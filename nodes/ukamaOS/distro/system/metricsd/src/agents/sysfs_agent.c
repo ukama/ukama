@@ -7,8 +7,9 @@
  */
 
 #include "file.h"
-#include "log.h"
 #include "metrics.h"
+
+#include "usys_log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,8 +28,8 @@ int ps_read_block(char *name, void *buff, uint16_t size) {
     read_bytes = read(fd, buff, size);
     file_close(fd);
   }
-  log_trace("Metrics:: Read %d bytes from %s file from offset 0x%x.",
-            read_bytes, name, PS_DEF_OFFSET);
+  usys_log_trace("Read %d bytes from %s file from offset 0x%x.",
+                 read_bytes, name, PS_DEF_OFFSET);
   return read_bytes;
 }
 
@@ -49,7 +50,7 @@ int sysfs_read_kpi_data(char *source, double *nval) {
   char line[32];
 
   if ((fp = fopen(source, "r")) == NULL) {
-    log_error("Metrics:: Cannot open %s: %s\n", source);
+      usys_log_error("Cannot open %s: %s", source, strerror(errno));
     return RETURN_NOTOK;
   }
 
@@ -72,14 +73,14 @@ int sysfs_push_kpi_metric_server(KPIConfig *kpi, char *source,
 
   /* Check for source */
   if (sysfs_check_for_kpi_source(source) != RETURN_OK) {
-    log_error("Metrics:: Source %s missing for KPI %s", source, kpi->name);
+    usys_log_error("Source %s missing for KPI %s", source, kpi->name);
     return ret;
   }
 
   /* Read KPI data */
   if (sysfs_read_kpi_data(source, &val) != RETURN_OK) {
-    log_error("Metrics:: Failed to read KPI %s from file %s ", kpi->name,
-              source);
+    usys_log_error("Failed to read KPI %s from file %s ",
+                   kpi->name, source);
     return ret;
   }
 
@@ -103,8 +104,8 @@ int sysfs_collect_kpi(MetricsCatConfig *stat, metricAddFunc addFunc) {
       if (sysfs_push_kpi_metric_server(&(stat->kpi[idx]), source, addFunc) !=
           RETURN_OK) {
         /* failed to push KPI but anyways continue to next KPI */
-        log_error("Metrics:: Failed to push data for kpi %s from source %s",
-                  stat->kpi[idx].name, source);
+        usys_log_error("Failed to push data for kpi %s from source %s",
+                       stat->kpi[idx].name, source);
       }
       free(source);
       ret = RETURN_OK;

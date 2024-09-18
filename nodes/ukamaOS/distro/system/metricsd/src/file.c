@@ -7,7 +7,8 @@
  */
 
 #include "file.h"
-#include "log.h"
+
+#include "usys_log.h"
 
 #define MAX_STR_LENGTH 64
 
@@ -25,7 +26,7 @@ int file_path_exist(char *fname) {
   if (access(fname, F_OK) != -1) {
     ret = 1;
   } else {
-    log_trace("FILE:: File %s is missing.", fname);
+    usys_log_trace("File %s is missing.", fname);
   }
   return ret;
 }
@@ -38,7 +39,7 @@ int file_exist(char *fname) {
     stat(fname, &sb);
     ret = S_ISREG(sb.st_mode);
     if (!ret) {
-      log_error("Err: FILE:: %s is not a file.", fname);
+      usys_log_error("Error %s is not a file.", fname);
       return ret;
     }
     file_close(fd);
@@ -63,9 +64,9 @@ int file_remove(void *data) {
     char *fname = data;
     ret = remove(fname);
     if (!ret) {
-      log_debug("FILE:: %s db file deleted successfully.", fname);
+      usys_log_debug("%s db file deleted successfully.", fname);
     } else {
-      log_debug("Err(%d): FILE:: %s db file deleted successfully.", ret, fname);
+      usys_log_debug("%s db file deleted successfully.", ret, fname);
     }
   }
   return ret;
@@ -81,7 +82,7 @@ int file_symlink_exists(const char *path) {
   struct stat sb;
   int ret = 0;
   if (lstat(path, &sb) == 0) {
-    log_trace("FILE:: Symbolic link %s exist.", path);
+    usys_log_trace("FILE:: Symbolic link %s exist.", path);
     ret = 1;
   }
   return (ret);
@@ -103,14 +104,13 @@ char *file_read_sym_link(char *fname) {
       return NULL;
     }
     if (readbytes > sb.st_size) {
-      log_error("Err: FILE: symlink increased in size "
-                "between lstat() and readlink()");
+      usys_log_error("Symlink increased in size between lstat() and readlink()");
       free(linkname);
       return NULL;
     }
     linkname[sb.st_size] = '\0';
 
-    log_trace("FILE:: '%s' points to '%s'\n", fname, linkname);
+    usys_log_trace("'%s' points to '%s'\n", fname, linkname);
   } else {
     return NULL;
   }
@@ -153,8 +153,8 @@ int file_read(void *fname, void *buff, off_t offset, uint16_t size) {
     read_bytes = read(fd, buff, size);
   }
   file_close(fd);
-  log_trace("FILE:: FD(%d) Read %d bytes from offset 0x%x.", fd, read_bytes,
-            offset);
+  usys_log_trace("FD(%d) Read %d bytes from offset 0x%x.", fd, read_bytes,
+                 offset);
   return read_bytes;
 }
 
@@ -174,8 +174,8 @@ int file_write(void *fname, void *buff, off_t offset, uint16_t size) {
     write_bytes = write(fd, buff, size);
   }
   file_close(fd);
-  log_trace("FILE:: FD(%d) Written %d bytes to offset 0x%x.", fd, write_bytes,
-            offset);
+  usys_log_trace("FD(%d) Written %d bytes to offset 0x%x.", fd, write_bytes,
+                 offset);
   return write_bytes;
 }
 
@@ -195,8 +195,8 @@ int file_append(void *fname, void *buff, off_t offset, uint16_t size) {
     write_bytes = write(fd, buff, size);
   }
   file_close(fd);
-  log_trace("FILE:: FD(%d) Written %d bytes to offset 0x%x.", fd, write_bytes,
-            offset);
+  usys_log_trace("FD(%d) Written %d bytes to offset 0x%x.", fd, write_bytes,
+                 offset);
   return write_bytes;
 }
 
@@ -220,7 +220,7 @@ int file_erase(void *fname, off_t offset, uint16_t size) {
   if (buff) {
     free(buff);
   }
-  log_trace("FILE:: Erased bytes: %d from %d", write_bytes, fd);
+  usys_log_trace("Erased bytes: %d from %d", write_bytes, fd);
   return write_bytes;
 }
 
@@ -236,8 +236,8 @@ int file_read_number(void *fname, void *data, off_t offset, uint16_t count,
     }
     memcpy((value + (idx * size)), val, size);
     for (int i = 0; i < size; i++) {
-      log_trace("\t \t File[%d] = 0x%x.", offset,
-                (uint8_t) * (value + (idx * size) + i));
+      usys_log_trace("\t \t File[%d] = 0x%x.", offset,
+                     (uint8_t) * (value + (idx * size) + i));
     }
     offset = offset + size;
     idx++;
@@ -257,8 +257,8 @@ int file_write_number(void *fname, void *data, off_t offset, uint16_t count,
       return -1;
     }
     for (int i = 0; i < size; i++) {
-      log_trace("\t \t File[%d] = 0x%x.", offset,
-                (uint8_t) * (value + (idx * size) + i));
+      usys_log_trace("\t \t File[%d] = 0x%x.", offset,
+                     (uint8_t) * (value + (idx * size) + i));
     }
     offset = offset + size;
     idx++;
@@ -278,14 +278,13 @@ int file_init(void *data) {
   int fd = file_open(fname, O_RDONLY);
   if (fd < 0) {
     /* This means db doesn't exist.*/
-    log_debug("FILE:: %s doesn't exist.So creating it", fname);
+    usys_log_debug("%s doesn't exist.So creating it", fname);
     fd = file_open(fname, (O_WRONLY | O_CREAT));
     if (fd < 0) {
       return -1;
     }
   }
   file_close(fd);
-  log_debug("FILE::File %s is ready.", fname);
   return 0;
 }
 
@@ -293,9 +292,9 @@ int file_cleanup(void *fname) {
   int ret = 0;
   ret = remove(fname);
   if (!ret) {
-    log_debug("FILE:: DB %s deleted successfully.", fname);
+    usys_log_debug("DB %s deleted successfully.", fname);
   } else {
-    log_debug("FILE:: DB %s deletion failed.", fname);
+    usys_log_debug("DB %s deletion failed.", fname);
   }
   return ret;
 }
@@ -303,10 +302,10 @@ int file_cleanup(void *fname) {
 int file_rename(char *old_name, char *new_name) {
   int ret = 0;
   if (rename(old_name, new_name) == 0) {
-    log_debug("FILE:: DB %s renamed to %s.", old_name, new_name);
+    usys_log_debug("DB %s renamed to %s.", old_name, new_name);
   } else {
     ret = -1;
-    log_error("Err:: Unable to rename file %s to %s.", old_name, new_name);
+    usys_log_error("Unable to rename file %s to %s.", old_name, new_name);
   }
   return ret;
 }

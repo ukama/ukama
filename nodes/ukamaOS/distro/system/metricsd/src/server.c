@@ -7,10 +7,11 @@
  */
 
 #include "config.h"
-#include "log.h"
 #include "microhttpd.h"
 #include "prom.h"
 #include "promhttp.h"
+
+#include "usys_log.h"
 
 static struct MHD_Daemon *mhd_daemon;
 
@@ -38,8 +39,8 @@ void metric_server_free_kpi(KPIConfig *kpi) {
               break;
 
           default:
-              log_error("METRICS:: Invalid KPI type %d for KPI %s.",
-                        kpi->type, kpi->name);
+              usys_log_error("Invalid KPI type %d for KPI %s.",
+                             kpi->type, kpi->name);
               break;
           }
 
@@ -52,8 +53,8 @@ void metric_server_free_kpi(KPIConfig *kpi) {
 /* Initialize metric */
 int metric_server_register_kpi(KPIConfig *kpi) {
 
-  log_trace(" METRICS:: Initializing prometheus metric  for KPI %s \n",
-            kpi->fqname);
+  usys_log_trace("Initializing prometheus metric  for KPI %s \n",
+                 kpi->fqname);
 
   kpi->registry = calloc(1, sizeof(PromRegistry));
   if (!kpi->registry) {
@@ -83,8 +84,8 @@ int metric_server_register_kpi(KPIConfig *kpi) {
     break;
 
   default:
-    log_error("METRICS:: Invalid KPI type %d for KPI %s.", kpi->type,
-              kpi->name);
+    usys_log_error("Invalid KPI type %d for KPI %s.", kpi->type,
+                   kpi->name);
   }
 
   if (!kpi->registry->counter) {
@@ -98,8 +99,8 @@ int metric_server_register_kpi(KPIConfig *kpi) {
 int metric_server_add_kpi_data(KPIConfig *kpi, void *value) {
   int ret = RETURN_OK;
 
-  log_trace("METRICS:: Adding KPI %s  %s and type %d\n", kpi->name, kpi->desc,
-            kpi->type);
+  usys_log_trace("Adding KPI %s  %s and type %d", kpi->name, kpi->desc,
+                 kpi->type);
   switch (kpi->type) {
 
   case METRICTYPE_COUNTER:
@@ -121,8 +122,8 @@ int metric_server_add_kpi_data(KPIConfig *kpi, void *value) {
 
   default:
     ret = RETURN_NOTOK;
-    log_error("METRICS:: Invalid KPI type %d for KPI %s.", kpi->type,
-              kpi->name);
+    usys_log_error("Invalid KPI type %d for KPI %s.", kpi->type,
+                   kpi->name);
   }
 
   return ret;
