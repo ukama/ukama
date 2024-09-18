@@ -180,6 +180,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 }
 
 func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
+
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
 		createdAt, _ := time.Parse(time.RFC3339, i.CreatedAt)
@@ -190,17 +191,21 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Type:        upb.NotificationType_name[int32(i.Type)],
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
-			NodeStateId: i.NodeState.Id.String(),
 			CreatedAt:   timestamppb.New(createdAt),
-			NodeState: &pb.NodeState{
+		}
+
+		if i.NodeState != nil {
+			n.NodeStateId = i.NodeState.Id.String()
+			n.NodeState = &pb.NodeState{
 				Id:           i.NodeState.Id.String(),
 				Name:         i.NodeState.Name,
 				NodeId:       i.NodeState.NodeId,
 				Latitude:     i.NodeState.Latitude,
 				Longitude:    i.NodeState.Longitude,
 				CurrentState: i.NodeState.CurrentState,
-			},
+			}
 		}
+
 		res = append(res, n)
 	}
 	return res
@@ -254,11 +259,17 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 	var err error
 	roleTypes := notif.NotificationScopeToRoles[scope]
 	done := make(chan bool)
-	nId, err := ukama.ValidateNodeId(nodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of node id. Error %s", err.Error())
+
+	var nId ukama.NodeID
+
+	if nodeId != "" {
+		nId, err = ukama.ValidateNodeId(nodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of node id. Error %s", err.Error())
+		}
 	}
+
 	go func() {
 
 		/* user specific notification */
@@ -319,7 +330,7 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 			log.Errorf("Error adding NodeState to db: %v", err)
 			return err
 		}
-		dn.NodeStateID = dn.NodeState.Id
+		dn.NodeStateID = &dn.NodeState.Id  
 	}
 	err := n.notificationRepo.Add(dn)
 	if err != nil {
@@ -336,8 +347,6 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 	un := []*db.UserNotification{}
 
 	for _, u := range users {
-
-		/* Only add vaild notifcation scope for the User */
 		if IsValidNotificationScopeForRole(u.Role, dn.Scope) {
 			un = append(un, &db.UserNotification{
 				Id:             uuid.NewV4(),

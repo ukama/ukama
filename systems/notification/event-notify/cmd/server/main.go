@@ -61,10 +61,11 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
+
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Notification{}, &db.Users{}, db.NodeState{},&db.UserNotification{}, &db.EventMsg{})
+	err := d.Init(&db.Notification{}, &db.Users{}, &db.NodeState{}, &db.UserNotification{}, &db.EventMsg{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -84,7 +85,7 @@ func initTrigger(db sql.Db) {
 		-- Fetch NodeState data
 		SELECT COALESCE(ns.id::text, ''), COALESCE(ns.node_id, ''), COALESCE(ns.current_state, '')
 		INTO node_state_data
-		FROM node_states ns
+		FROM node_states ns  -- Make sure this matches your table name
 		WHERE ns.id = NEW.node_state_id;
 
 		-- Combine UserNotification and NodeState data

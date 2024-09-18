@@ -610,7 +610,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 	var id uint = 0
 	err := event.Data.Set(msg)
 	if err != nil {
-		log.Errorf("failed to assing event: %v", err)
+		log.Errorf("failed to assign event: %v", err)
 	} else {
 		id, err = es.n.storeEvent(event)
 		if err != nil {
@@ -629,6 +629,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		NetworkId:    networkId,
 		NodeId:       nodeId,
 		SubscriberId: subscriberId,
+		NodeStateID:  nil, // Initialize as nil
 	}
 
 	if id != 0 {
@@ -641,8 +642,9 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		if err != nil {
 			log.Errorf("failed to unmarshal NodeStateChangeEvent: %v", err)
 		} else {
+			nodeStateID := uuid.NewV4()
 			nodeState := &db.NodeState{
-				Id:           uuid.NewV4(),
+				Id:           nodeStateID,
 				Name:         nodeStateEvent.Name,
 				NodeId:       nodeId,
 				Latitude:     nodeStateEvent.Latitude,
@@ -651,7 +653,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			}
-			dn.NodeStateID = nodeState.Id
+			dn.NodeStateID = &nodeStateID 
 			dn.NodeState = nodeState
 		}
 	}
