@@ -207,25 +207,25 @@ ukamnode = "TRX"
 			url ="/proc/meminfo"
 
 			[[stats.memory.swap.kpi]]
+		                name = "used_memory"
+		                ext = ""
+		                desc = "Used memory"
+		                type = "METRICTYPE_GAUGE"
+		                labels = []
+
+	               [[stats.memory.swap.kpi]]
+		                name = "free_memory"
+		                ext = ""
+		                desc = "Free memory"
+		                type = "METRICTYPE_GAUGE"
+                		labels = []
+
+			[[stats.memory.swap.kpi]]
 				name = "total"
 				ext = ""
 				desc = "Total Memory"
 				type = "METRICTYPE_GAUGE"
-				labels = []
-
-			[[stats.memory.swap.kpi]]
-				name = "Used memory"
-				ext = ""
-				desc = "Used memory"
-				type = "METRICTYPE_GAUGE"
-				labels = []
-
-			[[stats.memory.swap.kpi]]
-				name = "Free memory"
-				ext = ""
-				desc = "Free memory"
-				type = "METRICTYPE_GAUGE"
-				labels = []
+                                labels = []
 
 [[stats]]
 		[[stats.network]]
