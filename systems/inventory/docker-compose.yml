@@ -3,7 +3,7 @@ services:
  postgresd-inventory:
   image: postgres:13.3
   ports:
-   - '5414:5432'
+   - 5414:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -13,9 +13,7 @@ services:
    - postgress-data:/var/lib/postgresql
 
  component:
-  build:
-   context: ./component
-   dockerfile: ./Dockerfile
+  build: ./component
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-inventory
@@ -39,9 +37,7 @@ services:
    - postgresd-inventory
 
  accounting:
-  build:
-   context: ./accounting
-   dockerfile: ./Dockerfile
+  build: ./accounting
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-inventory
@@ -63,12 +59,10 @@ services:
    - postgresd-inventory
 
  api-gateway-inventory:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
-   - '8077:8080'
+   - 8077:8080
   networks:
    - ukama-net
   environment:
