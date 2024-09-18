@@ -132,7 +132,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     register_org_to_init(){
         echo  "$TAG Add ${ORGNAME} org in lookup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\",  \"country\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert', 'CD')"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
     }
 
@@ -229,6 +229,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         REG_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["registry"]')
         NOT_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["notification"]')
         NODE_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["node"]')
+
+        PGA_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["pg-admin"]')
+        RABBITMQ_P1=$(echo "$ORG" | jq -r '.["sys-ports"]["rabbitmq-p1"]')
+        RABBITMQ_P2=$(echo "$ORG" | jq -r '.["sys-ports"]["rabbitmq-p2"]')
+        REGAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["registry"]')
+        NODEAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["node"]')
+        NODEGW_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["nodegw"]')
+        NOTAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["notification"]')
+        SUBAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["subscriber"]')
+        DPAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["dataplan"]')
     }
 
     cleanup() {
@@ -280,22 +290,23 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             fi
             
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
-                sed -i '' '/ports:/d' docker-compose.yml
-                sed -i '' '/- 8090:80/d' docker-compose.yml
-                sed -i '' '/- 5672:5672/d' docker-compose.yml
-                sed -i '' '/- 15672:15672/d' docker-compose.yml
-                sed -i '' '/- 8075:8080/d' docker-compose.yml
-                sed -i '' '/- 8036:8080/d' docker-compose.yml
-                sed -i '' '/- 8097:8080/d' docker-compose.yml
-                sed -i '' '/- 8058:8080/d' docker-compose.yml
-                sed -i '' '/- 8078:8080/d' docker-compose.yml
-                sed -i '' '/- 8074:8080/d' docker-compose.yml
+                getSysPorts
+                sed -i ''  "s/- 8090:80/- ${PGA_PORT}:80/g" docker-compose.yml # PG ADMIN
+                sed -i '' "s/- 5672:5672/- ${RABBITMQ_P1}:5672/g" docker-compose.yml # RABBIT MQ P1
+                sed -i '' "s/- 15672:15672/- ${RABBITMQ_P2}:15672/g" docker-compose.yml # RABBIT MQ P2
 
-                sed -i '' "s/- 5405:5432/- ${REG_PORT}:5432/g" docker-compose.yml # REGISTRY SYS
-                sed -i '' "s/- 5489:5432/- ${NODE_PORT}:5432/g" docker-compose.yml # NODE SYS
-                sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS
-                sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS
-                sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS
+                sed -i '' "s/- 8075:8080/- ${REGAPI_PORT}:8080/g" docker-compose.yml # REGISTRY SYS APIGW
+                sed -i '' "s/- 8036:8080/- ${NODEAPI_PORT}:8080/g" docker-compose.yml # NODE SYS APIGW
+                sed -i '' "s/- 8097:8080/- ${NODEGW_PORT}:8080/g" docker-compose.yml # NODE SYS NODEGW
+                sed -i '' "s/- 8058:8080/- ${NOTAPI_PORT}:8080/g" docker-compose.yml # NOTIFICATION SYS APIGW
+                sed -i '' "s/- 8097:8080/- ${SUBAPI_PORT}:8080/g" docker-compose.yml # SUBSCRIBER SYS APIGW
+                sed -i '' "s/- 8074:8080/- ${DPAPI_PORT}:8080/g" docker-compose.yml # DATAPLAN SYS APIGW
+
+                sed -i '' "s/- 5405:5432/- ${REG_PORT}:5432/g" docker-compose.yml # REGISTRY SYS PG
+                sed -i '' "s/- 5489:5432/- ${NODE_PORT}:5432/g" docker-compose.yml # NODE SYS PG
+                sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS PG
+                sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS PG
+                sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS PG
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then
@@ -321,7 +332,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         fi
     }
 
-    getSysPorts
     sort_systems_by_dependency
     setup_docker_compose_files
     pre_deploy_config_for_other_org
