@@ -36,7 +36,6 @@ const OrgName = "testorg"
 func TestUserService_Add(t *testing.T) {
 	name := "Joe"
 	email := "test@example.com"
-	phone := "12324"
 	authId := uuid.NewV4()
 
 	userRepo := &mocks.UserRepo{}
@@ -45,14 +44,12 @@ func TestUserService_Add(t *testing.T) {
 	user := &db.User{
 		Name:   name,
 		Email:  email,
-		Phone:  phone,
 		AuthId: authId,
 	}
 
 	userRequest := &pb.User{
 		Name:   name,
 		Email:  email,
-		Phone:  phone,
 		AuthId: authId.String(),
 	}
 
@@ -438,13 +435,12 @@ func TestUserService_Validation_Add(t *testing.T) {
 			user:      &pb.User{Name: name},
 			expectErr: false,
 		},
-
-		{
-			name:        "phoneErr",
-			user:        &pb.User{Phone: "sdfewr", Name: name},
-			expectErr:   true,
-			errContains: "phone number",
-		},
+		// {
+		// 	name:        "phoneErr",
+		// 	user:        &pb.User{Phone: "sdfewr", Name: name},
+		// 	expectErr:   true,
+		// 	errContains: "phone number",
+		// },
 	}
 
 	for _, test := range tests {

@@ -66,16 +66,15 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	}
 
 	user := &db.User{
-		Email:  strings.ToLower(req.User.Email),
-		Name:   req.User.Name,
-		Phone:  req.User.Phone,
+		Email: strings.ToLower(req.User.Email),
+		Name:  req.User.Name,
+		// Phone:  req.User.Phone,
 		AuthId: authId,
 	}
 
 	err = u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		log.Infof("Adding user %s as member of default org", user.Id)
-
 		user.Id = uuid.NewV4()
+		log.Infof("Adding user %s as member of default org", user.Id)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -100,7 +99,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		UserId: user.Id.String(),
 		Email:  strings.ToLower(req.User.Email),
 		Name:   req.User.Name,
-		Phone:  req.User.Phone,
+		// Phone:  req.User.Phone,
 	}
 	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
 	err = u.msgbus.PublishRequest(route, evt)
