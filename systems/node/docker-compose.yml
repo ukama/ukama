@@ -3,7 +3,7 @@ services:
  postgresd-node:
   image: postgres:13.3
   ports:
-   - '5489:5432'
+   - 5489:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -35,9 +35,7 @@ services:
    - postgresd-node
 
  health:
-  build:
-   context: ./health
-   dockerfile: ./Dockerfile
+  build: ./health
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
@@ -55,9 +53,7 @@ services:
    - msgclient-node
 
  software:
-  build:
-   context: ./software
-   dockerfile: ./Dockerfile
+  build: ./software
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
@@ -76,9 +72,7 @@ services:
    - msgclient-node
 
  notify:
-  build:
-   context: ./notify
-   dockerfile: ./Dockerfile
+  build: ./notify
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
@@ -96,12 +90,10 @@ services:
    - postgresd-node
 
  node-gateway-node:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node-gateway
+  build: ./node-gateway
   restart: always
   ports:
-   - '8036:8080'
+   - 8036:8080
   networks:
    - ukama-net
   environment:
@@ -112,12 +104,10 @@ services:
    - postgresd-node
 
  api-gateway-node:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
-   - '8097:8080'
+   - 8097:8080
   networks:
    - ukama-net
   environment:
@@ -162,9 +152,7 @@ services:
    - ukama-net
 
  configurator:
-  build:
-   context: ./configurator
-   dockerfile: ./Dockerfile
+  build: ./configurator
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
