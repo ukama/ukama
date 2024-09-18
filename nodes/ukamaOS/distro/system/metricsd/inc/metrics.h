@@ -15,6 +15,11 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "usys_types.h"
+#include "usys_services.h"
+
+#define SERVICE_NAME SERVICE_METRICS
+
 #define RETURN_OK                       0
 #define RETURN_NOTOK                    (-1)
 
