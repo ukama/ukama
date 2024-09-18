@@ -95,7 +95,7 @@ int sysfs_collect_kpi(MetricsCatConfig *stat, metricAddFunc addFunc) {
   int ret = RETURN_NOTOK;
   for (int idx = 0; idx < stat->kpiCount; idx++) {
     int length =
-        sizeof(char) * ((strlen(stat->url)) + (strlen(stat->kpi[idx].ext)));
+        sizeof(char) * ((strlen(stat->url)) + (strlen(stat->kpi[idx].ext)) +1);
     char *source = calloc(1, length);
     if (source) {
       strcpy(source, stat->url);
