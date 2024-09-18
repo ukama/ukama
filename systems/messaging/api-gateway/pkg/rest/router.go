@@ -161,7 +161,7 @@ func (r *Router) prometheusHandler(c *gin.Context) error {
 	// wait for nodeToOrgNetwork mapping to finish
 	<-m
 
-	b, err := marshallTargets(l, nodeToOrg, int(r.config.nodeMetricPort))
+	b, err := r.marshallTargets(l, nodeToOrg, int(r.config.nodeMetricPort))
 	if err != nil {
 		logrus.Error("Error marshalling targets. Error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -182,12 +182,20 @@ type targets struct {
 	Labels  map[string]string `json:"labels"`
 }
 
-func marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
+func (r *Router) marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
 	resp := make([]targets, 0, len(l.Map))
 	var dname string
 	for _, v := range l.Map {
 		labels := map[string]string{
 			"nodeid": v.NodeId,
+		}
+
+		nodeIp, err := r.clients.n.GetNodeIpRequest(&pb.GetNodeIPRequest{
+			NodeId: v.NodeId,
+		})
+		if err != nil {
+			logrus.Errorf("Failed to get node ip for node %s.Error: %s", v.NodeId, err.Error())
+			continue
 		}
 
 		if m, ok := func(m *pb.NodeOrgMapListResponse, id string) (*pb.NodeOrgMap, bool) {
@@ -201,10 +209,12 @@ func marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListRe
 			dname = m.GetDomainname()
 			labels["org"] = m.Org
 			labels["network"] = m.Network
+			labels["serial"] = v.NodeId
+			labels["dns"] = v.NodeId + "." + dname
 		}
 
 		resp = append(resp, targets{
-			Targets: []string{v.NodeId + "." + dname},
+			Targets: []string{nodeIp.Ip},
 			Labels:  labels,
 		})
 	}

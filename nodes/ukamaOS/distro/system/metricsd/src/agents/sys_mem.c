@@ -6,7 +6,8 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "log.h"
+#include "usys_log.h"
+
 #include "metrics.h"
 #include "sys_stat.h"
 
@@ -25,7 +26,7 @@ int sys_read_memStat(SysMemMetrics *statMem) {
   char line[128];
 
   if ((fp = fopen(PROC_MEM_STAT, "r")) == NULL) {
-    log_error("Metrics:: Cannot open %s: %s\n", PROC_MEM_STAT);
+      usys_log_error("Cannot open %s: %s", PROC_MEM_STAT, strerror(errno));
     return RETURN_NOTOK;
   }
   
@@ -133,12 +134,12 @@ int sys_mem_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 
   SysMemMetrics *memStat = calloc(1, sizeof(SysMemMetrics));
   if (!memStat) {
-    log_error("Metrics:: Failed to allocate memory for mem stat.");
+    usys_log_error("Failed to allocate memory for mem stat.");
     return RETURN_NOTOK;
   }
 
   if (sys_read_memStat(memStat) != RETURN_OK) {
-    log_error("Metrics:: Failed to read memory stats.");
+    usys_log_error("Failed to read memory stats.");
     free(memStat);
     return RETURN_NOTOK;
   }
@@ -146,19 +147,19 @@ int sys_mem_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
   if (!strcmp(cfgStat->source, MEM_SOURCE_DDR)) {
     if (sys_mem_ddr_push_stat_to_metric_server(cfgStat, &memStat->ddr,
                                                addFunc) != RETURN_OK) {
-      log_error("Metrics:: Failed to add %s memory stats to metric server.",
-                MEM_SOURCE_DDR);
+      usys_log_error("Failed to add %s memory stats to metric server.",
+                     MEM_SOURCE_DDR);
       ret = RETURN_NOTOK;
     }
   } else if (!strcmp(cfgStat->source, MEM_SOURCE_SWAP)) {
     if (sys_mem_swap_push_stat_to_metric_server(cfgStat, &memStat->swap,
                                                 addFunc) != RETURN_OK) {
-      log_error("Metrics:: Failed to add memory stats %s to metric server.",
-                MEM_SOURCE_SWAP);
+      usys_log_error("Failed to add memory stats %s to metric server.",
+                     MEM_SOURCE_SWAP);
       ret = RETURN_NOTOK;
     } else {
-      log_error("Metrics:: Failed to find memory stats source  %s.",
-                cfgStat->source);
+      usys_log_error("Failed to find memory stats source  %s.",
+                     cfgStat->source);
       ret = RETURN_NOTOK;
     }
   }

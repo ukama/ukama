@@ -6,15 +6,16 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "config.h"
-#include "log.h"
-#include "server.h"
-#include "toml.h"
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "config.h"
+#include "server.h"
+#include "toml.h"
+
+#include "usys_log.h"
 
 char g_node[32] = {'\0'};
 
@@ -22,7 +23,7 @@ char g_node[32] = {'\0'};
 char *alloc_str(int size) {
   char *str = calloc(1, (sizeof(char) * size));
   if (!str) {
-    log_error("Metrics:: Memory allocation failed for string of size %d.",
+    usys_log_error("Memory allocation failed for string of size %d.",
               size);
   }
   return str;
@@ -34,12 +35,12 @@ char *read_str_value(toml_table_t *tab, char *key) {
 
   toml_datum_t str = toml_string_in(tab, key);
   if (!str.ok) {
-    log_error("Metrics:: Failed to read string value for key %s", key);
+    usys_log_error("Failed to read string value for key %s", key);
     return value;
   } else {
     int len = strlen(str.u.s);
-    log_trace("Metrics:: Type: String Key: %s Value: %s Length: %d", key,
-              str.u.s, len);
+    usys_log_trace("Type: String Key: %s Value: %s Length: %d", key,
+                   str.u.s, len);
     value = calloc(len + 1, sizeof(char));
     if (value) {
       memcpy(value, str.u.s, len);
@@ -53,10 +54,10 @@ char *read_str_value(toml_table_t *tab, char *key) {
 int read_int_value(toml_table_t *tab, char *key) {
   toml_datum_t val = toml_int_in(tab, key);
   if (!val.ok) {
-    log_error("Metrics:: Failed to read integer value for key %s", key);
+    usys_log_error("Failed to read integer value for key %s", key);
     return 0;
   }
-  log_trace("Metrics:: Type: Integer Key: %s Value: %d", key, val.u.i);
+  usys_log_trace("Type: Integer Key: %s Value: %d", key, val.u.i);
   return val.u.i;
 }
 
@@ -98,7 +99,6 @@ KPIConfig *alloc_kpi(int count) {
   return kpi;
 }
 
-/* Free KPI */
 void free_kpi(KPIConfig *kpi, int count) {
   if (kpi) {
     for (int idx = 0; idx < count; idx++) {
@@ -108,6 +108,8 @@ void free_kpi(KPIConfig *kpi, int count) {
       free_str_value(kpi[idx].desc);
       free_str_value(kpi[idx].unit);
       free_labels(kpi[idx].labels, kpi[idx].numLabels);
+
+      metric_server_free_kpi(&kpi[idx]);
     }
     free(kpi);
     kpi = NULL;
@@ -140,20 +142,44 @@ MetricsCatConfig *alloc_stat(int count) {
   return stat;
 }
 
-/* Free stat */
 void free_stat(MetricsCatConfig *stat, int count) {
-  if (stat) {
-    for (int idx = 0; idx < count; idx++) {
-      free_str_value(stat[idx].source);
-      free_str_value(stat[idx].agent);
-      free_str_value(stat[idx].url);
-      free_range(stat[idx].range);
-      int kcount = (stat->instances) ? (stat->instances) : 1;
-      free_kpi(stat[idx].kpi, stat[idx].kpiCount * kcount);
+    if (stat) {
+        for (int idx = 0; idx < count; idx++) {
+
+            free_str_value(stat[idx].source);
+            free_str_value(stat[idx].agent);
+            free_str_value(stat[idx].url);
+
+            if (stat[idx].range) {
+                free_range(stat[idx].range);
+                stat[idx].range = NULL;
+            }
+
+            if (stat[idx].kpi) {
+                int kpi_instance_count = (stat[idx].instances) ? stat[idx].instances : 1;
+                free_kpi(stat[idx].kpi, stat[idx].kpiCount * kpi_instance_count);
+            }
+        }
+        free(stat);
+        stat = NULL;
     }
-    free(stat);
-    stat = NULL;
-  }
+}
+
+/* Free stat config */
+void free_stat_cfg(MetricsConfig *stat_cfg, int count) {
+    if (stat_cfg) {
+        for (int idx = 0; idx < count; idx++) {
+            // Free dynamically allocated category name
+            free_str_value(stat_cfg[idx].name);
+            
+            // Free each stat category
+            if (stat_cfg[idx].metricsCategory) {
+                free_stat(stat_cfg[idx].metricsCategory, stat_cfg[idx].eachCategoryCount);
+            }
+        }
+        free(stat_cfg);
+        stat_cfg = NULL;
+    }
 }
 
 /* Allocate stat table */
@@ -163,18 +189,6 @@ MetricsConfig *alloc_stat_cfg(int count) {
     return NULL;
   }
   return stat_cfg;
-}
-
-/* Free stat table*/
-void free_stat_cfg(MetricsConfig *stat_cfg, int count) {
-  if (stat_cfg) {
-    for (int idx = 0; idx < count; idx++) {
-      free_str_value(stat_cfg[idx].name);
-      free_stat(stat_cfg[idx].metricsCategory, stat_cfg[idx].eachCategoryCount);
-    }
-    free(stat_cfg);
-    stat_cfg = NULL;
-  }
 }
 
 /* convert to lower_case */
@@ -244,7 +258,7 @@ int read_metric_type(toml_table_t *tab_kpi) {
     }
   } else {
     /* Set default GUAGE TYPE */
-    log_error("Metrics:: Err reading metric type.");
+    usys_log_error("Error reading metric type.");
   }
   return metrictype;
 }
@@ -256,18 +270,16 @@ int *parse_range_array(int *inst, toml_table_t *tab, char *key) {
   /* Range array */
   toml_array_t *arr_range = toml_array_in(tab, key);
   if (!arr_range) {
-    log_error("Metrics:: Error missing %s", key);
+    usys_log_error("Error missing %s", key);
   }
 
   *inst = toml_array_nelem(arr_range);
-  log_trace("Metrics:: %d range values available.", *inst);
+  log_trace("%d range values available.", *inst);
 
   /* Allocate memory for kpi */
   range = alloc_range(*inst);
   if (!range) {
-    log_error(
-        "Metrics:: Error: failed to allocate memory for %d range elements.",
-        *inst);
+    usys_log_error("Failed to allocate memory for %d range elements.", *inst);
     return range;
   }
 
@@ -280,7 +292,7 @@ int *parse_range_array(int *inst, toml_table_t *tab, char *key) {
 
     } else {
       range[idx] = data.u.i;
-      log_trace("Metrics:: Range value at [%d] is %d", idx, range[idx]);
+      usys_log_trace("Range value at [%d] is %d", idx, range[idx]);
     }
   }
 
@@ -295,7 +307,7 @@ int *parse_range_int(toml_table_t *tab, char *key) {
   /* Allocate memory for range */
   range = alloc_range(1);
   if (!range) {
-    log_error("Metrics:: Error: failed to allocate memory for range value.");
+    usys_log_error("Error: failed to allocate memory for range value.");
     return range;
   }
 
@@ -309,7 +321,7 @@ int *parse_range_int(toml_table_t *tab, char *key) {
   } else {
     int idx = 0;
     range[idx] = data.u.i;
-    log_trace("Metrics:: Range value at [%d] is %d", idx, range[idx]);
+    usys_log_trace("Range value at [%d] is %d", idx, range[idx]);
   }
 
   return range;
@@ -339,12 +351,12 @@ char **read_labels(int *count, toml_table_t *tab_kpi) {
   /* KPI Table array */
   toml_array_t *arr_kpi = toml_array_in(tab_kpi, TAG_LABELS);
   if (!arr_kpi) {
-    log_error("Metrics:: Error missing %s", TAG_LABELS);
+    usys_log_error("Error missing %s", TAG_LABELS);
     return NULL;
   }
 
   *count = toml_array_nelem(arr_kpi);
-  log_trace("Metrics:: %d labels available.", *count);
+  usys_log_trace("%d labels available.", *count);
 
   if (*count <= 0) {
     return NULL;
@@ -353,8 +365,7 @@ char **read_labels(int *count, toml_table_t *tab_kpi) {
   /* Allocate memory for kpi */
   labels = alloc_lables(*count);
   if (!(labels)) {
-    log_error("Metrics:: Error: failed to allocate memory for %d labels.",
-              *count);
+    usys_log_error("Error: failed to allocate memory for %d labels.", *count);
     return NULL;
   }
 
@@ -415,7 +426,7 @@ static int toml_parse_stat_table(char *category, MetricsCatConfig *stat,
   int ret = RETURN_OK;
 
   int clmn = toml_table_nkval(tab_stat);
-  log_trace("Metrics:: Number of columns in Stat table %d", clmn);
+  usys_log_trace("Number of columns in Stat table %d", clmn);
 
   /* Source */
   stat->source = read_str_value(tab_stat, TAG_SOURCE);
@@ -432,19 +443,19 @@ static int toml_parse_stat_table(char *category, MetricsCatConfig *stat,
   /* Table source */
   toml_table_t *tab_source = toml_table_in(tab_stat, stat->source);
   if (!tab_source) {
-    log_error("Metrics:: Error missing table %s", stat->source);
+    usys_log_error("Error missing table %s", stat->source);
     return RETURN_NOTOK;
   }
 
   /* KPI Table array */
   toml_array_t *arr_kpi = toml_array_in(tab_source, TAG_KPI);
   if (!arr_kpi) {
-    log_error("Metrics:: Error missing %s for source.", TAG_KPI, stat->source);
+    usys_log_error("Error missing %s for source.", TAG_KPI, stat->source);
     return RETURN_NOTOK;
   }
 
   stat->kpiCount = toml_array_nelem(arr_kpi);
-  log_trace("Metrics:: %d KPI available.", stat->kpiCount);
+  usys_log_trace("%d KPI available.", stat->kpiCount);
 
   int rkpi_count = stat->kpiCount;
 
@@ -461,16 +472,15 @@ static int toml_parse_stat_table(char *category, MetricsCatConfig *stat,
   /* Allocate memory for kpi */
   stat->kpi = alloc_kpi(rkpi_count);
   if (!(stat->kpi)) {
-    log_error("Metrics:: Error: failed to allocate memory for %d KPI.",
-              rkpi_count);
+    usys_log_error("Failed to allocate memory for %d KPI.", rkpi_count);
     return RETURN_NOTOK;
   }
 
   int max_instances = (stat->instances) ? (stat->instances) : 1;
 
-  log_trace("Metrics:: Range has %d instances max instances is set to %d for "
-            "category %s source %s.",
-            stat->instances, max_instances, category, stat->source);
+  usys_log_trace("Range has %d instances max instances is set to %d for "
+                 "category %s source %s.",
+                 stat->instances, max_instances, category, stat->source);
 
   /* For each value in range */
   for (uint8_t inst = 0; inst < max_instances; inst++) {
@@ -517,7 +527,7 @@ static int toml_parse_stats_cat(char *category, MetricsCatConfig *stat,
 
   /* Get table key */
   const char *key = toml_key_in(tab_stats, 0);
-  log_trace("Metrics::Key in stat category table is %s.", key);
+  usys_log_trace("in stat category table is %s.", key);
 
   /* parse table */
   if (RETURN_OK != toml_parse_stat_table(category, stat, tab_stats)) {
@@ -533,15 +543,14 @@ static int toml_parse_stat_cat_array(MetricsConfig *stat_cfg,
 
   /* Device under each category count */
   int table_count = toml_array_nelem(stat_cat_arr);
-  log_trace("Metrics:: Stats category contains %d tables.", table_count);
+  usys_log_trace("Stats category contains %d tables.", table_count);
   stat_cfg->eachCategoryCount = table_count;
 
   /* Allocate memory */
   stat_cfg->metricsCategory = alloc_stat(table_count);
   if (!(stat_cfg->metricsCategory)) {
-    log_error("Metrics:: Error: failed to allocate memory for %d tables to "
-              "stat category.",
-              table_count);
+    usys_log_error("Failed to allocate memory for %d tables to stat category",
+                   table_count);
     return RETURN_NOTOK;
   }
 
@@ -551,17 +560,15 @@ static int toml_parse_stat_cat_array(MetricsConfig *stat_cfg,
 
     toml_table_t *tab_stat = toml_table_at(stat_cat_arr, idx);
     if (!tab_stat) {
-      log_error(
-          "Metrics:: Error: reading Stats table at %d for category for %s.",
-          idx, stat_cfg->name);
+      usys_log_error("reading Stats table at %d for category for %s",
+                     idx, stat_cfg->name);
       return RETURN_NOTOK;
     }
 
     if (RETURN_OK !=
         toml_parse_stats_cat(stat_cfg->name, &stats[idx], tab_stat)) {
-      log_error(
-          "Metrics:: Error: Parsing stats table for idx %d category %s failed.",
-          idx, stat_cfg->name);
+      usys_log_error("Parsing stats table for idx %d category %s failed.",
+                     idx, stat_cfg->name);
       return RETURN_NOTOK;
     }
   }
@@ -570,8 +577,7 @@ static int toml_parse_stat_cat_array(MetricsConfig *stat_cfg,
 }
 
 int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
-                      int *server_port, MetricsConfig **pstat_cfg,
-                      int *cat_count) {
+                      MetricsConfig **pstat_cfg, int *cat_count) {
   FILE *fp;
   char errbuf[200];
   char *node;
@@ -579,35 +585,32 @@ int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
   // 1. Read and parse toml file
   fp = fopen(cfg, "r");
   if (!fp) {
-    log_error("Metrics:: cannot open %s.", cfg);
+    usys_log_error("Cannot open %s.", cfg);
   }
 
   toml_table_t *conf = toml_parse_file(fp, errbuf, sizeof(errbuf));
   fclose(fp);
 
   if (!conf) {
-    log_error("Metrics:: cannot parse  %s ", errbuf);
+    usys_log_error("Cannot parse  %s ", errbuf);
   }
 
   /* Read version */
   *version = read_str_value(conf, TAG_VERSION);
   if (*version) {
-    log_trace("Metrics:: config version %s.", *version);
+    usys_log_trace("Config version %s.", *version);
   }
 
   /* Node type */
   node = read_str_value(conf, TAG_NODE);
   if (node) {
-    log_trace("Metrics:: Node read is %s.", node);
+    usys_log_trace("Node read is %s.", node);
     memcpy(g_node, node, strlen(node));
   }
 
   *scraping_time_period = read_int_value(conf, TAG_SCRAPING_TIME_PERIOD);
-  log_trace("Metrics:: Scraping time period read is %d.",
-            *scraping_time_period);
-
-  *server_port = read_int_value(conf, TAG_SERVER_PORT);
-  log_trace("Metrics:: Metric server port %d.", *server_port);
+  usys_log_trace("Scraping time period read is %d.",
+                 *scraping_time_period);
 
 #if 0
     /* Parse Source list */
@@ -622,19 +625,19 @@ int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
   /* Traverse ARRAY of table of stats category. */
   toml_array_t *arr_stat_cfg = toml_array_in(conf, TAG_TABLE);
   if (!arr_stat_cfg) {
-    log_error("missing %s", TAG_TABLE);
+    usys_log_error("missing %s", TAG_TABLE);
   }
 
   /* Stats config category  count */
   int category_counts = toml_array_nelem(arr_stat_cfg);
-  log_trace("Metrics:: Stat config contains %d category.", category_counts);
+  usys_log_trace("Stat config contains %d category.", category_counts);
   *cat_count = category_counts;
 
   /* Allocate memory */
   *pstat_cfg = alloc_stat_cfg(category_counts);
   if (!(*pstat_cfg)) {
-    log_error(
-        "Metrics:: Error: failed to allocate memory for %d category of stats.",
+    usys_log_error(
+        "Failed to allocate memory for %d category of stats.",
         category_counts);
     return RETURN_NOTOK;
   }
@@ -644,13 +647,13 @@ int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
 
     toml_table_t *stat_tab = toml_table_at(arr_stat_cfg, idx);
     if (!stat_tab) {
-      log_error("Metrics:: Err reading Stats category table from array at %d.",
-                idx);
+      usys_log_error("Error reading Stats category table from array at %d.",
+                     idx);
       return RETURN_NOTOK;
     }
 
     const char *key = toml_key_in(stat_tab, 0);
-    log_trace("Metrics:: %d in stat category array is %s.", idx, key);
+    usys_log_trace("%d in stat category array is %s.", idx, key);
 
     /* Copy category name of stats */
     stat_cfg[idx].name = alloc_str(strlen(key) + 1);
@@ -660,19 +663,18 @@ int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
 
     toml_array_t *stat_cat_arr = toml_array_in(stat_tab, key);
     if (!stat_cat_arr) {
-      log_error("Metrics:: Err reading Stats category %s array at %d.", key,
-                idx);
+      usys_log_error("Error reading Stats category %s array at %d.", key,
+                     idx);
       return RETURN_NOTOK;
     }
 
     if (RETURN_OK != toml_parse_stat_cat_array(&stat_cfg[idx], stat_cat_arr)) {
-      log_error(
-          "Metrics:: Error: Parsing stats category array %s for idx %d failed.",
-          key, idx);
+      usys_log_error("Parsing stats category array %s for idx %d failed.",
+                     key, idx);
       return RETURN_NOTOK;
     }
   }
-  log_trace("Metrics:: Parsing completed for %s.", cfg);
+  usys_log_trace("Parsing completed for %s.", cfg);
   toml_free(conf);
   return RETURN_OK;
 }
