@@ -223,6 +223,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SYSTEMS=($(for item in "${SYSTEMS[@]}"; do echo "$item"; done | sort -n -k1,1 | cut -d' ' -f2-))
     }
 
+    getSysPorts(){
+        DP_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["dataplan"]')
+        SUB_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["subscriber"]')
+        REG_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["registry"]')
+        NOT_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["notification"]')
+        NODE_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["node"]')
+    }
+
     cleanup() {
         echo  "$TAG Cleaning up..."
         cd $root_dir
@@ -282,12 +290,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 8058:8080/d' docker-compose.yml
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
                 sed -i '' '/- 8074:8080/d' docker-compose.yml
-                sed -i '' '/- 5405:5432/d' docker-compose.yml # REGISTRY SYS
-                sed -i '' '/- 5489:5432/d' docker-compose.yml # NODE SYS
-                sed -i '' '/- 5632:5432/d' docker-compose.yml # NOTIFICATION SYS
-                sed -i '' '/- 5412:5432/d' docker-compose.yml # SUBSCRIBER SYS
-                sed -i '' '/- 5404:5432/d' docker-compose.yml # DATAPLAN SYS
+
+                sed -i '' "s/- 5405:5432/- ${REG_PORT}:5432/g" docker-compose.yml # REGISTRY SYS
+                sed -i '' "s/- 5489:5432/- ${NODE_PORT}:5432/g" docker-compose.yml # NODE SYS
+                sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS
+                sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS
+                sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS
             fi
+
             if [[ $WITHSUBAUTH == false ]]; then
                 sed -i '' '/- 4446:4446/d' docker-compose.yml # SUBSCRIBER MAILSERVER
                 sed -i '' '/- 4447:4447/d' docker-compose.yml # SUBSCRIBER MAILSERVER
@@ -311,6 +321,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         fi
     }
 
+    getSysPorts
     sort_systems_by_dependency
     setup_docker_compose_files
     pre_deploy_config_for_other_org
@@ -360,17 +371,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ;;
 
         "dataplan")
-            # TODO: NEED TO BE FIXED
-            # sleep 2
-            # echo  "$TAG Add default baserate in dataplan..."
-            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
-            # QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
-            # psql $DB_URI -c "$QUERY1"
+            sleep 2
+            echo  "$TAG Add default baserate in dataplan..."
+            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:${DP_PORT}/baserate"
+            QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
+            psql $DB_URI -c "$QUERY1"
 
-            # echo  "$TAG Set default markup..."
-            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
-            # QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
-            # psql $DB_URI -c "$QUERY2"
+            echo  "$TAG Set default markup..."
+            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:${DP_PORT}/rate"
+            QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
+            psql $DB_URI -c "$QUERY2"
         esac
         cd ../
     done
@@ -430,7 +440,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         fi
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
 
-        echo  "$TAG Updateing inventory..."
+        
+        echo  "$TAG Updateing inventory for ${ORGNAME}..."
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
         psql $DB_URI -t -A -c "$SQL_QUERY"
