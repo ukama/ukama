@@ -303,8 +303,8 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
 
 /* Read frequency */
 int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
-  int ret = RETURN_OK;
-  FILE *fp;
+
+  FILE *fp = NULL;
   SysCPUMetrics *tmpCpu;
   char line[1024];
   unsigned int coreId = 0;
@@ -319,12 +319,10 @@ int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
     if (!strncmp(line, "processor\t", 10)) {
       sscanf(strchr(line, ':') + 1, "%u", &coreId);
       if (coreId > (cpuMax - 1)) {
-        return RETURN_NOTOK;
-        break;
+          fclose(fp);
+          return RETURN_NOTOK;
       }
-    }
-
-    else if (!strncmp(line, "cpu MHz\t", 8)) {
+    } else if (!strncmp(line, "cpu MHz\t", 8)) {
       char *pos = strchr(line, ':');
       sscanf(pos + 1, "%lf", &decfreq);
 
@@ -339,7 +337,8 @@ int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
     }
   }
 
-  return ret;
+  fclose(fp);
+  return RETURN_OK;
 }
 
 /* Collect CPU stats */
