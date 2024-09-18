@@ -3,7 +3,7 @@ services:
  postgresd-init:
   image: postgres:13.3
   ports:
-   - '5401:5432'
+   - 5401:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -33,12 +33,10 @@ services:
    - postgresd-init
 
  node-gateway-init:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node-gateway
+  build: ./node-gateway
   restart: always
   ports:
-   - '17998:8080'
+   - 17998:8080
   networks:
    - ukama-net
   environment:
@@ -51,12 +49,10 @@ services:
    - lookup
 
  api-gateway-init:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
-   - '8071:8080'
+   - 8071:8080
   networks:
    - ukama-net
   environment:

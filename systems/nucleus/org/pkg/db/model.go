@@ -20,7 +20,7 @@ type Org struct {
 	Name        string         `gorm:"uniqueIndex"`
 	Owner       uuid.UUID      `gorm:"type:uuid"`
 	Users       []User         `gorm:"many2many:org_users"`
-	Country     string         `gorm:"default:US"`
+	Country     string         `gorm:"default:us"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
