@@ -3,7 +3,7 @@ services:
  postgresd-nucleus:
   image: postgres:13.3
   ports:
-   - '5411:5432'
+   - 5411:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -62,12 +62,10 @@ services:
    - msgclient-nucleus
 
  api-gateway-nucleus:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
-   - '8060:8080'
+   - 8060:8080
   networks:
    - ukama-net
   environment:
