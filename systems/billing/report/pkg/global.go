@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "invoice"
+const ServiceName = "report"
 const SystemName = "billing"
 
 var InstanceId = "debug"
