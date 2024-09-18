@@ -162,7 +162,7 @@ services:
  subscriber-auth:
   image: oryd/kratos:v1.0.0
   ports:
-   - '4423:4423' # public
+   - '4423:4423'
    - '4424:4424'
   restart: unless-stopped
   command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
