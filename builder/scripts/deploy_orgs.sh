@@ -231,8 +231,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         NODE_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["node"]')
 
         PGA_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["pg-admin"]')
-        RABBITMQ_P1=$(echo "$ORG" | jq -r '.["sys-ports"]["rabbitmq-p1"]')
-        RABBITMQ_P2=$(echo "$ORG" | jq -r '.["sys-ports"]["rabbitmq-p2"]')
+        RABBITMQ_P1=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-1"]')
+        RABBITMQ_P2=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-2"]')
         REGAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["registry"]')
         NODEAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["node"]')
         NODEGW_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["nodegw"]')
@@ -395,8 +395,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         cd ../
     done
 
-    cleanup
 
+    cleanup
     if [[ "${ORG_TYPE}" =~ "${ORG_COMMUNITY}" ]]; then
         sleep 3
         if ($IS_INVENTORY_SYS); then
