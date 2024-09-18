@@ -63,14 +63,14 @@ type UserNotification struct {
 }
 
 type Notifications struct {
-	Id          uuid.UUID `gorm:"type:uuid"`
-	Title       string
-	Description string
+	ID          string                  `json:"id"`
+	IsRead      bool                    `json:"is_read" gorm:"default:false"`
+	Title       string                  `json:"title"`
+	Description string                  `json:"description"`
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	IsRead      bool                    `gorm:"default:false"`
-	CreatedAt   string
-	UpdatedAt   string
+	CreatedAt   time.Time               `json:"created_at"`
+	UpdatedAt   time.Time               `json:"updated_at"`
 }
 
 type EventMsg struct {
