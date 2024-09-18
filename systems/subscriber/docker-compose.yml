@@ -162,8 +162,8 @@ services:
  subscriber-auth:
   image: oryd/kratos:v1.0.0
   ports:
-   - '4423:4423'
-   - '4424:4424'
+   - 4423:4423
+   - 4424:4424
   restart: unless-stopped
   command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
   networks:
@@ -176,8 +176,8 @@ services:
  subscriber-mailslurper:
   image: oryd/mailslurper:latest-smtps
   ports:
-   - '4446:4446'
-   - '4447:4447'
+   - 4446:4446
+   - 4447:4447
   networks:
    - ukama-net
 

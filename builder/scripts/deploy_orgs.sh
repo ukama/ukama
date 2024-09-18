@@ -55,6 +55,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     MAILERUSERNAME=$(echo "$ORG" | jq -r '.mailer.username')
     MAILERPASSWORD=$(echo "$ORG" | jq -r '.mailer.password')
     LAGOAPIKEY=$(echo "$ORG" | jq -r '.["lago-api-key"]')
+    WITHSUBAUTH=$(echo "$ORG" | jq -r '.["with-subscriber-auth"]')
     SYS=$(echo "$ORG" | jq -r '.systems')
     OWNERAUTHID=""
     OWNERID=$(uuidgen)
@@ -276,20 +277,22 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' '/- 5672:5672/d' docker-compose.yml
                 sed -i '' '/- 15672:15672/d' docker-compose.yml
                 sed -i '' '/- 8075:8080/d' docker-compose.yml
-                sed -i '' '/- 5405:5432/d' docker-compose.yml
-                sed -i '' '/- 5489:5432/d' docker-compose.yml
                 sed -i '' '/- 8036:8080/d' docker-compose.yml
                 sed -i '' '/- 8097:8080/d' docker-compose.yml
-                sed -i '' '/- 5632:5432/d' docker-compose.yml
                 sed -i '' '/- 8058:8080/d' docker-compose.yml
-                sed -i '' '/- 5412:5432/d' docker-compose.yml
                 sed -i '' '/- 8078:8080/d' docker-compose.yml
-                sed -i '' '/- 5404:5432/d' docker-compose.yml
                 sed -i '' '/- 8074:8080/d' docker-compose.yml
-                sed -i '' '/- 4446:4446/d' docker-compose.yml
-                sed -i '' '/- 4447:4447/d' docker-compose.yml
-                sed -i '' '/- 4423:4423/d' docker-compose.yml
-                sed -i '' '/- 4424:4424/d' docker-compose.yml
+                sed -i '' '/- 5405:5432/d' docker-compose.yml # REGISTRY SYS
+                sed -i '' '/- 5489:5432/d' docker-compose.yml # NODE SYS
+                sed -i '' '/- 5632:5432/d' docker-compose.yml # NOTIFICATION SYS
+                sed -i '' '/- 5412:5432/d' docker-compose.yml # SUBSCRIBER SYS
+                sed -i '' '/- 5404:5432/d' docker-compose.yml # DATAPLAN SYS
+            fi
+            if [[ $WITHSUBAUTH == false ]]; then
+                sed -i '' '/- 4446:4446/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4447:4447/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4423:4423/d' docker-compose.yml # SUBSCRIBER AUTH
+                sed -i '' '/- 4424:4424/d' docker-compose.yml # SUBSCRIBER AUTH
             fi
         done
         cd $root_dir
