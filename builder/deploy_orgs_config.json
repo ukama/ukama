@@ -46,6 +46,17 @@
     "subscriber": 5440,
     "notification": 5441
    },
+   "sys-ports": {
+    "pg-admin": 8091,
+    "rbitmq-1": 5673,
+    "rbitmq-2": 15673,
+    "node": 8011,
+    "nodegw": 8012,
+    "dataplan": 8013,
+    "registry": 8014,
+    "subscriber": 8015,
+    "notification": 8016
+   },
    "mailer": {
     "host": "smtp.gmail.com",
     "port": 465,
