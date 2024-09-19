@@ -19,9 +19,11 @@ import { CenterContainer } from '@/styles/global';
 import { colors } from '@/theme';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Box, Container, Paper, Stack, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 const Page = () => {
   const { user } = useAppContext();
+  const router = useRouter();
   const { data: invitationsData, refetch: refetchInvitations } =
     useGetInvitationsByEmailQuery({
       fetchPolicy: 'network-only',
@@ -38,7 +40,7 @@ const Page = () => {
   const [updateInvitation] = useUpdateInvitationMutation({
     fetchPolicy: 'network-only',
     onCompleted: () => {
-      refetchInvitations();
+      router.push('/refresh');
     },
   });
 

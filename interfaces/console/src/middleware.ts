@@ -10,10 +10,6 @@ import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// async function removeCookie(key: string) {
-//   cookies().delete(key);
-// }
-
 type User = {
   id: string;
   role: string;
@@ -41,7 +37,7 @@ const USER_INIT = {
 const whoami = async (session: string) => {
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
-    cache: 'force-cache',
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       cookie: session,
@@ -157,6 +153,13 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(
       new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
+  }
+
+  if (pathname.includes('/refresh')) {
+    const o = await getUserObject(session.value, '');
+    console.log('CALL RES: ', o);
+    response.cookies.delete('token');
+    return response;
   }
 
   let userObj: User = USER_INIT;
