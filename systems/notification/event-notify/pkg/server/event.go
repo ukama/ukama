@@ -33,7 +33,6 @@ type EventToNotifyEventServer struct {
 }
 
 func NewNotificationEventServer(orgName string, orgId string, subscriberClient csub.SubscriberClient, n *EventToNotifyServer) *EventToNotifyEventServer {
-
 	return &EventToNotifyEventServer{
 		orgName: orgName,
 		orgId:   orgId,
