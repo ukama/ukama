@@ -132,16 +132,16 @@ export const parseNotification = (
     isRead: notification.is_read,
     createdAt: notification.created_at,
     description: notification.description,
-    nodeStateId: notification.node_state_id || "",
-    nodeState: notification.node_state
+    nodeStateId: notification.nodeStateId || "",
+    nodeState: notification.nodeState
       ? {
-          Id: notification.node_state.Id,
-          name: notification.node_state.name,
-          nodeId: notification.node_state.nodeId,
-          currentState: notification.node_state.current_state,
-          latitude: notification.node_state.latitude,
-          longitude: notification.node_state.longitude,
-          createdAt: notification.node_state.created_at,
+          id: notification.nodeState.id,
+          name: notification.nodeState.name,
+          nodeId: notification.nodeState.node_id,
+          currentState: notification.nodeState.currentState,
+          latitude: notification.nodeState.latitude,
+          longitude: notification.nodeState.longitude,
+          createdAt: notification.nodeState.created_at,
         }
       : null,
   };

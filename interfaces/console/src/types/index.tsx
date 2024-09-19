@@ -208,13 +208,12 @@ export type TEnv = {
 };
 
 interface NodeState {
-  Id: string;
+  id: string;
   nodeId: string;
   name: string;
   currentState: string;
   latitude: number;
   longitude: number;
-  createdAt: string;
 }
 
 interface NotificationSubscription {

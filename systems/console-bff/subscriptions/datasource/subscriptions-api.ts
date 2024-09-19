@@ -104,7 +104,9 @@ const getNotifications = async (
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/event-notification?${params}`,
-  }).then(res => parseNotificationsRes(res.data));
+  }).then(res => {
+    return parseNotificationsRes(res.data);
+  });
 };
 
 export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };

@@ -98,9 +98,9 @@ export enum Notification_Type {
 
 export type NodeStateResDto = {
   __typename?: 'NodeStateResDto';
-  Id: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
   currentState: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
   name: Scalars['String']['output'];
@@ -175,14 +175,14 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', Id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number } | null }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   data: GetNotificationsInput;
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', Id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -216,13 +216,12 @@ export const GetNotificationsDocument = gql`
       description
       nodeStateId
       nodeState {
-        Id
+        id
         nodeId
         name
         currentState
         latitude
         longitude
-        createdAt
       }
     }
   }
@@ -273,7 +272,7 @@ export const NotificationSubscriptionDocument = gql`
     description
     nodeStateId
     nodeState {
-      Id
+      id
       nodeId
       name
       currentState

@@ -198,6 +198,8 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 				log.Errorf("Error getting notification: %v", err)
 				continue
 			}
+			fmt.Println("VANESSA DATA :",res)
+
 			un := &pb.Notification{
 				IsRead:       isRead,
 				Id:           res.Notification.Id,
@@ -224,6 +226,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 					Longitude:    res.Notification.NodeState.Longitude,
 				}
 			}
+			fmt.Println("VANESSA DATA :",un)
 
 			h.processNotification(un)
 

@@ -30,13 +30,12 @@ export const dtoToNotificationDto = (
     nodeStateId: res.notification.node_state_id || "",
     nodeState: res.notification.node_state
       ? {
-          Id: res.notification.node_state.Id,
+          id: res.notification.node_state.id,
           name: res.notification.node_state.name,
-          nodeId: res.notification.node_state.nodeId,
-          current_state: res.notification.node_state.current_state,
+          node_id: res.notification.node_state.node_id,
+          currentState: res.notification.node_state.currentState,
           latitude: res.notification.node_state.latitude,
           longitude: res.notification.node_state.longitude,
-          created_at: res.notification.node_state.created_at,
         }
       : null,
   };
@@ -52,18 +51,17 @@ export const dtoToNotificationsDto = (
       description: notification.description,
       type: notification.type,
       scope: notification.scope,
-      isRead: notification.is_read,
-      createdAt: notification.created_at,
-      nodeStateId: notification.node_state_id,
-      nodeState: notification.node_state
+      is_read: notification.is_read,
+      created_at: notification.created_at,
+      nodeStateId: notification.nodeStateId,
+      nodeState: notification.nodeState
         ? {
-            Id: notification.node_state.Id,
-            name: notification.node_state.name,
-            nodeId: notification.node_state.nodeId,
-            current_state: notification.node_state.current_state,
-            latitude: notification.node_state.latitude,
-            longitude: notification.node_state.longitude,
-            created_at: notification.node_state.created_at,
+            id: notification.nodeState.id,
+            name: notification.nodeState.name,
+            node_id: notification.nodeState.node_id,
+            latitude: notification.nodeState.latitude,
+            longitude: notification.nodeState.longitude,
+            currentState: notification.nodeState.currentState,
           }
         : null,
     })),

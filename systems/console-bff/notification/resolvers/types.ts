@@ -10,6 +10,26 @@ import { Field, ObjectType } from "type-graphql";
 import { NOTIFICATION_SCOPE, NOTIFICATION_TYPE } from "../../common/enums";
 
 @ObjectType()
+export class NodeState {
+  @Field()
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  node_id: string;
+
+  @Field()
+  currentState: string;
+
+  @Field()
+  latitude: number;
+
+  @Field()
+  longitude: number;
+}
+@ObjectType()
 export class NotificationsAPIDto {
   @Field()
   id: string;
@@ -33,10 +53,10 @@ export class NotificationsAPIDto {
   created_at: string;
 
   @Field()
-  node_state_id: string;
+  nodeStateId: string;
 
   @Field(() => NodeState, { nullable: true })
-  node_state: NodeState | null;
+  nodeState: NodeState | null;
 }
 
 @ObjectType()
@@ -76,29 +96,6 @@ export class NotificationAPIDto {
 
   @Field()
   user_id: string;
-}
-@ObjectType()
-export class NodeState {
-  @Field()
-  Id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  nodeId: string;
-
-  @Field()
-  current_state: string;
-
-  @Field()
-  latitude: number;
-
-  @Field()
-  longitude: number;
-
-  @Field()
-  created_at: string;
 }
 
 @ObjectType()
@@ -169,16 +166,16 @@ export class NotificationsDto {
   scope: NOTIFICATION_SCOPE;
 
   @Field()
+  is_read: boolean;
+
+  @Field()
+  created_at: string;
+
+  @Field()
   nodeStateId: string;
 
   @Field(() => NodeState, { nullable: true })
   nodeState: NodeState | null;
-
-  @Field()
-  isRead: boolean;
-
-  @Field()
-  createdAt: string;
 }
 
 @ObjectType()

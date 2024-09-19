@@ -180,7 +180,6 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 }
 
 func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
-
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
 		createdAt, _ := time.Parse(time.RFC3339, i.CreatedAt)

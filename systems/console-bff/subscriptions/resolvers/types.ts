@@ -167,16 +167,16 @@ export class SubMetricByTabInput {
 @ObjectType()
 export class NodeStateAPIResDto {
   @Field()
-  Id: string;
+  id: string;
 
   @Field()
   name: string;
 
   @Field()
-  nodeId: string;
+  node_id: string;
 
   @Field()
-  current_state: string;
+  currentState: string;
 
   @Field()
   latitude: number;
@@ -205,10 +205,10 @@ export class NotificationsAPIResDto {
   scope: NOTIFICATION_SCOPE;
 
   @Field()
-  node_state_id: string;
+  nodeStateId: string;
 
   @Field(() => NodeStateAPIResDto, { nullable: true })
-  node_state: NodeStateAPIResDto | null;
+  nodeState: NodeStateAPIResDto | null;
 
   @Field()
   is_read: boolean;
@@ -225,7 +225,7 @@ export class NotificationsAPIRes {
 @ObjectType()
 export class NodeStateResDto {
   @Field()
-  Id: string;
+  id: string;
 
   @Field()
   name: string;

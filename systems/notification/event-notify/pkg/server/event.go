@@ -23,12 +23,14 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
+
 const (
 	SeverityLow      = "low"
 	SeverityMedium   = "medium"
 	SeverityHigh     = "high"
 	SeverityCritical = "critical"
 )
+
 type EventToNotifyEventServer struct {
 	orgName string
 	orgId   string
@@ -534,7 +536,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
-	
+
 		switch msg.Severity {
 		case SeverityLow:
 			c.Type = notif.TYPE_INFO
@@ -546,7 +548,12 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			c.Type = notif.TYPE_INFO
 		}
 
-		c.Title = fmt.Sprintf("Your %s is now %s", msg.Name, msg.CurrentState)
+		c.Title = fmt.Sprintf("%s is now %s", msg.Name, msg.CurrentState)
+		if msg.CurrentState == "unknown" {
+			c.Description = fmt.Sprintf("%s: Unknown state. Click to configure.", msg.Name)
+		} else {
+			c.Description = fmt.Sprintf("Your %s is now in the %s state.", msg.Name, msg.CurrentState)
+		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
 
@@ -653,7 +660,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 				CreatedAt:    time.Now(),
 				UpdatedAt:    time.Now(),
 			}
-			dn.NodeStateID = &nodeStateID 
+			dn.NodeStateID = &nodeStateID
 			dn.NodeState = nodeState
 		}
 	}

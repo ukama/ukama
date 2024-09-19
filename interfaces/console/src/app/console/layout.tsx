@@ -11,9 +11,9 @@ import {
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
   useUpdateNotificationMutation,
+  NotificationsResDto,
 } from '@/client/graphql/generated';
 import {
-  NotificationsResDto,
   Role_Type,
   NodeStateResDto,
   useGetNotificationsLazyQuery,
@@ -49,9 +49,8 @@ export default function ConosleLayout({
     subscriptionClient,
   } = useAppContext();
   const router = useRouter();
-  const [notifications, setNotifications] = useState<
-    NotificationsResDto[] | []
-  >([]);
+  const [notifications, setNotifications] = useState<any>([]);
+
   const [startTimeStamp] = useState<string>(new Date().getTime().toString());
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const {
@@ -104,6 +103,16 @@ export default function ConosleLayout({
 
   const [updateNotificationCall] = useUpdateNotificationMutation({
     onCompleted: () => {
+      /**
+       * Sets the notifications from the response data
+       * @example
+       * setNotificationsResponse(response)
+       * undefined
+       * @param {Object} res - The response object containing notification data.
+       * @returns {void} No return value.
+       * @description
+       *   - Extracts notifications from the response object safely using optional chaining.
+       */
       refetchNotifications().then((res) => {
         setNotifications(res.data?.getNotifications.notifications);
       });
@@ -181,44 +190,62 @@ export default function ConosleLayout({
   };
 
   const handleNotification = (_: any, data: string) => {
-    const parsedData: TNotificationResDto = JSON.parse(data);
-    const {
-      id,
-      type,
-      scope,
-      title,
-      isRead,
-      description,
-      createdAt,
-      nodeStateId,
-      nodeState,
-    } = parsedData.data.notificationSubscription;
+    try {
+      const parsedData: TNotificationResDto = JSON.parse(data);
+      const notificationData = parsedData.data?.notificationSubscription;
 
-    setNotifications((prev: any) => {
-      if (!prev) return prev;
-      return [
-        {
-          id,
-          type,
-          scope,
-          title,
-          isRead,
-          createdAt,
-          description,
-          nodeStateId,
-          nodeState: {
-            Id: nodeState.Id,
-            nodeId: nodeState.nodeId,
-            name: nodeState.name,
-            currentState: nodeState.currentState,
-            latitude: nodeState.latitude,
-            longitude: nodeState.longitude,
-            createdAt: nodeState.createdAt,
+      if (!notificationData) {
+        console.error('Received invalid notification data:', parsedData);
+        return;
+      }
+
+      const {
+        id,
+        type,
+        scope,
+        title,
+        isRead,
+        description,
+        createdAt,
+        nodeStateId,
+        nodeState,
+      } = notificationData;
+
+      if (!id || !type || !scope || !title || !nodeState) {
+        console.error(
+          'Notification is missing required fields:',
+          notificationData,
+        );
+        return;
+      }
+
+      setNotifications((prev: any) => {
+        if (!prev) return [notificationData];
+        return [
+          {
+            id,
+            type,
+            scope,
+            title,
+            isRead: isRead ?? false,
+            createdAt: createdAt ?? new Date().toISOString(),
+            description: description ?? '',
+            nodeStateId: nodeStateId ?? '',
+            nodeState: {
+              id: nodeState.id ?? '',
+              nodeId: nodeState.nodeId ?? '',
+              name: nodeState.name ?? '',
+              currentState: nodeState.currentState ?? '',
+              latitude: nodeState.latitude ?? null,
+              longitude: nodeState.longitude ?? null,
+            },
           },
-        },
-        ...prev,
-      ];
-    });
+          ...prev,
+        ];
+      });
+    } catch (error) {
+      console.error('Error processing notification:', error);
+    }
   };
 
   const handleNotificationRead = (id: string) => {

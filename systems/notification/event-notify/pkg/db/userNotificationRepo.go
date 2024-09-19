@@ -14,6 +14,16 @@ import (
 	"gorm.io/gorm"
 )
 
+type NotificationResult struct {
+	Notifications
+	NodeStateID   *uuid.UUID `gorm:"column:node_state_id"`
+	NodeID        *string    `gorm:"column:node_id"`
+	Latitude      *float64   `gorm:"column:latitude"`
+	Longitude     *float64   `gorm:"column:longitude"`
+	CurrentState  *string    `gorm:"column:current_state"`
+	NodeStateName *string    `gorm:"column:name"`
+}
+
 type UserNotificationRepo interface {
 	Add(un []*UserNotification) error
 	Update(id uuid.UUID, isRead bool) error
@@ -36,7 +46,7 @@ func (r *userNotificationRepo) Add(un []*UserNotification) error {
 }
 
 func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications, error) {
-	var notifications []*Notifications
+	var results []NotificationResult
 	query := `
 		SELECT
 			UN.is_read,
@@ -63,13 +73,29 @@ func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notificat
 			UN.user_id = ?;
 	`
 
-	d := r.Db.GetGormDb().Raw(query, id).Scan(&notifications)
-	if d.Error != nil {
-		return nil, d.Error
+	result := r.Db.GetGormDb().Raw(query, id).Scan(&results)
+	if result.Error != nil {
+		return nil, result.Error
 	}
+
+	notifications := make([]*Notifications, len(results))
+
+	for i, res := range results {
+		notifications[i] = &res.Notifications
+		if res.NodeStateID != nil {
+			notifications[i].NodeState = &NodeState{
+				Id:           *res.NodeStateID,
+				NodeId:       *res.NodeID,
+				Latitude:     *res.Latitude,
+				Longitude:    *res.Longitude,
+				CurrentState: *res.CurrentState,
+				Name:         *res.NodeStateName,
+			}
+		}
+	}
+
 	return notifications, nil
 }
-
 func (r *userNotificationRepo) Update(id uuid.UUID, isRead bool) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&UserNotification{}).Where("notification_id = ?", id).Update("is_read", isRead).Error; err != nil {

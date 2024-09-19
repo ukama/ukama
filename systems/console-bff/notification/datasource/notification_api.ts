@@ -39,9 +39,9 @@ class NotificationApi extends RESTDataSource {
       `GetNotifications [GET]: ${baseURL}/${VERSION}/event-notification?${params}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/event-notification?${params}`).then(res =>
-      dtoToNotificationsDto(res)
-    );
+    return this.get(`/${VERSION}/event-notification?${params}`).then(res => {
+      return dtoToNotificationsDto(res);
+    });
   };
   getNotification = async (
     baseURL: string,

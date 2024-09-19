@@ -33,8 +33,8 @@ type Notification struct {
 	SubscriberId string
 	UserId       string
 	NodeId       string
-	NodeStateID  *uuid.UUID  
-	NodeState    *NodeState  `gorm:"foreignKey:NodeStateID"`
+	NodeStateID  *uuid.UUID
+	NodeState    *NodeState `gorm:"foreignKey:NodeStateID"`
 	EventMsgID   uint
 	EventMsg     EventMsg
 	CreatedAt    time.Time
@@ -54,14 +54,13 @@ type Users struct {
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
-
 type UserNotification struct {
 	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
 	NotificationId uuid.UUID `gorm:"type:uuid"`
 	UserId         uuid.UUID
 	IsRead         bool `gorm:"default:false"`
-	NodeStateID    *uuid.UUID  
-	NodeState      *NodeState  `gorm:"foreignKey:NodeStateID"`
+	NodeStateID    *uuid.UUID
+	NodeState      *NodeState `gorm:"foreignKey:NodeStateID"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
@@ -95,3 +94,4 @@ type EventMsg struct {
 	gorm.Model
 	Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
 }
+

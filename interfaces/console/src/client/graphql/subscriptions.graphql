@@ -12,13 +12,12 @@ query GetNotifications($data: GetNotificationsInput!) {
       description
       nodeStateId
       nodeState {
-        Id
+        id
         nodeId
         name
         currentState
         latitude
         longitude
-        createdAt
       }
     }
   }
@@ -35,7 +34,7 @@ subscription NotificationSubscription($data: GetNotificationsInput!) {
     description
     nodeStateId
     nodeState {
-      Id
+      id
       nodeId
       name
       currentState
