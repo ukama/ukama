@@ -313,7 +313,7 @@ const getInvitationStatusColor = (status: string) => {
 const provideStatusColor = (status: Invitation_Status) => {
   switch (status) {
     case Invitation_Status.InvitePending:
-      return 'info';
+      return colors.blueGray;
     case Invitation_Status.InviteAccepted:
       return 'success';
     case Invitation_Status.InviteDeclined:

@@ -26,7 +26,7 @@ type MemberEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewPackageEventServer(orgName string, ms *MemberServer, morg string) *MemberEventServer {
+func NewMemberEventServer(orgName string, ms *MemberServer, morg string) *MemberEventServer {
 	return &MemberEventServer{
 		m:             ms,
 		orgName:       orgName,

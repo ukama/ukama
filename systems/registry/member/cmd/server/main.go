@@ -44,7 +44,6 @@ func main() {
 	runGrpcServer(mDb)
 }
 func initConfig() {
-
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
@@ -89,21 +88,22 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
+
 	memberServer := server.NewMemberServer(serviceConfig.OrgName, db.NewMemberRepo(gormdb),
 		orgClient, userClient, mbClient, serviceConfig.PushGateway, id)
 
-	memberEventServer := server.NewPackageEventServer(serviceConfig.OrgName, memberServer, serviceConfig.MasterOrgName)
+	memberEventServer := server.NewMemberEventServer(serviceConfig.OrgName, memberServer, serviceConfig.MasterOrgName)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterMemberServiceServer(s, memberServer)
 		egenerated.RegisterEventNotificationServiceServer(s, memberEventServer)
 	})
 
-	go grpcServer.StartServer()
-
 	go msgBusListener(mbClient)
 
 	_ = memberServer.PushOrgMemberCountMetric(id)
+
+	go grpcServer.StartServer()
 
 	initMemberDB(gormdb, orgClient, userClient)
 

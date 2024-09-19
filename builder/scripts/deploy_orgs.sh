@@ -291,6 +291,11 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
                 getSysPorts
+                # Run the docker inspect command and store the result in a variable
+                INITCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-init-1)
+                NUCLEUSCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-nucleus-1)
+                INVENTORYCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-inventory-1)
+
                 sed -i ''  "s/- 8090:80/- ${PGA_PORT}:80/g" docker-compose.yml # PG ADMIN
                 sed -i '' "s/- 5672:5672/- ${RABBITMQ_P1}:5672/g" docker-compose.yml # RABBIT MQ P1
                 sed -i '' "s/- 15672:15672/- ${RABBITMQ_P2}:15672/g" docker-compose.yml # RABBIT MQ P2
@@ -307,6 +312,10 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS PG
                 sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS PG
                 sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS PG
+                
+                sed -i '' "s/- HTTP_INITCLIENT=http://api-gateway-init:8080/- HTTP_INITCLIENT=http://${INITCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
+                sed -i '' "s/- HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080/- HTTP_NUCLEUSCLIENT=http://${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
+                sed -i '' "s/- HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080/- HTTP_INVENTORYCLIENT=http://${INVENTORYCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then
@@ -408,28 +417,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             components=$(curl --location --silent --request PUT "http://${LOCAL_HOST_IP}:8077/v1/components/sync")
             echo "$TAG Org inventory synced up."
         fi
-
-        sleep 5
-
-        SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-        SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-        SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-        SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-        SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-        SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-        SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-        SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
-
-        echo "$TAG Registering systems URL in lookup db..."
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        psql $DB_URI -c "$SYS_QUERY_1"
-        psql $DB_URI -c "$SYS_QUERY_2"
-        psql $DB_URI -c "$SYS_QUERY_3"
-        psql $DB_URI -c "$SYS_QUERY_4"
-        psql $DB_URI -c "$SYS_QUERY_5"
-        psql $DB_URI -c "$SYS_QUERY_6"
-        psql $DB_URI -c "$SYS_QUERY_7"
-        psql $DB_URI -c "$SYS_QUERY_8"
     fi
 
     if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
@@ -452,8 +439,9 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
         fi
+        
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
-
+        docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-org-1
         
         echo  "$TAG Updateing inventory for ${ORGNAME}..."
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
