@@ -21,6 +21,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	urole "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -189,27 +190,50 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 		}
 	}
 
-	ownedOrgs, err := o.orgRepo.GetByOwner(userId)
+	orgs, err := o.orgRepo.GetAll()
+
 	if err != nil {
-		if !sql.IsNotFoundError(err) {
-			return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
+		return nil, grpc.SqlErrorToGrpc(err, "orgs")
+	}
+
+	ownerOrgs := []*pb.Organization{}
+	memberOrgs := []*pb.Organization{}
+
+	for _, org := range orgs {
+		mresp, err := o.registrySystem.GetByUserId(org.Name, user.Uuid.String())
+		if err != nil {
+			log.Errorf("Failed to get member info for user %s in org %s. Error %s", userId.String(), org.Name, err.Error())
+			continue
+		}
+
+		if mresp.Member.Role == urole.RoleType_ROLE_OWNER.String() {
+			ownerOrgs = append(ownerOrgs, dbOrgToPbOrg(&org))
+		} else if mresp.Member.Role == urole.RoleType_ROLE_USER.String() {
+			memberOrgs = append(memberOrgs, dbOrgToPbOrg(&org))
 		}
 	}
 
-	log.Infof("looking for orgs with member %s", userId.String())
-	membOrgs, err := o.orgRepo.GetByMember(user.Id)
-	if err != nil {
-		if !sql.IsNotFoundError(err) {
-			return nil, grpc.SqlErrorToGrpc(err, "member orgs")
-		}
-	}
+	// ownedOrgs, err := o.orgRepo.GetByOwner(userId)
+	// if err != nil {
+	// 	if !sql.IsNotFoundError(err) {
+	// 		return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
+	// 	}
+	// }
 
-	log.Infof("found %d owned orgs and %d member orgs", len(ownedOrgs), len(membOrgs))
+	// log.Infof("looking for orgs with member %s", userId.String())
+	// membOrgs, err := o.orgRepo.GetByMember(user.Id)
+	// if err != nil {
+	// 	if !sql.IsNotFoundError(err) {
+	// 		return nil, grpc.SqlErrorToGrpc(err, "member orgs")
+	// 	}
+	// }
+
+	// log.Infof("found %d owned orgs and %d member orgs", len(ownedOrgs), len(membOrgs))
 
 	resp := &pb.GetByUserResponse{
 		User:     req.GetUserUuid(),
-		OwnerOf:  dbOrgsToPbOrgs(ownedOrgs),
-		MemberOf: dbOrgsToPbOrgs(membOrgs),
+		OwnerOf:  ownerOrgs,
+		MemberOf: memberOrgs,
 	}
 
 	return resp, nil
