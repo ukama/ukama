@@ -10,8 +10,10 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -22,6 +24,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -47,8 +50,8 @@ type BillableMetric struct {
 type CollectorEventServer struct {
 	orgName string
 	orgId   string
-	client  client.BillingClient
 	bMetric BillableMetric
+	client  client.BillingClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
@@ -77,7 +80,6 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-
 	// Update org subscription
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
 		msg, err := unmarshalOrgSubscription(e.Msg)
@@ -150,7 +152,7 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// update subscrition to customer
+	// update subscrition for customer
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
@@ -172,6 +174,18 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 		err = handleSimUsageEvent(e.RoutingKey, msg, c)
+		if err != nil {
+			return nil, err
+		}
+
+	// Terminate subscription
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage"):
+		msg, err := unmarshalSimPackageExpire(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleSimManagerSimPackageExpireEvent(e.RoutingKey, msg, c)
 		if err != nil {
 			return nil, err
 		}
@@ -407,8 +421,11 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 		return fmt.Errorf("fail to update subscriber: %w", err)
 	}
 
-	log.Infof("Updated billing customer: %q", customerBillingId)
-	log.Infof("Successfuly updated subscriber %q", subscriber.Subscriber.SubscriberId)
+	log.Infof("Updated billing customer: %q",
+		customerBillingId)
+
+	log.Infof("Successfuly updated subscriber %q",
+		subscriber.Subscriber.SubscriberId)
 
 	return nil
 }
@@ -448,15 +465,19 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 		// SubscriptionAt: &subscriptionAt,
 	}
 
-	log.Infof("Sending subscripton creation event %v to billing server", subscriptionInput)
+	log.Infof("Sending subscripton creation event %v to billing server",
+		subscriptionInput)
 
 	subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
 		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
-	log.Infof("New subscription created on billing server:  %q", subscriptionId)
-	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
+	log.Infof("New subscription created on billing server:  %q",
+		subscriptionId)
+
+	log.Infof("Successfuly created new subscription from sim: %q",
+		sim.Id)
 
 	return nil
 }
@@ -470,10 +491,15 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
 	if err != nil {
-		return fmt.Errorf("fail to terminate subscriber subscripton: %w", err)
+		var e *clients.Error
+		if !errors.As(err, &e) || (errors.As(err, &e) && e.Code != http.StatusNotFound) {
+			return fmt.Errorf("fail to terminate subscriber's current subscripton: %w",
+				err)
+		}
+	} else {
+		log.Infof("Successfuly terminated previous subscription: %q",
+			subscriptionId)
 	}
-
-	log.Infof("Successfuly terminated previous subscription: %q", subscriptionId)
 
 	// subscriptionAt := sim.PackageStartDate.AsTime()
 
@@ -484,15 +510,19 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 		// SubscriptionAt: &subscriptionAt,
 	}
 
-	log.Infof("Sending sim package activation event %v to billing server", subscriptionInput)
+	log.Infof("Sending sim package activation event %v to billing server",
+		subscriptionInput)
 
 	subscriptionId, err = b.client.CreateSubscription(ctx, subscriptionInput)
 	if err != nil {
 		return fmt.Errorf("fail to create subscriber subscripton: %w", err)
 	}
 
-	log.Infof("New subscription created on billing server:  %q", subscriptionId)
-	log.Infof("Successfuly created new subscription from sim: %q", sim.Id)
+	log.Infof("New subscription created on billing server:  %q",
+		subscriptionId)
+
+	log.Infof("Successfuly created new subscription from sim: %q",
+		sim.Id)
 
 	return nil
 }
@@ -509,7 +539,8 @@ func handleSimManagerSimPackageExpireEvent(key string, sim *epb.EventSimPackageE
 		return fmt.Errorf("fail to terminate subscriber subscripton: %w", err)
 	}
 
-	log.Infof("Successfuly terminated current subscription: %q", subscriptionId)
+	log.Infof("Successfuly terminated current subscription: %q",
+		subscriptionId)
 
 	return nil
 }
@@ -533,7 +564,8 @@ func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.EventSimActivePackage, error
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal sim active package message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal sim active package message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -546,7 +578,8 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal package  message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal package  message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -559,7 +592,8 @@ func unmarshalAddSubscriber(msg *anypb.Any) (*epb.AddSubscriber, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -572,7 +606,8 @@ func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.UpdateSubscriber, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -585,7 +620,8 @@ func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.RemoveSubscriber, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
+			msg, err.Error())
 
 		return nil, err
 	}
@@ -679,15 +715,19 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 		// TODO: we might need additional fields such as Email, Address, Phone.
 	}
 
-	log.Infof("Sending org customer create event %v to billing server", customer)
+	log.Infof("Sending org customer create event %v to billing server",
+		customer)
 
 	customerBillingId, err := clt.CreateCustomer(ctx, customer)
 	if err != nil {
 		return "", err
 	}
 
-	log.Infof("New org customer: %q", customerBillingId)
-	log.Infof("Successfuly registered org %q as billing customer", orgId)
+	log.Infof("New org customer: %q",
+		customerBillingId)
+
+	log.Infof("Successfuly registered org %q as billing customer",
+		orgId)
 
 	return customerBillingId, nil
 }
@@ -703,7 +743,8 @@ func createBillableMetric(clt client.BillingClient) (string, error) {
 		FieldName:   "bytes_used",
 	}
 
-	log.Infof("Sending create request for billable metric %q to billing server", bMetric)
+	log.Infof("Sending create request for billable metric %q to billing server",
+		bMetric)
 
 	bm, err := clt.CreateBillableMetric(ctx, bMetric)
 	if err != nil {
