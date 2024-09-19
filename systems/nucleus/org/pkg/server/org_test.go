@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ugen "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/nucleus/org/mocks"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -217,7 +218,6 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	ownerId := uuid.NewV4()
 	orgId := uuid.NewV4()
 	userId := uuid.NewV4()
-	var id uint = 1
 
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
@@ -232,11 +232,11 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
 
-		orgRepo.On("GetByOwner", userId).
-			Return([]db.Org{{Id: orgId, Owner: ownerId}}, nil).Once()
+		orgRepo.On("GetAll").
+			Return([]db.Org{{Id: orgId, Owner: ownerId, Name: OrgName}}, nil)
 
-		orgRepo.On("GetByMember", id).
-			Return([]db.Org{{Id: orgId}}, nil).Once()
+		registry.On("GetByUserId", OrgName, userId.String()).
+			Return(&providers.MemberInfoResponse{Member: providers.MemberInfo{Role: ugen.RoleType_ROLE_OWNER.String(), UserId: userId.String()}}, nil).Once()
 
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
@@ -245,7 +245,7 @@ func TestOrgServer_GetByUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, orgResp)
 		assert.Equal(t, 1, len(orgResp.OwnerOf))
-		assert.Equal(t, 1, len(orgResp.MemberOf))
+		assert.Equal(t, 0, len(orgResp.MemberOf))
 		assert.Equal(t, userId.String(), orgResp.GetUser())
 		orgRepo.AssertExpectations(t)
 	})
@@ -253,11 +253,12 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	t.Run("UserNotFoundOnOwners", func(tt *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
 
-		orgRepo.On("GetByOwner", userId).
-			Return(nil, gorm.ErrRecordNotFound).Once()
+		orgRepo.On("GetAll").
+			Return([]db.Org{{Id: orgId, Owner: ownerId, Name: OrgName}}, nil)
 
-		orgRepo.On("GetByMember", id).
-			Return([]db.Org{{Id: orgId}}, nil).Once()
+		registry.On("GetByUserId", OrgName, userId.String()).
+			Return(&providers.MemberInfoResponse{Member: providers.MemberInfo{Role: ugen.RoleType_ROLE_USER.String(), UserId: userId.String()}}, nil).Once()
+
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
 			UserUuid: userId.String()})
@@ -272,11 +273,11 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	t.Run("UserNotFoundMembers", func(tt *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
 
-		orgRepo.On("GetByOwner", userId).
-			Return([]db.Org{{Id: orgId, Owner: ownerId}}, nil).Once()
+		orgRepo.On("GetAll").
+			Return([]db.Org{{Id: orgId, Owner: ownerId, Name: OrgName}}, nil)
 
-		orgRepo.On("GetByMember", id).
-			Return(nil, gorm.ErrRecordNotFound).Once()
+		registry.On("GetByUserId", OrgName, userId.String()).
+			Return(&providers.MemberInfoResponse{Member: providers.MemberInfo{Role: ugen.RoleType_ROLE_OWNER.String(), UserId: userId.String()}}, nil).Once()
 
 		// Act
 		orgResp, err := s.GetByUser(context.TODO(), &pb.GetByOwnerRequest{
