@@ -291,7 +291,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
                 getSysPorts
-                # Run the docker inspect command and store the result in a variable
                 INITCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-init-1)
                 NUCLEUSCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-nucleus-1)
                 INVENTORYCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-inventory-1)
@@ -313,9 +312,9 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS PG
                 sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS PG
                 
-                sed -i '' "s/- HTTP_INITCLIENT=http://api-gateway-init:8080/- HTTP_INITCLIENT=http://${INITCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
-                sed -i '' "s/- HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080/- HTTP_NUCLEUSCLIENT=http://${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
-                sed -i '' "s/- HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080/- HTTP_INVENTORYCLIENT=http://${INVENTORYCLIENT_HOST}:8080/g" docker-compose.yml # DATAPLAN SYS PG
+                sed -i '' "s/api-gateway-init:8080/${INITCLIENT_HOST}:8080/g" docker-compose.yml
+                sed -i '' "s/api-gateway-nucleus:8080/${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml
+                sed -i '' "s/api-gateway-inventory:8080/${INVENTORYCLIENT_HOST}:8080/g" docker-compose.yml
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then
