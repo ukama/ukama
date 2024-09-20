@@ -27,7 +27,7 @@ type Config struct {
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
 	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"3s"`
+	Timeout          time.Duration    `default:"5s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	PushGateway      string           `default:"http://localhost:9091"`
 	Service          *uconf.Service

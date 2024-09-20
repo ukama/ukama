@@ -83,31 +83,31 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		return nil, err
 	}
 
-	orgInfo, err := i.orgClient.Get(i.orgName)
-	if err != nil {
-		return nil, err
-	}
+	// orgInfo, err := i.orgClient.Get(i.orgName)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
-	if err != nil {
-		return nil, err
-	}
+	// orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{req.GetEmail()},
-		TemplateName: i.TemplateName,
-		Values: map[string]interface{}{
-			"INVITATION": invitationId.String(),
-			"LINK":       link,
-			"OWNER":      orgOwnerInfo.Name,
-			"ORG":        orgInfo.Name,
-			"ROLE":       req.GetRole().String(),
-		},
-	})
+	// err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
+	// 	To:           []string{req.GetEmail()},
+	// 	TemplateName: i.TemplateName,
+	// 	Values: map[string]interface{}{
+	// 		"INVITATION": invitationId.String(),
+	// 		"LINK":       link,
+	// 		"OWNER":      orgOwnerInfo.Name,
+	// 		"ORG":        orgInfo.Name,
+	// 		"ROLE":       req.GetRole().String(),
+	// 	},
+	// })
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	invitedUserInfo, err := i.userClient.GetByEmail(req.GetEmail())
 	if err != nil {
@@ -237,7 +237,6 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
-		log.Infof("Route %s", route)
 		evt := &epb.EventInvitationUpdated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
