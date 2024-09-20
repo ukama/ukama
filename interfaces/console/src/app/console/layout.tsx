@@ -113,6 +113,7 @@ export default function ConosleLayout({
     getNotifications,
     { refetch: refetchNotifications, loading: notificationsLoading },
   ] = useGetNotificationsLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getNotifications.notifications.length > 0) {
         setNotifications(data.getNotifications.notifications);
