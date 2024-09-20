@@ -39,7 +39,7 @@ const INIT_DATAPLAN = {
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { network, metaInfo, setSnackbarMessage } = useAppContext();
+  const { network, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
@@ -157,6 +157,20 @@ const Page = () => {
       },
     });
 
+  const handleAddDataPlanAction = () => {
+    if (network.id) {
+      setDataplan(INIT_DATAPLAN);
+      setIsDataPlan(true);
+    } else {
+      setSnackbarMessage({
+        id: 'network-not-selected',
+        message: 'Please select/create a network first.',
+        type: 'warning' as AlertColor,
+        show: true,
+      });
+    }
+  };
+
   const handleDataPlanAction = (action: string) => {
     if (action === 'add') {
       addDataPlan({
@@ -238,10 +252,7 @@ const Page = () => {
             showSearch={false}
             title={'Data plans'}
             buttonTitle={'CREATE DATA PLAN'}
-            handleButtonAction={() => {
-              setDataplan(INIT_DATAPLAN);
-              setIsDataPlan(true);
-            }}
+            handleButtonAction={handleAddDataPlanAction}
           />
           <br />
           {data.length === 0 ? (

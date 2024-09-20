@@ -296,9 +296,12 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 NUCLEUSCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-nucleus-1)
                 INVENTORYCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-inventory-1)
 
-                sed -i ''  "s/- 8090:80/- ${PGA_PORT}:80/g" docker-compose.yml # PG ADMIN
-                sed -i '' "s/- 5672:5672/- ${RABBITMQ_P1}:5672/g" docker-compose.yml # RABBIT MQ P1
-                sed -i '' "s/- 15672:15672/- ${RABBITMQ_P2}:15672/g" docker-compose.yml # RABBIT MQ P2
+               if [ "$SYSTEM" == "services" ]; then
+                    sed -i '' "s/- 8090:80/- ${PGA_PORT}:80/g" docker-compose.yml # PG ADMIN
+                    sed -i '' "s/- 5672:5672/- ${RABBITMQ_P1}:5672/g" docker-compose.yml # RABBIT MQ P1
+                    sed -i '' "s/- 15672:15672/- ${RABBITMQ_P2}:15672/g" docker-compose.yml # RABBIT MQ P2
+                    continue
+                fi
 
                 sed -i '' "s/- 8075:8080/- ${REGAPI_PORT}:8080/g" docker-compose.yml # REGISTRY SYS APIGW
                 sed -i '' "s/- 8036:8080/- ${NODEAPI_PORT}:8080/g" docker-compose.yml # NODE SYS APIGW

@@ -229,6 +229,7 @@ const Page = () => {
     loading: getSubscriberByNetworkLoading,
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
+    skip: !network.id,
     variables: {
       networkId: network.id,
     },

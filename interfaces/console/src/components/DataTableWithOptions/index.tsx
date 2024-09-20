@@ -164,12 +164,12 @@ const DataTableWithOptions = ({
                       {column.label == 'network' ? (
                         <>
                           <Button
-                            sx={{ p: 0 }}
+                            sx={{ p: 0, typography: 'body2', fontWeight: 700 }}
                             onClick={handleOpenMenu}
                             endIcon={<ArrowDropDown />}
                             aria-controls="network-menu"
                           >
-                            <b>{selectedNetwork || 'networkName'}</b>
+                            {selectedNetwork || 'networkName'}
                           </Button>
                           <Menu
                             id="network-menu"
