@@ -239,6 +239,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         NOTAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["notification"]')
         SUBAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["subscriber"]')
         DPAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["dataplan"]')
+        MSGCLIENT_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["msgclient"]')
     }
 
     cleanup() {
@@ -315,6 +316,9 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' "s/api-gateway-init:8080/${INITCLIENT_HOST}:8080/g" docker-compose.yml
                 sed -i '' "s/api-gateway-nucleus:8080/${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml
                 sed -i '' "s/api-gateway-inventory:8080/${INVENTORYCLIENT_HOST}:8080/g" docker-compose.yml
+
+                sed -i '' "s/9095/${MSGCLIENT_PORT}/g" docker-compose.yml
+                sed -i '' "s/5672/${RABBITMQ_P1}/g" docker-compose.yml
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then
