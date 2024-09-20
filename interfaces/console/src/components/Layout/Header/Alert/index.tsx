@@ -67,7 +67,7 @@ const Alerts = ({
         <AlertBox
           alerts={alerts}
           handleNotificationRead={handleNotificationRead}
-          configShowButtonState="onboarding"
+          configShowButtonState="unknown"
           onConfigureSite={onConfigureSite}
         />
       </Popover>

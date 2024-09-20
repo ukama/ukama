@@ -76,6 +76,20 @@ const runWorker = async () => {
       await addInStore(store, key, getTimestampCount("0"));
     });
 
+    /**
+     * Handles incoming WebSocket messages, updates a store with occurrence counts, and terminates the WebSocket if a limit is exceeded.
+     * @example
+     * functionName(data)
+     * Updates store with new occurrence count and may terminate WebSocket
+     * @param {Object} data - WebSocket message data object.
+     * @returns {void} No return value.
+     * @description
+     *   - Logs the incoming WebSocket message.
+     *   - Retrieves current occurrence from the store.
+     *   - Increments and updates occurrence count in the store.
+     *   - Terminates WebSocket if the occurrence count exceeds a maximum limit.
+     *   - Posts message to parent port with success status.
+     */
     ws.on("message", async data => {
       console.error("WebSocket message", data.toString());
       const value = await getFromStore(store, key);

@@ -55,6 +55,12 @@ const AlertBox: React.FC<AlertBoxProps> = ({
     }
     handleClose();
   };
+  const handleAlertClick = (alert: NotificationsResDto) => {
+    handleNotificationRead(alert.id);
+    if (alert.nodeState?.currentState === configShowButtonState) {
+      onConfigureSite(alert.nodeState);
+    }
+  };
 
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
@@ -84,7 +90,7 @@ const AlertBox: React.FC<AlertBoxProps> = ({
                 flexDirection: 'column',
                 alignItems: 'flex-start',
               }}
-              onClick={() => handleNotificationRead(alert.id)}
+              onClick={() => handleAlertClick(alert)}
             >
               <Box display="flex" alignItems="center" width="100%">
                 {!alert.isRead && (
@@ -116,24 +122,24 @@ const AlertBox: React.FC<AlertBoxProps> = ({
           </Box>
         ))}
       </List>
-      <Popover
-        id={id}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-      >
-        {selectedAlert?.nodeState?.currentState === configShowButtonState && (
+      {selectedAlert?.nodeState?.currentState === configShowButtonState && (
+        <Popover
+          id={id}
+          open={open}
+          anchorEl={anchorEl}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
           <MenuItem onClick={handleConfigureSite}>Configure Site</MenuItem>
-        )}
-      </Popover>
+        </Popover>
+      )}
     </Box>
   );
 };

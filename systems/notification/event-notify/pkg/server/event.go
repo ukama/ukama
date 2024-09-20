@@ -550,9 +550,9 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		c.Title = fmt.Sprintf("%s is now %s", msg.Name, msg.CurrentState)
 		if msg.CurrentState == "unknown" {
-			c.Description = fmt.Sprintf("%s: Unknown state. Click to configure.", msg.Name)
+			c.Description = fmt.Sprintf("Click to configure %s to site.", msg.Name)
 		} else {
-			c.Description = fmt.Sprintf("Your %s is now in the %s state.", msg.Name, msg.CurrentState)
+			c.Description = fmt.Sprintf("%s state changed to %s", msg.Name, msg.CurrentState)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg)
