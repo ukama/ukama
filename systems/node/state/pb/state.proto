@@ -1,0 +1,47 @@
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/node/state/pb/gen";
+package ukama.node.state.v1;
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+service NodeStateService {
+    rpc AddNodeState (AddNodeStateRequest) returns (AddNodeStateResponse);
+    rpc GetNodeStateById (GetNodeStateByIdRequest) returns (GetNodeStateByIdResponse);
+	rpc GetCurrentNodeState(GetNodeStateCurrentRequest)returns  (GetCurrentNodeStateResponse);
+	rpc GetNodeStates(GetNodeStatesRequest) returns(GetNodeStatesResponse);
+}
+message NodeState {
+    string id = 1; 
+    string nodeId = 2; 
+    string previousStateId = 3; 
+    string currentState = 4; 
+    string subState = 5; 
+    repeated string events = 6; 
+    string severity = 7; 
+    google.protobuf.Timestamp created_at = 8; 
+}
+message AddNodeStateRequest {
+    NodeState nodeState = 1; 
+}
+
+message AddNodeStateResponse {
+}
+message GetNodeStateByIdRequest {
+    string id = 1; 
+}
+message GetNodeStateByIdResponse {
+    NodeState nodeState = 1; 
+}
+message GetNodeStateCurrentRequest {
+    string nodeId = 1;
+}
+message GetCurrentNodeStateResponse {
+    NodeState node_state = 1; 
+}
+message GetNodeStatesRequest {
+    string nodeId = 1; 
+}
+
+message GetNodeStatesResponse {
+    repeated NodeState nodeStates = 1; 
+}
