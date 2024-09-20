@@ -123,9 +123,7 @@ services:
    - msgclient-registry
 
  api-gateway-registry:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
    - 8075:8080
@@ -152,6 +150,7 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
    - SYSTEM=registry
   restart: always
   networks:

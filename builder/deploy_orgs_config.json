@@ -55,7 +55,8 @@
     "dataplan": 8013,
     "registry": 8014,
     "subscriber": 8015,
-    "notification": 8016
+    "notification": 8016,
+    "msgclient": 9096
    },
    "mailer": {
     "host": "smtp.gmail.com",
