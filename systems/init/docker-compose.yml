@@ -75,6 +75,7 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=init
+   - GRPC_PORT=9095
    - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
    - SHOVEL_SRCURI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SHOVEL_DESTURI=amqp://user:password@192.168.0.26:5672

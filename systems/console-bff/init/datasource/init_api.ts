@@ -136,21 +136,6 @@ class InitAPI extends RESTDataSource {
     };${isWelcomeEligible}`;
     const base64Cookie = Buffer.from(cookie).toString("base64");
 
-    logger.info(
-      `Response: ${JSON.stringify({
-        orgId,
-        orgName,
-        role: role,
-        name: name,
-        email: email,
-        userId: userId,
-        token: base64Cookie,
-        isEmailVerified:
-          whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,
-        isShowWelcome: isWelcomeEligible,
-      })}`
-    );
-
     return {
       orgId,
       orgName,
