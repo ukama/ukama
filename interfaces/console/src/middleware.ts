@@ -156,8 +156,6 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (pathname.includes('/refresh')) {
-    const o = await getUserObject(session.value, '');
-    console.log('CALL RES: ', o);
     response.cookies.delete('token');
     return response;
   }
