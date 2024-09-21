@@ -94,6 +94,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 			OrgId:         m.OrgId.String(),
 			MemberId:      memUUID.String(),
 			Role:          upb.RoleType(member.Role),
+			UserId:        userUUID.String(),
 			IsDeactivated: member.Deactivated,
 			CreatedAt:     member.CreatedAt.String(),
 		}

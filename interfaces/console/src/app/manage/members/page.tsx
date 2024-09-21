@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  Invitation_Status,
   useCreateInvitationMutation,
   useDeleteInvitationMutation,
   useGetInvitationsQuery,
@@ -108,7 +109,10 @@ const Page = () => {
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        invites: data?.getInvitations.invitations ?? [],
+        invites:
+          data?.getInvitations.invitations.filter(
+            (i) => i.status != Invitation_Status.InviteAccepted,
+          ) ?? [],
       }));
     },
     onError: (error) => {
