@@ -24,7 +24,7 @@ type Config struct {
 	Service          *uconf.Service
 	MsgClient        *config.MsgClient `default:"{}"`
 	OrgName          string            `default:"ukama"`
-	ConfigPath	     string             `default:"nodeState.json"`
+	ConfigPath	     string             `default:"pkg/nodeState.json"`
 }
 
 func NewConfig(name string) *Config {
@@ -39,3 +39,4 @@ func NewConfig(name string) *Config {
 	}
 
 }
+

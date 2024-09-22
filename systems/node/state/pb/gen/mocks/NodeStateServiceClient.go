@@ -49,8 +49,8 @@ func (_m *NodeStateServiceClient) AddNodeState(ctx context.Context, in *gen.AddN
 	return r0, r1
 }
 
-// GetCurrentNodeState provides a mock function with given fields: ctx, in, opts
-func (_m *NodeStateServiceClient) GetCurrentNodeState(ctx context.Context, in *gen.GetNodeStateCurrentRequest, opts ...grpc.CallOption) (*gen.GetCurrentNodeStateResponse, error) {
+// GetLatestNodeState provides a mock function with given fields: ctx, in, opts
+func (_m *NodeStateServiceClient) GetLatestNodeState(ctx context.Context, in *gen.GetLatestNodeStateRequest, opts ...grpc.CallOption) (*gen.GetLatestNodeStateResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -60,20 +60,20 @@ func (_m *NodeStateServiceClient) GetCurrentNodeState(ctx context.Context, in *g
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetCurrentNodeStateResponse
+	var r0 *gen.GetLatestNodeStateResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeStateCurrentRequest, ...grpc.CallOption) (*gen.GetCurrentNodeStateResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestNodeStateRequest, ...grpc.CallOption) (*gen.GetLatestNodeStateResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeStateCurrentRequest, ...grpc.CallOption) *gen.GetCurrentNodeStateResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestNodeStateRequest, ...grpc.CallOption) *gen.GetLatestNodeStateResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetCurrentNodeStateResponse)
+			r0 = ret.Get(0).(*gen.GetLatestNodeStateResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeStateCurrentRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetLatestNodeStateRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukama/systems/node/state/pkg/db"
-	gorm "gorm.io/gorm"
-
 	mock "github.com/stretchr/testify/mock"
+	db "github.com/ukama/ukama/systems/node/state/pkg/db"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -16,13 +14,13 @@ type NodeStateRepo struct {
 	mock.Mock
 }
 
-// AddNodeState provides a mock function with given fields: nodeState, nestedFunc
-func (_m *NodeStateRepo) AddNodeState(nodeState *db.NodeState, nestedFunc func(*db.NodeState, *gorm.DB) error) error {
-	ret := _m.Called(nodeState, nestedFunc)
+// AddNodeState provides a mock function with given fields: newState, previousState
+func (_m *NodeStateRepo) AddNodeState(newState *db.NodeState, previousState *db.NodeState) error {
+	ret := _m.Called(newState, previousState)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.NodeState, func(*db.NodeState, *gorm.DB) error) error); ok {
-		r0 = rf(nodeState, nestedFunc)
+	if rf, ok := ret.Get(0).(func(*db.NodeState, *db.NodeState) error); ok {
+		r0 = rf(newState, previousState)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -30,8 +28,8 @@ func (_m *NodeStateRepo) AddNodeState(nodeState *db.NodeState, nestedFunc func(*
 	return r0
 }
 
-// GetCurrentNodeState provides a mock function with given fields: nodeId
-func (_m *NodeStateRepo) GetCurrentNodeState(nodeId string) (*db.NodeState, error) {
+// GetLatestNodeState provides a mock function with given fields: nodeId
+func (_m *NodeStateRepo) GetLatestNodeState(nodeId string) (*db.NodeState, error) {
 	ret := _m.Called(nodeId)
 
 	var r0 *db.NodeState
@@ -75,6 +73,32 @@ func (_m *NodeStateRepo) GetNodeStateById(id uuid.UUID) (*db.NodeState, error) {
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetNodeStateHistory provides a mock function with given fields: nodeId
+func (_m *NodeStateRepo) GetNodeStateHistory(nodeId string) ([]db.NodeState, error) {
+	ret := _m.Called(nodeId)
+
+	var r0 []db.NodeState
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) ([]db.NodeState, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) []db.NodeState); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.NodeState)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}

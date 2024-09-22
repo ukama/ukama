@@ -40,24 +40,24 @@ func (_m *NodeStateServiceServer) AddNodeState(_a0 context.Context, _a1 *gen.Add
 	return r0, r1
 }
 
-// GetCurrentNodeState provides a mock function with given fields: _a0, _a1
-func (_m *NodeStateServiceServer) GetCurrentNodeState(_a0 context.Context, _a1 *gen.GetNodeStateCurrentRequest) (*gen.GetCurrentNodeStateResponse, error) {
+// GetLatestNodeState provides a mock function with given fields: _a0, _a1
+func (_m *NodeStateServiceServer) GetLatestNodeState(_a0 context.Context, _a1 *gen.GetLatestNodeStateRequest) (*gen.GetLatestNodeStateResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetCurrentNodeStateResponse
+	var r0 *gen.GetLatestNodeStateResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeStateCurrentRequest) (*gen.GetCurrentNodeStateResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestNodeStateRequest) (*gen.GetLatestNodeStateResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeStateCurrentRequest) *gen.GetCurrentNodeStateResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestNodeStateRequest) *gen.GetLatestNodeStateResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetCurrentNodeStateResponse)
+			r0 = ret.Get(0).(*gen.GetLatestNodeStateResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeStateCurrentRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetLatestNodeStateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

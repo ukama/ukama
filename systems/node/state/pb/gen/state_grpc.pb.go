@@ -19,10 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	NodeStateService_AddNodeState_FullMethodName        = "/ukama.node.state.v1.NodeStateService/AddNodeState"
-	NodeStateService_GetNodeStateById_FullMethodName    = "/ukama.node.state.v1.NodeStateService/GetNodeStateById"
-	NodeStateService_GetCurrentNodeState_FullMethodName = "/ukama.node.state.v1.NodeStateService/GetCurrentNodeState"
-	NodeStateService_GetNodeStates_FullMethodName       = "/ukama.node.state.v1.NodeStateService/GetNodeStates"
+	NodeStateService_AddNodeState_FullMethodName       = "/ukama.node.state.v1.NodeStateService/AddNodeState"
+	NodeStateService_GetNodeStateById_FullMethodName   = "/ukama.node.state.v1.NodeStateService/GetNodeStateById"
+	NodeStateService_GetNodeStates_FullMethodName      = "/ukama.node.state.v1.NodeStateService/GetNodeStates"
+	NodeStateService_GetLatestNodeState_FullMethodName = "/ukama.node.state.v1.NodeStateService/GetLatestNodeState"
 )
 
 // NodeStateServiceClient is the client API for NodeStateService service.
@@ -31,8 +31,8 @@ const (
 type NodeStateServiceClient interface {
 	AddNodeState(ctx context.Context, in *AddNodeStateRequest, opts ...grpc.CallOption) (*AddNodeStateResponse, error)
 	GetNodeStateById(ctx context.Context, in *GetNodeStateByIdRequest, opts ...grpc.CallOption) (*GetNodeStateByIdResponse, error)
-	GetCurrentNodeState(ctx context.Context, in *GetNodeStateCurrentRequest, opts ...grpc.CallOption) (*GetCurrentNodeStateResponse, error)
 	GetNodeStates(ctx context.Context, in *GetNodeStatesRequest, opts ...grpc.CallOption) (*GetNodeStatesResponse, error)
+	GetLatestNodeState(ctx context.Context, in *GetLatestNodeStateRequest, opts ...grpc.CallOption) (*GetLatestNodeStateResponse, error)
 }
 
 type nodeStateServiceClient struct {
@@ -61,18 +61,18 @@ func (c *nodeStateServiceClient) GetNodeStateById(ctx context.Context, in *GetNo
 	return out, nil
 }
 
-func (c *nodeStateServiceClient) GetCurrentNodeState(ctx context.Context, in *GetNodeStateCurrentRequest, opts ...grpc.CallOption) (*GetCurrentNodeStateResponse, error) {
-	out := new(GetCurrentNodeStateResponse)
-	err := c.cc.Invoke(ctx, NodeStateService_GetCurrentNodeState_FullMethodName, in, out, opts...)
+func (c *nodeStateServiceClient) GetNodeStates(ctx context.Context, in *GetNodeStatesRequest, opts ...grpc.CallOption) (*GetNodeStatesResponse, error) {
+	out := new(GetNodeStatesResponse)
+	err := c.cc.Invoke(ctx, NodeStateService_GetNodeStates_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nodeStateServiceClient) GetNodeStates(ctx context.Context, in *GetNodeStatesRequest, opts ...grpc.CallOption) (*GetNodeStatesResponse, error) {
-	out := new(GetNodeStatesResponse)
-	err := c.cc.Invoke(ctx, NodeStateService_GetNodeStates_FullMethodName, in, out, opts...)
+func (c *nodeStateServiceClient) GetLatestNodeState(ctx context.Context, in *GetLatestNodeStateRequest, opts ...grpc.CallOption) (*GetLatestNodeStateResponse, error) {
+	out := new(GetLatestNodeStateResponse)
+	err := c.cc.Invoke(ctx, NodeStateService_GetLatestNodeState_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +85,8 @@ func (c *nodeStateServiceClient) GetNodeStates(ctx context.Context, in *GetNodeS
 type NodeStateServiceServer interface {
 	AddNodeState(context.Context, *AddNodeStateRequest) (*AddNodeStateResponse, error)
 	GetNodeStateById(context.Context, *GetNodeStateByIdRequest) (*GetNodeStateByIdResponse, error)
-	GetCurrentNodeState(context.Context, *GetNodeStateCurrentRequest) (*GetCurrentNodeStateResponse, error)
 	GetNodeStates(context.Context, *GetNodeStatesRequest) (*GetNodeStatesResponse, error)
+	GetLatestNodeState(context.Context, *GetLatestNodeStateRequest) (*GetLatestNodeStateResponse, error)
 	mustEmbedUnimplementedNodeStateServiceServer()
 }
 
@@ -100,11 +100,11 @@ func (UnimplementedNodeStateServiceServer) AddNodeState(context.Context, *AddNod
 func (UnimplementedNodeStateServiceServer) GetNodeStateById(context.Context, *GetNodeStateByIdRequest) (*GetNodeStateByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeStateById not implemented")
 }
-func (UnimplementedNodeStateServiceServer) GetCurrentNodeState(context.Context, *GetNodeStateCurrentRequest) (*GetCurrentNodeStateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCurrentNodeState not implemented")
-}
 func (UnimplementedNodeStateServiceServer) GetNodeStates(context.Context, *GetNodeStatesRequest) (*GetNodeStatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNodeStates not implemented")
+}
+func (UnimplementedNodeStateServiceServer) GetLatestNodeState(context.Context, *GetLatestNodeStateRequest) (*GetLatestNodeStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLatestNodeState not implemented")
 }
 func (UnimplementedNodeStateServiceServer) mustEmbedUnimplementedNodeStateServiceServer() {}
 
@@ -155,24 +155,6 @@ func _NodeStateService_GetNodeStateById_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _NodeStateService_GetCurrentNodeState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodeStateCurrentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeStateServiceServer).GetCurrentNodeState(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeStateService_GetCurrentNodeState_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeStateServiceServer).GetCurrentNodeState(ctx, req.(*GetNodeStateCurrentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _NodeStateService_GetNodeStates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetNodeStatesRequest)
 	if err := dec(in); err != nil {
@@ -187,6 +169,24 @@ func _NodeStateService_GetNodeStates_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NodeStateServiceServer).GetNodeStates(ctx, req.(*GetNodeStatesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeStateService_GetLatestNodeState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLatestNodeStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeStateServiceServer).GetLatestNodeState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeStateService_GetLatestNodeState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeStateServiceServer).GetLatestNodeState(ctx, req.(*GetLatestNodeStateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -207,12 +207,12 @@ var NodeStateService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NodeStateService_GetNodeStateById_Handler,
 		},
 		{
-			MethodName: "GetCurrentNodeState",
-			Handler:    _NodeStateService_GetCurrentNodeState_Handler,
-		},
-		{
 			MethodName: "GetNodeStates",
 			Handler:    _NodeStateService_GetNodeStates_Handler,
+		},
+		{
+			MethodName: "GetLatestNodeState",
+			Handler:    _NodeStateService_GetLatestNodeState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

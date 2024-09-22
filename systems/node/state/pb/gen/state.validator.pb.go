@@ -7,9 +7,7 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -19,19 +17,29 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *NodeState) Validate() error {
+	if this.PreviousState != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PreviousState); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("PreviousState", err)
+		}
+	}
 	if this.CreatedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
 		}
 	}
+	if this.UpdatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", err)
+		}
+	}
+	if this.DeletedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DeletedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DeletedAt", err)
+		}
+	}
 	return nil
 }
 func (this *AddNodeStateRequest) Validate() error {
-	if this.NodeState != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeState); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("NodeState", err)
-		}
-	}
 	return nil
 }
 func (this *AddNodeStateResponse) Validate() error {
@@ -68,6 +76,17 @@ func (this *GetNodeStatesResponse) Validate() error {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("NodeStates", err)
 			}
+		}
+	}
+	return nil
+}
+func (this *GetLatestNodeStateRequest) Validate() error {
+	return nil
+}
+func (this *GetLatestNodeStateResponse) Validate() error {
+	if this.NodeState != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeState); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeState", err)
 		}
 	}
 	return nil

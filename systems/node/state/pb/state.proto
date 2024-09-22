@@ -1,47 +1,70 @@
 syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/node/state/pb/gen";
 package ukama.node.state.v1;
-import "validator.proto";
+
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
+
 service NodeStateService {
     rpc AddNodeState (AddNodeStateRequest) returns (AddNodeStateResponse);
     rpc GetNodeStateById (GetNodeStateByIdRequest) returns (GetNodeStateByIdResponse);
-	rpc GetCurrentNodeState(GetNodeStateCurrentRequest)returns  (GetCurrentNodeStateResponse);
-	rpc GetNodeStates(GetNodeStatesRequest) returns(GetNodeStatesResponse);
+    rpc GetNodeStates(GetNodeStatesRequest) returns(GetNodeStatesResponse);
+    rpc GetLatestNodeState(GetLatestNodeStateRequest) returns (GetLatestNodeStateResponse);  
 }
+
 message NodeState {
-    string id = 1; 
-    string nodeId = 2; 
-    string previousStateId = 3; 
-    string currentState = 4; 
-    string subState = 5; 
-    repeated string events = 6; 
-    string severity = 7; 
-    google.protobuf.Timestamp created_at = 8; 
+    string id = 1;
+    string nodeId = 2;
+    string previousStateId = 3;
+    NodeState previousState = 4; 
+    string currentState = 5;
+    string subState = 6;
+    repeated string events = 7;
+    string severity = 8;
+    google.protobuf.Timestamp createdAt = 9;
+    google.protobuf.Timestamp updatedAt = 10;
+    google.protobuf.Timestamp deletedAt = 11;
 }
+
 message AddNodeStateRequest {
-    NodeState nodeState = 1; 
+    string nodeId = 1;
+    string previousStateId = 2;
+    string currentState = 3;
+    string subState = 4;
+    repeated string events = 5;
+    string severity = 6;
 }
 
 message AddNodeStateResponse {
+    string id = 1;  
 }
+
 message GetNodeStateByIdRequest {
-    string id = 1; 
+    string id = 1;
 }
+
 message GetNodeStateByIdResponse {
-    NodeState nodeState = 1; 
+    NodeState nodeState = 1;
 }
+
 message GetNodeStateCurrentRequest {
     string nodeId = 1;
 }
+
 message GetCurrentNodeStateResponse {
-    NodeState node_state = 1; 
+    NodeState nodeState = 1;
 }
+
 message GetNodeStatesRequest {
-    string nodeId = 1; 
+    string nodeId = 1;
 }
 
 message GetNodeStatesResponse {
-    repeated NodeState nodeStates = 1; 
+    repeated NodeState nodeStates = 1;
+}
+message GetLatestNodeStateRequest {
+    string nodeId = 1;
+}
+
+message GetLatestNodeStateResponse {
+    NodeState nodeState = 1;
 }
