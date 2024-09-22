@@ -6,64 +6,47 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-syntax = "proto3";
+ syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
-
-import "ukama/notification.proto";
-import "google/protobuf/timestamp.proto";
-package ukama.notification.distributor.v1;
-
-service DistributorService {
-    rpc GetNotificationStream(NotificationStreamRequest) returns (stream Notification);
-    //rpc GetNotifications(NotificationsRequest) returns (NotificationsResponse);
-}
-
-message NotificationsRequest {
-    string orgId = 1 [json_name = "org_id"];
-    string networkId = 2 [json_name = "network_id"];
-    string subscriberId = 3 [json_name = "subscriber_id"];
-    string userId = 4 [json_name = "user_id"];
-    string nodeId =5 [json_name = "node_id"];
-}
-
-message NotificationsResponse {
-    repeated Notification notifications = 1;
-}
-
-message NotificationStreamRequest {
-    string orgId = 1 [json_name = "org_id"];
-    string networkId = 2 [json_name = "network_id"];
-    string subscriberId = 3 [json_name = "subscriber_id"];
-    string userId = 4 [json_name = "user_id"];
-    string nodeId =5 [json_name = "node_id"];
-    repeated string scopes = 6 [json_name = "scopes"];
-    NodeState nodeState = 7;
-}
-
-message Notification {
-    string id = 1;
-    string title = 2;
-    string description = 3;
-    ukama.common.v1.NotificationType type = 4;
-    ukama.common.v1.NotificationScope scope = 5;
-    string orgId = 6 [json_name = "org_id"];
-    string networkId = 7 [json_name = "network_id"];
-    string subscriberId = 8 [json_name = "subscriber_id"];
-    string userId = 9 [json_name = "user_id"];
-    string nodeId = 10 [json_name = "node_id"];
-    bool isRead = 11 [json_name = "is_read"];
-    string nodeStateId = 12;
-    NodeState nodeState = 13;  
-    string createdAt = 14 [json_name = "created_at"];
-}
-
-message NodeState {  
-    string id = 1;
-    string name = 2;
-    string nodeId = 3 [json_name = "node_id"];
-    double latitude = 4;
-    double longitude = 5;
-    string currentState = 6;
-    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
-}
+ option go_package = "github.com/ukama/ukama/systems/notification/distributor/pb/gen";
+ 
+ import "ukama/notification.proto";
+ package ukama.notification.distributor.v1;
+ 
+ service DistributorService {
+     rpc GetNotificationStream(NotificationStreamRequest) returns (stream Notification);
+     //rpc GetNotifications(NotificationsRequest) returns (NotificationsResponse);
+ }
+ 
+ message NotificationsRequest {
+     string orgId = 1 [json_name = "org_id"];
+     string networkId = 2 [json_name = "network_id"];
+     string subscriberId = 3 [json_name = "subscriber_id"];
+     string userId = 4 [json_name = "user_id"];
+ }
+ 
+ message NotificationsResponse {
+     repeated Notification notifications = 1;
+ }
+ 
+ message NotificationStreamRequest {
+     string orgId = 1 [json_name = "org_id"];
+     string networkId = 2 [json_name = "network_id"];
+     string subscriberId = 3 [json_name = "subscriber_id"];
+     string userId = 4 [json_name = "user_id"];
+     repeated string scopes = 5 [json_name = "scopes"];
+ }
+ 
+ message Notification {
+     string id = 1;
+     string title = 2;
+     string description = 3;
+     ukama.common.v1.NotificationType type = 4;
+     ukama.common.v1.NotificationScope scope = 5;
+     string orgId = 6 [json_name = "org_id"];
+     string networkId = 7 [json_name = "network_id"];
+     string subscriberId = 8 [json_name = "subscriber_id"];
+     string userId = 9 [json_name = "user_id"];
+     bool isRead = 10 [json_name = "is_read"];
+     string createdAt = 11 [json_name = "created_at"];
+ }

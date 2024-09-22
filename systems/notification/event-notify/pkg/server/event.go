@@ -12,7 +12,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -612,12 +611,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte) *db.Notification {
 	log.Debugf("Processing event OrgId %s NetworkId %s nodeId %s subscriberId %s userId %s", orgId, networkId, nodeId, subscriberId, userId)
+
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
 	err := event.Data.Set(msg)
 	if err != nil {
-		log.Errorf("failed to assign event: %v", err)
+		log.Errorf("failed to assing event: %v", err)
 	} else {
 		id, err = es.n.storeEvent(event)
 		if err != nil {
@@ -629,6 +629,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		Id:           uuid.NewV4(),
 		Title:        ec.Title,
 		Description:  ec.Description,
+		ResourceId:	  nodeId,
 		Type:         notif.NotificationType(ec.Type),
 		Scope:        notif.NotificationScope(ec.Scope),
 		OrgId:        orgId,
@@ -636,33 +637,10 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		NetworkId:    networkId,
 		NodeId:       nodeId,
 		SubscriberId: subscriberId,
-		NodeStateID:  nil, // Initialize as nil
 	}
 
 	if id != 0 {
 		dn.EventMsgID = id
-	}
-
-	if ec.Key == evt.EventNodeStateChange {
-		var nodeStateEvent epb.NodeStateChangeEvent
-		err = json.Unmarshal(msg, &nodeStateEvent)
-		if err != nil {
-			log.Errorf("failed to unmarshal NodeStateChangeEvent: %v", err)
-		} else {
-			nodeStateID := uuid.NewV4()
-			nodeState := &db.NodeState{
-				Id:           nodeStateID,
-				Name:         nodeStateEvent.Name,
-				NodeId:       nodeId,
-				Latitude:     nodeStateEvent.Latitude,
-				Longitude:    nodeStateEvent.Longitude,
-				CurrentState: nodeStateEvent.CurrentState,
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
-			}
-			dn.NodeStateID = &nodeStateID
-			dn.NodeState = nodeState
-		}
 	}
 
 	err = es.n.storeNotification(dn)

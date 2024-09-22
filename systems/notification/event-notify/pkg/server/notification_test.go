@@ -19,6 +19,7 @@ import (
 	notif "github.com/ukama/ukama/systems/common/notification"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
@@ -26,6 +27,7 @@ import (
 )
 
 const testOrgName = "testorg"
+var testNode = ukama.NewVirtualNodeId("HomeNode")
 
 var testOrgId = uuid.NewV4().String()
 var testUserId = uuid.NewV4()
@@ -36,7 +38,7 @@ var notification = db.Notification{
 	Description: "Description1",
 	Type:        notif.TYPE_INFO,
 	Scope:       notif.SCOPE_ORG,
-	ResourceId:  uuid.NewV4(),
+	ResourceId: testNode.String(),
 	OrgId:       testOrgId,
 	UserId:      testUserId.String(),
 	CreatedAt:   time.Now(),
@@ -67,7 +69,6 @@ func TestServer_Get(t *testing.T) {
 	uRepo := &mocks.UserRepo{}
 	mc := &cmocks.MemberClient{}
 	unRepo := &mocks.UserNotificationRepo{}
-	nstRepo := &mocks.NodeStateRepo{}
 	emRepo := &mocks.EventMsgRepo{}
 	msgclient := &cmocks.MsgBusServiceClient{}
 
@@ -77,7 +78,7 @@ func TestServer_Get(t *testing.T) {
 
 	nRepo.On("Get", notification.Id).Return(&notification, nil).Once()
 
-	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo,nstRepo, msgclient)
+	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
 
 	// Act
 	resp, err := s.Get(context.TODO(), &req)
@@ -97,7 +98,6 @@ func TestServer_GetAll(t *testing.T) {
 	unRepo := &mocks.UserNotificationRepo{}
 	emRepo := &mocks.EventMsgRepo{}
 	msgclient := &cmocks.MsgBusServiceClient{}
-	nstRepo := &mocks.NodeStateRepo{}
 
 	req := pb.GetAllRequest{
 		OrgId:  testOrgId,
@@ -119,7 +119,7 @@ func TestServer_GetAll(t *testing.T) {
 	uRepo.On("GetUsers", req.OrgId, mock.Anything, mock.Anything, req.UserId, mock.Anything).Return([]*db.Users{&user}, nil).Once()
 	unRepo.On("GetNotificationsByUserID", user.Id.String()).Return([]*db.Notifications{&ns}, nil).Once()
 
-	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo,nstRepo, msgclient)
+	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
 
 	// Act
 	resp, err := s.GetAll(context.TODO(), &req)
@@ -140,7 +140,6 @@ func TestServer_UpdateStatus(t *testing.T) {
 	unRepo := &mocks.UserNotificationRepo{}
 	emRepo := &mocks.EventMsgRepo{}
 	msgclient := &cmocks.MsgBusServiceClient{}
-	nstRepo := &mocks.NodeStateRepo{}
 
 	req := pb.UpdateStatusRequest{
 		Id:     notification.Id.String(),
@@ -149,7 +148,7 @@ func TestServer_UpdateStatus(t *testing.T) {
 
 	unRepo.On("Update", notification.Id, req.IsRead).Return(nil)
 
-	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, nstRepo,msgclient)
+	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo,msgclient)
 
 	// Act
 	_, err := s.UpdateStatus(context.TODO(), &req)

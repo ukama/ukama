@@ -54,32 +54,6 @@ func (_m *UserRepo) GetAllUsers(orgId string) ([]*db.Users, error) {
 	return r0, r1
 }
 
-// GetNode provides a mock function with given fields: nodeId
-func (_m *UserRepo) GetNode(nodeId string) (*db.Users, error) {
-	ret := _m.Called(nodeId)
-
-	var r0 *db.Users
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Users, error)); ok {
-		return rf(nodeId)
-	}
-	if rf, ok := ret.Get(0).(func(string) *db.Users); ok {
-		r0 = rf(nodeId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Users)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetSubscriber provides a mock function with given fields: subscriberId
 func (_m *UserRepo) GetSubscriber(subscriberId string) (*db.Users, error) {
 	ret := _m.Called(subscriberId)
@@ -158,25 +132,25 @@ func (_m *UserRepo) GetUserWithRoles(orgId string, _a1 []roles.RoleType) ([]*db.
 	return r0, r1
 }
 
-// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, nodeId, userId, role
-func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, nodeId string, userId string, role uint8) ([]*db.Users, error) {
-	ret := _m.Called(orgId, networkId, subscriberId, nodeId, userId, role)
+// GetUsers provides a mock function with given fields: orgId, networkId, subscriberId, userId, role
+func (_m *UserRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*db.Users, error) {
+	ret := _m.Called(orgId, networkId, subscriberId, userId, role)
 
 	var r0 []*db.Users
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, uint8) ([]*db.Users, error)); ok {
-		return rf(orgId, networkId, subscriberId, nodeId, userId, role)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint8) ([]*db.Users, error)); ok {
+		return rf(orgId, networkId, subscriberId, userId, role)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, uint8) []*db.Users); ok {
-		r0 = rf(orgId, networkId, subscriberId, nodeId, userId, role)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, uint8) []*db.Users); ok {
+		r0 = rf(orgId, networkId, subscriberId, userId, role)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Users)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, uint8) error); ok {
-		r1 = rf(orgId, networkId, subscriberId, nodeId, userId, role)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, uint8) error); ok {
+		r1 = rf(orgId, networkId, subscriberId, userId, role)
 	} else {
 		r1 = ret.Error(1)
 	}
