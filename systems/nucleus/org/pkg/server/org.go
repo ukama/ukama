@@ -190,6 +190,9 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 		}
 	}
 
+	//TODO: CAN BE IMPROVE
+
+	// GET ALL ORGS
 	orgs, err := o.orgRepo.GetAll()
 
 	if err != nil {
@@ -199,6 +202,7 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 	ownerOrgs := []*pb.Organization{}
 	memberOrgs := []*pb.Organization{}
 
+	// GET MEMBER INFO FOR EACH ORG AGAINST USER ID
 	for _, org := range orgs {
 		mresp, err := o.registrySystem.GetByUserId(org.Name, user.Uuid.String())
 		if err != nil {
@@ -212,23 +216,6 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 		}
 		memberOrgs = append(memberOrgs, dbOrgToPbOrg(&org))
 	}
-
-	// ownedOrgs, err := o.orgRepo.GetByOwner(userId)
-	// if err != nil {
-	// 	if !sql.IsNotFoundError(err) {
-	// 		return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
-	// 	}
-	// }
-
-	// log.Infof("looking for orgs with member %s", userId.String())
-	// membOrgs, err := o.orgRepo.GetByMember(user.Id)
-	// if err != nil {
-	// 	if !sql.IsNotFoundError(err) {
-	// 		return nil, grpc.SqlErrorToGrpc(err, "member orgs")
-	// 	}
-	// }
-
-	// log.Infof("found %d owned orgs and %d member orgs", len(ownedOrgs), len(membOrgs))
 
 	resp := &pb.GetByUserResponse{
 		User:     req.GetUserUuid(),

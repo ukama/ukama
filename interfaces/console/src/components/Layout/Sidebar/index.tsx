@@ -7,6 +7,7 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
+import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { NavList } from '@/routes';
 import colors from '@/theme/colors';
@@ -66,7 +67,9 @@ const Sidebar = ({
   handleNetworkChange,
 }: ISidebarProps) => {
   const pathname = usePathname();
-  const { network } = useAppContext();
+  const { network, user } = useAppContext();
+  const isOwner =
+    user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
   const getDropDownData = () =>
     networks?.map((network) => ({
       id: network.id,
@@ -85,6 +88,7 @@ const Sidebar = ({
           <BasicDropdown
             value={network.id}
             list={getDropDownData()}
+            isShowAddOption={isOwner}
             placeholder={placeholder}
             handleOnChange={handleNetworkChange}
             handleAddNetwork={handleAddNetwork}
@@ -92,45 +96,48 @@ const Sidebar = ({
         </Box>
         <Divider sx={{ mx: 2, my: 0 }} />
         <Stack direction="column" spacing={1.5} px={2} py={2}>
-          {NavList.map(({ name, path, icon: Icon }) => (
-            <Link
-              href={path}
-              key={path}
-              style={{
-                borderRadius: 4,
-                textDecoration: 'none',
-                backgroundColor:
-                  pathname === path ? colors.white38 : 'transparent',
-              }}
-            >
-              <Stack
-                px={2}
-                py={1}
-                spacing={2}
-                direction={'row'}
-                alignItems={'flex-start'}
-                sx={{
-                  ':hover': {
-                    borderRadius: '4px',
-                    backgroundColor: colors.white38,
-                  },
-                }}
-              >
-                <Icon
-                  sx={{
-                    color: isDarkMode ? colors.white70 : colors.vulcan100,
+          {NavList.map(
+            ({ name, path, icon: Icon, forRoles }) =>
+              forRoles.includes(user.role as Role_Type) && (
+                <Link
+                  href={path}
+                  key={path}
+                  style={{
+                    borderRadius: 4,
+                    textDecoration: 'none',
+                    backgroundColor:
+                      pathname === path ? colors.white38 : 'transparent',
                   }}
-                />
-                <Typography
-                  variant="body1"
-                  fontWeight={400}
-                  color={colors.vulcan100}
                 >
-                  {name}
-                </Typography>
-              </Stack>
-            </Link>
-          ))}
+                  <Stack
+                    px={2}
+                    py={1}
+                    spacing={2}
+                    direction={'row'}
+                    alignItems={'flex-start'}
+                    sx={{
+                      ':hover': {
+                        borderRadius: '4px',
+                        backgroundColor: colors.white38,
+                      },
+                    }}
+                  >
+                    <Icon
+                      sx={{
+                        color: isDarkMode ? colors.white70 : colors.vulcan100,
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      fontWeight={400}
+                      color={colors.vulcan100}
+                    >
+                      {name}
+                    </Typography>
+                  </Stack>
+                </Link>
+              ),
+          )}
         </Stack>
       </Stack>
     </UkamaDrawer>
