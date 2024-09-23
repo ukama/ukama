@@ -23,43 +23,54 @@ import (
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
 )
- 
- type NodeStateEventServer struct {
-	 s               *NodeStateServer
-	 orgName         string
-	 msgbus          mb.MsgBusServiceClient
-	 stateRoutingKey msgbus.RoutingKeyBuilder
-	 epb.UnimplementedEventNotificationServiceServer
-	 stateMachine *stm.StateMachine 
- }
- 
 
- func (s *NodeStateServer) InitializeStateMachine(configPath string) error {
+type NodeStateEventServer struct {
+	s               *NodeStateServer
+	orgName         string
+	msgbus          mb.MsgBusServiceClient
+	stateRoutingKey msgbus.RoutingKeyBuilder
+	epb.UnimplementedEventNotificationServiceServer
+	stateMachine *stm.StateMachine
+}
+
+func (s *NodeStateServer) InitializeStateMachine(configPath string) error {
 	sm, err := stm.NewStateMachine(configPath)
 	if err != nil {
 		return err
 	}
 	s.stateMachine = sm
 	log.Infof("Initialized state machine with config from %s", configPath)
-	
+
 	return nil
 }
- func NewNodeStateEventServer(orgName string,s *NodeStateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
-	 return &NodeStateEventServer{
-		 s:               s,
-		 orgName:         orgName,
-		 msgbus:          msgBus,
-		 stateRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-	 }
- }
- 
+func NewNodeStateEventServer(orgName string, s *NodeStateServer, msgBus mb.MsgBusServiceClient) *NodeStateEventServer {
+	return &NodeStateEventServer{
+		s:               s,
+		orgName:         orgName,
+		msgbus:          msgBus,
+		stateRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
+}
 
- func (es *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (es *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOrgAdd]):
-		c := evt.EventToEventConfig[evt.EventOrgAdd]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
+		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, msg.Id, jmsg)
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
+		c := evt.EventToEventConfig[evt.EventNodeAssign]
 		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -72,8 +83,22 @@ import (
 
 		_ = es.ProcessEvent(&c, msg.Id, jmsg)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserAdd]):
-		c := evt.EventToEventConfig[evt.EventUserAdd]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
+		c := evt.EventToEventConfig[evt.EventNodeRelease]
+		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		// Handle Org Add event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, msg.Id, jmsg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
 		msg, err := epb.UnmarshalEventUserCreate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -94,41 +119,54 @@ import (
 }
 
 func (es *NodeStateEventServer) ProcessEvent(c *evt.EventConfig, nodeId string, rawMsg json.RawMessage) error {
-    currentState, err := es.s.GetLatestNodeState(context.Background(), &pb.GetLatestNodeStateRequest{NodeId: nodeId})
-    if err != nil {
-        log.Errorf("Error getting current state: %v", err)
-        return err
-    }
+	currentState, err := es.s.GetLatestNodeState(context.Background(), &pb.GetLatestNodeStateRequest{NodeId: nodeId})
+	currentStateName := ""
+	if err != nil {
+		log.Errorf("Error getting current state: %v", err)
+		return err
+	}
+	if currentState == nil {
+		initialState := "unknown"
+		_, err = es.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
+			NodeId:       nodeId,
+			CurrentState: initialState,
+			Events:       []string{},
+		})
+		currentStateName = initialState
+		if err != nil {
+			log.Errorf("Error creating initial node state: %v", err)
+			return err
+		}
+	}
 
-    currentStateName := currentState.NodeState.CurrentState
+	currentStateName = currentState.NodeState.CurrentState
 
-    receivedEvents := []string{c.Name}
+	receivedEvents := []string{c.Name}
 
-    latestState := currentStateName
+	latestState := currentStateName
 
-    nextState, err := es.s.stateMachine.GetNextState(latestState, receivedEvents)
-    if err != nil {
-        log.Errorf("Error getting next state: %v", err)
-        return fmt.Errorf("failed to determine next state: %v", err)
-    }
+	nextState, err := es.s.stateMachine.GetNextState(latestState, receivedEvents)
+	if err != nil {
+		log.Errorf("Error getting next state: %v", err)
+		return fmt.Errorf("failed to determine next state: %v", err)
+	}
 
-    if nextState != latestState {
-        _, err = es.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
-            NodeId:       nodeId,
-            CurrentState: nextState,
-            Events:       receivedEvents,
-        })
-        if err != nil {
-            log.Errorf("Error adding node state: %v", err)
-            return err
-        }
+	if nextState != latestState {
+		_, err = es.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
+			NodeId:       nodeId,
+			CurrentState: nextState,
+			Events:       receivedEvents,
+		})
+		if err != nil {
+			log.Errorf("Error adding node state: %v", err)
+			return err
+		}
 
-        log.Infof("Successfully processed events %v, new state: %s", receivedEvents, nextState)
+		log.Infof("Successfully processed events %v, new state: %s", receivedEvents, nextState)
+		receivedEvents = nil
+	} else {
+		log.Infof("Event %s processed, state remains: %s", c.Name, latestState)
+	}
 
-        receivedEvents = nil
-    } else {
-        log.Infof("Event %s processed, state remains: %s", c.Name, latestState)
-    }
-
-    return nil
+	return nil
 }
