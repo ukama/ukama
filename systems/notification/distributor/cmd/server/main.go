@@ -29,75 +29,75 @@ import (
 	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 )
- 
- var serviceConfig *pkg.Config
- 
- func main() {
-	 ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-	 initConfig()
-	 runGrpcServer()
- }
- 
- func initConfig() {
-	 serviceConfig = pkg.NewConfig(pkg.ServiceName)
-	 err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
-	 if err != nil {
-		 log.Fatal("Error reading config ", err)
-	 } else if serviceConfig.DebugMode {
-		 b, err := yaml.Marshal(serviceConfig)
-		 if err != nil {
-			 log.Infof("Config:\n%s", string(b))
-		 }
-	 }
-	 pkg.IsDebugMode = serviceConfig.DebugMode
- 
-	 if pkg.IsDebugMode {
-		 log.SetLevel(log.DebugLevel)
-	 }
- }
- 
- func runGrpcServer() {
- 
-	 log.Debugf("Distributor config %+v", serviceConfig)
- 
-	 regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	 if err != nil {
-		 log.Errorf("Failed to resolve registry address: %v", err)
-	 }
-	 subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	 if err != nil {
-		 log.Errorf("Failed to resolve registry address: %v", err)
-	 }
- 
-	 networkClient := creg.NewNetworkClient(regUrl.String())
-	 memberClient := creg.NewMemberClient(regUrl.String())
-	 subClient := sreg.NewSubscriberClient(subUrl.String())
-	 eventNotifyService := providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost)
- 
-	 nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
- 
-	 distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
- 
-	 grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		 generated.RegisterDistributorServiceServer(s, distributorServer)
-	 })
- 
-	 go grpcServer.StartServer()
- 
-	 waitForExit()
- }
- 
- func waitForExit() {
-	 sigs := make(chan os.Signal, 1)
-	 done := make(chan bool, 1)
-	 go func() {
- 
-		 sig := <-sigs
-		 log.Info(sig)
-		 done <- true
-	 }()
- 
-	 log.Debug("awaiting terminate/interrrupt signal")
-	 <-done
-	 log.Infof("exiting service %s", pkg.ServiceName)
- }
+
+var serviceConfig *pkg.Config
+
+func main() {
+	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	initConfig()
+	runGrpcServer()
+}
+
+func initConfig() {
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
+	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	if err != nil {
+		log.Fatal("Error reading config ", err)
+	} else if serviceConfig.DebugMode {
+		b, err := yaml.Marshal(serviceConfig)
+		if err != nil {
+			log.Infof("Config:\n%s", string(b))
+		}
+	}
+	pkg.IsDebugMode = serviceConfig.DebugMode
+
+	if pkg.IsDebugMode {
+		log.SetLevel(log.DebugLevel)
+	}
+}
+
+func runGrpcServer() {
+
+	log.Debugf("Distributor config %+v", serviceConfig)
+
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	networkClient := creg.NewNetworkClient(regUrl.String())
+	memberClient := creg.NewMemberClient(regUrl.String())
+	subClient := sreg.NewSubscriberClient(subUrl.String())
+	eventNotifyService := providers.NewEventNotifyClientProvider(serviceConfig.EventNotifyHost)
+
+	nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
+
+	distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
+
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		generated.RegisterDistributorServiceServer(s, distributorServer)
+	})
+
+	go grpcServer.StartServer()
+
+	waitForExit()
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
+}

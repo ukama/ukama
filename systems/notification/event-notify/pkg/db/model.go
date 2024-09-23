@@ -18,65 +18,65 @@ import (
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
- 
- type JSONB map[string]interface{}
- 
- type Notification struct {
-	 Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
-	 Title        string
-	 Description  string
-	 Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
-	 Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	 ResourceId   string
-	 IsActionable bool `gorm:"default:false"` 
-	 OrgId        string
-	 NetworkId    string
-	 SubscriberId string
-	 UserId       string
-	 NodeId       string
-	 EventMsgID   uint
-	 EventMsg     EventMsg
-	 CreatedAt    time.Time
-	 UpdatedAt    time.Time
-	 DeletedAt    gorm.DeletedAt `gorm:"index"`
- }
- 
- type Users struct {
-	 Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
-	 OrgId        string
-	 NetworkId    string
-	 SubscriberId string
-	 UserId       string
-	 Role         roles.RoleType `gorm:"type:uint;not null;default:0"`
-	 CreatedAt    time.Time
-	 UpdatedAt    time.Time
-	 DeletedAt    gorm.DeletedAt `gorm:"index"`
- }
- 
- type UserNotification struct {
-	 Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
-	 NotificationId uuid.UUID `gorm:"type:uuid"`
-	 UserId         uuid.UUID
-	 IsRead         bool `gorm:"default:false"`
-	 CreatedAt      time.Time
-	 UpdatedAt      time.Time
-	 DeletedAt      gorm.DeletedAt `gorm:"index"`
- }
- 
- type Notifications struct {
-	 Id          uuid.UUID `gorm:"type:uuid"`
-	 Title       string
-	 Description string
-	 Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
-	 Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	 IsRead      bool                    `gorm:"default:false"`
-	 IsActionable bool `gorm:"default:false"` 
-	 ResourceId string
-	 CreatedAt   string
-	 UpdatedAt   string
- }
- 
- type EventMsg struct {
-	 gorm.Model
-	 Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
- }
+
+type JSONB map[string]interface{}
+
+type Notification struct {
+	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
+	Title        string
+	Description  string
+	Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
+	Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
+	ResourceId   string
+	IsActionable bool `gorm:"default:false"`
+	OrgId        string
+	NetworkId    string
+	SubscriberId string
+	UserId       string
+	NodeId       string
+	EventMsgID   uint
+	EventMsg     EventMsg
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
+type Users struct {
+	Id           uuid.UUID `gorm:"primaryKey;type:uuid"`
+	OrgId        string
+	NetworkId    string
+	SubscriberId string
+	UserId       string
+	Role         roles.RoleType `gorm:"type:uint;not null;default:0"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
+}
+
+type UserNotification struct {
+	Id             uuid.UUID `gorm:"primaryKey;type:uuid"`
+	NotificationId uuid.UUID `gorm:"type:uuid"`
+	UserId         uuid.UUID
+	IsRead         bool `gorm:"default:false"`
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
+type Notifications struct {
+	Id           uuid.UUID `gorm:"type:uuid"`
+	Title        string
+	Description  string
+	Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
+	Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
+	IsRead       bool                    `gorm:"default:false"`
+	IsActionable bool                    `gorm:"default:false"`
+	ResourceId   string
+	CreatedAt    string
+	UpdatedAt    string
+}
+
+type EventMsg struct {
+	gorm.Model
+	Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
+}

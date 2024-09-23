@@ -27,6 +27,7 @@ import (
 )
 
 const testOrgName = "testorg"
+
 var testNode = ukama.NewVirtualNodeId("HomeNode")
 
 var testOrgId = uuid.NewV4().String()
@@ -38,7 +39,7 @@ var notification = db.Notification{
 	Description: "Description1",
 	Type:        notif.TYPE_INFO,
 	Scope:       notif.SCOPE_ORG,
-	ResourceId: testNode.String(),
+	ResourceId:  testNode.String(),
 	OrgId:       testOrgId,
 	UserId:      testUserId.String(),
 	CreatedAt:   time.Now(),
@@ -148,7 +149,7 @@ func TestServer_UpdateStatus(t *testing.T) {
 
 	unRepo.On("Update", notification.Id, req.IsRead).Return(nil)
 
-	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo,msgclient)
+	s := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
 
 	// Act
 	_, err := s.UpdateStatus(context.TODO(), &req)
