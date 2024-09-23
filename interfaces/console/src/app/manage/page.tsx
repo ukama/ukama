@@ -15,14 +15,13 @@ import { useEffect } from 'react';
 const Page = () => {
   const router = useRouter();
   const { user } = useAppContext();
+
   useEffect(() => {
-    if (
-      user.role === Role_Type.RoleOwner ??
-      user.role === Role_Type.RoleAdmin
-    ) {
+    if (user.role === Role_Type.RoleOwner) {
       router.push('/manage/members');
     }
   }, [user.role]);
+
   return (
     <Skeleton
       variant="rectangular"

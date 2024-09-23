@@ -67,8 +67,7 @@ const Header = ({
   handleNotificationRead,
 }: IHeaderProps) => {
   const { user } = useAppContext();
-  const isManager =
-    user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
+  const isManager = user.role === Role_Type.RoleOwner;
 
   return (
     <AppBar
