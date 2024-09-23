@@ -228,8 +228,15 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
+  if (pathname.includes('/manage') && userObj.role !== Role_Type.RoleOwner) {
+    return NextResponse.redirect(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
   if (
-    pathname.includes('/manage') &&
+    (pathname.includes('/console/nodes') ||
+      pathname.includes('/console/sites')) &&
     userObj.role !== Role_Type.RoleOwner &&
     userObj.role !== Role_Type.RoleAdmin
   ) {
