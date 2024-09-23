@@ -10,26 +10,6 @@ import { Field, ObjectType } from "type-graphql";
 import { NOTIFICATION_SCOPE, NOTIFICATION_TYPE } from "../../common/enums";
 
 @ObjectType()
-export class NodeState {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  node_id: string;
-
-  @Field()
-  currentState: string;
-
-  @Field()
-  latitude: number;
-
-  @Field()
-  longitude: number;
-}
-@ObjectType()
 export class NotificationsAPIDto {
   @Field()
   id: string;
@@ -50,13 +30,13 @@ export class NotificationsAPIDto {
   is_read: boolean;
 
   @Field()
-  created_at: string;
+  is_actionable: boolean;
 
   @Field()
-  nodeStateId: string;
+  resource_id: string;
 
-  @Field(() => NodeState, { nullable: true })
-  nodeState: NodeState | null;
+  @Field()
+  created_at: string;
 }
 
 @ObjectType()
@@ -89,13 +69,13 @@ export class NotificationAPIDto {
   subscriber_id: string;
 
   @Field()
-  node_state_id: string;
-
-  @Field(() => NodeState, { nullable: true })
-  node_state: NodeState | null;
+  user_id: string;
 
   @Field()
-  user_id: string;
+  is_actionable: boolean;
+
+  @Field()
+  resource_id: string;
 }
 
 @ObjectType()
@@ -136,13 +116,13 @@ export class NotificationResDto {
   subscriberId: string;
 
   @Field()
-  nodeStateId: string;
-
-  @Field(() => NodeState, { nullable: true })
-  nodeState: NodeState | null;
+  networkId: string;
 
   @Field()
-  networkId: string;
+  isActionable: boolean;
+
+  @Field()
+  resourceId: string;
 
   @Field()
   createdAt: string;
@@ -166,16 +146,16 @@ export class NotificationsDto {
   scope: NOTIFICATION_SCOPE;
 
   @Field()
-  is_read: boolean;
+  isRead: boolean;
 
   @Field()
-  created_at: string;
+  isActionable: boolean;
 
   @Field()
-  nodeStateId: string;
+  resourceId: string;
 
-  @Field(() => NodeState, { nullable: true })
-  nodeState: NodeState | null;
+  @Field()
+  createdAt: string;
 }
 
 @ObjectType()

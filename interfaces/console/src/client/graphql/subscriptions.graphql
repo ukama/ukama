@@ -10,15 +10,8 @@ query GetNotifications($data: GetNotificationsInput!) {
       isRead
       createdAt
       description
-      nodeStateId
-      nodeState {
-        id
-        nodeId
-        name
-        currentState
-        latitude
-        longitude
-      }
+      isActionable
+      resourceId
     }
   }
 }
@@ -32,16 +25,8 @@ subscription NotificationSubscription($data: GetNotificationsInput!) {
     isRead
     createdAt
     description
-    nodeStateId
-    nodeState {
-      id
-      nodeId
-      name
-      currentState
-      latitude
-      longitude
-      createdAt
-    }
+    isActionable
+    resourceId
   }
 }
 query GetMetricByTab($data: GetMetricByTabInput!) {

@@ -11,9 +11,8 @@ package server
 import (
 	"fmt"
 
-	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
-
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
+	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
 	"google.golang.org/grpc/status"
 
 	log "github.com/sirupsen/logrus"
@@ -155,3 +154,4 @@ import (
  EXIT:
 	 return nil
  }
+ 

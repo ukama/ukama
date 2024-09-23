@@ -5,10 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import {
-  NotificationsResDto,
-  NodeStateResDto,
-} from '@/client/graphql/generated/subscriptions';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
 import AlertBox from '@/components/AlertBox';
 import { IconStyle } from '@/styles/global';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -18,7 +15,7 @@ import React, { useState } from 'react';
 interface IAlertsProps {
   alerts: NotificationsResDto[] | undefined;
   handleNotificationRead: (id: string) => void;
-  onConfigureSite: (nodeState: NodeStateResDto) => void;
+  onConfigureSite: (nodeId: string) => void;
 }
 
 const Alerts = ({
@@ -67,7 +64,6 @@ const Alerts = ({
         <AlertBox
           alerts={alerts}
           handleNotificationRead={handleNotificationRead}
-          configShowButtonState="unknown"
           onConfigureSite={onConfigureSite}
         />
       </Popover>

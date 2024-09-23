@@ -128,7 +128,6 @@ class SubscriptionsResolvers {
       orgName,
       networkId,
       subscriberId,
-      nodeId,
       startTimestamp,
     } = data;
 
@@ -161,7 +160,7 @@ class SubscriptionsResolvers {
       scopes = scopes.substring(1);
     }
 
-    const key = `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${nodeId}-${startTimestamp}`;
+    const key = `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`;
     const workerData = {
       url: `${wsUrl}/v1/distributor/live`,
       key: key,
@@ -226,7 +225,7 @@ class SubscriptionsResolvers {
 
   @Subscription(() => NotificationsResDto, {
     topics: ({ args }) => {
-      return `notification-${args.data.orgId}-${args.data.userId}-${args.data.networkId}-${args.data.subscriberId}-${args.data.nodeId}-${args.data.startTimestamp}`;
+      return `notification-${args.data.orgId}-${args.data.userId}-${args.data.networkId}-${args.data.subscriberId}-${args.data.startTimestamp}`;
     },
   })
   async notificationSubscription(
@@ -235,7 +234,7 @@ class SubscriptionsResolvers {
   ): Promise<NotificationsResDto> {
     await addInStore(
       openStore(),
-      `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}-${data.nodeId}-${data.startTimestamp}`,
+      `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}-${data.startTimestamp}`,
       getTimestampCount("0")
     );
     logger.info("Notification payload :", payload);

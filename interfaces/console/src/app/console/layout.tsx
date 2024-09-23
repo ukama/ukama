@@ -11,11 +11,10 @@ import {
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
   useUpdateNotificationMutation,
-  NotificationsResDto,
 } from '@/client/graphql/generated';
 import {
+  NotificationsResDto,
   Role_Type,
-  NodeStateResDto,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
@@ -28,7 +27,6 @@ import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
 import { Box } from '@mui/material';
-import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
 import { useEffect, useState } from 'react';
 
@@ -48,9 +46,9 @@ export default function ConosleLayout({
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();
-  const router = useRouter();
-  const [notifications, setNotifications] = useState<any>([]);
-
+  const [notifications, setNotifications] = useState<
+    NotificationsResDto[] | []
+  >([]);
   const [startTimeStamp] = useState<string>(new Date().getTime().toString());
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const {
@@ -103,16 +101,6 @@ export default function ConosleLayout({
 
   const [updateNotificationCall] = useUpdateNotificationMutation({
     onCompleted: () => {
-      /**
-       * Sets the notifications from the response data
-       * @example
-       * setNotificationsResponse(response)
-       * undefined
-       * @param {Object} res - The response object containing notification data.
-       * @returns {void} No return value.
-       * @description
-       *   - Extracts notifications from the response object safely using optional chaining.
-       */
       refetchNotifications().then((res) => {
         setNotifications(res.data?.getNotifications.notifications);
       });
@@ -158,7 +146,6 @@ export default function ConosleLayout({
             networkId: network.id,
             role: user.role as Role_Type,
             startTimestamp: startTimeStamp,
-            nodeId: '',
           },
         },
       });
@@ -190,62 +177,24 @@ export default function ConosleLayout({
   };
 
   const handleNotification = (_: any, data: string) => {
-    try {
-      const parsedData: TNotificationResDto = JSON.parse(data);
-      const notificationData = parsedData.data?.notificationSubscription;
-
-      if (!notificationData) {
-        console.error('Received invalid notification data:', parsedData);
-        return;
-      }
-
-      const {
-        id,
-        type,
-        scope,
-        title,
-        isRead,
-        description,
-        createdAt,
-        nodeStateId,
-        nodeState,
-      } = notificationData;
-
-      if (!id || !type || !scope || !title || !nodeState) {
-        console.error(
-          'Notification is missing required fields:',
-          notificationData,
-        );
-        return;
-      }
-
-      setNotifications((prev: any) => {
-        if (!prev) return [notificationData];
-        return [
-          {
-            id,
-            type,
-            scope,
-            title,
-            isRead: isRead ?? false,
-            createdAt: createdAt ?? new Date().toISOString(),
-            description: description ?? '',
-            nodeStateId: nodeStateId ?? '',
-            nodeState: {
-              id: nodeState.id ?? '',
-              nodeId: nodeState.nodeId ?? '',
-              name: nodeState.name ?? '',
-              currentState: nodeState.currentState ?? '',
-              latitude: nodeState.latitude ?? null,
-              longitude: nodeState.longitude ?? null,
-            },
-          },
-          ...prev,
-        ];
-      });
-    } catch (error) {
-      console.error('Error processing notification:', error);
-    }
+    const parsedData: TNotificationResDto = JSON.parse(data);
+    const { id, type, scope, title, isRead, description, createdAt } =
+      parsedData.data.notificationSubscription;
+    setNotifications((prev: any) => {
+      if (!prev) return prev;
+      return [
+        {
+          id,
+          type,
+          scope,
+          title,
+          isRead,
+          createdAt,
+          description,
+        },
+        ...prev,
+      ];
+    });
   };
 
   const handleNotificationRead = (id: string) => {
@@ -298,12 +247,15 @@ export default function ConosleLayout({
       });
     }
   };
-
-  const handleSiteConfig = (nodeState: NodeStateResDto) => {
-    router.push(
-      `/configure/node/${nodeState.nodeId}?lat=${nodeState.latitude ?? '-4.322447'}&lng=${nodeState.longitude ?? '15.307045'}`,
-    );
+  const handleConfigureSite = (nodeId: string) => {
+    //console.log(nodeId)
+    //Here we will call the nodeState service to get lat,lng and state for node
+    console.log('NODE ID :', nodeId);
+    // router.push(
+    //   `/configure/node/${nodeState.nodeId}?lat=${nodeState.latitude}&lng=${nodeState.longitude}`,
+    // );
   };
+
   return (
     <ErrorBoundary>
       <Box
@@ -319,11 +271,11 @@ export default function ConosleLayout({
           isLoading={networksLoading}
           placeholder={'Select Network'}
           handleNotificationRead={handleNotificationRead}
-          onConfigureSite={handleSiteConfig}
           handleAddNetwork={handleAddNetworkAction}
           handleNetworkChange={handleNetworkChange}
           networks={networksData?.getNetworks.networks ?? []}
           notifications={notifications}
+          onConfigureSite={handleConfigureSite}
         >
           {children}
         </AppLayout>

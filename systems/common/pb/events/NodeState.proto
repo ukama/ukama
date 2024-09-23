@@ -13,11 +13,9 @@
  package ukama.events.v1;
 
  message NodeStateChangeEvent {
-    string node_id = 1;
+    string nodeId = 1;
     string name   =2;
     string severity = 3;
     string type = 4;
-    string current_state = 5;
-    double latitude =6 ;
-    double longitude = 8;
+    string currentState = 5;
   }

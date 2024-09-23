@@ -207,14 +207,14 @@ export type TEnv = {
   METRIC_WEBSOCKET_URL: string;
 };
 
-interface NodeState {
+export type NodeStateResDto = {
   id: string;
   nodeId: string;
   name: string;
   currentState: string;
   latitude: number;
   longitude: number;
-}
+};
 
 interface NotificationSubscription {
   createdAt: string;
@@ -224,8 +224,6 @@ interface NotificationSubscription {
   scope: string;
   title: string;
   type: string;
-  nodeStateId: string;
-  nodeState: NodeState;
 }
 
 interface Data {

@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import {
-  NotificationsResDto,
-  NodeStateResDto,
-} from '@/client/graphql/generated/subscriptions';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
 import { Circle, MoreHoriz } from '@mui/icons-material';
 import {
   Box,
@@ -19,14 +16,12 @@ import { format } from 'date-fns';
 interface AlertBoxProps {
   alerts: NotificationsResDto[] | undefined;
   handleNotificationRead: (id: string) => void;
-  configShowButtonState: string;
-  onConfigureSite: (nodeState: NodeStateResDto) => void;
+  onConfigureSite: (nodeId: string) => void;
 }
 
 const AlertBox: React.FC<AlertBoxProps> = ({
   alerts,
   handleNotificationRead,
-  configShowButtonState,
   onConfigureSite,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -37,7 +32,7 @@ const AlertBox: React.FC<AlertBoxProps> = ({
     event: React.MouseEvent<HTMLElement>,
     alert: NotificationsResDto,
   ) => {
-    if (alert.nodeState) {
+    if (alert.isActionable) {
       event.stopPropagation();
       setAnchorEl(event.currentTarget);
       setSelectedAlert(alert);
@@ -50,15 +45,15 @@ const AlertBox: React.FC<AlertBoxProps> = ({
   };
 
   const handleConfigureSite = () => {
-    if (selectedAlert?.nodeState) {
-      onConfigureSite(selectedAlert.nodeState);
+    if (selectedAlert?.resourceId) {
+      onConfigureSite(selectedAlert.resourceId);
     }
     handleClose();
   };
   const handleAlertClick = (alert: NotificationsResDto) => {
     handleNotificationRead(alert.id);
-    if (alert.nodeState?.currentState === configShowButtonState) {
-      onConfigureSite(alert.nodeState);
+    if (alert.isRead) {
+      onConfigureSite(alert.resourceId);
     }
   };
 
@@ -111,7 +106,7 @@ const AlertBox: React.FC<AlertBoxProps> = ({
                 <Typography variant="body2" sx={{ flexGrow: 1 }}>
                   {alert.description}
                 </Typography>
-                {alert.nodeState && (
+                {alert.resourceId && (
                   <IconButton onClick={(e) => handleMenuClick(e, alert)}>
                     <MoreHoriz />
                   </IconButton>
@@ -122,7 +117,7 @@ const AlertBox: React.FC<AlertBoxProps> = ({
           </Box>
         ))}
       </List>
-      {selectedAlert?.nodeState?.currentState === configShowButtonState && (
+      {selectedAlert?.isActionable && (
         <Popover
           id={id}
           open={open}

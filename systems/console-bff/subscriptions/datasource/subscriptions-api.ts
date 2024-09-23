@@ -78,7 +78,7 @@ const getNotifications = async (
   baseUrl: string,
   args: GetNotificationsInput
 ): Promise<NotificationsRes> => {
-  const { orgId, userId, networkId, subscriberId, nodeId } = args;
+  const { orgId, userId, networkId, subscriberId } = args;
 
   let params = "";
   if (orgId) {
@@ -94,9 +94,6 @@ const getNotifications = async (
     params = params + `&subscriber_id=${subscriberId}`;
   }
 
-  if (subscriberId) {
-    params = params + `&node_id=${nodeId}`;
-  }
   if (params.length > 0) params = params.substring(1);
   logger.info(
     `GetNotifications [GET]: ${baseUrl}/${VERSION}/event-notification?${params}`
@@ -104,9 +101,7 @@ const getNotifications = async (
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/event-notification?${params}`,
-  }).then(res => {
-    return parseNotificationsRes(res.data);
-  });
+  }).then(res => parseNotificationsRes(res.data));
 };
 
 export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };

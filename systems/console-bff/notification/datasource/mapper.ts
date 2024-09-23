@@ -26,18 +26,9 @@ export const dtoToNotificationDto = (
     orgId: res.notification.org_id,
     networkId: res.notification.network_id,
     userId: res.notification.user_id,
+    resourceId: res.notification.resource_id,
+    isActionable: res.notification.is_actionable,
     subscriberId: res.notification.subscriber_id,
-    nodeStateId: res.notification.node_state_id || "",
-    nodeState: res.notification.node_state
-      ? {
-          id: res.notification.node_state.id,
-          name: res.notification.node_state.name,
-          node_id: res.notification.node_state.node_id,
-          currentState: res.notification.node_state.currentState,
-          latitude: res.notification.node_state.latitude,
-          longitude: res.notification.node_state.longitude,
-        }
-      : null,
   };
 };
 
@@ -51,19 +42,10 @@ export const dtoToNotificationsDto = (
       description: notification.description,
       type: notification.type,
       scope: notification.scope,
-      is_read: notification.is_read,
-      created_at: notification.created_at,
-      nodeStateId: notification.nodeStateId,
-      nodeState: notification.nodeState
-        ? {
-            id: notification.nodeState.id,
-            name: notification.nodeState.name,
-            node_id: notification.nodeState.node_id,
-            latitude: notification.nodeState.latitude,
-            longitude: notification.nodeState.longitude,
-            currentState: notification.nodeState.currentState,
-          }
-        : null,
+      isRead: notification.is_read,
+      isActionable: notification.is_actionable,
+      resourceId: notification.resource_id,
+      createdAt: notification.created_at,
     })),
   };
 };

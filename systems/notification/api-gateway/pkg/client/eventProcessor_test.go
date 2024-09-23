@@ -20,73 +20,72 @@ import (
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
-
-var en = &mocks.EventToNotifyServiceClient{}
-var nId = uuid.NewV4().String()
-
-func TestEventProcessor_Get(t *testing.T) {
-	notifReq := &pb.GetRequest{
-		Id: nId,
-	}
-
-	data := &pb.GetResponse{
-		Notification: &pb.Notification{
-
-			Id:          uuid.NewV4().String(),
-			Title:       "Titel 1",
-			Description: "Description 1",
-			Type:        upb.NotificationType_NOTIF_INFO,
-			Scope:       upb.NotificationScope_SCOPE_ORG,
-			OrgId:       orgId,
-		},
-	}
-
-	en.On("Get", mock.Anything, notifReq).Return(data, nil)
-
-	c := client.NewEventToNotifyFromClient(en)
-
-	resp, err := c.Get(nId)
-	assert.NoError(t, err)
-
-	if assert.NotNil(t, resp) {
-		assert.Equal(t, &data.Notification, &resp.Notification)
-	}
-
-	en.AssertExpectations(t)
-}
-
-func TestEventProcessor_GetAll(t *testing.T) {
-	notifReq := &pb.GetAllRequest{
-		OrgId:        orgId,
-		NetworkId:    nwId,
-		SubscriberId: subId,
-		UserId:       uId,
-		NodeId: 	  nId,
-	}
-
-	data := &pb.GetAllResponse{
-		Notifications: []*pb.Notifications{
-			{
-				Id:          uuid.NewV4().String(),
-				Title:       "Titel 1",
-				Description: "Description 1",
-				Type:        upb.NotificationType_NOTIF_INFO.Enum().String(),
-				Scope:       upb.NotificationScope_SCOPE_ORG.Enum().String(),
-				IsRead:      false,
-			},
-		},
-	}
-
-	en.On("GetAll", mock.Anything, notifReq).Return(data, nil)
-
-	c := client.NewEventToNotifyFromClient(en)
-
-	resp, err := c.GetAll(orgId, nwId, subId, uId,nId)
-	assert.NoError(t, err)
-
-	if assert.NotNil(t, resp) {
-		assert.Equal(t, data.Notifications, resp.Notifications)
-	}
-
-	en.AssertExpectations(t)
-}
+ 
+ var en = &mocks.EventToNotifyServiceClient{}
+ var nId = uuid.NewV4().String()
+ 
+ func TestEventProcessor_Get(t *testing.T) {
+	 notifReq := &pb.GetRequest{
+		 Id: nId,
+	 }
+ 
+	 data := &pb.GetResponse{
+		 Notification: &pb.Notification{
+ 
+			 Id:          uuid.NewV4().String(),
+			 Title:       "Titel 1",
+			 Description: "Description 1",
+			 Type:        upb.NotificationType_NOTIF_INFO,
+			 Scope:       upb.NotificationScope_SCOPE_ORG,
+			 OrgId:       orgId,
+		 },
+	 }
+ 
+	 en.On("Get", mock.Anything, notifReq).Return(data, nil)
+ 
+	 c := client.NewEventToNotifyFromClient(en)
+ 
+	 resp, err := c.Get(nId)
+	 assert.NoError(t, err)
+ 
+	 if assert.NotNil(t, resp) {
+		 assert.Equal(t, &data.Notification, &resp.Notification)
+	 }
+ 
+	 en.AssertExpectations(t)
+ }
+ 
+ func TestEventProcessor_GetAll(t *testing.T) {
+	 notifReq := &pb.GetAllRequest{
+		 OrgId:        orgId,
+		 NetworkId:    nwId,
+		 SubscriberId: subId,
+		 UserId:       uId,
+	 }
+ 
+	 data := &pb.GetAllResponse{
+		 Notifications: []*pb.Notifications{
+			 {
+				 Id:          uuid.NewV4().String(),
+				 Title:       "Titel 1",
+				 Description: "Description 1",
+				 Type:        upb.NotificationType_NOTIF_INFO.Enum().String(),
+				 Scope:       upb.NotificationScope_SCOPE_ORG.Enum().String(),
+				 IsRead:      false,
+			 },
+		 },
+	 }
+ 
+	 en.On("GetAll", mock.Anything, notifReq).Return(data, nil)
+ 
+	 c := client.NewEventToNotifyFromClient(en)
+ 
+	 resp, err := c.GetAll(orgId, nwId, subId, uId)
+	 assert.NoError(t, err)
+ 
+	 if assert.NotNil(t, resp) {
+		 assert.Equal(t, data.Notifications, resp.Notifications)
+	 }
+ 
+	 en.AssertExpectations(t)
+ }

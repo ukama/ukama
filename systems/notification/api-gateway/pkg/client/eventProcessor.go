@@ -18,74 +18,73 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
-
-type EventNotification interface {
-	Get(id string) (*pb.GetResponse, error)
-	GetAll(orgId string, networkId string, subscriberId string, userId string,nodeId string) (*pb.GetAllResponse, error)
-	UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error)
-}
-
-type eventNotification struct {
-	conn    *grpc.ClientConn
-	timeout time.Duration
-	client  pb.EventToNotifyServiceClient
-	host    string
-}
-
-func NewEventNotification(host string, timeout time.Duration) (*eventNotification, error) {
-
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-
-		return nil, err
-	}
-
-	client := pb.NewEventToNotifyServiceClient(conn)
-
-	return &eventNotification{
-		conn:    conn,
-		client:  client,
-		timeout: timeout,
-		host:    host,
-	}, nil
-}
-
-func NewEventToNotifyFromClient(client pb.EventToNotifyServiceClient) *eventNotification {
-	return &eventNotification{
-		host:    "localhost",
-		timeout: 10 * time.Second,
-		conn:    nil,
-		client:  client,
-	}
-}
-
-func (m *eventNotification) Close() {
-	m.conn.Close()
-}
-
-func (n *eventNotification) Get(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.Get(ctx, &pb.GetRequest{Id: id})
-}
-
-func (n *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
-}
-
-func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string,nodeId string) (*pb.GetAllResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.GetAll(ctx, &pb.GetAllRequest{OrgId: orgId,
-		NetworkId:    networkId,
-		SubscriberId: subscriberId,
-		UserId:       userId,
-		NodeId:		  nodeId,
-	})
-}
+ 
+ type EventNotification interface {
+	 Get(id string) (*pb.GetResponse, error)
+	 GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error)
+	 UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error)
+ }
+ 
+ type eventNotification struct {
+	 conn    *grpc.ClientConn
+	 timeout time.Duration
+	 client  pb.EventToNotifyServiceClient
+	 host    string
+ }
+ 
+ func NewEventNotification(host string, timeout time.Duration) (*eventNotification, error) {
+ 
+	 conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	 if err != nil {
+		 log.Fatalf("did not connect: %v", err)
+ 
+		 return nil, err
+	 }
+ 
+	 client := pb.NewEventToNotifyServiceClient(conn)
+ 
+	 return &eventNotification{
+		 conn:    conn,
+		 client:  client,
+		 timeout: timeout,
+		 host:    host,
+	 }, nil
+ }
+ 
+ func NewEventToNotifyFromClient(client pb.EventToNotifyServiceClient) *eventNotification {
+	 return &eventNotification{
+		 host:    "localhost",
+		 timeout: 10 * time.Second,
+		 conn:    nil,
+		 client:  client,
+	 }
+ }
+ 
+ func (m *eventNotification) Close() {
+	 m.conn.Close()
+ }
+ 
+ func (n *eventNotification) Get(id string) (*pb.GetResponse, error) {
+	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	 defer cancel()
+ 
+	 return n.client.Get(ctx, &pb.GetRequest{Id: id})
+ }
+ 
+ func (n *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error) {
+	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	 defer cancel()
+ 
+	 return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
+ }
+ 
+ func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error) {
+	 ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	 defer cancel()
+ 
+	 return n.client.GetAll(ctx, &pb.GetAllRequest{OrgId: orgId,
+		 NetworkId:    networkId,
+		 SubscriberId: subscriberId,
+		 UserId:       userId,
+	 })
+ }

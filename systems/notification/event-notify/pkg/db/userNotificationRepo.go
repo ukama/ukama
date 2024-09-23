@@ -38,15 +38,29 @@ import (
  }
  
  func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications, error) {
-	 var notifications []*Notifications
-	 q := fmt.Sprintf("SELECT user_notifications.is_read,notifications.title,notifications.description,notifications.scope,notifications.type,notifications.id,notifications.created_at,notifications.updated_at FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id WHERE user_notifications.user_id = '%s';", id)
-	 d := r.Db.GetGormDb().Exec(q).Find(&notifications)
-	 if d.Error != nil {
-		 return nil, d.Error
-	 }
-	 return notifications, nil
- }
- 
+    var notifications []*Notifications
+    q := fmt.Sprintf(`
+        SELECT 
+            user_notifications.is_read,
+            notifications.title,
+            notifications.description,
+            notifications.scope,
+            notifications.type,
+            notifications.id,
+            notifications.created_at,
+            notifications.updated_at,
+            notifications.is_actionable,
+            notifications.resource_id
+        FROM user_notifications 
+        INNER JOIN notifications ON user_notifications.notification_id = notifications.id 
+        WHERE user_notifications.user_id = '%s';`, id)
+    
+    d := r.Db.GetGormDb().Raw(q).Scan(&notifications)
+    if d.Error != nil {
+        return nil, d.Error
+    }
+    return notifications, nil
+}
  func (r *userNotificationRepo) Update(id uuid.UUID, isRead bool) error {
 	 err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		 if err := tx.Model(&UserNotification{}).Where("notification_id = ?", id).Update("is_read", isRead).Error; err != nil {

@@ -48,5 +48,7 @@
      string subscriberId = 8 [json_name = "subscriber_id"];
      string userId = 9 [json_name = "user_id"];
      bool isRead = 10 [json_name = "is_read"];
-     string createdAt = 11 [json_name = "created_at"];
+     bool isActionable= 11 [json_name = "is_actionable"];
+     string resourceId= 12 [json_name = "resource_id"];
+     string createdAt = 13 [json_name = "created_at"];
  }

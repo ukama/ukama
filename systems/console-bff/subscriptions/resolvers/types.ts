@@ -165,29 +165,6 @@ export class SubMetricByTabInput {
 }
 
 @ObjectType()
-export class NodeStateAPIResDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  node_id: string;
-
-  @Field()
-  currentState: string;
-
-  @Field()
-  latitude: number;
-
-  @Field()
-  longitude: number;
-
-  @Field()
-  created_at: string;
-}
-@ObjectType()
 export class NotificationsAPIResDto {
   @Field()
   id: string;
@@ -205,13 +182,13 @@ export class NotificationsAPIResDto {
   scope: NOTIFICATION_SCOPE;
 
   @Field()
-  nodeStateId: string;
-
-  @Field(() => NodeStateAPIResDto, { nullable: true })
-  nodeState: NodeStateAPIResDto | null;
+  is_read: boolean;
 
   @Field()
-  is_read: boolean;
+  is_actionable: boolean;
+
+  @Field()
+  resource_id: string;
 
   @Field()
   created_at: string;
@@ -221,29 +198,6 @@ export class NotificationsAPIResDto {
 export class NotificationsAPIRes {
   @Field(() => [NotificationsAPIResDto])
   notifications: NotificationsAPIResDto[];
-}
-@ObjectType()
-export class NodeStateResDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  nodeId: string;
-
-  @Field()
-  currentState: string;
-
-  @Field()
-  latitude: number;
-
-  @Field()
-  longitude: number;
-
-  @Field()
-  createdAt: string;
 }
 
 @ObjectType()
@@ -267,13 +221,13 @@ export class NotificationsResDto {
   scope: NOTIFICATION_SCOPE;
 
   @Field()
-  nodeStateId: string;
-
-  @Field(() => NodeStateResDto, { nullable: true })
-  nodeState: NodeStateResDto | null;
+  isRead: boolean;
 
   @Field()
-  isRead: boolean;
+  isActionable: boolean;
+
+  @Field()
+  resourceId: string;
 }
 
 @ObjectType()
@@ -302,9 +256,6 @@ export class GetNotificationsInput {
 
   @Field()
   subscriberId: string;
-
-  @Field()
-  nodeId: string;
 
   @Field(() => ROLE_TYPE)
   role: ROLE_TYPE;

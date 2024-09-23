@@ -39,7 +39,6 @@ export type GetMetricByTabInput = {
 
 export type GetNotificationsInput = {
   networkId: Scalars['String']['input'];
-  nodeId: Scalars['String']['input'];
   orgId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
   role: Role_Type;
@@ -96,17 +95,6 @@ export enum Notification_Type {
   NotifWarning = 'NOTIF_WARNING'
 }
 
-export type NodeStateResDto = {
-  __typename?: 'NodeStateResDto';
-  createdAt: Scalars['String']['output'];
-  currentState: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  latitude: Scalars['Float']['output'];
-  longitude: Scalars['Float']['output'];
-  name: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
-};
-
 export type NotificationsRes = {
   __typename?: 'NotificationsRes';
   notifications: Array<NotificationsResDto>;
@@ -117,9 +105,9 @@ export type NotificationsResDto = {
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  isActionable: Scalars['Boolean']['output'];
   isRead: Scalars['Boolean']['output'];
-  nodeState?: Maybe<NodeStateResDto>;
-  nodeStateId: Scalars['String']['output'];
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -175,14 +163,14 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number } | null }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, isActionable: boolean, resourceId: string }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   data: GetNotificationsInput;
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, nodeStateId: string, nodeState?: { __typename?: 'NodeStateResDto', id: string, nodeId: string, name: string, currentState: string, latitude: number, longitude: number, createdAt: string } | null } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string, isActionable: boolean, resourceId: string } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -214,15 +202,8 @@ export const GetNotificationsDocument = gql`
       isRead
       createdAt
       description
-      nodeStateId
-      nodeState {
-        id
-        nodeId
-        name
-        currentState
-        latitude
-        longitude
-      }
+      isActionable
+      resourceId
     }
   }
 }
@@ -270,16 +251,8 @@ export const NotificationSubscriptionDocument = gql`
     isRead
     createdAt
     description
-    nodeStateId
-    nodeState {
-      id
-      nodeId
-      name
-      currentState
-      latitude
-      longitude
-      createdAt
-    }
+    isActionable
+    resourceId
   }
 }
     `;

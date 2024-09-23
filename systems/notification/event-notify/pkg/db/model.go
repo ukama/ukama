@@ -28,6 +28,7 @@ import (
 	 Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	 Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	 ResourceId   string
+	 IsActionable bool `gorm:"default:false"` 
 	 OrgId        string
 	 NetworkId    string
 	 SubscriberId string
@@ -69,6 +70,8 @@ import (
 	 Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	 Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	 IsRead      bool                    `gorm:"default:false"`
+	 IsActionable bool `gorm:"default:false"` 
+	 ResourceId string
 	 CreatedAt   string
 	 UpdatedAt   string
  }

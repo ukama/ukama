@@ -38,10 +38,9 @@ const Page = () => {
     setIsChecked(isChecked);
   };
   const onInstallProgressComplete = () => {
-    const id = searchParams.get('nodeId') ?? 'uk-sa9001-tnode-a1-1234';
-    const lat = searchParams.get('lat') ?? '-4.322447';
-    const lng = searchParams.get('lng') ?? '15.307045';
-
+    const id = searchParams.get('nodeId');
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
     router.push(`/configure/node/${id}?lat=${lat}&lng=${lng}`);
   };
   return (

@@ -175,6 +175,8 @@ import (
 			 Description: i.Description,
 			 Type:        upb.NotificationType_name[int32(i.Type)],
 			 Scope:       upb.NotificationScope_name[int32(i.Scope)],
+			 ResourceId: i.ResourceId,
+			 IsActionable: i.IsActionable,
 			 IsRead:      i.IsRead,
 			 CreatedAt:   timestamppb.New(createdAt),
 		 }
@@ -190,6 +192,8 @@ import (
 		 Description:  notification.Description,
 		 Type:         upb.NotificationType(notification.Type),
 		 Scope:        upb.NotificationScope(notification.Scope),
+		 IsActionable: notification.IsActionable,
+		 ResourceId:   notification.ResourceId,
 		 OrgId:        notification.OrgId,
 		 NetworkId:    notification.NetworkId,
 		 SubscriberId: notification.SubscriberId,
