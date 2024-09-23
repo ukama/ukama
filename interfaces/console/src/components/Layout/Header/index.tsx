@@ -9,7 +9,6 @@
 import {
   NotificationsResDto,
   Role_Type,
-  NodeStateResDto,
 } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
@@ -33,7 +32,7 @@ interface IHeaderProps {
   onNavigate: Function;
   notifications: NotificationsResDto[];
   handleNotificationRead: (id: string) => void;
-  onConfigureSite: (nodeState: NodeStateResDto) => void;
+  onConfigureSite: (nodeId: string) => void;
 }
 
 interface AppBarProps extends MuiAppBarProps {
