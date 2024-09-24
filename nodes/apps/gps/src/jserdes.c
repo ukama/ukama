@@ -80,6 +80,7 @@ bool json_serialize_alarm_notification(JsonObj **json,
     return USYS_TRUE;
 }
 #endif
+
 /*
  * deserialize_node_info --
  *
@@ -106,7 +107,7 @@ bool json_serialize_alarm_notification(JsonObj **json,
  *}
  *
  */
-bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
+bool json_deserialize_node_id(char **nodeID, json_t *json) {
 
     json_t *jNodeInfo=NULL;
 
@@ -118,11 +119,12 @@ bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
         return USYS_FALSE;
     }
 
-    if (get_json_entry(jNodeInfo, tag, JSON_STRING,
-                       data, NULL, NULL) == USYS_FALSE) {
-        log_error("Error deserializing node info. tag: %s", tag);
+    if (get_json_entry(jNodeInfo, JTAG_UUID, JSON_STRING,
+                       nodeID, NULL, NULL) == USYS_FALSE) {
+        log_error("Error deserializing node info");
         json_log(json);
-        *data = NULL;
+        *nodeID = NULL;
+
         return USYS_FALSE;
     }
 

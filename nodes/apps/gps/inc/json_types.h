@@ -10,7 +10,7 @@
 #define JSON_TYPES_H_
 
 #define JTAG_NODE_INFO "nodeInfo"
-#define JTAG_NODE_ID   "UUID"
+#define JTAG_UUID      "UUID"
 #define JTAG_TYPE      "type"
 
 #define JTAG_SERVICE_NAME   "serviceName"

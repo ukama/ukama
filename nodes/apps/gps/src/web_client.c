@@ -6,11 +6,14 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
+#include <ulfius.h>
+
 #include "web_client.h"
 #include "json_types.h"
 #include "http_status.h"
 #include "gpsd.h"
 #include "config.h"
+#include "jserdes.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -39,16 +42,19 @@ static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
     return STATUS_OK;
 }
 
-static URequest* wc_create_http_request(char *url,
-                                        char *method,
-                                        JsonObj *body) {
+URequest* wc_create_http_request(char* httpURL,
+                                 char *urlPath,
+                                 char* method,
+                                 JsonObj* jBody) {
 
-    /* Preparing Request */
-    URequest *httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
+    char urlWithEp[MAX_URL_LENGTH] = {0};
+    URequest* httpReq;
+
+    httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
     if (!httpReq) {
-      usys_log_error("Error allocating memory of size: %lu for http Request",
-                      sizeof(URequest));
-      return NULL;
+        usys_log_error("Error allocating memory of size: %lu for http Request",
+                       sizeof(URequest));
+        return NULL;
     }
 
     if (ulfius_init_request(httpReq)) {
@@ -56,14 +62,26 @@ static URequest* wc_create_http_request(char *url,
         return NULL;
     }
 
+    sprintf(urlWithEp, "%s/%s", httpURL, urlPath);
     ulfius_set_request_properties(httpReq,
-                       U_OPT_HTTP_VERB, method,
-                       U_OPT_HTTP_URL, url,
-                       U_OPT_TIMEOUT, 20,
-                       U_OPT_NONE);
+                                  U_OPT_HTTP_VERB, method,
+                                  U_OPT_HTTP_URL, urlWithEp,
+                                  U_OPT_HEADER_PARAMETER, "User-Agent", SERVICE_NAME,
+                                  U_OPT_TIMEOUT, 20,
+                                  U_OPT_NONE);
 
-    if (body) {
-       if (STATUS_OK != ulfius_set_json_body_request(httpReq, body)) {
+    if (urlPath) {
+        httpReq->url_path = strdup(urlPath);
+        if (httpReq->url_path == NULL) {
+            usys_log_error("Error allocating memory for URL path");
+            ulfius_clean_request(httpReq);
+            usys_free(httpReq);
+            return NULL;
+        }
+    }
+
+    if (jBody) {
+       if (STATUS_OK != ulfius_set_json_body_request(httpReq, jBody)) {
            ulfius_clean_request(httpReq);
            usys_free(httpReq);
            httpReq = NULL;
@@ -73,10 +91,10 @@ static URequest* wc_create_http_request(char *url,
     return httpReq;
 }
 
-static int wc_send_node_info_request(char *url,
+static int wc_send_node_info_request(char *httpURL,
+                                     char *urlPath,
                                      char *method,
-                                     char **nodeID,
-                                     char **nodeType) {
+                                     char **nodeID) {
 
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -84,7 +102,7 @@ static int wc_send_node_info_request(char *url,
     UResponse *httpResp = NULL;
     URequest *httpReq = NULL;
 
-    httpReq = wc_create_http_request(url, method, NULL);
+    httpReq = wc_create_http_request(httpURL, urlPath, method, NULL);
     if (!httpReq) {
         return ret;
     }
@@ -95,12 +113,11 @@ static int wc_send_node_info_request(char *url,
        goto cleanup;
     }
 
-    if (httpResp->status == HttpStatus_OK) {
+    if (httpResp->status == 200) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
-            json_deserialize_node_info(nodeID,   JTAG_NODE_ID, json);
-            json_deserialize_node_info(nodeType, JTAG_TYPE,    json);
-            if (nodeID == NULL || nodeType == NULL) {
+            ret = json_deserialize_node_id(nodeID, json);
+            if (!ret) {
                 usys_log_error("Failed to parse NodeInfo response from noded.");
                 return STATUS_NOK;
             }
@@ -111,8 +128,7 @@ static int wc_send_node_info_request(char *url,
     }
 
     json_decref(json);
-
-cleanup:
+    cleanup:
     if (httpReq) {
         ulfius_clean_request(httpReq);
         usys_free(httpReq);
@@ -125,24 +141,30 @@ cleanup:
     return ret;
 }
 
-int get_nodeid_and_type_from_noded(Config *config) {
 
-    char url[128] = {0};
+static int wc_read_node_info(Config* config) {
 
-    sprintf(url,"http://%s:%d%s",
-            DEF_NODED_HOST,
-            config->nodedPort,
-            DEF_NODED_EP);
+    int ret = STATUS_NOK;
+    char httpURL[128]={0};
 
-    if (wc_send_node_info_request(url,
-                                  "GET",
-                                  &config->nodeID,
-                                  &config->nodeType) == STATUS_NOK) {
+    sprintf(httpURL,"http://%s:%d", config->nodedHost, config->nodedPort);
+    ret = wc_send_node_info_request(httpURL, config->nodedEP, "GET", &config->nodeID);
+    if (ret) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
+        return ret;
+    }
+
+    return ret;
+}
+
+int get_nodeid_from_noded(Config *config) {
+
+    if (wc_read_node_info(config)) {
+        usys_log_error("Error reading NodeID from noded.d");
         return STATUS_NOK;
     }
 
-    usys_log_info("%s: Node ID: %s", SERVICE_NAME, config->nodeID);
+    usys_log_info("notify.d: Node ID: %s", config->nodeID);
 
     return STATUS_OK;
 }

@@ -146,6 +146,8 @@ bool start_gps_data_collection_and_processing(Config *config, pthread_t *tid) {
 
 void stop_gps_data_collection_and_processing(pthread_t tid) {
 
+    if (tid == 0) return;
+
     pthread_cancel(tid);
     pthread_join(tid, NULL);
 

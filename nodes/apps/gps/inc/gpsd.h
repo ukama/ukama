@@ -21,6 +21,7 @@
 
 #define MAX_BUFFER        512
 #define MAX_LINE_LENGTH   256
+#define MAX_URL_LENGTH    128
 #define MAX_LAT_LONG_SIZE 32
 
 #define SERVICE_NAME           SERVICE_GPS

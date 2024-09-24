@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
 
     int opt, optIdx;
 
-    char *debug   = DEF_LOG_LEVEL;
-    char *gpsHost = DEF_GPS_MODULE_HOST;
+    char *debug     = DEF_LOG_LEVEL;
+    char *gpsHost   = DEF_GPS_MODULE_HOST;
     UInst serviceInst;
     Config serviceConfig = {0};
 
@@ -158,6 +158,8 @@ int main(int argc, char **argv) {
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.gpsHost      = strdup(gpsHost);
+    serviceConfig.nodedHost    = DEF_NODED_HOST;
+    serviceConfig.nodedEP      = DEF_NODED_EP;
 
     if (!serviceConfig.servicePort ||
         !serviceConfig.nodedPort   ||
@@ -180,13 +182,17 @@ int main(int argc, char **argv) {
                        DEF_NODE_ID,
                        DEF_NODE_TYPE);
     } else {
-        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
-            usys_log_error("%s: unable to connect with node.d", SERVICE_NAME);
-            goto done;
+        if (get_nodeid_from_noded(&serviceConfig) == STATUS_NOK) {
+            usys_log_error("Unable to connect with node.d");
+            usys_free(serviceConfig.serviceName);
+            usys_free(serviceConfig.gpsHost);
+            usys_exit(1);
         }
     }
 
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
+        usys_free(serviceConfig.serviceName);
+        usys_free(serviceConfig.gpsHost);
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         usys_exit(1);
     }
@@ -203,10 +209,10 @@ int main(int argc, char **argv) {
 
     pause();
 
-done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
-    free(serviceConfig.serviceName);
+    usys_free(serviceConfig.serviceName);
+    usys_free(serviceConfig.gpsHost);
 
     stop_gps_data_collection_and_processing(tid);
     cleanup_gps_data();
