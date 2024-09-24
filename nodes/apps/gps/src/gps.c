@@ -16,10 +16,12 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 
+#include "static.h"
+
 /* main.c */
 extern GPSData *gData;
 
-static bool read_last_lat_long(char **lat, char **lon) {
+STATIC bool read_last_lat_long(char **lat, char **lon) {
 
     FILE *file = NULL;
     char line[MAX_LINE_LENGTH]      = {0};
@@ -60,7 +62,7 @@ static bool read_last_lat_long(char **lat, char **lon) {
     return USYS_TRUE;
 }
 
-static bool gps_data_collection_and_processing_thread(Config *config) {
+STATIC bool gps_data_collection_and_processing_thread(Config *config) {
 
     int ret;
     char runMe[MAX_BUFFER] = {0};
@@ -123,7 +125,7 @@ static bool gps_data_collection_and_processing_thread(Config *config) {
     return USYS_TRUE;
 }
 
-static void *gps_thread_wrapper(void* arg) {
+STATIC void *gps_thread_wrapper(void* arg) {
 
     Config* config = (Config*) arg;
     gps_data_collection_and_processing_thread(config);
