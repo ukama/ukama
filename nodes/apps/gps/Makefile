@@ -7,6 +7,7 @@
 include ../../ukamaOS/config.mk
 
 TARGET_EXEC = gps.d
+TEST_EXEC   = test_runner
 
 UKAMAOS_ROOT = ../../ukamaOS
 
@@ -40,9 +41,13 @@ CFLAGS+=-I./inc/common/
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
 
+# Coverage flags
+COVFLAGS=-fprofile-arcs -ftest-coverage
+
 LDFLAGS+=-L${VENDOR_LIB} 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
+LDFLAGS+=--coverage
 
 # Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto
@@ -54,20 +59,27 @@ LIBS+=-lpthread
 LIBS+=-lusys
 
 # Soruce files
-CFILES   = $(wildcard ./src/*.c)
-OBJFILES = $(CFILES:.c=.o)
+TARGET_CFILES   = $(wildcard ./src/*.c)
+TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
+
+# skip main.c
+TEST_TARGET_CFILES = $(filter-out ./src/main.c, $(wildcard ./src/*.c))
+TEST_CFILES    = $(wildcard ./test/test_*.c)
+UNITY_CFILES   = $(VENDOR_DIR)/Unity/src/unity.c
+
+TEST_TARGET_OBJFILES = $(TEST_TARGET_CFILES:.c=.o)
+UNITY_OBJFILES = $(UNITY_CFILES:.c=.o)
+TEST_OBJFILES  = $(TEST_CFILES:.c=.o)
 
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: all clean test $(TARGET_EXEC)
 
-all: version.h gpsd
+all: version.h $(TARGET_EXEC)
 
-gpsd: $(TARGET_EXEC)
-
-$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
@@ -79,8 +91,19 @@ $(VENDOR_PKG):
 version.h:
 	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
 
+test: version.h $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES)
+	$(XCC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) \
+		$(UNITY_OBJFILES) $(LDFLAGS) $(LIBS)
+	./$(TEST_EXEC)
+
+coverage: test
+	gcov $(TARGET_CFILES)
+
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
+	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) $(TEST_EXEC) $(TEST_OBJFILES) \
+		version.h *.gcda *.gcno *.gcov src/*.gcda src/*.gcov src/*.gcno \
+		test/*.gcda test/*.gcno test/*.gcov
+
