@@ -109,7 +109,6 @@ func (sm *StateMachine) GetNextState(currentState string, events []string) (stri
 	return nextState, nil
 }
 
-// Helper function to check if a slice contains a certain item
 func contains(slice []string, item string) bool {
 	for _, a := range slice {
 		if a == item {
