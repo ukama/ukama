@@ -9,7 +9,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/num30/config"
@@ -76,10 +75,6 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-	}
-	fmt.Println("TEST DIR: ",cwd)
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewNodeStateServer(svcConf.OrgName,db.NewNodeStateRepo(gormdb),
@@ -91,7 +86,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go grpcServer.StartServer()
 
-	// go msgBusListener(mbClient)
+ go msgBusListener(mbClient)
 
 	waitForExit()
 }

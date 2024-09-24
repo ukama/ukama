@@ -100,16 +100,11 @@ func (s *NodeStateServer) AddNodeState(ctx context.Context, req *pb.AddNodeState
 func (s *NodeStateServer) GetNodeStates(ctx context.Context, req *pb.GetNodeStatesRequest) (*pb.GetNodeStatesResponse, error) {
 	log.Infof("Getting node states for Node ID: %v", req.NodeId)
 
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request cannot be nil")
-	}
-
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id: %s", err.Error())
 	}
-
 	history, err := s.sRepo.GetNodeStateHistory(nId.String())
 	if err != nil {
 		log.Errorf("Failed to get node state history: %v", err)
@@ -170,7 +165,6 @@ func (s *NodeStateServer) GetNodeStates(ctx context.Context, req *pb.GetNodeStat
 		stateHistory.NodeStates = append(stateHistory.NodeStates, state)
 	}
 
-	log.Infof("Retrieved %d node states for Node ID: %v", len(stateHistory.NodeStates), req.NodeId)
 	return stateHistory, nil
 }
 func (s *NodeStateServer) GetLatestNodeState(ctx context.Context, req *pb.GetLatestNodeStateRequest) (*pb.GetLatestNodeStateResponse, error) {
@@ -186,11 +180,6 @@ func (s *NodeStateServer) GetLatestNodeState(ctx context.Context, req *pb.GetLat
 	if err != nil {
 		log.Errorf("Failed to get latest node state: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to get latest node state: %v", err)
-	}
-
-	if latestState == nil {
-		log.Warnf("No state found for Node ID: %v", req.NodeId)
-		return nil, status.Error(codes.NotFound, "no state found for the given node ID")
 	}
 
 	NodeStateRes := &pb.NodeState{

@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
+	uk "github.com/ukama/ukama/systems/common/ukama"
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -80,6 +81,14 @@ func (n *NodeStateEventServer) EventNodeState(ctx context.Context, e *epb.Event)
 		}
 
 		_ = n.ProcessEvent(&c, msg.NodeId)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventConfigUpdate]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventConfigUpdate]
+		msg, err := epb.UnmarshalNodeConfigUpdateEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = n.ProcessEvent(&c, msg.NodeId)
 	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventOnline]):
 		c := evt.NodeEventToEventConfig[evt.NodeEventOnline]
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
@@ -106,16 +115,16 @@ func (n *NodeStateEventServer) EventNodeState(ctx context.Context, e *epb.Event)
 
 func (n *NodeStateEventServer) ProcessEvent(evt *evt.NodeEventConfig, nodeId string) error {
 	currentState, err := n.s.GetLatestNodeState(context.Background(), &pb.GetLatestNodeStateRequest{NodeId: nodeId})
-	currentStateName := ""
+	var currentStateName uk.NodeStateEnum
 	if err != nil {
 		log.Errorf("Error getting current state: %v", err)
 		return err
 	}
 	if currentState == nil {
-		initialState := "unknown"
+		initialState := uk.StateUnknown
 		_, err = n.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
 			NodeId:       nodeId,
-			CurrentState: initialState,
+			CurrentState: initialState.String(),
 			Events:       []string{},
 		})
 		currentStateName = initialState
@@ -125,19 +134,19 @@ func (n *NodeStateEventServer) ProcessEvent(evt *evt.NodeEventConfig, nodeId str
 		}
 	}
 
-	currentStateName = currentState.NodeState.CurrentState
+	currentStateName = uk.ParseNodeStateEnum(currentState.NodeState.CurrentState)
 
 	receivedEvents := []string{evt.Name}
 
 	latestState := currentStateName
 
-	nextState, err := n.s.stateMachine.GetNextState(latestState, receivedEvents)
+	nextState, err := n.s.stateMachine.GetNextState(latestState.String(), receivedEvents)
 	if err != nil {
 		log.Errorf("Error getting next state: %v", err)
 		return fmt.Errorf("failed to determine next state: %v", err)
 	}
 
-	if nextState != latestState {
+	if nextState != latestState.String() {
 		_, err = n.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
 			NodeId:       nodeId,
 			CurrentState: nextState,
