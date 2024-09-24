@@ -2,6 +2,12 @@ package events
 
 type NodeEventId int
 
+type NodeEventConfig struct {
+	Key        NodeEventId
+	Name       string
+	RoutingKey string
+}
+
 const (
 	NodeEventInvalid NodeEventId = iota
 	NodeEventCreate
@@ -9,6 +15,7 @@ const (
 	NodeEventRelease
 	NodeEventOnline
 	NodeEventOffline
+	NodeEventConfigUpdate
 )
 
 var NodeEventRoutingKey = map[NodeEventId]string{
@@ -17,6 +24,7 @@ var NodeEventRoutingKey = map[NodeEventId]string{
 	NodeEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
 	NodeEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	NodeEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+	NodeEventConfigUpdate: "event.node.local.{{ .Org}}.messaging.mesh.config.create",
 }
 
 var NodeEventToEventConfig = map[NodeEventId]NodeEventConfig{
@@ -24,6 +32,11 @@ var NodeEventToEventConfig = map[NodeEventId]NodeEventConfig{
 		Key:        NodeEventCreate,
 		Name:       "online",
 		RoutingKey: NodeEventRoutingKey[NodeEventCreate],
+	},
+	NodeEventConfigUpdate: {
+		Key:        NodeEventConfigUpdate,
+		Name:       "config",
+		RoutingKey: NodeEventRoutingKey[NodeEventConfigUpdate],
 	},
 	NodeEventAssign: {
 		Key:        NodeEventAssign,
@@ -47,8 +60,3 @@ var NodeEventToEventConfig = map[NodeEventId]NodeEventConfig{
 	},
 }
 
-type NodeEventConfig struct {
-	Key        NodeEventId
-	Name       string
-	RoutingKey string
-}

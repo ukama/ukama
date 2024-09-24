@@ -1,4 +1,3 @@
-
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +7,12 @@
  */
 
 package events
+
 import (
-"google.golang.org/protobuf/types/known/anypb"
-"google.golang.org/protobuf/proto"
-log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 func UnmarshalEventNetworkDelete(msg *anypb.Any, emsg string) (*EventNetworkDelete, error) {
   p := &EventNetworkDelete{}
@@ -835,6 +836,16 @@ func UnmarshalSimRemoved(msg *anypb.Any, emsg string) (*SimRemoved, error) {
 
 func UnmarshalNodeCreatedEvent(msg *anypb.Any, emsg string) (*NodeCreatedEvent, error) {
   p := &NodeCreatedEvent{}
+  err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+  if err != nil {
+    log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+    return nil, err
+  }
+  return p, nil
+}
+
+func UnmarshalNodeConfigUpdateEvent(msg *anypb.Any, emsg string) (*eCfgPb.NodeConfigUpdateEvent, error) {
+  p := &eCfgPb.NodeConfigUpdateEvent{}
   err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
   if err != nil {
     log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
