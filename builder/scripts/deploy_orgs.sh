@@ -325,8 +325,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then
-                sed -i '' '/- 4446:4446/d' docker-compose.yml # SUBSCRIBER MAILSERVER
-                sed -i '' '/- 4447:4447/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4446:4436/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4447:4437/d' docker-compose.yml # SUBSCRIBER MAILSERVER
                 sed -i '' '/- 4423:4423/d' docker-compose.yml # SUBSCRIBER AUTH
                 sed -i '' '/- 4424:4424/d' docker-compose.yml # SUBSCRIBER AUTH
             fi
@@ -448,6 +448,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-org-1
+        docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-subscriber-auth-1
+        docker network connect ${ORGNAME}_ukama-net subscriber-subscriber-bff-1
         
         echo  "$TAG Updateing inventory for ${ORGNAME}..."
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
