@@ -27,16 +27,27 @@ type Config struct {
 	ConfigPath	     string             `default:"pkg/nodeState.json"`
 }
 
+
+
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{
 			DbName: name,
 		},
+
 		Service: uconf.LoadServiceHostConfig(name),
+
 		MsgClient: &uconf.MsgClient{
-			Timeout: 7 * time.Second,
+			Host:    "msg-client-state:9095",
+			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.registry.node.node.create",
+				"event.cloud.local.{{ .Org}}.registry.node.node.assign",
+				"event.cloud.local.{{ .Org}}.registry.node.node.release",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+				"event.cloud.local.{{ .Org}}.registry.node.node.assign",
+			},
 		},
 	}
-
 }
-

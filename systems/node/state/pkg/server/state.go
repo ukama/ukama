@@ -77,7 +77,7 @@ func (s *NodeStateServer) AddNodeState(ctx context.Context, req *pb.AddNodeState
 	newNodeState := &db.NodeState{
 		Id:           uuid.NewV4(),
 		NodeId:       nId.String(),
-		CurrentState: nextState,
+		CurrentState: ukama.ParseNodeStateEnum(nextState),
 		SubState:     req.SubState,
 		Events:       events,
 		Severity:     req.Severity,
@@ -127,7 +127,7 @@ func (s *NodeStateServer) GetNodeStates(ctx context.Context, req *pb.GetNodeStat
 		NodeStateRes := &pb.NodeState{
 			Id:           nodeState.Id.String(),
 			NodeId:       nodeState.NodeId,
-			CurrentState: nodeState.CurrentState,
+			CurrentState: nodeState.CurrentState.String(),
 			SubState:     nodeState.SubState,
 			Events:       nodeState.Events,
 			Severity:     nodeState.Severity,
@@ -196,7 +196,7 @@ func (s *NodeStateServer) GetLatestNodeState(ctx context.Context, req *pb.GetLat
 	NodeStateRes := &pb.NodeState{
 		Id:           latestState.Id.String(),
 		NodeId:       latestState.NodeId,
-		CurrentState: latestState.CurrentState,
+		CurrentState: latestState.CurrentState.String(),
 		SubState:     latestState.SubState,
 		Events:       latestState.Events,
 		Severity:     latestState.Severity,

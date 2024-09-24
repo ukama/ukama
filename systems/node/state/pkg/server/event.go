@@ -9,14 +9,13 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
 
+	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
@@ -52,65 +51,52 @@ func NewNodeStateEventServer(orgName string, s *NodeStateServer, msgBus mb.MsgBu
 	}
 }
 
-func (es *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *NodeStateEventServer) EventNodeState(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
-		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
-		if err != nil {
-			return nil, err
-		}
-		// Handle Org Add event
-		jmsg, err := json.Marshal(msg)
-		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
-		}
-
-		_ = es.ProcessEvent(&c, msg.Id, jmsg)
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
-		c := evt.EventToEventConfig[evt.EventNodeAssign]
-		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
-		if err != nil {
-			return nil, err
-		}
-		// Handle Org Add event
-		jmsg, err := json.Marshal(msg)
-		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
-		}
-
-		_ = es.ProcessEvent(&c, msg.Id, jmsg)
-
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
-		c := evt.EventToEventConfig[evt.EventNodeRelease]
-		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
-		if err != nil {
-			return nil, err
-		}
-		// Handle Org Add event
-		jmsg, err := json.Marshal(msg)
-		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
-		}
-
-		_ = es.ProcessEvent(&c, msg.Id, jmsg)
-
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
-		msg, err := epb.UnmarshalEventUserCreate(e.Msg, c.Name)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventCreate]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventCreate]
+		msg, err := epb.UnmarshalNodeCreatedEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		// Handle Org Add event
-		jmsg, err := json.Marshal(msg)
+		_ = n.ProcessEvent(&c, msg.NodeId)
+
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventAssign]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventAssign]
+		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			return nil, err
 		}
 
-		_ = es.ProcessEvent(&c, es.orgName, jmsg)
+		_ = n.ProcessEvent(&c, msg.NodeId)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventOffline]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventOffline]
+		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = n.ProcessEvent(&c, msg.NodeId)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventOnline]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventOnline]
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = n.ProcessEvent(&c, msg.NodeId)
+
+	case msgbus.PrepareRoute(n.orgName, evt.NodeEventRoutingKey[evt.NodeEventRelease]):
+		c := evt.NodeEventToEventConfig[evt.NodeEventRelease]
+		msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		_ = n.ProcessEvent(&c, msg.NodeId)
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -118,8 +104,8 @@ func (es *NodeStateEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	return &epb.EventResponse{}, nil
 }
 
-func (es *NodeStateEventServer) ProcessEvent(c *evt.EventConfig, nodeId string, rawMsg json.RawMessage) error {
-	currentState, err := es.s.GetLatestNodeState(context.Background(), &pb.GetLatestNodeStateRequest{NodeId: nodeId})
+func (n *NodeStateEventServer) ProcessEvent(evt *evt.NodeEventConfig, nodeId string) error {
+	currentState, err := n.s.GetLatestNodeState(context.Background(), &pb.GetLatestNodeStateRequest{NodeId: nodeId})
 	currentStateName := ""
 	if err != nil {
 		log.Errorf("Error getting current state: %v", err)
@@ -127,7 +113,7 @@ func (es *NodeStateEventServer) ProcessEvent(c *evt.EventConfig, nodeId string, 
 	}
 	if currentState == nil {
 		initialState := "unknown"
-		_, err = es.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
+		_, err = n.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
 			NodeId:       nodeId,
 			CurrentState: initialState,
 			Events:       []string{},
@@ -141,18 +127,18 @@ func (es *NodeStateEventServer) ProcessEvent(c *evt.EventConfig, nodeId string, 
 
 	currentStateName = currentState.NodeState.CurrentState
 
-	receivedEvents := []string{c.Name}
+	receivedEvents := []string{evt.Name}
 
 	latestState := currentStateName
 
-	nextState, err := es.s.stateMachine.GetNextState(latestState, receivedEvents)
+	nextState, err := n.s.stateMachine.GetNextState(latestState, receivedEvents)
 	if err != nil {
 		log.Errorf("Error getting next state: %v", err)
 		return fmt.Errorf("failed to determine next state: %v", err)
 	}
 
 	if nextState != latestState {
-		_, err = es.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
+		_, err = n.s.AddNodeState(context.Background(), &pb.AddNodeStateRequest{
 			NodeId:       nodeId,
 			CurrentState: nextState,
 			Events:       receivedEvents,
@@ -165,7 +151,7 @@ func (es *NodeStateEventServer) ProcessEvent(c *evt.EventConfig, nodeId string, 
 		log.Infof("Successfully processed events %v, new state: %s", receivedEvents, nextState)
 		receivedEvents = nil
 	} else {
-		log.Infof("Event %s processed, state remains: %s", c.Name, latestState)
+		log.Infof("Event %s processed, state remains: %s", evt, latestState)
 	}
 
 	return nil
