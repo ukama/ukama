@@ -177,8 +177,8 @@ services:
  subscriber-mailslurper:
   image: oryd/mailslurper:latest-smtps
   ports:
-   - 4446:4446
-   - 4447:4447
+   - 4446:4436
+   - 4447:4437
   networks:
    - ukama-net
 
