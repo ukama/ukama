@@ -32,6 +32,7 @@ extern "C" {
 #define SERVICE_REMOTE        "remote"
 #define SERVICE_BOOTSTRAP_REMOTE "bootstrap-remote"
 #define SERVICE_WIMC_AGENT    "wimc-agent"
+#define SERVICE_GPS           "gps"
 
 #ifdef __cplusplus
 }
