@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package action
+package scan
 
 import (
 	"fmt"

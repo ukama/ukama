@@ -18,7 +18,6 @@
 **/.idea/*
 **/.vscode/*
 **/bin/*
-<<<<<<< HEAD
 node_modules
 
 systems/data-plan/base-rate/cover.
