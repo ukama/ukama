@@ -91,6 +91,7 @@
 [submodule "nodes/ukamaOS/firmware"]
 	path = nodes/ukamaOS/firmware
 	url = https://github.com/ukama/firmware.git
+	branch = ukama-anode-latest
 [submodule "nodes/ukamaOS/os"]
 	path = nodes/ukamaOS/os
 	url = https://github.com/ukama/os.git
