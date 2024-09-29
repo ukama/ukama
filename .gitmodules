@@ -46,12 +46,9 @@
 [submodule "nodes/ukamaOS/distro/vendor/iproute2"]
 	path = nodes/ukamaOS/distro/vendor/iproute2
 	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
-[submodule "nodes/ukamaOS/distro/tools/Unity"]
-	path = nodes/ukamaOS/distro/tools/Unity
-	url = https://github.com/ThrowTheSwitch/Unity.git
 [submodule "systems/planner/Signal-Server"]
-        path = systems/planner/Signal-Server
-        url = https://github.com/Cloud-RF/Signal-Server.git
+    path = systems/planner/Signal-Server
+    url = https://github.com/Cloud-RF/Signal-Server.git
 [submodule "nodes/ukamaOS/distro/vendor/libunistring"]
 	path = nodes/ukamaOS/distro/vendor/libunistring
 	url = https://github.com/ukama/libunistring.git
