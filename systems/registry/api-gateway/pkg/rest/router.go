@@ -90,7 +90,7 @@ type member interface {
 type node interface {
 	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
-	GetAll(free bool) (*nodepb.GetAllResponse, error)
+	GetAll(free bool) (*nodepb.GetNodesResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
