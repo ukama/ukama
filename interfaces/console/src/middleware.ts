@@ -151,7 +151,10 @@ const middleware = async (request: NextRequest) => {
 
   if (!session) {
     return NextResponse.redirect(
-      new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+      new URL(
+        `/auth/login?return_to=${request.url}`,
+        process.env.NEXT_PUBLIC_AUTH_APP_URL,
+      ),
     );
   }
 
