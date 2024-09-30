@@ -86,11 +86,11 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetAll(free bool) (*pb.GetAllResponse, error) {
+func (n *Node) GetAll(free bool) (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.GetAll(ctx, &pb.GetAllRequest{
+	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{
 		Free: free,
 	})
 	if err != nil {

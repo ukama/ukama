@@ -11,7 +11,6 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
@@ -35,20 +34,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-var serviceConfig = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-
 	initConfig()
-	metrics.StartMetricsServer(serviceConfig.Metrics)
-
-	nodeDb := initDb()
-	runGrpcServer(nodeDb)
+	siteDb := initDb()
+	runGrpcServer(siteDb)
 }
 
-// initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
+	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -58,20 +54,16 @@ func initConfig() {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
-
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
-
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-
-	err := d.Init(&db.Node{}, &db.NodeStatus{}, &db.Site{})
+	err := d.Init(&db.Site{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
-
 	return d
 }
 
@@ -111,6 +103,8 @@ func runGrpcServer(gormdb sql.Db) {
 	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
+
+	waitForExit()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
@@ -122,4 +116,19 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }

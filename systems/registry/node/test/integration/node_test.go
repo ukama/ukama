@@ -32,7 +32,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	uconf "github.com/ukama/ukama/systems/common/config"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -101,7 +100,7 @@ func Test_FullFlow(t *testing.T) {
 
 		r, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
 			NodeId: node.String(),
-			State:  db.Offline.String(),
+			State:  ukama.Offline.String(),
 		})
 
 		handleResponse(tt, err, r)
@@ -110,7 +109,7 @@ func Test_FullFlow(t *testing.T) {
 			NodeId: node.String()})
 
 		handleResponse(tt, err, nodeResp)
-		assert.Equal(tt, db.Unknown.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(tt, ukama.Unknown.String(), nodeResp.Node.Status.Connectivity)
 		assert.Equal(tt, node.GetNodeType(), nodeResp.Node.Type)
 	})
 
@@ -218,7 +217,7 @@ func Test_Listener(t *testing.T) {
 
 	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
 		NodeId: nodeID,
-		State:  db.Offline.String()})
+		State:  ukama.Offline.String()})
 
 	if err != nil {
 		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
@@ -235,7 +234,7 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, db.Offline.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.Offline.String(), nodeResp.Node.Status.Connectivity)
 	}
 }
 
