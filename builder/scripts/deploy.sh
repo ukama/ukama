@@ -41,6 +41,24 @@ fi
 OWNERAUTHID=""
 OWNERID=$(uuidgen)
 
+function buildSystems() {
+    echo  "$TAG Building systems..."
+    ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
+}
+
+while getopts "b" opt; do
+    case ${opt} in
+        b )
+            buildSystems
+            ;;
+        \? )
+            echo "Usage: cmd [-b]"
+            exit 1
+            ;;
+    esac
+done
+
+
 function set_env() {
     export OWNERID=$OWNERID
     export OWNERAUTHID=$OWNERAUTHID
@@ -165,6 +183,57 @@ IS_INVENTORY_SYS=false
 INVENTORY_SYS_KEY="inventory"
 IS_INIT_SYS="init"
 
+cleanup() {
+    echo  "$TAG Cleaning up..."
+    cd $root_dir
+    cd ../../systems
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        if [ -d ".temp" ]; then
+            rm -rf docker-compose.yml
+            mv ".temp/docker-compose.yml" .
+            rm -rf ".temp"
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files(){
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        mkdir -p ".temp"
+        cp docker-compose.yml ".temp"
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "s/build: \.\.\/services\/initClient/image: main-init/g" docker-compose.yml
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files
+
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do
     cd ~
@@ -258,5 +327,7 @@ psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
 psql $DB_URI -c "$SYS_QUERY_8"
+
+cleanup
 
 echo "$TAG Task done."
