@@ -80,14 +80,18 @@ const CellValueByType = ({
         />
       );
     case 'status':
-      return getInvitationStatusColor(row[type]);
+      return getInvitationStatusColor(
+        row[type],
+        new Date(row['expireAt']) < new Date(),
+      );
     case 'actions':
       if (
         (withStatusColumn &&
-          row['status'] === Invitation_Status.InviteAccepted) ??
-        row['status'] === Invitation_Status.InviteDeclined
+          row['status'] === Invitation_Status.InviteAccepted) ||
+        row['status'] === Invitation_Status.InviteDeclined ||
+        new Date(row['expireAt']) < new Date()
       ) {
-        return <div>none</div>;
+        return <div>-</div>;
       } else
         return (
           <OptionsPopover
