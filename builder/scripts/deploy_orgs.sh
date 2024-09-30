@@ -47,7 +47,6 @@ while getopts "b" opt; do
     case ${opt} in
         b )
             buildSystems
-            exit 0
             ;;
         \? )
             echo "Usage: cmd [-b]"
