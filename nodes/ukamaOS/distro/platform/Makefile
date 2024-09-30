@@ -24,7 +24,7 @@ VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 VENDOR_INC+=$(VENDOR_DIR)/headers/musl/
 
 # Source paths
-UNITY_ROOT := ../tools/unity
+UNITY_ROOT := $(VENDOR_DIR)/Unity
 SRC_DIRS := sys/src log/src
 INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(VENDOR_INC)
 BUILD_DIR := build
