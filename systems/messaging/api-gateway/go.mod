@@ -19,12 +19,8 @@ require (
 	github.com/loopfz/gadgeto v0.11.4
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/messaging/nns v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/node/health v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/node/node-gateway v0.0.0-20240930044106-ec3fada4b8e4
-	github.com/ukama/ukama/systems/node/notify v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.67.0
 )
