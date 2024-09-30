@@ -90,7 +90,7 @@ services:
    - MSGCLIENT_HOST=msgclient-registry:9095
    - INVITATION_SERVICE_HOST=invitation
    - INVITATION_SERVICE_PORT=9090
-   - AUTHLOGINBASEURL=http://localhost:4455/auth/login
+   - CONSOLEAPPURL=http://localhost:3000/onboarding
    - INVITATIONEXPIRYTIME=72
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080

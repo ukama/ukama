@@ -88,7 +88,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
-		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
+		serviceConfig.InvitationExpiryTime, serviceConfig.ConsoleAppURL,
 		mailerClient, orgClient, userClient, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
