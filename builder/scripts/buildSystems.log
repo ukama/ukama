@@ -1,0 +1,116 @@
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/services/msgClient/cmd/version.Version=0.0. -extldflags=-static' -gcflags=all="-N -l" -o bin/msgClient cmd/msgClient/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mservices[0m - service: [0;32mmsgClient[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/init/lookup/cmd/version.Version=0.0. -extldflags=-static' -o bin/lookup cmd/lookup/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32minit[0m - service: [0;32mlookup[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/init/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32minit[0m - service: [0;32mapi-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/int/node-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/node-gateway cmd/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32minit[0m - service: [0;32mnode-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/nucleus/org/cmd/version.Version=0.0. -extldflags=-static' -o bin/org cmd/server/main.go	
+# env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/systems/nucleus/org/cmd/version.Version=0.0. -extldflags=-static' -o bin/listener cmd/listener/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnucleus[0m - service: [0;32morg[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/nucleus/user/cmd/version.Version=0.0. -extldflags=-static' -o bin/users cmd/server/main.go	
+[38;5;39mUkama>[0m Successfully build system: [0;32mnucleus[0m - service: [0;32muser[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/nucleus/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnucleus[0m - service: [0;32mapi-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/registry/network/cmd/version.Version=0.0. -extldflags=-static' -o bin/network cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32mnetwork[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/registry/site/cmd/version.Version=0.0. -extldflags=-static' -o bin/site cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32msite[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/registry/member/cmd/version.Version=0.0. -extldflags=-static' -o bin/member cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32mmember[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64  go build -ldflags='-X github.com/ukama/ukama/systems/registry/invitation/cmd/version.Version=0.0. -extldflags=-static' -o bin/invitation cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32minvitation[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/registry/node/cmd/version.Version=0.0. -extldflags=-static' -o bin/node cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32mnode[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/registry/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mregistry[0m - service: [0;32mapi-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/data-plan/base-rate/cmd/version.Version=0.0. -extldflags=-static' -gcflags=all="-N -l" -o bin/base-rate cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mdata-plan[0m - service: [0;32mbase-rate[0m
+golangci-lint run
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/package cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mdata-plan[0m - service: [0;32mpackage[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/data-rate/rate/cmd/version.Version=0.0. -extldflags=-static' -o bin/rate cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mdata-plan[0m - service: [0;32mrate[0m
+golangci-lint run
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/data-plan/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mdata-plan[0m - service: [0;32mapi-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/registry/cmd/version.Version=0.0. -extldflags=-static' -gcflags=all="-N -l" -o bin/registry cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32msubscriber[0m - service: [0;32mregistry[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/sim-manager/cmd/version.Version=0.0. -extldflags=-static' -o bin/sim-manager cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32msubscriber[0m - service: [0;32msim-manager[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/sim-pool/cmd/version.Version=0.0. -extldflags=-static' -o bin/sim-pool cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32msubscriber[0m - service: [0;32msim-pool[0m
+golangci-lint run
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/subscriber/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32msubscriber[0m - service: [0;32mapi-gateway[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/distributor/cmd/version.Version=0.0. -extldflags=-static' -o bin/distributor cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnotification[0m - service: [0;32mdistributor[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/event-notify/cmd/version.Version=0.0. -extldflags=-static' -o bin/event-notify cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnotification[0m - service: [0;32mevent-notify[0m
+golangci-lint run
+env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/notification/mailer/cmd/version.Version=0.0. -extldflags=-static' -gcflags=all="-N -l" -o bin/mailer cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnotification[0m - service: [0;32mmailer[0m
+golangci-lint run
+Building version: "0.0."
+env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build  -ldflags '-X github.com/ukama/ukama/systems/notification/api-gateway/cmd/version.Version=0.0. -extldflags=-static' -o bin/api-gateway cmd/server/main.go
+[38;5;39mUkama>[0m Successfully build system: [0;32mnotification[0m - service: [0;32mapi-gateway[0m

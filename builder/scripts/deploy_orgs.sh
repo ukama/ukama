@@ -38,6 +38,24 @@ fi
 
 MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
 
+function buildSystems() {
+    echo  "$TAG Building systems..."
+    ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
+}
+
+while getopts "b" opt; do
+    case ${opt} in
+        b )
+            buildSystems
+            exit 0
+            ;;
+        \? )
+            echo "Usage: cmd [-b]"
+            exit 1
+            ;;
+    esac
+done
+
 jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     ORGNAME=$(echo "$ORG" | jq -r '.["org-name"]')
     echo "${TAG} Processing organization: ${YELLOW}${ORGNAME}${NC}"
