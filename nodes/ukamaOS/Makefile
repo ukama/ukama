@@ -10,7 +10,7 @@ UKAMAOSDIR := $(dir $(UKAMAOSMAKE))
 ANODE = anode
 CNODE = cnode
 HNODE = hnode
-BUILDSUBDIRS = firmware os distro 
+BUILDSUBDIRS = firmware kernel distro
 
 #Final UKAMAOS path and name
 ROOTFSDIR := _ukamafs
@@ -35,13 +35,13 @@ initramfs:
 	@echo Creating initramfs for Ukama Distro.
 	(chmod +x $(RAMFSSCRIPT))
 	($(RAMFSSCRIPT) -p $(ROOTFSPATH) -u $(TARGETBOARD))
-	
+
 #Clean
 clean:
 	@echo Starting cleaning process.
 	for dir in $(BUILDSUBDIRS); do \
 		$(MAKE) -C $$dir -f Makefile $@; \
-  	done
+	done
 	rm -rf $(ROOTFSPATH)
 	rm -rf *.img
 

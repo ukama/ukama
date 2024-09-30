@@ -14,14 +14,14 @@ UTEST:=nodeTest
 
 DISTRO_DIR:=../..
 
-# Unit test
-UNITY_ROOT:=$(DISTRO_DIR)/tools/unity
-
 # Vendor
 VENDOR_DIR:=$(DISTRO_DIR)/vendor
 VENDOR_HEADERS_DIR:=$(VENDOR_DIR)/build/include
 VENDOR_LIBS_DIR:=$(VENDOR_DIR)/build/lib
 VENDOR_LIBS64_DIR:=$(VENDOR_DIR)/build/lib64
+
+# Unit test
+UNITY_ROOT:=$(VENDOR_DIR)/Unity
 
 # Platform
 PLATFORM_DIR:=$(DISTRO_DIR)/platform
@@ -233,7 +233,7 @@ $(INVENTORY): $(INVT_OBJFILES)
 $(SCHEMA): $(SCH_OBJFILES)
 	@echo "Building $(SCHEMA)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
-	
+
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGETBIN)
 	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
@@ -247,7 +247,7 @@ $(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) $(PLATFORM_PKG)
 # Memory check
 memcheck: $(UTEST)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST)
-		
+
 # Clean all build files
 clean:
 	rm -rf $(BUILD_DIR)
