@@ -287,7 +287,15 @@ const getSimValuefromSimType = (simType: string) => {
   }
 };
 
-const getInvitationStatusColor = (status: string) => {
+const getInvitationStatusColor = (status: string, isExpired: boolean) => {
+  if (isExpired) {
+    return (
+      <Typography variant="body2" color={colors.red}>
+        Expired
+      </Typography>
+    );
+  }
+
   switch (status) {
     case Invitation_Status.InviteAccepted:
       return (
