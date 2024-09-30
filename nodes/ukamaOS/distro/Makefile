@@ -12,7 +12,6 @@ DISTRODIR := $(dir $(DISTROMAKE))
 
 #Targets for the makefile
 DISTROSUBDIRS := system addons utils
-CROSSCCDIR := tools
 PLATFORM := platform
 
 
@@ -23,17 +22,15 @@ ROOTFSPATH := $(DISTRODIR)$(ROOTFSDIR)
 endif
 
 # Compiler path
-ifneq ($(TARGETBOARD),$(LOCAL))
-$(info	Building musl based gcc for $(TARGETBOARD))
-XGCCPATH := $(DISTRODIR)tools/musl-cross-make/output/bin/
-TOOLCHAIN := $(CROSSCCDIR)
-else
-XGCCPATH = $(shell which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}')/
-$(info Skipping CC tools for $(TARGETBOARD))
-endif	
+#ifneq ($(TARGETBOARD),$(LOCAL))
+#$(info	Building musl based gcc for $(TARGETBOARD))
+#XGCCPATH := $(DISTRODIR)tools/musl-cross-make/output/bin/
+#else
+#XGCCPATH = $(shell which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}')/
+#$(info Skipping CC tools for $(TARGETBOARD))
+#endif
 
-
-.PHONY: subdirs $(DISTROSUBDIRS) $(PLATFORM) vendor $(TOOLCHAIN) clean
+.PHONY: subdirs $(DISTROSUBDIRS) $(PLATFORM) vendor clean
 
 #Exporting Varibles
 export
@@ -58,10 +55,6 @@ rootfs: vendor
 vendor: $(TOOLCHAIN)
 	$(MAKE) -C $@
 
-$(CROSSCCDIR):
-	@echo "Building musl lib based crosscompiler."
-	$(MAKE) -C $@
-
 # Clean
 clean:
 	@echo "Cleaning Distro."
@@ -70,7 +63,7 @@ clean:
 		if [ $$dir != $(CROSSCCDIR) ]; then \
 			$(MAKE) -C $$dir -f Makefile $@; \
 		fi \
-  	done
+	done
 	@echo Cleaning vendor
 	$(MAKE) -C vendor -f Makefile $@;
 
