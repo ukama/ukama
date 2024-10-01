@@ -29,7 +29,7 @@ require (
 	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/site v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.67.0
+	google.golang.org/grpc v1.67.1
 )
 
 require (
@@ -112,6 +112,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9 // indirect
-	gorm.io/gorm v1.25.11 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
