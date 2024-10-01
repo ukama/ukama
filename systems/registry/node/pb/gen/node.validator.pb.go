@@ -7,8 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -18,6 +20,9 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *AddNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *AddNodeResponse) Validate() error {
@@ -29,6 +34,9 @@ func (this *AddNodeResponse) Validate() error {
 	return nil
 }
 func (this *GetNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *GetNodeResponse) Validate() error {
@@ -39,7 +47,16 @@ func (this *GetNodeResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_GetBySiteRequest_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *GetBySiteRequest) Validate() error {
+	if !_regex_GetBySiteRequest_SiteId.MatchString(this.SiteId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SiteId))
+	}
+	if this.SiteId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
+	}
 	return nil
 }
 func (this *GetBySiteResponse) Validate() error {
@@ -79,9 +96,15 @@ func (this *GetNodesResponse) Validate() error {
 	return nil
 }
 func (this *UpdateNodeStateRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *UpdateNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *UpdateNodeResponse) Validate() error {
@@ -93,30 +116,45 @@ func (this *UpdateNodeResponse) Validate() error {
 	return nil
 }
 func (this *DeleteNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *DeleteNodeResponse) Validate() error {
 	return nil
 }
 func (this *AttachNodesRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *AttachNodesResponse) Validate() error {
 	return nil
 }
 func (this *DetachNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *DetachNodeResponse) Validate() error {
 	return nil
 }
 func (this *AddNodeToSiteRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *AddNodeToSiteResponse) Validate() error {
 	return nil
 }
 func (this *ReleaseNodeFromSiteRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
 	return nil
 }
 func (this *ReleaseNodeFromSiteResponse) Validate() error {
@@ -125,7 +163,26 @@ func (this *ReleaseNodeFromSiteResponse) Validate() error {
 func (this *NodeStatus) Validate() error {
 	return nil
 }
+
+var _regex_Site_SiteId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Site_NetworkId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *Site) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if !_regex_Site_SiteId.MatchString(this.SiteId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SiteId))
+	}
+	if this.SiteId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
+	}
+	if !_regex_Site_NetworkId.MatchString(this.NetworkId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.NetworkId))
+	}
+	if this.NetworkId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkId", fmt.Errorf(`value '%v' must not be an empty string`, this.NetworkId))
+	}
 	if this.AddedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.AddedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("AddedAt", err)
@@ -134,6 +191,9 @@ func (this *Site) Validate() error {
 	return nil
 }
 func (this *Node) Validate() error {
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
 	if this.Status != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Status); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Status", err)
