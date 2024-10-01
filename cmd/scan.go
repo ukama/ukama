@@ -18,10 +18,6 @@ import (
 	"github.com/ukama/msgcli/util"
 )
 
-const (
-	defaultOutputFormat = "json"
-)
-
 var (
 	outputFile   = os.Stdout
 	outputFormat = util.EnumParam{

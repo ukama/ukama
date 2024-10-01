@@ -9,8 +9,14 @@
 package util
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -43,4 +49,26 @@ func (p *EnumParam) Type() string {
 
 type ResultSet struct {
 	Routes []string
+}
+
+func Serialize(data interface{}, format string) (io.Writer, error) {
+	var err error
+	buf := &bytes.Buffer{}
+
+	switch format {
+	case "json":
+		enc := json.NewEncoder(buf)
+		enc.SetIndent("", "    ")
+		err = enc.Encode(data)
+	case "yaml":
+		enc := yaml.NewEncoder(buf)
+		enc.SetIndent(4)
+		err = enc.Encode(data)
+	case "toml":
+		err = toml.NewEncoder(buf).Encode(data)
+	default:
+		return nil, fmt.Errorf("specified format not supported: %v", format)
+	}
+
+	return buf, err
 }

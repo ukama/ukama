@@ -12,6 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	defaultOutputFormat = "json"
+)
+
 var eventsCmd = &cobra.Command{
 	Use:   "events",
 	Short: "Manage events",

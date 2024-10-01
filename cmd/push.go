@@ -10,6 +10,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -48,7 +49,11 @@ message client.`,
 			return err
 		}
 
-		return push.Run(org, route, msg)
+		cfg := &util.Config{
+			OutputFormat: defaultOutputFormat,
+		}
+
+		return push.Run(org, route, msg, os.Stdout, cfg)
 	},
 }
 
