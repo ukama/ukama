@@ -62,7 +62,7 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			// Host:    "msgclient-registry:9095",
+			Host:    "msgclient-registry:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",

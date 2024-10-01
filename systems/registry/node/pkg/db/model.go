@@ -9,7 +9,6 @@
 package db
 
 import (
-	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -61,21 +60,4 @@ func (s *Site) BeforeSave(tx *gorm.DB) (err error) {
 	})
 
 	return nil
-}
-
-func ParseNodeState(s string) ukama.NodeState {
-	switch strings.ToLower(s) {
-	case "active":
-		return ukama.Active
-	case "maintainance":
-		return ukama.Maintenance
-	case "faulty":
-		return ukama.Faulty
-	case "onboarded":
-		return ukama.Onboarded
-	case "configured":
-		return ukama.Configured
-	default:
-		return ukama.Undefined
-	}
 }

@@ -197,7 +197,7 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node state  %v", req)
 
-	dbNodeState := db.ParseNodeState(req.State)
+	dbNodeState := ukama.ParseNodeState(req.State)
 	dbConnState := ukama.ParseNodeConnectivity(req.Connectivity)
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
