@@ -13,40 +13,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/msgcli/util"
 )
-
-type Config struct {
-	OutputFormat string
-}
-
-type Param struct {
-	Value  string
-	Values []string
-}
-
-func (p *Param) String() string {
-	return string(p.Value)
-}
-
-func (p *Param) Set(s string) error {
-	for _, v := range p.Values {
-		if strings.EqualFold(s, v) {
-			p.Value = strings.ToLower(v)
-			return nil
-		}
-	}
-	return fmt.Errorf("must match one of the following: %q", p.Values)
-}
-
-func (p *Param) Type() string {
-	return "String"
-}
 
 func serialize(data interface{}, format string) (io.Writer, error) {
 	var err error
@@ -70,7 +42,7 @@ func serialize(data interface{}, format string) (io.Writer, error) {
 	return buf, err
 }
 
-func Run(dir string, out io.Writer, cfg *Config) error {
+func Run(dir string, out io.Writer, cfg *util.Config) error {
 	data := &util.ResultSet{}
 
 	err := WalkAndParse(dir, data)

@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ukama/msgcli/internal/scan"
+	"github.com/ukama/msgcli/util"
 )
 
 const (
@@ -22,8 +23,8 @@ const (
 )
 
 var (
-	oFile        = os.Stdout
-	outputFormat = scan.Param{
+	outputFile   = os.Stdout
+	outputFormat = util.EnumParam{
 		Values: []string{"json", "yaml", "toml"},
 	}
 )
@@ -38,23 +39,23 @@ by the given Ukama service.`,
 	SilenceUsage: true,
 
 	RunE: func(cmd *cobra.Command, args []string) error {
-		src, err := cmd.Flags().GetString("source-file")
+		src, err := cmd.Flags().GetString("source")
 		if err != nil {
 			return err
 		}
 
-		ofilename, err := cmd.Flags().GetString("output-file")
+		outputFilename, err := cmd.Flags().GetString("output")
 		if err != nil {
 			return err
 		}
 
-		if ofilename != "" {
-			oFile, err = os.Create(ofilename)
+		if outputFilename != "" {
+			outputFile, err = os.Create(outputFilename)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-			defer oFile.Close()
+			defer outputFile.Close()
 		}
 
 		if outputFormat.String() == "" {
@@ -65,19 +66,19 @@ by the given Ukama service.`,
 			}
 		}
 
-		cfg := &scan.Config{
+		cfg := &util.Config{
 			OutputFormat: outputFormat.String(),
 		}
 
-		return scan.Run(src, oFile, cfg)
+		return scan.Run(src, outputFile, cfg)
 	},
 }
 
 func init() {
 	eventsCmd.AddCommand(scanCmd)
-	scanCmd.Flags().StringP("source-file", "s", ".", "Source directory to start from")
-	scanCmd.Flags().StringP("output-file", "o", "", "The name of the file to write to (default \"Stdout\")")
-	scanCmd.Flags().VarP(&outputFormat, "output-format", "f",
-		fmt.Sprintf("Output format. Must match one of the following: %q (default \"json\" )",
+	scanCmd.Flags().StringP("source", "s", ".", "source directory to start from")
+	scanCmd.Flags().StringP("output", "o", "", "name of the file to write to (default \"Stdout\")")
+	scanCmd.Flags().VarP(&outputFormat, "format", "f",
+		fmt.Sprintf("output format. Must match one of the following: %q (default \"json\" )",
 			outputFormat.Values))
 }

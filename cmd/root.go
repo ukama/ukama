@@ -12,6 +12,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/ukama/msgcli/cmd/version"
 )
 
 var rootCmd = &cobra.Command{
@@ -25,7 +27,7 @@ code and displays all the events (routing keys + messages)
 that it both listens to and generates, and also sends events to
 a running MsgClient instance targeting a specific Ukama service.`,
 
-	Version: "0.1",
+	Version: version.Version,
 }
 
 func Execute() {
