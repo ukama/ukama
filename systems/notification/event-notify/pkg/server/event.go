@@ -389,7 +389,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteUpdate]):
 		c := evt.EventToEventConfig[evt.EventSiteUpdate]
@@ -402,7 +402,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg)
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
