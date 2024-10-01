@@ -58,17 +58,21 @@ message Notification {
     string networkId = 7 [json_name = "network_id"];
     string subscriberId = 8 [json_name = "subscriber_id"];
     string userId = 9 [json_name = "user_id"];
-    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
+    bool IsProcessRequired= 10 [json_name = "is_process_required"];
+    string resourceId= 11 [json_name = "resource_id"];
+    google.protobuf.Timestamp createdAt = 12 [json_name = "created_at"];
 }
 
 message Notifications {
     string id = 1;
     string title = 2;
     string description = 3;
-    string type = 4;
-    string scope = 5;
-    bool isRead = 6 [json_name = "is_read"];
-    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
+    bool IsProcessRequired= 4 [json_name = "is_process_required"];
+    string resourceId= 5 [json_name = "resource_id"];
+    string type = 6;
+    string scope = 7;
+    bool isRead = 8 [json_name = "is_read"];
+    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
 }
 
 

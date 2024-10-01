@@ -14,6 +14,7 @@ type EventConfig struct {
 	Name        string
 	Title       string
 	Description string
+	IsProcessRequired bool
 	Scope       notif.NotificationScope
 	Type        notif.NotificationType
 }
@@ -119,6 +120,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Organization Added",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventUserAdd: {
 		Key:         EventUserAdd,
@@ -127,6 +129,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "User Added",
 		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventUserDeactivate: {
 		Key:         EventUserDeactivate,
@@ -135,6 +138,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "User Deactivated",
 		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventUserDelete: {
 		Key:         EventUserDelete,
@@ -143,6 +147,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "User Deleted",
 		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMemberCreate: {
 		Key:         EventMemberCreate,
@@ -151,6 +156,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Member Created",
 		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMemberDelete: {
 		Key:         EventMemberDelete,
@@ -159,6 +165,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Member Deleted",
 		Scope:       notif.SCOPE_USER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventNetworkAdd: {
 		Key:         EventNetworkAdd,
@@ -167,6 +174,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Network Added",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventNetworkDelete: {
 		Key:         EventNetworkDelete,
@@ -175,6 +183,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Network Deleted",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventNodeCreate: {
 		Key:         EventNodeCreate,
@@ -183,6 +192,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node Created",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventNodeUpdate: {
 		Key:         EventNodeUpdate,
@@ -191,6 +201,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node Updated",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventNodeStateUpdate: {
 		Key:         EventNodeStateUpdate,
@@ -199,6 +210,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node State Updated",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventNodeDelete: {
 		Key:         EventNodeDelete,
@@ -207,6 +219,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventNodeAssign: {
 		Key:         EventNodeAssign,
@@ -215,6 +228,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node Assigned",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventNodeRelease: {
 		Key:         EventNodeRelease,
@@ -223,6 +237,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Node Released",
 		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
+		IsProcessRequired: true,
 	},
 	EventInviteCreate: {
 		Key:         EventInviteCreate,
@@ -231,6 +246,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Invite Created",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventInviteDelete: {
 		Key:         EventInviteDelete,
@@ -239,6 +255,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Invite Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventInviteUpdate: {
 		Key:         EventInviteUpdate,
@@ -247,6 +264,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Invite Updated",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMeshNodeOnline: {
 		Key:         EventMeshNodeOnline,
@@ -255,6 +273,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Mesh Node Online",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMeshNodeOffline: {
 		Key:         EventMeshNodeOffline,
@@ -263,6 +282,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Mesh Node Offline",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimActivate: {
 		Key:         EventSimActivate,
@@ -271,6 +291,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Activated",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimAllocate: {
 		Key:         EventSimAllocate,
@@ -279,6 +300,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Allocated",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimDelete: {
 		Key:         EventSimDelete,
@@ -287,6 +309,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Deleted",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimAddPackage: {
 		Key:         EventSimAddPackage,
@@ -295,6 +318,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Package Added",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimActivePackage: {
 		Key:         EventSimActivePackage,
@@ -303,6 +327,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Active Package",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimRemovePackage: {
 		Key:         EventSimRemovePackage,
@@ -311,6 +336,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Package Removed",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSubscriberCreate: {
 		Key:         EventSubscriberCreate,
@@ -319,6 +345,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Subscriber Created",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSubscriberUpdate: {
 		Key:         EventSubscriberUpdate,
@@ -327,6 +354,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Subscriber Updated",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSubscriberDelete: {
 		Key:         EventSubscriberDelete,
@@ -335,6 +363,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Subscriber Deleted",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventSimsUpload: {
 		Key:         EventSimsUpload,
@@ -343,6 +372,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Sim Uploaded",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventBaserateUpload: {
 		Key:         EventBaserateUpload,
@@ -351,6 +381,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Baserate uploaded",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventPackageCreate: {
 		Key:         EventPackageCreate,
@@ -359,6 +390,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Package Created",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventPackageUpdate: {
 		Key:         EventPackageUpdate,
@@ -367,6 +399,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Package Updated",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventPackageDelete: {
 		Key:         EventPackageDelete,
@@ -375,6 +408,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Package Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMarkupUpdate: {
 		Key:         EventMarkupUpdate,
@@ -383,6 +417,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Markup Updated",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventMarkupDelete: {
 		Key:         EventMarkupDelete,
@@ -391,6 +426,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Markup Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventComponentsSync: {
 		Key:         EventComponentsSync,
@@ -399,6 +435,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Components Sync",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventAccountingSync: {
 		Key:         EventAccountingSync,
@@ -407,6 +444,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Accounting Sync",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventInvoiceGenerate: {
 		Key:         EventInvoiceGenerate,
@@ -415,6 +453,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Invoice Generated",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventInvoiceDelete: {
 		Key:         EventInvoiceDelete,
@@ -423,6 +462,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Invoice Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventHealthCappStore: {
 		Key:         EventHealthCappStore,
@@ -431,6 +471,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Health CAPP Store",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventNotificationDelete: {
 		Key:         EventNotificationDelete,
@@ -439,6 +480,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Notification Deleted",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 	EventNotificationStore: {
 		Key:         EventNotificationStore,
@@ -447,5 +489,6 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Notification Stored",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+		IsProcessRequired: false,
 	},
 }

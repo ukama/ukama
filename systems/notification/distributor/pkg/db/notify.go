@@ -182,17 +182,19 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 			}
 
 			un := &pb.Notification{
-				IsRead:       isRead,
-				Id:           res.Notification.Id,
-				OrgId:        res.Notification.OrgId,
-				Title:        res.Notification.Title,
-				UserId:       res.Notification.UserId,
-				NetworkId:    res.Notification.NetworkId,
-				Description:  res.Notification.Description,
-				SubscriberId: res.Notification.SubscriberId,
-				Type:         upb.NotificationType(res.Notification.Type),
-				Scope:        upb.NotificationScope(res.Notification.Scope),
-				CreatedAt:    res.Notification.CreatedAt.AsTime().Format(time.RFC3339),
+				IsRead:            isRead,
+				Id:                res.Notification.Id,
+				OrgId:             res.Notification.OrgId,
+				Title:             res.Notification.Title,
+				UserId:            res.Notification.UserId,
+				NetworkId:         res.Notification.NetworkId,
+				Description:       res.Notification.Description,
+				SubscriberId:      res.Notification.SubscriberId,
+				IsProcessRequired: res.Notification.IsProcessRequired,
+				ResourceId:        res.Notification.ResourceId,
+				Type:              upb.NotificationType(res.Notification.Type),
+				Scope:             upb.NotificationScope(res.Notification.Scope),
+				CreatedAt:         res.Notification.CreatedAt.AsTime().Format(time.RFC3339),
 			}
 			log.Infof("Notification is %+v", un)
 
