@@ -466,7 +466,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-org-1
         docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-subscriber-auth-1
-        docker network connect ${ORGNAME}_ukama-net subscriber-subscriber-bff-1
         
         echo  "$TAG Updateing inventory for ${ORGNAME}..."
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
