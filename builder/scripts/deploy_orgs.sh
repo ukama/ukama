@@ -471,6 +471,11 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
         psql $DB_URI -t -A -c "$SQL_QUERY"
+        
+        sleep 3
+        SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://salman-org-subscriber-auth-1:4423' WHERE systems."name" = 'subscriber-auth'";
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
+        psql $DB_URI -c "$SYS_QUERY_1"
     fi
 done
 
