@@ -179,7 +179,7 @@ func WithUserAgent(ua string) Option {
 	}
 }
 
-func ResponseToJson[T any](response *http.Response, target *T) error {
+func DecodeJSONResponse[T any](response *http.Response, target *T) error {
 	if response == nil {
 		return fmt.Errorf("response is nil")
 	}

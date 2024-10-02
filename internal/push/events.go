@@ -19,10 +19,9 @@ import (
 
 const (
 	baseRoute = "event.cloud.local.%s"
-	// .subscriber.registry.subscriber.create"
 )
 
-func prepareEvent(org, route, data string) (string, *epb.Event, error) {
+func prepareEvent(org, route, data string) (string, *anypb.Any, error) {
 	r := fmt.Sprintf(strings.Join([]string{baseRoute, route}, "."), org)
 
 	subs := &upb.Subscriber{
@@ -42,10 +41,5 @@ func prepareEvent(org, route, data string) (string, *epb.Event, error) {
 		return "", nil, fmt.Errorf("failed to marshall event message as proto: %w", err)
 	}
 
-	msg := &epb.Event{
-		RoutingKey: r,
-		Msg:        anyE,
-	}
-
-	return r, msg, nil
+	return r, anyE, nil
 }
