@@ -6,6 +6,7 @@ toolchain go1.22.5
 
 require (
 	github.com/BurntSushi/toml v1.4.0
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/spf13/cobra v1.8.1
 	github.com/ukama/ukama/systems/common v0.0.0-20240930044106-ec3fada4b8e4
 	google.golang.org/protobuf v1.34.1

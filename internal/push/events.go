@@ -12,8 +12,7 @@ import (
 	"fmt"
 	"strings"
 
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/msgcli/internal/push/messages"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -22,24 +21,14 @@ const (
 )
 
 func prepareEvent(org, route, data string) (string, *anypb.Any, error) {
+	payloadRetrieveFunc, ok := messages.RoutingMap[route]
+	if !ok {
+		return "", nil,
+			fmt.Errorf("failed to load event message type: given route %q is not supported", route)
+	}
+
 	r := fmt.Sprintf(strings.Join([]string{baseRoute, route}, "."), org)
+	pbPaylod, err := payloadRetrieveFunc(data)
 
-	subs := &upb.Subscriber{
-		SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-		FirstName:    "John Doe",
-		Email:        "john.doe@example.com",
-		Address:      "This is my address",
-		PhoneNumber:  "000111222",
-	}
-
-	subscriber := epb.AddSubscriber{
-		Subscriber: subs,
-	}
-
-	anyE, err := anypb.New(&subscriber)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshall event message as proto: %w", err)
-	}
-
-	return r, anyE, nil
+	return r, pbPaylod, err
 }
