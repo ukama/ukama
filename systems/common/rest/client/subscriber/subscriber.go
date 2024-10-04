@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const SubscriberEndpoint = "/v1/subscribers"
+const SubscriberEndpoint = "/v1/subscriber"
 
 type SubscriberInfo struct {
 	SubscriberId          uuid.UUID `json:"subscriber_id,omitempty"`
