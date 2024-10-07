@@ -77,8 +77,8 @@ type PaymentInfo struct {
 	Id                   string     `json:"id,omitempty"`
 	ItemId               string     `json:"item_id,omitempty"`
 	ItemType             string     `json:"item_type,omitempty"`
-	AmountCents          int64      `json:"amount_cents,omitempty"`
-	DepositedAmountCents int64      `json:"deposited_amount_cents,omitempty"`
+	AmountCents          int64      `json:"amount,omitempty"`
+	DepositedAmountCents int64      `json:"deposited_amount,omitempty"`
 	Currency             string     `json:"currency,omitempty"`
 	PaymentMethod        string     `json:"payment_method,omitempty"`
 	PaidAt               *time.Time `json:"paid_at,omitempty"`
@@ -89,6 +89,6 @@ type PaymentInfo struct {
 	Country              string     `json:"country,omitempty"`
 	Description          string     `json:"description,omitempty"`
 	Status               string     `json:"status,omitempty"`
-	FailureReason        string     `json:"faillure_reason,omitempty"`
+	FailureReason        string     `json:"failure_reason,omitempty"`
 	CreatedAt            time.Time  `json:"created_at,omitempty"`
 }
