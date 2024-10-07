@@ -23,7 +23,7 @@ type Config struct {
 	Queue             *uconf.Queue    `default:"{}"`
 	Service           *uconf.Service
 	System            string        `default:"testing"`
-	SchedulerInterval time.Duration `default:"20s"`
+	SchedulerInterval time.Duration `default:"30s"`
 	PaymentsHost      string        `default:"http://api-gateway-payments:8080"`
 	PawapayHost       string        `default:"https://api.sandbox.pawapay.cloud"`
 	WebhooksHost      string        `default:"http://api-gateway-webhooks:8080"`
