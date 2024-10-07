@@ -154,7 +154,7 @@ func (r *simRepo) List(iccid, imsi, subscriberId, networkId string, simType ukam
 	}
 
 	if sort {
-		tx = tx.Order("time DESC")
+		tx = tx.Order("allocated_at DESC")
 	}
 
 	if count > 0 {
