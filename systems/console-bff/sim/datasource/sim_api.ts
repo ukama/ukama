@@ -6,9 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
-import dayjs from "dayjs";
 
 import { ENCRYPTION_KEY } from "../../common/configs";
+import { logger } from "../../common/logger";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
@@ -105,13 +105,9 @@ class SimApi extends RESTDataSource {
       },
     });
 
-    if (simRes.sim.id) {
-      await this.addPackageToSim(baseURL, {
-        package_id: req.package_id,
-        sim_id: simRes.sim.id,
-        start_date: dayjs().add(10, "seconds").format(),
-      });
+    logger.info(`SimRes: ${JSON.stringify(simRes)}`);
 
+    if (simRes.sim.id) {
       await this.toggleSimStatus(baseURL, {
         sim_id: simRes.sim.id,
         status: "active",
