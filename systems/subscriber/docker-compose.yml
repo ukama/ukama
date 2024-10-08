@@ -126,24 +126,24 @@ services:
     depends_on:
       - postgresd
 
-  initclient-subscriber:
-    build: ../services/initClient
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_SYSTEM_NAME=subscriber
-      - ENV_DNS_REFRESH_TIME_PERIOD=30
-      - ENV_SYSTEM_DNS=api-gateway-subscriber
-      - ENV_DNS_SERVER=false
-      - ENV_SYSTEM_PORT=8080
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=initclient-subscriber
-      - ENV_INIT_CLIENT_PORT=8080
-      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-    restart: always
-    networks:
-      - ukama-net
+initclient-subscriber:
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
+  environment:
+    - ENV_SYSTEM_ORG=${ORGNAME}
+    - ENV_SYSTEM_NAME=subscriber
+    - ENV_DNS_REFRESH_TIME_PERIOD=30
+    - ENV_SYSTEM_DNS=api-gateway-subscriber
+    - ENV_DNS_SERVER=false
+    - ENV_SYSTEM_PORT=8080
+    - ENV_SYSTEM_CERT=This-is-a-certificate
+    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+    - ENV_INIT_SYSTEM_PORT=8071
+    - ENV_INIT_CLIENT_ADDR=initclient-subscriber
+    - ENV_INIT_CLIENT_PORT=8080
+    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+    - ukama-net
 
   subscriber-auth-migrate:
     image: oryd/kratos:latest
@@ -182,24 +182,24 @@ services:
     networks:
       - ukama-net
 
-  initclient-subscriber-auth:
-    build: ../services/initClient
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_SYSTEM_NAME=subscriber-auth
-      - ENV_DNS_REFRESH_TIME_PERIOD=30
-      - ENV_SYSTEM_DNS=subscriber-auth
-      - ENV_DNS_SERVER=false
-      - ENV_SYSTEM_PORT=4423
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=initclient-subscriber-auth
-      - ENV_INIT_CLIENT_PORT=8080
-      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-    restart: always
-    networks:
-      - ukama-net
+initclient-subscriber-auth:
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
+  environment:
+    - ENV_SYSTEM_ORG=${ORGNAME}
+    - ENV_SYSTEM_NAME=subscriber-auth
+    - ENV_DNS_REFRESH_TIME_PERIOD=30
+    - ENV_SYSTEM_DNS=subscriber-auth
+    - ENV_DNS_SERVER=false
+    - ENV_SYSTEM_PORT=4423
+    - ENV_SYSTEM_CERT=This-is-a-certificate
+    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+    - ENV_INIT_SYSTEM_PORT=8071
+    - ENV_INIT_CLIENT_ADDR=initclient-subscriber-auth
+    - ENV_INIT_CLIENT_PORT=8080
+    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+    - ukama-net
 
 networks:
   ukama-net:
