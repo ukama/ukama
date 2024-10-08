@@ -166,6 +166,7 @@ message Package {
     google.protobuf.Timestamp endDate = 4 [json_name = "end_date"];
     bool isActive = 5  [json_name = "is_active"];
     string createdAt = 6 [json_name = "created_at"];
+    string updatedAt = 7 [json_name = "updated_at"];
 }
 
 

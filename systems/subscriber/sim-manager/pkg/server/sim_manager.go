@@ -1013,6 +1013,7 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 		PackageId: pkg.PackageId.String(),
 		IsActive:  pkg.IsActive,
 		CreatedAt: pkg.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: pkg.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if !pkg.EndDate.IsZero() {
