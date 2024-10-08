@@ -33,8 +33,7 @@ type Sim struct {
 	FirstActivatedOn   time.Time
 	LastActivatedOn    time.Time
 	TrafficPolicy      uint32
-	AllocatedAt        int64 `gorm:"autoCreateTime"`
-	UpdatedAt          time.Time
+	AllocatedAt        int64          `gorm:"autoCreateTime"`
 	TerminatedAt       gorm.DeletedAt `gorm:"index"`
 	SyncStatus         ukama.StatusType
 }
@@ -46,6 +45,8 @@ type Package struct {
 	EndDate   time.Time
 	PackageId uuid.UUID `gorm:"not null;type:uuid"`
 	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (p Package) IsExpired() bool {
