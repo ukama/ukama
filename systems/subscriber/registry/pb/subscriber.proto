@@ -137,6 +137,8 @@ message UpdateSubscriberRequest{
     string idSerial =8;
     // proofOfIdentification is the new proofOfIdentification of the subscriber
     string proofOfIdentification =11;
+
+    string firstName = 12 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "first_name"];
     }
 // UpdateSubscriberResponse defines the response when updating a subscriber
 message UpdateSubscriberResponse{

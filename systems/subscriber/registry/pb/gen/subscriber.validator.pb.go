@@ -151,6 +151,12 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	if !_regex_UpdateSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
 	}
+	if this.FirstName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must not be an empty string`, this.FirstName))
+	}
+	if !(len(this.FirstName) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.FirstName))
+	}
 	return nil
 }
 func (this *UpdateSubscriberResponse) Validate() error {

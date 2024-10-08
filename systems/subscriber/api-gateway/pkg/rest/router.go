@@ -308,6 +308,7 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) (*su
 func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*subRegPb.UpdateSubscriberResponse, error) {
 
 	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
+		FirstName:             req.FirstName,
 		SubscriberId:          req.SubscriberId,
 		Email:                 req.Email,
 		PhoneNumber:           req.Phone,

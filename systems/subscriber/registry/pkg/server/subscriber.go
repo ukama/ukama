@@ -339,6 +339,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	}
 
 	subscriber := &db.Subscriber{
+		FirstName: req.GetFirstName(),
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Address:               req.GetAddress(),

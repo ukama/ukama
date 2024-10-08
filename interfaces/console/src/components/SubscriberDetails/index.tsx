@@ -6,27 +6,39 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { colors } from '@/theme';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import TabsComponent from '@/components/TabsComponent';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 import {
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogTitle,
+  Divider,
+  FormControl,
+  Grid,
   IconButton,
+  InputAdornment,
+  InputLabel,
   Menu,
   MenuItem,
+  OutlinedInput,
   Stack,
+  Tab,
+  Tabs,
+  TextField,
   Typography,
 } from '@mui/material';
-import SimInfoTab from './SimInfoTab';
+import SimTable from './SimInfoTab';
 import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
 import UserInfo from './userInfo';
+
 interface SubscriberProps {
   ishowSubscriberDetails: boolean;
   subscriberId: string;
@@ -42,7 +54,7 @@ interface SubscriberProps {
   currentSite?: string;
   handleUpdateSubscriber: (
     subscriberId: string,
-    email: string,
+    mobileNumber: string,
     firstName: string,
   ) => void;
   handleDeleteSubscriber: (action: string, subscriberId: string) => void;
@@ -57,62 +69,70 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   handleClose,
   handleDeleteSubscriber,
   handleSimActionOption,
-  packageName,
-  bundle,
+  packageName = '',
+  bundle = '',
   loading,
-  currentSite,
+  currentSite = '',
   simStatusLoading = false,
 }) => {
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [simAction, setSimAction] = useState<any>();
-  const [subscriberLoading, setSubscriberLoading] = useState(true);
-  const [email, setEmail] = useState<string>('');
-  const [onEditEmail, setOnEditEmail] = useState<boolean>(false);
-  const [onEditName, setOnEditName] = useState<boolean>(false);
-  const [firstName, setFirstName] = useState<string>('');
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-  };
+  const [simAction, setSimAction] = useState<null | HTMLElement>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [firstName, setFirstName] = useState(subscriberInfo?.firstName || '');
+  const [selectedsTab, setSelectedsTab] = useState(0);
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [isEditingFirstName, setIsEditingFirstName] = useState(false);
+  const [isEditingMobile, setIsEditingMobile] = useState(false);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseItem = () => {
-    setAnchorEl(null);
-  };
+  const handleCloseItem = useCallback(() => setAnchorEl(null), []);
 
-  const handleMenuItemClick = (action: string, subscriberId: string) => {
-    handleCloseItem();
+  const handleMenuItemClick = useCallback(
+    (action: string) => {
+      handleCloseItem();
+      handleDeleteSubscriber(action, subscriberInfo.uuid);
+    },
+    [subscriberInfo, handleCloseItem, handleDeleteSubscriber],
+  );
 
-    handleDeleteSubscriber(action, subscriberId);
-  };
-  const handleSimAction = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setSimAction(event.currentTarget);
-  };
-  const handleCloseSimAction = () => {
-    setSimAction(null);
-  };
-  const handleSimMenu = (action: string, simId: string) => {
-    handleCloseSimAction();
+  // const handleSimAction = (event: React.MouseEvent<HTMLButtonElement>) => {
+  //   setSimAction(event.currentTarget);
+  // };
 
-    handleSimActionOption(action, simId, subscriberInfo.uuid);
-  };
+  const handleCloseSimAction = useCallback(() => setSimAction(null), []);
+
+  const handleSimMenu = useCallback(
+    (action: string, simId: string) => {
+      handleCloseSimAction();
+      handleSimActionOption(action, simId, subscriberInfo.uuid);
+    },
+    [handleCloseSimAction, handleSimActionOption, subscriberInfo],
+  );
+
+  const handleSaveSubscriber = useCallback(() => {
+    handleUpdateSubscriber(subscriberInfo.uuid, firstName, mobileNumber);
+  }, [mobileNumber, firstName, handleUpdateSubscriber, subscriberInfo]);
+
   useEffect(() => {
     if (subscriberInfo) {
-      setSubscriberLoading(false);
-      setEmail(subscriberInfo.email);
+      setMobileNumber(subscriberInfo.phone);
       setFirstName(subscriberInfo.firstName);
     }
   }, [subscriberInfo]);
 
-  const handleSaveSubscriber = () => {
-    setOnEditEmail(false);
-    setOnEditName(false);
-    handleUpdateSubscriber(subscriberInfo.uuid, email, firstName);
+  const handleTabsChange = (_: React.SyntheticEvent, newValue: number) => {
+    setSelectedsTab(newValue);
   };
-
+  const handleSimAction = (action: string, iccid: string) => {
+    if (action === 'deactivateSim') {
+      handleSimActionOption(action, iccid, subscriberInfo.uuid);
+    }
+    if (action === 'deleteSim') {
+      handleSimActionOption(action, iccid, subscriberInfo.uuid);
+    }
+  };
   return (
     <Dialog
       open={ishowSubscriberDetails}
@@ -121,7 +141,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       fullWidth
     >
       <DialogTitle id="alert-dialog-title">
-        <Stack direction="row" spacing={2} alignItems={'center'}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="h6">{subscriberInfo?.firstName}</Typography>
           <IconButton
             aria-controls="menu"
@@ -136,17 +156,11 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             open={Boolean(anchorEl)}
             onClose={handleCloseItem}
           >
-            <MenuItem
-              onClick={() =>
-                handleMenuItemClick('pauseService', subscriberInfo.uuid)
-              }
-            >
+            <MenuItem onClick={() => handleMenuItemClick('pauseService')}>
               Pause service
             </MenuItem>
             <MenuItem
-              onClick={() =>
-                handleMenuItemClick('deleteSubscriber', subscriberInfo.uuid)
-              }
+              onClick={() => handleMenuItemClick('deleteSubscriber')}
               sx={{ color: colors.red }}
             >
               Delete subscriber
@@ -165,68 +179,170 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       >
         <CloseIcon />
       </IconButton>
-      <Box sx={{ width: '100%' }}>
-        <Box sx={{ p: 2 }}>
-          <TabsComponent
-            selectedTab={selectedTab}
-            handleTabChange={handleTabChange}
-          />
+      <Box sx={{ px: 4 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={selectedsTab}
+            onChange={handleTabsChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            indicatorColor="primary"
+            textColor="primary"
+            sx={{ alignItems: 'flex-start' }} // Left-align tabs
+          >
+            <Tab label="INFORMATION" />
+            <Tab label="DATA USAGE" />
+            <Tab label="SIMS" />
+            <Tab label="HISTORY" />
+          </Tabs>
         </Box>
 
-        <Box sx={{ pl: 2 }}>
-          <Box component="div" role="tabpanel" hidden={selectedTab !== 0}>
-            <UserInfo
-              subscriberLoading={subscriberLoading}
-              onEditName={onEditName}
-              firstName={firstName}
-              handleEditName={() => setOnEditName(!onEditName)}
-              onEditEmail={onEditEmail}
-              email={email}
-              handleSimEdit={() => setOnEditEmail(!onEditEmail)}
-              setOnEditName={setOnEditName}
-              setOnEditEmail={setOnEditEmail}
-            />
-          </Box>
+        <Box sx={{ p: 3, width: '100%' }}>
+          {selectedsTab === 0 && (
+            <Box sx={{ position: 'relative', right: 22 }}>
+              {' '}
+              {/* Add padding here */}
+              <Stack spacing={2} direction="column">
+                {/* First Name Field */}
+                <Box sx={{ position: 'relative' }}>
+                  <InputLabel
+                    shrink
+                    htmlFor="firstName"
+                    sx={{
+                      position: 'absolute',
+                      top: isEditingFirstName ? '-8px' : '0px',
+                      left: isEditingFirstName ? '14px' : '0px',
+                      background: isEditingFirstName ? 'white' : 'transparent',
+                      padding: isEditingFirstName ? '0 4px' : '0',
+                      transition: 'all 0.2s',
+                      zIndex: 1,
+                    }}
+                  >
+                    FIRST NAME *
+                  </InputLabel>
+                  {isEditingFirstName ? (
+                    <TextField
+                      id="firstName"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Button
+                              variant="text"
+                              onClick={() => {
+                                setIsEditingFirstName(false),
+                                  handleSaveSubscriber;
+                              }}
+                            >
+                              Save
+                            </Button>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  ) : (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                      <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                        {firstName}
+                      </Typography>
+                      <IconButton
+                        onClick={() => setIsEditingFirstName(true)}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
+                  )}
+                </Box>
 
-          <Box component="div" role="tabpanel" hidden={selectedTab !== 1}>
-            <DataPlanComponent
-              packageName={packageName ?? ''}
-              currentSite={currentSite ?? ''}
-              bundle={bundle ?? ''}
-            />
-          </Box>
-
-          <Box component="div" role="tabpanel" hidden={selectedTab !== 2}>
-            <SimInfoTab
-              selectedTab={selectedTab}
-              subscriberInfo={subscriberInfo}
-              simStatusLoading={simStatusLoading}
-              handleSimAction={handleSimAction}
-              simAction={simAction}
-              handleCloseSimAction={handleCloseSimAction}
-              handleSimMenu={handleSimMenu}
-            />
-          </Box>
-
-          <Box component="div" role="tabpanel" hidden={selectedTab !== 3}>
-            <BillingCycle />
-          </Box>
+                <Box sx={{ position: 'relative' }}>
+                  <InputLabel
+                    shrink
+                    htmlFor="mobileNumber"
+                    sx={{
+                      position: 'absolute',
+                      top: isEditingMobile ? '-8px' : '0px',
+                      left: isEditingMobile ? '14px' : '0px',
+                      background: isEditingMobile ? 'white' : 'transparent',
+                      padding: isEditingMobile ? '0 4px' : '0',
+                      transition: 'all 0.2s',
+                      zIndex: 1,
+                    }}
+                  >
+                    MOBILE NUMBER
+                  </InputLabel>
+                  {isEditingMobile ? (
+                    <TextField
+                      id="mobileNumber"
+                      value={mobileNumber}
+                      onChange={(e) => setMobileNumber(e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Button
+                              variant="text"
+                              onClick={() => setIsEditingMobile(false)}
+                            >
+                              Save
+                            </Button>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  ) : (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                      <Typography variant="body1" sx={{ flexGrow: 1 }}>
+                        {mobileNumber}
+                      </Typography>
+                      <IconButton
+                        onClick={() => setIsEditingMobile(true)}
+                        size="small"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
+                  )}
+                </Box>
+              </Stack>
+            </Box>
+          )}
+          {selectedsTab === 1 && (
+            <Box sx={{ position: 'relative', right: 22 }}>
+              <DataPlanComponent
+                packageName={packageName ?? ''}
+                currentSite={currentSite ?? ''}
+                bundle={bundle ?? ''}
+              />
+            </Box>
+          )}
+          {selectedsTab === 2 && (
+            <Box sx={{ position: 'relative', right: 22, top: -8 }}>
+              <SimTable
+                simData={subscriberInfo?.sim}
+                onSimAction={handleSimAction}
+              />
+            </Box>
+          )}
+          {selectedsTab === 3 && (
+            <Box sx={{ position: 'relative', right: 22, top: -30 }}>
+              <BillingCycle />
+            </Box>
+          )}
         </Box>
       </Box>
       <DialogActions>
-        {(onEditName ?? onEditEmail) ? (
-          <Button
-            variant="contained"
-            onClick={handleSaveSubscriber}
-            disabled={loading}
-          >
-            SAVE
-          </Button>
-        ) : (
-          <Button variant="contained" onClick={handleClose}>
-            CLOSE
-          </Button>
-        )}
+        <Button variant="text" onClick={handleClose}>
+          CANCEL
+        </Button>
+        <Button variant="contained" onClick={handleSaveSubscriber}>
+          DONE
+        </Button>
       </DialogActions>
     </Dialog>
   );

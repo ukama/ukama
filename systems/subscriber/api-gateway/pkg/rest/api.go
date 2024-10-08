@@ -120,6 +120,7 @@ type SubscriberByNetworkReq struct {
 
 type SubscriberUpdateReq struct {
 	SubscriberId          string `example:"{{SubscriberUUID}}" path:"subscriber_id" validate:"required"`
+	FirstName             string `example:"John" json:"first_name"`
 	Email                 string `example:"test@example.com" json:"email"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
