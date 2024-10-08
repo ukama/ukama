@@ -165,7 +165,6 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Send usage event
-	// case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
 		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
 		msg, err := unmarshalSimUsage(e.Msg)
