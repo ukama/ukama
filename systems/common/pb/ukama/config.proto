@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama/";
 
 package ukama.config.v1;
 
