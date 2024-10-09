@@ -7,27 +7,20 @@
  */
 import { colors } from '@/theme';
 import React, { useEffect, useState, useCallback } from 'react';
-
-import TabsComponent from '@/components/TabsComponent';
 import CloseIcon from '@mui/icons-material/Close';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
 import {
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogTitle,
-  Divider,
-  FormControl,
-  Grid,
   IconButton,
   InputAdornment,
   InputLabel,
   Menu,
   MenuItem,
-  OutlinedInput,
   Stack,
   Tab,
   Tabs,
@@ -37,7 +30,6 @@ import {
 import SimTable from './SimInfoTab';
 import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
-import UserInfo from './userInfo';
 
 interface SubscriberProps {
   ishowSubscriberDetails: boolean;
@@ -71,7 +63,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   handleSimActionOption,
   packageName = '',
   bundle = '',
-  loading,
   currentSite = '',
   simStatusLoading = false,
 }) => {
@@ -187,10 +178,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
         <Box sx={{ p: 3, width: '100%' }}>
           {selectedsTab === 0 && (
             <Box sx={{ position: 'relative', right: 22 }}>
-              {' '}
-              {/* Add padding here */}
               <Stack spacing={2} direction="column">
-                {/* First Name Field */}
                 <Box sx={{ position: 'relative' }}>
                   <InputLabel
                     shrink
