@@ -378,6 +378,32 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg)
 
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteAdd]):
+		c := evt.EventToEventConfig[evt.EventSiteAdd]
+		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteUpdate]):
+		c := evt.EventToEventConfig[evt.EventSiteUpdate]
+		msg, err := epb.UnmarshalEventUpdateSite(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg)
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
 		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, c.Name)
