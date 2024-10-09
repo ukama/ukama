@@ -16,21 +16,20 @@ import "google/protobuf/timestamp.proto";
  package ukama.common.v1;
 
  message Subscriber{
-    string firstName  = 2 [json_name = "first_name"];
-    string lastName = 3 [json_name = "last_name"];
-    string subscriberId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string email  = 6 [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
-    string phoneNumber  = 7 [json_name = "phone_number"];
-    string address  = 8; 
-    string proofOfIdentification =9 [json_name = "proof_of_identification"];
-    string createdAt = 10;
-    string deletedAt = 11;
-    string updatedAt = 12;
-    repeated Sim sim = 13;
-    string dob = 14 [json_name = "date_of_birth"];
-    string idSerial =15 [json_name = "id_serial"];
-    string gender =16;
+    string name  = 1 [json_name = "name"];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string email  = 4 [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string phoneNumber  = 5 [json_name = "phone_number"];
+    string address  = 6; 
+    string proofOfIdentification =7 [json_name = "proof_of_identification"];
+    string createdAt = 8;
+    string deletedAt = 9;
+    string updatedAt = 10;
+    repeated Sim sim = 11;
+    string dob = 12 [json_name = "date_of_birth"];
+    string idSerial =13 [json_name = "id_serial"];
+    string gender =14;
 
 }
 
