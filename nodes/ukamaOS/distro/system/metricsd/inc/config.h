@@ -15,7 +15,6 @@
 #define TAG_SEP                            "_"
 #define TAG_VERSION                     "version"
 #define TAG_SCRAPING_TIME_PERIOD        "scraping_time_period"
-#define TAG_SERVER_PORT                 "metric_server_port"
 #define TAG_NODE                        "ukamnode"
 #define TAG_GENERIC                     "generic"
 #define TAG_SYSTEM                      "system"
@@ -42,7 +41,7 @@
 #define TAG_LABELS                      "labels"
 
 int toml_parse_config(char *cfg, char **version, int *scraping_time_period,
-        int *server_port, MetricsConfig **pstat_cfg, int *source_count);
+                      MetricsConfig **pstat_cfg, int *source_count);
 void free_stat_cfg(MetricsConfig *stat_cfg, int count);
 
 #endif /* SRC_PARSER_CONFIG_H_ */

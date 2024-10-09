@@ -122,7 +122,7 @@ int serialize_system_response(char **response, Message *message,
 	}
 
 	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_NODE_RESPONSE));
-    json_object_set_new(json, JSON_SEQ, json_string(message->seqNo));
+    json_object_set_new(json, JSON_UUID, json_string(message->seqNo));
 
 	/* Add response info. */
 	json_object_set_new(json, JSON_MESSAGE, json_object());
@@ -260,7 +260,7 @@ int deserialize_websocket_message(Message **message, char *data) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_SEQ);
+    jSeq         = json_object_get(json, JSON_UUID);
     jMessage     = json_object_get(json, JSON_MESSAGE);
     if (jType == NULL || jSeq == NULL || jMessage == NULL) {
         json_decref(json);

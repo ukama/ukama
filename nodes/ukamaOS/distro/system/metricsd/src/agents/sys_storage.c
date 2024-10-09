@@ -6,11 +6,12 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "log.h"
+#include <sys/statvfs.h>
+
+#include "usys_log.h"
+
 #include "metrics.h"
 #include "sys_stat.h"
-
-#include <sys/statvfs.h>
 
 /* Translate bytes to MB */
 static double translate_mem_value(unsigned long long mem) {
@@ -29,7 +30,7 @@ int verify_path(const char *path) {
   /* Check path is a directory if it isn't,
    * then it can't be a mountpoint. */
   if (!(fstat.st_mode & S_IFDIR)) {
-    log_error("Metrics:: %s is not a directory.\n", path);
+    usys_log_error("%s is not a directory", path);
     return ret;
   }
 
@@ -43,7 +44,7 @@ long sys_read_storage_stats(const char *path, SysStorageMetrics *sysSt) {
 
   /* If path is not provided. */
   if (!path) {
-    log_error("Metrics: No storage device path specified.");
+    usys_log_error("No storage device path specified.");
     return ret;
   }
 
@@ -104,18 +105,17 @@ int sys_storage_collect_stat(MetricsCatConfig *cfgStat,
 
   SysStorageMetrics *storageStat = calloc(1, sizeof(SysStorageMetrics));
   if (!storageStat) {
-    log_error(
-        "Metrics:: Failed to allocate memory for storage stat collection.");
+    usys_log_error("Failed to allocate memory for storage stat collection.");
     return RETURN_NOTOK;
   }
 
   if (sys_read_storage_stats(cfgStat->url, storageStat) != RETURN_OK) {
-    log_error("Metrics:: Failed to collect storage stats.");
+    usys_log_error("Failed to collect storage stats.");
     free(storageStat);
     return RETURN_NOTOK;
   } else if (sys_storage_push_stat_to_metric_server(cfgStat, storageStat,
                                                     addFunc) != RETURN_OK) {
-    log_error("Metrics:: Failed to add storage stats to metric server.");
+    usys_log_error("Failed to add storage stats to metric server.");
     ret = RETURN_NOTOK;
   }
 

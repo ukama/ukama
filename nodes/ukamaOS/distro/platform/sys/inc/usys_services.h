@@ -23,6 +23,7 @@ extern "C" {
 #define SERVICE_LOOKOUT       "lookout"
 #define SERVICE_WIMC          "wimc"
 #define SERVICE_METRICS       "metrics"
+#define SERVICE_METRICS_ADMIN "metrics-admin"
 #define SERVICE_CONFIG        "config"
 #define SERVICE_NOTIFY        "notify"
 #define SERVICE_NOTIFY_ADMIN  "notify-admin"
@@ -31,6 +32,7 @@ extern "C" {
 #define SERVICE_REMOTE        "remote"
 #define SERVICE_BOOTSTRAP_REMOTE "bootstrap-remote"
 #define SERVICE_WIMC_AGENT    "wimc-agent"
+#define SERVICE_GPS           "gps"
 
 #ifdef __cplusplus
 }

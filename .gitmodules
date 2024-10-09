@@ -1,6 +1,3 @@
-[submodule "nodes/ukamaOS/distro/tools/unity"]
-	path = nodes/ukamaOS/distro/tools/unity
-	url = https://github.com/ThrowTheSwitch/Unity.git
 [submodule "nodes/ukamaOS/distro/vendor/openssl"]
 	path = nodes/ukamaOS/distro/vendor/openssl
 	url = https://github.com/openssl/openssl.git
@@ -46,12 +43,9 @@
 [submodule "nodes/ukamaOS/distro/vendor/iproute2"]
 	path = nodes/ukamaOS/distro/vendor/iproute2
 	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
-[submodule "nodes/ukamaOS/distro/tools/Unity"]
-	path = nodes/ukamaOS/distro/tools/Unity
-	url = https://github.com/ThrowTheSwitch/Unity.git
 [submodule "systems/planner/Signal-Server"]
-        path = systems/planner/Signal-Server
-        url = https://github.com/Cloud-RF/Signal-Server.git
+    path = systems/planner/Signal-Server
+    url = https://github.com/Cloud-RF/Signal-Server.git
 [submodule "nodes/ukamaOS/distro/vendor/libunistring"]
 	path = nodes/ukamaOS/distro/vendor/libunistring
 	url = https://github.com/ukama/libunistring.git
@@ -91,9 +85,10 @@
 [submodule "nodes/ukamaOS/firmware"]
 	path = nodes/ukamaOS/firmware
 	url = https://github.com/ukama/firmware.git
-[submodule "nodes/ukamaOS/os"]
-	path = nodes/ukamaOS/os
-	url = https://github.com/ukama/os.git
+	branch = ukama-anode-latest
 [submodule "nodes/ukamaOS/distro/vendor/busybox"]
 	path = nodes/ukamaOS/distro/vendor/busybox
 	url = https://github.com/ukama/busybox.git
+[submodule "nodes/ukamaOS/kernel"]
+	path = nodes/ukamaOS/kernel
+	url = https://github.com/ukama/os.git
