@@ -10,8 +10,11 @@
 
 #include "agents.h"
 #include "config.h"
-#include "log.h"
 #include "server.h"
+
+#include "usys_log.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 static int categoryCount = 0;
 static MetricsConfig *metricsCfg = NULL;
@@ -39,52 +42,45 @@ CollectorFxn get_agent_handler_fxn(char *agent) {
 }
 
 int rest_collector(MetricsCatConfig *stat) {
-  log_trace("Rest Agent started for source %s.", stat->source);
-
+  usys_log_trace("Rest Agent started for source %s.", stat->source);
   return RETURN_OK;
 }
 
 int lte_stack_collector(MetricsCatConfig *stat) {
-  log_trace("lte Agent started for source %s.", stat->source);
-  int ret = fp_read_kpi_from_file(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("lte Agent started for source %s.", stat->source);
+  return fp_read_kpi_from_file(stat, metric_server_add_kpi_data);
 }
 
 int sysfs_collector(MetricsCatConfig *stat) {
-  log_trace("sysfs Agent started for source %s.", stat->source);
+  usys_log_trace("sysfs Agent started for source %s.", stat->source);
   sysfs_collect_kpi(stat, metric_server_add_kpi_data);
   return RETURN_OK;
 }
 
 int cpu_collector(MetricsCatConfig *stat) {
-  log_trace("CPU Agent started for source %s.", stat->source);
-  int ret = sys_cpu_collect_stat(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("CPU Agent started for source %s.", stat->source);
+  return sys_cpu_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int memory_collector(MetricsCatConfig *stat) {
-  log_trace("Memory Agent started %s.", stat->source);
-  int ret = sys_mem_collect_stat(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("Memory Agent started %s.", stat->source);
+  return sys_mem_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int network_collector(MetricsCatConfig *stat) {
-  log_trace("Network Agent started for source %s.", stat->source);
-  int ret = sys_net_collect_stat(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("Network Agent started for source %s.", stat->source);
+  return sys_net_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int ssd_collector(MetricsCatConfig *stat) {
-  log_trace("SSD Agent started for source %s.", stat->source);
-  int ret = sys_storage_collect_stat(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("SSD Agent started for source %s.", stat->source);
+  return sys_storage_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int generic_stat_collector(MetricsCatConfig *stat) {
-  log_trace("Generic stat collection agent started for source %s.",
-            stat->source);
-  int ret = sys_gen_collect_stat(stat, metric_server_add_kpi_data);
-  return ret;
+  usys_log_trace("Generic stat collection agent started for source %s.",
+                 stat->source);
+  return sys_gen_collect_stat(stat, metric_server_add_kpi_data);
 }
 
 int collector(char *cfg) {
@@ -92,13 +88,15 @@ int collector(char *cfg) {
   int ret = RETURN_OK;
   char *version;
   int scraping_time_period = 0;
-  int server_port = 7001;
+  int server_port;
 
   /* Registry init */
   metric_server_registry_init();
 
+  server_port = usys_find_service_port(SERVICE_METRICS);
+
   /* Parsing config */
-  ret = toml_parse_config(cfg, &version, &scraping_time_period, &server_port,
+  ret = toml_parse_config(cfg, &version, &scraping_time_period,
                           &metricsCfg, &categoryCount);
   if (metricsCfg && (categoryCount <= 0)) {
     return RETURN_NOTOK;
@@ -108,6 +106,7 @@ int collector(char *cfg) {
   metric_server_set_active_registry();
 
   /* Starting metric server */
+  server_port = usys_find_service_port(SERVICE_METRICS);
   metric_server_start(server_port);
 
   /* Collect KPI metrics */
@@ -130,11 +129,15 @@ int collector(char *cfg) {
   }
 
   /* This means exit is called */
-  log_info("Metrics: Clearing stats config.");
+  usys_log_info("Clearing stats config.");
   if (stats) {
     free_stat_cfg(metricsCfg, categoryCount);
     metricsCfg = NULL;
     categoryCount = 0;
+  }
+
+  if (version) {
+      free(version);
   }
 
   return ret;
@@ -142,8 +145,7 @@ int collector(char *cfg) {
 
 /* Exit handler*/
 void collector_exit(int sig) {
-  log_info(
-      " METRICS:: Signal %d caught Shutting down metrics collector client.");
+  usys_log_info("Signal %d caught Shutting down metrics collector client.");
   collectionFlag = false;
   metric_server_stop();
 }

@@ -184,7 +184,7 @@ int serialize_websocket_message(char **str, URequest *request, char *uuid) {
 	}
 
 	json_object_set_new(json, JSON_TYPE, json_string(MESH_NODE_REQUEST));
-	json_object_set_new(json, JSON_SEQ,  json_string(uuid));
+	json_object_set_new(json, JSON_UUID,  json_string(uuid));
 
     serialize_message_data(request, &data);
 	json_object_set_new(json, JSON_MESSAGE, json_object());
@@ -386,7 +386,7 @@ int deserialize_websocket_message(Message **message, json_t *json) {
 	}
 
     jType        = json_object_get(json, JSON_TYPE);
-    jSeq         = json_object_get(json, JSON_SEQ);
+    jSeq         = json_object_get(json, JSON_UUID);
     jMessage     = json_object_get(json, JSON_MESSAGE);
 
     if (jType == NULL || jSeq == NULL || jMessage == NULL) {

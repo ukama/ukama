@@ -6,9 +6,10 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "log.h"
 #include "metrics.h"
 #include "sys_stat.h"
+
+#include "usys_log.h"
 
 #define CPU_SOURCE "cpu"
 #define CORE_SOURCE "cpu_core"
@@ -85,7 +86,7 @@ int sys_cpu_read_stat(SysCPUMetrics *cpu, int cpuMax) {
   int cpuId;
 
   if ((fp = fopen(PROC_CPU_STAT, "r")) == NULL) {
-    log_error("Metrics:: Cannot open %s: %s\n", PROC_CPU_STAT);
+      usys_log_error("Cannot open %s: Error: %s", PROC_CPU_STAT, strerror(errno));
     return RETURN_NOTOK;
   }
   memset(cpu, 0, sizeof(SysCPUMetrics) * (cpuMax + 1));
@@ -106,8 +107,7 @@ int sys_cpu_read_stat(SysCPUMetrics *cpu, int cpuMax) {
              &icpu.cpuGuestNice);
 
       if (cpuId >= cpuMax) {
-        log_error("Metrics:: Read cpu id is %d expected %d or less.", cpuId,
-                  cpuMax);
+        usys_log_error("Read cpu id is %d expected %d or less.", cpuId, cpuMax);
         ret = RETURN_NOTOK;
         break;
       }
@@ -145,7 +145,7 @@ int sys_cpu_get_kpi_value(KPIConfig *kpi, SysCPUMetrics *cpuStat,
   } else if (strstr(kpi->name, "steal")) {
     *val = cpuStat->cpuSteal;
   } else {
-    log_error("Metrics:: KPI %s not available under CPU.", kpi->name);
+    usys_log_error("kpi %s not available under CPU.", kpi->name);
     ret = RETURN_NOTOK;
   }
 
@@ -191,7 +191,7 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
   if (kpi) {
 	  addFunc(kpi, &cpu_per);
   }
-  log_trace("Metrics: Pushed realtime cpu usage %lf to metrics server.", cpu_per);
+  usys_log_trace("Pushed realtime cpu usage %lf to metrics server.", cpu_per);
 
   return ret;
 }
@@ -255,7 +255,7 @@ int sys_cpu_core_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
       }
     }
   }
-  log_trace("Metrics:: CPU core KPI pushed to server.");
+  usys_log_trace("CPU core KPI pushed to server.");
   return RETURN_OK;
 }
 
@@ -276,12 +276,12 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
 
   /* CPU count */
   if (sys_read_and_push_cpu_count(cpuCfg, coreCount, addFunc) != RETURN_OK) {
-    log_error("Metrics:: Failed to collect cpu_core count kpi info.");
+    usys_log_error("Failed to collect cpu_core count kpi info.");
   }
 
   /* CPU usage */
   if (sys_read_and_push_cpu_usage(cpuCfg, cpuStat, addFunc) != RETURN_OK) {
-    log_error("Metrics:: Failed to collect cpu_usage kpi info.");
+    usys_log_error("Failed to collect cpu_usage kpi info.");
   }
 
   /* Start Collecting other KPI */
@@ -297,14 +297,14 @@ int sys_cpu_push_stat_to_metric_server(MetricsCatConfig *cpuCfg,
     addFunc(kpi, &castVal);
   }
 
-  log_trace("Metrics:: CPU KPI pushed to server.");
+  usys_log_trace("CPU KPI pushed to server.");
   return RETURN_OK;
 }
 
 /* Read frequency */
 int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
-  int ret = RETURN_OK;
-  FILE *fp;
+
+  FILE *fp = NULL;
   SysCPUMetrics *tmpCpu;
   char line[1024];
   unsigned int coreId = 0;
@@ -319,12 +319,10 @@ int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
     if (!strncmp(line, "processor\t", 10)) {
       sscanf(strchr(line, ':') + 1, "%u", &coreId);
       if (coreId > (cpuMax - 1)) {
-        return RETURN_NOTOK;
-        break;
+          fclose(fp);
+          return RETURN_NOTOK;
       }
-    }
-
-    else if (!strncmp(line, "cpu MHz\t", 8)) {
+    } else if (!strncmp(line, "cpu MHz\t", 8)) {
       char *pos = strchr(line, ':');
       sscanf(pos + 1, "%lf", &decfreq);
 
@@ -339,7 +337,8 @@ int sys_cpu_read_freq(SysCPUMetrics *cpuStat, int cpuMax) {
     }
   }
 
-  return ret;
+  fclose(fp);
+  return RETURN_OK;
 }
 
 /* Collect CPU stats */
@@ -349,27 +348,26 @@ int sys_cpu_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 
   coreCount = sys_cpu_read_count(false);
   if (coreCount <= 0) {
-    log_error("Metrics:: Failed to read processor count.", coreCount);
-    return ret;
+      usys_log_error("Failed to read processor count: %d", coreCount);
+      return ret;
   }
 
   SysCPUMetrics *cpuStat = calloc(coreCount + 1, sizeof(SysCPUMetrics));
   if (!cpuStat) {
-    log_error("Metrics:: Failed to allocate memory for %d cpu stat.",
-              coreCount);
+    usys_log_error("Failed to allocate memory for %d cpu stat.", coreCount);
     return RETURN_NOTOK;
   }
 
   ret = sys_cpu_read_stat(cpuStat, coreCount);
   if (ret != RETURN_OK) {
-    log_error("Metrics:: Failed to read processor stats.");
+    usys_log_error("Failed to read processor stats.");
     free(cpuStat);
     return ret;
   }
 
   ret = sys_cpu_read_freq(cpuStat, coreCount);
   if (ret != RETURN_OK) {
-    log_error("Metrics:: Failed to read processor frequency.");
+    usys_log_error("Metrics:: Failed to read processor frequency.");
     free(cpuStat);
     return ret;
   }
@@ -381,8 +379,8 @@ int sys_cpu_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
     ret = sys_cpu_core_push_stat_to_metric_server(cfgStat, cpuStat,
                                                   coreCount, addFunc);
   } else {
-    log_error("Metrics: %s source for the CPU metrics not implemented.",
-              cfgStat->source);
+    usys_log_error("Metrics: %s source for the CPU metrics not implemented.",
+                   cfgStat->source);
     ret = RETURN_NOTOK;
   }
 

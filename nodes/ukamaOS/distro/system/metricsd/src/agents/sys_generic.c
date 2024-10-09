@@ -6,9 +6,10 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "log.h"
 #include "metrics.h"
 #include "sys_stat.h"
+
+#include "usys_log.h"
 
 /* Read system uptime */
 int sys_read_uptime(SysGenMetrics *sysGen) {
@@ -60,18 +61,17 @@ int sys_gen_collect_stat(MetricsCatConfig *cfgStat, metricAddFunc addFunc) {
 
   SysGenMetrics *genStat = calloc(1, sizeof(SysGenMetrics));
   if (!genStat) {
-    log_error(
-        "Metrics:: Failed to allocate memory for generic stat collection.");
+    usys_log_error("Failed to allocate memory for generic stat collection.");
     return RETURN_NOTOK;
   }
 
   if (sys_read_uptime(genStat) != RETURN_OK) {
-    log_error("Metrics:: Failed to collect generic stats.");
+    usys_log_error("Failed to collect generic stats.");
     free(genStat);
     return RETURN_NOTOK;
   } else if (sys_generic_push_stat_to_metric_server(cfgStat, genStat,
                                                     addFunc) != RETURN_OK) {
-    log_error("Metrics:: Failed to add generic stats to metric server.");
+    usys_log_error("Failed to add generic stats to metric server.");
     ret = RETURN_NOTOK;
   }
 

@@ -23,23 +23,10 @@
 #define MIN_UKDB_OFFSET 0
 #define MAX_UKDB_OFFSET 65536
 
-int file_add_record(char *filename, char *rowdesc, char *data);
-int file_append(void *fname, void *buff, off_t offset, uint16_t size);
-int file_init(void *fname);
-int file_cleanup(void *fname);
 int file_exist(char *fname);
-int file_erase(void *fname, off_t offset, uint16_t size);
 int file_open(char *fname, int flags);
-int file_protect(void *fname);
-char* file_read_sym_link(char *fname);
-int file_raw_read(char *fname, void *buff, off_t offset, uint16_t size);
 int file_read(void *fname, void *buff, off_t offset, uint16_t size);
-int file_rename(char *old_name, char *new_name);
 int file_write(void *fname, void *buff, off_t offset, uint16_t size);
-int file_read_number(void *fname, void *value, off_t offset, uint16_t count,
-        uint8_t size);
-int file_write_number(void *fname, void *value, off_t offset, uint16_t count,
-        uint8_t size);
 int file_remove(void *fname);
 void file_close();
 

@@ -6,7 +6,8 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include "log.h"
+#include "usys_log.h"
+
 #include "metrics.h"
 #include "sys_stat.h"
 
@@ -118,14 +119,14 @@ int sys_net_collect_stat(MetricsCatConfig *nstat, metricAddFunc addFunc) {
 
   SysNetDevMetrics *netStat = calloc(if_count, sizeof(SysNetDevMetrics));
   if (!netStat) {
-    log_error("Metrics:: Failed to allocate memory for %d network stat.",
-              if_count);
+    usys_log_error("Failed to allocate memory for %d network stat.",
+                   if_count);
     return RETURN_NOTOK;
   }
 
   ret = sys_net_dev_read_stat(netStat, if_count, nstat->source);
   if (ret != RETURN_OK) {
-    log_error("Metrics:: Failed to read network stats.");
+    usys_log_error("Failed to read network stats.");
     free(netStat);
     return ret;
   }

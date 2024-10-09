@@ -71,18 +71,39 @@ void clear_request(MRequest **data) {
 STATIC void find_service_name_and_ep(char *input,
                                      char **name,
                                      char **ep) {
+    char *start, *separator;
 
-    const char *separator = strchr(&input[1], '/');
+    if (input[0] != '/') {
+        *name = strdup("");
+        *ep = strdup("");
+        return;
+    }
+
+    start     = &input[1];
+    separator = strchr(start, '/');
 
     if (separator != NULL) {
-        size_t length = separator - input;
+        size_t name_len = separator - start;
+        if (name_len > 0) {
+            *name = (char *)calloc(name_len + 1, sizeof(char));
+            strncpy(*name, start, name_len);
+        } else {
+            *name = strdup("");
+        }
 
-        *name = (char *)calloc(length, sizeof(char));
-        strncpy(*name, &input[1], length-1);
-        *ep = strdup(separator);
+        const char *ep_start = separator + 1;
+        if (*ep_start != '\0') {
+            *ep = strdup(ep_start);
+        } else {
+            *ep = strdup("");
+        }
     } else {
-        *name = strdup(input);
-        *ep   = strdup("");
+        if (strlen(start) > 0) {
+            *name = strdup(start);
+        } else {
+            *name = strdup("");
+        }
+        *ep = strdup("");
     }
 }
 

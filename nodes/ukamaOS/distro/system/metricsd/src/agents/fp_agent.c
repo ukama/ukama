@@ -6,14 +6,15 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <ctype.h>
+#include <string.h>
+
+#include "usys_log.h"
+
 #include "agents.h"
 #include "collector.h"
 #include "file.h"
-#include "log.h"
 #include "metrics.h"
-
-#include <ctype.h>
-#include <string.h>
 
 /* Check if file exist */
 int fp_check_for_kpi_source(char *source) {
@@ -55,7 +56,7 @@ KPIData *fp_parse_kpi(KPIConfig *kpi, int count, char *kpi_data) {
 
     /* Check which  KPI metric */
     if (fp_is_prefix(kpi_data, kpi[id].name)) {
-      log_trace("Metrics:: Match found with KPI %s\n", kpi[id].name);
+      usys_log_trace("Match found with KPI %s", kpi[id].name);
       kdata = calloc(1, sizeof(KPIData));
       if (kdata) {
         kdata->kpi = &kpi[id];
@@ -78,22 +79,19 @@ int fp_read_kpi_from_file(MetricsCatConfig *stat, metricAddFunc addFunc) {
 
   /* url is the path of the file */
   if (fp_check_for_kpi_source(stat->url) != RETURN_OK) {
-    log_error("Metrics:: Error:: File %s doesn't exist.\n", stat->url);
+    usys_log_error("File %s doesn't exist.", stat->url);
     return RETURN_NOTOK;
   }
 
   /* Open KPI file */
   fp = fopen(stat->url, "r");
   if (fp == NULL) {
-    log_error("Metrics:: Error:: File %s doesn't exist.\n", stat->url);
+    usys_log_error("File %s doesn't exist", stat->url);
     return RETURN_NOTOK;
   }
 
   /* Read KPI entries */
   while ((read = getline(&line, &len, fp)) != -1) {
-
-    log_trace(" Metrics::  Retrieved line of length %zu: Data %s\n", read,
-              line);
 
     /* Parse KPI data */
     KPIData *kdata = fp_parse_kpi(stat->kpi, stat->kpiCount, line);
@@ -102,11 +100,10 @@ int fp_read_kpi_from_file(MetricsCatConfig *stat, metricAddFunc addFunc) {
       /* Add metric  data for prometheus to scrape */
       ret = addFunc(kdata->kpi, &kdata->value);
       if (ret) {
-        log_error(" Metrics:: Failed to add KPI for %s.", kdata->kpi->fqname);
+        usys_log_error("Failed to add KPI for %s.", kdata->kpi->fqname);
         ret = RETURN_NOTOK;
       } else {
-        log_trace(" Metrics:: Added KPI For %s Value %lf.", kdata->kpi->fqname,
-                  kdata->value);
+        usys_log_trace("Added KPI For %s Value %lf.", kdata->kpi->fqname, kdata->value);
         ret = RETURN_OK;
       }
       /* clean */

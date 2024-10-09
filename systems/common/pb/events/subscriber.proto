@@ -23,6 +23,7 @@
     string createdAt = 7;
     string dob = 8 [json_name = "date_of_birth"];
     string gender = 9;
+    string address = 10;
 }
 
 message EventSubscriberDeleted{
