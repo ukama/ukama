@@ -22,9 +22,11 @@ import (
 type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Get(simID uuid.UUID) (*Sim, error)
-	GetById(simID uuid.UUID) (*Sim, error)
+	GetByIccid(iccid string) (*Sim, error)
 	GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error)
 	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
+	List(iccid, imsi, SubscriberId, networkId string, simType ukama.SimType, status ukama.SimStatus,
+		TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error)
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	GetSimMetrics() (int64, int64, int64, int64, error)
@@ -64,7 +66,8 @@ func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	var sim Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package", "is_active is true").First(&sim, simID)
+	result := s.Db.GetGormDb().Model(&Sim{}).
+		Preload("Package", "is_active is true").First(&sim, simID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -72,10 +75,12 @@ func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	return &sim, nil
 }
 
-func (s *simRepo) GetById(simID uuid.UUID) (*Sim, error) {
+func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	var sim Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Preload("Package").First(&sim, simID)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{Iccid: iccid}).
+		Preload("Package", "is_active is true").First(&sim)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -86,7 +91,9 @@ func (s *simRepo) GetById(simID uuid.UUID) (*Sim, error) {
 func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberID}).
+		Preload("Package", "is_active is true").Find(&sims)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -97,9 +104,71 @@ func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkID}).Preload("Package", "is_active is true").Find(&sims)
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkID}).
+		Preload("Package", "is_active is true").Find(&sims)
+
 	if result.Error != nil {
 		return nil, result.Error
+	}
+
+	return sims, nil
+}
+
+func (r *simRepo) List(iccid, imsi, subscriberId, networkId string, simType ukama.SimType, simStatus ukama.SimStatus,
+	trafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error) {
+
+	sims := []Sim{}
+
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+
+	if iccid != "" {
+		tx = tx.Where("iccid = ?", iccid)
+	}
+
+	if imsi != "" {
+		tx = tx.Where("imsi = ?", imsi)
+	}
+
+	if subscriberId != "" {
+		tx = tx.Where("subscriber_id = ?", subscriberId)
+	}
+
+	if networkId != "" {
+		tx = tx.Where("network_id = ?", networkId)
+	}
+
+	if simType != ukama.SimTypeUnknown {
+		tx = tx.Where("type = ?", simType)
+	}
+
+	if simStatus != ukama.SimStatusUnknown {
+		tx = tx.Where("status = ?", simStatus)
+	}
+
+	if trafficPolicy > 0 {
+		tx = tx.Where("traffic_policy = ?", trafficPolicy)
+	}
+
+	if IsPhysical {
+		tx = tx.Where("is_physical = ?", true)
+	}
+
+	if sort {
+		tx = tx.Order("allocated_at DESC")
+	}
+
+	if count > 0 {
+		tx = tx.Limit(int(count))
+	}
+
+	result := tx.Preload("Package", "is_active is true").Find(&sims)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return sims, nil

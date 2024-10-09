@@ -44,7 +44,7 @@ import (
 
 //TODO; Replace all these GetBy with List functions.
 
-const DefaultDaysDelayForPackageStartDate = 1
+const DefaultMinuteDelayForPackageStartDate = 1
 
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
@@ -86,11 +86,12 @@ func NewSimManagerServer(
 		simPoolService:            simPoolService,
 		key:                       key,
 		msgbus:                    msgBus,
-		baseRoutingKey:            msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:                     orgId,
-		pushMetricHost:            pushMetricHost,
-		mailerClient:              mailerClient,
-		networkClient:             networkClient,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
+			SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgId:          orgId,
+		pushMetricHost: pushMetricHost,
+		mailerClient:   mailerClient,
+		networkClient:  networkClient,
 	}
 }
 
@@ -160,7 +161,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 				"an unknown error occured while getting iccid from sim token. Error %s", err.Error())
 		}
 
-		remoteSimPoolResp, err := simPoolSvc.GetByIccid(ctx, &simpoolpb.GetByIccidRequest{Iccid: iccid})
+		remoteSimPoolResp, err := simPoolSvc.GetByIccid(ctx,
+			&simpoolpb.GetByIccidRequest{Iccid: iccid})
 		if err != nil {
 			return nil, err
 		}
@@ -249,7 +251,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		firstPackage.Id = uuid.NewV4()
 		firstPackage.SimId = sim.Id
 
-		firstPackage.StartDate = time.Now().AddDate(0, 0, DefaultDaysDelayForPackageStartDate)
+		firstPackage.StartDate = time.Now().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
 
 		return nil
@@ -925,7 +927,8 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		log.Errorf("failed to get inactive Sim counts: %s", err.Error())
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount, float64(inactiveCount), map[string]string{"org": s.orgId}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
+		float64(inactiveCount), map[string]string{"org": s.orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
 	}
@@ -1009,6 +1012,8 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 		Id:        pkg.Id.String(),
 		PackageId: pkg.PackageId.String(),
 		IsActive:  pkg.IsActive,
+		CreatedAt: pkg.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: pkg.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if !pkg.EndDate.IsZero() {
