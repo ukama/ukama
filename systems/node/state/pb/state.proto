@@ -1,0 +1,76 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/node/state/pb/gen";
+package ukama.node.state.v1;
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+service StateService {
+    rpc AddState (AddStateRequest) returns (AddStateResponse);
+    rpc GetStateById (GetStateByIdRequest) returns (GetStateByIdResponse);
+    rpc GetStates(GetStatesRequest) returns(GetStatesResponse);
+    rpc GetLatestState(GetLatestStateRequest) returns (GetLatestStateResponse);  
+}
+message State {
+    string id = 1;
+    string nodeId = 2;
+    string previousStateId = 3;
+    State previousState = 4; 
+    string currentState = 5;
+    string subState = 6;
+    repeated string events = 7;
+    string severity = 8;
+    google.protobuf.Timestamp createdAt = 9;
+    google.protobuf.Timestamp updatedAt = 10;
+    google.protobuf.Timestamp deletedAt = 11;
+}
+
+message AddStateRequest {
+    string nodeId = 1;
+    string previousStateId = 2;
+    string currentState = 3;
+    string subState = 4;
+    repeated string events = 5;
+    string severity = 6;
+}
+
+message AddStateResponse {
+    string id = 1;  
+}
+
+message GetStateByIdRequest {
+    string id = 1;
+}
+
+message GetStateByIdResponse {
+    State State = 1;
+}
+
+message GetStateCurrentRequest {
+    string nodeId = 1;
+}
+
+message GetCurrentStateResponse {
+    State State = 1;
+}
+
+message GetStatesRequest {
+    string nodeId = 1;
+}
+
+message GetStatesResponse {
+    repeated State States = 1;
+}
+message GetLatestStateRequest {
+    string nodeId = 1;
+}
+
+message GetLatestStateResponse {
+    State State = 1;
+}
