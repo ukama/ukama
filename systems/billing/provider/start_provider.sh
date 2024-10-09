@@ -18,5 +18,12 @@ fi
 
 source .env
 
-# Start
+# Start the api
+docker compose -f "./provider.yml" up -d api
+
+# Create the database
+docker compose -f "./provider.yml" exec api rails db:create
+docker compose -f "./provider.yml" exec api rails db:migrate
+
+# Start all other components
 docker-compose -f "./provider.yml" up -d

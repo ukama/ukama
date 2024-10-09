@@ -9,24 +9,28 @@
 package main
 
 import (
+	_ "embed"
 	"os"
+
+	"github.com/ukama/ukama/systems/billing/report/cmd/version"
+	"github.com/ukama/ukama/systems/billing/report/pkg"
+	"github.com/ukama/ukama/systems/billing/report/pkg/db"
+	"github.com/ukama/ukama/systems/billing/report/pkg/server"
+	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/billing/collector/cmd/version"
-	"github.com/ukama/ukama/systems/billing/collector/pkg"
-	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
-	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	log "github.com/sirupsen/logrus"
-	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
+	generated "github.com/ukama/ukama/systems/billing/report/pb/gen"
+	fs "github.com/ukama/ukama/systems/billing/report/pkg/pdf/server"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -42,7 +46,9 @@ func main() {
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
-	runGrpcServer()
+	reportDB := initDb()
+
+	runGrpcServer(reportDB)
 
 	log.Infof("Exiting service %s", pkg.ServiceName)
 }
@@ -66,7 +72,20 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func runGrpcServer() {
+func initDb() sql.Db {
+	log.Infof("Initializing Database")
+
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+
+	err := d.Init(&db.Report{})
+	if err != nil {
+		log.Fatalf("Database initialization failed. Error: %v", err)
+	}
+
+	return d
+}
+
+func runGrpcServer(gormDB sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
 		/* used on local machines */
@@ -74,25 +93,30 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
-		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey,
-		serviceConfig.LagoHost, serviceConfig.LagoPort)
-
-	eSrv, err := server.NewCollectorEventServer(serviceConfig.OrgName, serviceConfig.OrgId, lagoClient)
-	if err != nil {
-		log.Fatalf("failed to start billing collector event server: %v", err)
-	}
+	reportServer := server.NewReportServer(
+		serviceConfig.OrgName,
+		serviceConfig.OrgId,
+		db.NewReportRepo(gormDB),
+		csub.NewSubscriberClient(serviceConfig.SubscriberHost),
+		mbClient,
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
+		generated.RegisterReportServiceServer(s, reportServer)
 	})
+
+	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder,
+		serviceConfig.PdfPrefix, serviceConfig.PdfPort)
+
+	go pdfServer.Start()
 
 	go msgBusListener(mbClient)
 

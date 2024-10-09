@@ -1,0 +1,138 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/billing/report/pb/gen";
+
+import "validator.proto";
+
+
+package ukama.billing.report.v1;
+
+service ReportService {
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc List(ListRequest) returns (ListResponse);
+    // Update
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+}
+
+
+message AddRequest{
+    string rawReport = 1 [json_name = "raw_report"];
+}
+
+message AddResponse{
+    Report report = 2;
+}
+
+
+message GetRequest{
+    string reportId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "report_id"];
+    bool asPdf = 2 [json_name = "as_pdf"];
+}
+
+message GetResponse{
+    Report report = 1;
+}
+
+
+message ListRequest {
+    string ownerId = 1 [json_name = "owner_id"];
+    string ownerType = 2 [json_name = "owner_type"];
+    string networkId = 3 [json_name = "network_Id"];
+    string reportType = 4 [json_name = "report_type"];
+    bool isPaid = 5 [json_name = "is_paid"];
+    uint32 count = 6;
+    bool sort = 7;
+}
+
+message ListResponse {
+    repeated Report reports = 1;
+}
+
+
+message DeleteRequest{
+    string reportId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "report_id"];
+}
+
+message DeleteResponse{
+}
+
+
+message Report {
+    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+    string ownerId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "owner_id"];
+    string ownerType = 3 [json_name = "owner_type"];
+    string networkId = 4 [json_name = "network_Id"];
+    string period = 5;
+    string Type = 6;
+    RawReport rawReport = 7 [json_name = "raw_report"];
+    bool isPaid = 8 [json_name = "is_paid"];
+    string createdAt = 9 [json_name = "created_at"];
+}
+
+
+message RawReport {
+    string issuingDate = 1 [json_name = "issuing_date"];
+    string status = 2 [json_name = "status"];
+    string paymentStatus = 3 [json_name = "payment_status"];
+    int64 amountCents = 4 [json_name = "amount_cents"];
+    string amountCurrency = 5 [json_name = "amount_currency"];
+    int64 vatAmountCents = 6 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 7 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 8 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 9 [json_name = "total_amount_currency"];
+    string fileURL = 10 [json_name = "file_url"];
+    Customer customer = 11 [json_name = "customer"];
+    repeated Subscription subscriptions = 12 [json_name = "subscriptions"];
+    repeated Fee fees = 13 [json_name = "fees"];
+}
+
+message Subscription {
+    string externalCustomerId = 1 [json_name = "external_customer_id"];
+    string externalId = 2 [json_name = "external_id"];
+    string planCode = 3 [json_name = "plan_code"];
+    string status = 4 [json_name = "status"];
+    string createdAt = 5 [json_name = "created_at"];
+    string startedAt = 6 [json_name = "started_at"];
+    string canceldAt = 7 [json_name = "canceled_at"];
+    string terminatedAt = 8 [json_name = "terminated_at"];
+}
+
+
+message Customer {
+    string externalId = 1 [json_name = "external_id"];
+    string name = 2 [json_name = "name"];
+    string email = 3 [json_name = "email"];
+    string AddressLine1 = 4 [json_name = "address_line1"];
+    string legalName = 5 [json_name = "legal_name"];
+    string legalNumber = 6 [json_name = "legal_number"];
+    string phone = 7 [json_name = "phone"];
+    double vatRate = 8 [json_name = "vat_rate"];
+    string createdAt = 9 [json_name = "created_at"];
+}
+
+message Fee {
+    int64 amountCents = 1 [json_name = "amount_cents"];
+    string amountCurrency = 2 [json_name = "amount_currency"];
+    int64 vatAmountCents = 3 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 4 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 5 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 6 [json_name = "total_amount_currency"];
+    int64 eventsCount = 7 [json_name = "events_count"];
+    double units = 8 [json_name = "units"];
+    Feeowner owner = 9 [json_name = "owner"];
+}
+
+message Feeowner {
+    string type = 1 [json_name = "type"];
+    string code = 2 [json_name = "code"];
+    string name = 3 [json_name = "name"];
+}
