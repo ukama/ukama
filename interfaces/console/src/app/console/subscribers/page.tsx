@@ -116,11 +116,7 @@ const Page = () => {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
           const s = search.toLowerCase();
-          if (
-            subscriber.firstName.toLowerCase().includes(s) ??
-            subscriber.lastName.toLowerCase().includes(s)
-          )
-            return subscriber;
+          if (subscriber.name.toLowerCase().includes(s)) return subscriber;
         },
       );
       setSubscriber(() => ({ subscribers: subscribers ?? [] }));
@@ -312,7 +308,7 @@ const Page = () => {
         return {
           id: subscriber.uuid,
           email: subscriber.email,
-          name: `${subscriber.firstName}`,
+          name: `${subscriber.name}`,
           dataUsage: '',
           dataPlan: '',
           actions: '',
@@ -610,7 +606,7 @@ const Page = () => {
 
   const handleUpdateSubscriber = (
     subscriberId: string,
-    firstName: string,
+    name: string,
     phone: string,
   ) => {
     updateSubscriber({
@@ -618,7 +614,7 @@ const Page = () => {
         subscriberId: subscriberId,
         data: {
           phone: phone,
-          first_name: firstName,
+          name: name,
         },
       },
     });
@@ -654,8 +650,7 @@ const Page = () => {
         data: {
           email: values.email,
           phone: values.phone,
-          first_name: values.name,
-          last_name: 'name',
+          name: values.name,
           network_id: network.id,
         },
       },

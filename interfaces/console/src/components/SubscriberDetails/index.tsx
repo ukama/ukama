@@ -67,10 +67,10 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   simStatusLoading = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [firstName, setFirstName] = useState(subscriberInfo?.firstName || '');
+  const [name, setName] = useState(subscriberInfo?.name || '');
   const [selectedsTab, setSelectedsTab] = useState(0);
   const [mobileNumber, setMobileNumber] = useState('');
-  const [isEditingFirstName, setIsEditingFirstName] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingMobile, setIsEditingMobile] = useState(false);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -88,14 +88,14 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   );
 
   const handleSaveSubscriber = useCallback(() => {
-    handleUpdateSubscriber(subscriberInfo.uuid, firstName, mobileNumber);
+    handleUpdateSubscriber(subscriberInfo.uuid, name, mobileNumber);
     handleClose();
-  }, [mobileNumber, firstName, handleUpdateSubscriber, subscriberInfo]);
+  }, [mobileNumber, name, handleUpdateSubscriber, subscriberInfo]);
 
   useEffect(() => {
     if (subscriberInfo) {
       setMobileNumber(subscriberInfo.phone);
-      setFirstName(subscriberInfo.firstName);
+      setName(subscriberInfo.name);
     }
   }, [subscriberInfo]);
 
@@ -119,7 +119,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     >
       <DialogTitle id="alert-dialog-title">
         <Stack direction="row" spacing={1} alignItems="center">
-          <Typography variant="h6">{subscriberInfo?.firstName}</Typography>
+          <Typography variant="h6">{subscriberInfo?.name}</Typography>
           <IconButton
             aria-controls="menu"
             aria-haspopup="true"
@@ -185,22 +185,22 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                     htmlFor="firstName"
                     sx={{
                       position: 'absolute',
-                      top: isEditingFirstName ? '-8px' : '0px',
-                      left: isEditingFirstName ? '14px' : '0px',
-                      background: isEditingFirstName ? 'white' : 'transparent',
-                      padding: isEditingFirstName ? '0 4px' : '0',
+                      top: isEditingName ? '-8px' : '0px',
+                      left: isEditingName ? '14px' : '0px',
+                      background: isEditingName ? 'white' : 'transparent',
+                      padding: isEditingName ? '0 4px' : '0',
                       transition: 'all 0.2s',
                       zIndex: 1,
                     }}
                   >
                     FIRST NAME *
                   </InputLabel>
-                  {isEditingFirstName ? (
+                  {isEditingName ? (
                     <TextField
-                      id="firstName"
+                      id="name"
                       required
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       variant="outlined"
                       fullWidth
                       InputProps={{
@@ -209,8 +209,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                             <Button
                               variant="text"
                               onClick={() => {
-                                setIsEditingFirstName(false),
-                                  handleSaveSubscriber;
+                                setIsEditingName(false), handleSaveSubscriber;
                               }}
                             >
                               Save
@@ -222,10 +221,10 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                   ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
                       <Typography variant="body1" sx={{ flexGrow: 1 }}>
-                        {firstName}
+                        {name}
                       </Typography>
                       <IconButton
-                        onClick={() => setIsEditingFirstName(true)}
+                        onClick={() => setIsEditingName(true)}
                         size="small"
                       >
                         <EditIcon />
