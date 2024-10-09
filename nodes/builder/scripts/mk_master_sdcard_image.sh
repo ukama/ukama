@@ -35,7 +35,7 @@ check_status() {
 }
 
 cleanup() {
-    
+
     log_info "Cleaning up resources..."
 
     sudo umount /media/boot       || true
@@ -47,10 +47,6 @@ cleanup() {
 
     log_info "Cleanup completed."
 }
-
-# Initialize variables
-STAGE="init"
-DIR="$(pwd)"
 
 # Check for arguments
 if [ $# -lt 1 ]; then
@@ -74,8 +70,10 @@ create_image() {
 }
 
 setup_loop_device() {
+
     STAGE="setup_loop_device"
     log_info "Attaching ${RAWIMG} to a loop device"
+
     LOOPDISK=$(sudo losetup -f --show "${RAWIMG}")
     if [ -z "${LOOPDISK}" ]; then
         log_error "Failed to set up loop device for ${RAWIMG}."
@@ -95,8 +93,10 @@ clean_first_50MB() {
 }
 
 partition_image() {
+
     STAGE="partition_image"
     log_info "Creating partitions on ${LOOPDISK} using sfdisk"
+
     sudo sfdisk "${LOOPDISK}" <<-__EOF__
 1M,48M,0xE,*
 49M,2048M,,-
@@ -107,34 +107,40 @@ __EOF__
 }
 
 map_partitions() {
+
     STAGE="map_partitions"
     log_info "Mapping partitions using kpartx"
+
     sudo kpartx -v -a "${LOOPDISK}"
     check_status $? "Partitions mapped" ${STAGE}
 }
 
 format_partitions() {
+
     STAGE="format_partitions"
+    log_info "Formatting partitions"
+
     DEVICE=$(basename "${LOOPDISK}")
     DISK="/dev/mapper/${DEVICE}p"
 
-    log_info "Formatting partitions"
-    sudo mkfs.vfat -F 16 -n BOOT "${DISK}1"
-    check_status $? "BOOT partition formatted" ${STAGE}
+    sudo mkfs.vfat -F 16 -n boot "${DISK}1"
+    check_status $? "boot partition formatted" ${STAGE}
 
     sudo mkfs.ext4 -L primary "${DISK}2"
-    check_status $? "Primary rootfs formatted" ${STAGE}
+    check_status $? "primary rootfs formatted" ${STAGE}
 
     sudo mkfs.ext4 -L passive "${DISK}3"
-    check_status $? "Passive rootfs formatted" ${STAGE}
+    check_status $? "passive rootfs formatted" ${STAGE}
 
     sudo mkfs.ext4 -L unused "${DISK}4"
-    check_status $? "Unused partition formatted" ${STAGE}
+    check_status $? "unused partition formatted" ${STAGE}
 }
 
 mount_partitions() {
+
     STAGE="mount_partitions"
     log_info "Mounting partitions"
+
     sudo mkdir -p /media/boot /media/primary /media/passive /media/unused
 
     sudo mount "${DISK}1" /media/boot
@@ -156,7 +162,7 @@ copy_bootloaders() {
     log_info "Copying bootloaders to /media/boot"
 
     sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin \
-         /media/boot/BOOT.BIN
+         /media/boot/boot.bin
     sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin \
          /media/boot/
 
