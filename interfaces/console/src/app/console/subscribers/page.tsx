@@ -517,8 +517,12 @@ const Page = () => {
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
-      onCompleted: () => {
-        refetchSubscribers();
+      onCompleted: (res) => {
+        refetchSubscribers().then((data) => {
+          setSubscriber(() => ({
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          }));
+        });
         setSnackbarMessage({
           id: 'update-subscriber-success',
           message: 'Subscriber updated successfully!',

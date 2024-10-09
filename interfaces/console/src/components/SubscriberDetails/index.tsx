@@ -98,6 +98,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
   const handleSaveSubscriber = useCallback(() => {
     handleUpdateSubscriber(subscriberInfo.uuid, firstName, mobileNumber);
+    handleClose();
   }, [mobileNumber, firstName, handleUpdateSubscriber, subscriberInfo]);
 
   useEffect(() => {
@@ -147,6 +148,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             <MenuItem
               onClick={() => handleMenuItemClick('deleteSubscriber')}
               sx={{ color: colors.red }}
+              disabled={true}
             >
               Delete subscriber
             </MenuItem>

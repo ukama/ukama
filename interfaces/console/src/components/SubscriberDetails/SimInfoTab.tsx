@@ -71,7 +71,7 @@ const SimTable: React.FC<SimTableProps> = ({
   };
 
   return (
-    <LoadingWrapper height={180} isLoading={simLoading}>
+    <LoadingWrapper height={120} isLoading={simLoading}>
       <StyledTableContainer>
         <Table>
           <TableHead>
