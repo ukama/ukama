@@ -75,7 +75,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   currentSite = '',
   simStatusLoading = false,
 }) => {
-  const [simAction, setSimAction] = useState<null | HTMLElement>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [firstName, setFirstName] = useState(subscriberInfo?.firstName || '');
   const [selectedsTab, setSelectedsTab] = useState(0);
@@ -95,20 +94,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       handleDeleteSubscriber(action, subscriberInfo.uuid);
     },
     [subscriberInfo, handleCloseItem, handleDeleteSubscriber],
-  );
-
-  // const handleSimAction = (event: React.MouseEvent<HTMLButtonElement>) => {
-  //   setSimAction(event.currentTarget);
-  // };
-
-  const handleCloseSimAction = useCallback(() => setSimAction(null), []);
-
-  const handleSimMenu = useCallback(
-    (action: string, simId: string) => {
-      handleCloseSimAction();
-      handleSimActionOption(action, simId, subscriberInfo.uuid);
-    },
-    [handleCloseSimAction, handleSimActionOption, subscriberInfo],
   );
 
   const handleSaveSubscriber = useCallback(() => {
@@ -188,7 +173,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             scrollButtons="auto"
             indicatorColor="primary"
             textColor="primary"
-            sx={{ alignItems: 'flex-start' }} // Left-align tabs
+            sx={{ alignItems: 'flex-start' }}
           >
             <Tab label="INFORMATION" />
             <Tab label="DATA USAGE" />
@@ -326,6 +311,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
               <SimTable
                 simData={subscriberInfo?.sim}
                 onSimAction={handleSimAction}
+                simLoading={simStatusLoading}
               />
             </Box>
           )}
