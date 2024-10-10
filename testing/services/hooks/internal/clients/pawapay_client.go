@@ -61,7 +61,7 @@ func NewPawapayClient(h string, key string) *pawapayClient {
 func (p *pawapayClient) GetDeposit(id string) (*util.Deposit, error) {
 	log.Debugf("Getting deposit: %v", id)
 
-	dep := util.Deposit{}
+	dep := []*util.Deposit{}
 
 	resp, err := p.R.Get(p.u.String() + DepositEndpoint + "/" + id)
 	if err != nil {
@@ -77,9 +77,9 @@ func (p *pawapayClient) GetDeposit(id string) (*util.Deposit, error) {
 		return nil, fmt.Errorf(deserializeErrorMsg, "deposit", err)
 	}
 
-	log.Infof(resourceLogMsg, "Deposit", dep)
+	log.Infof(resourceLogMsg, "Deposit", dep[0])
 
-	return &dep, nil
+	return dep[0], nil
 }
 
 func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*util.Deposit, error) {
