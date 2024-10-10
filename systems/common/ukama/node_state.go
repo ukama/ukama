@@ -20,8 +20,7 @@ const (
 	Undefined NodeState = iota
 	Onboarded
 	Configured
-	Active
-	Maintenance
+	operational
 	Faulty
 )
 
@@ -36,7 +35,7 @@ func (s NodeState) Value() (driver.Value, error) {
 }
 
 func (s NodeState) String() string {
-	t := map[NodeState]string{0: "undefined", 1: "onboarded", 2: "configured", 3: "active", 4: "maintenance", 5: "faulty"}
+	t := map[NodeState]string{0: "undefined", 1: "onboarded", 2: "configured", 3: "operational", 4: "faulty"}
 
 	v, ok := t[s]
 	if !ok {
@@ -52,7 +51,7 @@ func ParseNodeState(value string) NodeState {
 		return NodeState(i)
 	}
 
-	t := map[string]CdrType{"undefined": 0, "onboarded": 1, "configured": 2, "active": 3, "maintenance": 4, "faulty": 5}
+	t := map[string]CdrType{"undefined": 0, "onboarded": 1, "configured": 2, "operational": 3, "faulty": 4}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
