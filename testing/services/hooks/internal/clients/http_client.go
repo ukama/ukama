@@ -99,38 +99,6 @@ func (c *HttpClient) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	return c.c.Do(req)
-
-	// var resp *http.Response
-	// var body []byte
-	// var err error
-
-	// if req.Body != nil && req.Body != http.NoBody {
-	// body, err = io.ReadAll(req.Body)
-	// if err != nil {
-	// return nil, fmt.Errorf("failed to read request body: %w", err)
-	// }
-
-	// err = req.Body.Close()
-	// if err != nil {
-	// return nil, fmt.Errorf("failed to close request body: %w", err)
-	// }
-	// }
-
-	// if len(body) > 0 {
-	// req.Body = io.NopCloser(bytes.NewReader(body))
-	// }
-
-	// resp, err = c.HttpClient.Do(req)
-
-	// if req.Context().Err() != nil {
-	// return nil, fmt.Errorf("request context error: %w", req.Context().Err())
-	// }
-
-	// if err != nil {
-	// return nil, fmt.Errorf("failed to do request: %w", err)
-	// }
-
-	// return resp, nil
 }
 
 type Option func(*HttpClient)
