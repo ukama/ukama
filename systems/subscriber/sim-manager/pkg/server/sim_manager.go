@@ -582,10 +582,12 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	pkg := &sims.Package{
 		SimId:     sim.Id,
 		StartDate: startDate,
-		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
+		EndDate:   startDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration)),
 		PackageId: packageId,
 		IsActive:  false,
 	}
+
+	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
 
 	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
 	if err != nil {
