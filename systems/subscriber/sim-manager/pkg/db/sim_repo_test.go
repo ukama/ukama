@@ -154,6 +154,104 @@ func TestSimRepo_Get(t *testing.T) {
 	})
 }
 
+func TestSimRepo_GetByIccid(t *testing.T) {
+	const testIccid = "890000-this-is-a-test-iccid"
+
+	t.Run("IccidFound", func(t *testing.T) {
+		// Arrange
+		var simID = uuid.NewV4()
+		var netID = uuid.NewV4()
+		var subID = uuid.NewV4()
+
+		var packageID = uuid.NewV4()
+
+		var db *sql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
+			AddRow(simID, netID, subID, testIccid)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(testIccid, 1).
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		sim, err := r.GetByIccid(testIccid)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+
+		assert.NoError(t, err)
+		assert.NotNil(t, sim)
+
+		assert.Equal(t, testIccid, sim.Iccid)
+	})
+
+	t.Run("IccidNotFound", func(t *testing.T) {
+		var db *sql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(testIccid, 1).
+			WillReturnError(sql.ErrNoRows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		sim, err := r.GetByIccid(testIccid)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Nil(t, sim)
+	})
+}
+
 func TestSimRepo_GetBySubscriber(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
 		// Arrange
