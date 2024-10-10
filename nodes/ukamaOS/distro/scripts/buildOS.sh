@@ -18,20 +18,15 @@
 
 # Base parameters
 UKAMA_OS=`realpath ../../.`
+UKAMA_REPO=`realpath ../../../../.`
 VENDOR_ROOT=${UKAMA_OS}/distro/vendor
 VENDOR_BUILD=${VENDOR_ROOT}/build/
 SYS_ROOT=${UKAMA_OS}/distro/system
 SCRIPTS_ROOT=${UKAMA_OS}/distro/scripts
-CAPPS_ROOT=${UKAMA_OS}/distro/capps
+APPS_BUILDER_ROOT=${UKAMA_REPO}/nodes/builder
 BB_ROOT=${VENDOR_ROOT}/busybox
-INIT_ROOT=${SYS_ROOT}/init
-LXCE_ROOT=${SYS_ROOT}/lxce
-MICRO_INIT_ROOT=${INIT_ROOT}/src/micros
+STARTERD_ROOT=${SYS_ROOT}/starterd
 DHCPCD_SRC_ROOT=${UKAMA_OS}/distro/system/dhcpcd
-
-# Release related parameters
-PREINIT_REL=${MICRO_INIT_ROOT}/preInit/target/x86_64-unknown-linux-musl/release
-SYSINIT_REL=${MICRO_INIT_ROOT}/sysInit/target/x86_64-unknown-linux-musl/release
 
 # Build config parameters
 BB_CONFIG=ukama_minimal_defconfig
@@ -142,7 +137,7 @@ build_ip_utils() {
 	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
 	    XTARGET="linux"
     fi
-   
+
     # build and copy iptables
     cd ${VENDOR_ROOT}
     make TARGET=${XTARGET} XGCCPATH=${XGCC_PATH}/ DEPDIR=${ROOTFS} iptables
@@ -154,7 +149,7 @@ build_ip_utils() {
     sync
     rm -rf ${ROOTFS}/*.Po 
     rm -rf ${ROOTFS}/*.Plo
-    
+
     #copy_file ${VENDOR_BUILD}/sbin/ip $ROOTFS/sbin/
     sync
     cd ${CWD}
@@ -178,56 +173,14 @@ build_dhcpcd() {
     cd ${DHCPCD_SRC_ROOT}
     make XGCCPATH=${XGCC_PATH} ROOTFSPATH=${ROOTFS}
     cd ${CWD}
-    
-   log_info "dhcpcd successfully build"   
+
+    log_info "dhcpcd successfully build"
 }
 
 #
-# Build system init
+# Build starter.d
 #
-build_init() {
-    CWD=`pwd`
-
-    # setup proper compiler option
-    if [ "${TARGET}" != "local" ]
-    then
-	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
-    else
-	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
-    fi
-
-    # build and copy init micros
-    cd ${MICRO_INIT_ROOT}
-    
-#su $SUDO_USER << EOF
-#    source ~/.profile
-    make clean;  make
-#EOF
- 
-    copy_file ${PREINIT_REL}/preInit ${ROOTFS}
-    copy_file ${SYSINIT_REL}/sysInit ${ROOTFS}/boot/
-
-    # now build main init
-    cd ${INIT_ROOT}
-    make clean; make XGCCPATH=${XGCC_PATH}/
-    copy_file ${INIT_ROOT}/init $ROOTFS/boot
-
-    # Go back and clean up
-
-    #cd ${MICRO_INIT_ROOT}; make clean
-    cd ${INIT_ROOT}; make clean
-    cd ${CWD}
-
-    # Hack to be removed later on. Copy temp init script to /
-    copy_file preInit.sh $ROOTFS/
-
-    log_info "init successfully build" 
-}
-
-#
-# Build lxce.d
-#
-build_lxce() {
+build_starterd() {
    CWD=`pwd`
 
    # setup proper compiler option
@@ -238,31 +191,18 @@ build_lxce() {
        XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
    fi
 
-   cd ${LXCE_ROOT}
+   cd ${STARTERD_ROOT}
    make clean; make XGCCPATH=${XGCC_PATH}/
-   copy_file ${LXCE_ROOT}/lxce.d ${ROOTFS}/sbin
+   copy_file ${STARTERD_ROOT}/starter.d ${ROOTFS}/sbin
 
-   # copy all the config files
-   mkdir -p ${ROOTFS}/conf/lxce/
-   copy_file ${LXCE_ROOT}/configs/config.toml ${ROOTFS}/conf/lxce/
-   copy_file ${LXCE_ROOT}/configs/boot_contained.json ${ROOTFS}/conf/lxce/
-   copy_file ${LXCE_ROOT}/configs/service_contained.json ${ROOTFS}/conf/lxce/
-   copy_file ${LXCE_ROOT}/configs/shutdown_contained.json ${ROOTFS}/conf/lxce
-
-   # Copy manifest file
-   copy_file ${LXCE_ROOT}/configs/manifest.json ${ROOTFS}/conf/lxce/
+   # copy manifest file
+   copy_file ${UKAMA_REPO}/nodes/manifest.json ${ROOTFS}
 
    # Go back and clean up
-   cd ${LXCE_ROOT}; make clean
+   cd ${STARTERD_ROOT}; make clean
    cd ${CWD}
 
-   # overriding config lxce
-   # bridge if has to be for qemu not for host this need to fixed in lxce
-   # Also we need put some checks no wifi iface is added in here
-   # this is done for quick tests since we would only have eth0 availbale for us. 
-   copy_file config.toml ${ROOTFS}/conf/lxce/
-
-   log_info "lxce.d successfully build"
+   log_info "starter.d successfully build"
 }
 
 #
@@ -307,35 +247,19 @@ build_busybox() {
 }
 
 #
-# Build cspace rootfs
+# Build apps and copy them to rootfs
 #
-build_cspace_rootfs() {
-
-    CWD=`pwd`
-    # Build minimal fs
-    ${SCRIPTS_ROOT}/mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
-
-    # tar.gz, move to /capps/pkgs/ and clean up
-    cd ${CSPACE_ROOTFS}
-    tar -cvzf ${ROOTFS}/capps/pkgs/${CSPACE_ROOTFS}.tar.gz *
-    cd ${CWD}
-    rm -rf ${CSPACE_ROOTFS}
-}
-
-#
-# Build capps and copy them to rootfs
-#
-build_capps() {
+build_apps() {
 
     # Steps are:
-    # 1. Build capp utility
-    # 2. Build capp pkgs using the utility
-    # 3. Create /capps onto rootfs (pkgs, store, registry, rootfs)
+    # 1. Build builder
+    # 2. Build capp pkgs using the builder
+    # 3. Create /ukama/apps onto rootfs (pkgs, store, registry, rootfs)
     # 4. Copy pkgs
 
     CWD=`pwd`
 
-    cd ${CAPPS_ROOT}
+    cd ${APPS_BUILDER_ROOT}
     if [ "${TARGET}" != "local" ]
     then
 	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
@@ -344,32 +268,31 @@ build_capps() {
     fi
     make XGCCPATH=${XGCC_PATH}/
 
-    if [ -d ${CAPPS_ROOT}/pkgs/ ]
+    if [ -d ${APPS_BUILDER_ROOT}/pkgs/ ]
     then
-	    rm -rf ${CAPPS_ROOT}/pkgs/
+	    rm -rf ${APPS_BUILDER_ROOT}/pkgs/
     fi
 
-    # Build the pkgs
-    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/sysctl.toml
-    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/dhcpcd.toml
-    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/mesh.toml
+    # Compiler the builder
+    make clean; make XGCCPATH=${XGCC_PATH}/
 
-    # create capps dir onto rootfs
-    DIRS="${ROOTFS}/capps/pkgs"
-    DIRS="${ROOTFS}/capps/store    ${DIRS}"
-    DIRS="${ROOTFS}/capps/registry ${DIRS}"
-    DIRS="${ROOTFS}/capps/rootfs   ${DIRS}"
+    # for each apps in systems, build the pkg
+    for app in "${SYS_ROOT}"/*; do
+        basename=$(basename "$name")
+        ./builder --create --config ./configs/${basename}.toml
+    done
+
+    # create apps dir onto rootfs
+    DIRS="${ROOTFS}/ukama/apps/pkgs"
+    DIRS="${ROOTFS}/ukama/apps/registry ${DIRS}"
+    DIRS="${ROOTFS}/ukama/apps/rootfs   ${DIRS}"
     mkdir -p ${DIRS}
 
     # copy pkgs to rootfs /capps/pkgs
-    cp ${CAPPS_ROOT}/pkgs/* ${ROOTFS}/capps/pkgs
+    cp ./pkgs/*.tar.gz ${ROOTFS}/ukama/apps/pkgs
     cd ${CWD}
 
-    # Build cspace rootfs pkg
-    build_cspace_rootfs
-
-    cd ${CWD}
-    log_info "capps succesfully build"
+    log_info "apps succesfully build"
 }
 
 #
@@ -563,11 +486,13 @@ while [ "$#" -gt 0 ]; do
 	        fi
             shift
             ;;
+
         -h|--help)
             echo "Help message"
             msg_usage
             shift
             ;;
+
 	    -t|--target)
 	        if [ -z "$2" ]
 	        then
@@ -581,6 +506,7 @@ while [ "$#" -gt 0 ]; do
 	        fi
 	        shift
 	        ;;
+
         *)
             log_error "Invalid args: ${1}"
             msg_usage
@@ -611,9 +537,8 @@ build_rootfs_dirs
 log_info "Building busy box with Ukama minimal configuration"
 build_busybox
 
-log_info "Building system init, micros and lxce.d"
-build_init
-build_lxce
+log_info "Building starter.d"
+build_starterd
 
 log_info "Building dhcpcd"
 build_dhcpcd
@@ -621,8 +546,8 @@ build_dhcpcd
 log_info "Building ip utils"
 build_ip_utils
 
-log_info "Building capps"
-build_capps
+log_info "Building apps"
+build_apps
 
 log_info "Setting up /etc contents under rootfs"
 setup_etc
@@ -635,10 +560,7 @@ cp setup_space_network.sh ${ROOTFS}/sbin/
 
 log_info "Copying all lib for executables"
 EXEC="${ROOTFS}/bin/busybox"
-EXEC="${EXEC} ${ROOTFS}/boot/preInit"
-EXEC="${EXEC} ${ROOTFS}/boot/sysInit"
-EXEC="${EXEC} ${ROOTFS}/boot/init"
-EXEC="${EXEC} ${ROOTFS}/sbin/lxce.d"
+EXEC="${EXEC} ${ROOTFS}/sbin/starter.d"
 EXCE="${EXEC} ${ROOTFS}/sbin/iptables"
 EXEC="${EXEC} ${ROOTFS}/sbin/ip"
 copy_all_libs "${EXEC}"
