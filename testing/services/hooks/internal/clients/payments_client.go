@@ -29,7 +29,7 @@ type PaymentsClient interface {
 type paymentsClient struct {
 	u *url.URL
 	R *client.Resty
-	c *HttpClient
+	C *HttpClient
 }
 
 func NewPaymentsClient(h string) *paymentsClient {
@@ -44,9 +44,7 @@ func NewPaymentsClient(h string) *paymentsClient {
 		u: u,
 		R: client.NewResty(client.WithError(&Err{}),
 			client.WithDebug(), client.WithContentTypeJSON()),
-		// client.WithContentTypeJSON()),
-
-		c: NewHttpClient(WithHeaders(headers)),
+		C: NewHttpClient(WithHeaders(headers)),
 	}
 }
 
@@ -98,7 +96,7 @@ func NewPaymentsClient(h string) *paymentsClient {
 func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error) {
 	log.Infof("Listing payments matching: %v", queryString)
 
-	resp, err := p.c.Get(p.u.String() + PaymentEndpoint + queryString)
+	resp, err := p.C.Get(p.u.String() + PaymentEndpoint + queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get payments: %w", err)
 	}
