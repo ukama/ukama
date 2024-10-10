@@ -98,7 +98,9 @@ func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error
 
 	resp, err := p.C.Get(p.u.String() + PaymentEndpoint + queryString)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get payments: %w", err)
+		log.Errorf("ListPayments failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("failed to List payments: %w", err)
 	}
 
 	if !((resp.StatusCode >= http.StatusOK) && resp.StatusCode < http.StatusBadRequest) {
