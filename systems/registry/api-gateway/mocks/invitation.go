@@ -162,9 +162,9 @@ func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteResponse
 	return r0, r1
 }
 
-// UpdateInvitation provides a mock function with given fields: invitationId, status
-func (_m *invitation) UpdateInvitation(invitationId string, status string) (*gen.UpdateStatusResponse, error) {
-	ret := _m.Called(invitationId, status)
+// UpdateInvitation provides a mock function with given fields: invitationId, status, email
+func (_m *invitation) UpdateInvitation(invitationId string, status string, email string) (*gen.UpdateStatusResponse, error) {
+	ret := _m.Called(invitationId, status, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateInvitation")
@@ -172,19 +172,19 @@ func (_m *invitation) UpdateInvitation(invitationId string, status string) (*gen
 
 	var r0 *gen.UpdateStatusResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.UpdateStatusResponse, error)); ok {
-		return rf(invitationId, status)
+	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.UpdateStatusResponse, error)); ok {
+		return rf(invitationId, status, email)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.UpdateStatusResponse); ok {
-		r0 = rf(invitationId, status)
+	if rf, ok := ret.Get(0).(func(string, string, string) *gen.UpdateStatusResponse); ok {
+		r0 = rf(invitationId, status, email)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateStatusResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(invitationId, status)
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(invitationId, status, email)
 	} else {
 		r1 = ret.Error(1)
 	}
