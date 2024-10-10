@@ -478,8 +478,7 @@ fragment Subscriber on SubscriberDto {
   address
   dob
   email
-  firstName
-  lastName
+  name
   gender
   idSerial
   networkId

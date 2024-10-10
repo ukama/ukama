@@ -43,6 +43,7 @@ import { TAddSubscriberData } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper, Stack, Typography } from '@mui/material';
+import { set } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 
 const Page = () => {
@@ -73,6 +74,8 @@ const Page = () => {
     useState<boolean>(false);
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
+    useState(false);
   const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
   const [selectedNetwork, setSelectedNetwork] = useState<string>('');
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
@@ -114,11 +117,7 @@ const Page = () => {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
           const s = search.toLowerCase();
-          if (
-            subscriber.firstName.toLowerCase().includes(s) ??
-            subscriber.lastName.toLowerCase().includes(s)
-          )
-            return subscriber;
+          if (subscriber.name.toLowerCase().includes(s)) return subscriber;
         },
       );
       setSubscriber(() => ({ subscribers: subscribers ?? [] }));
@@ -138,7 +137,11 @@ const Page = () => {
   });
   const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
     onCompleted: (res) => {
-      if (res.getPackagesForSim.packages) {
+      if (
+        res.getPackagesForSim.packages &&
+        res.getPackagesForSim.packages.length > 0 &&
+        isPackageActivationNeeded
+      ) {
         activatePackageSim({
           variables: {
             data: {
@@ -147,22 +150,45 @@ const Page = () => {
             },
           },
         });
+        setIsPackageActivationNeeded(false);
       }
     },
   });
+
   const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
     onCompleted: (res) => {
       if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
-        getPackagesForSim({
-          variables: {
-            data: {
-              sim_id: res?.getSubscriber?.sim[0].id,
-            },
-          },
-        });
+        fetchPackagesForSim(res.getSubscriber.sim[0].id);
       }
     },
   });
+  const handleOpenSubscriberDetails = useCallback(
+    (id: string, shouldActivatePackage: boolean = false) => {
+      setIsSubscriberDetailsOpen(true);
+      setSelectedSubscriber(id);
+      setIsPackageActivationNeeded(shouldActivatePackage);
+
+      getSubscriber({
+        variables: {
+          subscriberId: id,
+        },
+      });
+    },
+    [getSubscriber],
+  );
+
+  const fetchPackagesForSim = useCallback(
+    (simId: string) => {
+      getPackagesForSim({
+        variables: {
+          data: {
+            sim_id: simId,
+          },
+        },
+      });
+    },
+    [getPackagesForSim],
+  );
 
   const onTableMenuItem = (id: string, type: string) => {
     if (type === 'delete-sub') {
@@ -184,16 +210,8 @@ const Page = () => {
       });
     }
     if (type === 'edit-sub') {
-      setIsSubscriberDetailsOpen(true);
-      getSubscriber({
-        variables: {
-          subscriberId: id,
-        },
-      });
-
-      setSelectedSubscriber(id);
+      handleOpenSubscriberDetails(id, false);
     }
-
     if (type === 'pause-service') {
       toggleSimStatus({
         variables: {
@@ -291,7 +309,7 @@ const Page = () => {
         return {
           id: subscriber.uuid,
           email: subscriber.email,
-          name: `${subscriber.firstName}`,
+          name: `${subscriber.name}`,
           dataUsage: '',
           dataPlan: '',
           actions: '',
@@ -495,8 +513,12 @@ const Page = () => {
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
-      onCompleted: () => {
-        refetchSubscribers();
+      onCompleted: (res) => {
+        refetchSubscribers().then((data) => {
+          setSubscriber(() => ({
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          }));
+        });
         setSnackbarMessage({
           id: 'update-subscriber-success',
           message: 'Subscriber updated successfully!',
@@ -585,15 +607,15 @@ const Page = () => {
 
   const handleUpdateSubscriber = (
     subscriberId: string,
-    email: string,
-    firstName: string,
+    name: string,
+    phone: string,
   ) => {
     updateSubscriber({
       variables: {
         subscriberId: subscriberId,
         data: {
-          email: email,
-          first_name: firstName,
+          phone: phone,
+          name: name,
         },
       },
     });
@@ -629,8 +651,7 @@ const Page = () => {
         data: {
           email: values.email,
           phone: values.phone,
-          first_name: values.name,
-          last_name: 'name',
+          name: values.name,
           network_id: network.id,
         },
       },
@@ -786,6 +807,7 @@ const Page = () => {
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
       />
+
       <TopUpData
         isToPup={isToPupData}
         onCancel={handleCloseTopUp}

@@ -58,8 +58,7 @@ func TestAddSubscriber(t *testing.T) {
 	}
 	t.Run("Add", func(t *testing.T) {
 		_, err := c.Add(ctx, &pb.AddSubscriberRequest{
-			FirstName:             "John",
-			LastName:              "Doe",
+			Name:                  "John",
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "+1234567890",
 			Address:               "123 Main St.",
@@ -84,7 +83,7 @@ func TestAddSubscriber(t *testing.T) {
 		})
 
 		if assert.NoError(t, err) {
-			assert.Equal(t, "john", r.Subscribers[0].FirstName)
+			assert.Equal(t, "john", r.Subscribers[0].Name)
 		}
 	})
 	t.Run("Get", func(t *testing.T) {

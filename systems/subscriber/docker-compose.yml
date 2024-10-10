@@ -1,19 +1,133 @@
-version: '3.3'
+version: "3.3"
 services:
- postgresd:
-  image: postgres:13.3
-  ports:
-   - 5412:5432
-  environment:
-   - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=Pass2020!
-  networks:
-   - ukama-net
-  volumes:
-   - postgress-data:/var/lib/postgresql
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - 5412:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
 
- simpool:
-  build: ./sim-pool
+  simpool:
+    build: ./sim-pool
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - ORGNAME=${ORGNAME}
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
+      - SIMPOOL_SERVICE_HOST=simpool
+      - SIMPOOL_SERVICE_PORT=9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      - msgclient-subscriber
+
+  registry:
+    build: ./registry
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
+      - REGISTRY_SERVICE_HOST=registry
+      - REGISTRY_SERVICE_PORT=9090
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - SIMMANAGERHOST=simmanager:9090
+      - HTTP_INITCLIENT=http://api-gateway-init:8080
+      - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      - msgclient-subscriber
+
+  simmanager:
+    build: ./sim-manager
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - PUSHMETRICHOST=http://${LOCAL_HOST_IP}:9099
+      - KEY=${KEY}
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
+      - SIMMANAGER_SERVICE_HOST=simmanager
+      - SIMMANAGER_SERVICE_PORT=9090
+      - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
+      - HTTP_INITCLIENT=http://api-gateway-init:8080
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      - msgclient-subscriber
+
+  testagent:
+    build: ./test-agent
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-subscriber:9095
+      - TESTAGENT_SERVICE_HOST=testagent
+      - TESTAGENT_SERVICE_PORT=9090
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+      - msgclient-subscriber
+
+  api-gateway-subscriber:
+    build: ./api-gateway
+    ports:
+      - 8078:8080
+    restart: always
+    environment:
+      - BYPASS_AUTH_MODE=true
+    networks:
+      - ukama-net
+    depends_on:
+      - simmanager
+      - simpool
+      - registry
+
+  msgclient-subscriber:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - GRPC_PORT=9095
+      - SYSTEM=subscriber
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd
+
+initclient-subscriber:
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -31,8 +145,45 @@ services:
    - postgresd
    - msgclient-subscriber
 
- registry:
-  build: ./registry
+  subscriber-auth-migrate:
+    image: oryd/kratos:latest
+    environment:
+      - DSN=postgres://postgres:Pass2020!@${LOCAL_HOST_IP}:5412/kratos?sslmode=disable
+    volumes:
+      - type: bind
+        source: ./auth
+        target: /etc/config/kratos
+    command: migrate sql -e --yes
+    restart: on-failure
+    depends_on:
+      - postgresd
+    networks:
+      - ukama-net
+
+  subscriber-auth:
+    image: oryd/kratos:v1.0.0
+    ports:
+      - "4423:4423" # public
+      - "4424:4424"
+    restart: unless-stopped
+    command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+    networks:
+      - ukama-net
+    volumes:
+      - type: bind
+        source: ./auth
+        target: /etc/config/kratos
+
+  subscriber-mailslurper:
+    image: oryd/mailslurper:latest-smtps
+    ports:
+      - "4446:4446"
+      - "4447:4447"
+    networks:
+      - ukama-net
+
+initclient-subscriber-auth:
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -54,7 +205,7 @@ services:
    - postgresd
    - msgclient-subscriber
 
- simmanager:
+simmanager:
   build: ./sim-manager
   environment:
    - DEBUGMODE=true
@@ -78,7 +229,7 @@ services:
    - postgresd
    - msgclient-subscriber
 
- testagent:
+testagent:
   build: ./test-agent
   environment:
    - DEBUGMODE=true
@@ -96,7 +247,7 @@ services:
    - postgresd
    - msgclient-subscriber
 
- api-gateway-subscriber:
+api-gateway-subscriber:
   build: ./api-gateway
   ports:
    - 8078:8080
@@ -110,7 +261,7 @@ services:
    - simpool
    - registry
 
- msgclient-subscriber:
+msgclient-subscriber:
   build: ../services/msgClient
   environment:
    - DEBUGMODE=true
@@ -126,7 +277,7 @@ services:
   depends_on:
    - postgresd
 
- initclient-subscriber:
+initclient-subscriber:
   build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
@@ -145,7 +296,7 @@ services:
   networks:
    - ukama-net
 
- subscriber-auth-migrate:
+subscriber-auth-migrate:
   image: oryd/kratos:latest
   environment:
    - DSN=postgres://postgres:Pass2020!@${LOCAL_HOST_IP}:5412/kratos?sslmode=disable
@@ -160,7 +311,7 @@ services:
   networks:
    - ukama-net
 
- subscriber-auth:
+subscriber-auth:
   image: oryd/kratos:v1.0.0
   ports:
    - 4423:4423
@@ -174,7 +325,7 @@ services:
      source: ./auth
      target: /etc/config/kratos
 
- subscriber-mailslurper:
+subscriber-mailslurper:
   image: oryd/mailslurper:latest-smtps
   ports:
    - 4446:4436
@@ -182,7 +333,7 @@ services:
   networks:
    - ukama-net
 
- initclient-subscriber-auth:
+initclient-subscriber-auth:
   build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
@@ -202,9 +353,9 @@ services:
    - ukama-net
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    external: true
+    name: services_ukama-net
 
 volumes:
- postgress-data:
+  postgress-data:

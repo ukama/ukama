@@ -16,8 +16,7 @@ import (
 
 type Subscriber struct {
 	SubscriberId          uuid.UUID `gorm:"primaryKey;type:uuid"`
-	FirstName             string    `gorm:"size:255"`
-	LastName              string    `gorm:"size:255"`
+	Name                  string    `gorm:"size:255"`
 	NetworkId             uuid.UUID `gorm:"type:uuid;index"`
 	Email                 string    `gorm:"size:255;unique;not null;index"`
 	PhoneNumber           string    `gorm:"size:15"`

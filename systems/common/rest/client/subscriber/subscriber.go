@@ -26,8 +26,7 @@ type SubscriberInfo struct {
 	SubscriberId          uuid.UUID `json:"subscriber_id,omitempty"`
 	OrgId                 uuid.UUID `json:"org_id,omitempty"`
 	NetworkId             uuid.UUID `json:"network_id,omitempty"`
-	FirstName             string    `json:"first_name,omitempty"`
-	LastName              string    `json:"last_name,omitempty"`
+	Name            	  string    `json:"name,omitempty"`
 	Email                 string    `json:"email,omitempty"`
 	PhoneNumber           string    `json:"phone_number,omitempty"`
 	Address               string    `json:"address,omitempty"`
@@ -44,8 +43,7 @@ type Subscriber struct {
 type AddSubscriberRequest struct {
 	OrgId                 string `json:"org_id" validate:"required"`
 	NetworkId             string `json:"network_id" validate:"required"`
-	FirstName             string `json:"first_name,omitempty"`
-	LastName              string `json:"last_name,omitempty"`
+	Name                  string `json:"name,omitempty"`
 	Email                 string `json:"email,omitempty"`
 	PhoneNumber           string `json:"phone_number,omitempty"`
 	Address               string `json:"address,omitempty"`
