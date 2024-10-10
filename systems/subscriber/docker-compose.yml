@@ -129,21 +129,21 @@ services:
 initclient-subscriber:
   image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
-    - ENV_SYSTEM_ORG=${ORGNAME}
-    - ENV_SYSTEM_NAME=subscriber
-    - ENV_DNS_REFRESH_TIME_PERIOD=30
-    - ENV_SYSTEM_DNS=api-gateway-subscriber
-    - ENV_DNS_SERVER=false
-    - ENV_SYSTEM_PORT=8080
-    - ENV_SYSTEM_CERT=This-is-a-certificate
-    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-    - ENV_INIT_SYSTEM_PORT=8071
-    - ENV_INIT_CLIENT_ADDR=initclient-subscriber
-    - ENV_INIT_CLIENT_PORT=8080
-    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - ORGNAME=${ORGNAME}
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-subscriber:9095
+   - SIMPOOL_SERVICE_HOST=simpool
+   - SIMPOOL_SERVICE_PORT=9090
   restart: always
   networks:
-    - ukama-net
+   - ukama-net
+  depends_on:
+   - postgresd
+   - msgclient-subscriber
 
   subscriber-auth-migrate:
     image: oryd/kratos:latest
@@ -185,21 +185,172 @@ initclient-subscriber:
 initclient-subscriber-auth:
   image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
-    - ENV_SYSTEM_ORG=${ORGNAME}
-    - ENV_SYSTEM_NAME=subscriber-auth
-    - ENV_DNS_REFRESH_TIME_PERIOD=30
-    - ENV_SYSTEM_DNS=subscriber-auth
-    - ENV_DNS_SERVER=false
-    - ENV_SYSTEM_PORT=4423
-    - ENV_SYSTEM_CERT=This-is-a-certificate
-    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-    - ENV_INIT_SYSTEM_PORT=8071
-    - ENV_INIT_CLIENT_ADDR=initclient-subscriber-auth
-    - ENV_INIT_CLIENT_PORT=8080
-    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-subscriber:9095
+   - REGISTRY_SERVICE_HOST=registry
+   - REGISTRY_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - SIMMANAGERHOST=simmanager:9090
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
   restart: always
   networks:
-    - ukama-net
+   - ukama-net
+  depends_on:
+   - postgresd
+   - msgclient-subscriber
+
+simmanager:
+  build: ./sim-manager
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - PUSHMETRICHOST=http://${LOCAL_HOST_IP}:9099
+   - KEY=${KEY}
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - MSGCLIENT_HOST=msgclient-subscriber:9095
+   - SIMMANAGER_SERVICE_HOST=simmanager
+   - SIMMANAGER_SERVICE_PORT=9090
+   - OPERATORAGENT=http://${LOCAL_HOST_IP}:8880
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd
+   - msgclient-subscriber
+
+testagent:
+  build: ./test-agent
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-subscriber:9095
+   - TESTAGENT_SERVICE_HOST=testagent
+   - TESTAGENT_SERVICE_PORT=9090
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd
+   - msgclient-subscriber
+
+api-gateway-subscriber:
+  build: ./api-gateway
+  ports:
+   - 8078:8080
+  restart: always
+  environment:
+   - BYPASS_AUTH_MODE=true
+  networks:
+   - ukama-net
+  depends_on:
+   - simmanager
+   - simpool
+   - registry
+
+msgclient-subscriber:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
+   - SYSTEM=subscriber
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd
+
+initclient-subscriber:
+  build: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=subscriber
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=api-gateway-subscriber
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-subscriber
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
+
+subscriber-auth-migrate:
+  image: oryd/kratos:latest
+  environment:
+   - DSN=postgres://postgres:Pass2020!@${LOCAL_HOST_IP}:5412/kratos?sslmode=disable
+  volumes:
+   - type: bind
+     source: ./auth
+     target: /etc/config/kratos
+  command: migrate sql -e --yes
+  restart: on-failure
+  depends_on:
+   - postgresd
+  networks:
+   - ukama-net
+
+subscriber-auth:
+  image: oryd/kratos:v1.0.0
+  ports:
+   - 4423:4423
+   - 4424:4424
+  restart: unless-stopped
+  command: serve -c /etc/config/kratos/kratos.yml --dev --watch-courier
+  networks:
+   - ukama-net
+  volumes:
+   - type: bind
+     source: ./auth
+     target: /etc/config/kratos
+
+subscriber-mailslurper:
+  image: oryd/mailslurper:latest-smtps
+  ports:
+   - 4446:4436
+   - 4447:4437
+  networks:
+   - ukama-net
+
+initclient-subscriber-auth:
+  build: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=subscriber-auth
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=subscriber-auth
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=4423
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-subscriber-auth
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
   ukama-net:

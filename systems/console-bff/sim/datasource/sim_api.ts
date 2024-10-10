@@ -105,12 +105,7 @@ class SimApi extends RESTDataSource {
       },
     });
 
-    if (simRes.sim.id) {
-      await this.addPackageToSim(baseURL, {
-        package_id: req.package_id,
-        sim_id: simRes.sim.id,
-        start_date: dayjs().add(10, "seconds").format(),
-      });
+    logger.info(`SimRes: ${JSON.stringify(simRes)}`);
 
     if (simRes.sim.id) {
       await this.toggleSimStatus(baseURL, {
@@ -146,7 +141,6 @@ class SimApi extends RESTDataSource {
       dtoToSimsDto(res)
     );
   };
-
 
   getDataUsage = async (
     baseURL: string,
