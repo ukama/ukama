@@ -99,10 +99,12 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 		if depositWebhook.Status != webhookStatusPending {
 			_, err = p.webhooksClient.PostDepositHook(depositWebhook)
 			if err != nil {
-				log.Errorf("error while fetching deposit webhook: %v", err)
+				log.Errorf("error while posting deposit webhook: %v", err)
 			}
 		}
 	}
+
+	log.Infof("finished Pulling webhooks from sandbox")
 
 	return nil
 }
