@@ -44,13 +44,13 @@ func TestNodeServer_Add(t *testing.T) {
 	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId)
 
 	node := &db.Node{
-		Id:    nodeId,
-		Name:  nodeName,
-		Type:  testNode.GetNodeType(),
+		Id:   nodeId,
+		Name: nodeName,
+		Type: testNode.GetNodeType(),
 		Status: db.NodeStatus{
-			NodeId: nodeId,
-			Conn:   db.Unknown,
-			State:  db.Undefined,
+			NodeId:       nodeId,
+			State:        ukama.Undefined,
+			Connectivity: ukama.Unknown,
 		},
 	}
 

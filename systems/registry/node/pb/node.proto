@@ -11,8 +11,8 @@ syntax = "proto3";
 option go_package = "github.com/ukama/ukama/systems/registry/node/pb/gen";
 
 import "validator.proto";
+import "ukama/node.proto";
 import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
 
 package ukama.registry.node.v1;
 
@@ -21,7 +21,6 @@ service NodeService {
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
     rpc GetNodesForNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
-    rpc GetAll(GetAllRequest) returns (GetAllResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
@@ -33,8 +32,8 @@ service NodeService {
 }
 
 message AddNodeRequest{
-    string nodeId = 1 [(validator.field) = {string_not_empty: true}];
-    string name = 3;
+    string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];;
+    string name = 2;
 }
 
 message AddNodeResponse{
@@ -60,19 +59,11 @@ message GetBySiteResponse{
 }
 
 message GetByNetworkRequest{
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string networkId = 1 [json_name = "network_id"];
 }
 
 message GetByNetworkResponse{
     string networkId = 1 [json_name = "network_id"];
-    repeated Node nodes = 2;
-}
-
-message GetAllRequest{
-    bool free = 2;
-}
-
-message GetAllResponse{
     repeated Node nodes = 2;
 }
 
@@ -142,8 +133,8 @@ message ReleaseNodeFromSiteResponse {
 }
 
 message NodeStatus {
-    string connectivity = 1;
-    string state = 2; 
+    ukama.common.v1.NodeConnectivity connectivity = 1;
+    ukama.common.v1.NodeState state = 2; 
 }
 
 message Site {
@@ -160,5 +151,4 @@ message Node {
     NodeStatus status = 5;
     Site site = 6;
     repeated Node attached = 7;
-    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
 }
