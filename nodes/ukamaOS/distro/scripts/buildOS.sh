@@ -93,6 +93,7 @@ usage() {
 }
 
 msg_usage() {
+
     echo "Usage:"
     echo "      buildOS.sh [options]"
     echo ""
@@ -189,9 +190,9 @@ build_init() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
     else
-	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
 
     # build and copy init micros
@@ -215,7 +216,7 @@ build_init() {
     #cd ${MICRO_INIT_ROOT}; make clean
     cd ${INIT_ROOT}; make clean
     cd ${CWD}
-	
+
     # Hack to be removed later on. Copy temp init script to /
     copy_file preInit.sh $ROOTFS/
 
@@ -250,11 +251,10 @@ build_lxce() {
    # Copy manifest file
    copy_file ${LXCE_ROOT}/configs/manifest.json ${ROOTFS}/conf/lxce/
 
-
    # Go back and clean up
    cd ${LXCE_ROOT}; make clean
    cd ${CWD}
-	
+
    # overriding config lxce
    # bridge if has to be for qemu not for host this need to fixed in lxce
    # Also we need put some checks no wifi iface is added in here
@@ -268,6 +268,7 @@ build_lxce() {
 # Build busybox using the Ukama minimal configuration
 #
 build_busybox() {
+
     CWD=`pwd`
     cd ${BB_ROOT}
 
@@ -280,18 +281,18 @@ build_busybox() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
     else
-	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
 
     make XGCCPATH=${XGCC_PATH}/ BBCONFIG=${BB_CONFIG} \
-	 ROOTFSPATH=${BB_ROOTFS}
+	     ROOTFSPATH=${BB_ROOTFS}
 
     if [ $? -ne 0 ]
     then
-       log_error "Busybox compliation failed"
-       exit 1
+        log_error "Busybox compliation failed"
+        exit 1
     fi
 
     cd ${CWD}
@@ -336,15 +337,15 @@ build_capps() {
     cd ${CAPPS_ROOT}
     if [ "${TARGET}" != "local" ]
     then
-	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
     else
-	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
     make XGCCPATH=${XGCC_PATH}/
 
     if [ -d ${CAPPS_ROOT}/pkgs/ ]
     then
-	rm -rf ${CAPPS_ROOT}/pkgs/
+	    rm -rf ${CAPPS_ROOT}/pkgs/
     fi
 
     # Build the pkgs
@@ -547,17 +548,17 @@ setup_device() {
 WD=`pwd`
 while [ "$#" -gt 0 ]; do
     case $1 in
-	-p|--path)
-	    if [ -z "$2" ]
-	    then
-		log_info "Missing rootfs parameter for -p"
-		log_info "Setting to default: ${DEF_ROOTFS}"
-		ROOTFS=${DEF_ROOTFS}
-	    else
+        -p|--path)
+	        if [ -z "$2" ]
+	        then
+		        log_info "Missing rootfs parameter for -p"
+		        log_info "Setting to default: ${DEF_ROOTFS}"
+		        ROOTFS=${DEF_ROOTFS}
+	        else
                 ROOTFS=$2
                 log_info "ukamaOS RootFS Path is: ${ROOTFS}"
                 shift # Remove path from processing
-	    fi
+	        fi
             shift
             ;;
         -h|--help)
@@ -565,19 +566,19 @@ while [ "$#" -gt 0 ]; do
             msg_usage
             shift
             ;;
-	-t|--target)
-	    if [ -z "$2" ]
-	    then
-		log_info "Missing target parameter for -t"
-		log_info "Setting to default: ${DEF_TARGET}"
-		TARGET=${DEF_TARGET}
-	    else
-		TARGET=$2
-		log_info "Target is: ${TARGET}"
-		shift
-	    fi
-	    shift
-	    ;;
+	    -t|--target)
+	        if [ -z "$2" ]
+	        then
+		        log_info "Missing target parameter for -t"
+		        log_info "Setting to default: ${DEF_TARGET}"
+		        TARGET=${DEF_TARGET}
+	        else
+		        TARGET=$2
+		        log_info "Target is: ${TARGET}"
+		        shift
+	        fi
+	        shift
+	        ;;
         *)
             log_error "Invalid args: ${1}"
             msg_usage
