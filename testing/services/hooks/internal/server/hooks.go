@@ -15,8 +15,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/testing/services/hooks/internal"
 	"github.com/ukama/ukama/testing/services/hooks/internal/clients"
 	"github.com/ukama/ukama/testing/services/hooks/internal/scheduler"
 
@@ -36,7 +34,6 @@ type HookServer struct {
 	paymentsClient clients.PaymentsClient
 	webhooksClient clients.WebhooksClient
 	cdrScheduler   scheduler.HookScheduler
-	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedHookServiceServer
 }
 
@@ -48,8 +45,6 @@ func NewHookServer(orgName string, pawapayClient clients.PawapayClient, payments
 		paymentsClient: paymentsClient,
 		webhooksClient: webhooksClient,
 		cdrScheduler:   cdrScheduler,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
-			SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
 
 	_, err := h.startScheduler()
