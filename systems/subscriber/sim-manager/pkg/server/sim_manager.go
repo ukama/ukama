@@ -589,16 +589,16 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
 
-	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
-	}
+	// overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
+	// if err != nil {
+	// 	return nil, grpc.SqlErrorToGrpc(err, "packages")
+	// }
 
-	if len(overlappingPackages) > 0 {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
-			len(overlappingPackages))
-	}
+	// if len(overlappingPackages) > 0 {
+	// 	return nil, status.Errorf(codes.FailedPrecondition,
+	// 		"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
+	// 		len(overlappingPackages))
+	// }
 
 	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
 		pckg.Id = uuid.NewV4()

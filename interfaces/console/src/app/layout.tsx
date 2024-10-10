@@ -50,6 +50,7 @@ export default function RootLayout({
     name: 'token',
     value: '',
   };
+
   return (
     <html lang="en">
       <body className={inter.className}>
