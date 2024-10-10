@@ -71,19 +71,20 @@ log_error() {
 }
 
 copy_file() {
+
     SRC=$1
     DST=$2
 
     if [ -d "${DST}" ]; then
-	if [ -f "${SRC}" ]; then
-	    cp $SRC $DST
-	else
-	    log_error "${SRC} not found. Exiting"
-	    exit 1
-	fi
+	    if [ -f "${SRC}" ]; then
+	        cp $SRC $DST
+	    else
+	        log_error "${SRC} not found. Exiting"
+	        exit 1
+	    fi
     else
-	log_error "${DST} not found. Exiting"
-	exit 1
+	    log_error "${DST} not found. Exiting"
+	    exit 1
     fi
 }
 
@@ -101,7 +102,7 @@ msg_usage() {
     echo "     -t target      # Target is local(default), cnode, anode, etc."
     echo "     -p string      # Path for minimal rootfs, e.g. _ukama_os_rootfs"
     echo "     -h             # Display this help message."
-    exit
+    exit 0
 }
 
 #
@@ -115,14 +116,14 @@ copy_all_libs() {
     
     for BIN in ${ARGS}
     do
-	for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
-	do
-	    if [ -f "${lib}" ]; then
-		cp --parents "${lib}" ${ROOTFS}
-		cp "${lib}" ${ROOTFS}/lib
-	    fi
-	    patchelf --set-rpath /lib ${BIN}
-	done
+	    for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
+	    do
+	        if [ -f "${lib}" ]; then
+		        cp --parents "${lib}" ${ROOTFS}
+		        cp "${lib}" ${ROOTFS}/lib
+	        fi
+	        patchelf --set-rpath /lib ${BIN}
+	    done
     done
 }
 
@@ -135,11 +136,11 @@ build_ip_utils() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
-	XTARGET=${TARGET}
+	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XTARGET=${TARGET}
     else
-	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
-	XTARGET="linux"
+	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+	    XTARGET="linux"
     fi
    
     # build and copy iptables
@@ -411,7 +412,8 @@ build_etc_dirs() {
 #
 build_rootfs_dirs() {
 
-    DIRS="boot"
+    DIRS="ukama"
+    DIRS="boot ${DIRS}"
     DIRS="bin  ${DIRS}"
     DIRS="sbin ${DIRS}"
     DIRS="etc  ${DIRS}"
