@@ -26,7 +26,7 @@ SCRIPTS_ROOT=${UKAMA_OS}/distro/scripts
 APPS_BUILDER_ROOT=${UKAMA_REPO}/nodes/builder
 BB_ROOT=${VENDOR_ROOT}/busybox
 STARTERD_ROOT=${SYS_ROOT}/starterd
-DHCPCD_SRC_ROOT=${UKAMA_OS}/distro/system/dhcpcd
+DHCPCD_SRC_ROOT=${VENDOR_ROOT}/dhcpcd
 
 # Build config parameters
 BB_CONFIG=ukama_minimal_defconfig
