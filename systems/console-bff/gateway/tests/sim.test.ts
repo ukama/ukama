@@ -154,6 +154,8 @@ describe("Sim API integration tests", () => {
         dataVolume: 10,
         duration: 30,
         name: "Test-Package",
+        country: "COD",
+        currency: "CF",
       },
       parsedHeaders
     );

@@ -260,6 +260,12 @@ export class AddPackageInputDto {
 
   @Field(() => Int)
   dataVolume: number;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
 }
 
 @InputType()

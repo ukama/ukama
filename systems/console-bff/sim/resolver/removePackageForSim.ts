@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import {
   RemovePackageFormSimInputDto,
@@ -17,7 +16,6 @@ import {
 @Resolver()
 export class RemovePackageForSimResolver {
   @Mutation(() => RemovePackageFromSimResDto)
-  @UseMiddleware(Authentication)
   async removePackageForSim(
     @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: Context

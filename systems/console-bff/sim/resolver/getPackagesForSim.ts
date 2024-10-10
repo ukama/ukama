@@ -18,7 +18,6 @@ export class GetPackagesForSimResolver {
     @Ctx() ctx: Context
   ): Promise<GetSimPackagesDtoAPI> {
     const { dataSources, baseURL } = ctx;
-
     return await dataSources.dataSource.getPackagesForSim(baseURL, data);
   }
 }

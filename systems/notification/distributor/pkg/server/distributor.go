@@ -65,13 +65,15 @@ func (n *DistributorServer) validateRequest(req *pb.NotificationStreamRequest) (
 	}
 
 	/* validate member of org or member role */
-	if req.GetUserId() != "" {
+	if req.GetUserId() != "" && req.GetSubscriberId() == "" {
 		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
 		if err != nil {
 			return roleType, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
 		}
 		roleType = roles.RoleType(upb.RoleType(upb.RoleType_value[resp.Member.Role]))
+	} else if req.GetSubscriberId() != "" {
+		roleType = roles.TYPE_SUBSCRIBER
 	}
 
 	if req.GetNetworkId() != "" {

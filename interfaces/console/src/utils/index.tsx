@@ -219,8 +219,8 @@ const getDataPlanUsage = (
   dataVolume: string,
   dataUnit: string,
 ): string => {
-  const symbol = currency === 'Dollar' ? '$' : '';
-  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+  const symbol = currency === 'Dollar' ? '$' : currency;
+  return `${symbol} ${amount} / ${dataVolume} ${getDataUsageSymbol(
     dataUnit,
   )} / ${duration}`;
 };
@@ -287,7 +287,15 @@ const getSimValuefromSimType = (simType: string) => {
   }
 };
 
-const getInvitationStatusColor = (status: string) => {
+const getInvitationStatusColor = (status: string, isExpired: boolean) => {
+  if (isExpired) {
+    return (
+      <Typography variant="body2" color={colors.red}>
+        Expired
+      </Typography>
+    );
+  }
+
   switch (status) {
     case Invitation_Status.InviteAccepted:
       return (
@@ -313,7 +321,7 @@ const getInvitationStatusColor = (status: string) => {
 const provideStatusColor = (status: Invitation_Status) => {
   switch (status) {
     case Invitation_Status.InvitePending:
-      return 'info';
+      return colors.blueGray;
     case Invitation_Status.InviteAccepted:
       return 'success';
     case Invitation_Status.InviteDeclined:

@@ -22,7 +22,7 @@ type Config struct {
 	Queue                *uconf.Queue      `default:"{}"`
 	Timeout              time.Duration     `default:"3s"`
 	MsgClient            *config.MsgClient `default:"{}"`
-	AuthLoginbaseURL     string            `default:"http://localhost:4455/auth/login"`
+	ConsoleAppURL        string            `default:"http://localhost:3000/onboarding"`
 	TemplateName         string            `default:"member-invite"`
 	InvitationExpiryTime uint              `default:"24"`
 	OrgName              string

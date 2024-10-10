@@ -30,6 +30,8 @@ type AddPackageRequest struct {
 	Overdraft     float64  `json:"overdraft"`
 	TrafficPolicy uint32   `json:"traffic_policy"`
 	Networks      []string `json:"networks"`
+	Country       string   `json:"country"`
+	Currency      string   `json:"currency"`
 }
 
 type UpdatePackageRequest struct {
@@ -60,7 +62,6 @@ type GetBaseRatesForPeriodRequest struct {
 type GetBaseRateRequest struct {
 	RateId string `path:"base_rate" validate:"required"`
 }
-
 
 type UploadBaseRatesRequest struct {
 	FileURL     string `json:"file_url" binding:"required" validate:"required"`

@@ -23,6 +23,7 @@ export const CONSOLE_APP_URL =
   process.env.CONSOLE_APP_URL ?? "http://localhost:3000";
 
 // UTILS
+export const SIM_TYPE = process.env.SIM_TYPE ?? "operator_data";
 export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";
 export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
