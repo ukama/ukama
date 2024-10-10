@@ -6,186 +6,185 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-syntax = "proto3";
+ syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen";
-
-import "validator.proto";
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/wrappers.proto";
-import "google/protobuf/struct.proto";
-
-
-package ukama.subscriber.sim_manager.v1;
-
-service SimManagerService {
-    // Sim
-    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
-    rpc GetSim(GetSimRequest) returns (GetSimResponse);
-    rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
-    rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
-    rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
-    rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
-    rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
-    // Sim pacakge
-    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
-    rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
-    rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
-    rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
-    // Usage
-    rpc GetUsages(UsageRequest) returns (UsageResponse);
-}
-
-
-
-message AllocateSimRequest {
-    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    string simToken = 2;
-    string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
-    string networkId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string simType = 5;
-    uint32 trafficPolicy = 6 [json_name = "traffic_policy"];
-}
-
-message AllocateSimResponse {
-    Sim sim = 1;
-}
-
-message GetSimRequest {
-    string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message GetSimResponse {
-    Sim sim = 1;
-}
-
-
-message ListSimsRequest{
-}
-
-message ListSimsResponse {
-    repeated Sim sims = 1;
-}
-
-
-message GetSimsBySubscriberRequest {
-    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-}
-
-message GetSimsBySubscriberResponse {
-    string subscriberId = 1 [json_name = "subscriber_id"];
-    repeated Sim sims = 2;
-}
-
-
-message GetSimsByNetworkRequest {
-    string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-}
-
-message GetSimsByNetworkResponse {
-    string networkId = 1 [json_name = "network_id"];
-    repeated Sim sims = 2;
-}
-
-
-message ToggleSimStatusRequest {
-    string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-    string status = 2;
-}
-
-message ToggleSimStatusResponse{}
-
-
-message DeleteSimRequest {
-    string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message DeleteSimResponse{
-}
-
-
-message AddPackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-    string startDate = 3 [json_name = "start_date"];
-}
-
-message AddPackageResponse{
-}
-
-
-message GetPackagesBySimRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-}
-
-message GetPackagesBySimResponse {
-    string simId = 1 [json_name = "sim_id"];
-    repeated Package packages = 2;
-}
-
-
-message SetActivePackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-}
-
-message SetActivePackageResponse{
-}
-
-
-message RemovePackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-}
-
-message RemovePackageResponse{
-}
-
-
-message UsageRequest {
-    string simId = 1 [json_name = "sim_id"];
-    string sim_type = 2 [json_name = "sim_type"];
-    string type = 3;
-    string from = 4;
-    string to = 5;
-    string region = 6;
-}
-
-
-message UsageResponse {
-    google.protobuf.Struct usage = 1;
-    google.protobuf.Struct cost = 2;
-}
-
-
-
-message Package {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-    string startDate = 3 [json_name = "start_date"];
-    string endDate = 4 [json_name = "end_date"];
-    bool isActive = 5  [json_name = "is_active"];
-    string createdAt = 6 [json_name = "created_at"];
-    string updatedAt = 7 [json_name = "updated_at"];
-}
-
-
-message Sim {
-    string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
-    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    Package package = 5;
-    string iccid = 6;
-    string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
-    string imsi = 8;
-    string type = 9;
-    string status = 10;
-    bool isPhysical = 11 [json_name = "is_physical"];
-    uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
-    google.protobuf.Timestamp firstActivatedOn = 13;
-    google.protobuf.Timestamp lastActivatedOn = 14 ;
-    uint64 activationsCount = 15;
-    uint64 deactivationsCount = 16;
-    google.protobuf.Timestamp allocatedAt = 17 [json_name = "allocated_at"];
-    string syncStatus = 18 [json_name = "sync_status"];
-}
+ option go_package = "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen";
+ 
+ import "validator.proto";
+ import "google/protobuf/timestamp.proto";
+ import "google/protobuf/struct.proto";
+ 
+ 
+ package ukama.subscriber.sim_manager.v1;
+ 
+ service SimManagerService {
+     // Sim
+     rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
+     rpc GetSim(GetSimRequest) returns (GetSimResponse);
+     rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
+     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
+     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
+     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
+     rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
+     // Sim pacakge
+     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+     rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
+     rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
+     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+     // Usage
+     rpc GetUsages(UsageRequest) returns (UsageResponse);
+ }
+ 
+ 
+ 
+ message AllocateSimRequest {
+     string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+     string simToken = 2;
+     string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
+     string networkId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+     string simType = 5;
+     uint32 trafficPolicy = 6 [json_name = "traffic_policy"];
+ }
+ 
+ message AllocateSimResponse {
+     Sim sim = 1;
+ }
+ 
+ message GetSimRequest {
+     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+ }
+ 
+ message GetSimResponse {
+     Sim sim = 1;
+ }
+ 
+ 
+ message ListSimsRequest{
+ }
+ 
+ message ListSimsResponse {
+     repeated Sim sims = 1;
+ }
+ 
+ 
+ message GetSimsBySubscriberRequest {
+     string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+ }
+ 
+ message GetSimsBySubscriberResponse {
+     string subscriberId = 1 [json_name = "subscriber_id"];
+     repeated Sim sims = 2;
+ }
+ 
+ 
+ message GetSimsByNetworkRequest {
+     string networkId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+ }
+ 
+ message GetSimsByNetworkResponse {
+     string networkId = 1 [json_name = "network_id"];
+     repeated Sim sims = 2;
+ }
+ 
+ 
+ message ToggleSimStatusRequest {
+     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+     string status = 2;
+ }
+ 
+ message ToggleSimStatusResponse{}
+ 
+ 
+ message DeleteSimRequest {
+     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
+ }
+ 
+ message DeleteSimResponse{
+ }
+ 
+ 
+ message AddPackageRequest {
+     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+     string startDate = 3 [json_name = "start_date"];
+ }
+ 
+ message AddPackageResponse{
+ }
+ 
+ 
+ message GetPackagesBySimRequest {
+     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+ }
+ 
+ message GetPackagesBySimResponse {
+     string simId = 1 [json_name = "sim_id"];
+     repeated Package packages = 2;
+ }
+ 
+ 
+ message SetActivePackageRequest {
+     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+ }
+ 
+ message SetActivePackageResponse{
+ }
+ 
+ 
+ message RemovePackageRequest {
+     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+ }
+ 
+ message RemovePackageResponse{
+ }
+ 
+ 
+ message UsageRequest {
+     string simId = 1 [json_name = "sim_id"];
+     string sim_type = 2 [json_name = "sim_type"];
+     string type = 3;
+     string from = 4;
+     string to = 5;
+     string region = 6;
+ }
+ 
+ 
+ message UsageResponse {
+     google.protobuf.Struct usage = 1;
+     google.protobuf.Struct cost = 2;
+ }
+ 
+ 
+ 
+ message Package {
+     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+     string startDate = 3 [json_name = "start_date"];
+     string endDate = 4 [json_name = "end_date"];
+     bool isActive = 5  [json_name = "is_active"];
+     string createdAt = 6 [json_name = "created_at"];
+     string updatedAt = 7 [json_name = "updated_at"];
+ }
+ 
+ 
+ message Sim {
+     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
+     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+     string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+     Package package = 5;
+     string iccid = 6;
+     string msisdn = 7  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+     string imsi = 8;
+     string type = 9;
+     string status = 10;
+     bool isPhysical = 11 [json_name = "is_physical"];
+     uint32 trafficPolicy = 12 [json_name = "traffic_policy"];
+     google.protobuf.Timestamp firstActivatedOn = 13;
+     google.protobuf.Timestamp lastActivatedOn = 14 ;
+     uint64 activationsCount = 15;
+     uint64 deactivationsCount = 16;
+     google.protobuf.Timestamp allocatedAt = 17 [json_name = "allocated_at"];
+     string syncStatus = 18 [json_name = "sync_status"];
+ }
