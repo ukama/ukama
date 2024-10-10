@@ -26,7 +26,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint+"/"+testUuid)
 
 			// fake subscriber info
-			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
+			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "name": "Foo"}}`
 
 			// Send mock response
 			return &http.Response{
@@ -125,7 +125,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), subscriber.SubscriberEndpoint)
 
 			// fake subscriber info
-			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "last_name": "Foo"}}`
+			subscriber := `{"subscriber":{"subscriber_id": "03cb753f-5e03-4c97-8e47-625115476c72", "name": "Foo"}}`
 
 			// Send mock response
 			return &http.Response{
@@ -149,7 +149,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.NoError(tt, err)
@@ -178,7 +178,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)
@@ -204,7 +204,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)
@@ -225,7 +225,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)
