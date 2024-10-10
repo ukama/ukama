@@ -253,7 +253,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		firstPackage.SimId = sim.Id
 
 		firstPackage.StartDate = time.Now().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
+		firstPackage.EndDate = firstPackage.StartDate.Add(time.Hour * 24 * time.Duration(packageInfo.Duration))
 
 		return nil
 	})
