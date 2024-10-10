@@ -38,7 +38,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorServiceClient{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
