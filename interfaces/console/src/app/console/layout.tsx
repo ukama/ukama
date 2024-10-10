@@ -131,6 +131,12 @@ export default function ConosleLayout({
   });
 
   useEffect(() => {
+    if (user.role === Role_Type.RoleInvalid) {
+      window.location.reload();
+    }
+  }, []);
+
+  useEffect(() => {
     if (metaInfo.ip === '') {
       fetchInfo();
     }
