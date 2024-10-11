@@ -146,10 +146,23 @@ unmount_partition() {
 copy_bootloaders() {
     STAGE="copy_bootloaders"
     log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
-    sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin \
-         ${BOOT_MOUNT}/boot.bin
-    sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin \
-         ${BOOT_MOUNT}/
+
+    BOOT1_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin
+    BOOT2_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin
+
+    if [ ! -f "${BOOT1_BIN}" ]; then
+        log "ERROR" "boot file ${BOOT1_BIN} does not exist"
+        exit 1
+    fi
+
+    if [ ! -f "${BOOT2_BIN}" ]; then
+        log "ERROR" "boot file ${BOOT2_BIN} does not exist"
+        exit 1
+    fi
+
+    sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
+    sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
+
     check_status $? "Bootloaders copied" ${STAGE}
 }
 
