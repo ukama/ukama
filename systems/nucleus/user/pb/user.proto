@@ -88,7 +88,8 @@ message User {
     string id = 1 ;
     string name = 2 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
     string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
-    string phone = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    // string phone = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string phone = 4;
     bool isDeactivated = 5 [json_name = "is_deactivated"];
     string authId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "auth_id"];
     google.protobuf.Timestamp created_at = 7 [json_name = "registered_since"];

@@ -62,9 +62,13 @@ func (s *simRepo) Get(isPhysicalSim bool, simType SimType) (*Sim, error) {
 }
 
 func (s *simRepo) UpdateStatus(iccid string, isAllocated, IsFailed bool) error {
-	result := s.Db.GetGormDb().Update("is_allocated = ?", isAllocated).Update("is_failed = ?", IsFailed).Where("iccid = ?", iccid).First(&Sim{})
-	if result.Error != nil {
-		return result.Error
+	err := s.Db.GetGormDb().Model(&Sim{}).Where("iccid = ?", iccid).Updates(map[string]interface{}{
+		"is_allocated": isAllocated,
+		"is_failed":    IsFailed,
+	}).Error
+
+	if err != nil {
+		return err
 	}
 	return nil
 }

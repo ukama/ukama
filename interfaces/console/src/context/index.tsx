@@ -34,6 +34,8 @@ const AppContext = createContext({
   network: {
     id: '',
     name: '',
+    country: '',
+    currency: '',
   },
   env: {
     APP_URL: '',
@@ -122,6 +124,8 @@ const AppContextWrapper = ({
   const [network, setNetwork] = useState<TNetwork>({
     id: '',
     name: '',
+    country: '',
+    currency: '',
   });
   const [user, setUser] = useState<TUser>(initalUserValues);
 

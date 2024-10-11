@@ -148,7 +148,7 @@ const startServer = async () => {
     if (cookies) {
       const sessionRes = await initAPI.validateSession(store, cookies);
       res.setHeader("Content-Type", "application/json");
-      res.setHeader("cache-control", "max-age=3600");
+      // res.setHeader("cache-control", "max-age=3600");
       return res.send(sessionRes);
     } else {
       res.send(new HTTP401Error(Messages.HEADER_ERR_USER));

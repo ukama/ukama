@@ -21,6 +21,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	urole "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -189,27 +190,37 @@ func (o *OrgService) GetByUser(ctx context.Context, req *pb.GetByOwnerRequest) (
 		}
 	}
 
-	ownedOrgs, err := o.orgRepo.GetByOwner(userId)
+	//TODO: CAN BE IMPROVE
+
+	// GET ALL ORGS
+	orgs, err := o.orgRepo.GetAll()
+
 	if err != nil {
-		if !sql.IsNotFoundError(err) {
-			return nil, grpc.SqlErrorToGrpc(err, "owned orgs")
-		}
+		return nil, grpc.SqlErrorToGrpc(err, "orgs")
 	}
 
-	log.Infof("looking for orgs with member %s", userId.String())
-	membOrgs, err := o.orgRepo.GetByMember(user.Id)
-	if err != nil {
-		if !sql.IsNotFoundError(err) {
-			return nil, grpc.SqlErrorToGrpc(err, "member orgs")
-		}
-	}
+	ownerOrgs := []*pb.Organization{}
+	memberOrgs := []*pb.Organization{}
 
-	log.Infof("found %d owned orgs and %d member orgs", len(ownedOrgs), len(membOrgs))
+	// GET MEMBER INFO FOR EACH ORG AGAINST USER ID
+	for _, org := range orgs {
+		mresp, err := o.registrySystem.GetByUserId(org.Name, user.Uuid.String())
+		if err != nil {
+			log.Errorf("Failed to get member info for user %s in org %s. Error %s", user.Uuid.String(), org.Name, err.Error())
+			continue
+		}
+
+		if mresp.Member.Role == urole.RoleType_ROLE_OWNER.String() {
+			ownerOrgs = append(ownerOrgs, dbOrgToPbOrg(&org))
+			continue
+		}
+		memberOrgs = append(memberOrgs, dbOrgToPbOrg(&org))
+	}
 
 	resp := &pb.GetByUserResponse{
 		User:     req.GetUserUuid(),
-		OwnerOf:  dbOrgsToPbOrgs(ownedOrgs),
-		MemberOf: dbOrgsToPbOrgs(membOrgs),
+		OwnerOf:  ownerOrgs,
+		MemberOf: memberOrgs,
 	}
 
 	return resp, nil

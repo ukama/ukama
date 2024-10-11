@@ -200,7 +200,7 @@ func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.G
 	return resp, nil
 }
 
-func (r *Router) getSims(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetSimsResponse, error) {
+func (r *Router) getSims(c *gin.Context, req *SimPoolStatReq) (*simPoolPb.GetSimsResponse, error) {
 	resp, err := r.clients.sp.GetSims(req.SimType)
 	if err != nil {
 		return nil, err

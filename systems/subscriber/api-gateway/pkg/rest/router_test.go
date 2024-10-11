@@ -405,8 +405,8 @@ func TestRouter_SimManager(t *testing.T) {
 		IsPhysical:   false,
 		Package: &smPb.Package{
 			Id:        uuid.NewV4().String(),
-			StartDate: timestamppb.New(time.Now().UTC()),
-			EndDate:   timestamppb.New(time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC)),
+			StartDate: timestamppb.New(time.Now().UTC()).String(),
+			EndDate:   timestamppb.New(time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC)).String(),
 		},
 	}
 

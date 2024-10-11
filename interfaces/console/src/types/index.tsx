@@ -161,6 +161,8 @@ export type TAddSubscriberData = {
 export type TNetwork = {
   id: string;
   name: string;
+  country: string;
+  currency: string;
 };
 
 export type TUser = {

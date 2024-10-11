@@ -80,14 +80,18 @@ const CellValueByType = ({
         />
       );
     case 'status':
-      return getInvitationStatusColor(row[type]);
+      return getInvitationStatusColor(
+        row[type],
+        new Date(row['expireAt']) < new Date(),
+      );
     case 'actions':
       if (
         (withStatusColumn &&
-          row['status'] === Invitation_Status.InviteAccepted) ??
-        row['status'] === Invitation_Status.InviteDeclined
+          row['status'] === Invitation_Status.InviteAccepted) ||
+        row['status'] === Invitation_Status.InviteDeclined ||
+        new Date(row['expireAt']) < new Date()
       ) {
-        return <div>none</div>;
+        return <div>-</div>;
       } else
         return (
           <OptionsPopover
@@ -164,12 +168,12 @@ const DataTableWithOptions = ({
                       {column.label == 'network' ? (
                         <>
                           <Button
-                            sx={{ p: 0 }}
+                            sx={{ p: 0, typography: 'body2', fontWeight: 700 }}
                             onClick={handleOpenMenu}
                             endIcon={<ArrowDropDown />}
                             aria-controls="network-menu"
                           >
-                            <b>{selectedNetwork || 'networkName'}</b>
+                            {selectedNetwork || 'networkName'}
                           </Button>
                           <Menu
                             id="network-menu"

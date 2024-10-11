@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 import LocationIcon from '@mui/icons-material/LocationOn';
@@ -21,6 +22,12 @@ export const NavList = [
     icon: HomeIcon,
     isPrivate: true,
     isFullScreen: false,
+    forRoles: [
+      Role_Type.RoleOwner,
+      Role_Type.RoleAdmin,
+      Role_Type.RoleVendor,
+      Role_Type.RoleNetworkOwner,
+    ],
   },
   {
     name: 'Sites',
@@ -28,6 +35,7 @@ export const NavList = [
     icon: LocationIcon,
     isPrivate: true,
     isFullScreen: false,
+    forRoles: [Role_Type.RoleOwner, Role_Type.RoleAdmin],
   },
   {
     name: 'Nodes',
@@ -35,6 +43,7 @@ export const NavList = [
     icon: RouterIcon,
     isPrivate: true,
     isFullScreen: false,
+    forRoles: [Role_Type.RoleOwner, Role_Type.RoleAdmin],
   },
   {
     name: 'Subscribers',
@@ -42,6 +51,12 @@ export const NavList = [
     icon: SubscriberIcon,
     isPrivate: true,
     isFullScreen: false,
+    forRoles: [
+      Role_Type.RoleOwner,
+      Role_Type.RoleAdmin,
+      Role_Type.RoleVendor,
+      Role_Type.RoleNetworkOwner,
+    ],
   },
   // {
   //   name: 'Site Planning',

@@ -44,14 +44,14 @@ var notification = db.Notification{
 }
 
 var ns = db.Notifications{
-	Id:          uuid.NewV4(),
+	ID:          uuid.NewV4().String(),
 	Title:       "Title1",
 	Description: "Description1",
 	Type:        notification.Type,
 	Scope:       notification.Scope,
 	IsRead:      false,
-	CreatedAt:   time.Now().Format(time.RFC3339),
-	UpdatedAt:   time.Now().Format(time.RFC3339),
+	CreatedAt:   time.Now(),
+	UpdatedAt:   time.Now(),
 }
 
 var user = db.Users{
@@ -125,7 +125,7 @@ func TestServer_GetAll(t *testing.T) {
 	// Assert
 	assert.NoError(t, err)
 
-	assert.Equal(t, resp.Notifications[0].Id, ns.Id.String())
+	assert.Equal(t, resp.Notifications[0].Id, ns.ID)
 	nRepo.AssertExpectations(t)
 	unRepo.AssertExpectations(t)
 

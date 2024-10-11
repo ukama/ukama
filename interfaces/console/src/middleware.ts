@@ -10,10 +10,6 @@ import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-// async function removeCookie(key: string) {
-//   cookies().delete(key);
-// }
-
 type User = {
   id: string;
   role: string;
@@ -41,7 +37,7 @@ const USER_INIT = {
 const whoami = async (session: string) => {
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
-    cache: 'force-cache',
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       cookie: session,
@@ -155,8 +151,16 @@ const middleware = async (request: NextRequest) => {
 
   if (!session) {
     return NextResponse.redirect(
-      new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+      new URL(
+        `/auth/login?return_to=${request.url}`,
+        process.env.NEXT_PUBLIC_AUTH_APP_URL,
+      ),
     );
+  }
+
+  if (pathname.includes('/refresh')) {
+    response.cookies.delete('token');
+    return response;
   }
 
   let userObj: User = USER_INIT;
@@ -227,8 +231,15 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
+  if (pathname.includes('/manage') && userObj.role !== Role_Type.RoleOwner) {
+    return NextResponse.redirect(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
   if (
-    pathname.includes('/manage') &&
+    (pathname.includes('/console/nodes') ||
+      pathname.includes('/console/sites')) &&
     userObj.role !== Role_Type.RoleOwner &&
     userObj.role !== Role_Type.RoleAdmin
   ) {

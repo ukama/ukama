@@ -9,7 +9,9 @@
 package providers
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	ic "github.com/ukama/ukama/systems/common/initclient"
@@ -20,8 +22,21 @@ import (
 const RegistryVersion = "/v1/"
 const SystemName = "registry"
 
+type MemberInfo struct {
+	MemberId      string    `json:"member_id,omitempty"`
+	UserId        string    `json:"user_id,omitempty"`
+	Role          string    `json:"role"`
+	IsDeactivated bool      `json:"is_deactivated"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+}
+
+type MemberInfoResponse struct {
+	Member MemberInfo `json:"member"`
+}
+
 type RegistryProvider interface {
 	AddMember(orgName string, uuid string) error
+	GetByUserId(orgName string, Id string) (*MemberInfoResponse, error)
 }
 
 type registryProvider struct {
@@ -90,4 +105,41 @@ func (r *registryProvider) AddMember(orgName string, uuid string) error {
 	}
 
 	return nil
+}
+
+func (r *registryProvider) GetByUserId(orgName string, uuid string) (*MemberInfoResponse, error) {
+
+	var err error
+
+	r.R, err = r.GetRestyClient(orgName)
+	if err != nil {
+		return nil, err
+	}
+
+	errStatus := &rest.ErrorMessage{}
+	mem := MemberInfoResponse{}
+	resp, err := r.R.C.R().
+		SetError(errStatus).
+		Get(r.R.URL.String() + RegistryVersion + "members/user/" + uuid)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to registry at %s . Error %s", r.R.URL.String(), err.Error())
+		return nil, fmt.Errorf("api request to registry at %s failure: %v", r.R.URL.String(), err)
+	}
+
+	if !resp.IsSuccess() {
+		log.Errorf("Failed to add member to registry at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		return nil, fmt.Errorf("failed to add memeber to registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
+	}
+
+	err = json.Unmarshal(resp.Body(), &mem)
+	if err != nil {
+		log.Tracef("Failed to deserialize member info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("member info deserailization failure: %w", err)
+	}
+
+	log.Infof("Member Info: %+v", mem)
+
+	return &mem, nil
 }

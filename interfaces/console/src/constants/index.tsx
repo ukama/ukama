@@ -135,11 +135,11 @@ export const NODE_TABLE_MENU: MenuItemType[] = [
   { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
 ];
 export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'Role', minWidth: 180 },
-  { id: 'status', label: 'Status', minWidth: 180 },
-  { id: 'email', label: 'Email', minWidth: 140 },
-  { id: 'actions', label: 'Action', minWidth: 140 },
+  { id: 'name', label: 'Name', minWidth: 120 },
+  { id: 'role', label: 'Role', minWidth: 144 },
+  { id: 'status', label: 'Status', minWidth: 144 },
+  { id: 'email', label: 'Email', minWidth: 120 },
+  { id: 'actions', label: 'Action', minWidth: 72 },
 ];
 export const INVITATION_TABLE_MENU: MenuItemType[] = [
   {
