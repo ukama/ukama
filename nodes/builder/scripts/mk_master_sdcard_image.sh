@@ -10,48 +10,52 @@ set -e
 
 STAGE="init"
 DIR="$(pwd)"
-UKAMA_OS=`realpath ../../ukamaOS`
+UKAMA_OS=$(realpath ../../ukamaOS)
 
-log_info() {
-    echo -e "\033[1;34mINFO: $1\033[0m"
-}
+BOOT_MOUNT="/media/boot"
+PRIMARY_MOUNT="/media/primary"
+PASSIVE_MOUNT="/media/passive"
+UNUSED_MOUNT="/media/unused"
 
-log_success() {
-    echo -e "\033[1;32mSUCCESS: $1\033[0m"
-}
+trap cleanup EXIT
 
-log_error() {
-    echo -e "\033[1;31mERROR: $1\033[0m" >&2
+log() {
+    local type="$1"
+    local message="$2"
+    local color
+    case "$type" in
+        "INFO") color="\033[1;34m";;
+        "SUCCESS") color="\033[1;32m";;
+        "ERROR") color="\033[1;31m";;
+        *) color="\033[1;37m";;
+    esac
+    echo -e "${color}${type}: ${message}\033[0m"
 }
 
 check_status() {
-    if [ $1 -eq 0 ]; then
-        log_success "$2"
-    else
-        log_error "Script failed at stage: $3"
-        cleanup
+    if [ $1 -ne 0 ]; then
+        log "ERROR" "Script failed at stage: $3"
         exit 1
     fi
+    log "SUCCESS" "$2"
 }
 
 cleanup() {
-
-    log_info "Cleaning up resources..."
-
-    sudo umount /media/boot       || true
-    sudo umount /media/primary    || true
-    sudo umount /media/passive    || true
-    sudo umount /media/unused     || true
-    sudo kpartx -dv "${RAW_IMG}"  || true
-    sudo losetup -d "${LOOPDISK}" || true
-
-    log_info "Cleanup completed."
+    if [ -z "$LOOPDISK" ]; then
+        return
+    fi
+    log "INFO" "Cleaning up resources..."
+    local mounts=(${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT} ${UNUSED_MOUNT})
+    for mount in "${mounts[@]}"; do
+        sudo umount "${mount}" 2>/dev/null || true
+    done
+    sudo kpartx -dv "${RAW_IMG}" 2>/dev/null || true
+    sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
+    log "INFO" "Cleanup completed."
 }
 
-# Check for arguments
 if [ $# -lt 3 ]; then
-    log_error "No arguments supplied. "
-    log_error "Usage: $0 <output_image_file> <os_target> <os_version>"
+    log "ERROR" "Usage: $0 <output_image_file> <os_target> <os_version>"
     exit 1
 fi
 
@@ -59,47 +63,35 @@ RAW_IMG="$1"
 OS_TARGET="$2"
 OS_VERSION="$3"
 
-# Main execution
-log_info "Starting SD card image creation script."
-
 create_image() {
-
     STAGE="create_image"
-    log_info "Creating a new raw image: ${RAW_IMG}"
-
+    log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
     dd if=/dev/zero of="${RAW_IMG}" bs=1M count=0 seek=8096
     check_status $? "Raw image created" ${STAGE}
 }
 
 setup_loop_device() {
-
     STAGE="setup_loop_device"
-    log_info "Attaching ${RAW_IMG} to a loop device"
-
+    log "INFO" "Attaching ${RAW_IMG} to a loop device"
     LOOPDISK=$(sudo losetup -f --show "${RAW_IMG}")
     if [ -z "${LOOPDISK}" ]; then
-        log_error "Failed to set up loop device for ${RAW_IMG}."
-        cleanup
+        log "ERROR" "Failed to set up loop device for ${RAW_IMG}."
         exit 1
     fi
-    log_success "Loop device set up at ${LOOPDISK}"
+    log "SUCCESS" "Loop device set up at ${LOOPDISK}"
 }
 
 clean_first_50MB() {
-
     STAGE="clean_first_50MB"
-    log_info "Cleaning the first 50MB of ${LOOPDISK}"
-
+    log "INFO" "Cleaning the first 50MB of ${LOOPDISK}"
     sudo dd if=/dev/zero of="${LOOPDISK}" bs=1M count=50
     check_status $? "First 50MB cleaned" ${STAGE}
 }
 
 partition_image() {
-
     STAGE="partition_image"
-    log_info "Creating partitions on ${LOOPDISK} using sfdisk"
-
+    log "INFO" "Creating partitions on ${LOOPDISK} using sfdisk"
     sudo sfdisk "${LOOPDISK}" <<-__EOF__
 1M,48M,0xE,*
 49M,2048M,,-
@@ -110,19 +102,15 @@ __EOF__
 }
 
 map_partitions() {
-
     STAGE="map_partitions"
-    log_info "Mapping partitions using kpartx"
-
+    log "INFO" "Mapping partitions using kpartx"
     sudo kpartx -v -a "${LOOPDISK}"
     check_status $? "Partitions mapped" ${STAGE}
 }
 
 format_partitions() {
-
     STAGE="format_partitions"
-    log_info "Formatting partitions"
-
+    log "INFO" "Formatting partitions"
     DEVICE=$(basename "${LOOPDISK}")
     DISK="/dev/mapper/${DEVICE}p"
 
@@ -139,197 +127,151 @@ format_partitions() {
     check_status $? "unused partition formatted" ${STAGE}
 }
 
-mount_partitions() {
+mount_partition() {
+    local partition=$1
+    local mount_point=$2
+    log "INFO" "Mounting ${partition} to ${mount_point}"
+    sudo mkdir -p "${mount_point}"
+    sudo mount "${partition}" "${mount_point}"
+    check_status $? "Partition ${partition} mounted to ${mount_point}" "${STAGE}"
+}
 
-    STAGE="mount_partitions"
-    log_info "Mounting partitions"
-
-    sudo mkdir -p /media/boot /media/primary /media/passive /media/unused
-
-    sudo mount "${DISK}1" /media/boot
-    check_status $? "BOOT partition mounted" ${STAGE}
-
-    sudo mount "${DISK}2" /media/primary
-    check_status $? "Primary partition mounted" ${STAGE}
-
-    sudo mount "${DISK}3" /media/passive
-    check_status $? "Passive partition mounted" ${STAGE}
-
-    sudo mount "${DISK}4" /media/unused
-    check_status $? "Unused partition mounted" ${STAGE}
+unmount_partition() {
+    local mount_point=$1
+    log "INFO" "Unmounting ${mount_point}"
+    sudo umount "${mount_point}"
+    check_status $? "${mount_point} unmounted" "${STAGE}"
 }
 
 copy_bootloaders() {
-
     STAGE="copy_bootloaders"
-    log_info "Copying bootloaders to /media/boot"
-
+    log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
     sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin \
-         /media/boot/boot.bin
+         ${BOOT_MOUNT}/boot.bin
     sudo cp -v ${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin \
-         /media/boot/
-
+         ${BOOT_MOUNT}/
     check_status $? "Bootloaders copied" ${STAGE}
 }
 
 copy_rootfs() {
-
     STAGE="copy_rootfs"
-    log_info "Copying rootfs to primary and passive"
+    log "INFO" "Copying rootfs to primary and passive"
 
-    IMG_PATH="${UKAMA_OS}/distro/scripts/ukamaOS_initrd_$1_$2.img"
+    IMG_PATH="${UKAMA_OS}/distro/scripts/ukamaOS_initrd_${OS_TARGET}_${OS_VERSION}.img"
     MOUNT_IMG="/mnt/img"
-    MOUNT_PRIMARY="/media/primary/"
-    MOUNT_PASSIVE="/media/passive/"
 
-    # Step 0: Check if the .img file exists
     if [ ! -f "${IMG_PATH}" ]; then
-        log_error "Image file ${IMG_PATH} does not exist" ${STAGE}
-        return 1
+        log "ERROR" "Image file ${IMG_PATH} does not exist"
+        exit 1
     fi
 
-    log_info "Image file ${IMG_PATH} found"
-
-    # Create temporary mount point for the image
+    log "INFO" "Image file ${IMG_PATH} found"
     sudo mkdir -p ${MOUNT_IMG}
 
-    # Step 1: Set up loop device for the .img file
     LOOP_DEVICE=$(sudo losetup -fP --show ${IMG_PATH})
     if [ $? -ne 0 ]; then
-        log_error "Failed to set up loop device for ${IMG_PATH}" ${STAGE}
-        return 1
+        log "ERROR" "Failed to set up loop device for ${IMG_PATH}"
+        exit 1
     fi
 
-    log_info "Mounted ${IMG_PATH} as ${LOOP_DEVICE}"
-
-    # Step 2: Find the partition containing rootfs (if needed)
+    log "INFO" "Mounted ${IMG_PATH} as ${LOOP_DEVICE}"
     ROOTFS_PARTITION="${LOOP_DEVICE}p1"
 
-    # Step 3: Mount the rootfs from the image
     sudo mount ${ROOTFS_PARTITION} ${MOUNT_IMG}
     if [ $? -ne 0 ]; then
-        log_error "Failed to mount rootfs partition ${ROOTFS_PARTITION}" ${STAGE}
+        log "ERROR" "Failed to mount rootfs partition ${ROOTFS_PARTITION}"
         sudo losetup -d ${LOOP_DEVICE}
-        return 1
+        exit 1
     fi
 
-    log_info "Rootfs partition ${ROOTFS_PARTITION} mounted to ${MOUNT_IMG}"
-
-    # Step 4: Copy rootfs from .img to both primary and passive
-    sudo rsync -aAX ${MOUNT_IMG}/ ${MOUNT_PRIMARY}
+    log "INFO" "Rootfs partition ${ROOTFS_PARTITION} mounted to ${MOUNT_IMG}"
+    sudo rsync -aAX ${MOUNT_IMG}/ ${PRIMARY_MOUNT}
     check_status $? "Rootfs copied to primary" ${STAGE}
 
-    sudo rsync -aAX ${MOUNT_IMG}/ ${MOUNT_PASSIVE}
+    sudo rsync -aAX ${MOUNT_IMG}/ ${PASSIVE_MOUNT}
     check_status $? "Rootfs copied to passive" ${STAGE}
 
-    # Step 5: Unmount and clean up
     sudo umount ${MOUNT_IMG}
     sudo losetup -d ${LOOP_DEVICE}
-    log_info "Unmounted ${MOUNT_IMG} and detached loop device ${LOOP_DEVICE}"
-
+    log "INFO" "Unmounted ${MOUNT_IMG} and detached loop device ${LOOP_DEVICE}"
     sudo rm -rf ${MOUNT_IMG}
-
-    log_info "Rootfs copy operation completed"
+    log "INFO" "Rootfs copy operation completed"
 }
 
 set_permissions() {
-
     STAGE="set_permissions"
-    log_info "Setting permissions for primary and passive partitions"
-
-    sudo chown -R root:root /media/primary/
-    sudo chmod -R 755 /media/primary/
+    log "INFO" "Setting permissions for primary and passive partitions"
+    sudo chown -R root:root ${PRIMARY_MOUNT}
+    sudo chmod -R 755 ${PRIMARY_MOUNT}
     check_status $? "Permissions set for primary" ${STAGE}
 
-    sudo chown -R root:root /media/passive/
-    sudo chmod -R 755 /media/passive/
-
+    sudo chown -R root:root ${PASSIVE_MOUNT}
+    sudo chmod -R 755 ${PASSIVE_MOUNT}
     check_status $? "Permissions set for passive" ${STAGE}
 }
 
 copy_kernel() {
-
     STAGE="copy_kernel"
-    log_info "Copying kernel to primary and passive"
-
-    sudo cp -v ${UKAMA_OS}/_ukamafs/boot/zImage /media/primary/boot/zImage
+    log "INFO" "Copying kernel to primary and passive"
+    sudo cp -v ${UKAMA_OS}/_ukamafs/boot/zImage ${PRIMARY_MOUNT}/boot/zImage
     check_status $? "Kernel copied to primary" ${STAGE}
 
-    sudo cp -v ${UKAMA_OS}/_ukamafs/boot/zImage /media/passive/boot/zImage
+    sudo cp -v ${UKAMA_OS}/_ukamafs/boot/zImage ${PASSIVE_MOUNT}/boot/zImage
     check_status $? "Kernel copied to passive" ${STAGE}
 }
 
 copy_dtbs() {
-
     STAGE="copy_dtbs"
-    log_info "Copying DTBs to primary and passive"
+    log "INFO" "Copying DTBs to primary and passive"
+    kernel_version=$(awk '{print $3}' "${UKAMA_OS}/kernel/linux/include/generated/utsrelease.h" | sed 's/\"//g')
 
-    kernel_version=$(awk '{print $3}' "${UKAMA_OS}/kernel/linux/include/generated/utsrelease.h" \
-                         | sed 's/\"//g')
-
-    sudo mkdir -p /media/primary/dtbs/${kernel_version}/
-    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb /media/primary/dtbs/${kernel_version}/
-    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb /media/primary/boot/ 
+    sudo mkdir -p ${PRIMARY_MOUNT}/dtbs/${kernel_version}/
+    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb \
+         ${PRIMARY_MOUNT}/dtbs/${kernel_version}/
+    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb \
+         ${PRIMARY_MOUNT}/boot/
     check_status $? "DTBs copied to primary" ${STAGE}
 
-    sudo mkdir -p /media/passive/dtbs/${kernel_version}/
-    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb /media/passive/dtbs/${kernel_version}/
-    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb /media/passive/boot/ 
+    sudo mkdir -p ${PASSIVE_MOUNT}/dtbs/${kernel_version}/
+    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb \
+         ${PASSIVE_MOUNT}/dtbs/${kernel_version}/
+    sudo cp -v ${UKAMA_OS}/_ukamafs/u-boot/arch/arm/dts/*.dtb \
+         ${PASSIVE_MOUNT}/boot/
     check_status $? "DTBs copied to passive" ${STAGE}
 }
 
 copy_modules() {
-
     STAGE="copy_modules"
-    log_info "Copying kernel modules to primary and passive"
-
-    sudo cp -a ${UKAMA_OS}/_ukamafs/lib/modules /media/primary/lib/
+    log "INFO" "Copying kernel modules to primary and passive"
+    sudo cp -a ${UKAMA_OS}/_ukamafs/lib/modules ${PRIMARY_MOUNT}/lib/
     check_status $? "Modules copied to primary" ${STAGE}
 
-    sudo cp -a ${UKAMA_OS}/_ukamafs/lib/modules /media/passive/lib/
+    sudo cp -a ${UKAMA_OS}/_ukamafs/lib/modules ${PASSIVE_MOUNT}/lib/
     check_status $? "Modules copied to passive" ${STAGE}
 }
 
 setup_fstab() {
-
     STAGE="setup_fstab"
-    log_info "Setting up fstab for primary and passive partitions"
+    log "INFO" "Setting up fstab for primary and passive partitions"
 
-    # Primary
-    sudo bash -c "cat << EOF > /media/primary/etc/fstab
+    sudo bash -c "cat << EOF > ${PRIMARY_MOUNT}/etc/fstab
         /dev/mmcblk0p4  /unused  auto  ro,nodev,noexec  0  2
         /dev/mmcblk0p3  /fs3     auto  ro              0  2
         /dev/mmcblk0p2  /        auto  errors=remount-ro  0  1
-        EOF"
+EOF"
     check_status $? "fstab setup for primary" ${STAGE}
 
-    # Passive
-    sudo bash -c "cat << EOF > /media/passive/etc/fstab
+    sudo bash -c "cat << EOF > ${PASSIVE_MOUNT}/etc/fstab
         /dev/mmcblk0p4  /unused  auto  ro,nodev,noexec  0  2
         /dev/mmcblk0p2  /fs2     auto  ro              0  1
         /dev/mmcblk0p3  /        auto  errors=remount-ro  0  1
-        EOF"
+EOF"
     check_status $? "fstab setup for passive" ${STAGE}
 }
 
-unmount_partitions() {
-
-    STAGE="unmount_partitions"
-    log_info "Unmounting partitions"
-
-    sudo umount /media/boot
-    sudo umount /media/primary
-    sudo umount /media/passive
-    sudo umount /media/unused
-
-    check_status $? "Partitions unmounted" ${STAGE}
-}
-
 detach_loop_device() {
-
     STAGE="detach_loop_device"
-    log_info "Detaching loop device and cleaning up"
-
+    log "INFO" "Detaching loop device and cleaning up"
     sudo kpartx -dv "${LOOPDISK}"
     sudo losetup -d "${LOOPDISK}"
     check_status $? "Loop device detached" ${STAGE}
@@ -342,15 +284,21 @@ clean_first_50MB
 partition_image
 map_partitions
 format_partitions
-mount_partitions
+mount_partition "${DISK}1" "${BOOT_MOUNT}"
+mount_partition "${DISK}2" "${PRIMARY_MOUNT}"
+mount_partition "${DISK}3" "${PASSIVE_MOUNT}"
+mount_partition "${DISK}4" "${UNUSED_MOUNT}"
 copy_bootloaders
-copy_rootfs ${OS_TARGET} ${OS_VERSION}
+copy_rootfs
 set_permissions
 copy_kernel
 copy_dtbs
 copy_modules
 setup_fstab
-unmount_partitions
+unmount_partition "${BOOT_MOUNT}"
+unmount_partition "${PRIMARY_MOUNT}"
+unmount_partition "${PASSIVE_MOUNT}"
+unmount_partition "${UNUSED_MOUNT}"
 detach_loop_device
 
-log_success "SD card image creation completed successfully!"
+log "SUCCESS" "SD card image creation completed successfully!"
