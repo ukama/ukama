@@ -17,6 +17,9 @@ PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 UNUSED_MOUNT="/media/unused"
 
+BOOT1_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin
+BOOT2_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin
+
 trap cleanup EXIT
 
 log() {
@@ -53,15 +56,6 @@ cleanup() {
     sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
     log "INFO" "Cleanup completed."
 }
-
-if [ $# -lt 3 ]; then
-    log "ERROR" "Usage: $0 <output_image_file> <os_target> <os_version>"
-    exit 1
-fi
-
-RAW_IMG="$1"
-OS_TARGET="$2"
-OS_VERSION="$3"
 
 create_image() {
     STAGE="create_image"
@@ -147,19 +141,6 @@ copy_bootloaders() {
     STAGE="copy_bootloaders"
     log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
 
-    BOOT1_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/at91bootstrap/at91bootstrap.bin
-    BOOT2_BIN=${UKAMA_OS}/firmware/_ukamafs/boot/uboot/u-boot.bin
-
-    if [ ! -f "${BOOT1_BIN}" ]; then
-        log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-        exit 1
-    fi
-
-    if [ ! -f "${BOOT2_BIN}" ]; then
-        log "ERROR" "boot file ${BOOT2_BIN} does not exist"
-        exit 1
-    fi
-
     sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
     sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
 
@@ -172,11 +153,6 @@ copy_rootfs() {
 
     IMG_PATH="${UKAMA_OS}/distro/scripts/ukamaOS_initrd_${OS_TARGET}_${OS_VERSION}.img"
     MOUNT_IMG="/mnt/img"
-
-    if [ ! -f "${IMG_PATH}" ]; then
-        log "ERROR" "Image file ${IMG_PATH} does not exist"
-        exit 1
-    fi
 
     log "INFO" "Image file ${IMG_PATH} found"
     sudo mkdir -p ${MOUNT_IMG}
@@ -289,6 +265,33 @@ detach_loop_device() {
     sudo losetup -d "${LOOPDISK}"
     check_status $? "Loop device detached" ${STAGE}
 }
+
+# Execution entry
+if [ $# -lt 3 ]; then
+    log "ERROR" "Usage: $0 <output_image_file> <os_target> <os_version>"
+    exit 1
+fi
+
+RAW_IMG="$1"
+OS_TARGET="$2"
+OS_VERSION="$3"
+IMG_PATH="${UKAMA_OS}/distro/scripts/ukamaOS_initrd_${OS_TARGET}_${OS_VERSION}.img"
+
+# Sanity check.
+if [ ! -f "${BOOT1_BIN}" ]; then
+    log "ERROR" "boot file ${BOOT1_BIN} does not exist"
+    exit 1
+fi
+
+if [ ! -f "${BOOT2_BIN}" ]; then
+    log "ERROR" "boot file ${BOOT2_BIN} does not exist"
+    exit 1
+fi
+
+if [ ! -f "${IMG_PATH}" ]; then
+    log "ERROR" "Image file ${IMG_PATH} does not exist"
+    exit 1
+fi
 
 # Execute each step
 create_image
