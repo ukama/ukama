@@ -9,8 +9,7 @@
 # Script to generate ukamaOS bootable image with minimal rootfs
 
 # Build busybox
-# Build init (and microinits)
-# Build lxce.d
+# Build starter.d
 # Build dhcpcd
 # Build sysctl
 # Copy all lib dependencies
@@ -278,7 +277,7 @@ build_apps() {
 
     # for each apps in systems, build the pkg
     for app in "${SYS_ROOT}"/*; do
-        basename=$(basename "$name")
+        basename=$(basename "$app")
         ./builder --create --config ./configs/${basename}.toml
     done
 
@@ -581,13 +580,16 @@ sudo chown -R root:root *
 
 sync
 
-#Archive it up
-sudo find . | cpio  --quiet -H newc -o | gzip -9 -n > ${WD}/ukamaOS.img
+# Building initramfs
+log_info "Creating initrd.img"
+IMG=${OS_NAME}_initrd_${TARGET}_${OS_VERSION_ID}
+sudo find . | cpio --quiet -H newc -o | gzip -9 -n > ${WD}/${IMG}.img
+sync
 cd ${WD}
 
 TOTAL_ROOTFS_SIZE=`du -chs ${ROOTFS} | awk '{print $1}' | uniq`
-IMAGE_SIZE=`du -kh ${WD}/ukamaOS.img | cut -f1`
-IMAGE_LOC=`realpath ${WD}/ukamaOS.img`
+IMAGE_SIZE=`du -kh ${WD}/${IMG}.img | cut -f1`
+IMAGE_LOC=`realpath ${WD}/${IMG}.img`
 
 log_info "All done. Have fun!"
 log_info "------------------"
