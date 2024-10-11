@@ -42,19 +42,22 @@ cleanup() {
     sudo umount /media/primary    || true
     sudo umount /media/passive    || true
     sudo umount /media/unused     || true
-    sudo kpartx -dv "${RAWIMG}"   || true
+    sudo kpartx -dv "${RAW_IMG}"  || true
     sudo losetup -d "${LOOPDISK}" || true
 
     log_info "Cleanup completed."
 }
 
 # Check for arguments
-if [ $# -lt 1 ]; then
-    log_error "No arguments supplied. Usage: $0 <output_image_file>"
+if [ $# -lt 3 ]; then
+    log_error "No arguments supplied. "
+    log_error "Usage: $0 <output_image_file> <os_target> <os_version>"
     exit 1
 fi
 
-RAWIMG="$1"
+RAW_IMG="$1"
+OS_TARGET="$2"
+OS_VERSION="$3"
 
 # Main execution
 log_info "Starting SD card image creation script."
@@ -62,21 +65,21 @@ log_info "Starting SD card image creation script."
 create_image() {
 
     STAGE="create_image"
-    log_info "Creating a new raw image: ${RAWIMG}"
+    log_info "Creating a new raw image: ${RAW_IMG}"
 
-    rm -f "${RAWIMG}"
-    dd if=/dev/zero of="${RAWIMG}" bs=1M count=0 seek=8096
+    rm -f "${RAW_IMG}"
+    dd if=/dev/zero of="${RAW_IMG}" bs=1M count=0 seek=8096
     check_status $? "Raw image created" ${STAGE}
 }
 
 setup_loop_device() {
 
     STAGE="setup_loop_device"
-    log_info "Attaching ${RAWIMG} to a loop device"
+    log_info "Attaching ${RAW_IMG} to a loop device"
 
-    LOOPDISK=$(sudo losetup -f --show "${RAWIMG}")
+    LOOPDISK=$(sudo losetup -f --show "${RAW_IMG}")
     if [ -z "${LOOPDISK}" ]; then
-        log_error "Failed to set up loop device for ${RAWIMG}."
+        log_error "Failed to set up loop device for ${RAW_IMG}."
         cleanup
         exit 1
     fi
@@ -169,16 +172,64 @@ copy_bootloaders() {
     check_status $? "Bootloaders copied" ${STAGE}
 }
 
-# FIXME.
 copy_rootfs() {
 
     STAGE="copy_rootfs"
     log_info "Copying rootfs to primary and passive"
 
-    sudo cp -a "${DIR}/_ukamafs/." /media/primary/
-    sudo cp -a "${DIR}/_ukamafs/." /media/passive/
+    IMG_PATH="${UKAMA_OS}/distro/scripts/ukamaOS_initrd_$1_$2.img"
+    MOUNT_IMG="/mnt/img"
+    MOUNT_PRIMARY="/media/primary/"
+    MOUNT_PASSIVE="/media/passive/"
 
-    check_status $? "Rootfs copied to primary and passive" ${STAGE}
+    # Step 0: Check if the .img file exists
+    if [ ! -f "${IMG_PATH}" ]; then
+        log_error "Image file ${IMG_PATH} does not exist" ${STAGE}
+        return 1
+    fi
+
+    log_info "Image file ${IMG_PATH} found"
+
+    # Create temporary mount point for the image
+    sudo mkdir -p ${MOUNT_IMG}
+
+    # Step 1: Set up loop device for the .img file
+    LOOP_DEVICE=$(sudo losetup -fP --show ${IMG_PATH})
+    if [ $? -ne 0 ]; then
+        log_error "Failed to set up loop device for ${IMG_PATH}" ${STAGE}
+        return 1
+    fi
+
+    log_info "Mounted ${IMG_PATH} as ${LOOP_DEVICE}"
+
+    # Step 2: Find the partition containing rootfs (if needed)
+    ROOTFS_PARTITION="${LOOP_DEVICE}p1"
+
+    # Step 3: Mount the rootfs from the image
+    sudo mount ${ROOTFS_PARTITION} ${MOUNT_IMG}
+    if [ $? -ne 0 ]; then
+        log_error "Failed to mount rootfs partition ${ROOTFS_PARTITION}" ${STAGE}
+        sudo losetup -d ${LOOP_DEVICE}
+        return 1
+    fi
+
+    log_info "Rootfs partition ${ROOTFS_PARTITION} mounted to ${MOUNT_IMG}"
+
+    # Step 4: Copy rootfs from .img to both primary and passive
+    sudo rsync -aAX ${MOUNT_IMG}/ ${MOUNT_PRIMARY}
+    check_status $? "Rootfs copied to primary" ${STAGE}
+
+    sudo rsync -aAX ${MOUNT_IMG}/ ${MOUNT_PASSIVE}
+    check_status $? "Rootfs copied to passive" ${STAGE}
+
+    # Step 5: Unmount and clean up
+    sudo umount ${MOUNT_IMG}
+    sudo losetup -d ${LOOP_DEVICE}
+    log_info "Unmounted ${MOUNT_IMG} and detached loop device ${LOOP_DEVICE}"
+
+    sudo rm -rf ${MOUNT_IMG}
+
+    log_info "Rootfs copy operation completed"
 }
 
 set_permissions() {
@@ -293,7 +344,7 @@ map_partitions
 format_partitions
 mount_partitions
 copy_bootloaders
-copy_rootfs
+copy_rootfs ${OS_TARGET} ${OS_VERSION}
 set_permissions
 copy_kernel
 copy_dtbs
