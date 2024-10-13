@@ -280,8 +280,7 @@ func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*subRegPb
 func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb.AddSubscriberResponse, error) {
 
 	pbResp, err := r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{
-		FirstName:             req.FirstName,
-		LastName:              req.LastName,
+		Name:                  req.Name,
 		Email:                 strings.ToLower(req.Email),
 		PhoneNumber:           req.Phone,
 		Dob:                   req.Dob,
@@ -309,6 +308,7 @@ func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*su
 
 	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
 		SubscriberId:          req.SubscriberId,
+		Name:                  req.Name,
 		Email:                 req.Email,
 		PhoneNumber:           req.Phone,
 		Address:               req.Address,

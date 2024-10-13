@@ -61,6 +61,8 @@ const Page = () => {
   const [isAddSubscriberDialogOpen, setIsAddSubscriberDialogOpen] =
     useState(false);
   const [isToPupData, setIsToPupData] = useState<boolean>(false);
+  const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
+    useState(false);
   const [topUpDetails, setTopUpDetails] = useState<any>({
     simId: '',
     subscriberId: '',
@@ -114,11 +116,7 @@ const Page = () => {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
           const s = search.toLowerCase();
-          if (
-            subscriber.firstName.toLowerCase().includes(s) ??
-            subscriber.lastName.toLowerCase().includes(s)
-          )
-            return subscriber;
+          if (subscriber.name.toLowerCase().includes(s)) return subscriber;
         },
       );
       setSubscriber(() => ({ subscribers: subscribers ?? [] }));
@@ -138,7 +136,11 @@ const Page = () => {
   });
   const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
     onCompleted: (res) => {
-      if (res.getPackagesForSim.packages) {
+      if (
+        res.getPackagesForSim.packages &&
+        res.getPackagesForSim.packages.length > 0 &&
+        isPackageActivationNeeded
+      ) {
         activatePackageSim({
           variables: {
             data: {
@@ -147,24 +149,47 @@ const Page = () => {
             },
           },
         });
-      }
-    },
-  });
-  const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
-    onCompleted: (res) => {
-      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
-        getPackagesForSim({
-          variables: {
-            data: {
-              sim_id: res?.getSubscriber?.sim[0].id,
-            },
-          },
-        });
+        setIsPackageActivationNeeded(false);
       }
     },
   });
 
-  const onTableMenuItem = (id: string, type: string) => {
+  const fetchPackagesForSim = useCallback(
+    (simId: string) => {
+      getPackagesForSim({
+        variables: {
+          data: {
+            sim_id: simId,
+          },
+        },
+      });
+    },
+    [getPackagesForSim],
+  );
+
+  const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
+    onCompleted: (res) => {
+      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
+        fetchPackagesForSim(res.getSubscriber.sim[0].id);
+      }
+    },
+  });
+  const handleOpenSubscriberDetails = useCallback(
+    (id: string, shouldActivatePackage: boolean = false) => {
+      setIsSubscriberDetailsOpen(true);
+      setSelectedSubscriber(id);
+      setIsPackageActivationNeeded(shouldActivatePackage);
+
+      getSubscriber({
+        variables: {
+          subscriberId: id,
+        },
+      });
+    },
+    [getSubscriber],
+  );
+
+  const onTableMenuItem = async (id: string, type: string) => {
     if (type === 'delete-sub') {
       setIsConfirmationOpen(true);
       setDeletedSubscriber(id);
@@ -184,25 +209,44 @@ const Page = () => {
       });
     }
     if (type === 'edit-sub') {
-      setIsSubscriberDetailsOpen(true);
-      getSubscriber({
-        variables: {
-          subscriberId: id,
-        },
-      });
-
-      setSelectedSubscriber(id);
+      handleOpenSubscriberDetails(id, false);
     }
-
     if (type === 'pause-service') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: id,
-            status: 'terminated',
+      try {
+        const { data } = await getSimBySubscriber({
+          variables: {
+            data: {
+              subscriberId: id,
+            },
           },
-        },
-      });
+        });
+
+        if (data?.getSimsBySubscriber?.sims.length === 0) {
+          setSnackbarMessage({
+            id: 'no-sim',
+            message: 'Subscriber has no SIM yet.',
+            type: 'error',
+            show: true,
+          });
+          return;
+        }
+        if (data?.getSimsBySubscriber?.sims) {
+          const deletionPromises = data.getSimsBySubscriber.sims.map((sim) =>
+            deleteSim({
+              variables: {
+                data: {
+                  simId: sim.id,
+                },
+              },
+            }),
+          );
+
+          await Promise.all(deletionPromises);
+          await refetchSubscribers();
+        }
+      } catch (error) {
+        console.error('Error in pause-service operation:', error);
+      }
     }
   };
   const [activatePackageSim] = useSetActivePackageForSimMutation({
@@ -291,7 +335,7 @@ const Page = () => {
         return {
           id: subscriber.uuid,
           email: subscriber.email,
-          name: `${subscriber.firstName}`,
+          name: `${subscriber.name}`,
           dataUsage: '',
           dataPlan: '',
           actions: '',
@@ -495,8 +539,12 @@ const Page = () => {
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
-      onCompleted: () => {
-        refetchSubscribers();
+      onCompleted: (res) => {
+        refetchSubscribers().then((data) => {
+          setSubscriber(() => ({
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          }));
+        });
         setSnackbarMessage({
           id: 'update-subscriber-success',
           message: 'Subscriber updated successfully!',
@@ -535,32 +583,63 @@ const Page = () => {
   };
 
   const handleSimAction = (action: string, simId: string) => {
-    if (action === 'deleteSim') {
-      deleteSim({
-        variables: {
-          data: {
-            simId: simId,
+    switch (action) {
+      case 'deactivateSim':
+      case 'activateSim':
+        toggleSimStatus({
+          variables: {
+            data: {
+              sim_id: simId,
+              status: action === 'deactivateSim' ? 'inactive' : 'active',
+            },
           },
-        },
-      });
-    } else if (action === 'deactivateSim') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: simId,
-            status: 'inactive',
+        })
+          .then(() => {
+            setSnackbarMessage({
+              id: 'sim-activated-success',
+              message: `Sim ${action === 'deactivateSim' ? 'deactivated' : 'activated'} successfully!`,
+              type: 'success' as AlertColor,
+              show: true,
+            });
+            refetchSubscribers();
+          })
+          .catch((error) => {
+            setSnackbarMessage({
+              id: 'sim-activated-error',
+              message: error.message,
+              type: 'error' as AlertColor,
+              show: true,
+            });
+          });
+        break;
+      case 'topUp':
+        setIsToPupData(true);
+
+        setTopUpDetails({
+          simId: simId,
+
+          subscriberId: selectedSubscriber,
+        });
+        break;
+      case 'deleteSim':
+        toggleSimStatus({
+          variables: {
+            data: {
+              sim_id: simId,
+              status: 'inactive',
+            },
           },
-        },
-      });
-    } else if (action === 'topUp') {
-      setIsToPupData(true);
-      setTopUpDetails({
-        simId: simId,
-        subscriberId: selectedSubscriber,
-      });
+        });
+        deleteSim({
+          variables: {
+            data: {
+              simId: simId,
+            },
+          },
+        });
+        break;
     }
   };
-
   const handleCloseTopUp = () => {
     setIsToPupData(false);
   };
@@ -585,22 +664,18 @@ const Page = () => {
 
   const handleUpdateSubscriber = (
     subscriberId: string,
-    email: string,
-    firstName: string,
+    updates: { name?: string; phone?: string },
   ) => {
     updateSubscriber({
       variables: {
         subscriberId: subscriberId,
-        data: {
-          email: email,
-          first_name: firstName,
-        },
+        data: updates,
       },
     });
     refetchSubscribers();
   };
 
-  const handleDeleteSubscriberModal = (
+  const handleSubscriberMenuAction = async (
     action: string,
     subscriberId: string,
   ) => {
@@ -611,14 +686,55 @@ const Page = () => {
         },
       });
     } else if (action === 'pauseService') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: subscriberId,
-            status: 'terminated',
+      try {
+        const { data } = await getSimBySubscriber({
+          variables: {
+            data: {
+              subscriberId: subscriberId,
+            },
           },
-        },
-      });
+        });
+
+        const simId = data?.getSimsBySubscriber?.sims[0].id;
+
+        if (!simId) {
+          setSnackbarMessage({
+            id: 'pause-service-error',
+            message: 'Subercriber has no sim yet',
+            type: 'error' as AlertColor,
+            show: true,
+          });
+          return;
+        }
+
+        if (data?.getSimsBySubscriber?.sims) {
+          for (const sim of data.getSimsBySubscriber.sims) {
+            await toggleSimStatus({
+              variables: {
+                data: {
+                  sim_id: simId,
+                  status: 'inactive',
+                },
+              },
+            });
+            await deleteSim({
+              variables: {
+                data: {
+                  simId: sim.id,
+                },
+              },
+            });
+          }
+          refetchSubscribers();
+        }
+      } catch (error) {
+        setSnackbarMessage({
+          id: 'pause-service-error',
+          message: 'Error pausing service: ' + (error as Error).message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      }
     }
   };
 
@@ -629,8 +745,7 @@ const Page = () => {
         data: {
           email: values.email,
           phone: values.phone,
-          first_name: values.name,
-          last_name: 'name',
+          name: values.name,
           network_id: network.id,
         },
       },
@@ -782,7 +897,7 @@ const Page = () => {
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
         loading={updateSubscriberLoading ?? deleteSimLoading}
-        handleDeleteSubscriber={handleDeleteSubscriberModal}
+        handleDeleteSubscriber={handleSubscriberMenuAction}
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
       />

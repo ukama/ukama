@@ -210,8 +210,7 @@ describe("Sim API integration tests", () => {
       {
         email: email,
         network_id: networkId,
-        first_name: "First Name",
-        last_name: "Last Name",
+        name: "Name",
         phone: phone,
       }
     );

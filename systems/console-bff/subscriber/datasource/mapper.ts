@@ -26,8 +26,7 @@ export const addSubscriberReqToSubscriberResDto = (
     phone: res.Subscriber.phone_number,
     idSerial: res.Subscriber.id_serial,
     uuid: res.Subscriber.subscriber_id,
-    lastName: res.Subscriber.last_name,
-    firstName: res.Subscriber.first_name,
+    name: res.Subscriber.name,
     networkId: res.Subscriber.network_id,
     proofOfIdentification: res.Subscriber.proof_of_identification,
   };
@@ -63,8 +62,7 @@ export const dtoToSubscriberResDto = (
     phone: res.subscriber.phone_number,
     idSerial: res.subscriber.id_serial,
     uuid: res.subscriber.subscriber_id,
-    lastName: res.subscriber.last_name,
-    firstName: res.subscriber.first_name,
+    name: res.subscriber.name,
     networkId: res.subscriber.network_id,
     proofOfIdentification: res.subscriber.proof_of_identification,
   };

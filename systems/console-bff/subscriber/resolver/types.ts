@@ -71,10 +71,7 @@ export class SubscriberAPIDto {
   email: string;
 
   @Field()
-  first_name: string;
-
-  @Field()
-  last_name: string;
+  name: string;
 
   @Field()
   gender: string;
@@ -122,10 +119,7 @@ export class SubscriberInputDto {
   email: string;
 
   @Field({ nullable: true })
-  first_name?: string;
-
-  @Field({ nullable: true })
-  last_name?: string;
+  name?: string;
 
   @Field()
   network_id: string;
@@ -196,10 +190,7 @@ export class SubscriberDto {
   email: string;
 
   @Field()
-  firstName: string;
-
-  @Field()
-  lastName: string;
+  name: string;
 
   @Field()
   gender: string;
@@ -239,7 +230,7 @@ export class UpdateSubscriberInputDto {
   id_serial: string;
 
   @Field({ nullable: true })
-  first_name: string;
+  name: string;
 
   @Field({ nullable: true })
   phone: string;

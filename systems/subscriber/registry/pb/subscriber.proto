@@ -100,27 +100,25 @@ ukama.common.v1.Subscriber subscriber = 1;
 }
 
 message AddSubscriberRequest {
-    // first name of the subscriber, must not be empty and have a length greater than 1
-    string firstName = 1 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "first_name"];
-    // last name of the subscriber, must not be empty and have a length greater than 1
-    string lastName = 2 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "last_name"];
+    // name of the subscriber, must not be empty and have a length greater than 1
+    string name = 1 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "name"];
     // email of the subscriber, must be in email format
-    string email = 3  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$", string_not_empty: true,}];
+    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$", string_not_empty: true,}];
     // phone number of the subscriber, must be in phone number format
-    string phoneNumber = 4  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"},
+    string phoneNumber = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"},
                             json_name = "phone_number"];
     // address of the subscriber
-    string address = 5;
+    string address = 4;
     // idSerial of the subscriber
-    string idSerial =6;
+    string idSerial =5;
     // network ID of the subscriber, if not provided, it will pick up the default network
-    string networkId = 7;
+    string networkId = 6;
     // proof of identification of the subscriber, must not be empty and have a length greater than 1
-    string proofOfIdentification =8;
+    string proofOfIdentification =7;
     // date of birth of the subscriber
-    string dob = 9;
+    string dob = 8;
     // gender of the subscriber, must not be empty and have a length greater than 1
-    string gender =10;
+    string gender =9;
 }
 
 // UpdateSubscriberRequest defines the request to update a subscriber
@@ -128,15 +126,16 @@ message UpdateSubscriberRequest{
     // subscriberId is the ID of the subscriber to update
     string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     // email is the new email address of the subscriber
-    string email = 4  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     // phoneNumber is the new phone number of the subscriber
-    string phoneNumber = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string phoneNumber = 3  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     // address is the new address of the subscriber
-    string address = 6;
+    string address = 4;
     // idSerial is the new idSerial of the subscriber
-    string idSerial =8;
+    string idSerial =5;
     // proofOfIdentification is the new proofOfIdentification of the subscriber
-    string proofOfIdentification =11;
+    string proofOfIdentification =6;
+    string name = 7 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "name"];
     }
 // UpdateSubscriberResponse defines the response when updating a subscriber
 message UpdateSubscriberResponse{
