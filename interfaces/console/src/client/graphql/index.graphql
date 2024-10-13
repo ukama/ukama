@@ -250,6 +250,25 @@ fragment SimPackages on SimToPackagesDto {
   end_date
   is_active
 }
+fragment SubscriberSims on SubscriberToSimsDto {
+  subscriberId
+  sims {
+    id
+    subscriberId
+    networkId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+  }
+}
 
 fragment Package on PackageDto {
   uuid
@@ -303,9 +322,7 @@ query getPackages {
 }
 query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
   getSimsBySubscriber(data: $data) {
-    sims {
-      ...SimPool
-    }
+    ...SubscriberSims
   }
 }
 
@@ -336,13 +353,7 @@ mutation setActivePackageForSim($data: SetActivePackageForSimInputDto!) {
     packageId
   }
 }
-query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
-  getSimsBySubscriber(data: $data) {
-    sims {
-      ...SimPool
-    }
-  }
-}
+
 query getPackagesForSim($data: GetPackagesForSimInputDto!) {
   getPackagesForSim(data: $data) {
     sim_id
@@ -478,8 +489,7 @@ fragment Subscriber on SubscriberDto {
   address
   dob
   email
-  firstName
-  lastName
+  name
   gender
   idSerial
   networkId

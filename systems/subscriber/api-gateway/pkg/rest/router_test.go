@@ -251,8 +251,7 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	s := &upb.Subscriber{
 		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		FirstName:             "John",
-		LastName:              "Doe",
+		Name:                  "John",
 		NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 		Email:                 "johndoe@example.com",
 		PhoneNumber:           "1234567890",
@@ -286,8 +285,7 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	t.Run("putSubscriber", func(t *testing.T) {
 		data := SubscriberAddReq{
-			FirstName:             "John",
-			LastName:              "Doe",
+			Name:                  "John",
 			NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
 			Email:                 "johndoe@example.com",
 			Phone:                 "1234567890",
@@ -306,8 +304,7 @@ func TestRouter_Subscriber(t *testing.T) {
 		assert.NoError(t, err)
 
 		preq := &subPb.AddSubscriberRequest{
-			FirstName:             data.FirstName,
-			LastName:              data.LastName,
+			Name:                  data.Name,
 			Email:                 data.Email,
 			PhoneNumber:           data.Phone,
 			Dob:                   data.Dob,

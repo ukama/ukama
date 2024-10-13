@@ -346,11 +346,120 @@ export class SimAPIDto {
 }
 
 @ObjectType()
-export class SubscriberToSimsDto {
+export class SubscriberToSimsResDto {
   @Field()
   subscriber_id: string;
-  @Field(() => [SimDto])
-  sims: SimDto[];
+  @Field(() => [SubscriberSimsAPIDto])
+  sims: SubscriberSimsAPIDto[];
+}
+
+@ObjectType()
+export class SubscriberToSimsDto {
+  @Field()
+  subscriberId: string;
+  @Field(() => [SubscriberSimsDto])
+  sims: SubscriberSimsDto[];
+}
+
+@ObjectType()
+export class SubscriberSimsDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  syncStatus: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  isPhysical: boolean;
+
+  @Field()
+  trafficPolicy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocatedAt: string;
+}
+@ObjectType()
+export class SubscriberSimsAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriber_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  is_physical: boolean;
+
+  @Field()
+  traffic_policy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocated_at: string;
+
+  @Field()
+  sync_status: string;
 }
 @ObjectType()
 export class SimDto {

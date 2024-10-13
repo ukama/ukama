@@ -5,115 +5,138 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import LoadingWrapper from '@/components/LoadingWrapper';
-import { colors } from '@/theme';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import React, { useState } from 'react';
 import {
-  IconButton,
-  Menu,
-  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
 } from '@mui/material';
-import React from 'react';
+import { styled } from '@mui/system';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import colors from '@/theme/colors';
+import LoadingWrapper from '../LoadingWrapper';
+import { SubscriberSimDto } from '@/client/graphql/generated';
 
-interface SimInfoProps {
-  selectedTab: number;
-  subscriberInfo: any;
-  simStatusLoading: boolean;
-  handleSimAction: any;
-  simAction: any;
-  handleCloseSimAction: () => void;
-  handleSimMenu: Function;
+interface SimTableProps {
+  simData: SubscriberSimDto[];
+  onSimAction: (action: string, id: string) => void;
+  simLoading: boolean;
 }
 
-const SimInfoTab: React.FC<SimInfoProps> = ({
-  selectedTab,
-  subscriberInfo,
-  simStatusLoading,
-  handleSimAction,
-  simAction,
-  handleCloseSimAction,
-  handleSimMenu,
-}) => (
-  <Typography component="div" role="tabpanel" hidden={selectedTab !== 2}>
-    <TableContainer>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>
-              <strong style={{ fontWeight: 'bold' }}> SIM ICCID</strong>
-            </TableCell>
-            <TableCell>
-              <strong style={{ fontWeight: 'bold' }}> Type</strong>
-            </TableCell>
-            <TableCell>
-              <strong style={{ fontWeight: 'bold' }}> Status</strong>
-            </TableCell>
-            <TableCell></TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          <LoadingWrapper
-            radius="small"
-            width={'100%'}
-            isLoading={simStatusLoading}
-            cstyle={{
-              overflow: 'auto',
-              backgroundColor: false ? colors.white : 'transparent',
-            }}
-          >
-            {subscriberInfo &&
-              subscriberInfo.sim.map((sim: any) => (
+const StyledTableContainer = styled(TableContainer)({
+  boxShadow: 'none',
+  border: 'none',
+});
+
+const StyledTableCellHeader = styled(TableCell)({
+  color: `${colors.black}`,
+});
+
+const StyledTableCellBody = styled(TableCell)({
+  color: `${colors.black70}`,
+});
+
+const SimTable: React.FC<SimTableProps> = ({
+  simData,
+  onSimAction,
+  simLoading,
+}) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedSim, setSelectedSim] = useState<string | null>(null);
+
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    id: string,
+  ) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedSim(id);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setSelectedSim(null);
+  };
+
+  const handleSimMenu = (action: string) => {
+    if (selectedSim) {
+      onSimAction(action, selectedSim);
+    }
+
+    handleClose();
+  };
+
+  return (
+    <LoadingWrapper height={120} isLoading={simLoading}>
+      <StyledTableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <StyledTableCellHeader>SIM ICCID</StyledTableCellHeader>
+              <StyledTableCellHeader>Type</StyledTableCellHeader>
+              <StyledTableCellHeader>Status</StyledTableCellHeader>
+              <StyledTableCellHeader>
+                <></>
+              </StyledTableCellHeader>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {simData &&
+              simData.map((sim) => (
                 <TableRow key={sim.iccid}>
-                  <TableCell>{sim.msisdn}</TableCell>
-                  <TableCell>{sim.isPhysical ? 'pSim' : 'eSim'}</TableCell>
-                  <TableCell>{sim.status}</TableCell>
+                  <StyledTableCellBody>{sim.iccid}</StyledTableCellBody>
+                  <StyledTableCellBody>
+                    {sim.isPhysical ? 'pSim' : 'eSim'}
+                  </StyledTableCellBody>
+                  <StyledTableCellBody>
+                    {sim.status.charAt(0).toUpperCase() + sim.status.slice(1)}
+                  </StyledTableCellBody>
                   <TableCell>
                     <IconButton
                       aria-controls="menu"
                       aria-haspopup="true"
-                      onClick={handleSimAction}
+                      onClick={(event) => handleMenuClick(event, sim.id)}
                     >
                       <MoreVertIcon sx={{ transform: 'rotate(90deg)' }} />
                     </IconButton>
                     <Menu
                       id="menu"
-                      anchorEl={simAction}
-                      open={Boolean(simAction)}
-                      onClose={handleCloseSimAction}
+                      anchorEl={anchorEl}
+                      open={Boolean(anchorEl) && selectedSim === sim.id}
+                      onClose={handleClose}
                     >
                       <MenuItem
-                        onClick={() => handleSimMenu('deactivateSim', sim.id)}
+                        onClick={() => {
+                          handleSimMenu(
+                            sim.status === 'inactive'
+                              ? 'activateSim'
+                              : 'deactivateSim',
+                          );
+                        }}
                       >
-                        Deactivate SIM
+                        {sim.status === 'active' ? 'Deactivate' : 'Activate'}
                       </MenuItem>
                       <MenuItem
-                        onClick={() => handleSimMenu('deleteSim', sim.id)}
-                        sx={{ color: colors.red }}
+                        onClick={() => handleSimMenu('deleteSim')}
+                        sx={{ color: 'red' }}
                       >
                         Delete SIM
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => handleSimMenu('topUp', sim.id)}
-                        sx={{ color: colors.red }}
-                      >
-                        Top up data
                       </MenuItem>
                     </Menu>
                   </TableCell>
                 </TableRow>
               ))}
-          </LoadingWrapper>
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </Typography>
-);
+          </TableBody>
+        </Table>
+      </StyledTableContainer>
+    </LoadingWrapper>
+  );
+};
 
-export default SimInfoTab;
+export default SimTable;
