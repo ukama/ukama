@@ -33,7 +33,6 @@ import {
   SimStatusResDto,
   SimsResDto,
   SubscriberToSimsDto,
-  SubscriberToSimsResDto,
   ToggleSimStatusInputDto,
   UploadSimsInputDto,
   UploadSimsResDto,
