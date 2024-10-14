@@ -6,10 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package client
+package clients
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -81,4 +82,14 @@ type Subscription struct {
 	CustomerId     string
 	PlanCode       string
 	SubscriptionAt *time.Time
+}
+
+type Error struct {
+	Code int    `json:"code"`
+	Msg  string `json:"message"`
+	Err  error  `json:"-"`
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("%d:%s", e.Code, e.Msg)
 }

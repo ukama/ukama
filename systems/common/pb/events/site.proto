@@ -39,5 +39,6 @@
      bool isDeactivated = 8 [json_name = "is_deactivated"];
      double latitude = 9;
      double longitude = 10;
-     string installDate = 11 [json_name = "install_date"];
+     string networkId = 11 [(validator.field) = { uuid_ver: 4, string_not_empty: true }, json_name = "network_id"];
+     string installDate = 12 [json_name = "install_date"];
  }

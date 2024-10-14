@@ -141,25 +141,27 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
 
-	evt := &epb.EventAddSite{
-		SiteId:        site.Id.String(),
-		Name:          site.Name,
-		NetworkId:     site.NetworkId.String(),
-		IsDeactivated: site.IsDeactivated,
-		BackhaulId:    site.BackhaulId.String(),
-		PowerId:       site.PowerId.String(),
-		AccessId:      site.AccessId.String(),
-		SwitchId:      site.SwitchId.String(),
-		Latitude:      site.Latitude,
-		Longitude:     site.Longitude,
-		InstallDate:   site.InstallDate,
-	}
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetActionCreate().SetObject("site").MustBuild()
 
-	route := s.baseRoutingKey.SetAction("add").SetObject("site").MustBuild()
+		evt := &epb.EventAddSite{
+			SiteId:        site.Id.String(),
+			NetworkId:     site.NetworkId.String(),
+			Name:          site.Name,
+			IsDeactivated: site.IsDeactivated,
+			BackhaulId:    site.BackhaulId.String(),
+			PowerId:       site.PowerId.String(),
+			AccessId:      site.AccessId.String(),
+			SwitchId:      site.SwitchId.String(),
+			Latitude:      site.Latitude,
+			Longitude:     site.Longitude,
+			InstallDate:   site.InstallDate,
+		}
 
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	s.pushSiteCount(networkId)
@@ -216,26 +218,29 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
-	
+
 	site := &db.Site{
-		Id:            siteId,
-		Name:          req.Name,
+		Id:   siteId,
+		Name: req.Name,
 	}
 
 	err = s.siteRepo.Update(site)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
-	evt := &epb.EventUpdateSite{
-		SiteId:        site.Id.String(),
-		Name:          site.Name,
-	}
 
-	route := s.baseRoutingKey.SetAction("update").SetObject("site").MustBuild()
+	if s.msgbus != nil {
+		route := s.baseRoutingKey.SetAction("update").SetObject("site").MustBuild()
+		evt := &epb.EventUpdateSite{
+			SiteId:    site.Id.String(),
+			Name:      site.Name,
+			NetworkId: site.NetworkId.String(),
+		}
 
-	err = s.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		err = s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 	return &pb.UpdateResponse{
 		Site: dbSiteToPbSite(site),

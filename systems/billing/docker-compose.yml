@@ -28,7 +28,7 @@ services:
    - ukama-net
   depends_on:
    - postgresd-billing
-   - billing-invoice
+   - billing-report
    - billing-collector
 
  msg-client-billing:
@@ -71,8 +71,8 @@ services:
   depends_on:
    - postgresd-billing
 
- billing-invoice:
-  build: ./invoice
+ billing-report:
+  build: ./report
   ports:
    - '9692:9090'
   environment:
@@ -82,8 +82,8 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msg-client-billing:9095
-   - INVOICE_SERVICE_HOST=billing-invoice
-   - INVOICE_SERVICE_PORT=9090
+   - REPORT_SERVICE_HOST=billing-report
+   - REPORT_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
   restart: always
@@ -91,6 +91,28 @@ services:
    - ukama-net
   depends_on:
    - postgresd-billing
+
+
+ initclient-billing:
+  build:
+   dockerfile: ./Dockerfile
+   context: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_NAME=billing
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_DNS=api-gateway-billing
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-billing
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
  ukama-net:
