@@ -12,7 +12,6 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	stm "github.com/ukama/ukama/systems/common/stateMachine"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
@@ -31,7 +30,6 @@ import (
 	 sRepo               db.StateRepo
 	 nodeStateRoutingKey msgbus.RoutingKeyBuilder
 	 msgbus              mb.MsgBusServiceClient
-	 stateMachine        *stm.StateMachine
 	 debug               bool
 	 orgName             string
  }
@@ -80,6 +78,21 @@ import (
 	 if err != nil {
 		 return nil, status.Errorf(codes.Internal, "failed to add node state: %v", err)
 	 }
+	 if s.msgbus != nil {
+		route := s.nodeStateRoutingKey.SetAction("add").SetObject("network").MustBuild()
+		evt := &pb.AddStateRequest {
+			NodeId: newNodeState.NodeId,
+			CurrentState: newNodeState.CurrentState,
+			SubState: newNodeState.SubState,
+			Events: newNodeState.Events,
+		}
+
+		err = s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+				evt, route, err.Error())
+		}
+	}
  
 	 return &pb.AddStateResponse{
 		 Id: newNodeState.Id.String(),

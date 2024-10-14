@@ -7,70 +7,69 @@
  */
 package events
 
- type NodeStateEventId int
- 
- type NodeStateEventsConfig struct {
-	 Key        NodeStateEventId
-	 Name       string
-	 RoutingKey string
- }
- 
- const (
-	 NodeStateEventInvalid NodeStateEventId = iota
-	 NodeStateEventCreate
-	 NodeStateEventAssign
-	 NodeStateEventRelease
-	 NodeStateEventOnline
-	 NodeStateEventOffline
-	 NodeStateEventUpdate
-	 NodeStateEventConfig
- )
- 
- var NodeStateEventRoutingKey = map[NodeStateEventId]string{
-	 NodeStateEventCreate:  "event.cloud.local.{{ .Org}}.registry.node.node.create",
-	 NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
-	 NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
-	 NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-	 NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-	 NodeStateEventUpdate: "event.node.local.{{ .Org}}.messaging.mesh.config.create",
-	 NodeStateEventConfig: "event.cloud.local.{{ .Org}}.messaging.mesh.config.create"
- }
- 
- var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
-	 NodeStateEventCreate: {
-		 Key:        NodeStateEventCreate,
-		 Name:       "create",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventCreate],
-	 },
-	 NodeStateEventUpdate: {
-		 Key:        NodeStateEventUpdate,
-		 Name:       "update",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventUpdate],
-	 },
-	 NodeStateEventAssign: {
-		 Key:        NodeStateEventAssign,
-		 Name:       "onboarding",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
-	 },
-	 NodeStateEventRelease: {
-		 Key:        NodeStateEventRelease,
-		 Name:       "offboarding",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
-	 },
-	 NodeStateEventOffline: {
-		 Key:        NodeStateEventOffline,
-		 Name:       "offline",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventOffline],
-	 },
-	 NodeStateEventOnline: {
-		 Key:        NodeStateEventOnline,
-		 Name:       "online",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
-	 },
-	 NodeStateEventConfig: {
-		 Key:        NodeStateEventConfig,
-		 Name:       "config",
-		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventConfig],
-	 },
- }
- 
+type NodeStateEventId int
+
+type NodeStateEventsConfig struct {
+	Key        NodeStateEventId
+	Name       string
+	RoutingKey string
+}
+
+const (
+	NodeStateEventInvalid NodeStateEventId = iota
+	NodeStateEventCreate
+	NodeStateEventAssign
+	NodeStateEventRelease
+	NodeStateEventOnline
+	NodeStateEventOffline
+	NodeStateEventUpdate
+	NodeStateEventConfig
+)
+
+var NodeStateEventRoutingKey = map[NodeStateEventId]string{
+	NodeStateEventCreate:  "event.cloud.local.{{ .Org}}.registry.node.node.create",
+	NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
+	NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
+	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+	NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+	NodeStateEventUpdate:  "event.node.local.{{ .Org}}.messaging.mesh.config.create",
+	NodeStateEventConfig:  "event.cloud.local.{{ .Org}}.messaging.mesh.config.create",
+}
+
+var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
+	NodeStateEventCreate: {
+		Key:        NodeStateEventCreate,
+		Name:       "create",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventCreate],
+	},
+	NodeStateEventUpdate: {
+		Key:        NodeStateEventUpdate,
+		Name:       "update",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventUpdate],
+	},
+	NodeStateEventAssign: {
+		Key:        NodeStateEventAssign,
+		Name:       "onboarding",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
+	},
+	NodeStateEventRelease: {
+		Key:        NodeStateEventRelease,
+		Name:       "offboarding",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
+	},
+	NodeStateEventOffline: {
+		Key:        NodeStateEventOffline,
+		Name:       "offline",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOffline],
+	},
+	NodeStateEventOnline: {
+		Key:        NodeStateEventOnline,
+		Name:       "online",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
+	},
+	NodeStateEventConfig: {
+		Key:        NodeStateEventConfig,
+		Name:       "config",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventConfig],
+	},
+}

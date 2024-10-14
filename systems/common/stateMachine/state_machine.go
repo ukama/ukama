@@ -34,7 +34,7 @@ type Transition struct {
 }
 
 type SubState struct {
-	Events      []string               `json:"events"`
+	Events      []string              `json:"events"`
 	Transitions map[string]Transition `json:"transition"`
 }
 
@@ -80,6 +80,7 @@ func (s *State) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	s.Name = aux.Name
+
 	s.Description = aux.Description
 	s.Events = aux.Events
 	s.Transitions = make(map[string]Transition)
@@ -104,7 +105,7 @@ func (smc *StateMachineConfig) UnmarshalJSON(data []byte) error {
 		Version string  `json:"version"`
 		Entity  string  `json:"entity"`
 		File    string  `json:"file"`
-		States  []State `json:"states"` // Keep as an array
+		States  []State `json:"states"`
 	}{}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -157,7 +158,6 @@ func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string)
 	return instance, nil
 }
 
-// Transition processes a state transition for the instance.
 func (instance *StateMachineInstance) Transition(eventName string) {
 	instance.StateMachine.mu.Lock()
 	defer instance.StateMachine.mu.Unlock()
