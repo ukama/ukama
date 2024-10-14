@@ -79,7 +79,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewStateServer(svcConf.OrgName, db.NewStateRepo(gormdb),
-		mbClient, svcConf.DebugMode, svcConf.ConfigPath)
+		mbClient, svcConf.DebugMode)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterStateServiceServer(s, regServer)

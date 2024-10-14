@@ -36,7 +36,7 @@ import (
 	 orgName             string
  }
  
- func NewStateServer(orgName string, sRepo db.StateRepo, msgBus mb.MsgBusServiceClient, debug bool, configPath string) *StateServer {
+ func NewStateServer(orgName string, sRepo db.StateRepo, msgBus mb.MsgBusServiceClient, debug bool) *StateServer {
 	 ns := &StateServer{
 		 sRepo:   sRepo,
 		 orgName: orgName,

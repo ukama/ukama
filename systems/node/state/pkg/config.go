@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
  
  type Config struct {
@@ -24,7 +25,6 @@ import (
 	 Service          *uconf.Service
 	 MsgClient        *config.MsgClient `default:"{}"`
 	 OrgName          string            `default:"ukama"`
-	 ConfigPath       string            `default:"pkg/nodeState.json"`
  }
  
  func NewConfig(name string) *Config {
@@ -32,15 +32,17 @@ import (
 		 DB: &uconf.Database{
 			 DbName: name,
 		 },
- 
 		 Service: uconf.LoadServiceHostConfig(name),
- 
-		 MsgClient: &uconf.MsgClient{
-			 Host:    "msg-client-state:9095",
-			 Timeout: 5 * time.Second,
+		MsgClient: &uconf.MsgClient{
+			Timeout: 7 * time.Second,
 			 ListenerRoutes: []string{
-					"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-					"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventCreate],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventUpdate],
+				 evt.NodeStateEventRoutingKey[evt.NodeStateEventConfig],
 			 },
 		 },
 	 }
