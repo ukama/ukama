@@ -121,6 +121,7 @@ services:
    - DB_USER=postgres
    - GRPC_PORT=9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
    - SYSTEM=notification
   restart: always
   networks:

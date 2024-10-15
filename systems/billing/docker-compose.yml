@@ -40,6 +40,7 @@ services:
    - DB_HOST=postgresd-billing
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - GRPC_PORT=9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=billing
   restart: always
@@ -92,7 +93,6 @@ services:
    - ukama-net
   depends_on:
    - postgresd-billing
-
 
  initclient-billing:
   build:
