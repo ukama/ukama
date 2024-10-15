@@ -116,6 +116,7 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=messaging
+   - GRPC_PORT=9095
    - ORGNAME=${ORGNAME}
    - MASTERORGNAME=${MASTERORGNAME}
   restart: always
