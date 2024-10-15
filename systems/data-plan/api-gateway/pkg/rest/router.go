@@ -348,6 +348,8 @@ func (r *Router) AddPackageHandler(c *gin.Context, req *AddPackageRequest) (*pb.
 		Overdraft:     req.Overdraft,
 		TrafficPolicy: req.TrafficPolicy,
 		Networks:      req.Networks,
+		Country:       req.Country,
+		Currency:      req.Currency,
 	}
 
 	return r.clients.p.AddPackage(pack)
