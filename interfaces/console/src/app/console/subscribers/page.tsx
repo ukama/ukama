@@ -211,43 +211,6 @@ const Page = () => {
     if (type === 'edit-sub') {
       handleOpenSubscriberDetails(id, false);
     }
-    if (type === 'pause-service') {
-      try {
-        const { data } = await getSimBySubscriber({
-          variables: {
-            data: {
-              subscriberId: id,
-            },
-          },
-        });
-
-        if (data?.getSimsBySubscriber?.sims.length === 0) {
-          setSnackbarMessage({
-            id: 'no-sim',
-            message: 'Subscriber has no SIM yet.',
-            type: 'error',
-            show: true,
-          });
-          return;
-        }
-        if (data?.getSimsBySubscriber?.sims) {
-          const deletionPromises = data.getSimsBySubscriber.sims.map((sim) =>
-            deleteSim({
-              variables: {
-                data: {
-                  simId: sim.id,
-                },
-              },
-            }),
-          );
-
-          await Promise.all(deletionPromises);
-          await refetchSubscribers();
-        }
-      } catch (error) {
-        console.error('Error in pause-service operation:', error);
-      }
-    }
   };
   const [activatePackageSim] = useSetActivePackageForSimMutation({
     onCompleted: () => {
@@ -354,10 +317,11 @@ const Page = () => {
       onCompleted: () => {
         setSnackbarMessage({
           id: 'sim-activated-success',
-          message: 'Sim activated successfully!',
+          message: 'Sim state updated successfully!',
           type: 'success' as AlertColor,
           show: true,
         });
+        refetchSubscribers();
         getSim({
           variables: {
             data: {
@@ -593,50 +557,16 @@ const Page = () => {
               status: action === 'deactivateSim' ? 'inactive' : 'active',
             },
           },
-        })
-          .then(() => {
-            setSnackbarMessage({
-              id: 'sim-activated-success',
-              message: `Sim ${action === 'deactivateSim' ? 'deactivated' : 'activated'} successfully!`,
-              type: 'success' as AlertColor,
-              show: true,
-            });
-            refetchSubscribers();
-          })
-          .catch((error) => {
-            setSnackbarMessage({
-              id: 'sim-activated-error',
-              message: error.message,
-              type: 'error' as AlertColor,
-              show: true,
-            });
-          });
+        });
         break;
       case 'topUp':
         setIsToPupData(true);
-
         setTopUpDetails({
           simId: simId,
-
           subscriberId: selectedSubscriber,
         });
         break;
-      case 'deleteSim':
-        toggleSimStatus({
-          variables: {
-            data: {
-              sim_id: simId,
-              status: 'inactive',
-            },
-          },
-        });
-        deleteSim({
-          variables: {
-            data: {
-              simId: simId,
-            },
-          },
-        });
+      default:
         break;
     }
   };
@@ -685,56 +615,6 @@ const Page = () => {
           subscriberId: subscriberId,
         },
       });
-    } else if (action === 'pauseService') {
-      try {
-        const { data } = await getSimBySubscriber({
-          variables: {
-            data: {
-              subscriberId: subscriberId,
-            },
-          },
-        });
-
-        const simId = data?.getSimsBySubscriber?.sims[0].id;
-
-        if (!simId) {
-          setSnackbarMessage({
-            id: 'pause-service-error',
-            message: 'Subercriber has no sim yet',
-            type: 'error' as AlertColor,
-            show: true,
-          });
-          return;
-        }
-
-        if (data?.getSimsBySubscriber?.sims) {
-          for (const sim of data.getSimsBySubscriber.sims) {
-            await toggleSimStatus({
-              variables: {
-                data: {
-                  sim_id: simId,
-                  status: 'inactive',
-                },
-              },
-            });
-            await deleteSim({
-              variables: {
-                data: {
-                  simId: sim.id,
-                },
-              },
-            });
-          }
-          refetchSubscribers();
-        }
-      } catch (error) {
-        setSnackbarMessage({
-          id: 'pause-service-error',
-          message: 'Error pausing service: ' + (error as Error).message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      }
     }
   };
 

@@ -73,7 +73,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingMobile, setIsEditingMobile] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const hasSims = subscriberInfo?.sim && subscriberInfo.sim.length > 0;
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -121,11 +120,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   };
 
   const handleSimAction = (action: string, iccid: string) => {
-    if (
-      action === 'deactivateSim' ||
-      action === 'deleteSim' ||
-      action === 'activateSim'
-    ) {
+    if (action === 'deactivateSim' || action === 'activateSim') {
       handleSimActionOption(action, iccid, subscriberInfo.uuid);
       handleCloseItem();
     }
@@ -161,13 +156,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             open={open}
             onClose={() => setAnchorEl(null)}
           >
-            <MenuItem
-              onClick={() => handleMenuItemClick('pauseService')}
-              disabled={!hasSims}
-            >
-              Pause service
-            </MenuItem>
-
             <MenuItem
               onClick={() => handleMenuItemClick('deleteSubscriber')}
               sx={{ color: colors.red }}
