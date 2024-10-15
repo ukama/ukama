@@ -27,7 +27,7 @@ import "google/protobuf/timestamp.proto";
     string deletedAt = 9;
     string updatedAt = 10;
     repeated Sim sim = 11;
-    string dob = 12 [json_name = "date_of_birth"];
+    string dob = 12 [json_name = "dob"];
     string idSerial =13 [json_name = "id_serial"];
     string gender =14;
 
