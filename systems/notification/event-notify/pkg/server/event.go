@@ -17,6 +17,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	notif "github.com/ukama/ukama/systems/common/notification"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
@@ -26,14 +27,15 @@ type EventToNotifyEventServer struct {
 	orgName string
 	orgId   string
 	n       *EventToNotifyServer
+	sc      csub.SubscriberClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNotificationEventServer(orgName string, orgId string, n *EventToNotifyServer) *EventToNotifyEventServer {
-
+func NewNotificationEventServer(orgName string, orgId string, subscriberClient csub.SubscriberClient, n *EventToNotifyServer) *EventToNotifyEventServer {
 	return &EventToNotifyEventServer{
 		orgName: orgName,
 		orgId:   orgId,
+		sc:      subscriberClient,
 		n:       n,
 	}
 }
@@ -113,7 +115,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.MemberId, jmsg, msg.MemberId)
+		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
 
 		user := &db.Users{
 			Id:           uuid.NewV4(),
@@ -445,6 +447,19 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+		user := &db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        es.orgId,
+			UserId:       msg.SubscriberId,
+			Role:         roles.TYPE_SUBSCRIBER,
+			NetworkId:    msg.NetworkId,
+			SubscriberId: msg.SubscriberId,
+		}
+
+		err = es.n.storeUser(user)
+		if err != nil {
+			log.Errorf("Error storing user: %v", err)
+		}
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberUpdate]

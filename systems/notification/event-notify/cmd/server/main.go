@@ -34,6 +34,7 @@ import (
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
@@ -91,9 +92,15 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
+	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve subscriber address: %v", err)
+	}
+
 	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 	memberClient := creg.NewMemberClient(regUrl.String())
+	subscriberClient := sreg.NewSubscriberClient(subUrl.String())
 
 	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -104,7 +111,7 @@ func runGrpcServer(gormdb sql.Db) {
 	eventToNotifyServer := server.NewEventToNotifyServer(serviceConfig.OrgName, serviceConfig.OrgId, memberClient, db.NewNotificationRepo(gormdb),
 		db.NewUserRepo(gormdb), db.NewEventMsgRepo(gormdb), db.NewUserNotificationRepo(gormdb), mbClient)
 
-	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, serviceConfig.OrgId, eventToNotifyServer)
+	eventToNotifyEventServer := server.NewNotificationEventServer(serviceConfig.OrgName, serviceConfig.OrgId, subscriberClient, eventToNotifyServer)
 	log.Debugf("MessageBus Client is %+v and config %+v", mbClient, serviceConfig.MsgClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
