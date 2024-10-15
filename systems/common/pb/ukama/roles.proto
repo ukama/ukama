@@ -19,4 +19,5 @@
     ROLE_NETWORK_OWNER = 3;
     ROLE_VENDOR = 4;
     ROLE_USER = 5;
+    ROLE_SUBSCRIBER = 6;
 }

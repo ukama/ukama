@@ -64,6 +64,9 @@ export class NotificationAPIDto {
 
   @Field()
   user_id: string;
+
+  @Field()
+  resource_id: string;
 }
 
 @ObjectType()
@@ -108,6 +111,9 @@ export class NotificationResDto {
 
   @Field()
   createdAt: string;
+
+  @Field()
+  resourceId: string;
 }
 
 @ObjectType()
