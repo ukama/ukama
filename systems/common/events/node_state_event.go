@@ -24,6 +24,7 @@ const (
 	NodeStateEventOffline
 	NodeStateEventUpdate
 	NodeStateEventConfig
+	NodeStateEventReady
 )
 
 var NodeStateEventRoutingKey = map[NodeStateEventId]string{
@@ -33,7 +34,8 @@ var NodeStateEventRoutingKey = map[NodeStateEventId]string{
 	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 	NodeStateEventUpdate:  "event.node.local.{{ .Org}}.messaging.mesh.config.create",
-	NodeStateEventConfig:  "event.cloud.local.{{ .Org}}.messaging.mesh.config.create",
+	NodeStateEventConfig:  " event.cloud.local.{{ .Org}}.node.configurator.node.publish",
+	NodeStateEventReady:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.ready",
 }
 
 var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
@@ -71,5 +73,10 @@ var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
 		Key:        NodeStateEventConfig,
 		Name:       "config",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventConfig],
+	},
+	NodeStateEventReady: {
+		Key:        NodeStateEventReady,
+		Name:       "ready",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventReady],
 	},
 }

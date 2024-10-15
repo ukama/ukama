@@ -21,6 +21,7 @@ import (
 type Event struct {
 	Name       string    `json:"name"`
 	Timestamp  time.Time `json:"timestamp"`
+	InstanceId string    `json:"instance_id"`
 	OldState   string    `json:"old_state"`
 	NewState   string    `json:"new_state"`
 	IsSubstate bool      `json:"is_substate"`
@@ -184,6 +185,7 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 			OldState:   oldState,
 			NewState:   instance.CurrentState,
 			IsSubstate: false,
+			InstanceId: instance.InstanceID,
 		}
 
 		if instance.StateMachine.handler != nil {
@@ -202,6 +204,7 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 				OldState:   oldState,
 				NewState:   instance.CurrentSubstate,
 				IsSubstate: true,
+				InstanceId: instance.InstanceID,
 			}
 
 			if instance.StateMachine.handler != nil {
