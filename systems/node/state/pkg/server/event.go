@@ -14,49 +14,63 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
-
-	"github.com/ukama/ukama/systems/node/state/pkg"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type StateEventServer struct {
-	s               *StateServer
-	orgName         string
-	msgbus          mb.MsgBusServiceClient
-	stateRoutingKey msgbus.RoutingKeyBuilder
-	epb.UnimplementedEventNotificationServiceServer
+	orgName      string
+	orgId        string
 	stateMachine *stm.StateMachine
 	instances    map[string]*stm.StateMachineInstance
+	s            *StateServer
+	configPath   string
+	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewStateEventServer(orgName string, s *StateServer, msgBus mb.MsgBusServiceClient, configFile string) (*StateEventServer, error) {
+func NewStateEventServer(orgName string, orgId string, s *StateServer, stateMachine *stm.StateMachine, instances map[string]*stm.StateMachineInstance, configPath string) *StateEventServer {
 	server := &StateEventServer{
-		s:               s,
-		orgName:         orgName,
-		msgbus:          msgBus,
-		stateRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		instances:       make(map[string]*stm.StateMachineInstance),
+		orgName:      orgName,
+		orgId:        orgId,
+		instances:    make(map[string]*stm.StateMachineInstance),
+		stateMachine: stateMachine,
+		s:            s,
+		configPath:   configPath,
 	}
 
 	server.stateMachine = stm.NewStateMachine(server.handleTransition)
 
-	return server, nil
+	return server
 }
 
 func (n *StateEventServer) handleTransition(event stm.Event) {
 	log.Infof("Transition occurred: %+v", event)
-	// Here you can add any additional logic to handle the transition,
-	// such as updating a database or sending notifications
+
+	var subState string
+	if event.IsSubstate {
+		subState = event.NewState
+		log.Infof("Substate Transition: Event: %s, Old Substate: %s, New Substate: %s\n", event.Name, event.OldState, event.NewState)
+	}
+	ctx := context.Background()
+	_, err := n.s.AddNodeState(ctx, &pb.AddStateRequest{
+		NodeId:       event.InstanceId,
+		CurrentState: event.NewState,
+		SubState:     subState,
+		Events:       []string{event.Name},
+	})
+	if err != nil {
+		log.Errorf("Error adding node state: %v", err)
+	}
 }
 
 func (n *StateEventServer) getOrCreateInstance(nodeId, initialState string) (*stm.StateMachineInstance, error) {
 	instance, exists := n.instances[nodeId]
 	if !exists {
-		newInstance, err := n.stateMachine.NewInstance("pkg/nodeState.json", nodeId, initialState)
+		newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeId, initialState)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create new instance: %v", err)
 		}
@@ -66,19 +80,19 @@ func (n *StateEventServer) getOrCreateInstance(nodeId, initialState string) (*st
 	return instance, nil
 }
 
-func (n *StateEventServer) EventNodeState(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 
 	var nodeId string
 	var eventName string
-
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventCreate]):
 		c := evt.NodeEventToEventConfig[evt.NodeStateEventCreate]
-		msg, err := epb.UnmarshalNodeCreatedEvent(e.Msg, c.Name)
+		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, msg)
 		nodeId = msg.NodeId
 		eventName = c.Name
 
@@ -88,6 +102,7 @@ func (n *StateEventServer) EventNodeState(ctx context.Context, e *epb.Event) (*e
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, msg)
 		nodeId = msg.NodeId
 		eventName = c.Name
 
@@ -97,6 +112,7 @@ func (n *StateEventServer) EventNodeState(ctx context.Context, e *epb.Event) (*e
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, msg)
 		nodeId = msg.NodeId
 		eventName = c.Name
 
@@ -115,6 +131,7 @@ func (n *StateEventServer) EventNodeState(ctx context.Context, e *epb.Event) (*e
 		if err != nil {
 			return nil, err
 		}
+		log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, msg)
 		nodeId = msg.NodeId
 		eventName = c.Name
 
@@ -145,65 +162,38 @@ func (n *StateEventServer) ProcessEvent(eventName, nodeId string) error {
 	log.Infof("Processing event %s for node %s", eventName, nodeId)
 
 	ctx := context.Background()
-	currentState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
+
+	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
 	if err != nil {
-		log.Errorf("Failed to get current state for node %s: %v", nodeId, err)
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.InvalidArgument:
+				log.Errorf("Invalid node ID format: %v", err)
+				return err
+			case codes.Internal:
+				log.Errorf("Internal error while checking node state: %v", err)
+				return err
+			}
+		}
 		return err
 	}
 
-	var initialState string
-	var initialSubstate string
-	if currentState == nil {
-		initialState = "unknown"
-		initialSubstate = ""
+	currentState := "unknown"
+	if latestState != nil && latestState.State != nil {
+		currentState = latestState.State.CurrentState
+		log.Infof("Node %s already exists with state %s. Attempting transition.", nodeId, currentState)
 	} else {
-		initialState = currentState.State.GetCurrentState()
-		initialSubstate = currentState.State.GetSubState()
+		log.Infof("Node %s does not exist. Creating new node.", nodeId)
 	}
 
-	instance, err := n.getOrCreateInstance(nodeId, initialState)
+	instance, err := n.getOrCreateInstance(nodeId, currentState)
 	if err != nil {
-		log.Errorf("Failed to get or create state machine instance for node %s: %v", nodeId, err)
+		log.Errorf("Failed to create state machine instance for node %s: %v", nodeId, err)
 		return err
 	}
-
-	// Set the initial substate if it exists
-	if initialSubstate != "" {
-		instance.CurrentSubstate = initialSubstate
-	}
-
-	oldState := instance.CurrentState
-	oldSubstate := instance.CurrentSubstate
 
 	instance.Transition(eventName)
 
-	// Check if the state or substate has changed
-	stateChanged := oldState != instance.CurrentState
-	substateChanged := oldSubstate != instance.CurrentSubstate
-
-	if stateChanged || substateChanged {
-		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-			NodeId:       nodeId,
-			CurrentState: instance.CurrentState,
-			SubState:     instance.CurrentSubstate,
-			Events:       []string{eventName},
-		})
-		if err != nil {
-			log.Errorf("Error updating node state: %v", err)
-			return err
-		}
-
-		if stateChanged {
-			log.Infof("State transition: %s -> %s", oldState, instance.CurrentState)
-		}
-		if substateChanged {
-			log.Infof("Substate transition: %s -> %s", oldSubstate, instance.CurrentSubstate)
-		}
-	} else {
-		log.Infof("No state or substate change for event %s", eventName)
-	}
-
-	log.Infof("Successfully processed event %s for node %s. New state: %s, New substate: %s",
-		eventName, nodeId, instance.CurrentState, instance.CurrentSubstate)
+	log.Infof("Successfully processed event for node %s with state '%s'", nodeId, instance.CurrentState)
 	return nil
 }
