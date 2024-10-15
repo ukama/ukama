@@ -195,6 +195,8 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
 		CreatedAt:    timestamppb.New(notification.CreatedAt),
+		ResourceId:   notification.ResourceId.String(),
+		EventMsg:     notification.EventMsg.Data.Bytes,
 	}
 }
 
