@@ -122,12 +122,6 @@ const SimTable: React.FC<SimTableProps> = ({
                       >
                         {sim.status === 'active' ? 'Deactivate' : 'Activate'}
                       </MenuItem>
-                      <MenuItem
-                        onClick={() => handleSimMenu('deleteSim')}
-                        sx={{ color: 'red' }}
-                      >
-                        Delete SIM
-                      </MenuItem>
                     </Menu>
                   </TableCell>
                 </TableRow>
