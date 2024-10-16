@@ -1,11 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 package statemachine
 
 import (
@@ -21,7 +13,7 @@ import (
 type Event struct {
 	Name       string    `json:"name"`
 	Timestamp  time.Time `json:"timestamp"`
-	InstanceId string    `json:"instance_id"`
+	InstanceID string    `json:"instance_id"`
 	OldState   string    `json:"old_state"`
 	NewState   string    `json:"new_state"`
 	IsSubstate bool      `json:"is_substate"`
@@ -63,8 +55,8 @@ type State struct {
 	Events      []string              `json:"events"`
 	Transitions map[string]Transition `json:"transition"`
 	SubState    *SubState             `json:"substate,omitempty"`
-	OnEnter     func()                `json:"-"`
-	OnExit      func()                `json:"-"`
+	OnEnter     func() error          `json:"-"`
+	OnExit      func() error          `json:"-"`
 }
 
 func (s *State) UnmarshalJSON(data []byte) error {
@@ -81,7 +73,6 @@ func (s *State) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	s.Name = aux.Name
-
 	s.Description = aux.Description
 	s.Events = aux.Events
 	s.Transitions = make(map[string]Transition)
@@ -123,7 +114,7 @@ func (smc *StateMachineConfig) UnmarshalJSON(data []byte) error {
 
 type StateMachine struct {
 	handler TransitionCallback
-	mu      sync.Mutex
+	mu      sync.RWMutex
 }
 
 type StateMachineInstance struct {
@@ -141,7 +132,7 @@ func NewStateMachine(handler TransitionCallback) *StateMachine {
 func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string) (*StateMachineInstance, error) {
 	config, err := LoadConfig(configFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
 	if _, exists := config.States[initialState]; !exists {
@@ -159,7 +150,7 @@ func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string)
 	return instance, nil
 }
 
-func (instance *StateMachineInstance) Transition(eventName string) {
+func (instance *StateMachineInstance) Transition(eventName string) error {
 	instance.StateMachine.mu.Lock()
 	defer instance.StateMachine.mu.Unlock()
 
@@ -167,15 +158,16 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 	currentState, exists := instance.Config.States[instance.CurrentState]
 
 	if !exists {
-		log.Infof("Current state not found: %s\n", instance.CurrentState)
-		return
+		return fmt.Errorf("current state not found: %s", instance.CurrentState)
 	}
 
 	if currentState.OnExit != nil {
-		currentState.OnExit()
+		if err := currentState.OnExit(); err != nil {
+			return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
+		}
 	}
 
-	log.Infof("Current state: %s\n", currentState.Name)
+	log.Infof("Current state: %s", currentState.Name)
 
 	if transition, exists := currentState.Transitions[eventName]; exists {
 		instance.CurrentState = transition.ToState
@@ -185,7 +177,7 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 			OldState:   oldState,
 			NewState:   instance.CurrentState,
 			IsSubstate: false,
-			InstanceId: instance.InstanceID,
+			InstanceID: instance.InstanceID,
 		}
 
 		if instance.StateMachine.handler != nil {
@@ -193,7 +185,9 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 		}
 
 		if newState, exists := instance.Config.States[instance.CurrentState]; exists && newState.OnEnter != nil {
-			newState.OnEnter()
+			if err := newState.OnEnter(); err != nil {
+				return fmt.Errorf("error in OnEnter for state %s: %w", instance.CurrentState, err)
+			}
 		}
 	} else if currentState.SubState != nil {
 		if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
@@ -204,7 +198,7 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 				OldState:   oldState,
 				NewState:   instance.CurrentSubstate,
 				IsSubstate: true,
-				InstanceId: instance.InstanceID,
+				InstanceID: instance.InstanceID,
 			}
 
 			if instance.StateMachine.handler != nil {
@@ -212,14 +206,18 @@ func (instance *StateMachineInstance) Transition(eventName string) {
 			}
 
 			if newSubState, exists := instance.Config.States[instance.CurrentSubstate]; exists && newSubState.OnEnter != nil {
-				newSubState.OnEnter()
+				if err := newSubState.OnEnter(); err != nil {
+					return fmt.Errorf("error in OnEnter for substate %s: %w", instance.CurrentSubstate, err)
+				}
 			}
 		} else {
-			log.Infof("No substate transition found for event: %s in state: %s\n", eventName, instance.CurrentState)
+			return fmt.Errorf("no substate transition found for event: %s in state: %s", eventName, instance.CurrentState)
 		}
 	} else {
-		log.Infof("No transition found for event: %s in state: %s\n", eventName, instance.CurrentState)
+		return fmt.Errorf("no transition found for event: %s in state: %s", eventName, instance.CurrentState)
 	}
+
+	return nil
 }
 
 func LoadConfig(configFile string) (StateMachineConfig, error) {
