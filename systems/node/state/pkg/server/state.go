@@ -68,9 +68,15 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 	newNodeState := &db.State{
 		Id:           uuid.NewV4(),
 		NodeId:       nId.String(),
-		CurrentState: req.CurrentState,
+		CurrentState: ukama.ParseNodeState(req.CurrentState),
 		SubState:     req.SubState,
 		Events:       events,
+		NodeType:     req.GetNodeType(),
+		NodeIp:       req.NodeIp,
+		NodePort:     req.NodePort,
+		MeshIp:       req.MeshIp,
+		MeshPort:     req.MeshPort,
+		MeshHostName: req.MeshHostName,
 	}
 
 	if currentState != nil {
@@ -85,7 +91,7 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 		route := s.StateRoutingKey.SetAction("add").SetObject("state").MustBuild()
 		evt := &pb.AddStateRequest{
 			NodeId:       newNodeState.NodeId,
-			CurrentState: newNodeState.CurrentState,
+			CurrentState: newNodeState.CurrentState.String(),
 			SubState:     newNodeState.SubState,
 			Events:       newNodeState.Events,
 		}
@@ -127,7 +133,7 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		NodeStateRes := &pb.State{
 			Id:           nodeState.Id.String(),
 			NodeId:       nodeState.NodeId,
-			CurrentState: nodeState.CurrentState,
+			CurrentState: nodeState.CurrentState.String(),
 			SubState:     nodeState.SubState,
 			Events:       nodeState.Events,
 			CreatedAt:    timestamppb.New(nodeState.CreatedAt),
@@ -151,7 +157,6 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 					CurrentState:    prevState.CurrentState,
 					SubState:        prevState.SubState,
 					Events:          prevState.Events,
-					Severity:        prevState.Severity,
 					CreatedAt:       prevState.CreatedAt,
 					UpdatedAt:       prevState.UpdatedAt,
 					DeletedAt:       prevState.DeletedAt,
@@ -196,7 +201,7 @@ func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestState
 	stateRes := &pb.State{
 		Id:           latestState.Id.String(),
 		NodeId:       latestState.NodeId,
-		CurrentState: latestState.CurrentState,
+		CurrentState: latestState.CurrentState.String(),
 		SubState:     latestState.SubState,
 		Events:       latestState.Events,
 		CreatedAt:    timestamppb.New(latestState.CreatedAt),

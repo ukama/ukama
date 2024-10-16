@@ -16,7 +16,6 @@ import (
 	"github.com/ukama/ukama/systems/node/state/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	statemachine "github.com/ukama/ukama/systems/common/stateMachine"
 	"github.com/ukama/ukama/systems/node/state/pkg"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -81,12 +80,9 @@ func runGrpcServer(gormdb sql.Db) {
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	stateMachine := statemachine.NewStateMachine(nil) 
-	instances := make(map[string]*statemachine.StateMachineInstance)
-
 	Server := server.NewStateServer(svcConf.OrgName, svcConf.OrgId, db.NewStateRepo(gormdb),
 		mbClient)
-   stateEventServer := server.NewStateEventServer(svcConf.OrgName, svcConf.OrgId,Server,stateMachine,instances,svcConf.ConfigPath)
+   stateEventServer := server.NewStateEventServer(svcConf.OrgName, svcConf.OrgId,Server,svcConf.ConfigPath)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterStateServiceServer(s, Server)

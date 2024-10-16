@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -28,15 +29,21 @@ func (a *StringArray) Scan(value interface{}) error {
 }
 
 type State struct {
-	Id              uuid.UUID      `gorm:"primaryKey;type:uuid" json:"id"`
-	NodeId          string         `gorm:"not null;index" json:"nodeId"`
-	PreviousStateId *uuid.UUID     `gorm:"column:previous_state_id;index" json:"previousStateId,omitempty"`
-	PreviousState   *State         `gorm:"-" json:"previousState,omitempty"`
-	CurrentState    string         `gorm:"not null" json:"currentState"`
-	SubState        string         `gorm:"not null" json:"subState"`
-	Events          StringArray    `gorm:"type:jsonb" json:"events"`
-	Version         string         `gorm:"not null" json:"version"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UpdatedAt       time.Time      `json:"updatedAt"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	Id              uuid.UUID       `gorm:"primaryKey;type:uuid" json:"id"`
+	NodeId          string          `gorm:"not null;index" json:"nodeId"`
+	PreviousStateId *uuid.UUID      `gorm:"column:previous_state_id;index" json:"previousStateId,omitempty"`
+	PreviousState   *State          `gorm:"-" json:"previousState,omitempty"`
+	CurrentState    ukama.NodeState `gorm:"not null" json:"currentState"`
+	SubState        string          `gorm:"not null" json:"subState"`
+	Events          StringArray     `gorm:"type:jsonb" json:"events"`
+	Version         string          `gorm:"" json:"version,omitempty"`
+	NodeType        string          `gorm:"" json:"nodeType,omitempty"`
+	NodeIp          string          `gorm:"" json:"nodeIp,omitempty"`
+	NodePort        int32           `gorm:"" json:"nodePort,omitempty"`
+	MeshIp          string          `gorm:"" json:"meshIp,omitempty"`
+	MeshPort        int32           `gorm:"" json:"meshPort,omitempty"`
+	MeshHostName    string          `gorm:"" json:"meshHostName,omitempty"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
+	DeletedAt       gorm.DeletedAt  `gorm:"index" json:"deletedAt,omitempty"`
 }
