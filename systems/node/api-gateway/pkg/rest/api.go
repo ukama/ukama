@@ -19,6 +19,10 @@ type RestartNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
+type GetStatesRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
 type RestartSiteRequest struct {
 	SiteId    string `json:"site_id"  example:"site-1" validate:"required" path:"site_name"`
 	NetworkId string `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
