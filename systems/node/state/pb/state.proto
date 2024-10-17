@@ -16,6 +16,7 @@ service StateService {
     rpc GetStateById (GetStateByIdRequest) returns (GetStateByIdResponse);
     rpc GetStates(GetStatesRequest) returns(GetStatesResponse);
     rpc GetLatestState(GetLatestStateRequest) returns (GetLatestStateResponse);  
+    rpc UpdateState(UpdateStateRequest) returns (UpdateStateResponse);
 }
 
 message State {
@@ -24,7 +25,7 @@ message State {
     string previousStateId = 3;
     State previousState = 4; 
     string currentState = 5;
-    string subState = 6;
+    repeated string subState = 6;
     repeated string events = 7;
     string version = 8;    
     string  nodeType = 9;   
@@ -37,13 +38,21 @@ message State {
     google.protobuf.Timestamp updatedAt = 16;
     google.protobuf.Timestamp deletedAt = 17;
 }
+message UpdateStateRequest {
+    string nodeId = 1;
+    repeated string subState = 2;
+    repeated string events = 3;
+}
 
+message UpdateStateResponse {
+    State updatedState = 1;
+}
 
 message AddStateRequest {
     string nodeId = 1;
     string previousStateId = 2;
     string currentState = 3;
-    string subState = 4;
+    repeated string subState = 4;
     repeated string events = 5;
     string  nodeIp = 6;     
     int32 nodePort = 8;    

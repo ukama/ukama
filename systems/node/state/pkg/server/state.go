@@ -58,6 +58,7 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 	}
 
 	events := db.StringArray(req.Events)
+	subState := db.StringArray(req.SubState)
 
 	currentState, err := s.sRepo.GetLatestState(nId.String())
 	if err != nil && err != gorm.ErrRecordNotFound {
@@ -69,7 +70,7 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 		Id:           uuid.NewV4(),
 		NodeId:       nId.String(),
 		CurrentState: req.CurrentState,
-		SubState:     req.SubState,
+		SubState:     subState,
 		Events:       events,
 		NodeType:     req.GetNodeType(),
 		NodeIp:       req.NodeIp,
@@ -200,4 +201,38 @@ func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestState
 	return &pb.GetLatestStateResponse{
 		State: stateRes,
 	}, nil
+}
+
+func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateRequest) (*pb.UpdateStateResponse, error) {
+	log.Infof("Updating node state for Node ID: %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id: %s", err.Error())
+	}
+
+	// Retrieve the current state
+	currentState, err := s.sRepo.GetLatestState(nId.String())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.NotFound, "state not found for Node ID: %s", req.NodeId)
+		}
+		log.Errorf("Error retrieving current state: %v", err)
+		return nil, status.Errorf(codes.Internal, "failed to retrieve current state: %v", err)
+	}
+
+	if currentState == nil {
+		return nil, status.Errorf(codes.NotFound, "state not found for Node ID: %s", req.NodeId)
+	}
+
+	// Append new substate to the existing SubState
+	updatedSubState := append(currentState.SubState, db.StringArray(req.SubState)...)
+	updatedEvents := append(currentState.Events, db.StringArray(req.Events)...)
+
+
+	if _, err := s.sRepo.UpdateState(nId.String(), updatedSubState, updatedEvents); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update node state: %v", err)
+	}
+
+	return &pb.UpdateStateResponse{}, nil
 }

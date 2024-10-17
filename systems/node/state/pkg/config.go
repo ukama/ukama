@@ -40,7 +40,6 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventCreate],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],

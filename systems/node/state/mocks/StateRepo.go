@@ -152,6 +152,36 @@ func (_m *StateRepo) GetStatesByNodeId(nodeId string) ([]db.State, error) {
 	return r0, r1
 }
 
+// UpdateState provides a mock function with given fields: nodeId, subStates
+func (_m *StateRepo) UpdateState(nodeId string, subStates []string) (*db.State, error) {
+	ret := _m.Called(nodeId, subStates)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateState")
+	}
+
+	var r0 *db.State
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, []string) (*db.State, error)); ok {
+		return rf(nodeId, subStates)
+	}
+	if rf, ok := ret.Get(0).(func(string, []string) *db.State); ok {
+		r0 = rf(nodeId, subStates)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.State)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, []string) error); ok {
+		r1 = rf(nodeId, subStates)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewStateRepo creates a new instance of StateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStateRepo(t interface {

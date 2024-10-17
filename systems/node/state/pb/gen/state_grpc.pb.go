@@ -30,6 +30,7 @@ const (
 	StateService_GetStateById_FullMethodName   = "/ukama.node.state.v1.StateService/GetStateById"
 	StateService_GetStates_FullMethodName      = "/ukama.node.state.v1.StateService/GetStates"
 	StateService_GetLatestState_FullMethodName = "/ukama.node.state.v1.StateService/GetLatestState"
+	StateService_UpdateState_FullMethodName    = "/ukama.node.state.v1.StateService/UpdateState"
 )
 
 // StateServiceClient is the client API for StateService service.
@@ -40,6 +41,7 @@ type StateServiceClient interface {
 	GetStateById(ctx context.Context, in *GetStateByIdRequest, opts ...grpc.CallOption) (*GetStateByIdResponse, error)
 	GetStates(ctx context.Context, in *GetStatesRequest, opts ...grpc.CallOption) (*GetStatesResponse, error)
 	GetLatestState(ctx context.Context, in *GetLatestStateRequest, opts ...grpc.CallOption) (*GetLatestStateResponse, error)
+	UpdateState(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*UpdateStateResponse, error)
 }
 
 type stateServiceClient struct {
@@ -90,6 +92,16 @@ func (c *stateServiceClient) GetLatestState(ctx context.Context, in *GetLatestSt
 	return out, nil
 }
 
+func (c *stateServiceClient) UpdateState(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*UpdateStateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateStateResponse)
+	err := c.cc.Invoke(ctx, StateService_UpdateState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StateServiceServer is the server API for StateService service.
 // All implementations must embed UnimplementedStateServiceServer
 // for forward compatibility.
@@ -98,6 +110,7 @@ type StateServiceServer interface {
 	GetStateById(context.Context, *GetStateByIdRequest) (*GetStateByIdResponse, error)
 	GetStates(context.Context, *GetStatesRequest) (*GetStatesResponse, error)
 	GetLatestState(context.Context, *GetLatestStateRequest) (*GetLatestStateResponse, error)
+	UpdateState(context.Context, *UpdateStateRequest) (*UpdateStateResponse, error)
 	mustEmbedUnimplementedStateServiceServer()
 }
 
@@ -119,6 +132,9 @@ func (UnimplementedStateServiceServer) GetStates(context.Context, *GetStatesRequ
 }
 func (UnimplementedStateServiceServer) GetLatestState(context.Context, *GetLatestStateRequest) (*GetLatestStateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLatestState not implemented")
+}
+func (UnimplementedStateServiceServer) UpdateState(context.Context, *UpdateStateRequest) (*UpdateStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateState not implemented")
 }
 func (UnimplementedStateServiceServer) mustEmbedUnimplementedStateServiceServer() {}
 func (UnimplementedStateServiceServer) testEmbeddedByValue()                      {}
@@ -213,6 +229,24 @@ func _StateService_GetLatestState_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StateService_UpdateState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StateServiceServer).UpdateState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StateService_UpdateState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StateServiceServer).UpdateState(ctx, req.(*UpdateStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StateService_ServiceDesc is the grpc.ServiceDesc for StateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -235,6 +269,10 @@ var StateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestState",
 			Handler:    _StateService_GetLatestState_Handler,
+		},
+		{
+			MethodName: "UpdateState",
+			Handler:    _StateService_UpdateState_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

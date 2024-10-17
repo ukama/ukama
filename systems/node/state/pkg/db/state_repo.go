@@ -23,6 +23,7 @@ type StateRepo interface {
 	GetStateHistory(nodeId string) ([]State, error)
 	AddState(newState *State, previousState *State) error
 	GetLatestState(nodeId string) (*State, error)
+	UpdateState(nodeId string, subStates []string, events []string) (*State, error) 
 }
 
 type stateRepo struct {
@@ -106,4 +107,25 @@ func (r *stateRepo) AddState(newState *State, previousState *State) error {
 
 		return nil
 	})
+}
+
+// UpdateState updates the state for a given nodeId with the provided subStates.
+func (r *stateRepo) UpdateState(nodeId string,  subStates []string, events []string) (*State, error) {
+	var state State
+
+	err := r.Db.GetGormDb().Where("node_id = ?", nodeId).Order("created_at DESC").First(&state).Error
+	if err != nil {
+		return nil, fmt.Errorf("error fetching current state: %w", err)
+	}
+	state.SubState = subStates
+
+	if len(events) > 0 {
+		state.Events = events
+	}
+
+	if err := r.Db.GetGormDb().Save(&state).Error; err != nil {
+		return nil, fmt.Errorf("error updating state: %w", err)
+	}
+
+	return &state, nil
 }

@@ -164,6 +164,43 @@ func (_m *StateServiceClient) GetStates(ctx context.Context, in *gen.GetStatesRe
 	return r0, r1
 }
 
+// UpdateState provides a mock function with given fields: ctx, in, opts
+func (_m *StateServiceClient) UpdateState(ctx context.Context, in *gen.UpdateStateRequest, opts ...grpc.CallOption) (*gen.UpdateStateResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateState")
+	}
+
+	var r0 *gen.UpdateStateResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) (*gen.UpdateStateResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) *gen.UpdateStateResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateStateResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateStateRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewStateServiceClient creates a new instance of StateServiceClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStateServiceClient(t interface {

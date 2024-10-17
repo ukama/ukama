@@ -18,12 +18,11 @@ type NodeStateEventsConfig struct {
 	Key        NodeStateEventId
 	Name       string
 	RoutingKey string
-	body  interface{} 
+	body       interface{}
 }
 
 const (
 	NodeStateEventInvalid NodeStateEventId = iota
-	NodeStateEventCreate
 	NodeStateEventAssign
 	NodeStateEventRelease
 	NodeStateEventOnline
@@ -34,7 +33,6 @@ const (
 )
 
 var NodeStateEventRoutingKey = map[NodeStateEventId]string{
-	NodeStateEventCreate:  "event.cloud.local.{{ .Org}}.registry.node.node.create",
 	NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
 	NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
 	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
@@ -45,47 +43,41 @@ var NodeStateEventRoutingKey = map[NodeStateEventId]string{
 }
 
 var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
-	NodeStateEventCreate: {
-		Key:        NodeStateEventCreate,
-		Name:       "online",
-		RoutingKey: NodeStateEventRoutingKey[NodeStateEventCreate],
-		body:epb.NodeCreatedEvent{},
-	},
 	NodeStateEventUpdate: {
 		Key:        NodeStateEventUpdate,
 		Name:       "update",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventUpdate],
-		 body:epb.NodeUpdatedEvent{},
+		body:       epb.NodeUpdatedEvent{},
 	},
 	NodeStateEventAssign: {
 		Key:        NodeStateEventAssign,
 		Name:       "onboarding",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
-		body:epb.NodeAssignedEvent{},
+		body:       epb.NodeAssignedEvent{},
 	},
 	NodeStateEventRelease: {
 		Key:        NodeStateEventRelease,
 		Name:       "offboarding",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
-		body:epb.NodeReleasedEvent{},
+		body:       epb.NodeReleasedEvent{},
 	},
 	NodeStateEventOffline: {
 		Key:        NodeStateEventOffline,
 		Name:       "offline",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOffline],
-		body:epb.NodeOfflineEvent{},
+		body:       epb.NodeOfflineEvent{},
 	},
 	NodeStateEventOnline: {
 		Key:        NodeStateEventOnline,
 		Name:       "online",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
-		body:epb.NodeOnlineEvent{},
+		body:       epb.NodeOnlineEvent{},
 	},
 	NodeStateEventConfig: {
 		Key:        NodeStateEventConfig,
 		Name:       "config",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventConfig],
-		 body:pb.NodeFeederMessage{},
+		body:       pb.NodeFeederMessage{},
 	},
 	NodeStateEventReady: {
 		Key:        NodeStateEventReady,

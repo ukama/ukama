@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -37,6 +37,17 @@ func (this *State) Validate() error {
 	if this.DeletedAt != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DeletedAt); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("DeletedAt", err)
+		}
+	}
+	return nil
+}
+func (this *UpdateStateRequest) Validate() error {
+	return nil
+}
+func (this *UpdateStateResponse) Validate() error {
+	if this.UpdatedState != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedState); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedState", err)
 		}
 	}
 	return nil

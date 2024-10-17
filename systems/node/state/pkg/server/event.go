@@ -136,15 +136,6 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 	var eventName string
 	var body interface{}
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventCreate]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventCreate]
-		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeCreate event: %w", err)
-		}
-		body = msg
-		nodeID = msg.NodeId
-		eventName = c.Name
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign]):
 		c := evt.NodeEventToEventConfig[evt.NodeStateEventAssign]
 		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
@@ -246,9 +237,10 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID s
 	}
 
 	currentState := "unknown"
+	currentSubstate := ""
 	if latestState != nil && latestState.State != nil {
 		currentState = latestState.State.CurrentState
-		log.Infof("Node already exist with current state %s", currentState)
+		log.Infof("Node already exists with current state %s and substate %s", currentState, currentSubstate)
 	} else {
 		log.Infof("Creating initial state entry for node %s", nodeID)
 		if err := n.createInitialNodeState(ctx, nodeID, eventName, msg); err != nil {
@@ -261,19 +253,53 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID s
 		return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeID, err)
 	}
 
+	prevState := instance.CurrentState
+	prevSubstate := instance.CurrentSubstate
+
 	if err := instance.Transition(eventName); err != nil {
 		return fmt.Errorf("failed to transition state for node %s: %w", nodeID, err)
 	}
 
-	_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-		NodeId:       nodeID,
-		CurrentState: instance.CurrentState,
-		SubState:     instance.CurrentSubstate,
-		Events:       n.getEventsForNode(nodeID),
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update state for node %s: %w", nodeID, err)
+	// Check if it's a main state transition
+	if instance.CurrentState != prevState {
+		// Main state transition
+		newSubstate := currentSubstate
+		if newSubstate != "" {
+			newSubstate += "," + instance.CurrentSubstate
+		} else {
+			newSubstate = instance.CurrentSubstate
+		}
+		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
+			NodeId:       nodeID,
+			CurrentState: instance.CurrentState,
+			SubState:     []string{newSubstate},
+			Events:       n.getEventsForNode(nodeID),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to add new state for node %s: %w", nodeID, err)
+		}
+		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeID, instance.CurrentState, newSubstate)
+	} else if instance.CurrentSubstate != prevSubstate {
+		// Substate transition only
+		newSubstate := currentSubstate
+		if newSubstate != "" {
+			newSubstate += "," + instance.CurrentSubstate
+		} else {
+			newSubstate = instance.CurrentSubstate
+		}
+		_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+			NodeId:   nodeID,
+			SubState: []string{newSubstate},
+			Events:   n.getEventsForNode(nodeID),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update substate for node %s: %w", nodeID, err)
+		}
+		log.Infof("Updated substate for node %s: substate=%s", nodeID, newSubstate)
+	} else {
+		log.Infof("No state or substate change for node %s", nodeID)
 	}
+
 	log.Infof("Events for node %s: %v", nodeID, n.getEventsForNode(nodeID))
 
 	n.clearEventsForNode(nodeID)
@@ -290,7 +316,7 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeID, e
 	addStateRequest := &pb.AddStateRequest{
 		NodeId:       nodeID,
 		CurrentState: "unknown",
-		SubState:     "on",
+		SubState:     []string{"on"},
 		Events:       []string{eventName},
 		NodeIp:       onlineEvent.NodeIp,
 		NodePort:     int32(onlineEvent.NodePort),
