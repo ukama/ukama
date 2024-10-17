@@ -65,7 +65,7 @@ export class SubscriberAPIDto {
   address: string;
 
   @Field()
-  date_of_birth: string;
+  dob: string;
 
   @Field()
   email: string;
