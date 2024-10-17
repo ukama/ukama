@@ -105,8 +105,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	subscriber := &db.Subscriber{
-		FirstName:             req.GetFirstName(),
-		LastName:              req.GetLastName(),
+		Name:                  req.GetName(),
 		NetworkId:             nid,
 		Email:                 strings.ToLower(req.GetEmail()),
 		PhoneNumber:           req.GetPhoneNumber(),
@@ -134,8 +133,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Dob:          req.GetDob(),
 		Email:        req.GetEmail(),
 		Gender:       req.GetGender(),
-		LastName:     req.GetLastName(),
-		FirstName:    req.GetFirstName(),
+		Name:         req.GetName(),
 		NetworkId:    req.GetNetworkId(),
 		PhoneNumber:  req.GetPhoneNumber(),
 		SubscriberId: subscriber.SubscriberId.String(),
@@ -339,6 +337,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	}
 
 	subscriber := &db.Subscriber{
+		Name:				   req.GetName(),
 		Email:                 req.GetEmail(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Address:               req.GetAddress(),
@@ -452,8 +451,7 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*upb.Sim {
 func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subscriber {
 
 	return &upb.Subscriber{
-		FirstName:             s.FirstName,
-		LastName:              s.LastName,
+		Name:                  s.Name,
 		Email:                 s.Email,
 		SubscriberId:          s.SubscriberId.String(),
 		ProofOfIdentification: s.ProofOfIdentification,

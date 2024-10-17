@@ -18,6 +18,8 @@ import {
   SimsAPIResDto,
   SimsAlloAPIResDto,
   SimsResDto,
+  SubscriberToSimsDto,
+  SubscriberToSimsResDto,
 } from "../resolver/types";
 
 export const dtoToAllocateSimResDto = (
@@ -148,6 +150,32 @@ export const dtoToSimDetailsDto = (response: any): SimDetailsDto => {
     activationsCount,
     deactivationsCount,
     allocatedAt: allocatedAt?.toDate(),
+  };
+};
+
+export const mapSubscriberToSimsResDto = (
+  resDto: SubscriberToSimsResDto
+): SubscriberToSimsDto => {
+  return {
+    subscriberId: resDto.subscriber_id,
+    sims: resDto.sims.map(sim => ({
+      id: sim.id,
+      subscriberId: sim.subscriber_id,
+      networkId: sim.network_id,
+      iccid: sim.iccid,
+      msisdn: sim.msisdn,
+      imsi: sim.imsi,
+      type: sim.type,
+      status: sim.status,
+      isPhysical: sim.is_physical,
+      trafficPolicy: sim.traffic_policy,
+      firstActivatedOn: sim.firstActivatedOn,
+      lastActivatedOn: sim.lastActivatedOn,
+      activationsCount: sim.activationsCount,
+      deactivationsCount: sim.deactivationsCount,
+      allocatedAt: sim.allocated_at,
+      syncStatus: sim.sync_status,
+    })),
   };
 };
 

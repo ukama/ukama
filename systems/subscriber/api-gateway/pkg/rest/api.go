@@ -53,8 +53,7 @@ type Package struct {
 
 type Subscriber struct {
 	SubscriberId          string `json:"subscriber_id" validate:"required"`
-	FirstName             string `json:"first_name" validate:"required"`
-	LastName              string `json:"last_name" validate:"required"`
+	Name                  string `json:"name" validate:"required"`
 	Email                 string `json:"email" validate:"email,required"`
 	Phone                 string `json:"phone" validate:"required"`
 	Dob                   string `json:"dob" validate:"required"`
@@ -90,8 +89,7 @@ type SimPoolAddSimReq struct {
 }
 
 type SubscriberAddReq struct {
-	FirstName             string `example:"John" json:"first_name" validate:"required"`
-	LastName              string `example:"Doe" json:"last_name" validate:"required"`
+	Name                  string `example:"John" json:"name" validate:"required"`
 	Email                 string `example:"john@example.com" json:"email" validate:"required"`
 	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id"`
 	Gender                string `example:"male" json:"gender"`
@@ -120,6 +118,7 @@ type SubscriberByNetworkReq struct {
 
 type SubscriberUpdateReq struct {
 	SubscriberId          string `example:"{{SubscriberUUID}}" path:"subscriber_id" validate:"required"`
+	Name                  string `example:"John" json:"name" validate:"required"`
 	Email                 string `example:"test@example.com" json:"email"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`

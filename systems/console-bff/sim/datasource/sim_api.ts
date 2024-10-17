@@ -42,6 +42,7 @@ import {
   dtoToSimDetailsDto,
   dtoToSimResDto,
   dtoToSimsDto,
+  mapSubscriberToSimsResDto,
 } from "./mapper";
 
 const VERSION = "v1";
@@ -170,11 +171,7 @@ class SimApi extends RESTDataSource {
     req: DeleteSimInputDto
   ): Promise<DeleteSimResDto> => {
     this.baseURL = baseURL;
-    return this.put(``, {
-      body: {
-        simId: req.simId,
-      },
-    }).then(res => res);
+    return this.delete(`/${VERSION}/${SIM}/${req.simId}`).then(res => res);
   };
 
   addPackageToSim = async (
@@ -227,7 +224,9 @@ class SimApi extends RESTDataSource {
       `GetSimsBySubscriberId [GET]: ${baseURL}/${VERSION}/sim/subscriber/${req.subscriberId}`
     );
     this.baseURL = baseURL;
-    return this.get(`/sim/subscriber/${req.subscriberId}`).then(res => res);
+    return this.get(`/${VERSION}/sim/subscriber/${req.subscriberId}`).then(
+      res => mapSubscriberToSimsResDto(res)
+    );
   };
 
   getSimPoolStats = async (

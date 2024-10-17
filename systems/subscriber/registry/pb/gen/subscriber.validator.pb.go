@@ -110,17 +110,11 @@ var _regex_AddSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@
 var _regex_AddSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
 func (this *AddSubscriberRequest) Validate() error {
-	if this.FirstName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must not be an empty string`, this.FirstName))
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
-	if !(len(this.FirstName) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("FirstName", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.FirstName))
-	}
-	if this.LastName == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("LastName", fmt.Errorf(`value '%v' must not be an empty string`, this.LastName))
-	}
-	if !(len(this.LastName) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("LastName", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.LastName))
+	if !(len(this.Name) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Name))
 	}
 	if !_regex_AddSubscriberRequest_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
@@ -150,6 +144,12 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	}
 	if !_regex_UpdateSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
+	}
+	if this.Name == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
+	}
+	if !(len(this.Name) > 1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Name))
 	}
 	return nil
 }
