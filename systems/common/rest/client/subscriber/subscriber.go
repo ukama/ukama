@@ -30,7 +30,7 @@ type SubscriberInfo struct {
 	Email                 string    `json:"email,omitempty"`
 	PhoneNumber           string    `json:"phone_number,omitempty"`
 	Address               string    `json:"address,omitempty"`
-	Dob                   string    `json:"date_of_birth,omitempty"`
+	Dob                   string    `json:"dob,omitempty"`
 	ProofOfIdentification string    `json:"proof_of_identification,omitempty"`
 	IdSerial              string    `json:"id_serial,omitempty"`
 	CreatedAt             time.Time `json:"created_at,omitempty"`
@@ -47,7 +47,7 @@ type AddSubscriberRequest struct {
 	Email                 string `json:"email,omitempty"`
 	PhoneNumber           string `json:"phone_number,omitempty"`
 	Address               string `json:"address,omitempty"`
-	Dob                   string `json:"date_of_birth,omitempty"`
+	Dob                   string `json:"dob,omitempty"`
 	ProofOfIdentification string `json:"proof_of_identification,omitempty"`
 	IdSerial              string `json:"id_serial,omitempty"`
 }
