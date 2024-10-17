@@ -12,6 +12,7 @@ import (
 	"fmt"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/oleiade/reflections"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -34,9 +35,21 @@ func NewSubscriberCreate(data string) (*anypb.Any, error) {
 	}
 
 	if data != "" {
-		err := updateMessageFields(data)
+		data, err := getData(data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to upddate event message: %w", err)
+			return nil, fmt.Errorf("failed to get data from event message: %w", err)
+		}
+
+		for k, v := range data {
+			_, err := reflections.GetField(subs, k)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get field info from event message: %w", err)
+			}
+
+			err = reflections.SetField(subs, k, v)
+			if err != nil {
+				return nil, fmt.Errorf("failed to update field info from event message: %w", err)
+			}
 		}
 	}
 

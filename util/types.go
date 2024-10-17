@@ -23,6 +23,15 @@ type Config struct {
 	OutputFormat string
 }
 
+type PushConfig struct {
+	ClusterURL   string
+	ClusterUsr   string
+	ClusterPswd  string
+	Vhost        string
+	Exchange     string
+	OutputFormat string
+}
+
 type EnumParam struct {
 	Value  string
 	Values []string

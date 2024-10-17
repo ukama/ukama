@@ -17,18 +17,18 @@ import (
 )
 
 const (
-	baseRoute = "event.cloud.local.%s"
+	baseRoute = "event.cloud.%s.%s"
 )
 
-func prepareEvent(org, route, data string) (string, *anypb.Any, error) {
+func prepareEvent(org, scope, route, msg string) (string, *anypb.Any, error) {
 	payloadRetrieveFunc, ok := messages.RoutingMap[route]
 	if !ok {
 		return "", nil,
 			fmt.Errorf("failed to load event message type: given route %q is not supported", route)
 	}
 
-	r := fmt.Sprintf(strings.Join([]string{baseRoute, route}, "."), org)
-	pbPaylod, err := payloadRetrieveFunc(data)
+	r := fmt.Sprintf(strings.Join([]string{baseRoute, route}, "."), scope, org)
+	pbPaylod, err := payloadRetrieveFunc(msg)
 
 	return r, pbPaylod, err
 }

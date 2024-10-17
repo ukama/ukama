@@ -9,9 +9,14 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	homedir "github.com/mitchellh/go-homedir"
 
 	"github.com/ukama/msgcli/cmd/version"
 )
@@ -30,6 +35,8 @@ a running MsgClient instance targeting a specific Ukama service.`,
 	Version: version.Version,
 }
 
+var cfgFile string = ""
+
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -38,9 +45,36 @@ func Execute() {
 }
 
 func init() {
-	// cobra.OnInitialize(InitConfig)
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.msgcli.yaml)")
+	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVar(&cfgFile,
+		"config", "", "config file (default is $HOME/.msgcli.yaml)")
+
+	replacer := strings.NewReplacer("-", "_")
+
+	viper.SetEnvKeyReplacer(replacer)
+	viper.SetEnvPrefix("MSGCLI")
 
 	versionTemplate := `{{printf "%s: %s - version: %s\n" .Name .Short .Version}}`
 	rootCmd.SetVersionTemplate(versionTemplate)
+}
+
+func initConfig() {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		home, err := homedir.Dir()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".msgcli")
+	}
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file", viper.ConfigFileUsed())
+	}
 }

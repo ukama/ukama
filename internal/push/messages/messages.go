@@ -19,16 +19,13 @@ var RoutingMap = map[string]func(string) (*anypb.Any, error){
 	"subscriber.registry.subscriber.create": NewSubscriberCreate,
 }
 
-func updateMessageFields(data string) error {
-	// fmt.Printf("raw payload: %s\n", data)
+func getData(msg string) (map[string]any, error) {
 	m := make(map[string]any)
 
-	err := json.Unmarshal([]byte(data), &m)
+	err := json.Unmarshal([]byte(msg), &m)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal provided payload %q. Error: %w", data, err)
+		return nil, fmt.Errorf("failed to unmarshal provided payload %q. Error: %w", msg, err)
 	}
 
-	// fmt.Printf("map payload: %v\n", m)
-
-	return nil
+	return m, nil
 }
