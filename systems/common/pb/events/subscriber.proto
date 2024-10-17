@@ -20,7 +20,7 @@
     string email  = 4;
     string phoneNumber  = 5 [json_name = "phone_number"];
     string createdAt = 6;
-    string dob = 7 [json_name = "date_of_birth"];
+    string dob = 7 [json_name = "dob"];
     string gender = 8;
     string address = 9;
 }
