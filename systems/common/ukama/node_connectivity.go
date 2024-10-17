@@ -17,10 +17,11 @@ import (
 type NodeConnectivity uint8
 
 const (
-	Unknown NodeConnectivity = iota
+	Undefined NodeConnectivity = iota
 	Online
 	Offline
 )
+
 
 func (s *NodeConnectivity) Scan(value interface{}) error {
 	*s = NodeConnectivity(uint8(value.(int64)))

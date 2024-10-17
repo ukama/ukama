@@ -85,8 +85,8 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		Id: nId.StringLowercase(),
 		Status: db.NodeStatus{
 			NodeId:       nId.StringLowercase(),
-			Connectivity: ukama.Unknown,
-			State:        ukama.Undefined,
+			Connectivity: ukama.Undefined,
+			State:        ukama.Unknown,
 		},
 		Type: nId.GetNodeType(),
 		Name: req.Name,
