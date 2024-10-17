@@ -11,14 +11,15 @@ import (
 )
 
 type Event struct {
-	Name       string    `json:"name"`
-	Timestamp  time.Time `json:"timestamp"`
-	InstanceID string    `json:"instance_id"`
-	OldState   string    `json:"old_state"`
-	NewState   string    `json:"new_state"`
-	IsSubstate bool      `json:"is_substate"`
+	Name        string    `json:"name"`
+	Timestamp   time.Time `json:"timestamp"`
+	InstanceID  string    `json:"instance_id"`
+	OldState    string    `json:"old_state"`
+	NewState    string    `json:"new_state"`
+	OldSubstate string    `json:"old_substate"`
+	NewSubstate string    `json:"new_substate"`
+	IsSubstate  bool      `json:"is_substate"`
 }
-
 type TransitionCallback func(event Event)
 
 type Transition struct {
@@ -155,6 +156,7 @@ func (instance *StateMachineInstance) Transition(eventName string) error {
 	defer instance.StateMachine.mu.Unlock()
 
 	oldState := instance.CurrentState
+	oldSubstate := instance.CurrentSubstate
 	currentState, exists := instance.Config.States[instance.CurrentState]
 
 	if !exists {
@@ -172,12 +174,14 @@ func (instance *StateMachineInstance) Transition(eventName string) error {
 	if transition, exists := currentState.Transitions[eventName]; exists {
 		instance.CurrentState = transition.ToState
 		event := Event{
-			Name:       eventName,
-			Timestamp:  time.Now(),
-			OldState:   oldState,
-			NewState:   instance.CurrentState,
-			IsSubstate: false,
-			InstanceID: instance.InstanceID,
+			Name:        eventName,
+			Timestamp:   time.Now(),
+			OldState:    oldState,
+			NewState:    instance.CurrentState,
+			OldSubstate: oldSubstate,
+			NewSubstate: instance.CurrentSubstate,
+			IsSubstate:  false,
+			InstanceID:  instance.InstanceID,
 		}
 
 		if instance.StateMachine.handler != nil {
@@ -193,12 +197,14 @@ func (instance *StateMachineInstance) Transition(eventName string) error {
 		if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
 			instance.CurrentSubstate = subTransition.ToState
 			event := Event{
-				Name:       eventName,
-				Timestamp:  time.Now(),
-				OldState:   oldState,
-				NewState:   instance.CurrentSubstate,
-				IsSubstate: true,
-				InstanceID: instance.InstanceID,
+				Name:        eventName,
+				Timestamp:   time.Now(),
+				OldState:    oldState,
+				NewState:    instance.CurrentState,
+				OldSubstate: oldSubstate,
+				NewSubstate: instance.CurrentSubstate,
+				IsSubstate:  true,
+				InstanceID:  instance.InstanceID,
 			}
 
 			if instance.StateMachine.handler != nil {

@@ -59,7 +59,6 @@ func initConfig() {
 	pkg.IsDebugMode = svcConf.DebugMode
 }
 
-
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
@@ -82,7 +81,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	Server := server.NewStateServer(svcConf.OrgName, svcConf.OrgId, db.NewStateRepo(gormdb),
 		mbClient)
-   stateEventServer := server.NewStateEventServer(svcConf.OrgName, svcConf.OrgId,Server,svcConf.ConfigPath)
+	stateEventServer := server.NewStateEventServer(svcConf.OrgName, svcConf.OrgId, Server, svcConf.ConfigPath, mbClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterStateServiceServer(s, Server)
@@ -95,7 +94,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	waitForExit()
 }
-
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 

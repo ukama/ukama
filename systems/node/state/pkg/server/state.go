@@ -68,7 +68,7 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 	newNodeState := &db.State{
 		Id:           uuid.NewV4(),
 		NodeId:       nId.String(),
-		CurrentState: ukama.ParseNodeState(req.CurrentState),
+		CurrentState: req.CurrentState,
 		SubState:     req.SubState,
 		Events:       events,
 		NodeType:     req.GetNodeType(),
@@ -86,21 +86,6 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 	err = s.sRepo.AddState(newNodeState, currentState)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to add node state: %v", err)
-	}
-	if s.msgbus != nil {
-		route := s.StateRoutingKey.SetAction("add").SetObject("state").MustBuild()
-		evt := &pb.AddStateRequest{
-			NodeId:       newNodeState.NodeId,
-			CurrentState: newNodeState.CurrentState.String(),
-			SubState:     newNodeState.SubState,
-			Events:       newNodeState.Events,
-		}
-
-		err = s.msgbus.PublishRequest(route, evt)
-		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
-				evt, route, err.Error())
-		}
 	}
 
 	return &pb.AddStateResponse{
@@ -133,7 +118,7 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		NodeStateRes := &pb.State{
 			Id:           nodeState.Id.String(),
 			NodeId:       nodeState.NodeId,
-			CurrentState: nodeState.CurrentState.String(),
+			CurrentState: nodeState.CurrentState,
 			SubState:     nodeState.SubState,
 			Events:       nodeState.Events,
 			CreatedAt:    timestamppb.New(nodeState.CreatedAt),
@@ -201,7 +186,7 @@ func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestState
 	stateRes := &pb.State{
 		Id:           latestState.Id.String(),
 		NodeId:       latestState.NodeId,
-		CurrentState: latestState.CurrentState.String(),
+		CurrentState: latestState.CurrentState,
 		SubState:     latestState.SubState,
 		Events:       latestState.Events,
 		CreatedAt:    timestamppb.New(latestState.CreatedAt),
