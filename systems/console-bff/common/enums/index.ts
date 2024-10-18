@@ -123,6 +123,15 @@ registerEnumType(ROLE_TYPE, {
   name: "ROLE_TYPE",
 });
 
+export enum SIM_STATUS {
+  ALL = "ALL",
+  ASSIGNED = "ASSIGNED",
+  UNASSIGNED = "UNASSIGNED",
+}
+registerEnumType(SIM_STATUS, {
+  name: "SIM_STATUS",
+});
+
 export enum NOTIFICATION_TYPE {
   NOTIF_INVALID = "NOTIF_INVALID",
   NOTIF_INFO = "NOTIF_INFO",

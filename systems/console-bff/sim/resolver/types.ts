@@ -7,7 +7,7 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { SIM_TYPES } from "../../common/enums";
+import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 
 @InputType()
 export class AllocateSimInputDto {
@@ -327,7 +327,7 @@ export class SimAPIDto {
   id: string;
 
   @Field()
-  is_allocated: string;
+  is_allocated: boolean;
 
   @Field()
   is_physical: string;
@@ -367,7 +367,7 @@ export class SimDto {
   id: string;
 
   @Field()
-  isAllocated: string;
+  isAllocated: boolean;
 
   @Field()
   isPhysical: string;
@@ -457,4 +457,19 @@ export class UploadSimsInputDto {
 
   @Field(() => SIM_TYPES)
   simType: SIM_TYPES;
+}
+
+@InputType()
+export class GetSimsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
+
+  @Field(() => SIM_STATUS)
+  status: SIM_STATUS;
+}
+
+@InputType()
+export class GetSimPoolStatsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
 }

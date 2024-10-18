@@ -96,13 +96,13 @@ log:
 
 secrets:
   cookie:
-    - ukama_subscriber_session
+    - subscriber_session
   cipher:
     - 32-LONG-SECRET-NOT-SECURE-AT-ALL
 session:
   lifespan: 24h
   cookie:
-    name: ukama_subscriber_session
+    name: subscriber_session
     path: "/"
     domain: "localhost"
 

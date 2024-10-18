@@ -10,8 +10,6 @@ package rest
 
 import (
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SimInfo struct {
@@ -71,6 +69,10 @@ type SimByIccidReq struct {
 }
 
 type SimPoolTypeReq struct {
+	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
+}
+
+type SimPoolStatReq struct {
 	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
 }
 
@@ -159,9 +161,9 @@ type GetSimsBySubReq struct {
 	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 type AddPkgToSimReq struct {
-	SimId     string                 `example:"{{SimUUID}}" json:"sim_id" validate:"required"`
-	PackageId string                 `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
-	StartDate *timestamppb.Timestamp `example:"" json:"start_date" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" validate:"required"`
+	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
+	StartDate string `example:"" json:"start_date" validate:"required"`
 }
 
 type RemovePkgFromSimReq struct {
