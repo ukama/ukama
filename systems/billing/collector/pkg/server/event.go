@@ -294,7 +294,7 @@ func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *CollectorEv
 		Code:           b.bMetric.Code,
 		SentAt:         time.Now(),
 
-		AdditionalProperties: map[string]string{
+		AdditionalProperties: map[string]any{
 			"bytes_used": fmt.Sprint(simUsage.BytesUsed),
 			"sim_id":     simUsage.SimId,
 		},
@@ -383,6 +383,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
+		Type:    client.IndividualCustomerType,
 	}
 
 	log.Infof("Sending subscriber create event %v to billing server", customer)
@@ -710,6 +711,7 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 	customer := client.Customer{
 		Id:   orgId,
 		Name: OrgName,
+		Type: client.CompanyCustomerType,
 
 		// TODO: we might need additional fields such as Email, Address, Phone.
 	}

@@ -42,15 +42,16 @@ func NewLagoClientFromClients(b LagoBillableMetric, c LagoCustomer,
 
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	eventInput := &lago.EventInput{
-		TransactionID:          ev.TransactionId,
-		ExternalCustomerID:     ev.CustomerId,
+		TransactionID: ev.TransactionId,
+		// ExternalCustomerID:     ev.CustomerId,
 		ExternalSubscriptionID: ev.SubscriptionId,
 		Code:                   ev.Code,
-		Timestamp:              ev.SentAt.Unix(),
+		Timestamp:              ev.SentAt.String(),
 		Properties:             ev.AdditionalProperties,
+		//PreciseTotalAmountCents:
 	}
 
-	err := l.e.Create(ctx, eventInput)
+	_, err := l.e.Create(ctx, eventInput)
 	if err != nil {
 		msg := "error while sending sim usage event"
 
@@ -174,12 +175,19 @@ func (l *lagoClient) GetCustomer(ctx context.Context, custId string) (string, er
 }
 
 func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string, error) {
+	var customerType lago.CustomerType = IndividualCustomerType
+
+	if cust.Type == CompanyCustomerType {
+		customerType = lago.CompanyCustomerType
+	}
+
 	newCust := &lago.CustomerInput{
 		ExternalID:   cust.Id,
 		Name:         cust.Name,
 		Email:        cust.Email,
 		AddressLine1: cust.Address,
 		Phone:        cust.Phone,
+		CustomerType: customerType,
 	}
 
 	customer, err := l.c.Create(ctx, newCust)
@@ -230,6 +238,8 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 		ExternalCustomerID: sub.CustomerId,
 		PlanCode:           sub.PlanCode,
 		SubscriptionAt:     sub.SubscriptionAt,
+		// EndingAt
+		// Name
 	}
 
 	subscription, err := l.s.Create(ctx, newSub)
@@ -242,11 +252,16 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 	return subscription.LagoID.String(), nil
 }
 
-func (l *lagoClient) TerminateSubscription(ctx context.Context, subscritionId string) (string, error) {
-	subscription, err := l.s.Terminate(ctx, subscritionId)
+func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId string) (string, error) {
+	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
+		ExternalID: subscriptionId,
+		// Status     string `json:"status,omitempty"`,
+	}
+
+	subscription, err := l.s.Terminate(ctx, subscriptionTerminateInput)
 	if err != nil {
 		msg := fmt.Sprintf("error while sending subscription termination event with Id (%s)",
-			subscritionId)
+			subscriptionTerminateInput.ExternalID)
 
 		return "", unpackLagoError(msg, err)
 	}
@@ -267,7 +282,7 @@ type LagoCustomer interface {
 }
 
 type LagoEvent interface {
-	Create(context.Context, *lago.EventInput) *lago.Error
+	Create(context.Context, *lago.EventInput) (*lago.Event, *lago.Error)
 }
 
 type LagoPlan interface {
@@ -278,17 +293,16 @@ type LagoPlan interface {
 
 type LagoSubscription interface {
 	Create(context.Context, *lago.SubscriptionInput) (*lago.Subscription, *lago.Error)
-	Terminate(context.Context, string) (*lago.Subscription, *lago.Error)
+	Terminate(context.Context, lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error)
 }
 
 func unpackLagoError(msg string, err *lago.Error) error {
 	cltError := &Error{
 		Code: err.HTTPStatusCode,
-		Msg:  err.Msg,
+		Msg:  err.Message,
 		Err:  err.Err,
 	}
 
 	return fmt.Errorf(msg+": %s. code: %d. %w",
-		err.Msg, err.HTTPStatusCode, cltError)
-
+		err.Message, err.HTTPStatusCode, cltError)
 }
