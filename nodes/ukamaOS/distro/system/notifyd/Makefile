@@ -8,7 +8,12 @@ include ../../../config.mk
 
 TARGET_EXEC = notify.d
 
-UKAMAOS_ROOT = ../../../
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGET_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG = $(APP_CONFIG_DIR)/$(APP_NAME)/status.map
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -78,8 +83,16 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+$(VERSION_FILE):
+	$(NODES_DIR)/builder/scripts/generate_version.sh
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES) version.h
+
+install: $(ARTIFACTS) $(VERSION_FILE)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+    	cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi

@@ -8,7 +8,12 @@ include ../../../config.mk
 
 TARGET_EXEC = rlog.d
 
-UKAMAOS_ROOT = ../../../
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGET_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG =
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -45,10 +50,11 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed
-CURL_LIB=-lcurl -lssl -lcrypto
+CURL_LIB=-lcurl -lssl -lcrypto -lgnutls 
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
-LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS =$(ULFIUS_LIB)
+LIBS+=$(CURL_LIB)
 LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lpthread
@@ -81,8 +87,16 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+$(VERSION_FILE):
+	$(NODES_DIR)/builder/scripts/generate_version.sh
+
+install: $(ARTIFACTS) $(VERSION)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+    	cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

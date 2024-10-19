@@ -14,7 +14,7 @@
 # Build sysctl
 # Copy all lib dependencies
 # create cpio arch
-
+ set -x
 # Base parameters
 UKAMA_OS=`realpath ../../.`
 UKAMA_REPO=`realpath ../../../../.`
@@ -26,6 +26,7 @@ APPS_BUILDER_ROOT=${UKAMA_REPO}/nodes/builder
 BB_ROOT=${VENDOR_ROOT}/busybox
 STARTERD_ROOT=${SYS_ROOT}/starterd
 DHCPCD_SRC_ROOT=${VENDOR_ROOT}/dhcpcd
+COMPILER_PATH=/usr/bin
 
 # Build config parameters
 BB_CONFIG=ukama_minimal_defconfig
@@ -130,7 +131,7 @@ build_ip_utils() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XGCC_PATH=${COMPILER_PATH}/
 	    XTARGET=${TARGET}
     else
 	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
@@ -163,14 +164,34 @@ build_dhcpcd() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-        XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+        XGCC_PATH=${COMPILER_PATH}
     else
         XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
 
     # build and copy init micros
     cd ${DHCPCD_SRC_ROOT}
-    make XGCCPATH=${XGCC_PATH} ROOTFSPATH=${ROOTFS}
+    make TARGET=${TARGET} XGCCPATH=${XGCC_PATH} ROOTFSPATH=${ROOTFS}
+    cd ${CWD}
+
+    log_info "dhcpcd successfully build"
+}
+
+
+build_dhcp() {
+    CWD=`pwd`
+    
+    # setup proper compiler option
+    if [ "${TARGET}" != "local" ]
+    then
+        XGCC_PATH=${COMPILER_PATH}
+    else
+        XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+    fi
+
+    # build dhcp
+    cd ${VENDOR_ROOT}
+    make TARGET=${TARGET} dhcp 
     cd ${CWD}
 
     log_info "dhcpcd successfully build"
@@ -185,13 +206,13 @@ build_starterd() {
    # setup proper compiler option
    if [ "${TARGET}" != "local" ]
    then
-       XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+       XGCC_PATH=${COMPILER_PATH}
    else
        XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
    fi
 
    cd ${STARTERD_ROOT}
-   make clean; make XGCCPATH=${XGCC_PATH}/
+   make clean; make TARGET=${TARGET} XGCCPATH=${XGCC_PATH}/
    copy_file ${STARTERD_ROOT}/starter.d ${ROOTFS}/sbin
 
    # copy manifest file
@@ -213,7 +234,7 @@ build_busybox() {
     cd ${BB_ROOT}
 
     # set the config file for BB build
-    BB_CONFIG=ukama_minimal_defconfig
+    BB_CONFIG=defconfig
     #Execute make and copy conent of _ukamafs to rootfs
 
     mkdir -p ${BB_ROOTFS}
@@ -221,12 +242,12 @@ build_busybox() {
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
     then
-	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	    XGCC_PATH=${COMPILER_PATH}
     else
 	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
 
-    make XGCCPATH=${XGCC_PATH}/ BBCONFIG=${BB_CONFIG} \
+    make TARGET=${TARGET} XGCCPATH=${XGCC_PATH}/ BBCONFIG=${BB_CONFIG} \
 	     ROOTFSPATH=${BB_ROOTFS}
 
     if [ $? -ne 0 ]
@@ -259,41 +280,39 @@ build_apps() {
     CWD=`pwd`
 
     cd ${APPS_BUILDER_ROOT}
-    if [ "${TARGET}" != "local" ]
-    then
-	    XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
-    else
-	    XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
-    fi
-    make XGCCPATH=${XGCC_PATH}/
 
-    if [ -d ${APPS_BUILDER_ROOT}/pkgs/ ]
-    then
-	    rm -rf ${APPS_BUILDER_ROOT}/pkgs/
-    fi
+    # make TARGET=${TARGET} XGCCPATH=${XGCCPATH}/
 
-    # Compiler the builder
-    make clean; make XGCCPATH=${XGCC_PATH}/
+    # if [ -d ${APPS_BUILDER_ROOT}/pkgs/ ]
+    # then
+	#     rm -rf ${APPS_BUILDER_ROOT}/pkgs/
+    # fi
 
-    # for each apps in systems, build the pkg
-    for app in "${SYS_ROOT}"/*; do
+    # Compile the builder
+    make clean; make
+
+    # for each apps in systems
+    apps=("bootstrap" "configd" "deviced" "lookoutd" "meshd" "metricsd" "noded" "notifyd" "rlog" "started" "wimcd") 
+    for app in ${apps[@]}; do
         basename=$(basename "$app")
-        ./builder --create --config ./configs/${basename}.toml
+        #./builder --create --config ./configs/${basename}.toml
+        make -C ${SYS_ROOT}/${basename} install TARGET=${TARGET} INSTALL_DIR=${ROOTFS} 
     done
 
     # create apps dir onto rootfs
-    DIRS="${ROOTFS}/ukama/apps/pkgs"
-    DIRS="${ROOTFS}/ukama/apps/registry ${DIRS}"
-    DIRS="${ROOTFS}/ukama/apps/rootfs   ${DIRS}"
-    mkdir -p ${DIRS}
-
-    # copy pkgs to rootfs /capps/pkgs
-    cp ./pkgs/*.tar.gz ${ROOTFS}/ukama/apps/pkgs
-    cd ${CWD}
+    #DIRS="${ROOTFS}/ukama/apps/pkgs"
+    #DIRS="${ROOTFS}/ukama/apps/registry ${DIRS}"
+    #DIRS="${ROOTFS}/ukama/apps/rootfs   ${DIRS}"
+    #mkdir -p ${DIRS}
 
     log_info "apps succesfully build"
 }
 
+copy_vendor_libs() {
+    cd ${VENDOR_ROOT}
+    cp -vrf ${VENDOR_ROOT}/build/* ${ROOTFS}
+    sync 
+}
 #
 # Build the usr directory structure
 #
@@ -524,7 +543,7 @@ fi
 if [ -d "${ROOTFS}" ]
 then
     log_error "Please remove existing copy of ${ROOTFS}"
-    exit
+    #exit
 fi
 
 mkdir -p ${ROOTFS}
@@ -535,34 +554,29 @@ build_rootfs_dirs
 
 log_info "Building busy box with Ukama minimal configuration"
 build_busybox
+sleep 2
 
-log_info "Building starter.d"
-build_starterd
-
-log_info "Building dhcpcd"
-build_dhcpcd
+log_info "Building dhcp"
+build_dhcp
+sleep 2
 
 log_info "Building ip utils"
-build_ip_utils
+#build_ip_utils
 
+sleep 2
 log_info "Building apps"
 build_apps
 
+sleep 2
 log_info "Setting up /etc contents under rootfs"
 setup_etc
 
+sleep 2 
 log_info "Setting up /dev"
 setup_device
 
-# Copy networking script.
-cp setup_space_network.sh ${ROOTFS}/sbin/
-
-log_info "Copying all lib for executables"
-EXEC="${ROOTFS}/bin/busybox"
-EXEC="${EXEC} ${ROOTFS}/sbin/starter.d"
-EXCE="${EXEC} ${ROOTFS}/sbin/iptables"
-EXEC="${EXEC} ${ROOTFS}/sbin/ip"
-copy_all_libs "${EXEC}"
+log_info "Copying vendor libs"
+copy_vendor_libs
 
 # Change ownership and create archieve
 log_info "Changing ownership, updating permission and creating cpio archive"

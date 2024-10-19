@@ -12,7 +12,14 @@ INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
 
-DISTRO_DIR:=../..
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGETBIN)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG = 
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
+
+DISTRO_DIR:=$(UKAMAOS_ROOT)/distro
 
 # Vendor
 VENDOR_DIR:=$(DISTRO_DIR)/vendor
@@ -155,10 +162,10 @@ $(info CFILES :: $(SVC_CFILES))
 $(info OBJFILES :: $(SVC_OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
+.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean version.h
 
 # Main target for building
-all: $(TARGETBIN) $(INVENTORY) $(SCHEMA)
+all: $(TARGETBIN) $(INVENTORY) $(SCHEMA) version.h 
 	@echo Done.
 
 # CLANG FORMAT
@@ -252,3 +259,14 @@ memcheck: $(UTEST)
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
+
+version.h:
+	$(NODES_DIR)/builder/scripts/generate_version.sh
+
+install: $(ARTIFACTS) version.h
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf build/$(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+    	cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi
