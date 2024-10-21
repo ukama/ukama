@@ -152,9 +152,9 @@ func (_m *StateRepo) GetStatesByNodeId(nodeId string) ([]db.State, error) {
 	return r0, r1
 }
 
-// UpdateState provides a mock function with given fields: nodeId, subStates
-func (_m *StateRepo) UpdateState(nodeId string, subStates []string) (*db.State, error) {
-	ret := _m.Called(nodeId, subStates)
+// UpdateState provides a mock function with given fields: nodeId, subStates, events
+func (_m *StateRepo) UpdateState(nodeId string, subStates []string, events []string) (*db.State, error) {
+	ret := _m.Called(nodeId, subStates, events)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateState")
@@ -162,19 +162,19 @@ func (_m *StateRepo) UpdateState(nodeId string, subStates []string) (*db.State, 
 
 	var r0 *db.State
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, []string) (*db.State, error)); ok {
-		return rf(nodeId, subStates)
+	if rf, ok := ret.Get(0).(func(string, []string, []string) (*db.State, error)); ok {
+		return rf(nodeId, subStates, events)
 	}
-	if rf, ok := ret.Get(0).(func(string, []string) *db.State); ok {
-		r0 = rf(nodeId, subStates)
+	if rf, ok := ret.Get(0).(func(string, []string, []string) *db.State); ok {
+		r0 = rf(nodeId, subStates, events)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.State)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, []string) error); ok {
-		r1 = rf(nodeId, subStates)
+	if rf, ok := ret.Get(1).(func(string, []string, []string) error); ok {
+		r1 = rf(nodeId, subStates, events)
 	} else {
 		r1 = ret.Error(1)
 	}
