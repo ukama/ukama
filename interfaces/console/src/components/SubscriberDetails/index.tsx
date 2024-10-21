@@ -69,10 +69,13 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const open = Boolean(anchorEl);
   const [name, setName] = useState(subscriberInfo?.name || '');
   const [selectedsTab, setSelectedsTab] = useState(0);
-  const [mobileNumber, setMobileNumber] = useState('');
+  const [mobileNumber, setMobileNumber] = useState(subscriberInfo?.phone || '');
   const [isEditingName, setIsEditingName] = useState(false);
   const [isEditingMobile, setIsEditingMobile] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [localSubscriberInfo, setLocalSubscriberInfo] =
+    useState<any>(subscriberInfo);
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -88,7 +91,14 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     },
     [subscriberInfo, handleCloseItem, handleDeleteSubscriber],
   );
-
+  useEffect(() => {
+    if (subscriberInfo) {
+      setLocalSubscriberInfo(subscriberInfo);
+      setName(subscriberInfo.name || '');
+      setMobileNumber(subscriberInfo.phone || '');
+      setHasChanges(false);
+    }
+  }, [subscriberInfo]);
   const handleSaveSubscriber = useCallback(() => {
     if (hasChanges) {
       const updates: { name?: string; phone?: string } = {};
@@ -147,7 +157,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     >
       <DialogTitle id="alert-dialog-title">
         <Stack direction="row" sx={{ ml: 1 }} justifyItems={'center'}>
-          <Typography variant="h6">{subscriberInfo?.name}</Typography>
+          <Typography variant="h6">{localSubscriberInfo?.name}</Typography>
           <IconButton onClick={handleClick}>
             <MoreVertIcon />
           </IconButton>
@@ -274,6 +284,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                       onChange={handleMobileChange}
                       variant="outlined"
                       fullWidth
+                      placeholder="+1 (xxx) xxx-xxxx"
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -289,8 +300,14 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                     />
                   ) : (
                     <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      <Typography variant="body1" sx={{ flexGrow: 1 }}>
-                        {mobileNumber}
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          flexGrow: 1,
+                          color: mobileNumber ? 'inherit' : 'text.secondary',
+                        }}
+                      >
+                        {mobileNumber || '+1 (xxx) xxx-xxxx'}
                       </Typography>
                       <IconButton
                         onClick={() => setIsEditingMobile(true)}

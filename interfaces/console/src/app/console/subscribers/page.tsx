@@ -167,7 +167,8 @@ const Page = () => {
     [getPackagesForSim],
   );
 
-  const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
+  const [getSubscriber, { data: subscriberInfo }] = useGetSubscriberLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (res) => {
       if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
         fetchPackagesForSim(res.getSubscriber.sim[0].id);
@@ -186,7 +187,12 @@ const Page = () => {
         },
       });
     },
-    [getSubscriber],
+    [
+      getSubscriber,
+      setIsSubscriberDetailsOpen,
+      setSelectedSubscriber,
+      setIsPackageActivationNeeded,
+    ],
   );
 
   const onTableMenuItem = async (id: string, type: string) => {
@@ -231,6 +237,7 @@ const Page = () => {
       });
     },
   });
+
   const {
     data,
     loading: getSubscriberByNetworkLoading,
@@ -240,7 +247,7 @@ const Page = () => {
     variables: {
       networkId: network.id,
     },
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getSubscribersByNetwork.subscribers.length > 0) {
         setSubscriber(() => ({
@@ -602,6 +609,11 @@ const Page = () => {
         data: updates,
       },
     });
+    getSubscriber({
+      variables: {
+        subscriberId: subscriberId,
+      },
+    });
     refetchSubscribers();
   };
 
@@ -773,7 +785,7 @@ const Page = () => {
         ishowSubscriberDetails={isSubscriberDetailsOpen}
         handleClose={handleCloseSubscriberDetails}
         subscriberId={selectedSubscriber}
-        subscriberInfo={subcriberInfo?.getSubscriber}
+        subscriberInfo={subscriberInfo?.getSubscriber}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
         loading={updateSubscriberLoading ?? deleteSimLoading}
