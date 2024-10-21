@@ -99,3 +99,29 @@ func NewSubscriberDelete(data string) (protoreflect.ProtoMessage, error) {
 
 	return removeSub, nil
 }
+
+func NewSimAllocate(data string) (protoreflect.ProtoMessage, error) {
+	sim := &epb.EventSimAllocation{
+		Id:           gofakeit.UUID(),
+		SubscriberId: gofakeit.UUID(),
+		NetworkId:    gofakeit.UUID(),
+		OrgId:        gofakeit.UUID(),
+		DataPlanId:   gofakeit.UUID(),
+		Iccid:        gofakeit.SSN(),
+		Msisdn:       gofakeit.Phone(),
+		Imsi:         gofakeit.SSN(),
+		Type:         gofakeit.RandomString([]string{"test", "operator_data", "ukama_data"}),
+		Status:       gofakeit.RandomString([]string{"active", "inactive", "terminated"}),
+		IsPhysical:   gofakeit.Bool(),
+		PackageId:    gofakeit.UUID(),
+	}
+
+	if data != "" {
+		err := updateProto(sim, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	return sim, nil
+}
