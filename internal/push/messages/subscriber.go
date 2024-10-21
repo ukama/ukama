@@ -12,15 +12,14 @@ import (
 	"fmt"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/oleiade/reflections"
-	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
-func NewSubscriberCreate(data string) (*anypb.Any, error) {
-	subs := &upb.Subscriber{
+func NewSubscriberCreate(data string) (protoreflect.ProtoMessage, error) {
+	subscriber := &upb.Subscriber{
 		SubscriberId:          gofakeit.UUID(),
 		FirstName:             gofakeit.FirstName(),
 		LastName:              gofakeit.LastName(),
@@ -35,32 +34,68 @@ func NewSubscriberCreate(data string) (*anypb.Any, error) {
 	}
 
 	if data != "" {
-		data, err := getData(data)
+		err := updateProto(subscriber, data)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get data from event message: %w", err)
-		}
-
-		for k, v := range data {
-			_, err := reflections.GetField(subs, k)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get field info from event message: %w", err)
-			}
-
-			err = reflections.SetField(subs, k, v)
-			if err != nil {
-				return nil, fmt.Errorf("failed to update field info from event message: %w", err)
-			}
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
 		}
 	}
 
-	subscriber := epb.AddSubscriber{
-		Subscriber: subs,
+	createSub := &epb.AddSubscriber{
+		Subscriber: subscriber,
 	}
 
-	anyE, err := anypb.New(&subscriber)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshall event message as proto: %w", err)
+	return createSub, nil
+}
+
+func NewSubscriberUpdate(data string) (protoreflect.ProtoMessage, error) {
+	subscriber := &upb.Subscriber{
+		SubscriberId:          gofakeit.UUID(),
+		Email:                 gofakeit.Email(),
+		PhoneNumber:           gofakeit.Phone(),
+		Address:               gofakeit.Address().Address,
+		ProofOfIdentification: "passport",
+		IdSerial:              gofakeit.SSN(),
 	}
 
-	return anyE, nil
+	if data != "" {
+		err := updateProto(subscriber, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	updateSub := epb.UpdateSubscriber{
+		Subscriber: subscriber,
+	}
+
+	return &updateSub, nil
+}
+
+func NewSubscriberDelete(data string) (protoreflect.ProtoMessage, error) {
+	subscriber := &upb.Subscriber{
+		SubscriberId:          gofakeit.UUID(),
+		FirstName:             gofakeit.FirstName(),
+		LastName:              gofakeit.LastName(),
+		Email:                 gofakeit.Email(),
+		Address:               gofakeit.Address().Address,
+		PhoneNumber:           gofakeit.Phone(),
+		Gender:                gofakeit.Gender(),
+		Dob:                   gofakeit.Date().String(),
+		NetworkId:             gofakeit.UUID(),
+		ProofOfIdentification: "passport",
+		IdSerial:              gofakeit.SSN(),
+	}
+
+	if data != "" {
+		err := updateProto(subscriber, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	removeSub := &epb.RemoveSubscriber{
+		Subscriber: subscriber,
+	}
+
+	return removeSub, nil
 }

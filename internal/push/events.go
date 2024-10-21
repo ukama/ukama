@@ -28,7 +28,7 @@ func prepareEvent(org, scope, route, msg string) (string, *anypb.Any, error) {
 	}
 
 	r := fmt.Sprintf(strings.Join([]string{baseRoute, route}, "."), scope, org)
-	pbPaylod, err := payloadRetrieveFunc(msg)
+	pbPaylod, err := messages.WrapProto(payloadRetrieveFunc, msg)
 
 	return r, pbPaylod, err
 }
