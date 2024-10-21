@@ -1,0 +1,7 @@
+# COM board - used in tower node
+
+INIT_APP:         no
+BUSYBOX_INIT_APP: yes
+EPC_APP:          yes
+GPS_APP:          yes
+PCRF_APP:         yes
