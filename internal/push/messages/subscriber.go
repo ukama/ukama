@@ -125,3 +125,24 @@ func NewSimAllocate(data string) (protoreflect.ProtoMessage, error) {
 
 	return sim, nil
 }
+
+func NewSetActivePackageForSim(data string) (protoreflect.ProtoMessage, error) {
+	sim := &epb.EventSimActivePackage{
+		Id:           gofakeit.UUID(),
+		SubscriberId: gofakeit.UUID(),
+		NetworkId:    gofakeit.UUID(),
+		PlanId:       gofakeit.UUID(),
+		Iccid:        gofakeit.SSN(),
+		Imsi:         gofakeit.SSN(),
+		PackageId:    gofakeit.UUID(),
+	}
+
+	if data != "" {
+		err := updateProto(sim, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	return sim, nil
+}
