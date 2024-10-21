@@ -322,21 +322,10 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 
 	switch pkgType {
 	case ukama.PackageTypePostpaid:
-		if pkg.Flatrate {
-			return fmt.Errorf("unconsistant data: package type (%s) mismatches flat rate attribute (%t).",
-				pkg.Type, pkg.Flatrate)
-		}
-
 		pkgIntervall = postpaidBillingInterval
-		// amount := strconv.Itoa(int(pkg.DataUnitCost))
 		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', -1, 64)
 
 	case ukama.PackageTypePrepaid:
-		if !pkg.Flatrate {
-			return fmt.Errorf("unconsistant data: package type (%s) mismatches flat rate attribute (%t).",
-				pkg.Type, pkg.Flatrate)
-		}
-
 		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
 		amount = strconv.FormatFloat(dataUnitCost, 'f', -1, 64)
 	}
