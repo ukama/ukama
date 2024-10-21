@@ -23,6 +23,7 @@ func NewPackageCreate(data string) (protoreflect.ProtoMessage, error) {
 		OrgId:           gofakeit.UUID(),
 		OwnerId:         gofakeit.UUID(),
 		Type:            gofakeit.RandomString([]string{"postpaid", "prepaid"}),
+		Flatrate:        gofakeit.Bool(),
 		Amount:          gofakeit.Float64(),
 		From:            gofakeit.Date().String(),
 		To:              gofakeit.Date().String(),
@@ -37,13 +38,6 @@ func NewPackageCreate(data string) (protoreflect.ProtoMessage, error) {
 		MessageUnitCost: gofakeit.Float64(),
 		VoiceUnitCost:   gofakeit.Float64(),
 	}
-
-	flatRate := false
-	if createPackage.Type == "prepaid" {
-		flatRate = true
-	}
-
-	createPackage.Flatrate = flatRate
 
 	if data != "" {
 		err := updateProto(createPackage, data)
