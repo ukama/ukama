@@ -132,7 +132,7 @@ func (n *StateEventServer) getOrCreateInstance(nodeID, initialState string) (*st
 func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 
 	log.Infof("Received event %s, routing key %s", e.Msg, e.RoutingKey)
-	var nodeID string
+	var nodeId string
 	var eventName string
 	var body interface{}
 	switch e.RoutingKey {
@@ -143,7 +143,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeAssign event: %w", err)
 		}
 		body = msg
-		nodeID = msg.NodeId
+		nodeId = msg.NodeId
 		eventName = c.Name
 
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline]):
@@ -153,7 +153,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeOffline event: %w", err)
 		}
 		body = msg
-		nodeID = msg.NodeId
+		nodeId = msg.NodeId
 		eventName = c.Name
 
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
@@ -163,7 +163,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeOnline event: %w", err)
 		}
 		body = msg
-		nodeID = msg.NodeId
+		nodeId = msg.NodeId
 		eventName = c.Name
 
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
@@ -173,7 +173,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeRelease event: %w", err)
 		}
 		body = msg
-		nodeID = msg.NodeId
+		nodeId = msg.NodeId
 		eventName = c.Name
 		//To be added once node ready is implemented
 	// case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventReady]):
@@ -193,7 +193,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeConfig event: %w", err)
 		}
 		body = msg
-		nodeID = strings.Split(msg.Target, ".")[3]
+		nodeId = strings.Split(msg.Target, ".")[3]
 		eventName = c.Name
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventUpdate]):
 		c := evt.NodeEventToEventConfig[evt.NodeStateEventUpdate]
@@ -202,7 +202,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, fmt.Errorf("failed to unmarshal NodeUpdate event: %w", err)
 		}
 		body = msg
-		nodeID = msg.NodeId
+		nodeId = msg.NodeId
 		eventName = c.Name
 
 	default:
@@ -210,7 +210,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		return &epb.EventResponse{}, nil
 	}
 
-	if err := n.ProcessEvent(ctx, eventName, nodeID, body); err != nil {
+	if err := n.ProcessEvent(ctx, eventName, nodeId, body); err != nil {
 		log.WithError(err).Error("Error processing event")
 		return nil, err
 	}
@@ -218,12 +218,12 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 	return &epb.EventResponse{}, nil
 }
 
-func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID string, msg interface{}) error {
-	log.Infof("Processing event %s for node %s", eventName, nodeID)
+func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
+	log.Infof("Processing event %s for node %s", eventName, nodeId)
 
-	n.addEventToBuffer(nodeID, eventName)
+	n.addEventToBuffer(nodeId, eventName)
 
-	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeID})
+	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
 			switch st.Code() {
@@ -242,22 +242,22 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID s
 		currentState = latestState.State.CurrentState
 		log.Infof("Node already exists with current state %s and substate %s", currentState, currentSubstate)
 	} else {
-		log.Infof("Creating initial state entry for node %s", nodeID)
-		if err := n.createInitialNodeState(ctx, nodeID, eventName, msg); err != nil {
+		log.Infof("Creating initial state entry for node %s", nodeId)
+		if err := n.createInitialNodeState(ctx, nodeId, eventName, msg); err != nil {
 			return err
 		}
 	}
 
-	instance, err := n.getOrCreateInstance(nodeID, currentState)
+	instance, err := n.getOrCreateInstance(nodeId, currentState)
 	if err != nil {
-		return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeID, err)
+		return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	}
 
 	prevState := instance.CurrentState
 	prevSubstate := instance.CurrentSubstate
 
 	if err := instance.Transition(eventName); err != nil {
-		return fmt.Errorf("failed to transition state for node %s: %w", nodeID, err)
+		return fmt.Errorf("failed to transition state for node %s: %w", nodeId, err)
 	}
 
 	// Check if it's a main state transition
@@ -270,15 +270,15 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID s
 			newSubstate = instance.CurrentSubstate
 		}
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-			NodeId:       nodeID,
+			NodeId:       nodeId,
 			CurrentState: instance.CurrentState,
 			SubState:     []string{newSubstate},
-			Events:       n.getEventsForNode(nodeID),
+			Events:       n.getEventsForNode(nodeId),
 		})
 		if err != nil {
-			return fmt.Errorf("failed to add new state for node %s: %w", nodeID, err)
+			return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
 		}
-		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeID, instance.CurrentState, newSubstate)
+		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeId, instance.CurrentState, newSubstate)
 	} else if instance.CurrentSubstate != prevSubstate {
 		// Substate transition only
 		newSubstate := currentSubstate
@@ -288,25 +288,25 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeID s
 			newSubstate = instance.CurrentSubstate
 		}
 		_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
-			NodeId:   nodeID,
+			NodeId:   nodeId,
 			SubState: []string{newSubstate},
-			Events:   n.getEventsForNode(nodeID),
+			Events:   n.getEventsForNode(nodeId),
 		})
 		if err != nil {
-			return fmt.Errorf("failed to update substate for node %s: %w", nodeID, err)
+			return fmt.Errorf("failed to update substate for node %s: %w", nodeId, err)
 		}
-		log.Infof("Updated substate for node %s: substate=%s", nodeID, newSubstate)
+		log.Infof("Updated substate for node %s: substate=%s", nodeId, newSubstate)
 	} else {
-		log.Infof("No state or substate change for node %s", nodeID)
+		log.Infof("No state or substate change for node %s", nodeId)
 	}
 
-	log.Infof("Events for node %s: %v", nodeID, n.getEventsForNode(nodeID))
+	log.Infof("Events for node %s: %v", nodeId, n.getEventsForNode(nodeId))
 
-	n.clearEventsForNode(nodeID)
+	n.clearEventsForNode(nodeId)
 
 	return nil
 }
-func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeID, eventName string, msg interface{}) error {
+func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
 	// Assume the initial event will always be online
 	onlineEvent, ok := msg.(*epb.NodeOnlineEvent)
 	if !ok {
@@ -314,7 +314,7 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeID, e
 	}
 
 	addStateRequest := &pb.AddStateRequest{
-		NodeId:       nodeID,
+		NodeId:       nodeId,
 		CurrentState: "unknown",
 		SubState:     []string{"on"},
 		Events:       []string{eventName},
@@ -327,7 +327,7 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeID, e
 
 	_, err := n.s.AddNodeState(ctx, addStateRequest)
 	if err != nil {
-		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeID, err)
+		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
 	}
 	return nil
 }

@@ -23,7 +23,7 @@ type StateRepo interface {
 	GetStateHistory(nodeId string) ([]State, error)
 	AddState(newState *State, previousState *State) error
 	GetLatestState(nodeId string) (*State, error)
-	UpdateState(nodeId string, subStates []string, events []string) (*State, error) 
+	UpdateState(nodeId string, subStates []string, events []string) (*State, error)
 }
 
 type stateRepo struct {
@@ -110,7 +110,7 @@ func (r *stateRepo) AddState(newState *State, previousState *State) error {
 }
 
 // UpdateState updates the state for a given nodeId with the provided subStates.
-func (r *stateRepo) UpdateState(nodeId string,  subStates []string, events []string) (*State, error) {
+func (r *stateRepo) UpdateState(nodeId string, subStates []string, events []string) (*State, error) {
 	var state State
 
 	err := r.Db.GetGormDb().Where("node_id = ?", nodeId).Order("created_at DESC").First(&state).Error

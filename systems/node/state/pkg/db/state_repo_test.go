@@ -105,7 +105,7 @@ func TestState_GetStateHistory(t *testing.T) {
 	
 	t.Run("GetStateHistory", func(t *testing.T) {
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String()
-		stateID := uuid.NewV4()
+		stateId := uuid.NewV4()
 
 		var db *extsql.DB
 		var err error
@@ -115,7 +115,7 @@ func TestState_GetStateHistory(t *testing.T) {
 
 		// Define a sample State object to return
 		history := State{
-			Id:        stateID,
+			Id:        stateId,
 			NodeId:    nid,
 			CreatedAt: time.Now(), // Assume you have this field in your State struct
 		}
@@ -147,7 +147,7 @@ func TestState_GetStateHistory(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
-		assert.Equal(t, stateID, c[0].Id)
+		assert.Equal(t, stateId, c[0].Id)
 		
 	})
 }
