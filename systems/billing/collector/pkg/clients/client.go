@@ -63,7 +63,7 @@ type Plan struct {
 type PlanCharge struct {
 	BillableMetricID     string
 	ChargeModel          string
-	ChargeAmountCents    string
+	ChargeAmount         string
 	ChargeAmountCurrency string
 	FreeUnits            int
 	PackageSize          int

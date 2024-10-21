@@ -124,7 +124,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 
 		props := make(map[string]interface{})
 
-		props["amount"] = charge.ChargeAmountCents
+		props["amount"] = charge.ChargeAmount
 		props["free_units"] = charge.FreeUnits
 		props["package_size"] = charge.PackageSize
 

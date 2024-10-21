@@ -37,7 +37,8 @@ const (
 	handlerTimeoutFactor      = 3
 	defaultChargeModel        = "package"
 	defaultCurrency           = "USD"
-	defaultBillingInterval    = "monthly"
+	postpaidBillingInterval   = "monthly"
+	prepaidBillingInterval    = "yearly"
 	testBillingInterval       = "weekly"
 	DefaultBillableMetricCode = "data_usage"
 )
@@ -232,20 +233,12 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name: accountItem.Item + ": " + accountItem.Id,
-			Code: accountItem.Id,
-
-			//TODO: update with defaultBillingIntervall for production
-			Interval: testBillingInterval,
-
-			// 0 values are not sent by the upstream billing provider client. see above Todos
-			AmountCents: amount * 100,
-
+			Name:           accountItem.Item + ": " + accountItem.Id,
+			Code:           accountItem.Id,
+			Interval:       postpaidBillingInterval,
+			AmountCents:    amount * 100,
 			AmountCurrency: defaultCurrency,
-
-			//TODO: fails on false (postpaid). See abouve Todos
-			// PayInAdvance: true,
-			PayInAdvance: false,
+			PayInAdvance:   false,
 		}
 
 		log.Infof("Sending plan create event %v with no charge to billing", newPlan)
@@ -311,50 +304,62 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	// TODO: upstream billing provider fails on a DB constraint when pay in advance
-	// is set to false (postpaid). Somwhow, false bool value from go is sent as null
-	// to upstream DB. Need to investigate this between upstream go client and DB.
-
-	// TODO updates: It seems like 0, false values are not sent by go client.
-
-	// payAdvance := false
-	// if ukama.ParsePackageType(pkg.Type) == ukama.PackageTypePrepaid {
-	// payAdvance = true
-	// }
-
-	// Get the cost of the package per bytke
+	// Get the cost of the package per byte
 	dataUnit := ukama.ParseDataUnitType(pkg.DataUnit)
 	if dataUnit == ukama.DataUnitTypeUnknown {
 		return fmt.Errorf("invalid data unit type: %s", pkg.DataUnit)
 	}
 
+	// Get the type of the package
+	pkgType := ukama.ParsePackageType(pkg.Type)
+	if pkgType == ukama.PackageTypeUnknown {
+		return fmt.Errorf("invalid package type: %s", pkg.DataUnit)
+	}
+
+	var amount string
+
+	pkgIntervall := prepaidBillingInterval
+
+	switch pkgType {
+	case ukama.PackageTypePostpaid:
+		if pkg.Flatrate {
+			return fmt.Errorf("unconsistant data: package type (%s) mismatches flat rate attribute (%t).",
+				pkg.Type, pkg.Flatrate)
+		}
+
+		pkgIntervall = postpaidBillingInterval
+		// amount := strconv.Itoa(int(pkg.DataUnitCost))
+		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', -1, 64)
+
+	case ukama.PackageTypePrepaid:
+		if !pkg.Flatrate {
+			return fmt.Errorf("unconsistant data: package type (%s) mismatches flat rate attribute (%t).",
+				pkg.Type, pkg.Flatrate)
+		}
+
+		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
+		amount = strconv.FormatFloat(dataUnitCost, 'f', -1, 64)
+	}
+
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
-	amountCents := strconv.Itoa(int(pkg.DataUnitCost * 100))
 
 	charge := client.PlanCharge{
 		BillableMetricID:     b.bMetric.Id,
 		ChargeModel:          defaultChargeModel,
-		ChargeAmountCents:    amountCents,
+		ChargeAmount:         amount,
 		ChargeAmountCurrency: defaultCurrency,
-		PackageSize:          int(billableDataSize),
+		// ChargeAmountCurrency: pkg.Currency,
+		PackageSize: int(billableDataSize),
 	}
 
 	newPlan := client.Plan{
-		Name: "Plan: " + pkg.Uuid,
-		Code: pkg.Uuid,
-
-		//TODO: set to defaultBillingInterval for production
-		Interval: testBillingInterval,
-
-		//TODO: 0 values are not sent by the upstream billing provider client. see above Todos
-		// AmountCents: 1,
+		Name:        "Plan: " + pkg.Uuid,
+		Code:        pkg.Uuid,
+		Interval:    pkgIntervall,
 		AmountCents: 0,
-
+		// AmountCurrency: pkg.Currency,
 		AmountCurrency: defaultCurrency,
-
-		//TOdO: fails on false (postpaid). See abouve Todos
-		// PayInAdvance: true,
-		PayInAdvance: false,
+		PayInAdvance:   false,
 	}
 
 	log.Infof("Sending plan create event %v with charges %v to billing", newPlan, charge)
