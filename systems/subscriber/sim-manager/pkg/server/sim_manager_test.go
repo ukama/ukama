@@ -980,7 +980,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		var orgID = uuid.NewV4()
-		startDate := time.Now().In(time.Local).Add(5 * time.Minute).Truncate(time.Second)
+		startDate := time.Now().In(time.UTC).Add(5 * time.Minute).Truncate(time.Second)
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
