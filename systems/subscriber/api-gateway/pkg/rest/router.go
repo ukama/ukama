@@ -309,7 +309,6 @@ func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*su
 	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
 		SubscriberId:          req.SubscriberId,
 		Name:                  req.Name,
-		Email:                 req.Email,
 		PhoneNumber:           req.Phone,
 		Address:               req.Address,
 		ProofOfIdentification: req.ProofOfIdentification,

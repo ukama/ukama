@@ -90,7 +90,7 @@ type SimPoolAddSimReq struct {
 
 type SubscriberAddReq struct {
 	Name                  string `example:"John" json:"name" validate:"required"`
-	Email                 string `example:"john@example.com" json:"email" validate:"required"`
+	Email                 string `example:"john@example.com" json:"email"`
 	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id"`
 	Gender                string `example:"male" json:"gender"`
 	Phone                 string `example:"4151231234" json:"phone"`
@@ -119,7 +119,6 @@ type SubscriberByNetworkReq struct {
 type SubscriberUpdateReq struct {
 	SubscriberId          string `example:"{{SubscriberUUID}}" path:"subscriber_id" validate:"required"`
 	Name                  string `example:"John" json:"name" validate:"required"`
-	Email                 string `example:"test@example.com" json:"email"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
 	ProofOfIdentification string `example:"passport" json:"proof_of_Identification"`

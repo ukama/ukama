@@ -119,9 +119,6 @@ func (this *AddSubscriberRequest) Validate() error {
 	if !_regex_AddSubscriberRequest_Email.MatchString(this.Email) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
-	if this.Email == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
-	}
 	if !_regex_AddSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
 	}
@@ -129,7 +126,6 @@ func (this *AddSubscriberRequest) Validate() error {
 }
 
 var _regex_UpdateSubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_UpdateSubscriberRequest_Email = regexp.MustCompile(`^$|^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 var _regex_UpdateSubscriberRequest_PhoneNumber = regexp.MustCompile(`^$|^(?:(?:\(?(?:00|\+)([1-4]\d\d|[1-9]\d?)\)?)?[\-\.\ \\\/]?)?((?:\(?\d{1,}\)?[\-\.\ \\\/]?){0,})(?:[\-\.\ \\\/]?(?:#|ext\.?|extension|x)[\-\.\ \\\/]?(\d+))?$`)
 
 func (this *UpdateSubscriberRequest) Validate() error {
@@ -138,9 +134,6 @@ func (this *UpdateSubscriberRequest) Validate() error {
 	}
 	if this.SubscriberId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
-	}
-	if !_regex_UpdateSubscriberRequest_Email.MatchString(this.Email) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
 	if !_regex_UpdateSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PhoneNumber", fmt.Errorf(`must be a phone number format`))
