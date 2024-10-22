@@ -78,7 +78,7 @@ func TestDistributionServer_GetNotificationStream(t *testing.T) {
 	s := NewDistributorServer(nc, mc, sc, ndb, testOrgName, testOrgId, eNotify)
 
 	// Act
-	err := s.GetNotificationStream(req, nil)
+	err := s.GetNotificationStream(req, sS)
 	assert.NoError(t, err)
 
 	// Assert
