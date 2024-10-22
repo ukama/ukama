@@ -27,7 +27,11 @@ import CloseIcon from '@mui/icons-material/Close';
 import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import { makeStyles } from '@mui/styles';
-import { PackageDto, SimDto } from '@/client/graphql/generated';
+import {
+  PackageDto,
+  SimDto,
+  AllocateSimApiDto,
+} from '@/client/graphql/generated';
 import QRCode from 'qrcode.react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SubscriberDetailsType } from '@/types';
@@ -40,10 +44,6 @@ const subscriberDetailsSchema = Yup.object().shape({
   simIccid: Yup.string()
     .required('SIM ICCID is required')
     .matches(/^\d{19,20}$/, 'Invalid ICCID format'),
-});
-
-const planSelectionSchema = Yup.object().shape({
-  plan: Yup.string().required('Please select a plan'),
 });
 
 const useStyles = makeStyles(() => ({
@@ -68,7 +68,7 @@ interface SubscriberFormProps {
   handleAddSubscriber: (subscriber: SubscriberDetailsType) => void;
   packages: PackageDto[];
   sims: SimDto[];
-  data: any;
+  data: AllocateSimApiDto;
 }
 
 const SubscriberForm: React.FC<SubscriberFormProps> = ({
@@ -95,6 +95,10 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
     handleCloseAction();
   };
 
+  const handleSubmit = (values: SubscriberDetailsType) => {
+    handleAddSubscriber(values);
+    setActiveStep(2);
+  };
   const handleNext = (
     values: SubscriberDetailsType,
     setValues: (values: SubscriberDetailsType) => void,
@@ -106,7 +110,6 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
-  console.log('SIMS :', sims);
 
   const renderStepContent = (formik: any) => {
     switch (activeStep) {
@@ -279,7 +282,7 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
               <Button onClick={handleClose}>Cancel</Button>
               <Button
                 onClick={formik.handleSubmit}
-                disabled={!formik.isValid || !formik.dirty || data > 0}
+                disabled={!formik.isValid || !formik.dirty}
                 variant="contained"
               >
                 Add Subscriber
@@ -302,51 +305,92 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
               </IconButton>
             </DialogTitle>
             <DialogContent>
-              <Typography
-                variant="subtitle1"
-                color="text.secondary"
-                sx={{ mb: 3 }}
-              >
-                You have successfully added {formik.values.name} as a subscriber
-                to your network, and an eSIM installation invitation has been
-                sent out to them. If they would rather install their eSIM now,
-                have them scan the QR code below.
-              </Typography>
-              <Accordion
-                sx={{ boxShadow: 'none', background: 'transparent' }}
-                onChange={(_, isExpanded: boolean) => {
-                  setShowQrCode(isExpanded);
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon color="primary" />}
-                  sx={{
-                    p: 0,
-                    m: 0,
-                    justifyContent: 'flex-start',
-                    '& .MuiAccordionSummary-content': {
-                      flexGrow: 0.02,
-                    },
-                  }}
-                >
+              {data?.is_physical ? (
+                <>
                   <Typography
-                    fontWeight={500}
-                    variant="caption"
-                    color={colors.primaryMain}
+                    variant="subtitle1"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
                   >
-                    {showQrCode ? 'HIDE QR CODE' : 'SHOW QR CODE'}
+                    You have successfully added {formik.values.name} as a
+                    subscriber to your network, and a unique ID has been
+                    generated for them, which must be used to create a Ukama
+                    subscriber app.
                   </Typography>
-                </AccordionSummary>
-                <AccordionDetails
-                  sx={{ p: 2, display: 'flex', justifyContent: 'center' }}
-                >
-                  <QRCode
-                    id="qrCodeId"
-                    value={data.qrCode}
-                    style={{ height: 164, width: 164 }}
-                  />
-                </AccordionDetails>
-              </Accordion>
+                  <Box
+                    sx={{
+                      bgcolor: 'grey.50',
+                      p: 2,
+                      borderRadius: 1,
+                      mb: 3,
+                    }}
+                  >
+                    <Typography fontFamily="monospace" sx={{ mb: 1 }}>
+                      UID: {data.subscriber_id}
+                    </Typography>
+                    <Typography fontFamily="monospace">
+                      SIM ICCID: {data.iccid}
+                    </Typography>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Typography
+                    variant="subtitle1"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
+                    You have successfully added {formik.values.name} as a
+                    subscriber to your network, and an eSIM installation
+                    invitation has been sent out to them. If they would rather
+                    install their eSIM now, have them scan the QR code below.
+                  </Typography>
+                  <Accordion
+                    sx={{ boxShadow: 'none', background: 'transparent' }}
+                    onChange={(_, isExpanded: boolean) => {
+                      setShowQrCode(isExpanded);
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon color="primary" />}
+                      sx={{
+                        p: 0,
+                        m: 0,
+                        justifyContent: 'flex-start',
+                        '& .MuiAccordionSummary-content': {
+                          flexGrow: 0.02,
+                        },
+                      }}
+                    >
+                      <Typography
+                        fontWeight={500}
+                        variant="caption"
+                        color={colors.primaryMain}
+                      >
+                        {showQrCode ? 'HIDE QR CODE' : 'SHOW QR CODE'}
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails
+                      sx={{ p: 2, display: 'flex', justifyContent: 'center' }}
+                    >
+                      <QRCode
+                        id="qrCodeId"
+                        value={data?.iccid || ''}
+                        style={{ height: 164, width: 164 }}
+                      />
+                    </AccordionDetails>
+                  </Accordion>
+                </>
+              )}
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  size="small"
+                />
+                <Button variant="contained">SHARE </Button>
+              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose} variant="contained">
@@ -367,13 +411,14 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
         <Formik
           initialValues={initialValues}
           validationSchema={
-            activeStep === 0 ? subscriberDetailsSchema : planSelectionSchema
+            activeStep === 0 ? subscriberDetailsSchema : subscriberDetailsSchema
           }
-          onSubmit={(values) => {
-            handleAddSubscriber(values);
-            setActiveStep(2);
-          }}
+          onSubmit={handleSubmit}
           validateOnMount
+          // onSubmit={(values) => {
+          //   handleAddSubscriber(values);
+          //   setActiveStep(2);
+          // }}
         >
           {(formik) => <Form>{renderStepContent(formik)}</Form>}
         </Formik>

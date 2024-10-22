@@ -1118,7 +1118,7 @@ export type SubscriberDto = {
 };
 
 export type SubscriberInputDto = {
-  email: Scalars['String']['input'];
+  email?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   network_id: Scalars['String']['input'];
   phone?: InputMaybe<Scalars['String']['input']>;
