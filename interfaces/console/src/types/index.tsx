@@ -118,7 +118,11 @@ export type UserActivateFormType = {
   serialNumber: string;
   securityCode: string;
 };
-
+export interface SubscriberDetailsType {
+  name: string;
+  simIccid: string;
+  plan: string;
+}
 export type TVariant = 'small' | 'medium' | 'large';
 
 export type TObject = { [key: string]: boolean | string | number };

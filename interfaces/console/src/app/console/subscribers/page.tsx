@@ -28,7 +28,7 @@ import {
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
-import AddSubscriberDialog from '@/components/AddSubscriber';
+import StepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import DeleteConfirmation from '@/components/DeleteDialog';
 import EmptyView from '@/components/EmptyView';
@@ -39,27 +39,17 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
-import { TAddSubscriberData } from '@/types';
+import { SubscriberDetailsType, TAddSubscriberData } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper, Stack, Typography } from '@mui/material';
+import { set } from 'date-fns';
 import { useCallback, useEffect, useState } from 'react';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
   const { setSnackbarMessage, network, env } = useAppContext();
-  const [addSubscriberData, setAddSubscriberData] =
-    useState<TAddSubscriberData>({
-      email: '',
-      iccid: '',
-      name: '',
-      phone: '',
-      plan: '',
-      simType: 'eSim',
-      roamingStatus: false,
-    });
-  const [isAddSubscriberDialogOpen, setIsAddSubscriberDialogOpen] =
-    useState(false);
+  const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isToPupData, setIsToPupData] = useState<boolean>(false);
   const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
     useState(false);
@@ -69,6 +59,9 @@ const Page = () => {
   });
   const [simId, setSimId] = useState<string>('');
   const [qrCode, setQrCode] = useState<string>('');
+  const [simDetails, setSimDetails] = useState<any>();
+  const [subscriberDetails, setSubscriberDetails] =
+    useState<SubscriberDetailsType>();
   const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
@@ -377,6 +370,7 @@ const Page = () => {
     {
       onCompleted: (res) => {
         setSimId(res.allocateSim.id);
+        setSimDetails(res.allocateSim);
         refetchSubscribers();
         setSnackbarMessage({
           id: 'sim-allocated-success',
@@ -430,10 +424,10 @@ const Page = () => {
           variables: {
             data: {
               network_id: res.addSubscriber.networkId,
-              package_id: addSubscriberData.plan ?? '',
+              package_id: subscriberDetails?.plan ?? '',
               subscriber_id: res.addSubscriber.uuid,
               sim_type: env.SIM_TYPE,
-              iccid: addSubscriberData.iccid,
+              iccid: subscriberDetails?.simIccid,
               traffic_policy: 0,
             },
           },
@@ -534,11 +528,7 @@ const Page = () => {
     });
 
   const handleAddSubscriberModal = () => {
-    setIsAddSubscriberDialogOpen(true);
-  };
-
-  const OnCloseAddSubcriber = () => {
-    setIsAddSubscriberDialogOpen(false);
+    setOpenAddSubscriber(true);
   };
 
   const getSelectedNetwork = (network: string) => {
@@ -630,15 +620,28 @@ const Page = () => {
     }
   };
 
-  const handleAddSubscriber = async (values: TAddSubscriberData) => {
-    setAddSubscriberData(values);
+  // const handleAddSubscriber = async (values: TAddSubscriberData) => {
+  //   setAddSubscriberData(values);
+  //   await addSubscriber({
+  //     variables: {
+  //       data: {
+  //         email: values.email,
+  //         phone: values.phone,
+  //         name: values.name,
+  //         network_id: network.id,
+  //       },
+  //     },
+  //   });
+  // };
+  const handleAddSubscriberTest = async (subscriber: any) => {
+    setSubscriberDetails(subscriber);
     await addSubscriber({
       variables: {
         data: {
-          email: values.email,
-          phone: values.phone,
-          name: values.name,
+          name: subscriber.name,
           network_id: network.id,
+          email: subscriber.email,
+          phone: subscriber.phone,
         },
       },
     });
@@ -758,8 +761,16 @@ const Page = () => {
           />
         </Paper>
       )}
+      <StepperDialog
+        isOpen={openAddSubscriber}
+        handleCloseAction={() => setOpenAddSubscriber(false)}
+        handleAddSubscriber={handleAddSubscriberTest}
+        sims={simPoolData?.getSims.sim ?? []}
+        packages={packagesData?.getPackages.packages ?? []}
+        data={simDetails}
+      />
 
-      <AddSubscriberDialog
+      {/* <AddSubscriberDialog
         qrCode={qrCode}
         pkgList={packagesData?.getPackages.packages ?? []}
         onSuccess={subscriberSuccess}
@@ -773,7 +784,7 @@ const Page = () => {
           addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
         }
         loading={addSubscriberLoading ?? allocateSimLoading ?? packagesLoading}
-      />
+      /> */}
       <DeleteConfirmation
         open={isConfirmationOpen}
         onDelete={handleDeleteSubscriber}
