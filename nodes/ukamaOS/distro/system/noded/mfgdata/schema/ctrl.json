@@ -144,7 +144,7 @@
   },
   "nodeConfig" : [ {
     "UUID" : "UK-8001-RFC-1102",
-    "name" : "RF CTRL BOARD",
+    "name" : "ctrl",
     "invtSysFsFile" : "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
     "invtDeviceInfo" : {
       "bus" : 2,
@@ -152,7 +152,7 @@
     }
   }, {
     "UUID" : "UK-8001-RFA-1102",
-    "name" : "RF BOARD",
+    "name" : "fe",
     "invtSysFsFile" : "/tmp/sys/bus/i2c/devices/i2c-1/1-0052/eeprom",
     "invtDeviceInfo" : {
       "bus" : 1,
@@ -161,7 +161,7 @@
   } ],
   "moduleInfo" : {
     "UUID" : "UK-8001-RFC-1102",
-    "name" : "RF CTRL BOARD",
+    "name" : "ctrl",
     "type" : 2,
     "partNumber" : "RF-CTRL-1001",
     "hwVersion" : "REV-A",

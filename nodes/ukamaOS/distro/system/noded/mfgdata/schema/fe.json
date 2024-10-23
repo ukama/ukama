@@ -37,7 +37,7 @@
   } ],
   "moduleInfo" : {
     "UUID" : "UK-8001-RFA-1102",
-    "name" : "RF BOARD",
+    "name" : "fe",
     "type" : 3,
     "partNumber" : "GSM-RFFE-BAND3",
     "hwVersion" : "REV-A",
