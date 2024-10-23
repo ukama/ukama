@@ -77,6 +77,7 @@ func TestSubscriber_Add(t *testing.T) {
 		SubscriberId:          uuid.NewV4(),
 		Name:                  "John",
 		NetworkId:             uuid.NewV4(),
+		
 		PhoneNumber:           "555-555-5555",
 		Gender:                "Male",
 		DOB:                   dateStr,
@@ -93,6 +94,7 @@ func TestSubscriber_Add(t *testing.T) {
 		subscriber.SubscriberId,
 		subscriber.Name,
 		subscriber.NetworkId,
+		subscriber.Email,
 		subscriber.PhoneNumber,
 		subscriber.Gender,
 		subscriber.DOB,
