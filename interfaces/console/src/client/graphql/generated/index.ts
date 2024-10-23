@@ -1107,10 +1107,9 @@ export type SubscriberDto = {
   address: Scalars['String']['output'];
   dob: Scalars['String']['output'];
   email: Scalars['String']['output'];
-  firstName: Scalars['String']['output'];
   gender: Scalars['String']['output'];
   idSerial: Scalars['String']['output'];
-  lastName: Scalars['String']['output'];
+  name: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   phone: Scalars['String']['output'];
   proofOfIdentification: Scalars['String']['output'];
@@ -1120,8 +1119,7 @@ export type SubscriberDto = {
 
 export type SubscriberInputDto = {
   email: Scalars['String']['input'];
-  first_name?: InputMaybe<Scalars['String']['input']>;
-  last_name?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
   network_id: Scalars['String']['input'];
   phone?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1153,10 +1151,30 @@ export type SubscriberSimDto = {
   type: Scalars['String']['output'];
 };
 
+export type SubscriberSimsDto = {
+  __typename?: 'SubscriberSimsDto';
+  activationsCount: Scalars['String']['output'];
+  allocatedAt: Scalars['String']['output'];
+  deactivationsCount: Scalars['String']['output'];
+  firstActivatedOn: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  isPhysical: Scalars['Boolean']['output'];
+  lastActivatedOn: Scalars['String']['output'];
+  msisdn: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  subscriberId: Scalars['String']['output'];
+  syncStatus: Scalars['String']['output'];
+  trafficPolicy: Scalars['Float']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type SubscriberToSimsDto = {
   __typename?: 'SubscriberToSimsDto';
-  sims: Array<SimDto>;
-  subscriber_id: Scalars['String']['output'];
+  sims: Array<SubscriberSimsDto>;
+  subscriberId: Scalars['String']['output'];
 };
 
 export type SubscribersResDto = {
@@ -1227,8 +1245,8 @@ export type UpdateSiteInputDto = {
 export type UpdateSubscriberInputDto = {
   address?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
-  first_name?: InputMaybe<Scalars['String']['input']>;
   id_serial?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
   proof_of_identification?: InputMaybe<Scalars['String']['input']>;
 };
@@ -1434,6 +1452,8 @@ export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typ
 
 export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
 
+export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical: boolean }> };
+
 export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
 export type GetPackagesQueryVariables = Exact<{ [key: string]: never; }>;
@@ -1453,7 +1473,7 @@ export type GetSimsBySubscriberQueryVariables = Exact<{
 }>;
 
 
-export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', sims: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
+export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical: boolean }> } };
 
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
@@ -1562,21 +1582,21 @@ export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'Sims
 
 export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null } };
 
 export type GetSubscriberQueryVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
@@ -1598,7 +1618,7 @@ export type GetSubscribersByNetworkQueryVariables = Exact<{
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, firstName: string, lastName: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null }> } };
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical?: boolean | null, package?: string | null }> | null }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -1818,6 +1838,27 @@ export const SimPackagesFragmentDoc = gql`
   is_active
 }
     `;
+export const SubscriberSimsFragmentDoc = gql`
+    fragment SubscriberSims on SubscriberToSimsDto {
+  subscriberId
+  sims {
+    id
+    subscriberId
+    networkId
+    iccid
+    msisdn
+    imsi
+    type
+    status
+    firstActivatedOn
+    lastActivatedOn
+    activationsCount
+    deactivationsCount
+    allocatedAt
+    isPhysical
+  }
+}
+    `;
 export const PackageRateFragmentDoc = gql`
     fragment PackageRate on PackageDto {
   rate {
@@ -1942,8 +1983,7 @@ export const SubscriberFragmentDoc = gql`
   address
   dob
   email
-  firstName
-  lastName
+  name
   gender
   idSerial
   networkId
@@ -2950,12 +2990,10 @@ export type GetPackageQueryResult = Apollo.QueryResult<GetPackageQuery, GetPacka
 export const GetSimsBySubscriberDocument = gql`
     query getSimsBySubscriber($data: GetSimBySubscriberInputDto!) {
   getSimsBySubscriber(data: $data) {
-    sims {
-      ...SimPool
-    }
+    ...SubscriberSims
   }
 }
-    ${SimPoolFragmentDoc}`;
+    ${SubscriberSimsFragmentDoc}`;
 
 /**
  * __useGetSimsBySubscriberQuery__

@@ -41,8 +41,7 @@ func TestAdd(t *testing.T) {
 		networkClient := &cmocks.NetworkClient{}
 		networkId := uuid.NewV4()
 		sub := &db.Subscriber{
-			FirstName:             "John",
-			LastName:              "Doe",
+			Name:                 "John",
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
@@ -64,8 +63,7 @@ func TestAdd(t *testing.T) {
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			FirstName:             sub.FirstName,
-			LastName:              sub.LastName,
+			Name:                  sub.Name,
 			Email:                 sub.Email,
 			PhoneNumber:           sub.PhoneNumber,
 			Gender:                sub.Gender,
@@ -92,8 +90,7 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			FirstName:             "John",
-			LastName:              "Doe",
+			Name:                  "John",
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
@@ -116,8 +113,7 @@ func TestAdd(t *testing.T) {
 			}, nil).Once()
 
 		res, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			FirstName:             sub.FirstName,
-			LastName:              sub.LastName,
+			Name:                  sub.Name,
 			Email:                 sub.Email,
 			PhoneNumber:           sub.PhoneNumber,
 			Gender:                sub.Gender,

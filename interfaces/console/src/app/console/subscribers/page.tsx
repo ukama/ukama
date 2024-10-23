@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  AllocateSimApiDto,
   Sim_Status,
   Sim_Types,
   SubscribersResDto,
@@ -28,7 +29,7 @@ import {
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
-import AddSubscriberDialog from '@/components/AddSubscriber';
+import AddSubscriberStepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import DeleteConfirmation from '@/components/DeleteDialog';
 import EmptyView from '@/components/EmptyView';
@@ -39,7 +40,7 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
-import { TAddSubscriberData } from '@/types';
+import { SubscriberDetailsType } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper, Stack, Typography } from '@mui/material';
@@ -48,25 +49,17 @@ import { useCallback, useEffect, useState } from 'react';
 const Page = () => {
   const [search, setSearch] = useState<string>('');
   const { setSnackbarMessage, network, env } = useAppContext();
-  const [addSubscriberData, setAddSubscriberData] =
-    useState<TAddSubscriberData>({
-      email: '',
-      iccid: '',
-      name: '',
-      phone: '',
-      plan: '',
-      simType: 'eSim',
-      roamingStatus: false,
-    });
-  const [isAddSubscriberDialogOpen, setIsAddSubscriberDialogOpen] =
-    useState(false);
+  const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isToPupData, setIsToPupData] = useState<boolean>(false);
+  const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
+    useState(false);
   const [topUpDetails, setTopUpDetails] = useState<any>({
     simId: '',
     subscriberId: '',
   });
   const [simId, setSimId] = useState<string>('');
-  const [qrCode, setQrCode] = useState<string>('');
+  const [simDetails, setSimDetails] = useState<any>();
+  const [subscriberDetails, setSubscriberDetails] = useState<any>();
   const [subscriberSuccess, setSubscriberSuccess] = useState<boolean>(false);
   const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
@@ -114,11 +107,7 @@ const Page = () => {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
           const s = search.toLowerCase();
-          if (
-            subscriber.firstName.toLowerCase().includes(s) ??
-            subscriber.lastName.toLowerCase().includes(s)
-          )
-            return subscriber;
+          if (subscriber.name.toLowerCase().includes(s)) return subscriber;
         },
       );
       setSubscriber(() => ({ subscribers: subscribers ?? [] }));
@@ -138,7 +127,11 @@ const Page = () => {
   });
   const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
     onCompleted: (res) => {
-      if (res.getPackagesForSim.packages) {
+      if (
+        res.getPackagesForSim.packages &&
+        res.getPackagesForSim.packages.length > 0 &&
+        isPackageActivationNeeded
+      ) {
         activatePackageSim({
           variables: {
             data: {
@@ -147,24 +140,57 @@ const Page = () => {
             },
           },
         });
-      }
-    },
-  });
-  const [getSubscriber, { data: subcriberInfo }] = useGetSubscriberLazyQuery({
-    onCompleted: (res) => {
-      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
-        getPackagesForSim({
-          variables: {
-            data: {
-              sim_id: res?.getSubscriber?.sim[0].id,
-            },
-          },
-        });
+        setIsPackageActivationNeeded(false);
       }
     },
   });
 
-  const onTableMenuItem = (id: string, type: string) => {
+  const fetchPackagesForSim = useCallback(
+    (simId: string) => {
+      getPackagesForSim({
+        variables: {
+          data: {
+            sim_id: simId,
+          },
+        },
+      });
+    },
+    [getPackagesForSim],
+  );
+
+  const [getSubscriber, { data: subscriberInfo }] = useGetSubscriberLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (res) => {
+      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
+        fetchPackagesForSim(res.getSubscriber.sim[0].id);
+      }
+
+      if (res?.getSubscriber) {
+        setSubscriberDetails(res.getSubscriber);
+      }
+    },
+  });
+  const handleOpenSubscriberDetails = useCallback(
+    (id: string, shouldActivatePackage: boolean = false) => {
+      setIsSubscriberDetailsOpen(true);
+      setSelectedSubscriber(id);
+      setIsPackageActivationNeeded(shouldActivatePackage);
+
+      getSubscriber({
+        variables: {
+          subscriberId: id,
+        },
+      });
+    },
+    [
+      getSubscriber,
+      setIsSubscriberDetailsOpen,
+      setSelectedSubscriber,
+      setIsPackageActivationNeeded,
+    ],
+  );
+
+  const onTableMenuItem = async (id: string, type: string) => {
     if (type === 'delete-sub') {
       setIsConfirmationOpen(true);
       setDeletedSubscriber(id);
@@ -175,6 +201,11 @@ const Page = () => {
         simId: id,
         subscriberId: id,
       });
+      getSubscriber({
+        variables: {
+          subscriberId: id,
+        },
+      });
       getSimBySubscriber({
         variables: {
           data: {
@@ -184,25 +215,7 @@ const Page = () => {
       });
     }
     if (type === 'edit-sub') {
-      setIsSubscriberDetailsOpen(true);
-      getSubscriber({
-        variables: {
-          subscriberId: id,
-        },
-      });
-
-      setSelectedSubscriber(id);
-    }
-
-    if (type === 'pause-service') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: id,
-            status: 'terminated',
-          },
-        },
-      });
+      handleOpenSubscriberDetails(id, false);
     }
   };
   const [activatePackageSim] = useSetActivePackageForSimMutation({
@@ -224,6 +237,7 @@ const Page = () => {
       });
     },
   });
+
   const {
     data,
     loading: getSubscriberByNetworkLoading,
@@ -233,7 +247,7 @@ const Page = () => {
     variables: {
       networkId: network.id,
     },
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getSubscribersByNetwork.subscribers.length > 0) {
         setSubscriber(() => ({
@@ -291,7 +305,7 @@ const Page = () => {
         return {
           id: subscriber.uuid,
           email: subscriber.email,
-          name: `${subscriber.firstName}`,
+          name: `${subscriber.name}`,
           dataUsage: '',
           dataPlan: '',
           actions: '',
@@ -310,10 +324,11 @@ const Page = () => {
       onCompleted: () => {
         setSnackbarMessage({
           id: 'sim-activated-success',
-          message: 'Sim activated successfully!',
+          message: 'Sim state updated successfully!',
           type: 'success' as AlertColor,
           show: true,
         });
+        refetchSubscribers();
         getSim({
           variables: {
             data: {
@@ -361,35 +376,17 @@ const Page = () => {
   const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
     {
       onCompleted: (res) => {
-        setSimId(res.allocateSim.id);
-        refetchSubscribers();
+        setSimDetails(res.allocateSim);
         setSnackbarMessage({
-          id: 'sim-allocated-success',
-          message: 'Sim allocated successfully!',
+          id: 'allocate-sim-success',
+          message: 'SIM allocated successfully!',
           type: 'success' as AlertColor,
           show: true,
         });
-        setQrCode(res.allocateSim.iccid);
-        // getPackagesForSim({
-        //   variables: {
-        //     data: {
-        //       sim_id: res.allocateSim.id,
-        //     },
-        //   },
-        // });
-        // getSim({
-        //   variables: {
-        //     data: {
-        //       simId: res.allocateSim.id,
-        //     },
-        //   },
-        // });
-        refetchSimPoolStats();
-        refetchSims();
       },
       onError: (error) => {
         setSnackbarMessage({
-          id: 'sim-allocated-error',
+          id: 'allocate-sim-error',
           message: error.message,
           type: 'error' as AlertColor,
           show: true,
@@ -397,6 +394,7 @@ const Page = () => {
       },
     },
   );
+
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
@@ -405,23 +403,13 @@ const Page = () => {
             subscribers: [...data.data.getSubscribersByNetwork.subscribers],
           }));
         });
+
+        // Move this to after SIM allocation succeeds
         setSnackbarMessage({
           id: 'add-subscriber-success',
           message: 'Subscriber added successfully!',
           type: 'success' as AlertColor,
           show: true,
-        });
-        allocateSim({
-          variables: {
-            data: {
-              network_id: res.addSubscriber.networkId,
-              package_id: addSubscriberData.plan ?? '',
-              subscriber_id: res.addSubscriber.uuid,
-              sim_type: env.SIM_TYPE,
-              iccid: addSubscriberData.iccid,
-              traffic_policy: 0,
-            },
-          },
         });
       },
       onError: (error) => {
@@ -495,8 +483,12 @@ const Page = () => {
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
-      onCompleted: () => {
-        refetchSubscribers();
+      onCompleted: (res) => {
+        refetchSubscribers().then((data) => {
+          setSubscriber(() => ({
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          }));
+        });
         setSnackbarMessage({
           id: 'update-subscriber-success',
           message: 'Subscriber updated successfully!',
@@ -515,11 +507,7 @@ const Page = () => {
     });
 
   const handleAddSubscriberModal = () => {
-    setIsAddSubscriberDialogOpen(true);
-  };
-
-  const OnCloseAddSubcriber = () => {
-    setIsAddSubscriberDialogOpen(false);
+    setOpenAddSubscriber(true);
   };
 
   const getSelectedNetwork = (network: string) => {
@@ -535,32 +523,29 @@ const Page = () => {
   };
 
   const handleSimAction = (action: string, simId: string) => {
-    if (action === 'deleteSim') {
-      deleteSim({
-        variables: {
-          data: {
-            simId: simId,
+    switch (action) {
+      case 'deactivateSim':
+      case 'activateSim':
+        toggleSimStatus({
+          variables: {
+            data: {
+              sim_id: simId,
+              status: action === 'deactivateSim' ? 'inactive' : 'active',
+            },
           },
-        },
-      });
-    } else if (action === 'deactivateSim') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: simId,
-            status: 'inactive',
-          },
-        },
-      });
-    } else if (action === 'topUp') {
-      setIsToPupData(true);
-      setTopUpDetails({
-        simId: simId,
-        subscriberId: selectedSubscriber,
-      });
+        });
+        break;
+      case 'topUp':
+        setIsToPupData(true);
+        setTopUpDetails({
+          simId: simId,
+          subscriberId: selectedSubscriber,
+        });
+        break;
+      default:
+        break;
     }
   };
-
   const handleCloseTopUp = () => {
     setIsToPupData(false);
   };
@@ -585,22 +570,23 @@ const Page = () => {
 
   const handleUpdateSubscriber = (
     subscriberId: string,
-    email: string,
-    firstName: string,
+    updates: { name?: string; phone?: string },
   ) => {
     updateSubscriber({
       variables: {
         subscriberId: subscriberId,
-        data: {
-          email: email,
-          first_name: firstName,
-        },
+        data: updates,
+      },
+    });
+    getSubscriber({
+      variables: {
+        subscriberId: subscriberId,
       },
     });
     refetchSubscribers();
   };
 
-  const handleDeleteSubscriberModal = (
+  const handleSubscriberMenuAction = async (
     action: string,
     subscriberId: string,
   ) => {
@@ -610,33 +596,65 @@ const Page = () => {
           subscriberId: subscriberId,
         },
       });
-    } else if (action === 'pauseService') {
-      toggleSimStatus({
-        variables: {
-          data: {
-            sim_id: subscriberId,
-            status: 'terminated',
-          },
-        },
-      });
     }
   };
 
-  const handleAddSubscriber = async (values: TAddSubscriberData) => {
-    setAddSubscriberData(values);
-    await addSubscriber({
-      variables: {
-        data: {
-          email: values.email,
-          phone: values.phone,
-          first_name: values.name,
-          last_name: 'name',
-          network_id: network.id,
-        },
-      },
-    });
-  };
+  // const handleAddSubscriber = async (values: TAddSubscriberData) => {
+  //   setAddSubscriberData(values);
+  //   await addSubscriber({
+  //     variables: {
+  //       data: {
+  //         email: values.email,
+  //         phone: values.phone,
+  //         name: values.name,
+  //         network_id: network.id,
+  //       },
+  //     },
+  //   });
+  // };
+  const handleAddSubscriberTest = async (
+    subscriber: any,
+  ): Promise<AllocateSimApiDto> => {
+    try {
+      setSubscriberDetails(subscriber);
 
+      const subscriberResponse = await addSubscriber({
+        variables: {
+          data: {
+            name: subscriber.name,
+            network_id: network.id,
+            email: subscriber.email,
+            phone: subscriber.phone,
+          },
+        },
+      });
+
+      if (!subscriberResponse.data) {
+        throw new Error('Failed to add subscriber');
+      }
+
+      const simResponse = await allocateSim({
+        variables: {
+          data: {
+            network_id: subscriberResponse.data.addSubscriber.networkId,
+            package_id: subscriber.plan,
+            subscriber_id: subscriberResponse.data.addSubscriber.uuid,
+            sim_type: env.SIM_TYPE,
+            iccid: subscriber.simIccid,
+            traffic_policy: 0,
+          },
+        },
+      });
+
+      if (!simResponse.data) {
+        throw new Error('Failed to allocate SIM');
+      }
+
+      return simResponse.data.allocateSim;
+    } catch (error) {
+      throw error;
+    }
+  };
   return (
     <Stack
       direction={'column'}
@@ -751,8 +769,16 @@ const Page = () => {
           />
         </Paper>
       )}
+      <AddSubscriberStepperDialog
+        isOpen={openAddSubscriber}
+        handleCloseAction={() => setOpenAddSubscriber(false)}
+        handleAddSubscriber={handleAddSubscriberTest}
+        sims={simPoolData?.getSims.sim ?? []}
+        packages={packagesData?.getPackages.packages ?? []}
+        isLoading={addSubscriberLoading || allocateSimLoading}
+      />
 
-      <AddSubscriberDialog
+      {/* <AddSubscriberDialog
         qrCode={qrCode}
         pkgList={packagesData?.getPackages.packages ?? []}
         onSuccess={subscriberSuccess}
@@ -766,7 +792,7 @@ const Page = () => {
           addSubscriberLoading ?? allocateSimLoading ?? packagesLoading
         }
         loading={addSubscriberLoading ?? allocateSimLoading ?? packagesLoading}
-      />
+      /> */}
       <DeleteConfirmation
         open={isConfirmationOpen}
         onDelete={handleDeleteSubscriber}
@@ -778,22 +804,22 @@ const Page = () => {
         ishowSubscriberDetails={isSubscriberDetailsOpen}
         handleClose={handleCloseSubscriberDetails}
         subscriberId={selectedSubscriber}
-        subscriberInfo={subcriberInfo?.getSubscriber}
+        subscriberInfo={subscriberInfo?.getSubscriber}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
         loading={updateSubscriberLoading ?? deleteSimLoading}
-        handleDeleteSubscriber={handleDeleteSubscriberModal}
+        handleDeleteSubscriber={handleSubscriberMenuAction}
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
       />
       <TopUpData
         isToPup={isToPupData}
         onCancel={handleCloseTopUp}
-        subscriberId={topUpDetails.subscriberId}
         handleTopUp={handleTopUp}
         loadingTopUp={packagesLoading ?? addPackageToSimLoading}
         packages={packagesData?.getPackages.packages ?? []}
         sims={subscriberSimList ?? []}
+        subscriberName={subscriberDetails?.name}
       />
     </Stack>
   );

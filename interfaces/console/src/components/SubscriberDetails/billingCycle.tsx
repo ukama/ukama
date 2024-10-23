@@ -19,15 +19,9 @@ const BillingCycle: React.FC = () => (
     <Table>
       <TableHead>
         <TableRow>
-          <TableCell>
-            <strong style={{ fontWeight: 'bold' }}> Billing cycle</strong>
-          </TableCell>
-          <TableCell>
-            <strong style={{ fontWeight: 'bold' }}> Data usage</strong>
-          </TableCell>
-          <TableCell>
-            <strong style={{ fontWeight: 'bold' }}> Data plan</strong>
-          </TableCell>
+          <TableCell>Billing cycle</TableCell>
+          <TableCell>Data usage</TableCell>
+          <TableCell>Data plan</TableCell>
         </TableRow>
       </TableHead>
     </Table>

@@ -114,8 +114,7 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
     route: 'edit-sub',
   },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
-  { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
-  { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
