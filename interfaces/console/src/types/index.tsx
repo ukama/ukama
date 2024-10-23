@@ -120,6 +120,7 @@ export type UserActivateFormType = {
 };
 export interface SubscriberDetailsType {
   name: string;
+  email: string;
   simIccid: string;
   plan: string;
 }

@@ -22,6 +22,7 @@ import {
   AccordionSummary,
   Accordion,
   AccordionDetails,
+  CircularProgress,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { globalUseStyles } from '@/styles/global';
@@ -37,15 +38,22 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SubscriberDetailsType } from '@/types';
 
 const subscriberDetailsSchema = Yup.object().shape({
-  name: Yup.string()
-    .required('Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name must not exceed 50 characters'),
   simIccid: Yup.string()
     .required('SIM ICCID is required')
     .matches(/^\d{19,20}$/, 'Invalid ICCID format'),
 });
-
+const stepZeroSchema = Yup.object().shape({
+  name: Yup.string()
+    .required('Name is required')
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must not exceed 50 characters'),
+  email: Yup.string()
+    .required('Email is required')
+    .matches(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      'Invalid email format',
+    ),
+});
 const useStyles = makeStyles(() => ({
   selectStyle: {
     width: '100%',
@@ -65,27 +73,34 @@ const useStyles = makeStyles(() => ({
 interface SubscriberFormProps {
   isOpen: boolean;
   handleCloseAction: () => void;
-  handleAddSubscriber: (subscriber: SubscriberDetailsType) => void;
+  handleAddSubscriber: (
+    subscriber: SubscriberDetailsType,
+  ) => Promise<AllocateSimApiDto>;
   packages: PackageDto[];
   sims: SimDto[];
-  data: AllocateSimApiDto;
+  isLoading: boolean;
 }
 
-const SubscriberForm: React.FC<SubscriberFormProps> = ({
+const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   isOpen,
   handleCloseAction,
   handleAddSubscriber,
   packages,
   sims,
-  data,
+  isLoading,
 }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [showQrCode, setShowQrCode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submissionData, setSubmissionData] =
+    useState<AllocateSimApiDto | null>(null);
+
   const gclasses = globalUseStyles();
   const classes = useStyles();
 
   const initialValues: SubscriberDetailsType = {
     name: '',
+    email: '',
     simIccid: '',
     plan: '',
   };
@@ -95,10 +110,19 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
     handleCloseAction();
   };
 
-  const handleSubmit = (values: SubscriberDetailsType) => {
-    handleAddSubscriber(values);
-    setActiveStep(2);
+  const handleSubmit = async (values: SubscriberDetailsType) => {
+    try {
+      setError(null);
+      const response = await handleAddSubscriber(values);
+      setSubmissionData(response);
+      setActiveStep(3);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to process request',
+      );
+    }
   };
+
   const handleNext = (
     values: SubscriberDetailsType,
     setValues: (values: SubscriberDetailsType) => void,
@@ -110,8 +134,51 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
+  const NoItemMessage = ({ message }: { message: string }) => (
+    <MenuItem
+      disabled
+      value={''}
+      sx={{
+        m: 0,
+        p: '6px 16px',
+      }}
+    >
+      <Typography variant="body1">{message}</Typography>
+    </MenuItem>
+  );
 
   const renderStepContent = (formik: any) => {
+    if (isLoading) {
+      return (
+        <DialogContent>
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={2}
+            py={4}
+          >
+            <CircularProgress />
+            <Typography>Processing your request...</Typography>
+          </Box>
+        </DialogContent>
+      );
+    }
+
+    if (error) {
+      return (
+        <>
+          <DialogTitle>Error</DialogTitle>
+          <DialogContent>
+            <Typography color="error">{error}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setError(null)}>Try Again</Button>
+            <Button onClick={handleCloseAction}>Close</Button>
+          </DialogActions>
+        </>
+      );
+    }
     switch (activeStep) {
       case 0:
         return (
@@ -132,8 +199,8 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                 color="text.secondary"
                 sx={{ mb: 3 }}
               >
-                Authorize subscriber to use your network. Please ensure the
-                ICCID is correct, because it cannot be undone once assigned.
+                Enter basic information about the subscriber, so that they can
+                be authorized to use the network.{' '}
               </Typography>
               <Stack direction="column" spacing={2}>
                 <Field name="name">
@@ -152,26 +219,19 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                     />
                   )}
                 </Field>
-                <Field name="simIccid">
-                  {({ field, form, meta }: any) => (
-                    <Autocomplete
-                      options={sims}
-                      getOptionLabel={(option) => option.iccid || ''}
-                      value={sims.find((sim) => sim.id === field.value) || null}
-                      onChange={(_, newValue) => {
-                        form.setFieldValue('simIccid', newValue?.iccid || '');
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          {...field}
-                          label="SIM ICCID*"
-                          error={meta.touched && Boolean(meta.error)}
-                          helperText={meta.touched && meta.error}
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      )}
+                <Field name="email">
+                  {({ field, meta }: any) => (
+                    <TextField
+                      {...field}
+                      required
                       fullWidth
+                      label="Email"
+                      error={meta.touched && Boolean(meta.error)}
+                      helperText={meta.touched && meta.error}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        classes: { input: gclasses.inputFieldStyle },
+                      }}
                     />
                   )}
                 </Field>
@@ -181,7 +241,9 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
               <Button onClick={handleClose}>Cancel</Button>
               <Button
                 onClick={() => handleNext(formik.values, formik.setValues)}
-                disabled={!formik.isValid || !formik.dirty}
+                disabled={
+                  !formik.values.name || !formik.values.email || !formik.isValid
+                }
                 variant="contained"
               >
                 Next
@@ -194,7 +256,79 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
         return (
           <>
             <DialogTitle>
-              Add Subscriber: [{formik.values.name}]
+              Enter SIM ICCID
+              <IconButton
+                aria-label="close"
+                onClick={handleClose}
+                className={classes.closeButton}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Typography
+                variant="subtitle1"
+                color="text.secondary"
+                sx={{ mb: 3 }}
+              >
+                Please select the SIM you would like to assign to the
+                subscriber, and enter the ICCID found on the back of the card.
+                Please ensure the ICCID is correct, because this cannot be
+                undone.{' '}
+              </Typography>
+              <Field name="simIccid">
+                {({ field, form, meta }: any) => (
+                  <Autocomplete
+                    options={sims}
+                    getOptionLabel={(option) => option.iccid || ''}
+                    value={sims.find((sim) => sim.id === field.value) || null}
+                    onChange={(_, newValue) => {
+                      form.setFieldValue('simIccid', newValue?.iccid || '');
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        {...field}
+                        label="SIM ICCID*"
+                        error={meta.touched && Boolean(meta.error)}
+                        helperText={meta.touched && meta.error}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    )}
+                    noOptionsText={
+                      sims.length === 0
+                        ? 'SIM pool is empty. Please upload SIMs to SIM pool first.'
+                        : 'No matching SIMs found'
+                    }
+                    fullWidth
+                  />
+                )}
+              </Field>
+            </DialogContent>
+            <DialogActions
+              sx={{ display: 'flex', justifyContent: 'space-between' }}
+            >
+              <Box>
+                <Button onClick={handleBack}>Back</Button>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button
+                  onClick={() => handleNext(formik.values, formik.setValues)}
+                  disabled={!formik.isValid || !formik.values.simIccid}
+                  variant="contained"
+                >
+                  Next
+                </Button>
+              </Box>
+            </DialogActions>
+          </>
+        );
+      case 2: // Plan Selection
+        return (
+          <>
+            <DialogTitle>
+              Select data plan
               <IconButton
                 aria-label="close"
                 onClick={handleClose}
@@ -209,7 +343,7 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                 color="text.secondary"
                 sx={{ mb: 2 }}
               >
-                Select the purchased data plan.
+                Select the purchased data plan
               </Typography>
               <Field name="plan">
                 {({ field, meta }: any) => (
@@ -229,44 +363,19 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                           id="outlined-plan"
                         />
                       }
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          textAlign: 'left',
-                        },
-                        '& .MuiInputLabel-outlined': {
-                          transform: 'translate(14px, -6px) scale(0.75)',
-                        },
-                        '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
-                          transform: 'translate(14px, -6px) scale(0.75)',
-                        },
-                        '& .MuiSelect-select': {
-                          paddingTop: '16px',
-                          paddingBottom: '16px',
-                        },
-                      }}
-                      fullWidth
-                      required
-                      label="DATA PLAN"
-                      labelId="outlined-plan-label"
-                      MenuProps={{
-                        disablePortal: false,
-                        PaperProps: {
-                          sx: {
-                            boxShadow:
-                              '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
-                            borderRadius: '4px',
-                          },
-                        },
-                      }}
                       className={classes.selectStyle}
                     >
-                      {packages.map((plan) => (
-                        <MenuItem key={plan.uuid} value={plan.uuid}>
-                          <Typography variant="body1">
-                            {`${plan.name} - ${plan.currency} ${plan.amount}/${plan.dataVolume} ${plan.dataUnit}`}
-                          </Typography>
-                        </MenuItem>
-                      ))}
+                      {packages.length === 0 ? (
+                        <NoItemMessage message="No packages available. Please add packages first." />
+                      ) : (
+                        packages.map((plan) => (
+                          <MenuItem key={plan.uuid} value={plan.uuid}>
+                            <Typography variant="body1">
+                              {`${plan.name} - ${plan.currency} ${plan.amount}/${plan.dataVolume} ${plan.dataUnit}`}
+                            </Typography>
+                          </MenuItem>
+                        ))
+                      )}
                     </Select>
                     {meta.touched && meta.error && (
                       <FormHelperText>{meta.error}</FormHelperText>
@@ -275,23 +384,26 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                 )}
               </Field>
             </DialogContent>
-            <DialogActions>
-              <Box sx={{ flexGrow: 1 }}>
+            <DialogActions
+              sx={{ display: 'flex', justifyContent: 'space-between' }}
+            >
+              <Box>
                 <Button onClick={handleBack}>Back</Button>
               </Box>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button
-                onClick={formik.handleSubmit}
-                disabled={!formik.isValid || !formik.dirty}
-                variant="contained"
-              >
-                Add Subscriber
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button
+                  onClick={() => formik.handleSubmit()}
+                  disabled={!formik.isValid || !formik.values.plan}
+                  variant="contained"
+                >
+                  ADD SUBSCRIBER
+                </Button>
+              </Box>
             </DialogActions>
           </>
         );
-
-      case 2:
+      case 3:
         return (
           <>
             <DialogTitle>
@@ -305,7 +417,7 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
               </IconButton>
             </DialogTitle>
             <DialogContent>
-              {data?.is_physical ? (
+              {submissionData?.is_physical ? (
                 <>
                   <Typography
                     variant="subtitle1"
@@ -326,10 +438,10 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                     }}
                   >
                     <Typography fontFamily="monospace" sx={{ mb: 1 }}>
-                      UID: {data.subscriber_id}
+                      UID: {submissionData.subscriber_id}
                     </Typography>
                     <Typography fontFamily="monospace">
-                      SIM ICCID: {data.iccid}
+                      SIM ICCID: {submissionData.iccid}
                     </Typography>
                   </Box>
                 </>
@@ -375,22 +487,13 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
                     >
                       <QRCode
                         id="qrCodeId"
-                        value={data?.iccid || ''}
-                        style={{ height: 164, width: 164 }}
+                        value={submissionData?.iccid || ''}
+                        style={{ height: 180, width: 180 }}
                       />
                     </AccordionDetails>
                   </Accordion>
                 </>
               )}
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  variant="outlined"
-                  size="small"
-                />
-                <Button variant="contained">SHARE </Button>
-              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose} variant="contained">
@@ -411,14 +514,10 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
         <Formik
           initialValues={initialValues}
           validationSchema={
-            activeStep === 0 ? subscriberDetailsSchema : subscriberDetailsSchema
+            activeStep === 0 ? stepZeroSchema : subscriberDetailsSchema
           }
           onSubmit={handleSubmit}
           validateOnMount
-          // onSubmit={(values) => {
-          //   handleAddSubscriber(values);
-          //   setActiveStep(2);
-          // }}
         >
           {(formik) => <Form>{renderStepContent(formik)}</Form>}
         </Formik>
@@ -427,4 +526,4 @@ const SubscriberForm: React.FC<SubscriberFormProps> = ({
   );
 };
 
-export default SubscriberForm;
+export default AddSubscriberStepperDialog;

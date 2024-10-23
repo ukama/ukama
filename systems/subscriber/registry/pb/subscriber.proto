@@ -103,7 +103,7 @@ message AddSubscriberRequest {
     // name of the subscriber, must not be empty and have a length greater than 1
     string name = 1 [(validator.field) = { string_not_empty: true, length_gt: 1 }, json_name = "name"];
     // email of the subscriber, must be in email format
-    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$", string_not_empty: false,}] ;
+    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$", string_not_empty: true,}];
     // phone number of the subscriber, must be in phone number format
     string phoneNumber = 3 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"},
                             json_name = "phone_number"];

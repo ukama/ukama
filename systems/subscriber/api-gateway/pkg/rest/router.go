@@ -277,6 +277,7 @@ func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*subRegPb
 	return pbResp, nil
 }
 
+
 func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb.AddSubscriberResponse, error) {
 
 	pbResp, err := r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{

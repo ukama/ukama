@@ -114,12 +114,12 @@ export class SubscribersAPIResDto {
 
 @InputType()
 export class SubscriberInputDto {
-  @Field({ nullable: true })
+  @Field()
   @IsEmail()
-  email?: string;
+  email: string;
 
-  @Field({ nullable: true })
-  name?: string;
+  @Field()
+  name: string;
 
   @Field()
   network_id: string;

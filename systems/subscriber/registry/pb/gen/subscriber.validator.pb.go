@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -117,6 +117,9 @@ func (this *AddSubscriberRequest) Validate() error {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Name))
 	}
 	if !_regex_AddSubscriberRequest_Email.MatchString(this.Email) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
+	}
+	if this.Email == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Email", fmt.Errorf(`must be an email format`))
 	}
 	if !_regex_AddSubscriberRequest_PhoneNumber.MatchString(this.PhoneNumber) {

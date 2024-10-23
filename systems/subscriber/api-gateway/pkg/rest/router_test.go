@@ -348,7 +348,6 @@ func TestRouter_Subscriber(t *testing.T) {
 	t.Run("updateSubscriber", func(t *testing.T) {
 		data := SubscriberUpdateReq{
 			Name:                  "John",
-			Email:                 "johndoe@example.com",
 			Phone:                 "1234567890",
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
@@ -365,7 +364,6 @@ func TestRouter_Subscriber(t *testing.T) {
 		preq := &subPb.UpdateSubscriberRequest{
 			SubscriberId:          s.SubscriberId,
 			Name:                  data.Name,	
-			Email:                 data.Email,
 			PhoneNumber:           data.Phone,
 			Address:               data.Address,
 			ProofOfIdentification: data.ProofOfIdentification,
