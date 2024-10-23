@@ -1,0 +1,67 @@
+name: sonar-scanner-for-ukama
+
+on:
+  schedule:
+    # Runs every day at midnight UTC
+    - cron: '0 0 * * *'
+
+jobs:
+  sonar-scan:
+    name: SonarCloud Scan for everything ukama
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the code
+      - uses: actions/checkout@v3
+
+      # Step 2: Install Java (required for Sonar Scanner) and SonarScanner CLI
+      - name: Install Java and SonarScanner cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openjdk-11-jdk wget unzip
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+          unzip sonar-scanner-cli-4.6.2.2472-linux.zip
+          echo "export PATH=$PATH:$PWD/sonar-scanner-4.6.2.2472-linux/bin" >> $GITHUB_ENV
+
+      # Step 3: Find all submodules excluding 'docs'
+      - name: Find systems and services
+        id: submodules
+        run: |
+          find ./systems -type d \( -path '*/docs' -o -path './systems' \) -prune -false -o -type d -print > submodules.txt
+          echo "Found submodules:"
+          cat submodules.txt
+
+      # Step 4: Iterate over each submodule and run SonarScanner
+      - name: Run SonarCloud scan for each system and its services
+        env:
+          GITHUB_BOT_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mkdir sonar-reports
+          while read submodule; do
+            echo "Running SonarCloud scan for $submodule..."
+            cd $submodule
+
+            # Run SonarCloud scan for each module and export results as JSON
+            sonar-scanner \
+              -Dsonar.organization=ukama \
+              -Dsonar.projectKey=ukama_${submodule//\//_} \
+              -Dsonar.projectName=$submodule \
+              -Dsonar.sources=. \
+              -Dsonar.exclusions=**/docs/** \
+              -Dsonar.tests=. \
+              -Dsonar.test.inclusions=**/*_test.go \
+              -Dsonar.report.export.path=sonar-report-${submodule//\//_}.json \
+              -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+            # Move the report to a common directory
+            mv sonar-report-${submodule//\//_}.json ../sonar-reports/
+
+            cd -
+          done < submodules.txt
+
+      # Step 5: Upload all SonarCloud reports as artifacts
+      - name: Upload SonarCloud reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: sonar-reports
+          path: sonar-reports/
