@@ -99,3 +99,7 @@ message GetLatestStateRequest {
 message GetLatestStateResponse {
     State State = 1;
 }
+
+message subState {
+    
+}

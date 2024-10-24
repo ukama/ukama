@@ -19,6 +19,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -269,9 +270,11 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		} else {
 			newSubstate = instance.CurrentSubstate
 		}
+		stateValue := ukama.NodeState_value[instance.CurrentState]
+
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
-			CurrentState: npb.NodeState(npb.NodeState_value[string(instance.CurrentState)]),
+			CurrentState: ukama.NodeState(stateValue),
 			SubState:     []string{newSubstate},
 			Events:       n.getEventsForNode(nodeId),
 		})
@@ -307,7 +310,7 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	return nil
 }
 func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
-	// Assume the initial event will always be online
+	//Assume the initial event will always be online
 	onlineEvent, ok := msg.(*epb.NodeOnlineEvent)
 	if !ok {
 		return fmt.Errorf("expected *NodeOnlineEvent, got %T", msg)

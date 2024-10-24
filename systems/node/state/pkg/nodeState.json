@@ -4,12 +4,12 @@
   "file": "nodeState.json",
   "states": [
     {
-      "name": "unknown",
+      "name": "Unknown",
       "description": "Initial state when node comes online for the first time, or state after offBoarding",
       "events": ["online", "offline", "reboot", "onboarding"],
       "transition": [
         {
-          "to_state": "config",
+          "to_state": "Configured",
           "trigger": ["onboarding"]
         }
       ],
@@ -34,7 +34,7 @@
       }
     },
     {
-      "name": "config",
+      "name": "Configured",
       "description": "Node is in configuration state",
       "events": [
         "online",
@@ -45,19 +45,19 @@
         "upgrade",
         "update",
         "downgrade",
-        "fault"
+        "faulty"
       ],
       "transition": [
         {
-          "to_state": "faulty",
+          "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "config",
+          "to_state": "Configured",
           "trigger": ["config"]
         },
         {
-          "to_state": "operational",
+          "to_state": "Operational",
           "trigger": ["ready"]
         }
       ],
@@ -107,7 +107,7 @@
       }
     },
     {
-      "name": "operational",
+      "name": "Operational",
       "description": "Node is fully operational and part of a site",
       "events": [
         "online",
@@ -119,11 +119,11 @@
       ],
       "transition": [
         {
-          "to_state": "faulty",
+          "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "config",
+          "to_state": "Configured",
           "trigger": ["reset"]
         },
         {
@@ -156,11 +156,11 @@
       "description": "Node is in a faulty state",
       "transition": [
         {
-          "to_state": "faulty",
+          "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "config",
+          "to_state": "Configured",
           "trigger": ["config"]
         }
       ],

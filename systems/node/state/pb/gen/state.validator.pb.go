@@ -105,3 +105,6 @@ func (this *GetLatestStateResponse) Validate() error {
 	}
 	return nil
 }
+func (this *SubState) Validate() error {
+	return nil
+}
