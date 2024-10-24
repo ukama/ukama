@@ -18,6 +18,7 @@
 #include "usys_types.h"
 
 #define SCRIPT        "./build.sh"
+#define NODE_SCRIPT   "./build-virtual-node.sh"
 #define BASE_IMAGE_ID "uk-ma0000-tnode-a1-1234"
 
 static bool build_system(char *name, char *path) {
@@ -72,10 +73,10 @@ bool build_nodes(char *repo, int count, char **list) {
 
     if (getenv(ENV_DOCKER_BUILD)) {
         sprintf(runMe, "cd scripts; %s base-image %s %s; cd -",
-                SCRIPT, repo, BASE_IMAGE_ID);
+                NODE_SCRIPT, repo, BASE_IMAGE_ID);
     } else {
         sprintf(runMe, "cd scripts; sudo %s base-image %s %s; cd -",
-                SCRIPT, repo, BASE_IMAGE_ID);
+                NODE_SCRIPT, repo, BASE_IMAGE_ID);
     }
     if (system(runMe) < 0) {
         usys_log_error("Unable to create base image via repo: %s", repo);
