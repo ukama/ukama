@@ -40,7 +40,6 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
-import { SubscriberDetailsType } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper, Stack, Typography } from '@mui/material';
@@ -551,21 +550,16 @@ const Page = () => {
   };
 
   const handleTopUp = async (topUpplan: string, selectedSim: string) => {
-    const data = {
-      sim_id: selectedSim,
-      package_id: topUpplan,
-    };
-
+    // TODO: Need to revisit this start date logic
     await addPackageToSim({
       variables: {
         data: {
           sim_id: selectedSim,
           package_id: topUpplan,
-          start_date: new Date(Date.now() + 5 * 60000).toISOString(),
+          start_date: new Date(Date.now() + 1 * 60000).toISOString(),
         },
       },
     });
-    await activatePackageSim({ variables: { data } });
   };
 
   const handleUpdateSubscriber = (
