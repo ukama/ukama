@@ -116,7 +116,7 @@ class SimApi extends RESTDataSource {
 
       await this.setActivePackageForSim(baseURL, {
         sim_id: simRes.sim.id,
-        package_id: req.package_id,
+        package_id: simRes.sim.package.id,
       });
     }
 
