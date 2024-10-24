@@ -202,7 +202,10 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
+  console.log(`UserObj ${JSON.stringify(userObj)}`);
+
   if (userObj.isShowWelcome) {
+    console.log("Redirecting to '/welcome'");
     return NextResponse.redirect(
       new URL('/welcome', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -212,6 +215,7 @@ const middleware = async (request: NextRequest) => {
     (pathname.includes('/console') || pathname === '/') &&
     !isUserHaveOrg(userObj)
   ) {
+    console.log("Redirecting to '/onboarding' ");
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -222,16 +226,19 @@ const middleware = async (request: NextRequest) => {
     (userObj.role === Role_Type.RoleInvalid ||
       userObj.role === Role_Type.RoleUser)
   ) {
+    console.log("Redirecting to '/403' ");
     return NextResponse.redirect(
       new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
   if (pathname.includes('/welcome') && userObj.role !== Role_Type.RoleOwner) {
+    console.log("Redirecting to '/' ");
     return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
   if (pathname.includes('/manage') && userObj.role !== Role_Type.RoleOwner) {
+    console.log("Redirecting to '/unauthorized' ");
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -243,12 +250,14 @@ const middleware = async (request: NextRequest) => {
     userObj.role !== Role_Type.RoleOwner &&
     userObj.role !== Role_Type.RoleAdmin
   ) {
+    console.log("Redirecting to '/unauthorized' ");
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
   if (pathname === '/' && isUserHaveOrg(userObj) && isValidUser(userObj)) {
+    console.log("Redirecting to '/console/home'");
     return NextResponse.redirect(
       new URL('/console/home', process.env.NEXT_PUBLIC_APP_URL),
     );
