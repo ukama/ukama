@@ -44,9 +44,9 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
-ULFIUS_LIB+=-lhogweed -lp11-kit -lz
-LIBS = $(ULFIUS_LIB)
+#ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+#ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+#LIBS = $(ULFIUS_LIB)
 LIBS+=-ljansson
 LIBS+=-lusys
 
