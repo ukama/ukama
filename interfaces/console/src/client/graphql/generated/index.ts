@@ -1002,10 +1002,10 @@ export enum Sim_Status {
 }
 
 export enum Sim_Types {
-  OperatorData = 'OPERATOR_DATA',
-  Test = 'TEST',
-  UkamaData = 'UKAMA_DATA',
-  Unknown = 'UNKNOWN'
+  OperatorData = 'operator_data',
+  Test = 'test',
+  UkamaData = 'ukama_data',
+  Unknown = 'unknown'
 }
 
 export type SetActivePackageForSimInputDto = {
