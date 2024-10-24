@@ -257,13 +257,19 @@ const getBaseURL = async (
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
-    const intRes = await initAPI.getSystem(orgName, sysName);
-    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
-    // if (store) await addInStore(store, `${orgName}-${sysName}`, url);
-    return {
-      status: 200,
-      message: url,
-    };
+    try {
+      const intRes = await initAPI.getSystem(orgName, sysName);
+      const url = intRes.url
+        ? intRes.url
+        : `http://${intRes.ip}:${intRes.port}`;
+      // if (store) await addInStore(store, `${orgName}-${sysName}`, url);
+      return {
+        status: 200,
+        message: url,
+      };
+    } catch (e) {
+      logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
+    }
   } else {
     return {
       status: 500,
