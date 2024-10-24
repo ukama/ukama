@@ -30,6 +30,7 @@ import (
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
 
 type Router struct {
@@ -50,8 +51,12 @@ type Clients struct {
 	Controller      controller
 	Configurator    configurator
 	SoftwareManager softwareManager
+	State           state
 }
 
+type state interface {
+	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+}
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
@@ -75,6 +80,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
 	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
+	c.State = client.NewState(endpoints.State, endpoints.Timeout)
 	return c
 }
 
@@ -148,6 +154,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const soft = "/software"
 		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
+
+		const state = "/state"
+		stateS := auth.Group(state, "State", "Operations on state")
+		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
 	}
 }
 
@@ -170,6 +180,10 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
+}
+
+func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
+	return r.clients.State.GetStates(req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

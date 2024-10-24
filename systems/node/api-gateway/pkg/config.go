@@ -30,6 +30,7 @@ type GrpcEndpoints struct {
 	Controller   string
 	Configurator string
 	Software     string
+	State        string
 }
 
 type HttpEndpoints struct {
@@ -51,6 +52,7 @@ func NewConfig() *Config {
 			Controller:   "controller:9090",
 			Software:     "software:9090",
 			Configurator: "configurator:9090",
+			State:        "state:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
