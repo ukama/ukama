@@ -114,10 +114,7 @@ const Page = () => {
     useDeletePackageMutation({
       onCompleted: () => {
         getDataPlans().then((res) => {
-          setData((prev: any) => ({
-            ...prev,
-            dataPlan: res?.data?.getPackages.packages ?? [],
-          }));
+          setData(res?.data?.getPackages.packages ?? []);
         });
         setSnackbarMessage({
           id: 'delete-data-plan',
