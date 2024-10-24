@@ -10,8 +10,6 @@ package rest
 
 import (
 	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SimInfo struct {
@@ -55,8 +53,7 @@ type Package struct {
 
 type Subscriber struct {
 	SubscriberId          string `json:"subscriber_id" validate:"required"`
-	FirstName             string `json:"first_name" validate:"required"`
-	LastName              string `json:"last_name" validate:"required"`
+	Name                  string `json:"name" validate:"required"`
 	Email                 string `json:"email" validate:"email,required"`
 	Phone                 string `json:"phone" validate:"required"`
 	Dob                   string `json:"dob" validate:"required"`
@@ -74,6 +71,10 @@ type SimPoolTypeReq struct {
 	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
 }
 
+type SimPoolStatReq struct {
+	SimType string `example:"test" form:"sim_type" json:"sim_type" path:"sim_type" binding:"required" validate:"required"`
+}
+
 type SimPoolRemoveSimReq struct {
 	Id []uint64 `example:"[1]" form:"id" json:"id" path:"sim_id" binding:"required" validate:"required"`
 }
@@ -88,8 +89,7 @@ type SimPoolAddSimReq struct {
 }
 
 type SubscriberAddReq struct {
-	FirstName             string `example:"John" json:"first_name" validate:"required"`
-	LastName              string `example:"Doe" json:"last_name" validate:"required"`
+	Name                  string `example:"John" json:"name" validate:"required"`
 	Email                 string `example:"john@example.com" json:"email" validate:"required"`
 	NetworkId             string `example:"{{NetworkUUID}}" json:"network_id"`
 	Gender                string `example:"male" json:"gender"`
@@ -118,7 +118,7 @@ type SubscriberByNetworkReq struct {
 
 type SubscriberUpdateReq struct {
 	SubscriberId          string `example:"{{SubscriberUUID}}" path:"subscriber_id" validate:"required"`
-	Email                 string `example:"test@example.com" json:"email"`
+	Name                  string `example:"John" json:"name" validate:"required"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
 	ProofOfIdentification string `example:"passport" json:"proof_of_Identification"`
@@ -159,9 +159,9 @@ type GetSimsBySubReq struct {
 	SubscriberId string `example:"{{SubscriberUUID}}" form:"subscriber_id" json:"subscriber_id" path:"subscriber_id" binding:"required" validate:"required"`
 }
 type AddPkgToSimReq struct {
-	SimId     string                 `example:"{{SimUUID}}" json:"sim_id" validate:"required"`
-	PackageId string                 `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
-	StartDate *timestamppb.Timestamp `example:"" json:"start_date" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" validate:"required"`
+	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
+	StartDate string `example:"" json:"start_date" validate:"required"`
 }
 
 type RemovePkgFromSimReq struct {

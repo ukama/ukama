@@ -149,7 +149,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.NoError(tt, err)
@@ -178,7 +178,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)
@@ -204,7 +204,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)
@@ -225,7 +225,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		s, err := testSubscriberClient.Add(
 			subscriber.AddSubscriberRequest{
 				OrgId:    testUuid,
-				LastName: "Foo"},
+				Name: "Foo"},
 		)
 
 		assert.Error(tt, err)

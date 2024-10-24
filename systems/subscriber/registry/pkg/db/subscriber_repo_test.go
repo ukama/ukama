@@ -75,10 +75,9 @@ func TestSubscriber_Add(t *testing.T) {
 
 	subscriber := int_db.Subscriber{
 		SubscriberId:          uuid.NewV4(),
-		FirstName:             "John",
-		LastName:              "Doe",
+		Name:                  "John",
 		NetworkId:             uuid.NewV4(),
-		Email:                 "johndoe@example.com",
+		
 		PhoneNumber:           "555-555-5555",
 		Gender:                "Male",
 		DOB:                   dateStr,
@@ -93,8 +92,7 @@ func TestSubscriber_Add(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
 		subscriber.SubscriberId,
-		subscriber.FirstName,
-		subscriber.LastName,
+		subscriber.Name,
 		subscriber.NetworkId,
 		subscriber.Email,
 		subscriber.PhoneNumber,

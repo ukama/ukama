@@ -63,7 +63,7 @@ func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	pkg := &Package{}
 
-	result := p.Db.GetGormDb().Where("package_id = ?", packageID).First(pkg)
+	result := p.Db.GetGormDb().Where("id = ?", packageID).First(pkg)
 	if result.Error != nil {
 		return nil, result.Error
 	}

@@ -15,13 +15,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/testing/services/hooks/internal"
 	"github.com/ukama/ukama/testing/services/hooks/internal/clients"
 	"github.com/ukama/ukama/testing/services/hooks/internal/scheduler"
 
 	log "github.com/sirupsen/logrus"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/testing/services/hooks/pb/gen"
 )
 
@@ -37,22 +34,17 @@ type HookServer struct {
 	paymentsClient clients.PaymentsClient
 	webhooksClient clients.WebhooksClient
 	cdrScheduler   scheduler.HookScheduler
-	msgBus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
 	pb.UnimplementedHookServiceServer
 }
 
 func NewHookServer(orgName string, pawapayClient clients.PawapayClient, paymentsClient clients.PaymentsClient,
-	webhooksClient clients.WebhooksClient, cdrScheduler scheduler.HookScheduler, msgBus mb.MsgBusServiceClient) *HookServer {
+	webhooksClient clients.WebhooksClient, cdrScheduler scheduler.HookScheduler) *HookServer {
 	h := &HookServer{
 		orgName:        orgName,
 		pawapayClient:  pawapayClient,
 		paymentsClient: paymentsClient,
 		webhooksClient: webhooksClient,
 		cdrScheduler:   cdrScheduler,
-		msgBus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
-			SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
 
 	_, err := h.startScheduler()
@@ -102,10 +94,12 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 		if depositWebhook.Status != webhookStatusPending {
 			_, err = p.webhooksClient.PostDepositHook(depositWebhook)
 			if err != nil {
-				log.Errorf("error while fetching deposit webhook: %v", err)
+				log.Errorf("error while posting deposit webhook: %v", err)
 			}
 		}
 	}
+
+	log.Infof("finished Pulling webhooks from sandbox")
 
 	return nil
 }

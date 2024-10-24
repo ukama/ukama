@@ -29,9 +29,9 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	PushGateway      string           `default:"http://localhost:9091"`
-	Country          string           `default:"usa"`
-	Language         string           `default:"en"`
-	Currency         string           `default:"usd"`
+	Country          string
+	Language         string
+	Currency         string
 	Service          *uconf.Service
 	Http             HttpServices
 	OrgName          string

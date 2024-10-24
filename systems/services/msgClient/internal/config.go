@@ -54,9 +54,5 @@ type HeathCheckRoutine struct {
 }
 
 func NewConfig() *Config {
-	return &Config{
-		Grpc: &uconf.Grpc{
-			Port: 9095,
-		},
-	}
+	return &Config{}
 }

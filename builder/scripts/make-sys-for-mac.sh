@@ -1,12 +1,12 @@
 #!/bin/bash
 # To run "chmod +x make-sys-for-mac.sh && ./make-sys-for-mac.sh ../deploy_config.json"
 
+TAG="\033[38;5;39mUkama>\033[0m"
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[38;5;39m'
-NC='\033[0m'
-TAG="${BLUE}Ukama>${NC}"
+
 root_dir=$(pwd)
 METADATA=$(jq -c '.' ../metadata.json)
 SYS=$(jq -r '.systems' "$1")
@@ -54,14 +54,19 @@ cd ../../systems
 root_dir=$(pwd)
 
 for path in "${PATHS[@]}"; do
+
     cd "$root_dir/$path" || { echo "Failed to change directory to $path"; exit 1; }
    
     go mod tidy && make lint && make
 
+    IFS='/' read -r -a path_array <<< "$path"
+    system=${path_array[0]}
+    service=${path_array[1]}
+   
     if [ $? -eq 0 ]; then
-        echo "Make completed successfully in $path"
+        echo -e "${TAG} Successfully build system: ${GREEN}${system}${NC} - service: ${GREEN}${service}${NC}"
     else
-        echo "Make failed in $path"
+        echo -e "${TAG} Failed to build system: ${RED}${system}${NC} - service: ${RED}${service}${NC}"
     fi
 
     cd - >/dev/null

@@ -106,18 +106,25 @@ class InitAPI extends RESTDataSource {
             baseURL.message,
             userWhoami.user.uuid
           );
-          role = member.role as ROLE_TYPE;
-          if (role === ROLE_TYPE.ROLE_OWNER) {
-            const isAlreadyWelcomed = await getFromStore(
-              store,
-              `${userWhoami.user.uuid}-welcome`
-            );
-            if (typeof isAlreadyWelcomed !== "boolean") {
-              await addInStore(store, `${userWhoami.user.uuid}-welcome`, true);
-              isWelcomeEligible = true;
-            } else {
-              isWelcomeEligible = false;
+
+          if (member && member.memberId) {
+            role = member.role as ROLE_TYPE;
+            if (role === ROLE_TYPE.ROLE_OWNER) {
+              const isAlreadyWelcomed = await getFromStore(
+                store,
+                `${userWhoami.user.uuid}-welcome`
+              );
+              if (typeof isAlreadyWelcomed !== "boolean") {
+                await addInStore(
+                  store,
+                  `${userWhoami.user.uuid}-welcome`,
+                  true
+                );
+                isWelcomeEligible = true;
+              }
             }
+          } else {
+            logger.error(`Error: member not found`);
           }
         } else {
           logger.error(`Error: ${baseURL.message}`);

@@ -64,7 +64,7 @@ type AddSimReq struct {
 	Email                 string `json:"email"`
 	PhoneNumber           string `json:"phone_number"`
 	Address               string `json:"address"`
-	Dob                   string `json:"date_of_birth"`
+	Dob                   string `json:"dob"`
 	ProofOfIdentification string `json:"proof_of_identification"`
 	IdSerial              string `json:"id_serial"`
 	NetworkId             string `json:"network_id" validate:"required"`

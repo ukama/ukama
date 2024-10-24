@@ -8,6 +8,7 @@
 'use client';
 import {
   SimDto,
+  Sim_Status,
   Sim_Types,
   useGetSimsQuery,
   useUploadSimsMutation,
@@ -25,14 +26,17 @@ import { useState } from 'react';
 
 const Page = () => {
   const [data, setData] = useState<SimDto[]>([]);
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage, env } = useAppContext();
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
 
   const { loading: simsLoading, refetch: refetchSims } = useGetSimsQuery({
     fetchPolicy: 'cache-and-network',
     skip: false,
     variables: {
-      type: Sim_Types.OperatorData,
+      data: {
+        status: Sim_Status.All,
+        type: env.SIM_TYPE as Sim_Types,
+      },
     },
     onCompleted: (data) => {
       setData(data?.getSims?.sim ?? []);

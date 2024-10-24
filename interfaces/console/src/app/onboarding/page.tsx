@@ -12,6 +12,7 @@ import {
   useUpdateInvitationMutation,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
+import DataTableSkelton from '@/components/DataTableWithOptions/skelton';
 import { INVITATION_TABLE_COLUMN, INVITATION_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
 import '@/styles/console.css';
@@ -19,28 +20,29 @@ import { CenterContainer } from '@/styles/global';
 import { colors } from '@/theme';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import { Box, Container, Paper, Stack, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 const Page = () => {
   const { user } = useAppContext();
-  const { data: invitationsData, refetch: refetchInvitations } =
-    useGetInvitationsByEmailQuery({
-      fetchPolicy: 'network-only',
-      variables: {
-        email: user.email,
-      },
-      onCompleted: (data) => {
-        // if (data.getInvitationsByEmail.invitations === Invitation_Status.InviteAccepted) {
-        // TODO: ON ACCEPT INVITE REDIRECT TO ROOT SO THAT TOKEN CAN BE REFRESHED
-        // }
-      },
-    });
-
-  const [updateInvitation] = useUpdateInvitationMutation({
+  const router = useRouter();
+  const {
+    data: invitationsData,
+    refetch: refetchInvitations,
+    loading: invitationLoading,
+  } = useGetInvitationsByEmailQuery({
     fetchPolicy: 'network-only',
-    onCompleted: () => {
-      refetchInvitations();
+    variables: {
+      email: user.email,
     },
   });
+
+  const [updateInvitation, { loading: updateInvitationLoading }] =
+    useUpdateInvitationMutation({
+      fetchPolicy: 'network-only',
+      onCompleted: () => {
+        router.push('/refresh');
+      },
+    });
 
   const handleInviteAction = (id: string, type: string) => {
     if (type === 'accept-invite') {
@@ -106,20 +108,24 @@ const Page = () => {
             </Box>
             <br />
             <br />
-            <DataTableWithOptions
-              icon={PeopleAltIcon}
-              isRowClickable={false}
-              withStatusColumn={true}
-              columns={INVITATION_TABLE_COLUMN}
-              menuOptions={INVITATION_TABLE_MENU}
-              emptyViewLabel={'No invitation yet!'}
-              onMenuItemClick={handleInviteAction}
-              dataset={
-                invitationsData?.getInvitationsByEmail
-                  ? invitationsData?.getInvitationsByEmail.invitations
-                  : []
-              }
-            />
+            {invitationLoading || updateInvitationLoading ? (
+              <DataTableSkelton header={INVITATION_TABLE_COLUMN} />
+            ) : (
+              <DataTableWithOptions
+                icon={PeopleAltIcon}
+                isRowClickable={false}
+                withStatusColumn={true}
+                columns={INVITATION_TABLE_COLUMN}
+                menuOptions={INVITATION_TABLE_MENU}
+                emptyViewLabel={'No invitation yet!'}
+                onMenuItemClick={handleInviteAction}
+                dataset={
+                  invitationsData?.getInvitationsByEmail
+                    ? invitationsData?.getInvitationsByEmail.invitations
+                    : []
+                }
+              />
+            )}
           </Stack>
         </Paper>
       </Container>

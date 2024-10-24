@@ -18,7 +18,6 @@ import {
 } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
-import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
@@ -242,34 +241,40 @@ const getBaseURL = async (
   store: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  if (store) {
-    const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
-    if (baseURL) {
-      logger.info(
-        `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
-      );
-      return {
-        status: 200,
-        message: baseURL,
-      };
-    }
-  }
+  logger.info(`${store.get("org")}`);
+  // if (store) {
+  //   const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
+  //   if (baseURL) {
+  //     logger.info(
+  //       `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
+  //     );
+  //     return {
+  //       status: 200,
+  //       message: baseURL,
+  //     };
+  //   }
+  // }
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
-    const intRes = await initAPI.getSystem(orgName, sysName);
-    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
-    if (store) await addInStore(store, `${orgName}-${sysName}`, url);
-    return {
-      status: 200,
-      message: url,
-    };
-  } else {
-    return {
-      status: 500,
-      message: "Unable to reach system",
-    };
+    try {
+      const intRes = await initAPI.getSystem(orgName, sysName);
+      const url = intRes.url
+        ? intRes.url
+        : `http://${intRes.ip}:${intRes.port}`;
+      // if (store) await addInStore(store, `${orgName}-${sysName}`, url);
+      return {
+        status: 200,
+        message: url,
+      };
+    } catch (e) {
+      logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
+    }
   }
+  return {
+    status: 500,
+    message: "Unable to reach system",
+  };
 };
 
 const csvToBase64 = (filePath: string) => {

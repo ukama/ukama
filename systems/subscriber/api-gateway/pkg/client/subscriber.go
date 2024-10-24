@@ -83,7 +83,7 @@ func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*
 	defer cancel()
 	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
 		SubscriberId:          subscriber.SubscriberId,
-		Email:                 subscriber.Email,
+		Name:				   subscriber.Name,
 		PhoneNumber:           subscriber.PhoneNumber,
 		Address:               subscriber.Address,
 		IdSerial:              subscriber.IdSerial,

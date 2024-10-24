@@ -89,14 +89,17 @@ message SetDefaultResponse{
 message Network {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
     string name = 2;
-    repeated string allowedCountries = 4 [json_name = "allowed_countries"];
-    repeated string allowedNetworks = 5 [json_name = "allowed_networks"];
-    double budget = 6;
-    double overdraft = 7;
-    uint32 trafficPolicy = 8 [json_name = "traffic_policy"];;
-    bool isDeactivated = 9 [json_name = "is_deactivated"];
-    bool paymentLinks = 10 [json_name = "payment_links"];
-    bool isDefault = 11 [json_name = "is_default"];
-    google.protobuf.Timestamp createdAt = 12 [json_name = "created_at"];
-    string syncStatus = 13 [json_name = "sync_status"];
+    repeated string allowedCountries = 3 [json_name = "allowed_countries"];
+    repeated string allowedNetworks = 4 [json_name = "allowed_networks"];
+    double budget = 5;
+    double overdraft = 6;
+    uint32 trafficPolicy = 7 [json_name = "traffic_policy"];;
+    bool isDeactivated = 8 [json_name = "is_deactivated"];
+    bool paymentLinks = 9 [json_name = "payment_links"];
+    bool isDefault = 10 [json_name = "is_default"];
+    google.protobuf.Timestamp createdAt = 11 [json_name = "created_at"];
+    string syncStatus = 12 [json_name = "sync_status"];
+    string country = 13;
+    string currency = 14;
+    string language = 15;
 }

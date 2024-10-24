@@ -46,19 +46,19 @@ type InvitationServer struct {
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
 	invitationExpiryTime uint
-	authLoginbaseURL     string
+	consoleAppUrl        string
 	orgName              string
 	TemplateName         string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, consoleAppUrl string, mailerClient cnotif.MailerClient,
 	orgClient cnucl.OrgClient, userClient cnucl.UserClient, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
 		mailerClient:         mailerClient,
 		invitationExpiryTime: invitationExpiryTime,
-		authLoginbaseURL:     authLoginbaseURL,
+		consoleAppUrl:        consoleAppUrl,
 		orgClient:            orgClient,
 		userClient:           userClient,
 		msgbus:               msgBus,
@@ -78,36 +78,36 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 
 	expiry := time.Now().Add(time.Hour * time.Duration(i.invitationExpiryTime))
 
-	link, err := generateInvitationLink(i.authLoginbaseURL, uuid.NewV4().String(), expiry)
+	link, err := generateInvitationLink(i.consoleAppUrl, invitationId.String(), expiry)
 	if err != nil {
 		return nil, err
 	}
 
-	orgInfo, err := i.orgClient.Get(i.orgName)
-	if err != nil {
-		return nil, err
-	}
+	// orgInfo, err := i.orgClient.Get(i.orgName)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
-	if err != nil {
-		return nil, err
-	}
+	// orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{req.GetEmail()},
-		TemplateName: i.TemplateName,
-		Values: map[string]interface{}{
-			"INVITATION": invitationId.String(),
-			"LINK":       link,
-			"OWNER":      orgOwnerInfo.Name,
-			"ORG":        orgInfo.Name,
-			"ROLE":       req.GetRole().String(),
-		},
-	})
+	// err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
+	// 	To:           []string{req.GetEmail()},
+	// 	TemplateName: i.TemplateName,
+	// 	Values: map[string]interface{}{
+	// 		"INVITATION": invitationId.String(),
+	// 		"LINK":       link,
+	// 		"OWNER":      orgOwnerInfo.Name,
+	// 		"ORG":        orgInfo.Name,
+	// 		"ROLE":       req.GetRole().String(),
+	// 	},
+	// })
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	invitedUserInfo, err := i.userClient.GetByEmail(req.GetEmail())
 	if err != nil {
@@ -237,7 +237,6 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 
 	if i.msgbus != nil {
 		route := i.baseRoutingKey.SetActionUpdate().SetObject("invitation").MustBuild()
-		log.Infof("Route %s", route)
 		evt := &epb.EventInvitationUpdated{
 			Id:        invite.Id.String(),
 			Link:      invite.Link,
@@ -331,8 +330,8 @@ func dbInvitationsToPbInvitations(invitations []*db.Invitation) []*pb.Invitation
 	return res
 }
 
-func generateInvitationLink(authLoginbaseURL string, linkID string, expirationTime time.Time) (string, error) {
-	link := fmt.Sprintf("%s?linkId=%s", authLoginbaseURL, linkID)
+func generateInvitationLink(consoleAppUrl string, linkID string, expirationTime time.Time) (string, error) {
+	link := fmt.Sprintf("%s?linkId=%s", consoleAppUrl, linkID)
 
 	expiringLink := fmt.Sprintf("%s&expires=%d", link, expirationTime.Unix())
 

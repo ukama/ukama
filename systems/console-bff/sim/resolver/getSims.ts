@@ -7,18 +7,25 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { SIM_TYPES } from "../../common/enums";
+import { SIM_STATUS } from "../../common/enums";
 import { Context } from "../context";
-import { SimsResDto } from "./types";
+import { GetSimsInput, SimsResDto } from "./types";
 
 @Resolver()
 export class GetSimsResolver {
   @Query(() => SimsResDto)
   async getSims(
-    @Arg("type") type: SIM_TYPES,
+    @Arg("data") data: GetSimsInput,
     @Ctx() ctx: Context
   ): Promise<SimsResDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.getSims(baseURL, type);
+    const sims = await dataSources.dataSource.getSims(baseURL, data.type);
+    if (data.status === SIM_STATUS.ASSIGNED) {
+      return { sim: sims.sim.filter(sim => sim.isAllocated === true) };
+    } else if (data.status === SIM_STATUS.UNASSIGNED) {
+      return { sim: sims.sim.filter(sim => sim.isAllocated === false) };
+    } else {
+      return sims;
+    }
   }
 }

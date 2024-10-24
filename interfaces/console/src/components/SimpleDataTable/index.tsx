@@ -8,7 +8,6 @@
 
 import ChipDropdown from '@/components/ChipDropDown';
 import { useAppContext } from '@/context';
-import { colors } from '@/theme';
 import { ColumnsWithOptions } from '@/types';
 import {
   getSimValuefromSimType,
@@ -72,22 +71,6 @@ const MemoizedTableHeader = React.memo(
 );
 MemoizedTableHeader.displayName = 'MemoizedTableHeader';
 
-const MemoizedChip = React.memo(({ label }: { label: string }) => {
-  return (
-    <Chip
-      label={label}
-      sx={{
-        backgroundColor: colors.blueGray,
-        color: colors.black,
-        marginRight: '4px',
-        marginBottom: '4px',
-        borderRadius: '4px',
-      }}
-    />
-  );
-});
-MemoizedChip.displayName = 'MemoizedChip';
-
 const SimpleTableCell = ({
   column,
   row,
@@ -113,7 +96,11 @@ const SimpleTableCell = ({
     >
       {column.id === 'role' ? (
         <div>
-          <MemoizedChip label={roleEnumToString(row[column.id])} />
+          <Chip
+            color="info"
+            sx={{ color: 'white' }}
+            label={roleEnumToString(row[column.id])}
+          />
         </div>
       ) : column.id === 'pdf' ? (
         <Link target="_blank" underline="hover" href={row[column.id]}>
@@ -137,9 +124,12 @@ const SimpleTableCell = ({
         </IconButton>
       ) : column.id === 'status' ? (
         <Chip
-          sx={{ color: 'white' }}
+          sx={{
+            p: 1,
+            color: 'black',
+            backgroundColor: provideStatusColor(row[column.id]),
+          }}
           label={inviteStatusEnumToString(row[column.id])}
-          color={provideStatusColor(row[column.id])}
         />
       ) : column.id === 'simType' ? (
         <Chip
@@ -153,9 +143,9 @@ const SimpleTableCell = ({
         </Typography>
       ) : (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
-          {row[column.id] === 'true'
+          {row[column.id] === true
             ? 'Assigned'
-            : row[column.id] === 'false'
+            : row[column.id] === false
               ? 'N/A'
               : row[column.id]}
         </Typography>

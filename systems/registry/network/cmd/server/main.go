@@ -81,8 +81,8 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	networkServer := server.NewNetworkServer(serviceConfig.OrgName, db.NewNetRepo(gormdb), orgClient,
-		mbClient, serviceConfig.PushGateway, serviceConfig.Country, serviceConfig.Currency,
-		serviceConfig.Language, serviceConfig.OrgId)
+		mbClient, serviceConfig.PushGateway, serviceConfig.Country,
+		serviceConfig.Language, serviceConfig.Currency, serviceConfig.OrgId)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

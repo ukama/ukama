@@ -81,10 +81,10 @@ registerEnumType(NETWORK_STATUS, {
 });
 
 export enum SIM_TYPES {
-  UNKNOWN = "unknown",
-  TEST = "test",
-  OPERATOR_DATA = "operator_data",
-  UKAMA_DATA = "ukama_data",
+  unknown = "unknown",
+  test = "test",
+  operator_data = "operator_data",
+  ukama_data = "ukama_data",
 }
 registerEnumType(SIM_TYPES, {
   name: "SIM_TYPES",
@@ -121,6 +121,15 @@ export enum ROLE_TYPE {
 }
 registerEnumType(ROLE_TYPE, {
   name: "ROLE_TYPE",
+});
+
+export enum SIM_STATUS {
+  ALL = "ALL",
+  ASSIGNED = "ASSIGNED",
+  UNASSIGNED = "UNASSIGNED",
+}
+registerEnumType(SIM_STATUS, {
+  name: "SIM_STATUS",
 });
 
 export enum NOTIFICATION_TYPE {
