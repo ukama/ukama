@@ -79,11 +79,11 @@ func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error
 	return res, nil
 }
 
-func (r *OrgRegistry) AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error) {
+func (r *OrgRegistry) AddOrg(orgName string, owner string, certificate string, country string, currency string) (*orgpb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	organization := &orgpb.Organization{Name: orgName, Owner: owner, Certificate: certificate}
+	organization := &orgpb.Organization{Name: orgName, Owner: owner, Certificate: certificate, Country: country, Currency: currency}
 	res, err := r.orgClient.Add(ctx, &orgpb.AddRequest{Org: organization})
 
 	if err != nil {

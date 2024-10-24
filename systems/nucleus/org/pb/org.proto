@@ -101,6 +101,7 @@ message Organization {
     string certificate = 5;
     bool isDeactivated = 6 [json_name = "is_deactivated"];
     google.protobuf.Timestamp created_at = 7 [json_name = "created_at"];
+    string currency = 8;
 }
 
 message UserAttributes {

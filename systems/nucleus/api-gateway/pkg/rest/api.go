@@ -26,6 +26,8 @@ type AddOrgRequest struct {
 	OrgName     string `example:"milky-way" json:"name" validate:"required"`
 	Owner       string `example:"{{UserUUID}}" json:"owner_uuid" validate:"required"`
 	Certificate string `example:"test_cert" json:"certificate"`
+	Country     string `example:"us" json:"country"`
+	Currency    string `example:"usd" json:"currency"`
 }
 
 type UserOrgRequest struct {

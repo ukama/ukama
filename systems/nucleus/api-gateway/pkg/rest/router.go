@@ -54,7 +54,7 @@ type Clients struct {
 }
 
 type organization interface {
-	AddOrg(orgName string, owner string, certificate string) (*orgpb.AddResponse, error)
+	AddOrg(orgName string, owner string, certificate string, country string, currency string) (*orgpb.AddResponse, error)
 	GetOrg(orgName string) (*orgpb.GetByNameResponse, error)
 	GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error)
 	UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error)
@@ -163,7 +163,7 @@ func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.Get
 }
 
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {
-	return r.clients.Organization.AddOrg(req.OrgName, req.Owner, req.Certificate)
+	return r.clients.Organization.AddOrg(req.OrgName, req.Owner, req.Certificate, req.Country, req.Currency)
 }
 
 func (r *Router) updateOrgToUserHandler(c *gin.Context, req *UserOrgRequest) (*orgpb.UpdateOrgForUserResponse, error) {
