@@ -270,12 +270,11 @@ const getBaseURL = async (
     } catch (e) {
       logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
     }
-  } else {
-    return {
-      status: 500,
-      message: "Unable to reach system",
-    };
   }
+  return {
+    status: 500,
+    message: "Unable to reach system",
+  };
 };
 
 const csvToBase64 = (filePath: string) => {
