@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
@@ -165,7 +166,7 @@ func TestState_AddState(t *testing.T) {
 			Id:               uuid.NewV4(), 
 			NodeId:          ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String(),
 			PreviousStateId: nil, 
-			CurrentState:    "unkown", 
+			CurrentState:    cpb.NodeState_Unknown ,
 			SubState:        StringArray([]string{"on"}), 
 			Events:          StringArray([]string{"online"}), 
 			Version:         "1.0.0", 

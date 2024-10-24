@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -32,7 +33,7 @@ type State struct {
 	NodeId          string          `gorm:"not null;index" json:"nodeId"`
 	PreviousStateId *uuid.UUID      `gorm:"column:previous_state_id;index" json:"previousStateId,omitempty"`
 	PreviousState   *State          `gorm:"-" json:"previousState,omitempty"`
-	CurrentState    string `gorm:"not null" json:"currentState"`
+	CurrentState    ukama.NodeState `gorm:"not null" json:"currentState"`
 	SubState        StringArray     `gorm:"type:jsonb" json:"subState"`
 	Events          StringArray     `gorm:"type:jsonb" json:"events"`
 	Version         string          `gorm:"" json:"version,omitempty"`

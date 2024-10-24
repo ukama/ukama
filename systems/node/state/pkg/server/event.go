@@ -236,7 +236,7 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		return fmt.Errorf("error getting latest state: %w", err)
 	}
 
-	currentState := "unknown"
+	var currentState npb.NodeState
 	currentSubstate := ""
 	if latestState != nil && latestState.State != nil {
 		currentState = latestState.State.CurrentState
@@ -248,7 +248,7 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		}
 	}
 
-	instance, err := n.getOrCreateInstance(nodeId, currentState)
+	instance, err := n.getOrCreateInstance(nodeId, currentState.String())
 	if err != nil {
 		return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	}
@@ -271,7 +271,7 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		}
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
-			CurrentState: instance.CurrentState,
+			CurrentState: npb.NodeState(npb.NodeState_value[string(instance.CurrentState)]),
 			SubState:     []string{newSubstate},
 			Events:       n.getEventsForNode(nodeId),
 		})
@@ -315,7 +315,7 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, e
 
 	addStateRequest := &pb.AddStateRequest{
 		NodeId:       nodeId,
-		CurrentState: "unknown",
+		CurrentState: npb.NodeState_Unknown,
 		SubState:     []string{"on"},
 		Events:       []string{eventName},
 		NodeIp:       onlineEvent.NodeIp,

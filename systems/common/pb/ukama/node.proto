@@ -5,16 +5,16 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
 package ukama.common.v1;
 
 enum NodeConnectivity {
-    Unknown = 0;
+    Undefined = 0;
     Online = 1;
     Offline = 2;
 }
 
 enum NodeState {
-    Undefined =  0;
+    Unknown =  0;
     Onboarded  = 1;
     Configured = 2;
-    Active     = 3;
-    Maintenance = 4;
-    Faulty      = 5;
+    operational     = 3;
+    faulty = 4;
 }
+

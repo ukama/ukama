@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/state/mocks"
@@ -34,7 +35,7 @@ func TestStateServer_AddNodeState(t *testing.T) {
 			name: "Valid request",
 			req: &pb.AddStateRequest{
 				NodeId:       nodeId,
-				CurrentState: "running",
+				CurrentState: cpb.NodeState_Unknown,
 				SubState:     []string{"sub-state-1"},
 				Events:       []string{"event-1"},
 				NodeType:     "test-type",
@@ -94,7 +95,7 @@ func TestStateServer_GetLatestState(t *testing.T) {
 				mockStateRepo.On("GetLatestState", nodeId).Return(&db.State{
 					Id:           uuid.NewV4(),
 					NodeId:       nodeId,
-					CurrentState: "running",
+					CurrentState: cpb.NodeState_Unknown,
 					SubState:     []string{"sub-state-1"},
 					Events:       []string{"event-1"},
 					CreatedAt:    time.Now(),
@@ -151,7 +152,7 @@ func TestStateServer_GetStates(t *testing.T) {
 					{
 						Id:           uuid.NewV4(),
 						NodeId:       nodeId,
-						CurrentState: "running",
+						CurrentState: cpb.NodeState_Unknown,
 						SubState:     []string{"sub-state-1"},
 						Events:       []string{"event-1"},
 						CreatedAt:    time.Now(),

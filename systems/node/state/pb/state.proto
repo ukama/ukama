@@ -11,6 +11,8 @@ package ukama.node.state.v1;
 import "validator.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
+import "ukama/node.proto";
+
 service StateService {
     rpc AddState (AddStateRequest) returns (AddStateResponse);
     rpc GetStateById (GetStateByIdRequest) returns (GetStateByIdResponse);
@@ -24,7 +26,7 @@ message State {
     string nodeId = 2;
     string previousStateId = 3;
     State previousState = 4; 
-    string currentState = 5;
+    ukama.common.v1.NodeState currentState = 5;  
     repeated string subState = 6;
     repeated string events = 7;
     string version = 8;    
@@ -51,7 +53,7 @@ message UpdateStateResponse {
 message AddStateRequest {
     string nodeId = 1;
     string previousStateId = 2;
-    string currentState = 3;
+    ukama.common.v1.NodeState currentState = 3;
     repeated string subState = 4;
     repeated string events = 5;
     string  nodeIp = 6;     
