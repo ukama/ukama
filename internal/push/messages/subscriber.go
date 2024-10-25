@@ -10,12 +10,19 @@ package messages
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
+)
+
+const (
+	minDelta = 10
+	maxDelta = 60
 )
 
 func NewSubscriberCreate(data string) (protoreflect.ProtoMessage, error) {
@@ -162,4 +169,29 @@ func NewSimPackageExpire(data string) (protoreflect.ProtoMessage, error) {
 	}
 
 	return pkg, nil
+}
+
+func NewSimUsage(data string) (protoreflect.ProtoMessage, error) {
+	usage := &epb.EventSimUsage{
+		SimId:        gofakeit.UUID(),
+		SubscriberId: gofakeit.UUID(),
+		NetworkId:    gofakeit.UUID(),
+		BytesUsed:    gofakeit.Uint64(),
+		Type:         ukama.CdrTypeData.String(),
+	}
+
+	startTime := gofakeit.Date()
+	endTime := startTime.Add(time.Duration(gofakeit.Number(minDelta, maxDelta)) * time.Minute)
+
+	usage.StartTime = uint64(startTime.Unix())
+	usage.EndTime = uint64(endTime.Unix())
+
+	if data != "" {
+		err := updateProto(usage, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	return usage, nil
 }
