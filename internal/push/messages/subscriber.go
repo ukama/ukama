@@ -146,3 +146,20 @@ func NewSetActivePackageForSim(data string) (protoreflect.ProtoMessage, error) {
 
 	return sim, nil
 }
+
+func NewSimPackageExpire(data string) (protoreflect.ProtoMessage, error) {
+	pkg := &epb.EventSimPackageExpire{
+		Id:         gofakeit.UUID(),
+		DataPlanId: gofakeit.UUID(),
+		PackageId:  gofakeit.UUID(),
+	}
+
+	if data != "" {
+		err := updateProto(pkg, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update event proto: %w", err)
+		}
+	}
+
+	return pkg, nil
+}
