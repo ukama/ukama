@@ -17,6 +17,12 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
+const (
+	minPrice       = 1
+	maxUnitPrice   = 50
+	maxAmountPrice = 5000
+)
+
 func NewPackageCreate(data string) (protoreflect.ProtoMessage, error) {
 	createPackage := &epb.CreatePackageEvent{
 		Uuid:            gofakeit.UUID(),
@@ -24,7 +30,7 @@ func NewPackageCreate(data string) (protoreflect.ProtoMessage, error) {
 		OwnerId:         gofakeit.UUID(),
 		Type:            gofakeit.RandomString([]string{"postpaid", "prepaid"}),
 		Flatrate:        gofakeit.Bool(),
-		Amount:          gofakeit.Float64(),
+		Amount:          gofakeit.Price(minPrice, maxAmountPrice),
 		From:            gofakeit.Date().String(),
 		To:              gofakeit.Date().String(),
 		SimType:         gofakeit.RandomString([]string{"test", "operator_data", "ukama_data"}),
@@ -34,9 +40,9 @@ func NewPackageCreate(data string) (protoreflect.ProtoMessage, error) {
 		DataUnit:        gofakeit.RandomString([]string{"Bytes", "KiloBytes", "MegaBytes", "GigaBytes"}),
 		VoiceUnit:       gofakeit.RandomString([]string{"seconds", "minutes", "hours"}),
 		Messageunit:     gofakeit.RandomString([]string{"int"}),
-		DataUnitCost:    gofakeit.Float64(),
-		MessageUnitCost: gofakeit.Float64(),
-		VoiceUnitCost:   gofakeit.Float64(),
+		DataUnitCost:    gofakeit.Price(minPrice, maxUnitPrice),
+		MessageUnitCost: gofakeit.Price(minPrice, maxUnitPrice),
+		VoiceUnitCost:   gofakeit.Price(minPrice, maxUnitPrice),
 	}
 
 	if data != "" {

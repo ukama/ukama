@@ -15,9 +15,10 @@ import (
 	"github.com/brianvoe/gofakeit/v7"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/ukama/ukama/systems/common/ukama"
+
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 const (
