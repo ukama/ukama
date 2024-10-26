@@ -15,6 +15,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -165,9 +166,9 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// Send usage event
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
-		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
+		// Send usage event
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
+		// , msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -225,7 +226,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
-		amount, err := strconv.Atoi(accountItem.OpexFee)
+		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
 			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
 				accountItem.OpexFee, accountItem.Id, err)
@@ -236,7 +237,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Name:           accountItem.Item + ": " + accountItem.Id,
 			Code:           accountItem.Id,
 			Interval:       postpaidBillingInterval,
-			AmountCents:    amount * 100,
+			AmountCents:    int(amount * 100),
 			AmountCurrency: defaultCurrency,
 			PayInAdvance:   false,
 		}
@@ -323,11 +324,11 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	switch pkgType {
 	case ukama.PackageTypePostpaid:
 		pkgIntervall = postpaidBillingInterval
-		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', -1, 64)
+		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', 2, 64)
 
 	case ukama.PackageTypePrepaid:
 		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
-		amount = strconv.FormatFloat(dataUnitCost, 'f', -1, 64)
+		amount = strconv.FormatFloat(dataUnitCost, 'f', 2, 64)
 	}
 
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
