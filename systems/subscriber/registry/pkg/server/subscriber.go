@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
@@ -26,6 +27,7 @@ import (
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
@@ -91,12 +93,6 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		log.Infof("Default network %+v", networkInfo)
 	}
 
-	// if s.orgId != networkInfo.OrgId {
-	// 	log.Error("Missing network.")
-
-	// 	return nil, fmt.Errorf("Network mismatch")
-	// }
-
 	// if remoteOrg.IsDeactivated {
 	// 	return nil, status.Errorf(codes.FailedPrecondition,
 	// 		"org is deactivated: cannot add network to it")
@@ -109,8 +105,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}
 
 	subscriber := &db.Subscriber{
-		FirstName:             req.GetFirstName(),
-		LastName:              req.GetLastName(),
+		Name:                  req.GetName(),
 		NetworkId:             nid,
 		Email:                 strings.ToLower(req.GetEmail()),
 		PhoneNumber:           req.GetPhoneNumber(),
@@ -132,14 +127,20 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
 	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.AddSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing add subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberAdded{
+		Dob:          req.GetDob(),
+		Email:        req.GetEmail(),
+		Gender:       req.GetGender(),
+		Name:         req.GetName(),
+		NetworkId:    req.GetNetworkId(),
+		PhoneNumber:  req.GetPhoneNumber(),
+		SubscriberId: subscriber.SubscriberId.String(),
 	})
 
 	return &pb.AddSubscriberResponse{
-		Subscriber: subscriberPb,
+		Subscriber: dbSubscriberToPbSubscriber(subscriber, []*upb.Sim{}),
 	}, nil
 }
 
@@ -245,6 +246,15 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	// Store Sims by their SubscriberId
 	simMap := make(map[string][]*upb.Sim)
 	for _, sim := range allSims {
+		start, err := validation.FromString(sim.Package.StartDate)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
+
+		end, err := validation.FromString(sim.Package.EndDate)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		}
 		simMap[sim.SubscriberId] = append(simMap[sim.SubscriberId], &upb.Sim{
 			Id:           sim.Id,
 			SubscriberId: sim.SubscriberId,
@@ -253,8 +263,8 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 			Msisdn:       sim.Msisdn,
 			Package: &upb.Package{
 				Id:        sim.Package.Id,
-				StartDate: sim.Package.StartDate,
-				EndDate:   sim.Package.EndDate,
+				StartDate: timestamppb.New(start),
+				EndDate:   timestamppb.New(end),
 			},
 			Type:               sim.Type,
 			Status:             sim.Status,
@@ -327,7 +337,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	}
 
 	subscriber := &db.Subscriber{
-		Email:                 req.GetEmail(),
+		Name:				   req.GetName(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
@@ -342,11 +352,15 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
-
 	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.UpdateSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing update subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberUpdate{
+		Email:                 subscriber.Email,
+		Address:               subscriber.Address,
+		IdSerial:              subscriber.IdSerial,
+		PhoneNumber:           subscriber.PhoneNumber,
+		SubscriberId:          subscriber.SubscriberId.String(),
+		ProofOfIdentification: subscriber.ProofOfIdentification,
 	})
 
 	return &pb.UpdateSubscriberResponse{}, nil
@@ -375,11 +389,10 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
 
-	subscriberPb := dbSubscriberToPbSubscriber(subscriber, nil)
-
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	_ = s.PublishEventMessage(route, &epb.RemoveSubscriber{
-		Subscriber: subscriberPb,
+	log.Infof("Pushing delete subscriber event to %v", route)
+	_ = s.PublishEventMessage(route, &epb.EventSubscriberDeleted{
+		SubscriberId: subscriber.SubscriberId.String(),
 	})
 
 	return &pb.DeleteSubscriberResponse{}, nil
@@ -437,8 +450,7 @@ func pbManagerSimsToPbSubscriberSims(s []*simMangerPb.Sim) []*upb.Sim {
 func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subscriber {
 
 	return &upb.Subscriber{
-		FirstName:             s.FirstName,
-		LastName:              s.LastName,
+		Name:                  s.Name,
 		Email:                 s.Email,
 		SubscriberId:          s.SubscriberId.String(),
 		ProofOfIdentification: s.ProofOfIdentification,
