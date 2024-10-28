@@ -33,23 +33,24 @@ type EventSubscriberAdded struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	FirstName    string `protobuf:"bytes,1,opt,name=firstName,json=first_name,proto3" json:"firstName,omitempty"`
-	LastName     string `protobuf:"bytes,2,opt,name=lastName,json=last_name,proto3" json:"lastName,omitempty"`
-	SubscriberId string `protobuf:"bytes,3,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
-	NetworkId    string `protobuf:"bytes,4,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
-	Email        string `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
-	PhoneNumber  string `protobuf:"bytes,6,opt,name=phoneNumber,json=phone_number,proto3" json:"phoneNumber,omitempty"`
-	CreatedAt    string `protobuf:"bytes,7,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
-	Dob          string `protobuf:"bytes,8,opt,name=dob,json=date_of_birth,proto3" json:"dob,omitempty"`
-	Gender       string `protobuf:"bytes,9,opt,name=gender,proto3" json:"gender,omitempty"`
-	Address      string `protobuf:"bytes,10,opt,name=address,proto3" json:"address,omitempty"`
+	Name         string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	SubscriberId string `protobuf:"bytes,2,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
+	NetworkId    string `protobuf:"bytes,3,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
+	Email        string `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
+	PhoneNumber  string `protobuf:"bytes,5,opt,name=phoneNumber,json=phone_number,proto3" json:"phoneNumber,omitempty"`
+	CreatedAt    string `protobuf:"bytes,6,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	Dob          string `protobuf:"bytes,7,opt,name=dob,proto3" json:"dob,omitempty"`
+	Gender       string `protobuf:"bytes,8,opt,name=gender,proto3" json:"gender,omitempty"`
+	Address      string `protobuf:"bytes,9,opt,name=address,proto3" json:"address,omitempty"`
 }
 
 func (x *EventSubscriberAdded) Reset() {
 	*x = EventSubscriberAdded{}
-	mi := &file_events_subscriber_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_subscriber_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
 }
 
 func (x *EventSubscriberAdded) String() string {
@@ -60,7 +61,7 @@ func (*EventSubscriberAdded) ProtoMessage() {}
 
 func (x *EventSubscriberAdded) ProtoReflect() protoreflect.Message {
 	mi := &file_events_subscriber_proto_msgTypes[0]
-	if x != nil {
+	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -75,16 +76,9 @@ func (*EventSubscriberAdded) Descriptor() ([]byte, []int) {
 	return file_events_subscriber_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *EventSubscriberAdded) GetFirstName() string {
+func (x *EventSubscriberAdded) GetName() string {
 	if x != nil {
-		return x.FirstName
-	}
-	return ""
-}
-
-func (x *EventSubscriberAdded) GetLastName() string {
-	if x != nil {
-		return x.LastName
+		return x.Name
 	}
 	return ""
 }
@@ -155,9 +149,11 @@ type EventSubscriberDeleted struct {
 
 func (x *EventSubscriberDeleted) Reset() {
 	*x = EventSubscriberDeleted{}
-	mi := &file_events_subscriber_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
+	if protoimpl.UnsafeEnabled {
+		mi := &file_events_subscriber_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
 }
 
 func (x *EventSubscriberDeleted) String() string {
@@ -168,7 +164,7 @@ func (*EventSubscriberDeleted) ProtoMessage() {}
 
 func (x *EventSubscriberDeleted) ProtoReflect() protoreflect.Message {
 	mi := &file_events_subscriber_proto_msgTypes[1]
-	if x != nil {
+	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -281,7 +277,7 @@ var file_events_subscriber_proto_rawDesc = []byte{
 	0x0a, 0x17, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2f, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
 	0x62, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0f, 0x75, 0x6b, 0x61, 0x6d, 0x61,
 	0x2e, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x2e, 0x76, 0x31, 0x1a, 0x0f, 0x76, 0x61, 0x6c, 0x69,
-	0x64, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xd1, 0x02, 0x0a, 0x14,
+	0x64, 0x61, 0x74, 0x6f, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x9f, 0x02, 0x0a, 0x14,
 	0x45, 0x76, 0x65, 0x6e, 0x74, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x72, 0x41,
 	0x64, 0x64, 0x65, 0x64, 0x12, 0x1d, 0x0a, 0x09, 0x66, 0x69, 0x72, 0x73, 0x74, 0x4e, 0x61, 0x6d,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x6e,
@@ -376,6 +372,44 @@ func init() { file_events_subscriber_proto_init() }
 func file_events_subscriber_proto_init() {
 	if File_events_subscriber_proto != nil {
 		return
+	}
+	if !protoimpl.UnsafeEnabled {
+		file_events_subscriber_proto_msgTypes[0].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberAdded); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_subscriber_proto_msgTypes[1].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberDeleted); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_events_subscriber_proto_msgTypes[2].Exporter = func(v any, i int) any {
+			switch v := v.(*EventSubscriberUpdate); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
