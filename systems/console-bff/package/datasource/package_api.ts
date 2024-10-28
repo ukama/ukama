@@ -51,6 +51,11 @@ class PackageApi extends RESTDataSource {
     this.logger.info(`AddPackage [POST]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
     const baserate = await this.get(`/${VERSION}/baserates/history`);
+    if (!baserate.rates || baserate?.rates?.length === 0) {
+      throw new Error("No baserate found");
+    }
+
+    // TODO: Need to revisit this to, from values
     return this.post(`/${VERSION}/${PACKAGES}`, {
       body: {
         name: req.name,
