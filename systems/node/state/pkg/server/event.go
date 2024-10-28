@@ -19,7 +19,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -176,16 +175,6 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		body = msg
 		nodeId = msg.NodeId
 		eventName = c.Name
-		//To be added once node ready is implemented
-	// case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventReady]):
-	// 	c := evt.NodeEventToEventConfig[evt.NodeStateEventReady]
-	// 	msg, err := epb.UnmarshalNodeReadyEvent(e.Msg, c.Name)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to unmarshal NodeReady event: %w", err)
-	// 	}
-	// 	body = msg
-	// 	nodeID = msg.NodeId
-	// 	eventName = c.Name
 
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventConfig]):
 		c := evt.NodeEventToEventConfig[evt.NodeStateEventConfig]
@@ -261,20 +250,18 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		return fmt.Errorf("failed to transition state for node %s: %w", nodeId, err)
 	}
 
-	// Check if it's a main state transition
 	if instance.CurrentState != prevState {
-		// Main state transition
 		newSubstate := currentSubstate
 		if newSubstate != "" {
 			newSubstate += "," + instance.CurrentSubstate
 		} else {
 			newSubstate = instance.CurrentSubstate
 		}
-		stateValue := ukama.NodeState_value[instance.CurrentState]
+		stateValue := npb.NodeState_value[instance.CurrentState]
 
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
-			CurrentState: ukama.NodeState(stateValue),
+			CurrentState: npb.NodeState(stateValue),
 			SubState:     []string{newSubstate},
 			Events:       n.getEventsForNode(nodeId),
 		})
@@ -283,7 +270,6 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		}
 		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeId, instance.CurrentState, newSubstate)
 	} else if instance.CurrentSubstate != prevSubstate {
-		// Substate transition only
 		newSubstate := currentSubstate
 		if newSubstate != "" {
 			newSubstate += "," + instance.CurrentSubstate
@@ -310,7 +296,6 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	return nil
 }
 func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
-	//Assume the initial event will always be online
 	onlineEvent, ok := msg.(*epb.NodeOnlineEvent)
 	if !ok {
 		return fmt.Errorf("expected *NodeOnlineEvent, got %T", msg)

@@ -10,7 +10,7 @@ package db
 import (
 	"log"
 	"testing"
-	"time" // Make sure to import time package for CreatedAt
+	"time"
 
 	extsql "database/sql"
 
@@ -96,12 +96,10 @@ func TestState_GetLatestState(t *testing.T) {
 		// Act
 		c, err := r.GetLatestState(nid.String())
 
-		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 		assert.Equal(t, nid.String(), c.NodeId)
 
-		// Ensure all expectations were met
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
@@ -118,19 +116,17 @@ func TestState_GetStateHistory(t *testing.T) {
 		var db *extsql.DB
 		var err error
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() 
 		assert.NoError(t, err)
 
-		// Define a sample State object to return
 		history := State{
 			Id:        stateId,
 			NodeId:    nid,
-			CreatedAt: time.Now(), // Assume you have this field in your State struct
+			CreatedAt: time.Now(), 
 		}
    rows := sqlmock.NewRows([]string{"id", "node_id", "created_at"}).
 		AddRow(history.Id, history.NodeId, history.CreatedAt)
 
-		// Update the mock query to match the actual query
 		mock.ExpectQuery(`^SELECT \* FROM "states" WHERE node_id = \$1 AND "states"."deleted_at" IS NULL ORDER BY created_at DESC,"states"."id" LIMIT \$2`).
 		WithArgs(nid, 1).
 		WillReturnRows(rows)
@@ -149,10 +145,8 @@ func TestState_GetStateHistory(t *testing.T) {
 			GormDb: gdb,
 		})
 
-		// Act
 		c, err := r.GetStateHistory(nid)
 
-		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, c)
 		assert.Equal(t, stateId, c[0].Id)
@@ -166,7 +160,7 @@ func TestState_AddState(t *testing.T) {
 		var db *extsql.DB
 		var err error
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
 		newState := &State{
@@ -197,7 +191,7 @@ func TestState_AddState(t *testing.T) {
 				newState.MeshHostName, newState.CreatedAt, newState.UpdatedAt,
 				newState.DeletedAt, 
 			).
-			WillReturnResult(sqlmock.NewResult(1, 1)) // Expect the result
+			WillReturnResult(sqlmock.NewResult(1, 1)) 
 		mock.ExpectCommit()
 
 		dialector := postgres.New(postgres.Config{
@@ -214,13 +208,10 @@ func TestState_AddState(t *testing.T) {
 			GormDb: gdb,
 		})
 
-		// Act
 		err = r.AddState(newState, nil)
 
-		// Assert
 		assert.NoError(t, err)
 
-		// Ensure all expectations were met
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})

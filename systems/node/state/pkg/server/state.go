@@ -211,7 +211,6 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id: %s", err.Error())
 	}
 
-	// Retrieve the current state
 	currentState, err := s.sRepo.GetLatestState(nId.String())
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -225,7 +224,6 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 		return nil, status.Errorf(codes.NotFound, "state not found for Node ID: %s", req.NodeId)
 	}
 
-	// Append new substate to the existing SubState
 	updatedSubState := append(currentState.SubState, db.StringArray(req.SubState)...)
 	updatedEvents := append(currentState.Events, db.StringArray(req.Events)...)
 

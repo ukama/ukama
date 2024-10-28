@@ -109,7 +109,6 @@ func (r *stateRepo) AddState(newState *State, previousState *State) error {
 	})
 }
 
-// UpdateState updates the state for a given nodeId with the provided subStates.
 func (r *stateRepo) UpdateState(nodeId string, subStates []string, events []string) (*State, error) {
 	var state State
 
