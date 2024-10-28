@@ -43,8 +43,28 @@ import { useAppContext } from '@/context';
 import { TNetwork } from '@/types';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import { AlertColor, Box, Grid, Paper, Stack, Typography } from '@mui/material';
-import { useCallback, useEffect, useState } from 'react';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import {
+  AlertColor,
+  Box,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  styled,
+  Typography,
+} from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import colors from '@/theme/colors';
+import {
+  CardWrapper,
+  DataPlanEmptyView,
+  NavigationButton,
+  NavigationWrapper,
+  ScrollableContent,
+  ScrollContainer,
+} from '@/styles/global';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
@@ -61,7 +81,7 @@ const Page = () => {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
   const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
-
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
@@ -661,6 +681,15 @@ const Page = () => {
       throw error;
     }
   };
+
+  const scroll = (direction: 'left' | 'right'): void => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = scrollContainerRef.current.clientWidth / 2;
+      scrollContainerRef.current.scrollLeft +=
+        direction === 'left' ? -scrollAmount : scrollAmount;
+    }
+  };
+
   return (
     <Stack
       direction={'column'}
@@ -681,30 +710,57 @@ const Page = () => {
         </LoadingWrapper>
       ) : (
         <Paper
+          elevation={1}
           sx={{
             height: '218px',
             borderRadius: '10px',
             padding: '24px 32px',
+            position: 'relative',
+            maxWidth: '1320px',
+            width: '100%',
+            margin: '0 auto',
           }}
         >
-          <Stack direction={'column'} spacing={1.5}>
-            <Typography variant="h6" mr={1}>
-              Data plans
-            </Typography>
-            <Box>
-              {packagesData?.getPackages.packages.length === 0 ? (
-                <EmptyView
-                  icon={UpdateIcon}
-                  title="No data plan created yet!"
-                />
-              ) : (
-                <Grid
-                  container
-                  rowSpacing={2}
-                  columnSpacing={2}
-                  overflow={'scroll'}
-                >
-                  {packagesData?.getPackages.packages.map(
+          <Stack direction="column" spacing={1.5} sx={{ position: 'relative' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Stack direction={'row'} spacing={1} alignItems={'center'}>
+                <Typography variant="h6">Data plans</Typography>
+                <Typography variant="subtitle2" sx={{ color: colors.black38 }}>
+                  ({packagesData?.getPackages.packages?.length ?? 0})
+                </Typography>
+              </Stack>
+
+              {packagesData &&
+                packagesData?.getPackages.packages?.length > 4 && (
+                  <NavigationWrapper>
+                    <NavigationButton
+                      onClick={() => scroll('left')}
+                      disabled={!packagesData?.getPackages.packages?.length}
+                    >
+                      <KeyboardArrowLeftIcon />
+                    </NavigationButton>
+
+                    <NavigationButton
+                      onClick={() => scroll('right')}
+                      disabled={!packagesData?.getPackages.packages?.length}
+                    >
+                      <KeyboardArrowRightIcon />
+                    </NavigationButton>
+                  </NavigationWrapper>
+                )}
+            </Box>
+
+            <ScrollContainer>
+              <ScrollableContent ref={scrollContainerRef}>
+                {!packagesData?.getPackages.packages?.length ? (
+                  <DataPlanEmptyView>
+                    <UpdateIcon sx={{ fontSize: 40, mb: 1 }} />
+                    <Typography variant="body1">
+                      No data plan created yet!
+                    </Typography>
+                  </DataPlanEmptyView>
+                ) : (
+                  packagesData.getPackages.packages.map(
                     ({
                       uuid,
                       name,
@@ -714,7 +770,7 @@ const Page = () => {
                       dataUnit,
                       amount,
                     }: any) => (
-                      <Grid item xs={12} sm={6} md={3} key={uuid}>
+                      <CardWrapper key={uuid}>
                         <PlanCard
                           uuid={uuid}
                           name={name}
@@ -725,12 +781,12 @@ const Page = () => {
                           currency={currency}
                           dataVolume={dataVolume}
                         />
-                      </Grid>
+                      </CardWrapper>
                     ),
-                  )}
-                </Grid>
-              )}
-            </Box>
+                  )
+                )}
+              </ScrollableContent>
+            </ScrollContainer>
           </Stack>
         </Paper>
       )}
