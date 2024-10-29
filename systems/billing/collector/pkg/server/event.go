@@ -318,8 +318,6 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		return fmt.Errorf("invalid package type: %s", pkg.DataUnit)
 	}
 
-	pkg.C
-
 	var amount string
 
 	pkgIntervall := prepaidBillingInterval
