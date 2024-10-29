@@ -7,10 +7,22 @@
  */
 'use client';
 
+import { useAppContext } from '@/context';
 import { CenterContainer } from '@/styles/global';
 import { CircularProgress } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const Page = () => {
+  const { env } = useAppContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    setTimeout(() => {
+      router.push(`${env.AUTH_APP_URL}/user/logout`);
+    }, 2000);
+  }, []);
+
   return (
     <CenterContainer>
       <CircularProgress />

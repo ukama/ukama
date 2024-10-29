@@ -24,7 +24,7 @@ export const CONSOLE_APP_URL =
 
 // UTILS
 export const SIM_TYPE = process.env.SIM_TYPE ?? "operator_data";
-export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";
+export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "localhost";
 export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";

@@ -138,12 +138,8 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
-    // removeCookie('token');
-    const logoutRes = NextResponse.redirect(
-      new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
-    );
-    logoutRes.cookies.delete('token');
-    return logoutRes;
+    response.cookies.delete('token');
+    return response;
   }
 
   const session = cookieStore.get('ukama_session');

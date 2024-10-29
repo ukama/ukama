@@ -114,6 +114,7 @@ const startServer = async () => {
     json(),
     expressMiddleware(server)
   );
+
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
@@ -133,7 +134,7 @@ const startServer = async () => {
     const theme = req.query.theme;
     res.cookie("theme", theme, {
       domain: BASE_DOMAIN,
-      secure: true,
+      secure: BASE_DOMAIN === "localhost" ? false : true,
       sameSite: "lax",
       maxAge: COOKIE_EXPIRY_TIME - (new Date().getTime() - 2017874138705),
       httpOnly: false,
