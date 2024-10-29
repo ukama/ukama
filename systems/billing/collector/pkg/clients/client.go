@@ -46,7 +46,7 @@ type Event struct {
 	SubscriptionId       string
 	Code                 string
 	SentAt               time.Time
-	AdditionalProperties map[string]string
+	AdditionalProperties map[string]any
 }
 
 type Plan struct {
@@ -63,11 +63,16 @@ type Plan struct {
 type PlanCharge struct {
 	BillableMetricID     string
 	ChargeModel          string
-	ChargeAmountCents    string
+	ChargeAmount         string
 	ChargeAmountCurrency string
 	FreeUnits            int
 	PackageSize          int
 }
+
+const (
+	IndividualCustomerType = "individual"
+	CompanyCustomerType    = "company"
+)
 
 type Customer struct {
 	Id      string
@@ -75,6 +80,7 @@ type Customer struct {
 	Email   string
 	Address string
 	Phone   string
+	Type    string
 }
 
 type Subscription struct {

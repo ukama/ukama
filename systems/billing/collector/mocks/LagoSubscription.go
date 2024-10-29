@@ -47,7 +47,7 @@ func (_m *LagoSubscription) Create(_a0 context.Context, _a1 *lago.SubscriptionIn
 }
 
 // Terminate provides a mock function with given fields: _a0, _a1
-func (_m *LagoSubscription) Terminate(_a0 context.Context, _a1 string) (*lago.Subscription, *lago.Error) {
+func (_m *LagoSubscription) Terminate(_a0 context.Context, _a1 lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -56,10 +56,10 @@ func (_m *LagoSubscription) Terminate(_a0 context.Context, _a1 string) (*lago.Su
 
 	var r0 *lago.Subscription
 	var r1 *lago.Error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*lago.Subscription, *lago.Error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *lago.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, lago.SubscriptionTerminateInput) *lago.Subscription); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -67,7 +67,7 @@ func (_m *LagoSubscription) Terminate(_a0 context.Context, _a1 string) (*lago.Su
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) *lago.Error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, lago.SubscriptionTerminateInput) *lago.Error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		if ret.Get(1) != nil {

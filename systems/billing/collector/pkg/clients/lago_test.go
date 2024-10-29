@@ -27,7 +27,7 @@ func TestLagoClient_AddUsaeEvent(t *testing.T) {
 		e := &mocks.LagoEvent{}
 		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil)
 
-		e.On("Create", mock.Anything, mock.Anything).Return(&lago.Error{})
+		e.On("Create", mock.Anything, mock.Anything).Return(&lago.Event{}, &lago.Error{})
 
 		err := l.AddUsageEvent(context.TODO(), clients.Event{})
 
@@ -38,7 +38,7 @@ func TestLagoClient_AddUsaeEvent(t *testing.T) {
 		e := &mocks.LagoEvent{}
 		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil)
 
-		e.On("Create", mock.Anything, mock.Anything).Return(nil)
+		e.On("Create", mock.Anything, mock.Anything).Return(&lago.Event{}, nil)
 
 		err := l.AddUsageEvent(context.TODO(), clients.Event{})
 
