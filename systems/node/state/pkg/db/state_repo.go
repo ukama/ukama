@@ -63,14 +63,14 @@ func (r *stateRepo) GetStatesByNodeId(nodeId string) ([]State, error) {
 }
 
 func (r *stateRepo) GetStateHistory(nodeId string) ([]State, error) {
-	var history []State
+	var tempHistory []State
 	currentState, err := r.GetCurrentNodeState(nodeId)
 	if err != nil {
 		return nil, err
 	}
 
 	for currentState != nil {
-		history = append(history, *currentState)
+		tempHistory = append(tempHistory, *currentState)
 		if currentState.PreviousStateId == nil {
 			break
 		}
@@ -78,6 +78,11 @@ func (r *stateRepo) GetStateHistory(nodeId string) ([]State, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	history := make([]State, len(tempHistory))
+	for i, state := range tempHistory {
+		history[len(tempHistory)-1-i] = state
 	}
 
 	return history, nil

@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"sort"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -99,13 +100,13 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return &pb.GetStatesResponse{}, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id: %s", err.Error())
 	}
 	history, err := s.sRepo.GetStateHistory(nId.String())
 	if err != nil {
 		log.Errorf("Failed to get node state history: %v", err)
-		return nil, status.Errorf(codes.Internal, "failed to get node state history: %v", err)
+		return &pb.GetStatesResponse{}, status.Errorf(codes.Internal, "failed to get node state history: %v", err)
 	}
 
 	if history == nil {
@@ -114,6 +115,7 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 	}
 
 	stateMap := make(map[string]*pb.State)
+	var latestStates []*pb.State
 
 	for _, nodeState := range history {
 		NodeStateRes := &pb.State{
@@ -131,36 +133,34 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		}
 
 		stateMap[NodeStateRes.Id] = NodeStateRes
+
+		isLatest := true
+		for _, s := range history {
+			if s.PreviousStateId != nil && s.PreviousStateId.String() == NodeStateRes.Id {
+				isLatest = false
+				break
+			}
+		}
+		if isLatest {
+			latestStates = append(latestStates, NodeStateRes)
+		}
 	}
 
 	for _, state := range stateMap {
 		if state.PreviousStateId != "" {
 			if prevState, exists := stateMap[state.PreviousStateId]; exists {
-				prevStateCopy := &pb.State{
-					Id:              prevState.Id,
-					NodeId:          prevState.NodeId,
-					PreviousStateId: prevState.PreviousStateId,
-					CurrentState:    prevState.CurrentState,
-					SubState:        prevState.SubState,
-					Events:          prevState.Events,
-					CreatedAt:       prevState.CreatedAt,
-					UpdatedAt:       prevState.UpdatedAt,
-					DeletedAt:       prevState.DeletedAt,
-				}
-				state.PreviousState = prevStateCopy
+				state.PreviousState = prevState
 			}
 		}
 	}
 
-	stateHistory := &pb.GetStatesResponse{
-		States: make([]*pb.State, 0, len(history)),
-	}
+	sort.Slice(latestStates, func(i, j int) bool {
+		return latestStates[i].UpdatedAt.AsTime().After(latestStates[j].UpdatedAt.AsTime())
+	})
 
-	for _, state := range stateMap {
-		stateHistory.States = append(stateHistory.States, state)
-	}
-
-	return stateHistory, nil
+	return &pb.GetStatesResponse{
+		States: latestStates,
+	}, nil
 }
 func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestStateRequest) (*pb.GetLatestStateResponse, error) {
 	log.Infof("Getting latest node state for Node ID: %v", req.NodeId)
@@ -226,7 +226,6 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 
 	updatedSubState := append(currentState.SubState, db.StringArray(req.SubState)...)
 	updatedEvents := append(currentState.Events, db.StringArray(req.Events)...)
-
 
 	if _, err := s.sRepo.UpdateState(nId.String(), updatedSubState, updatedEvents); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update node state: %v", err)
