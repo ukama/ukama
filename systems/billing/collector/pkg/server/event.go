@@ -233,10 +233,12 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name:           accountItem.Item + ": " + accountItem.Id,
-			Code:           accountItem.Id,
-			Interval:       postpaidBillingInterval,
-			AmountCents:    amount * 100,
+			Name:        accountItem.Item + ": " + accountItem.Id,
+			Code:        accountItem.Id,
+			Interval:    postpaidBillingInterval,
+			AmountCents: amount * 100,
+
+			//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 			AmountCurrency: defaultCurrency,
 			PayInAdvance:   false,
 		}
@@ -316,6 +318,8 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		return fmt.Errorf("invalid package type: %s", pkg.DataUnit)
 	}
 
+	pkg.C
+
 	var amount string
 
 	pkgIntervall := prepaidBillingInterval
@@ -333,12 +337,13 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
 
 	charge := client.PlanCharge{
-		BillableMetricID:     b.bMetric.Id,
-		ChargeModel:          defaultChargeModel,
-		ChargeAmount:         amount,
+		BillableMetricID: b.bMetric.Id,
+		ChargeModel:      defaultChargeModel,
+		ChargeAmount:     amount,
+
+		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 		ChargeAmountCurrency: defaultCurrency,
-		// ChargeAmountCurrency: pkg.Currency,
-		PackageSize: int(billableDataSize),
+		PackageSize:          int(billableDataSize),
 	}
 
 	newPlan := client.Plan{
@@ -346,7 +351,8 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		Code:        pkg.Uuid,
 		Interval:    pkgIntervall,
 		AmountCents: 0,
-		// AmountCurrency: pkg.Currency,
+
+		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 		AmountCurrency: defaultCurrency,
 		PayInAdvance:   false,
 	}
@@ -448,15 +454,12 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	// subscriptionAt := time.Now()
-
 	// Because the Plan object does not expose an external_plan_id, we need to use
 	// our backend plan_id as billing provider's plan_code
 	subscriptionInput := client.Subscription{
 		Id:         sim.Id,
 		CustomerId: sim.SubscriberId,
 		PlanCode:   sim.DataPlanId,
-		// SubscriptionAt: &subscriptionAt,
 	}
 
 	log.Infof("Sending subscripton creation event %v to billing server",
@@ -495,13 +498,10 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 			subscriptionId)
 	}
 
-	// subscriptionAt := sim.PackageStartDate.AsTime()
-
 	subscriptionInput := client.Subscription{
 		Id:         sim.Id,
 		CustomerId: sim.SubscriberId,
 		PlanCode:   sim.PlanId,
-		// SubscriptionAt: &subscriptionAt,
 	}
 
 	log.Infof("Sending sim package activation event %v to billing server",

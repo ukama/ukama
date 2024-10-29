@@ -42,13 +42,11 @@ func NewLagoClientFromClients(b LagoBillableMetric, c LagoCustomer,
 
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	eventInput := &lago.EventInput{
-		TransactionID: ev.TransactionId,
-		// ExternalCustomerID:     ev.CustomerId,
+		TransactionID:          ev.TransactionId,
 		ExternalSubscriptionID: ev.SubscriptionId,
 		Code:                   ev.Code,
 		Timestamp:              ev.SentAt.String(),
 		Properties:             ev.AdditionalProperties,
-		//PreciseTotalAmountCents:
 	}
 
 	_, err := l.e.Create(ctx, eventInput)
@@ -132,8 +130,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 			BillableMetricID: bMetricId,
 			ChargeModel:      lago.ChargeModel(charge.ChargeModel),
 			AmountCurrency:   lago.Currency(pl.AmountCurrency),
-			// PayInAdvance:     true,
-			Properties: props,
+			Properties:       props,
 		}
 
 		// Appending charge to plan
@@ -238,8 +235,6 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 		ExternalCustomerID: sub.CustomerId,
 		PlanCode:           sub.PlanCode,
 		SubscriptionAt:     sub.SubscriptionAt,
-		// EndingAt
-		// Name
 	}
 
 	subscription, err := l.s.Create(ctx, newSub)
@@ -255,7 +250,6 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId string) (string, error) {
 	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
 		ExternalID: subscriptionId,
-		// Status     string `json:"status,omitempty"`,
 	}
 
 	subscription, err := l.s.Terminate(ctx, subscriptionTerminateInput)
