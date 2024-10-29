@@ -35,7 +35,7 @@ func (l NotificationScope) Value() (driver.Value, error) {
 type NotificationType uint8
 
 const (
-	TYPE_INAVLID             NotificationType = 0
+	TYPE_INVALID             NotificationType = 0
 	TYPE_INFO                NotificationType = 1
 	TYPE_WARNING             NotificationType = 2
 	TYPE_ERROR               NotificationType = 3
