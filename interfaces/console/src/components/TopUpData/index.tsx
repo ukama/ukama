@@ -1,6 +1,8 @@
 import React from 'react';
 import { PackageDto, SimDto } from '@/client/graphql/generated';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import {
   Autocomplete,
   Box,
@@ -19,25 +21,30 @@ import {
   Typography,
   styled,
 } from '@mui/material';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, FieldArray, FormikErrors } from 'formik';
 import * as Yup from 'yup';
+import colors from '@/theme/colors';
 
 interface TopUpProps {
   onCancel: () => void;
   isToPup: boolean;
   subscriberName: string;
-  handleTopUp: (planId: string, simId: string) => void;
+  handleTopUp: (plans: { planId: string; simId: string }[]) => void;
   packages: PackageDto[];
   loadingTopUp: boolean;
   sims: SimDto[];
 }
 
-interface FormValues {
-  simIccid: string;
+interface PlanEntry {
   planId: string;
 }
 
-// Styled components
+interface FormValues {
+  simIccid: string;
+  plans: PlanEntry[];
+}
+
+// Styled components remain the same
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
   padding: theme.spacing(3),
 }));
@@ -61,14 +68,12 @@ const FormContainer = styled(Box)(({ theme }) => ({
   '& .MuiFormControl-root': {
     marginBottom: theme.spacing(1),
   },
-  // Add consistent height for both fields
   '& .MuiInputBase-root': {
-    height: '56px', // Standard Material-UI height
+    height: '56px',
   },
-  // Ensure Autocomplete internal input matches height
   '& .MuiAutocomplete-input': {
-    height: '23px', // Adjust this value to match the Select input height
-    padding: '7.5px 4px !important', // Add important to override Autocomplete's default styles
+    height: '23px',
+    padding: '7.5px 4px !important',
   },
 }));
 
@@ -76,11 +81,28 @@ const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
   padding: theme.spacing(1, 0),
 }));
 
+const PlanContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  marginTop: theme.spacing(2),
+  '&:not(:last-child)': {
+    marginBottom: theme.spacing(2),
+  },
+}));
+
 const validationSchema = Yup.object().shape({
   simIccid: Yup.string().required('SIM ICCID is required'),
-  planId: Yup.string().required('Data plan is required'),
+  plans: Yup.array()
+    .of(
+      Yup.object().shape({
+        planId: Yup.string().required('Data plan is required'),
+      }),
+    )
+    .min(1, 'At least one plan is required'),
 });
-
+const getOptionLabel = (option: SimDto) => {
+  if (!option) return '';
+  return `${option.iccid} - ${option.isPhysical ? 'pSIM' : 'eSIM'}`;
+};
 const TopUpData: React.FC<TopUpProps> = ({
   handleTopUp,
   onCancel,
@@ -92,13 +114,17 @@ const TopUpData: React.FC<TopUpProps> = ({
 }) => {
   const initialValues: FormValues = {
     simIccid: '',
-    planId: '',
+    plans: [{ planId: '' }],
   };
 
   const handleSubmit = (values: FormValues) => {
     const selectedSim = sims.find((sim) => sim.iccid === values.simIccid);
     if (selectedSim) {
-      handleTopUp(values.planId, selectedSim.id);
+      const plansToSubmit = values.plans.map((plan) => ({
+        planId: plan.planId,
+        simId: selectedSim.id,
+      }));
+      handleTopUp(plansToSubmit);
     }
   };
 
@@ -131,8 +157,8 @@ const TopUpData: React.FC<TopUpProps> = ({
 
       <StyledDialogContent>
         <Typography sx={{ color: 'text.secondary', mb: 3 }}>
-          Add more data for subscriber. Note: new data plan will only come into
-          effect after current data expires.
+          Add one or more data plans for subscriber. Note: new data plans will
+          only come into effect after current data expires.
         </Typography>
 
         <NameLabel>NAME</NameLabel>
@@ -149,8 +175,9 @@ const TopUpData: React.FC<TopUpProps> = ({
                 <Field name="simIccid">
                   {({ field, form }: any) => (
                     <Autocomplete
+                      className="w-full"
                       options={sims}
-                      getOptionLabel={(option) => option.iccid || ''}
+                      getOptionLabel={getOptionLabel}
                       value={
                         sims.find((sim) => sim.iccid === field.value) || null
                       }
@@ -160,12 +187,9 @@ const TopUpData: React.FC<TopUpProps> = ({
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          {...field}
-                          label="SIM ICCID*"
-                          error={touched.simIccid && Boolean(errors.simIccid)}
-                          helperText={touched.simIccid && errors.simIccid}
-                          InputLabelProps={{ shrink: true }}
-                          fullWidth
+                          label="SIM ICCID"
+                          placeholder="Select a SIM"
+                          className="w-full"
                         />
                       )}
                       noOptionsText={
@@ -179,31 +203,68 @@ const TopUpData: React.FC<TopUpProps> = ({
 
                 {packages.length === 0 ? (
                   <Typography color="error" variant="body2" sx={{ mt: 2 }}>
-                    No data plans available. Please contact support to set up
-                    data plans.
+                    No data plans available. Please upload data plans.
                   </Typography>
                 ) : (
-                  <FormControl fullWidth sx={{ mt: 3 }}>
-                    <InputLabel shrink required>
-                      DATA PLAN
-                    </InputLabel>
-                    <Field name="planId">
-                      {({ field }: any) => (
-                        <Select
-                          {...field}
-                          input={<OutlinedInput notched label="DATA PLAN" />}
-                          error={touched.planId && Boolean(errors.planId)}
-                          fullWidth
+                  <FieldArray name="plans">
+                    {({ push, remove }) => (
+                      <Box>
+                        {values.plans.map((_, index) => (
+                          <PlanContainer key={index}>
+                            <FormControl fullWidth>
+                              <InputLabel shrink required>
+                                DATA PLAN {index + 1}
+                              </InputLabel>
+                              <Field name={`plans.${index}.planId`}>
+                                {({ field }: any) => (
+                                  <Select
+                                    {...field}
+                                    input={
+                                      <OutlinedInput
+                                        notched
+                                        label={`DATA PLAN ${index + 1}`}
+                                      />
+                                    }
+                                    error={
+                                      touched.plans?.[index]?.planId &&
+                                      Boolean(
+                                        (
+                                          errors.plans as FormikErrors<PlanEntry>[]
+                                        )?.[index]?.planId,
+                                      )
+                                    }
+                                    fullWidth
+                                  >
+                                    {packages.map((pkg) => (
+                                      <MenuItem key={pkg.uuid} value={pkg.uuid}>
+                                        {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                )}
+                              </Field>
+                            </FormControl>
+                            {values.plans.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => remove(index)}
+                                sx={{ position: 'absolute', right: 20, top: 8 }}
+                              >
+                                <DeleteOutlineIcon />
+                              </IconButton>
+                            )}
+                          </PlanContainer>
+                        ))}
+                        <Button
+                          startIcon={<AddCircleOutlineIcon />}
+                          onClick={() => push({ planId: '' })}
+                          sx={{ mt: 1, color: colors.primaryMain }}
                         >
-                          {packages.map((pkg) => (
-                            <MenuItem key={pkg.uuid} value={pkg.uuid}>
-                              {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      )}
-                    </Field>
-                  </FormControl>
+                          ADD ANOTHER DATA PLAN
+                        </Button>
+                      </Box>
+                    )}
+                  </FieldArray>
                 )}
               </FormContainer>
 
@@ -223,7 +284,7 @@ const TopUpData: React.FC<TopUpProps> = ({
                     packages.length === 0 ||
                     sims.length === 0 ||
                     !values.simIccid ||
-                    !values.planId
+                    values.plans.some((plan) => !plan.planId)
                   }
                 >
                   TOP UP
