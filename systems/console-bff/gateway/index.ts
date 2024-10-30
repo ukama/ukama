@@ -134,7 +134,7 @@ const startServer = async () => {
     const theme = req.query.theme;
     res.cookie("theme", theme, {
       domain: BASE_DOMAIN,
-      secure: BASE_DOMAIN === "localhost" ? false : true,
+      secure: false,
       sameSite: "lax",
       maxAge: COOKIE_EXPIRY_TIME - (new Date().getTime() - 2017874138705),
       httpOnly: false,

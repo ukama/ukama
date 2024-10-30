@@ -178,11 +178,11 @@ const middleware = async (request: NextRequest) => {
     response.cookies.set('token', userObj.token, {
       path: '/',
       name: 'token',
+      secure: false,
       httpOnly: true,
       sameSite: 'lax',
       value: userObj.token,
       domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
-      secure: process.env.NODE_ENV === 'production',
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
   } else if (!userObj.token) {
