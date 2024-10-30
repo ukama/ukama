@@ -274,7 +274,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Mesh Node Online",
 		Description: "Mesh Node Online",
 		Scope:       notif.SCOPE_ORG,
-		Type:        TypeDefault,
+		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},
 	EventMeshNodeOffline: {
 		Key:         EventMeshNodeOffline,
@@ -282,7 +282,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Mesh Node Offline",
 		Description: "Mesh Node Offline",
 		Scope:       notif.SCOPE_ORG,
-		Type:        TypeDefault,
+		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},
 	EventSimActivate: {
 		Key:         EventSimActivate,

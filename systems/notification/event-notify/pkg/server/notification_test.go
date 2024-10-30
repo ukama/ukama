@@ -50,8 +50,8 @@ var ns = db.Notifications{
 	Type:        notification.Type,
 	Scope:       notification.Scope,
 	IsRead:      false,
-	CreatedAt:   time.Now().Format(time.RFC3339),
-	UpdatedAt:   time.Now().Format(time.RFC3339),
+	CreatedAt:   time.Now(),
+	UpdatedAt:   time.Now(),
 }
 
 var user = db.Users{
