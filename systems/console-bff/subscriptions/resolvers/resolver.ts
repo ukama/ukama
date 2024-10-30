@@ -1,4 +1,4 @@
-import { Arg, Args, Query, Resolver, Root, Subscription } from "type-graphql";
+import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import { STORAGE_KEY } from "../../common/configs";
@@ -213,11 +213,11 @@ class SubscriptionsResolvers {
   })
   async getMetricByTabSub(
     @Root() payload: LatestMetricRes,
-    @Args() args: SubMetricByTabInput
+    @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
     await addInStore(
       openStore(),
-      `${args.orgId}/${args.userId}/${payload.type}/${args.from}`,
+      `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
       getTimestampCount("0")
     );
     return payload;
