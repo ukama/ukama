@@ -35,11 +35,15 @@ func (l NotificationScope) Value() (driver.Value, error) {
 type NotificationType uint8
 
 const (
-	TYPE_INAVLID  NotificationType = 0
-	TYPE_INFO     NotificationType = 1
-	TYPE_WARNING  NotificationType = 2
-	TYPE_ERROR    NotificationType = 3
-	TYPE_CRITICAL NotificationType = 4
+	TYPE_INVALID             NotificationType = 0
+	TYPE_INFO                NotificationType = 1
+	TYPE_WARNING             NotificationType = 2
+	TYPE_ERROR               NotificationType = 3
+	TYPE_CRITICAL            NotificationType = 4
+	TYPE_ACTIONABLE_INFO     NotificationType = 5
+	TYPE_ACTIONABLE_WARNING  NotificationType = 6
+	TYPE_ACTIONABLE_ERROR    NotificationType = 7
+	TYPE_ACTIONABLE_CRITICAL NotificationType = 8
 )
 
 func (l *NotificationType) Scan(value interface{}) error {
@@ -57,6 +61,7 @@ var RoleToNotificationScopes = map[roles.RoleType][]NotificationScope{
 	roles.TYPE_NETWORK_OWNER: {SCOPE_NETWORK, SCOPE_SITE, SCOPE_SITES, SCOPE_SUBSCRIBERS, SCOPE_SUBSCRIBER, SCOPE_USERS, SCOPE_USER, SCOPE_NODE},
 	roles.TYPE_VENDOR:        {SCOPE_NETWORK},
 	roles.TYPE_USERS:         {SCOPE_USER},
+	roles.TYPE_SUBSCRIBER:    {SCOPE_SUBSCRIBER},
 }
 
 var NotificationScopeToRoles = map[NotificationScope][]roles.RoleType{
@@ -68,7 +73,7 @@ var NotificationScopeToRoles = map[NotificationScope][]roles.RoleType{
 	SCOPE_SITES:       {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_SITE:        {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_SUBSCRIBERS: {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
-	SCOPE_SUBSCRIBER:  {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
+	SCOPE_SUBSCRIBER:  {roles.TYPE_SUBSCRIBER, roles.TYPE_NETWORK_OWNER},
 	SCOPE_USERS:       {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_USERS, roles.TYPE_NETWORK_OWNER},
 	SCOPE_USER:        {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
 	SCOPE_NODE:        {roles.TYPE_OWNER, roles.TYPE_ADMIN, roles.TYPE_NETWORK_OWNER},
