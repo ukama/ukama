@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  Role_Type,
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
@@ -14,7 +15,6 @@ import {
 } from '@/client/graphql/generated';
 import {
   NotificationsResDto,
-  Role_Type,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
@@ -120,7 +120,7 @@ export default function ConosleLayout({
       }
       ServerNotificationSubscription(
         `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
-        user.role as Role_Type,
+        user.role,
         user.orgId,
         user.id,
         user.orgName,
@@ -147,15 +147,13 @@ export default function ConosleLayout({
       getNotifications({
         client: subscriptionClient,
         variables: {
-          data: {
-            userId: user.id,
-            subscriberId: '',
-            orgId: user.orgId,
-            orgName: user.orgName,
-            networkId: network.id,
-            role: user.role as Role_Type,
-            startTimestamp: startTimeStamp,
-          },
+          userId: user.id,
+          subscriberId: '',
+          orgId: user.orgId,
+          orgName: user.orgName,
+          networkId: network.id,
+          role: user.role,
+          startTimestamp: startTimeStamp,
         },
       });
 

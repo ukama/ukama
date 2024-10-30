@@ -6,10 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  NotificationsResDto,
-  Role_Type,
-} from '@/client/graphql/generated/subscriptions';
+import { Role_Type } from '@/client/graphql/generated';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';

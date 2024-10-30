@@ -8,7 +8,7 @@
 import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { INVITATION_STATUS } from "../../common/enums";
+import { INVITATION_STATUS, ROLE_TYPE } from "../../common/enums";
 
 @InputType()
 export class CreateInvitationInputDto {
@@ -19,8 +19,8 @@ export class CreateInvitationInputDto {
   @IsEmail()
   email: string;
 
-  @Field()
-  role: string;
+  @Field(() => ROLE_TYPE)
+  role: ROLE_TYPE;
 }
 
 @ObjectType()

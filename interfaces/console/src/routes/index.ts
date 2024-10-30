@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { Role_Type } from '@/client/graphql/generated';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 import LocationIcon from '@mui/icons-material/LocationOn';

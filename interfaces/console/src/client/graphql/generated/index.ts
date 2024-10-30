@@ -189,7 +189,7 @@ export type CountryDto = {
 export type CreateInvitationInputDto = {
   email: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  role: Scalars['String']['input'];
+  role: Role_Type;
 };
 
 export type CurrencyRes = {
@@ -984,6 +984,15 @@ export type QueryGetSubscribersByNetworkArgs = {
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
+
+export enum Role_Type {
+  RoleAdmin = 'ROLE_ADMIN',
+  RoleInvalid = 'ROLE_INVALID',
+  RoleNetworkOwner = 'ROLE_NETWORK_OWNER',
+  RoleOwner = 'ROLE_OWNER',
+  RoleUser = 'ROLE_USER',
+  RoleVendor = 'ROLE_VENDOR'
+}
 
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];

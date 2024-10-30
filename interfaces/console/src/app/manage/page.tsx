@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { Role_Type } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { Skeleton } from '@mui/material';
 import { useRouter } from 'next/navigation';

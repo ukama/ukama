@@ -8,6 +8,7 @@
 'use client';
 import {
   Invitation_Status,
+  Role_Type,
   useCreateInvitationMutation,
   useDeleteInvitationMutation,
   useGetInvitationsQuery,
@@ -200,7 +201,7 @@ const Page = () => {
       variables: {
         data: {
           email: (member.email as string).toLowerCase(),
-          role: member.role as string,
+          role: member.role as Role_Type,
           name: member.name as string,
         },
       },

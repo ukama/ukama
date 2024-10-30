@@ -14,7 +14,6 @@ import { API_METHOD_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
   GetMetricRangeInput,
-  GetNotificationsInput,
   MetricRes,
   NotificationsRes,
 } from "../resolvers/types";
@@ -76,10 +75,11 @@ const getNodeRangeMetric = async (
 
 const getNotifications = async (
   baseUrl: string,
-  args: GetNotificationsInput
+  orgId: string,
+  userId: string,
+  networkId: string,
+  subscriberId: string
 ): Promise<NotificationsRes> => {
-  const { orgId, userId, networkId, subscriberId } = args;
-
   let params = "";
   if (orgId) {
     params = params + `&org_id=${orgId}`;

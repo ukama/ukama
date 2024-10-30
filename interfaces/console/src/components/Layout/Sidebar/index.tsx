@@ -6,8 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NetworkDto } from '@/client/graphql/generated';
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { NetworkDto, Role_Type } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { NavList } from '@/routes';
 import colors from '@/theme/colors';

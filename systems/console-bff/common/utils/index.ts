@@ -36,7 +36,6 @@ const parseHeaders = (reqHeader: any): THeaders => {
     orgName: "",
   };
   if (reqHeader.get("introspection") === "true") return headers;
-  console.log(`COOKIE: ${reqHeader.get("cookie")}`);
   if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
     if (reqHeader.get("x-session-token")) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;

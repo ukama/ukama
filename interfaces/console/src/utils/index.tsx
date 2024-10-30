@@ -6,12 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Invitation_Status, NodeTypeEnum } from '@/client/graphql/generated';
+import {
+  Invitation_Status,
+  NodeTypeEnum,
+  Role_Type,
+} from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
-  Role_Type,
 } from '@/client/graphql/generated/subscriptions';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
