@@ -65,6 +65,15 @@ function isValidUser(userObj: {
   );
 }
 
+function isValidRole(role: string) {
+  return (
+    role === Role_Type.RoleOwner ||
+    role === Role_Type.RoleAdmin ||
+    role === Role_Type.RoleVendor ||
+    role === Role_Type.RoleNetworkOwner
+  );
+}
+
 function decodeBase64Token(token: string): string {
   return Buffer.from(token, 'base64').toString('utf8');
 }
@@ -136,35 +145,13 @@ const middleware = async (request: NextRequest) => {
     return response;
   }
 
-  if (request.url.includes('logout')) {
-    response.cookies.set('token', '', {
-      path: '/',
-      name: 'token',
-      secure: false,
-      httpOnly: true,
-      sameSite: 'lax',
-      value: '',
-      domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
-      expires: new Date(Date.now()),
-    });
-    return response;
-  }
-
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
 
   if (!session) {
     return NextResponse.redirect(
-      new URL(
-        `/auth/login?return_to=${request.url}`,
-        process.env.NEXT_PUBLIC_AUTH_APP_URL,
-      ),
+      new URL(`/auth/login`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
-  }
-
-  if (pathname.includes('/refresh')) {
-    response.cookies.delete('token');
-    return response;
   }
 
   let userObj: User = USER_INIT;
@@ -180,6 +167,28 @@ const middleware = async (request: NextRequest) => {
     return NextResponse.redirect(
       new URL('/user/verification', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
+  }
+
+  // if (request.url.includes('logout')) {
+  // response.cookies.set('token', '', {
+  //   path: '/',
+  //   name: 'token',
+  //   secure: false,
+  //   httpOnly: true,
+  //   sameSite: 'lax',
+  //   value: '',
+  //   domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
+  //   expires: new Date(Date.now()),
+  // });
+  // return response;
+  //   return NextResponse.redirect(
+  //     new URL(`/user/logout`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
+  //   );
+  // }
+
+  if (pathname.includes('/refresh')) {
+    response.cookies.delete('token');
+    return response;
   }
 
   if (userObj.token && !cookieToken) {
@@ -207,12 +216,14 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-name', userObj.orgName);
 
   if (
-    cookieToken &&
-    (userObj.role === Role_Type.RoleUser ||
-      userObj.role === Role_Type.RoleInvalid) &&
-    !pathname.includes('/logout') &&
-    !pathname.includes('/403')
+    userObj.role === Role_Type.RoleUser &&
+    (pathname.includes('/console') ||
+      pathname.includes('/manage') ||
+      pathname.includes('/refresh') ||
+      pathname.includes('/configure') ||
+      pathname.includes('/welcome'))
   ) {
+    console.log("Redirecting to '/403' ");
     return NextResponse.redirect(
       new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -259,10 +270,25 @@ const middleware = async (request: NextRequest) => {
     );
   }
 
-  if (pathname === '/' && isUserHaveOrg(userObj) && isValidUser(userObj)) {
+  if (
+    pathname === '/' &&
+    isUserHaveOrg(userObj) &&
+    isValidUser(userObj) &&
+    isValidRole(userObj.role)
+  ) {
     console.log("Redirecting to '/console/home'");
     return NextResponse.redirect(
       new URL('/console/home', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
+  if (
+    userObj.role === Role_Type.RoleUser &&
+    pathname !== '/403' &&
+    pathname !== '/logout'
+  ) {
+    return NextResponse.redirect(
+      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 

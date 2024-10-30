@@ -20,7 +20,7 @@ const Page = () => {
   useEffect(() => {
     setTimeout(() => {
       router.push(`${env.AUTH_APP_URL}/user/logout`);
-    }, 2000);
+    }, 1000);
   }, []);
 
   return (
