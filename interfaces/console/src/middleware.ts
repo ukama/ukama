@@ -7,8 +7,7 @@
  */
 import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 type User = {
   id: string;
@@ -107,10 +106,8 @@ function getUserFromToken(token: string): User {
 
 const getUserObject = async (session: string, cookieToken: string) => {
   if (cookieToken) {
-    console.log('Get user from token');
     return getUserFromToken(cookieToken);
   } else {
-    console.log('Get user from whoami');
     const res = await whoami(`ukama_session=${session}`);
     if (!res.ok) {
       throw new Error('Unauthorized');
@@ -209,6 +206,18 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
 
+  if (
+    cookieToken &&
+    (userObj.role === Role_Type.RoleUser ||
+      userObj.role === Role_Type.RoleInvalid) &&
+    !pathname.includes('/logout') &&
+    !pathname.includes('/403')
+  ) {
+    return NextResponse.redirect(
+      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
   if (userObj.isShowWelcome) {
     console.log("Redirecting to '/welcome'");
     return NextResponse.redirect(
@@ -223,17 +232,6 @@ const middleware = async (request: NextRequest) => {
     console.log("Redirecting to '/onboarding' ");
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
-    );
-  }
-
-  if (
-    pathname.includes('/console') &&
-    (userObj.role === Role_Type.RoleInvalid ||
-      userObj.role === Role_Type.RoleUser)
-  ) {
-    console.log("Redirecting to '/403' ");
-    return NextResponse.redirect(
-      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 

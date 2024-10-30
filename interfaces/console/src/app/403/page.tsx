@@ -20,7 +20,7 @@ const Page = () => {
         <Typography variant="body1">
           {"Sorry, You don't have permissions to view this page"}
         </Typography>
-        <Link href={`${env.AUTH_APP_URL}/user/logout`}>Log me out</Link>
+        <Link href="/logout">Log me out</Link>
       </Stack>
     </CenterContainer>
   );
