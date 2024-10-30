@@ -107,8 +107,10 @@ function getUserFromToken(token: string): User {
 
 const getUserObject = async (session: string, cookieToken: string) => {
   if (cookieToken) {
+    console.log('Get user from token');
     return getUserFromToken(cookieToken);
   } else {
+    console.log('Get user from whoami');
     const res = await whoami(`ukama_session=${session}`);
     if (!res.ok) {
       throw new Error('Unauthorized');
@@ -138,18 +140,16 @@ const middleware = async (request: NextRequest) => {
   }
 
   if (request.url.includes('logout')) {
-    // cookieStore.set('token', '', {
-    //   path: '/',
-    //   name: 'token',
-    //   secure: false,
-    //   httpOnly: true,
-    //   sameSite: 'lax',
-    //   value: '',
-    //   domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
-    //   expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
-    // });
-    cookieStore.delete('token');
-    response.cookies.delete('token');
+    response.cookies.set('token', '', {
+      path: '/',
+      name: 'token',
+      secure: false,
+      httpOnly: true,
+      sameSite: 'lax',
+      value: '',
+      domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
+      expires: new Date(Date.now()),
+    });
     return response;
   }
 
