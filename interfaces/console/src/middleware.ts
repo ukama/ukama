@@ -137,10 +137,10 @@ const middleware = async (request: NextRequest) => {
     return response;
   }
 
-  if (request.url.includes('logout')) {
-    response.cookies.delete('token');
-    return response;
-  }
+  // if (request.url.includes('logout')) {
+  //   response.cookies.delete('token');
+  //   return response;
+  // }
 
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
@@ -197,8 +197,6 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('email', userObj.email);
   response.headers.set('org-id', userObj.orgId);
   response.headers.set('org-name', userObj.orgName);
-
-  console.log(`UserObj ${JSON.stringify(userObj)}`);
 
   if (userObj.isShowWelcome) {
     console.log("Redirecting to '/welcome'");
