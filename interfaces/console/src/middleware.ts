@@ -137,10 +137,21 @@ const middleware = async (request: NextRequest) => {
     return response;
   }
 
-  // if (request.url.includes('logout')) {
-  //   response.cookies.delete('token');
-  //   return response;
-  // }
+  if (request.url.includes('logout')) {
+    // cookieStore.set('token', '', {
+    //   path: '/',
+    //   name: 'token',
+    //   secure: false,
+    //   httpOnly: true,
+    //   sameSite: 'lax',
+    //   value: '',
+    //   domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
+    //   expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    // });
+    cookieStore.delete('token');
+    response.cookies.delete('token');
+    return response;
+  }
 
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';

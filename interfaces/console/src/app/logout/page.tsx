@@ -5,16 +5,29 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { cookies } from 'next/headers';
+'use client';
 
-import LogoutAction from './LogoutAction';
+import { useAppContext } from '@/context';
+import { CenterContainer } from '@/styles/global';
+import { CircularProgress } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default async function SignOut() {
-  async function deleteTokens() {
-    'use server';
+const Page = () => {
+  const { env } = useAppContext();
+  const router = useRouter();
 
-    cookies().delete('token');
-  }
+  useEffect(() => {
+    setTimeout(() => {
+      router.push(`${env.AUTH_APP_URL}/user/logout`);
+    }, 2000);
+  }, []);
 
-  return <LogoutAction deleteTokens={deleteTokens} />;
-}
+  return (
+    <CenterContainer>
+      <CircularProgress />
+    </CenterContainer>
+  );
+};
+
+export default Page;
