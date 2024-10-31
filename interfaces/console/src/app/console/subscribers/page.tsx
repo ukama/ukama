@@ -712,13 +712,9 @@ const Page = () => {
         <Paper
           elevation={1}
           sx={{
-            height: '218px',
             borderRadius: '10px',
-            padding: '24px 32px',
-            position: 'relative',
-            maxWidth: '1320px',
-            width: '100%',
-            margin: '0 auto',
+            py: 4,
+            px: 4,
           }}
         >
           <Stack direction="column" spacing={1.5} sx={{ position: 'relative' }}>
