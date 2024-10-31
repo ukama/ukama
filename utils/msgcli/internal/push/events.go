@@ -12,8 +12,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ukama/msgcli/internal/push/messages"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ukama/ukama/utils/msgcli/internal/push/messages"
 )
 
 const (

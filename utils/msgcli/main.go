@@ -6,9 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package version
+package main
 
-// Minor version is autoupdated by the build system
-// NOTE: use go build -ldflags "-X github.com/ukama/msgcli/cmd/version.Version==$(git describe)".
+import "github.com/ukama/ukama/utils/msgcli/cmd"
 
-var Version = "v0.0.debug"
+func main() {
+	cmd.Execute()
+}

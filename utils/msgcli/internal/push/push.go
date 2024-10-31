@@ -13,7 +13,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/ukama/msgcli/util"
+	"github.com/ukama/ukama/utils/msgcli/util"
 )
 
 const (

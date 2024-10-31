@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ukama/msgcli/internal/scan"
-	"github.com/ukama/msgcli/util"
+	"github.com/ukama/ukama/utils/msgcli/internal/scan"
+	"github.com/ukama/ukama/utils/msgcli/util"
 )
 
 var (

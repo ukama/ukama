@@ -99,7 +99,10 @@ func updateProto(p any, d string) error {
 		}
 
 		if val, ok := v.(float64); ok && fk != reflect.Float64 {
-			updateNumericField(p, k, val)
+			err = updateNumericField(p, k, val)
+			if err != nil {
+				return fmt.Errorf("failed to update field info [%s: %v] from event message: %w", k, v, err)
+			}
 		} else {
 			err = reflections.SetField(p, k, v)
 			if err != nil {

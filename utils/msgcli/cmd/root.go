@@ -18,7 +18,7 @@ import (
 
 	homedir "github.com/mitchellh/go-homedir"
 
-	"github.com/ukama/msgcli/cmd/version"
+	"github.com/ukama/ukama/utils/msgcli/cmd/version"
 )
 
 var rootCmd = &cobra.Command{

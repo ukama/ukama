@@ -17,7 +17,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ukama/msgcli/util"
+	"github.com/ukama/ukama/utils/msgcli/util"
 )
 
 func WalkAndParse(dir string, out *util.ResultSet) error {

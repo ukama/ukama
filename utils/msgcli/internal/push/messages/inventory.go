@@ -24,6 +24,7 @@ const (
 )
 
 func NewAccountingSync(data string) (protoreflect.ProtoMessage, error) {
+
 	userAccountingInfo := &epb.UserAccounting{
 		Id:            gofakeit.UUID(),
 		UserId:        gofakeit.UUID(),
@@ -44,7 +45,7 @@ func NewAccountingSync(data string) (protoreflect.ProtoMessage, error) {
 	}
 
 	userAccountingEvt := &epb.UserAccountingEvent{
-		UserId:     gofakeit.UUID(),
+		UserId:     userAccountingInfo.UserId,
 		Accounting: []*epb.UserAccounting{userAccountingInfo},
 	}
 

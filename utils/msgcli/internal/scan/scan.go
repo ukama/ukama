@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ukama/msgcli/util"
+	"github.com/ukama/ukama/utils/msgcli/util"
 )
 
 func Run(dir string, out io.Writer, cfg *util.Config) error {

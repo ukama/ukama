@@ -29,8 +29,7 @@ const (
 func NewSubscriberCreate(data string) (protoreflect.ProtoMessage, error) {
 	subscriber := &upb.Subscriber{
 		SubscriberId:          gofakeit.UUID(),
-		FirstName:             gofakeit.FirstName(),
-		LastName:              gofakeit.LastName(),
+		Name:                  gofakeit.Name(),
 		Email:                 gofakeit.Email(),
 		Address:               gofakeit.Address().Address,
 		PhoneNumber:           gofakeit.Phone(),
@@ -82,8 +81,7 @@ func NewSubscriberUpdate(data string) (protoreflect.ProtoMessage, error) {
 func NewSubscriberDelete(data string) (protoreflect.ProtoMessage, error) {
 	subscriber := &upb.Subscriber{
 		SubscriberId:          gofakeit.UUID(),
-		FirstName:             gofakeit.FirstName(),
-		LastName:              gofakeit.LastName(),
+		Name:                  gofakeit.Name(),
 		Email:                 gofakeit.Email(),
 		Address:               gofakeit.Address().Address,
 		PhoneNumber:           gofakeit.Phone(),

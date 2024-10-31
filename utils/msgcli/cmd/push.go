@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ukama/msgcli/internal/push"
-	"github.com/ukama/msgcli/util"
+	"github.com/ukama/ukama/utils/msgcli/internal/push"
+	"github.com/ukama/ukama/utils/msgcli/util"
 )
 
 const (
@@ -103,14 +103,17 @@ func init() {
 
 	pushCmd.Flags().StringP("org", "o", defaultOrg, "name of the org to send the event to")
 
-	eventScope.Set(defaultScope)
+	_ = eventScope.Set(defaultScope)
+
 	pushCmd.Flags().VarP(eventScope, "scope", "s",
 		fmt.Sprintf("event scope. Must match one of the following: %q", eventScope.Values))
 
 	pushCmd.Flags().StringP("route", "r", "", "route for the event (should match \"system.service.object.action\")")
-	pushCmd.MarkFlagRequired("route")
+
+	_ = pushCmd.MarkFlagRequired("route")
+
 	pushCmd.Flags().StringP("message", "m", "", "message for the event (should be in json format)")
 
-	viper.BindPFlag("default-org", pushCmd.Flags().Lookup("org"))
-	viper.BindPFlag("default-scope", pushCmd.Flags().Lookup("scope"))
+	_ = viper.BindPFlag("default-org", pushCmd.Flags().Lookup("org"))
+	_ = viper.BindPFlag("default-scope", pushCmd.Flags().Lookup("scope"))
 }
