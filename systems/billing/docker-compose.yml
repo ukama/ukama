@@ -65,6 +65,7 @@ services:
    - LAGOHOST=${LOCAL_HOST_IP}
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - WEBHOOKURL=http://${LOCAL_HOST_IP}:8680/v1/reports
   restart: always
   networks:
    - ukama-net
