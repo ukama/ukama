@@ -36,10 +36,10 @@ export default function ConosleLayout({
   children: React.ReactNode;
 }>) {
   const {
+    env,
     user,
     network,
     metaInfo,
-    pageName,
     isDarkMode,
     setNetwork,
     setMetaInfo,
@@ -119,6 +119,7 @@ export default function ConosleLayout({
         setNotifications(data.getNotifications.notifications);
       }
       ServerNotificationSubscription(
+        env.METRIC_URL,
         `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
         user.role,
         user.orgId,

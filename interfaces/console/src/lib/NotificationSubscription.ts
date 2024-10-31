@@ -24,6 +24,7 @@ function parseEvent(eventStr: any) {
 }
 
 export default async function ServerNotificationSubscription(
+  url: string,
   key: string,
   role: string,
   orgId: string,
@@ -46,7 +47,7 @@ export default async function ServerNotificationSubscription(
     headers: myHeaders,
   };
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_METRIC_URL}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%${orgId}%22+orgName%3A%${orgName}%22+role%3A%${role}%22+startTimestamp%3A%${startTimestamp}%22+subscriberId%3A%${''}%22+userId%3A%${userId}%22%29%7BcreatedAt+description+id+isRead+scope+title+type%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
+    `${url}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%${orgId}%22+orgName%3A%${orgName}%22+role%3A%${role}%22+startTimestamp%3A%${startTimestamp}%22+subscriberId%3A%${''}%22+userId%3A%${userId}%22%29%7BcreatedAt+description+id+isRead+scope+title+type%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
     requestOptions,
   );
 
