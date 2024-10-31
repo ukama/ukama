@@ -297,7 +297,7 @@ func (l *lagoClient) ListWebhooks(ctx context.Context) ([]string, error) {
 
 	webhooks, err := l.w.GetList(ctx, &lago.WebhookEndpointListInput{})
 	if err != nil {
-		msg := fmt.Sprintf("error while sending webhook list event")
+		msg := "error while sending webhook list event"
 
 		return nil, unpackLagoError(msg, err)
 	}
