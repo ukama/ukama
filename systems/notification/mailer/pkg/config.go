@@ -31,7 +31,7 @@ type Config struct {
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
-	Timeout          time.Duration   `default:"20s"`
+	Timeout          time.Duration   `default:"50s"`
 	Service          *uconf.Service
 	Mailer           *Mailer
 	TemplatesPath    string `default:"templates"`
