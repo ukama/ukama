@@ -6,8 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/* to build capp */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -20,7 +18,7 @@
 #include "config.h"
 #include "log.h"
 
-#define SCRIPT "./scripts/mk_capp_rootfs.sh"
+#define SCRIPT "./scripts/mk-app.sh"
 
 #define MAX_BUFFER   1024
 #define DEF_HOSTNAME "localhost"
@@ -28,11 +26,7 @@
 
 #define JSON "{ \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \"%s/%s\", \n \t \t \"args\": \"%s\", \n \t \t \"env\": \"%s\" \n \t }, \n \t \"hostname\": \"%s\",\n \t \"namespaces\" : [ \n \t \t { \"type\" : \"pid\"}, \n \t {\t \"type\" : \"mount\"}, \n \t { \t \"type\" : \"user\"} \n \n \t ] \n } \n"
 
-/*
- * create_capp_config --
- *
- */
-static int create_capp_config(Config *config) {
+static int create_app_config(Config *config) {
 
   char str[2048] = {0};
   char *envs, *args;
@@ -82,56 +76,42 @@ static int create_capp_config(Config *config) {
   return ret;
 }
 
-/*
- * create_capp --
- *
- */
-int create_capp(Config *config) {
+int create_app(Config *config) {
 
   char runMe[MAX_BUFFER] = {0};
 
   /* Flow is:
    * 1. create config.json and mv to rootfs
-   * 2. rename the rootfs to match capp
+   * 2. rename the rootfs to match app
    * 3. tar things up and clean up
    */
-  if (!create_capp_config(config)) {
-    log_error("Error creating %s", DEF_CONFIG);
-    return FALSE;
+  if (!create_app_config(config)) {
+      log_error("Error creating %s", DEF_CONFIG);
+      return FALSE;
   }
 
   /* Copy to / in rootfs and delete it locally */
-  sprintf(runMe, "%s cp %s /", SCRIPT, DEF_CONFIG);
+  sprintf(runMe, "%s cp %s %s_%s/", SCRIPT, DEF_CONFIG,
+          config->capp->name, config->capp->version);
   if (system(runMe) < 0) {
-    log_error("Error copying %s to rootfs", DEF_CONFIG);
-    return FALSE;
+      log_error("Error copying %s to rootfs", DEF_CONFIG);
+      return FALSE;
   }
   remove(DEF_CONFIG);
 
-  sprintf(runMe, "%s rename %s_%s", SCRIPT, config->capp->name,
-	  config->capp->version);
-  if (system(runMe) < 0) {
-    log_error("Error renaming the dir to %s_%s", config->capp->name,
-	      config->capp->version);
-    return FALSE;
-  }
-
   /* delete the directory afterwards */
-  sprintf(runMe, "%s pack %s_%s.tar.gz %s_%s %d", SCRIPT, config->capp->name,
-	  config->capp->version, config->capp->name,
-	  config->capp->version, TRUE);
+  sprintf(runMe, "%s pack %s_%s.tar.gz %s_%s %d", SCRIPT,
+          config->capp->name, config->capp->version,
+          config->capp->name, config->capp->version, TRUE);
   if (system(runMe) < 0) {
-    log_error("Error packing the capp to %s_%s", config->capp->name,
-	      config->capp->version);
-    return FALSE;
+      log_error("Error packing the capp to %s_%s", config->capp->name,
+                config->capp->version);
+      return FALSE;
   }
 
   /* clean up */
-  sprintf(runMe, "%s clean %s_%s", SCRIPT, config->capp->name,
-	  config->capp->version);
-  if (system(runMe) < 0) return FALSE;
-
-  sprintf(runMe, "%s clean", SCRIPT);
+  sprintf(runMe, "%s clean %s_%s", SCRIPT,
+          config->capp->name, config->capp->version);
   if (system(runMe) < 0) return FALSE;
 
   return TRUE;

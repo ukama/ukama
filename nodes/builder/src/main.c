@@ -6,11 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * capp - utility to create capp from source code.
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,13 +25,9 @@ enum {
   CAPP_CMD_CREATE,
 };
 
-extern int build_capp(Config *config);
-extern int create_capp(Config *config);
+extern int build_app(Config *config);
+extern int create_app(Config *config);
 
-/*
- * usage -- 
- *
- */
 void usage() {
 
   printf("Usage: [options] \n");
@@ -151,12 +142,12 @@ int main (int argc, char *argv[]) {
     log_config(config);
   }
 
-  if (!build_capp(config)) {
+  if (!build_app(config)) {
     log_error("Error building the capp using: %s", configFile);
     goto done;
   }
 
-  if (!create_capp(config)) {
+  if (!create_app(config)) {
     log_error("Error creating the capp using: %s", configFile);
     goto done;
   }
