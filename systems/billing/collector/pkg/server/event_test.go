@@ -411,7 +411,7 @@ func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 			VoiceVolume: 500,
 			Type:        "prepaid",
 			DataUnit:    "MegaBytes",
-			Flatrate:    false,
+			Flatrate:    true,
 			Country:     "USA",
 			Provider:    "ukama",
 		}

@@ -35,8 +35,8 @@ type Notification struct {
 	NodeId       string
 	EventMsgID   uint
 	EventMsg     EventMsg
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 

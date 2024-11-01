@@ -96,6 +96,11 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Errorf("Failed to resolve subscriber address: %v", err)
 	}
 
+	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve subscriber address: %v", err)
+	}
+
 	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 	memberClient := creg.NewMemberClient(regUrl.String())

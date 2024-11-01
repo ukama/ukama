@@ -27,6 +27,7 @@ export const dtoToNotificationDto = (
     networkId: res.notification.network_id,
     userId: res.notification.user_id,
     subscriberId: res.notification.subscriber_id,
+    resourceId: res.notification.resource_id,
   };
 };
 

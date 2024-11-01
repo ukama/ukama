@@ -35,11 +35,15 @@ func (l NotificationScope) Value() (driver.Value, error) {
 type NotificationType uint8
 
 const (
-	TYPE_INAVLID  NotificationType = 0
-	TYPE_INFO     NotificationType = 1
-	TYPE_WARNING  NotificationType = 2
-	TYPE_ERROR    NotificationType = 3
-	TYPE_CRITICAL NotificationType = 4
+	TYPE_INVALID             NotificationType = 0
+	TYPE_INFO                NotificationType = 1
+	TYPE_WARNING             NotificationType = 2
+	TYPE_ERROR               NotificationType = 3
+	TYPE_CRITICAL            NotificationType = 4
+	TYPE_ACTIONABLE_INFO     NotificationType = 5
+	TYPE_ACTIONABLE_WARNING  NotificationType = 6
+	TYPE_ACTIONABLE_ERROR    NotificationType = 7
+	TYPE_ACTIONABLE_CRITICAL NotificationType = 8
 )
 
 func (l *NotificationType) Scan(value interface{}) error {

@@ -119,6 +119,7 @@ services:
    - DB_HOST=postgresd-notification
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - GRPC_PORT=9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - GRPC_PORT=9095
    - SYSTEM=notification
