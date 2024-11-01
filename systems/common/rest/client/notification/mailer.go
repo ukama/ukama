@@ -49,19 +49,24 @@ func NewMailerClient(h string, options ...client.Option) *mailerClient {
 }
 
 func (m *mailerClient) SendEmail(body SendEmailReq) error {
-	log.Debugf("Sending email req: %v", body)
+    log.Debugf("Sending email req: %v", body)
 
-	b, err := json.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("email body marshal error. error: %w", err)
-	}
+    b, err := json.Marshal(body)
+    if err != nil {
+        return fmt.Errorf("email body marshal error. error: %w", err)
+    }
 
-	_, err = m.R.Post(m.u.String()+MailerEndpoint+"/sendEmail", b)
-	if err != nil {
-		log.Errorf("SendEmail failure. error: %s", err.Error())
+    resp, err := m.R.Post(m.u.String()+MailerEndpoint+"/sendEmail", b)
+    if err != nil {
+        log.Errorf("SendEmail failure. error: %s", err.Error())
+        return fmt.Errorf("SendEmail failure: %w", err)
+    }
 
-		return fmt.Errorf("SendEmail failure: %w", err)
-	}
+    if resp.StatusCode() != 200 {
+        return fmt.Errorf("SendEmail failed with status: %d, body: %s", 
+            resp.StatusCode(), string(resp.Body()))
+    }
 
-	return nil
+    log.Debugf("Email sent successfully")
+    return nil
 }
