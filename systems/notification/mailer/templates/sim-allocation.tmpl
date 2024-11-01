@@ -1,0 +1,107 @@
+Subject: [Ukama] {{ .Values.NAME }} invited you to use their network
+MIME-version: 1.0;
+Content-Type: text/html; charset="UTF-8";
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #000000;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .qr-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 200px; 
+        }
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            display: block; 
+            object-fit: contain; 
+            background-color: white; 
+            padding: 10px; 
+            border: 1px solid #ddd;
+        }
+        .qr-code[src=""] {
+            display: none; 
+        }
+        .download-link {
+            display: inline-block;
+            background-color: ##1D90F8;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .download-link:hover {
+            background-color: #1a365d;
+        }
+        footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h1>Download your eSIM</h1>
+        <p>Hi {{.Values.SUBSCRIBER}},</p>
+        
+        <p>{{ .Values.NAME }} has invited you to join their network. To get started, scan the QR code below to download your eSIM and start using the {{ .Values.NETWORK }} network. You have {{ .Values.VOLUME }}  {{ .Values.UNIT }} of free data and will be charged at $5/GB while roaming.</p>
+        
+        <p>This invitation <span class="highlight"><strong>expires in 48 hours</strong></span> for security purposes, but another invitation will be sent if you click on the link past the time period.</p>
+        
+        <p>Note: You don't have to do anything with your current SIM in your phone.</p>
+        
+      <div class="qr-container">
+        <img 
+            class="qr-code" 
+            alt="QR Code for eSIM" 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{.Values.QRCODE}}"
+onerror="this.src='https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl={{.Values.QRCODE}}'"
+        />
+     </div>
+        <p>Having trouble with the QR code? Use the following link instead:</p>
+        <a href="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{.Values.QRCODE}}" class="download-link">Download eSIM</a>
+        
+        <p>Thanks,<br>The Ukama Team</p>
+
+        <footer>
+            <p>© Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</p>
+        </footer>
+    </div>
+</body>
+</html>
