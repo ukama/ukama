@@ -27,12 +27,22 @@ build_app() {
 copy_all_libs() {
 
     BIN=$1
+    DEST=$2
 
     for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
     do
         if [ -f "${lib}" ]; then
-            cp --parents "${lib}" ${ROOTFS}
-            cp "${lib}" ${ROOTFS}/lib
+            # Use case statement for substring match
+            case "${lib}" in
+                *libusys.so*)
+                    # Copy libusys.so directly to /lib
+                    cp "${lib}" "${DEST}/lib"
+                    ;;
+                *)
+                    # Copy other libraries to the destination with their parents
+                    cp --parents "${lib}" "${DEST}"
+                    ;;
+            esac
         fi
     done
 }
@@ -43,6 +53,10 @@ case "$ACTION" in
     "init")
         rm -rf $2
         mkdir $2
+        mkdir $2/sbin
+        mkdir $2/bin
+        mkdir $2/lib
+        mkdir $2/conf
         ;;
     "build")
 	    build_app $3 "$4"
@@ -60,7 +74,7 @@ case "$ACTION" in
 	    mkdir -p $2
 	    ;;
     "libs")
-	    copy_all_libs $2
+	    copy_all_libs $2 $3
 	    ;;
     "clean")
 	    rm -rf $2
