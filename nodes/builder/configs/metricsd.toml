@@ -7,7 +7,7 @@
 	static="false"
 	source="/nodes/ukamaOS/distro/system/metricsd"
 	cmd="make"
-	bin_from="/nodes/ukamaOS/distro/system/metricsd/build/metricsd"
+	bin_from="/nodes/ukamaOS/distro/system/metricsd/metrics.d"
 	bin_to="/sbin"
 
 [build-rootfs]
@@ -22,7 +22,7 @@
 [capp-exec]
 	name="metricsd"
 	version="latest"
-	bin="metricsd"
+	bin="metrics.d"
 	path="/sbin" # path where the exec should be. Mathches build.bin_to
 	args="--config /ukama/configs/metricsd/config.toml"
 
