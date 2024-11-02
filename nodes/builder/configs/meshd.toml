@@ -14,7 +14,7 @@
 	mkdir="/conf"
 
 [build-conf]
-        from="/nodes/configs/capps/mesh/config.toml"
+        from="/nodes/configs/apps/mesh/config.toml"
         to="/conf/config.toml"
 
 [build-misc]

@@ -14,7 +14,7 @@
 	mkdir="/conf"
 
 [build-conf]
-    from="/nodes/configs/capps/metricsd/metrics_config.toml"
+    from="/nodes/configs/apps/metricsd/metrics_config.toml"
     to="/conf/config.toml"
 
 # Following are use to create config.json file which is used by starter.d to start 
