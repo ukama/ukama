@@ -70,7 +70,8 @@ int build_app(Config *config) {
   }
 
   if (!build->staticFlag) {
-      sprintf(runMe, "%s libs %s", SCRIPT, build->binFrom);
+      sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,
+              config->capp->name, config->capp->version);
       if (system(runMe) < 0) return FALSE;
   }
   return TRUE;
