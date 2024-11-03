@@ -24,44 +24,57 @@ import (
 )
 
 const (
-	maxRetries        = 3
-	retryDelay        = 5 * time.Second
-	templateExtension = ".tmpl"
-	defaultTimeout    = 80 * time.Second
-	dialTimeout       = 80 * time.Second
-	smtpTimeout       = 60 * time.Second
+	maxRetries         = 3
+	retryDelay         = 5 * time.Second
+	templateExtension  = ".tmpl"
+	defaultTimeout     = 80 * time.Second
+	dialTimeout        = 80 * time.Second
+	smtpTimeout        = 60 * time.Second
+	emailQueueCapacity = 100
+	MaxRetryCount      = 3
+	InitialBackoff     = 5 * time.Minute
 )
 
 type EmailPayload struct {
 	To           []string               `json:"to"`
 	TemplateName string                 `json:"template_name"`
 	Values       map[string]interface{} `json:"values"`
+	MailId       uuid.UUID
 }
 
 type MailerServer struct {
 	mailerRepo db.MailerRepo
 	pb.UnimplementedMailerServiceServer
-	mailer        *pkg.Mailer
+	mailer        *pkg.MailerConfig
 	templatesPath string
 	templates     *template.Template
+	emailQueue    chan *EmailPayload
+	retryTicker   *time.Ticker
 }
 
-func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.Mailer, templatesPath string) (*MailerServer, error) {
+func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.MailerConfig, templatesPath string) (*MailerServer, error) {
 	templates, err := template.ParseGlob(filepath.Join(templatesPath, "*"+templateExtension))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load email templates: %v", err)
 	}
 
-	return &MailerServer{
+	server := &MailerServer{
 		mailerRepo:    mailerRepo,
 		mailer:        mail,
 		templatesPath: templatesPath,
 		templates:     templates,
-	}, nil
+		emailQueue:    make(chan *EmailPayload, emailQueueCapacity),
+		retryTicker:   time.NewTicker(1 * time.Minute),
+	}
+
+	go server.processEmailQueue()
+	go server.processRetries()
+
+	return server, nil
 }
 
 func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := s.validateRequest(req); err != nil {
@@ -69,54 +82,157 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	}
 
 	mailId := uuid.NewV4()
-	logger := log.WithField("mail_id", mailId)
-	logger.Infof("Sending email to %v", req.To)
+	log.Infof("Queueing email to %v", req.To)
 
 	payload := &EmailPayload{
 		To:           req.To,
 		TemplateName: req.TemplateName,
 		Values:       s.convertValues(req.Values),
+		MailId:       mailId,
+	}
+	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, db.Pending, req.Values); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
-	var lastError error
-	for attempt := 1; attempt <= maxRetries; attempt++ {
-		err := s.attemptSendEmail(ctx, payload)
-		if err == nil {
-			if err := s.saveEmailStatus(mailId, req.To[0], req.TemplateName, "sent"); err != nil {
-				logger.WithError(err).Error("Failed to save successful email status")
-			}
-			return &pb.SendEmailResponse{
-				Message: "Email Sent!",
-				MailId:  mailId.String(),
-			}, nil
+	select {
+	case s.emailQueue <- payload:
+		return &pb.SendEmailResponse{
+			Message: "Email queued for sending!",
+			MailId:  mailId.String(),
+		}, nil
+	case <-timeoutCtx.Done():
+		return nil, status.Errorf(codes.Canceled, "operation canceled: %v", timeoutCtx.Err())
+	}
+}
+
+func (s *MailerServer) processEmailQueue() {
+	for payload := range s.emailQueue {
+		email, err := s.mailerRepo.GetEmailById(payload.MailId)
+		if err != nil {
+			log.WithError(err).Error("Failed to fetch email")
+			continue
 		}
 
-		lastError = err
-		logger.WithFields(log.Fields{
-			"attempt": attempt,
-			"error":   err,
-		}).Error("Email sending failed")
+		if email.Status == db.Success {
+			log.Warnf("Skipping email with mailId %v as it has already been sent", payload.MailId)
+			continue
+		}
 
-		if attempt < maxRetries {
-			backoff := retryDelay * time.Duration(attempt)
-			logger.WithField("backoff", backoff).Info("Retrying after backoff")
+		if err := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
+			MailId:        payload.MailId,
+			Status:        db.Process,
+			RetryCount:    0,
+			NextRetryTime: nil,
+			UpdatedAt:     time.Now(),
+		}); err != nil {
+			log.Errorf("Failed to update email status: %v", err)
+			continue
+		}
+		now := time.Now()
 
-			timer := time.NewTimer(backoff)
-			select {
-			case <-ctx.Done():
-				timer.Stop()
-				return nil, status.Errorf(codes.Canceled, "operation cancelled: %v", ctx.Err())
-			case <-timer.C:
+		err = s.attemptSendEmail(payload)
+		if err != nil {
+			log.Errorf("Failed to send email: %v", err)
+
+			nextRetry := time.Now().Add(InitialBackoff)
+			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
+				MailId:        payload.MailId,
+				Status:        db.Retry,
+				RetryCount:    1,
+				NextRetryTime: &nextRetry,
+				UpdatedAt:     time.Now(),
+			}); updateErr != nil {
+				log.Errorf("Failed to update email status: %v", updateErr)
+			}
+		} else {
+			log.Infof("Email sent successfully to %v with template %s and mail ID %v", payload.To, payload.TemplateName, payload.MailId)
+
+			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
+				MailId:        payload.MailId,
+				Status:        db.Success,
+				SentAt:        &now,
+				RetryCount:    0,
+				NextRetryTime: nil,
+				UpdatedAt:     time.Now(),
+			}); updateErr != nil {
+				log.Errorf("Failed to update email status: %v", updateErr)
+
+			}
+		}
+	}
+}
+
+func (s *MailerServer) updateStatus(mailId uuid.UUID, status db.Status) error {
+	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
+		MailId:    mailId,
+		Status:    status,
+		UpdatedAt: time.Now(),
+	})
+}
+
+func (s *MailerServer) updateRetryStatus(mailId uuid.UUID, retryCount int, nextRetryTime *time.Time) error {
+	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
+		MailId:        mailId,
+		Status:        db.Retry,
+		RetryCount:    retryCount,
+		NextRetryTime: nextRetryTime,
+		UpdatedAt:     time.Now(),
+	})
+}
+
+func (s *MailerServer) processRetries() {
+	for range s.retryTicker.C {
+		emails, err := s.mailerRepo.GetFailedEmails()
+		if err != nil {
+			log.WithError(err).Error("Failed to fetch failed emails")
+			continue
+		}
+
+		for _, email := range emails {
+			if email.Status == db.Success || email.Status == db.Process {
 				continue
 			}
+
+			if email.NextRetryTime != nil && time.Now().Before(*email.NextRetryTime) {
+				continue
+			}
+
+			if email.RetryCount >= MaxRetryCount {
+				log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
+
+				if err := s.updateStatus(email.MailId, db.Failed); err != nil {
+					log.WithError(err).Error("Failed to update email status")
+
+				}
+				continue
+			}
+
+			if err := s.updateStatus(email.MailId, db.Process); err != nil {
+				log.WithError(err).Error("Failed to update status to processing")
+				continue
+			}
+
+			payload := &EmailPayload{
+				To:           strings.Split(email.Email, ","),
+				TemplateName: email.TemplateName,
+				Values:       email.Values,
+				MailId:       email.MailId,
+			}
+
+			if err := s.attemptSendEmail(payload); err != nil {
+				log.WithError(err).WithField("mailId", email.MailId).Error("Retry attempt failed")
+				nextRetry := time.Now().Add(InitialBackoff * time.Duration(1<<uint(email.RetryCount)))
+				if err := s.updateRetryStatus(email.MailId, email.RetryCount+1, &nextRetry); err != nil {
+					log.WithError(err).Error("Failed to update retry status")
+				}
+			} else {
+				log.WithField("mailId", email.MailId).Info("Retry successful")
+				if err := s.updateStatus(email.MailId, db.Success); err != nil {
+					log.WithError(err).Error("Failed to update email status")
+				}
+			}
 		}
 	}
-
-	if err := s.saveEmailStatus(mailId, req.To[0], req.TemplateName, "failed"); err != nil {
-		logger.WithError(err).Error("Failed to save failed email status")
-	}
-
-	return nil, status.Errorf(codes.Internal, "failed to send email after %d attempts: %v", maxRetries, lastError)
 }
 
 func (s *MailerServer) validateRequest(req *pb.SendEmailRequest) error {
@@ -146,19 +262,44 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) attemptSendEmail(ctx context.Context, payload *EmailPayload) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status db.Status, values map[string]string) error {
+	var nextRetryTime *time.Time
+	if status == db.Failed {
+		t := time.Now().Add(InitialBackoff)
+		nextRetryTime = &t
+	}
+
+	jsonMap := make(db.JSONMap)
+	for k, v := range values {
+		jsonMap[k] = v
+	}
+
+	return s.mailerRepo.CreateEmail(&db.Mailing{
+		MailId:        mailId,
+		Email:         email,
+		TemplateName:  templateName,
+		Status:        status,
+		RetryCount:    0,
+		NextRetryTime: nextRetryTime,
+		Values:        jsonMap,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	})
+}
+
+func (s *MailerServer) attemptSendEmail(payload *EmailPayload) error {
 	body, err := s.prepareMsg(payload)
 	if err != nil {
 		return fmt.Errorf("failed to prepare email body: %v", err)
 	}
 
-	client, err := s.createSMTPClient(ctx)
+	client, err := s.createSMTPClient(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to create SMTP client: %v", err)
 	}
 	defer client.Close()
 
-	return s.sendWithClient(ctx, client, payload, body)
+	return s.sendWithClient(client, payload, body)
 }
 
 func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, error) {
@@ -198,8 +339,8 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 	return client, nil
 }
 
-func (s *MailerServer) sendWithClient(ctx context.Context, client *smtp.Client, payload *EmailPayload, body bytes.Buffer) error {
-	sendCtx, cancel := context.WithTimeout(ctx, smtpTimeout)
+func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload, body bytes.Buffer) error {
+	sendCtx, cancel := context.WithTimeout(context.Background(), smtpTimeout)
 	defer cancel()
 
 	errCh := make(chan error, 1)
@@ -229,8 +370,10 @@ func (s *MailerServer) sendWithClient(ctx context.Context, client *smtp.Client, 
 		}
 
 		if err := client.Quit(); err != nil {
-			errCh <- fmt.Errorf("failed to close SMTP connection: %v", err)
-			return
+			if !strings.Contains(err.Error(), "250 Ok") {
+				errCh <- fmt.Errorf("failed to close SMTP connection: %v", err)
+				return
+			}
 		}
 
 		errCh <- nil
@@ -267,16 +410,8 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 	return body, nil
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName, status string) error {
-	return s.mailerRepo.SendEmail(&db.Mailing{
-		MailId:       mailId,
-		Email:        email,
-		TemplateName: templateName,
-		Status:       status,
-	})
-}
-
 func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+	log.Infof("GetEmailById: %v", req)
 	if req.MailId == "" {
 		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
 	}
@@ -292,12 +427,10 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
 	}
 
-	log.WithField("mail_id", mail.MailId).Info("Retrieved email")
-
 	return &pb.GetEmailByIdResponse{
 		MailId:       mail.MailId.String(),
 		TemplateName: mail.TemplateName,
-		SentAt:       mail.SentAt.String(),
-		Status:       mail.Status,
+		SentAt:       mail.CreatedAt.String(),
+		Status:       pb.Status(pb.Status_value[db.Status(mail.Status).String()]),
 	}, nil
 }

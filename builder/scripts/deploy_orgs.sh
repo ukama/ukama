@@ -91,7 +91,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export MAILER_PASSWORD=$MAILERPASSWORD
         export MAILER_USERNAME=$MAILERUSERNAME
         export MAILER_FROM=$OWNEREMAIL
-        export TEMPLATESPATH=member-invite
+        export TEMPLATESPATH=templates
         export LAGO_API_KEY=$LAGOAPIKEY
         export MASTERORGNAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP

@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -39,6 +40,7 @@ import (
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 
+	"github.com/ukama/ukama/systems/common/emailTemplate"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -309,14 +311,15 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
-			TemplateName: "sim-allocation",
+			TemplateName: emailTemplate.EmailTemplateSimAllocation,
 			Values: map[string]interface{}{
-				"SUBSCRIBER": remoteSubResp.Subscriber.Name,
-				"NETWORK":    netInfo.Name,
-				"NAME":       userInfos.Name,
-				"QRCODE":     poolSim.QrCode,
-				"VOLUME":     planInfos.DataVolume,
-				"UNIT":       planInfos.DataUnit,
+				emailTemplate.EmailKeySubscriber: remoteSubResp.Subscriber.Name,
+				emailTemplate.EmailKeyNetwork:   netInfo.Name,
+				emailTemplate.EmailKeyName:      userInfos.Name,
+				emailTemplate.EmailKeyQRCode:    poolSim.QrCode,
+				emailTemplate.EmailKeyVolume:    fmt.Sprintf("%v", planInfos.DataVolume),
+				emailTemplate.EmailKeyUnit:      planInfos.DataUnit,
+				emailTemplate.EmailKeyOrg:       s.orgName,
 			},
 		})
 		if err != nil {
