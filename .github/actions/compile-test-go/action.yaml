@@ -1,0 +1,68 @@
+name: Compile app
+description: Compile application and run tests.
+
+inputs:
+  registry-name:
+    description: The repository where the code is. Should match with the folder on deployment-repo and the container name
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+  aws-access-key: 
+    description: The AWS access key
+    required: true
+  aws-secret-key:
+    description: The AWS secret key
+    required: true
+  build-listener: 
+    description: The build listener image 
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Init vars
+    id: vars_step
+    uses: ./.github/actions/git-vars
+
+  - name: Set up Go
+    uses: actions/setup-go@v2
+    with:
+      go-version: 1.22
+
+  - name: Granting private modules access
+    shell: bash
+    run: |
+      git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
+
+  - uses: actions/cache@v3
+    with:
+      path: |
+        ~/.cache/go-build
+        ~/go/pkg/mod
+        /opt/sonar-scanner/.sonar/cache
+      key: ${{ runner.os }}-go-ukama
+      restore-keys: |
+        ${{ runner.os }}-go-
+
+  - name: Build
+    shell: bash
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+    run: make build
+    working-directory: ${{ inputs.working-directory }}
+
+  - name: Test
+    shell: bash
+    run: go test -v ./... -coverprofile="coverage.out"
+    working-directory: ${{ inputs.working-directory }}
+  
+  - name: Archive code coverage results
+    uses: actions/upload-artifact@v3
+    with:
+      name: code-coverage-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/coverage.out
