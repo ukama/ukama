@@ -12,7 +12,7 @@ CURPATH = $(dir $(CURMAKE))
 export DEPDIR = $(CURPATH)/build
 
 ifndef XGCCPATH
-	$(error XGCCPATH is missing)
+$(error XGCCPATH is missing)
 endif
 
 ifeq ($(TARGETBOARD), $(LOCAL))
@@ -85,12 +85,13 @@ LIST += p11-kit
 LIST += gnutls
 LIST += sqlite
 LIST += amqp
-LIST += protobuf
-LIST += protobuf-c
+#LIST += protobuf
+#LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
+LIST += psl
 
-.PHONY: $(LIST) iptables iproute2 
+.PHONY: $(LIST) iptables iproute2 dhcp dhcpcd
 
 build: $(LIST)
 
@@ -245,7 +246,8 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-curl: openssl gnutls 
+
+curl: openssl gnutls psl
 	$(call print_msg,"curl")
 ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
@@ -421,6 +423,14 @@ dhcpcd:
 	$(MAKE) CC="${XCC}" DESTDIR=${DEPDIR} install && \
 	cd ./src && $(MAKE) clean && cd ..)
 	$(call post_build_cleanup,$@/src/build)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+dhcp:
+	$(call print_msg,"dhcp")
+	(cd $@/dhcp-4.4.3 && \
+    ./configure --host=${HOST} --with-randomdev=no LDFLAGS="-L${DEPDIR}/lib" && \
+	$(MAKE) CC="${XCC}" BUILD_CC=gcc LDFLAGS="-L${DEPDIR}/lib" && \
+	$(MAKE) install DESTDIR=${DEPDIR} )
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 sysctl:
