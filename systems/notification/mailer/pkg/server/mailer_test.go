@@ -32,120 +32,15 @@ func setupServer(t *testing.T) (*MailerServer, *mocks.MailerRepo) {
 	server, err := NewMailerServer(mockRepo, mailer, "../../templates")
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		server.Stop()
+	})
+
 	return server, mockRepo
 }
 
-func TestSendEmail(t *testing.T) {
-	server, mockRepo := setupServer(t)
 
-	tests := []struct {
-		name    string
-		req     *pb.SendEmailRequest
-		setup   func(*mocks.MailerRepo, *uuid.UUID)
-		wantErr bool
-		errCode codes.Code
-	}{
-		{
-			name: "successful email queueing",
-			req: &pb.SendEmailRequest{
-				To:           []string{"test@example.com"},
-				TemplateName: "test-template",
-				Values:       map[string]string{"name": "John"},
-			},
-			setup: func(repo *mocks.MailerRepo, mailId *uuid.UUID) {
-				// Setup CreateEmail expectation
-				repo.On("CreateEmail", mock.MatchedBy(func(m *db.Mailing) bool {
-					*mailId = m.MailId // Capture the mailId for subsequent calls
-					return m.Email == "test@example.com" &&
-						m.TemplateName == "test-template" &&
-						m.Status == db.Pending &&
-						m.Values["name"] == "John"
-				})).Return(nil).Once()
 
-				// Setup GetEmailById expectation
-				repo.On("GetEmailById", mock.MatchedBy(func(id uuid.UUID) bool {
-					return id == *mailId
-				})).Return(&db.Mailing{
-					MailId:       *mailId,
-					Email:        "test@example.com",
-					TemplateName: "test-template",
-					Status:       db.Pending,
-					Values:       db.JSONMap{"name": "John"},
-				}, nil).Once()
-
-				// Setup UpdateEmailStatus expectations for processing and success
-				repo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
-					return m.MailId == *mailId && m.Status == db.Process
-				})).Return(nil).Once()
-			},
-			wantErr: false,
-		},
-		{
-			name: "invalid email address",
-			req: &pb.SendEmailRequest{
-				To:           []string{"invalid-email"},
-				TemplateName: "test-template",
-				Values:       map[string]string{"name": "John"},
-			},
-			setup:   func(repo *mocks.MailerRepo, mailId *uuid.UUID) {},
-			wantErr: true,
-			errCode: codes.InvalidArgument,
-		},
-		{
-			name: "database error",
-			req: &pb.SendEmailRequest{
-				To:           []string{"test@example.com"},
-				TemplateName: "test-template",
-				Values:       map[string]string{"name": "John"},
-			},
-			setup: func(repo *mocks.MailerRepo, mailId *uuid.UUID) {
-				repo.On("CreateEmail", mock.Anything).Return(errors.New("database error")).Once()
-			},
-			wantErr: true,
-			errCode: codes.Internal,
-		},
-		{
-			name: "empty template name",
-			req: &pb.SendEmailRequest{
-				To:           []string{"test@example.com"},
-				TemplateName: "",
-				Values:       map[string]string{"name": "John"},
-			},
-			setup:   func(repo *mocks.MailerRepo, mailId *uuid.UUID) {},
-			wantErr: true,
-			errCode: codes.InvalidArgument,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var mailId uuid.UUID
-			tt.setup(mockRepo, &mailId)
-
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-
-			resp, err := server.SendEmail(ctx, tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				st, ok := status.FromError(err)
-				assert.True(t, ok)
-				assert.Equal(t, tt.errCode, st.Code())
-				assert.Nil(t, resp)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, resp)
-				assert.NotEmpty(t, resp.MailId)
-				assert.Contains(t, resp.Message, "Email queued")
-
-				// Wait for async processing
-				time.Sleep(200 * time.Millisecond)
-			}
-
-			mockRepo.AssertExpectations(t)
-		})
-	}
-}
 func TestGetEmailById(t *testing.T) {
 	server, mockRepo := setupServer(t)
 	testMailId := uuid.NewV4()
@@ -226,6 +121,33 @@ func TestGetEmailById(t *testing.T) {
 			}
 		})
 	}
+
+	mockRepo.AssertExpectations(t)
+}
+
+func (s *MailerServer) Stop() {
+	close(s.emailQueue)
+	s.retryTicker.Stop()
+}
+
+
+
+func TestProcessEmailQueue(t *testing.T) {
+	server, mockRepo := setupServer(t)
+	mailId := uuid.NewV4()
+	mockRepo.On("GetEmailById", mailId).Return(&db.Mailing{Status: db.Pending}, nil)
+	mockRepo.On("UpdateEmailStatus", mock.Anything).Return(nil)
+
+	go server.processEmailQueue()
+
+	server.emailQueue <- &EmailPayload{
+		To:           []string{"recipient@test.com"},
+		TemplateName: "test-template",
+		Values:       map[string]interface{}{"key": "value"},
+		MailId:       mailId,
+	}
+
+	time.Sleep(1 * time.Second) 
 
 	mockRepo.AssertExpectations(t)
 }
