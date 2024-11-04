@@ -303,11 +303,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	planInfos, err := s.packageClient.Get(req.PackageId)
-	if err != nil {
-		return nil, err
-	}
-
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
@@ -317,8 +312,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 				emailTemplate.EmailKeyNetwork:   netInfo.Name,
 				emailTemplate.EmailKeyName:      userInfos.Name,
 				emailTemplate.EmailKeyQRCode:    poolSim.QrCode,
-				emailTemplate.EmailKeyVolume:    fmt.Sprintf("%v", planInfos.DataVolume),
-				emailTemplate.EmailKeyUnit:      planInfos.DataUnit,
+				emailTemplate.EmailKeyVolume:    fmt.Sprintf("%v", packageInfo.DataVolume),
+				emailTemplate.EmailKeyUnit:      packageInfo.DataUnit,
 				emailTemplate.EmailKeyOrg:       s.orgName,
 			},
 		})
