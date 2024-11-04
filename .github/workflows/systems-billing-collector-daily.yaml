@@ -3,7 +3,8 @@
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 name: daily-systems-billing-collector
 on:
-  cron: '*/10 * * * *'
+  schedule:
+    - cron: "*/10 * * * *"
     paths:
         - "systems/billing/collector/**"
         - ".github/workflows/systems-billing-collector-daily.yaml"
