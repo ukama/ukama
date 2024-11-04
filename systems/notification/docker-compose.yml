@@ -1,138 +1,137 @@
-version: '3.3'
+version: "3.3"
 
 services:
- postgresd-notification:
-  image: postgres:13.3
-  ports:
-   - 5632:5432
-  environment:
-   - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=Pass2020!
-  networks:
-   - ukama-net
-  volumes:
-   - postgress-data:/var/lib/postgresql
+  postgresd-notification:
+    image: postgres:13.3
+    ports:
+      - 5632:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
 
- mailer:
-  build: ./mailer
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-notification
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MAILER_HOST=${MAILER_HOST}
-   - MAILER_PORT=${MAILER_PORT}
-   - MAILER_PASSWORD=${MAILER_PASSWORD}
-   - MAILER_USERNAME=${MAILER_USERNAME}
-   - TEMPLATESPATH=${TEMPLATESPATH}
-   - MAILER_FROM=${MAILER_FROM}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-notification
+  mailer:
+    build: ./mailer
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MAILER_HOST=${MAILER_HOST}
+      - MAILER_PORT=${MAILER_PORT}
+      - MAILER_PASSWORD=${MAILER_PASSWORD}
+      - MAILER_USERNAME=${MAILER_USERNAME}
+      - TEMPLATESPATH=${TEMPLATESPATH}
+      - MAILER_FROM=${MAILER_FROM}
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-notification
 
- eventnotify:
-  build: ./event-notify
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-notification
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-notification:9095
-   - EVENTNOTIFY_SERVICE_HOST=eventnotify
-   - EVENTNOTIFY_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-   - OWNERID=${OWNERID}
-   - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
-   - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-notification
+  eventnotify:
+    build: ./event-notify
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-notification:9095
+      - EVENTNOTIFY_SERVICE_HOST=eventnotify
+      - EVENTNOTIFY_SERVICE_PORT=9090
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+      - OWNERID=${OWNERID}
+      - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
+      - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-notification
 
- distributor:
-  build: ./distributor
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-notification
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - DISTRIBUTOR_SERVICE_HOST=distributor
-   - DISTRIBUTOR_SERVICE_PORT=9090
-   - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
-   - EVENTNOTIFYHOST=eventnotify:9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-notification
+  distributor:
+    build: ./distributor
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - DISTRIBUTOR_SERVICE_HOST=distributor
+      - DISTRIBUTOR_SERVICE_PORT=9090
+      - HTTP_INITCLIENT=http://${LOCAL_HOST_IP}:8071
+      - EVENTNOTIFYHOST=eventnotify:9090
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-notification
 
- api-gateway-notification:
-  build: ./api-gateway
-  restart: always
-  ports:
-   - 8058:8080
-  networks:
-   - ukama-net
-  environment:
-   - DEBUGMODE=true
-   - BYPASS_AUTH_MODE=true
-   - SERVICES_MAILER=mailer:9090
-   - SERVICES_EVENTNOTIFICATION=eventnotify:9090
-   - SERVICES_DISTRIBUTOR=distributor:9090
-  depends_on:
-   - mailer
-   - eventnotify
-   - distributor
-   - postgresd-notification
+  api-gateway-notification:
+    build: ./api-gateway
+    restart: always
+    ports:
+      - 8058:8080
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      - SERVICES_MAILER=mailer:9090
+      - SERVICES_EVENTNOTIFICATION=eventnotify:9090
+      - SERVICES_DISTRIBUTOR=distributor:9090
+    depends_on:
+      - mailer
+      - eventnotify
+      - distributor
+      - postgresd-notification
 
- initclient-notification:
-  build: ../services/initClient
-  environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
-   - ENV_SYSTEM_NAME=notification
-   - ENV_DNS_REFRESH_TIME_PERIOD=30
-   - ENV_SYSTEM_DNS=api-gateway-notification
-   - ENV_DNS_SERVER=false
-   - ENV_SYSTEM_PORT=8080
-   - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=initclient-notification
-   - ENV_INIT_CLIENT_PORT=8080
-   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-  restart: always
-  networks:
-   - ukama-net
+  initclient-notification:
+    build: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=${ORGNAME}
+      - ENV_SYSTEM_NAME=notification
+      - ENV_DNS_REFRESH_TIME_PERIOD=30
+      - ENV_SYSTEM_DNS=api-gateway-notification
+      - ENV_DNS_SERVER=false
+      - ENV_SYSTEM_PORT=8080
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=initclient-notification
+      - ENV_INIT_CLIENT_PORT=8080
+      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+    restart: always
+    networks:
+      - ukama-net
 
- msgclient-notification:
-  build: ../services/msgClient
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-notification
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - GRPC_PORT=9095
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - GRPC_PORT=9095
-   - SYSTEM=notification
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-notification
+  msgclient-notification:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-notification
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - GRPC_PORT=9095
+      - SYSTEM=notification
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-notification
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    external: true
+    name: services_ukama-net
 
 volumes:
- postgress-data:
+  postgress-data:
