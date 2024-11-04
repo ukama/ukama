@@ -104,7 +104,7 @@ $(VERSION_FILE):
 	$(NODES_DIR)/builder/scripts/generate_version.sh
 
 static.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_static.sh
+	$(UKAMAOS_ROOT)/../builder/scripts/generate_static.sh
 
 %.o: %.c
 	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
