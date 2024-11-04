@@ -1,18 +1,18 @@
 {
   "setup": {
-    "name": "Admin",
-    "org-name": "ukama",
-    "password": "@Pass2024",
-    "email": "admin@ukama.com",
-    "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221"
+   "name": "Admin",
+   "org-name": "ukama",
+   "password": "@Pass2024",
+   "email": "admin@ukama.com",
+   "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221"
   },
   "mailer": {
-    "host": "email-smtp.us-east-1.amazonaws.com",
-    "port": 587,
-    "username": "AKIAQBWTE3XHWXICW64T",
-    "password": "BDptpd7vhzuP8k42MI3O8rkViw3zAp8r8Aw3zWaNzNu2"
+   "host": "smtp.gmail.com",
+   "port": 465,
+   "username": "smtp",
+   "password": "smtp_password"
   },
   "key": "the-key-has-to-be-32-bytes-long!",
   "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
-  "systems": "auth-services, services, init, nucleus, registry, dataplan, subscriber, notification, bff, console"
-}
+  "systems": "auth-services, services, init, nucleus, registry, dataplan, subscriber, notification"
+ }
