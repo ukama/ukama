@@ -56,7 +56,7 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 }
 
 func (n *NotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Infof("Getting notification %v", req.NotificationId)
+	log.Infof("Getting node notification %v", req.NotificationId)
 
 	notificationId, err := uuid.FromString(req.GetNotificationId())
 	if err != nil {
@@ -66,7 +66,7 @@ func (n *NotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 
 	nt, err := n.notifyRepo.Get(notificationId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "notification")
+		return nil, grpc.SqlErrorToGrpc(err, "notifications")
 	}
 
 	return &pb.GetResponse{Notification: dbNotificationToPbNotification(nt)}, nil
@@ -119,7 +119,7 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 		return nil, err
 	}
 
-	route := n.baseRoutingKey.SetAction("delete").SetObject("notification").MustBuild()
+	route := n.baseRoutingKey.SetAction("delete").SetObject("node").MustBuild()
 
 	evt := &epb.NotificationDeletedEvent{
 		Id: notificationId.String(),
@@ -205,7 +205,7 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 		Details:     details,
 	}
 
-	log.Debugf("New notification is : %+v.", notification)
+	log.Debugf("New node notification is : %+v.", notification)
 
 	err = notifyRepo.Add(notification)
 	if err != nil {
@@ -215,7 +215,7 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 		return err
 	}
 
-	route := baseRoutingKey.SetAction("store").SetObject("notification").MustBuild()
+	route := baseRoutingKey.SetAction("store").SetObject("node").MustBuild()
 
 	evt := &epb.Notification{
 		Id:          notification.Id.String(),
