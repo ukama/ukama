@@ -5,9 +5,9 @@ name: daily-systems-billing-collector
 on:
   schedule:
     - cron: "*/10 * * * *"
-    paths:
-        - "systems/billing/collector/**"
-        - ".github/workflows/systems-billing-collector-daily.yaml"
+  # paths:
+    # - "systems/billing/collector/**"
+    # - ".github/workflows/systems-billing-collector-daily.yaml"
 
   workflow_dispatch:
 
