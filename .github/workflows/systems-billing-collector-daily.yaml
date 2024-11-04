@@ -24,12 +24,10 @@ jobs:
   build:
     env:
       working-directory: systems/billing/collector
-
     name: build and test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
     - name: build app
       uses: ./.github/actions/compile-test-go
       with:
