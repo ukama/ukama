@@ -1,12 +1,26 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+
 name: daily-systems-billing-collector
 on:
   schedule:
     - cron: "*/10 * * * *"
 
 jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env:
+      working-directory: systems/billing/collector
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: ./.github/actions/lint-go
+        with:
+          working-directory: ${{ env.working-directory }}
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+
   build:
     env:
       working-directory: systems/billing/collector
@@ -26,16 +40,18 @@ jobs:
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
         build-listener: false
 
-
-  lint:
-    name: lint
+  sonar-scan:
+    name: sonar-cli scan
+    needs: build
     runs-on: ubuntu-latest
     env:
       working-directory: systems/billing/collector
     steps:
       - uses: actions/checkout@v3
-      - name: lint
-        uses: ./.github/actions/lint-go
+      - name: scan
+        uses: ./.github/actions/sonar-local-go
         with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          project-key: ukama_systems_billing_collector

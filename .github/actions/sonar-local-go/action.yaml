@@ -1,0 +1,69 @@
+name: Run sonar scan
+description: Build application and image
+
+inputs:
+  project-key:
+    description: Sonarcloud project key
+    required: true
+  sonar-token:
+    description: API token for sonarcloud
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up SonarScanner cli
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-11-jdk wget unzip
+        wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+        unzip sonar-scanner-cli-4.6.2.2472-linux.zip
+        echo "export PATH=$PATH:$PWD/sonar-scanner-4.6.2.2472-linux/bin" >> $GITHUB_ENV
+
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+          /opt/sonar-scanner/.sonar/cache
+        key: ${{ runner.os }}-go-ukama
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download code coverage results
+      uses: actions/download-artifact@v3
+      with:
+        name: code-coverage-${{ github.run_number }}
+        path: ${{ inputs.working-directory }}
+
+    - name: SonarCli Scan
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-bot-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
+      run: |
+        sonar-scanner \
+        -Dsonar.organization=ukama \
+        -Dsonar.projectKey=${{ inputs.project-key }} \
+        -Dsonar.projectName=${{ inputs.working-directory }} \
+        -Dsonar.go.coverage.reportPaths=coverage.out \
+        -Dsonar.test.exclusions=tests/** \
+        -Dsonar.tests=tests/ \
+        -Dsonar.verbose=false \
+        -Dsonar.sources=. \
+        -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**,**/docs/** \
+        -Dsonar.tests=. \
+        -Dsonar.test.inclusions=**/*_test.go \
+        -Dsonar.report.export.path=${{inputs.working-directory}}/sonar-report.json \
+        -Dsonar.login=${{ inputs.sonar-token }}
+
+    - name: Archive sonar scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: sonar-report-${{ github.run_number }}
+        path: ${{ inputs.working-directory }}/sonar-report.json
