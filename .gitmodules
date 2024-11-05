@@ -88,13 +88,14 @@
 	url = https://github.com/ukama/busybox.git
 [submodule "nodes/ukamaOS/kernel"]
 	path = nodes/ukamaOS/kernel
-	url = https://github.com/ukama/os.git
+	url = https://github.com/ukama/kernel.git
+	branch = ukama_anode
 [submodule "nodes/ukamaOS/distro/vendor/psl"]
 	path = nodes/ukamaOS/distro/vendor/psl
-	url = https://github.com/rockdaboot/libpsl
+	url = https://github.com/ukama/psl.git
 [submodule "nodes/ukamaOS/distro/vendor/idn2"]
 	path = nodes/ukamaOS/distro/vendor/idn2
-	url = https://github.com/libidn/libidn2.git
+	url = https://github.com/ukama/libidn2.git
 [submodule "nodes/ukamaOS/distro/vendor/protobuf"]
 	path = nodes/ukamaOS/distro/vendor/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git

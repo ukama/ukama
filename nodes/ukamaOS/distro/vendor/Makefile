@@ -246,6 +246,20 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
+psl:
+	 $(call print_msg,"psl")
+ifeq (,$(wildcard ${DEPDIR}/lib/libpsl.*))
+	mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && \
+	cd ./${BUILD_DIR} && \
+        CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
+                ../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
+                --host=${HOST} && \
+        make -j${NPROCS} && make -j${NPROCS} install
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
 
 curl: openssl gnutls psl
 	$(call print_msg,"curl")
@@ -256,7 +270,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 		../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
 		LIBS="-latomic -lhogweed -lnettle" \
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
-		--with-zlib=${DEPDIR} --without-zstd --host=${HOST} && \
+		--with-zlib=${DEPDIR} --without-zstd --with-libpsl=${DEPDIR} --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
