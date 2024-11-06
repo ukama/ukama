@@ -48,11 +48,9 @@ type EventAddSite struct {
 
 func (x *EventAddSite) Reset() {
 	*x = EventAddSite{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_site_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_site_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventAddSite) String() string {
@@ -63,7 +61,7 @@ func (*EventAddSite) ProtoMessage() {}
 
 func (x *EventAddSite) ProtoReflect() protoreflect.Message {
 	mi := &file_events_site_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -175,11 +173,9 @@ type EventUpdateSite struct {
 
 func (x *EventUpdateSite) Reset() {
 	*x = EventUpdateSite{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_site_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_site_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventUpdateSite) String() string {
@@ -190,7 +186,7 @@ func (*EventUpdateSite) ProtoMessage() {}
 
 func (x *EventUpdateSite) ProtoReflect() protoreflect.Message {
 	mi := &file_events_site_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -375,32 +371,6 @@ func init() { file_events_site_proto_init() }
 func file_events_site_proto_init() {
 	if File_events_site_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_events_site_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*EventAddSite); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_site_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*EventUpdateSite); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
