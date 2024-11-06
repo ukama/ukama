@@ -651,8 +651,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 	trafficPolicy := uint32(0)
 
 	orgId := uuid.NewV4()
-	firstName := "John"
-	lastName := "Doe"
+	name := "John Doe"
 	email := "johndoe@example.com"
 	phoneNumber := "0123456789"
 	address := "2 Rivers"
@@ -665,8 +664,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		NetworkId:             networkId.String(),
 		PackageId:             packageId.String(),
 		OrgId:                 orgId.String(),
-		FirstName:             firstName,
-		LastName:              lastName,
+		Name:                  name,
 		Email:                 email,
 		PhoneNumber:           phoneNumber,
 		Address:               address,

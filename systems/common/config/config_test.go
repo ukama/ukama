@@ -9,7 +9,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"testing"
@@ -61,7 +60,7 @@ db:
    dbName: connectionStr
 array: ["this", "is", "test" ]
 `
-		err = ioutil.WriteFile(file, []byte(fileContent), 0644)
+		err = os.WriteFile(file, []byte(fileContent), 0644)
 		assert.NoError(t, err)
 
 		conf := &TestConfig{}
