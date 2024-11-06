@@ -48,11 +48,9 @@ type EventSimUsage struct {
 
 func (x *EventSimUsage) Reset() {
 	*x = EventSimUsage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimUsage) String() string {
@@ -63,7 +61,7 @@ func (*EventSimUsage) ProtoMessage() {}
 
 func (x *EventSimUsage) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -170,11 +168,9 @@ type EventSimAllocation struct {
 
 func (x *EventSimAllocation) Reset() {
 	*x = EventSimAllocation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimAllocation) String() string {
@@ -185,7 +181,7 @@ func (*EventSimAllocation) ProtoMessage() {}
 
 func (x *EventSimAllocation) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -308,11 +304,9 @@ type EventSimActivePackage struct {
 
 func (x *EventSimActivePackage) Reset() {
 	*x = EventSimActivePackage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimActivePackage) String() string {
@@ -323,7 +317,7 @@ func (*EventSimActivePackage) ProtoMessage() {}
 
 func (x *EventSimActivePackage) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -408,11 +402,9 @@ type EventSimTermination struct {
 
 func (x *EventSimTermination) Reset() {
 	*x = EventSimTermination{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimTermination) String() string {
@@ -423,7 +415,7 @@ func (*EventSimTermination) ProtoMessage() {}
 
 func (x *EventSimTermination) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -488,11 +480,9 @@ type EventSimActivation struct {
 
 func (x *EventSimActivation) Reset() {
 	*x = EventSimActivation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimActivation) String() string {
@@ -503,7 +493,7 @@ func (*EventSimActivation) ProtoMessage() {}
 
 func (x *EventSimActivation) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -575,11 +565,9 @@ type EventSimDeactivation struct {
 
 func (x *EventSimDeactivation) Reset() {
 	*x = EventSimDeactivation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimDeactivation) String() string {
@@ -590,7 +578,7 @@ func (*EventSimDeactivation) ProtoMessage() {}
 
 func (x *EventSimDeactivation) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -662,11 +650,9 @@ type EventSimAddPackage struct {
 
 func (x *EventSimAddPackage) Reset() {
 	*x = EventSimAddPackage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimAddPackage) String() string {
@@ -677,7 +663,7 @@ func (*EventSimAddPackage) ProtoMessage() {}
 
 func (x *EventSimAddPackage) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -749,11 +735,9 @@ type EventSimRemovePackage struct {
 
 func (x *EventSimRemovePackage) Reset() {
 	*x = EventSimRemovePackage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimRemovePackage) String() string {
@@ -764,7 +748,7 @@ func (*EventSimRemovePackage) ProtoMessage() {}
 
 func (x *EventSimRemovePackage) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -833,11 +817,9 @@ type EventSimPackageExpire struct {
 
 func (x *EventSimPackageExpire) Reset() {
 	*x = EventSimPackageExpire{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_events_simmanager_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_events_simmanager_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EventSimPackageExpire) String() string {
@@ -848,7 +830,7 @@ func (*EventSimPackageExpire) ProtoMessage() {}
 
 func (x *EventSimPackageExpire) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1088,116 +1070,6 @@ func init() { file_events_simmanager_proto_init() }
 func file_events_simmanager_proto_init() {
 	if File_events_simmanager_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_events_simmanager_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimUsage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimAllocation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimActivePackage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimTermination); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimActivation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimDeactivation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimAddPackage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimRemovePackage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_events_simmanager_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*EventSimPackageExpire); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

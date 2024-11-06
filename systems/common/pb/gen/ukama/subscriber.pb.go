@@ -52,11 +52,9 @@ type Subscriber struct {
 
 func (x *Subscriber) Reset() {
 	*x = Subscriber{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_ukama_subscriber_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_ukama_subscriber_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Subscriber) String() string {
@@ -67,7 +65,7 @@ func (*Subscriber) ProtoMessage() {}
 
 func (x *Subscriber) ProtoReflect() protoreflect.Message {
 	mi := &file_ukama_subscriber_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -204,11 +202,9 @@ type Sim struct {
 
 func (x *Sim) Reset() {
 	*x = Sim{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_ukama_subscriber_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_ukama_subscriber_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Sim) String() string {
@@ -219,7 +215,7 @@ func (*Sim) ProtoMessage() {}
 
 func (x *Sim) ProtoReflect() protoreflect.Message {
 	mi := &file_ukama_subscriber_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -352,11 +348,9 @@ type Package struct {
 
 func (x *Package) Reset() {
 	*x = Package{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_ukama_subscriber_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_ukama_subscriber_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Package) String() string {
@@ -367,7 +361,7 @@ func (*Package) ProtoMessage() {}
 
 func (x *Package) ProtoReflect() protoreflect.Message {
 	mi := &file_ukama_subscriber_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -551,44 +545,6 @@ func init() { file_ukama_subscriber_proto_init() }
 func file_ukama_subscriber_proto_init() {
 	if File_ukama_subscriber_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_ukama_subscriber_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*Subscriber); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_ukama_subscriber_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*Sim); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_ukama_subscriber_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*Package); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
