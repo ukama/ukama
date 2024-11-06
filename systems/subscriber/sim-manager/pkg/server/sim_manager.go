@@ -294,7 +294,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	// 	Values: map[string]interface{}{
 	// 		"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
 	// 		"NETWORK":    netInfo.Name,
-	// 		"NAME":       remoteSubResp.Subscriber.FirstName,
+	// 		"NAME":       remoteSubResp.Subscriber.Name,
 	// 		"QRCODE":     poolSim.QrCode},
 	// })
 	// if err != nil {
