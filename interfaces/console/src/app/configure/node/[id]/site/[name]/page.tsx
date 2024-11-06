@@ -65,7 +65,8 @@ const Page = ({ params }: IPage) => {
   const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
@@ -239,6 +240,10 @@ const Page = ({ params }: IPage) => {
     });
   };
 
+  const handleOnNewNetwork = () => {
+    setIsCreateNetwork(true);
+  };
+
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       {isLoading ? (
@@ -252,10 +257,10 @@ const Page = ({ params }: IPage) => {
               fontWeight={400}
               sx={{
                 color: colors.black70,
-                display: stepTracker !== '1' ? 'none' : 'flex',
               }}
             >
-              <i>&nbsp;- optional</i>&nbsp;(6/6)
+              {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
+              {flow === 'onb' ? 6 : 4})
             </Typography>
           </Stack>
 
@@ -272,29 +277,11 @@ const Page = ({ params }: IPage) => {
                   always add more sites to it later! Please name it for your
                   ease of reference.
                 </Typography>
-
                 <SvgIcon sx={{ width: 240, height: 176, mt: 2, mb: 4 }}>
                   {NetworkInfo}
                 </SvgIcon>
 
-                {isCreateNetwork ? (
-                  <TextField
-                    fullWidth
-                    id={'name'}
-                    name={'name'}
-                    size="medium"
-                    label={'Network name'}
-                    placeholder="network-name"
-                    onBlur={formik.handleBlur}
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    error={formik.touched.name && Boolean(formik.errors.name)}
-                    helperText={formik.touched.name && formik.errors.name}
-                  />
-                ) : networksLoading ? (
+                {networksLoading ? (
                   <Skeleton variant="rounded" width={'100%'} height={42} />
                 ) : (
                   <Field
@@ -327,28 +314,28 @@ const Page = ({ params }: IPage) => {
                         {network.name}
                       </MenuItem>
                     ))}
+                    <MenuItem value="New Network" onClick={handleOnNewNetwork}>
+                      New Network
+                    </MenuItem>
                   </Field>
                 )}
-                {networksData?.getNetworks.networks &&
-                  networksData?.getNetworks.networks.length > 0 && (
-                    <Button
-                      variant="text"
-                      sx={{
-                        textTransform: 'none',
-                        px: 0,
-                        alignSelf: 'end',
-                        mt: '0px !important',
-                      }}
-                      onClick={() => {
-                        formik.setFieldValue('name', '');
-                        setIsCreateNetwork(!isCreateNetwork);
-                      }}
-                    >
-                      {isCreateNetwork
-                        ? 'Choose existing network'
-                        : 'Create new network'}
-                    </Button>
-                  )}
+                {isCreateNetwork && (
+                  <TextField
+                    fullWidth
+                    id={'name'}
+                    name={'name'}
+                    size="medium"
+                    label={'Network name'}
+                    placeholder="network-name"
+                    onBlur={formik.handleBlur}
+                    onChange={formik.handleChange}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    error={formik.touched.name && Boolean(formik.errors.name)}
+                    helperText={formik.touched.name && formik.errors.name}
+                  />
+                )}
               </Stack>
 
               <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
@@ -360,7 +347,7 @@ const Page = ({ params }: IPage) => {
                   Back
                 </Button>
                 <Button type="submit" variant="contained">
-                  Complete network creation
+                  Next
                 </Button>
               </Stack>
             </form>

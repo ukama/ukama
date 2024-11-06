@@ -35,7 +35,8 @@ const SiteName = ({ params }: ISiteName) => {
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const address = searchParams.get('address') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -51,11 +52,21 @@ const SiteName = ({ params }: ISiteName) => {
     parseFloat(qpLng),
   ]);
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
+
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    return p;
+  };
 
   const handleSubmit = (values: FormikValues) => {
+    const p = setQueryParam('step', (step + 1).toString());
     router.push(
-      `/configure/node/${id}/site/${values.name}?${searchParams.toString()}`,
+      `/configure/node/${id}/site/${values.name}/install?${p.toString()}`,
     );
   };
 
@@ -68,10 +79,10 @@ const SiteName = ({ params }: ISiteName) => {
           fontWeight={400}
           sx={{
             color: colors.black70,
-            display: stepTracker !== '1' ? 'none' : 'flex',
           }}
         >
-          <i>&nbsp;- optional</i>&nbsp;(5/6)
+          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
+          {flow === 'onb' ? 6 : 4})
         </Typography>
       </Stack>
 

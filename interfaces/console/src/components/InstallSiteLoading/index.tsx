@@ -10,14 +10,16 @@ import { LinearProgress, Stack, Typography } from '@mui/material';
 import React from 'react';
 
 interface IInstallSiteLoading {
+  step: number;
+  flow: string;
   duration: number;
   onCompleted: () => void;
-  isShowStepTracker: boolean;
 }
 
 const InstallSiteLoading = ({
+  step,
+  flow,
   duration,
-  isShowStepTracker,
   onCompleted,
 }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
@@ -54,10 +56,9 @@ const InstallSiteLoading = ({
           fontWeight={400}
           sx={{
             color: colors.black70,
-            display: isShowStepTracker ? 'flex' : 'none',
           }}
         >
-          <i>&nbsp;- optional</i>&nbsp;(2/6)
+          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/6)
         </Typography>
       </Stack>
 

@@ -100,7 +100,8 @@ secrets:
   cipher:
     - 32-LONG-SECRET-NOT-SECURE-AT-ALL
 session:
-  lifespan: 24h
+  lifespan: 720h0m0s
+  earliest_possible_extend: 720h0m0s
   cookie:
     name: subscriber_session
     path: "/"

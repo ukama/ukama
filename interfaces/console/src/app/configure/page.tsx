@@ -25,7 +25,8 @@ import SiteInfo from '../../../public/svg/SiteInfo';
 const Page = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const [isChecked, setIsChecked] = useState(false);
   const [checkForInstallation, setCheckForInstallation] = useState(false);
   const handleNext = () => {
@@ -39,15 +40,18 @@ const Page = () => {
   };
   const onInstallProgressComplete = () => {
     const id = 'uk-sa9001-tnode-a1-1234';
-    router.push(`/configure/node/${id}?lat=-4.322447&lng=15.307045`);
+    router.push(
+      `/configure/node/${id}?step=${step + 2}&flow=${flow}&lat=-4.322447&lng=15.307045`,
+    );
   };
 
   return (
     <Paper elevation={0} sx={{ px: 4, py: 2 }}>
       {checkForInstallation ? (
         <InstallSiteLoading
+          step={step + 1}
+          flow={flow}
           duration={10}
-          isShowStepTracker={stepTracker === '1'}
           onCompleted={onInstallProgressComplete}
         />
       ) : (
@@ -59,10 +63,10 @@ const Page = () => {
               fontWeight={400}
               sx={{
                 color: colors.black70,
-                display: stepTracker !== '1' ? 'none' : 'flex',
               }}
             >
-              <i>&nbsp;- optional</i>&nbsp;(1/6)
+              {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}
+              /6)
             </Typography>
           </Stack>
 
@@ -107,7 +111,7 @@ const Page = () => {
               onClick={handleSkip}
               sx={{ color: colors.black70, p: 0 }}
             >
-              {stepTracker !== '1' ? 'Back' : 'Skip'}
+              {step !== 1 ? 'Back' : 'Skip'}
             </Button>
             <Button
               variant="contained"

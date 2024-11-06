@@ -39,7 +39,8 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   const searchParams = useSearchParams();
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const qpbackhaul = searchParams.get('backhaul') ?? '';
 
   const formik = useFormik({
@@ -102,16 +103,17 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
     },
   });
 
-  const handleSubmit = () => {
-    if (formik.isValid) {
-      router.push(`/configure/node/${id}/site/name?${searchParams.toString()}`);
-    }
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    return p;
   };
 
-  const setQueryParam = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
-    window.history.pushState(null, '', `?${params.toString()}`);
+  const handleSubmit = () => {
+    if (formik.isValid) {
+      const p = setQueryParam('step', (step + 1).toString());
+      router.push(`/configure/node/${id}/site/name?${p.toString()}`);
+    }
   };
 
   const handleBack = () => router.back();
@@ -125,10 +127,10 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
           fontWeight={400}
           sx={{
             color: colors.black70,
-            display: stepTracker !== '1' ? 'none' : 'flex',
           }}
         >
-          <i>&nbsp;- optional</i>&nbsp;(4/6)
+          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
+          {flow === 'onb' ? 6 : 4})
         </Typography>
       </Stack>
 
