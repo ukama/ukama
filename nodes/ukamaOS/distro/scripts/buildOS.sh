@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,8 +29,8 @@ DHCPCD_SRC_ROOT=${VENDOR_ROOT}/dhcpcd
 COMPILER_PATH=/usr/bin
 
 # Build config parameters
-BB_CONFIG=ukama_minimal_defconfig
-
+#BB_CONFIG=ukama_minimal_defconfig
+BB_CONFIG=defconfig
 # command line arguments
 MIN_ARGS=2
 DEF_ROOTFS=_ukama_os_rootfs/
@@ -312,7 +312,9 @@ copy_vendor_libs() {
     cd ${VENDOR_ROOT}
     cp -vrf ${VENDOR_ROOT}/build/* ${ROOTFS}
     sync 
+    log_info "libs copied succesfully"
 }
+
 #
 # Build the usr directory structure
 #
