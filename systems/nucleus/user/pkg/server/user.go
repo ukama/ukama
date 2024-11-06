@@ -66,10 +66,10 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	}
 
 	user := &db.User{
-		Email: strings.ToLower(req.User.Email),
-		Name:  req.User.Name,
-		// Phone:  req.User.Phone,
+		Email:  strings.ToLower(req.User.Email),
+		Name:   req.User.Name,
 		AuthId: authId,
+		Phone:  req.User.Phone,
 	}
 
 	err = u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {

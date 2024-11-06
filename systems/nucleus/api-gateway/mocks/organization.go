@@ -12,9 +12,9 @@ type organization struct {
 	mock.Mock
 }
 
-// AddOrg provides a mock function with given fields: orgName, owner, certificate
-func (_m *organization) AddOrg(orgName string, owner string, certificate string) (*gen.AddResponse, error) {
-	ret := _m.Called(orgName, owner, certificate)
+// AddOrg provides a mock function with given fields: orgName, owner, certificate, country, currency
+func (_m *organization) AddOrg(orgName string, owner string, certificate string, country string, currency string) (*gen.AddResponse, error) {
+	ret := _m.Called(orgName, owner, certificate, country, currency)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddOrg")
@@ -22,19 +22,19 @@ func (_m *organization) AddOrg(orgName string, owner string, certificate string)
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AddResponse, error)); ok {
-		return rf(orgName, owner, certificate)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) (*gen.AddResponse, error)); ok {
+		return rf(orgName, owner, certificate, country, currency)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddResponse); ok {
-		r0 = rf(orgName, owner, certificate)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string) *gen.AddResponse); ok {
+		r0 = rf(orgName, owner, certificate, country, currency)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(orgName, owner, certificate)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string) error); ok {
+		r1 = rf(orgName, owner, certificate, country, currency)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -21,6 +21,7 @@ type Org struct {
 	Owner       uuid.UUID      `gorm:"type:uuid"`
 	Users       []User         `gorm:"many2many:org_users"`
 	Country     string         `gorm:"default:us"`
+	Currency    string         `gorm:"default:usd"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -37,13 +38,3 @@ type User struct {
 	Deactivated bool
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
-
-// type OrgUser struct {
-// 	OrgId       uuid.UUID `gorm:"primaryKey;type:uuid"`
-// 	UserId      uint      `gorm:"primaryKey"`
-// 	Uuid        uuid.UUID `gorm:"not null;type:uuid"`
-// 	Deactivated bool
-// 	CreatedAt   time.Time
-// 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-// 	Role        RoleType       `gorm:"type:uint;not null;default:3"` // Set the default value to Member
-// }

@@ -76,6 +76,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		Owner:       owner,
 		Certificate: req.GetOrg().GetCertificate(),
 		Country:     req.GetOrg().GetCountry(),
+		Currency:    req.GetOrg().GetCurrency(),
 	}
 
 	OrgId := uuid.NewV4()
@@ -402,6 +403,8 @@ func dbOrgToPbOrg(org *db.Org) *pb.Organization {
 		Owner:         org.Owner.String(),
 		Certificate:   org.Certificate,
 		IsDeactivated: org.Deactivated,
+		Country:       org.Country,
+		Currency:      org.Currency,
 		CreatedAt:     timestamppb.New(org.CreatedAt),
 	}
 }
