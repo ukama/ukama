@@ -531,7 +531,7 @@ func TestCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) 
 
 		subs := &upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-			FirstName:    "John Doe",
+			Name:         "John Doe",
 			Email:        "john.doe@example.com",
 			Address:      "This is my address",
 			PhoneNumber:  "000111222",
@@ -613,7 +613,7 @@ func TestCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) 
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
 		subs := &upb.Subscriber{
-			FirstName:   "Fox Doe",
+			Name:        "Fox Doe",
 			Email:       "Fox.doe@example.com",
 			Address:     "This is my address",
 			PhoneNumber: "000111222",
