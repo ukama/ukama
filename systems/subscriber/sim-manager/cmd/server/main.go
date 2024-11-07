@@ -122,16 +122,12 @@ func runGrpcServer(gormDB sql.Db) {
 	if err != nil {
 		log.Errorf("Failed to resolve notification address: %v", err)
 	}
-	nucleusUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "nucleus"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to resolve nucleus address: %v", err)
-	}
 
 	netClient := creg.NewNetworkClient(regUrl.String())
 	pckgClient := cdplan.NewPackageClient(dataplanUrl.String())
 	notificationClient := cnotif.NewMailerClient(notificationUrl.String())
-	nucleusOrgClient := cnuc.NewOrgClient(nucleusUrl.String())
-	nucleusUserClient := cnuc.NewUserClient(nucleusUrl.String())
+	nucleusOrgClient := cnuc.NewOrgClient(serviceConfig.Http.NucleusClient)
+	nucleusUserClient := cnuc.NewUserClient(serviceConfig.Http.NucleusClient)
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,

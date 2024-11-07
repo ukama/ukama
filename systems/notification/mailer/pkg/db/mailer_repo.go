@@ -12,7 +12,9 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+
 	"gorm.io/gorm"
 )
 
@@ -72,9 +74,9 @@ func (r *mailerRepo) GetFailedEmails() ([]*Mailing, error) {
 	db := r.Db.GetGormDb()
 
 	result := db.Where("status IN (?, ?) AND retry_count < ? AND (next_retry_time <= ? OR next_retry_time IS NULL)",
-		Failed,
-		Retry,
-		MaxRetryCount,
+		ukama.Failed,
+		ukama.Retry,
+		ukama.MaxRetryCount,
 		time.Now(),
 	).Find(&mailings)
 

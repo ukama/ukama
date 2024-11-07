@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/mocks"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
@@ -60,14 +61,14 @@ func TestGetEmailById(t *testing.T) {
 					MailId:       testMailId,
 					Email:        "test@example.com",
 					TemplateName: "test-template",
-					Status:       db.Success,
+					Status:       ukama.Success,
 					SentAt:       &testTime,
 				}, nil).Once()
 			},
 			want: &pb.GetEmailByIdResponse{
 				MailId:       testMailId.String(),
 				TemplateName: "test-template",
-				Status:       pb.Status(pb.Status_value[db.Success.String()]),
+				Status:       pb.Status(pb.Status_value[ukama.Success.String()]),
 				SentAt:       testTime.String(),
 			},
 			wantErr: false,
@@ -131,7 +132,7 @@ func (s *MailerServer) Stop() {
 func TestProcessEmailQueue(t *testing.T) {
 	server, mockRepo := setupServer(t)
 	mailId := uuid.NewV4()
-	mockRepo.On("GetEmailById", mailId).Return(&db.Mailing{Status: db.Pending}, nil)
+	mockRepo.On("GetEmailById", mailId).Return(&db.Mailing{Status: ukama.Pending}, nil)
 	mockRepo.On("UpdateEmailStatus", mock.Anything).Return(nil)
 
 	go server.processEmailQueue()

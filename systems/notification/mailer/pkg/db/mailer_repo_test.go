@@ -16,6 +16,7 @@ import (
 	"github.com/tj/assert"
 	int_db "github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -76,7 +77,7 @@ func Test_SendEmail(t *testing.T) {
 		Email:         "brackley@ukama.com",
 		TemplateName:  "test_template",
 		SentAt:        nil,
-		Status:        int_db.Pending,
+		Status:        ukama.Pending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
 		Values: int_db.JSONMap{
@@ -130,7 +131,7 @@ func Test_GetEmailById(t *testing.T) {
 		Email:         "brackley@ukama.com",
 		TemplateName:  "test_template",
 		SentAt:        nil,
-		Status:        int_db.Pending,
+		Status:        ukama.Pending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
 		Values: int_db.JSONMap{

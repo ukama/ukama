@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
@@ -98,7 +99,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		Values:       s.convertValues(req.Values),
 		MailId:       mailId,
 	}
-	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, db.Pending, req.Values); err != nil {
+	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.Pending, req.Values); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
@@ -121,14 +122,14 @@ func (s *MailerServer) processEmailQueue() {
 			continue
 		}
 
-		if email.Status == db.Success {
+		if email.Status == ukama.Success {
 			log.Warnf("Skipping email with mailId %v as it has already been sent", payload.MailId)
 			continue
 		}
 
 		if err := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 			MailId:        payload.MailId,
-			Status:        db.Process,
+			Status:        ukama.Process,
 			RetryCount:    0,
 			NextRetryTime: nil,
 			UpdatedAt:     time.Now(),
@@ -145,7 +146,7 @@ func (s *MailerServer) processEmailQueue() {
 			nextRetry := time.Now().Add(InitialBackoff)
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        db.Retry,
+				Status:        ukama.Retry,
 				RetryCount:    1,
 				NextRetryTime: &nextRetry,
 				UpdatedAt:     time.Now(),
@@ -157,7 +158,7 @@ func (s *MailerServer) processEmailQueue() {
 
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        db.Success,
+				Status:        ukama.Success,
 				SentAt:        &now,
 				RetryCount:    0,
 				NextRetryTime: nil,
@@ -170,7 +171,7 @@ func (s *MailerServer) processEmailQueue() {
 	}
 }
 
-func (s *MailerServer) updateStatus(mailId uuid.UUID, status db.Status) error {
+func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.Status) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:    mailId,
 		Status:    status,
@@ -181,7 +182,7 @@ func (s *MailerServer) updateStatus(mailId uuid.UUID, status db.Status) error {
 func (s *MailerServer) updateRetryStatus(mailId uuid.UUID, retryCount int, nextRetryTime *time.Time) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:        mailId,
-		Status:        db.Retry,
+		Status:        ukama.Retry,
 		RetryCount:    retryCount,
 		NextRetryTime: nextRetryTime,
 		UpdatedAt:     time.Now(),
@@ -197,7 +198,7 @@ func (s *MailerServer) processRetries() {
 		}
 
 		for _, email := range emails {
-			if email.Status == db.Success || email.Status == db.Process {
+			if email.Status == ukama.Success || email.Status == ukama.Process {
 				continue
 			}
 
@@ -208,14 +209,14 @@ func (s *MailerServer) processRetries() {
 			if email.RetryCount >= MaxRetryCount {
 				log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
 
-				if err := s.updateStatus(email.MailId, db.Failed); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.Failed); err != nil {
 					log.WithError(err).Error("Failed to update email status")
 
 				}
 				continue
 			}
 
-			if err := s.updateStatus(email.MailId, db.Process); err != nil {
+			if err := s.updateStatus(email.MailId, ukama.Process); err != nil {
 				log.WithError(err).Error("Failed to update status to processing")
 				continue
 			}
@@ -235,7 +236,7 @@ func (s *MailerServer) processRetries() {
 				}
 			} else {
 				log.WithField("mailId", email.MailId).Info("Retry successful")
-				if err := s.updateStatus(email.MailId, db.Success); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.Success); err != nil {
 					log.WithError(err).Error("Failed to update email status")
 				}
 			}
@@ -270,9 +271,9 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status db.Status, values map[string]string) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.Status, values map[string]string) error {
 	var nextRetryTime *time.Time
-	if status == db.Failed {
+	if status == ukama.Failed {
 		t := time.Now().Add(InitialBackoff)
 		nextRetryTime = &t
 	}
@@ -439,6 +440,6 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 		MailId:       mail.MailId.String(),
 		TemplateName: mail.TemplateName,
 		SentAt:       mail.CreatedAt.String(),
-		Status:       pb.Status(pb.Status_value[db.Status(mail.Status).String()]),
+		Status:       pb.Status(pb.Status_value[ukama.Status(mail.Status).String()]),
 	}, nil
 }
