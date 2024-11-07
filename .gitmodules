@@ -95,3 +95,6 @@
 [submodule "nodes/ukamaOS/distro/vendor/protobuf"]
 	path = nodes/ukamaOS/distro/vendor/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "nodes/ukamaOS/distro/vendor/libidn2"]
+	path = nodes/ukamaOS/distro/vendor/libidn2
+	url = https://github.com/ukama/libidn2.git

@@ -90,6 +90,7 @@ LIST += amqp
 LIST += libunistring
 LIST += libcap
 LIST += psl
+LIST += libidn2
 
 .PHONY: $(LIST) iptables iproute2 dhcp dhcpcd
 
@@ -246,14 +247,30 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-psl:
+libidn2:
+	$(call print_msg,"libidn2")
+ifeq (,$(wildcard ${DEPDIR}/lib/libidn2.*))
+	#first host build and then crosscompile
+	cd $@ && ./bootstrap && \
+	    CC=gcc LDFLAGS="${LD_LIBARARY_PATH}" ./configure && make -j${NPROCS} && make clean && \
+        CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
+        ./configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
+        --host=${HOST} --disable-doc  --without-libiconv-prefix && \
+        make -j${NPROCS} && make -j${NPROCS} install
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+psl: libunistring libidn2
 	 $(call print_msg,"psl")
 ifeq (,$(wildcard ${DEPDIR}/lib/libpsl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && \
 	cd ./${BUILD_DIR} && \
         CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
                 ../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
-                --host=${HOST} && \
+                --with-libunistring-prefix=${DEPDIR} --host=${HOST} && \
         make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
