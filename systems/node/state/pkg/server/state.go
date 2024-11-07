@@ -23,6 +23,7 @@ import (
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/node/state/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
@@ -66,6 +67,15 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 		log.Errorf("Error retrieving current state: %v", err)
 		return nil, status.Errorf(codes.Internal, "failed to retrieve current state: %v", err)
 	}
+	config := &db.NodeConfig{
+		Id:           uuid.NewV4(),
+		NodeId:       nId.String(),
+		NodeIp:       req.NodeIp,
+		NodePort:     req.NodePort,
+		MeshIp:       req.MeshIp,
+		MeshPort:     req.MeshPort,
+		MeshHostName: req.MeshHostName,
+	}
 
 	newNodeState := &db.State{
 		Id:           uuid.NewV4(),
@@ -74,11 +84,8 @@ func (s *StateServer) AddNodeState(ctx context.Context, req *pb.AddStateRequest)
 		SubState:     subState,
 		Events:       events,
 		NodeType:     req.GetNodeType(),
-		NodeIp:       req.NodeIp,
-		NodePort:     req.NodePort,
-		MeshIp:       req.MeshIp,
-		MeshPort:     req.MeshPort,
-		MeshHostName: req.MeshHostName,
+		ConfigId:     config.Id,
+		Config:       config,
 	}
 
 	if currentState != nil {
@@ -158,8 +165,16 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		return latestStates[i].UpdatedAt.AsTime().After(latestStates[j].UpdatedAt.AsTime())
 	})
 
+	// Fetch the node configuration
+	nodeConfig, err := s.sRepo.GetNodeConfig(nId.String())
+	if err != nil {
+		log.Errorf("Failed to get node configuration: %v", err)
+		return &pb.GetStatesResponse{}, status.Errorf(codes.Internal, "failed to get node configuration: %v", err)
+	}
+
 	return &pb.GetStatesResponse{
-		States: latestStates,
+		States:      latestStates,
+		NodeConfig:  convertToGenNodeConfig(nodeConfig), 
 	}, nil
 }
 func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestStateRequest) (*pb.GetLatestStateResponse, error) {
@@ -232,4 +247,21 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 	}
 
 	return &pb.UpdateStateResponse{}, nil
+}
+
+func convertToGenNodeConfig(dbConfig *db.NodeConfig) *gen.NodeConfig {
+    if dbConfig == nil {
+        return nil
+    }
+    return &gen.NodeConfig{
+        Id:           dbConfig.Id.String(),
+        NodeId:       dbConfig.NodeId,
+        NodeIp:       dbConfig.NodeIp,
+        NodePort:     dbConfig.NodePort,
+        MeshIp:       dbConfig.MeshIp,
+        MeshPort:     dbConfig.MeshPort,
+        MeshHostName: dbConfig.MeshHostName,
+        CreatedAt:    timestamppb.New(dbConfig.CreatedAt),
+        UpdatedAt:    timestamppb.New(dbConfig.UpdatedAt),
+    }
 }

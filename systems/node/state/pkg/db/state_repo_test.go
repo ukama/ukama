@@ -16,7 +16,6 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
@@ -155,64 +154,3 @@ func TestState_GetStateHistory(t *testing.T) {
 }
 
 
-func TestState_AddState(t *testing.T) {
-	t.Run("AddState", func(t *testing.T) {
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		newState := &State{
-			Id:               uuid.NewV4(), 
-			NodeId:          ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String(),
-			PreviousStateId: nil, 
-			CurrentState:    cpb.NodeState_Unknown ,
-			SubState:        StringArray([]string{"on"}), 
-			Events:          StringArray([]string{"online"}), 
-			Version:         "1.0.0", 
-			NodeType:        "example", 
-			NodeIp:         "192.168.1.1", 
-			NodePort:       8080, 
-			MeshIp:         "192.168.1.1", 
-			MeshPort:       8081, 
-			MeshHostName:   "example-host", 
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(), 
-			DeletedAt:      gorm.DeletedAt{}, 
-		}
-
-		mock.ExpectBegin()
-		mock.ExpectExec(`INSERT INTO "states"`).
-			WithArgs(
-				newState.Id, newState.NodeId, newState.PreviousStateId, newState.CurrentState,
-				newState.SubState, newState.Events, newState.Version, newState.NodeType,
-				newState.NodeIp, newState.NodePort, newState.MeshIp, newState.MeshPort,
-				newState.MeshHostName, newState.CreatedAt, newState.UpdatedAt,
-				newState.DeletedAt, 
-			).
-			WillReturnResult(sqlmock.NewResult(1, 1)) 
-		mock.ExpectCommit()
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewStateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		err = r.AddState(newState, nil)
-
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}

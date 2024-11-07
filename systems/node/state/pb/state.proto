@@ -88,10 +88,25 @@ message GetCurrentStateResponse {
 message GetStatesRequest {
     string nodeId = 1;
 }
+message NodeConfig {
+    string id = 1;
+    string nodeId = 2;
+    string nodeIp = 3;
+    int32 nodePort = 4;
+    string meshIp = 5;
+    int32 meshPort = 6;
+    string meshHostName = 7;
+    google.protobuf.Timestamp createdAt = 8;
+    google.protobuf.Timestamp updatedAt = 9;
+    google.protobuf.Timestamp deletedAt = 10;
+}
+
 
 message GetStatesResponse {
-    repeated State States = 1;
+    repeated State states = 1; 
+    NodeConfig nodeConfig = 2; 
 }
+
 message GetLatestStateRequest {
     string nodeId = 1;
 }

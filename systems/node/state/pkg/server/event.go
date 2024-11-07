@@ -10,12 +10,11 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -63,18 +62,10 @@ func NewStateEventServer(orgName, orgId string, s *StateServer, configPath strin
 }
 
 func (n *StateEventServer) handleTransition(event stm.Event) {
-	log.Infof("Transition event received: %+v ", event)
+	log.Infof("Transition event received: From state %s -> %s, From substate %s -> %s",
+		event.OldState, event.NewState, event.OldSubstate, event.NewSubstate)
 
-	var state, substate string
-	if event.IsSubstate {
-		state = event.NewState
-		substate = event.NewSubstate
-	} else {
-		state = event.NewState
-		substate = event.NewSubstate
-	}
-
-	n.publishStateChangeEvent(state, substate, event.InstanceID)
+	n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
 }
 func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID string) {
 	if n.msgbus == nil {
@@ -101,12 +92,6 @@ func (n *StateEventServer) getEventsForNode(nodeID string) []string {
 	return n.eventBuffer[nodeID]
 }
 
-func (n *StateEventServer) addEventToBuffer(nodeID, eventName string) {
-	n.bufferMu.Lock()
-	defer n.bufferMu.Unlock()
-	n.eventBuffer[nodeID] = append(n.eventBuffer[nodeID], eventName)
-}
-
 func (n *StateEventServer) clearEventsForNode(nodeID string) {
 	n.bufferMu.Lock()
 	defer n.bufferMu.Unlock()
@@ -130,88 +115,86 @@ func (n *StateEventServer) getOrCreateInstance(nodeID, initialState string) (*st
 }
 
 func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-
-	log.Infof("Received event %s, routing key %s", e.Msg, e.RoutingKey)
-	var nodeId string
-	var eventName string
-	var body interface{}
+	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventAssign]
-		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.node.store"):
+		msg, err := n.unmarshalNotifyEvent(e.Msg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeAssign event: %w", err)
+			return nil, err
 		}
-		body = msg
-		nodeId = msg.NodeId
-		eventName = c.Name
 
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventOffline]
-		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		err = n.handleNotifyEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeOffline event: %w", err)
+			return nil, err
 		}
-		body = msg
-		nodeId = msg.NodeId
-		eventName = c.Name
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
+		if err != nil {
+			return nil, err
+		}
 
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventOnline]
-		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		err = n.handleNodeOnline(ctx, e.RoutingKey, msg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeOnline event: %w", err)
+			return nil, err
 		}
-		body = msg
-		nodeId = msg.NodeId
-		eventName = c.Name
-
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventRelease]
-		msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, c.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeRelease event: %w", err)
-		}
-		body = msg
-		nodeId = msg.NodeId
-		eventName = c.Name
-
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventConfig]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventConfig]
-		msg, err := n.unmarshalConfigNodeEvent(e.Msg, c.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeConfig event: %w", err)
-		}
-		body = msg
-		nodeId = strings.Split(msg.Target, ".")[3]
-		eventName = c.Name
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventUpdate]):
-		c := evt.NodeEventToEventConfig[evt.NodeStateEventUpdate]
-		msg, err := n.unmarshalNodeConfigUpdateEvent(e.Msg, c.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal NodeUpdate event: %w", err)
-		}
-		body = msg
-		nodeId = msg.NodeId
-		eventName = c.Name
 
 	default:
-		log.Infof("Received event %s, routing key %s", e.Msg, e.RoutingKey)
-		return &epb.EventResponse{}, nil
-	}
-
-	if err := n.ProcessEvent(ctx, eventName, nodeId, body); err != nil {
-		log.WithError(err).Error("Error processing event")
-		return nil, err
+		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
 }
+func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notification, error) {
+	p := &epb.Notification{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal node notify  message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+func (n *StateEventServer) handleNotifyEvent(ctx context.Context, key string, msg *epb.Notification) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	var details map[string]interface{}
+	if err := json.Unmarshal(msg.Details, &details); err != nil {
+		log.WithError(err).Error("Failed to unmarshal details")
+		return err
+	}
+
+	value, exists := details["value"]
+	if !exists {
+		log.Warn("Value key not found in details")
+		return fmt.Errorf("value key not found in details")
+	}
+
+	valueStr, ok := value.(string)
+	if !ok {
+		log.Error("Value is not a string type")
+		return fmt.Errorf("value is not a string type")
+	}
+
+	log.Infof("Extracted value: %s", valueStr)
+
+	if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
+		log.WithError(err).Error("Error processing event")
+		return err
+	}
+	return nil
+}
+func (n *StateEventServer) handleNodeOnline(ctx context.Context, key string, msg *epb.NodeOnlineEvent) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	if err := n.createInitialNodeState(ctx, msg.NodeId, "online", msg); err != nil {
+		return err
+
+	}
+
+	return nil
+}
 
 func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
 	log.Infof("Processing event %s for node %s", eventName, nodeId)
-
-	n.addEventToBuffer(nodeId, eventName)
 
 	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
 	if err != nil {
@@ -230,6 +213,9 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	currentSubstate := ""
 	if latestState != nil && latestState.State != nil {
 		currentState = latestState.State.CurrentState
+		if len(latestState.State.SubState) > 0 {
+			currentSubstate = latestState.State.SubState[0]
+		}
 		log.Infof("Node already exists with current state %s and substate %s", currentState, currentSubstate)
 	} else {
 		log.Infof("Creating initial state entry for node %s", nodeId)
@@ -246,50 +232,56 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	prevState := instance.CurrentState
 	prevSubstate := instance.CurrentSubstate
 
+	eventsInCurrentState := n.getEventsForNode(nodeId)
+
 	if err := instance.Transition(eventName); err != nil {
 		return fmt.Errorf("failed to transition state for node %s: %w", nodeId, err)
 	}
 
 	if instance.CurrentState != prevState {
-		newSubstate := currentSubstate
-		if newSubstate != "" {
-			newSubstate += "," + instance.CurrentSubstate
-		} else {
-			newSubstate = instance.CurrentSubstate
-		}
+		newSubstate := instance.CurrentSubstate
 		stateValue := npb.NodeState_value[instance.CurrentState]
+
+		if latestState != nil && latestState.State != nil {
+			if len(eventsInCurrentState) == 0 || eventsInCurrentState[len(eventsInCurrentState)-1] != eventName {
+				eventsInCurrentState = append(eventsInCurrentState, eventName)
+			}
+
+			_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+				NodeId:   nodeId,
+				SubState: latestState.State.SubState,
+				Events:   eventsInCurrentState,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to update events in previous state for node %s: %w", nodeId, err)
+			}
+		}
 
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
 			CurrentState: npb.NodeState(stateValue),
 			SubState:     []string{newSubstate},
-			Events:       n.getEventsForNode(nodeId),
+			Events:       []string{},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
 		}
 		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeId, instance.CurrentState, newSubstate)
 	} else if instance.CurrentSubstate != prevSubstate {
-		newSubstate := currentSubstate
-		if newSubstate != "" {
-			newSubstate += "," + instance.CurrentSubstate
-		} else {
-			newSubstate = instance.CurrentSubstate
+		if len(eventsInCurrentState) == 0 || eventsInCurrentState[len(eventsInCurrentState)-1] != eventName {
+			eventsInCurrentState = append(eventsInCurrentState, eventName)
 		}
+
 		_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
 			NodeId:   nodeId,
-			SubState: []string{newSubstate},
-			Events:   n.getEventsForNode(nodeId),
+			SubState: []string{instance.CurrentSubstate},
+			Events:   eventsInCurrentState,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to update substate for node %s: %w", nodeId, err)
 		}
-		log.Infof("Updated substate for node %s: substate=%s", nodeId, newSubstate)
-	} else {
-		log.Infof("No state or substate change for node %s", nodeId)
+		log.Infof("Updated substate for node %s: substate=%s", nodeId, instance.CurrentSubstate)
 	}
-
-	log.Infof("Events for node %s: %v", nodeId, n.getEventsForNode(nodeId))
 
 	n.clearEventsForNode(nodeId)
 
@@ -318,23 +310,4 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, e
 		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
 	}
 	return nil
-}
-func (n *StateEventServer) unmarshalConfigNodeEvent(msg *anypb.Any, emsg string) (*npb.NodeFeederMessage, error) {
-	p := &npb.NodeFeederMessage{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
-
-func (n *StateEventServer) unmarshalNodeConfigUpdateEvent(msg *anypb.Any, emsg string) (*npb.NodeConfigUpdateEvent, error) {
-	p := &npb.NodeConfigUpdateEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeConfigUpdate message with : %+v. Error %s. Message %s", msg, err.Error(), emsg)
-		return nil, err
-	}
-	return p, nil
 }

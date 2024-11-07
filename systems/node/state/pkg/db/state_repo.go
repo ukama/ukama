@@ -24,6 +24,7 @@ type StateRepo interface {
 	AddState(newState *State, previousState *State) error
 	GetLatestState(nodeId string) (*State, error)
 	UpdateState(nodeId string, subStates []string, events []string) (*State, error)
+	GetNodeConfig(nodeId string) (*NodeConfig, error)
 }
 
 type stateRepo struct {
@@ -132,4 +133,13 @@ func (r *stateRepo) UpdateState(nodeId string, subStates []string, events []stri
 	}
 
 	return &state, nil
+}
+
+func (r *stateRepo) GetNodeConfig(nodeId string) (*NodeConfig, error) {
+	var config NodeConfig
+	err := r.Db.GetGormDb().Where("node_id = ?", nodeId).First(&config).Error
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }

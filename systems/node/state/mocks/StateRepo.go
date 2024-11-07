@@ -62,6 +62,36 @@ func (_m *StateRepo) GetLatestState(nodeId string) (*db.State, error) {
 	return r0, r1
 }
 
+// GetNodeConfig provides a mock function with given fields: nodeId
+func (_m *StateRepo) GetNodeConfig(nodeId string) (*db.NodeConfig, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodeConfig")
+	}
+
+	var r0 *db.NodeConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*db.NodeConfig, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *db.NodeConfig); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.NodeConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStateById provides a mock function with given fields: id
 func (_m *StateRepo) GetStateById(id uuid.UUID) (*db.State, error) {
 	ret := _m.Called(id)

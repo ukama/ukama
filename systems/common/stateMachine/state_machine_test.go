@@ -243,7 +243,7 @@ func TestSubStateTransition(t *testing.T) {
 	if instance.CurrentSubstate != "substate1" {
 		t.Errorf("Expected substate to be 'substate1', got '%s'", instance.CurrentSubstate)
 	}
-	if lastEvent.Name != "sub1" || lastEvent.OldState != "main" || lastEvent.NewSubstate != "substate1" || !lastEvent.IsSubstate {
+	if lastEvent.Name != "sub1" || lastEvent.OldState != "main" || lastEvent.NewSubstate != "substate1"  {
 		t.Errorf("Unexpected event for substate transition: %+v", lastEvent)
 	}
 }

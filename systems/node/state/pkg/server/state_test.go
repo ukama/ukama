@@ -143,14 +143,15 @@ func TestStateServer_GetStates(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String()
 
 	testCases := []struct {
-		name    string
-		req     *pb.GetStatesRequest
-		mockFn  func()
-		wantErr bool
-		errCode codes.Code
+		name           string
+		req            *pb.GetStatesRequest
+		mockFn         func()
+		wantErr        bool
+		errCode        codes.Code
+		expectedStates int
 	}{
 		{
-			name: "Valid request",
+			name: "Valid request with history",
 			req: &pb.GetStatesRequest{
 				NodeId: nodeId,
 			},
@@ -166,9 +167,13 @@ func TestStateServer_GetStates(t *testing.T) {
 						UpdatedAt:    time.Now(),
 					},
 				}, nil)
+				mockStateRepo.On("GetNodeConfig", nodeId).Return(&db.NodeConfig{}, nil)
 			},
-			wantErr: false,
+			wantErr:        false,
+			expectedStates: 1,
 		},
+
+		
 	}
 
 	for _, tc := range testCases {
@@ -182,6 +187,7 @@ func TestStateServer_GetStates(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, resp)
+				assert.Equal(t, tc.expectedStates, len(resp.States))
 			}
 			mockStateRepo.AssertExpectations(t)
 		})

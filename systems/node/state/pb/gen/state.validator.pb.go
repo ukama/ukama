@@ -84,12 +84,35 @@ func (this *GetCurrentStateResponse) Validate() error {
 func (this *GetStatesRequest) Validate() error {
 	return nil
 }
+func (this *NodeConfig) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
+	if this.UpdatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.UpdatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("UpdatedAt", err)
+		}
+	}
+	if this.DeletedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.DeletedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("DeletedAt", err)
+		}
+	}
+	return nil
+}
 func (this *GetStatesResponse) Validate() error {
 	for _, item := range this.States {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
 				return github_com_mwitkow_go_proto_validators.FieldError("States", err)
 			}
+		}
+	}
+	if this.NodeConfig != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeConfig); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeConfig", err)
 		}
 	}
 	return nil

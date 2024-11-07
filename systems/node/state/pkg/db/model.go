@@ -28,11 +28,11 @@ import (
 	 return json.Unmarshal(value.([]byte), &a)
  }
  
- type NodeState struct {
+ type State struct {
 	 Id              uuid.UUID       `gorm:"primaryKey;type:uuid" json:"id"`
 	 NodeId          string          `gorm:"not null;index" json:"nodeId"`
 	 PreviousStateId *uuid.UUID      `gorm:"column:previous_state_id;index" json:"previousStateId,omitempty"`
-	 PreviousState   *NodeState      `gorm:"-" json:"previousState,omitempty"`
+	 PreviousState   *State      `gorm:"-" json:"previousState,omitempty"`
 	 CurrentState    ukama.NodeState `gorm:"not null" json:"currentState"`
 	 SubState        StringArray     `gorm:"type:jsonb" json:"subState"`
 	 Events          StringArray     `gorm:"type:jsonb" json:"events"`
@@ -57,3 +57,4 @@ import (
 	 UpdatedAt    time.Time      `json:"updatedAt"`
 	 DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
  }
+

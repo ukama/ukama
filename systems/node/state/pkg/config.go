@@ -13,8 +13,6 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
-
-	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -40,12 +38,8 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease],
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventUpdate],
-				evt.NodeStateEventRoutingKey[evt.NodeStateEventConfig],
+				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 			},
 		},
 	}
