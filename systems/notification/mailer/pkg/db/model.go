@@ -20,7 +20,6 @@ import (
 
 type JSONMap map[string]interface{}
 
-
 type Mailing struct {
 	MailId        uuid.UUID  `gorm:"primaryKey;type:uuid"`
 	Email         string     `gorm:"size:255"`
