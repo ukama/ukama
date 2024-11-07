@@ -287,7 +287,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 		../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
 		LIBS="-latomic -lhogweed -lnettle" \
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
-		--with-zlib=${DEPDIR} --without-zstd --with-libpsl=${DEPDIR} --host=${HOST} && \
+		--with-zlib=${DEPDIR} --without-zstd --with-libpsl=${DEPDIR} --without-brotli --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
