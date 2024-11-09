@@ -46,7 +46,7 @@ const Page = () => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       {checkForInstallation ? (
         <InstallSiteLoading
           step={step + 1}

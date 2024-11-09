@@ -119,7 +119,7 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   const handleBack = () => router.back();
 
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       <Stack direction={'row'}>
         <Typography variant="h6">{'Configure site installation'}</Typography>
         <Typography

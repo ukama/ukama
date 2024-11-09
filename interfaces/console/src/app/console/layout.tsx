@@ -266,6 +266,7 @@ export default function ConosleLayout({
           width: '100%',
           height: '100%',
           display: 'flex',
+          overflow: 'hidden',
           flexDirection: 'column',
         }}
       >

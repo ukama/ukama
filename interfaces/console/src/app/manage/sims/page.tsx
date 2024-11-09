@@ -102,16 +102,16 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      height={'calc(100vh - 400px)'}
+      height={'calc(100vh - 244px)'}
       isLoading={uploadSimsLoading ?? simsLoading}
     >
       <Paper
         sx={{
-          py: 3,
-          px: 4,
+          py: { xs: 1.5, md: 3 },
+          px: { xs: 2, md: 4 },
           overflow: 'scroll',
           borderRadius: '10px',
-          height: 'calc(100vh - 400px)',
+          height: '100%',
         }}
       >
         <Box sx={{ width: '100%', height: '100%' }}>

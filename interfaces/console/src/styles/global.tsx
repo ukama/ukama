@@ -73,9 +73,6 @@ const HorizontalContainerJustify = styled(Box)((props) => ({
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
-  [props.theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
-  },
 }));
 
 const HorizontalContainer = styled(Box)({
@@ -168,7 +165,7 @@ const PageContainer = styled(Paper, {
   borderRadius: radius,
   padding: '24px 32px',
   overflow: 'scroll',
-  height: 'calc(100vh - 232px)',
+  height: 'calc(100vh - 216px)',
   [theme.breakpoints.down('sm')]: {
     marginTop: '12px',
     padding: '12px 18px',
@@ -266,28 +263,28 @@ const DataPlanEmptyView = styled(Box)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 export {
+  CardWrapper,
   CenterContainer,
   ComponentContainer,
   ContainerJustifySpaceBtw,
   ContainerMax,
   DarkTooltip,
+  DataPlanEmptyView,
   GradiantBar,
   HorizontalContainer,
   HorizontalContainerJustify,
   IconStyle,
   LinkStyle,
   MessageContainer,
+  NavigationButton,
+  NavigationWrapper,
   PageContainer,
   RootContainer,
   RoundedCard,
+  ScrollContainer,
+  ScrollableContent,
   SimpleCardWithBorder,
   SkeletonRoundedCard,
   VerticalContainer,
   globalUseStyles,
-  ScrollContainer,
-  ScrollableContent,
-  NavigationWrapper,
-  NavigationButton,
-  CardWrapper,
-  DataPlanEmptyView,
 };

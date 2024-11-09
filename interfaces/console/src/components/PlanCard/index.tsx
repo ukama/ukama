@@ -37,8 +37,7 @@ const PlanCard = ({
     <Card
       variant="outlined"
       sx={{
-        px: 3,
-        py: 3,
+        p: { xs: 1.5, md: 3 },
         display: 'flex',
         boxShadow: 'none',
         borderRadius: '4px',

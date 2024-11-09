@@ -93,3 +93,30 @@ export const MANAGE_MENU_LIST = [
     icon: PermDataSettingIcon,
   },
 ];
+
+export const MANAGE_MENU_LIST_SMALL = [
+  {
+    id: 'manage-members',
+    name: 'Members',
+    path: '/manage/members',
+    icon: SubscriberIcon,
+  },
+  {
+    id: 'manage-sim',
+    name: 'Sim pool',
+    path: '/manage/sims',
+    icon: SimCardIcon,
+  },
+  {
+    id: 'manage-node',
+    name: 'Node pool',
+    path: '/manage/nodes',
+    icon: AccountTreeIcon,
+  },
+  {
+    id: 'manage-data-plan',
+    name: 'Data plans',
+    path: '/manage/data-plans',
+    icon: PermDataSettingIcon,
+  },
+];

@@ -32,7 +32,6 @@ import {
 import AddSubscriberStepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import DeleteConfirmation from '@/components/DeleteDialog';
-import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
@@ -40,23 +39,6 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
-import { TNetwork } from '@/types';
-import SubscriberIcon from '@mui/icons-material/PeopleAlt';
-import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import {
-  AlertColor,
-  Box,
-  Grid,
-  IconButton,
-  Paper,
-  Stack,
-  styled,
-  Typography,
-} from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import colors from '@/theme/colors';
 import {
   CardWrapper,
   DataPlanEmptyView,
@@ -65,6 +47,14 @@ import {
   ScrollableContent,
   ScrollContainer,
 } from '@/styles/global';
+import colors from '@/theme/colors';
+import { TNetwork } from '@/types';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import SubscriberIcon from '@mui/icons-material/PeopleAlt';
+import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
+import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Page = () => {
   const [search, setSearch] = useState<string>('');
@@ -692,10 +682,10 @@ const Page = () => {
 
   return (
     <Stack
-      direction={'column'}
-      spacing={2}
       mt={2}
-      sx={{ height: 'calc(100vh - 200px)' }}
+      spacing={2}
+      direction={'column'}
+      sx={{ height: { xs: 'calc(100vh - 158px)', md: 'calc(100vh - 172px)' } }}
     >
       {getSubscriberByNetworkLoading ? (
         <LoadingWrapper
@@ -713,11 +703,10 @@ const Page = () => {
           elevation={1}
           sx={{
             borderRadius: '10px',
-            py: 4,
-            px: 4,
+            p: { xs: 2, md: 4 },
           }}
         >
-          <Stack direction="column" spacing={1.5} sx={{ position: 'relative' }}>
+          <Stack direction="column" spacing={{ xs: 0.5, md: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Stack direction={'row'} spacing={1} alignItems={'center'}>
                 <Typography variant="h6">Data plans</Typography>
@@ -802,7 +791,8 @@ const Page = () => {
           sx={{
             height: '100%',
             borderRadius: '10px',
-            padding: '24px 32px',
+            px: { xs: 2, md: 3 },
+            py: { xs: 2, md: 4 },
           }}
         >
           <PageContainerHeader

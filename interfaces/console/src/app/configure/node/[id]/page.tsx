@@ -10,7 +10,6 @@ import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -71,7 +70,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       <Stack direction={'row'}>
         <Typography variant="h6">{'Install site'}</Typography>
         <Typography
@@ -92,19 +91,6 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           can properly manage your network. If the following details are
           incorrect, please check on your site installation.
         </Typography>
-        {isLoading ? (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <Skeleton variant="circular" width={24} height={24} />
-            <Skeleton variant="text" width={200} height={20} />
-          </Stack>
-        ) : (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <CheckCircleIcon sx={{ color: colors.green }} />
-            <Typography variant={'body1'} sx={{ fontWeight: 700 }}>
-              Your site is online
-            </Typography>
-          </Stack>
-        )}
 
         {isLoading || addressLoading ? (
           <Skeleton variant="rounded" width={'100%'} height={128} />

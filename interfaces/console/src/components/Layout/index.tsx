@@ -69,7 +69,7 @@ const AppLayout = ({
     ? selectedDefaultSite
     : id;
   return (
-    <Stack overflow={'hidden'}>
+    <Stack direction={'column'} height={'100%'}>
       <Header
         isOpen={open}
         isLoading={isLoading}
@@ -77,25 +77,26 @@ const AppLayout = ({
         notifications={notifications}
         handleNotificationRead={handleNotificationRead}
       />
-      <Stack direction={'row'}>
-        <Sidebar
-          isOpen={open}
-          isDarkMode={isDarkMode}
-          placeholder={placeholder}
-          networks={networks ?? []}
-          handleAddNetwork={handleAddNetwork}
-          handleNetworkChange={handleNetworkChange}
-        />
+      <Stack height={'100%'} direction={'row'} spacing={2}>
+        {!matches && (
+          <Sidebar
+            isOpen={open}
+            isDarkMode={isDarkMode}
+            placeholder={placeholder}
+            networks={networks ?? []}
+            handleAddNetwork={handleAddNetwork}
+            handleNetworkChange={handleNetworkChange}
+          />
+        )}
         <Stack
-          mr={2}
-          ml={30}
-          mt={8}
-          p={2}
           width={'100%'}
           height={'100%'}
+          overflow={'hidden'}
           direction={'column'}
+          pt={{ xs: 1, md: 2 }}
+          px={{ xs: 2, md: 3 }}
         >
-          <Typography variant="h5" fontWeight={400} mb={0.8}>
+          <Typography variant="h5" fontWeight={400}>
             {getTitleFromPath(pathname, dynamicId)}
           </Typography>
           <Divider sx={{ mb: 1 }} />

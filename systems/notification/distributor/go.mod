@@ -26,11 +26,6 @@ require (
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/notification/event-notify v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/nucleus/org v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20241023131059-a5535819f6f1
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/yaml.v2 v2.4.0
