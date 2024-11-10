@@ -11,8 +11,8 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -22,12 +22,11 @@ type Config struct {
 	Queue            *uconf.Queue    `default:"{}"`
 	Timeout          time.Duration   `default:"20s"`
 	Service          *uconf.Service
-	MsgClient        *config.MsgClient `default:"{}"`
-	OrgName          string           	
-	OrgId			 string		
-	ConfigPath       string           
+	MsgClient        *uconf.MsgClient `default:"{}"`
+	OrgName          string
+	OrgId            string
+	ConfigPath       string
 }
-
 
 func NewConfig(name string) *Config {
 	return &Config{
@@ -39,7 +38,10 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
-				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease],
 			},
 		},
 	}

@@ -137,7 +137,11 @@ func (r *stateRepo) UpdateState(nodeId string, subStates []string, events []stri
 
 func (r *stateRepo) GetNodeConfig(nodeId string) (*NodeConfig, error) {
 	var config NodeConfig
-	err := r.Db.GetGormDb().Where("node_id = ?", nodeId).First(&config).Error
+	err := r.Db.GetGormDb().
+		Where("node_id = ?", nodeId).
+		Order("id DESC").
+		First(&config).Error
+
 	if err != nil {
 		return nil, err
 	}

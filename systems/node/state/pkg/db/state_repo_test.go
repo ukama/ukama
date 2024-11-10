@@ -56,25 +56,22 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func TestState_GetLatestState(t *testing.T) {
 	t.Run("state exists for node", func(t *testing.T) {
-		// Arrange
 		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 		var db *extsql.DB
 		var err error
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() 
 		assert.NoError(t, err)
 
-		// Define a sample State object to return
 		latestState := State{
 			NodeId:    nid.String(),
-			CreatedAt: time.Now(), // Assume you have this field in your State struct
+			CreatedAt: time.Now(), 
 		}
 
 		rows := sqlmock.NewRows([]string{"node_id", "created_at"}).
 			AddRow(latestState.NodeId, latestState.CreatedAt)
 
-		// Update the mock query to match the actual query
 		mock.ExpectQuery(`^SELECT \* FROM "states" WHERE node_id = \$1 AND "states"."deleted_at" IS NULL ORDER BY created_at DESC,"states"."id" LIMIT \$2`).
 			WithArgs(nid.String(), 1).
 			WillReturnRows(rows)
@@ -92,7 +89,6 @@ func TestState_GetLatestState(t *testing.T) {
 			GormDb: gdb,
 		})
 
-		// Act
 		c, err := r.GetLatestState(nid.String())
 
 		assert.NoError(t, err)

@@ -29,13 +29,7 @@ message State {
     ukama.common.v1.NodeState currentState = 5;  
     repeated string subState = 6;
     repeated string events = 7;
-    string version = 8;    
     string  nodeType = 9;   
-    string  nodeIp = 10;     
-    int32 nodePort = 11;    
-    string  meshIp = 12;      
-    int32 meshPort = 13;    
-    string  meshHostName = 14;
     google.protobuf.Timestamp createdAt = 15;
     google.protobuf.Timestamp updatedAt = 16;
     google.protobuf.Timestamp deletedAt = 17;

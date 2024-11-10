@@ -45,7 +45,7 @@
         "upgrade",
         "update",
         "downgrade",
-        "faulty"
+        "fault"
       ],
       "transition": [
         {
@@ -152,8 +152,15 @@
       }
     },
     {
-      "name": "faulty",
+      "name": "Faulty",
       "description": "Node is in a faulty state",
+      "events": [
+        "offline",
+        "reboot",
+        "fault",
+        "online",
+        "config"
+      ],
       "transition": [
         {
           "to_state": "Faulty",

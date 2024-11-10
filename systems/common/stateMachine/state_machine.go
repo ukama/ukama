@@ -38,6 +38,24 @@ type SubState struct {
 	Events      []string              `json:"events"`
 	Transitions map[string]Transition `json:"transition"`
 }
+
+type State struct {
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	Events      []string              `json:"events"`
+	Transitions map[string]Transition `json:"transition"`
+	SubState    *SubState             `json:"substate,omitempty"`
+	OnEnter     func() error          `json:"-"`
+	OnExit      func() error          `json:"-"`
+}
+
+type StateMachineConfig struct {
+	Version string           `json:"version"`
+	Entity  string           `json:"entity"`
+	File    string           `json:"file"`
+	States  map[string]State `json:"states"`
+}
+
 type configCache struct {
 	configs map[string]StateMachineConfig
 	mu      sync.RWMutex
@@ -75,16 +93,6 @@ func (ss *SubState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type State struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Events      []string              `json:"events"`
-	Transitions map[string]Transition `json:"transition"`
-	SubState    *SubState             `json:"substate,omitempty"`
-	OnEnter     func() error          `json:"-"`
-	OnExit      func() error          `json:"-"`
-}
-
 func (s *State) UnmarshalJSON(data []byte) error {
 	aux := struct {
 		Name        string       `json:"name"`
@@ -109,13 +117,6 @@ func (s *State) UnmarshalJSON(data []byte) error {
 	}
 	s.SubState = aux.SubState
 	return nil
-}
-
-type StateMachineConfig struct {
-	Version string           `json:"version"`
-	Entity  string           `json:"entity"`
-	File    string           `json:"file"`
-	States  map[string]State `json:"states"`
 }
 
 func (smc *StateMachineConfig) UnmarshalJSON(data []byte) error {
@@ -155,6 +156,82 @@ func NewStateMachine(handler TransitionCallback) *StateMachine {
 	return &StateMachine{handler: handler}
 }
 
+func validateStateTransitions(config StateMachineConfig) error {
+	for stateName, state := range config.States {
+		for trigger, transition := range state.Transitions {
+			if _, exists := config.States[transition.ToState]; !exists {
+				return fmt.Errorf("state '%s' has transition to non-existent state '%s' on trigger '%s'",
+					stateName, transition.ToState, trigger)
+			}
+		}
+
+		if state.SubState != nil {
+			for trigger := range state.SubState.Transitions {
+				if trigger == "" {
+					return fmt.Errorf("empty trigger found in substate transitions for state '%s'", stateName)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func validateEventConsistency(config StateMachineConfig) error {
+	for stateName, state := range config.States {
+		declaredEvents := make(map[string]bool)
+		for _, event := range state.Events {
+			declaredEvents[event] = true
+		}
+		if state.SubState != nil {
+			for _, event := range state.SubState.Events {
+				declaredEvents[event] = true
+			}
+		}
+
+		for trigger := range state.Transitions {
+			if !declaredEvents[trigger] && trigger != "enter" {
+				return fmt.Errorf("state '%s' uses undeclared event '%s' in transition",
+					stateName, trigger)
+			}
+		}
+
+		if state.SubState != nil {
+			for trigger := range state.SubState.Transitions {
+				if !declaredEvents[trigger] && trigger != "enter" {
+					return fmt.Errorf("state '%s' substate uses undeclared event '%s' in transition",
+						stateName, trigger)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func validateEventUniqueness(config StateMachineConfig) error {
+	for stateName, state := range config.States {
+		eventCount := make(map[string]int)
+		for _, event := range state.Events {
+			eventCount[event]++
+			if eventCount[event] > 1 {
+				return fmt.Errorf("duplicate event '%s' found in state '%s'",
+					event, stateName)
+			}
+		}
+
+		if state.SubState != nil {
+			substateEventCount := make(map[string]int)
+			for _, event := range state.SubState.Events {
+				substateEventCount[event]++
+				if substateEventCount[event] > 1 {
+					return fmt.Errorf("duplicate event '%s' found in substate of state '%s'",
+						event, stateName)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string) (*StateMachineInstance, error) {
 	config, err := LoadConfig(configFile)
 	if err != nil {
@@ -177,110 +254,107 @@ func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string)
 }
 
 func (instance *StateMachineInstance) Transition(eventName string) error {
-    instance.StateMachine.mu.Lock()
-    defer instance.StateMachine.mu.Unlock()
+	instance.StateMachine.mu.Lock()
+	defer instance.StateMachine.mu.Unlock()
 
-    oldState := instance.CurrentState
-    oldSubstate := instance.CurrentSubstate
+	oldState := instance.CurrentState
+	oldSubstate := instance.CurrentSubstate
 
-    currentState, exists := instance.Config.States[instance.CurrentState]
-    if !exists {
-        return fmt.Errorf("current state not found: %s", instance.CurrentState)
-    }
+	currentState, exists := instance.Config.States[instance.CurrentState]
+	if !exists {
+		return fmt.Errorf("current state not found: %s", instance.CurrentState)
+	}
 
-    log.Infof("Processing event %s in state %s (substate: %s)",
-        eventName, currentState.Name, instance.CurrentSubstate)
+	log.Infof("Processing event %s in state %s (substate: %s)",
+		eventName, currentState.Name, instance.CurrentSubstate)
 
-    newMainState := instance.CurrentState
-    newSubState := instance.CurrentSubstate
-    
-    // Handle initial substate transition if we're in a state with substates but no current substate
-    if currentState.SubState != nil && instance.CurrentSubstate == "" {
-        if initialSubTransition, exists := currentState.SubState.Transitions["enter"]; exists {
-            newSubState = initialSubTransition.ToState
-            log.Infof("Setting initial substate: %s", newSubState)
-        }
-    }
+	newMainState := instance.CurrentState
+	newSubState := instance.CurrentSubstate
 
-    // Process substate transitions first
-    if currentState.SubState != nil {
-        // If we have a substate, check for substate transitions
-        if instance.CurrentSubstate != "" {
-            if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
-                newSubState = subTransition.ToState
-                log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
-                
-                // Check if the new substate triggers a main state transition
-                if mainTransition, exists := currentState.Transitions[newSubState]; exists {
-                    if currentState.OnExit != nil {
-                        if err := currentState.OnExit(); err != nil {
-                            return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
-                        }
-                    }
-                    newMainState = mainTransition.ToState
-                    log.Infof("Main state transition triggered by substate: %s -> %s", 
-                        currentState.Name, newMainState)
-                }
-            }
-        } else {
-            if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
-                newSubState = subTransition.ToState
-                log.Infof("Direct substate transition: -> %s", newSubState)
-            }
-        }
-    }
+	if currentState.SubState != nil && instance.CurrentSubstate == "" {
+		if initialSubTransition, exists := currentState.SubState.Transitions["enter"]; exists {
+			newSubState = initialSubTransition.ToState
+			log.Infof("Setting initial substate: %s", newSubState)
+		}
+	}
 
-    if newMainState == instance.CurrentState {
-        if transition, exists := currentState.Transitions[eventName]; exists {
-            if currentState.OnExit != nil {
-                if err := currentState.OnExit(); err != nil {
-                    return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
-                }
-            }
-            newMainState = transition.ToState
-            log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
-        }
-    }
+	if currentState.SubState != nil {
+		if instance.CurrentSubstate != "" {
+			if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
+				newSubState = subTransition.ToState
+				log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
 
-    if newMainState != instance.CurrentState {
-        newState, exists := instance.Config.States[newMainState]
-        if !exists {
-            return fmt.Errorf("new state not found: %s", newMainState)
-        }
+				if mainTransition, exists := currentState.Transitions[newSubState]; exists {
+					if currentState.OnExit != nil {
+						if err := currentState.OnExit(); err != nil {
+							return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
+						}
+					}
+					newMainState = mainTransition.ToState
+					log.Infof("Main state transition triggered by substate: %s -> %s",
+						currentState.Name, newMainState)
+				}
+			}
+		} else {
+			if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
+				newSubState = subTransition.ToState
+				log.Infof("Direct substate transition: -> %s", newSubState)
+			}
+		}
+	}
 
-        if newState.SubState != nil {
-            if initialSubTransition, exists := newState.SubState.Transitions["enter"]; exists {
-                newSubState = initialSubTransition.ToState
-                log.Infof("New state initial substate transition: %s", newSubState)
-            }
-        } else {
-            newSubState = ""
-        }
+	if newMainState == instance.CurrentState {
+		if transition, exists := currentState.Transitions[eventName]; exists {
+			if currentState.OnExit != nil {
+				if err := currentState.OnExit(); err != nil {
+					return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
+				}
+			}
+			newMainState = transition.ToState
+			log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
+		}
+	}
 
-        if newState.OnEnter != nil {
-            if err := newState.OnEnter(); err != nil {
-                return fmt.Errorf("error in OnEnter for state %s: %w", newMainState, err)
-            }
-        }
-    }
+	if newMainState != instance.CurrentState {
+		newState, exists := instance.Config.States[newMainState]
+		if !exists {
+			return fmt.Errorf("new state not found: %s", newMainState)
+		}
 
-    instance.CurrentState = newMainState
-    instance.CurrentSubstate = newSubState
+		if newState.SubState != nil {
+			if initialSubTransition, exists := newState.SubState.Transitions["enter"]; exists {
+				newSubState = initialSubTransition.ToState
+				log.Infof("New state initial substate transition: %s", newSubState)
+			}
+		} else {
+			newSubState = ""
+		}
 
-    if instance.StateMachine.handler != nil {
-        instance.StateMachine.handler(Event{
-            Name:        eventName,
-            Timestamp:   time.Now(),
-            InstanceID:  instance.InstanceID,
-            OldState:    oldState,
-            NewState:    instance.CurrentState,
-            OldSubstate: oldSubstate,
-            NewSubstate: instance.CurrentSubstate,
-        })
-    }
+		if newState.OnEnter != nil {
+			if err := newState.OnEnter(); err != nil {
+				return fmt.Errorf("error in OnEnter for state %s: %w", newMainState, err)
+			}
+		}
+	}
 
-    return nil
+	instance.CurrentState = newMainState
+	instance.CurrentSubstate = newSubState
+
+	if instance.StateMachine.handler != nil {
+		instance.StateMachine.handler(Event{
+			Name:        eventName,
+			Timestamp:   time.Now(),
+			InstanceID:  instance.InstanceID,
+			OldState:    oldState,
+			NewState:    instance.CurrentState,
+			OldSubstate: oldSubstate,
+			NewSubstate: instance.CurrentSubstate,
+		})
+	}
+
+	return nil
 }
+
 func LoadConfig(configFile string) (StateMachineConfig, error) {
 	cache := getConfigCache()
 
@@ -304,9 +378,20 @@ func LoadConfig(configFile string) (StateMachineConfig, error) {
 	}
 
 	var config StateMachineConfig
-	err = json.Unmarshal(data, &config)
-	if err != nil {
+	if err := json.Unmarshal(data, &config); err != nil {
 		return StateMachineConfig{}, fmt.Errorf("error parsing JSON: %v", err)
+	}
+
+	if err := validateStateTransitions(config); err != nil {
+		return StateMachineConfig{}, fmt.Errorf("invalid state transitions: %v", err)
+	}
+
+	if err := validateEventConsistency(config); err != nil {
+		return StateMachineConfig{}, fmt.Errorf("event consistency error: %v", err)
+	}
+
+	if err := validateEventUniqueness(config); err != nil {
+		return StateMachineConfig{}, fmt.Errorf("event uniqueness error: %v", err)
 	}
 
 	cache.configs[configFile] = config

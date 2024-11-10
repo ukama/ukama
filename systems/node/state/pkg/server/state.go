@@ -110,6 +110,7 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		return &pb.GetStatesResponse{}, status.Errorf(codes.InvalidArgument,
 			"invalid format of node id: %s", err.Error())
 	}
+
 	history, err := s.sRepo.GetStateHistory(nId.String())
 	if err != nil {
 		log.Errorf("Failed to get node state history: %v", err)
@@ -121,11 +122,9 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		return &pb.GetStatesResponse{States: []*pb.State{}}, nil
 	}
 
-	stateMap := make(map[string]*pb.State)
-	var latestStates []*pb.State
-
+	states := make([]*pb.State, 0, len(history))
 	for _, nodeState := range history {
-		NodeStateRes := &pb.State{
+		state := &pb.State{
 			Id:           nodeState.Id.String(),
 			NodeId:       nodeState.NodeId,
 			CurrentState: nodeState.CurrentState,
@@ -136,36 +135,16 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 		}
 
 		if nodeState.PreviousStateId != nil {
-			NodeStateRes.PreviousStateId = nodeState.PreviousStateId.String()
+			state.PreviousStateId = nodeState.PreviousStateId.String()
 		}
 
-		stateMap[NodeStateRes.Id] = NodeStateRes
-
-		isLatest := true
-		for _, s := range history {
-			if s.PreviousStateId != nil && s.PreviousStateId.String() == NodeStateRes.Id {
-				isLatest = false
-				break
-			}
-		}
-		if isLatest {
-			latestStates = append(latestStates, NodeStateRes)
-		}
+		states = append(states, state)
 	}
 
-	for _, state := range stateMap {
-		if state.PreviousStateId != "" {
-			if prevState, exists := stateMap[state.PreviousStateId]; exists {
-				state.PreviousState = prevState
-			}
-		}
-	}
-
-	sort.Slice(latestStates, func(i, j int) bool {
-		return latestStates[i].UpdatedAt.AsTime().After(latestStates[j].UpdatedAt.AsTime())
+	sort.Slice(states, func(i, j int) bool {
+		return states[i].UpdatedAt.AsTime().After(states[j].UpdatedAt.AsTime())
 	})
 
-	// Fetch the node configuration
 	nodeConfig, err := s.sRepo.GetNodeConfig(nId.String())
 	if err != nil {
 		log.Errorf("Failed to get node configuration: %v", err)
@@ -173,8 +152,8 @@ func (s *StateServer) GetStates(ctx context.Context, req *pb.GetStatesRequest) (
 	}
 
 	return &pb.GetStatesResponse{
-		States:      latestStates,
-		NodeConfig:  convertToGenNodeConfig(nodeConfig), 
+		States:     states,
+		NodeConfig: convertToGenNodeConfig(nodeConfig),
 	}, nil
 }
 func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestStateRequest) (*pb.GetLatestStateResponse, error) {
@@ -250,18 +229,18 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 }
 
 func convertToGenNodeConfig(dbConfig *db.NodeConfig) *gen.NodeConfig {
-    if dbConfig == nil {
-        return nil
-    }
-    return &gen.NodeConfig{
-        Id:           dbConfig.Id.String(),
-        NodeId:       dbConfig.NodeId,
-        NodeIp:       dbConfig.NodeIp,
-        NodePort:     dbConfig.NodePort,
-        MeshIp:       dbConfig.MeshIp,
-        MeshPort:     dbConfig.MeshPort,
-        MeshHostName: dbConfig.MeshHostName,
-        CreatedAt:    timestamppb.New(dbConfig.CreatedAt),
-        UpdatedAt:    timestamppb.New(dbConfig.UpdatedAt),
-    }
+	if dbConfig == nil {
+		return nil
+	}
+	return &gen.NodeConfig{
+		Id:           dbConfig.Id.String(),
+		NodeId:       dbConfig.NodeId,
+		NodeIp:       dbConfig.NodeIp,
+		NodePort:     dbConfig.NodePort,
+		MeshIp:       dbConfig.MeshIp,
+		MeshPort:     dbConfig.MeshPort,
+		MeshHostName: dbConfig.MeshHostName,
+		CreatedAt:    timestamppb.New(dbConfig.CreatedAt),
+		UpdatedAt:    timestamppb.New(dbConfig.UpdatedAt),
+	}
 }
