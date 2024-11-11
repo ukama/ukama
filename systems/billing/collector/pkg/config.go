@@ -29,6 +29,7 @@ type Config struct {
 	LagoAPIKey        string
 	OrgName           string
 	OrgId             string
+	WebhookUrl        string
 }
 
 func NewConfig(name string) *Config {

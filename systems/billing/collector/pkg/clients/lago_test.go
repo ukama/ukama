@@ -25,7 +25,7 @@ import (
 func TestLagoClient_AddUsaeEvent(t *testing.T) {
 	t.Run("UsageEventNotSent", func(t *testing.T) {
 		e := &mocks.LagoEvent{}
-		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil, nil)
 
 		e.On("Create", mock.Anything, mock.Anything).Return(&lago.Event{}, &lago.Error{})
 
@@ -36,7 +36,7 @@ func TestLagoClient_AddUsaeEvent(t *testing.T) {
 
 	t.Run("UsageEventSent", func(t *testing.T) {
 		e := &mocks.LagoEvent{}
-		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, e, nil, nil, nil)
 
 		e.On("Create", mock.Anything, mock.Anything).Return(&lago.Event{}, nil)
 
@@ -49,7 +49,7 @@ func TestLagoClient_AddUsaeEvent(t *testing.T) {
 func TestLagoClient_GetBillableMetric(t *testing.T) {
 	t.Run("BillableMetricNotFound", func(t *testing.T) {
 		b := &mocks.LagoBillableMetric{}
-		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil, nil)
 
 		b.On("Get", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -61,7 +61,7 @@ func TestLagoClient_GetBillableMetric(t *testing.T) {
 
 	t.Run("BillableMetricFound", func(t *testing.T) {
 		b := &mocks.LagoBillableMetric{}
-		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil, nil)
 
 		b.On("Get", mock.Anything, mock.Anything).Return(&lago.BillableMetric{}, nil)
 
@@ -75,7 +75,7 @@ func TestLagoClient_GetBillableMetric(t *testing.T) {
 func TestLagoClient_CreateBillableMetric(t *testing.T) {
 	t.Run("BillableMetricNotCreated", func(t *testing.T) {
 		b := &mocks.LagoBillableMetric{}
-		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil, nil)
 
 		b.On("Create", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -87,7 +87,7 @@ func TestLagoClient_CreateBillableMetric(t *testing.T) {
 
 	t.Run("BillableMetricCreated", func(t *testing.T) {
 		b := &mocks.LagoBillableMetric{}
-		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(b, nil, nil, nil, nil, nil)
 
 		b.On("Create", mock.Anything, mock.Anything).Return(&lago.BillableMetric{}, nil)
 
@@ -101,7 +101,7 @@ func TestLagoClient_CreateBillableMetric(t *testing.T) {
 func TestLagoClient_GetPlan(t *testing.T) {
 	t.Run("PlanNotFound", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		p.On("Get", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -113,7 +113,7 @@ func TestLagoClient_GetPlan(t *testing.T) {
 
 	t.Run("PlanFound", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		p.On("Get", mock.Anything, mock.Anything).Return(&lago.Plan{}, nil)
 
@@ -127,7 +127,7 @@ func TestLagoClient_GetPlan(t *testing.T) {
 func TestLagoClient_CreatePlan(t *testing.T) {
 	t.Run("InvalidPlanChargeBillableMetricId", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		charges := []clients.PlanCharge{
 			clients.PlanCharge{
@@ -142,7 +142,7 @@ func TestLagoClient_CreatePlan(t *testing.T) {
 	})
 	t.Run("PlanNotCreated", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		bmId := guuid.New().String()
 
@@ -162,7 +162,7 @@ func TestLagoClient_CreatePlan(t *testing.T) {
 
 	t.Run("PlanCreated", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		p.On("Create", mock.Anything, mock.Anything).Return(&lago.Plan{}, nil)
 
@@ -176,7 +176,7 @@ func TestLagoClient_CreatePlan(t *testing.T) {
 func TestLagoClient_TerminatePlan(t *testing.T) {
 	t.Run("PlanNotTerminated", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		p.On("Delete", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -188,7 +188,7 @@ func TestLagoClient_TerminatePlan(t *testing.T) {
 
 	t.Run("PlanTerminated", func(t *testing.T) {
 		p := &mocks.LagoPlan{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, p, nil, nil)
 
 		p.On("Delete", mock.Anything, mock.Anything).Return(&lago.Plan{}, nil)
 
@@ -202,7 +202,7 @@ func TestLagoClient_TerminatePlan(t *testing.T) {
 func TestLagoClient_GetCustomer(t *testing.T) {
 	t.Run("CustomerNotFound", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Get", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -214,7 +214,7 @@ func TestLagoClient_GetCustomer(t *testing.T) {
 
 	t.Run("CustomerFound", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Get", mock.Anything, mock.Anything).Return(&lago.Customer{}, nil)
 
@@ -228,11 +228,13 @@ func TestLagoClient_GetCustomer(t *testing.T) {
 func TestLagoClient_CreateCustomer(t *testing.T) {
 	t.Run("CustomerNotCreated", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Create", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
-		customer, err := l.CreateCustomer(context.TODO(), clients.Customer{})
+		customer, err := l.CreateCustomer(context.TODO(), clients.Customer{
+			Type: "company",
+		})
 
 		assert.Error(t, err)
 		assert.Empty(t, customer)
@@ -240,11 +242,13 @@ func TestLagoClient_CreateCustomer(t *testing.T) {
 
 	t.Run("CustomerCreated", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Create", mock.Anything, mock.Anything).Return(&lago.Customer{}, nil)
 
-		customer, err := l.CreateCustomer(context.TODO(), clients.Customer{})
+		customer, err := l.CreateCustomer(context.TODO(), clients.Customer{
+			Type: "individual",
+		})
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, customer)
@@ -254,7 +258,7 @@ func TestLagoClient_CreateCustomer(t *testing.T) {
 func TestLagoClient_UpdateCustomer(t *testing.T) {
 	t.Run("CustomerNotUpdated", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Update", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -266,7 +270,7 @@ func TestLagoClient_UpdateCustomer(t *testing.T) {
 
 	t.Run("CustomerUpdated", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Update", mock.Anything, mock.Anything).Return(&lago.Customer{}, nil)
 
@@ -280,7 +284,7 @@ func TestLagoClient_UpdateCustomer(t *testing.T) {
 func TestLagoClient_DeleteCustomer(t *testing.T) {
 	t.Run("CustomerNotDeleted", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Delete", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -292,7 +296,7 @@ func TestLagoClient_DeleteCustomer(t *testing.T) {
 
 	t.Run("CustomerDeleted", func(t *testing.T) {
 		c := &mocks.LagoCustomer{}
-		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil)
+		l := clients.NewLagoClientFromClients(nil, c, nil, nil, nil, nil)
 
 		c.On("Delete", mock.Anything, mock.Anything).Return(&lago.Customer{}, nil)
 
@@ -306,7 +310,7 @@ func TestLagoClient_DeleteCustomer(t *testing.T) {
 func TestLagoClient_CreateSubscription(t *testing.T) {
 	t.Run("SubscriptionNotCreated", func(t *testing.T) {
 		s := &mocks.LagoSubscription{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s, nil)
 
 		s.On("Create", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -318,7 +322,7 @@ func TestLagoClient_CreateSubscription(t *testing.T) {
 
 	t.Run("SubscriptionCreated", func(t *testing.T) {
 		s := &mocks.LagoSubscription{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s, nil)
 
 		s.On("Create", mock.Anything, mock.Anything).Return(&lago.Subscription{}, nil)
 
@@ -332,7 +336,7 @@ func TestLagoClient_CreateSubscription(t *testing.T) {
 func TestLagoClient_TerminateSubscription(t *testing.T) {
 	t.Run("SubscriptionNotTerminated", func(t *testing.T) {
 		s := &mocks.LagoSubscription{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s, nil)
 
 		s.On("Terminate", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
 
@@ -344,7 +348,7 @@ func TestLagoClient_TerminateSubscription(t *testing.T) {
 
 	t.Run("SubscriptionTerminated", func(t *testing.T) {
 		s := &mocks.LagoSubscription{}
-		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s)
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, s, nil)
 
 		s.On("Terminate", mock.Anything, mock.Anything).Return(&lago.Subscription{}, nil)
 
@@ -352,5 +356,65 @@ func TestLagoClient_TerminateSubscription(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, subscription)
+	})
+}
+
+func TestLagoClient_CreateWebhook(t *testing.T) {
+	t.Run("WebhookNotCreated", func(t *testing.T) {
+		w := &mocks.LagoWebhookEndpoint{}
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, nil, w)
+
+		w.On("Create", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
+
+		webhhok, err := l.CreateWebhook(context.TODO(), clients.WebhookEndpoint{
+			SignatureAlgo: "hmac",
+		})
+
+		assert.Error(t, err)
+		assert.Empty(t, webhhok)
+	})
+
+	t.Run("WebhookCreated", func(t *testing.T) {
+		w := &mocks.LagoWebhookEndpoint{}
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, nil, w)
+
+		w.On("Create", mock.Anything, mock.Anything).Return(&lago.WebhookEndpoint{}, nil)
+
+		webhook, err := l.CreateWebhook(context.TODO(), clients.WebhookEndpoint{
+			SignatureAlgo: "hmac",
+		})
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, webhook)
+	})
+}
+
+func TestLagoClient_ListWebhook(t *testing.T) {
+	t.Run("WebhookNotFound", func(t *testing.T) {
+		w := &mocks.LagoWebhookEndpoint{}
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, nil, w)
+
+		w.On("GetList", mock.Anything, mock.Anything).Return(nil, &lago.Error{})
+
+		webhooks, err := l.ListWebhooks(context.TODO())
+
+		assert.Error(t, err)
+		assert.Empty(t, webhooks)
+	})
+
+	t.Run("WebhookFound", func(t *testing.T) {
+		w := &mocks.LagoWebhookEndpoint{}
+		l := clients.NewLagoClientFromClients(nil, nil, nil, nil, nil, w)
+
+		w.On("GetList", mock.Anything, mock.Anything).Return(&lago.WebhookEndpointResult{
+			WebhookEndpoints: []lago.WebhookEndpoint{
+				lago.WebhookEndpoint{},
+			},
+		}, nil)
+
+		webhook, err := l.ListWebhooks(context.TODO())
+
+		assert.NoError(t, err)
+		assert.NotEmpty(t, webhook)
 	})
 }
