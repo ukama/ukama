@@ -33,7 +33,7 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout:        5 * time.Second,
-			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.simManager.sim.allocation"},
+			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"},
 		},
 	}
 }

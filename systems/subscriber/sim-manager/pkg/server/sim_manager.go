@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
@@ -35,7 +37,10 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+
+	"github.com/ukama/ukama/systems/common/emailTemplate"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -61,6 +66,8 @@ type SimManagerServer struct {
 	pushMetricHost            string
 	mailerClient              cnotif.MailerClient
 	networkClient             creg.NetworkClient
+	nucleusOrgClient          cnuc.OrgClient
+	nucleusUserClient         cnuc.UserClient
 	pb.UnimplementedSimManagerServiceServer
 }
 
@@ -74,6 +81,8 @@ func NewSimManagerServer(
 	pushMetricHost string,
 	mailerClient cnotif.MailerClient,
 	networkClient creg.NetworkClient,
+	nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -88,10 +97,12 @@ func NewSimManagerServer(
 		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
 			SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:          orgId,
-		pushMetricHost: pushMetricHost,
-		mailerClient:   mailerClient,
-		networkClient:  networkClient,
+		orgId:             orgId,
+		pushMetricHost:    pushMetricHost,
+		mailerClient:      mailerClient,
+		networkClient:     networkClient,
+		nucleusOrgClient:  nucleusOrgClient,
+		nucleusUserClient: nucleusUserClient,
 	}
 }
 
@@ -252,7 +263,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		firstPackage.SimId = sim.Id
 
 		firstPackage.StartDate = time.Now().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		firstPackage.EndDate = firstPackage.StartDate.Add(time.Duration(packageInfo.Duration))
+		firstPackage.EndDate = firstPackage.StartDate.Add(time.Hour * 24 * time.Duration(packageInfo.Duration))
 
 		return nil
 	})
@@ -268,37 +279,50 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 
 	evt := &epb.EventSimAllocation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		NetworkId:    sim.NetworkId.String(),
-		OrgId:        orgId.String(),
-		DataPlanId:   sim.Package.PackageId.String(),
-		Iccid:        sim.Iccid,
-		Msisdn:       sim.Msisdn,
-		Imsi:         sim.Imsi,
-		Type:         sim.Type.String(),
-		Status:       sim.Status.String(),
-		IsPhysical:   sim.IsPhysical,
-		PackageId:    sim.Package.Id.String(),
+		Id:            sim.Id.String(),
+		SubscriberId:  sim.SubscriberId.String(),
+		NetworkId:     sim.NetworkId.String(),
+		OrgId:         orgId.String(),
+		DataPlanId:    sim.Package.PackageId.String(),
+		Iccid:         sim.Iccid,
+		Msisdn:        sim.Msisdn,
+		Imsi:          sim.Imsi,
+		Type:          sim.Type.String(),
+		Status:        sim.Status.String(),
+		IsPhysical:    sim.IsPhysical,
+		PackageId:     sim.Package.Id.String(),
+		TrafficPolicy: sim.TrafficPolicy,
+	}
+	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	if poolSim.QrCode != "" && !poolSim.IsPhysical {
+		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
+			To:           []string{remoteSubResp.Subscriber.Email},
+			TemplateName: emailTemplate.EmailTemplateSimAllocation,
+			Values: map[string]interface{}{
+				emailTemplate.EmailKeySubscriber: remoteSubResp.Subscriber.Name,
+				emailTemplate.EmailKeyNetwork:    netInfo.Name,
+				emailTemplate.EmailKeyName:       userInfos.Name,
+				emailTemplate.EmailKeyQRCode:     poolSim.QrCode,
+				emailTemplate.EmailKeyVolume:     fmt.Sprintf("%v", packageInfo.DataVolume),
+				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
+				emailTemplate.EmailKeyOrg:        s.orgName,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	_ = s.PublishEventMessage(route, evt)
-
-	// if poolSim.QrCode != "" && !poolSim.IsPhysical {
-	//TODO: Commenting below code, Need to address issue #702
-	// err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
-	// 	To:           []string{remoteSubResp.Subscriber.Email},
-	// 	TemplateName: "sim-allocation",
-	// 	Values: map[string]interface{}{
-	// 		"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
-	// 		"NETWORK":    netInfo.Name,
-	// 		"NAME":       remoteSubResp.Subscriber.FirstName,
-	// 		"QRCODE":     poolSim.QrCode},
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// }
 
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -534,17 +558,18 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	log.Infof("Adding package %v to sim: %v", req.GetPackageId(), req.GetSimId())
 
-	if err := req.GetStartDate().CheckValid(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid time format for package start_date. Error %s", err.Error())
+	formattedStart, err := validation.ValidateDate(req.GetStartDate())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if err := validation.IsFutureDate(formattedStart); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+
 	}
 
-	startDate := req.GetStartDate().AsTime()
-
-	if startDate.Before(time.Now()) {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package start date on the past: package start date is %s",
-			startDate)
+	startDate, err := time.Parse(time.RFC3339, formattedStart)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
 	}
 
 	sim, err := s.getSim(req.SimId)
@@ -568,17 +593,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			"cannot set package to sim: package is no more active within its org")
 	}
 
-	orgId, err := uuid.FromString(s.orgId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"invalid format of subscriber's org uuid. Error %s", err.Error())
-	}
-
-	if orgId.String() != pkgInfo.OrgId {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid packageID: provided package does not belong to sim org issuer")
-	}
-
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
 
 	if sim.Type != pkgInfoSimType {
@@ -590,21 +604,23 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	pkg := &sims.Package{
 		SimId:     sim.Id,
 		StartDate: startDate,
-		EndDate:   startDate.Add(time.Duration(pkgInfo.Duration)),
+		EndDate:   startDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration)),
 		PackageId: packageId,
 		IsActive:  false,
 	}
 
-	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
-	}
+	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
 
-	if len(overlappingPackages) > 0 {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
-			len(overlappingPackages))
-	}
+	// overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
+	// if err != nil {
+	// 	return nil, grpc.SqlErrorToGrpc(err, "packages")
+	// }
+
+	// if len(overlappingPackages) > 0 {
+	// 	return nil, status.Errorf(codes.FailedPrecondition,
+	// 		"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
+	// 		len(overlappingPackages))
+	// }
 
 	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
 		pckg.Id = uuid.NewV4()
@@ -1017,11 +1033,11 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	}
 
 	if !pkg.EndDate.IsZero() {
-		res.EndDate = timestamppb.New(pkg.EndDate)
+		res.EndDate = pkg.EndDate.Format(time.RFC3339)
 	}
 
 	if !pkg.StartDate.IsZero() {
-		res.StartDate = timestamppb.New(pkg.StartDate)
+		res.StartDate = pkg.StartDate.Format(time.RFC3339)
 	}
 
 	return res

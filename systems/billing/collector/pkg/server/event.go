@@ -377,7 +377,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
@@ -406,7 +406,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,

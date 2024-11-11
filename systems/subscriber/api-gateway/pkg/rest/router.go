@@ -200,7 +200,7 @@ func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.G
 	return resp, nil
 }
 
-func (r *Router) getSims(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetSimsResponse, error) {
+func (r *Router) getSims(c *gin.Context, req *SimPoolStatReq) (*simPoolPb.GetSimsResponse, error) {
 	resp, err := r.clients.sp.GetSims(req.SimType)
 	if err != nil {
 		return nil, err
@@ -277,11 +277,11 @@ func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*subRegPb
 	return pbResp, nil
 }
 
+
 func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb.AddSubscriberResponse, error) {
 
 	pbResp, err := r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{
-		FirstName:             req.FirstName,
-		LastName:              req.LastName,
+		Name:                  req.Name,
 		Email:                 strings.ToLower(req.Email),
 		PhoneNumber:           req.Phone,
 		Dob:                   req.Dob,
@@ -309,7 +309,7 @@ func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*su
 
 	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
 		SubscriberId:          req.SubscriberId,
-		Email:                 req.Email,
+		Name:                  req.Name,
 		PhoneNumber:           req.Phone,
 		Address:               req.Address,
 		ProofOfIdentification: req.ProofOfIdentification,

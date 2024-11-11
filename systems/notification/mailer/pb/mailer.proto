@@ -6,48 +6,50 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-syntax = "proto3";
-option go_package = "github.com/ukama/ukama/systems/notification/mailer/pb/gen";
-
-import "google/protobuf/timestamp.proto";
-package ukama.notification.mailer.v1;
-import "validator.proto";
-
-
-/*
-Mailer sub-system is responsible of:
-    - Sending Emails
-*/
-// Defines the service for mailer  operations
-service MailerService {
-rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
-rpc GetEmailById (GetEmailByIdRequest) returns (GetEmailByIdResponse) {}
-}
-// Defines the request and response for getting email by id
-message GetEmailByIdRequest{
-    string mailId = 1;
-}
-// Defines the response for getting email by id
-message GetEmailByIdResponse{
-    string mailId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
-    string to = 2;
-    string templateName = 3;
-    string status = 4;
-    string SentAt = 5;
-    map<string, string> values = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
-}
-
-// Defines the request and response for sending emails
-message SendEmailRequest{
-    repeated string to = 2;
-    string TemplateName = 3 [(validator.field) = {string_not_empty: true}, json_name = "template_name"];
-    map<string, string> values = 4;
-}
-
-// Defines the response for sending emails
-message SendEmailResponse{
-    string message = 1;
-    string mailId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
-}
+ syntax = "proto3";
+ option go_package = "github.com/ukama/ukama/systems/notification/mailer/pb/gen";
+ 
+ import "google/protobuf/timestamp.proto";
+ package ukama.notification.mailer.v1;
+ import "validator.proto";
+ 
+ 
+ 
+ service MailerService {
+ rpc SendEmail (SendEmailRequest) returns (SendEmailResponse) {}
+ rpc GetEmailById (GetEmailByIdRequest) returns (GetEmailByIdResponse) {}
+ }
+ 
+ message GetEmailByIdRequest{
+     string mailId = 1;
+ }
+ message GetEmailByIdResponse{
+     string mailId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
+     string to = 2;
+     string templateName = 3;
+     Status status = 4 ;    
+     string SentAt = 5;
+     map<string, string> values = 6;
+     google.protobuf.Timestamp created_at = 7;
+     google.protobuf.Timestamp updated_at = 8;
+ }
+ 
+ message SendEmailRequest{
+     repeated string to = 2;
+     string TemplateName = 3 [(validator.field) = {string_not_empty: true}, json_name = "template_name"];
+     map<string, string> values = 4;
+     Status status = 5 ;
+ }
+ 
+ message SendEmailResponse{
+     string message = 1;
+     string mailId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "mailer_id"];
+ }
+ 
+ enum Status {
+     Pending = 0;
+     Success = 1;
+     Failed = 2;
+     Retry = 3;
+     Process = 4;
+ }
