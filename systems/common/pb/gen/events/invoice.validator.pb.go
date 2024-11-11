@@ -73,6 +73,13 @@ func (this *RawInvoice) Validate() error {
 			}
 		}
 	}
+	for _, item := range this.Metadata {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Metadata", err)
+			}
+		}
+	}
 	return nil
 }
 func (this *Subscription) Validate() error {
@@ -105,5 +112,13 @@ func (this *Fee) Validate() error {
 	return nil
 }
 func (this *FeeItem) Validate() error {
+	return nil
+}
+func (this *InvoiceMetadataResponse) Validate() error {
+	if this.CreatedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CreatedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CreatedAt", err)
+		}
+	}
 	return nil
 }

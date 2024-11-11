@@ -27,19 +27,22 @@ message Invoice {
 
 
 message RawInvoice {
-    string issuingDate = 1 [json_name = "issuing_date"];
-    string status = 2 [json_name = "status"];
-    string paymentStatus = 3 [json_name = "payment_status"];
-    int64 amountCents = 4 [json_name = "amount_cents"];
-    string amountCurrency = 5 [json_name = "amount_currency"];
-    int64 vatAmountCents = 6 [json_name = "vat_amount_cents"];
-    string vatAmountCurrency = 7 [json_name = "vat_amount_currency"];
-    int64 totalAmountCents = 8 [json_name = "total_amount_cents"];
-    string totalAmountCurrency = 9 [json_name = "total_amount_currency"];
-    string fileURL = 10 [json_name = "file_url"];
-    Customer customer = 11 [json_name = "customer"];
-    repeated Subscription subscriptions = 12 [json_name = "subscriptions"];
-    repeated Fee fees = 13 [json_name = "fees"];
+    int64 sequentialId = 1 [json_name = "sequential_id"];
+    string number = 2 [json_name = "number"];
+    string issuingDate = 3 [json_name = "issuing_date"];
+    string status = 4 [json_name = "status"];
+    string paymentStatus = 5 [json_name = "payment_status"];
+    int64 amountCents = 6 [json_name = "amount_cents"];
+    string amountCurrency = 7 [json_name = "amount_currency"];
+    int64 vatAmountCents = 8 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 9 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 10 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 11 [json_name = "total_amount_currency"];
+    string fileURL = 12 [json_name = "file_url"];
+    Customer customer = 13 [json_name = "customer"];
+    repeated Subscription subscriptions = 14 [json_name = "subscriptions"];
+    repeated Fee fees = 15 [json_name = "fees"];
+    repeated InvoiceMetadataResponse metadata = 16 [json_name = "metadata"];
 }
 
 message Subscription {
@@ -81,3 +84,11 @@ message FeeItem {
     string code = 2 [json_name = "code"];
     string name = 3 [json_name = "name"];
 }
+
+
+message InvoiceMetadataResponse {
+    string key = 1 [json_name = "key"];
+    string value = 2 [json_name = "value"];
+    google.protobuf.Timestamp createdAt = 3 [json_name = "created_at"];
+}
+
