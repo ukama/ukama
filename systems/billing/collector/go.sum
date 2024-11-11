@@ -99,8 +99,8 @@ github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nos
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
-github.com/getlago/lago-go-client v1.13.1 h1:LZUTDJ/2LPU7ncwXJguOubnYEpiV0LdDnPSAWZRqdao=
-github.com/getlago/lago-go-client v1.13.1/go.mod h1:kJwRh0SDSH85EiZVTaGvBw1P5SVksjiAsXNFSSDyjMM=
+github.com/getlago/lago-go-client v1.15.0 h1:sHTZJ+s3D8yMC0n7OF1e9e3GAjCSLIhJ3bZHggJ49ds=
+github.com/getlago/lago-go-client v1.15.0/go.mod h1:kJwRh0SDSH85EiZVTaGvBw1P5SVksjiAsXNFSSDyjMM=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/gin-contrib/cors v1.3.0/go.mod h1:artPvLlhkF7oG06nK8v3U8TNz6IeX+w1uzCSEId5/Vc=
 github.com/gin-contrib/cors v1.7.2 h1:oLDHxdg8W/XDoN/8zamqk/Drgt4oVZDvaV0YmvVICQw=

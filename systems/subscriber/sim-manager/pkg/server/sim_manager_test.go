@@ -27,6 +27,8 @@ import (
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
@@ -76,7 +78,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 			sim.Iccid).Return(nil, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
 			SimId: simID.String()})
 
@@ -95,7 +97,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		simRepo.On("Get", simID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
 			SimId: simID.String()})
 
@@ -110,7 +112,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
 			SimId: simID})
 
@@ -147,7 +149,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 			Return(map[string]any{}, map[string]any{}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimId: simID.String(),
 			Type:  ukama.CdrTypeData.String(),
@@ -166,7 +168,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		simRepo.On("Get", simID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimId: simID.String(),
 			Type:  ukama.CdrTypeData.String(),
@@ -183,7 +185,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimId: simID})
@@ -209,7 +211,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 			Return(map[string]any{}, map[string]any{}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimType: simTypeOperator,
 			Type:    ukama.CdrTypeData.String(),
@@ -225,7 +227,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		agentFactory := &mocks.AgentFactory{}
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimType: "lol",
 		})
@@ -251,7 +253,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 				}}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsBySubscriber(context.TODO(),
 			&pb.GetSimsBySubscriberRequest{SubscriberId: subscriberID.String()})
 
@@ -270,7 +272,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 		simRepo.On("GetBySubscriber", subscriberID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsBySubscriber(context.TODO(), &pb.GetSimsBySubscriberRequest{
 			SubscriberId: subscriberID.String()})
 
@@ -285,7 +287,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsBySubscriber(context.TODO(), &pb.GetSimsBySubscriberRequest{
 			SubscriberId: subscriberID})
 
@@ -311,7 +313,7 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 				}}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsByNetwork(context.TODO(),
 			&pb.GetSimsByNetworkRequest{NetworkId: networkID.String()})
 
@@ -330,7 +332,7 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 		simRepo.On("GetByNetwork", networkID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsByNetwork(context.TODO(), &pb.GetSimsByNetworkRequest{
 			NetworkId: networkID.String()})
 
@@ -345,7 +347,7 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 		simResp, err := s.GetSimsByNetwork(context.TODO(), &pb.GetSimsByNetworkRequest{
 			NetworkId: networkID})
 
@@ -370,7 +372,7 @@ func TestSimManagerServer_GetPackagesBySim(t *testing.T) {
 				}}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.GetPackagesBySim(context.TODO(),
 			&pb.GetPackagesBySimRequest{SimId: simID.String()})
@@ -390,7 +392,7 @@ func TestSimManagerServer_GetPackagesBySim(t *testing.T) {
 		packageRepo.On("GetBySim", simID).Return(nil, gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.GetPackagesBySim(context.TODO(), &pb.GetPackagesBySimRequest{
 			SimId: simID.String()})
@@ -406,7 +408,7 @@ func TestSimManagerServer_GetPackagesBySim(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.GetPackagesBySim(context.TODO(), &pb.GetPackagesBySimRequest{
 			SimId: simID})
@@ -434,6 +436,9 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		packageClient := &cmocks.PackageClient{}
 		netClient := &cmocks.NetworkClient{}
+		orgClient := &cmocks.OrgClient{}
+		userClient := &cmocks.UserClient{}
+		mailerClient := &cmocks.MailerClient{}
 
 		agentFactory := &mocks.AgentFactory{}
 
@@ -514,9 +519,24 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+		mailerClient.On("SendEmail", mock.MatchedBy(func(req cnotif.SendEmailReq) bool {
+			return req.To[0] == "test@example.com"
+		})).Return(nil).Once()
+
+		orgClient.On("Get", OrgName).
+			Return(&cnuc.OrgInfo{
+				Name:  OrgName,
+				Owner: OrgId.String(),
+			}, nil).Once()
+
+		userClient.On("GetById", OrgId.String()).
+			Return(&cnuc.UserInfo{
+				Name: "test-user",
+			},
+				nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, agentFactory,
-			packageClient, subscriberService, simPoolService, "", msgbusClient, OrgId.String(), "", nil, netClient)
+			packageClient, subscriberService, simPoolService, "", msgbusClient, OrgId.String(), "", mailerClient, netClient, orgClient, userClient)
 
 		log.Info("SimManagerServer: ", s)
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
@@ -566,7 +586,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, nil, nil, nil, nil, subscriberService,
-			nil, "", nil, "", "", nil, nil)
+			nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
 			SubscriberId: subscriberID.String(),
@@ -615,7 +635,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, nil, nil, nil,
-			packageClient, subscriberService, nil, "", nil, "", "", nil, nil)
+			packageClient, subscriberService, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
 			SubscriberId: subscriberID.String(),
@@ -667,7 +687,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, nil, nil, nil,
-			packageClient, subscriberService, nil, "", nil, "", "", nil, nil)
+			packageClient, subscriberService, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
 			SubscriberId: subscriberID.String(),
@@ -733,7 +753,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			})).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			agentFactory, nil, nil, nil, "", msgbusClient, "", "", nil, nil)
+			agentFactory, nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),
@@ -762,7 +782,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),
@@ -796,7 +816,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),
@@ -831,7 +851,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
 			SimId:     simID.String(),
@@ -871,7 +891,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, nil, nil, nil, "", msgbusClient, "", "", nil, nil)
+			nil, nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
@@ -910,7 +930,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 			mock.Anything).Return(gorm.ErrRecordNotFound).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
 			PackageId: packageID.String(),
@@ -928,7 +948,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
 			PackageId: packageID})
@@ -960,7 +980,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
 			PackageId: packageID.String(),
@@ -1018,7 +1038,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
-			nil, nil, "", msgbusClient, orgID.String(), "", nil, nil)
+			nil, nil, "", msgbusClient, orgID.String(), "", nil, nil, nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
@@ -1042,7 +1062,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		startDate := time.Now().UTC()
 
 		s := NewSimManagerServer(OrgName, nil, nil, nil, nil,
-			nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
@@ -1083,7 +1103,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
-			nil, packageClient, nil, nil, "", nil, "", "", nil, nil)
+			nil, packageClient, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
@@ -1128,7 +1148,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
-			nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
@@ -1241,7 +1261,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", msgbusClient, "", "", nil, nil)
+			nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
 
 		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
 			SimId: simID.String(),
@@ -1269,7 +1289,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
 			SimId: simID.String(),
@@ -1302,7 +1322,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
 			SimId: simID.String(),
@@ -1339,7 +1359,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			sim.Iccid).Return(errors.New("anyError")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, "", nil, "", "", nil, nil)
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
 		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
 			SimId: simID.String(),

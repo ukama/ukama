@@ -14,17 +14,19 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -49,17 +51,18 @@ type BillableMetric struct {
 }
 
 type CollectorEventServer struct {
-	orgName string
-	orgId   string
-	bMetric BillableMetric
-	client  client.BillingClient
+	orgName    string
+	orgId      string
+	bMetric    BillableMetric
+	webhookUrl string
+	client     client.BillingClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewCollectorEventServer(orgName, orgId string, client client.BillingClient) (*CollectorEventServer, error) {
+func NewCollectorEventServer(orgName, orgId, webhookUrl string, client client.BillingClient) (*CollectorEventServer, error) {
 	log.Infof("Starting billing collector for org: %s", orgName)
 
-	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId)
+	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId, webhookUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to initialize billable metric: %w", err)
 	}
@@ -70,10 +73,11 @@ func NewCollectorEventServer(orgName, orgId string, client client.BillingClient)
 	}
 
 	return &CollectorEventServer{
-		orgName: orgName,
-		orgId:   orgId,
-		client:  client,
-		bMetric: bMetric,
+		orgName:    orgName,
+		orgId:      orgId,
+		client:     client,
+		bMetric:    bMetric,
+		webhookUrl: webhookUrl,
 	}, nil
 }
 
@@ -165,9 +169,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// Send usage event
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
-		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
+		// Send usage event
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -225,7 +228,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
-		amount, err := strconv.Atoi(accountItem.OpexFee)
+		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
 			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
 				accountItem.OpexFee, accountItem.Id, err)
@@ -236,7 +239,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Name:        accountItem.Item + ": " + accountItem.Id,
 			Code:        accountItem.Id,
 			Interval:    postpaidBillingInterval,
-			AmountCents: amount * 100,
+			AmountCents: int(amount * 100),
 
 			//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 			AmountCurrency: defaultCurrency,
@@ -257,7 +260,6 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Id:         accountItem.Id,
 			CustomerId: b.orgId,
 			PlanCode:   accountItem.Id,
-			// SubscriptionAt: &subscriptionAt,
 		}
 
 		log.Infof("Sending org subscription event %v to billing server", subscriptionInput)
@@ -325,11 +327,11 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	switch pkgType {
 	case ukama.PackageTypePostpaid:
 		pkgIntervall = postpaidBillingInterval
-		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', -1, 64)
+		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', 2, 64)
 
 	case ukama.PackageTypePrepaid:
 		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
-		amount = strconv.FormatFloat(dataUnitCost, 'f', -1, 64)
+		amount = strconv.FormatFloat(dataUnitCost, 'f', 2, 64)
 	}
 
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
@@ -377,7 +379,7 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
@@ -406,7 +408,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
@@ -663,7 +665,7 @@ func unmarshalSimPackageExpire(msg *anypb.Any) (*epb.EventSimPackageExpire, erro
 	return p, nil
 }
 
-func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string) (string, error) {
+func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId, webhookUrl string) (string, error) {
 	log.Infof("Initializing billing defaults")
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -675,6 +677,17 @@ func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string
 		log.Infof("Creating org billable account: %s", orgId)
 
 		_, err = createOrgCustomer(clt, orgId, orgName)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	webhooks, err := clt.ListWebhooks(ctx)
+	if err != nil || webhooks == nil || len(webhooks) == 0 || !slices.Contains(webhooks, webhookUrl) {
+		log.Warnf("failure while getting the list of existing webhook endppints: %v, %v, %v", webhooks, webhookUrl, err)
+		log.Infof("Registering default webhook endppint: %s", webhookUrl)
+
+		_, err := registerWebhookEndpoint(clt, webhookUrl)
 		if err != nil {
 			return "", err
 		}
@@ -747,4 +760,26 @@ func createBillableMetric(clt client.BillingClient) (string, error) {
 	log.Infof("Successfuly created billable metric. Id: %s", bm)
 
 	return bm, nil
+}
+
+func registerWebhookEndpoint(clt client.BillingClient, webhookUrl string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	webhook := client.WebhookEndpoint{
+		Url:           webhookUrl,
+		SignatureAlgo: client.JwtSignatureAlgoType,
+	}
+
+	log.Infof("Sending org customer create event %v to billing server",
+		webhook)
+
+	webhookEndpointId, err := clt.CreateWebhook(ctx, webhook)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("New webhook endppint: %q", webhookEndpointId)
+
+	return webhookEndpointId, nil
 }
