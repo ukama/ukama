@@ -235,6 +235,8 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 		ExternalCustomerID: sub.CustomerId,
 		PlanCode:           sub.PlanCode,
 		SubscriptionAt:     sub.SubscriptionAt,
+		// EndingAt
+		// Name
 	}
 
 	subscription, err := l.s.Create(ctx, newSub)
