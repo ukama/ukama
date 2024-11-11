@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -36,7 +37,10 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+
+	"github.com/ukama/ukama/systems/common/emailTemplate"
 	subregpb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -62,6 +66,8 @@ type SimManagerServer struct {
 	pushMetricHost            string
 	mailerClient              cnotif.MailerClient
 	networkClient             creg.NetworkClient
+	nucleusOrgClient          cnuc.OrgClient
+	nucleusUserClient         cnuc.UserClient
 	pb.UnimplementedSimManagerServiceServer
 }
 
@@ -75,6 +81,8 @@ func NewSimManagerServer(
 	pushMetricHost string,
 	mailerClient cnotif.MailerClient,
 	networkClient creg.NetworkClient,
+	nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient,
 
 ) *SimManagerServer {
 	return &SimManagerServer{
@@ -89,10 +97,12 @@ func NewSimManagerServer(
 		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
 			SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:          orgId,
-		pushMetricHost: pushMetricHost,
-		mailerClient:   mailerClient,
-		networkClient:  networkClient,
+		orgId:             orgId,
+		pushMetricHost:    pushMetricHost,
+		mailerClient:      mailerClient,
+		networkClient:     networkClient,
+		nucleusOrgClient:  nucleusOrgClient,
+		nucleusUserClient: nucleusUserClient,
 	}
 }
 
@@ -283,24 +293,36 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageId:     sim.Package.Id.String(),
 		TrafficPolicy: sim.TrafficPolicy,
 	}
+	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	if poolSim.QrCode != "" && !poolSim.IsPhysical {
+		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
+			To:           []string{remoteSubResp.Subscriber.Email},
+			TemplateName: emailTemplate.EmailTemplateSimAllocation,
+			Values: map[string]interface{}{
+				emailTemplate.EmailKeySubscriber: remoteSubResp.Subscriber.Name,
+				emailTemplate.EmailKeyNetwork:    netInfo.Name,
+				emailTemplate.EmailKeyName:       userInfos.Name,
+				emailTemplate.EmailKeyQRCode:     poolSim.QrCode,
+				emailTemplate.EmailKeyVolume:     fmt.Sprintf("%v", packageInfo.DataVolume),
+				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
+				emailTemplate.EmailKeyOrg:        s.orgName,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	_ = s.PublishEventMessage(route, evt)
-
-	// if poolSim.QrCode != "" && !poolSim.IsPhysical {
-	//TODO: Commenting below code, Need to address issue #702
-	// err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
-	// 	To:           []string{remoteSubResp.Subscriber.Email},
-	// 	TemplateName: "sim-allocation",
-	// 	Values: map[string]interface{}{
-	// 		"SUBSCRIBER": remoteSubResp.Subscriber.SubscriberId,
-	// 		"NETWORK":    netInfo.Name,
-	// 		"NAME":       remoteSubResp.Subscriber.Name,
-	// 		"QRCODE":     poolSim.QrCode},
-	// })
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// }
 
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
