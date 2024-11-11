@@ -8,16 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SimPoolStatsDto } from "./types";
+import { GetSimPoolStatsInput, SimPoolStatsDto } from "./types";
 
 @Resolver()
 export class GetSimPoolStatsResolver {
   @Query(() => SimPoolStatsDto)
   async getSimPoolStats(
-    @Arg("type") type: string,
+    @Arg("data") data: GetSimPoolStatsInput,
     @Ctx() ctx: Context
   ): Promise<SimPoolStatsDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSimPoolStats(baseURL, type);
+    return await dataSources.dataSource.getSimPoolStats(baseURL, data.type);
   }
 }

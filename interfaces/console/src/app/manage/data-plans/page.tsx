@@ -10,7 +10,8 @@ import {
   PackageDto,
   useAddPackageMutation,
   useDeletePackageMutation,
-  useGetCurrencySymbolQuery,
+  useGetCurrencySymbolLazyQuery,
+  useGetNetworkQuery,
   useGetPackagesQuery,
   useUpdatePacakgeMutation,
 } from '@/client/graphql/generated';
@@ -32,25 +33,38 @@ const INIT_DATAPLAN = {
   dataUnit: '',
   amount: 0,
   duration: 0,
+  currency: '',
+  country: '',
 };
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { metaInfo, setSnackbarMessage } = useAppContext();
+  const { network, metaInfo, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
-  const { data: currencyData } = useGetCurrencySymbolQuery({
-    fetchPolicy: 'cache-and-network',
+  const [getCurrencySymbol, { data: currencyData }] =
+    useGetCurrencySymbolLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'currency-info-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  const { data: networkData } = useGetNetworkQuery({
     variables: {
-      code: metaInfo.currency,
+      networkId: network.id,
     },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'currency-info-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
+    onCompleted: (data) => {
+      getCurrencySymbol({
+        variables: {
+          code: data.getNetwork.currency,
+        },
       });
     },
   });
@@ -100,10 +114,7 @@ const Page = () => {
     useDeletePackageMutation({
       onCompleted: () => {
         getDataPlans().then((res) => {
-          setData((prev: any) => ({
-            ...prev,
-            dataPlan: res?.data?.getPackages.packages ?? [],
-          }));
+          setData(res?.data?.getPackages.packages ?? []);
         });
         setSnackbarMessage({
           id: 'delete-data-plan',
@@ -143,6 +154,20 @@ const Page = () => {
       },
     });
 
+  const handleAddDataPlanAction = () => {
+    if (network.id) {
+      setDataplan(INIT_DATAPLAN);
+      setIsDataPlan(true);
+    } else {
+      setSnackbarMessage({
+        id: 'network-not-selected',
+        message: 'Please select/create a network first.',
+        type: 'warning' as AlertColor,
+        show: true,
+      });
+    }
+  };
+
   const handleDataPlanAction = (action: string) => {
     if (action === 'add') {
       addDataPlan({
@@ -153,6 +178,8 @@ const Page = () => {
             dataUnit: dataplan.dataUnit,
             dataVolume: dataplan.dataVolume,
             duration: dataplan.duration,
+            country: networkData?.getNetwork.country ?? '',
+            currency: networkData?.getNetwork.currency ?? '',
           },
         },
       });
@@ -187,6 +214,8 @@ const Page = () => {
         duration: d?.duration ?? 0,
         dataUnit: d?.dataUnit ?? '',
         dataVolume: d?.dataVolume ?? 0,
+        country: d?.country ?? '',
+        currency: d?.currency ?? '',
         amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
       });
       setIsDataPlan(true);
@@ -203,16 +232,16 @@ const Page = () => {
         updatePkgLoading ??
         deletePkgLoading
       }
-      height={'calc(100vh - 400px)'}
+      height={'calc(100vh - 244px)'}
     >
       <Paper
         sx={{
-          py: 3,
-          px: 4,
+          py: { xs: 1.5, md: 3 },
+          px: { xs: 2, md: 4 },
           overflow: 'scroll',
           borderRadius: '10px',
           bgcolor: colors.white,
-          height: 'calc(100vh - 400px)',
+          height: '100%',
         }}
       >
         <Box sx={{ width: '100%', height: '100%' }}>
@@ -220,10 +249,7 @@ const Page = () => {
             showSearch={false}
             title={'Data plans'}
             buttonTitle={'CREATE DATA PLAN'}
-            handleButtonAction={() => {
-              setDataplan(INIT_DATAPLAN);
-              setIsDataPlan(true);
-            }}
+            handleButtonAction={handleAddDataPlanAction}
           />
           <br />
           {data.length === 0 ? (

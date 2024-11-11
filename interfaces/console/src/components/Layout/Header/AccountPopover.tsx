@@ -84,7 +84,7 @@ const AccountPopover = () => {
             <Divider />
             <Link
               href={`/logout`}
-              prefetch={true}
+              prefetch={false}
               style={{
                 borderRadius: 4,
                 textDecoration: 'none',

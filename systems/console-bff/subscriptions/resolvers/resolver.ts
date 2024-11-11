@@ -1,4 +1,4 @@
-import { Arg, Args, Query, Resolver, Root, Subscription } from "type-graphql";
+import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import { STORAGE_KEY } from "../../common/configs";
@@ -21,7 +21,6 @@ import {
 import { pubSub } from "./pubsub";
 import {
   GetMetricByTabInput,
-  GetNotificationsInput,
   LatestMetricRes,
   MetricRes,
   MetricsRes,
@@ -120,17 +119,15 @@ class SubscriptionsResolvers {
   }
 
   @Query(() => NotificationsRes)
-  async getNotifications(@Arg("data") data: GetNotificationsInput) {
-    const {
-      role,
-      orgId,
-      userId,
-      orgName,
-      networkId,
-      subscriberId,
-      startTimestamp,
-    } = data;
-
+  async getNotifications(
+    @Arg("orgId") orgId: string,
+    @Arg("role") role: string,
+    @Arg("userId") userId: string,
+    @Arg("orgName") orgName: string,
+    @Arg("networkId") networkId: string,
+    @Arg("subscriberId") subscriberId: string,
+    @Arg("startTimestamp") startTimestamp: string
+  ) {
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "notification",
@@ -149,8 +146,13 @@ class SubscriptionsResolvers {
       wsUrl = wsUrl.replace("http://", "ws://");
     }
 
-    // Get Notifications
-    const notifications = getNotifications(baseURL, data);
+    const notifications = getNotifications(
+      baseURL,
+      orgId,
+      userId,
+      networkId,
+      subscriberId
+    );
     const scopesPerRole = getScopesByRole(role);
     let scopes = "";
     if (scopesPerRole.length > 0) {
@@ -213,11 +215,11 @@ class SubscriptionsResolvers {
   })
   async getMetricByTabSub(
     @Root() payload: LatestMetricRes,
-    @Args() args: SubMetricByTabInput
+    @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
     await addInStore(
       openStore(),
-      `${args.orgId}/${args.userId}/${payload.type}/${args.from}`,
+      `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
       getTimestampCount("0")
     );
     return payload;
@@ -225,16 +227,22 @@ class SubscriptionsResolvers {
 
   @Subscription(() => NotificationsResDto, {
     topics: ({ args }) => {
-      return `notification-${args.data.orgId}-${args.data.userId}-${args.data.networkId}-${args.data.subscriberId}-${args.data.startTimestamp}`;
+      return `notification-${args.orgId}-${args.userId}-${args.networkId}-${args.subscriberId}-${args.startTimestamp}`;
     },
   })
   async notificationSubscription(
     @Root() payload: NotificationsResDto,
-    @Arg("data") data: GetNotificationsInput
+    @Arg("orgId") orgId: string,
+    @Arg("role") role: string,
+    @Arg("userId") userId: string,
+    @Arg("orgName") orgName: string,
+    @Arg("networkId") networkId: string,
+    @Arg("subscriberId") subscriberId: string,
+    @Arg("startTimestamp") startTimestamp: string
   ): Promise<NotificationsResDto> {
     await addInStore(
       openStore(),
-      `notification-${data.orgId}-${data.userId}-${data.networkId}-${data.subscriberId}-${data.startTimestamp}`,
+      `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`,
       getTimestampCount("0")
     );
     logger.info("Notification payload :", payload);

@@ -7,6 +7,8 @@
  */
 'use client';
 import {
+  Invitation_Status,
+  Role_Type,
   useCreateInvitationMutation,
   useDeleteInvitationMutation,
   useGetInvitationsQuery,
@@ -108,7 +110,10 @@ const Page = () => {
     onCompleted: (data) => {
       setData((prev: any) => ({
         ...prev,
-        invites: data?.getInvitations.invitations ?? [],
+        invites:
+          data?.getInvitations.invitations.filter(
+            (i) => i.status != Invitation_Status.InviteAccepted,
+          ) ?? [],
       }));
     },
     onError: (error) => {
@@ -196,7 +201,7 @@ const Page = () => {
       variables: {
         data: {
           email: (member.email as string).toLowerCase(),
-          role: member.role as string,
+          role: member.role as Role_Type,
           name: member.name as string,
         },
       },
@@ -270,16 +275,16 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
+      height={'calc(100vh - 244px)'}
       isLoading={membersLoading ?? invitationsLoading ?? deleteInviteLoading}
-      height={'calc(100vh - 400px)'}
     >
       <Paper
         sx={{
-          py: 3,
-          px: 4,
+          py: { xs: 1.5, md: 3 },
+          px: { xs: 2, md: 4 },
           overflow: 'scroll',
           borderRadius: '10px',
-          height: 'calc(100vh - 400px)',
+          height: '100%',
         }}
       >
         <Box sx={{ width: '100%', height: '100%' }}>
@@ -287,7 +292,7 @@ const Page = () => {
             <Tab label="team members" />
           </Tabs>
           {tabIndex === 0 && (
-            <Box sx={{ width: '100%', mt: 4 }}>
+            <Box sx={{ width: '100%', mt: { xs: 2, md: 4 } }}>
               <Grid container spacing={2}>
                 <Grid item xs={6}>
                   <TextField

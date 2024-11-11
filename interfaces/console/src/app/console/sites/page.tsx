@@ -218,7 +218,7 @@ const Sites = () => {
           overflow: 'auto',
           padding: '24px 32px',
           borderRadius: '10px',
-          height: 'calc(100vh - 228px)',
+          height: 'calc(100vh - 212px)',
         }}
       >
         <Stack spacing={2} direction={'column'} height="100%">

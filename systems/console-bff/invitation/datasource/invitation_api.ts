@@ -58,12 +58,12 @@ class InvitationApi extends RESTDataSource {
   ): Promise<UpdateInvitationResDto> => {
     const store = openStore();
     const baseURL = await getFromStore(store, `${req.email}/${req.id}`);
+    this.baseURL = baseURL;
     this.logger.info(
       `UpdateInvitation [PATCH]: ${baseURL}/${VERSION}/${INVITATIONS}/${req.id}`
     );
-    this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${INVITATIONS}/${req.id}`, {
-      body: { status: req.status },
+      body: { status: req.status, email: req.email },
     }).then(res => res);
   };
 
@@ -98,20 +98,27 @@ class InvitationApi extends RESTDataSource {
         const baseURL = await getBaseURL("invitation", element.name, store);
         logger.info(`BaseURL: ${JSON.stringify(baseURL)}`);
         if (baseURL.status === 200) {
-          const res = await this.getInvitationsByEmail(baseURL.message, email);
-          logger.info(`Invitations res: ${JSON.stringify(res)}`);
-          if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
-            await addInStore(store, `${email}/${res.id}`, baseURL);
-            invitations.invitations.push({
-              id: res.id,
-              name: res.name,
-              link: res.link,
-              role: res.role,
-              email: res.email,
-              status: res.status,
-              userId: res.userId,
-              expireAt: res.expireAt,
-            });
+          try {
+            const res = await this.getInvitationsByEmail(
+              baseURL.message,
+              email
+            );
+            logger.info(`Invitations res: ${JSON.stringify(res)}`);
+            if (res && res.status !== INVITATION_STATUS.INVITE_ACCEPTED) {
+              await addInStore(store, `${email}/${res.id}`, baseURL.message);
+              invitations.invitations.push({
+                id: res.id,
+                name: res.name,
+                link: res.link,
+                role: res.role,
+                email: res.email,
+                status: res.status,
+                userId: res.userId,
+                expireAt: res.expireAt,
+              });
+            }
+          } catch (e) {
+            logger.error(`Error: ${e}`);
           }
         }
       }

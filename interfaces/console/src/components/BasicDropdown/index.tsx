@@ -14,6 +14,7 @@ import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
 interface IBasicDropdown {
   value: string;
   placeholder: string;
+  isShowAddOption: boolean;
   handleOnChange: Function;
   handleAddNetwork: Function;
   list: SelectItemType[];
@@ -23,6 +24,7 @@ const BasicDropdown = ({
   list,
   placeholder,
   handleOnChange,
+  isShowAddOption,
   handleAddNetwork,
 }: IBasicDropdown) => (
   <FormControl sx={{ width: '100%' }} size="small">
@@ -59,34 +61,38 @@ const BasicDropdown = ({
         </MenuItem>
       ))}
       {list?.length === 0 && <MenuItem disabled>No network found!</MenuItem>}
-      <Divider sx={{ width: '100%', height: '1px' }} />
-      <Button
-        startIcon={<Add sx={{ color: colors.black70 }} />}
-        sx={{
-          px: 2,
-          py: 1,
-          color: 'textPrimary',
-          typography: 'body1',
-          fontWeight: 400,
-          display: 'flex',
-          cursor: 'pointer',
-          textTransform: 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
-          ':hover': {
-            backgroundColor: colors.primaryMain02,
-          },
-          ':hover .MuiSvgIcon-root': {
-            fill: colors.primaryMain,
-          },
-        }}
-        onClick={(e) => {
-          handleAddNetwork();
-          e.stopPropagation();
-        }}
-      >
-        Add new network
-      </Button>
+      {isShowAddOption && (
+        <>
+          <Divider sx={{ width: '100%', height: '1px' }} />
+          <Button
+            startIcon={<Add sx={{ color: colors.black70 }} />}
+            sx={{
+              px: 2,
+              py: 1,
+              color: 'textPrimary',
+              typography: 'body1',
+              fontWeight: 400,
+              display: 'flex',
+              cursor: 'pointer',
+              textTransform: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              ':hover': {
+                backgroundColor: colors.primaryMain02,
+              },
+              ':hover .MuiSvgIcon-root': {
+                fill: colors.primaryMain,
+              },
+            }}
+            onClick={(e) => {
+              handleAddNetwork();
+              e.stopPropagation();
+            }}
+          >
+            Add new network
+          </Button>
+        </>
+      )}
     </Select>
   </FormControl>
 );

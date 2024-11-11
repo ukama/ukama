@@ -6,14 +6,17 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { DataVolume, Throughput, UsersWithBG } from '@/../public/svg';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { LabelOverlayUI, SitesTree } from '@/components/NetworkMap/OverlayUI';
 import NetworkStatus from '@/components/NetworkStatus';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
+import { colors } from '@/theme';
+import DataVolume from '@mui/icons-material/DataSaverOff';
+import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
+import Throughput from '@mui/icons-material/NetworkCheck';
 import { Box, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import dynamic from 'next/dynamic';
@@ -23,9 +26,9 @@ const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
     <Skeleton
       variant="rectangular"
       sx={{
-        borderRadius: '10px',
-        height: 'calc(100vh - 332px)',
         width: '100%',
+        borderRadius: '10px',
+        height: { xs: 'calc(100vh - 280px)', md: 'calc(100vh - 318px)' },
       }}
     />
   ),
@@ -115,14 +118,15 @@ export default function Page() {
           <StatusCard
             option={''}
             subtitle2={''}
-            Icon={UsersWithBG}
+            Icon={GroupPeople}
             subtitle1={`${0}`}
             options={TIME_FILTER}
             loading={networkLoading}
             title={'Active subscribers'}
+            iconColor={colors.primaryMain}
             handleSelect={(value: string) => {}}
           />
-          <Box p={1} />
+          <Box p={{ xs: 0.5, md: 1 }} />
           <StatusCard
             Icon={DataVolume}
             option={'usage'}
@@ -131,9 +135,10 @@ export default function Page() {
             options={TIME_FILTER}
             loading={networkLoading}
             title={'Data Volume'}
+            iconColor={colors.secondaryMain}
             handleSelect={(value: string) => {}}
           />
-          <Box p={1} />
+          <Box p={{ xs: 0.5, md: 1 }} />
           <StatusCard
             option={'bill'}
             subtitle2={`bps`}
@@ -141,6 +146,7 @@ export default function Page() {
             Icon={Throughput}
             options={MONTH_FILTER}
             loading={networkLoading}
+            iconColor={colors.black54}
             title={'Average throughput'}
             handleSelect={(value: string) => {}}
           />
@@ -150,7 +156,7 @@ export default function Page() {
         <Paper
           sx={{
             borderRadius: '10px',
-            height: 'calc(100vh - 332px)',
+            height: { xs: 'calc(100vh - 280px)', md: 'calc(100vh - 318px)' },
           }}
         >
           {network.id ? (

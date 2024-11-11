@@ -11,6 +11,7 @@ import { hexToRGB } from '@/utils';
 import {
   Box,
   Container,
+  IconButton,
   Link,
   Paper,
   Skeleton,
@@ -72,9 +73,6 @@ const HorizontalContainerJustify = styled(Box)((props) => ({
   flexDirection: 'row',
   alignItems: 'center',
   justifyContent: 'space-between',
-  [props.theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
-  },
 }));
 
 const HorizontalContainer = styled(Box)({
@@ -167,7 +165,7 @@ const PageContainer = styled(Paper, {
   borderRadius: radius,
   padding: '24px 32px',
   overflow: 'scroll',
-  height: 'calc(100vh - 232px)',
+  height: 'calc(100vh - 216px)',
   [theme.breakpoints.down('sm')]: {
     marginTop: '12px',
     padding: '12px 18px',
@@ -207,21 +205,84 @@ const ComponentContainer = {
   overflow: 'hidden',
 };
 
+const ScrollContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '100%',
+  overflow: 'hidden',
+}));
+
+const ScrollableContent = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(2),
+  overflowX: 'auto',
+  scrollBehavior: 'smooth',
+  msOverflowStyle: 'none',
+  scrollbarWidth: 'none',
+  '&::-webkit-scrollbar': {
+    display: 'none',
+  },
+  padding: theme.spacing(1),
+}));
+
+const NavigationWrapper = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(1),
+  position: 'absolute',
+  top: 6,
+  right: 8,
+}));
+
+const NavigationButton = styled(IconButton)(({ theme }) => ({
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.shadows[1],
+  width: 40,
+  height: 40,
+  padding: 6,
+  '&:hover': {
+    backgroundColor: theme.palette.grey[100],
+  },
+  '&.Mui-disabled': {
+    backgroundColor: theme.palette.grey[100],
+    color: theme.palette.grey[400],
+  },
+  border: `1px solid ${colors.black38}`,
+}));
+
+const CardWrapper = styled(Box)(({ theme }) => ({
+  width: 'calc(25% - 12px)',
+  minWidth: 200,
+  flexShrink: 0,
+}));
+const DataPlanEmptyView = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: theme.spacing(4),
+  width: '100%',
+  color: theme.palette.text.secondary,
+}));
 export {
+  CardWrapper,
   CenterContainer,
   ComponentContainer,
   ContainerJustifySpaceBtw,
   ContainerMax,
   DarkTooltip,
+  DataPlanEmptyView,
   GradiantBar,
   HorizontalContainer,
   HorizontalContainerJustify,
   IconStyle,
   LinkStyle,
   MessageContainer,
+  NavigationButton,
+  NavigationWrapper,
   PageContainer,
   RootContainer,
   RoundedCard,
+  ScrollContainer,
+  ScrollableContent,
   SimpleCardWithBorder,
   SkeletonRoundedCard,
   VerticalContainer,

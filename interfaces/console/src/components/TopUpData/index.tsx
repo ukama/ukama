@@ -1,261 +1,299 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-import { colors } from '@/theme';
-import React, { useEffect, useState } from 'react';
-
+import React from 'react';
 import { PackageDto, SimDto } from '@/client/graphql/generated';
 import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import {
+  Autocomplete,
+  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   FormControl,
-  Grid,
   IconButton,
   InputLabel,
   MenuItem,
   OutlinedInput,
   Select,
-  SelectChangeEvent,
+  TextField,
   Typography,
+  styled,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import { Formik, Form, Field, FieldArray, FormikErrors } from 'formik';
+import * as Yup from 'yup';
+import colors from '@/theme/colors';
 
-const useStyles = makeStyles(() => ({
-  selectStyle: () => ({
-    width: '100%',
-    height: '48px',
-  }),
-  formControl: {
-    width: '100%',
-    height: '48px',
-  },
-}));
 interface TopUpProps {
   onCancel: () => void;
   isToPup: boolean;
-  subscriberId: string;
-  handleTopUp: (planId: string, simId: string) => void;
+  subscriberName: string;
+  handleTopUp: (plans: { planId: string; simId: string }[]) => void;
   packages: PackageDto[];
   loadingTopUp: boolean;
   sims: SimDto[];
 }
 
+interface PlanEntry {
+  planId: string;
+}
+
+interface FormValues {
+  simIccid: string;
+  plans: PlanEntry[];
+}
+
+// Styled components remain the same
+const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
+  padding: theme.spacing(3),
+}));
+
+const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
+  padding: theme.spacing(2, 3),
+}));
+
+const NameLabel = styled(Typography)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+  marginBottom: theme.spacing(0.5),
+  fontSize: '0.875rem',
+  fontWeight: 500,
+}));
+
+const NameValue = styled(Typography)(({ theme }) => ({
+  marginBottom: theme.spacing(3),
+}));
+
+const FormContainer = styled(Box)(({ theme }) => ({
+  '& .MuiFormControl-root': {
+    marginBottom: theme.spacing(1),
+  },
+  '& .MuiInputBase-root': {
+    height: '56px',
+  },
+  '& .MuiAutocomplete-input': {
+    height: '23px',
+    padding: '7.5px 4px !important',
+  },
+}));
+
+const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
+  padding: theme.spacing(1, 0),
+}));
+
+const PlanContainer = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  marginTop: theme.spacing(2),
+  '&:not(:last-child)': {
+    marginBottom: theme.spacing(2),
+  },
+}));
+
+const validationSchema = Yup.object().shape({
+  simIccid: Yup.string().required('SIM ICCID is required'),
+  plans: Yup.array()
+    .of(
+      Yup.object().shape({
+        planId: Yup.string().required('Data plan is required'),
+      }),
+    )
+    .min(1, 'At least one plan is required'),
+});
+const getOptionLabel = (option: SimDto) => {
+  if (!option) return '';
+  return `${option.iccid} - ${option.isPhysical ? 'pSIM' : 'eSIM'}`;
+};
 const TopUpData: React.FC<TopUpProps> = ({
   handleTopUp,
   onCancel,
   isToPup,
-  subscriberId,
+  subscriberName,
   packages,
   sims,
   loadingTopUp = false,
 }) => {
-  const [isToppingUp, setIsToppingUp] = useState(false);
-  const [plan, setPlan] = useState<string>('');
-  const [sim, setSim] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const classes = useStyles();
+  const initialValues: FormValues = {
+    simIccid: '',
+    plans: [{ planId: '' }],
+  };
 
-  useEffect(() => {
-    if (sim && plan) {
-      setLoading(false);
-    } else {
-      setLoading(true);
+  const handleSubmit = (values: FormValues) => {
+    const selectedSim = sims.find((sim) => sim.iccid === values.simIccid);
+    if (selectedSim) {
+      const plansToSubmit = values.plans.map((plan) => ({
+        planId: plan.planId,
+        simId: selectedSim.id,
+      }));
+      handleTopUp(plansToSubmit);
     }
-  }, [sim, plan]);
-
-  const onTopUp = () => {
-    setIsToppingUp(true);
-    onTopUp();
-  };
-
-  const handleClose = () => {
-    if (!isToppingUp) {
-      onCancel();
-      setPlan('');
-      setSim('');
-    }
-  };
-
-  const handleselectPLan = (e: SelectChangeEvent) => {
-    setPlan(e.target.value);
-  };
-  const handleselectSim = (e: SelectChangeEvent) => {
-    setSim(e.target.value);
-  };
-  const handleClick = () => {
-    handleTopUp(plan, sim);
   };
 
   return (
     <Dialog
       open={isToPup}
-      onClose={handleClose}
-      aria-labelledby="alert-dialog-title"
-      aria-describedby="alert-dialog-description"
+      onClose={onCancel}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 1,
+        },
+      }}
     >
-      <DialogTitle id="alert-dialog-title">
-        <Typography variant="h6">{`Top up data - ${subscriberId.slice(
-          0,
-          10,
-        )}...`}</Typography>
-      </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
-      <DialogContent>
-        <DialogContentText id="alert-dialog-description">
-          <Typography variant="body1" sx={{ color: colors.black }}>
-            {` Add more data for ${subscriberId} for the rest of this month. Note: just like other data, it expires at the end of the month.`}
-          </Typography>
-        </DialogContentText>
-        <Grid item xs={12} sx={{ pt: 2 }}>
-          <FormControl variant="outlined" className={classes.formControl}>
-            <InputLabel
-              shrink
-              variant="outlined"
-              required
-              htmlFor="outlined-age-always-notched"
-            >
-              SIMS
-            </InputLabel>
+      <StyledDialogTitle>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography variant="h6">Top up data</Typography>
+          <IconButton aria-label="close" onClick={onCancel} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </StyledDialogTitle>
 
-            <Select
-              variant="outlined"
-              onChange={handleselectSim}
-              value={sim}
-              required
-              sx={{
-                '& legend': { width: '93px' },
-              }}
-              input={
-                <OutlinedInput
-                  fullWidth
-                  notched
-                  label="Plan"
-                  name={'plan'}
-                  id="outlined-age-always-notched"
-                />
-              }
-              MenuProps={{
-                disablePortal: false,
-                PaperProps: {
-                  sx: {
-                    boxShadow:
-                      '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
-                    borderRadius: '4px',
-                  },
-                },
-              }}
-              className={classes.selectStyle}
-            >
-              {sims?.map((sim) => (
-                <MenuItem
-                  key={sim.id}
-                  value={sim.id}
-                  sx={{
-                    m: 0,
-                    p: '6px 16px',
-                  }}
-                >
-                  <Typography variant="body1">{`${sim.iccid}`}</Typography>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sx={{ pt: 2 }}>
-          <FormControl variant="outlined" className={classes.formControl}>
-            <InputLabel
-              shrink
-              variant="outlined"
-              required
-              htmlFor="outlined-age-always-notched"
-            >
-              DATA PLAN
-            </InputLabel>
+      <StyledDialogContent>
+        <Typography sx={{ color: 'text.secondary', mb: 3 }}>
+          Add one or more data plans for subscriber. Note: new data plans will
+          only come into effect after current data expires.
+        </Typography>
 
-            <Select
-              variant="outlined"
-              onChange={handleselectPLan}
-              value={plan}
-              required
-              sx={{
-                '& legend': { width: '93px' },
-              }}
-              input={
-                <OutlinedInput
-                  fullWidth
-                  notched
-                  label="Plan"
-                  name={'plan'}
-                  id="outlined-age-always-notched"
-                />
-              }
-              MenuProps={{
-                disablePortal: false,
-                PaperProps: {
-                  sx: {
-                    boxShadow:
-                      '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
-                    borderRadius: '4px',
-                  },
-                },
-              }}
-              className={classes.selectStyle}
-            >
-              {packages?.map((pkg) => (
-                <MenuItem
-                  key={pkg.uuid}
-                  value={pkg.uuid}
-                  sx={{
-                    m: 0,
-                    p: '6px 16px',
-                  }}
-                >
-                  <Typography variant="body1">
-                    {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+        <NameLabel>NAME</NameLabel>
+        <NameValue>{subscriberName}</NameValue>
+
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ errors, touched, values }) => (
+            <Form>
+              <FormContainer>
+                <Field name="simIccid">
+                  {({ field, form }: any) => (
+                    <Autocomplete
+                      className="w-full"
+                      options={sims}
+                      getOptionLabel={getOptionLabel}
+                      value={
+                        sims.find((sim) => sim.iccid === field.value) || null
+                      }
+                      onChange={(_, newValue) => {
+                        form.setFieldValue('simIccid', newValue?.iccid || '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="SIM ICCID"
+                          placeholder="Select a SIM"
+                          className="w-full"
+                        />
+                      )}
+                      noOptionsText={
+                        sims.length === 0
+                          ? 'SIM pool is empty. Please upload SIMs to SIM pool first.'
+                          : 'No matching SIMs found'
+                      }
+                    />
+                  )}
+                </Field>
+
+                {packages.length === 0 ? (
+                  <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+                    No data plans available. Please upload data plans.
                   </Typography>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button
-          onClick={handleClose}
-          color="primary"
-          autoFocus
-          size="medium"
-          disabled={loadingTopUp}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleClick}
-          disabled={loadingTopUp ?? loading}
-        >
-          TOP UP
-        </Button>
-      </DialogActions>
+                ) : (
+                  <FieldArray name="plans">
+                    {({ push, remove }) => (
+                      <Box>
+                        {values.plans.map((_, index) => (
+                          <PlanContainer key={index}>
+                            <FormControl fullWidth>
+                              <InputLabel shrink required>
+                                DATA PLAN {index + 1}
+                              </InputLabel>
+                              <Field name={`plans.${index}.planId`}>
+                                {({ field }: any) => (
+                                  <Select
+                                    {...field}
+                                    input={
+                                      <OutlinedInput
+                                        notched
+                                        label={`DATA PLAN ${index + 1}`}
+                                      />
+                                    }
+                                    error={
+                                      touched.plans?.[index]?.planId &&
+                                      Boolean(
+                                        (
+                                          errors.plans as FormikErrors<PlanEntry>[]
+                                        )?.[index]?.planId,
+                                      )
+                                    }
+                                    fullWidth
+                                  >
+                                    {packages.map((pkg) => (
+                                      <MenuItem key={pkg.uuid} value={pkg.uuid}>
+                                        {`${pkg.name} - $${pkg.amount}/${Number(pkg.dataVolume) / 1024} GB`}
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                )}
+                              </Field>
+                            </FormControl>
+                            {values.plans.length > 1 && (
+                              <IconButton
+                                size="small"
+                                onClick={() => remove(index)}
+                                sx={{ position: 'absolute', right: 20, top: 8 }}
+                              >
+                                <DeleteOutlineIcon />
+                              </IconButton>
+                            )}
+                          </PlanContainer>
+                        ))}
+                        <Button
+                          startIcon={<AddCircleOutlineIcon />}
+                          onClick={() => push({ planId: '' })}
+                          sx={{ mt: 1, color: colors.primaryMain }}
+                        >
+                          ADD ANOTHER DATA PLAN
+                        </Button>
+                      </Box>
+                    )}
+                  </FieldArray>
+                )}
+              </FormContainer>
+
+              <StyledDialogActions>
+                <Button
+                  onClick={onCancel}
+                  color="primary"
+                  disabled={loadingTopUp}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  disabled={
+                    loadingTopUp ||
+                    packages.length === 0 ||
+                    sims.length === 0 ||
+                    !values.simIccid ||
+                    values.plans.some((plan) => !plan.planId)
+                  }
+                >
+                  TOP UP
+                </Button>
+              </StyledDialogActions>
+            </Form>
+          )}
+        </Formik>
+      </StyledDialogContent>
     </Dialog>
   );
 };

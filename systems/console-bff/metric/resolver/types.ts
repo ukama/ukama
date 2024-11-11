@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class NetworkStats {
@@ -18,8 +18,6 @@ export class NetworkStats {
   @Field()
   averageThroughput: number;
 }
-
-@ArgsType()
 @InputType()
 export class GetNodeLatestMetricInput {
   @Field()

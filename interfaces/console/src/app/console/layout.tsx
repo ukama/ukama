@@ -7,6 +7,7 @@
  */
 'use client';
 import {
+  Role_Type,
   useAddNetworkMutation,
   useGetNetworksQuery,
   useSetDefaultNetworkMutation,
@@ -14,7 +15,6 @@ import {
 } from '@/client/graphql/generated';
 import {
   NotificationsResDto,
-  Role_Type,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
@@ -36,10 +36,10 @@ export default function ConosleLayout({
   children: React.ReactNode;
 }>) {
   const {
+    env,
     user,
     network,
     metaInfo,
-    pageName,
     isDarkMode,
     setNetwork,
     setMetaInfo,
@@ -62,6 +62,8 @@ export default function ConosleLayout({
         setNetwork({
           id: data.getNetworks.networks[0].id,
           name: data.getNetworks.networks[0].name,
+          country: data.getNetworks.networks[0].country,
+          currency: data.getNetworks.networks[0].currency,
         });
       }
     },
@@ -111,13 +113,15 @@ export default function ConosleLayout({
     getNotifications,
     { refetch: refetchNotifications, loading: notificationsLoading },
   ] = useGetNotificationsLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getNotifications.notifications.length > 0) {
         setNotifications(data.getNotifications.notifications);
       }
       ServerNotificationSubscription(
+        env.METRIC_URL,
         `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
-        user.role as Role_Type,
+        user.role,
         user.orgId,
         user.id,
         user.orgName,
@@ -126,6 +130,12 @@ export default function ConosleLayout({
       );
     },
   });
+
+  useEffect(() => {
+    if (user.role === Role_Type.RoleInvalid) {
+      window.location.reload();
+    }
+  }, []);
 
   useEffect(() => {
     if (metaInfo.ip === '') {
@@ -138,15 +148,13 @@ export default function ConosleLayout({
       getNotifications({
         client: subscriptionClient,
         variables: {
-          data: {
-            userId: user.id,
-            subscriberId: '',
-            orgId: user.orgId,
-            orgName: user.orgName,
-            networkId: network.id,
-            role: user.role as Role_Type,
-            startTimestamp: startTimeStamp,
-          },
+          userId: user.id,
+          subscriberId: '',
+          orgId: user.orgId,
+          orgName: user.orgName,
+          networkId: network.id,
+          role: user.role,
+          startTimestamp: startTimeStamp,
         },
       });
 
@@ -239,11 +247,14 @@ export default function ConosleLayout({
 
   const handleNetworkChange = (id: string) => {
     if (id) {
+      const filterNetwork = networksData?.getNetworks.networks.find(
+        (n) => n.id === id,
+      );
       setNetwork({
         id: id,
-        name:
-          networksData?.getNetworks.networks.filter((n) => n.id === id)[0]
-            .name ?? '',
+        name: filterNetwork?.name ?? '',
+        country: filterNetwork?.country ?? '',
+        currency: filterNetwork?.currency ?? '',
       });
     }
   };
@@ -255,6 +266,7 @@ export default function ConosleLayout({
           width: '100%',
           height: '100%',
           display: 'flex',
+          overflow: 'hidden',
           flexDirection: 'column',
         }}
       >

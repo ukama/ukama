@@ -6,9 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import Stripe from "stripe";
-import { Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { STRIP_SK } from "../../common/configs";
 import { getStripeIdByUserId } from "../../common/utils";
 import { Context } from "../context";
@@ -17,7 +16,6 @@ import { StripePaymentMethods } from "./types";
 @Resolver()
 export class RetrivePaymentMethodsResolver {
   @Query(() => [StripePaymentMethods])
-  @UseMiddleware(Authentication)
   async retrivePaymentMethods(
     @Ctx() ctx: Context
   ): Promise<StripePaymentMethods[]> {

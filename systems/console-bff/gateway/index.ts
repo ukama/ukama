@@ -114,6 +114,7 @@ const startServer = async () => {
     json(),
     expressMiddleware(server)
   );
+
   await new Promise((resolve: any) =>
     httpServer.listen({ port: GATEWAY_PORT }, resolve)
   );
@@ -133,7 +134,7 @@ const startServer = async () => {
     const theme = req.query.theme;
     res.cookie("theme", theme, {
       domain: BASE_DOMAIN,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       maxAge: COOKIE_EXPIRY_TIME - (new Date().getTime() - 2017874138705),
       httpOnly: false,
@@ -148,7 +149,7 @@ const startServer = async () => {
     if (cookies) {
       const sessionRes = await initAPI.validateSession(store, cookies);
       res.setHeader("Content-Type", "application/json");
-      res.setHeader("cache-control", "max-age=3600");
+      // res.setHeader("cache-control", "max-age=3600");
       return res.send(sessionRes);
     } else {
       res.send(new HTTP401Error(Messages.HEADER_ERR_USER));

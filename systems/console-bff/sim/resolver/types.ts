@@ -7,7 +7,7 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { SIM_TYPES } from "../../common/enums";
+import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 
 @InputType()
 export class AllocateSimInputDto {
@@ -327,7 +327,7 @@ export class SimAPIDto {
   id: string;
 
   @Field()
-  is_allocated: string;
+  is_allocated: boolean;
 
   @Field()
   is_physical: string;
@@ -346,11 +346,120 @@ export class SimAPIDto {
 }
 
 @ObjectType()
-export class SubscriberToSimsDto {
+export class SubscriberToSimsResDto {
   @Field()
   subscriber_id: string;
-  @Field(() => [SimDto])
-  sims: SimDto[];
+  @Field(() => [SubscriberSimsAPIDto])
+  sims: SubscriberSimsAPIDto[];
+}
+
+@ObjectType()
+export class SubscriberToSimsDto {
+  @Field()
+  subscriberId: string;
+  @Field(() => [SubscriberSimsDto])
+  sims: SubscriberSimsDto[];
+}
+
+@ObjectType()
+export class SubscriberSimsDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  syncStatus: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  isPhysical: boolean;
+
+  @Field()
+  trafficPolicy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocatedAt: string;
+}
+@ObjectType()
+export class SubscriberSimsAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriber_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  is_physical: boolean;
+
+  @Field()
+  traffic_policy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocated_at: string;
+
+  @Field()
+  sync_status: string;
 }
 @ObjectType()
 export class SimDto {
@@ -367,7 +476,7 @@ export class SimDto {
   id: string;
 
   @Field()
-  isAllocated: string;
+  isAllocated: boolean;
 
   @Field()
   isPhysical: string;
@@ -457,4 +566,19 @@ export class UploadSimsInputDto {
 
   @Field(() => SIM_TYPES)
   simType: SIM_TYPES;
+}
+
+@InputType()
+export class GetSimsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
+
+  @Field(() => SIM_STATUS)
+  status: SIM_STATUS;
+}
+
+@InputType()
+export class GetSimPoolStatsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
 }
