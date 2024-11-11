@@ -56,6 +56,7 @@ export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
+export const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
 export const SUB_GRAPHS = {
   metric: {
@@ -116,6 +117,12 @@ export const SUB_GRAPHS = {
     name: "package",
     port: PACKAGE_PORT,
     url: `http://localhost:${PACKAGE_PORT}`,
+    isPingedSuccess: false,
+  },
+  controller: {
+    name: "controller",
+    port: CONTROLLER_PORT,
+    url: `http://localhost:${CONTROLLER_PORT}`,
     isPingedSuccess: false,
   },
   rate: {
