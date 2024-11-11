@@ -57,8 +57,8 @@ selfservice:
       ui_url:  http://localhost:4425/error
 
     settings:
-      ui_url: http://localhost:4425/user/settings
-      privileged_session_max_age: 15m
+      ui_url: http://localhost:4425/user/change-password
+      privileged_session_max_age: 30m
 
     recovery:
       enabled: true
