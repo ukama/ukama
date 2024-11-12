@@ -53,17 +53,23 @@ LIBS+=-lusys
 LIBS+=-ltoml
 
 # Soruce files
-#CFILES = $(filter-out ./src/*_app.c, $(wildcard ./src/*.c))
-CFILES = $(shell find ./src -name "*.c" ! -name "*_app.c")
+CFILES   = $(shell find ./src -name "*.c" ! -name "*_app.c")
 OBJFILES = $(CFILES:.c=.o)
+
+APP_CFILES   = $(wildcard ./src/*_app.c)
+APP_OBJFILES = $(APP_CFILES:.c=.o)
 
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(BUILDER_EXEC)
+.PHONY: all clean
 
 $(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
 	$(XCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+$(APP_BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(APP_OBJFILES)
+	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
@@ -75,7 +81,7 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: builder
+all: builder app_builder
 
 clean:
-	rm -f $(BUILDER_EXEC) $(OBJFILES)
+	rm -f $(BUILDER_EXEC) $(APP_BUILDER_EXEC) $(OBJFILES) $(APP_OBJFILES)
