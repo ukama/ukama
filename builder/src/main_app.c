@@ -12,8 +12,8 @@
 #include <getopt.h>
 #include <sys/stat.h>
 
-#include "config.h"
-#include "log.h"
+#include "config_app.h"
+#include "log_app.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"

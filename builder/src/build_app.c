@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "config.h"
+#include "config_app.h"
 
 #define SCRIPT "./scripts/mk-app.sh"
 #define MAX_BUFFER   1024

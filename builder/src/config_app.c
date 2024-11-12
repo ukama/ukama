@@ -11,9 +11,9 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "config.h"
+#include "config_app.h"
 #include "toml.h"
-#include "log.h"
+#include "log_app.h"
 
 static int read_entry(toml_table_t *table, char *key, char **destStr,
                       int *destInt, int flag);

@@ -15,8 +15,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "config.h"
-#include "log.h"
+#include "config_app.h"
+#include "log_app.h"
 
 #define SCRIPT "./scripts/mk-app.sh"
 

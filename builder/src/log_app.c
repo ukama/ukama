@@ -20,7 +20,7 @@
  * IN THE SOFTWARE.
  */
 
-#include "log.h"
+#include "log_app.h"
 
 #include <stdbool.h>
 

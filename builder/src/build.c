@@ -87,10 +87,10 @@ bool build_nodes(char *repo, int count, char **list) {
 
         if (getenv(ENV_DOCKER_BUILD)) {
             sprintf(runMe, "cd scripts; %s create-node %s %s %s; cd -",
-                    SCRIPT, repo, list[i], BASE_IMAGE_ID);
+                    NODE_SCRIPT, repo, list[i], BASE_IMAGE_ID);
         } else {
             sprintf(runMe, "cd scripts; sudo %s create-node %s %s %s; cd -",
-                    SCRIPT, repo, list[i], BASE_IMAGE_ID);
+                    NODE_SCRIPT, repo, list[i], BASE_IMAGE_ID);
         }
         if (system(runMe) < 0) {
             usys_log_error("Unable to create node with ID: %s", list[i]);
