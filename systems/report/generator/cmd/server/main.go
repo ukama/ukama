@@ -15,9 +15,9 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/report/generator/cmd/version"
-	"github.com/ukama/ukama/systems/report/generator/pkg"
-	"github.com/ukama/ukama/systems/report/generator/pkg/pdf/engine"
-	"github.com/ukama/ukama/systems/report/generator/pkg/server"
+	"github.com/ukama/ukama/systems/report/generator/internal"
+	"github.com/ukama/ukama/systems/report/generator/internal/pdf/engine"
+	"github.com/ukama/ukama/systems/report/generator/internal/server"
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
@@ -28,17 +28,17 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	fs "github.com/ukama/ukama/systems/report/generator/pkg/server"
+	fs "github.com/ukama/ukama/systems/report/generator/internal/server"
 )
 
-var serviceConfig = pkg.NewConfig(pkg.ServiceName)
+var serviceConfig = internal.NewConfig(internal.ServiceName)
 
 func main() {
-	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(internal.ServiceName, os.Args, version.Version)
 
 	/* Log level */
 	log.SetLevel(log.TraceLevel)
-	log.Infof("Starting %s service", pkg.ServiceName)
+	log.Infof("Starting %s service", internal.ServiceName)
 
 	initConfig()
 
@@ -46,12 +46,12 @@ func main() {
 
 	runGrpcServer()
 
-	log.Infof("Exiting service %s", pkg.ServiceName)
+	log.Infof("Exiting service %s", internal.ServiceName)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
+	err := config.NewConfReader(internal.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatalf("Error reading config file. Error: %v", err)
 	} else if serviceConfig.DebugMode {
@@ -63,9 +63,9 @@ func initConfig() {
 	}
 
 	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v",
-		pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
+		internal.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
-	pkg.IsDebugMode = serviceConfig.DebugMode
+	internal.IsDebugMode = serviceConfig.DebugMode
 }
 
 func runGrpcServer() {
@@ -77,7 +77,7 @@ func runGrpcServer() {
 	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
-		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		internal.SystemName, internal.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
@@ -112,6 +112,6 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	}
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
-			pkg.ServiceName, err.Error())
+			internal.ServiceName, err.Error())
 	}
 }

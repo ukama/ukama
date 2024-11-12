@@ -17,8 +17,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/report/generator/pkg"
-	"github.com/ukama/ukama/systems/report/generator/pkg/pdf"
+	"github.com/ukama/ukama/systems/report/generator/internal"
+	"github.com/ukama/ukama/systems/report/generator/internal/pdf"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -45,7 +45,7 @@ func NewGeneratorEventServer(orgName string, pdfEngine pdf.PdfEngine, msgBus mb.
 		pdfEngine: pdfEngine,
 		msgbus:    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
-			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+			SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
 }
 

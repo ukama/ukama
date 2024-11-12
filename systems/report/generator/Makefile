@@ -26,7 +26,7 @@ deps:
 			github.com/vektra/mockery/v2/.../
 
 gen:
-	mockery --all --recursive --dir ./pkg
+	mockery --all --recursive --dir ./internal
 
 clean:
 	rm -rf bin/

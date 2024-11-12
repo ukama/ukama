@@ -20,8 +20,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ukama/ukama/systems/report/generator/internal/server"
 	"github.com/ukama/ukama/systems/report/generator/mocks"
-	"github.com/ukama/ukama/systems/report/generator/pkg/server"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
