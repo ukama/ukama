@@ -21,10 +21,10 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/report/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/report/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/report/api-gateway/internal/client"
 
 	log "github.com/sirupsen/logrus"
-	pkg "github.com/ukama/ukama/systems/report/api-gateway/pkg"
+	internal "github.com/ukama/ukama/systems/report/api-gateway/internal"
 )
 
 type Router struct {
@@ -43,7 +43,7 @@ type Clients struct {
 	p client.Pdf
 }
 
-func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
+func NewClientsSet(grpcEndpoints *internal.GrpcEndpoints, httpEndpoints *internal.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
 
 	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
@@ -66,7 +66,7 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 	return r
 }
 
-func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+func NewRouterConfig(svcConf *internal.Config) *RouterConfig {
 	return &RouterConfig{
 		serverConf: &svcConf.Server,
 		debugMode:  svcConf.DebugMode,
@@ -84,7 +84,7 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init(f func(*gin.Context, string) error) {
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
+	r.f = rest.NewFizzRouter(r.config.serverConf, internal.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
 	auth := r.f.Group("/v1", "API GW ", "Payments system version v1", func(ctx *gin.Context) {
@@ -94,7 +94,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			return
 		}
 
-		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
+		s := fmt.Sprintf("%s, %s, %s", internal.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
 		ctx.Request.Header.Set("Meta", s)
 
 		err := f(ctx, r.config.auth.AuthServerUrl)

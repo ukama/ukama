@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package pkg
+package internal
 
 const ServiceName = "gateway"
 const SystemName = "report"

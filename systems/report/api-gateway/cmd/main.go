@@ -15,17 +15,17 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/report/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/report/api-gateway/pkg/rest"
+	"github.com/ukama/ukama/systems/report/api-gateway/internal/rest"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	pkg "github.com/ukama/ukama/systems/report/api-gateway/pkg"
+	internal "github.com/ukama/ukama/systems/report/api-gateway/internal"
 )
 
-var svcConf = pkg.NewConfig()
+var svcConf = internal.NewConfig()
 
 func main() {
-	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(internal.ServiceName, os.Args, version.Version)
 	initConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services, &svcConf.HttpServices, svcConf.DebugMode)
@@ -42,6 +42,6 @@ func main() {
 }
 
 func initConfig() {
-	svcConf = pkg.NewConfig()
-	config.LoadConfig(pkg.ServiceName, svcConf)
+	svcConf = internal.NewConfig()
+	config.LoadConfig(internal.ServiceName, svcConf)
 }

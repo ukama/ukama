@@ -16,7 +16,7 @@ import (
 
 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/report/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/report/api-gateway/internal/client"
 )
 
 // fake pdf file

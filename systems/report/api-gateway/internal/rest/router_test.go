@@ -22,8 +22,8 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/report/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/report/api-gateway/pkg/client"
+	"github.com/ukama/ukama/systems/report/api-gateway/internal"
+	"github.com/ukama/ukama/systems/report/api-gateway/internal/client"
 
 	crest "github.com/ukama/ukama/systems/common/rest"
 	pmocks "github.com/ukama/ukama/systems/report/api-gateway/mocks"
@@ -56,12 +56,12 @@ func init() {
 	gin.SetMode(gin.TestMode)
 
 	testClientSet = NewClientsSet(
-		&pkg.GrpcEndpoints{
+		&internal.GrpcEndpoints{
 			Timeout:   1 * time.Second,
 			Generator: "report:9090",
 		},
 
-		&pkg.HttpEndpoints{
+		&internal.HttpEndpoints{
 			Timeout: 1 * time.Second,
 			Files:   `http://report:3000`,
 		}, true)
