@@ -6,7 +6,8 @@
 
 include ../nodes/ukamaOS/config.mk
 
-TARGET_EXEC = builder
+BUILDER_EXEC = builder
+APP_BUILDER_EXEC = app_builder
 
 UKAMAOS_ROOT = ../nodes/ukamaOS/
 
@@ -39,7 +40,7 @@ CFLAGS+=-I./inc/common/
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
 
-LDFLAGS+=-L${VENDOR_LIB} 
+LDFLAGS+=-L$(VENDOR_LIB) 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
@@ -49,20 +50,20 @@ ULFIUS_LIB+=-lhogweed -lp11-kit -lz
 LIBS = $(ULFIUS_LIB)
 LIBS+=-ljansson
 LIBS+=-lusys
+LIBS+=-ltoml
 
 # Soruce files
-CFILES   = $(wildcard ./src/*.c)
+#CFILES = $(filter-out ./src/*_app.c, $(wildcard ./src/*.c))
+CFILES = $(shell find ./src -name "*.c" ! -name "*_app.c")
 OBJFILES = $(CFILES:.c=.o)
 
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: $(BUILDER_EXEC)
 
-starter: $(TARGET_EXEC)
-
-$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+$(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
+	$(XCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
@@ -77,4 +78,4 @@ $(VENDOR_PKG):
 all: builder
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(BUILDER_EXEC) $(OBJFILES)
