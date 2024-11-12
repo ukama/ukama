@@ -241,18 +241,6 @@ const getBaseURL = async (
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
   logger.info(`${store.get("org")}`);
-  // if (store) {
-  //   const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
-  //   if (baseURL) {
-  //     logger.info(
-  //       `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
-  //     );
-  //     return {
-  //       status: 200,
-  //       message: baseURL,
-  //     };
-  //   }
-  // }
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
@@ -261,7 +249,6 @@ const getBaseURL = async (
       const url = intRes.url
         ? intRes.url
         : `http://${intRes.ip}:${intRes.port}`;
-      // if (store) await addInStore(store, `${orgName}-${sysName}`, url);
       return {
         status: 200,
         message: url,
