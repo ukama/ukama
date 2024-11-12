@@ -7,6 +7,7 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
+import { ExampleResolver } from "./exampleResolver";
 import { RestartNodeResolver } from "./restartNode";
 import { RestartNodesResolver } from "./restartNodes";
 import { RestartSiteResolver } from "./restartSite";
@@ -17,6 +18,7 @@ const resolvers: NonEmptyArray<any> = [
   RestartNodesResolver,
   RestartSiteResolver,
   ToggleInternetSwitchResolver,
+  ExampleResolver,
 ];
 
 export default resolvers;

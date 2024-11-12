@@ -52,11 +52,12 @@ const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
+
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
-export const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
 export const SUB_GRAPHS = {
   metric: {
