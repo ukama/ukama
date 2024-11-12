@@ -60,11 +60,15 @@ message Customer {
     string externalId = 1 [json_name = "external_id"];
     string name = 2 [json_name = "name"];
     string email = 3 [json_name = "email"];
-    string AddressLine1 = 4 [json_name = "address_line1"];
-    string legalName = 5 [json_name = "legal_name"];
-    string legalNumber = 6 [json_name = "legal_number"];
-    string phone = 7 [json_name = "phone"];
-    double vatRate = 8 [json_name = "vat_rate"];
+    string addressLine1 = 4 [json_name = "address_line1"];
+    string city = 5 [json_name = "city"];
+    string state = 6 [json_name = "state"];
+    string zipcode = 7 [json_name = "zipcode"];
+    string country = 8 [json_name = "country"];
+    string legalName = 9 [json_name = "legal_name"];
+    string legalNumber = 10 [json_name = "legal_number"];
+    string phone = 11 [json_name = "phone"];
+    double vatRate = 12 [json_name = "vat_rate"];
 }
 
 message Fee {
