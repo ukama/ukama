@@ -27,9 +27,6 @@ export const dtoToNetworksDto = (res: NetworksAPIResDto): NetworksResDto => {
       overdraft: network.overdraft,
       paymentLinks: network.payment_links,
       trafficPolicy: network.traffic_policy,
-      language: network.language,
-      currency: network.currency,
-      country: network.country,
     });
   });
   return {
@@ -50,8 +47,5 @@ export const dtoToNetworkDto = (res: NetworkAPIResDto): NetworkDto => {
     overdraft: res.network.overdraft,
     paymentLinks: res.network.payment_links,
     trafficPolicy: res.network.traffic_policy,
-    language: res.network.language,
-    currency: res.network.currency,
-    country: res.network.country,
   };
 };

@@ -87,9 +87,6 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		Overdraft:        req.Overdraft,
 		TrafficPolicy:    req.TrafficPolicy,
 		PaymentLinks:     req.PaymentLinks,
-		Country:          n.country,
-		Currency:         n.currency,
-		Language:         db.ParseType(n.language),
 		SyncStatus:       ukama.StatusTypePending,
 	}
 
@@ -105,7 +102,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 
 	if n.msgbus != nil {
 		route := n.baseRoutingKey.SetAction("add").SetObject("network").MustBuild()
-		evt := &epb.EventNetworkCreate {
+		evt := &epb.EventNetworkCreate{
 			Id:               network.Id.String(),
 			Name:             network.Name,
 			OrgId:            n.orgId,
