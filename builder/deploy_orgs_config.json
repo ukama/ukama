@@ -11,7 +11,15 @@
    "key": "the-key-has-to-be-32-bytes-long!",
    "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221",
    "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
-   "systems": "auth-services, services, init, nucleus, inventory, registry",
+   "systems": "auth-services, services, init, nucleus, inventory, registry, notification, bff, console",
+   "with-subscriber-auth": false,
+   "sys-db-ports": {
+    "node": 5427,
+    "dataplan": 5428,
+    "registry": 5429,
+    "subscriber": 5430,
+    "notification": 5431
+   },
    "mailer": {
     "host": "smtp.gmail.com",
     "port": 465,
@@ -29,7 +37,27 @@
    "key": "the-key-has-to-be-32-bytes-long!",
    "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b222",
    "lago-api-key": "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
-   "systems": "services, registry, notification",
+   "systems": "services, registry, dataplan, subscriber, notification",
+   "with-subscriber-auth": true,
+   "sys-db-ports": {
+    "node": 5437,
+    "dataplan": 5438,
+    "registry": 5439,
+    "subscriber": 5440,
+    "notification": 5441
+   },
+   "sys-ports": {
+    "pg-admin": 8091,
+    "rbitmq-1": 5673,
+    "rbitmq-2": 15673,
+    "node": 8011,
+    "nodegw": 8012,
+    "dataplan": 8013,
+    "registry": 8014,
+    "subscriber": 8015,
+    "notification": 8016,
+    "msgclient": 9096
+   },
    "mailer": {
     "host": "smtp.gmail.com",
     "port": 465,

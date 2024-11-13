@@ -4,7 +4,7 @@ services:
  postgresd-billing:
   image: postgres:13.3
   ports:
-   - '5413:5432'
+   - 5413:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -19,7 +19,7 @@ services:
   container_name: billing-api-gateway
   build: ./api-gateway
   ports:
-   - '8680:8080'
+   - 8680:8080
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
@@ -33,13 +33,12 @@ services:
 
  msg-client-billing:
   build: ../services/msgClient
-  ports:
-   - '9690:9095'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-billing
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - GRPC_PORT=9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=billing
   restart: always
@@ -50,8 +49,6 @@ services:
 
  billing-collector:
   build: ./collector
-  ports:
-   - '9691:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-billing
@@ -74,8 +71,6 @@ services:
 
  billing-report:
   build: ./report
-  ports:
-   - '9692:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-billing
@@ -93,11 +88,8 @@ services:
   depends_on:
    - postgresd-billing
 
-
  initclient-billing:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=billing

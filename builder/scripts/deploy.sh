@@ -14,22 +14,23 @@ NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
 root_dir=$(pwd)
 # Parse the JSON file and initialize the variables
+JSON_FILE="../deploy_config.json"
 MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
 BILLINGSYSKEY="billing"
-OWNEREMAIL=$(jq -r '.setup.email' "$1")
-PASSWORD=$(jq -r '.setup.password' "$1")
-OWNERNAME=$(jq -r '.setup.name' "$1")
-ORGNAME=$(jq -r '.setup["org-name"]' "$1")
-ORGID=$(jq -r '.setup["org-id"]' "$1")
-SYS=$(jq -r '.systems' "$1")
-KEY=$(jq -r '.key' "$1")
+OWNEREMAIL=$(jq -r '.setup.email' "$JSON_FILE")
+PASSWORD=$(jq -r '.setup.password' "$JSON_FILE")
+OWNERNAME=$(jq -r '.setup.name' "$JSON_FILE")
+ORGNAME=$(jq -r '.setup["org-name"]' "$JSON_FILE")
+ORGID=$(jq -r '.setup["org-id"]' "$JSON_FILE")
+SYS=$(jq -r '.systems' "$JSON_FILE")
+KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
-MAILERHOST=$(jq -r '.mailer.host' "$1")
-MAILERPORT=$(jq -r '.mailer.port' "$1")
-MAILERUSERNAME=$(jq -r '.mailer.username' "$1")
-MAILERPASSWORD=$(jq -r '.mailer.password' "$1")
-LAGOAPIKEY=$(jq -r '."lago-api-key"' "$1")
+MAILERHOST=$(jq -r '.mailer.host' "$JSON_FILE")
+MAILERPORT=$(jq -r '.mailer.port' "$JSON_FILE")
+MAILERUSERNAME=$(jq -r '.mailer.username' "$JSON_FILE")
+MAILERPASSWORD=$(jq -r '.mailer.password' "$JSON_FILE")
+LAGOAPIKEY=$(jq -r '."lago-api-key"' "$JSON_FILE")
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
     LOCAL_HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
@@ -39,6 +40,24 @@ elif [[ "$(uname)" == "Linux" ]]; then
 fi
 OWNERAUTHID=""
 OWNERID=$(uuidgen)
+
+function buildSystems() {
+    echo  "$TAG Building systems..."
+    ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
+}
+
+while getopts "b" opt; do
+    case ${opt} in
+        b )
+            buildSystems
+            ;;
+        \? )
+            echo "Usage: cmd [-b]"
+            exit 1
+            ;;
+    esac
+done
+
 
 function set_env() {
     export OWNERID=$OWNERID
@@ -164,6 +183,57 @@ IS_INVENTORY_SYS=false
 INVENTORY_SYS_KEY="inventory"
 IS_INIT_SYS="init"
 
+cleanup() {
+    echo  "$TAG Cleaning up..."
+    cd $root_dir
+    cd ../../systems
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        if [ -d ".temp" ]; then
+            rm -rf docker-compose.yml
+            mv ".temp/docker-compose.yml" .
+            rm -rf ".temp"
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files(){
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        mkdir -p ".temp"
+        cp docker-compose.yml ".temp"
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "s/build: \.\.\/services\/initClient/image: main-init/g" docker-compose.yml
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files
+
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do
     cd ~
@@ -211,7 +281,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
         ;;
-
     "dataplan")
         sleep 2
         echo  "$TAG Add default baserate in dataplan..."
@@ -258,5 +327,7 @@ psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
 psql $DB_URI -c "$SYS_QUERY_8"
+
+cleanup
 
 echo "$TAG Task done."
