@@ -83,7 +83,7 @@ $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@ 
 
 $(VERSION_FILE):
-	$(NODES_DIR)/builder/scripts/generate_version.sh
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@

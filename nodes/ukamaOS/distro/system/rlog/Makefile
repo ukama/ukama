@@ -88,7 +88,7 @@ $(PLATFORM):
 	$(XCC) $(CFLAGS) -c $< -o $@
 
 $(VERSION_FILE):
-	$(NODES_DIR)/builder/scripts/generate_version.sh
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 install: $(ARTIFACTS) $(VERSION)
 	mkdir -p $(TARGET_CONFIG_DIR)

@@ -84,7 +84,7 @@ $(PLATFORM):
 	$(XCC) $(CFLAGS) -c $< -o $@
 
 $(VERSION_FILE):
-	$(NODES_DIR)/builder/scripts/generate_version.sh
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES) version.h

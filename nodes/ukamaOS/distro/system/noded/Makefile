@@ -261,7 +261,7 @@ clean:
 	@echo Cleaned.
 
 version.h:
-	$(NODES_DIR)/builder/scripts/generate_version.sh
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 install: $(ARTIFACTS) version.h
 	mkdir -p $(TARGET_CONFIG_DIR)
