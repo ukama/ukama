@@ -370,6 +370,8 @@ func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 			Id:            o.Id,
 			Name:          o.Name,
 			Owner:         o.Owner,
+			Currency:      o.Currency,
+			Country:       o.Country,
 			Certificate:   o.Certificate,
 			IsDeactivated: o.IsDeactivated,
 			CreatedAt:     o.CreatedAt,
