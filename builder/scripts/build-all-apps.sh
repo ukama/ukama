@@ -7,25 +7,25 @@
 # Copyright (c) 2023-present, Ukama Inc.
 
 export UKAMA_ROOT=$1
-CONFIG_DIR=${UKAMA_ROOT}/nodes/builder/configs/
+CONFIG_DIR=${UKAMA_ROOT}/builder/configs/
 
 CWD=`pwd`
-cd ${UKAMA_ROOT}/nodes/builder
+cd ${UKAMA_ROOT}/builder
 
-# builder
-make clean; make
-rm -rf ${UKAMA_ROOT}/nodes/builder/pkgs
+# make the app_builder and cleanup
+make clean; make app_builder
+rm -rf ${UKAMA_ROOT}/builder/pkgs
 
 # Loop through each file in the directory
 for config in "$CONFIG_DIR"/*.toml; do
     if [ -f "$config" ]; then
         file=$(basename "$config")
-        ./builder --create --config "$CONFIG_DIR/$file"
+        ./app_builder --create --config "$CONFIG_DIR/$file"
     fi
 done
 
 # cleanup
 make clean
 
-cp -r ${UKAMA_ROOT}/nodes/builder/pkgs $CWD
+cp -r ${UKAMA_ROOT}/builder/pkgs $CWD
 cd $CWD

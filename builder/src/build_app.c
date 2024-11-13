@@ -11,7 +11,7 @@
 
 #include "config_app.h"
 
-#define SCRIPT "./scripts/mk-app.sh"
+#define SCRIPT "./scripts/make-app.sh"
 #define MAX_BUFFER   1024
 
 int build_app(Config *config) {

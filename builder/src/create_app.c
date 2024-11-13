@@ -18,7 +18,7 @@
 #include "config_app.h"
 #include "log_app.h"
 
-#define SCRIPT "./scripts/mk-app.sh"
+#define SCRIPT "./scripts/make-app.sh"
 
 #define MAX_BUFFER   1024
 #define DEF_HOSTNAME "localhost"
