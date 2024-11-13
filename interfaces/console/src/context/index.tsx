@@ -53,6 +53,8 @@ const AppContext = createContext({
     role: '',
     orgId: '',
     orgName: '',
+    country: '',
+    currency: '',
   },
   setUser: (u: TUser) => {},
   subscriptionClient: undefined,

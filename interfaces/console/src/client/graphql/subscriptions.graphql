@@ -1,21 +1,53 @@
 # Subscriptions
 
-query GetNotifications($data: GetNotificationsInput!) {
-  getNotifications(data: $data) {
+query GetNotifications(
+  $networkId: String!
+  $orgId: String!
+  $orgName: String!
+  $role: String!
+  $startTimestamp: String!
+  $subscriberId: String!
+  $userId: String!
+) {
+  getNotifications(
+    networkId: $networkId
+    orgId: $orgId
+    orgName: $orgName
+    startTimestamp: $startTimestamp
+    subscriberId: $subscriberId
+    userId: $userId
+    role: $role
+  ) {
     notifications {
-      id
-      type
-      scope
-      title
-      isRead
       createdAt
       description
+      id
+      isRead
+      scope
+      title
+      type
     }
   }
 }
 
-subscription NotificationSubscription($data: GetNotificationsInput!) {
-  notificationSubscription(data: $data) {
+subscription NotificationSubscription(
+  $networkId: String!
+  $orgId: String!
+  $orgName: String!
+  $role: String!
+  $startTimestamp: String!
+  $subscriberId: String!
+  $userId: String!
+) {
+  notificationSubscription(
+    networkId: $networkId
+    orgId: $orgId
+    orgName: $orgName
+    startTimestamp: $startTimestamp
+    subscriberId: $subscriberId
+    userId: $userId
+    role: $role
+  ) {
     id
     type
     scope
@@ -39,28 +71,28 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
   }
 }
 
-subscription GetMetricByTabSub(
-  $nodeId: String!
-  $orgId: String!
-  $type: GRAPHS_TYPE!
-  $userId: String!
-  $from: Float!
-) {
-  getMetricByTabSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
-    msg
-    orgId
-    nodeId
-    type
-    value
-  }
-}
+# subscription GetMetricByTabSub(
+#   $nodeId: String!
+#   $orgId: String!
+#   $type: GRAPHS_TYPE!
+#   $userId: String!
+#   $from: Float!
+# ) {
+#   getMetricByTabSub(
+#     nodeId: $nodeId
+#     orgId: $orgId
+#     type: $type
+#     userId: $userId
+#     from: $from
+#   ) {
+#     success
+#     msg
+#     orgId
+#     nodeId
+#     type
+#     value
+#   }
+# }
 
 # query GetStatsMetric {
 #   getStatsMetric {

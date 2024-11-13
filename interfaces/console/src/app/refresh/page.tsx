@@ -6,27 +6,25 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-
-import { useAppContext } from '@/context';
-import { CenterContainer } from '@/styles/global';
-import { CircularProgress } from '@mui/material';
+import AppSnackbar from '@/components/AppSnackbar/page';
+import LayoutSkelton from '@/components/Layout/skelton';
+import { Box } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 const Page = () => {
-  const { env } = useAppContext();
   const router = useRouter();
-
   useEffect(() => {
     setTimeout(() => {
-      router.push(`${env.AUTH_APP_URL}/user/logout`);
-    }, 1000);
+      router.push('/');
+    }, 3000);
   }, []);
 
   return (
-    <CenterContainer>
-      <CircularProgress />
-    </CenterContainer>
+    <Box>
+      <LayoutSkelton />
+      <AppSnackbar />
+    </Box>
   );
 };
 

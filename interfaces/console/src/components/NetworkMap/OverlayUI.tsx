@@ -61,10 +61,10 @@ export const SitesTree = ({ sites }: ISitesTree) => {
         right: 24,
         zIndex: 400,
         display: 'flex',
-        padding: '16px 24px',
+        p: { xs: 1, md: 2 },
         borderRadius: '4px',
-        width: '220px',
         position: 'absolute',
+        width: { xs: 'fit-content', md: '220px' },
         boxShadow: '2px 2px 6px 0px rgba(0, 0, 0, 0.05)',
         background: (theme) => theme.palette.background.paper,
       }}

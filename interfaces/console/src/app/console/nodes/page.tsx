@@ -129,8 +129,8 @@ export default function Page() {
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        height={isLoading ? '85vh' : '100%'}
         isLoading={isLoading}
+        height={'calc(100vh - 212px)'}
         cstyle={{ marginTop: isLoading ? '18px' : '0px' }}
       >
         <PageContainer>

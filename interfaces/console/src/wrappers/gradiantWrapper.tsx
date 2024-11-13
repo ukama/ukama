@@ -17,10 +17,12 @@ import { ReactNode } from 'react';
 
 const GradientWrapper = ({ children }: { children: ReactNode }) => {
   return (
-    <RootContainer maxWidth="sm" disableGutters>
-      <GradiantBar />
-      <Box sx={ComponentContainer}>{children}</Box>
-    </RootContainer>
+    <Box sx={{ width: '95%' }}>
+      <RootContainer maxWidth="sm">
+        <GradiantBar />
+        <Box sx={ComponentContainer}>{children}</Box>
+      </RootContainer>
+    </Box>
   );
 };
 

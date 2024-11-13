@@ -9,7 +9,13 @@
 import { colors } from '@/theme';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
-import { Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import LoadingWrapper from '../LoadingWrapper';
 
 const getIconByStatus = (status: string, info: string) => {
@@ -54,20 +60,25 @@ const NetworkStatus = ({
   availableNodes = undefined,
   statusType = 'onboarding',
 }: NetworkStatusProps) => {
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.down('md'));
   return (
     <LoadingWrapper
       isLoading={loading}
       height={loading ? '30px' : 'fit-content'}
       width={loading ? '40%' : 'fit-content'}
     >
-      <Stack direction={'row'} alignItems="center" spacing={1} mt={1.5}>
+      <Stack direction={'row'} alignItems="center" mt={{ xs: 0.5, md: 1.5 }}>
         {getIconByStatus(statusType, tooltipInfo)}
-        <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
-          {title}
+        <Typography
+          variant={matches ? 'subtitle1' : 'h6'}
+          sx={{ fontWeight: { xs: 400, md: 500 }, ml: 1 }}
+        >
+          {title} {subtitle}
         </Typography>
-        <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
+        {/* <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
           {subtitle}
-        </Typography>
+        </Typography> */}
         {availableNodes && (
           <Typography
             variant={'h6'}

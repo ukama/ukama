@@ -5,16 +5,14 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Query, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { GetSimInputDto, SimDto } from "./types";
 
 @Resolver()
 export class GetSimResolver {
   @Query(() => SimDto)
-  @UseMiddleware(Authentication)
   async getSim(
     @Arg("data") data: GetSimInputDto,
     @Ctx() ctx: Context
