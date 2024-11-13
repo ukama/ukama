@@ -19,7 +19,20 @@ service StateService {
     rpc GetStates(GetStatesRequest) returns(GetStatesResponse);
     rpc GetLatestState(GetLatestStateRequest) returns (GetLatestStateResponse);  
     rpc UpdateState(UpdateStateRequest) returns (UpdateStateResponse);
+    rpc GetStatesHistory(GetStatesHistoryRequest) returns (GetStatesHistoryResponse);
 }
+message GetStatesHistoryRequest {
+    string nodeId = 1;
+    google.protobuf.Timestamp startTime = 2;
+    google.protobuf.Timestamp endTime = 3;
+    int32 pageSize = 4;
+}
+
+message GetStatesHistoryResponse {
+    repeated State states = 1;
+    NodeConfig nodeConfig = 2;
+}
+
 
 message State {
     string id = 1;

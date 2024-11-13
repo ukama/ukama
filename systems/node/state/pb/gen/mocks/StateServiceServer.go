@@ -134,6 +134,36 @@ func (_m *StateServiceServer) GetStates(_a0 context.Context, _a1 *gen.GetStatesR
 	return r0, r1
 }
 
+// GetStatesHistory provides a mock function with given fields: _a0, _a1
+func (_m *StateServiceServer) GetStatesHistory(_a0 context.Context, _a1 *gen.GetStatesHistoryRequest) (*gen.GetStatesHistoryResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStatesHistory")
+	}
+
+	var r0 *gen.GetStatesHistoryResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStatesHistoryRequest) (*gen.GetStatesHistoryResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetStatesHistoryRequest) *gen.GetStatesHistoryResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetStatesHistoryResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetStatesHistoryRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateState provides a mock function with given fields: _a0, _a1
 func (_m *StateServiceServer) UpdateState(_a0 context.Context, _a1 *gen.UpdateStateRequest) (*gen.UpdateStateResponse, error) {
 	ret := _m.Called(_a0, _a1)

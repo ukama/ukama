@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -19,6 +19,34 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *GetStatesHistoryRequest) Validate() error {
+	if this.StartTime != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartTime); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("StartTime", err)
+		}
+	}
+	if this.EndTime != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndTime); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("EndTime", err)
+		}
+	}
+	return nil
+}
+func (this *GetStatesHistoryResponse) Validate() error {
+	for _, item := range this.States {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("States", err)
+			}
+		}
+	}
+	if this.NodeConfig != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.NodeConfig); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("NodeConfig", err)
+		}
+	}
+	return nil
+}
 func (this *State) Validate() error {
 	if this.PreviousState != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PreviousState); err != nil {

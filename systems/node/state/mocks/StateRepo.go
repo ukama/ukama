@@ -6,6 +6,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/node/state/pkg/db"
 
+	time "time"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -145,6 +147,36 @@ func (_m *StateRepo) GetStateHistory(nodeId string) ([]db.State, error) {
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetStateHistoryWithFilter provides a mock function with given fields: nodeId, startTime, endTime, pageSize
+func (_m *StateRepo) GetStateHistoryWithFilter(nodeId string, startTime time.Time, endTime time.Time, pageSize int) ([]*db.State, error) {
+	ret := _m.Called(nodeId, startTime, endTime, pageSize)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStateHistoryWithFilter")
+	}
+
+	var r0 []*db.State
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, time.Time, time.Time, int) ([]*db.State, error)); ok {
+		return rf(nodeId, startTime, endTime, pageSize)
+	}
+	if rf, ok := ret.Get(0).(func(string, time.Time, time.Time, int) []*db.State); ok {
+		r0 = rf(nodeId, startTime, endTime, pageSize)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.State)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, time.Time, time.Time, int) error); ok {
+		r1 = rf(nodeId, startTime, endTime, pageSize)
 	} else {
 		r1 = ret.Error(1)
 	}

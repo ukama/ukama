@@ -10,7 +10,7 @@ package statemachine
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"sync"
 	"time"
 
@@ -372,7 +372,7 @@ func LoadConfig(configFile string) (StateMachineConfig, error) {
 		return config, nil
 	}
 
-	data, err := ioutil.ReadFile(configFile)
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return StateMachineConfig{}, fmt.Errorf("error reading config file: %v", err)
 	}

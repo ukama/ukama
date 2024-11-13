@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"sort"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
@@ -226,6 +227,73 @@ func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateReques
 	}
 
 	return &pb.UpdateStateResponse{}, nil
+}
+func (s *StateServer) GetStatesHistory(ctx context.Context, req *pb.GetStatesHistoryRequest) (*pb.GetStatesHistoryResponse, error) {
+	log.Infof("Getting node state history for Node ID: %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return &pb.GetStatesHistoryResponse{}, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id: %s", err.Error())
+	}
+
+	var (
+		startTime time.Time
+		endTime   time.Time
+	)
+
+	if req.StartTime != nil {
+		startTime = req.StartTime.AsTime()
+	}
+
+	if req.EndTime != nil {
+		endTime = req.EndTime.AsTime()
+	}
+
+	history, err := s.sRepo.GetStateHistoryWithFilter(nId.String(), startTime, endTime, int(req.PageSize))
+	if err != nil {
+		log.Errorf("Failed to get node state history: %v", err)
+		return &pb.GetStatesHistoryResponse{}, status.Errorf(codes.Internal, "failed to get node state history: %v", err)
+	}
+
+	if history == nil {
+		log.Warnf("No history found for Node ID: %v", req.NodeId)
+		return &pb.GetStatesHistoryResponse{States: []*pb.State{}}, nil
+	}
+
+	states := make([]*pb.State, 0, len(history))
+	for _, nodeState := range history {
+		state := &pb.State{
+			Id:           nodeState.Id.String(),
+			NodeId:       nodeState.NodeId,
+			CurrentState: nodeState.CurrentState,
+			SubState:     nodeState.SubState,
+			Events:       nodeState.Events,
+			CreatedAt:    timestamppb.New(nodeState.CreatedAt),
+			UpdatedAt:    timestamppb.New(nodeState.UpdatedAt),
+		}
+
+		if nodeState.PreviousStateId != nil {
+			state.PreviousStateId = nodeState.PreviousStateId.String()
+		}
+
+		states = append(states, state)
+	}
+
+	sort.Slice(states, func(i, j int) bool {
+		return states[i].UpdatedAt.AsTime().After(states[j].UpdatedAt.AsTime())
+	})
+
+	nodeConfig, err := s.sRepo.GetNodeConfig(nId.String())
+	if err != nil {
+		log.Errorf("Failed to get node configuration: %v", err)
+		return &pb.GetStatesHistoryResponse{}, status.Errorf(codes.Internal, "failed to get node configuration: %v", err)
+	}
+
+	return &pb.GetStatesHistoryResponse{
+		States:     states,
+		NodeConfig: convertToGenNodeConfig(nodeConfig),
+	}, nil
 }
 
 func convertToGenNodeConfig(dbConfig *db.NodeConfig) *gen.NodeConfig {

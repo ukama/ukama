@@ -11,6 +11,7 @@ package db
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -25,6 +26,7 @@ type StateRepo interface {
 	GetLatestState(nodeId string) (*State, error)
 	UpdateState(nodeId string, subStates []string, events []string) (*State, error)
 	GetNodeConfig(nodeId string) (*NodeConfig, error)
+	GetStateHistoryWithFilter(nodeId string, startTime time.Time, endTime time.Time, pageSize int) ([]*State, error)
 }
 
 type stateRepo struct {
@@ -146,4 +148,31 @@ func (r *stateRepo) GetNodeConfig(nodeId string) (*NodeConfig, error) {
 		return nil, err
 	}
 	return &config, nil
+}
+
+func (r *stateRepo) GetStateHistoryWithFilter(nodeId string, startTime time.Time, endTime time.Time, pageSize int) ([]*State, error) {
+	var states []*State
+
+	query := r.Db.GetGormDb().Model(&State{}).Where("node_id = ?", nodeId)
+
+	if !startTime.IsZero() {
+		query = query.Where("created_at >= ?", startTime)
+	}
+
+	if !endTime.IsZero() {
+		query = query.Where("created_at <= ?", endTime)
+	}
+
+	query = query.Order("created_at DESC")
+
+	if pageSize > 0 {
+		query = query.Limit(pageSize)
+	}
+
+	err := query.Find(&states).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return states, nil
 }
