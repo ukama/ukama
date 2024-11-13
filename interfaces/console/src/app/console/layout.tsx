@@ -62,8 +62,6 @@ export default function ConosleLayout({
         setNetwork({
           id: data.getNetworks.networks[0].id,
           name: data.getNetworks.networks[0].name,
-          country: data.getNetworks.networks[0].country,
-          currency: data.getNetworks.networks[0].currency,
         });
       }
     },
@@ -253,8 +251,6 @@ export default function ConosleLayout({
       setNetwork({
         id: id,
         name: filterNetwork?.name ?? '',
-        country: filterNetwork?.country ?? '',
-        currency: filterNetwork?.currency ?? '',
       });
     }
   };
