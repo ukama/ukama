@@ -14,7 +14,8 @@
 # Build sysctl
 # Copy all lib dependencies
 # create cpio arch
- set -x
+set -e
+
 # Base parameters
 UKAMA_OS=`realpath ../../.`
 UKAMA_REPO=`realpath ../../../../.`
@@ -177,26 +178,6 @@ build_dhcpcd() {
     log_info "dhcpcd successfully build"
 }
 
-
-build_dhcp() {
-    CWD=`pwd`
-    
-    # setup proper compiler option
-    if [ "${TARGET}" != "local" ]
-    then
-        XGCC_PATH=${COMPILER_PATH}
-    else
-        XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
-    fi
-
-    # build dhcp
-    cd ${VENDOR_ROOT}
-    make TARGET=${TARGET} dhcp 
-    cd ${CWD}
-
-    log_info "dhcpcd successfully build"
-}
-
 #
 # Build starter.d
 #
@@ -264,48 +245,6 @@ build_busybox() {
     cd ${CWD}
 
     log_info "Busybox successfully build"
-}
-
-#
-# Build apps and copy them to rootfs
-#
-build_apps() {
-
-    # Steps are:
-    # 1. Build builder
-    # 2. Build capp pkgs using the builder
-    # 3. Create /ukama/apps onto rootfs (pkgs, store, registry, rootfs)
-    # 4. Copy pkgs
-
-    CWD=`pwd`
-
-    cd ${APPS_BUILDER_ROOT}
-
-    # make TARGET=${TARGET} XGCCPATH=${XGCCPATH}/
-
-    # if [ -d ${APPS_BUILDER_ROOT}/pkgs/ ]
-    # then
-	#     rm -rf ${APPS_BUILDER_ROOT}/pkgs/
-    # fi
-
-    # Compile the builder
-    make clean; make
-
-    # for each apps in systems
-    apps=("bootstrap" "configd" "deviced" "lookoutd" "meshd" "metricsd" "noded" "notifyd" "rlog" "started" "wimcd") 
-    for app in ${apps[@]}; do
-        basename=$(basename "$app")
-        #./builder --create --config ./configs/${basename}.toml
-        make -C ${SYS_ROOT}/${basename} install TARGET=${TARGET} INSTALL_DIR=${ROOTFS} 
-    done
-
-    # create apps dir onto rootfs
-    #DIRS="${ROOTFS}/ukama/apps/pkgs"
-    #DIRS="${ROOTFS}/ukama/apps/registry ${DIRS}"
-    #DIRS="${ROOTFS}/ukama/apps/rootfs   ${DIRS}"
-    #mkdir -p ${DIRS}
-
-    log_info "apps succesfully build"
 }
 
 copy_vendor_libs() {
@@ -558,18 +497,6 @@ log_info "Building busy box with Ukama minimal configuration"
 build_busybox
 sleep 2
 
-log_info "Building dhcp"
-build_dhcp
-sleep 2
-
-log_info "Building ip utils"
-#build_ip_utils
-
-sleep 2
-log_info "Building apps"
-build_apps
-
-sleep 2
 log_info "Setting up /etc contents under rootfs"
 setup_etc
 
