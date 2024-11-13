@@ -586,9 +586,6 @@ fragment UNetwork on NetworkDto {
   isDefault
   budget
   overdraft
-  language
-  country
-  currency
   trafficPolicy
   isDeactivated
   paymentLinks

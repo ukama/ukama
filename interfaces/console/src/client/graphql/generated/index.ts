@@ -548,6 +548,10 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
+  NotifActionableCritical = 'NOTIF_ACTIONABLE_CRITICAL',
+  NotifActionableError = 'NOTIF_ACTIONABLE_ERROR',
+  NotifActionableInfo = 'NOTIF_ACTIONABLE_INFO',
+  NotifActionableWarning = 'NOTIF_ACTIONABLE_WARNING',
   NotifCritical = 'NOTIF_CRITICAL',
   NotifError = 'NOTIF_ERROR',
   NotifInfo = 'NOTIF_INFO',
@@ -559,13 +563,10 @@ export type NetworkDto = {
   __typename?: 'NetworkDto';
   budget: Scalars['Float']['output'];
   countries: Array<Scalars['String']['output']>;
-  country: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
-  currency: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
   isDefault: Scalars['Boolean']['output'];
-  language: Scalars['String']['output'];
   name: Scalars['String']['output'];
   networks: Array<Scalars['String']['output']>;
   overdraft: Scalars['Float']['output'];
@@ -692,6 +693,7 @@ export type NotificationResDto = {
   id: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   orgId: Scalars['String']['output'];
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   subscriberId: Scalars['String']['output'];
   title: Scalars['String']['output'];
@@ -718,7 +720,9 @@ export type NotificationsResDto = {
 export type OrgDto = {
   __typename?: 'OrgDto';
   certificate: Scalars['String']['output'];
+  country: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isDeactivated: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
@@ -1650,26 +1654,26 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string } };
 
-export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
+export type UNetworkFragment = { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> };
 
 export type GetNetworksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
+export type GetNetworksQuery = { __typename?: 'Query', getNetworks: { __typename?: 'NetworksResDto', networks: Array<{ __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> }> } };
 
 export type GetNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
 
-export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type AddNetworkMutationVariables = Exact<{
   data: AddNetworkInputDto;
 }>;
 
 
-export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, language: string, country: string, currency: string, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
+export type AddNetworkMutation = { __typename?: 'Mutation', addNetwork: { __typename?: 'NetworkDto', id: string, name: string, isDefault: boolean, budget: number, overdraft: number, trafficPolicy: number, isDeactivated: boolean, paymentLinks: boolean, createdAt: string, countries: Array<string>, networks: Array<string> } };
 
 export type SetDefaultNetworkMutationVariables = Exact<{
   data: SetDefaultNetworkInputDto;
@@ -2019,9 +2023,6 @@ export const UNetworkFragmentDoc = gql`
   isDefault
   budget
   overdraft
-  language
-  country
-  currency
   trafficPolicy
   isDeactivated
   paymentLinks

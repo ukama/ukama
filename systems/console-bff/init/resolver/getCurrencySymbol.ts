@@ -14,7 +14,9 @@ import { CurrencyRes } from "./types";
 export class GetCurrencySymbolResolver {
   @Query(() => CurrencyRes)
   async getCurrencySymbol(@Arg("code") code: string): Promise<CurrencyRes> {
-    const currency = CURRENCIES.find(currency => currency.Code === code);
+    const currency = CURRENCIES.find(
+      currency => currency.Code === code.toUpperCase()
+    );
     return {
       code: currency?.Code ?? "",
       symbol: currency?.Symbol ?? "",

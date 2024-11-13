@@ -166,8 +166,6 @@ export type TAddSubscriberData = {
 export type TNetwork = {
   id: string;
   name: string;
-  country: string;
-  currency: string;
 };
 
 export type TUser = {
@@ -177,6 +175,8 @@ export type TUser = {
   role: string;
   orgId: string;
   orgName: string;
+  country: string;
+  currency: string;
 };
 
 export type TSnackbarMessage = {

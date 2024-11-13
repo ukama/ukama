@@ -17,6 +17,8 @@ type User = {
   orgId: string;
   token: string;
   orgName: string;
+  country: string;
+  currency: string;
   isShowWelcome: boolean;
   isEmailVerified: boolean;
 };
@@ -28,6 +30,8 @@ const USER_INIT = {
   email: '',
   orgId: '',
   orgName: '',
+  country: '',
+  currency: '',
   isShowWelcome: false,
   isEmailVerified: false,
   role: Role_Type.RoleInvalid,
@@ -83,7 +87,7 @@ function getUserFromToken(token: string): User {
     const parseToken = decodeBase64Token(token);
     const parts = parseToken.split(';');
 
-    if (parts.length < 8) {
+    if (parts.length < 10) {
       return USER_INIT;
     }
 
@@ -96,6 +100,8 @@ function getUserFromToken(token: string): User {
       role,
       isEmailVerified,
       isShowWelcome,
+      country,
+      currency,
     ] = parts;
     return {
       id,
@@ -105,6 +111,8 @@ function getUserFromToken(token: string): User {
       orgId,
       token,
       orgName,
+      country,
+      currency,
       isShowWelcome: isShowWelcome.includes('true'),
       isEmailVerified: isEmailVerified.includes('true'),
     };
@@ -130,6 +138,8 @@ const getUserObject = async (session: string, cookieToken: string) => {
       orgId: jsonRes.orgId,
       token: jsonRes.token,
       orgName: jsonRes.orgName,
+      country: jsonRes.country,
+      currency: jsonRes.currency,
       isShowWelcome: jsonRes.isShowWelcome,
       isEmailVerified: jsonRes.isEmailVerified,
     };
@@ -213,6 +223,8 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('user-id', userObj.id);
   response.headers.set('email', userObj.email);
   response.headers.set('org-id', userObj.orgId);
+  response.headers.set('country', userObj.country);
+  response.headers.set('currency', userObj.currency);
   response.headers.set('org-name', userObj.orgName);
 
   if (

@@ -64,6 +64,12 @@ export class ValidateSessionRes {
 
   @Field()
   isShowWelcome: boolean;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
 }
 
 @ObjectType()

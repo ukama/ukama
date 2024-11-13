@@ -39,7 +39,7 @@ const INIT_DATAPLAN = {
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { network, metaInfo, setSnackbarMessage } = useAppContext();
+  const { network, user, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
@@ -63,7 +63,7 @@ const Page = () => {
     onCompleted: (data) => {
       getCurrencySymbol({
         variables: {
-          code: data.getNetwork.currency,
+          code: user.currency,
         },
       });
     },
@@ -155,13 +155,13 @@ const Page = () => {
     });
 
   const handleAddDataPlanAction = () => {
-    if (network.id) {
+    if (user.currency) {
       setDataplan(INIT_DATAPLAN);
       setIsDataPlan(true);
     } else {
       setSnackbarMessage({
         id: 'network-not-selected',
-        message: 'Please select/create a network first.',
+        message: 'Something went wrong, please try again',
         type: 'warning' as AlertColor,
         show: true,
       });
@@ -178,8 +178,8 @@ const Page = () => {
             dataUnit: dataplan.dataUnit,
             dataVolume: dataplan.dataVolume,
             duration: dataplan.duration,
-            country: networkData?.getNetwork.country ?? '',
-            currency: networkData?.getNetwork.currency ?? '',
+            country: user.country ?? '',
+            currency: user.currency ?? '',
           },
         },
       });
@@ -221,7 +221,6 @@ const Page = () => {
       setIsDataPlan(true);
     }
   };
-
   return (
     <LoadingWrapper
       width={'100%'}

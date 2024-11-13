@@ -44,7 +44,9 @@ export default function RootLayout({
   const email = headersList.get('email');
   const orgId = headersList.get('org-id');
   const userId = headersList.get('user-id');
+  const country = headersList.get('country');
   const orgName = headersList.get('org-name');
+  const currency = headersList.get('currency');
   const tokenStr = cookieStore.get('token') ?? {
     name: 'token',
     value: '',
@@ -74,6 +76,8 @@ export default function RootLayout({
               email: email ?? '',
               orgId: orgId ?? '',
               orgName: orgName ?? '',
+              country: country ?? '',
+              currency: currency ?? '',
             }}
           >
             <AppThemeProvider themeCookie={cookieTheme?.value}>
