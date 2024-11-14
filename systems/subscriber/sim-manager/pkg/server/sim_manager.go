@@ -738,13 +738,15 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
-	evtMsg := &epb.EventSimActivation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    pkg.Id.String(),
+	evtMsg := &epb.EventSimActivePackage{
+		Id:               sim.Id.String(),
+		SubscriberId:     sim.SubscriberId.String(),
+		Iccid:            sim.Iccid,
+		Imsi:             sim.Imsi,
+		NetworkId:        sim.NetworkId.String(),
+		PackageId:        pkg.Id.String(),
+		PlanId:           pkg.PackageId.String(),
+		PackageStartDate: timestamppb.New(pkg.StartDate),
 	}
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	_ = s.PublishEventMessage(route, evtMsg)
