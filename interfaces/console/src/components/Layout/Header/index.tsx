@@ -14,6 +14,7 @@ import colors from '@/theme/colors';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import {
   Box,
+  Divider,
   IconButton,
   Stack,
   Toolbar,
@@ -107,9 +108,13 @@ const Header = ({
             alignItems={'center'}
             spacing={{ xs: 1, md: 1.75 }}
           >
-            <Typography variant="body1" fontWeight={600}>
+            <Typography variant="body1" fontWeight={600} color={colors.white}>
               {user.orgName}
             </Typography>
+            <Divider
+              orientation="vertical"
+              sx={{ width: '0.5px', height: '24px', bgcolor: colors.darkGray }}
+            />
             {isManager && (
               <IconButton
                 onClick={() => onNavigate('Manage', '/manage')}
