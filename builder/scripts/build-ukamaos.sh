@@ -17,8 +17,8 @@
 set -e
 
 # Base parameters
-UKAMA_OS=`realpath ../../.`
-UKAMA_REPO=`realpath ../../../../.`
+UKAMA_OS=`realpath ../../nodes/ukamaOS`
+UKAMA_REPO=`realpath ../../.`
 VENDOR_ROOT=${UKAMA_OS}/distro/vendor
 VENDOR_BUILD=${VENDOR_ROOT}/build/
 SYS_ROOT=${UKAMA_OS}/distro/system
@@ -101,9 +101,6 @@ msg_usage() {
     exit 0
 }
 
-#
-# copy_all_libs
-#
 copy_all_libs() {
 
     ARGS=$1
@@ -123,9 +120,6 @@ copy_all_libs() {
     done
 }
 
-#
-# Build ip utilies (iptables and ip)
-#
 build_ip_utils() {
     CWD=`pwd`
 
@@ -156,9 +150,6 @@ build_ip_utils() {
     cd ${CWD}
 }
 
-#
-# dhcpcd build
-#
 build_dhcpcd() {
     CWD=`pwd`
     
@@ -178,9 +169,6 @@ build_dhcpcd() {
     log_info "dhcpcd successfully build"
 }
 
-#
-# Build starter.d
-#
 build_starterd() {
    CWD=`pwd`
 
@@ -206,9 +194,6 @@ build_starterd() {
    log_info "starter.d successfully build"
 }
 
-#
-# Build busybox using the Ukama minimal configuration
-#
 build_busybox() {
 
     CWD=`pwd`
@@ -254,9 +239,6 @@ copy_vendor_libs() {
     log_info "libs copied succesfully"
 }
 
-#
-# Build the usr directory structure
-#
 build_usr_dirs() {
 
     DIRS="bin"
@@ -272,9 +254,6 @@ build_usr_dirs() {
     cd ../
 }
 
-#
-# Build the etc directory structure
-#
 build_etc_dirs() {
 
     DIRS="network/if-down.d"
@@ -289,9 +268,6 @@ build_etc_dirs() {
     cd ../
 }
 
-#
-# Build rootfs directory structure
-#
 build_rootfs_dirs() {
 
     DIRS="ukama"
@@ -329,9 +305,6 @@ build_rootfs_dirs() {
     log_info "Building rootfs directory structure at: ${ROOTFS}"
 }
 
-#
-# setup /etc content
-#
 setup_etc() {
 
     cd ${ROOTFS}/etc/
@@ -403,17 +376,14 @@ tty10
 tty11
 EOF
 
-    cp ../../files/protocols ./protocols
-    cp ../../files/services  ./services
+    cp ${UKAMA_OS}/distro/scripts/files/protocols ./protocols
+    cp ${UKAMA_OS}/distro/scripts/files/services  ./services
 
     cd ../../
 
     sync
 }
 
-#
-# setup_device
-#
 setup_device() {
 
     CWD=`pwd`
@@ -430,61 +400,20 @@ setup_device() {
 # Script main
 #
 WD=`pwd`
-while [ "$#" -gt 0 ]; do
-    case $1 in
-        -p|--path)
-	        if [ -z "$2" ]
-	        then
-		        log_info "Missing rootfs parameter for -p"
-		        log_info "Setting to default: ${DEF_ROOTFS}"
-		        ROOTFS=${DEF_ROOTFS}
-	        else
-                ROOTFS=$2
-                log_info "ukamaOS RootFS Path is: ${ROOTFS}"
-                shift # Remove path from processing
-	        fi
-            shift
-            ;;
+TARGET=$1
+ROOTFS=${DEF_ROOTFS}
 
-        -h|--help)
-            echo "Help message"
-            msg_usage
-            shift
-            ;;
-
-	    -t|--target)
-	        if [ -z "$2" ]
-	        then
-		        log_info "Missing target parameter for -t"
-		        log_info "Setting to default: ${DEF_TARGET}"
-		        TARGET=${DEF_TARGET}
-	        else
-		        TARGET=$2
-		        log_info "Target is: ${TARGET}"
-		        shift
-	        fi
-	        shift
-	        ;;
-
-        *)
-            log_error "Invalid args: ${1}"
-            msg_usage
-            shift # Remove generic argument from processing
-            ;;
-    esac
-done
-
-if [ -z ${ROOTFS} ]
+if [ -z "$TARGET" ]
 then
-    log_info "-p not defined. Setting to default: ${DEF_ROOTFS}"
-    ROOTFS=${DEF_ROOTFS}
+	log_info "Missing node type"
+    exit 1
 fi
 
 #setup rootfs location
 if [ -d "${ROOTFS}" ]
 then
-    log_error "Please remove existing copy of ${ROOTFS}"
-    #exit
+    rm -rf ${ROOTFS}
+    log_info "Removed existing copy of ${ROOTFS}"
 fi
 
 mkdir -p ${ROOTFS}
@@ -534,11 +463,11 @@ TOTAL_ROOTFS_SIZE=`du -chs ${ROOTFS} | awk '{print $1}' | uniq`
 IMAGE_SIZE=`du -kh ${WD}/${IMG}.img | cut -f1`
 IMAGE_LOC=`realpath ${WD}/${IMG}.img`
 
-log_info "All done. Have fun!"
+log_info "All done."
 log_info "------------------"
 log_info "  Rootfs loc:   ${ROOTFS}"
 log_info "  Rootfs size:  ${TOTAL_ROOTFS_SIZE}"
 log_info "  ukamaOS loc:  ${IMAGE_LOC}"
 log_info "  ukamaOS size: ${IMAGE_SIZE}"
 
-exit
+exit 0
