@@ -233,7 +233,6 @@ build_busybox() {
 }
 
 copy_vendor_libs() {
-    cd ${VENDOR_ROOT}
     cp -vrf ${VENDOR_ROOT}/build/* ${ROOTFS}
     sync 
     log_info "libs copied succesfully"
@@ -417,7 +416,7 @@ then
 fi
 
 mkdir -p ${ROOTFS}
-BB_ROOTFS=${ROOTFS}
+BB_ROOTFS=`realpath ${ROOTFS}`
 
 log_info "Setting up rootfs directory structure"
 build_rootfs_dirs
