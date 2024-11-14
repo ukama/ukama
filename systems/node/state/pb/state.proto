@@ -23,9 +23,10 @@ service StateService {
 }
 message GetStatesHistoryRequest {
     string nodeId = 1;
-    google.protobuf.Timestamp startTime = 2;
-    google.protobuf.Timestamp endTime = 3;
+    string startTime = 2;
+    string endTime = 3;
     int32 pageSize = 4;
+    int32 PageNumber = 5;   
 }
 
 message GetStatesHistoryResponse {

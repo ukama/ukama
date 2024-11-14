@@ -271,48 +271,27 @@ func (instance *StateMachineInstance) Transition(eventName string) error {
 	newMainState := instance.CurrentState
 	newSubState := instance.CurrentSubstate
 
-	if currentState.SubState != nil && instance.CurrentSubstate == "" {
-		if initialSubTransition, exists := currentState.SubState.Transitions["enter"]; exists {
-			newSubState = initialSubTransition.ToState
-			log.Infof("Setting initial substate: %s", newSubState)
-		}
-	}
+	mainStateTransition, hasMainTransition := currentState.Transitions[eventName]
 
+	var substateTransition Transition
+	var hasSubstateTransition bool
 	if currentState.SubState != nil {
-		if instance.CurrentSubstate != "" {
-			if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
-				newSubState = subTransition.ToState
-				log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
-
-				if mainTransition, exists := currentState.Transitions[newSubState]; exists {
-					if currentState.OnExit != nil {
-						if err := currentState.OnExit(); err != nil {
-							return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
-						}
-					}
-					newMainState = mainTransition.ToState
-					log.Infof("Main state transition triggered by substate: %s -> %s",
-						currentState.Name, newMainState)
-				}
-			}
-		} else {
-			if subTransition, exists := currentState.SubState.Transitions[eventName]; exists {
-				newSubState = subTransition.ToState
-				log.Infof("Direct substate transition: -> %s", newSubState)
-			}
-		}
+		substateTransition, hasSubstateTransition = currentState.SubState.Transitions[eventName]
 	}
 
-	if newMainState == instance.CurrentState {
-		if transition, exists := currentState.Transitions[eventName]; exists {
-			if currentState.OnExit != nil {
-				if err := currentState.OnExit(); err != nil {
-					return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
-				}
+	if hasMainTransition {
+		if currentState.OnExit != nil {
+			if err := currentState.OnExit(); err != nil {
+				return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
 			}
-			newMainState = transition.ToState
-			log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
 		}
+		newMainState = mainStateTransition.ToState
+		log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
+	}
+
+	if hasSubstateTransition {
+		newSubState = substateTransition.ToState
+		log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
 	}
 
 	if newMainState != instance.CurrentState {
@@ -321,19 +300,14 @@ func (instance *StateMachineInstance) Transition(eventName string) error {
 			return fmt.Errorf("new state not found: %s", newMainState)
 		}
 
-		if newState.SubState != nil {
-			if initialSubTransition, exists := newState.SubState.Transitions["enter"]; exists {
-				newSubState = initialSubTransition.ToState
-				log.Infof("New state initial substate transition: %s", newSubState)
-			}
-		} else {
-			newSubState = ""
-		}
-
 		if newState.OnEnter != nil {
 			if err := newState.OnEnter(); err != nil {
 				return fmt.Errorf("error in OnEnter for state %s: %w", newMainState, err)
 			}
+		}
+
+		if newState.SubState == nil {
+			newSubState = ""
 		}
 	}
 

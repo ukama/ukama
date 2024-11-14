@@ -57,3 +57,4 @@ type NodeConfig struct {
 	UpdatedAt    time.Time      `json:"updatedAt"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }
+

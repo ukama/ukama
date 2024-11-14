@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -56,6 +57,7 @@ type Clients struct {
 
 type state interface {
 	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
 }
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
@@ -158,6 +160,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const state = "/state"
 		stateS := auth.Group(state, "State", "Operations on state")
 		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
+		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
+
 	}
 }
 
@@ -242,6 +246,28 @@ func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesReques
 }
 func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
 	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
+}
+func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRequest) (*nspb.GetStatesHistoryResponse, error) {
+	nodeId := c.Param("node_id")
+
+	pageSizeStr := c.DefaultQuery("page_size", "10")
+	pageNumberStr := c.DefaultQuery("page_number", "1")
+	startTime := c.DefaultQuery("start_time", "")
+	endTime := c.DefaultQuery("end_time", "")
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page_size parameter"})
+		return nil, err
+	}
+
+	pageNumber, err := strconv.Atoi(pageNumberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page_number parameter"})
+		return nil, err
+	}
+
+	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

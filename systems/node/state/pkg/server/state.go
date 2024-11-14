@@ -237,20 +237,23 @@ func (s *StateServer) GetStatesHistory(ctx context.Context, req *pb.GetStatesHis
 			"invalid format of node id: %s", err.Error())
 	}
 
-	var (
-		startTime time.Time
-		endTime   time.Time
-	)
+	var from, to time.Time
 
-	if req.StartTime != nil {
-		startTime = req.StartTime.AsTime()
+	if req.GetStartTime() != "" {
+		from, err = time.Parse(time.RFC3339, req.GetStartTime())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for start_time: "+err.Error())
+		}
 	}
 
-	if req.EndTime != nil {
-		endTime = req.EndTime.AsTime()
+	if req.GetEndTime() != "" {
+		to, err = time.Parse(time.RFC3339, req.GetEndTime())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for end_time: "+err.Error())
+		}
 	}
 
-	history, err := s.sRepo.GetStateHistoryWithFilter(nId.String(), startTime, endTime, int(req.PageSize))
+	history, err := s.sRepo.GetStateHistoryWithFilter(nId.String(), int(req.PageSize), int(req.PageNumber), from, to)
 	if err != nil {
 		log.Errorf("Failed to get node state history: %v", err)
 		return &pb.GetStatesHistoryResponse{}, status.Errorf(codes.Internal, "failed to get node state history: %v", err)

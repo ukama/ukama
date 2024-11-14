@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -20,16 +20,6 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *GetStatesHistoryRequest) Validate() error {
-	if this.StartTime != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.StartTime); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("StartTime", err)
-		}
-	}
-	if this.EndTime != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.EndTime); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("EndTime", err)
-		}
-	}
 	return nil
 }
 func (this *GetStatesHistoryResponse) Validate() error {

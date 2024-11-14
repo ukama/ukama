@@ -27,6 +27,13 @@ type RestartSiteRequest struct {
 	SiteId    string `json:"site_id"  example:"site-1" validate:"required" path:"site_name"`
 	NetworkId string `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`
 }
+type GetStatesHistoryRequest struct {
+    NodeId    string                `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	PageNumber int32                  `json:"page_number" query:"page_number"`
+    PageSize  int32                  `json:"page_size" query:"page_size"`
+	StartTime string                `json:"start_time" query:"start_time"`
+	EndTime   string                `json:"end_time" query:"end_time"`
+}
 
 type RestartNodesRequest struct {
 	NetworkId string   `json:"network_id" example:"{{NetworkId}}" validate:"required" path:"network_id"`

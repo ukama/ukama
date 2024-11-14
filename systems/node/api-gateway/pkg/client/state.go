@@ -66,3 +66,21 @@ func (r *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
 
 	return res, nil
 }
+
+func (r *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*pb.GetStatesHistoryResponse, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
+		NodeId:     nodeId,
+		PageSize:   pageSize,
+		PageNumber: pageNumber,
+		StartTime:  startTime,
+		EndTime:    endTime,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

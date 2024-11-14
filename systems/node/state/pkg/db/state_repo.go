@@ -26,7 +26,7 @@ type StateRepo interface {
 	GetLatestState(nodeId string) (*State, error)
 	UpdateState(nodeId string, subStates []string, events []string) (*State, error)
 	GetNodeConfig(nodeId string) (*NodeConfig, error)
-	GetStateHistoryWithFilter(nodeId string, startTime time.Time, endTime time.Time, pageSize int) ([]*State, error)
+	GetStateHistoryWithFilter(nodeId string, pageSize int, pageNumber int, startTime, endTime time.Time) ([]*State, error)
 }
 
 type stateRepo struct {
@@ -150,10 +150,15 @@ func (r *stateRepo) GetNodeConfig(nodeId string) (*NodeConfig, error) {
 	return &config, nil
 }
 
-func (r *stateRepo) GetStateHistoryWithFilter(nodeId string, startTime time.Time, endTime time.Time, pageSize int) ([]*State, error) {
+func (r *stateRepo) GetStateHistoryWithFilter(nodeId string, pageSize int, pageNumber int, startTime, endTime time.Time) ([]*State, error) {
 	var states []*State
 
-	query := r.Db.GetGormDb().Model(&State{}).Where("node_id = ?", nodeId)
+	offset := (pageNumber - 1) * pageSize
+	query := r.Db.GetGormDb().Model(&State{}).
+		Where("node_id = ?", nodeId).
+		Limit(pageSize).
+		Offset(offset).
+		Order("created_at desc")
 
 	if !startTime.IsZero() {
 		query = query.Where("created_at >= ?", startTime)
@@ -161,12 +166,6 @@ func (r *stateRepo) GetStateHistoryWithFilter(nodeId string, startTime time.Time
 
 	if !endTime.IsZero() {
 		query = query.Where("created_at <= ?", endTime)
-	}
-
-	query = query.Order("created_at DESC")
-
-	if pageSize > 0 {
-		query = query.Limit(pageSize)
 	}
 
 	err := query.Find(&states).Error
