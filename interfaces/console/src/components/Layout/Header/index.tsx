@@ -17,6 +17,7 @@ import {
   IconButton,
   Stack,
   Toolbar,
+  Typography,
   styled,
   useMediaQuery,
   useTheme,
@@ -106,6 +107,9 @@ const Header = ({
             alignItems={'center'}
             spacing={{ xs: 1, md: 1.75 }}
           >
+            <Typography variant="body1" fontWeight={600}>
+              {user.orgName}
+            </Typography>
             {isManager && (
               <IconButton
                 onClick={() => onNavigate('Manage', '/manage')}
