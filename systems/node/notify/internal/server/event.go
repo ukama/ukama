@@ -23,36 +23,25 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
- 
- type NotifiyEventServer struct {
-	 orgName        string
-	 notifyRepo     db.NotificationRepo
-	 listenerRoutes map[string]struct{}
-	 msgbus         mb.MsgBusServiceClient
-	 baseRoutingKey msgbus.RoutingKeyBuilder
-	 epb.UnimplementedEventNotificationServiceServer
- }
- 
- func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, routes []string) *NotifiyEventServer {
- 
-	 pRoutes := msgbus.PrepareRoutes(orgName, routes)
-	 r := make(map[string]struct{}, len(routes))
- 
-	 for _, route := range pRoutes {
-		 r[route] = struct{}{}
-	 }
- 
-	 return &NotifiyEventServer{
-		 orgName:        orgName,
-		 notifyRepo:     nRepo,
-		 listenerRoutes: r,
-		 msgbus:         msgBus,
-		 baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
-	 }
- }
- 
 
- func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+type NotifiyEventServer struct {
+	orgName        string
+	notifyRepo     db.NotificationRepo
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	epb.UnimplementedEventNotificationServiceServer
+}
+
+func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifiyEventServer {
+	return &NotifiyEventServer{
+		orgName:        orgName,
+		notifyRepo:     nRepo,
+		msgbus:         msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
+	}
+}
+
+func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
@@ -71,7 +60,7 @@ import (
 			return nil, err
 		}
 
-		err = n.handleNodeOfflineEvent( msg)
+		err = n.handleNodeOfflineEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -81,7 +70,7 @@ import (
 			return nil, err
 		}
 
-		err = n.handleNodeCreateEvent( msg)
+		err = n.handleNodeCreateEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +81,7 @@ import (
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NotifiyEventServer) handleNodeOnlineEvent( msg *epb.NodeOnlineEvent) error {
+func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent) error {
 	eventData := map[string]interface{}{
 		"value": "online",
 	}
@@ -101,18 +90,18 @@ func (n *NotifiyEventServer) handleNodeOnlineEvent( msg *epb.NodeOnlineEvent) er
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
 
-    return  add(
-        msg.NodeId,
+	return add(
+		msg.NodeId,
 		string(db.Low),
-        "",
-        "mesh",
-		data ,
+		db.NotificationType("event").String(),
+		"mesh",
+		data,
 		1,
 		1,
-        n.notifyRepo,
-        n.msgbus,
-        n.baseRoutingKey,
-    )
+		n.notifyRepo,
+		n.msgbus,
+		n.baseRoutingKey,
+	)
 
 }
 
@@ -129,7 +118,7 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.NodeCreatedEvent) er
 	return add(
 		msg.NodeId,
 		string(db.Low),
-		"",
+		db.NotificationType("event").String(),
 		"registry",
 		data,
 		1,
@@ -140,7 +129,7 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.NodeCreatedEvent) er
 	)
 }
 
-func (n *NotifiyEventServer) handleNodeOfflineEvent( msg *epb.NodeOfflineEvent) error {
+func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent) error {
 	eventData := map[string]interface{}{
 		"value": "offline",
 	}
@@ -150,21 +139,19 @@ func (n *NotifiyEventServer) handleNodeOfflineEvent( msg *epb.NodeOfflineEvent) 
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
 
-    return add(
-        msg.NodeId,
-        string(db.Low),
-        "",
-        "mesh",
-        data,
+	return add(
+		msg.NodeId,
+		string(db.Low),
+		db.NotificationType("event").String(),
+		"mesh",
+		data,
 		1,
 		1,
-        n.notifyRepo,
-        n.msgbus,
-        n.baseRoutingKey,
-
-    )
+		n.notifyRepo,
+		n.msgbus,
+		n.baseRoutingKey,
+	)
 }
-
 
 func (n *NotifiyEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
 	p := &epb.NodeCreatedEvent{}
@@ -177,8 +164,7 @@ func (n *NotifiyEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.Node
 	return p, nil
 }
 
- 
- func (n *NotifiyEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
+func (n *NotifiyEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
 	p := &epb.NodeOnlineEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {

@@ -91,8 +91,7 @@ func runGrpcServer(gormdb sql.Db) {
 		srv := server.NewNotifyServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
 		generated.RegisterNotifyServiceServer(s, srv)
 
-		eSrv := server.NewNotifyEventServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient,
-			serviceConfig.MsgClient.ListenerRoutes)
+		eSrv := server.NewNotifyEventServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 
 	})
