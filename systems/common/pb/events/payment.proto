@@ -28,4 +28,5 @@ message Payment {
     string country = 13;
     string description = 14;
     string status = 15;
+    bytes metadata = 16;
 }
