@@ -5,13 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 
 package pkg
 
@@ -46,7 +39,6 @@ type Config struct {
 }
 
 func NewConfig(name string) *Config {
-
 	return &Config{
 		DB: &uconf.Database{
 			DbName: name,
@@ -71,37 +63,37 @@ func getEnvOrLog(key, description string) (string, bool) {
 
 func loadMailerConfig(name string) *MailerConfig {
 	const (
-		mailerHostSuffix     = "_MAILER_HOST"
-		mailerPortSuffix     = "_MAILER_PORT"
-		mailerUsernameSuffix = "_MAILER_USERNAME"
-		mailerPasswordSuffix = "_MAILER_PASSWORD"
-		mailerFromSuffix     = "_MAILER_FROM"
+		hostSuffix     = "_HOST"
+		portSuffix     = "_PORT"
+		usernameSuffix = "_USERNAME"
+		passwordSuffix = "_PASSWORD"
+		fromSuffix     = "_FROM"
 	)
 
 	config := &MailerConfig{}
 
-	if val, ok := getEnvOrLog(envKey(name, mailerFromSuffix), "mailer from"); ok {
+	if val, ok := getEnvOrLog(envKey(name, fromSuffix), "mailer from"); ok {
 		config.From = val
 	}
 
-	if val, ok := getEnvOrLog(envKey(name, mailerHostSuffix), "mailer host"); ok {
+	if val, ok := getEnvOrLog(envKey(name, hostSuffix), "mailer host"); ok {
 		config.Host = val
 	}
 
-	if val, ok := getEnvOrLog(envKey(name, mailerPortSuffix), "mailer port"); ok {
+	if val, ok := getEnvOrLog(envKey(name, portSuffix), "mailer port"); ok {
 		port, err := strconv.Atoi(val)
 		if err != nil {
-			logrus.Errorf("Invalid port value for %s: %v", envKey(name, mailerPortSuffix), err)
+			logrus.Errorf("Invalid port value for %s: %v", envKey(name, portSuffix), err)
 		} else {
 			config.Port = port
 		}
 	}
 
-	if val, ok := getEnvOrLog(envKey(name, mailerUsernameSuffix), "mailer username"); ok {
+	if val, ok := getEnvOrLog(envKey(name, usernameSuffix), "mailer username"); ok {
 		config.Username = val
 	}
 
-	if val, ok := getEnvOrLog(envKey(name, mailerPasswordSuffix), "mailer password"); ok {
+	if val, ok := getEnvOrLog(envKey(name, passwordSuffix), "mailer password"); ok {
 		config.Password = val
 	}
 
