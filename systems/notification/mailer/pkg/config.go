@@ -14,6 +14,13 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
+type MailerConfig struct {
+	Host     string `default:"localhost"`
+	Port     int    `default:"587"`
+	Username string `default:""`
+	Password string `default:""`
+	From     string `default:"hello@dev.ukama.com"`
+}
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database `default:"{}"`
@@ -22,11 +29,7 @@ type Config struct {
 	Timeout          time.Duration   `default:"50s"`
 	Service          *uconf.Service
 	TemplatesPath    string `default:"templates"`
-	MailerHost       string `default:"localhost"`
-	MailerPort       int    `default:"587"`
-	MailerUsername   string `default:""`
-	MailerPassword   string `default:""`
-	MailerFrom       string `default:"hello@dev.ukama.com"`
+	Mailer           *MailerConfig
 }
 
 func NewConfig(name string) *Config {
