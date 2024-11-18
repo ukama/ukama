@@ -67,7 +67,7 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
-	srv, err := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer, serviceConfig.TemplatesPath)
+	srv, err := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig, serviceConfig.TemplatesPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize mailer server: %v", err)
 	}

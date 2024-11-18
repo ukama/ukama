@@ -54,14 +54,14 @@ type EmailPayload struct {
 type MailerServer struct {
 	mailerRepo db.MailerRepo
 	pb.UnimplementedMailerServiceServer
-	mailer        *pkg.MailerConfig
+	mailer        *pkg.Config
 	templatesPath string
 	templates     *template.Template
 	emailQueue    chan *EmailPayload
 	retryTicker   *time.Ticker
 }
 
-func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.MailerConfig, templatesPath string) (*MailerServer, error) {
+func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.Config, templatesPath string) (*MailerServer, error) {
 	templates, err := template.ParseGlob(filepath.Join(templatesPath, "*"+templateExtension))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load email templates: %v", err)
@@ -312,23 +312,26 @@ func (s *MailerServer) attemptSendEmail(payload *EmailPayload) error {
 }
 
 func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, error) {
+
 	dialer := &net.Dialer{
 		Timeout: dialTimeout,
 	}
 
-	conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", s.mailer.Host, s.mailer.Port))
+	conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", s.mailer.MailerHost, s.mailer.MailerPort))
+
 	if err != nil {
 		return nil, fmt.Errorf("SMTP connection failed: %v", err)
 	}
 
-	client, err := smtp.NewClient(conn, s.mailer.Host)
+	client, err := smtp.NewClient(conn, s.mailer.MailerHost)
+
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("SMTP client creation failed: %v", err)
 	}
 
 	config := &tls.Config{
-		ServerName:         s.mailer.Host,
+		ServerName:         s.mailer.MailerHost,
 		InsecureSkipVerify: false,
 	}
 	if err := client.StartTLS(config); err != nil {
@@ -336,7 +339,7 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 		return nil, fmt.Errorf("TLS setup failed: %v", err)
 	}
 
-	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
+	auth := smtp.PlainAuth("", s.mailer.MailerUsername, s.mailer.MailerPassword, s.mailer.MailerHost)
 	if err := client.Auth(auth); err != nil {
 		client.Close()
 		if strings.Contains(err.Error(), "authentication failed") {
@@ -354,7 +357,7 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 
 	errCh := make(chan error, 1)
 	go func() {
-		if err := client.Mail(s.mailer.From); err != nil {
+		if err := client.Mail(s.mailer.MailerFrom); err != nil {
 			errCh <- fmt.Errorf("failed to set sender: %v", err)
 			return
 		}

@@ -21,12 +21,12 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MAILER_HOST=${MAILER_HOST}
-   - MAILER_PORT=${MAILER_PORT}
-   - MAILER_PASSWORD=${MAILER_PASSWORD}
-   - MAILER_USERNAME=${MAILER_USERNAME}
+   - MAILERHOST=${MAILERHOST}
+   - MAILERPORT=${MAILERPORT}
+   - MAILERPASSWORD=${MAILERPASSWORD}
+   - MAILERUSERNAME=${MAILERUSERNAME}
    - TEMPLATESPATH=${TEMPLATESPATH}
-   - MAILER_FROM=${MAILER_FROM}
+   - MAILERFROM=${MAILERFROM}
   restart: always
   networks:
    - ukama-net
@@ -94,7 +94,7 @@ services:
    - postgresd-notification
 
  initclient-notification:
-  build: ../services/initClient
+  image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/services/initclient:main-31
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=notification

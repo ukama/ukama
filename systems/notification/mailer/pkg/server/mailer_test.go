@@ -22,12 +22,12 @@ import (
 
 func setupServer(t *testing.T) (*MailerServer, *mocks.MailerRepo) {
 	mockRepo := mocks.NewMailerRepo(t)
-	mailer := &pkg.MailerConfig{
-		Host:     "smtp.example.com",
-		Port:     587,
-		Username: "test@example.com",
-		Password: "password",
-		From:     "from@example.com",
+	mailer := &pkg.Config{
+		MailerHost:     "smtp.example.com",
+		MailerPort:     587,
+		MailerUsername: "test@example.com",
+		MailerPassword: "password",
+		MailerFrom:     "from@example.com",
 	}
 
 	server, err := NewMailerServer(mockRepo, mailer, "../../templates")
