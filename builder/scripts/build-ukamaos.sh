@@ -15,7 +15,7 @@
 # Copy all lib dependencies
 # create cpio arch
 set -e
-
+set -x
 # Base parameters
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
 UKAMA_REPO=`realpath ../../.`
@@ -395,9 +395,7 @@ setup_device() {
     cd ${CWD}
 }
 
-#
-# Script main
-#
+# Script entry point
 WD=`pwd`
 TARGET=$1
 ROOTFS=${DEF_ROOTFS}
@@ -406,13 +404,6 @@ if [ -z "$TARGET" ]
 then
 	log_info "Missing node type"
     exit 1
-fi
-
-#setup rootfs location
-if [ -d "${ROOTFS}" ]
-then
-    rm -rf ${ROOTFS}
-    log_info "Removed existing copy of ${ROOTFS}"
 fi
 
 mkdir -p ${ROOTFS}
