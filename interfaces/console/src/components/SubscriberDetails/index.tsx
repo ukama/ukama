@@ -5,10 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import { colors } from '@/theme';
 import CloseIcon from '@mui/icons-material/Close';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   Box,
   Button,
@@ -26,10 +26,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
 import SimTable from './SimInfoTab';
 import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
-import { colors } from '@/theme';
 
 interface SubscriberProps {
   ishowSubscriberDetails: boolean;

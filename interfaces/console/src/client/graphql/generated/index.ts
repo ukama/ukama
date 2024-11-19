@@ -79,15 +79,11 @@ export type AddSiteInputDto = {
 
 export type AllocateSimApiDto = {
   __typename?: 'AllocateSimAPIDto';
-  activationsCount: Scalars['String']['output'];
   allocated_at: Scalars['String']['output'];
-  deactivationsCount: Scalars['String']['output'];
-  firstActivatedOn?: Maybe<Scalars['String']['output']>;
   iccid: Scalars['String']['output'];
   id: Scalars['String']['output'];
   imsi?: Maybe<Scalars['String']['output']>;
   is_physical: Scalars['Boolean']['output'];
-  lastActivatedOn?: Maybe<Scalars['String']['output']>;
   msisdn: Scalars['String']['output'];
   network_id: Scalars['String']['output'];
   package: SimAllocatePackageDto;
@@ -1164,15 +1160,11 @@ export type SubscriberMetricsByNetworkDto = {
 
 export type SubscriberSimDto = {
   __typename?: 'SubscriberSimDto';
-  activationsCount: Scalars['String']['output'];
   allocatedAt: Scalars['String']['output'];
-  deactivationsCount: Scalars['String']['output'];
-  firstActivatedOn?: Maybe<Scalars['String']['output']>;
   iccid: Scalars['String']['output'];
   id: Scalars['String']['output'];
   imsi: Scalars['String']['output'];
   isPhysical?: Maybe<Scalars['Boolean']['output']>;
-  lastActivatedOn?: Maybe<Scalars['String']['output']>;
   msisdn: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   package: SimPackageDto;
@@ -1184,15 +1176,11 @@ export type SubscriberSimDto = {
 
 export type SubscriberSimsDto = {
   __typename?: 'SubscriberSimsDto';
-  activationsCount: Scalars['String']['output'];
   allocatedAt: Scalars['String']['output'];
-  deactivationsCount: Scalars['String']['output'];
-  firstActivatedOn: Scalars['String']['output'];
   iccid: Scalars['String']['output'];
   id: Scalars['String']['output'];
   imsi: Scalars['String']['output'];
   isPhysical: Scalars['Boolean']['output'];
-  lastActivatedOn: Scalars['String']['output'];
   msisdn: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
   status: Scalars['String']['output'];
@@ -1488,7 +1476,7 @@ export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typ
 
 export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
 
-export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical: boolean }> };
+export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
 
 export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
@@ -1509,7 +1497,7 @@ export type GetSimsBySubscriberQueryVariables = Exact<{
 }>;
 
 
-export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, isPhysical: boolean }> } };
+export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> } };
 
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
@@ -1586,14 +1574,14 @@ export type SimPoolFragment = { __typename?: 'SimDto', activationCode?: string |
 
 export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null };
 
-export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
+export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
 
 export type AllocateSimMutationVariables = Exact<{
   data: AllocateSimInputDto;
 }>;
 
 
-export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
+export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
 
 export type ToggleSimStatusMutationVariables = Exact<{
   data: ToggleSimStatusInputDto;
@@ -1616,23 +1604,23 @@ export type GetSimsQueryVariables = Exact<{
 
 export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
 
-export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
+export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
 
 export type GetSubscriberQueryVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
@@ -1654,7 +1642,7 @@ export type GetSubscribersByNetworkQueryVariables = Exact<{
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, firstActivatedOn?: string | null, lastActivatedOn?: string | null, activationsCount: string, deactivationsCount: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null }> } };
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status: string, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -1886,10 +1874,6 @@ export const SubscriberSimsFragmentDoc = gql`
     imsi
     type
     status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
     allocatedAt
     isPhysical
   }
@@ -1984,10 +1968,6 @@ export const SimAllocationFragmentDoc = gql`
   status
   is_physical
   traffic_policy
-  firstActivatedOn
-  lastActivatedOn
-  activationsCount
-  deactivationsCount
   allocated_at
   sync_status
 }
@@ -2003,10 +1983,6 @@ export const SubscriberSimFragmentDoc = gql`
     imsi
     type
     status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
     allocatedAt
     sync_status
     isPhysical
