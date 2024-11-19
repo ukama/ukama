@@ -90,7 +90,9 @@ class ControllerApi extends RESTDataSource {
   };
 
   example = async (baseURL: string, req: any): Promise<string> => {
-    this.logger.info(`Example [GET]: ${baseURL}/${VERSION}/example`);
+    this.logger.info(
+      `Example [GET]: ${baseURL}/${VERSION}/${req.nodeId}example`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/example`);
   };
