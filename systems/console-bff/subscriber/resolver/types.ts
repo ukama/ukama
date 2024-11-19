@@ -9,6 +9,30 @@ import { IsEmail } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
+export class SimPackageAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  package_id: string;
+
+  @Field()
+  start_date: string;
+
+  @Field()
+  end_date: string;
+
+  @Field()
+  is_active: boolean;
+
+  @Field()
+  created_at: string;
+
+  @Field()
+  updated_at: string;
+}
+
+@ObjectType()
 export class SubSimAPIDto {
   @Field()
   id: string;
@@ -34,17 +58,8 @@ export class SubSimAPIDto {
   @Field()
   status: string;
 
-  @Field({ nullable: true })
-  first_activated_on: string;
-
-  @Field({ nullable: true })
-  last_activated_on: string;
-
   @Field()
-  activations_count: string;
-
-  @Field()
-  deactivations_count: string;
+  sync_status: string;
 
   @Field()
   allocated_at: string;
@@ -52,8 +67,8 @@ export class SubSimAPIDto {
   @Field({ nullable: true })
   is_physical: boolean;
 
-  @Field({ nullable: true })
-  package: string;
+  @Field(() => SimPackageAPIDto)
+  package: SimPackageAPIDto;
 }
 
 @ObjectType()
@@ -96,6 +111,12 @@ export class SubscriberAPIDto {
 }
 
 @ObjectType()
+export class SimsAPIResDto {
+  @Field(() => [SubSimAPIDto])
+  sims: SubSimAPIDto[];
+}
+
+@ObjectType()
 export class SubscriberAPIResDto {
   @Field(() => SubscriberAPIDto)
   Subscriber: SubscriberAPIDto;
@@ -129,6 +150,30 @@ export class SubscriberInputDto {
 }
 
 @ObjectType()
+export class SimPackageDto {
+  @Field()
+  id: string;
+
+  @Field()
+  package_id: string;
+
+  @Field()
+  start_date: string;
+
+  @Field()
+  end_date: string;
+
+  @Field()
+  is_active: boolean;
+
+  @Field()
+  created_at: string;
+
+  @Field()
+  updated_at: string;
+}
+
+@ObjectType()
 export class SubscriberSimDto {
   @Field()
   id: string;
@@ -154,26 +199,17 @@ export class SubscriberSimDto {
   @Field()
   status: string;
 
-  @Field({ nullable: true })
-  firstActivatedOn: string;
-
-  @Field({ nullable: true })
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: string;
-
-  @Field()
-  deactivationsCount: string;
-
   @Field()
   allocatedAt: string;
+
+  @Field()
+  sync_status: string;
 
   @Field({ nullable: true })
   isPhysical: boolean;
 
-  @Field({ nullable: true })
-  package: string;
+  @Field(() => SimPackageDto)
+  package: SimPackageDto;
 }
 @ObjectType()
 export class SubscriberDto {
@@ -215,6 +251,12 @@ export class SubscriberDto {
 export class SubscribersResDto {
   @Field(() => [SubscriberDto])
   subscribers: SubscriberDto[];
+}
+
+@ObjectType()
+export class SubscriberSimsResDto {
+  @Field(() => [SubscriberSimDto])
+  sims: SubscriberSimDto[];
 }
 
 @InputType()

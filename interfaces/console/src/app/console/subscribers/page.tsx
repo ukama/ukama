@@ -315,11 +315,16 @@ const Page = () => {
   });
 
   const structureData = useCallback(
-    (data: SubscribersResDto) =>
-      data.subscribers.map((subscriber) => {
+    (data: SubscribersResDto) => {
+      return data.subscribers.map((subscriber) => {
         const networkName =
           networkList?.getNetworks?.networks.find(
             (net) => net.id === subscriber.networkId,
+          )?.name ?? '';
+        const sim = subscriber.sim?.length > 0 ? subscriber.sim[0] : null;
+        const pacakgeName =
+          packagesData?.getPackages.packages.find(
+            (pkg) => pkg.uuid === subscriber?.sim[0]?.package?.id,
           )?.name ?? '';
 
         return {
@@ -327,11 +332,12 @@ const Page = () => {
           email: subscriber.email,
           name: `${subscriber.name}`,
           dataUsage: '',
-          dataPlan: '',
+          dataPlan: subscriber?.sim[0]?.package?.id ?? '',
           actions: '',
           network: networkName,
         };
-      }),
+      });
+    },
     [networkList],
   );
 

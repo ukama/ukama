@@ -474,13 +474,18 @@ fragment SubscriberSim on SubscriberDto {
     imsi
     type
     status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
     allocatedAt
+    sync_status
     isPhysical
-    package
+    package {
+      id
+      package_id
+      start_date
+      end_date
+      is_active
+      created_at
+      updated_at
+    }
   }
 }
 

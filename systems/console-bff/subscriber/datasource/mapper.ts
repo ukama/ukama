@@ -7,9 +7,14 @@
  */
 import {
   GetSubscriberAPIResDto,
+  SimPackageAPIDto,
+  SimPackageDto,
+  SimsAPIResDto,
+  SubSimAPIDto,
   SubscriberAPIResDto,
   SubscriberDto,
   SubscriberSimDto,
+  SubscriberSimsResDto,
   SubscribersAPIResDto,
   SubscribersResDto,
 } from "../resolver/types";
@@ -46,12 +51,9 @@ export const dtoToSubscriberResDto = (
       package: sim.package,
       networkId: sim.network_id,
       isPhysical: sim.is_physical,
+      sync_status: sim.sync_status,
       allocatedAt: sim.allocated_at,
       subscriberId: sim.subscriber_id,
-      lastActivatedOn: sim.last_activated_on,
-      activationsCount: sim.activations_count,
-      firstActivatedOn: sim.first_activated_on,
-      deactivationsCount: sim.deactivations_count,
     })) ?? [];
   return {
     sim: sims,
@@ -80,4 +82,43 @@ export const dtoToSubscribersResDto = (
   return {
     subscribers: subscribers,
   };
+};
+
+export const dtoToSimPackageDto = (res: SimPackageAPIDto): SimPackageDto => {
+  return {
+    id: res.id,
+    end_date: res.end_date,
+    is_active: res.is_active,
+    package_id: res.package_id,
+    start_date: res.start_date,
+    updated_at: res.updated_at,
+    created_at: res.created_at,
+  };
+};
+
+export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
+  return {
+    id: res.id,
+    imsi: res.imsi,
+    type: res.type,
+    iccid: res.iccid,
+    msisdn: res.msisdn,
+    status: res.status,
+    networkId: res.network_id,
+    isPhysical: res.is_physical,
+    sync_status: res.sync_status,
+    allocatedAt: res.allocated_at,
+    subscriberId: res.subscriber_id,
+    package: dtoToSimPackageDto(res.package),
+  };
+};
+
+export const dtoToSimsResDto = (res: SimsAPIResDto): SubscriberSimsResDto => {
+  const subSims: SubscriberSimDto[] = [];
+  for (const sim of res.sims) {
+    const s = dtoToSimDto(sim);
+    subSims.push(s);
+  }
+
+  return { sims: subSims };
 };
