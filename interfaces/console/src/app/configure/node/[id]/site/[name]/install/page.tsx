@@ -119,7 +119,10 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
     }
   };
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   return (
     <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>

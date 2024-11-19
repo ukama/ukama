@@ -62,7 +62,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     return p;
   };
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   const handleNext = () => {
     if (address) {

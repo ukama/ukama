@@ -33,7 +33,7 @@ import {
 } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { Field, FormikProvider, FormikValues, useFormik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import NetworkInfo from '../../../../../../../public/svg/NetworkInfo';
 
@@ -56,6 +56,7 @@ interface IPage {
 const Page = ({ params }: IPage) => {
   const { id, name } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const gclasses = globalUseStyles();
   const { setSnackbarMessage } = useAppContext();
   const searchParams = useSearchParams();
@@ -173,7 +174,17 @@ const Page = ({ params }: IPage) => {
     },
   });
 
-  const handleBack = async () => router.back();
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   const handleSubmit = (values: FormikValues) => {
     if (
