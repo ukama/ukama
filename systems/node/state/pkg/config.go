@@ -38,6 +38,7 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
+				"event.cloud.local.{{ .Org}}.node.state.node.force",
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],

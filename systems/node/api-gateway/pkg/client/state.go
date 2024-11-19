@@ -84,3 +84,18 @@ func (r *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32
 	}
 	return res, nil
 }
+
+func (r *State) EnforeTransition(nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{
+		NodeId: nodeId,
+		Event:  event,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

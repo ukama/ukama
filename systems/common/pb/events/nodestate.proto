@@ -20,3 +20,8 @@
    repeated string events = 6;
    google.protobuf.Timestamp timestamp = 5;
  }
+
+ message EnforceNodeStateEvent {
+   string nodeId = 2;
+   string event = 3;
+ }

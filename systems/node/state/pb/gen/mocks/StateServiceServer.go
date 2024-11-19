@@ -44,6 +44,36 @@ func (_m *StateServiceServer) AddState(_a0 context.Context, _a1 *gen.AddStateReq
 	return r0, r1
 }
 
+// EnforceStateTransition provides a mock function with given fields: _a0, _a1
+func (_m *StateServiceServer) EnforceStateTransition(_a0 context.Context, _a1 *gen.EnforceStateTransitionRequest) (*gen.EnforceStateTransitionResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnforceStateTransition")
+	}
+
+	var r0 *gen.EnforceStateTransitionResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.EnforceStateTransitionRequest) (*gen.EnforceStateTransitionResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.EnforceStateTransitionRequest) *gen.EnforceStateTransitionResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.EnforceStateTransitionResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.EnforceStateTransitionRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetLatestState provides a mock function with given fields: _a0, _a1
 func (_m *StateServiceServer) GetLatestState(_a0 context.Context, _a1 *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error) {
 	ret := _m.Called(_a0, _a1)

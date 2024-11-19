@@ -87,6 +87,12 @@
           },
           {
             "to_state": "update",
+            "trigger":["ready"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 600
+          },
+          {
+            "to_state": "update",
             "trigger": ["update"],
             "expectedEvents": ["offline", "online", "ready"],
             "timeout": 600

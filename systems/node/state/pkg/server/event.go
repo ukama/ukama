@@ -73,7 +73,7 @@ func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID strin
 		return
 	}
 
-	route := n.baseRoutingKey.SetAction("chnage").SetObject("node").MustBuild()
+	route := n.baseRoutingKey.SetAction("transition").SetObject("node").MustBuild()
 
 	evt := &epb.NodeStateChangeEvent{
 		NodeId:   nodeID,
@@ -159,6 +159,16 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.state.node.force"):
+		msg, err := n.UnmarshalTransitionEvent(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleEnforceTransitionEvent(ctx, e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.notification.store"):
 		msg, err := n.unmarshalNotifyEvent(e.Msg)
 		if err != nil {
@@ -183,6 +193,25 @@ func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notificati
 		return nil, err
 	}
 	return p, nil
+}
+
+func (n *StateEventServer) UnmarshalTransitionEvent(msg *anypb.Any) (*epb.EnforceNodeStateEvent, error) {
+	p := &epb.EnforceNodeStateEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal node transition message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+func (n *StateEventServer) handleEnforceTransitionEvent(ctx context.Context, key string, msg *epb.EnforceNodeStateEvent) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	if err := n.ProcessEvent(ctx, msg.Event, msg.NodeId, msg); err != nil {
+		log.WithError(err).Error("Error processing event")
+		return err
+	}
+	return nil
 }
 func (n *StateEventServer) handleNotifyEvent(ctx context.Context, key string, msg *epb.Notification) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
@@ -253,7 +282,6 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	prevState := instance.CurrentState
 
 	eventsInCurrentState := n.getEventsForNode(nodeId)
-
 	if len(eventsInCurrentState) == 0 || eventsInCurrentState[len(eventsInCurrentState)-1] != eventName {
 		eventsInCurrentState = append(eventsInCurrentState, eventName)
 	}
@@ -276,13 +304,13 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
 			CurrentState: npb.NodeState(stateValue),
-			SubState:     []string{instance.CurrentSubstate},
+			SubState:     []string{},
 			Events:       []string{},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
 		}
-		log.Infof("Added new state for node %s: state=%s, substate=%s", nodeId, instance.CurrentState, instance.CurrentSubstate)
+		log.Infof("Added new state for node %s: state=%s", nodeId, instance.CurrentState)
 	}
 
 	n.clearEventsForNode(nodeId)

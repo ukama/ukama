@@ -58,6 +58,7 @@ type Clients struct {
 type state interface {
 	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
 	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
+	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
@@ -161,6 +162,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		stateS := auth.Group(state, "State", "Operations on state")
 		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
 		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
+		stateS.POST("/:node_id/enforce/:event", formatDoc("Enforce state transition", "Enforce state transition"), tonic.Handler(r.enforceStateTransitionHandler, http.StatusOK))
 
 	}
 }
@@ -270,6 +272,10 @@ func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRe
 	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
 }
 
+func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {
+
+	return r.clients.State.EnforeTransition(req.NodeId, req.Event)
+}
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary

@@ -24,3 +24,6 @@ func (this *NodeStateChangeEvent) Validate() error {
 	}
 	return nil
 }
+func (this *EnforceNodeStateEvent) Validate() error {
+	return nil
+}

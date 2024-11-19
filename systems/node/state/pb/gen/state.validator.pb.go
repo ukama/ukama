@@ -19,6 +19,12 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *EnforceStateTransitionRequest) Validate() error {
+	return nil
+}
+func (this *EnforceStateTransitionResponse) Validate() error {
+	return nil
+}
 func (this *GetStatesHistoryRequest) Validate() error {
 	return nil
 }

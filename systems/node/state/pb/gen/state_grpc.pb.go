@@ -26,12 +26,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	StateService_AddState_FullMethodName         = "/ukama.node.state.v1.StateService/AddState"
-	StateService_GetStateById_FullMethodName     = "/ukama.node.state.v1.StateService/GetStateById"
-	StateService_GetStates_FullMethodName        = "/ukama.node.state.v1.StateService/GetStates"
-	StateService_GetLatestState_FullMethodName   = "/ukama.node.state.v1.StateService/GetLatestState"
-	StateService_UpdateState_FullMethodName      = "/ukama.node.state.v1.StateService/UpdateState"
-	StateService_GetStatesHistory_FullMethodName = "/ukama.node.state.v1.StateService/GetStatesHistory"
+	StateService_AddState_FullMethodName               = "/ukama.node.state.v1.StateService/AddState"
+	StateService_GetStateById_FullMethodName           = "/ukama.node.state.v1.StateService/GetStateById"
+	StateService_GetStates_FullMethodName              = "/ukama.node.state.v1.StateService/GetStates"
+	StateService_GetLatestState_FullMethodName         = "/ukama.node.state.v1.StateService/GetLatestState"
+	StateService_UpdateState_FullMethodName            = "/ukama.node.state.v1.StateService/UpdateState"
+	StateService_GetStatesHistory_FullMethodName       = "/ukama.node.state.v1.StateService/GetStatesHistory"
+	StateService_EnforceStateTransition_FullMethodName = "/ukama.node.state.v1.StateService/EnforceStateTransition"
 )
 
 // StateServiceClient is the client API for StateService service.
@@ -44,6 +45,7 @@ type StateServiceClient interface {
 	GetLatestState(ctx context.Context, in *GetLatestStateRequest, opts ...grpc.CallOption) (*GetLatestStateResponse, error)
 	UpdateState(ctx context.Context, in *UpdateStateRequest, opts ...grpc.CallOption) (*UpdateStateResponse, error)
 	GetStatesHistory(ctx context.Context, in *GetStatesHistoryRequest, opts ...grpc.CallOption) (*GetStatesHistoryResponse, error)
+	EnforceStateTransition(ctx context.Context, in *EnforceStateTransitionRequest, opts ...grpc.CallOption) (*EnforceStateTransitionResponse, error)
 }
 
 type stateServiceClient struct {
@@ -114,6 +116,16 @@ func (c *stateServiceClient) GetStatesHistory(ctx context.Context, in *GetStates
 	return out, nil
 }
 
+func (c *stateServiceClient) EnforceStateTransition(ctx context.Context, in *EnforceStateTransitionRequest, opts ...grpc.CallOption) (*EnforceStateTransitionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnforceStateTransitionResponse)
+	err := c.cc.Invoke(ctx, StateService_EnforceStateTransition_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StateServiceServer is the server API for StateService service.
 // All implementations must embed UnimplementedStateServiceServer
 // for forward compatibility.
@@ -124,6 +136,7 @@ type StateServiceServer interface {
 	GetLatestState(context.Context, *GetLatestStateRequest) (*GetLatestStateResponse, error)
 	UpdateState(context.Context, *UpdateStateRequest) (*UpdateStateResponse, error)
 	GetStatesHistory(context.Context, *GetStatesHistoryRequest) (*GetStatesHistoryResponse, error)
+	EnforceStateTransition(context.Context, *EnforceStateTransitionRequest) (*EnforceStateTransitionResponse, error)
 	mustEmbedUnimplementedStateServiceServer()
 }
 
@@ -151,6 +164,9 @@ func (UnimplementedStateServiceServer) UpdateState(context.Context, *UpdateState
 }
 func (UnimplementedStateServiceServer) GetStatesHistory(context.Context, *GetStatesHistoryRequest) (*GetStatesHistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatesHistory not implemented")
+}
+func (UnimplementedStateServiceServer) EnforceStateTransition(context.Context, *EnforceStateTransitionRequest) (*EnforceStateTransitionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnforceStateTransition not implemented")
 }
 func (UnimplementedStateServiceServer) mustEmbedUnimplementedStateServiceServer() {}
 func (UnimplementedStateServiceServer) testEmbeddedByValue()                      {}
@@ -281,6 +297,24 @@ func _StateService_GetStatesHistory_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StateService_EnforceStateTransition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnforceStateTransitionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StateServiceServer).EnforceStateTransition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StateService_EnforceStateTransition_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StateServiceServer).EnforceStateTransition(ctx, req.(*EnforceStateTransitionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StateService_ServiceDesc is the grpc.ServiceDesc for StateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -311,6 +345,10 @@ var StateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStatesHistory",
 			Handler:    _StateService_GetStatesHistory_Handler,
+		},
+		{
+			MethodName: "EnforceStateTransition",
+			Handler:    _StateService_EnforceStateTransition_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

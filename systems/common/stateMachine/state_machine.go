@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 package statemachine
 
 import (
@@ -16,6 +9,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+// TODO:
+// - Add more comprehensive error messages
+// - Improve logging details
+// - Consider adding more robust validation checks
+// - Optimize memory usage for large state configs
+// - Add more comprehensive unit tests
+// - Implement better error handling for edge cases
+// - Implement better error handling for invalid state machine configurations
+// Roolback fucnitonality when state is changed to previous state or failed to change state
 
 type Event struct {
 	Name        string    `json:"name"`
@@ -29,24 +32,25 @@ type Event struct {
 
 type TransitionCallback func(event Event)
 
-type Transition struct {
-	ToState string   `json:"to_state"`
-	Trigger []string `json:"trigger"`
+type TransitionState struct {
+	ExpectedEvents []string `json:"expectedEvents,omitempty"`
+	ToState        string   `json:"to_state"`
+	Trigger        []string `json:"trigger"`
 }
 
 type SubState struct {
-	Events      []string              `json:"events"`
-	Transitions map[string]Transition `json:"transition"`
+	Events      []string                   `json:"events"`
+	Transitions map[string]TransitionState `json:"transition"`
 }
 
 type State struct {
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	Events      []string              `json:"events"`
-	Transitions map[string]Transition `json:"transition"`
-	SubState    *SubState             `json:"substate,omitempty"`
-	OnEnter     func() error          `json:"-"`
-	OnExit      func() error          `json:"-"`
+	Name        string                     `json:"name"`
+	Description string                     `json:"description"`
+	Events      []string                   `json:"events"`
+	Transitions map[string]TransitionState `json:"transition"`
+	SubState    *SubState                  `json:"substate,omitempty"`
+	OnEnter     func() error               `json:"-"`
+	OnExit      func() error               `json:"-"`
 }
 
 type StateMachineConfig struct {
@@ -59,6 +63,11 @@ type StateMachineConfig struct {
 type configCache struct {
 	configs map[string]StateMachineConfig
 	mu      sync.RWMutex
+}
+
+type TransitionValidation struct {
+	IsValid       bool
+	PendingEvents []string
 }
 
 var (
@@ -77,14 +86,14 @@ func getConfigCache() *configCache {
 
 func (ss *SubState) UnmarshalJSON(data []byte) error {
 	aux := struct {
-		Events      []string     `json:"events"`
-		Transitions []Transition `json:"transition"`
+		Events      []string          `json:"events"`
+		Transitions []TransitionState `json:"transition"`
 	}{}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
 	}
 	ss.Events = aux.Events
-	ss.Transitions = make(map[string]Transition)
+	ss.Transitions = make(map[string]TransitionState)
 	for _, t := range aux.Transitions {
 		for _, trigger := range t.Trigger {
 			ss.Transitions[trigger] = t
@@ -95,13 +104,13 @@ func (ss *SubState) UnmarshalJSON(data []byte) error {
 
 func (s *State) UnmarshalJSON(data []byte) error {
 	aux := struct {
-		Name        string       `json:"name"`
-		Description string       `json:"description"`
-		Events      []string     `json:"events"`
-		Transitions []Transition `json:"transition"`
-		SubState    *SubState    `json:"substate,omitempty"`
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Events      []string          `json:"events"`
+		Transitions []TransitionState `json:"transition"`
+		SubState    *SubState         `json:"substate,omitempty"`
 	}{
-		Transitions: make([]Transition, 0),
+		Transitions: make([]TransitionState, 0),
 	}
 	if err := json.Unmarshal(data, &aux); err != nil {
 		return err
@@ -109,7 +118,7 @@ func (s *State) UnmarshalJSON(data []byte) error {
 	s.Name = aux.Name
 	s.Description = aux.Description
 	s.Events = aux.Events
-	s.Transitions = make(map[string]Transition)
+	s.Transitions = make(map[string]TransitionState)
 	for _, t := range aux.Transitions {
 		for _, trigger := range t.Trigger {
 			s.Transitions[trigger] = t
@@ -150,12 +159,147 @@ type StateMachineInstance struct {
 	CurrentSubstate string
 	Config          StateMachineConfig
 	StateMachine    *StateMachine
+	ExpectedEvents  []string
 }
 
 func NewStateMachine(handler TransitionCallback) *StateMachine {
 	return &StateMachine{handler: handler}
 }
 
+func validateExpectedEvents(transition TransitionState, eventName string, expectedEvents []string) TransitionValidation {
+	if len(transition.ExpectedEvents) == 0 {
+		return TransitionValidation{IsValid: true}
+	}
+
+	if len(expectedEvents) == 0 {
+		return TransitionValidation{
+			IsValid:       true,
+			PendingEvents: transition.ExpectedEvents[1:],
+		}
+	}
+
+	if len(expectedEvents) > 0 && expectedEvents[0] == eventName {
+		return TransitionValidation{
+			IsValid:       true,
+			PendingEvents: expectedEvents[1:],
+		}
+	}
+
+	return TransitionValidation{IsValid: false}
+}
+
+func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string) (*StateMachineInstance, error) {
+	config, err := LoadConfig(configFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	if _, exists := config.States[initialState]; !exists {
+		return nil, fmt.Errorf("invalid initial state: %s", initialState)
+	}
+
+	instance := &StateMachineInstance{
+		InstanceID:      instanceID,
+		CurrentState:    initialState,
+		CurrentSubstate: "",
+		Config:          config,
+		StateMachine:    sm,
+		ExpectedEvents:  []string{},
+	}
+
+	return instance, nil
+}
+
+func (instance *StateMachineInstance) Transition(eventName string) error {
+	instance.StateMachine.mu.Lock()
+	defer instance.StateMachine.mu.Unlock()
+
+	oldState := instance.CurrentState
+	oldSubstate := instance.CurrentSubstate
+
+	currentState, exists := instance.Config.States[instance.CurrentState]
+	if !exists {
+		return fmt.Errorf("current state not found: %s", instance.CurrentState)
+	}
+
+	log.Infof("Processing event %s in state %s (substate: %s)",
+		eventName, currentState.Name, instance.CurrentSubstate)
+
+	var mainStateValidation, substateValidation TransitionValidation
+	var hasMainTransition, hasSubstateTransition bool
+	var mainStateTransition, substateTransition TransitionState
+
+	if trans, exists := currentState.Transitions[eventName]; exists {
+		mainStateValidation = validateExpectedEvents(trans, eventName, instance.ExpectedEvents)
+		if !mainStateValidation.IsValid {
+			return fmt.Errorf("unexpected event %s in main state %s, expected: %v",
+				eventName, instance.CurrentState, instance.ExpectedEvents)
+		}
+		hasMainTransition = true
+		mainStateTransition = trans
+	}
+
+	if currentState.SubState != nil {
+		if trans, exists := currentState.SubState.Transitions[eventName]; exists {
+			substateValidation = validateExpectedEvents(trans, eventName, instance.ExpectedEvents)
+			if !substateValidation.IsValid {
+				return fmt.Errorf("unexpected event %s in substate %s, expected: %v",
+					eventName, instance.CurrentSubstate, instance.ExpectedEvents)
+			}
+			hasSubstateTransition = true
+			substateTransition = trans
+		}
+	}
+
+	var newMainState = instance.CurrentState
+	var newSubState = instance.CurrentSubstate
+
+	if hasSubstateTransition {
+		newSubState = substateTransition.ToState
+		instance.ExpectedEvents = substateValidation.PendingEvents
+		log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
+	}
+
+	if hasMainTransition {
+		if currentState.OnExit != nil {
+			if err := currentState.OnExit(); err != nil {
+				return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
+			}
+		}
+
+		newMainState = mainStateTransition.ToState
+		instance.ExpectedEvents = mainStateValidation.PendingEvents
+		log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
+
+		newState, exists := instance.Config.States[newMainState]
+		if !exists {
+			return fmt.Errorf("new state not found: %s", newMainState)
+		}
+
+		if newState.OnEnter != nil {
+			if err := newState.OnEnter(); err != nil {
+				return fmt.Errorf("error in OnEnter for state %s: %w", newMainState, err)
+			}
+		}
+	}
+
+	instance.CurrentState = newMainState
+	instance.CurrentSubstate = newSubState
+
+	if instance.StateMachine.handler != nil {
+		instance.StateMachine.handler(Event{
+			Name:        eventName,
+			Timestamp:   time.Now(),
+			InstanceID:  instance.InstanceID,
+			OldState:    oldState,
+			NewState:    instance.CurrentState,
+			OldSubstate: oldSubstate,
+			NewSubstate: instance.CurrentSubstate,
+		})
+	}
+
+	return nil
+}
 func validateStateTransitions(config StateMachineConfig) error {
 	for stateName, state := range config.States {
 		for trigger, transition := range state.Transitions {
@@ -232,103 +376,6 @@ func validateEventUniqueness(config StateMachineConfig) error {
 	return nil
 }
 
-func (sm *StateMachine) NewInstance(configFile, instanceID, initialState string) (*StateMachineInstance, error) {
-	config, err := LoadConfig(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if _, exists := config.States[initialState]; !exists {
-		return nil, fmt.Errorf("invalid initial state: %s", initialState)
-	}
-
-	instance := &StateMachineInstance{
-		InstanceID:      instanceID,
-		CurrentState:    initialState,
-		CurrentSubstate: "",
-		Config:          config,
-		StateMachine:    sm,
-	}
-
-	return instance, nil
-}
-
-func (instance *StateMachineInstance) Transition(eventName string) error {
-	instance.StateMachine.mu.Lock()
-	defer instance.StateMachine.mu.Unlock()
-
-	oldState := instance.CurrentState
-	oldSubstate := instance.CurrentSubstate
-
-	currentState, exists := instance.Config.States[instance.CurrentState]
-	if !exists {
-		return fmt.Errorf("current state not found: %s", instance.CurrentState)
-	}
-
-	log.Infof("Processing event %s in state %s (substate: %s)",
-		eventName, currentState.Name, instance.CurrentSubstate)
-
-	newMainState := instance.CurrentState
-	newSubState := instance.CurrentSubstate
-
-	mainStateTransition, hasMainTransition := currentState.Transitions[eventName]
-
-	var substateTransition Transition
-	var hasSubstateTransition bool
-	if currentState.SubState != nil {
-		substateTransition, hasSubstateTransition = currentState.SubState.Transitions[eventName]
-	}
-
-	if hasMainTransition {
-		if currentState.OnExit != nil {
-			if err := currentState.OnExit(); err != nil {
-				return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
-			}
-		}
-		newMainState = mainStateTransition.ToState
-		log.Infof("Main state transition: %s -> %s", currentState.Name, newMainState)
-	}
-
-	if hasSubstateTransition {
-		newSubState = substateTransition.ToState
-		log.Infof("Substate transition: %s -> %s", instance.CurrentSubstate, newSubState)
-	}
-
-	if newMainState != instance.CurrentState {
-		newState, exists := instance.Config.States[newMainState]
-		if !exists {
-			return fmt.Errorf("new state not found: %s", newMainState)
-		}
-
-		if newState.OnEnter != nil {
-			if err := newState.OnEnter(); err != nil {
-				return fmt.Errorf("error in OnEnter for state %s: %w", newMainState, err)
-			}
-		}
-
-		if newState.SubState == nil {
-			newSubState = ""
-		}
-	}
-
-	instance.CurrentState = newMainState
-	instance.CurrentSubstate = newSubState
-
-	if instance.StateMachine.handler != nil {
-		instance.StateMachine.handler(Event{
-			Name:        eventName,
-			Timestamp:   time.Now(),
-			InstanceID:  instance.InstanceID,
-			OldState:    oldState,
-			NewState:    instance.CurrentState,
-			OldSubstate: oldSubstate,
-			NewSubstate: instance.CurrentSubstate,
-		})
-	}
-
-	return nil
-}
-
 func LoadConfig(configFile string) (StateMachineConfig, error) {
 	cache := getConfigCache()
 
@@ -370,4 +417,53 @@ func LoadConfig(configFile string) (StateMachineConfig, error) {
 
 	cache.configs[configFile] = config
 	return config, nil
+}
+
+func (instance *StateMachineInstance) EnforceStateTransition(newState string, newSubstate string) error {
+	instance.StateMachine.mu.Lock()
+	defer instance.StateMachine.mu.Unlock()
+
+	if _, exists := instance.Config.States[newState]; !exists {
+		return fmt.Errorf("invalid new state: %s", newState)
+	}
+
+	oldState := instance.CurrentState
+	oldSubstate := instance.CurrentSubstate
+
+	newStateConfig := instance.Config.States[newState]
+
+	currentState := instance.Config.States[instance.CurrentState]
+	if currentState.OnExit != nil {
+		if err := currentState.OnExit(); err != nil {
+			return fmt.Errorf("error in OnExit for state %s: %w", instance.CurrentState, err)
+		}
+	}
+
+	if newStateConfig.OnEnter != nil {
+		if err := newStateConfig.OnEnter(); err != nil {
+			return fmt.Errorf("error in OnEnter for state %s: %w", newState, err)
+		}
+	}
+
+	instance.CurrentState = newState
+	instance.CurrentSubstate = newSubstate
+
+	instance.ExpectedEvents = []string{}
+
+	if instance.StateMachine.handler != nil {
+		instance.StateMachine.handler(Event{
+			Name:        "manual_transition",
+			Timestamp:   time.Now(),
+			InstanceID:  instance.InstanceID,
+			OldState:    oldState,
+			NewState:    newState,
+			OldSubstate: oldSubstate,
+			NewSubstate: newSubstate,
+		})
+	}
+
+	log.Infof("Manually enforced state transition: %s:%s -> %s:%s",
+		oldState, oldSubstate, newState, newSubstate)
+
+	return nil
 }

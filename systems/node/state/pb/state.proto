@@ -20,6 +20,16 @@ service StateService {
     rpc GetLatestState(GetLatestStateRequest) returns (GetLatestStateResponse);  
     rpc UpdateState(UpdateStateRequest) returns (UpdateStateResponse);
     rpc GetStatesHistory(GetStatesHistoryRequest) returns (GetStatesHistoryResponse);
+    rpc EnforceStateTransition(EnforceStateTransitionRequest) returns (EnforceStateTransitionResponse);
+}
+
+message EnforceStateTransitionRequest {
+    string nodeId = 1;
+    string event =2;
+}
+
+message EnforceStateTransitionResponse {
+    
 }
 message GetStatesHistoryRequest {
     string nodeId = 1;

@@ -15,6 +15,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc/codes"
@@ -297,6 +298,30 @@ func (s *StateServer) GetStatesHistory(ctx context.Context, req *pb.GetStatesHis
 		States:     states,
 		NodeConfig: convertToGenNodeConfig(nodeConfig),
 	}, nil
+}
+func (s *StateServer) EnforceStateTransition(ctx context.Context, req *pb.EnforceStateTransitionRequest) (*pb.EnforceStateTransitionResponse, error) {
+	log.Infof("Enforcing state transition for Node ID: %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return &pb.EnforceStateTransitionResponse{}, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id: %s", err.Error())
+	}
+	if s.msgbus != nil {
+		route := s.StateRoutingKey.SetAction("force").SetObject("node").MustBuild()
+
+		evt := &epb.EnforceNodeStateEvent{
+			NodeId: nId.StringLowercase(),
+			Event:  req.Event,
+		}
+
+		err = s.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
+	return &pb.EnforceStateTransitionResponse{}, nil
 }
 
 func convertToGenNodeConfig(dbConfig *db.NodeConfig) *gen.NodeConfig {
