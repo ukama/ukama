@@ -240,31 +240,27 @@ copy_vendor_libs() {
 
 build_usr_dirs() {
 
-    DIRS="bin"
-    DIRS="lib $DIRS"
-    DIRS="local/bin   ${DIRS}"
-    DIRS="local/lib   ${DIRS}"
-    DIRS="local/share ${DIRS}"
-    DIRS="sbin        ${DIRS}"
-    DIRS="share/misc  ${DIRS}"
+    DIRS="usr/bin"
+    DIRS="usr/lib $DIRS"
+    DIRS="usr/local/bin   ${DIRS}"
+    DIRS="usr/local/lib   ${DIRS}"
+    DIRS="usr/local/share ${DIRS}"
+    DIRS="usr/sbin        ${DIRS}"
+    DIRS="usr/share/misc  ${DIRS}"
 
-    cd ./usr
     mkdir -p ${DIRS}
-    cd ../
 }
 
 build_etc_dirs() {
 
-    DIRS="network/if-down.d"
-    DIRS="network/if-post-down.d ${DIRS}"
-    DIRS="network/if-post-up.d   ${DIRS}"
-    DIRS="network/if-pre-down.d  ${DIRS}"
-    DIRS="network/if-pre-up.d    ${DIRS}"
-    DIRS="network/if-up.d        ${DIRS}"
+    DIRS="etc/network/if-down.d"
+    DIRS="etc/network/if-post-down.d ${DIRS}"
+    DIRS="etc/network/if-post-up.d   ${DIRS}"
+    DIRS="etc/network/if-pre-down.d  ${DIRS}"
+    DIRS="etc/network/if-pre-up.d    ${DIRS}"
+    DIRS="etc/network/if-up.d        ${DIRS}"
 
-    cd ./etc
     mkdir -p ${DIRS}
-    cd ../
 }
 
 build_rootfs_dirs() {
@@ -292,7 +288,6 @@ build_rootfs_dirs() {
     cd ${ROOTFS}
     mkdir -p ${DIRS}
 
-    mkdir -p /var/run/netns
     build_etc_dirs
     build_usr_dirs
 
@@ -404,6 +399,11 @@ if [ -z "$TARGET" ]
 then
 	log_info "Missing node type"
     exit 1
+fi
+
+if [ -d "${ROOTFS}" ]
+then
+    sudo rm -rf "${ROOTFS}"
 fi
 
 mkdir -p ${ROOTFS}
