@@ -7,14 +7,13 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { CBooleanResponse } from "../../common/types";
 import { Context } from "../context";
 
 @Resolver()
 export class ExampleResolver {
-  @Query(() => CBooleanResponse)
-  async getNetworks(@Ctx() ctx: Context): Promise<CBooleanResponse> {
+  @Query(() => String)
+  async example(@Ctx() ctx: Context): Promise<string> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.restartNode(baseURL, { nodeId: "1" });
+    return dataSources.dataSource.example(baseURL, { nodeId: "1" });
   }
 }
