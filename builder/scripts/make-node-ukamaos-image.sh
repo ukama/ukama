@@ -91,8 +91,10 @@ build_ukamaos() {
     local node=$1
     cwd=$(pwd)
     log "INFO" "Building ukamaOS for Node: ${node}"
-    ${UKAMA_ROOT}/builder/scripts/build-ukamaos.sh ${node}
+    cd ${UKAMA_ROOT}/builder/scripts/
+    ./build-ukamaos.sh ${node}
     check_status $? "ukamaOS build successfull" ${STAGE}
+    cd "${cwd}"
 }
 
 create_disk_image() {
@@ -179,6 +181,8 @@ copy_rootfs() {
     log "INFO" "Copying rootfs to primary and passive"
 
     IMG_PATH="${UKAMA_ROOT}/builder/scripts/ukamaOS_initrd_${NODE}_${UKAMAOS_VERSION}.img"
+    PRIMARY_PARTITION="/dev/mapper/$(basename ${LOOPDISK})p2"
+    PASSIVE_PARTITION="/dev/mapper/$(basename ${LOOPDISK})p3"
     MOUNT_IMG="/mnt/img"
 
     # Validate the image file
@@ -189,34 +193,36 @@ copy_rootfs() {
 
     sudo mkdir -p ${MOUNT_IMG}
 
-    # Set up loop device and partitions
-    ROOTFS_PARTITION="/dev/mapper/$(basename ${LOOPDISK})p1"
+    # Mount the primary partition
+    log "INFO" "Mounting primary partition ${PRIMARY_PARTITION}"
+    sudo mount "${PRIMARY_PARTITION}" "${MOUNT_IMG}"
+    check_status $? "Primary partition mounted to ${MOUNT_IMG}" ${STAGE}
 
-    # Verify the partition exists
-    if [ ! -e "${ROOTFS_PARTITION}" ]; then
-        log "ERROR" "Partition ${ROOTFS_PARTITION} does not exist. Ensure kpartx mappings are active."
-        exit 1
-    fi
+    # Copy the rootfs to primary partition
+    log "INFO" "Copying rootfs from ${IMG_PATH} to ${MOUNT_IMG}"
+    sudo rsync -aAX --progress "${IMG_PATH}/" "${MOUNT_IMG}/"
+    check_status $? "Rootfs copied to primary partition" ${STAGE}
 
-    # Mount and copy the root filesystem
-    sudo mount ${ROOTFS_PARTITION} ${MOUNT_IMG}
-    if [ $? -ne 0 ]; then
-        log "ERROR" "Failed to mount rootfs partition ${ROOTFS_PARTITION}"
-        exit 1
-    fi
-
-    log "INFO" "Rootfs partition ${ROOTFS_PARTITION} mounted to ${MOUNT_IMG}"
-
-    sudo rsync -aAX ${MOUNT_IMG}/ ${PRIMARY_MOUNT}
-    check_status $? "Rootfs copied to primary" ${STAGE}
-
-    sudo rsync -aAX ${MOUNT_IMG}/ ${PASSIVE_MOUNT}
-    check_status $? "Rootfs copied to passive" ${STAGE}
-
-    # Unmount and clean up
-    sudo umount ${MOUNT_IMG}
+    # Unmount the primary partition
+    sudo umount "${MOUNT_IMG}"
     log "INFO" "Unmounted ${MOUNT_IMG}"
-    sudo rm -rf ${MOUNT_IMG}
+
+    # Mount the passive partition
+    log "INFO" "Mounting passive partition ${PASSIVE_PARTITION}"
+    sudo mount "${PASSIVE_PARTITION}" "${MOUNT_IMG}"
+    check_status $? "Passive partition mounted to ${MOUNT_IMG}" ${STAGE}
+
+    # Copy the rootfs to passive partition
+    log "INFO" "Copying rootfs from ${IMG_PATH} to ${MOUNT_IMG}"
+    sudo rsync -aAX --progress "${IMG_PATH}/" "${MOUNT_IMG}/"
+    check_status $? "Rootfs copied to passive partition" ${STAGE}
+
+    # Unmount the passive partition
+    sudo umount "${MOUNT_IMG}"
+    log "INFO" "Unmounted ${MOUNT_IMG}"
+
+    # Clean up the mount directory
+    sudo rm -rf "${MOUNT_IMG}"
     log "INFO" "Rootfs copy operation completed"
 }
 
