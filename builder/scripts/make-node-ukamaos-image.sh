@@ -59,7 +59,7 @@ cleanup() {
     cd ${UKAMA_OS}/firmware; make distclean
     cd ${UKAMA_OS}/kernel;   make distclean
     cd "${cwd}"; sudo rm -rf _ukama_os_rootfs
-    rm -rf ${UKAMA_ROOT}/builder/scripts/ukamaOS_initrd_${NODE}_${UKAMAOS_VERSION}.img
+    # rm -rf ${UKAMA_ROOT}/builder/scripts/ukamaOS_initrd_${NODE}_${UKAMAOS_VERSION}.img
     log "INFO" "Cleanup completed."
 }
 
@@ -184,6 +184,7 @@ copy_rootfs() {
     PRIMARY_PARTITION="/dev/mapper/$(basename ${LOOPDISK})p2"
     PASSIVE_PARTITION="/dev/mapper/$(basename ${LOOPDISK})p3"
     MOUNT_IMG="/mnt/img"
+    TMP_MOUNT="/mnt/rootfs_img"
 
     # Validate the image file
     if [ ! -f "${IMG_PATH}" ]; then
@@ -192,37 +193,40 @@ copy_rootfs() {
     fi
 
     sudo mkdir -p ${MOUNT_IMG}
+    sudo mkdir -p ${TMP_MOUNT}
 
-    # Mount the primary partition
+    # Mount the image file to extract its contents
+    log "INFO" "Mounting rootfs image ${IMG_PATH} to ${TMP_MOUNT}"
+    sudo mount -o loop "${IMG_PATH}" "${TMP_MOUNT}"
+    check_status $? "Rootfs image mounted to ${TMP_MOUNT}" ${STAGE}
+
+    # Copy to primary partition
     log "INFO" "Mounting primary partition ${PRIMARY_PARTITION}"
     sudo mount "${PRIMARY_PARTITION}" "${MOUNT_IMG}"
     check_status $? "Primary partition mounted to ${MOUNT_IMG}" ${STAGE}
 
-    # Copy the rootfs to primary partition
-    log "INFO" "Copying rootfs from ${IMG_PATH} to ${MOUNT_IMG}"
-    sudo rsync -aAX --progress "${IMG_PATH}/" "${MOUNT_IMG}/"
+    log "INFO" "Copying rootfs to primary partition"
+    sudo rsync -aAX --progress "${TMP_MOUNT}/" "${MOUNT_IMG}/"
     check_status $? "Rootfs copied to primary partition" ${STAGE}
-
-    # Unmount the primary partition
     sudo umount "${MOUNT_IMG}"
     log "INFO" "Unmounted ${MOUNT_IMG}"
 
-    # Mount the passive partition
+    # Copy to passive partition
     log "INFO" "Mounting passive partition ${PASSIVE_PARTITION}"
     sudo mount "${PASSIVE_PARTITION}" "${MOUNT_IMG}"
     check_status $? "Passive partition mounted to ${MOUNT_IMG}" ${STAGE}
 
-    # Copy the rootfs to passive partition
-    log "INFO" "Copying rootfs from ${IMG_PATH} to ${MOUNT_IMG}"
-    sudo rsync -aAX --progress "${IMG_PATH}/" "${MOUNT_IMG}/"
+    log "INFO" "Copying rootfs to passive partition"
+    sudo rsync -aAX --progress "${TMP_MOUNT}/" "${MOUNT_IMG}/"
     check_status $? "Rootfs copied to passive partition" ${STAGE}
-
-    # Unmount the passive partition
     sudo umount "${MOUNT_IMG}"
     log "INFO" "Unmounted ${MOUNT_IMG}"
 
-    # Clean up the mount directory
-    sudo rm -rf "${MOUNT_IMG}"
+    # Cleanup
+    sudo umount "${TMP_MOUNT}"
+    log "INFO" "Unmounted ${TMP_MOUNT}"
+    sudo rm -rf ${TMP_MOUNT}
+    sudo rm -rf ${MOUNT_IMG}
     log "INFO" "Rootfs copy operation completed"
 }
 
