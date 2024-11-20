@@ -2,8 +2,8 @@ name: Compile app
 description: Compile application and run tests.
 
 inputs:
-  registry-name:
-    description: The repository where the code is. Should match with the folder on deployment-repo and the container name
+  project-key:
+    description: Sonarcloud project key
     required: true
   working-directory:
     description: The working directory for the application
@@ -11,16 +11,6 @@ inputs:
   github-bot-token:
     description: The github bot token
     required: true
-  aws-access-key: 
-    description: The AWS access key
-    required: true
-  aws-secret-key:
-    description: The AWS secret key
-    required: true
-  build-listener: 
-    description: The build listener image 
-    required: false
-    default: "false"
 
 runs:
   using: "composite"
@@ -30,16 +20,19 @@ runs:
     uses: ./.github/actions/git-vars
 
   - name: Set up Go
-    uses: actions/setup-go@v2
+    uses: actions/setup-go@v5
     with:
-      go-version: 1.22
+      go-version: '>=1.19.0'
+      cache-dependency-path: |
+        **/go.sum
+
 
   - name: Granting private modules access
     shell: bash
     run: |
       git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
-  - uses: actions/cache@v3
+  - uses: actions/cache@v4
     with:
       path: |
         ~/.cache/go-build
@@ -58,11 +51,11 @@ runs:
 
   - name: Test
     shell: bash
-    run: go test -v ./... -coverprofile="coverage.out"
+    run: go test -v ./... -coverprofile=code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
     working-directory: ${{ inputs.working-directory }}
-  
+
   - name: Archive code coverage results
-    uses: actions/upload-artifact@v3
+    uses: actions/upload-artifact@v4
     with:
-      name: code-coverage-${{ github.run_number }}
-      path: ${{ inputs.working-directory }}/coverage.out
+      name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out

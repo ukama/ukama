@@ -3,7 +3,7 @@ description: Build application and image
 
 inputs:
   project-key:
-    description: Sonarcloud project key 
+    description: Sonarcloud project key
     required: true
   sonar-token:
     description: API token for sonarcloud
@@ -13,27 +13,28 @@ inputs:
     required: true
   github-bot-token:
     description: The github bot token
-    required: true  
+    required: true
 
 runs:
   using: "composite"
-  steps:  
+  steps:
 
-  - uses: actions/cache@v3
+  - uses: actions/cache@v4
     with:
       path: |
         ~/.cache/go-build
         ~/go/pkg/mod
-        /opt/sonar-scanner/.sonar/cache      
+        /opt/sonar-scanner/.sonar/cache
       key: ${{ runner.os }}-go-ukama
       restore-keys: |
         ${{ runner.os }}-go-
-  
+
   - name: Download code coverage results
-    uses: actions/download-artifact@v3
+    uses: actions/download-artifact@v4
     with:
-      name: code-coverage-${{ github.run_number }}
+      name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
       path: ${{ inputs.working-directory }}
+
   - name: SonarCloud Scan
     uses: sonarsource/sonarcloud-github-action@v2
     env:
@@ -45,11 +46,11 @@ runs:
         -Dsonar.organization=ukama
         -Dsonar.projectKey=${{ inputs.project-key }}
         -Dsonar.projectName=${{ inputs.working-directory }}
-        -Dsonar.go.coverage.reportPaths=coverage.out
+        -Dsonar.go.coverage.reportPaths=code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
         -Dsonar.test.exclusions=tests/**
         -Dsonar.tests=tests/
-        -Dsonar.verbose=false
+        -Dsonar.verbose=true
         -Dsonar.sources=.
-        -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
+        -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**,go.mod,go.sum
         -Dsonar.tests=.
         -Dsonar.test.inclusions=**/*_test.go

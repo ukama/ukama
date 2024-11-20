@@ -1,0 +1,62 @@
+name: Run sonar fetch
+description: Fetch analysis resutls from sonar cloud
+
+inputs:
+  project-key:
+    description: Sonarcloud project key
+    required: true
+  sonar-token:
+    description: API token for sonarcloud
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+  - name: Init vars
+    id: vars_step
+    uses: ./.github/actions/git-vars
+
+  - name: Granting private modules access
+    shell: bash
+    run: |
+      git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
+
+  - uses: actions/cache@v4
+    with:
+      path: |
+        ~/.cache/go-build
+        ~/go/pkg/mod
+        /opt/sonar-scanner/.sonar/cache
+      key: ${{ runner.os }}-go-ukama
+      restore-keys: |
+        ${{ runner.os }}-go-
+
+  - name: curl
+    uses: prasiman/gocurl@v1
+    id: api
+    with:
+      url: https://sonarcloud.io/api/measures/component
+      method: "GET"
+      accept: 200,201,204,403
+      # headers: '{ "custom-header": "value" }'
+      params: '{ "metricKeys": "ncloc%2Ccode_smells%2Ccomplexity", "component": "my_project_key" }'
+      bearer-token: ${{ inputs.sonar-token }}
+      log-response: true
+  - name: "save response"
+    shell: bash
+    run: |
+      echo ${{ steps.api.outputs.response }} > sonar-reports-${{ inputs.project-Key }}-${{ github.run_number }}.json
+    working-directory: ${{ inputs.working-directory }}
+
+  - name: Archive sonar scan results
+    uses: actions/upload-artifact@v4
+    with:
+      name: sonar-reports-${{ inputs.project-Key }}-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/sonar-reports-${{ inputs.project-Key }}-${{ github.run_number }}.json
