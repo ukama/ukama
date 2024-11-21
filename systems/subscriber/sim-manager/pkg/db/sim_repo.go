@@ -22,11 +22,19 @@ import (
 type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Get(simID uuid.UUID) (*Sim, error)
+
+	// Deprecated: Use db.SimRepo.List with iccid as filtering param instead.
 	GetByIccid(iccid string) (*Sim, error)
+
+	// Deprecated: Use db.SimRepo.List with subscriberId as filtering param instead.
 	GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error)
+
+	// Deprecated: Use db.SimRepo.List with networkId as filtering param instead.
 	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
+
 	List(iccid, imsi, SubscriberId, networkId string, simType ukama.SimType, status ukama.SimStatus,
 		TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error)
+
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	GetSimMetrics() (int64, int64, int64, int64, error)
@@ -75,6 +83,7 @@ func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
 	return &sim, nil
 }
 
+// Deprecated: Use db.SimRepo.List with iccid as filtering param instead.
 func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	var sim Sim
 
@@ -88,6 +97,7 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	return &sim, nil
 }
 
+// Deprecated: Use db.SimRepo.List with subscriberId as filtering param instead.
 func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
@@ -101,6 +111,7 @@ func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 	return sims, nil
 }
 
+// Deprecated: Use db.SimRepo.List with networkId as filtering param instead.
 func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
