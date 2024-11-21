@@ -10,6 +10,7 @@ package db
 
 import (
 	"errors"
+	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -23,6 +24,8 @@ import (
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageID uuid.UUID) (*Package, error)
+	List(simId, dataPlanId string, fromStartDate, toSartDate,
+		fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error)
 	GetBySim(simID uuid.UUID) ([]Package, error)
 	GetOverlap(*Package) ([]Package, error)
 	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
@@ -69,6 +72,60 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	}
 
 	return pkg, nil
+}
+
+func (p *packageRepo) List(simId, dataPlanId string, fromStartDate, toStartDate,
+	fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error) {
+	packages := []Package{}
+
+	tx := p.Db.GetGormDb().Preload(clause.Associations)
+
+	if simId != "" {
+		tx = tx.Where("item_id = ?", simId)
+	}
+
+	if dataPlanId != "" {
+		tx = tx.Where("package_id = ?", dataPlanId)
+	}
+
+	if !fromStartDate.IsZero() {
+		tx = tx.Where("start_date >= ?", fromStartDate)
+	}
+
+	if !toStartDate.IsZero() {
+		tx = tx.Where("start_date <= ?", toStartDate)
+	}
+
+	if !fromEndDate.IsZero() {
+		tx = tx.Where("end_date >= ?", fromEndDate)
+	}
+
+	if !toEndDate.IsZero() {
+		tx = tx.Where("end_date <= ?", toEndDate)
+	}
+
+	if isActive {
+		tx = tx.Where("is_active = ?", true)
+	}
+
+	if sort {
+		tx = tx.Order("start_date ASC")
+	}
+
+	if count > 0 {
+		tx = tx.Limit(int(count))
+	}
+
+	result := tx.Find(&packages)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return packages, nil
 }
 
 func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
