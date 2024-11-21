@@ -165,11 +165,14 @@ sort_systems_by_dependency() {
             "dataplan")
                 SYSTEMS+=("7 $key")
                 ;;
-            "subscriber")
+            "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            *)
+            "subscriber")
                 SYSTEMS+=("9 $key")
+                ;;
+            *)
+                SYSTEMS+=("10 $key")
                 ;;
         esac
     done

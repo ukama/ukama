@@ -1,0 +1,201 @@
+{
+  "version": "0.0.0",
+  "entity": "node",
+  "file": "nodeState.json",
+  "states": [
+    {
+      "name": "Unknown",
+      "description": "Initial state when node comes online for the first time, or state after offBoarding",
+      "events": ["online", "offline", "reboot", "onboarding"],
+      "transition": [
+        {
+          "to_state": "Configured",
+          "trigger": ["onboarding"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Configured",
+      "description": "Node is in configuration state",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "config",
+        "ready",
+        "upgrade",
+        "update",
+        "downgrade",
+        "fault"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["config"]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": ["ready"]
+        }
+      ],
+      "substate": {
+        "events": [
+          "online",
+          "offline",
+          "reboot",
+          "upgrade",
+          "update",
+          "downgrade"
+        ],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          },
+          {
+            "to_state": "update",
+            "trigger":["ready"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 600
+          },
+          {
+            "to_state": "update",
+            "trigger": ["update"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 600
+          },
+          {
+            "to_state": "upgrade",
+            "trigger": ["upgrade"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 180
+          },
+          {
+            "to_state": "downgrade",
+            "trigger": ["downgrade"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Operational",
+      "description": "Node is fully operational and part of a site",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "fault",
+        "offboarding",
+        "reset"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["reset"]
+        },
+        {
+          "to_state": "Unknown",
+          "trigger": ["offboarding"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Faulty",
+      "description": "Node is in a faulty state",
+      "events": [
+        "offline",
+        "reboot",
+        "fault",
+        "online",
+        "config"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["config"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    }
+  ]
+}
