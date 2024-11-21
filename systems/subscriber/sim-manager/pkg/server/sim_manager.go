@@ -427,7 +427,53 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 }
 
 func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest) (*pb.ListSimsResponse, error) {
-	return nil, nil
+	log.Infof("Getting sims matching: %v", req)
+
+	if req.SubscriberId != "" {
+		subscriberId, err := uuid.FromString(req.GetSubscriberId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for subscriber uuid: %s. Error %v", req.SubscriberId, err)
+		}
+
+		req.SubscriberId = subscriberId.String()
+	}
+
+	if req.NetworkId != "" {
+		networkId, err := uuid.FromString(req.GetNetworkId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for network uuid: %s. Error %v", req.NetworkId, err)
+		}
+
+		req.NetworkId = networkId.String()
+	}
+
+	simType := ukama.SimTypeUnknown
+	if req.SimType != "" {
+		simType = ukama.ParseSimType(req.SimType)
+		if simType == ukama.SimTypeUnknown {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid value for sim type: %s", req.SimType)
+		}
+	}
+
+	simStatus := ukama.SimStatusUnknown
+	if req.SimStatus != "" {
+		simStatus = ukama.ParseSimStatus(req.SimStatus)
+		if simStatus == ukama.SimStatusUnknown {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid value for sim status: %s", req.SimStatus)
+		}
+	}
+
+	sims, err := s.simRepo.List(req.Iccid, req.Imsi, req.SubscriberId, req.NetworkId,
+		simType, simStatus, req.TrafficPolicy, req.IsPhysical, req.Count, req.Sort)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
+	}
+
+	return &pb.ListSimsResponse{Sims: dbSimsToPbSims(sims)}, nil
 }
 
 func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetSimsBySubscriberRequest) (*pb.GetSimsBySubscriberResponse, error) {
