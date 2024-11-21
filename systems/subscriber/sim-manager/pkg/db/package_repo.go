@@ -27,7 +27,7 @@ type PackageRepo interface {
 	List(simId, dataPlanId string, fromStartDate, toSartDate,
 		fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error)
 
-	// Deprecated: Use db.PackageRepo.List with simId as filtering param  instead.
+	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simID uuid.UUID) ([]Package, error)
 
 	GetOverlap(*Package) ([]Package, error)
@@ -131,7 +131,7 @@ func (p *packageRepo) List(simId, dataPlanId string, fromStartDate, toStartDate,
 	return packages, nil
 }
 
-// Deprecated: Use PackageRepo.List with simId as filtering param  instead.
+// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	var packages []Package
 
