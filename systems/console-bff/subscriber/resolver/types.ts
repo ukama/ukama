@@ -202,14 +202,14 @@ export class SubscriberSimDto {
   @Field()
   allocatedAt: string;
 
-  @Field()
-  sync_status: string;
+  @Field({ nullable: true })
+  sync_status?: string;
 
   @Field({ nullable: true })
   isPhysical: boolean;
 
-  @Field(() => SimPackageDto)
-  package: SimPackageDto;
+  @Field(() => SimPackageDto, { nullable: true })
+  package?: SimPackageDto;
 }
 @ObjectType()
 export class SubscriberDto {

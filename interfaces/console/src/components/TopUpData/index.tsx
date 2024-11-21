@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React from 'react';
 import { PackageDto, SimDto } from '@/client/graphql/generated';
 import CloseIcon from '@mui/icons-material/Close';
@@ -44,7 +51,6 @@ interface FormValues {
   plans: PlanEntry[];
 }
 
-// Styled components remain the same
 const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
   padding: theme.spacing(3),
 }));
@@ -97,12 +103,15 @@ const validationSchema = Yup.object().shape({
         planId: Yup.string().required('Data plan is required'),
       }),
     )
-    .min(1, 'At least one plan is required'),
+    .min(1, 'At least one plan is required')
+    .max(5, 'Maximum of 5 data plans allowed'),
 });
+
 const getOptionLabel = (option: SimDto) => {
   if (!option) return '';
   return `${option.iccid} - ${option.isPhysical ? 'pSIM' : 'eSIM'}`;
 };
+
 const TopUpData: React.FC<TopUpProps> = ({
   handleTopUp,
   onCancel,
@@ -255,13 +264,26 @@ const TopUpData: React.FC<TopUpProps> = ({
                             )}
                           </PlanContainer>
                         ))}
-                        <Button
-                          startIcon={<AddCircleOutlineIcon />}
-                          onClick={() => push({ planId: '' })}
-                          sx={{ mt: 1, color: colors.primaryMain }}
-                        >
-                          ADD ANOTHER DATA PLAN
-                        </Button>
+
+                        {values.plans.length < 5 && (
+                          <Button
+                            startIcon={<AddCircleOutlineIcon />}
+                            onClick={() => push({ planId: '' })}
+                            sx={{ mt: 1, color: colors.primaryMain }}
+                          >
+                            ADD ANOTHER DATA PLAN
+                          </Button>
+                        )}
+
+                        {values.plans.length === 5 && (
+                          <Typography
+                            color="error"
+                            variant="body2"
+                            sx={{ mt: 1 }}
+                          >
+                            Maximum of 5 data plans reached
+                          </Typography>
+                        )}
                       </Box>
                     )}
                   </FieldArray>

@@ -33,7 +33,6 @@ import DataPlanComponent from './dataPlanInfo';
 
 interface SubscriberProps {
   ishowSubscriberDetails: boolean;
-  subscriberId: string;
   handleClose: () => void;
   subscriberInfo: any;
   handleSimActionOption: (
