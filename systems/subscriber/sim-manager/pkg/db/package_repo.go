@@ -26,7 +26,10 @@ type PackageRepo interface {
 	Get(packageID uuid.UUID) (*Package, error)
 	List(simId, dataPlanId string, fromStartDate, toSartDate,
 		fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error)
+
+	// Deprecated: Use db.PackageRepo.List with simId as filtering param  instead.
 	GetBySim(simID uuid.UUID) ([]Package, error)
+
 	GetOverlap(*Package) ([]Package, error)
 	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
@@ -128,6 +131,7 @@ func (p *packageRepo) List(simId, dataPlanId string, fromStartDate, toStartDate,
 	return packages, nil
 }
 
+// Deprecated: Use PackageRepo.List with simId as filtering param  instead.
 func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	var packages []Package
 
