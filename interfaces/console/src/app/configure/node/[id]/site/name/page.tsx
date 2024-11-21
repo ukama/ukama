@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import { FormikProvider, FormikValues, useFormik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 interface ISiteName {
@@ -31,6 +31,7 @@ interface ISiteName {
 const SiteName = ({ params }: ISiteName) => {
   const { id } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
@@ -60,6 +61,7 @@ const SiteName = ({ params }: ISiteName) => {
   const setQueryParam = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams.toString());
     p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
     return p;
   };
 

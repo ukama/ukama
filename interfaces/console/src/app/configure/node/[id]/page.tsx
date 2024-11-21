@@ -11,7 +11,7 @@ import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface INodeConfigure {
@@ -23,6 +23,7 @@ interface INodeConfigure {
 const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
@@ -57,10 +58,14 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const setQueryParam = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams.toString());
     p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
     return p;
   };
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   const handleNext = () => {
     if (address) {

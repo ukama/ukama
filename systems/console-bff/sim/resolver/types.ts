@@ -84,18 +84,6 @@ export class SimDetailsDto {
   isPhysical: boolean;
 
   @Field()
-  firstActivatedOn: string;
-
-  @Field()
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: number;
-
-  @Field()
-  deactivationsCount: number;
-
-  @Field()
   allocatedAt: string;
 }
 
@@ -294,18 +282,6 @@ export class AllocateSimAPIDto {
   @Field()
   traffic_policy: number;
 
-  @Field({ nullable: true })
-  firstActivatedOn?: string;
-
-  @Field({ nullable: true })
-  lastActivatedOn?: string;
-
-  @Field()
-  activationsCount: string;
-
-  @Field()
-  deactivationsCount: string;
-
   @Field()
   allocated_at: string;
 
@@ -397,18 +373,6 @@ export class SubscriberSimsDto {
   trafficPolicy: number;
 
   @Field()
-  firstActivatedOn: string;
-
-  @Field()
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: string;
-
-  @Field()
-  deactivationsCount: string;
-
-  @Field()
   allocatedAt: string;
 }
 @ObjectType()
@@ -442,18 +406,6 @@ export class SubscriberSimsAPIDto {
 
   @Field()
   traffic_policy: number;
-
-  @Field()
-  firstActivatedOn: string;
-
-  @Field()
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: string;
-
-  @Field()
-  deactivationsCount: string;
 
   @Field()
   allocated_at: string;

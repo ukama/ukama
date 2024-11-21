@@ -43,9 +43,7 @@ const SITE_CONFIG_STEPS = [
 ];
 export const MEMBER_ROLES = [
   { id: 1, label: 'Administrator', value: Role_Type.RoleAdmin },
-  { id: 2, label: 'Vendor', value: Role_Type.RoleVendor },
-  { id: 3, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
-  { id: 4, label: 'User', value: Role_Type.RoleUser },
+  { id: 2, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
 ];
 export const SITE_PLANNING_AP_OPTIONS = [
   { id: 1, label: 'Tower Node + 1 Amplifier Unit', value: 'ONE_TO_ONE' },
@@ -100,8 +98,8 @@ const TIME_FILTER = [
 
 export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'network', label: 'network', minWidth: 180 },
-  { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
+  { id: 'email', label: 'Email', minWidth: 180 },
+  // { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];

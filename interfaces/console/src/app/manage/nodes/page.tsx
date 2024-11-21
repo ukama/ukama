@@ -96,7 +96,6 @@ const Page = () => {
           <PageContainerHeader
             search={search}
             title={'My node pool'}
-            buttonTitle={'CLAIM NODE'}
             handleButtonAction={() => {}}
             subtitle={'0'}
             onSearchChange={(e: string) => setSearch(e)}

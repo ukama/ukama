@@ -48,7 +48,6 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { TNetwork } from '@/types';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -205,15 +204,6 @@ const Page = () => {
       setIsPackageActivationNeeded,
     ],
   );
-  const determineNetworkId = (
-    contextNetwork: TNetwork,
-    selectedNetworkId: string | null,
-  ) => {
-    if (selectedNetworkId && selectedNetworkId !== contextNetwork.id) {
-      return selectedNetworkId;
-    }
-    return contextNetwork.id;
-  };
 
   const onTableMenuItem = async (id: string, type: string) => {
     if (type === 'delete-sub') {
@@ -315,24 +305,37 @@ const Page = () => {
   });
 
   const structureData = useCallback(
-    (data: SubscribersResDto) =>
-      data.subscribers.map((subscriber) => {
-        const networkName =
-          networkList?.getNetworks?.networks.find(
-            (net) => net.id === subscriber.networkId,
-          )?.name ?? '';
+    (data: SubscribersResDto) => {
+      if (
+        (packagesData?.getPackages.packages?.length ?? 0) > 0 &&
+        (networkList?.getNetworks?.networks?.length ?? 0) > 0
+      ) {
+        return data.subscribers.map((subscriber) => {
+          const networkName =
+            networkList?.getNetworks?.networks.find(
+              (net) => net.id === subscriber.networkId,
+            )?.name ?? '';
+          const sim =
+            subscriber?.sim && subscriber.sim?.length > 0
+              ? subscriber?.sim[0]
+              : null;
+          const pkg = packagesData?.getPackages.packages.find(
+            (pkg) => pkg.uuid === sim?.package.package_id,
+          );
 
-        return {
-          id: subscriber.uuid,
-          email: subscriber.email,
-          name: `${subscriber.name}`,
-          dataUsage: '',
-          dataPlan: '',
-          actions: '',
-          network: networkName,
-        };
-      }),
-    [networkList],
+          return {
+            id: subscriber.uuid,
+            network: networkName,
+            name: subscriber.name,
+            dataPlan: pkg?.name ?? '',
+            email: subscriber.email,
+            dataUsage: '',
+            actions: '',
+          };
+        });
+      }
+    },
+    [packagesData?.getPackages.packages, networkList?.getNetworks?.networks],
   );
 
   const [getSim] = useGetSimLazyQuery({

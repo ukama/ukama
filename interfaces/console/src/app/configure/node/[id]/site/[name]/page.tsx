@@ -33,7 +33,7 @@ import {
 } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { Field, FormikProvider, FormikValues, useFormik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import NetworkInfo from '../../../../../../../public/svg/NetworkInfo';
 
@@ -56,6 +56,7 @@ interface IPage {
 const Page = ({ params }: IPage) => {
   const { id, name } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const gclasses = globalUseStyles();
   const { setSnackbarMessage } = useAppContext();
   const searchParams = useSearchParams();
@@ -173,9 +174,34 @@ const Page = ({ params }: IPage) => {
     },
   });
 
-  const handleBack = async () => router.back();
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   const handleSubmit = (values: FormikValues) => {
+    if (
+      qpAddress === '' ||
+      qpPower === '' ||
+      qpSwitch === '' ||
+      qpbackhaul === ''
+    ) {
+      setSnackbarMessage({
+        id: 'add-site-error',
+        message: 'Require data is missing. Please complete the previous steps',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
     const accessId =
       accessComponentsData?.getComponentsByUserId.components.find(
         (component) => component.partNumber === id,
@@ -194,25 +220,27 @@ const Page = ({ params }: IPage) => {
       return;
     }
     setIsLoading(true);
-    if (isCreateNetwork) {
-      setLoadingMessage('Creating network...');
-      addNetwork({
-        variables: {
-          data: {
-            isDefault: false,
-            name: values.name,
-            budget: values.budget,
-            networks: values.networks,
-            countries: values.countries,
+    if (formik.isValid) {
+      if (isCreateNetwork) {
+        setLoadingMessage('Creating network...');
+        addNetwork({
+          variables: {
+            data: {
+              isDefault: false,
+              name: values.name,
+              budget: values.budget,
+              networks: values.networks,
+              countries: values.countries,
+            },
           },
-        },
-      }).then((res) => {
+        }).then((res) => {
+          setLoadingMessage('Creating site...');
+          addSiteCall(accessId, spectrumId, res.data?.addNetwork.id ?? '');
+        });
+      } else {
         setLoadingMessage('Creating site...');
-        addSiteCall(accessId, spectrumId, res.data?.addNetwork.id ?? '');
-      });
-    } else {
-      setLoadingMessage('Creating site...');
-      addSiteCall(accessId, spectrumId, values.name);
+        addSiteCall(accessId, spectrumId, values.name);
+      }
     }
   };
 
@@ -238,10 +266,6 @@ const Page = ({ params }: IPage) => {
         },
       },
     });
-  };
-
-  const handleOnNewNetwork = () => {
-    setIsCreateNetwork(true);
   };
 
   return (
@@ -280,7 +304,6 @@ const Page = ({ params }: IPage) => {
                 <SvgIcon sx={{ width: 240, height: 176, mt: 2, mb: 4 }}>
                   {NetworkInfo}
                 </SvgIcon>
-
                 {networksLoading ? (
                   <Skeleton variant="rounded" width={'100%'} height={42} />
                 ) : (
@@ -301,6 +324,11 @@ const Page = ({ params }: IPage) => {
                       },
                     }}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (e.target.value === 'new-network') {
+                        setIsCreateNetwork(true);
+                      } else {
+                        setIsCreateNetwork(false);
+                      }
                       formik.setFieldValue('name', e.target.value);
                     }}
                     helperText={formik.touched.name && formik.errors.name}
@@ -314,9 +342,7 @@ const Page = ({ params }: IPage) => {
                         {network.name}
                       </MenuItem>
                     ))}
-                    <MenuItem value="New Network" onClick={handleOnNewNetwork}>
-                      New Network
-                    </MenuItem>
+                    <MenuItem value="new-network">New Network</MenuItem>
                   </Field>
                 )}
                 {isCreateNetwork && (
