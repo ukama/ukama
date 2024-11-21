@@ -61,6 +61,16 @@ message GetSimResponse {
 
 
 message ListSimsRequest{
+   string iccid = 1 [json_name = "iccid"];
+   string imsi = 2 [json_name = "imsi"];
+   string subscriberId = 3 [json_name = "subscriber_id"];
+   string networkId = 4 [json_name = "network_id"];
+   string simType = 5 [json_name = "sim_type"];
+   string simStatus = 6 [json_name = "sim_status"];
+   uint32 trafficPolicy = 7 [json_name = "traffic_policy"];
+   bool isPhysical = 8 [json_name = "is_physical"];
+   uint32 count = 9;
+   bool sort = 10;
 }
 
 message ListSimsResponse {
