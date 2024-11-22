@@ -129,7 +129,7 @@ mock_sysfs_for_noded() {
     local repo=$1
     local partition=$2
 
-    mkdir -p "${parition}/ukama/mocksysfs/"
+    mkdir -p "${partition}/ukama/mocksysfs/"
     cp -p "${repo}/builder/scripts/mocksysfs.sh" "${parition}/ukama/mocksysfs/"
 
     cd "${repo}/nodes/ukamaOS/distro/system/noded"; make
@@ -137,7 +137,7 @@ mock_sysfs_for_noded() {
     make clean
     cd -
 
-    sudo chroot "${parition}" /bin/bash <<EOF
+    sudo chroot "${partition}" /bin/bash <<EOF
 
     # Create systemd service file
     cat > /etc/systemd/system/mocksysfs.service <<EOL
