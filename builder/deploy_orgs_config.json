@@ -19,12 +19,6 @@
     "registry": 5429,
     "subscriber": 5430,
     "notification": 5431
-   },
-   "mailer": {
-    "host": "smtp.gmail.com",
-    "port": 465,
-    "username": "smtp",
-    "password": "smtp_password"
    }
   },
   {
@@ -57,12 +51,6 @@
     "subscriber": 8015,
     "notification": 8016,
     "msgclient": 9096
-   },
-   "mailer": {
-    "host": "smtp.gmail.com",
-    "port": 465,
-    "username": "smtp",
-    "password": "smtp_password"
    }
   }
  ]
