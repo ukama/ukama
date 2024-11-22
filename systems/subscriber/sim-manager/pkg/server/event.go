@@ -26,7 +26,6 @@ import (
 )
 
 const (
-	packageItemType      = "package"
 	handlerTimeoutFactor = 3
 )
 
@@ -62,16 +61,17 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			}
 		}
 
-	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.update"):
-		msg, err := unmarshalProcessorPaymentUpdate(e.Msg)
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):
+		msg, err := unmarshalProcessorPaymentSuccess(e.Msg)
 		if err != nil {
 			return nil, err
 		}
 
 		paymentStatus := ukama.ParseStatusType(msg.Status)
+		itemType := ukama.ParseItemType(msg.ItemType)
 
-		if paymentStatus == ukama.StatusTypeCompleted && msg.ItemType == packageItemType {
-			err = handleEventCloudProcessorPaymentUpdate(e.RoutingKey, msg, es.s)
+		if paymentStatus == ukama.StatusTypeCompleted && itemType == ukama.ItemTypePackage {
+			err = handleEventCloudProcessorPaymentSuccess(e.RoutingKey, msg, es.s)
 			if err != nil {
 				return nil, err
 			}
@@ -116,8 +116,9 @@ func handleEventCloudSimManagerOperatorSimAllocate(key string, msg *pb.AllocateS
 	return err
 }
 
-func handleEventCloudProcessorPaymentUpdate(key string, msg *epb.Payment, s *SimManagerServer) error {
+func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
 	metadata := map[string]string{}
 
 	err := json.Unmarshal(msg.Metadata, &metadata)
@@ -231,7 +232,7 @@ func unmarshalSimManagerSimAllocate(msg *anypb.Any) (*pb.AllocateSimResponse, er
 	return p, nil
 }
 
-func unmarshalProcessorPaymentUpdate(msg *anypb.Any) (*epb.Payment, error) {
+func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
 	p := &epb.Payment{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})

@@ -129,7 +129,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if remoteSubResp.Subscriber.NetworkId != req.GetNetworkId() {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return nil, status.Error(codes.InvalidArgument,
 			"invalid networkId: subscriber is not registered on the provided network")
 	}
 
@@ -146,7 +146,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	if !packageInfo.IsActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
+		return nil, status.Error(codes.FailedPrecondition,
 			"cannot set package to sim: package is no more active within its org")
 	}
 
@@ -369,7 +369,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	log.Infof("Getting Usages matching: %v", req)
 
 	if req.Type == "" {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return nil, status.Error(codes.InvalidArgument,
 			"invalid value. Cdr type cannot be empty while getting usages")
 	}
 
@@ -405,13 +405,13 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 	usage, ok := u.(map[string]any)
 	if !ok {
-		return nil, status.Errorf(codes.Internal,
+		return nil, status.Error(codes.Internal,
 			"an unexpected error has occured while unpacking usage response. Type is not map[string]any")
 	}
 
 	cost, ok := c.(map[string]any)
 	if !ok {
-		return nil, status.Errorf(codes.Internal,
+		return nil, status.Error(codes.Internal,
 			"an unexpected error has occured while unpacking cost response. Type is not map[string]any")
 	}
 
@@ -615,17 +615,18 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	formattedStart, err := validation.ValidateDate(req.GetStartDate())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	//TODO: Not so sure if this is always a good idea to bind on local cpu time for validation
 	// if err := validation.IsFutureDate(formattedStart); err != nil {
-	// return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	// return nil, status.Error(codes.InvalidArgument, err.Error())
 	// }
 
 	sim, err := s.getSim(req.SimId)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.NotFound,
+			"invalid simId while adding package to sim. Error %s", err.Error())
 	}
 
 	packageId, err := uuid.FromString(req.GetPackageId())
@@ -640,15 +641,15 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	}
 
 	if !pkgInfo.IsActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package is no more active within its org")
+		return nil, status.Error(codes.FailedPrecondition,
+			"cannot set package to sim: data plan package is no more active within its org")
 	}
 
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
 
 	if sim.Type != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and packge (%s) sim types mismatch",
+			"invalid sim type: sim (%s) and packge (%s)'s sim types mismatch",
 			sim.Type, pkgInfoSimType.String())
 	}
 
@@ -660,7 +661,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, 0, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %v", req.SimId, err)
+		return nil, fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w", req.SimId, err)
 	}
 
 	if len(packages) == 0 {
@@ -700,6 +701,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
+	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimAddPackage{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -708,7 +710,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    packageId.String(),
 	}
-	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
@@ -809,6 +811,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
+	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimActivation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -817,7 +820,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    pkg.Id.String(),
 	}
-	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
@@ -875,6 +878,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
+	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimRemovePackage{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -883,7 +887,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    packageId.String(),
 	}
-	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
@@ -918,6 +922,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		PackageId: sim.Package.Id.String(),
 		SimId:     sim.Id.String(),
 	}
+
 	err = simAgent.ActivateSim(ctx, req)
 	if err != nil {
 		return nil, err
@@ -939,6 +944,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimActivation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -947,7 +953,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    sim.Package.Id.String(),
 	}
-	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
@@ -1007,6 +1013,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimDeactivation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -1015,7 +1022,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    sim.Package.Id.String(),
 	}
-	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
