@@ -29,7 +29,6 @@ BB_CONFIG=defconfig
 # command line arguments
 MIN_ARGS=2
 DEF_ROOTFS=_ukama_os_rootfs/
-DEF_CSPACE_ROOTFS=cspace_rootfs
 
 # For os-release
 OS_NAME="ukamaOS"
@@ -50,7 +49,6 @@ TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_ROOTFS}
 ROOTFS=`realpath ${DEF_ROOTFS}`
-CSPACE_ROOTFS=${DEF_CSPACE_ROOTFS}
 
 log_info() {
     echo "Info: $1"
