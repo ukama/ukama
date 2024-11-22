@@ -190,7 +190,6 @@ const Page = () => {
       setIsSubscriberDetailsOpen(true);
       setSelectedSubscriber(id);
       setIsPackageActivationNeeded(shouldActivatePackage);
-
       getSubscriber({
         variables: {
           subscriberId: id,
@@ -560,29 +559,10 @@ const Page = () => {
   const handleCloseTopUp = () => {
     setIsToPupData(false);
   };
-
   const handleTopUp = async (plans: { planId: string; simId: string }[]) => {
     try {
-      if (plans.length === 1) {
-        const data = {
-          sim_id: plans[0].simId,
-          package_id: plans[0].planId,
-        };
-        await addPackageToSim({
-          variables: {
-            data: {
-              sim_id: plans[0].simId,
-              package_id: plans[0].planId,
-              start_date: new Date(Date.now() + 1 * 60000).toISOString(),
-            },
-          },
-        });
-
-        await activatePackageSim({
-          variables: { data },
-        });
-      } else {
-        for (const plan of plans) {
+      for (const plan of plans) {
+        try {
           await addPackageToSim({
             variables: {
               data: {
@@ -592,12 +572,56 @@ const Page = () => {
               },
             },
           });
+
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+
+          const result = await getPackagesForSim({
+            variables: {
+              data: {
+                sim_id: plan.simId,
+              },
+            },
+          });
+
+          const packages = result?.data?.getPackagesForSim?.packages || [];
+
+          const mostRecentInactivePackage = packages
+            .filter((pkg) => pkg.is_active === false)
+            .sort(
+              (a, b) =>
+                new Date(b.start_date).getTime() -
+                new Date(a.start_date).getTime(),
+            )[0];
+
+          if (mostRecentInactivePackage) {
+            try {
+              await activatePackageSim({
+                variables: {
+                  data: {
+                    sim_id: plan.simId,
+                    package_id: mostRecentInactivePackage.id,
+                  },
+                },
+              });
+            } catch (error) {
+              console.error(
+                `Error activating package ${mostRecentInactivePackage.id}:`,
+                error,
+              );
+              throw error;
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing plan ${plan.planId}:`, error);
+          throw error;
         }
       }
 
       setIsToPupData(false);
     } catch (error) {
       console.error('Error handling top up:', error);
+      setIsToPupData(false);
+      throw error;
     }
   };
   const handleUpdateSubscriber = (
@@ -839,7 +863,6 @@ const Page = () => {
       <SubscriberDetails
         ishowSubscriberDetails={isSubscriberDetailsOpen}
         handleClose={handleCloseSubscriberDetails}
-        subscriberId={selectedSubscriber}
         subscriberInfo={subscriberInfo?.getSubscriber}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
