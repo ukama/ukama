@@ -36,7 +36,7 @@ var notification = db.Notification{
 	Description: "Description1",
 	Type:        notif.TYPE_INFO,
 	Scope:       notif.SCOPE_ORG,
-	ResourceId:  uuid.NewV4(),
+	ResourceId:  uuid.NewV4().String(),
 	OrgId:       testOrgId,
 	UserId:      testUserId.String(),
 	CreatedAt:   time.Now(),

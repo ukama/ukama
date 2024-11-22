@@ -84,6 +84,7 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventHealthCappStore],
 				evt.EventRoutingKey[evt.EventNotificationDelete],
 				evt.EventRoutingKey[evt.EventNotificationStore],
+				evt.EventRoutingKey[evt.EventNodeStateChange],
 			}},
 	}
 }
