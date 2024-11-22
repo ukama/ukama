@@ -8,14 +8,8 @@
 
 # Script to generate ukamaOS bootable image with minimal rootfs
 
-# Build busybox
-# Build starter.d
-# Build dhcpcd
-# Build sysctl
-# Copy all lib dependencies
-# create cpio arch
 set -e
-set -x
+
 # Base parameters
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
 UKAMA_REPO=`realpath ../../.`
@@ -452,6 +446,8 @@ cd ${WD}
 TOTAL_ROOTFS_SIZE=`du -chs ${ROOTFS} | awk '{print $1}' | uniq`
 IMAGE_SIZE=`du -kh ${WD}/${IMG}.img | cut -f1`
 IMAGE_LOC=`realpath ${WD}/${IMG}.img`
+
+sudo rm -rf "${ROOTFS}"
 
 log_info "All done."
 log_info "------------------"
