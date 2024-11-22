@@ -5,14 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Ctx, Query, Resolver } from "type-graphql";
-
-import { Context } from "../context";
+import { Query, Resolver } from "type-graphql";
 
 @Resolver()
 export class ExampleResolver {
   @Query(() => String, { nullable: true })
-  async example(@Ctx() ctx: Context): Promise<string | null> {
+  async example(): Promise<string | null> {
     return null;
   }
 }
