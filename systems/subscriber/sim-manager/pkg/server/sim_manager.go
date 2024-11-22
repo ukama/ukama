@@ -264,7 +264,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		firstPackage.Id = uuid.NewV4()
 		firstPackage.SimId = sim.Id
 
-		firstPackage.StartDate = time.Now().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+		firstPackage.StartDate = time.Now().UTC().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 		firstPackage.EndDate = firstPackage.StartDate.Add(time.Hour * 24 * time.Duration(packageInfo.Duration))
 
 		return nil
@@ -574,7 +574,7 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 	}
 
 	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
-		pckg.TerminatedAt = gorm.DeletedAt{Time: time.Now(), Valid: true}
+		pckg.TerminatedAt = gorm.DeletedAt{Time: time.Now().UTC(), Valid: true}
 
 		return nil
 	})
@@ -618,10 +618,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	if err := validation.IsFutureDate(formattedStart); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-
-	}
+	//TODO: Not so sure if this is always a good idea to bind on local cpu time for validation
+	// if err := validation.IsFutureDate(formattedStart); err != nil {
+	// return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	// }
 
 	sim, err := s.getSim(req.SimId)
 	if err != nil {
