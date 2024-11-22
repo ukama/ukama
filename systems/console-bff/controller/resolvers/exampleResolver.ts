@@ -11,9 +11,8 @@ import { Context } from "../context";
 
 @Resolver()
 export class ExampleResolver {
-  @Query(() => String)
-  async example(@Ctx() ctx: Context): Promise<string> {
-    const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.example(baseURL, { nodeId: "1" });
+  @Query(() => String, { nullable: true })
+  async example(@Ctx() ctx: Context): Promise<string | null> {
+    return null;
   }
 }
