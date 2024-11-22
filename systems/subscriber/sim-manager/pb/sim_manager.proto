@@ -117,6 +117,8 @@ message DeleteSimResponse{
 message AddPackageRequest {
     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+
+    // Deprecated: packages are now added as FIFO, so this param will be simply ignored
     string startDate = 3 [json_name = "start_date"];
 }
 
