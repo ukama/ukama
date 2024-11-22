@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -43,6 +44,33 @@ func NewNotificationEventServer(orgName string, orgId string, subscriberClient c
 func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v.", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateChange]):
+		c := evt.EventToEventConfig[evt.EventNodeStateChange]
+		msg, err := epb.UnmarshalEventNodeStateChange(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		// Handle Node State Change event
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		c.Title = "Node State Change: " + msg.State
+		c.Description = fmt.Sprintf("Node %s changed state to %s", msg.NodeId, msg.State)
+
+		switch msg.State {
+		case "unknown":
+			c.Type = notif.TYPE_ACTIONABLE_INFO
+		case "faulty":
+			c.Type = notif.TYPE_ERROR
+		default:
+			c.Type = notif.TYPE_INFO
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOrgAdd]):
 		c := evt.EventToEventConfig[evt.EventOrgAdd]

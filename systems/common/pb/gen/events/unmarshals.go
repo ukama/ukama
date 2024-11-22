@@ -1,4 +1,3 @@
-
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,10 +7,11 @@
  */
 
 package events
+
 import (
-"google.golang.org/protobuf/types/known/anypb"
-"google.golang.org/protobuf/proto"
-log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 func UnmarshalEventNetworkDelete(msg *anypb.Any, emsg string) (*EventNetworkDelete, error) {
   p := &EventNetworkDelete{}
@@ -843,3 +843,13 @@ func UnmarshalNodeCreatedEvent(msg *anypb.Any, emsg string) (*NodeCreatedEvent, 
   return p, nil
 }
 
+
+func UnmarshalEventNodeStateChange(msg *anypb.Any, emsg string) (*NodeStateChangeEvent, error) {
+  p := &NodeStateChangeEvent{}
+  err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+  if err != nil {
+    log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+    return nil, err
+  }
+  return p, nil
+  }
