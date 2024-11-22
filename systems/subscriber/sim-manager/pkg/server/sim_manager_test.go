@@ -729,7 +729,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		packageRepo.On("Get", packageID).Return(
 			&db.Package{Id: packageID,
 				SimId:    simID,
-				EndDate:  time.Now().AddDate(0, 1, 0), // next month
+				EndDate:  time.Now().UTC().AddDate(0, 1, 0), // next month
 				IsActive: false,
 			}, nil).Once()
 
@@ -811,7 +811,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		packageRepo.On("Get", packageID).Return(
 			&db.Package{Id: packageID,
 				SimId:    uuid.NewV4(),
-				EndDate:  time.Now().AddDate(0, 1, 0), // next month
+				EndDate:  time.Now().UTC().AddDate(0, 1, 0), // next month
 				IsActive: false,
 			}, nil).Once()
 
@@ -846,7 +846,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		packageRepo.On("Get", packageID).Return(
 			&db.Package{Id: packageID,
 				SimId:    simID,
-				EndDate:  time.Now().AddDate(0, -1, 0), // one month ago
+				EndDate:  time.Now().UTC().AddDate(0, -1, 0), // one month ago
 				IsActive: false,
 			}, nil).Once()
 
@@ -1000,7 +1000,9 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		var orgID = uuid.NewV4()
-		startDate := time.Now().In(time.UTC).Add(5 * time.Minute).Truncate(time.Second)
+		// startDate := time.Now().UTC().Add(5 * time.Minute).Truncate(time.Second)
+		// startDate := time.Now().UTC())
+		startDate := time.Now().UTC()
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
@@ -1038,9 +1040,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
 
 		packageRepo.On("GetOverlap", pkg).Return([]db.Package{}, nil).Once()
-
 		packageRepo.On("Add", pkg, mock.Anything).Return(nil).Once()
-
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
@@ -1065,7 +1065,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 	t.Run("PackageStartDateNotValid", func(t *testing.T) {
 		var simID = uuid.NewV4()
 		var packageID = uuid.NewV4()
-		startDate := time.Now().UTC()
 
 		s := NewSimManagerServer(OrgName, nil, nil, nil, nil,
 			nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -1073,7 +1072,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
 			SimId:     simID.String(),
 			PackageId: packageID.String(),
-			StartDate: startDate.Format(time.RFC3339),
+			StartDate: "xxxx/12/xx",
 		})
 
 		assert.Error(t, err)

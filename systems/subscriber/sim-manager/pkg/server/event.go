@@ -136,6 +136,7 @@ func handleEventCloudProcessorPaymentUpdate(key string, msg *epb.Payment, s *Sim
 	addReq := &pb.AddPackageRequest{
 		SimId:     simId,
 		PackageId: msg.ItemId,
+		StartDate: time.Now().UTC().String(),
 	}
 
 	_, err = s.AddPackageForSim(ctx, addReq)

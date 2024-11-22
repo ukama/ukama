@@ -51,5 +51,5 @@ type Package struct {
 }
 
 func (p Package) IsExpired() bool {
-	return p.EndDate.Before(time.Now())
+	return p.EndDate.Before(time.Now().UTC())
 }
