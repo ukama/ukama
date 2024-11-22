@@ -101,70 +101,27 @@ unmount_all_partitions() {
 
     log "INFO" "Unmounting all partitions and detaching loop devices..."
 
-#    for part in "${PARTITIONS[@]}"; do
-#        set -- $part
-#        local name="$1"
-#        local mount_point="${MOUNT_DIR}/${name}"
+    for part in "${PARTITIONS[@]}"; do
+        set -- $part
+        local name="$1"
+        local mount_point="${MOUNT_DIR}/${name}"
 
         # Unmount partition
-#        if mountpoint -q "${mount_point}"; then
-#            sudo umount "${mount_point}" && log "INFO" "Unmounted ${mount_point}" \
-#                || log "WARNING" "Failed to unmount ${mount_point}"
-#        fi
-#        sudo rmdir "${mount_point}" 2>/dev/null \
-#            || log "WARNING" "Failed to remove ${mount_point}"
-#    done
+        if mountpoint -q "${mount_point}"; then
+            sudo umount "${mount_point}" && log "INFO" "Unmounted ${mount_point}" \
+                || log "WARNING" "Failed to unmount ${mount_point}"
+        fi
+        sudo rmdir "${mount_point}" 2>/dev/null \
+            || log "WARNING" "Failed to remove ${mount_point}"
+    done
 
     # Detach all loop devices
-#    for loop_device in "${LOOP_DEVICES[@]}"; do
-#        sudo losetup -d "${loop_device}" && log "INFO" "Detached ${loop_device}" \
-#            || log "WARNING" "Failed to detach ${loop_device}"
-#    done
+    for loop_device in "${LOOP_DEVICES[@]}"; do
+        sudo losetup -d "${loop_device}" && log "INFO" "Detached ${loop_device}" \
+            || log "WARNING" "Failed to detach ${loop_device}"
+    done
 
     LOOP_DEVICES=() # Reset loop device array
-}
-
-mock_sysfs_for_noded() {
-
-    local repo=$1
-    local partition=$2
-
-    mkdir -p "${partition}/ukama/mocksysfs/"
-    cp -p "${repo}/builder/scripts/mocksysfs.sh" "${parition}/ukama/mocksysfs/"
-
-    cd "${repo}/nodes/ukamaOS/distro/system/noded"; make
-    cp -rfp * "${partition}/ukama/mocksysfs/"
-    make clean
-    cd -
-
-    sudo chroot "${partition}" /bin/bash <<EOF
-
-    # Create systemd service file
-    cat > /etc/systemd/system/mocksysfs.service <<EOL
-        [Unit]
-        Description=Mock sysfs for Ukama Node
-        Before=starterd.service
-
-        [Service]
-        Type=oneshot
-        ExecStart=/ukama/mocksysfs/mocksysfs.sh
-
-        [Install]
-        WantedBy=multi-user.target
-EOL
-
-    # Check if the service file creation was successful
-    if [ ! -f /etc/systemd/system/mocksysfs.service ]; then
-        echo "Error: Failed to create systemd service file."
-        exit 1
-    fi
-
-    # Enable the service
-    systemctl enable mocksysfs.service || {
-        echo "Error: Failed to enable mocksysfs.service."
-        exit 1
-    }
-EOF
 }
 
 install_starter_app() {
@@ -381,16 +338,10 @@ copy_all_apps_to_image "${NODE_ID}"    "${NODE_APPS}" \
 copy_misc_files_to_image "${UKAMA_ROOT}" "${NODE_ID}" "${NODE_APPS}" \
     || { log "ERROR" "Failed to copy misc files"; exit 1; }
 
-mock_sysfs_for_noded "${UKAMA_ROOT}" "${PRIMARY}" \
-    || { log "ERROR" "Failed to mock sysfs on ${PRIMARY}"; exit 1; }
-
-mock_sysfs_for_noded "${UKAMA_ROOT}" "${PASSIVE}" \
-    || { log "ERROR" "Failed to mock sysfs on ${PASSIVE}"; exit 1; }
-
 # Add Node ID to the image
 log "INFO" "Adding Node ID to the image"
-echo "${NODE_ID}" > "${PRIMARY}/ukama/nodeid"
-echo "${NODE_ID}" > "${PASSIVE}/ukama/nodeid"
+echo "${NODE_ID}" | sudo tee "${PRIMARY}/ukama/nodeid" > /dev/null
+echo "${NODE_ID}" | sudo tee "${PASSIVE}/ukama/nodeid" > /dev/null
 
 # Unmount the image
 log "INFO" "Unmounting image: ${NODE_IMAGE}"
@@ -400,4 +351,3 @@ log "SUCCESS" "Amplifier node image creation completed successfully."
 log "INFO"    "Node ID: ${NODE_ID}, Image: ${NODE_IMAGE}"
 
 exit 0
-
