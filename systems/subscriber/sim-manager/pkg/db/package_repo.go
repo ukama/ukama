@@ -10,7 +10,6 @@ package db
 
 import (
 	"errors"
-	"time"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -24,8 +23,8 @@ import (
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageID uuid.UUID) (*Package, error)
-	List(simId, dataPlanId string, fromStartDate, toSartDate,
-		fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error)
+	List(simId, dataPlanId, fromStartDate, toSartDate,
+		fromEndDate, toEndDate string, isActive bool, count uint32, sort bool) ([]Package, error)
 
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simID uuid.UUID) ([]Package, error)
@@ -77,8 +76,8 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	return pkg, nil
 }
 
-func (p *packageRepo) List(simId, dataPlanId string, fromStartDate, toStartDate,
-	fromEndDate, toEndDate time.Time, isActive bool, count uint32, sort bool) ([]Package, error) {
+func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
+	fromEndDate, toEndDate string, isActive bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -91,19 +90,19 @@ func (p *packageRepo) List(simId, dataPlanId string, fromStartDate, toStartDate,
 		tx = tx.Where("package_id = ?", dataPlanId)
 	}
 
-	if !fromStartDate.IsZero() {
+	if fromStartDate != "" {
 		tx = tx.Where("start_date >= ?", fromStartDate)
 	}
 
-	if !toStartDate.IsZero() {
+	if toStartDate != "" {
 		tx = tx.Where("start_date <= ?", toStartDate)
 	}
 
-	if !fromEndDate.IsZero() {
+	if fromEndDate != "" {
 		tx = tx.Where("end_date >= ?", fromEndDate)
 	}
 
-	if !toEndDate.IsZero() {
+	if toEndDate != "" {
 		tx = tx.Where("end_date <= ?", toEndDate)
 	}
 

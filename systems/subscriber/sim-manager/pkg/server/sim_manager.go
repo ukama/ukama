@@ -48,7 +48,10 @@ import (
 
 //TODO; Replace all these GetBy with List functions.
 
-const DefaultMinuteDelayForPackageStartDate = 1
+const (
+	DefaultMinuteDelayForPackageStartDate = 1
+	eventPublishErrorMsg                  = "Failed to publish message %+v with key %+v. Errors %v"
+)
 
 type SimManagerServer struct {
 	simRepo                   sims.SimRepo
@@ -276,7 +279,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
-
 	evt := &epb.EventSimAllocation{
 		Id:            sim.Id.String(),
 		SubscriberId:  sim.SubscriberId.String(),
@@ -292,6 +294,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageId:     sim.Package.Id.String(),
 		TrafficPolicy: sim.TrafficPolicy,
 	}
+
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
 	if err != nil {
 		return nil, err
@@ -321,7 +324,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		}
 	}
 
-	_ = s.PublishEventMessage(route, evt)
+	err = s.PublishEventMessage(route, evt)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evt, route, err)
+	}
 
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -333,6 +339,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
+
 	return resp, nil
 }
 
@@ -584,7 +591,10 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		NetworkId:    sim.NetworkId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	_, _, _, terminatedCount, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -607,14 +617,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
+
 	if err := validation.IsFutureDate(formattedStart); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 
-	}
-
-	startDate, err := time.Parse(time.RFC3339, formattedStart)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
 	}
 
 	sim, err := s.getSim(req.SimId)
@@ -648,24 +654,41 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	pkg := &sims.Package{
 		SimId:     sim.Id,
-		StartDate: startDate,
-		EndDate:   startDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration)),
 		PackageId: packageId,
 		IsActive:  false,
 	}
 
+	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, 0, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %v", req.SimId, err)
+	}
+
+	if len(packages) == 0 {
+		startDate, err := time.Parse(time.RFC3339, formattedStart)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
+		}
+
+		pkg.StartDate = startDate
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+		pkg.IsActive = true
+	} else {
+		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+	}
+
 	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
 
-	// overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
-	// if err != nil {
-	// 	return nil, grpc.SqlErrorToGrpc(err, "packages")
-	// }
+	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
+	}
 
-	// if len(overlappingPackages) > 0 {
-	// 	return nil, status.Errorf(codes.FailedPrecondition,
-	// 		"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
-	// 		len(overlappingPackages))
-	// }
+	if len(overlappingPackages) > 0 {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
+			len(overlappingPackages))
+	}
 
 	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
 		pckg.Id = uuid.NewV4()
@@ -686,7 +709,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		PackageId:    packageId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	return &pb.AddPackageResponse{}, nil
 }
@@ -792,7 +818,10 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		PackageId:    pkg.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	/* Update package for opertaor */
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
@@ -855,7 +884,10 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 		PackageId:    packageId.String(),
 	}
 	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	return &pb.RemovePackageResponse{}, nil
 }
@@ -916,7 +948,10 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		PackageId:    sim.Package.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	_, activeCount, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -981,7 +1016,10 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		PackageId:    sim.Package.Id.String(),
 	}
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
-	_ = s.PublishEventMessage(route, evtMsg)
+	err = s.PublishEventMessage(route, evtMsg)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
 
 	_, _, inactiveCount, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
@@ -1013,13 +1051,12 @@ func (s *SimManagerServer) getSim(simId string) (*sims.Sim, error) {
 }
 
 func (s *SimManagerServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
-
 	err := s.msgbus.PublishRequest(route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}
-	return err
 
+	return err
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {

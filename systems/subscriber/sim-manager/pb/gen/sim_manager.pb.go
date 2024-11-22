@@ -814,6 +814,7 @@ type AddPackageRequest struct {
 
 	SimId     string `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
 	PackageId string `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	// Deprecated: packages are now added as FIFO, so this param will be simply ignored
 	StartDate string `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
 }
 

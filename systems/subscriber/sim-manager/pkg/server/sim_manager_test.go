@@ -1031,10 +1031,16 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			StartDate: startDate.Truncate(time.Second),
 			EndDate:   startDate.Add(time.Hour * 24).Truncate(time.Second),
 			PackageId: packageID,
-			IsActive:  false,
+			IsActive:  true,
 		}
 
+		packageRepo.On("List", sim.Id.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
+
+		packageRepo.On("GetOverlap", pkg).Return([]db.Package{}, nil).Once()
+
 		packageRepo.On("Add", pkg, mock.Anything).Return(nil).Once()
+
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,

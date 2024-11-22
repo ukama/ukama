@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 )
 
 const (
+	packageItemType      = "package"
 	handlerTimeoutFactor = 3
 )
 
@@ -55,6 +57,21 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 
 		if simType == ukama.SimTypeOperatorData {
 			err = handleEventCloudSimManagerOperatorSimAllocate(e.RoutingKey, msg, es.s)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.update"):
+		msg, err := unmarshalProcessorPaymentUpdate(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		paymentStatus := ukama.ParseStatusType(msg.Status)
+
+		if paymentStatus == ukama.StatusTypeCompleted && msg.ItemType == packageItemType {
+			err = handleEventCloudProcessorPaymentUpdate(e.RoutingKey, msg, es.s)
 			if err != nil {
 				return nil, err
 			}
@@ -95,6 +112,33 @@ func handleEventCloudSimManagerOperatorSimAllocate(key string, msg *pb.AllocateS
 	defer cancel()
 
 	_, err := s.activateSim(ctx, msg.Sim.Iccid)
+
+	return err
+}
+
+func handleEventCloudProcessorPaymentUpdate(key string, msg *epb.Payment, s *SimManagerServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	metadata := map[string]string{}
+
+	err := json.Unmarshal(msg.Metadata, &metadata)
+	if err != nil {
+		return fmt.Errorf("failed to Unmarshal payment metadata as map[string]string: %w", err)
+	}
+
+	simId, ok := metadata["simId"]
+	if !ok {
+		return fmt.Errorf("missing simId metadata for successful package payment: %s", msg.ItemId)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+	defer cancel()
+
+	addReq := &pb.AddPackageRequest{
+		SimId:     simId,
+		PackageId: msg.ItemId,
+	}
+
+	_, err = s.AddPackageForSim(ctx, addReq)
 
 	return err
 }
@@ -179,6 +223,19 @@ func unmarshalSimManagerSimAllocate(msg *anypb.Any) (*pb.AllocateSimResponse, er
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AllocateSim message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalProcessorPaymentUpdate(msg *anypb.Any) (*epb.Payment, error) {
+	p := &epb.Payment{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal payment  message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

@@ -45,7 +45,7 @@ type Config struct {
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"api-gateway-init:8080"`
+	InitClient    string `defaut:"api-gateway-init:8080"`
 	NucleusClient string `defaut:"api-gateway-nucleus:8080"`
 }
 
@@ -59,6 +59,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.payments.processor.payment.update",
 				"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create",
 				"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create",
 			},
