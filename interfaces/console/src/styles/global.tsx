@@ -228,15 +228,15 @@ const NavigationWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: theme.spacing(1),
   position: 'absolute',
-  top: 6,
-  right: 8,
+  top: 160,
+  right: 50,
 }));
 
 const NavigationButton = styled(IconButton)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   boxShadow: theme.shadows[1],
-  width: 40,
-  height: 40,
+  width: 30,
+  height: 30,
   padding: 6,
   '&:hover': {
     backgroundColor: theme.palette.grey[100],

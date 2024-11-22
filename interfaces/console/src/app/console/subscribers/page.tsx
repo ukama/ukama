@@ -749,14 +749,14 @@ const Page = () => {
                       onClick={() => scroll('left')}
                       disabled={!packagesData?.getPackages.packages?.length}
                     >
-                      <KeyboardArrowLeftIcon />
+                      <KeyboardArrowLeftIcon fontSize="small" />
                     </NavigationButton>
 
                     <NavigationButton
                       onClick={() => scroll('right')}
                       disabled={!packagesData?.getPackages.packages?.length}
                     >
-                      <KeyboardArrowRightIcon />
+                      <KeyboardArrowRightIcon fontSize="small" />
                     </NavigationButton>
                   </NavigationWrapper>
                 )}
