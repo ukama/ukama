@@ -20,8 +20,8 @@ const (
 	StatusTypeUnknown StatusType = iota
 	StatusTypePending
 	StatusTypeProcessing
-	StatusTypeCompleted
 	StatusTypeFailed
+	StatusTypeCompleted
 )
 
 func (s *StatusType) Scan(value interface{}) error {
