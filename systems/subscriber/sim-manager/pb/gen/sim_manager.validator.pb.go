@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -162,6 +162,19 @@ func (this *AddPackageRequest) Validate() error {
 	return nil
 }
 func (this *AddPackageResponse) Validate() error {
+	return nil
+}
+func (this *ListPackagesForSimRequest) Validate() error {
+	return nil
+}
+func (this *ListPackagesForSimResponse) Validate() error {
+	for _, item := range this.Packages {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Packages", err)
+			}
+		}
+	}
 	return nil
 }
 

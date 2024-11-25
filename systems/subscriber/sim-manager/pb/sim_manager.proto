@@ -32,6 +32,8 @@ service SimManagerService {
 
     // Sim pacakge
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
+	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
     rpc GetPackagesForSim(GetPackagesForSimRequest) returns (GetPackagesForSimResponse);
     rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
@@ -125,6 +127,24 @@ message AddPackageRequest {
 }
 
 message AddPackageResponse{
+}
+
+
+message ListPackagesForSimRequest{
+   string simId = 1 [json_name = "sim_id"];
+   string dataPlanId = 2 [json_name = "data_paln_id"];
+   string fromStartDate = 3 [json_name = "from_start_date"];
+   string toStartDate = 4 [json_name = "to_start_date"];
+   string fromEndDate = 5 [json_name = "from_end_date"];
+   string toEndDate = 6 [json_name = "to_end_date"];
+   bool isActive = 7 [json_name = "is_active"];
+   bool asExpired = 8 [json_name = "as_expired"];
+   uint32 count = 9;
+   bool sort = 10;
+}
+
+message ListPackagesForSimResponse {
+    repeated Package packages = 1;
 }
 
 
