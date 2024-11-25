@@ -46,6 +46,7 @@ type Package struct {
 	EndDate   time.Time
 	PackageId uuid.UUID `gorm:"not null;type:uuid"`
 	IsActive  bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true;default:false"`
+	AsExpired bool      `gorm:"default:false"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

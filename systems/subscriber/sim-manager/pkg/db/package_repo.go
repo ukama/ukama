@@ -23,8 +23,8 @@ import (
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageID uuid.UUID) (*Package, error)
-	List(simId, dataPlanId, fromStartDate, toSartDate,
-		fromEndDate, toEndDate string, isActive bool, count uint32, sort bool) ([]Package, error)
+	List(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate string,
+		isActive, asExpired bool, count uint32, sort bool) ([]Package, error)
 
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simID uuid.UUID) ([]Package, error)
@@ -77,7 +77,7 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 }
 
 func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
-	fromEndDate, toEndDate string, isActive bool, count uint32, sort bool) ([]Package, error) {
+	fromEndDate, toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -108,6 +108,10 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
 
 	if isActive {
 		tx = tx.Where("is_active = ?", true)
+	}
+
+	if asExpired {
+		tx = tx.Where("as_expired = ?", true)
 	}
 
 	if sort {

@@ -659,7 +659,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		IsActive:  false,
 	}
 
-	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, 0, true)
+	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w", req.SimId, err)
 	}
@@ -1118,6 +1118,7 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 		Id:        pkg.Id.String(),
 		PackageId: pkg.PackageId.String(),
 		IsActive:  pkg.IsActive,
+		AsExpired: pkg.AsExpired,
 		CreatedAt: pkg.CreatedAt.Format(time.RFC3339),
 		UpdatedAt: pkg.UpdatedAt.Format(time.RFC3339),
 	}

@@ -142,9 +142,9 @@ func (_m *PackageRepo) GetOverlap(_a0 *db.Package) ([]db.Package, error) {
 	return r0, r1
 }
 
-// List provides a mock function with given fields: simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, count, sort
-func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate string, toSartDate string, fromEndDate string, toEndDate string, isActive bool, count uint32, sort bool) ([]db.Package, error) {
-	ret := _m.Called(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, count, sort)
+// List provides a mock function with given fields: simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, asExpired, count, sort
+func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate string, toSartDate string, fromEndDate string, toEndDate string, isActive bool, asExpired bool, count uint32, sort bool) ([]db.Package, error) {
+	ret := _m.Called(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, asExpired, count, sort)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -152,19 +152,19 @@ func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate strin
 
 	var r0 []db.Package
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, uint32, bool) ([]db.Package, error)); ok {
-		return rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, count, sort)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint32, bool) ([]db.Package, error)); ok {
+		return rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, asExpired, count, sort)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, uint32, bool) []db.Package); ok {
-		r0 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, count, sort)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint32, bool) []db.Package); ok {
+		r0 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, asExpired, count, sort)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Package)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, uint32, bool) error); ok {
-		r1 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, count, sort)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, uint32, bool) error); ok {
+		r1 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isActive, asExpired, count, sort)
 	} else {
 		r1 = ret.Error(1)
 	}
