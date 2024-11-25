@@ -1037,7 +1037,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		}
 
 		packageRepo.On("List", sim.Id.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
+			mock.Anything, mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
 
 		packageRepo.On("GetOverlap", pkg).Return([]db.Package{}, nil).Once()
 		packageRepo.On("Add", pkg, mock.Anything).Return(nil).Once()
