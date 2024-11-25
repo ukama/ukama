@@ -83,7 +83,7 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
 
 	if simId != "" {
-		tx = tx.Where("item_id = ?", simId)
+		tx = tx.Where("sim_id = ?", simId)
 	}
 
 	if dataPlanId != "" {

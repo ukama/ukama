@@ -724,15 +724,13 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
 	log.Infof("Getting sims matching: %v", req)
 
-	if req.SimId != "" {
-		simId, err := uuid.FromString(req.GetSimId())
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument,
-				"invalid format for sim uuid: %s. Error %v", req.SimId, err)
-		}
-
-		req.SimId = simId.String()
+	simId, err := uuid.FromString(req.GetSimId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format for sim uuid: %s. Error %v", req.SimId, err)
 	}
+
+	req.SimId = simId.String()
 
 	if req.DataPlanId != "" {
 		dataPlanId, err := uuid.FromString(req.GetDataPlanId())
