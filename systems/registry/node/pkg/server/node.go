@@ -266,6 +266,8 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 	nodeUpdates := &db.Node{
 		Id:   nodeId.StringLowercase(),
 		Name: req.Name,
+		Latitude: req.Latitude,
+		Longitude: req.Longitude,
 	}
 
 	err = n.nodeRepo.Update(nodeUpdates, nil)
