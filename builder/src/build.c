@@ -21,6 +21,11 @@
 #define NODE_SCRIPT   "./build-virtual-node.sh"
 #define BASE_IMAGE_ID "uk-ma0000-tnode-a1-1234"
 
+#define BUILD_ANODE_SCRIPT "./build-amplifier-node.sh"
+
+/* board_config.c */
+extern char *getAppsFromBoardConfigs(const char *commonFile, const char *boardFile);
+
 static bool build_system(char *name, char *path) {
 
 	char runMe[MAX_BUFFER] = {0};
@@ -115,6 +120,38 @@ bool build_ukamaos_image(char *repo) {
 
     if (system(runMe) < 0) {
         usys_log_error("Unable to create base image via repo: %s", repo);
+        return USYS_FALSE;
+    }
+
+    return USYS_TRUE;
+}
+
+bool build_amplifier_node(char *repo, char *nodeID) {
+
+    char runMe[MAX_BUFFER] = {0};
+    char *appsList = NULL;
+
+    appsList = getAppsFromBoardConfigs(BOARD_COMMON_CONFIG,
+                                       BOARD_CONTROLLER_CONFIG);
+
+    if (appsList) {
+        sprintf(runMe, "cd scripts; sudo %s %s 0.0.1 %s %s; cd -",
+                BUILD_ANODE_SCRIPT,
+                repo,
+                nodeID,
+                appsList);
+    } else {
+        sprintf(runMe, "cd scripts; %s %s 0.0.1 %s %s; cd -",
+                BUILD_ANODE_SCRIPT,
+                repo,
+                nodeID,
+                "");
+    }
+
+    if (system(runMe) < 0) {
+        usys_log_error("Unable to build amplifier image", repo);
+        usys_log_error(" common config: %s controller config: %s",
+                       BOARD_COMMON_CONFIG, BOARD_CONTROLLER_CONFIG);
         return USYS_FALSE;
     }
 

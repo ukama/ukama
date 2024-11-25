@@ -24,10 +24,11 @@
 extern bool build_all_systems(char *systemsList, char *ukamaRepo, char *authRepo);
 extern bool build_nodes(char *repo, int count, char **list);
 extern bool build_ukamaos_image(char *repo);
-
+extern bool build_amplifier_node(char *repo, char *nodeID);
 
 /* deploy.c */
-extern bool deploy_all_systems(char *file, DeployConfig *deployConfig, char *ukamaRepo, char *authRepo);
+extern bool deploy_all_systems(char *file, DeployConfig *deployConfig,
+                               char *ukamaRepo, char *authRepo);
 extern bool display_all_systems_status(char *systems, int interval);
 extern bool deploy_nodes(int count, char **nodesIDList);
 
@@ -45,6 +46,9 @@ extern bool shutdown_nodes(int count, char **nodesIDList);
 #define TARGET_NODES    2
 #define TARGET_SYSTEMS  3
 #define TARGET_UKAMA_OS 4
+
+#define TARGET_AMPLIFIER_NODE 5
+#define TARGET_TOWER_NODE     6
 
 #define IS_S3_PATH(source) (strncmp((source), "s3://", 5) == 0 ? USYS_TRUE : USYS_FALSE)
 
@@ -92,7 +96,8 @@ void processArguments(int argc, char **argv, int *target, int *cmd) {
     for (int i = 1; i < argc; i++) {
         if (strcasecmp(argv[i], "nodes") == 0 ||
             strcasecmp(argv[i], "systems") == 0 ||
-            strcasecmp(argv[i], "ukamaos") == 0) {
+            strcasecmp(argv[i], "ukamaos") == 0 ||
+            strcasecmp(argv[i], "amplifier") == 0 ) {
 
             if (!isTargetSet) {
                 if (strcasecmp(argv[1], "nodes") == 0) {
@@ -101,6 +106,8 @@ void processArguments(int argc, char **argv, int *target, int *cmd) {
                     *target = TARGET_SYSTEMS;
                 } else if (strcasecmp(argv[i], "ukamaos") == 0) {
                     *target = TARGET_UKAMA_OS;
+                } else if (strcasecmp(argv[i], "amplifier") == 0) {
+                    *target = TARGET_AMPLIFIER_NODE;
                 }
                 isTargetSet = USYS_TRUE;
             }
@@ -192,6 +199,7 @@ int main(int argc, char **argv) {
     int cmd = CMD_ALL, target = TARGET_ALL;
     char *debug      = DEF_LOG_LEVEL;
     char *configFile = DEF_CONFIG_FILE;
+    char *nodeID     = DEF_NODE_ID;
 
     Config *config = NULL;
 
@@ -205,7 +213,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:c:p:l", longOptions,
+        opt = usys_getopt_long(argc, argv, "vh:c:p:i:l", longOptions,
                                &optIdx);
         if (opt == -1) {
             break;
@@ -235,6 +243,10 @@ int main(int argc, char **argv) {
             }
             break;
 
+        case 'i':
+            nodeID = optarg;
+            break;
+
         default:
             usage();
             usys_exit(0);
@@ -245,6 +257,16 @@ int main(int argc, char **argv) {
         usys_log_error("Unable to read builder's config file: %s",
                        configFile);
         usys_exit(1);
+    }
+
+    if (cmd == CMD_BUILD && target == TARGET_AMPLIFIER_NODE) {
+        if (!build_amplifier_node(config->setup->ukamaRepo, nodeID)) {
+            usys_log_error("Unable to build Ukama amplifier node image");
+            usys_exit(1);
+        }
+
+        free_config(config);
+        usys_exit(0);
     }
 
     /* Build ukamaOS image - mainly this is for CI/CD workflows */
