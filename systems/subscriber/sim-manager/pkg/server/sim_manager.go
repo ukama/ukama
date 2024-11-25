@@ -721,6 +721,59 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	return &pb.AddPackageResponse{}, nil
 }
 
+func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
+	log.Infof("Getting sims matching: %v", req)
+
+	if req.SimId != "" {
+		simId, err := uuid.FromString(req.GetSimId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for sim uuid: %s. Error %v", req.SimId, err)
+		}
+
+		req.SimId = simId.String()
+	}
+
+	if req.DataPlanId != "" {
+		dataPlanId, err := uuid.FromString(req.GetDataPlanId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for data plan uuid: %s. Error %v", req.DataPlanId, err)
+		}
+
+		req.DataPlanId = dataPlanId.String()
+	}
+
+	fromStartDate, err := validation.ValidateDate(req.GetFromStartDate())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	toStartDate, err := validation.ValidateDate(req.GetToStartDate())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	fromEndDate, err := validation.ValidateDate(req.GetFromEndDate())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	toEndDate, err := validation.ValidateDate(req.GetToEndDate())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, fromStartDate, toStartDate,
+		fromEndDate, toEndDate, req.IsActive, req.AsExpired, req.Count, req.Sort)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	return &pb.ListPackagesForSimResponse{Packages: dbPackagesToPbPackages(packages)}, nil
+}
+
+// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
 func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPackagesForSimRequest) (*pb.GetPackagesForSimResponse, error) {
 	log.Infof("Getting packages for sim: %v", req.GetSimId())
 
