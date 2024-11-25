@@ -104,28 +104,28 @@ func (_m *SimManagerServiceServer) DeleteSim(_a0 context.Context, _a1 *gen.Delet
 	return r0, r1
 }
 
-// GetPackagesBySim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) GetPackagesBySim(_a0 context.Context, _a1 *gen.GetPackagesBySimRequest) (*gen.GetPackagesBySimResponse, error) {
+// GetPackagesForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GetPackagesForSim(_a0 context.Context, _a1 *gen.GetPackagesForSimRequest) (*gen.GetPackagesForSimResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPackagesBySim")
+		panic("no return value specified for GetPackagesForSim")
 	}
 
-	var r0 *gen.GetPackagesBySimResponse
+	var r0 *gen.GetPackagesForSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesBySimRequest) (*gen.GetPackagesBySimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesForSimRequest) (*gen.GetPackagesForSimResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesBySimRequest) *gen.GetPackagesBySimResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesForSimRequest) *gen.GetPackagesForSimResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetPackagesBySimResponse)
+			r0 = ret.Get(0).(*gen.GetPackagesForSimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesBySimRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesForSimRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

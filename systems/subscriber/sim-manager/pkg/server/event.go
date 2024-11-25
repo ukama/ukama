@@ -148,17 +148,29 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sim, err := s.simRepo.GetByIccid(cdr.Iccid)
-	if err != nil {
-		return fmt.Errorf("no corresponding sim found for given iccid %q: %v",
-			cdr.Iccid, err)
-	}
-
 	if cdr.Type != ukama.CdrTypeData.String() {
 		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
 
 		return nil
 	}
+
+	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	if err != nil {
+		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
+			cdr.Iccid, err)
+	}
+
+	if len(sims) == 0 {
+		return fmt.Errorf("no corresponding sim found for given iccid %q",
+			cdr.Iccid)
+	}
+
+	if len(sims) > 1 {
+		return fmt.Errorf("inconsistant state: multiple sim found for given iccid %q",
+			cdr.Iccid)
+	}
+
+	sim := sims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -189,8 +201,18 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 
 	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
-		return fmt.Errorf("no corresponding sim found for given iccid %q: %v",
+		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
+	}
+
+	if len(sims) == 0 {
+		return fmt.Errorf("no corresponding sim found for given imsi %q",
+			cdr.Imsi)
+	}
+
+	if len(sims) > 1 {
+		return fmt.Errorf("inconsistant state: multiple sim found for given imsi %q",
+			cdr.Imsi)
 	}
 
 	sim := sims[0]

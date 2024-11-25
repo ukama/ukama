@@ -127,8 +127,8 @@ func (_m *SimManagerServiceClient) DeleteSim(ctx context.Context, in *gen.Delete
 	return r0, r1
 }
 
-// GetPackagesBySim provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) GetPackagesBySim(ctx context.Context, in *gen.GetPackagesBySimRequest, opts ...grpc.CallOption) (*gen.GetPackagesBySimResponse, error) {
+// GetPackagesForSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetPackagesForSim(ctx context.Context, in *gen.GetPackagesForSimRequest, opts ...grpc.CallOption) (*gen.GetPackagesForSimResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -139,23 +139,23 @@ func (_m *SimManagerServiceClient) GetPackagesBySim(ctx context.Context, in *gen
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetPackagesBySim")
+		panic("no return value specified for GetPackagesForSim")
 	}
 
-	var r0 *gen.GetPackagesBySimResponse
+	var r0 *gen.GetPackagesForSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesBySimRequest, ...grpc.CallOption) (*gen.GetPackagesBySimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesForSimRequest, ...grpc.CallOption) (*gen.GetPackagesForSimResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesBySimRequest, ...grpc.CallOption) *gen.GetPackagesBySimResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetPackagesForSimRequest, ...grpc.CallOption) *gen.GetPackagesForSimResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetPackagesBySimResponse)
+			r0 = ret.Get(0).(*gen.GetPackagesForSimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesBySimRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetPackagesForSimRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
