@@ -12,6 +12,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -61,14 +64,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		c.Title = "Node State Change: " + msg.State
 		c.Description = fmt.Sprintf("Node %s changed state to %s", msg.NodeId, msg.State)
 
-		switch msg.State {
-		case "unknown":
-			c.Type = notif.TYPE_ACTIONABLE_INFO
-		case "faulty":
-			c.Type = notif.TYPE_ERROR
-		default:
-			c.Type = notif.TYPE_INFO
-		}
+		state := ukama.ParseNodeState(strings.ToLower(msg.State))
+		c.Type = determineNotificationType(state)
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 
@@ -680,4 +677,15 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 	}
 
 	return dn
+}
+
+func determineNotificationType(state ukama.NodeState) notif.NotificationType {
+	switch state {
+	case ukama.Unknown:
+		return notif.TYPE_ACTIONABLE_INFO
+	case ukama.Faulty:
+		return notif.TYPE_ACTIONABLE_CRITICAL
+	default:
+		return notif.TYPE_INFO
+	}
 }

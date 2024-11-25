@@ -9,28 +9,33 @@
  syntax = "proto3";
 
  option go_package = "github.com/ukama/ukama/systems/common/pb/gen/ukama";
- 
+  
  package ukama.common.v1;
-
+ 
  enum NotificationType {
-    NOTIF_INVALID = 0;
-    NOTIF_INFO = 1;
-    NOTIF_WARNING = 2;
-    NOTIF_ERROR = 3;
-    NOTIF_CRITICAL = 4;
-}
-
-enum NotificationScope {
-    SCOPE_INVALID = 0;
-    SCOPE_OWNER = 1;
-    SCOPE_ORG = 2;
-    SCOPE_NETWORKS = 3;
-	SCOPE_NETWORK = 4;
-    SCOPE_SITES = 5;
-	SCOPE_SITE = 6;
-    SCOPE_SUBSCRIBERS = 7;
-	SCOPE_SUBSCRIBER = 8;
-    SCOPE_USERS = 9;
-	SCOPE_USER = 10;
-	SCOPE_NODE = 11;
-}
+     NOTIF_INVALID = 0;
+     NOTIF_INFO = 1;
+     NOTIF_WARNING = 2;
+     NOTIF_ERROR = 3;
+     NOTIF_CRITICAL = 4;
+     NOTIF_ACTIONABLE_INFO = 5;
+     NOTIF_ACTIONABLE_WARNING = 6;
+     NOTIF_ACTIONABLE_ERROR = 7;
+     NOTIF_ACTIONABLE_CRITICAL = 8;
+     NOTIF_NOT = 9;
+ }
+ 
+ enum NotificationScope {
+     SCOPE_INVALID = 0;
+     SCOPE_OWNER = 1;
+     SCOPE_ORG = 2;
+     SCOPE_NETWORKS = 3;
+     SCOPE_NETWORK = 4;
+     SCOPE_SITES = 5;
+     SCOPE_SITE = 6;
+     SCOPE_SUBSCRIBERS = 7;
+     SCOPE_SUBSCRIBER = 8;
+     SCOPE_USERS = 9;
+     SCOPE_USER = 10;
+     SCOPE_NODE = 11;
+ }
