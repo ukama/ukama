@@ -76,7 +76,7 @@ void set_log_level(char *slevel) {
 
 void usage() {
 
-    usys_puts("Usage: builder [ukamaos | nodes | systems]  "
+    usys_puts("Usage: builder [ukamaos | nodes | systems | amplifier]  "
               "[build | deploy | status | down] [options]");
     usys_puts("Options:");
     usys_puts("-h, --help                    Help menu");
@@ -281,7 +281,6 @@ int main(int argc, char **argv) {
     }
 
     if (cmd == CMD_ALL || cmd == CMD_BUILD) {
-
         if (target == TARGET_ALL || target == TARGET_SYSTEMS) {
             if (!build_all_systems(config->build->systemsList,
                                    config->setup->ukamaRepo,

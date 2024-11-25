@@ -257,6 +257,7 @@ copy_misc_files_to_image() {
     generate_manifest_file $apps
     sudo cp ${MANIFEST_FILE} "${PRIMARY}/manifest.json"
     sudo cp ${MANIFEST_FILE} "${PASSIVE}/manifest.json"
+    rm ${MANIFEST_FILE}
 
     # install the starter.d app
     install_starter_app $PRIMARY
