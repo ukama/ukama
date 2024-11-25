@@ -119,7 +119,7 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 		return nil, err
 	}
 
-	route := n.baseRoutingKey.SetAction("delete").SetObject("node").MustBuild()
+	route := n.baseRoutingKey.SetAction("delete").SetObject("notification").MustBuild()
 
 	evt := &epb.NotificationDeletedEvent{
 		Id: notificationId.String(),
@@ -215,7 +215,7 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 		return err
 	}
 
-	route := baseRoutingKey.SetAction("store").SetObject("node").MustBuild()
+	route := baseRoutingKey.SetAction("store").SetObject("notification").MustBuild()
 
 	evt := &epb.Notification{
 		Id:          notification.Id.String(),
