@@ -261,10 +261,6 @@ fragment SubscriberSims on SubscriberToSimsDto {
     imsi
     type
     status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
     allocatedAt
     isPhysical
   }
@@ -427,10 +423,6 @@ fragment SimAllocation on AllocateSimAPIDto {
   status
   is_physical
   traffic_policy
-  firstActivatedOn
-  lastActivatedOn
-  activationsCount
-  deactivationsCount
   allocated_at
   sync_status
 }
@@ -474,13 +466,18 @@ fragment SubscriberSim on SubscriberDto {
     imsi
     type
     status
-    firstActivatedOn
-    lastActivatedOn
-    activationsCount
-    deactivationsCount
     allocatedAt
+    sync_status
     isPhysical
-    package
+    package {
+      id
+      package_id
+      start_date
+      end_date
+      is_active
+      created_at
+      updated_at
+    }
   }
 }
 

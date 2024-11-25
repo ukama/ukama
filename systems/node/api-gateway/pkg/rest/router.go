@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/ukama/ukama/systems/common/rest"
 
@@ -30,6 +31,7 @@ import (
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
 
 type Router struct {
@@ -50,8 +52,14 @@ type Clients struct {
 	Controller      controller
 	Configurator    configurator
 	SoftwareManager softwareManager
+	State           state
 }
 
+type state interface {
+	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
+	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
+}
 type controller interface {
 	RestartSite(siteName, networkId string) (*contPb.RestartSiteResponse, error)
 	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
@@ -75,6 +83,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
 	c.Configurator = client.NewConfigurator(endpoints.Configurator, endpoints.Timeout)
 	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
+	c.State = client.NewState(endpoints.State, endpoints.Timeout)
 	return c
 }
 
@@ -148,6 +157,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		const soft = "/software"
 		softS := auth.Group(soft, "Software manager", "Operations on software")
 		softS.POST("/update/:space/:name/:tag/:node_id", formatDoc("Update software", "Update software"), tonic.Handler(r.postUpdateSoftwareHandler, http.StatusOK))
+
+		const state = "/state"
+		stateS := auth.Group(state, "State", "Operations on state")
+		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
+		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
+		stateS.POST("/:node_id/enforce/:event", formatDoc("Enforce state transition", "Enforce state transition"), tonic.Handler(r.enforceStateTransitionHandler, http.StatusOK))
+
 	}
 }
 
@@ -170,6 +186,10 @@ func (r *Router) postRestartSiteHandler(c *gin.Context, req *RestartSiteRequest)
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
 	return r.clients.SoftwareManager.UpdateSoftware(req.Space, req.Name, req.Tag, req.NodeId)
+}
+
+func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
+	return r.clients.State.GetStates(req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {
@@ -229,7 +249,33 @@ func (r *Router) postRestartNodesHandler(c *gin.Context, req *RestartNodesReques
 func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*contPb.ToggleInternetSwitchResponse, error) {
 	return r.clients.Controller.ToggleInternetSwitch(req.Status, req.Port, req.SiteId)
 }
+func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRequest) (*nspb.GetStatesHistoryResponse, error) {
+	nodeId := c.Param("node_id")
 
+	pageSizeStr := c.DefaultQuery("page_size", "10")
+	pageNumberStr := c.DefaultQuery("page_number", "1")
+	startTime := c.DefaultQuery("start_time", "")
+	endTime := c.DefaultQuery("end_time", "")
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page_size parameter"})
+		return nil, err
+	}
+
+	pageNumber, err := strconv.Atoi(pageNumberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page_number parameter"})
+		return nil, err
+	}
+
+	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
+}
+
+func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {
+
+	return r.clients.State.EnforeTransition(req.NodeId, req.Event)
+}
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
 		info.Summary = summary

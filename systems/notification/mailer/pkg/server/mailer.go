@@ -312,6 +312,7 @@ func (s *MailerServer) attemptSendEmail(payload *EmailPayload) error {
 }
 
 func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, error) {
+
 	dialer := &net.Dialer{
 		Timeout: dialTimeout,
 	}

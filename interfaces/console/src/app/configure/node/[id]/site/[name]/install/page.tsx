@@ -25,7 +25,7 @@ import {
   Typography,
 } from '@mui/material';
 import { Field, FormikProvider, useFormik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface ISiteConfigure {
   params: {
@@ -36,13 +36,13 @@ interface ISiteConfigure {
 const SiteConfigure = ({ params }: ISiteConfigure) => {
   const { id } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
   const flow = searchParams.get('flow') ?? 'onb';
   const step = parseInt(searchParams.get('step') ?? '1');
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-
   const formik = useFormik({
     initialValues: {
       power: qpPower,
@@ -106,17 +106,23 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   const setQueryParam = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams.toString());
     p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
     return p;
   };
 
   const handleSubmit = () => {
-    if (formik.isValid) {
+    if (formik.isValid && pathname.split('/').length > 5) {
       const p = setQueryParam('step', (step + 1).toString());
-      router.push(`/configure/node/${id}/site/name?${p.toString()}`);
+      router.push(
+        `/configure/node/${id}/site/${pathname.split('/')[5]}?${p.toString()}`,
+      );
     }
   };
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   return (
     <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>

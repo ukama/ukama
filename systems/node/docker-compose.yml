@@ -70,6 +70,26 @@ services:
    - ukama-net
   depends_on:
    - msgclient-node
+  
+ state:
+  build: ./state
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-node
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-node:9095
+   - STATE_SERVICE_HOST=state
+   - STATE_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+   - CONFIGPATH=/app/pkg/nodeState.json
+  restart: always
+  networks:
+  - ukama-net
+  depends_on:
+  - msgclient-node
 
  notify:
   build: ./notify

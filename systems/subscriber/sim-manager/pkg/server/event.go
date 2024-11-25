@@ -22,6 +22,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ue "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -47,15 +48,15 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
-		msg, err := unmarshalSimManagerSimAllocate(e.Msg)
+		msg, err := ue.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
 		if err != nil {
 			return nil, err
 		}
 
-		simType := ukama.ParseSimType(msg.Sim.Type)
+		simType := ukama.ParseSimType(msg.Type)
 
 		if simType == ukama.SimTypeOperatorData {
-			err = handleEventCloudSimManagerOperatorSimAllocate(e.RoutingKey, msg, es.s)
+			err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
 			if err != nil {
 				return nil, err
 			}
@@ -105,13 +106,14 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 	return &epb.EventResponse{}, nil
 }
 
-func handleEventCloudSimManagerOperatorSimAllocate(key string, msg *pb.AllocateSimResponse, s *SimManagerServer) error {
+// We auto activate any new allocated sim
+func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocation, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	_, err := s.activateSim(ctx, msg.Sim.Iccid)
+	_, err := s.activateSim(ctx, msg.Iccid)
 
 	return err
 }
@@ -241,25 +243,12 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 	return err
 }
 
-func unmarshalSimManagerSimAllocate(msg *anypb.Any) (*pb.AllocateSimResponse, error) {
-	p := &pb.AllocateSimResponse{}
-
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal AllocateSim message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-
-	return p, nil
-}
-
 func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
 	p := &epb.Payment{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal payment  message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal payment message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

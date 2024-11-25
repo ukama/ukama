@@ -518,7 +518,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		pkg := &db.Package{
 			SimId:     sim.Id,
 			PackageId: packageID,
-			IsActive:  false,
+			IsActive:  true,
 		}
 
 		packageRepo.On("Add", pkg,

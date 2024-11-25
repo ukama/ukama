@@ -26,10 +26,6 @@ ORGID=$(jq -r '.setup["org-id"]' "$JSON_FILE")
 SYS=$(jq -r '.systems' "$JSON_FILE")
 KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
-MAILERHOST=$(jq -r '.mailer.host' "$JSON_FILE")
-MAILERPORT=$(jq -r '.mailer.port' "$JSON_FILE")
-MAILERUSERNAME=$(jq -r '.mailer.username' "$JSON_FILE")
-MAILERPASSWORD=$(jq -r '.mailer.password' "$JSON_FILE")
 LAGOAPIKEY=$(jq -r '."lago-api-key"' "$JSON_FILE")
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -67,12 +63,6 @@ function set_env() {
     export ORGID=$ORGID
     export ORGNAME=$ORGNAME
     export KEY=$KEY
-    export MAILER_PORT=$MAILERPORT
-    export MAILER_HOST=$MAILERHOST
-    export MAILER_PASSWORD=$MAILERPASSWORD
-    export MAILER_USERNAME=$MAILERUSERNAME
-    export MAILER_FROM=$OWNEREMAIL
-    export TEMPLATESPATH=templates
     export LAGO_API_KEY=$LAGOAPIKEY
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
@@ -165,11 +155,14 @@ sort_systems_by_dependency() {
             "dataplan")
                 SYSTEMS+=("7 $key")
                 ;;
-            "subscriber")
+            "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            *)
+            "subscriber")
                 SYSTEMS+=("9 $key")
+                ;;
+            *)
+                SYSTEMS+=("10 $key")
                 ;;
         esac
     done

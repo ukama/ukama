@@ -67,10 +67,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     OWNERNAME=$(echo "$ORG" | jq -r '.name')
     ORGID=$(echo "$ORG" | jq -r '.["org-id"]')
     KEY=$(echo "$ORG" | jq -r '.key')
-    MAILERHOST=$(echo "$ORG" | jq -r '.mailer.host')
-    MAILERPORT=$(echo "$ORG" | jq -r '.mailer.port')
-    MAILERUSERNAME=$(echo "$ORG" | jq -r '.mailer.username')
-    MAILERPASSWORD=$(echo "$ORG" | jq -r '.mailer.password')
     LAGOAPIKEY=$(echo "$ORG" | jq -r '.["lago-api-key"]')
     WITHSUBAUTH=$(echo "$ORG" | jq -r '.["with-subscriber-auth"]')
     SYS=$(echo "$ORG" | jq -r '.systems')
@@ -86,12 +82,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export ORGID=$ORGID
         export ORGNAME=$ORGNAME
         export KEY=$KEY
-        export MAILER_PORT=$MAILERPORT
-        export MAILER_HOST=$MAILERHOST
-        export MAILER_PASSWORD=$MAILERPASSWORD
-        export MAILER_USERNAME=$MAILERUSERNAME
-        export MAILER_FROM=$OWNEREMAIL
-        export TEMPLATESPATH=templates
         export LAGO_API_KEY=$LAGOAPIKEY
         export MASTERORGNAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP

@@ -257,7 +257,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	firstPackage := &sims.Package{
 		PackageId: packageId,
-		IsActive:  false,
+		IsActive:  true,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -865,13 +865,15 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	}
 
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimActivation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    pkg.Id.String(),
+	evtMsg := &epb.EventSimActivePackage{
+		Id:               sim.Id.String(),
+		SubscriberId:     sim.SubscriberId.String(),
+		Iccid:            sim.Iccid,
+		Imsi:             sim.Imsi,
+		NetworkId:        sim.NetworkId.String(),
+		PackageId:        pkg.Id.String(),
+		PlanId:           pkg.PackageId.String(),
+		PackageStartDate: timestamppb.New(pkg.StartDate),
 	}
 
 	err = s.PublishEventMessage(route, evtMsg)
