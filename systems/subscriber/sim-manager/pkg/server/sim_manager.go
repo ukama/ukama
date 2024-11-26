@@ -340,6 +340,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
+	log.Infof("Allocating sim to subscriber success: %v", req.GetSubscriberId())
+
 	return resp, nil
 }
 
