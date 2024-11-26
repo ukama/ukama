@@ -10,8 +10,7 @@ import {
   PackageDto,
   useAddPackageMutation,
   useDeletePackageMutation,
-  useGetCurrencySymbolLazyQuery,
-  useGetNetworkQuery,
+  useGetCurrencySymbolQuery,
   useGetPackagesQuery,
   useUpdatePacakgeMutation,
 } from '@/client/graphql/generated';
@@ -39,32 +38,21 @@ const INIT_DATAPLAN = {
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { network, user, setSnackbarMessage } = useAppContext();
+  const { user, setSnackbarMessage } = useAppContext();
   const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
-  const [getCurrencySymbol, { data: currencyData }] =
-    useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'currency-info-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-
-  const { data: networkData } = useGetNetworkQuery({
+  const { data: currencyData } = useGetCurrencySymbolQuery({
+    fetchPolicy: 'cache-and-network',
     variables: {
-      networkId: network.id,
+      code: user.currency,
     },
-    onCompleted: (data) => {
-      getCurrencySymbol({
-        variables: {
-          code: user.currency,
-        },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'currency-info-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
       });
     },
   });
