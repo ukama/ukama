@@ -173,7 +173,6 @@ func (r *simRepo) List(iccid, imsi, subscriberId, networkId string, simType ukam
 	}
 
 	result := tx.Preload("Package", "is_active is true").Find(&sims)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}

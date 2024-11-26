@@ -245,8 +245,9 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		// simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
+		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		simRepo.On("GetBySubscriber", subscriberID).Return(
 			[]db.Sim{
 				{Id: simID,
 					SubscriberId: subscriberID,
@@ -270,8 +271,10 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("some unexpected error has occured")).Once()
+		// simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
+		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		simRepo.On("GetBySubscriber", subscriberID).Return(
+			nil, errors.New("some unexpected error has occured")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)

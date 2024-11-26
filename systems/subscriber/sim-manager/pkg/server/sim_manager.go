@@ -495,7 +495,12 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
 
-	sims, err := s.simRepo.List("", "", subId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	// sims, err := s.simRepo.List("", "", subId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	// if err != nil {
+	// return nil, grpc.SqlErrorToGrpc(err, "sims")
+	// }
+
+	sims, err := s.simRepo.GetBySubscriber(subId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
