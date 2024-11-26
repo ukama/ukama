@@ -523,7 +523,12 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 			"invalid format of network uuid. Error %s", err.Error())
 	}
 
-	sims, err := s.simRepo.List("", "", "", netId.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	// sims, err := s.simRepo.List("", "", "", netId.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	// if err != nil {
+	// return nil, grpc.SqlErrorToGrpc(err, "sims")
+	// }
+
+	sims, err := s.simRepo.GetByNetwork(netId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}

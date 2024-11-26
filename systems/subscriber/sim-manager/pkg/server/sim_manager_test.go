@@ -310,8 +310,10 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+		// simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
+		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+
+		simRepo.On("GetByNetwork", networkID).Return(
 			[]db.Sim{
 				{Id: simID,
 					NetworkId:  networkID,
@@ -335,8 +337,11 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("some unexpected error has occured")).Once()
+		// simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
+		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
+
+		simRepo.On("GetByNetwork", networkID).Return(
+			nil, errors.New("some unexpected error has occured")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
