@@ -107,11 +107,7 @@ export class AddPackageSimResDto {
   @Field(() => String, { nullable: true })
   packageId?: string;
 }
-@ObjectType()
-export class SetActivePackageForSimResDto {
-  @Field(() => String, { nullable: true })
-  packageId?: string;
-}
+
 @InputType()
 export class RemovePackageFormSimInputDto {
   @Field()
@@ -222,12 +218,20 @@ export class AddPackageToSimInputDto {
   start_date: string;
 }
 @InputType()
-export class SetActivePackageForSimInputDto {
+export class PackagesToSimInputDto {
+  @Field()
+  package_id: string;
+
+  @Field()
+  start_date: string;
+}
+@InputType()
+export class AddPackagesToSimInputDto {
   @Field()
   sim_id: string;
 
-  @Field()
-  package_id: string;
+  @Field(() => [PackagesToSimInputDto])
+  packages: PackagesToSimInputDto[];
 }
 
 @ObjectType()

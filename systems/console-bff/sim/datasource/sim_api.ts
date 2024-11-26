@@ -13,6 +13,7 @@ import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
   AddPackageToSimInputDto,
+  AddPackagesToSimInputDto,
   AllocateSimAPIDto,
   AllocateSimInputDto,
   DeleteSimInputDto,
@@ -24,8 +25,6 @@ import {
   GetSimPackagesDtoAPI,
   RemovePackageFormSimInputDto,
   RemovePackageFromSimResDto,
-  SetActivePackageForSimInputDto,
-  SetActivePackageForSimResDto,
   SimDataUsage,
   SimDetailsDto,
   SimDto,
@@ -113,11 +112,6 @@ class SimApi extends RESTDataSource {
         sim_id: simRes.sim.id,
         status: "active",
       });
-
-      await this.setActivePackageForSim(baseURL, {
-        sim_id: simRes.sim.id,
-        package_id: simRes.sim.package.id,
-      });
     }
 
     return dtoToAllocateSimResDto(simRes);
@@ -191,6 +185,37 @@ class SimApi extends RESTDataSource {
     }).then(res => res);
   };
 
+  AddPackagesToSim = async (
+    baseURL: string,
+    req: AddPackagesToSimInputDto
+  ): Promise<AddPackageSimResDto[]> => {
+    this.baseURL = baseURL;
+    const addedPackageIds: AddPackageSimResDto[] = [];
+
+    try {
+      for (const packageInfo of req.packages) {
+        this.logger.info(
+          `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
+        );
+
+        const response = await this.post(`/${VERSION}/${SIM}/package`, {
+          body: {
+            sim_id: req.sim_id,
+            package_id: packageInfo.package_id,
+            start_date: packageInfo.start_date,
+          },
+        });
+        if (response && response.package_id) {
+          addedPackageIds.push({ packageId: response.package_id });
+        }
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+
+    return addedPackageIds;
+  };
+
   removePackageFromSim = async (
     baseURL: string,
     req: RemovePackageFormSimInputDto
@@ -238,24 +263,6 @@ class SimApi extends RESTDataSource {
     );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
-  };
-
-  setActivePackageForSim = async (
-    baseURL: string,
-    req: SetActivePackageForSimInputDto
-  ): Promise<SetActivePackageForSimResDto> => {
-    this.logger.info(
-      `SetActivePackageForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`
-    );
-    this.baseURL = baseURL;
-    return this.patch(
-      `/${VERSION}/${SIM}/${req.sim_id}/package/${req.package_id}`,
-      {
-        body: {
-          ...req,
-        },
-      }
-    ).then(res => res);
   };
 }
 
