@@ -257,7 +257,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	firstPackage := &sims.Package{
 		PackageId: packageId,
-		IsActive:  false,
+		IsActive:  true,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
