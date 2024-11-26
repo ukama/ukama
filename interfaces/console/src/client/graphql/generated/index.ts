@@ -63,6 +63,11 @@ export type AddPackageToSimInputDto = {
   start_date: Scalars['String']['input'];
 };
 
+export type AddPackagesToSimInputDto = {
+  packages: Array<PackagesToSimInputDto>;
+  sim_id: Scalars['String']['input'];
+};
+
 export type AddSiteInputDto = {
   access_id: Scalars['String']['input'];
   backhaul_id: Scalars['String']['input'];
@@ -323,6 +328,7 @@ export type Mutation = {
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
   addPackageToSim: AddPackageSimResDto;
+  addPackagesToSim: AddPackageSimResDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -338,7 +344,6 @@ export type Mutation = {
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
-  setActivePackageForSim: SetActivePackageForSimResDto;
   setDefaultNetwork: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
@@ -381,6 +386,11 @@ export type MutationAddPackageArgs = {
 
 export type MutationAddPackageToSimArgs = {
   data: AddPackageToSimInputDto;
+};
+
+
+export type MutationAddPackagesToSimArgs = {
+  data: AddPackagesToSimInputDto;
 };
 
 
@@ -456,11 +466,6 @@ export type MutationRemoveMemberArgs = {
 
 export type MutationRemovePackageForSimArgs = {
   data: RemovePackageFormSimInputDto;
-};
-
-
-export type MutationSetActivePackageForSimArgs = {
-  data: SetActivePackageForSimInputDto;
 };
 
 
@@ -783,6 +788,11 @@ export type PackagesResDto = {
   packages: Array<PackageDto>;
 };
 
+export type PackagesToSimInputDto = {
+  package_id: Scalars['String']['input'];
+  start_date: Scalars['String']['input'];
+};
+
 export type Query = {
   __typename?: 'Query';
   getAppsChangeLog: AppChangeLogs;
@@ -1023,16 +1033,6 @@ export enum Sim_Types {
   Unknown = 'unknown'
 }
 
-export type SetActivePackageForSimInputDto = {
-  package_id: Scalars['String']['input'];
-  sim_id: Scalars['String']['input'];
-};
-
-export type SetActivePackageForSimResDto = {
-  __typename?: 'SetActivePackageForSimResDto';
-  packageId?: Maybe<Scalars['String']['output']>;
-};
-
 export type SetDefaultNetworkInputDto = {
   id: Scalars['String']['input'];
 };
@@ -1167,7 +1167,7 @@ export type SubscriberSimDto = {
   isPhysical?: Maybe<Scalars['Boolean']['output']>;
   msisdn: Scalars['String']['output'];
   networkId: Scalars['String']['output'];
-  package: SimPackageDto;
+  package?: Maybe<SimPackageDto>;
   status: Scalars['String']['output'];
   subscriberId: Scalars['String']['output'];
   sync_status?: Maybe<Scalars['String']['output']>;
@@ -1520,6 +1520,13 @@ export type DeletePackageMutationVariables = Exact<{
 
 export type DeletePackageMutation = { __typename?: 'Mutation', deletePackage: { __typename?: 'IdResponse', uuid: string } };
 
+export type GetPackagesForSimQueryVariables = Exact<{
+  data: GetPackagesForSimInputDto;
+}>;
+
+
+export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
+
 export type AddPackageToSimMutationVariables = Exact<{
   data: AddPackageToSimInputDto;
 }>;
@@ -1527,19 +1534,12 @@ export type AddPackageToSimMutationVariables = Exact<{
 
 export type AddPackageToSimMutation = { __typename?: 'Mutation', addPackageToSim: { __typename?: 'AddPackageSimResDto', packageId?: string | null } };
 
-export type SetActivePackageForSimMutationVariables = Exact<{
-  data: SetActivePackageForSimInputDto;
+export type AddPackagesToSimMutationVariables = Exact<{
+  data: AddPackagesToSimInputDto;
 }>;
 
 
-export type SetActivePackageForSimMutation = { __typename?: 'Mutation', setActivePackageForSim: { __typename?: 'SetActivePackageForSimResDto', packageId?: string | null } };
-
-export type GetPackagesForSimQueryVariables = Exact<{
-  data: GetPackagesForSimInputDto;
-}>;
-
-
-export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
+export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: { __typename?: 'AddPackageSimResDto', packageId?: string | null } };
 
 export type DeleteSimMutationVariables = Exact<{
   data: DeleteSimInputDto;
@@ -1604,23 +1604,23 @@ export type GetSimsQueryVariables = Exact<{
 
 export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
 
-export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
+export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type GetSubscriberQueryVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
@@ -1642,7 +1642,7 @@ export type GetSubscribersByNetworkQueryVariables = Exact<{
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } }> | null }> } };
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -3144,72 +3144,6 @@ export function useDeletePackageMutation(baseOptions?: Apollo.MutationHookOption
 export type DeletePackageMutationHookResult = ReturnType<typeof useDeletePackageMutation>;
 export type DeletePackageMutationResult = Apollo.MutationResult<DeletePackageMutation>;
 export type DeletePackageMutationOptions = Apollo.BaseMutationOptions<DeletePackageMutation, DeletePackageMutationVariables>;
-export const AddPackageToSimDocument = gql`
-    mutation addPackageToSim($data: AddPackageToSimInputDto!) {
-  addPackageToSim(data: $data) {
-    packageId
-  }
-}
-    `;
-export type AddPackageToSimMutationFn = Apollo.MutationFunction<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
-
-/**
- * __useAddPackageToSimMutation__
- *
- * To run a mutation, you first call `useAddPackageToSimMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddPackageToSimMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addPackageToSimMutation, { data, loading, error }] = useAddPackageToSimMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useAddPackageToSimMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddPackageToSimMutation, AddPackageToSimMutationVariables>(AddPackageToSimDocument, options);
-      }
-export type AddPackageToSimMutationHookResult = ReturnType<typeof useAddPackageToSimMutation>;
-export type AddPackageToSimMutationResult = Apollo.MutationResult<AddPackageToSimMutation>;
-export type AddPackageToSimMutationOptions = Apollo.BaseMutationOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
-export const SetActivePackageForSimDocument = gql`
-    mutation setActivePackageForSim($data: SetActivePackageForSimInputDto!) {
-  setActivePackageForSim(data: $data) {
-    packageId
-  }
-}
-    `;
-export type SetActivePackageForSimMutationFn = Apollo.MutationFunction<SetActivePackageForSimMutation, SetActivePackageForSimMutationVariables>;
-
-/**
- * __useSetActivePackageForSimMutation__
- *
- * To run a mutation, you first call `useSetActivePackageForSimMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSetActivePackageForSimMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [setActivePackageForSimMutation, { data, loading, error }] = useSetActivePackageForSimMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useSetActivePackageForSimMutation(baseOptions?: Apollo.MutationHookOptions<SetActivePackageForSimMutation, SetActivePackageForSimMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<SetActivePackageForSimMutation, SetActivePackageForSimMutationVariables>(SetActivePackageForSimDocument, options);
-      }
-export type SetActivePackageForSimMutationHookResult = ReturnType<typeof useSetActivePackageForSimMutation>;
-export type SetActivePackageForSimMutationResult = Apollo.MutationResult<SetActivePackageForSimMutation>;
-export type SetActivePackageForSimMutationOptions = Apollo.BaseMutationOptions<SetActivePackageForSimMutation, SetActivePackageForSimMutationVariables>;
 export const GetPackagesForSimDocument = gql`
     query getPackagesForSim($data: GetPackagesForSimInputDto!) {
   getPackagesForSim(data: $data) {
@@ -3253,6 +3187,72 @@ export type GetPackagesForSimQueryHookResult = ReturnType<typeof useGetPackagesF
 export type GetPackagesForSimLazyQueryHookResult = ReturnType<typeof useGetPackagesForSimLazyQuery>;
 export type GetPackagesForSimSuspenseQueryHookResult = ReturnType<typeof useGetPackagesForSimSuspenseQuery>;
 export type GetPackagesForSimQueryResult = Apollo.QueryResult<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>;
+export const AddPackageToSimDocument = gql`
+    mutation addPackageToSim($data: AddPackageToSimInputDto!) {
+  addPackageToSim(data: $data) {
+    packageId
+  }
+}
+    `;
+export type AddPackageToSimMutationFn = Apollo.MutationFunction<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
+
+/**
+ * __useAddPackageToSimMutation__
+ *
+ * To run a mutation, you first call `useAddPackageToSimMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPackageToSimMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addPackageToSimMutation, { data, loading, error }] = useAddPackageToSimMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddPackageToSimMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddPackageToSimMutation, AddPackageToSimMutationVariables>(AddPackageToSimDocument, options);
+      }
+export type AddPackageToSimMutationHookResult = ReturnType<typeof useAddPackageToSimMutation>;
+export type AddPackageToSimMutationResult = Apollo.MutationResult<AddPackageToSimMutation>;
+export type AddPackageToSimMutationOptions = Apollo.BaseMutationOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
+export const AddPackagesToSimDocument = gql`
+    mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
+  addPackagesToSim(data: $data) {
+    packageId
+  }
+}
+    `;
+export type AddPackagesToSimMutationFn = Apollo.MutationFunction<AddPackagesToSimMutation, AddPackagesToSimMutationVariables>;
+
+/**
+ * __useAddPackagesToSimMutation__
+ *
+ * To run a mutation, you first call `useAddPackagesToSimMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPackagesToSimMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addPackagesToSimMutation, { data, loading, error }] = useAddPackagesToSimMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddPackagesToSimMutation(baseOptions?: Apollo.MutationHookOptions<AddPackagesToSimMutation, AddPackagesToSimMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddPackagesToSimMutation, AddPackagesToSimMutationVariables>(AddPackagesToSimDocument, options);
+      }
+export type AddPackagesToSimMutationHookResult = ReturnType<typeof useAddPackagesToSimMutation>;
+export type AddPackagesToSimMutationResult = Apollo.MutationResult<AddPackagesToSimMutation>;
+export type AddPackagesToSimMutationOptions = Apollo.BaseMutationOptions<AddPackagesToSimMutation, AddPackagesToSimMutationVariables>;
 export const DeleteSimDocument = gql`
     mutation deleteSim($data: DeleteSimInputDto!) {
   deleteSim(data: $data) {

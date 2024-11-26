@@ -68,9 +68,9 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const open = Boolean(anchorEl);
   const [name, setName] = useState(subscriberInfo?.name || '');
   const [selectedsTab, setSelectedsTab] = useState(0);
-  const [mobileNumber, setMobileNumber] = useState(subscriberInfo?.phone || '');
+  const [email, setEmail] = useState(subscriberInfo?.email || '');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingMobile, setIsEditingMobile] = useState(false);
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [localSubscriberInfo, setLocalSubscriberInfo] =
     useState<any>(subscriberInfo);
@@ -94,22 +94,22 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     if (subscriberInfo) {
       setLocalSubscriberInfo(subscriberInfo);
       setName(subscriberInfo.name || '');
-      setMobileNumber(subscriberInfo.phone || '');
+      setEmail(subscriberInfo.email || '');
       setHasChanges(false);
     }
   }, [subscriberInfo]);
   const handleSaveSubscriber = useCallback(() => {
     if (hasChanges) {
-      const updates: { name?: string; phone?: string } = {};
+      const updates: { name?: string; email?: string } = {};
       if (name !== subscriberInfo.name) updates.name = name;
-      if (mobileNumber !== subscriberInfo.phone) updates.phone = mobileNumber;
+      if (email !== subscriberInfo.phone) updates.email = email;
 
       handleUpdateSubscriber(subscriberInfo.uuid, updates);
     }
     handleClose();
   }, [
     name,
-    mobileNumber,
+    email,
     hasChanges,
     handleUpdateSubscriber,
     subscriberInfo,
@@ -118,7 +118,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
   useEffect(() => {
     if (subscriberInfo) {
-      setMobileNumber(subscriberInfo.phone);
+      setEmail(subscriberInfo.phone);
       setName(subscriberInfo.name);
       setHasChanges(false);
     }
@@ -141,7 +141,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   };
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMobileNumber(e.target.value);
+    setEmail(e.target.value);
     setHasChanges(true);
   };
   return (
@@ -266,30 +266,30 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                     htmlFor="mobileNumber"
                     sx={{
                       position: 'absolute',
-                      top: isEditingMobile ? '-8px' : '0px',
-                      left: isEditingMobile ? '14px' : '0px',
-                      background: isEditingMobile ? 'white' : 'transparent',
-                      padding: isEditingMobile ? '0 4px' : '0',
+                      top: isEditingEmail ? '-8px' : '0px',
+                      left: isEditingEmail ? '14px' : '0px',
+                      background: isEditingEmail ? 'white' : 'transparent',
+                      padding: isEditingEmail ? '0 4px' : '0',
                       transition: 'all 0.2s',
                       zIndex: 1,
                     }}
                   >
-                    MOBILE NUMBER
+                    EMAIL
                   </InputLabel>
-                  {isEditingMobile ? (
+                  {isEditingEmail ? (
                     <TextField
-                      id="mobileNumber"
-                      value={mobileNumber}
+                      id="email"
+                      value={email}
                       onChange={handleMobileChange}
                       variant="outlined"
                       fullWidth
-                      placeholder="+1 (xxx) xxx-xxxx"
+                      placeholder="@@@-@@@-@@@@"
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
                             <Button
                               variant="text"
-                              onClick={() => setIsEditingMobile(false)}
+                              onClick={() => setIsEditingEmail(false)}
                             >
                               Done
                             </Button>
@@ -303,13 +303,13 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                         variant="body1"
                         sx={{
                           flexGrow: 1,
-                          color: mobileNumber ? 'inherit' : 'text.secondary',
+                          color: email ? 'inherit' : 'text.secondary',
                         }}
                       >
-                        {mobileNumber || '+1 (xxx) xxx-xxxx'}
+                        {email || '@@@-@@@-@@@@'}
                       </Typography>
                       <IconButton
-                        onClick={() => setIsEditingMobile(true)}
+                        onClick={() => setIsEditingEmail(true)}
                         size="small"
                       >
                         <EditIcon />

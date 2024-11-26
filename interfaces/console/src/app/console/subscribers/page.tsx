@@ -11,10 +11,8 @@ import {
   Sim_Status,
   Sim_Types,
   SubscribersResDto,
-  useAddPackageToSimMutation,
   useAddSubscriberMutation,
   useAllocateSimMutation,
-  useDeleteSimMutation,
   useDeleteSubscriberMutation,
   useGetNetworksQuery,
   useGetPackagesForSimLazyQuery,
@@ -23,9 +21,9 @@ import {
   useGetSimPoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
+  useAddPackagesToSimMutation,
   useGetSubscriberLazyQuery,
   useGetSubscribersByNetworkQuery,
-  useSetActivePackageForSimMutation,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
@@ -63,7 +61,6 @@ const Page = () => {
   const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
     useState(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
-  const [selectedSubscriber, setSelectedSubscriber] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
@@ -147,15 +144,6 @@ const Page = () => {
         res.getPackagesForSim.packages.length > 0 &&
         isPackageActivationNeeded
       ) {
-        activatePackageSim({
-          variables: {
-            data: {
-              sim_id: res.getPackagesForSim.sim_id,
-              package_id: res.getPackagesForSim.packages[0].package_id,
-            },
-          },
-        });
-        setIsPackageActivationNeeded(false);
       }
     },
   });
@@ -173,36 +161,14 @@ const Page = () => {
     [getPackagesForSim],
   );
 
-  const [getSubscriber, { data: subscriberInfo }] = useGetSubscriberLazyQuery({
+  const [getSubscriber] = useGetSubscriberLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (res) => {
       if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
         fetchPackagesForSim(res.getSubscriber.sim[0].id);
       }
-
-      if (res?.getSubscriber) {
-        setSubscriberDetails(res.getSubscriber);
-      }
     },
   });
-  const handleOpenSubscriberDetails = useCallback(
-    (id: string, shouldActivatePackage: boolean = false) => {
-      setIsSubscriberDetailsOpen(true);
-      setSelectedSubscriber(id);
-      setIsPackageActivationNeeded(shouldActivatePackage);
-      getSubscriber({
-        variables: {
-          subscriberId: id,
-        },
-      });
-    },
-    [
-      getSubscriber,
-      setIsSubscriberDetailsOpen,
-      setSelectedSubscriber,
-      setIsPackageActivationNeeded,
-    ],
-  );
 
   const onTableMenuItem = async (id: string, type: string) => {
     if (type === 'delete-sub') {
@@ -225,28 +191,9 @@ const Page = () => {
       });
     }
     if (type === 'edit-sub') {
-      handleOpenSubscriberDetails(id, false);
+      handleOpenSubscriberDetails(id);
     }
   };
-  const [activatePackageSim] = useSetActivePackageForSimMutation({
-    onCompleted: () => {
-      setSnackbarMessage({
-        id: 'package-activated-success',
-        message: 'Package activated successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-      refetchSubscribers();
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'package-activated-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
 
   const {
     data,
@@ -273,6 +220,18 @@ const Page = () => {
       });
     },
   });
+  const { data: networkList } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   // const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
   //   variables: {
@@ -290,19 +249,6 @@ const Page = () => {
   //   },
   // });
 
-  const { data: networkList } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
   const structureData = useCallback(
     (data: SubscribersResDto) => {
       if (
@@ -319,7 +265,7 @@ const Page = () => {
               ? subscriber?.sim[0]
               : null;
           const pkg = packagesData?.getPackages.packages.find(
-            (pkg) => pkg.uuid === sim?.package.package_id,
+            (pkg) => pkg.uuid === sim?.package?.package_id,
           );
 
           return {
@@ -336,7 +282,18 @@ const Page = () => {
     },
     [packagesData?.getPackages.packages, networkList?.getNetworks?.networks],
   );
-
+  const handleOpenSubscriberDetails = useCallback(
+    (id: string) => {
+      const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
+        (subscriber) => subscriber.uuid === id,
+      );
+      setIsSubscriberDetailsOpen(true);
+      if (subscriberInfo) {
+        setSubscriberDetails(subscriberInfo);
+      }
+    },
+    [data?.getSubscribersByNetwork.subscribers],
+  );
   const [getSim] = useGetSimLazyQuery({
     onCompleted: (res) => {},
   });
@@ -369,11 +326,12 @@ const Page = () => {
       },
     });
   };
-  const [addPackageToSim, { loading: addPackageToSimLoading }] =
-    useAddPackageToSimMutation({
+
+  const [addPackagesToSim, { loading: addPackagesToSimLoading }] =
+    useAddPackagesToSimMutation({
       onCompleted: () => {
         setSnackbarMessage({
-          id: 'package-added-success',
+          id: 'packages-added-success',
           message: 'Package added successfully!',
           type: 'success' as AlertColor,
           show: true,
@@ -381,7 +339,7 @@ const Page = () => {
       },
       onError: (error) => {
         setSnackbarMessage({
-          id: 'package-added-error',
+          id: 'packages-added-error',
           message: error.message,
           type: 'error' as AlertColor,
           show: true,
@@ -475,25 +433,6 @@ const Page = () => {
       },
     });
 
-  const [deleteSim, { loading: deleteSimLoading }] = useDeleteSimMutation({
-    onCompleted: () => {
-      setSnackbarMessage({
-        id: 'sim-delete-success',
-        message: 'Sim deleted successfully',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sim-delete-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
       onCompleted: (res) => {
@@ -559,63 +498,22 @@ const Page = () => {
   const handleCloseTopUp = () => {
     setIsToPupData(false);
   };
-  const handleTopUp = async (plans: { planId: string; simId: string }[]) => {
+
+  const handleTopUp = async (simId: string, planIds: string[]) => {
     try {
-      for (const plan of plans) {
-        try {
-          await addPackageToSim({
-            variables: {
-              data: {
-                sim_id: plan.simId,
-                package_id: plan.planId,
-                start_date: new Date(Date.now() + 1 * 60000).toISOString(),
-              },
-            },
-          });
+      const packages = planIds.map((planId) => ({
+        package_id: planId,
+        start_date: new Date(Date.now() + 1 * 60000).toISOString(),
+      }));
 
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-
-          const result = await getPackagesForSim({
-            variables: {
-              data: {
-                sim_id: plan.simId,
-              },
-            },
-          });
-
-          const packages = result?.data?.getPackagesForSim?.packages || [];
-
-          const mostRecentInactivePackage = packages
-            .filter((pkg) => pkg.is_active === false)
-            .sort(
-              (a, b) =>
-                new Date(b.start_date).getTime() -
-                new Date(a.start_date).getTime(),
-            )[0];
-
-          if (mostRecentInactivePackage) {
-            try {
-              await activatePackageSim({
-                variables: {
-                  data: {
-                    sim_id: plan.simId,
-                    package_id: mostRecentInactivePackage.id,
-                  },
-                },
-              });
-            } catch (error) {
-              console.error(
-                `Error activating package ${mostRecentInactivePackage.id}:`,
-                error,
-              );
-              throw error;
-            }
-          }
-        } catch (error) {
-          console.error(`Error processing plan ${plan.planId}:`, error);
-          throw error;
-        }
-      }
+      await addPackagesToSim({
+        variables: {
+          data: {
+            sim_id: simId,
+            packages: packages,
+          },
+        },
+      });
 
       setIsToPupData(false);
     } catch (error) {
@@ -863,10 +761,10 @@ const Page = () => {
       <SubscriberDetails
         ishowSubscriberDetails={isSubscriberDetailsOpen}
         handleClose={handleCloseSubscriberDetails}
-        subscriberInfo={subscriberInfo?.getSubscriber}
+        subscriberInfo={subscriberDetails}
         handleSimActionOption={handleSimAction}
         handleUpdateSubscriber={handleUpdateSubscriber}
-        loading={updateSubscriberLoading ?? deleteSimLoading}
+        loading={updateSubscriberLoading}
         handleDeleteSubscriber={handleSubscriberMenuAction}
         simStatusLoading={toggleSimStatusLoading}
         currentSite={'-'}
@@ -875,7 +773,7 @@ const Page = () => {
         isToPup={isToPupData}
         onCancel={handleCloseTopUp}
         handleTopUp={handleTopUp}
-        loadingTopUp={packagesLoading || addPackageToSimLoading}
+        loadingTopUp={packagesLoading || addPackagesToSimLoading}
         packages={packagesData?.getPackages.packages ?? []}
         sims={subscriberSimList ?? []}
         subscriberName={subscriberDetails?.name}

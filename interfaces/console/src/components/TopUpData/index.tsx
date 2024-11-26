@@ -36,7 +36,7 @@ interface TopUpProps {
   onCancel: () => void;
   isToPup: boolean;
   subscriberName: string;
-  handleTopUp: (plans: { planId: string; simId: string }[]) => void;
+  handleTopUp: (simId: string, planIds: string[]) => void;
   packages: PackageDto[];
   loadingTopUp: boolean;
   sims: SimDto[];
@@ -103,8 +103,7 @@ const validationSchema = Yup.object().shape({
         planId: Yup.string().required('Data plan is required'),
       }),
     )
-    .min(1, 'At least one plan is required')
-    .max(5, 'Maximum of 5 data plans allowed'),
+    .min(1, 'At least one plan is required'),
 });
 
 const getOptionLabel = (option: SimDto) => {
@@ -129,11 +128,8 @@ const TopUpData: React.FC<TopUpProps> = ({
   const handleSubmit = (values: FormValues) => {
     const selectedSim = sims.find((sim) => sim.iccid === values.simIccid);
     if (selectedSim) {
-      const plansToSubmit = values.plans.map((plan) => ({
-        planId: plan.planId,
-        simId: selectedSim.id,
-      }));
-      handleTopUp(plansToSubmit);
+      const planIdsToSubmit = values.plans.map((plan) => plan.planId);
+      handleTopUp(selectedSim.id, planIdsToSubmit); // Pass SIM ID and array of plan IDs
     }
   };
 
