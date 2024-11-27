@@ -14,10 +14,8 @@ import {
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
-  useGetNetworksQuery,
   useGetPackagesForSimLazyQuery,
   useGetPackagesQuery,
-  useGetSimLazyQuery,
   useGetSimPoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
@@ -58,31 +56,16 @@ const Page = () => {
   const { setSnackbarMessage, network, env } = useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isToPupData, setIsToPupData] = useState<boolean>(false);
-  const [isPackageActivationNeeded, setIsPackageActivationNeeded] =
-    useState(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
-  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
-
-  useEffect(() => {
-    setSelectedNetwork(null);
-    setSubscriber({ subscribers: [] });
-  }, [network.id]);
-
-  const getActiveNetworkId = (): string => {
-    if (selectedNetwork) {
-      return selectedNetwork;
-    }
-    return network.id;
-  };
 
   const { data: packagesData, loading: packagesLoading } = useGetPackagesQuery({
     fetchPolicy: 'cache-and-network',
@@ -138,14 +121,7 @@ const Page = () => {
     },
   });
   const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
-    onCompleted: (res) => {
-      if (
-        res.getPackagesForSim.packages &&
-        res.getPackagesForSim.packages.length > 0 &&
-        isPackageActivationNeeded
-      ) {
-      }
-    },
+    onCompleted: (res) => {},
   });
 
   const fetchPackagesForSim = useCallback(
@@ -200,9 +176,9 @@ const Page = () => {
     loading: getSubscriberByNetworkLoading,
     refetch: refetchSubscribers,
   } = useGetSubscribersByNetworkQuery({
-    skip: !getActiveNetworkId(),
+    skip: !network.id,
     variables: {
-      networkId: getActiveNetworkId(),
+      networkId: network.id,
     },
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'network-only',
@@ -214,18 +190,6 @@ const Page = () => {
     onError: (error) => {
       setSnackbarMessage({
         id: 'subscriber-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-  const { data: networkList } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -251,15 +215,8 @@ const Page = () => {
 
   const structureData = useCallback(
     (data: SubscribersResDto) => {
-      if (
-        (packagesData?.getPackages.packages?.length ?? 0) > 0 &&
-        (networkList?.getNetworks?.networks?.length ?? 0) > 0
-      ) {
+      if ((packagesData?.getPackages.packages?.length ?? 0) > 0 && network) {
         return data.subscribers.map((subscriber) => {
-          const networkName =
-            networkList?.getNetworks?.networks.find(
-              (net) => net.id === subscriber.networkId,
-            )?.name ?? '';
           const sim =
             subscriber?.sim && subscriber.sim?.length > 0
               ? subscriber?.sim[0]
@@ -269,7 +226,6 @@ const Page = () => {
           );
           return {
             id: subscriber.uuid,
-            network: networkName,
             name: subscriber.name,
             dataPlan: pkg?.name ?? '',
             email: subscriber.email,
@@ -279,7 +235,7 @@ const Page = () => {
         });
       }
     },
-    [packagesData?.getPackages.packages, networkList?.getNetworks?.networks],
+    [packagesData?.getPackages.packages],
   );
   const handleOpenSubscriberDetails = useCallback(
     (id: string) => {
@@ -293,9 +249,6 @@ const Page = () => {
     },
     [data?.getSubscribersByNetwork.subscribers],
   );
-  const [getSim] = useGetSimLazyQuery({
-    onCompleted: (res) => {},
-  });
 
   const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
     useToggleSimStatusMutation({
@@ -462,10 +415,6 @@ const Page = () => {
     refetchSims();
   };
 
-  const getSelectedNetwork = (network: string) => {
-    setSelectedNetwork(network);
-  };
-
   const handleCloseSubscriberDetails = () => {
     setIsSubscriberDetailsOpen(false);
   };
@@ -603,6 +552,7 @@ const Page = () => {
         direction === 'left' ? -scrollAmount : scrollAmount;
     }
   };
+  console.log('TOKA :', simPoolData);
 
   return (
     <Stack
@@ -736,8 +686,6 @@ const Page = () => {
             menuOptions={SUBSCRIBER_TABLE_MENU}
             onMenuItemClick={onTableMenuItem}
             emptyViewLabel={'No subscribers yet!'}
-            getSelectedNetwork={getSelectedNetwork}
-            networkList={networkList?.getNetworks?.networks ?? []}
           />
         </Paper>
       )}

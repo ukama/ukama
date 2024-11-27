@@ -40,9 +40,6 @@ const AppLayout = ({
   networks,
   isLoading,
   isDarkMode,
-  placeholder,
-  handleAddNetwork,
-  handleNetworkChange,
   notifications,
   handleNotificationRead,
 }: ILayoutProps) => {
@@ -83,10 +80,7 @@ const AppLayout = ({
           <Sidebar
             isOpen={open}
             isDarkMode={isDarkMode}
-            placeholder={placeholder}
             networks={networks ?? []}
-            handleAddNetwork={handleAddNetwork}
-            handleNetworkChange={handleNetworkChange}
           />
         )}
         <Stack
@@ -98,14 +92,7 @@ const AppLayout = ({
           px={{ xs: 2, md: 3 }}
         >
           <Stack direction={'row'} spacing={{ xs: 2, md: 0 }}>
-            {matches && (
-              <UDrawer
-                placeholder={placeholder}
-                networks={networks ?? []}
-                handleAddNetwork={handleAddNetwork}
-                handleNetworkChange={handleNetworkChange}
-              />
-            )}
+            {matches && <UDrawer networks={networks ?? []} />}
             <Typography variant="h5" fontWeight={400}>
               {getTitleFromPath(pathname, dynamicId)}
             </Typography>
