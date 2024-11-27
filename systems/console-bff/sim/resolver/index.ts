@@ -8,7 +8,6 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { AddPackagesToSimResolver } from "./addPackagestoSim";
-import { AddPackageToSimResolver } from "./addPackagetoSim";
 import { AllocateSimResolver } from "./allocateSim";
 import { DeleteSimResolver } from "./delete";
 import { GetSimByNetworkResolver } from "./getByNetwork";
@@ -23,7 +22,6 @@ import { ToggleSimStatusResolver } from "./toggleSimStatus";
 import { UploadSimsResolver } from "./uploadSims";
 
 const resolvers: NonEmptyArray<any> = [
-  AddPackageToSimResolver,
   AllocateSimResolver,
   DeleteSimResolver,
   GetSimByNetworkResolver,

@@ -45,7 +45,7 @@ interface SubscriberProps {
   currentSite?: string;
   handleUpdateSubscriber: (
     subscriberId: string,
-    updates: { name?: string; phone?: string },
+    updates: { name?: string; email?: string },
   ) => void;
   handleDeleteSubscriber: (action: string, subscriberId: string) => void;
   loading: boolean;
@@ -70,7 +70,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   const [selectedsTab, setSelectedsTab] = useState(0);
   const [email, setEmail] = useState(subscriberInfo?.email || '');
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [localSubscriberInfo, setLocalSubscriberInfo] =
     useState<any>(subscriberInfo);
@@ -100,10 +99,8 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   }, [subscriberInfo]);
   const handleSaveSubscriber = useCallback(() => {
     if (hasChanges) {
-      const updates: { name?: string; email?: string } = {};
+      const updates: { name?: string } = {};
       if (name !== subscriberInfo.name) updates.name = name;
-      if (email !== subscriberInfo.phone) updates.email = email;
-
       handleUpdateSubscriber(subscriberInfo.uuid, updates);
     }
     handleClose();
@@ -118,7 +115,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
 
   useEffect(() => {
     if (subscriberInfo) {
-      setEmail(subscriberInfo.phone);
+      setEmail(subscriberInfo.email);
       setName(subscriberInfo.name);
       setHasChanges(false);
     }
@@ -140,10 +137,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     setHasChanges(true);
   };
 
-  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    setHasChanges(true);
-  };
   return (
     <Dialog
       open={ishowSubscriberDetails}
@@ -222,7 +215,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                       zIndex: 1,
                     }}
                   >
-                    NAME *
+                    NAME
                   </InputLabel>
                   {isEditingName ? (
                     <TextField
@@ -263,59 +256,26 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
                 <Box sx={{ position: 'relative' }}>
                   <InputLabel
                     shrink
-                    htmlFor="mobileNumber"
+                    htmlFor="email"
                     sx={{
-                      position: 'absolute',
-                      top: isEditingEmail ? '-8px' : '0px',
-                      left: isEditingEmail ? '14px' : '0px',
-                      background: isEditingEmail ? 'white' : 'transparent',
-                      padding: isEditingEmail ? '0 4px' : '0',
                       transition: 'all 0.2s',
                       zIndex: 1,
                     }}
                   >
                     EMAIL
                   </InputLabel>
-                  {isEditingEmail ? (
-                    <TextField
-                      id="email"
-                      value={email}
-                      onChange={handleMobileChange}
-                      variant="outlined"
-                      fullWidth
-                      placeholder="@@@-@@@-@@@@"
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Button
-                              variant="text"
-                              onClick={() => setIsEditingEmail(false)}
-                            >
-                              Done
-                            </Button>
-                          </InputAdornment>
-                        ),
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        flexGrow: 1,
+                        color: email ? 'inherit' : 'text.secondary',
                       }}
-                    />
-                  ) : (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          flexGrow: 1,
-                          color: email ? 'inherit' : 'text.secondary',
-                        }}
-                      >
-                        {email || '@@@-@@@-@@@@'}
-                      </Typography>
-                      <IconButton
-                        onClick={() => setIsEditingEmail(true)}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Box>
-                  )}
+                    >
+                      {email}
+                    </Typography>
+                  </Box>
                 </Box>
               </Stack>
             </Box>

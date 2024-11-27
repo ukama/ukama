@@ -207,17 +207,6 @@ export class DeleteSimInputDto {
 }
 
 @InputType()
-export class AddPackageToSimInputDto {
-  @Field()
-  sim_id: string;
-
-  @Field()
-  package_id: string;
-
-  @Field()
-  start_date: string;
-}
-@InputType()
 export class PackagesToSimInputDto {
   @Field()
   package_id: string;

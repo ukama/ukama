@@ -267,7 +267,6 @@ const Page = () => {
           const pkg = packagesData?.getPackages.packages.find(
             (pkg) => pkg.uuid === sim?.package?.package_id,
           );
-
           return {
             id: subscriber.uuid,
             network: networkName,

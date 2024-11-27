@@ -12,7 +12,6 @@ import { logger } from "../../common/logger";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AddPackageSimResDto,
-  AddPackageToSimInputDto,
   AddPackagesToSimInputDto,
   AllocateSimAPIDto,
   AllocateSimInputDto,
@@ -166,23 +165,6 @@ class SimApi extends RESTDataSource {
   ): Promise<DeleteSimResDto> => {
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${SIM}/${req.simId}`).then(res => res);
-  };
-
-  addPackageToSim = async (
-    baseURL: string,
-    req: AddPackageToSimInputDto
-  ): Promise<AddPackageSimResDto> => {
-    this.baseURL = baseURL;
-    this.logger.info(
-      `AddPackageToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
-    );
-    return this.post(`/${VERSION}/${SIM}/package`, {
-      body: {
-        sim_id: req.sim_id,
-        package_id: req.package_id,
-        start_date: req.start_date,
-      },
-    }).then(res => res);
   };
 
   AddPackagesToSim = async (

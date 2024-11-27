@@ -347,11 +347,7 @@ query getPackagesForSim($data: GetPackagesForSimInputDto!) {
     }
   }
 }
-mutation addPackageToSim($data: AddPackageToSimInputDto!) {
-  addPackageToSim(data: $data) {
-    packageId
-  }
-}
+
 mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
   addPackagesToSim(data: $data) {
     packageId

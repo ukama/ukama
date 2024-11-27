@@ -273,9 +273,9 @@ const TopUpData: React.FC<TopUpProps> = ({
 
                         {values.plans.length === 5 && (
                           <Typography
-                            color="error"
+                            color="info"
                             variant="body2"
-                            sx={{ mt: 1 }}
+                            sx={{ mt: 1, color: colors.green }}
                           >
                             Maximum of 5 data plans reached
                           </Typography>

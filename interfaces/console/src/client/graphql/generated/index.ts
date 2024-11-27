@@ -57,12 +57,6 @@ export type AddPackageSimResDto = {
   packageId?: Maybe<Scalars['String']['output']>;
 };
 
-export type AddPackageToSimInputDto = {
-  package_id: Scalars['String']['input'];
-  sim_id: Scalars['String']['input'];
-  start_date: Scalars['String']['input'];
-};
-
 export type AddPackagesToSimInputDto = {
   packages: Array<PackagesToSimInputDto>;
   sim_id: Scalars['String']['input'];
@@ -327,8 +321,7 @@ export type Mutation = {
   addNode: Node;
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
-  addPackageToSim: AddPackageSimResDto;
-  addPackagesToSim: AddPackageSimResDto;
+  addPackagesToSim: Array<AddPackageSimResDto>;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -381,11 +374,6 @@ export type MutationAddNodeToSiteArgs = {
 
 export type MutationAddPackageArgs = {
   data: AddPackageInputDto;
-};
-
-
-export type MutationAddPackageToSimArgs = {
-  data: AddPackageToSimInputDto;
 };
 
 
@@ -1527,19 +1515,12 @@ export type GetPackagesForSimQueryVariables = Exact<{
 
 export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
 
-export type AddPackageToSimMutationVariables = Exact<{
-  data: AddPackageToSimInputDto;
-}>;
-
-
-export type AddPackageToSimMutation = { __typename?: 'Mutation', addPackageToSim: { __typename?: 'AddPackageSimResDto', packageId?: string | null } };
-
 export type AddPackagesToSimMutationVariables = Exact<{
   data: AddPackagesToSimInputDto;
 }>;
 
 
-export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: { __typename?: 'AddPackageSimResDto', packageId?: string | null } };
+export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: Array<{ __typename?: 'AddPackageSimResDto', packageId?: string | null }> };
 
 export type DeleteSimMutationVariables = Exact<{
   data: DeleteSimInputDto;
@@ -3187,39 +3168,6 @@ export type GetPackagesForSimQueryHookResult = ReturnType<typeof useGetPackagesF
 export type GetPackagesForSimLazyQueryHookResult = ReturnType<typeof useGetPackagesForSimLazyQuery>;
 export type GetPackagesForSimSuspenseQueryHookResult = ReturnType<typeof useGetPackagesForSimSuspenseQuery>;
 export type GetPackagesForSimQueryResult = Apollo.QueryResult<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>;
-export const AddPackageToSimDocument = gql`
-    mutation addPackageToSim($data: AddPackageToSimInputDto!) {
-  addPackageToSim(data: $data) {
-    packageId
-  }
-}
-    `;
-export type AddPackageToSimMutationFn = Apollo.MutationFunction<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
-
-/**
- * __useAddPackageToSimMutation__
- *
- * To run a mutation, you first call `useAddPackageToSimMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddPackageToSimMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addPackageToSimMutation, { data, loading, error }] = useAddPackageToSimMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useAddPackageToSimMutation(baseOptions?: Apollo.MutationHookOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddPackageToSimMutation, AddPackageToSimMutationVariables>(AddPackageToSimDocument, options);
-      }
-export type AddPackageToSimMutationHookResult = ReturnType<typeof useAddPackageToSimMutation>;
-export type AddPackageToSimMutationResult = Apollo.MutationResult<AddPackageToSimMutation>;
-export type AddPackageToSimMutationOptions = Apollo.BaseMutationOptions<AddPackageToSimMutation, AddPackageToSimMutationVariables>;
 export const AddPackagesToSimDocument = gql`
     mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
   addPackagesToSim(data: $data) {
