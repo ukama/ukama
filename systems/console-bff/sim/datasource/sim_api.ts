@@ -180,16 +180,13 @@ class SimApi extends RESTDataSource {
           `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
         );
 
-        const response = await this.post(`/${VERSION}/${SIM}/package`, {
+        return await this.post(`/${VERSION}/${SIM}/package`, {
           body: {
             sim_id: req.sim_id,
             package_id: packageInfo.package_id,
             start_date: packageInfo.start_date,
           },
         });
-        if (response && response.package_id) {
-          addedPackageIds.push({ packageId: response.package_id });
-        }
       }
     } catch (error) {
       this.logger.error(error);
