@@ -11,6 +11,7 @@ import { ENCRYPTION_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
+  AddPackageSimResDto,
   AddPackagesToSimInputDto,
   AllocateSimAPIDto,
   AllocateSimInputDto,
@@ -165,26 +166,36 @@ class SimApi extends RESTDataSource {
     this.baseURL = baseURL;
     return this.delete(`/${VERSION}/${SIM}/${req.simId}`).then(res => res);
   };
-
   AddPackagesToSim = async (
     baseURL: string,
     req: AddPackagesToSimInputDto
-  ): Promise<void> => {
+  ): Promise<AddPackageSimResDto[]> => {
     this.baseURL = baseURL;
+    const addedPackageIds: AddPackageSimResDto[] = [];
 
     for (const packageInfo of req.packages) {
-      this.logger.info(
-        `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
-      );
+      try {
+        this.logger.info(
+          `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
+        );
 
-      await this.post(`/${VERSION}/${SIM}/package`, {
-        body: {
-          sim_id: req.sim_id,
-          package_id: packageInfo.package_id,
-          start_date: packageInfo.start_date,
-        },
-      });
+        await this.post(`/${VERSION}/${SIM}/package`, {
+          body: {
+            sim_id: req.sim_id,
+            package_id: packageInfo.package_id,
+            start_date: packageInfo.start_date,
+          },
+        });
+
+        addedPackageIds.push({
+          packageId: packageInfo.package_id,
+        });
+      } catch (error) {
+        this.logger.error(error);
+      }
     }
+
+    return addedPackageIds;
   };
 
   removePackageFromSim = async (

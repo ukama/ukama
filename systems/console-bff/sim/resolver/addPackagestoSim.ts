@@ -18,23 +18,6 @@ export class AddPackagesToSimResolver {
     @Ctx() ctx: Context
   ): Promise<AddPackageSimResDto[]> {
     const { dataSources, baseURL } = ctx;
-    const addedPackageIds: AddPackageSimResDto[] = [];
-
-    for (const packageInfo of data.packages) {
-      try {
-        await dataSources.dataSource.AddPackagesToSim(baseURL, {
-          sim_id: data.sim_id,
-          packages: [packageInfo],
-        });
-
-        addedPackageIds.push({
-          packageId: packageInfo.package_id,
-        });
-      } catch (error) {
-        console.error(`Failed to add package ${packageInfo.package_id}`, error);
-      }
-    }
-
-    return addedPackageIds;
+    return dataSources.dataSource.AddPackagesToSim(baseURL, data);
   }
 }
