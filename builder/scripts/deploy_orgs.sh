@@ -57,7 +57,7 @@ done
 jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     ORGNAME=$(echo "$ORG" | jq -r '.["org-name"]')
     echo "${TAG} Processing organization: ${YELLOW}${ORGNAME}${NC}"
-
+    docker network rm ${ORGNAME}_ukama-net
     # Initialize the variables
     SUBNET=$(echo "$ORG" | jq -r '.subnet')
     ORG_TYPE=$(echo "$ORG" | jq -r '.type')
@@ -357,6 +357,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     sort_systems_by_dependency
     setup_docker_compose_files
     pre_deploy_config_for_other_org
+
+    docker network create ${ORGNAME}_ukama-net
 
     for SYSTEM in "${SYSTEMS[@]}"; do
         cd ~
