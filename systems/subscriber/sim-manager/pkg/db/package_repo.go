@@ -127,10 +127,6 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
 		return nil, result.Error
 	}
 
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
 	return packages, nil
 }
 

@@ -177,10 +177,6 @@ func (r *simRepo) List(iccid, imsi, subscriberId, networkId string, simType ukam
 		return nil, result.Error
 	}
 
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
 	return sims, nil
 }
 
