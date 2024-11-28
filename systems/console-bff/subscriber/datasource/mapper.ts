@@ -95,10 +95,6 @@ export const dtoToSimPackageDto = (res: SimPackageAPIDto): SimPackageDto => {
     updated_at: res.updated_at,
   };
 };
-
-export const dtoToSimPackages = (res: SimPackageAPIDto[]): SimPackageDto[] => {
-  return res.map(dtoToSimPackageDto);
-};
 export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
   return {
     id: res.id,
@@ -112,7 +108,10 @@ export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
     allocatedAt: res.allocated_at,
     sync_status: res.sync_status || "",
     isPhysical: res.is_physical ?? false,
-    package: dtoToSimPackages(res.package) || [],
+    package:
+      res.package && Array.isArray(res.package) && res.package.length > 0
+        ? dtoToSimPackageDto(res.package[0])
+        : undefined,
   };
 };
 

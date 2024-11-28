@@ -67,8 +67,8 @@ export class SubSimAPIDto {
   @Field({ nullable: true })
   is_physical: boolean;
 
-  @Field(() => [SimPackageAPIDto], { nullable: true })
-  package: SimPackageAPIDto[];
+  @Field(() => SimPackageAPIDto)
+  package: SimPackageAPIDto;
 }
 
 @ObjectType()
@@ -208,8 +208,8 @@ export class SubscriberSimDto {
   @Field({ nullable: true })
   isPhysical: boolean;
 
-  @Field(() => [SimPackageDto], { nullable: true })
-  package?: SimPackageDto[];
+  @Field(() => SimPackageDto, { nullable: true })
+  package?: SimPackageDto;
 }
 @ObjectType()
 export class SubscriberDto {
