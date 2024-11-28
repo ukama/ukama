@@ -7,9 +7,15 @@
  */
 
 import { ColumnsWithOptions, MenuItemType } from '@/types';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
 import {
   Box,
+  Button,
   Chip,
+  ListItem,
+  ListItemText,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -19,6 +25,8 @@ import {
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
 import { Invitation_Status, NetworkDto } from '@/client/graphql/generated';
 import { getInvitationStatusColor, roleEnumToString } from '@/utils';
 import EmptyView from '../EmptyView';
@@ -102,11 +110,36 @@ const DataTableWithOptions = ({
   columns,
   dataset,
   menuOptions,
+  networkList,
   onMenuItemClick,
   withStatusColumn = false,
+  getSelectedNetwork,
   emptyViewLabel = '',
   isRowClickable = true,
 }: DataTableWithOptionsInterface) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<any>();
+
+  const handleOpenMenu = (event: any) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+  const handleNetworkSelect = (network: string, networkId: string) => {
+    setSelectedNetwork(network);
+    handleCloseMenu();
+    if (getSelectedNetwork) {
+      getSelectedNetwork(networkId);
+    }
+  };
+  useEffect(() => {
+    if (networkList && networkList.length > 0) {
+      setSelectedNetwork(networkList[0].name);
+    }
+  }, [networkList]);
+
   return (
     <Box
       component="div"
@@ -131,7 +164,43 @@ const DataTableWithOptions = ({
                       padding: '6px 12px 12px 0px',
                     }}
                   >
-                    <b>{column.label}</b>
+                    <b>
+                      {column.label == 'network' ? (
+                        <>
+                          <Button
+                            sx={{ p: 0, typography: 'body2', fontWeight: 700 }}
+                            onClick={handleOpenMenu}
+                            endIcon={<ArrowDropDown />}
+                            aria-controls="network-menu"
+                          >
+                            {selectedNetwork || 'networkName'}
+                          </Button>
+                          <Menu
+                            id="network-menu"
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl)}
+                            onClose={handleCloseMenu}
+                          >
+                            {networkList?.map(({ name, id }: NetworkDto) => {
+                              return (
+                                <MenuItem
+                                  key={id}
+                                  onClick={() => handleNetworkSelect(name, id)}
+                                >
+                                  <ListItem>
+                                    <ListItemText sx={{ typography: 'body1' }}>
+                                      {name}
+                                    </ListItemText>
+                                  </ListItem>
+                                </MenuItem>
+                              );
+                            })}
+                          </Menu>
+                        </>
+                      ) : (
+                        column.label
+                      )}
+                    </b>
                   </TableCell>
                 ))}
               </TableRow>

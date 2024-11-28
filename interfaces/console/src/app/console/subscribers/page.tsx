@@ -678,6 +678,7 @@ const Page = () => {
             search={search}
           />
           <br />
+
           <DataTableWithOptions
             icon={SubscriberIcon}
             isRowClickable={false}

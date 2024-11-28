@@ -30,10 +30,18 @@ const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
 });
 
 interface IUDrawer {
+  placeholder: string;
   networks: NetworkDto[];
+  handleAddNetwork: Function;
+  handleNetworkChange: Function;
 }
 
-export default function UDrawer({ networks }: IUDrawer) {
+export default function UDrawer({
+  networks,
+  placeholder,
+  handleAddNetwork,
+  handleNetworkChange,
+}: IUDrawer) {
   const pathname = usePathname();
   const [anchor, setAnchor] = React.useState(false);
   const { user, isDarkMode, network } = useAppContext();
@@ -68,7 +76,14 @@ export default function UDrawer({ networks }: IUDrawer) {
       onKeyDown={toggleDrawer(false)}
     >
       <Box mx={2} my={2}>
-        <BasicDropdown network={network.name} isShowAddOption={isOwner} />
+        <BasicDropdown
+          value={network.id}
+          list={getDropDownData()}
+          isShowAddOption={isOwner}
+          placeholder={placeholder}
+          handleOnChange={handleNetworkChange}
+          handleAddNetwork={handleAddNetwork}
+        />
       </Box>
       <Divider sx={{ mx: 2, my: 0 }} />
       {NavList.map(

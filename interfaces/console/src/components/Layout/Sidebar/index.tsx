@@ -25,16 +25,30 @@ const drawerWidth: number = 232;
 interface ISidebarProps {
   isOpen: boolean;
   isDarkMode: boolean;
+  placeholder: string;
   networks: NetworkDto[];
+  handleAddNetwork: Function;
+  handleNetworkChange: Function;
 }
 
-const Sidebar = ({ isOpen, isDarkMode, networks = [] }: ISidebarProps) => {
+const Sidebar = ({
+  isOpen,
+  isDarkMode,
+  placeholder,
+  networks = [],
+  handleAddNetwork,
+  handleNetworkChange,
+}: ISidebarProps) => {
   const pathname = usePathname();
   const { network, user } = useAppContext();
   const isOwner =
     user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
-
-  const getFirstNetworkName = () => networks?.[0]?.name;
+  const getDropDownData = () =>
+    networks?.map((network) => ({
+      id: network.id,
+      label: network.name,
+      value: network.id,
+    }));
 
   return (
     <Box
@@ -49,8 +63,12 @@ const Sidebar = ({ isOpen, isDarkMode, networks = [] }: ISidebarProps) => {
       <Stack direction={'column'}>
         <Box mx={2} my={2}>
           <BasicDropdown
+            value={network.id}
+            list={getDropDownData()}
             isShowAddOption={isOwner}
-            network={getFirstNetworkName()}
+            placeholder={placeholder}
+            handleOnChange={handleNetworkChange}
+            handleAddNetwork={handleAddNetwork}
           />
         </Box>
         <Divider sx={{ mx: 2, my: 0 }} />

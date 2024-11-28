@@ -106,10 +106,6 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
     plan: '',
   };
 
-  useEffect(() => {
-    console.log('HELLO', selectedSim);
-  }, [selectedSim]);
-
   const handleClose = () => {
     setActiveStep(0);
     handleCloseAction();

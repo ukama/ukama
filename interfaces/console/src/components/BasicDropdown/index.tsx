@@ -7,21 +7,93 @@
  */
 
 import colors from '@/theme/colors';
-import { FormControl, Typography } from '@mui/material';
+import { SelectItemType } from '@/types';
+import Add from '@mui/icons-material/Add';
+import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
 
 interface IBasicDropdown {
-  network: string;
+  value: string;
+  placeholder: string;
   isShowAddOption: boolean;
+  handleOnChange: Function;
+  handleAddNetwork: Function;
+  list: SelectItemType[];
 }
-const BasicDropdown = ({ network, isShowAddOption }: IBasicDropdown) => (
+const BasicDropdown = ({
+  value,
+  list,
+  placeholder,
+  handleOnChange,
+  isShowAddOption,
+  handleAddNetwork,
+}: IBasicDropdown) => (
   <FormControl sx={{ width: '100%' }} size="small">
-    {isShowAddOption && (
-      <>
-        <Typography variant="body1" sx={{ color: colors.primaryMain }}>
-          {network || ''}
-        </Typography>
-      </>
-    )}
+    <Select
+      value={value}
+      disableUnderline
+      variant="standard"
+      displayEmpty={true}
+      renderValue={(value) =>
+        value?.length
+          ? Array.isArray(value)
+            ? value.join(', ')
+            : list?.find((item) => item.value === value)?.label
+          : placeholder
+      }
+      onChange={(e) => handleOnChange(e.target.value)}
+      sx={{
+        color: value?.length
+          ? Array.isArray(value)
+            ? value.join(', ')
+            : colors.primaryMain
+          : colors.black38,
+      }}
+      SelectDisplayProps={{
+        style: {
+          fontWeight: 400,
+          fontSize: '16px',
+        },
+      }}
+    >
+      {list?.map((item: SelectItemType) => (
+        <MenuItem key={item.id} value={item.value}>
+          {item.label}
+        </MenuItem>
+      ))}
+      {list?.length === 0 && <MenuItem disabled>No network found!</MenuItem>}
+      {isShowAddOption && (
+        <>
+          <Divider sx={{ width: '100%', height: '1px' }} />
+          <Button
+            startIcon={<Add sx={{ color: colors.black70 }} />}
+            sx={{
+              px: 2,
+              py: 1,
+              color: 'textPrimary',
+              typography: 'body1',
+              fontWeight: 400,
+              display: 'flex',
+              cursor: 'pointer',
+              textTransform: 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              ':hover': {
+                backgroundColor: colors.primaryMain02,
+              },
+              ':hover .MuiSvgIcon-root': {
+                fill: colors.primaryMain,
+              },
+            }}
+            onClick={(e) => {
+              handleAddNetwork();
+              e.stopPropagation();
+            }}
+          >
+            Add new network
+          </Button>
+        </>
+      )}
+    </Select>
   </FormControl>
 );
 
