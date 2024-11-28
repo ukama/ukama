@@ -245,8 +245,6 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		// simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
-		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
 		simRepo.On("GetBySubscriber", subscriberID).Return(
 			[]db.Sim{
 				{Id: simID,
@@ -271,8 +269,6 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		// simRepo.On("List", mock.Anything, mock.Anything, subscriberID.String(), mock.Anything, mock.Anything, mock.Anything,
-		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
 		simRepo.On("GetBySubscriber", subscriberID).Return(
 			nil, errors.New("some unexpected error has occured")).Once()
 
@@ -310,9 +306,6 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 
-		// simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
-		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
-
 		simRepo.On("GetByNetwork", networkID).Return(
 			[]db.Sim{
 				{Id: simID,
@@ -336,9 +329,6 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 		var networkID = uuid.Nil
 
 		simRepo := &mocks.SimRepo{}
-
-		// simRepo.On("List", mock.Anything, mock.Anything, "", networkID.String(), mock.Anything, mock.Anything,
-		// mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(
 
 		simRepo.On("GetByNetwork", networkID).Return(
 			nil, errors.New("some unexpected error has occured")).Once()
@@ -376,8 +366,7 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 
 		packageRepo := &mocks.PackageRepo{}
 
-		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, uint32(0), mock.Anything).Return(
+		packageRepo.On("GetBySim", simId).Return(
 			[]db.Package{
 				{Id: packageId,
 					SimId:    simId,
@@ -402,9 +391,8 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 
 		packageRepo := &mocks.PackageRepo{}
 
-		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, uint32(0), mock.Anything).
-			Return(nil, errors.New("some unexpected error has occured")).Once()
+		packageRepo.On("GetBySim", simId).Return(
+			nil, errors.New("some unexpected error has occured")).Once()
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)

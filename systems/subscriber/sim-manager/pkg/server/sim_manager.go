@@ -479,6 +479,9 @@ func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest
 	sims, err := s.simRepo.List(req.Iccid, req.Imsi, req.SubscriberId, req.NetworkId,
 		simType, simStatus, req.TrafficPolicy, req.IsPhysical, req.Count, req.Sort)
 	if err != nil {
+		log.Errorf("error while getting list of sims matching the given filters: %v",
+			err)
+
 		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
 
@@ -494,11 +497,6 @@ func (s *SimManagerServer) GetSimsBySubscriber(ctx context.Context, req *pb.GetS
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of subscriber uuid. Error %s", err.Error())
 	}
-
-	// sims, err := s.simRepo.List("", "", subId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
-	// if err != nil {
-	// return nil, grpc.SqlErrorToGrpc(err, "sims")
-	// }
 
 	sims, err := s.simRepo.GetBySubscriber(subId)
 	if err != nil {
@@ -522,11 +520,6 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of network uuid. Error %s", err.Error())
 	}
-
-	// sims, err := s.simRepo.List("", "", "", netId.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
-	// if err != nil {
-	// return nil, grpc.SqlErrorToGrpc(err, "sims")
-	// }
 
 	sims, err := s.simRepo.GetByNetwork(netId)
 	if err != nil {
@@ -675,7 +668,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w", req.SimId, err)
+		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+			req.SimId, err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
 	if len(packages) == 0 {
@@ -777,6 +773,9 @@ func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListP
 	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, fromStartDate, toStartDate,
 		fromEndDate, toEndDate, req.IsActive, req.AsExpired, req.Count, req.Sort)
 	if err != nil {
+		log.Errorf("error while getting list of packages present on sim (%s) matching the given filters: %v",
+			req.SimId, err)
+
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
@@ -793,9 +792,12 @@ func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPac
 			"invalid format of sim uuid. Error %s", err.Error())
 	}
 
-	packages, err := s.packageRepo.List(simId.String(), "", "", "", "", "", false, false, 0, false)
+	packages, err := s.packageRepo.GetBySim(simId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the list of packages present on sim (%s): %w", req.SimId, err)
+		log.Errorf("failed to get the list of packages present on sim (%s): %v",
+			req.SimId, err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 
 	resp := &pb.GetPackagesForSimResponse{
