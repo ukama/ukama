@@ -22,14 +22,14 @@ export class AddPackagesToSimResolver {
 
     for (const packageInfo of data.packages) {
       try {
-        const response = await dataSources.dataSource.AddPackagesToSim(
-          baseURL,
-          {
-            sim_id: data.sim_id,
-            packages: [packageInfo],
-          }
-        );
-        addedPackageIds.push(...response);
+        await dataSources.dataSource.AddPackagesToSim(baseURL, {
+          sim_id: data.sim_id,
+          packages: [packageInfo],
+        });
+
+        addedPackageIds.push({
+          packageId: packageInfo.package_id,
+        });
       } catch (error) {
         console.error(`Failed to add package ${packageInfo.package_id}`, error);
       }

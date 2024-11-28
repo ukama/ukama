@@ -170,29 +170,22 @@ class SimApi extends RESTDataSource {
   AddPackagesToSim = async (
     baseURL: string,
     req: AddPackagesToSimInputDto
-  ): Promise<AddPackageSimResDto[]> => {
+  ): Promise<void> => {
     this.baseURL = baseURL;
-    const addedPackageIds: AddPackageSimResDto[] = [];
 
-    try {
-      for (const packageInfo of req.packages) {
-        this.logger.info(
-          `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
-        );
+    for (const packageInfo of req.packages) {
+      this.logger.info(
+        `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
+      );
 
-        return await this.post(`/${VERSION}/${SIM}/package`, {
-          body: {
-            sim_id: req.sim_id,
-            package_id: packageInfo.package_id,
-            start_date: packageInfo.start_date,
-          },
-        });
-      }
-    } catch (error) {
-      this.logger.error(error);
+      await this.post(`/${VERSION}/${SIM}/package`, {
+        body: {
+          sim_id: req.sim_id,
+          package_id: packageInfo.package_id,
+          start_date: packageInfo.start_date,
+        },
+      });
     }
-
-    return addedPackageIds;
   };
 
   removePackageFromSim = async (
