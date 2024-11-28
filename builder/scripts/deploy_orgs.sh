@@ -22,11 +22,9 @@ INVENTORY_SYS_KEY="inventory"
 IS_INVENTORY_SYS=false
 METADATA=$(jq -c '.' ../metadata.json)
 JSON_FILE="../deploy_orgs_config.json"
-if [ "$1" == "-d" ]; then
-  ISDEBUGMODE=true
-else
-  ISDEBUGMODE=false
-fi
+ISDEBUGMODE=false
+MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
+
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -36,20 +34,21 @@ elif [[ "$(uname)" == "Linux" ]]; then
     LOCAL_HOST_IP=$(ifconfig enp0s25 | grep inet | awk '$1=="inet" {print $2}')
 fi
 
-MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
-
 function buildSystems() {
     echo  "$TAG Building systems..."
     ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
 }
 
-while getopts "b" opt; do
+while getopts "bd" opt; do
     case ${opt} in
         b )
             buildSystems
             ;;
+        d )
+            ISDEBUGMODE=true
+            ;;
         \? )
-            echo "Usage: cmd [-b]"
+            echo "Usage: cmd [-b, -d]"
             exit 1
             ;;
     esac
@@ -84,6 +83,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export KEY=$KEY
         export LAGO_API_KEY=$LAGOAPIKEY
         export MASTERORGNAME=$MASTERORGNAME
+        export MASTER_ORG_NAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP
         export COMPONENT_ENVIRONMENT=test
     }
