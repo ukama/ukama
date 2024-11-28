@@ -191,7 +191,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET("/subscriber/:subscriber_id", formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
 		// Deprecated: Use GET /v1/sim/:sim_id/package with query params  for filtering instead.
 		sim.GET("/packages/:sim_id", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.getPackagesForSim, http.StatusOK))
-		// Deprecated: Use POST /v1/:sim_id/package instead.
+		// Deprecated: Use POST /v1/sim/:sim_id/package instead.
 		sim.POST("/package", formatDoc("Add a new package to the given subscriber's SIM", ""), tonic.Handler(r.postPkgForSim, http.StatusCreated))
 
 		usage := auth.Group("usages", "Usages", "Operator sims usages endpoints")
