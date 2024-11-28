@@ -21,5 +21,3 @@ export class AddPackageResolver {
     return dataSources.dataSource.addPackage(baseURL, data, headers);
   }
 }
-
-

@@ -11,7 +11,6 @@ import { ENCRYPTION_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
-  AddPackageSimResDto,
   AddPackagesToSimInputDto,
   AllocateSimAPIDto,
   AllocateSimInputDto,
