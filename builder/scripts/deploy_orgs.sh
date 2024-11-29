@@ -57,7 +57,7 @@ done
 jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     ORGNAME=$(echo "$ORG" | jq -r '.["org-name"]')
     echo "${TAG} Processing organization: ${YELLOW}${ORGNAME}${NC}"
-    docker network rm ${ORGNAME}_ukama-net
+    docker network rm ${ORGNAME}_ukama-net > /dev/null 2>&1
     # Initialize the variables
     SUBNET=$(echo "$ORG" | jq -r '.subnet')
     ORG_TYPE=$(echo "$ORG" | jq -r '.type')
@@ -145,16 +145,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
 
     get_user_id() {
         echo  "$TAG Fetching user ID..."
-        SQL_QUERY="SELECT PUBLIC.users.id FROM PUBLIC.users WHERE users.auth_id = '$OWNERAUTHID' AND users.deleted_at IS NULL ORDER BY users.id LIMIT 1;"
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/users"
-        OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
+        response=$(curl --location --silent "http://localhost:8060/v1/users/auth/${OWNERAUTHID}" -H 'accept: application/json')
+        user_id=$(echo "$response" | jq -r '.user.id')
+        OWNERID="$user_id"
         echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
     }
 
     create_org() {
        echo  "$TAG Register org in nucleus..."
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/org"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE)"
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5406/org"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\", \"country\", \"currency\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE, 'cod', 'cdf')"
         psql $DB_URI -c "$QUERY"
     }
 
@@ -357,8 +357,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     sort_systems_by_dependency
     setup_docker_compose_files
     pre_deploy_config_for_other_org
-
-    docker network create ${ORGNAME}_ukama-net
 
     for SYSTEM in "${SYSTEMS[@]}"; do
         cd ~

@@ -3,7 +3,7 @@ services:
  postgresd-nucleus:
   image: postgres:13.3
   ports:
-   - 5411:5432
+   - 5406:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
