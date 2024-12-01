@@ -11,6 +11,7 @@ import {
   Sim_Status,
   Sim_Types,
   SubscribersResDto,
+  useAddPackagesToSimMutation,
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
@@ -19,7 +20,6 @@ import {
   useGetSimPoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
-  useAddPackagesToSimMutation,
   useGetSubscriberLazyQuery,
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
@@ -227,7 +227,7 @@ const Page = () => {
           return {
             id: subscriber.uuid,
             name: subscriber.name,
-            dataPlan: pkg?.name ?? '',
+            dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
             dataUsage: '',
             actions: '',
@@ -281,10 +281,10 @@ const Page = () => {
 
   const [addPackagesToSim, { loading: addPackagesToSimLoading }] =
     useAddPackagesToSimMutation({
-      onCompleted: () => {
+      onCompleted: (data) => {
         setSnackbarMessage({
           id: 'packages-added-success',
-          message: 'Package added successfully!',
+          message: 'Packages added successfully!',
           type: 'success' as AlertColor,
           show: true,
         });
@@ -552,7 +552,6 @@ const Page = () => {
         direction === 'left' ? -scrollAmount : scrollAmount;
     }
   };
-  console.log('TOKA :', simPoolData);
 
   return (
     <Stack

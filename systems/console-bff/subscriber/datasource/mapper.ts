@@ -109,8 +109,8 @@ export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
     sync_status: res.sync_status || "",
     isPhysical: res.is_physical ?? false,
     package:
-      res.package && Array.isArray(res.package) && res.package.length > 0
-        ? dtoToSimPackageDto(res.package[0])
+      res.package && res.package.id
+        ? dtoToSimPackageDto(res.package)
         : undefined,
   };
 };

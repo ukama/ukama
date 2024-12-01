@@ -42,6 +42,11 @@ export type AddNodeToSiteInput = {
   siteId: Scalars['String']['input'];
 };
 
+export type AddPackagSimResDto = {
+  __typename?: 'AddPackagSimResDto';
+  packageId?: Maybe<Scalars['String']['output']>;
+};
+
 export type AddPackageInputDto = {
   amount: Scalars['Float']['input'];
   country: Scalars['String']['input'];
@@ -52,9 +57,9 @@ export type AddPackageInputDto = {
   name: Scalars['String']['input'];
 };
 
-export type AddPackageSimResDto = {
-  __typename?: 'AddPackageSimResDto';
-  packageId?: Maybe<Scalars['String']['output']>;
+export type AddPackagesSimResDto = {
+  __typename?: 'AddPackagesSimResDto';
+  packages: Array<AddPackagSimResDto>;
 };
 
 export type AddPackagesToSimInputDto = {
@@ -321,7 +326,7 @@ export type Mutation = {
   addNode: Node;
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
-  addPackagesToSim: Array<AddPackageSimResDto>;
+  addPackagesToSim: AddPackagesSimResDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -1520,7 +1525,7 @@ export type AddPackagesToSimMutationVariables = Exact<{
 }>;
 
 
-export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: Array<{ __typename?: 'AddPackageSimResDto', packageId?: string | null }> };
+export type AddPackagesToSimMutation = { __typename?: 'Mutation', addPackagesToSim: { __typename?: 'AddPackagesSimResDto', packages: Array<{ __typename?: 'AddPackagSimResDto', packageId?: string | null }> } };
 
 export type DeleteSimMutationVariables = Exact<{
   data: DeleteSimInputDto;
@@ -3171,7 +3176,9 @@ export type GetPackagesForSimQueryResult = Apollo.QueryResult<GetPackagesForSimQ
 export const AddPackagesToSimDocument = gql`
     mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
   addPackagesToSim(data: $data) {
-    packageId
+    packages {
+      packageId
+    }
   }
 }
     `;
