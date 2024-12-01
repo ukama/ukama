@@ -139,8 +139,10 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 	addReq := &pb.AddPackageRequest{
 		SimId:     simId,
 		PackageId: msg.ItemId,
-		StartDate: time.Now().UTC().String(),
+		StartDate: time.Now().UTC().Format(time.RFC3339),
 	}
+
+	log.Infof("Adding package %v", addReq)
 
 	_, err = s.AddPackageForSim(ctx, addReq)
 
