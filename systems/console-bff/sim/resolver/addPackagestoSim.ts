@@ -7,17 +7,41 @@
  */
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
+import { logger } from "../../common/logger";
 import { Context } from "../context";
-import { AddPackageSimResDto, AddPackagesToSimInputDto } from "./types";
+import {
+  AddPackagSimResDto,
+  AddPackagesSimResDto,
+  AddPackagesToSimInputDto,
+} from "./types";
 
 @Resolver()
 export class AddPackagesToSimResolver {
-  @Mutation(() => [AddPackageSimResDto])
+  @Mutation(() => AddPackagesSimResDto)
   async addPackagesToSim(
     @Arg("data") data: AddPackagesToSimInputDto,
     @Ctx() ctx: Context
-  ): Promise<AddPackageSimResDto[]> {
+  ): Promise<AddPackagesSimResDto> {
     const { dataSources, baseURL } = ctx;
-    return dataSources.dataSource.AddPackagesToSim(baseURL, data);
+    const pacakgesId: AddPackagSimResDto[] = [];
+    for (const packageInfo of data.packages) {
+      try {
+        await dataSources.dataSource.addPackageToSim(
+          baseURL,
+          data.sim_id,
+          packageInfo.package_id,
+          packageInfo.start_date
+        );
+        pacakgesId.push({
+          packageId: packageInfo.package_id,
+        });
+      } catch (error) {
+        logger.error(`Error adding package to sim: ${packageInfo.package_id} `);
+        throw new Error("Failed to add package to sim");
+      }
+    }
+    return {
+      packages: pacakgesId,
+    };
   }
 }

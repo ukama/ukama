@@ -103,9 +103,15 @@ export class RemovePackageFromSimResDto {
   packageId?: string;
 }
 @ObjectType()
-export class AddPackageSimResDto {
+export class AddPackagSimResDto {
   @Field(() => String, { nullable: true })
-  packageId?: string;
+  packageId: string;
+}
+
+@ObjectType()
+export class AddPackagesSimResDto {
+  @Field(() => [AddPackagSimResDto])
+  packages: AddPackagSimResDto[];
 }
 
 @InputType()
