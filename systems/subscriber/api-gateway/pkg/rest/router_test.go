@@ -26,7 +26,6 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
@@ -402,8 +401,8 @@ func TestRouter_SimManager(t *testing.T) {
 		IsPhysical:   false,
 		Package: &smPb.Package{
 			Id:        uuid.NewV4().String(),
-			StartDate: timestamppb.New(time.Now().UTC()).String(),
-			EndDate:   timestamppb.New(time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC)).String(),
+			StartDate: time.Now().UTC().Format(time.RFC3339),
+			EndDate:   time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
 		},
 	}
 
