@@ -63,6 +63,7 @@ const Page = () => {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const [topUpSubscriberName, setTopUpSubscriberName] = useState('');
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
@@ -145,29 +146,46 @@ const Page = () => {
       }
     },
   });
+  const handleTopUpDataPreparation = (id: string) => {
+    const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
+      (subscriber) => subscriber.uuid === id,
+    );
 
-  const onTableMenuItem = async (id: string, type: string) => {
-    if (type === 'delete-sub') {
-      setIsConfirmationOpen(true);
-      setDeletedSubscriber(id);
-    }
-    if (type === 'top-up-data') {
-      setIsToPupData(true);
-      getSubscriber({
-        variables: {
+    setIsToPupData(true);
+
+    getSubscriber({
+      variables: {
+        subscriberId: id,
+      },
+    });
+
+    getSimBySubscriber({
+      variables: {
+        data: {
           subscriberId: id,
         },
-      });
-      getSimBySubscriber({
-        variables: {
-          data: {
-            subscriberId: id,
-          },
-        },
-      });
+      },
+    });
+
+    if (subscriberInfo) {
+      setTopUpSubscriberName(subscriberInfo.name);
     }
-    if (type === 'edit-sub') {
-      handleOpenSubscriberDetails(id);
+  };
+
+  const onTableMenuItem = async (id: string, type: string) => {
+    switch (type) {
+      case 'delete-sub':
+        setIsConfirmationOpen(true);
+        setDeletedSubscriber(id);
+        break;
+
+      case 'top-up-data':
+        handleTopUpDataPreparation(id);
+        break;
+
+      case 'edit-sub':
+        handleOpenSubscriberDetails(id);
+        break;
     }
   };
 
@@ -552,7 +570,6 @@ const Page = () => {
         direction === 'left' ? -scrollAmount : scrollAmount;
     }
   };
-
   return (
     <Stack
       mt={2}
@@ -723,7 +740,7 @@ const Page = () => {
         loadingTopUp={packagesLoading || addPackagesToSimLoading}
         packages={packagesData?.getPackages.packages ?? []}
         sims={subscriberSimList ?? []}
-        subscriberName={subscriberDetails?.name}
+        subscriberName={topUpSubscriberName}
       />
     </Stack>
   );

@@ -65,8 +65,8 @@ const useStyles = makeStyles(() => ({
   },
   closeButton: {
     position: 'absolute',
-    right: 8,
-    top: 8,
+    right: 10,
+    top: 14,
   },
 }));
 

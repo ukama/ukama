@@ -89,6 +89,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     },
     [subscriberInfo, handleCloseItem, handleDeleteSubscriber],
   );
+
   useEffect(() => {
     if (subscriberInfo) {
       setLocalSubscriberInfo(subscriberInfo);
@@ -97,6 +98,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       setHasChanges(false);
     }
   }, [subscriberInfo]);
+
   const handleSaveSubscriber = useCallback(() => {
     if (hasChanges) {
       const updates: { name?: string } = {};
@@ -112,14 +114,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
     subscriberInfo,
     handleClose,
   ]);
-
-  useEffect(() => {
-    if (subscriberInfo) {
-      setEmail(subscriberInfo.email);
-      setName(subscriberInfo.name);
-      setHasChanges(false);
-    }
-  }, [subscriberInfo]);
 
   const handleTabsChange = (_: React.SyntheticEvent, newValue: number) => {
     setSelectedsTab(newValue);
@@ -148,38 +142,41 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
       fullWidth
     >
       <DialogTitle id="alert-dialog-title">
-        <Stack direction="row" sx={{ ml: 1 }} justifyItems={'center'}>
-          <Typography variant="h6">{localSubscriberInfo?.name}</Typography>
-          <IconButton onClick={handleClick}>
-            <MoreVertIcon />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={open}
-            onClose={() => setAnchorEl(null)}
-          >
-            <MenuItem
-              onClick={() => handleMenuItemClick('deleteSubscriber')}
-              sx={{ color: colors.red }}
-              disabled={true}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Stack direction="row" spacing={1} alignItems={'center'}>
+            <Typography variant="h6">{localSubscriberInfo?.name}</Typography>
+            <IconButton onClick={handleClick}>
+              <MoreVertIcon />
+            </IconButton>
+          </Stack>
+          <Stack direction="row" alignItems="center">
+            <IconButton
+              aria-label="close"
+              onClick={handleClose}
+              sx={{
+                position: 'relative',
+                right: 0,
+              }}
             >
-              Delete subscriber
-            </MenuItem>
-          </Menu>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
         </Stack>
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={handleClose}
-        sx={{
-          position: 'absolute',
-          right: 8,
-          top: 8,
-        }}
-      >
-        <CloseIcon />
-      </IconButton>
-      <Box sx={{ px: 4 }}>
+      <Menu anchorEl={anchorEl} open={open} onClose={handleCloseItem}>
+        <MenuItem
+          onClick={() => handleMenuItemClick('deleteSubscriber')}
+          sx={{ color: colors.red }}
+          disabled={true}
+        >
+          Delete subscriber
+        </MenuItem>
+      </Menu>
+      <Box sx={{ px: 4, py: 2 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
             value={selectedsTab}
@@ -188,7 +185,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             scrollButtons="auto"
             indicatorColor="primary"
             textColor="primary"
-            sx={{ alignItems: 'flex-start' }}
           >
             <Tab label="INFORMATION" />
             <Tab label="DATA USAGE" />
@@ -197,63 +193,49 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3, width: '100%' }}>
+        <Box sx={{ pt: 3 }}>
           {selectedsTab === 0 && (
-            <Box sx={{ position: 'relative', right: 22 }}>
-              <Stack spacing={2} direction="column">
-                <Box sx={{ position: 'relative' }}>
-                  <InputLabel
-                    shrink
-                    htmlFor="name"
-                    sx={{
-                      position: 'absolute',
-                      top: isEditingName ? '-8px' : '0px',
-                      left: isEditingName ? '14px' : '0px',
-                      background: isEditingName ? 'white' : 'transparent',
-                      padding: isEditingName ? '0 4px' : '0',
-                      transition: 'all 0.2s',
-                      zIndex: 1,
+            <Box>
+              <Stack spacing={3} direction="column">
+                <Box>
+                  <TextField
+                    id="name"
+                    required
+                    value={name}
+                    label="NAME"
+                    onChange={handleNameChange}
+                    variant={isEditingName ? 'outlined' : 'standard'}
+                    fullWidth
+                    InputProps={{
+                      disableUnderline: !isEditingName,
+                      endAdornment: isEditingName ? (
+                        <InputAdornment position="end">
+                          <Button
+                            variant="text"
+                            onClick={() => {
+                              setIsEditingName(false);
+                              setHasChanges(true);
+                            }}
+                          >
+                            SAVE
+                          </Button>
+                        </InputAdornment>
+                      ) : (
+                        <IconButton
+                          onClick={() => setIsEditingName(true)}
+                          size="small"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      ),
+                      style: {
+                        height: '53px',
+                      },
                     }}
-                  >
-                    NAME
-                  </InputLabel>
-                  {isEditingName ? (
-                    <TextField
-                      id="name"
-                      required
-                      value={name}
-                      onChange={handleNameChange}
-                      variant="outlined"
-                      fullWidth
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Button
-                              variant="text"
-                              onClick={() => setIsEditingName(false)}
-                            >
-                              SAVE
-                            </Button>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  ) : (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
-                      <Typography variant="body1" sx={{ flexGrow: 1 }}>
-                        {name}
-                      </Typography>
-                      <IconButton
-                        onClick={() => setIsEditingName(true)}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Box>
-                  )}
+                  />
                 </Box>
 
-                <Box sx={{ position: 'relative' }}>
+                <Box>
                   <InputLabel
                     shrink
                     htmlFor="email"
@@ -281,7 +263,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             </Box>
           )}
           {selectedsTab === 1 && (
-            <Box sx={{ position: 'relative', right: 22 }}>
+            <Box>
               <DataPlanComponent
                 packageName={packageName ?? ''}
                 currentSite={currentSite ?? ''}
@@ -290,7 +272,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             </Box>
           )}
           {selectedsTab === 2 && (
-            <Box sx={{ position: 'relative', right: 22, top: -8 }}>
+            <Box>
               <SimTable
                 simData={subscriberInfo?.sim}
                 onSimAction={handleSimAction}
@@ -299,7 +281,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             </Box>
           )}
           {selectedsTab === 3 && (
-            <Box sx={{ position: 'relative', right: 22, top: -30 }}>
+            <Box>
               <BillingCycle />
             </Box>
           )}
