@@ -69,6 +69,7 @@ type Notifications struct {
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	IsRead      bool                    `gorm:"default:false"`
+	ResourceId  uuid.UUID
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

@@ -598,12 +598,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
 		}
 
-		subscriberId, ok := metadata["subscriberId"]
+		targetId, ok := metadata["targetId"]
 		if !ok {
-			log.Errorf("missing subscriberId metadata for successful package payment: %s", msg.ItemId)
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", subscriberId, subscriberId, jmsg, msg.Id)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentFailed]):
 		c := evt.EventToEventConfig[evt.EventPaymentFailed]
@@ -629,12 +630,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
 		}
 
-		subscriberId, ok := metadata["subscriberId"]
+		targetId, ok := metadata["targetId"]
 		if !ok {
-			log.Errorf("missing subscriberId metadata for successful package payment: %s", msg.ItemId)
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
 		}
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", subscriberId, subscriberId, jmsg, msg.Id)
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
 		/*
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
 				c := evt.EventToEventConfig[evt.EventComponentsSync]
