@@ -66,6 +66,8 @@ const (
 	EventHealthCappStore
 	EventNotificationDelete
 	EventNotificationStore
+	EventPaymentSuccess
+	EventPaymentFailed
 )
 
 var EventRoutingKey = [...]string{
@@ -113,6 +115,8 @@ var EventRoutingKey = [...]string{
 	EventHealthCappStore:    "event.cloud.local.{{ .Org}}.node.health.capps.store",
 	EventNotificationDelete: "event.cloud.local.{{ .Org}}.notification.notify.notification.delete",
 	EventNotificationStore:  "event.cloud.local.{{ .Org}}.notification.notify.notification.store",
+	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
+	EventPaymentFailed:      "event.cloud.local.{{ .Org}}.payments.processor.payment.failed",
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
@@ -467,5 +471,21 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Description: "Notification Stored",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
+	},
+	EventPaymentSuccess: {
+		Key:         EventPaymentSuccess,
+		Name:        "EventPaymentSuccess",
+		Title:       "Payment Success",
+		Description: "Payment Success",
+		Scope:       notif.SCOPE_SUBSCRIBER,
+		Type:        TypeDefault,
+	},
+	EventPaymentFailed: {
+		Key:         EventPaymentFailed,
+		Name:        "EventPaymentFailed",
+		Title:       "Payment Failed",
+		Description: "Payment Failed",
+		Scope:       notif.SCOPE_SUBSCRIBER,
+		Type:        notif.TYPE_ERROR,
 	},
 }
