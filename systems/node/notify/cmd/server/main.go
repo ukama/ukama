@@ -13,6 +13,7 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/metrics"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/notify/cmd/version"
@@ -26,7 +27,6 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	generated "github.com/ukama/ukama/systems/node/notify/pb/gen"
 )
 
@@ -91,8 +91,7 @@ func runGrpcServer(gormdb sql.Db) {
 		srv := server.NewNotifyServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
 		generated.RegisterNotifyServiceServer(s, srv)
 
-		eSrv := server.NewNotifyEventServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient,
-			serviceConfig.MsgClient.ListenerRoutes)
+		eSrv := server.NewNotifyEventServer(serviceConfig.OrgName, db.NewNotificationRepo(gormdb), mbClient)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 
 	})
