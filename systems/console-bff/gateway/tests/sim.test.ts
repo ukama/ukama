@@ -17,7 +17,7 @@ import NetworkApi from "../../network/datasource/network_api";
 import PackageApi from "../../package/datasource/package_api";
 import { Context } from "../../sim/context";
 import SimApi from "../../sim/datasource/sim_api";
-import { AddPackageToSimResolver } from "../../sim/resolver/addPackagetoSim";
+import { AddPackagesToSimResolver } from "../../sim/resolver/addPackagestoSim";
 import { AllocateSimResolver } from "../../sim/resolver/allocateSim";
 import { DeleteSimResolver } from "../../sim/resolver/delete";
 import { GetSimByNetworkResolver } from "../../sim/resolver/getByNetwork";
@@ -56,7 +56,7 @@ const simApi = new SimApi();
 const createSchema = async () => {
   return await buildSchema({
     resolvers: [
-      AddPackageToSimResolver,
+      AddPackagesToSimResolver,
       AllocateSimResolver,
       DeleteSimResolver,
       GetSimByNetworkResolver,

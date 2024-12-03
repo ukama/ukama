@@ -339,17 +339,6 @@ mutation deletePackage($packageId: String!) {
     uuid
   }
 }
-mutation addPackageToSim($data: AddPackageToSimInputDto!) {
-  addPackageToSim(data: $data) {
-    packageId
-  }
-}
-mutation setActivePackageForSim($data: SetActivePackageForSimInputDto!) {
-  setActivePackageForSim(data: $data) {
-    packageId
-  }
-}
-
 query getPackagesForSim($data: GetPackagesForSimInputDto!) {
   getPackagesForSim(data: $data) {
     sim_id
@@ -358,6 +347,15 @@ query getPackagesForSim($data: GetPackagesForSimInputDto!) {
     }
   }
 }
+
+mutation addPackagesToSim($data: AddPackagesToSimInputDto!) {
+  addPackagesToSim(data: $data) {
+    packages {
+      packageId
+    }
+  }
+}
+
 mutation deleteSim($data: DeleteSimInputDto!) {
   deleteSim(data: $data) {
     simId

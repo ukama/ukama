@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import {
@@ -65,8 +65,8 @@ const useStyles = makeStyles(() => ({
   },
   closeButton: {
     position: 'absolute',
-    right: 8,
-    top: 8,
+    right: 10,
+    top: 14,
   },
 }));
 
@@ -94,6 +94,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [submissionData, setSubmissionData] =
     useState<AllocateSimApiDto | null>(null);
+  const [selectedSim, setSelectedSim] = useState<SimDto | null>(null);
 
   const gclasses = globalUseStyles();
   const classes = useStyles();
@@ -284,6 +285,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                     value={sims.find((sim) => sim.id === field.value) || null}
                     onChange={(_, newValue) => {
                       form.setFieldValue('simIccid', newValue?.iccid || '');
+                      setSelectedSim(newValue);
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -487,7 +489,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                     >
                       <QRCode
                         id="qrCodeId"
-                        value={submissionData?.iccid || ''}
+                        value={selectedSim?.qrCode || ''}
                         style={{ height: 180, width: 180 }}
                       />
                     </AccordionDetails>

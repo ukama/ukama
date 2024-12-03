@@ -87,29 +87,31 @@ export const dtoToSubscribersResDto = (
 export const dtoToSimPackageDto = (res: SimPackageAPIDto): SimPackageDto => {
   return {
     id: res.id,
-    end_date: res.end_date,
-    is_active: res.is_active,
     package_id: res.package_id,
     start_date: res.start_date,
-    updated_at: res.updated_at,
+    end_date: res.end_date,
+    is_active: res.is_active,
     created_at: res.created_at,
+    updated_at: res.updated_at,
   };
 };
-
 export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
   return {
     id: res.id,
-    imsi: res.imsi,
-    type: res.type,
+    subscriberId: res.subscriber_id,
+    networkId: res.network_id,
     iccid: res.iccid,
     msisdn: res.msisdn,
+    imsi: res.imsi || "",
+    type: res.type,
     status: res.status,
-    networkId: res.network_id,
-    isPhysical: res.is_physical,
-    sync_status: res.sync_status,
     allocatedAt: res.allocated_at,
-    subscriberId: res.subscriber_id,
-    package: dtoToSimPackageDto(res.package),
+    sync_status: res.sync_status || "",
+    isPhysical: res.is_physical ?? false,
+    package:
+      res.package && res.package.id
+        ? dtoToSimPackageDto(res.package)
+        : undefined,
   };
 };
 

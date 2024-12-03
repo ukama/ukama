@@ -223,6 +223,11 @@ const DataPlanDialog = ({
                     value={dataplan.duration}
                     id={'data-plan-unit'}
                     labelId="data-plan-unit-price-label"
+                    sx={{
+                      '& legend': {
+                        letterSpacing: 4,
+                      },
+                    }}
                     onChange={(e) =>
                       setDataplan({
                         ...dataplan,
