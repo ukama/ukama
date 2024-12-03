@@ -9,6 +9,7 @@ import colors from '@/theme/colors';
 import { Button, Paper, Stack, Typography } from '@mui/material';
 
 interface IWelcome {
+  role: string;
   orgName: string;
   operatingCountry: string;
   handleNext: () => void;
@@ -33,6 +34,7 @@ export const LField = ({ label, value }: { label: string; value: string }) => {
 };
 
 const Welcome = ({
+  role,
   orgName,
   operatingCountry,
   handleBack,
@@ -51,6 +53,7 @@ const Welcome = ({
 
         <LField label="Organization Name" value={orgName} />
         <LField label="Network Operating Country" value={operatingCountry} />
+        <LField label="Role" value={role} />
       </Stack>
       <Stack direction={'row'} justifyContent={'space-between'} spacing={2}>
         <Button

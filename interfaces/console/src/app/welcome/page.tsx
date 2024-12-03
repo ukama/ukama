@@ -6,9 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { Role_Type } from '@/client/graphql/generated';
 import Welcome from '@/components/Welcome';
 import { useAppContext } from '@/context';
 import { CenterContainer } from '@/styles/global';
+import { roleEnumToString } from '@/utils';
 import GradientWrapper from '@/wrappers/gradiantWrapper';
 import { useRouter } from 'next/navigation';
 
@@ -19,10 +21,11 @@ const Page = () => {
     <CenterContainer>
       <GradientWrapper>
         <Welcome
-          handleNext={() => router.push('/configure')}
-          handleBack={() => router.push(`${env.AUTH_APP_URL}/user/logout`)}
           orgName={user.orgName}
+          handleNext={() => router.push('/configure')}
           operatingCountry={'Dominican Republic of Congo'}
+          handleBack={() => router.push(`${env.AUTH_APP_URL}/user/logout`)}
+          role={`${user.name} - ${roleEnumToString(user.role as Role_Type)}`}
         />
       </GradientWrapper>
     </CenterContainer>
