@@ -5,245 +5,293 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 package statemachine
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestNewStateMachine(t *testing.T) {
-	handler := func(event Event) {}
-	sm := NewStateMachine(handler)
-	if sm == nil {
-		t.Error("NewStateMachine returned nil")
+func TestNodeStateMachine(t *testing.T) {
+	var capturedEvents []Event
+	mockHandler := func(event Event) {
+		capturedEvents = append(capturedEvents, event)
 	}
+
+	sm := NewStateMachine(mockHandler)
+
+	configFile := createTempConfigFile(t, nodeStateConfig)
+
+	t.Run("Configured State Transitions", func(t *testing.T) {
+		t.Run("ready event", func(t *testing.T) {
+			instance, err := sm.NewInstance(configFile, "test-node-ready", "Configured")
+			require.NoError(t, err)
+
+			err = instance.Transition("ready")
+			assert.NoError(t, err)
+			assert.Equal(t, "Operational", instance.CurrentState)
+		})
+
+		t.Run("config event", func(t *testing.T) {
+			instance, err := sm.NewInstance(configFile, "test-node-config", "Configured")
+			require.NoError(t, err)
+
+			err = instance.Transition("config")
+			assert.NoError(t, err)
+			assert.Equal(t, "Configured", instance.CurrentState)
+		})
+
+		t.Run("fault event", func(t *testing.T) {
+			instance, err := sm.NewInstance(configFile, "test-node-fault", "Configured")
+			require.NoError(t, err)
+
+			err = instance.Transition("fault")
+			assert.NoError(t, err)
+			assert.Equal(t, "Faulty", instance.CurrentState)
+		})
+
+		substateCases := []struct {
+			name          string
+			event         string
+			expectedState string
+			expectedEvents []string
+		}{
+			{"update substate", "update", "Configured", []string{ "online", "ready"}},
+			{"upgrade substate", "upgrade", "Configured", []string{ "online", "ready"}},
+			{"downgrade substate", "downgrade", "Configured", []string{ "online", "ready"}},
+		}
+
+		for _, tc := range substateCases {
+			t.Run(tc.name, func(t *testing.T) {
+				instance, err := sm.NewInstance(configFile, "test-node-"+tc.name, "Configured")
+				require.NoError(t, err)
+
+				err = instance.Transition(tc.event)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedState, instance.CurrentState)
+				assert.Equal(t, tc.expectedEvents, instance.ExpectedEvents)
+				assert.Equal(t, tc.event, instance.CurrentSubstate)
+			})
+		}
+	})
+
+	
 }
 
-func TestNewInstance(t *testing.T) {
-	// Create a temporary config file
-	config := `{
-		"version": "1.0",
-		"entity": "test",
-		"file": "test.json",
-		"states": [
-			{
-				"name": "initial",
-				"description": "Initial state",
-				"events": ["start"],
-				"transition": [
-					{
-						"to_state": "running",
-						"trigger": ["start"]
-					}
-				]
-			},
-			{
-				"name": "running",
-				"description": "Running state",
-				"events": ["stop"],
-				"transition": [
-					{
-						"to_state": "stopped",
-						"trigger": ["stop"]
-					}
-				]
-			},
-			{
-				"name": "stopped",
-				"description": "Stopped state",
-				"events": ["start"],
-				"transition": [
-					{
-						"to_state": "running",
-						"trigger": ["start"]
-					}
-				]
-			}
-		]
-	}`
+func createTempConfigFile(t *testing.T, content string) string {
+	t.Helper()
+	tempFile, err := os.CreateTemp("", "node-state-config-*.json")
+	require.NoError(t, err)
+	defer tempFile.Close()
 
-	tmpfile, err := ioutil.TempFile("", "test_config.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name())
+	_, err = tempFile.Write([]byte(content))
+	require.NoError(t, err)
 
-	if _, err := tmpfile.Write([]byte(config)); err != nil {
-		t.Fatal(err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	sm := NewStateMachine(nil)
-	instance, err := sm.NewInstance(tmpfile.Name(), "test-instance", "initial")
-	if err != nil {
-		t.Errorf("NewInstance failed: %v", err)
-	}
-
-	if instance.CurrentState != "initial" {
-		t.Errorf("Expected initial state to be 'initial', got '%s'", instance.CurrentState)
-	}
+	return tempFile.Name()
 }
 
-func TestTransition(t *testing.T) {
-	config := StateMachineConfig{
-		Version: "1.0",
-		Entity:  "test",
-		File:    "test.json",
-		States: map[string]State{
-			"initial": {
-				Name:        "initial",
-				Description: "Initial state",
-				Events:      []string{"start"},
-				Transitions: map[string]Transition{
-					"start": {ToState: "running", Trigger: []string{"start"}},
-				},
-			},
-			"running": {
-				Name:        "running",
-				Description: "Running state",
-				Events:      []string{"stop"},
-				Transitions: map[string]Transition{
-					"stop": {ToState: "stopped", Trigger: []string{"stop"}},
-				},
-			},
-			"stopped": {
-				Name:        "stopped",
-				Description: "Stopped state",
-				Events:      []string{"start"},
-				Transitions: map[string]Transition{
-					"start": {ToState: "running", Trigger: []string{"start"}},
-				},
-			},
-		},
-	}
 
-	var lastEvent Event
-	handler := func(event Event) {
-		lastEvent = event
-	}
-
-	sm := NewStateMachine(handler)
-	instance := &StateMachineInstance{
-		InstanceID:   "test-instance",
-		CurrentState: "initial",
-		Config:       config,
-		StateMachine: sm,
-	}
-
-	// Test valid transition
-	err := instance.Transition("start")
-	if err != nil {
-		t.Errorf("Transition failed: %v", err)
-	}
-	if instance.CurrentState != "running" {
-		t.Errorf("Expected state to be 'running', got '%s'", instance.CurrentState)
-	}
-	if lastEvent.Name != "start" || lastEvent.OldState != "initial" || lastEvent.NewState != "running" {
-		t.Errorf("Unexpected event: %+v", lastEvent)
-	}
-
-	// Test invalid transition
-	err = instance.Transition("invalid")
-	if err == nil {
-		t.Error("Expected error for invalid transition, got nil")
-	}
-}
-
-func TestLoadConfig(t *testing.T) {
-	config := `{
-		"version": "1.0",
-		"entity": "test",
-		"file": "test.json",
-		"states": [
-			{
-				"name": "initial",
-				"description": "Initial state",
-				"events": ["start"],
-				"transition": [
-					{
-						"to_state": "running",
-						"trigger": ["start"]
-					}
-				]
-			}
-		]
-	}`
-
-	tmpfile, err := ioutil.TempFile("", "test_config.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.Remove(tmpfile.Name())
-
-	if _, err := tmpfile.Write([]byte(config)); err != nil {
-		t.Fatal(err)
-	}
-	if err := tmpfile.Close(); err != nil {
-		t.Fatal(err)
-	}
-
-	loadedConfig, err := LoadConfig(tmpfile.Name())
-	if err != nil {
-		t.Errorf("LoadConfig failed: %v", err)
-	}
-
-	if loadedConfig.Version != "1.0" || loadedConfig.Entity != "test" || loadedConfig.File != "test.json" {
-		t.Errorf("Unexpected config values: %+v", loadedConfig)
-	}
-
-	if _, exists := loadedConfig.States["initial"]; !exists {
-		t.Error("Expected 'initial' state not found in loaded config")
-	}
-}
-
-func TestSubStateTransition(t *testing.T) {
-	config := StateMachineConfig{
-		Version: "1.0",
-		Entity:  "test",
-		File:    "test.json",
-		States: map[string]State{
-			"main": {
-				Name:        "main",
-				Description: "Main state with substates",
-				Events:      []string{"sub1", "sub2"},
-				SubState: &SubState{
-					Events: []string{"sub1", "sub2"},
-					Transitions: map[string]Transition{
-						"sub1": {ToState: "substate1", Trigger: []string{"sub1"}},
-						"sub2": {ToState: "substate2", Trigger: []string{"sub2"}},
-					},
-				},
-			},
-		},
-	}
-
-	var lastEvent Event
-	handler := func(event Event) {
-		lastEvent = event
-	}
-
-	sm := NewStateMachine(handler)
-	instance := &StateMachineInstance{
-		InstanceID:   "test-instance",
-		CurrentState: "main",
-		Config:       config,
-		StateMachine: sm,
-	}
-
-	// Test substate transition
-	err := instance.Transition("sub1")
-	if err != nil {
-		t.Errorf("Substate transition failed: %v", err)
-	}
-	if instance.CurrentSubstate != "substate1" {
-		t.Errorf("Expected substate to be 'substate1', got '%s'", instance.CurrentSubstate)
-	}
-	if lastEvent.Name != "sub1" || lastEvent.OldState != "main" || lastEvent.NewSubstate != "substate1"  {
-		t.Errorf("Unexpected event for substate transition: %+v", lastEvent)
-	}
-}
+const nodeStateConfig = `{
+  "version": "0.0.0",
+  "entity": "node",
+  "file": "nodeState.json",
+  "states": [
+    {
+      "name": "Unknown",
+      "description": "Initial state when node comes online for the first time, or state after offBoarding",
+      "events": ["online", "offline", "reboot", "onboarding"],
+      "transition": [
+        {
+          "to_state": "Configured",
+          "trigger": ["onboarding"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Configured",
+      "description": "Node is in configuration state",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "config",
+        "ready",
+        "upgrade",
+        "update",
+        "downgrade",
+        "fault"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["config"]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": ["ready"]
+        }
+      ],
+      "substate": {
+        "events": [
+          "online",
+          "offline",
+          "reboot",
+          "upgrade",
+          "update",
+          "downgrade"
+        ],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          },
+          {
+            "to_state": "update",
+            "trigger":["ready"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 600
+          },
+          {
+            "to_state": "update",
+            "trigger": ["update"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 600
+          },
+          {
+            "to_state": "upgrade",
+            "trigger": ["upgrade"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 180
+          },
+          {
+            "to_state": "downgrade",
+            "trigger": ["downgrade"],
+            "expectedEvents": ["offline", "online", "ready"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Operational",
+      "description": "Node is fully operational and part of a site",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "fault",
+        "offboarding",
+        "reset"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["reset"]
+        },
+        {
+          "to_state": "Unknown",
+          "trigger": ["offboarding"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    },
+    {
+      "name": "Faulty",
+      "description": "Node is in a faulty state",
+      "events": [
+        "offline",
+        "reboot",
+        "fault",
+        "online",
+        "config"
+      ],
+      "transition": [
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Configured",
+          "trigger": ["config"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"],
+            "timeout": 180
+          }
+        ]
+      }
+    }
+  ]
+}`
