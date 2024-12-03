@@ -166,14 +166,14 @@ type PostPkgToSimReq struct {
 }
 
 type AddPkgToSimReq struct {
-	SimId     string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
 	StartDate string `example:"" json:"start_date" validate:"required"`
 }
 
 type RemovePkgFromSimReq struct {
-	SimId     string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
-	PackageId string `example:"{{PackageUUID}}" form:"package_id" json:"package_id" path:"package_id" binding:"required" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	PackageId string `example:"{{PackageUUID}}" json:"package_id" path:"package_id" binding:"required" validate:"required"`
 }
 
 type GetUsagesReq struct {
