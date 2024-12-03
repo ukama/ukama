@@ -22,11 +22,9 @@ INVENTORY_SYS_KEY="inventory"
 IS_INVENTORY_SYS=false
 METADATA=$(jq -c '.' ../metadata.json)
 JSON_FILE="../deploy_orgs_config.json"
-if [ "$1" == "-d" ]; then
-  ISDEBUGMODE=true
-else
-  ISDEBUGMODE=false
-fi
+ISDEBUGMODE=false
+MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
+
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -36,20 +34,21 @@ elif [[ "$(uname)" == "Linux" ]]; then
     LOCAL_HOST_IP=$(ifconfig enp0s25 | grep inet | awk '$1=="inet" {print $2}')
 fi
 
-MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
-
 function buildSystems() {
     echo  "$TAG Building systems..."
     ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
 }
 
-while getopts "b" opt; do
+while getopts "bd" opt; do
     case ${opt} in
         b )
             buildSystems
             ;;
+        d )
+            ISDEBUGMODE=true
+            ;;
         \? )
-            echo "Usage: cmd [-b]"
+            echo "Usage: cmd [-b, -d]"
             exit 1
             ;;
     esac
@@ -58,7 +57,7 @@ done
 jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     ORGNAME=$(echo "$ORG" | jq -r '.["org-name"]')
     echo "${TAG} Processing organization: ${YELLOW}${ORGNAME}${NC}"
-
+    docker network rm ${ORGNAME}_ukama-net > /dev/null 2>&1
     # Initialize the variables
     SUBNET=$(echo "$ORG" | jq -r '.subnet')
     ORG_TYPE=$(echo "$ORG" | jq -r '.type')
@@ -84,6 +83,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export KEY=$KEY
         export LAGO_API_KEY=$LAGOAPIKEY
         export MASTERORGNAME=$MASTERORGNAME
+        export MASTER_ORG_NAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP
         export COMPONENT_ENVIRONMENT=test
     }
@@ -145,16 +145,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
 
     get_user_id() {
         echo  "$TAG Fetching user ID..."
-        SQL_QUERY="SELECT PUBLIC.users.id FROM PUBLIC.users WHERE users.auth_id = '$OWNERAUTHID' AND users.deleted_at IS NULL ORDER BY users.id LIMIT 1;"
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/users"
-        OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
+        response=$(curl --location --silent "http://localhost:8060/v1/users/auth/${OWNERAUTHID}" -H 'accept: application/json')
+        user_id=$(echo "$response" | jq -r '.user.id')
+        OWNERID="$user_id"
         echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
     }
 
     create_org() {
        echo  "$TAG Register org in nucleus..."
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/org"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE)"
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5406/org"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\", \"country\", \"currency\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE, 'cod', 'cdf')"
         psql $DB_URI -c "$QUERY"
     }
 

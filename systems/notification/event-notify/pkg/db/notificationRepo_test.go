@@ -17,6 +17,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	notif "github.com/ukama/ukama/systems/common/notification"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
@@ -32,61 +33,12 @@ var n = int_db.Notification{
 	Description: "Description1",
 	Type:        notif.TYPE_INFO,
 	Scope:       notif.SCOPE_ORG,
-	ResourceId:  uuid.NewV4(),
+	ResourceId:  ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE).String(),
 	OrgId:       testOrgId,
 	UserId:      testUserId,
 	CreatedAt:   time.Now(),
 	UpdatedAt:   time.Now(),
 }
-
-// var evtMsg = int_db.EventMsg{
-// 	Model: gorm.Model{
-// 		ID: 1,
-// 	},
-// }
-
-// func TestNotificationRepo_Add(t *testing.T) {
-// 	t.Run("Add", func(t *testing.T) {
-// 		// Arrange
-// 		var db *extsql.DB
-
-// 		db, mock, err := sqlmock.New() // mock sql.DB
-// 		assert.NoError(t, err)
-
-// 		mock.ExpectBegin()
-
-// 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-// 			WithArgs(n.Id, n.Title, n.Description, n.Type, n.Scope, n.ResourceId, n.OrgId, n.NetworkId, n.SubscriberId, n.UserId, n.NodeId, evtMsg.ID, evtMsg, n.CreatedAt, n.UpdatedAt, sqlmock.AnyArg()).
-// 			WillReturnResult(sqlmock.NewResult(1, 1))
-
-// 		mock.ExpectCommit()
-
-// 		dialector := postgres.New(postgres.Config{
-// 			DSN:                  "sqlmock_db_0",
-// 			DriverName:           "postgres",
-// 			Conn:                 db,
-// 			PreferSimpleProtocol: true,
-// 		})
-
-// 		gdb, err := gorm.Open(dialector, &gorm.Config{})
-// 		assert.NoError(t, err)
-
-// 		r := int_db.NewNotificationRepo(&UkamaDbMock{
-// 			GormDb: gdb,
-// 		})
-
-// 		assert.NoError(t, err)
-
-// 		// Act
-// 		err = r.Add(&n)
-
-// 		// Assert
-// 		assert.NoError(t, err)
-
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
-// }
 
 func TestNotificationRepo_Get(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {

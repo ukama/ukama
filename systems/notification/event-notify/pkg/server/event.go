@@ -19,6 +19,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
@@ -573,6 +574,69 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
 
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
+		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
+		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		if msg.ItemType != ukama.ItemTypePackage.String() {
+			log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+			break
+		}
+
+		metadata := map[string]string{}
+
+		err = json.Unmarshal(msg.Metadata, &metadata)
+		if err != nil {
+			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
+		}
+
+		targetId, ok := metadata["targetId"]
+		if !ok {
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentFailed]):
+		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		if msg.ItemType != ukama.ItemTypePackage.String() {
+			log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+			break
+		}
+
+		metadata := map[string]string{}
+
+		err = json.Unmarshal(msg.Metadata, &metadata)
+		if err != nil {
+			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
+		}
+
+		targetId, ok := metadata["targetId"]
+		if !ok {
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
 		/*
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
 				c := evt.EventToEventConfig[evt.EventComponentsSync]
@@ -638,7 +702,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		UserId:       userId,
 		NetworkId:    networkId,
 		NodeId:       nodeId,
-		ResourceId:   uuid.FromStringOrNil(rid),
+		ResourceId:   rid,
 		SubscriberId: subscriberId,
 	}
 
