@@ -186,7 +186,7 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
 			CreatedAt:   timestamppb.New(i.CreatedAt),
-			ResourceId:  i.ResourceId.String(),
+			ResourceId:  i.ResourceId,
 		}
 		res = append(res, n)
 	}
@@ -205,7 +205,7 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
 		CreatedAt:    timestamppb.New(notification.CreatedAt),
-		ResourceId:   notification.ResourceId.String(),
+		ResourceId:   notification.ResourceId,
 		EventMsg:     notification.EventMsg.Data.Bytes,
 	}
 }

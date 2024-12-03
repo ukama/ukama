@@ -702,7 +702,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		UserId:       userId,
 		NetworkId:    networkId,
 		NodeId:       nodeId,
-		ResourceId:   uuid.FromStringOrNil(rid),
+		ResourceId:   rid,
 		SubscriberId: subscriberId,
 	}
 
