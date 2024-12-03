@@ -16,10 +16,10 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/notify/internal"
 	"github.com/ukama/ukama/systems/node/notify/internal/db"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
+
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -44,33 +44,37 @@ func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.M
 func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
-		msg, err := n.unmarshalNodeOnlineEvent(e.Msg)
+
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		err = n.handleNodeOnlineEvent(msg)
+		err = n.handleNodeOnlineEvent(msg, c.Title)
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
-		msg, err := n.unmarshalNodeOfflineEvent(e.Msg)
-		if err != nil {
-			return nil, err
-		}
-
-		err = n.handleNodeOfflineEvent(msg)
-		if err != nil {
-			return nil, err
-		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
-		msg, err := n.unmarshalNodeCreateEvent(e.Msg)
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
+		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		err = n.handleNodeCreateEvent(msg)
+		err = n.handleNodeOfflineEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
+		c := evt.EventToEventConfig[evt.EventNodeCreate]
+		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeCreateEvent(msg,c.Title)
 		if err != nil {
 			return nil, err
 		}
@@ -81,9 +85,9 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent) error {
+func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, name string) error {
 	eventData := map[string]interface{}{
-		"value": "online",
+		"value": name,
 	}
 	data, err := json.Marshal(eventData)
 	if err != nil {
@@ -105,9 +109,9 @@ func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent) err
 
 }
 
-func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.NodeCreatedEvent) error {
+func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCreate, name string) error {
 	eventData := map[string]interface{}{
-		"value": "created",
+		"value": name,
 	}
 
 	data, err := json.Marshal(eventData)
@@ -129,9 +133,9 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.NodeCreatedEvent) er
 	)
 }
 
-func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent) error {
+func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, name string) error {
 	eventData := map[string]interface{}{
-		"value": "offline",
+		"value": name,
 	}
 
 	data, err := json.Marshal(eventData)
@@ -153,32 +157,3 @@ func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent) e
 	)
 }
 
-func (n *NotifiyEventServer) unmarshalNodeCreateEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
-	p := &epb.NodeCreatedEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeCreate message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-
-	return p, nil
-}
-
-func (n *NotifiyEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
-	p := &epb.NodeOnlineEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
-func (n *NotifiyEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOfflineEvent, error) {
-	p := &epb.NodeOfflineEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOffline message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}

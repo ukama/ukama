@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -38,9 +39,9 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-				"event.cloud.local.{{ .Org}}.registry.node.node.create",
+				evt.EventRoutingKey[evt.EventNodeCreate],
+				evt.EventRoutingKey[evt.EventMeshNodeOnline],
+				evt.EventRoutingKey[evt.EventMeshNodeOffline],
 			},
 		},
 	}

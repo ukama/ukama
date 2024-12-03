@@ -39,7 +39,7 @@ func TestEventNotification(t *testing.T) {
 			assert.Equal(t, "low", notification.Severity)
 			assert.Equal(t, "event", notification.Type)
 			assert.Equal(t, "mesh", notification.ServiceName)
-			assert.Equal(t, []byte(`{"value":"online"}`), notification.Details)
+			assert.Equal(t, []byte(`{"value":"Mesh Node Online"}`), notification.Details)
 		}).
 		Return(nil).Once()
 
@@ -66,7 +66,7 @@ func TestEventNotification(t *testing.T) {
 			assert.Equal(t, "low", notification.Severity)
 			assert.Equal(t, "event", notification.Type)
 			assert.Equal(t, "mesh", notification.ServiceName)
-			assert.Equal(t, []byte(`{"value":"offline"}`), notification.Details)
+			assert.Equal(t, []byte(`{"value":"Mesh Node Offline"}`), notification.Details)
 		}).
 		Return(nil).Once()
 
@@ -77,7 +77,7 @@ func TestEventNotification(t *testing.T) {
 	_, err = notifyEventServer.EventNotification(context.Background(), eventOffline)
 	assert.NoError(t, err)
 
-	createdEvent := &epb.NodeCreatedEvent{
+	createdEvent := &epb.EventRegistryNodeCreate{
 		NodeId: nodeId,
 	}
 	createdMsg, _ := anypb.New(createdEvent)
@@ -93,7 +93,7 @@ func TestEventNotification(t *testing.T) {
 			assert.Equal(t, "low", notification.Severity)
 			assert.Equal(t, "event", notification.Type)
 			assert.Equal(t, "registry", notification.ServiceName)
-			assert.Equal(t, []byte(`{"value":"created"}`), notification.Details)
+			assert.Equal(t, []byte(`{"value":"Node Created"}`), notification.Details)
 		}).
 		Return(nil).Once()
 
