@@ -18,21 +18,22 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/validation"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/common/validation"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -70,7 +71,8 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	if req.GetDob() != "" {
 		dob, err = validate.ValidateDate(req.GetDob())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for DoB value %s. Error: %v", req.GetDob(), err)
 		}
 	}
 	// remoteOrg, err := s.orgClient.Get(s.orgName)
@@ -168,7 +170,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 		return nil, err
 	}
 
-	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
+	simRep, err := smc.ListSims(ctx, &simMangerPb.ListSimsRequest{
 		SubscriberId: subscriberId.String()})
 	if err != nil {
 		log.Errorf("Error while getting Sims by subscriber: %s", err.Error())
@@ -202,7 +204,7 @@ func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberB
 		return nil, err
 	}
 
-	simRep, err := smc.GetSimsBySubscriber(ctx, &simMangerPb.GetSimsBySubscriberRequest{
+	simRep, err := smc.ListSims(ctx, &simMangerPb.ListSimsRequest{
 		SubscriberId: subscriber.SubscriberId.String()})
 	if err != nil {
 		log.Errorf("Error while getting Sims by subscriber: %s", err.Error())
@@ -248,12 +250,14 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	for _, sim := range allSims {
 		start, err := validation.FromString(sim.Package.StartDate)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for Package.StartDate value %s. Error: %v", sim.Package.StartDate, err)
 		}
 
 		end, err := validation.FromString(sim.Package.EndDate)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, err.Error())
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format for Package.EndDate value %s. Error: %v", sim.Package.EndDate, err)
 		}
 		simMap[sim.SubscriberId] = append(simMap[sim.SubscriberId], &upb.Sim{
 			Id:           sim.Id,
@@ -312,7 +316,7 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 		return nil, err
 	}
 
-	simRep, err := smc.GetSimsByNetwork(ctx, &simMangerPb.GetSimsByNetworkRequest{NetworkId: networkIdReq})
+	simRep, err := smc.ListSims(ctx, &simMangerPb.ListSimsRequest{NetworkId: networkIdReq})
 	if err != nil {
 		log.Errorf("Failed to get Sims by network. Error: %s", err.Error())
 
@@ -337,7 +341,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	}
 
 	subscriber := &db.Subscriber{
-		Name:				   req.GetName(),
+		Name:                  req.GetName(),
 		PhoneNumber:           req.GetPhoneNumber(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
@@ -347,7 +351,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 	err = s.subscriberRepo.Update(subscriberId, *subscriber)
 	if err != nil {
-		log.Errorf("error while updating subscriber" + err.Error())
+		log.Errorf("error while updating subscriber %s. Error: %v", subscriberId, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
