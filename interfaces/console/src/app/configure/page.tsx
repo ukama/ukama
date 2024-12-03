@@ -17,7 +17,6 @@ import {
   SvgIcon,
   Typography,
 } from '@mui/material';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import SiteInfo from '../../../public/svg/SiteInfo';
@@ -34,7 +33,10 @@ const Page = () => {
       setCheckForInstallation(true);
     }
   };
-  const handleSkip = () => router.push('/console/home');
+  const handleSkip = () => {
+    //TODO: HANDLE SKIP LOGIC
+    // router.push('/console/home');
+  };
   const handleOnInstalled = (isChecked: boolean) => {
     setIsChecked(isChecked);
   };
@@ -72,19 +74,17 @@ const Page = () => {
 
           <Stack mt={3} mb={3} direction={'column'} alignItems={'center'}>
             <Typography variant="body1" color={colors.vulcan}>
-              If you would like to set up your network later, or if someone else
-              will set up your network for you, skip this step.
+              If you would like to install your site later, please skip this
+              step.
               <br />
               <br />
-              Install your node at the intended location, and ensure it is
-              connected to a power and backhaul source. These three elements
-              form a site, an abstracted representation of the aforementioned
-              components. Each site can also hold up to three nodes for a
+              To install your full site, please install your node(s), power, and
+              backhaul components at their intended location(s). These three
+              elements form a site, which represents a full connection point to
+              the network. Each site can also hold up to three nodes for a
               stronger connection.
               <br />
               <br />
-              You can follow the installation instructions in the provided
-              manual, or in the PDF <Link href={''}>here</Link>.
             </Typography>
             <SvgIcon sx={{ width: 240, height: 176, mt: 2, mb: 4 }}>
               {SiteInfo}
@@ -97,7 +97,7 @@ const Page = () => {
                   onChange={(e) => handleOnInstalled(e.target.checked)}
                 />
               }
-              label="I have installed my node, power, and backhaul components"
+              label="I have installed my site"
             />
           </Stack>
           <Stack
@@ -111,7 +111,7 @@ const Page = () => {
               onClick={handleSkip}
               sx={{ color: colors.black70, p: 0 }}
             >
-              {step !== 1 ? 'Back' : 'Skip'}
+              Skip
             </Button>
             <Button
               variant="contained"
