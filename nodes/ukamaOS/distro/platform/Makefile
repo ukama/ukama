@@ -39,8 +39,14 @@ endif
 
 # Libraries
 CURL_LIB=-lcurl -lssl -lcrypto
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding yder library for Alpine build)
+else
+    ULFIUS_LIB+=-lyder
+endif
+
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-lpthread
 LIBS+=-ljansson
