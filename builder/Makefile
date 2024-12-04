@@ -24,7 +24,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
-VENDOR_PKG = jansson ulfius
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+	VENDOR_PKG=
+else
+	VENDOR_PKG = jansson ulfius
+endif
 PLATFORM   = platform
 
 # Setting up various compile and link flags
@@ -45,8 +50,13 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding yder library for Alpine build)
+else
+    ULFIUS_LIB+=-lyder
+endif
 LIBS = $(ULFIUS_LIB)
 LIBS+=-ljansson
 LIBS+=-lusys
@@ -68,10 +78,15 @@ $(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
 	$(XCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
+ifeq ($(ALPINE_BUILD),1)
+$(APP_BUILDER_EXEC): $(PLATFORM) $(APP_OBJFILES)
+	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+else
 $(APP_BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(APP_OBJFILES)
 	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
-
+endif
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
