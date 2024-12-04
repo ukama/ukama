@@ -140,6 +140,12 @@ export const SUB_GRAPHS = {
     url: `http://localhost:${RATE_PORT}`,
     isPingedSuccess: false,
   },
+  billing: {
+    name: "billing",
+    port: BILLING_PORT,
+    url: `http://localhost:${BILLING_PORT}`,
+    isPingedSuccess: false,
+  },
   invitation: {
     name: "invitation",
     port: INVITATION_PORT,

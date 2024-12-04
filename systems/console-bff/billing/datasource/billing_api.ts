@@ -7,18 +7,71 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { BillHistoryDto, BillResponse } from "../resolvers/types";
-import { billHistoryDtoToDto, dtoToDto } from "./mapper";
+import { VERSION } from "../../common/configs";
+import {
+  GetReportInputDto,
+  GetReportResDto,
+  GetReportsInputDto,
+  GetReportsResDto,
+  InvoiceInputDto,
+} from "../resolvers/types";
 
-const version = "/v1/invoices";
 class BillingAPI extends RESTDataSource {
-  baseURL = "" + version;
-  public getCurrentBill = async (): Promise<BillResponse> => {
-    return this.get("/current").then(res => dtoToDto(res));
+  getReports = async (
+    baseURL: string,
+    req: GetReportsInputDto
+  ): Promise<GetReportsResDto> => {
+    let params = "";
+
+    if (req.count) {
+      params += `&count=${req.count}`;
+    }
+    if (req.is_paid !== undefined) {
+      params += `&is_paid=${req.is_paid}`;
+    }
+    if (req.network_id) {
+      params += `&network_id=${req.network_id}`;
+    }
+    if (req.owner_id) {
+      params += `&owner_id=${req.owner_id}`;
+    }
+    if (req.owner_type) {
+      params += `&owner_type=${req.owner_type}`;
+    }
+    if (req.report_type) {
+      params += `&report_type=${req.report_type}`;
+    }
+
+    if (params.length > 0) {
+      params = params.substring(1);
+    }
+
+    this.logger.info(
+      `GetReports [GET]: ${baseURL}/${VERSION}/reports?${params}`
+    );
+    this.baseURL = baseURL;
+
+    return this.get(`/${VERSION}/reports?${params}`).then(res => res);
   };
 
-  public getBillHistory = async (): Promise<BillHistoryDto[]> => {
-    return this.get("/history").then(res => billHistoryDtoToDto(res));
+  getReport = async (
+    baseURL: string,
+    req: GetReportInputDto
+  ): Promise<GetReportResDto> => {
+    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${req.id}`);
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/reports/${req.id}?as_pdf=${req.asPdf}`).then(
+      res => res
+    );
+  };
+
+  addReport = async (
+    baseURL: string,
+    req: InvoiceInputDto
+  ): Promise<GetReportResDto> => {
+    this.logger.info(`AddReport [POST]: ${baseURL}/${VERSION}/report`);
+    this.baseURL = baseURL;
+    return this.post(`/${VERSION}/reports`, { body: req }).then(res => res);
   };
 }
 
