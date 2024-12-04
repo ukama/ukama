@@ -31,6 +31,7 @@ extern int create_app(Config *config);
 void usage() {
 
   printf("Usage: [options] \n");
+  printf("UKAMA_ROOT environment variable is required\n");
   printf("Options:\n");
   printf("--h, --help                         Help menu.\n");
   printf("--c, --create                       Create capp\n");
@@ -124,6 +125,12 @@ int main (int argc, char *argv[]) {
     fprintf(stderr, "Missing required parameters.\n");
     usage();
     exit(1);
+  }
+
+  if (getenv("UKAMA_ROOT") == NULL) {
+      fprintf(stderr, "UKAMA_ROOT is not set.\n");
+      usage();
+      exit(1);
   }
 
   config = (Config *)calloc(1, sizeof(Config));

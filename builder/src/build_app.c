@@ -11,68 +11,68 @@
 
 #include "config_app.h"
 
-#define SCRIPT "./scripts/make-app.sh"
+#define SCRIPT       "builder/scripts/make-app.sh"
 #define MAX_BUFFER   1024
 
 int build_app(Config *config) {
 
-  char runMe[MAX_BUFFER] = {0};
-  BuildConfig *build;
+    char *ukamaRoot = NULL;
+    char runMe[MAX_BUFFER] = {0};
+    BuildConfig *build;
 
-  /* Flow is:
-   * 1. build the app
-   * 2. copy the binary to rootfs
-   * 3. Make any additional directories within rootfs
-   * 4. Copy any config file to rootfs
-   * 5. Copy libs for non-static
-   * 6. patch ELF to set rpath
-   */
   if (config == NULL)        return FALSE;
   if (config->build == NULL) return FALSE;
+  if ((ukamaRoot = getenv("UKAMA_ROOT")) == NULL) return FALSE;
 
   build = config->build;
 
-  sprintf(runMe, "%s init %s_%s",
+  sprintf(runMe, "%s/%s init %s_%s",
+          ukamaRoot,
           SCRIPT,
           config->capp->name,
           config->capp->version);
   if (system(runMe) < 0) return FALSE;
   
-  sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
+  sprintf(runMe, "%s/%s build app %s \"%s\"",
+          ukamaRoot, SCRIPT, build->source, build->cmd);
   if (system(runMe) < 0) return FALSE;
 
   if (!build->staticFlag) {
       /* set rpath for the executable */
-      sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
+      sprintf(runMe, "%s/%s patchelf %s", ukamaRoot, SCRIPT, build->binFrom);
       if (system(runMe) < 0 ) return FALSE;
   }
 
-  sprintf(runMe, "%s cp %s %s_%s%s", SCRIPT, build->binFrom,
-          config->capp->name, config->capp->version, build->binTo);
+  sprintf(runMe, "%s/%s cp %s %s_%s%s", ukamaRoot, SCRIPT,
+          build->binFrom, config->capp->name, config->capp->version, build->binTo);
   if (system(runMe) < 0) return FALSE;
 
   if (build->mkdir) {
-      sprintf(runMe, "%s mkdir %s_%s%s", SCRIPT,
+      sprintf(runMe, "%s/%s mkdir %s_%s%s", ukamaRoot, SCRIPT,
               config->capp->name, config->capp->version, build->mkdir);
       if (system(runMe) < 0) return FALSE;
   }
 
   if (build->from && build->to) {
-      sprintf(runMe, "%s cp %s %s_%s%s", SCRIPT, build->from,
-              config->capp->name, config->capp->version, build->to);
+      sprintf(runMe, "%s/%s cp %s %s_%s%s", ukamaRoot, SCRIPT,
+              build->from, config->capp->name, config->capp->version, build->to);
       if (system(runMe) < 0) return FALSE;
   }
 
   if (build->miscFrom && build->miscTo) {
-      sprintf(runMe, "%s cp %s %s_%s%s", SCRIPT, build->miscFrom,
-              config->capp->name, config->capp->version, build->miscTo);
+      sprintf(runMe, "%s/%s cp %s %s_%s%s", ukamaRoot, SCRIPT,
+              build->miscFrom, config->capp->name,
+              config->capp->version, build->miscTo);
       if (system(runMe) < 0) return FALSE;
   }
 
+#ifndef ALPINE_BUILD
   if (!build->staticFlag) {
-      sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,
-              config->capp->name, config->capp->version);
+      sprintf(runMe, "%s/%s libs %s %s_%s", ukamaRoot, SCRIPT,
+              build->binFrom, config->capp->name, config->capp->version);
       if (system(runMe) < 0) return FALSE;
   }
+#endif
+
   return TRUE;
 }
