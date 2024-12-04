@@ -92,6 +92,14 @@ RUN git clone https://github.com/babelouest/ulfius.git && \
     make install && \
     cd ../../ && rm -rf ulfius
 
+# Install tomlc99
+RUN git clone https://github.com/cktan/tomlc99.git && \
+    cd tomlc99 && \
+    make && \
+    cp toml.h /usr/include/ && \
+    cp libtoml.* /usr/lib/ && \
+    cd .. && rm -rf tomlc99
+
 # Final stage
 FROM builder as final
 
