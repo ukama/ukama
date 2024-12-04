@@ -7,6 +7,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 set -e
+set -x
 
 STAGE="init"
 DIR="$(pwd)"
@@ -63,7 +64,7 @@ cleanup() {
 }
 
 build_firmware() {
-    STAGE="build_linux_kernel"
+    STAGE="build_firmware"
     local node=$1
     cwd=$(pwd)
     log "INFO" "Building firmware for Node: ${node}"

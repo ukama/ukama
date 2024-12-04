@@ -41,8 +41,9 @@ cleanup() {
 }
 
 validate_inputs() {
-    if [[ -z "${UKAMA_ROOT}" || -z "${UKAMAOS_VERSION}" || -z "${NODE_ID}" ]]; then
-        echo "Usage: $0 <UKAMA_ROOT> <UKAMAOS_VERSION> <NODE_ID> [NODE_APPS]"
+    if [[ -z "${UKAMA_ROOT}" || -z "${OS_TYPE}" || \
+              -z "${OS_VERSION}" || -z "${NODE_ID}" ]]; then
+        echo "Usage: $0 <UKAMA_ROOT> <OS_TYPE> <OS_VERSION> <NODE_ID> [NODE_APPS]"
         exit 1
     fi
 }
@@ -288,11 +289,17 @@ copy_misc_files_to_image() {
          "${PASSIVE}/etc/services"
 }
 
+# build all the apps within Alpine Docker
+# copy everything over to Alpine image
+# install all the required pkgs (needed by apps) into the image.
+# update alpine so that it can start the starter.d automatically
+
 # Main entry point for the script to build an image for the amplifier node
 UKAMA_ROOT="$1"
-UKAMAOS_VERSION="$2"
-NODE_ID="$3"
-NODE_APPS="$4"
+OS_TYPE="$2"
+OS_VERSION="$3"
+NODE_ID="$4"
+NODE_APPS="$5"
 NODE_IMAGE="amplifier_node_sdcard.img"
 NODE_TYPE="anode"
 MOUNT_DIR="/mnt/${NODE_ID}"
@@ -312,12 +319,20 @@ cleanup_mount_dir "${PRIMARY}"
 cleanup_mount_dir "${PASSIVE}"
 
 # Build base image
-log "INFO" "Building image with Node ID: ${NODE_ID}"
-${UKAMA_ROOT}/builder/scripts/make-node-ukamaos-image.sh \
+log "INFO" "Building image (OS: ${OS_TYPE}) with Node ID: ${NODE_ID}"
+if [[ "${OS_TYPE}" = "alpine" ]]; then
+    ${UKAMA_ROOT}/builder/scripts/make-alpine-image.sh \
              "${NODE_TYPE}" \
              "${UKAMA_ROOT}" \
-             "${UKAMAOS_VERSION}" \
+             "${OS_VERSION}" \
              "${NODE_IMAGE}"
+else
+    ${UKAMA_ROOT}/builder/scripts/make-node-ukamaos-image.sh \
+                 "${NODE_TYPE}" \
+                 "${UKAMA_ROOT}" \
+                 "${OS_VERSION}" \
+                 "${NODE_IMAGE}"
+fi
 
 # Mount paritions of the image.
 for part in "${PARTITIONS[@]}"; do

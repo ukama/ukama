@@ -9,6 +9,7 @@
 # Script to generate ukamaOS bootable image with minimal rootfs
 
 set -e
+set -x
 
 # Base parameters
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
