@@ -12,6 +12,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
+export const NETWORK_FLOW = 'net';
+export const ONBOARDING_FLOW = 'onb';
+export const INSTALLATION_FLOW = 'ins';
+export const CHECK_SITE_FLOW = 'chk';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';

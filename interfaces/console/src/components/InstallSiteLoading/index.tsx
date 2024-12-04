@@ -5,22 +5,25 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import colors from '@/theme/colors';
 import { LinearProgress, Stack, Typography } from '@mui/material';
 import React from 'react';
 
 interface IInstallSiteLoading {
-  step: number;
-  flow: string;
+  title: string;
+  subtitle: string;
   duration: number;
+  description: string;
+  handleBack: () => void;
   onCompleted: () => void;
 }
 
 const InstallSiteLoading = ({
-  step,
-  flow,
+  title,
+  subtitle,
   duration,
+  description,
   onCompleted,
+  handleBack,
 }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);
@@ -48,31 +51,23 @@ const InstallSiteLoading = ({
   }, [duration]);
 
   return (
-    <Stack direction="column">
-      <Stack direction={'row'}>
-        <Typography variant="h6"> {'Install site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/6)
-        </Typography>
-      </Stack>
-
-      <Stack direction={'column'} mt={3} mb={3} spacing={1.5}>
-        <Typography variant="body1" fontWeight={700}>
-          Loading up your site...
-        </Typography>
+    <Stack width={'100%'} direction="column">
+      <Typography variant="h6">{title}</Typography>
+      <Stack direction={'column'} mt={2} mb={3} spacing={1.5}>
+        {subtitle && (
+          <Typography variant="body1" fontWeight={700}>
+            {subtitle}
+          </Typography>
+        )}
         <LinearProgress
           value={progress}
           variant="determinate"
           sx={{ height: '12px', borderRadius: '4px' }}
         />
-        <Typography variant="body1">
-          About {Math.ceil(remainingTime / 60)} minutes remaining
+        <Typography variant="body2">
+          {description
+            ? description
+            : `About ${Math.ceil(remainingTime)} seconds remaining`}
         </Typography>
       </Stack>
     </Stack>

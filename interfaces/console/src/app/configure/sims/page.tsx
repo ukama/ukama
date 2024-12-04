@@ -1,0 +1,201 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+'use client';
+import { Sim_Types, useUploadSimsMutation } from '@/client/graphql/generated';
+import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { useAppContext } from '@/context';
+import colors from '@/theme/colors';
+import { fileToBase64 } from '@/utils';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import {
+  AlertColor,
+  Box,
+  Button,
+  IconButton,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+
+const Sims = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
+  const step = parseInt(searchParams.get('step') ?? '1');
+  const { env, setSnackbarMessage } = useAppContext();
+  const [file, setFile] = useState<any>();
+  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+    accept: {
+      'text/html': ['.csv'],
+    },
+    maxFiles: 1,
+  });
+
+  const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
+    {
+      onCompleted: () => {
+        setSnackbarMessage({
+          id: 'sim-pool-uploaded',
+          message: 'Sims uploaded successfully',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+        router.push(`/configure/complete?flow=${flow}`);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    },
+  );
+
+  useEffect(() => {
+    if (acceptedFiles.length > 0) {
+      setFile(acceptedFiles[0]);
+    }
+  }, [acceptedFiles]);
+
+  const handleSkip = () => {
+    // TODO: HANDLE SKIP LOGIC
+  };
+
+  const handleNext = () => {
+    if (
+      acceptedFiles &&
+      acceptedFiles.length > 0 &&
+      env.SIM_TYPE !== Sim_Types.Unknown
+    ) {
+      const file: any = acceptedFiles[0];
+      fileToBase64(file)
+        .then((base64String) => {
+          handleUploadSimsAction('success', base64String, env.SIM_TYPE);
+        })
+        .catch((error) => {
+          handleUploadSimsAction('error', error, env.SIM_TYPE);
+        });
+    } else {
+      setSnackbarMessage({
+        id: 'sim-pool-error',
+        message: 'Please add/drop file to upload',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    }
+  };
+
+  const handleUploadSimsAction = (
+    action: string,
+    value: string,
+    type: string,
+  ) => {
+    if (action === 'error') {
+      setSnackbarMessage({
+        id: 'sim-pool-parsing-error',
+        message: value,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    } else if (action === 'success') {
+      uploadSimPool({
+        variables: {
+          data: {
+            data: value,
+            simType: type as Sim_Types,
+          },
+        },
+      });
+    }
+  };
+
+  return (
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
+      <Stack direction={'row'}>
+        <Typography variant="h6">{'Upload Sims'}</Typography>
+        <Typography
+          variant="h6"
+          fontWeight={400}
+          sx={{
+            color: colors.black70,
+          }}
+        >
+          {flow === ONBOARDING_FLOW && <i>&nbsp;- optional</i>}&nbsp;({step}/
+          {flow === ONBOARDING_FLOW ? 5 : 4})
+        </Typography>
+      </Stack>
+
+      <Stack mt={2} mb={3} direction={'column'} spacing={2}>
+        <Typography variant={'body1'} fontWeight={400}>
+          Upload the SIMs belonging to your organization, so that you can later
+          authorize subscribers to start using your network. If you would like
+          to do this later, please skip this step.
+        </Typography>
+
+        {file ? (
+          <Stack direction={'row'} spacing={2} alignItems={'center'}>
+            <Typography variant="body1">{acceptedFiles[0].name}</Typography>
+            <IconButton
+              onClick={() => {
+                setFile(null);
+                acceptedFiles.pop();
+              }}
+              size="small"
+            >
+              <DeleteOutlineOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        ) : (
+          <Box
+            sx={{
+              py: 8,
+              width: '100%',
+              display: 'flex',
+              cursor: 'pointer',
+              borderRadius: '4px',
+              justifyContent: 'center',
+              border: `1px dashed ${colors.primaryDark}`,
+              backgroundColor: colors.primaryMain02,
+            }}
+          >
+            <div {...getRootProps({ className: 'dropzone' })}>
+              <input {...getInputProps()} />
+              <Typography variant="body2" sx={{ cursor: 'inherit' }}>
+                Drag & Drop file here Or click to select file.
+              </Typography>
+            </div>
+          </Box>
+        )}
+      </Stack>
+      <Stack
+        mb={1}
+        spacing={2}
+        direction={'row'}
+        justifyContent={'space-between'}
+      >
+        <Button
+          variant="text"
+          onClick={handleSkip}
+          sx={{ color: colors.black70, p: 0 }}
+        >
+          Skip
+        </Button>
+        <Button variant="contained" onClick={handleNext}>
+          Upload sims
+        </Button>
+      </Stack>
+    </Paper>
+  );
+};
+
+export default Sims;

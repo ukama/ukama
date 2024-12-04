@@ -91,10 +91,9 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
       </Stack>
 
       <Stack mt={3} mb={3} direction={'column'} spacing={2}>
-        <Typography variant={'body1'}>
-          Your installed site is online, and requires configuration, so that you
-          can properly manage your network. If the following details are
-          incorrect, please check on your site installation.
+        <Typography variant={'body1'} fontWeight={400}>
+          You have successfully installed your site, and it is online now!
+          Please check to make sure you are satisfied with the location details.
         </Typography>
 
         {isLoading || addressLoading ? (
@@ -107,7 +106,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           />
         )}
 
-        <LField label="Node" value={id} />
+        <LField label="Node Id" value={id} />
         <LField
           label="SITE LOCATION"
           value={`${address} [${qpLat}, ${qpLng}]`}

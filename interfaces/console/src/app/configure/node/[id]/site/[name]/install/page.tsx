@@ -8,8 +8,11 @@
 'use client';
 import {
   Component_Type,
+  useAddSiteMutation,
   useGetComponentsByUserIdQuery,
+  useGetNetworksQuery,
 } from '@/client/graphql/generated';
+import { INSTALLATION_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
 import { globalUseStyles } from '@/styles/global';
@@ -24,25 +27,32 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { formatISO } from 'date-fns';
 import { Field, FormikProvider, useFormik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-interface ISiteConfigure {
+interface IPage {
   params: {
     id: string;
+    name: string;
   };
 }
 
-const SiteConfigure = ({ params }: ISiteConfigure) => {
-  const { id } = params;
+const SiteConfigure = ({ params }: IPage) => {
+  const { id, name } = params;
   const router = useRouter();
   const pathname = usePathname();
+  const gclasses = globalUseStyles();
   const searchParams = useSearchParams();
+  const qpLat = searchParams.get('lat') ?? '';
+  const qpLng = searchParams.get('lng') ?? '';
+  const flow = searchParams.get('flow') ?? 'onb';
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
-  const flow = searchParams.get('flow') ?? 'onb';
+  const qpAddress = searchParams.get('address') ?? '';
   const step = parseInt(searchParams.get('step') ?? '1');
   const qpbackhaul = searchParams.get('backhaul') ?? '';
+  const { setSnackbarMessage, network } = useAppContext();
   const formik = useFormik({
     initialValues: {
       power: qpPower,
@@ -55,8 +65,64 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
     },
     validationSchema: SiteConfigureSchema,
   });
-  const gclasses = globalUseStyles();
-  const { setSnackbarMessage } = useAppContext();
+
+  const { data: networkData } = useGetNetworksQuery();
+
+  const { data: accessComponentsData } = useGetComponentsByUserIdQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        category: Component_Type.Access,
+      },
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'components-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const { data: spectrumComponentsData } = useGetComponentsByUserIdQuery({
+    fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {
+        category: Component_Type.Spectrum,
+      },
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'components-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'add-site-success',
+        message: 'Site added successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      router.push(
+        `/configure/sims?step=${flow !== INSTALLATION_FLOW ? 4 : 5}&flow=${flow}`,
+      );
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'add-site-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const { data: componentsData } = useGetComponentsByUserIdQuery({
     fetchPolicy: 'cache-and-network',
@@ -111,12 +177,74 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
   };
 
   const handleSubmit = () => {
-    if (formik.isValid && pathname.split('/').length > 5) {
-      const p = setQueryParam('step', (step + 1).toString());
-      router.push(
-        `/configure/node/${id}/site/${pathname.split('/')[5]}?${p.toString()}`,
+    if (
+      qpAddress === '' ||
+      qpPower === '' ||
+      qpSwitch === '' ||
+      qpbackhaul === ''
+    ) {
+      setSnackbarMessage({
+        id: 'add-site-error',
+        message: 'Require data is missing. Please complete the previous steps',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
+    const accessId =
+      accessComponentsData?.getComponentsByUserId.components.find(
+        (component) => component.partNumber === id,
+      )?.id;
+
+    const spectrumId =
+      spectrumComponentsData?.getComponentsByUserId.components[0].id;
+
+    if (!accessId || !spectrumId) {
+      setSnackbarMessage({
+        id: 'add-site-error',
+        message: 'Access or Spectrum components not found',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
+    if (
+      formik.isValid &&
+      networkData &&
+      networkData?.getNetworks.networks.length > 0
+    ) {
+      addSiteCall(
+        accessId,
+        spectrumId,
+        networkData?.getNetworks.networks[0].id,
       );
     }
+  };
+
+  const addSiteCall = (
+    accessId: string,
+    spectrumId: string,
+    networkId: string,
+  ) => {
+    addSite({
+      variables: {
+        data: {
+          name: name,
+          power_id: qpPower,
+          access_id: accessId,
+          switch_id: qpSwitch,
+          location: qpAddress,
+          backhaul_id: qpbackhaul,
+          spectrum_id: spectrumId,
+          latitude: parseFloat(qpLat),
+          longitude: parseFloat(qpLng),
+          install_date: formatISO(new Date()),
+          network_id: networkId,
+        },
+      },
+    });
   };
 
   const handleBack = () => {
@@ -257,7 +385,7 @@ const SiteConfigure = ({ params }: ISiteConfigure) => {
               Back
             </Button>
             <Button type="submit" variant="contained">
-              Next
+              Configure site
             </Button>
           </Stack>
         </form>

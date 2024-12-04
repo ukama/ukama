@@ -9,9 +9,9 @@
 
 import {
   useAddNetworkMutation,
-  useGetNetworksQuery,
-  useGetSitesLazyQuery,
+  useGetNetworksLazyQuery,
 } from '@/client/graphql/generated';
+import { CHECK_SITE_FLOW, NETWORK_FLOW, ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { CenterContainer } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -27,7 +27,7 @@ import {
 } from '@mui/material';
 import { Formik } from 'formik';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
 import NetworkInfo from '../../../../public/svg/NetworkInfo';
 
@@ -63,33 +63,21 @@ const initialValues: AddNetworkForm = {
 const Network = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
-  const { setSnackbarMessage } = useAppContext();
-  const flow = searchParams.get('flow') ?? 'onb';
-  const totalStep = flow === 'onb' ? 5 : 4;
+  const [loading, setLoading] = useState(true);
+  const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
+  const totalStep = flow === ONBOARDING_FLOW ? 5 : 4;
   const step = parseInt(searchParams.get('step') ?? '1');
+  const { setSnackbarMessage, network, setNetwork } = useAppContext();
 
-  const [getSites, { data: sites }] = useGetSitesLazyQuery({
+  const [getNetworks] = useGetNetworksLazyQuery({
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
-      if (data.getSites.sites.length > 0) {
-        // TODO: CHECK IF ANY SITE IS AVAILABLE FOR CONFIGURE & REDIRECT TO SITE CONFIGURE
-        router.push(`/console/home`);
-      } else {
-        router.push(`/configure?step=2&flow=${flow}`);
-      }
-    },
-  });
-
-  const { data: networksData, loading: networksLoading } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      if (data.getNetworks.networks.length >= 1) {
-        getSites({
-          variables: {
-            networkId: data.getNetworks.networks[0].id,
-          },
+      if (data.getNetworks.networks.length > 0) {
+        setNetwork({
+          id: data.getNetworks.networks[0].id,
+          name: data.getNetworks.networks[0].name,
         });
+        router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
       } else {
         setLoading(false);
       }
@@ -107,18 +95,11 @@ const Network = () => {
   const [addNetwork, { loading: addNetworkLoading }] = useAddNetworkMutation({
     onCompleted: (data) => {
       if (data.addNetwork.id) {
-        getSites({
-          variables: {
-            networkId: data.addNetwork.id,
-          },
+        setNetwork({
+          id: data.addNetwork.id,
+          name: data.addNetwork.name,
         });
-
-        setSnackbarMessage({
-          id: 'add-networks-success',
-          message: 'Network added successfully',
-          type: 'success',
-          show: true,
-        });
+        router.push(`/configure/check?flow=${NETWORK_FLOW}`);
       }
     },
     onError: (error) => {
@@ -130,6 +111,14 @@ const Network = () => {
       });
     },
   });
+
+  useEffect(() => {
+    if (network.id) {
+      router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
+    } else {
+      getNetworks();
+    }
+  }, []);
 
   const handleAddNetwork = (values: any) => {
     addNetwork({
@@ -162,7 +151,7 @@ const Network = () => {
                 color: colors.black70,
               }}
             >
-              {flow === 'onb' && <i>&nbsp;</i>}&nbsp;
+              {flow === ONBOARDING_FLOW && <i>&nbsp;</i>}&nbsp;
               {`(${step}/${totalStep})`}
             </Typography>
           </Stack>
