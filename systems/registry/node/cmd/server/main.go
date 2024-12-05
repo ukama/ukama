@@ -39,8 +39,8 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	siteDb := initDb()
-	runGrpcServer(siteDb)
+	nodeDb := initDb()
+	runGrpcServer(nodeDb)
 }
 
 func initConfig() {
@@ -89,20 +89,21 @@ func runGrpcServer(gormdb sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
-			serviceConfig.PushGateway, mbClient,
-			providers.NewSiteClientProvider(serviceConfig.SiteHost),
-			orgId)
+	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
+		serviceConfig.PushGateway, mbClient,
+		providers.NewSiteClientProvider(serviceConfig.SiteHost),
+		orgId)
 
-		nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv)
+	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv)
+
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNodeServiceServer(s, srv)
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
 	go msgBusListener(mbClient)
 
-	grpcServer.StartServer()
+	go grpcServer.StartServer()
 
 	waitForExit()
 }
