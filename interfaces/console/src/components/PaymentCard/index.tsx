@@ -1,166 +1,71 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
+'use client';
+import React, { use } from 'react';
+import { Box, Typography, Paper, Select, MenuItem } from '@mui/material';
 
-/* 
-import { isDarkmode } from '@/app-recoil';
-import { RoundedCard } from '@/styles/global';
-import colors from '@/styles/theme/colors';
-import {
-  Box,
-  Button,
-  Divider,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  OutlinedInput,
-  Select,
-  Stack,
-  Typography,
-} from '@mui/material';
-import { makeStyles } from '@mui/styles';
-import { useRecoilValue } from 'recoil';
-const useStyles = makeStyles(() => ({
-  '&.MuiFormHelperText-root.Mui-error': {
-    color: 'red',
-  },
-  selectStyle: () => ({
-    width: '100%',
-    height: '48px',
-  }),
-  formControl: {
-    width: '100%',
-    height: '48px',
-    paddingBottom: '55px',
-  },
-}));
-
-interface IPaymentProps {
-  title: string;
-  onChangePM: any;
-  selectedPM: string;
-  paymentMethodData: any;
-  onAddPaymentMethod: any;
+interface PaymentCardProps {
+  amount: string;
+  startDate: string;
+  endDate: string;
+  paymentMethod: string;
+  onChangePaymentMethod: (method: string) => void;
+  paymentMethods: string[];
 }
-const PaymentCard = ({
-  title,
-  onChangePM,
-  selectedPM,
-  paymentMethodData,
-  onAddPaymentMethod,
-}: IPaymentProps) => {
-  const classes = useStyles();
 
-  const _isDarkMod = useRecoilValue(isDarkmode);
-
-  const isDiable = () =>
-    paymentMethodData.length === 1 &&
-    paymentMethodData[0].value === 'no_payment_method_Set'
-      ? true
-      : false;
-
+const PaymentCard: React.FC<PaymentCardProps> = ({
+  amount,
+  startDate,
+  endDate,
+  paymentMethod,
+  onChangePaymentMethod,
+  paymentMethods,
+}) => {
   return (
-    <RoundedCard radius="4px">
-      <Typography variant="h6" sx={{ pb: 3 }}>
-        {title}
-      </Typography>
-      <FormControl variant="outlined" className={classes.formControl}>
-        <InputLabel
-          shrink
-          variant="outlined"
-          htmlFor="outlined-age-always-notched"
+    <Box display="flex" gap={2}>
+      <Paper elevation={2} sx={{ padding: 2, flex: 1 }}>
+        <Typography variant="subtitle1" fontWeight="bold">
+          Next payment
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ marginBottom: 1 }}
         >
+          Detailed breakdown available below.
+        </Typography>
+        <Typography variant="h4" fontWeight="bold">
+          {amount}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {startDate} - {endDate}
+        </Typography>
+      </Paper>
+
+      <Paper elevation={2} sx={{ padding: 2, flex: 1 }}>
+        <Typography variant="subtitle1" fontWeight="bold">
+          Payment information
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
           PAYMENT METHOD
-        </InputLabel>
+        </Typography>
         <Select
-          value={selectedPM}
-          variant="outlined"
-          onChange={onChangePM}
-          IconComponent={() => null}
-          sx={{
-            '& legend': { width: '135px' },
-            '& #add-payment-method': {
-              color: `${colors.primaryMain} !important`,
-              '-webkit-text-fill-color': `${colors.primaryMain} !important`,
-              ':hover': {
-                color: (theme) => `${theme.palette.text.primary} !important`,
-                '-webkit-text-fill-color': (theme) =>
-                  `${theme.palette.text.primary} !important`,
-              },
-            },
-          }}
-          input={
-            <OutlinedInput
-              notched
-              label="NODE TYPE"
-              name="node_type"
-              id="outlined-age-always-notched"
-            />
-          }
-          disabled={isDiable()}
-          MenuProps={{
-            disablePortal: false,
-            PaperProps: {
-              sx: {
-                boxShadow:
-                  '0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)',
-                borderRadius: '4px',
-              },
-            },
-          }}
-          className={classes.selectStyle}
+          value={paymentMethod}
+          onChange={(e) => onChangePaymentMethod(e.target.value)}
+          fullWidth
+          displayEmpty
+          sx={{ marginTop: 1, marginBottom: 1 }}
         >
-          {paymentMethodData.map(({ id, value, label }: any) => (
-            <MenuItem
-              key={id}
-              value={value}
-              sx={{
-                m: 0,
-                p: '6px 16px',
-              }}
-            >
-              <Stack direction="row" spacing={1}>
-                <Typography variant="body1">{label}</Typography>
-              </Stack>
+          {paymentMethods.map((method, index) => (
+            <MenuItem key={index} value={method}>
+              {method}
             </MenuItem>
           ))}
-          {!isDiable() && (
-            <Box>
-              <Divider />
-              <Button
-                variant="text"
-                sx={{
-                  padding: '6px 16px',
-                  typography: 'body1',
-                  textTransform: 'none',
-                }}
-                onClick={(e) => {
-                  onAddPaymentMethod();
-                  e.stopPropagation();
-                }}
-              >
-                Add new payment method
-              </Button>
-            </Box>
-          )}
         </Select>
-      </FormControl>
-      <Typography
-        variant="caption"
-        sx={{ color: _isDarkMod ? colors.white : colors.black54 }}
-      >
-        *Automatically charged to card EOD on the last day of the billing cycle
-      </Typography>
-    </RoundedCard>
+        <Typography variant="caption" color="text.secondary">
+          *Automatically charged EOD on the last day of the billing cycle
+        </Typography>
+      </Paper>
+    </Box>
   );
 };
-*/
 
-const PaymentCard = () => {
-  return <></>;
-};
 export default PaymentCard;

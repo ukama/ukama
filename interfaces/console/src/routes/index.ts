@@ -14,6 +14,7 @@ import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
 import RouterIcon from '@mui/icons-material/Router';
 import SimCardIcon from '@mui/icons-material/SimCard';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 export const NavList = [
   {
@@ -118,5 +119,13 @@ export const MANAGE_MENU_LIST_SMALL = [
     name: 'Data plans',
     path: '/manage/data-plans',
     icon: PermDataSettingIcon,
+  },
+];
+export const MY_ACCOUNT_MENU_LIST = [
+  {
+    id: 'billing',
+    name: 'Billing',
+    path: '/manage/billing',
+    icon: AttachMoneyIcon,
   },
 ];
