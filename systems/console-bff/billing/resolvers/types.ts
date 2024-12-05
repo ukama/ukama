@@ -229,6 +229,56 @@ class FeeDto {
   @Field()
   vatAmountCurrency: string;
 }
+@InputType()
+export class CustomerInputDto {
+  @Field({ nullable: true })
+  address_line1?: string;
+
+  @Field({ nullable: true })
+  address_line2?: string;
+
+  @Field({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  created_at?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  external_id?: string;
+
+  @Field({ nullable: true })
+  legal_name?: string;
+
+  @Field({ nullable: true })
+  legal_number?: string;
+
+  @Field({ nullable: true })
+  logo_url?: string;
+
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  phone?: string;
+
+  @Field({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  url?: string;
+
+  @Field({ nullable: true })
+  vat_rate?: number;
+
+  @Field({ nullable: true })
+  zipcode?: string;
+}
 
 @ObjectType()
 class SubscriptionDto {
@@ -342,18 +392,6 @@ export class GetReportResDto {
 }
 
 @InputType()
-export class AddReportInputDto {
-  @Field(() => InvoiceInputDto)
-  invoice: InvoiceInputDto;
-
-  @Field()
-  object_type: string;
-
-  @Field()
-  webhook_type: string;
-}
-
-@InputType()
 export class InvoiceInputDto {
   @Field({ nullable: true })
   amount_cents?: number;
@@ -417,18 +455,15 @@ export class InvoiceInputDto {
 }
 
 @InputType()
-export class CreditInputDto {
-  @Field({ nullable: true })
-  amount_cents?: number;
+export class AddReportInputDto {
+  @Field(() => InvoiceInputDto)
+  invoice: InvoiceInputDto;
 
-  @Field({ nullable: true })
-  amount_currency?: string;
+  @Field()
+  object_type: string;
 
-  @Field(() => CreditItemInputDto)
-  item: CreditItemInputDto;
-
-  @Field({ nullable: true })
-  lago_id?: string;
+  @Field()
+  webhook_type: string;
 }
 
 @InputType()
@@ -442,56 +477,30 @@ export class CreditItemInputDto {
   @Field({ nullable: true })
   type?: string;
 }
-
 @InputType()
-export class CustomerInputDto {
+export class CreditInputDto {
   @Field({ nullable: true })
-  address_line1?: string;
+  amount_cents?: number;
 
   @Field({ nullable: true })
-  address_line2?: string;
+  amount_currency?: string;
+
+  @Field(() => CreditItemInputDto)
+  item: CreditItemInputDto;
 
   @Field({ nullable: true })
-  city?: string;
-
+  lago_id?: string;
+}
+@InputType()
+export class FeeItemInputDto {
   @Field({ nullable: true })
-  country?: string;
-
-  @Field({ nullable: true })
-  created_at?: string;
-
-  @Field({ nullable: true })
-  email?: string;
-
-  @Field({ nullable: true })
-  external_id?: string;
-
-  @Field({ nullable: true })
-  legal_name?: string;
-
-  @Field({ nullable: true })
-  legal_number?: string;
-
-  @Field({ nullable: true })
-  logo_url?: string;
+  code?: string;
 
   @Field({ nullable: true })
   name?: string;
 
   @Field({ nullable: true })
-  phone?: string;
-
-  @Field({ nullable: true })
-  state?: string;
-
-  @Field({ nullable: true })
-  url?: string;
-
-  @Field({ nullable: true })
-  vat_rate?: number;
-
-  @Field({ nullable: true })
-  zipcode?: string;
+  type?: string;
 }
 
 @InputType()
@@ -522,18 +531,6 @@ export class FeeInputDto {
 
   @Field({ nullable: true })
   vat_amount_currency?: string;
-}
-
-@InputType()
-export class FeeItemInputDto {
-  @Field({ nullable: true })
-  code?: string;
-
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  type?: string;
 }
 
 @InputType()
