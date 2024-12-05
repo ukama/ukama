@@ -59,8 +59,6 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 LDFLAGS+=--coverage
 
-# Libraries needed
-
 # Libraries
 ULFIUS_LIB_DEP=-lorcania
 ULFIUS_LIB_DEP+=-lyder

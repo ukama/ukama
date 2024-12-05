@@ -29,7 +29,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target.
-VENDOR_PKG = tomlc ulfius curl jansson
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc ulfius curl jansson
+endif
 PLATFORM = platform
 
 # Setting up various compile and link flags.
@@ -115,6 +120,6 @@ install: $(ARTIFACTS) $(VERSION_FILE)
 	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
 	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
 	if [ "$(APP_CONFIG)" != "" ]; then \
-    	cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
 	fi
 
