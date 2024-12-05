@@ -56,8 +56,11 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed.
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB+=-lyder
+endif
 CURL_LIB=-lcurl -lssl -lcrypto
 
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)

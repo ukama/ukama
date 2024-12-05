@@ -61,7 +61,9 @@ LDFLAGS+=--coverage
 
 # Libraries
 ULFIUS_LIB_DEP=-lorcania
+ifneq ($(ALPINE_BUILD),1)
 ULFIUS_LIB_DEP+=-lyder
+endif
 ULFIUS_LIB_DEP+=-lmicrohttpd
 ULFIUS_LIB_DEP+=-lgnutls
 ULFIUS_LIB_DEP+=-lnettle
