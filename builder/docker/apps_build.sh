@@ -10,7 +10,8 @@
 set -e
 set -x
 
-UKAMA_ROOT=/workspace/
+export UKAMA_ROOT=/workspace
+export ALPINE_BUILD=1
 
 #default branch is main
 APPS=$1

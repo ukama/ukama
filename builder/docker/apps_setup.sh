@@ -35,8 +35,8 @@ fi
 # Run the docker to build the apps 
 docker run --privileged \
        -v ${UKAMA_ROOT}:/workspace \
-       apps-builder-${TARGETPLATFORM}:latest \
-       /bin/bash -c "/workspace/builder/docker/apps_build.sh ${APPS} > /workspace/apps_build.log 2>&1"
+       apps-builder-${TARGETPLATFORM} \
+       /bin/bash -c "cd /workspace/builder/scripts/ && /workspace/builder/docker/apps_build.sh ${APPS} > /workspace/apps_build.log 2>&1"
 
 # clean up
 docker image rm --force apps-builder-${TARGETPLATFORM}
