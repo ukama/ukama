@@ -52,7 +52,7 @@ jobs:
     env:
       working-directory: systems/report/api-gateway
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: lint
         uses: ./.github/actions/lint-go
         with:
