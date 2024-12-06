@@ -378,6 +378,270 @@ mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
 }
 
 ### Package End ###
+### Payment start ###
+mutation AddPayment($data: AddPaymentInputDto!) {
+  addPayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+query GetPayment($paymentId: String!) {
+  getPayment(paymentId: $paymentId) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+query GetPayments($data: GetPaymentsInputDto!) {
+  getPayments(data: $data) {
+    payments {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
+
+### Payment end ###
+### Billing start ###
+query GetReportPdf($getReportPdfId: String!) {
+  getReportPdf(id: $getReportPdfId) {
+    type
+    createdAt
+    id
+    isPaid
+    networkId
+    ownerId
+    ownerType
+    period
+    rawReport {
+      amountCents
+      amountCurrency
+      customer {
+        AddressLine1
+        createdAt
+        email
+        externalId
+        legalName
+        legalNumber
+        name
+        phone
+        vatRate
+      }
+      fees {
+        fees {
+          amountCents
+          amountCurrency
+          eventsCount
+          owner {
+            code
+            name
+            type
+          }
+          totalAmountCents
+          totalAmountCurrency
+          units
+          vatAmountCents
+          vatAmountCurrency
+        }
+      }
+      subscriptions {
+        subscriptions {
+          canceldAt
+          createdAt
+          externalCustomerId
+          externalId
+          planCode
+          startedAt
+          status
+          terminatedAt
+        }
+      }
+      fileURL
+      issuingDate
+      paymentStatus
+      status
+      totalAmountCents
+      totalAmountCurrency
+      vatAmountCents
+      vatAmountCurrency
+    }
+  }
+}
+query GetReports($data: GetReportsInputDto!) {
+  getReports(data: $data) {
+    reports {
+      type
+      createdAt
+      id
+      isPaid
+      networkId
+      ownerId
+      ownerType
+      period
+      rawReport {
+        amountCents
+        amountCurrency
+        customer {
+          AddressLine1
+          createdAt
+          email
+          externalId
+          legalName
+          legalNumber
+          name
+          phone
+          vatRate
+        }
+        fees {
+          fees {
+            amountCents
+            amountCurrency
+            eventsCount
+            owner {
+              code
+              name
+              type
+            }
+            totalAmountCents
+            totalAmountCurrency
+            units
+            vatAmountCents
+            vatAmountCurrency
+          }
+        }
+        subscriptions {
+          subscriptions {
+            canceldAt
+            createdAt
+            externalCustomerId
+            externalId
+            planCode
+            startedAt
+            status
+            terminatedAt
+          }
+        }
+        fileURL
+        issuingDate
+        paymentStatus
+        status
+        totalAmountCents
+        totalAmountCurrency
+        vatAmountCents
+        vatAmountCurrency
+      }
+    }
+  }
+}
+query GetReport($getReportId: String!) {
+  getReport(id: $getReportId) {
+    type
+    createdAt
+    id
+    isPaid
+    networkId
+    ownerId
+    ownerType
+    period
+    rawReport {
+      amountCents
+      amountCurrency
+      customer {
+        AddressLine1
+        createdAt
+        email
+        externalId
+        legalName
+        legalNumber
+        name
+        phone
+        vatRate
+      }
+      fees {
+        fees {
+          amountCents
+          amountCurrency
+          eventsCount
+          owner {
+            code
+            name
+            type
+          }
+          totalAmountCents
+          totalAmountCurrency
+          units
+          vatAmountCents
+          vatAmountCurrency
+        }
+      }
+      subscriptions {
+        subscriptions {
+          canceldAt
+          createdAt
+          externalCustomerId
+          externalId
+          planCode
+          startedAt
+          status
+          terminatedAt
+        }
+      }
+      fileURL
+      issuingDate
+      paymentStatus
+      status
+      totalAmountCents
+      totalAmountCurrency
+      vatAmountCents
+      vatAmountCurrency
+    }
+  }
+}
+### Billing end ###
 
 ### SimPool Start ###
 query GetSimPoolStats($data: GetSimPoolStatsInput!) {

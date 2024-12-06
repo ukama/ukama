@@ -66,6 +66,21 @@ export type AddPackagesToSimInputDto = {
   sim_id: Scalars['String']['input'];
 };
 
+export type AddPaymentInputDto = {
+  amount: Scalars['String']['input'];
+  correspondent: Scalars['String']['input'];
+  country: Scalars['String']['input'];
+  currency: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  itemType: Payment_Item_Type;
+  payerEmail: Scalars['String']['input'];
+  payerPhone: Scalars['String']['input'];
+  paymentMethod: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+};
+
 export type AddSiteInputDto = {
   access_id: Scalars['String']['input'];
   backhaul_id: Scalars['String']['input'];
@@ -182,6 +197,24 @@ export type ComponentsResDto = {
   components: Array<ComponentDto>;
 };
 
+export type CorrespondentsDto = {
+  __typename?: 'CorrespondentsDto';
+  correspondent_code: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  logo: Scalars['String']['output'];
+};
+
+export type CorrespondentsInputDto = {
+  paymentMethod: Scalars['String']['input'];
+  phoneNumber: Scalars['String']['input'];
+};
+
+export type CorrespondentsResDto = {
+  __typename?: 'CorrespondentsResDto';
+  correspondents: Array<CorrespondentsDto>;
+  country: Scalars['String']['output'];
+};
+
 export type CountriesRes = {
   __typename?: 'CountriesRes';
   countries: Array<CountryDto>;
@@ -211,6 +244,18 @@ export type DataPlan = {
   elementType: Scalars['String']['output'];
   planId: Scalars['String']['output'];
   planName: Scalars['String']['output'];
+}
+export type Customer = {
+  __typename?: 'Customer';
+  AddressLine1: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  externalId: Scalars['String']['output'];
+  legalName: Scalars['String']['output'];
+  legalNumber: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  phone: Scalars['String']['output'];
+  vatRate: Scalars['Float']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -253,6 +298,24 @@ export type DeleteSimResDto = {
   simId?: Maybe<Scalars['String']['output']>;
 };
 
+export type Fee = {
+  __typename?: 'Fee';
+  amountCents: Scalars['Float']['output'];
+  amountCurrency: Scalars['String']['output'];
+  eventsCount: Scalars['Float']['output'];
+  owner: Owner;
+  totalAmountCents: Scalars['Float']['output'];
+  totalAmountCurrency: Scalars['String']['output'];
+  units: Scalars['Float']['output'];
+  vatAmountCents: Scalars['Float']['output'];
+  vatAmountCurrency: Scalars['String']['output'];
+};
+
+export type Fees = {
+  __typename?: 'Fees';
+  fees: Array<Fee>;
+};
+
 export type GetNodeLatestMetricInput = {
   nodeId: Scalars['String']['input'];
   type: Scalars['String']['input'];
@@ -265,6 +328,40 @@ export type GetNodesByStateInput = {
 
 export type GetPackagesForSimInputDto = {
   sim_id: Scalars['String']['input'];
+};
+
+export type GetPaymentsInputDto = {
+  paymentMethod: Scalars['String']['input'];
+  status: Scalars['String']['input'];
+  type: Scalars['String']['input'];
+};
+
+export type GetReportResDto = {
+  __typename?: 'GetReportResDto';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isPaid: Scalars['Boolean']['output'];
+  networkId: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  ownerType: Scalars['String']['output'];
+  period: Scalars['String']['output'];
+  rawReport: RawReport;
+  type: Scalars['String']['output'];
+};
+
+export type GetReportsInputDto = {
+  count: Scalars['Float']['input'];
+  isPaid: Scalars['Boolean']['input'];
+  networkId: Scalars['String']['input'];
+  ownerId: Scalars['String']['input'];
+  ownerType: Scalars['String']['input'];
+  report_type: Scalars['String']['input'];
+  sort: Scalars['Boolean']['input'];
+};
+
+export type GetReportsResDto = {
+  __typename?: 'GetReportsResDto';
+  reports: Array<GetReportResDto>;
 };
 
 export type GetSimBySubscriberInputDto = {
@@ -349,6 +446,7 @@ export type Mutation = {
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
   addPackagesToSim: AddPackagesSimResDto;
+  addPayment: PaymentDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -361,6 +459,7 @@ export type Mutation = {
   deleteSim: DeleteSimResDto;
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
+  processPayment: ProcessPaymentDto;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
@@ -377,6 +476,7 @@ export type Mutation = {
   updateNodeState: Node;
   updateNotification: UpdateNotificationResDto;
   updatePackage: PackageDto;
+  updatePayment: PaymentDto;
   updateSite: SiteDto;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
@@ -410,6 +510,11 @@ export type MutationAddPackageArgs = {
 
 export type MutationAddPackagesToSimArgs = {
   data: AddPackagesToSimInputDto;
+};
+
+
+export type MutationAddPaymentArgs = {
+  data: AddPaymentInputDto;
 };
 
 
@@ -470,6 +575,11 @@ export type MutationDeleteSubscriberArgs = {
 
 export type MutationDetachhNodeArgs = {
   data: NodeInput;
+};
+
+
+export type MutationProcessPaymentArgs = {
+  data: ProcessPaymentInputDto;
 };
 
 
@@ -553,6 +663,11 @@ export type MutationUpdateNotificationArgs = {
 export type MutationUpdatePackageArgs = {
   data: UpdatePackageInputDto;
   packageId: Scalars['String']['input'];
+};
+
+
+export type MutationUpdatePaymentArgs = {
+  data: UpdatePaymentInputDto;
 };
 
 
@@ -803,6 +918,19 @@ export type OrgsResDto = {
   user: Scalars['String']['output'];
 };
 
+export type Owner = {
+  __typename?: 'Owner';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
+export enum Payment_Item_Type {
+  Invoice = 'INVOICE',
+  Package = 'PACKAGE',
+  Unknown = 'UNKNOWN'
+}
+
 export type PackageDto = {
   __typename?: 'PackageDto';
   active: Scalars['Boolean']['output'];
@@ -859,12 +987,51 @@ export type PackagesToSimInputDto = {
   start_date: Scalars['String']['input'];
 };
 
+export type PaymentDto = {
+  __typename?: 'PaymentDto';
+  amount: Scalars['String']['output'];
+  correspondent: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  depositedAmount: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  failureReason: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemType: Scalars['String']['output'];
+  paidAt: Scalars['String']['output'];
+  payerEmail: Scalars['String']['output'];
+  payerName: Scalars['String']['output'];
+  payerPhone: Scalars['String']['output'];
+  paymentMethod: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type PaymentsDto = {
+  __typename?: 'PaymentsDto';
+  payments: Array<PaymentDto>;
+};
+
+export type ProcessPaymentDto = {
+  __typename?: 'ProcessPaymentDto';
+  extras: Scalars['String']['output'];
+  payment: PaymentDto;
+};
+
+export type ProcessPaymentInputDto = {
+  correspondent: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  token: Scalars['String']['input'];
+};
+
 export type Query = {
   __typename?: 'Query';
   example?: Maybe<Scalars['String']['output']>;
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
+  getCorrespondents: CorrespondentsResDto;
   getCountries: CountriesRes;
   getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
@@ -895,6 +1062,11 @@ export type Query = {
   getPackage: PackageDto;
   getPackages: PackagesResDto;
   getPackagesForSim: GetSimPackagesDtoApi;
+  getPayment: PaymentDto;
+  getPayments: PaymentsDto;
+  getReport: GetReportResDto;
+  getReportPdf: GetReportResDto;
+  getReports: GetReportsResDto;
   getSim: SimDto;
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
@@ -906,6 +1078,7 @@ export type Query = {
   getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
   getSubscribersByNetwork: SubscribersResDto;
   getTimezones: TimezoneRes;
+  getToken: TokenResDto;
   getUser: UserResDto;
   whoami: WhoamiDto;
 };
@@ -923,6 +1096,11 @@ export type QueryGetComponentByIdArgs = {
 
 export type QueryGetComponentsByUserIdArgs = {
   data: ComponentTypeInputDto;
+};
+
+
+export type QueryGetCorrespondentsArgs = {
+  data: CorrespondentsInputDto;
 };
 
 
@@ -1011,6 +1189,31 @@ export type QueryGetPackagesForSimArgs = {
 };
 
 
+export type QueryGetPaymentArgs = {
+  paymentId: Scalars['String']['input'];
+};
+
+
+export type QueryGetPaymentsArgs = {
+  data: GetPaymentsInputDto;
+};
+
+
+export type QueryGetReportArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetReportPdfArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetReportsArgs = {
+  data: GetReportsInputDto;
+};
+
+
 export type QueryGetSimArgs = {
   data: GetSimInputDto;
 };
@@ -1061,6 +1264,11 @@ export type QueryGetSubscribersByNetworkArgs = {
 };
 
 
+export type QueryGetTokenArgs = {
+  paymentId: Scalars['String']['input'];
+};
+
+
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
@@ -1073,6 +1281,23 @@ export enum Role_Type {
   RoleUser = 'ROLE_USER',
   RoleVendor = 'ROLE_VENDOR'
 }
+
+export type RawReport = {
+  __typename?: 'RawReport';
+  amountCents: Scalars['Float']['output'];
+  amountCurrency: Scalars['String']['output'];
+  customer: Customer;
+  fees: Fees;
+  fileURL: Scalars['String']['output'];
+  issuingDate: Scalars['String']['output'];
+  paymentStatus: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  subscriptions: Subscriptions;
+  totalAmountCents: Scalars['Float']['output'];
+  totalAmountCurrency: Scalars['String']['output'];
+  vatAmountCents: Scalars['Float']['output'];
+  vatAmountCurrency: Scalars['String']['output'];
+};
 
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
@@ -1306,6 +1531,23 @@ export type SubscribersResDto = {
   subscribers: Array<SubscriberDto>;
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  canceldAt: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  externalCustomerId: Scalars['String']['output'];
+  externalId: Scalars['String']['output'];
+  planCode: Scalars['String']['output'];
+  startedAt: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  terminatedAt: Scalars['String']['output'];
+};
+
+export type Subscriptions = {
+  __typename?: 'Subscriptions';
+  subscriptions: Array<Subscription>;
+};
+
 export type TimezoneDto = {
   __typename?: 'TimezoneDto';
   abbr: Scalars['String']['output'];
@@ -1328,6 +1570,11 @@ export type ToggleInternetSwitchInputDto = {
 export type ToggleSimStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
+};
+
+export type TokenResDto = {
+  __typename?: 'TokenResDto';
+  token: Scalars['String']['output'];
 };
 
 export type UpateInvitationInputDto = {
@@ -1364,6 +1611,20 @@ export type UpdateNotificationResDto = {
 export type UpdatePackageInputDto = {
   active: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
+};
+
+export type UpdatePaymentInputDto = {
+  amount: Scalars['String']['input'];
+  country: Scalars['String']['input'];
+  currency: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  paidAt: Scalars['String']['input'];
+  payerEmail: Scalars['String']['input'];
+  payerName: Scalars['String']['input'];
+  payerPhone: Scalars['String']['input'];
+  paymentMethod: Scalars['String']['input'];
+  status: Scalars['String']['input'];
 };
 
 export type UpdateSiteInputDto = {
@@ -1655,6 +1916,48 @@ export type UpdatePacakgeMutationVariables = Exact<{
 
 
 export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
+export type AddPaymentMutationVariables = Exact<{
+  data: AddPaymentInputDto;
+}>;
+
+
+export type AddPaymentMutation = { __typename?: 'Mutation', addPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
+export type GetPaymentQueryVariables = Exact<{
+  paymentId: Scalars['String']['input'];
+}>;
+
+
+export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
+export type GetPaymentsQueryVariables = Exact<{
+  data: GetPaymentsInputDto;
+}>;
+
+
+export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string }> } };
+
+export type GetReportPdfQueryVariables = Exact<{
+  getReportPdfId: Scalars['String']['input'];
+}>;
+
+
+export type GetReportPdfQuery = { __typename?: 'Query', getReportPdf: { __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } } };
+
+export type GetReportsQueryVariables = Exact<{
+  data: GetReportsInputDto;
+}>;
+
+
+export type GetReportsQuery = { __typename?: 'Query', getReports: { __typename?: 'GetReportsResDto', reports: Array<{ __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } }> } };
+
+export type GetReportQueryVariables = Exact<{
+  getReportId: Scalars['String']['input'];
+}>;
+
+
+export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } } };
 
 export type GetSimPoolStatsQueryVariables = Exact<{
   data: GetSimPoolStatsInput;
@@ -3429,6 +3732,468 @@ export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
 export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
 export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export const AddPaymentDocument = gql`
+    mutation AddPayment($data: AddPaymentInputDto!) {
+  addPayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+    `;
+export type AddPaymentMutationFn = Apollo.MutationFunction<AddPaymentMutation, AddPaymentMutationVariables>;
+
+/**
+ * __useAddPaymentMutation__
+ *
+ * To run a mutation, you first call `useAddPaymentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPaymentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addPaymentMutation, { data, loading, error }] = useAddPaymentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddPaymentMutation(baseOptions?: Apollo.MutationHookOptions<AddPaymentMutation, AddPaymentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddPaymentMutation, AddPaymentMutationVariables>(AddPaymentDocument, options);
+      }
+export type AddPaymentMutationHookResult = ReturnType<typeof useAddPaymentMutation>;
+export type AddPaymentMutationResult = Apollo.MutationResult<AddPaymentMutation>;
+export type AddPaymentMutationOptions = Apollo.BaseMutationOptions<AddPaymentMutation, AddPaymentMutationVariables>;
+export const GetPaymentDocument = gql`
+    query GetPayment($paymentId: String!) {
+  getPayment(paymentId: $paymentId) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetPaymentQuery__
+ *
+ * To run a query within a React component, call `useGetPaymentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPaymentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPaymentQuery({
+ *   variables: {
+ *      paymentId: // value for 'paymentId'
+ *   },
+ * });
+ */
+export function useGetPaymentQuery(baseOptions: Apollo.QueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables> & ({ variables: GetPaymentQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+      }
+export function useGetPaymentLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+        }
+export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+        }
+export type GetPaymentQueryHookResult = ReturnType<typeof useGetPaymentQuery>;
+export type GetPaymentLazyQueryHookResult = ReturnType<typeof useGetPaymentLazyQuery>;
+export type GetPaymentSuspenseQueryHookResult = ReturnType<typeof useGetPaymentSuspenseQuery>;
+export type GetPaymentQueryResult = Apollo.QueryResult<GetPaymentQuery, GetPaymentQueryVariables>;
+export const GetPaymentsDocument = gql`
+    query GetPayments($data: GetPaymentsInputDto!) {
+  getPayments(data: $data) {
+    payments {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetPaymentsQuery__
+ *
+ * To run a query within a React component, call `useGetPaymentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPaymentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPaymentsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetPaymentsQuery(baseOptions: Apollo.QueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables> & ({ variables: GetPaymentsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+      }
+export function useGetPaymentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+        }
+export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+        }
+export type GetPaymentsQueryHookResult = ReturnType<typeof useGetPaymentsQuery>;
+export type GetPaymentsLazyQueryHookResult = ReturnType<typeof useGetPaymentsLazyQuery>;
+export type GetPaymentsSuspenseQueryHookResult = ReturnType<typeof useGetPaymentsSuspenseQuery>;
+export type GetPaymentsQueryResult = Apollo.QueryResult<GetPaymentsQuery, GetPaymentsQueryVariables>;
+export const GetReportPdfDocument = gql`
+    query GetReportPdf($getReportPdfId: String!) {
+  getReportPdf(id: $getReportPdfId) {
+    type
+    createdAt
+    id
+    isPaid
+    networkId
+    ownerId
+    ownerType
+    period
+    rawReport {
+      amountCents
+      amountCurrency
+      customer {
+        AddressLine1
+        createdAt
+        email
+        externalId
+        legalName
+        legalNumber
+        name
+        phone
+        vatRate
+      }
+      fees {
+        fees {
+          amountCents
+          amountCurrency
+          eventsCount
+          owner {
+            code
+            name
+            type
+          }
+          totalAmountCents
+          totalAmountCurrency
+          units
+          vatAmountCents
+          vatAmountCurrency
+        }
+      }
+      subscriptions {
+        subscriptions {
+          canceldAt
+          createdAt
+          externalCustomerId
+          externalId
+          planCode
+          startedAt
+          status
+          terminatedAt
+        }
+      }
+      fileURL
+      issuingDate
+      paymentStatus
+      status
+      totalAmountCents
+      totalAmountCurrency
+      vatAmountCents
+      vatAmountCurrency
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetReportPdfQuery__
+ *
+ * To run a query within a React component, call `useGetReportPdfQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportPdfQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportPdfQuery({
+ *   variables: {
+ *      getReportPdfId: // value for 'getReportPdfId'
+ *   },
+ * });
+ */
+export function useGetReportPdfQuery(baseOptions: Apollo.QueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables> & ({ variables: GetReportPdfQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
+      }
+export function useGetReportPdfLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
+        }
+export function useGetReportPdfSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
+        }
+export type GetReportPdfQueryHookResult = ReturnType<typeof useGetReportPdfQuery>;
+export type GetReportPdfLazyQueryHookResult = ReturnType<typeof useGetReportPdfLazyQuery>;
+export type GetReportPdfSuspenseQueryHookResult = ReturnType<typeof useGetReportPdfSuspenseQuery>;
+export type GetReportPdfQueryResult = Apollo.QueryResult<GetReportPdfQuery, GetReportPdfQueryVariables>;
+export const GetReportsDocument = gql`
+    query GetReports($data: GetReportsInputDto!) {
+  getReports(data: $data) {
+    reports {
+      type
+      createdAt
+      id
+      isPaid
+      networkId
+      ownerId
+      ownerType
+      period
+      rawReport {
+        amountCents
+        amountCurrency
+        customer {
+          AddressLine1
+          createdAt
+          email
+          externalId
+          legalName
+          legalNumber
+          name
+          phone
+          vatRate
+        }
+        fees {
+          fees {
+            amountCents
+            amountCurrency
+            eventsCount
+            owner {
+              code
+              name
+              type
+            }
+            totalAmountCents
+            totalAmountCurrency
+            units
+            vatAmountCents
+            vatAmountCurrency
+          }
+        }
+        subscriptions {
+          subscriptions {
+            canceldAt
+            createdAt
+            externalCustomerId
+            externalId
+            planCode
+            startedAt
+            status
+            terminatedAt
+          }
+        }
+        fileURL
+        issuingDate
+        paymentStatus
+        status
+        totalAmountCents
+        totalAmountCurrency
+        vatAmountCents
+        vatAmountCurrency
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetReportsQuery__
+ *
+ * To run a query within a React component, call `useGetReportsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetReportsQuery(baseOptions: Apollo.QueryHookOptions<GetReportsQuery, GetReportsQueryVariables> & ({ variables: GetReportsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+      }
+export function useGetReportsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+        }
+export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+        }
+export type GetReportsQueryHookResult = ReturnType<typeof useGetReportsQuery>;
+export type GetReportsLazyQueryHookResult = ReturnType<typeof useGetReportsLazyQuery>;
+export type GetReportsSuspenseQueryHookResult = ReturnType<typeof useGetReportsSuspenseQuery>;
+export type GetReportsQueryResult = Apollo.QueryResult<GetReportsQuery, GetReportsQueryVariables>;
+export const GetReportDocument = gql`
+    query GetReport($getReportId: String!) {
+  getReport(id: $getReportId) {
+    type
+    createdAt
+    id
+    isPaid
+    networkId
+    ownerId
+    ownerType
+    period
+    rawReport {
+      amountCents
+      amountCurrency
+      customer {
+        AddressLine1
+        createdAt
+        email
+        externalId
+        legalName
+        legalNumber
+        name
+        phone
+        vatRate
+      }
+      fees {
+        fees {
+          amountCents
+          amountCurrency
+          eventsCount
+          owner {
+            code
+            name
+            type
+          }
+          totalAmountCents
+          totalAmountCurrency
+          units
+          vatAmountCents
+          vatAmountCurrency
+        }
+      }
+      subscriptions {
+        subscriptions {
+          canceldAt
+          createdAt
+          externalCustomerId
+          externalId
+          planCode
+          startedAt
+          status
+          terminatedAt
+        }
+      }
+      fileURL
+      issuingDate
+      paymentStatus
+      status
+      totalAmountCents
+      totalAmountCurrency
+      vatAmountCents
+      vatAmountCurrency
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetReportQuery__
+ *
+ * To run a query within a React component, call `useGetReportQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportQuery({
+ *   variables: {
+ *      getReportId: // value for 'getReportId'
+ *   },
+ * });
+ */
+export function useGetReportQuery(baseOptions: Apollo.QueryHookOptions<GetReportQuery, GetReportQueryVariables> & ({ variables: GetReportQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+      }
+export function useGetReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+        }
+export function useGetReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+        }
+export type GetReportQueryHookResult = ReturnType<typeof useGetReportQuery>;
+export type GetReportLazyQueryHookResult = ReturnType<typeof useGetReportLazyQuery>;
+export type GetReportSuspenseQueryHookResult = ReturnType<typeof useGetReportSuspenseQuery>;
+export type GetReportQueryResult = Apollo.QueryResult<GetReportQuery, GetReportQueryVariables>;
 export const GetSimPoolStatsDocument = gql`
     query GetSimPoolStats($data: GetSimPoolStatsInput!) {
   getSimPoolStats(data: $data) {
