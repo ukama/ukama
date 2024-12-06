@@ -9,11 +9,9 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
 import {
-  GetReportInputDto,
   GetReportResDto,
   GetReportsInputDto,
   GetReportsResDto,
-  InvoiceInputDto,
 } from "../resolvers/types";
 import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
@@ -22,59 +20,43 @@ class BillingAPI extends RESTDataSource {
     baseURL: string,
     req: GetReportsInputDto
   ): Promise<GetReportsResDto> => {
-    let params = "";
-
-    if (req.count) {
-      params += `&count=${req.count}`;
+    this.logger.info(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
+    this.baseURL = baseURL;
+    const params = "sort=true";
+    if (req.networkId) {
+      params.concat(`&network_id=${req.networkId}`);
     }
-    if (req.is_paid !== undefined) {
-      params += `&is_paid=${req.is_paid}`;
+    if (req.ownerId) {
+      params.concat(`&owner_id=${req.ownerId}`);
     }
-    if (req.network_id) {
-      params += `&network_id=${req.network_id}`;
-    }
-    if (req.owner_id) {
-      params += `&owner_id=${req.owner_id}`;
-    }
-    if (req.owner_type) {
-      params += `&owner_type=${req.owner_type}`;
+    if (req.ownerType) {
+      params.concat(`&owner_type=${req.ownerType}`);
     }
     if (req.report_type) {
-      params += `&report_type=${req.report_type}`;
+      params.concat(`&report_type=${req.report_type}`);
     }
-
-    if (params.length > 0) {
-      params = params.substring(1);
+    if (req.count) {
+      params.concat(`&count=${req.count}`);
     }
-
-    this.logger.info(
-      `GetReports [GET]: ${baseURL}/${VERSION}/reports?${params}`
-    );
-    this.baseURL = baseURL;
-
+    if (req.isPaid) {
+      params.concat(`&is_paid=${req.isPaid}`);
+    }
     return this.get(`/${VERSION}/reports?${params}`).then(res =>
       dtoToReportsDto(res)
     );
   };
 
-  getReport = async (
-    baseURL: string,
-    req: GetReportInputDto
-  ): Promise<GetReportResDto> => {
-    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${req.id}`);
+  getReport = async (baseURL: string, id: string): Promise<GetReportResDto> => {
+    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${id}`);
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/reports/${req.id}?as_pdf=${req.asPdf}`).then(
-      res => dtoToReportDto(res)
+    return this.get(`/${VERSION}/reports/${id}`).then(res =>
+      dtoToReportDto(res)
     );
   };
-
-  addReport = async (
-    baseURL: string,
-    req: InvoiceInputDto
-  ): Promise<GetReportResDto> => {
-    this.logger.info(`AddReport [POST]: ${baseURL}/${VERSION}/report`);
+  getPDFReport = async (baseURL: string, id: string): Promise<Report> => {
+    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/reports/${id}`);
     this.baseURL = baseURL;
-    return this.post(`/${VERSION}/reports`, { body: req }).then(res => res);
+    return this.get(`/${VERSION}/pdf/${id}?as_pdf=true`).then(res => res);
   };
 }
 

@@ -5,19 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { GetReportResDto, InvoiceInputDto } from "./types";
+import { GetReportResDto } from "./types";
 
 @Resolver()
-export class AddReportResolver {
-  @Mutation(() => GetReportResDto)
-  async addReport(
-    @Arg("data") data: InvoiceInputDto,
+export class GetReportPdfResolver {
+  @Query(() => GetReportResDto)
+  async getReportPdf(
+    @Arg("id") id: string,
     @Ctx() ctx: Context
   ): Promise<GetReportResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.addReport(baseURL, data);
+    return dataSources.dataSource.getReport(baseURL, id);
   }
 }

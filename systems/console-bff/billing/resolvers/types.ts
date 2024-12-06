@@ -5,93 +5,29 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
-export class StripeCustomer {
+export class Owner {
   @Field()
-  id: string;
+  code: string;
 
-  @Field()
-  name: string;
-
-  @Field()
-  email: string;
-}
-
-@InputType()
-export class CreateCustomerDto {
   @Field()
   name: string;
-
-  @Field()
-  email: string;
-}
-
-@ObjectType()
-export class StripePaymentMethods {
-  @Field()
-  id: string;
-
-  @Field()
-  brand: string;
-
-  @Field({ nullable: true })
-  cvc_check?: string;
-
-  @Field({ nullable: true })
-  country?: string;
-
-  @Field()
-  exp_month: number;
-
-  @Field()
-  exp_year: number;
-
-  @Field()
-  funding: string;
-
-  @Field()
-  last4: string;
 
   @Field()
   type: string;
-
-  @Field()
-  created: number;
 }
-
-@InputType()
-export class GetReportsInputDto {
-  @Field({ nullable: true })
-  count?: number;
-
-  @Field({ nullable: true })
-  is_paid?: boolean;
-
-  @Field()
-  network_id: string;
-
-  @Field({ nullable: true })
-  owner_id?: string;
-
-  @Field({ nullable: true })
-  owner_type?: string;
-
-  @Field({ nullable: true })
-  report_type?: string;
-}
-@InputType()
-export class GetReportInputDto {
-  @Field()
-  id: string;
-
-  @Field()
-  asPdf: boolean;
-}
-
 @ObjectType()
-class CustomerDto {
+export class Customer {
   @Field()
   AddressLine1: string;
 
@@ -121,19 +57,7 @@ class CustomerDto {
 }
 
 @ObjectType()
-class FeeOwnerDto {
-  @Field()
-  code: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  type: string;
-}
-
-@ObjectType()
-class FeeDto {
+export class Fee {
   @Field()
   amountCents: number;
 
@@ -143,8 +67,8 @@ class FeeDto {
   @Field()
   eventsCount: number;
 
-  @Field(() => FeeOwnerDto)
-  owner: FeeOwnerDto;
+  @Field(() => Owner)
+  owner: Owner;
 
   @Field()
   totalAmountCents: number;
@@ -161,61 +85,17 @@ class FeeDto {
   @Field()
   vatAmountCurrency: string;
 }
-@InputType()
-export class CustomerInputDto {
-  @Field({ nullable: true })
-  address_line1?: string;
 
-  @Field({ nullable: true })
-  address_line2?: string;
-
-  @Field({ nullable: true })
-  city?: string;
-
-  @Field({ nullable: true })
-  country?: string;
-
-  @Field({ nullable: true })
-  created_at?: string;
-
-  @Field({ nullable: true })
-  email?: string;
-
-  @Field({ nullable: true })
-  external_id?: string;
-
-  @Field({ nullable: true })
-  legal_name?: string;
-
-  @Field({ nullable: true })
-  legal_number?: string;
-
-  @Field({ nullable: true })
-  logo_url?: string;
-
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  phone?: string;
-
-  @Field({ nullable: true })
-  state?: string;
-
-  @Field({ nullable: true })
-  url?: string;
-
-  @Field({ nullable: true })
-  vat_rate?: number;
-
-  @Field({ nullable: true })
-  zipcode?: string;
+@ObjectType()
+export class Fees {
+  @Field(() => [Fee])
+  fees: Fee[];
 }
 
 @ObjectType()
-class SubscriptionDto {
-  @Field({ nullable: true })
-  canceldAt?: string;
+export class Subscription {
+  @Field()
+  canceldAt: string;
 
   @Field()
   createdAt: string;
@@ -235,23 +115,62 @@ class SubscriptionDto {
   @Field()
   status: string;
 
-  @Field({ nullable: true })
-  terminatedAt?: string;
+  @Field()
+  terminatedAt: string;
 }
 
 @ObjectType()
-class RawReportDto {
+export class Subscriptions {
+  @Field(() => [Subscription])
+  subscriptions: Subscription[];
+}
+
+@ObjectType()
+export class GetReportsResDto {
+  @Field(() => [GetReportResDto])
+  reports: GetReportResDto[];
+}
+
+@InputType()
+export class GetReportsInputDto {
+  @Field()
+  networkId?: string;
+
+  @Field()
+  ownerId?: string;
+
+  @Field()
+  ownerType?: string;
+
+  @Field()
+  report_type?: string;
+
+  @Field()
+  isPaid?: boolean;
+
+  @Field()
+  sort?: boolean;
+
+  @Field()
+  count?: number;
+}
+
+@ObjectType()
+export class RawReport {
   @Field()
   amountCents: number;
 
   @Field()
   amountCurrency: string;
 
-  @Field(() => CustomerDto)
-  customer: CustomerDto;
+  @Field(() => Customer)
+  customer: Customer;
 
-  @Field(() => [FeeDto])
-  fees: FeeDto[];
+  @Field(() => Fees)
+  fees: Fees;
+
+  @Field(() => Subscriptions)
+  subscriptions: Subscriptions;
 
   @Field()
   fileURL: string;
@@ -264,9 +183,6 @@ class RawReportDto {
 
   @Field()
   status: string;
-
-  @Field(() => [SubscriptionDto])
-  subscriptions: SubscriptionDto[];
 
   @Field()
   totalAmountCents: number;
@@ -282,9 +198,9 @@ class RawReportDto {
 }
 
 @ObjectType()
-class ReportDto {
+export class GetReportResDto {
   @Field()
-  Type: string;
+  type: string;
 
   @Field()
   createdAt: string;
@@ -307,199 +223,6 @@ class ReportDto {
   @Field()
   period: string;
 
-  @Field(() => RawReportDto)
-  rawReport: RawReportDto;
-}
-
-@ObjectType()
-export class GetReportsResDto {
-  @Field(() => [ReportDto])
-  reports: ReportDto[];
-}
-
-@ObjectType()
-export class GetReportResDto {
-  @Field()
-  report: ReportDto;
-}
-
-@InputType()
-export class InvoiceInputDto {
-  @Field({ nullable: true })
-  amount_cents?: number;
-
-  @Field({ nullable: true })
-  amount_currency?: string;
-
-  @Field({ nullable: true })
-  credit_amount_cents?: number;
-
-  @Field({ nullable: true })
-  credit_amount_currency?: string;
-
-  @Field(() => [CreditInputDto], { nullable: true })
-  credits?: CreditInputDto[];
-
-  @Field(() => CustomerInputDto)
-  customer: CustomerInputDto;
-
-  @Field(() => [FeeInputDto])
-  fees: FeeInputDto[];
-
-  @Field({ nullable: true })
-  file_url?: string;
-
-  @Field({ nullable: true })
-  issuing_date?: string;
-
-  @Field({ nullable: true })
-  legacy?: boolean;
-
-  @Field(() => [MetadataInputDto], { nullable: true })
-  metadata?: MetadataInputDto[];
-
-  @Field({ nullable: true })
-  number?: string;
-
-  @Field({ nullable: true })
-  payment_status?: string;
-
-  @Field({ nullable: true })
-  sequential_id?: number;
-
-  @Field({ nullable: true })
-  status?: string;
-
-  @Field(() => [SubscriptionInputDto], { nullable: true })
-  subscriptions?: SubscriptionInputDto[];
-
-  @Field({ nullable: true })
-  total_amount_cents?: number;
-
-  @Field({ nullable: true })
-  total_amount_currency?: string;
-
-  @Field({ nullable: true })
-  vat_amount_cents?: number;
-
-  @Field({ nullable: true })
-  vat_amount_currency?: string;
-}
-
-@InputType()
-export class AddReportInputDto {
-  @Field(() => InvoiceInputDto)
-  invoice: InvoiceInputDto;
-
-  @Field()
-  object_type: string;
-
-  @Field()
-  webhook_type: string;
-}
-
-@InputType()
-export class CreditItemInputDto {
-  @Field({ nullable: true })
-  code?: string;
-
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  type?: string;
-}
-@InputType()
-export class CreditInputDto {
-  @Field({ nullable: true })
-  amount_cents?: number;
-
-  @Field({ nullable: true })
-  amount_currency?: string;
-
-  @Field(() => CreditItemInputDto)
-  item: CreditItemInputDto;
-
-  @Field({ nullable: true })
-  lago_id?: string;
-}
-@InputType()
-export class FeeItemInputDto {
-  @Field({ nullable: true })
-  code?: string;
-
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  type?: string;
-}
-
-@InputType()
-export class FeeInputDto {
-  @Field({ nullable: true })
-  amount_cents?: number;
-
-  @Field({ nullable: true })
-  amount_currenty?: string;
-
-  @Field({ nullable: true })
-  events_count?: number;
-
-  @Field(() => FeeItemInputDto)
-  item: FeeItemInputDto;
-
-  @Field({ nullable: true })
-  total_amount_cents?: number;
-
-  @Field({ nullable: true })
-  total_amount_currency?: string;
-
-  @Field({ nullable: true })
-  units?: string;
-
-  @Field({ nullable: true })
-  vat_amount_cents?: number;
-
-  @Field({ nullable: true })
-  vat_amount_currency?: string;
-}
-
-@InputType()
-export class MetadataInputDto {
-  @Field({ nullable: true })
-  created_at?: string;
-
-  @Field({ nullable: true })
-  key?: string;
-
-  @Field({ nullable: true })
-  value?: string;
-}
-
-@InputType()
-export class SubscriptionInputDto {
-  @Field({ nullable: true })
-  canceled_at?: string;
-
-  @Field({ nullable: true })
-  created_at?: string;
-
-  @Field({ nullable: true })
-  external_customer_id?: string;
-
-  @Field({ nullable: true })
-  external_id?: string;
-
-  @Field({ nullable: true })
-  plan_code?: string;
-
-  @Field({ nullable: true })
-  started_at?: string;
-
-  @Field({ nullable: true })
-  status?: string;
-
-  @Field({ nullable: true })
-  terminated_at?: string;
+  @Field(() => RawReport)
+  rawReport: RawReport;
 }

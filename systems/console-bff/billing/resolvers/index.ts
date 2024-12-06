@@ -7,16 +7,14 @@
  */
 import { NonEmptyArray } from "type-graphql";
 
-import { CreateCustomerResolver } from "./createCustomer";
 import { GetReportResolver } from "./getReport";
-import { GetStripeCustomerResolver } from "./getStripeCustomer";
-import { RetrivePaymentMethodsResolver } from "./retrivePaymentMethods";
+import { GetReportPdfResolver } from "./getReportPdf";
+import { GetReportsResolver } from "./getReports";
 
 const resolvers: NonEmptyArray<any> = [
   GetReportResolver,
-  CreateCustomerResolver,
-  GetStripeCustomerResolver,
-  RetrivePaymentMethodsResolver,
+  GetReportsResolver,
+  GetReportPdfResolver,
 ];
 
 export default resolvers;
