@@ -108,3 +108,13 @@ export class ResponseObj {
   @Field()
   message: string;
 }
+
+type TCorrespondents = {
+  MNO: string;
+  Correspondent: string;
+  logo: string;
+};
+
+export type TCorrespondentsMap = {
+  [key: string]: TCorrespondents[];
+};
