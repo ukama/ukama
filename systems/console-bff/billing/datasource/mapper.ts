@@ -5,30 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import {
-  BillHistoryDto,
-  BillHistoryResponse,
-  BillResponse,
-  CurrentBillResponse,
-} from "../resolvers/types";
+import { GetReportResDto, GetReportsResDto } from "../resolvers/types";
 
-export const dtoToDto = (res: CurrentBillResponse): BillResponse => {
-  const bill = res.data;
-  let total = 0;
-  for (const sub of bill) {
-    const subTotal = sub.subtotal;
-    total = total + subTotal;
-  }
-  return {
-    bill,
-    total,
-    dueDate: "10-10-2021",
-    billMonth: "11-10-2021",
-  };
+export const dtoToReportsDto = (res: GetReportsResDto): GetReportsResDto => {
+  return res;
 };
 
-export const billHistoryDtoToDto = (
-  res: BillHistoryResponse
-): BillHistoryDto[] => {
-  return res.data;
+export const dtoToReportDto = (res: GetReportResDto): GetReportResDto => {
+  return res;
 };

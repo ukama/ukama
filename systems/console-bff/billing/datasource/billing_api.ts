@@ -15,6 +15,7 @@ import {
   GetReportsResDto,
   InvoiceInputDto,
 } from "../resolvers/types";
+import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
 class BillingAPI extends RESTDataSource {
   getReports = async (
@@ -51,7 +52,9 @@ class BillingAPI extends RESTDataSource {
     );
     this.baseURL = baseURL;
 
-    return this.get(`/${VERSION}/reports?${params}`).then(res => res);
+    return this.get(`/${VERSION}/reports?${params}`).then(res =>
+      dtoToReportsDto(res)
+    );
   };
 
   getReport = async (
@@ -61,7 +64,7 @@ class BillingAPI extends RESTDataSource {
     this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${req.id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/reports/${req.id}?as_pdf=${req.asPdf}`).then(
-      res => res
+      res => dtoToReportDto(res)
     );
   };
 
