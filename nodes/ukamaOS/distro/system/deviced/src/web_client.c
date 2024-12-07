@@ -16,6 +16,10 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
+/* jserdes.c */
+extern bool json_deserialize_node_info(char **data, char *tag, json_t *json);
+extern bool json_serialize_alarm_notification(JsonObj **json, Config *config);
+
 static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
 
     *httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
