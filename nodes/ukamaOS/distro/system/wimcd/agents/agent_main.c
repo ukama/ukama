@@ -24,8 +24,12 @@
 #include "usys_getopt.h"
 #include "usys_api.h"
 #include "usys_services.h"
+#include "usys_file.h"
 
 #include "version.h"
+
+/* network.c */
+bool start_web_service(char *method, struct _u_instance *webInstance);
 
 #define DEF_LOG_LEVEL     "TRACE"
 

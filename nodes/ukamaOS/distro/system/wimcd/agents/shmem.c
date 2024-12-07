@@ -22,6 +22,14 @@
 #include "usys_log.h"
 #include "usys_mem.h"
 
+/* wimc.c */
+extern long communicate_with_wimc(int reqType,
+                                  char *wimcURL,
+                                  char *cbURL,
+                                  void *data);
+/* thread.c */
+void free_fetch_request(WFetch *ptr);
+ 
 #define SECRET_ID 46504650 /* Id for ftok() */
 
 void *create_shared_memory(int *shmId, char *memFile, size_t size) {

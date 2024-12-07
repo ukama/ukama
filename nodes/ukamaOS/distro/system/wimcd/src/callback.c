@@ -20,6 +20,25 @@
 
 #include "version.h"
 
+/* db.c */
+extern int db_read_status(sqlite3 *db, char *name, char *tag, char **status);
+extern int db_insert_entry(sqlite3 *db, char *name, char *tag, char *status);
+
+/* agent.c */
+extern void cleanup_wimc_request(WimcReq *request);
+extern void create_wimc_request(WimcReq **request, char *name, char *tag,
+                                char *indexURL, char *storeURL, char *method,
+                                int interval);
+extern bool communicate_with_agent(WimcReq *request, char *agentMethod,
+                                   Config *config);
+extern int process_agent_update_request(WTasks **tasks,
+                                        AgentReq *req,
+                                        sqlite3 *db);
+
+/* jserdes.c */
+bool deserialize_agent_request_update(Update **update, json_t *json);
+
+
 static void free_agent_request_update(AgentReq *req) {
 
     usys_free(req->update->voidStr);
@@ -122,7 +141,7 @@ int web_service_cb_get_app_status(const URequest *request,
                 jResponse = json_pack("{s:s}",
                                       "message", "App corrupted at default location.");
                 ulfius_set_json_body_response(response,
-                                            HttpStatusStr(HttpStatus_InternalServerError),
+                                            HttpStatus_InternalServerError,
                                             jResponse);
                 json_decref(jResponse);
             }
@@ -131,7 +150,7 @@ int web_service_cb_get_app_status(const URequest *request,
             jResponse = json_pack("{s:s}",
                                   "message", "Unknown app status.");
             ulfius_set_json_body_response(response,
-                                          HttpStatusStr(HttpStatus_InternalServerError),
+                                          HttpStatus_InternalServerError,
                                           jResponse);
             json_decref(jResponse);
         }
@@ -209,7 +228,7 @@ int web_service_cb_post_app(const URequest *request,
     }
 
     /* Check with hub */
-    if (!get_artifact_info_from_hub(&artifact, config, name, tag, &httpStatus)) {
+    if (!get_artifacts_info_from_hub(&artifact, config, name, tag, &httpStatus)) {
         if (httpStatus == HttpStatus_InternalServerError) {
             usys_log_error("Unable to connect with hub at: %s", config->hubURL);
             ulfius_set_string_body_response(response,
@@ -327,7 +346,7 @@ int web_service_cb_put_app_stats_update(const struct _u_request *request,
                                     retCode,
                                     HttpStatusStr(retCode));
     
-    free_agent_request_update(agentRequest->update);
+    free_agent_request_update(agentRequest);
     usys_free(agentRequest);
     json_decref(json);
 
