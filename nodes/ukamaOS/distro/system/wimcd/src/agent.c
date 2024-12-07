@@ -244,7 +244,6 @@ bool communicate_with_agent(WimcReq *request,
                             char *agentMethod,
                             Config *config) {
 
-    long code=0;
     json_t *json=NULL;
     long agentRetCode=0;
 

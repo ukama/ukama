@@ -171,10 +171,8 @@ int web_service_cb_post_app(const URequest *request,
                             UResponse *response,
                             void *data) {
 
-    int ret=TRUE, resCode=200, i=0;
     int httpStatus=0;
 
-    char cbURL[WIMC_MAX_URL_LEN]    = {0};
     char indexURL[WIMC_MAX_URL_LEN] = {0};
     char storeURL[WIMC_MAX_URL_LEN] = {0};
 
@@ -184,8 +182,6 @@ int web_service_cb_post_app(const URequest *request,
     char *name=NULL, *tag=NULL, *status=NULL;
 
     WimcReq   *wimcRequest  = NULL;
-    WRespType respType=WRESP_ERROR;
-    Agent *agent=NULL;
     ArtifactFormat *artifactFormat=NULL;
 
     config = (Config *)data;
@@ -248,7 +244,7 @@ int web_service_cb_post_app(const URequest *request,
     }
 
     /* Find matching agent */
-    for (i=0; i < artifact.formatsCount; i++) {
+    for (int i=0; i < artifact.formatsCount; i++) {
         if (get_agent_port_by_method(artifact.formats[i]->type)) {
             artifactFormat = artifact.formats[i];
             usys_log_debug("Matching agent for method: %s",
