@@ -17,9 +17,16 @@
 
 #include "starter.h"
 #include "config.h"
+#include "web_client.h"
 
 #include "usys_types.h"
 #include "usys_log.h"
+
+/* space.c */
+void copy_capp_to_space_rootfs(char *spaceName,
+                               Capp *capp,
+                               char *sPath,
+                               char *dPath);
 
 extern char **environ;
 
@@ -100,7 +107,7 @@ static int create_args_list(char *exec, char *arg, char ***argv) {
     return count;
 }
 
-static bool execute_capp(void *arg) {
+static void* execute_capp(void *arg) {
 
     Capp *capp = (Capp *)arg;
     CappRuntime *runtime;
@@ -152,7 +159,7 @@ static bool execute_capp(void *arg) {
         }
     }
 
-    return USYS_TRUE;
+    return NULL;
 }
 
 static bool setup_and_execute_capp(Capp *capp, int *error) {

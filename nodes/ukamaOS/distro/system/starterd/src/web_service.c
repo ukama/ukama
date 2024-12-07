@@ -14,7 +14,9 @@
 #include "config.h"
 
 #include "starter.h"
+
 #include "usys_log.h"
+#include "usys_mem.h"
 
 #include "version.h"
 
@@ -26,6 +28,8 @@ extern bool json_serialize_add_capp_to_array(JsonObj **json,
                                              char *tag,
                                              char *status,
                                              int  pid);
+
+extern bool find_matching_space(SpaceList **spaceList, char *name, Space **space);
 
 static char *capp_status_str(int status) {
 

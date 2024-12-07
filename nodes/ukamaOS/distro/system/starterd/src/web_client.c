@@ -20,6 +20,7 @@
 #include "usys_types.h"
 #include "usys_mem.h"
 #include "usys_api.h"
+#include "usys_file.h"
 #include "usys_services.h"
 
 static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
