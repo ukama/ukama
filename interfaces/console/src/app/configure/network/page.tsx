@@ -7,29 +7,15 @@
  */
 'use client';
 
-import {
-  useAddNetworkMutation,
-  useGetNetworksLazyQuery,
-} from '@/client/graphql/generated';
-import { CHECK_SITE_FLOW, NETWORK_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { useAddNetworkMutation } from '@/client/graphql/generated';
+import { CHECK_SITE_FLOW, NETWORK_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
-import { CenterContainer } from '@/styles/global';
-import colors from '@/theme/colors';
-import {
-  Button,
-  CircularProgress,
-  FormControlLabel,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import * as Yup from 'yup';
-import NetworkInfo from '../../../../public/svg/NetworkInfo';
+import NetworkSkelton from './skelton';
 
 interface AddNetworkForm {
   name: string;
@@ -62,37 +48,10 @@ const initialValues: AddNetworkForm = {
 
 const Network = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
-  const totalStep = flow === ONBOARDING_FLOW ? 5 : 4;
-  const step = parseInt(searchParams.get('step') ?? '1');
   const { setSnackbarMessage, network, setNetwork } = useAppContext();
 
-  const [getNetworks] = useGetNetworksLazyQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      if (data.getNetworks.networks.length > 0) {
-        setNetwork({
-          id: data.getNetworks.networks[0].id,
-          name: data.getNetworks.networks[0].name,
-        });
-        router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
-      } else {
-        setLoading(false);
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error',
-        show: true,
-      });
-    },
-  });
-
-  const [addNetwork, { loading: addNetworkLoading }] = useAddNetworkMutation({
+  const [addNetwork] = useAddNetworkMutation({
     onCompleted: (data) => {
       if (data.addNetwork.id) {
         setNetwork({
@@ -103,6 +62,7 @@ const Network = () => {
       }
     },
     onError: (error) => {
+      setLoading(false);
       setSnackbarMessage({
         id: 'add-networks-error',
         message: error.message,
@@ -115,12 +75,11 @@ const Network = () => {
   useEffect(() => {
     if (network.id) {
       router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
-    } else {
-      getNetworks();
-    }
+    } else setLoading(false);
   }, []);
 
   const handleAddNetwork = (values: any) => {
+    setLoading(true);
     addNetwork({
       variables: {
         data: {
@@ -134,103 +93,80 @@ const Network = () => {
     });
   };
 
+  if (loading) return <NetworkSkelton />;
+
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      {loading ? (
-        <CenterContainer>
-          <CircularProgress />
-        </CenterContainer>
-      ) : (
-        <Stack direction="column" spacing={1.5}>
-          <Stack direction={'row'}>
-            <Typography variant="h6"> {'Name your network'}</Typography>
-            <Typography
-              variant="h6"
-              fontWeight={400}
-              sx={{
-                color: colors.black70,
-              }}
+    <Stack direction="column" height={'100%'} spacing={3}>
+      <Typography variant="h4" fontWeight={500}>
+        Name your network
+      </Typography>
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={async (values) => {
+          handleAddNetwork(values);
+        }}
+      >
+        {({
+          values,
+          errors,
+          touched,
+          handleChange,
+          handleSubmit,
+          handleBlur,
+        }) => (
+          <form onSubmit={handleSubmit}>
+            <Stack
+              spacing={{ xs: 4, md: 6 }}
+              direction={'column'}
+              height={'100%'}
+              alignItems="center"
             >
-              {flow === ONBOARDING_FLOW && <i>&nbsp;</i>}&nbsp;
-              {`(${step}/${totalStep})`}
-            </Typography>
-          </Stack>
-          <Formik
-            initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={async (values) => {
-              handleAddNetwork(values);
-            }}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleSubmit,
-              handleBlur,
-              setFieldValue,
-            }) => (
-              <form onSubmit={handleSubmit}>
-                <Stack spacing={3} direction={'column'} alignItems="center">
-                  <Typography variant="body1">
-                    Please name your first network. A network is made up of one
-                    or more sites of Ukama hardware, allowing you to connect to
-                    the cellular internet.
-                  </Typography>
-                  {NetworkInfo}
-                  <TextField
-                    fullWidth
-                    name={'name'}
-                    size="medium"
-                    placeholder="network-name"
-                    label={'Network name'}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    value={values.name}
-                    helperText={touched.name && errors.name}
-                    error={touched.name && Boolean(errors.name)}
-                    id={'name'}
-                  />
-                  <FormControlLabel
-                    sx={{ display: 'none' }}
-                    control={
-                      <Switch
-                        defaultChecked={false}
-                        value={values.isDefault}
-                        checked={values.isDefault}
-                        onChange={() =>
-                          setFieldValue('isDefault', !values.isDefault)
-                        }
-                      />
-                    }
-                    label="Make this network default"
-                  />
-                  <Stack
-                    width="100%"
-                    spacing={2}
-                    direction={'row'}
-                    alignItems="center"
-                    justifyContent={'flex-end'}
-                  >
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      disabled={addNetworkLoading}
-                    >
-                      CREATE NETWORK
-                    </Button>
-                  </Stack>
-                </Stack>
-              </form>
-            )}
-          </Formik>
-        </Stack>
-      )}
-    </Paper>
+              <Stack spacing={4}>
+                <Typography variant="body1">
+                  Please name your first network. A network is made up of one or
+                  more sites of Ukama hardware, allowing you to connect to the
+                  cellular internet.
+                </Typography>
+                <TextField
+                  fullWidth
+                  id={'name'}
+                  name={'name'}
+                  size="medium"
+                  value={values.name}
+                  onBlur={handleBlur}
+                  label={'Network name'}
+                  onChange={handleChange}
+                  placeholder="network-name"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    '.MuiOutlinedInput-input': {
+                      height: '32px',
+                      fontSize: '16px !important',
+                    },
+                  }}
+                  helperText={touched.name && errors.name}
+                  error={touched.name && Boolean(errors.name)}
+                />
+              </Stack>
+
+              <Stack
+                width="100%"
+                direction={'row'}
+                alignItems="center"
+                justifyContent={'flex-end'}
+              >
+                <Button type="submit" variant="contained">
+                  NAME NETWORK
+                </Button>
+              </Stack>
+            </Stack>
+          </form>
+        )}
+      </Formik>
+    </Stack>
   );
 };
 

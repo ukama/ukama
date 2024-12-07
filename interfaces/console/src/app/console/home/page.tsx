@@ -18,7 +18,7 @@ import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
 import Throughput from '@mui/icons-material/NetworkCheck';
 import { Box, Paper, Skeleton, Stack } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
@@ -99,7 +99,7 @@ export default function Page() {
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
-      <Grid xs={12}>
+      <Grid size={12}>
         <NetworkStatus
           title={
             network.name
@@ -113,7 +113,7 @@ export default function Page() {
           tooltipInfo="Network is online"
         />
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <Stack direction={'row'}>
           <StatusCard
             option={''}
@@ -152,7 +152,7 @@ export default function Page() {
           />
         </Stack>
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <Paper
           sx={{
             borderRadius: '10px',

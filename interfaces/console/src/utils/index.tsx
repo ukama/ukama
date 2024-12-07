@@ -21,6 +21,12 @@ import { TNodeSiteTree } from '@/types';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { LatLngTuple } from 'leaflet';
+
+type TConfigureStep = {
+  totalStep: number;
+  currentStep: number;
+};
+
 const getTitleFromPath = (path: string, id: string) => {
   if (path.startsWith('/console/sites') && id) {
     return (
@@ -398,7 +404,21 @@ const isValidLatLng = (position: LatLngTuple): boolean => {
   );
 };
 
+const ConfigureStep = (
+  path: string,
+  flow: string,
+  step: number,
+): TConfigureStep => {
+  switch (path) {
+    case 'network-name':
+      return { currentStep: 1, totalStep: 1 };
+    default:
+      return { currentStep: 1, totalStep: 5 };
+  }
+};
+
 export {
+  ConfigureStep,
   fileToBase64,
   formatBytes,
   formatBytesToMB,

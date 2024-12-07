@@ -20,9 +20,7 @@ import colors from '@/theme/colors';
 import {
   AlertColor,
   Button,
-  Divider,
   MenuItem,
-  Paper,
   Stack,
   TextField,
   Typography,
@@ -30,6 +28,8 @@ import {
 import { formatISO } from 'date-fns';
 import { Field, FormikProvider, useFormik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import LoadingSkeleton from './skelton';
 
 interface IPage {
   params: {
@@ -44,6 +44,7 @@ const SiteConfigure = ({ params }: IPage) => {
   const pathname = usePathname();
   const gclasses = globalUseStyles();
   const searchParams = useSearchParams();
+  const [loading, setLoading] = useState<boolean>(false);
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const flow = searchParams.get('flow') ?? 'onb';
@@ -115,6 +116,7 @@ const SiteConfigure = ({ params }: IPage) => {
       );
     },
     onError: (error) => {
+      setLoading(false);
       setSnackbarMessage({
         id: 'add-site-error',
         message: error.message,
@@ -168,6 +170,10 @@ const SiteConfigure = ({ params }: IPage) => {
       });
     },
   });
+
+  useEffect(() => {
+    if (addSiteLoading) setLoading(true);
+  }, [addSiteLoading]);
 
   const setQueryParam = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams.toString());
@@ -252,36 +258,30 @@ const SiteConfigure = ({ params }: IPage) => {
     router.back();
   };
 
+  if (loading) return <LoadingSkeleton />;
+
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      <Stack direction={'row'}>
-        <Typography variant="h6">{'Configure site installation'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
-          {flow === 'onb' ? 6 : 4})
-        </Typography>
-      </Stack>
+    <Stack spacing={2}>
+      <Typography variant="h4" fontWeight={500}>
+        Configure site settings
+      </Typography>
 
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>
-          <Stack direction="column" my={3} spacing={2.5}>
+          <Stack direction="column" spacing={2.5}>
             <Typography variant="body1" color={colors.vulcan}>
-              You have successfully created your site, and now need to configure
-              some settings. If the node or site location details are wrong,
-              please check on your installation.
-              <br />
-              <br />
               If you did not install your site yourself, or used all the default
               options, click “Next”.
+              <br />
+              <br />
+              If you used your own custom options for the switch, power, or
+              backhaul, please select “Other” in the corresponding dropdown.
+              Please note that we currently cannot track real time KPIs for
+              custom options.
+              <br />
+              <br />
             </Typography>
 
-            <Divider sx={{ marginBottom: '8px !important' }} />
             <Field
               as={TextField}
               select
@@ -376,7 +376,11 @@ const SiteConfigure = ({ params }: IPage) => {
                 ))}
             </Field>
           </Stack>
-          <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
+          <Stack
+            mt={{ xs: 4, md: 6 }}
+            direction={'row'}
+            justifyContent={'space-between'}
+          >
             <Button
               variant="text"
               onClick={handleBack}
@@ -390,7 +394,7 @@ const SiteConfigure = ({ params }: IPage) => {
           </Stack>
         </form>
       </FormikProvider>
-    </Paper>
+    </Stack>
   );
 };
 

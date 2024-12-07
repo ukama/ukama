@@ -51,11 +51,13 @@ const InstallSiteLoading = ({
   }, [duration]);
 
   return (
-    <Stack width={'100%'} direction="column">
-      <Typography variant="h6">{title}</Typography>
-      <Stack direction={'column'} mt={2} mb={3} spacing={1.5}>
+    <Stack width={'100%'} direction="column" spacing={2}>
+      <Typography variant="h4" fontWeight={500}>
+        {title}
+      </Typography>
+      <Stack direction={'column'} spacing={1.5}>
         {subtitle && (
-          <Typography variant="body1" fontWeight={700}>
+          <Typography variant="h6" sx={{ fontSize: '16px !important' }}>
             {subtitle}
           </Typography>
         )}

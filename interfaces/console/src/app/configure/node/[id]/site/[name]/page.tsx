@@ -73,7 +73,7 @@ const Page = ({ params }: IPage) => {
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
   const formik = useFormik({
     initialValues: {
-      name: '',
+      name: name ?? '',
     },
     validateOnChange: true,
     onSubmit: (values) => {

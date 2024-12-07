@@ -16,8 +16,6 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import { useAppContext } from '@/context';
-import colors from '@/theme/colors';
-import { Button, Paper, Stack } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -27,7 +25,7 @@ const Check = () => {
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [title, setTitle] = useState(
     flow === NETWORK_FLOW
-      ? 'Creating your network'
+      ? 'Creating your network...'
       : flow === CHECK_SITE_FLOW
         ? 'Checking for site availability to configure'
         : 'Loading up your site...',
@@ -73,25 +71,14 @@ const Check = () => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      <Stack mb={1} direction={'column'} alignItems={'flex-start'}>
-        <InstallSiteLoading
-          duration={10}
-          title={title}
-          subtitle={subtitle}
-          handleBack={handleBack}
-          description={description}
-          onCompleted={onInstallProgressComplete}
-        />
-        <Button
-          variant="text"
-          onClick={handleBack}
-          sx={{ color: colors.black70, p: 0 }}
-        >
-          {network.id ? 'Skip' : 'Back'}
-        </Button>
-      </Stack>
-    </Paper>
+    <InstallSiteLoading
+      duration={10}
+      title={title}
+      subtitle={subtitle}
+      handleBack={handleBack}
+      description={description}
+      onCompleted={onInstallProgressComplete}
+    />
   );
 };
 

@@ -7,7 +7,7 @@
  */
 'use client';
 import { Sim_Types, useUploadSimsMutation } from '@/client/graphql/generated';
-import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { INSTALLATION_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
 import { fileToBase64 } from '@/utils';
@@ -17,17 +17,18 @@ import {
   Box,
   Button,
   IconButton,
-  Paper,
   Stack,
   Typography,
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import LoadingSkeleton from './skelton';
 
 const Sims = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [loading, setLoading] = useState(false);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const step = parseInt(searchParams.get('step') ?? '1');
   const { env, setSnackbarMessage } = useAppContext();
@@ -51,6 +52,7 @@ const Sims = () => {
         router.push(`/configure/complete?flow=${flow}`);
       },
       onError: (error) => {
+        setLoading(false);
         setSnackbarMessage({
           id: 'sim-pool-error',
           message: error.message,
@@ -62,13 +64,19 @@ const Sims = () => {
   );
 
   useEffect(() => {
+    if (uploadSimsLoading) {
+      setLoading(true);
+    }
+  }, [uploadSimsLoading]);
+
+  useEffect(() => {
     if (acceptedFiles.length > 0) {
       setFile(acceptedFiles[0]);
     }
   }, [acceptedFiles]);
 
   const handleSkip = () => {
-    // TODO: HANDLE SKIP LOGIC
+    router.push(`/configure/complete?flow=${flow}`);
   };
 
   const handleNext = () => {
@@ -119,27 +127,18 @@ const Sims = () => {
     }
   };
 
-  return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      <Stack direction={'row'}>
-        <Typography variant="h6">{'Upload Sims'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === ONBOARDING_FLOW && <i>&nbsp;- optional</i>}&nbsp;({step}/
-          {flow === ONBOARDING_FLOW ? 5 : 4})
-        </Typography>
-      </Stack>
+  if (loading) return <LoadingSkeleton />;
 
-      <Stack mt={2} mb={3} direction={'column'} spacing={2}>
+  return (
+    <Stack>
+      <Typography variant="h4" fontWeight={500} mb={2}>
+        Upload Sims
+      </Typography>
+
+      <Stack direction={'column'} spacing={4}>
         <Typography variant={'body1'} fontWeight={400}>
           Upload the SIMs belonging to your organization, so that you can later
-          authorize subscribers to start using your network. If you would like
-          to do this later, please skip this step.
+          authorize subscribers to start using your network.
         </Typography>
 
         {file ? (
@@ -148,7 +147,7 @@ const Sims = () => {
             <IconButton
               onClick={() => {
                 setFile(null);
-                acceptedFiles.pop();
+                acceptedFiles?.pop();
               }}
               size="small"
             >
@@ -164,7 +163,7 @@ const Sims = () => {
               cursor: 'pointer',
               borderRadius: '4px',
               justifyContent: 'center',
-              border: `1px dashed ${colors.primaryDark}`,
+              border: `2px dashed ${colors.primaryMain}`,
               backgroundColor: colors.primaryMain02,
             }}
           >
@@ -177,8 +176,9 @@ const Sims = () => {
           </Box>
         )}
       </Stack>
+
       <Stack
-        mb={1}
+        mt={{ xs: 4, md: 6 }}
         spacing={2}
         direction={'row'}
         justifyContent={'space-between'}
@@ -194,7 +194,7 @@ const Sims = () => {
           Upload sims
         </Button>
       </Stack>
-    </Paper>
+    </Stack>
   );
 };
 

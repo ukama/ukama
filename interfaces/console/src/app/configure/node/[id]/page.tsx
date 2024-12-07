@@ -10,7 +10,7 @@ import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Button, Skeleton, Stack, Typography } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -75,25 +75,19 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
+    <Stack spacing={2}>
       <Stack direction={'row'}>
-        <Typography variant="h6">{'Install site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
-          {flow === 'onb' ? 6 : 4})
+        <Typography variant="h4" fontWeight={500}>
+          Site installed
         </Typography>
       </Stack>
 
-      <Stack mt={3} mb={3} direction={'column'} spacing={2}>
+      <Stack mt={3} mb={3} direction={'column'} spacing={3}>
         <Typography variant={'body1'} fontWeight={400}>
           You have successfully installed your site, and it is online now!
           Please check to make sure you are satisfied with the location details.
+          <br />
+          <br />
         </Typography>
 
         {isLoading || addressLoading ? (
@@ -112,7 +106,12 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           value={`${address} [${qpLat}, ${qpLng}]`}
         />
       </Stack>
-      <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
+
+      <Stack
+        direction={'row'}
+        pt={{ xs: 4, md: 6 }}
+        justifyContent={'space-between'}
+      >
         <Button
           variant="text"
           onClick={handleBack}
@@ -124,7 +123,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           Next
         </Button>
       </Stack>
-    </Paper>
+    </Stack>
   );
 };
 

@@ -66,6 +66,13 @@ const GradiantBar = styled(Box)({
   borderRadius: '4px 4px 0px 0px',
 });
 
+const GradiantBarNoRadius = styled(Box)({
+  width: '100%',
+  height: '12px',
+  background:
+    'linear-gradient(90deg, #00D3EB 0%, #2190F6 14.06%, #6974F8 44.27%, #6974F8 58.85%, #271452 100%)',
+});
+
 const HorizontalContainerJustify = styled(Box)((props) => ({
   width: '100%',
   height: 'auto',
@@ -271,6 +278,7 @@ export {
   DarkTooltip,
   DataPlanEmptyView,
   GradiantBar,
+  GradiantBarNoRadius,
   HorizontalContainer,
   HorizontalContainerJustify,
   IconStyle,

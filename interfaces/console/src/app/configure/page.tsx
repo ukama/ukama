@@ -12,14 +12,11 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Paper,
   Stack,
-  SvgIcon,
   Typography,
 } from '@mui/material';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import SiteInfo from '../../../public/svg/SiteInfo';
 
 const Page = () => {
   const router = useRouter();
@@ -47,72 +44,52 @@ const Page = () => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      <Stack direction="column">
-        <Stack direction={'row'}>
-          <Typography variant="h6"> {'Install site'}</Typography>
-          <Typography
-            variant="h6"
-            fontWeight={400}
-            sx={{
-              color: colors.black70,
-            }}
-          >
-            {flow === ONBOARDING_FLOW && <i>&nbsp;- optional</i>}&nbsp;
-            {`(${step}/${totalSteps})`}
-          </Typography>
-        </Stack>
+    <Stack direction="column" spacing={2}>
+      <Typography variant="h4" fontWeight={500}>
+        Install site
+      </Typography>
 
-        <Stack mt={3} mb={3} direction={'column'} alignItems={'center'}>
-          <Typography variant="body1" color={colors.vulcan}>
-            If you would like to install your site later, please skip this step.
-            <br />
-            <br />
-            To install your full site, please install your node(s), power, and
-            backhaul components at their intended location(s). These three
-            elements form a site, which represents a full connection point to
-            the network. Each site can also hold up to three nodes for a
-            stronger connection.
-            <br />
-            <br />
-          </Typography>
-          <SvgIcon sx={{ width: 240, height: 176, mt: 2, mb: 4 }}>
-            {SiteInfo}
-          </SvgIcon>
-          <FormControlLabel
-            sx={{ alignSelf: 'baseline' }}
-            control={
-              <Checkbox
-                sx={{ p: 0, px: 1.3 }}
-                onChange={(e) => handleOnInstalled(e.target.checked)}
-              />
-            }
-            label="I have installed my site"
-          />
-        </Stack>
-        <Stack
-          mb={1}
-          spacing={2}
-          direction={'row'}
-          justifyContent={'space-between'}
-        >
-          <Button
-            variant="text"
-            onClick={handleSkip}
-            sx={{ color: colors.black70, p: 0 }}
-          >
-            Skip
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={!isChecked}
-          >
-            Next
-          </Button>
-        </Stack>
+      <Stack spacing={{ xs: 2, md: 4 }}>
+        <Typography variant="body1" color={colors.vulcan}>
+          If you would like to install your site later, please skip this step.
+          <br />
+          <br />
+          To install your full site, please install your node(s), power, and
+          backhaul components at their intended location(s). These three
+          elements form a site, which represents a full connection point to the
+          network. Each site can also hold up to three nodes for a stronger
+          connection.
+        </Typography>
+
+        <FormControlLabel
+          sx={{ alignSelf: 'baseline' }}
+          control={
+            <Checkbox
+              sx={{ p: 0, pr: 1.5 }}
+              onChange={(e) => handleOnInstalled(e.target.checked)}
+            />
+          }
+          label="I have installed my site"
+        />
       </Stack>
-    </Paper>
+
+      <Stack
+        direction={'row'}
+        pt={{ xs: 4, md: 6 }}
+        justifyContent={'space-between'}
+      >
+        <Button
+          variant="text"
+          onClick={handleSkip}
+          sx={{ color: colors.black70, p: 0 }}
+        >
+          Skip
+        </Button>
+        <Button variant="contained" onClick={handleNext} disabled={!isChecked}>
+          Next
+        </Button>
+      </Stack>
+    </Stack>
   );
 };
 export default Page;
