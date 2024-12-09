@@ -263,7 +263,7 @@ memcheck: $(UTEST)
 
 # Clean all build files
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) version.h
 	@echo Cleaned.
 
 version.h:
