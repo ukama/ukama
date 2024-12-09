@@ -8,7 +8,6 @@
 # To run within specific container
 
 set -e
-set -x
 
 export UKAMA_ROOT=/workspace
 export ALPINE_BUILD=1

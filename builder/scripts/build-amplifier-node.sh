@@ -344,8 +344,16 @@ log "INFO" "All partitions mounted successfully under ${MOUNT_BASE_DIR}."
 # Compile and package the needed apps for this node
 log "INFO" "Packaging and copying applications"
 export UKAMA_ROOT
-package_all_apps "${UKAMA_ROOT}" "${NODE_APPS}" \
-    || { log "ERROR" "Failed to package apps"; exit 1; }
+
+if [[ "${OS_TYPE}" = "alpine" ]]; then
+    package_all_apps_via_container_build \
+        "${OS_TYPE}" \
+        "${UKAMA_ROOT}" \
+        "{NODE_APPS}" || { log "ERROR" "Failed to package apps"; exit 1; }
+else
+    package_all_apps "${UKAMA_ROOT}" "${NODE_APPS}" \
+        || { log "ERROR" "Failed to package apps"; exit 1; }
+fi
 
 copy_all_apps_to_image "${NODE_ID}"    "${NODE_APPS}" \
     || { log "ERROR" "Failed to copy apps to image"; exit 1; }

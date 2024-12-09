@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,8 @@
 # Copyright (c) 2021-present, Ukama Inc.
 
 # Script to build and package ukamaOS app
+
+set -e
 
 # Base parameters
 UKAMA_OS=`realpath ../ukamaOS`

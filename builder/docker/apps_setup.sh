@@ -7,7 +7,6 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 set -e
-set -x
 
 TARGET=$1
 UKAMA_ROOT=$2
@@ -21,16 +20,9 @@ else
     TARGETPLATFORM="ubuntu:latest"
 fi
 
-# Check if the Docker image already exists
-IMAGE_EXISTS=$(docker images -q apps-builder-${TARGETPLATFORM})
-
-if [ -z "$IMAGE_EXISTS" ]; then
-    # Build docker image using local Dockerfile
-    docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
-           -t apps-builder-${TARGETPLATFORM} .
-else
-    echo "Docker image 'apps-builder:latest' already exists. Skipping build."
-fi
+# Build docker image using local Dockerfile
+docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
+       -t apps-builder-${TARGETPLATFORM} .
 
 # Run the docker to build the apps 
 docker run --privileged \
