@@ -12,6 +12,7 @@
 #include "config_app.h"
 
 #define SCRIPT       "builder/scripts/make-app.sh"
+#define LIB_USYS     "nodes/ukamaOS/distro/platform/build/libusys.so"
 #define MAX_BUFFER   1024
 
 int build_app(Config *config) {
@@ -37,11 +38,13 @@ int build_app(Config *config) {
           ukamaRoot, SCRIPT, build->source, build->cmd);
   if (system(runMe) < 0) return FALSE;
 
+#ifndef ALPINE_BUILD
   if (!build->staticFlag) {
       /* set rpath for the executable */
       sprintf(runMe, "%s/%s patchelf %s", ukamaRoot, SCRIPT, build->binFrom);
       if (system(runMe) < 0 ) return FALSE;
   }
+#endif
 
   sprintf(runMe, "%s/%s cp %s %s_%s%s", ukamaRoot, SCRIPT,
           build->binFrom, config->capp->name, config->capp->version, build->binTo);
@@ -70,6 +73,13 @@ int build_app(Config *config) {
   if (!build->staticFlag) {
       sprintf(runMe, "%s/%s libs %s %s_%s", ukamaRoot, SCRIPT,
               build->binFrom, config->capp->name, config->capp->version);
+      if (system(runMe) < 0) return FALSE;
+  }
+#else
+  if (!build->staticFlag) {
+      sprintf(runMe, "%s/%s cp %s/%s %s_%s/lib",
+              ukamaRoot, SCRIPT, ukamaRoot, LIB_USYS,
+              config->capp->name, config->capp->version);
       if (system(runMe) < 0) return FALSE;
   }
 #endif
