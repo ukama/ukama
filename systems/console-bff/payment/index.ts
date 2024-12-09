@@ -25,7 +25,7 @@ const runServer = async () => {
     context: async ({ req }) => {
       const headers: THeaders = parseGatewayHeaders(req.headers);
       const baseURL = await getBaseURL(
-        SUB_GRAPHS.payment.name,
+        SUB_GRAPHS.payments.name,
         headers.orgName,
         store
       );
@@ -37,11 +37,11 @@ const runServer = async () => {
         },
       };
     },
-    listen: { port: SUB_GRAPHS.payment.port },
+    listen: { port: SUB_GRAPHS.payments.port },
   });
 
   logger.info(
-    `🚀 Ukama Payment service running at http://localhost:${SUB_GRAPHS.payment.port}/graphql`
+    `🚀 Ukama Payment service running at http://localhost:${SUB_GRAPHS.payments.port}/graphql`
   );
 };
 

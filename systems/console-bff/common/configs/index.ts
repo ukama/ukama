@@ -153,8 +153,8 @@ export const SUB_GRAPHS = {
     url: `http://localhost:${INVITATION_PORT}`,
     isPingedSuccess: false,
   },
-  payment: {
-    name: "payment",
+  payments: {
+    name: "payments",
     port: PAYMENT_PORT,
     url: `http://localhost:${PAYMENT_PORT}`,
     isPingedSuccess: false,

@@ -7,6 +7,7 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
+import { VERSION } from "../../common/configs";
 import { logger } from "../../common/logger";
 import {
   AddPaymentInputDto,
@@ -26,16 +27,12 @@ import {
   dtoToProcessPaymentsDto,
 } from "./mapper";
 
-const VERSION = "v1";
-const PAYMENTS = "payments";
-
 class PaymentAPI extends RESTDataSource {
   add = async (
     baseURL: string,
     req: AddPaymentInputDto
   ): Promise<PaymentDto> => {
-    this.baseURL = baseURL;
-    logger.info(`[POST] AddPayment: ${this.baseURL}/${VERSION}/${PAYMENTS}`);
+    logger.info(`[POST] AddPayment: ${baseURL}/${VERSION}/payments`);
     logger.info(
       `[POST] AddPayment Payload: ${JSON.stringify({
         amount: req.amount,
@@ -53,7 +50,9 @@ class PaymentAPI extends RESTDataSource {
         },
       })}`
     );
-    return this.post(`/${VERSION}/${PAYMENTS}`, {
+    this.baseURL = baseURL;
+
+    return this.post(`/${VERSION}/payments`, {
       body: {
         amount: req.amount,
         item_id: req.itemId,
@@ -76,11 +75,11 @@ class PaymentAPI extends RESTDataSource {
     baseURL: string,
     req: UpdatePaymentInputDto
   ): Promise<PaymentDto> => {
-    this.baseURL = baseURL;
     logger.info(
-      `[PUT] UpdatePayment: ${this.baseURL}/${VERSION}/${PAYMENTS}/${req.id}`
+      `[PUT] UpdatePayment: ${baseURL}/${VERSION}/payments/${req.id}`
     );
-    return this.put(`/${VERSION}/${PAYMENTS}/${req.id}`, {
+    this.baseURL = baseURL;
+    return this.put(`/${VERSION}/payments/${req.id}`, {
       body: {
         country: req.country,
         currency: req.currency,
@@ -100,11 +99,11 @@ class PaymentAPI extends RESTDataSource {
     baseURL: string,
     paymentId: string
   ): Promise<PaymentDto> => {
-    this.baseURL = baseURL;
     logger.info(
-      `[GET] GetPayment: ${this.baseURL}/${VERSION}/${PAYMENTS}/${paymentId}`
+      `[GET] GetPayment: ${baseURL}/${VERSION}/payments/${paymentId}`
     );
-    return this.get(`/${VERSION}/${PAYMENTS}/${paymentId}`, {}).then(res =>
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/payments/${paymentId}`, {}).then(res =>
       dtoToPaymentDto(res)
     );
   };
@@ -113,10 +112,9 @@ class PaymentAPI extends RESTDataSource {
     baseURL: string,
     paymentId: string
   ): Promise<TokenResDto> => {
+    logger.info(`[GET] GetToken: ${baseURL}/${VERSION}/tokens/${paymentId}`);
     this.baseURL = baseURL;
-    logger.info(
-      `[GET] GetToken: ${this.baseURL}/${VERSION}/tokens/${paymentId}`
-    );
+
     return this.get(`/${VERSION}/tokens/${paymentId}`, {}).then(res => res);
   };
 
@@ -125,7 +123,6 @@ class PaymentAPI extends RESTDataSource {
     data: GetPaymentsInputDto
   ): Promise<PaymentsDto> => {
     this.baseURL = baseURL;
-
     let params = "sort=true";
     if (data.paymentMethod) {
       params = params + `&payment_method=${data.paymentMethod}`;
@@ -136,10 +133,8 @@ class PaymentAPI extends RESTDataSource {
     if (data.status) {
       params = params + `&status=${data.status}`;
     }
-    logger.info(
-      `[GET] GetPayments: ${this.baseURL}/${VERSION}/${PAYMENTS}?${params}`
-    );
-    return this.get(`/${VERSION}/${PAYMENTS}?${params}`).then(res =>
+    logger.info(`[GET] GetPayments: ${baseURL}/${VERSION}/payments?${params}`);
+    return this.get(`/${VERSION}/payments?${params}`).then(res =>
       dtoToPaymentsDto(res)
     );
   };
@@ -148,11 +143,12 @@ class PaymentAPI extends RESTDataSource {
     baseURL: string,
     req: ProcessPaymentInputDto
   ): Promise<ProcessPaymentDto> => {
-    this.baseURL = baseURL;
     logger.info(
-      `[PATCH] ProcessPayments: ${this.baseURL}/${VERSION}/${PAYMENTS}/${req.id}`
+      `[PATCH] ProcessPayments: ${this.baseURL}/${VERSION}/payments/${req.id}`
     );
-    return this.patch(`/${VERSION}/${PAYMENTS}/${req.id}`, {
+    this.baseURL = baseURL;
+
+    return this.patch(`/${VERSION}/payments/${req.id}`, {
       body: {
         correspondent: req.correspondent,
         token: req.token,
@@ -165,10 +161,11 @@ class PaymentAPI extends RESTDataSource {
     phoneNumber: string,
     paymentMethod: string
   ): Promise<CorrespondentsResDto> => {
-    this.baseURL = baseURL;
     logger.info(
-      `[GET] GetCorrespondents: ${this.baseURL}/${VERSION}/correspondents/${phoneNumber}?payment_method=${paymentMethod}`
+      `[GET] GetCorrespondents: ${baseURL}/${VERSION}/correspondents/${phoneNumber}?payment_method=${paymentMethod}`
     );
+    this.baseURL = baseURL;
+
     return this.get(
       `/${VERSION}/correspondents/${phoneNumber}?payment_method=${paymentMethod}`
     ).then(res => dtoToCorspondantsDto(res));
