@@ -19,7 +19,7 @@ int web_socket_cb_default(const URequest *request, UResponse *response, void *da
 
 void websocket_manager(const URequest *request, WSManager *manager, void *data);
 void websocket_incoming_message(const URequest *request, WSManager *manager,
-                                WSMessage *message, void *nodeID);
+                                const WSMessage *message, void *nodeID);
 void websocket_onclose(const URequest *request, WSManager *manager, void *data);
 
 #endif /* WEB_SOCKET_H_ */

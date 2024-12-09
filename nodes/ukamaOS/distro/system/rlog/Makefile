@@ -30,7 +30,7 @@ PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 # Packages needed to compile target
 ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
-        VENDOR_PKG=
+	VENDOR_PKG=
 else
 	VENDOR_PKG = tomlc curl jansson ulfius libuuid
 endif
@@ -78,7 +78,7 @@ XLD := $(XGCCPATH)$(XLD)
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
 all: version.h rlog.d
-	cd test; make all; cd -
+#	cd test; make ALPINE_BUILD=$(ALPINE_BUILD) all; cd -
 
 rlog.d: $(TARGET_EXEC)
 
