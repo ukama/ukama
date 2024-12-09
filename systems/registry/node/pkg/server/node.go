@@ -88,8 +88,10 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Connectivity: ukama.Undefined,
 			State:        ukama.Unknown,
 		},
-		Type: nId.GetNodeType(),
-		Name: req.Name,
+		Type:      nId.GetNodeType(),
+		Name:      req.Name,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
@@ -101,9 +103,11 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		route := n.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
 
 		evt := &epb.EventRegistryNodeCreate{
-			NodeId: nId.StringLowercase(),
-			Name:   node.Name,
-			Type:   node.Type,
+			NodeId:    nId.StringLowercase(),
+			Name:      node.Name,
+			Type:      node.Type,
+			Latitude:  node.Latitude,
+			Longitude: node.Longitude,
 		}
 
 		err = n.msgbus.PublishRequest(route, evt)
@@ -280,8 +284,10 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	resp := &pb.UpdateNodeResponse{
 		Node: &pb.Node{
-			Id:   req.NodeId,
-			Name: req.Name,
+			Id:        req.NodeId,
+			Name:      req.Name,
+			Latitude:  req.Latitude,
+			Longitude: req.Longitude,
 		},
 	}
 

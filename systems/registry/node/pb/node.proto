@@ -34,6 +34,8 @@ service NodeService {
 message AddNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];;
     string name = 2;
+    double latitude = 3;   
+    double longitude = 4; 
 }
 
 message AddNodeResponse{
@@ -84,6 +86,8 @@ message  UpdateNodeStateRequest{
 message  UpdateNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
     string name = 2;
+    double latitude = 3;   
+    double longitude = 4; 
 }
 
 message UpdateNodeResponse {
@@ -151,4 +155,6 @@ message Node {
     NodeStatus status = 5;
     Site site = 6;
     repeated Node attached = 7;
+    double latitude = 8;   
+    double longitude = 9; 
 }

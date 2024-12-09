@@ -57,13 +57,15 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, state string, latitude, longitude float64) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNode(ctx, &pb.AddNodeRequest{
-		NodeId: nodeId,
-		Name:   name,
+		NodeId:    nodeId,
+		Name:      name,
+		Latitude:  latitude,
+		Longitude: longitude,
 	})
 	if err != nil {
 		return nil, err
@@ -157,13 +159,15 @@ func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeRespo
 	return res, nil
 }
 
-func (n *Node) UpdateNode(nodeId string, name string) (*pb.UpdateNodeResponse, error) {
+func (n *Node) UpdateNode(nodeId string, name string, latitude, longitude float64) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.UpdateNode(ctx, &pb.UpdateNodeRequest{
-		NodeId: nodeId,
-		Name:   name,
+		Name:      name,
+		NodeId:    nodeId,
+		Latitude:  latitude,
+		Longitude: longitude,
 	})
 	if err != nil {
 		return nil, err

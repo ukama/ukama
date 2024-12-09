@@ -88,14 +88,14 @@ type member interface {
 }
 
 type node interface {
-	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
+	AddNode(nodeId, name, state string, latitude, longitude float64) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetAll(free bool) (*nodepb.GetNodesResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
 	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
-	UpdateNode(nodeId string, name string) (*nodepb.UpdateNodeResponse, error)
+	UpdateNode(nodeId string, name string, latitude, longitude float64) (*nodepb.UpdateNodeResponse, error)
 	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
 	AttachNodes(node, l, r string) (*nodepb.AttachNodesResponse, error)
 	DetachNode(nodeId string) (*nodepb.DetachNodeResponse, error)
@@ -243,7 +243,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.Ge
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State)
+	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State, req.Latitude, req.Longitude)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
@@ -255,7 +255,7 @@ func (r *Router) deleteAttachedNodeHandler(c *gin.Context, req *DetachNodeReques
 }
 
 func (r *Router) putUpdateNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
-	return r.clients.Node.UpdateNode(req.NodeId, req.Name)
+	return r.clients.Node.UpdateNode(req.NodeId, req.Name, req.Latitude, req.Longitude)
 }
 
 func (r *Router) patchUpdateNodeStateHandler(c *gin.Context, req *UpdateNodeStateRequest) (*nodepb.UpdateNodeResponse, error) {
