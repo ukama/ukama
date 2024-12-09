@@ -100,6 +100,24 @@ RUN git clone https://github.com/cktan/tomlc99.git && \
     cp libtoml.* /usr/lib/ && \
     cd .. && rm -rf tomlc99
 
+WORKDIR /
+
+# Clone Prometheus client repository and build it
+RUN git clone https://github.com/ukama/prometheus-client.git && \
+    cd prometheus-client && \
+    mkdir -p prom/build && \
+    cd prom/build && \
+    cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_C_FLAGS="-I/usr/include" \
+        -DCMAKE_LD_FLAGS="-L/usr/lib" && \
+    make install DESTDIR=/usr && \
+    mkdir -p ../../promhttp/build && \
+    cd ../../promhttp/build && \
+    cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_C_FLAGS="-I/usr/include" \
+        -DCMAKE_LD_FLAGS="-L/usr/lib" && \
+    make install DESTDIR=/usr && \
+    cd ../../.. && \
+    rm -rf prometheus-client
+
 # Final stage
 FROM builder as final
 
