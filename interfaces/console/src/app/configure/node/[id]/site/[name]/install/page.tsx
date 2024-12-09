@@ -127,7 +127,7 @@ const SiteConfigure = ({ params }: IPage) => {
   });
 
   const { data: componentsData } = useGetComponentsByUserIdQuery({
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
     variables: {
       data: {
         category: Component_Type.All,

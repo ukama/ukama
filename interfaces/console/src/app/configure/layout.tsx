@@ -6,14 +6,18 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { useGetNetworksQuery } from '@/client/graphql/generated';
+import {
+  Component_Type,
+  useGetComponentsByUserIdQuery,
+  useGetNetworksQuery,
+} from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
 import { ConfigureStep, isValidLatLng } from '@/utils';
-import { Box, Typography } from '@mui/material';
+import { AlertColor, Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
   useParams,
@@ -21,6 +25,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation';
+import { useState } from 'react';
 import DynamicNetwork from '../../../public/svg/DynamicNetwork';
 import { Logo } from '../../../public/svg/Logo';
 
@@ -30,15 +35,24 @@ const ConfigureLayout = ({
   children: React.ReactNode;
 }>) => {
   const router = useRouter();
-  const params = useParams<{ id: string; name: string }>();
   const path = usePathname();
+  const params = useParams<{ id: string; name: string }>();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
+  const qpPower = searchParams.get('power') ?? '';
+  const qpSwitch = searchParams.get('switch') ?? '';
+  const qpAddress = searchParams.get('address') ?? '';
+  const qpbackhaul = searchParams.get('backhaul') ?? '';
   const pstep = parseInt(searchParams.get('step') ?? '1');
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow, pstep);
   const { network, setNetwork, setSnackbarMessage } = useAppContext();
+  const [parts, setParts] = useState({
+    switchId: '',
+    powerName: '',
+    backhaulName: '',
+  });
 
   useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
@@ -56,6 +70,44 @@ const ConfigureLayout = ({
         id: 'networks-msg',
         message: error.message,
         type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  useGetComponentsByUserIdQuery({
+    fetchPolicy: 'cache-first',
+    variables: {
+      data: {
+        category: Component_Type.All,
+      },
+    },
+    onCompleted: (data) => {
+      if (data.getComponentsByUserId.components.length > 0) {
+        const switchRecords = data.getComponentsByUserId.components.find(
+          (comp) => comp.id === qpSwitch,
+        );
+
+        const powerRecords = data.getComponentsByUserId.components.find(
+          (comp) => comp.id === qpPower,
+        );
+
+        const backhaulRecords = data.getComponentsByUserId.components.find(
+          (comp) => comp.id === qpbackhaul,
+        );
+
+        setParts({
+          switchId: switchRecords?.id ?? '',
+          powerName: powerRecords?.description ?? '',
+          backhaulName: backhaulRecords?.description ?? '',
+        });
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'components-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
         show: true,
       });
     },
@@ -125,6 +177,7 @@ const ConfigureLayout = ({
                   lineHeight={'18px'}
                   letterSpacing={'1.5px'}
                   color={colors.tertiary}
+                  visibility={path.includes('complete') ? 'hidden' : 'visible'}
                 >
                   STEP {`${currentStep}/${totalStep}`}
                 </Typography>
@@ -141,7 +194,15 @@ const ConfigureLayout = ({
           >
             <CenterContainer>
               {DynamicNetwork({
-                network: network.name ? network.name : 'NETWORK',
+                power: parts.powerName,
+                powerIcon: parts.powerName ? colors.primaryMain : '#6F7979',
+                nodeId: parts.switchId,
+                nodeIcon: parts.switchId ? colors.primaryMain : '#6F7979',
+                backhaul: parts.backhaulName,
+                backhaulIcon: parts.backhaulName
+                  ? colors.primaryMain
+                  : '#6F7979',
+                network: network.name ? network.name : 'Network',
                 networkIcon: network.name ? colors.primaryMain : '#6F7979',
                 siteOneIcon:
                   qpLat &&
@@ -149,7 +210,7 @@ const ConfigureLayout = ({
                   isValidLatLng([parseFloat(qpLat), parseFloat(qpLng)])
                     ? colors.primaryMain
                     : '#6F7979',
-                siteOne: params.name ? params.name : 'SITE 1',
+                siteOne: params.name ? params.name : 'Site 1',
                 isShowComponents: params.name ? true : false,
               })}
             </CenterContainer>

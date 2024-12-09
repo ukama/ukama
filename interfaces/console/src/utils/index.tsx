@@ -16,6 +16,7 @@ import {
   MetricRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
+import { ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -409,11 +410,22 @@ const ConfigureStep = (
   flow: string,
   step: number,
 ): TConfigureStep => {
-  switch (path) {
-    case 'network-name':
-      return { currentStep: 1, totalStep: 1 };
+  switch (flow) {
+    case ONBOARDING_FLOW:
+      if (path.includes('configure/network'))
+        return { currentStep: 1, totalStep: 6 };
+      else if (path.includes('check')) return { currentStep: 1, totalStep: 6 };
+      else if (path.includes('sims')) return { currentStep: 6, totalStep: 6 };
+      else if (path.includes('install'))
+        return { currentStep: 5, totalStep: 6 };
+      else if (path.includes('site/name'))
+        return { currentStep: 4, totalStep: 6 };
+      else if (path.includes('configure/node'))
+        return { currentStep: 3, totalStep: 6 };
+      else if (path.includes('configure'))
+        return { currentStep: 2, totalStep: 6 };
     default:
-      return { currentStep: 1, totalStep: 5 };
+      return { currentStep: 1, totalStep: 6 };
   }
 };
 

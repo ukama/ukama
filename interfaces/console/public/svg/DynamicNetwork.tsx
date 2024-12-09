@@ -3,8 +3,15 @@ type TDynamicNetwork = {
   siteOne?: string;
   siteTwo?: string;
   siteN?: string;
-  node?: string;
+  nodeId?: string;
   power?: string;
+  netowrkTextColor?: string;
+  siteOneTextColor?: string;
+  siteTwoTextColor?: string;
+  siteNTextColor?: string;
+  nodeTextColor?: string;
+  powerTextColor?: string;
+  backhaulTextColor?: string;
   backhaul?: string;
   networkIcon?: string;
   siteOneIcon?: string;
@@ -13,7 +20,6 @@ type TDynamicNetwork = {
   nodeIcon?: string;
   powerIcon?: string;
   backhaulIcon?: string;
-  selectedColor?: string;
   isShowComponents?: boolean;
 };
 const DynamicNetwork = ({
@@ -21,8 +27,15 @@ const DynamicNetwork = ({
   siteOne = 'Site 1',
   siteTwo = 'Site 2',
   siteN = 'Site N',
-  node = 'Node',
+  nodeId = 'Node',
   power = 'Power',
+  netowrkTextColor = '#6F7979',
+  siteOneTextColor = '#6F7979',
+  siteTwoTextColor = '#6F7979',
+  siteNTextColor = '#6F7979',
+  nodeTextColor = '#6F7979',
+  powerTextColor = '#6F7979',
+  backhaulTextColor = '#6F7979',
   backhaul = 'Backhaul',
   networkIcon = '#6F7979',
   siteOneIcon = '#6F7979',
@@ -31,7 +44,6 @@ const DynamicNetwork = ({
   nodeIcon = '#6F7979',
   powerIcon = '#6F7979',
   backhaulIcon = '#6F7979',
-  selectedColor = '#6F7979',
   isShowComponents = false,
 }: TDynamicNetwork) => {
   const DEFAULT_TEXT_COLOR = '#304445';
@@ -49,35 +61,24 @@ const DynamicNetwork = ({
       xmlns="http://www.w3.org/2000/svg"
     >
       <text
-        x="180"
+        x="196"
         y="64"
-        fill={network ? selectedColor : DEFAULT_TEXT_COLOR}
+        fill={netowrkTextColor}
         style={textStyle}
+        textAnchor="middle"
+        dominantBaseline="middle"
       >
-        {network}
+        <tspan x="218" dy="-0.5em">
+          {network}
+        </tspan>
       </text>
-      <text
-        x="18"
-        y="154"
-        fill={siteOne ? selectedColor : DEFAULT_TEXT_COLOR}
-        style={textStyle}
-      >
+      <text x="30" y="154" fill={siteOneTextColor} style={textStyle}>
         {siteOne}
       </text>
-      <text
-        x="187"
-        y="154"
-        fill={siteTwo ? selectedColor : DEFAULT_TEXT_COLOR}
-        style={textStyle}
-      >
+      <text x="200" y="154" fill={siteTwoTextColor} style={textStyle}>
         {siteTwo}
       </text>
-      <text
-        x="358"
-        y="154"
-        fill={siteN ? selectedColor : DEFAULT_TEXT_COLOR}
-        style={textStyle}
-      >
+      <text x="370" y="154" fill={siteNTextColor} style={textStyle}>
         {siteN}
       </text>
 
@@ -94,33 +95,35 @@ const DynamicNetwork = ({
         d="M389 107.917C383.356 107.917 378.792 112.481 378.792 118.125C378.792 125.781 389 137.083 389 137.083C389 137.083 399.208 125.781 399.208 118.125C399.208 112.481 394.644 107.917 389 107.917ZM389 121.771C386.987 121.771 385.354 120.137 385.354 118.125C385.354 116.112 386.987 114.479 389 114.479C391.012 114.479 392.646 116.112 392.646 118.125C392.646 120.137 391.012 121.771 389 121.771Z"
         fill={siteNIcon}
       />
-      <path
-        d="M216.646 34.4375L218.396 32.6875C216.938 31.2292 216.208 29.3333 216.208 27.5833C216.208 25.6875 216.938 23.7917 218.396 22.4792L216.646 20.7292C214.75 22.625 213.729 25.1042 213.729 27.5833C213.729 30.0625 214.75 32.5417 216.646 34.4375Z"
-        fill={networkIcon}
-      />
-      <path
-        d="M233.854 17.2292L232.104 18.9792C234.438 21.3125 235.604 24.5208 235.604 27.5833C235.604 30.6458 234.438 33.8542 232.104 36.1875L233.854 37.9375C236.771 35.0208 238.083 31.375 238.083 27.5833C238.083 23.7917 236.625 20.1458 233.854 17.2292Z"
-        fill={networkIcon}
-      />
-      <path
-        d="M214.896 18.9792L213.146 17.2292C210.375 20.1458 208.917 23.7917 208.917 27.5833C208.917 31.375 210.375 35.0208 213.146 37.9375L214.896 36.1875C212.563 33.8542 211.396 30.6458 211.396 27.5833C211.396 24.5208 212.563 21.3125 214.896 18.9792Z"
-        fill={networkIcon}
-      />
-      <path
-        d="M230.354 34.4375C232.25 32.5417 233.271 30.0625 233.271 27.5833C233.125 25.1042 232.25 22.625 230.354 20.7292L228.604 22.4792C230.063 23.9375 230.792 25.8333 230.792 27.5833C230.792 29.4792 230.063 31.375 228.604 32.6875L230.354 34.4375Z"
-        fill={networkIcon}
-      />
-      <path
-        d="M227.146 27.5833C227.146 25.5708 225.513 23.9375 223.5 23.9375C221.488 23.9375 219.854 25.5708 219.854 27.5833C219.854 28.6917 220.35 29.6542 221.123 30.325L216.208 45.0833H219.125L220.102 42.1667H226.913L227.875 45.0833H230.792L225.877 30.325C226.65 29.6542 227.146 28.6917 227.146 27.5833ZM221.065 39.25L223.5 31.9583L225.935 39.25H221.065Z"
-        fill={networkIcon}
-      />
+      <g x="218" dy="-0.5em">
+        <path
+          d="M216.646 34.4375L218.396 32.6875C216.938 31.2292 216.208 29.3333 216.208 27.5833C216.208 25.6875 216.938 23.7917 218.396 22.4792L216.646 20.7292C214.75 22.625 213.729 25.1042 213.729 27.5833C213.729 30.0625 214.75 32.5417 216.646 34.4375Z"
+          fill={networkIcon}
+        />
+        <path
+          d="M233.854 17.2292L232.104 18.9792C234.438 21.3125 235.604 24.5208 235.604 27.5833C235.604 30.6458 234.438 33.8542 232.104 36.1875L233.854 37.9375C236.771 35.0208 238.083 31.375 238.083 27.5833C238.083 23.7917 236.625 20.1458 233.854 17.2292Z"
+          fill={networkIcon}
+        />
+        <path
+          d="M214.896 18.9792L213.146 17.2292C210.375 20.1458 208.917 23.7917 208.917 27.5833C208.917 31.375 210.375 35.0208 213.146 37.9375L214.896 36.1875C212.563 33.8542 211.396 30.6458 211.396 27.5833C211.396 24.5208 212.563 21.3125 214.896 18.9792Z"
+          fill={networkIcon}
+        />
+        <path
+          d="M230.354 34.4375C232.25 32.5417 233.271 30.0625 233.271 27.5833C233.125 25.1042 232.25 22.625 230.354 20.7292L228.604 22.4792C230.063 23.9375 230.792 25.8333 230.792 27.5833C230.792 29.4792 230.063 31.375 228.604 32.6875L230.354 34.4375Z"
+          fill={networkIcon}
+        />
+        <path
+          d="M227.146 27.5833C227.146 25.5708 225.513 23.9375 223.5 23.9375C221.488 23.9375 219.854 25.5708 219.854 27.5833C219.854 28.6917 220.35 29.6542 221.123 30.325L216.208 45.0833H219.125L220.102 42.1667H226.913L227.875 45.0833H230.792L225.877 30.325C226.65 29.6542 227.146 28.6917 227.146 27.5833ZM221.065 39.25L223.5 31.9583L225.935 39.25H221.065Z"
+          fill={networkIcon}
+        />
+      </g>
       <path
         d="M219 87H385C387.209 87 389 88.7909 389 91V100"
-        fill={networkIcon}
+        stroke="#B0B9C6"
       />
       <path
         d="M219 87H53C50.7909 87 49 88.7909 49 91V100"
-        fill={networkIcon}
+        stroke="#B0B9C6"
         strokeLinecap="round"
       />
       <g style={{ display: isShowComponents ? 'flex' : 'none' }}>
@@ -148,28 +151,13 @@ const DynamicNetwork = ({
           d="M62.5 313.936C62.7761 313.936 63 314.144 63 314.4C63 314.657 62.7761 314.865 62.5 314.865V313.936ZM50 166.601L50 310.682H49L49 166.601H50ZM53.5 313.936H62.5V314.865H53.5V313.936ZM50 310.682C50 312.479 51.567 313.936 53.5 313.936V314.865C51.0147 314.865 49 312.992 49 310.682H50Z"
           fill="#B0B9C6"
         />
-        <text
-          x="52"
-          y="222"
-          fill={node ? selectedColor : DEFAULT_TEXT_COLOR}
-          style={textStyle}
-        >
-          {node}
+        <text x="72" y="222" fill={nodeTextColor} style={textStyle}>
+          {nodeId}
         </text>
-        <text
-          x="52"
-          y="282"
-          fill={power ? selectedColor : DEFAULT_TEXT_COLOR}
-          style={textStyle}
-        >
+        <text x="72" y="282" fill={powerTextColor} style={textStyle}>
           {power}
         </text>
-        <text
-          x="52"
-          y="346"
-          fill={backhaul ? selectedColor : DEFAULT_TEXT_COLOR}
-          style={textStyle}
-        >
+        <text x="72" y="346" fill={backhaulTextColor} style={textStyle}>
           {backhaul}
         </text>
       </g>
