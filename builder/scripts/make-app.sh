@@ -82,11 +82,11 @@ case "$ACTION" in
 	    rm -rf $2
 	    ;;
     "pack")
-	    mkdir -p pkgs
-	    tar -czf pkgs/$2 $3
-	    if [ $4 -eq 1 ]
+	    mkdir -p $2/build/pkgs/
+	    tar -czf $2/build/pkgs/$3 $4
+	    if [ $5 -eq 1 ]
 	    then
-	        rm -rf $3 ${ROOTFS}
+	        rm -rf $4 ${ROOTFS}
 	    fi
 	    ;;
 esac

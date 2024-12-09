@@ -100,7 +100,9 @@ int create_app(Config *config) {
   remove(DEF_CONFIG);
 
   /* delete the directory afterwards */
-  sprintf(runMe, "%s pack %s_%s.tar.gz %s_%s %d", SCRIPT,
+  sprintf(runMe, "%s pack %s %s_%s.tar.gz %s_%s %d",
+          SCRIPT,
+          getenv("UKAMA_ROOT"),
           config->capp->name, config->capp->version,
           config->capp->name, config->capp->version, TRUE);
   if (system(runMe) < 0) {

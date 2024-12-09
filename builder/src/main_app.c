@@ -159,10 +159,12 @@ int main (int argc, char *argv[]) {
     goto done;
   }
 
-  sprintf(cappFile, "pkgs/%s_%s.tar.gz", config->capp->name,
-	  config->capp->version);
+  sprintf(cappFile, "%s/build/pkgs/%s_%s.tar.gz",
+          getenv("UKAMA_ROOT"),
+          config->capp->name,
+          config->capp->version);
   stat(cappFile, &st);
-  log_debug("All done. cApp: %s Size: %dK", cappFile, (int)st.st_size/1000);
+  log_debug("All done. \n cApp: %s \n Size: %dK", cappFile, (int)st.st_size/1000);
 
   exitStatus = 0;
 

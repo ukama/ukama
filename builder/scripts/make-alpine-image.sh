@@ -334,6 +334,7 @@ unmount_partition "$PRIMARY_MOUNT"
 unmount_partition "$PASSIVE_MOUNT"
 unmount_partition "$UNUSED_MOUNT"
 detach_loop_device
+rm "${ALPINE_TAR}"
 
 log "SUCCESS" "Alpine-based SD card image created successfully!"
 exit 0
