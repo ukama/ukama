@@ -30,7 +30,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
 }) => {
   return (
     <Box display="flex" gap={2}>
-      <Paper elevation={2} sx={{ padding: 2, flex: 1, borderRadius: '10px' }}>
+      <Paper elevation={2} sx={{ padding: 4, flex: 1, borderRadius: '10px' }}>
         <Stack direction="column" spacing={2} sx={{ mb: 2 }}>
           <Stack
             direction={'row'}
@@ -56,7 +56,7 @@ const PaymentCard: React.FC<PaymentCardProps> = ({
         <Typography variant="h4">{amount}</Typography>
       </Paper>
 
-      <Paper elevation={2} sx={{ padding: 2, flex: 1 }}>
+      <Paper elevation={2} sx={{ padding: 4, flex: 1 }}>
         <Typography variant="subtitle1" fontWeight="bold">
           Payment information
         </Typography>
