@@ -21,7 +21,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation';
-import CustomNetworkInfo from '../../../public/svg/CustomNetworkInfo';
+import DynamicNetwork from '../../../public/svg/DynamicNetwork';
 import { Logo } from '../../../public/svg/Logo';
 
 const ConfigureLayout = ({
@@ -140,18 +140,17 @@ const ConfigureLayout = ({
             display={{ xs: 'none', md: 'flex' }}
           >
             <CenterContainer>
-              {CustomNetworkInfo({
-                networkName: network.name ? network.name : 'NETWORK',
-                networkColor: network.name ? colors.primaryMain : '#333333',
-                networkIconColor: network.name ? colors.primaryMain : '#6F7979',
-                siteOneIconColor:
+              {DynamicNetwork({
+                network: network.name ? network.name : 'NETWORK',
+                networkIcon: network.name ? colors.primaryMain : '#6F7979',
+                siteOneIcon:
                   qpLat &&
                   qpLng &&
                   isValidLatLng([parseFloat(qpLat), parseFloat(qpLng)])
                     ? colors.primaryMain
                     : '#6F7979',
-                siteOneName: params.name ? params.name : 'SITE 1',
-                siteOneColor: params.name ? colors.primaryMain : '#333333',
+                siteOne: params.name ? params.name : 'SITE 1',
+                isShowComponents: params.name ? true : false,
               })}
             </CenterContainer>
           </Grid>

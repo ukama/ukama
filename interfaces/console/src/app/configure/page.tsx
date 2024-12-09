@@ -36,7 +36,7 @@ const Page = () => {
   };
   const handleSkip = () => {
     //TODO: HANDLE SKIP LOGIC
-    // router.push('/console/home');
+    router.push(`/configure/sims?step=5&flow=${flow}`);
   };
 
   const handleOnInstalled = (isChecked: boolean) => {
