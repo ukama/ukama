@@ -85,38 +85,19 @@ func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg
 		log.WithError(err).Error("Failed to unmarshal details")
 		return err
 	}
+	lat := details["latitude"]
+	lon := details["longitude"]
+	if lat == nil || lon == nil {
+		log.Errorf("Latitude or Longitude key not found in details")
+		return fmt.Errorf("latitude or longitude key not found in details")
+	}
+
 	updateRequest := &pb.UpdateNodeRequest{
-		NodeId: msg.NodeId,
+		NodeId:    msg.NodeId,
+		Latitude:  lat.(float64),
+		Longitude: lon.(float64),
 	}
-	switch key {
-	case "latitude":
-		lat, exists := details["latitude"]
-		if !exists {
-			log.Warn("Latitude key not found in details")
-			return fmt.Errorf("latitude key not found in details")
-		}
-		latFloat, ok := lat.(float64)
-		if !ok {
-			log.Error("Latitude is not a float64 type")
-			return fmt.Errorf("latitude is not a float64 type")
-		}
-		updateRequest.Latitude = latFloat
-	case "longitude":
-		lon, exists := details["longitude"]
-		if !exists {
-			log.Errorf("Longitude key not found in details")
-			return fmt.Errorf("longitude key not found in details")
-		}
-		lonFloat, ok := lon.(float64)
-		if !ok {
-			log.Error("Longitude is not a float64 type")
-			return fmt.Errorf("longitude is not a float64 type")
-		}
-		updateRequest.Longitude = lonFloat
-	default:
-		log.Errorf("Unhandled key %s", key)
-		return fmt.Errorf("unhandled key: %s", key)
-	}
+
 	_, err := n.s.UpdateNode(ctx, updateRequest)
 	if err != nil {
 		log.WithError(err).Error("Failed to update node")
