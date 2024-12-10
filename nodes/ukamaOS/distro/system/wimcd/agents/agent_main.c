@@ -24,8 +24,12 @@
 #include "usys_getopt.h"
 #include "usys_api.h"
 #include "usys_services.h"
+#include "usys_file.h"
 
 #include "version.h"
+
+/* network.c */
+bool start_web_service(char *method, struct _u_instance *webInstance);
 
 #define DEF_LOG_LEVEL     "TRACE"
 
@@ -67,10 +71,8 @@ void set_log_level(char *slevel) {
 int main(int argc, char **argv) {
 
     int opt=0, opdix=0;
-    long code;
     char *debug=DEF_LOG_LEVEL;
     char *method="test";
-
     UInst inst;
 
     usys_log_set_service(SERVICE_WIMC_AGENT);
@@ -123,7 +125,6 @@ int main(int argc, char **argv) {
 
     pause();
 
-cleanup:
     ulfius_stop_framework(&inst);
     ulfius_clean_instance(&inst);
 

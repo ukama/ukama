@@ -9,7 +9,7 @@ include ../../ukamaOS/config.mk
 TARGET_EXEC = gps.d
 TEST_EXEC   = test_runner
 
-UKAMAOS_ROOT = ../../ukamaOS
+UKAMAOS_ROOT = $(NODES_DIR)/ukamaOS
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -24,7 +24,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
-VENDOR_PKG = tomlc curl jansson ulfius
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc curl jansson ulfius
+endif
 PLATFORM = platform
 
 # Setting up various compile and link flags
@@ -94,10 +99,10 @@ $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@
 
 version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 static.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_static.sh
+	$(NODES_DIR)/utils/scripts/generate_static.sh
 
 test: version.h static.h $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES)
 	$(XCC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) \

@@ -29,6 +29,9 @@
 
 #include "version.h"
 
+/* init.c */
+extern void open_db(sqlite3 **db, char *dbFile, int flag);
+
 void handle_sigint(int signum) {
 
     usys_log_debug("Terminate signal.\n");

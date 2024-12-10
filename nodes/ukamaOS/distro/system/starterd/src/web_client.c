@@ -20,6 +20,7 @@
 #include "usys_types.h"
 #include "usys_mem.h"
 #include "usys_api.h"
+#include "usys_file.h"
 #include "usys_services.h"
 
 static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
@@ -47,7 +48,7 @@ static int wc_send_http_request(URequest *httpReq, UResponse **httpResp) {
 
 static bool deserialzie_wimc_response(json_t *json, char **path) {
 
-    char *type, *result;
+    const char *type, *result;
     json_t *jResp, *obj;
 
     jResp = json_object_get(json, JSON_WIMC_RESPONSE);
@@ -189,7 +190,6 @@ bool ping_capp(char *name) {
     int port, httpStatus;
     CURL *curl = NULL;
     CURLcode res;
-    struct curl_slist *headers = NULL;
     char url[MAX_BUFFER] = {0};
 
     curl_global_init(CURL_GLOBAL_ALL);

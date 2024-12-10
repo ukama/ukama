@@ -9,7 +9,12 @@ include ../../../config.mk
 TARGET_EXEC = bootstrap
 TEST_EXEC   = test_runner
 
-UKAMAOS_ROOT = ../../../
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGET_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG = $(APP_CONFIG_DIR)/$(APP_NAME)/config.toml
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -24,7 +29,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
-VENDOR_PKG = tomlc curl jansson ulfius libuuid
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc curl jansson ulfius libuuid
+endif
 PLATFORM   = platform
 
 # Setting up various compile and link flags
@@ -49,15 +59,32 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 LDFLAGS+=--coverage
 
-# Libraries needed
-CURL_LIB=-lcurl -lssl -lcrypto
+# Libraries
+ULFIUS_LIB_DEP=-lorcania
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB_DEP+=-lyder
+endif
+ULFIUS_LIB_DEP+=-lmicrohttpd
+ULFIUS_LIB_DEP+=-lgnutls
+ULFIUS_LIB_DEP+=-lnettle
+ULFIUS_LIB_DEP+=-lhogweed
+ULFIUS_LIB_DEP+=-lp11-kit
+ULFIUS_LIB_DEP+=-lz
+CURL_LIB_DEP=-lcurl
+CURL_LIB_DEP+=-lssl
+CURL_LIB_DEP+=-lcrypto
 
-LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-lpthread
+LIBS+=-lrt
+LIBS+=-lm
+LIBS+=$(ULFIUS_LIB_DEP)
+LIBS+=$(CURL_LIB_DEP)
 LIBS+=-ltoml
 LIBS+=-ljansson
 LIBS+=-lpthread
 LIBS+=-lusys
 LIBS+=-lmicrohttpd
+LIBS+=-lulfius
 
 # Source files
 TARGET_CFILES   = $(wildcard ./src/*.c)
@@ -89,8 +116,8 @@ $(VENDOR_PKG):
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
-version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+$(VERSION_FILE):
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 %.o: %.c
 	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
@@ -106,3 +133,11 @@ clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) $(TEST_EXEC) $(TEST_OBJFILES) \
 	version.h *.gcda *.gcno *.gcov src/*.gcda src/*.gcov src/*.gcno \
 	test/*.gcda test/*.gcno test/*.gcov
+
+install: $(ARTIFACTS) $(VERSION_FILE)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi

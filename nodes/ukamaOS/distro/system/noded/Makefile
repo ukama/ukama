@@ -12,7 +12,14 @@ INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
 
-DISTRO_DIR:=../..
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGETBIN)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG = 
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
+
+DISTRO_DIR:=$(UKAMAOS_ROOT)/distro
 
 # Vendor
 VENDOR_DIR:=$(DISTRO_DIR)/vendor
@@ -69,14 +76,20 @@ XCC=gcc
 endif
 
 # VENDOR_PKG
-VENDOR_PKG = tomlc curl jansson ulfius
-
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc curl jansson ulfius
+endif
 # Platform Package
 PLATFORM_PKG = usys
 
 # Libraries
 ULFIUS_LIB_DEP=-lorcania 
-ULFIUS_LIB_DEP+=-lyder 
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB_DEP+=-lyder
+endif
 ULFIUS_LIB_DEP+=-lmicrohttpd
 ULFIUS_LIB_DEP+=-lgnutls
 ULFIUS_LIB_DEP+=-lnettle
@@ -155,10 +168,10 @@ $(info CFILES :: $(SVC_CFILES))
 $(info OBJFILES :: $(SVC_OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
+.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean version.h
 
 # Main target for building
-all: $(TARGETBIN) $(INVENTORY) $(SCHEMA)
+all: $(TARGETBIN) $(INVENTORY) $(SCHEMA) version.h 
 	@echo Done.
 
 # CLANG FORMAT
@@ -250,5 +263,16 @@ memcheck: $(UTEST)
 
 # Clean all build files
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) version.h
 	@echo Cleaned.
+
+version.h:
+	$(NODES_DIR)/utils/scripts/generate_version.sh
+
+install: $(ARTIFACTS) version.h
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf build/$(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi

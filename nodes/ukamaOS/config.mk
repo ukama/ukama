@@ -11,6 +11,11 @@
 CURMAKE = $(abspath $(firstword $(MAKEFILE_LIST)))
 CURPATH = $(dir $(CURMAKE))
 
+CUR_BUILD_DIRNAME = $(notdir $(patsubst %/,%,$(CURPATH)))
+
+NODES_DIR = $(shell echo $(CURPATH) | sed 's|\(.*nodes\)/.*|\1|')
+UKAMAOS_ROOT = $(NODES_DIR)/ukamaOS
+
 #OS
 OS = $(shell uname -s)
 NPROCS = 1
@@ -35,25 +40,30 @@ override LOCAL  = linux
 
 #TARGET
 ifndef TARGET
-	override TARGETBOARD = $(LOCAL)
+	override TARGETBOARD = ANODEBOARD
 else
 	override TARGETBOARD = $(TARGET)
 endif
 
-#Kernelheaders
-KERNEL_HEADERS = $(CURPATH)/distro/helpers/kernelheaders/usr/include
+# Setup paths for configs
+APP_CONFIG_DIR = $(NODES_DIR)/configs/capps
+NODE_APP_CONFIG_DIR = /conf
+
+# Setup paths for apps
+NODE_APP_DIR = /sbin/
 
 # Setup various compilier and linker options for various targets.
 
 ifeq ($(ANODEBOARD), $(TARGETBOARD))
 	override CC     = arm-linux-gnueabihf-gcc
 	override ARCH   = $(ARCH_ARM)
-	XCROSS_COMPILER = arm-linux-musleabihf-
+	XCROSS_COMPILER = arm-linux-gnueabihf-
 	XGCC            = $(XCROSS_COMPILER)gcc
 	XLD             = $(XCROSS_COMPILER)ld
 	XGXX            = $(XCROSS_COMPILER)g++
-	HOST            = arm-linux-musleabihf
+	HOST            = arm-linux-gnueabihf
 	OPENSSLTARGET   = linux-generic32
+	XGCCPATH        = /usr/bin/
 endif
 
 ifeq ($(CNODEBOARD), $(TARGETBOARD))

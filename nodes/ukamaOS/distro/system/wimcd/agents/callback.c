@@ -29,6 +29,9 @@
 
 #include "version.h"
 
+/* thread.c */
+extern void process_capp_fetch_request(WFetch *fetch);
+
 static void log_json(json_t *json) {
 
     char *str = NULL;

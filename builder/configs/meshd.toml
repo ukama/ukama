@@ -1,0 +1,35 @@
+[build-from]
+	rootfs="default"     # default is busybox minimal capp config
+	contained="default"  # default namespace, cgroup, etc.
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/meshd"
+	cmd="make XGCCPATH=/usr/bin/"
+	bin_from="/nodes/ukamaOS/distro/system/meshd/mesh.d"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+        from="/nodes/configs/apps/mesh/config.toml"
+        to="/conf/config.toml"
+
+[build-misc]
+	from="/nodes/configs/capps/mesh/ip_file"
+	to="/conf/ip_file"
+
+# Following are use to create config.json file which is used by lxce.d to start 
+# the capp within ukamaOS and pkg everything
+[capp-exec]
+	name="meshd"
+	version="latest"
+	bin="mesh.d"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	args="--config /ukama/configs/meshd/config.toml"
+	
+# Final output format for capp
+[capp-output]
+	format="tar.gz"
