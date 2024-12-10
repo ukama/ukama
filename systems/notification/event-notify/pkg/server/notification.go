@@ -10,12 +10,12 @@ package server
 
 import (
 	"context"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cnotif "github.com/ukama/ukama/systems/common/notification"
 	notif "github.com/ukama/ukama/systems/common/notification"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -136,13 +136,15 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 	roleType := upb.RoleType_ROLE_INVALID
 
 	/* validate member of org or member role */
-	if req.GetUserId() != "" {
+	if req.GetUserId() != "" && req.GetSubscriberId() == "" {
 		resp, err := n.memberkClient.GetByUserId(req.GetUserId())
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid user id. Error %s", err.Error())
 		}
 		roleType = upb.RoleType(upb.RoleType_value[resp.Member.Role])
+	} else if req.GetSubscriberId() != "" {
+		roleType = upb.RoleType_ROLE_SUBSCRIBER
 	}
 
 	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(roleType))
@@ -150,14 +152,22 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
 
-	if len(user) > 1 {
+	if len(user) == 0 {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"Invalid arguments: no user found")
 	}
 
-	notifications, err := n.userNotificationRepo.GetNotificationsByUserID(user[0].Id.String())
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
+	notifications := []*db.Notifications{}
+	for _, u := range user {
+		if u.UserId == req.GetUserId() {
+			userNotifications, err := n.userNotificationRepo.GetNotificationsByUserID(u.Id.String())
+			log.Infof("Notifications for user: %+v", userNotifications)
+			if err != nil {
+				return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
+			}
+			notifications = append(notifications, userNotifications...)
+			break
+		}
 	}
 
 	return &pb.GetAllResponse{
@@ -168,7 +178,6 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
-		createdAt, _ := time.Parse(time.RFC3339, i.CreatedAt)
 		n := &pb.Notifications{
 			Id:          i.Id.String(),
 			Title:       i.Title,
@@ -176,7 +185,8 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 			Type:        upb.NotificationType_name[int32(i.Type)],
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
 			IsRead:      i.IsRead,
-			CreatedAt:   timestamppb.New(createdAt),
+			CreatedAt:   timestamppb.New(i.CreatedAt),
+			ResourceId:  i.ResourceId,
 		}
 		res = append(res, n)
 	}
@@ -195,6 +205,8 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
 		CreatedAt:    timestamppb.New(notification.CreatedAt),
+		ResourceId:   notification.ResourceId,
+		EventMsg:     notification.EventMsg.Data.Bytes,
 	}
 }
 
@@ -215,7 +227,7 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
 	var userList []*db.Users
 	var err error
-	roleTypes := notif.NotificationScopeToRoles[scope]
+	roleTypes := cnotif.NotificationScopeToRoles[scope]
 	done := make(chan bool)
 
 	go func() {
@@ -310,9 +322,9 @@ func (n *EventToNotifyServer) storeEvent(event *db.EventMsg) (uint, error) {
 	return id, nil
 }
 
-func IsValidNotificationScopeForRole(r roles.RoleType, s notif.NotificationScope) bool {
+func IsValidNotificationScopeForRole(r roles.RoleType, s cnotif.NotificationScope) bool {
 	valid := false
-	for _, v := range notif.RoleToNotificationScopes[r] {
+	for _, v := range cnotif.RoleToNotificationScopes[r] {
 		if v == s {
 			valid = true
 		}

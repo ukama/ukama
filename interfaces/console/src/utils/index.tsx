@@ -6,12 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Invitation_Status, NodeTypeEnum } from '@/client/graphql/generated';
+import {
+  Invitation_Status,
+  NodeTypeEnum,
+  Role_Type,
+} from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
-  Role_Type,
 } from '@/client/graphql/generated/subscriptions';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
@@ -219,8 +222,8 @@ const getDataPlanUsage = (
   dataVolume: string,
   dataUnit: string,
 ): string => {
-  const symbol = currency === 'Dollar' ? '$' : '';
-  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+  const symbol = currency === 'Dollar' ? '$' : currency;
+  return `${symbol} ${amount} / ${dataVolume} ${getDataUsageSymbol(
     dataUnit,
   )} / ${duration}`;
 };
@@ -287,7 +290,15 @@ const getSimValuefromSimType = (simType: string) => {
   }
 };
 
-const getInvitationStatusColor = (status: string) => {
+const getInvitationStatusColor = (status: string, isExpired: boolean) => {
+  if (isExpired) {
+    return (
+      <Typography variant="body2" color={colors.red}>
+        Expired
+      </Typography>
+    );
+  }
+
   switch (status) {
     case Invitation_Status.InviteAccepted:
       return (
@@ -313,7 +324,7 @@ const getInvitationStatusColor = (status: string) => {
 const provideStatusColor = (status: Invitation_Status) => {
   switch (status) {
     case Invitation_Status.InvitePending:
-      return 'info';
+      return colors.blueGray;
     case Invitation_Status.InviteAccepted:
       return 'success';
     case Invitation_Status.InviteDeclined:

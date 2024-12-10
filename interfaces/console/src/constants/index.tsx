@@ -5,8 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Sim_Types } from '@/client/graphql/generated';
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { Role_Type, Sim_Types } from '@/client/graphql/generated';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -44,9 +43,7 @@ const SITE_CONFIG_STEPS = [
 ];
 export const MEMBER_ROLES = [
   { id: 1, label: 'Administrator', value: Role_Type.RoleAdmin },
-  { id: 2, label: 'Vendor', value: Role_Type.RoleVendor },
-  { id: 3, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
-  { id: 4, label: 'User', value: Role_Type.RoleUser },
+  { id: 2, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
 ];
 export const SITE_PLANNING_AP_OPTIONS = [
   { id: 1, label: 'Tower Node + 1 Amplifier Unit', value: 'ONE_TO_ONE' },
@@ -101,8 +98,8 @@ const TIME_FILTER = [
 
 export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'network', label: 'network', minWidth: 180 },
-  { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
+  { id: 'email', label: 'Email', minWidth: 180 },
+  // { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
@@ -114,8 +111,7 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
     route: 'edit-sub',
   },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
-  { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
-  { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
@@ -135,11 +131,11 @@ export const NODE_TABLE_MENU: MenuItemType[] = [
   { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
 ];
 export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'Role', minWidth: 180 },
-  { id: 'status', label: 'Status', minWidth: 180 },
-  { id: 'email', label: 'Email', minWidth: 140 },
-  { id: 'actions', label: 'Action', minWidth: 140 },
+  { id: 'name', label: 'Name', minWidth: 120 },
+  { id: 'role', label: 'Role', minWidth: 144 },
+  { id: 'status', label: 'Status', minWidth: 144 },
+  { id: 'email', label: 'Email', minWidth: 120 },
+  { id: 'actions', label: 'Action', minWidth: 72 },
 ];
 export const INVITATION_TABLE_MENU: MenuItemType[] = [
   {

@@ -34,7 +34,9 @@ import (
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -124,6 +126,8 @@ func runGrpcServer(gormDB sql.Db) {
 	netClient := creg.NewNetworkClient(regUrl.String())
 	pckgClient := cdplan.NewPackageClient(dataplanUrl.String())
 	notificationClient := cnotif.NewMailerClient(notificationUrl.String())
+	nucleusOrgClient := cnuc.NewOrgClient(serviceConfig.Http.NucleusClient)
+	nucleusUserClient := cnuc.NewUserClient(serviceConfig.Http.NucleusClient)
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,
@@ -139,6 +143,8 @@ func runGrpcServer(gormDB sql.Db) {
 		serviceConfig.PushMetricHost,
 		notificationClient,
 		netClient,
+		nucleusOrgClient,
+		nucleusUserClient,
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)

@@ -26,4 +26,5 @@ export default {
   HEADER_ERR_USER: "Required header user-id not found",
   HEADER_ERR_ORG_NAME: "Required header org-name not found",
   HEADER_ERR_AUTH: "Required auth headers not found",
+  TOKEN_HEADER_NOT_FOUND: "Required token headers not found",
 };

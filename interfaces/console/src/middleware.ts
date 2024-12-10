@@ -5,14 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
 import { cookies } from 'next/headers';
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
-
-// async function removeCookie(key: string) {
-//   cookies().delete(key);
-// }
+import { NextRequest, NextResponse } from 'next/server';
+import { Role_Type } from './client/graphql/generated';
 
 type User = {
   id: string;
@@ -22,6 +17,8 @@ type User = {
   orgId: string;
   token: string;
   orgName: string;
+  country: string;
+  currency: string;
   isShowWelcome: boolean;
   isEmailVerified: boolean;
 };
@@ -33,6 +30,8 @@ const USER_INIT = {
   email: '',
   orgId: '',
   orgName: '',
+  country: '',
+  currency: '',
   isShowWelcome: false,
   isEmailVerified: false,
   role: Role_Type.RoleInvalid,
@@ -41,7 +40,7 @@ const USER_INIT = {
 const whoami = async (session: string) => {
   return await fetch(`${process.env.NEXT_PUBLIC_API_GW_4SS}/get-user`, {
     method: 'GET',
-    cache: 'force-cache',
+    cache: 'no-store',
     credentials: 'include',
     headers: {
       cookie: session,
@@ -70,6 +69,15 @@ function isValidUser(userObj: {
   );
 }
 
+function isValidRole(role: string) {
+  return (
+    role === Role_Type.RoleOwner ||
+    role === Role_Type.RoleAdmin ||
+    role === Role_Type.RoleVendor ||
+    role === Role_Type.RoleNetworkOwner
+  );
+}
+
 function decodeBase64Token(token: string): string {
   return Buffer.from(token, 'base64').toString('utf8');
 }
@@ -79,7 +87,7 @@ function getUserFromToken(token: string): User {
     const parseToken = decodeBase64Token(token);
     const parts = parseToken.split(';');
 
-    if (parts.length < 8) {
+    if (parts.length < 10) {
       return USER_INIT;
     }
 
@@ -92,6 +100,8 @@ function getUserFromToken(token: string): User {
       role,
       isEmailVerified,
       isShowWelcome,
+      country,
+      currency,
     ] = parts;
     return {
       id,
@@ -101,6 +111,8 @@ function getUserFromToken(token: string): User {
       orgId,
       token,
       orgName,
+      country,
+      currency,
       isShowWelcome: isShowWelcome.includes('true'),
       isEmailVerified: isEmailVerified.includes('true'),
     };
@@ -126,6 +138,8 @@ const getUserObject = async (session: string, cookieToken: string) => {
       orgId: jsonRes.orgId,
       token: jsonRes.token,
       orgName: jsonRes.orgName,
+      country: jsonRes.country,
+      currency: jsonRes.currency,
       isShowWelcome: jsonRes.isShowWelcome,
       isEmailVerified: jsonRes.isEmailVerified,
     };
@@ -141,21 +155,12 @@ const middleware = async (request: NextRequest) => {
     return response;
   }
 
-  if (request.url.includes('logout')) {
-    // removeCookie('token');
-    const logoutRes = NextResponse.redirect(
-      new URL('/user/logout', process.env.NEXT_PUBLIC_AUTH_APP_URL),
-    );
-    logoutRes.cookies.delete('token');
-    return logoutRes;
-  }
-
   const session = cookieStore.get('ukama_session');
   const cookieToken = cookieStore.get('token')?.value ?? '';
 
   if (!session) {
     return NextResponse.redirect(
-      new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
+      new URL(`/auth/login`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
   }
 
@@ -174,15 +179,37 @@ const middleware = async (request: NextRequest) => {
     );
   }
 
+  // if (request.url.includes('logout')) {
+  // response.cookies.set('token', '', {
+  //   path: '/',
+  //   name: 'token',
+  //   secure: false,
+  //   httpOnly: true,
+  //   sameSite: 'lax',
+  //   value: '',
+  //   domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
+  //   expires: new Date(Date.now()),
+  // });
+  // return response;
+  //   return NextResponse.redirect(
+  //     new URL(`/user/logout`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
+  //   );
+  // }
+
+  if (pathname.includes('/refresh')) {
+    response.cookies.delete('token');
+    return response;
+  }
+
   if (userObj.token && !cookieToken) {
     response.cookies.set('token', userObj.token, {
       path: '/',
       name: 'token',
+      secure: false,
       httpOnly: true,
       sameSite: 'lax',
       value: userObj.token,
       domain: process.env.NEXT_PUBLIC_APP_DOMAIN,
-      secure: process.env.NODE_ENV === 'production',
       expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
     });
   } else if (!userObj.token) {
@@ -196,9 +223,26 @@ const middleware = async (request: NextRequest) => {
   response.headers.set('user-id', userObj.id);
   response.headers.set('email', userObj.email);
   response.headers.set('org-id', userObj.orgId);
+  response.headers.set('country', userObj.country);
+  response.headers.set('currency', userObj.currency);
   response.headers.set('org-name', userObj.orgName);
 
+  if (
+    userObj.role === Role_Type.RoleUser &&
+    (pathname.includes('/console') ||
+      pathname.includes('/manage') ||
+      pathname.includes('/refresh') ||
+      pathname.includes('/configure') ||
+      pathname.includes('/welcome'))
+  ) {
+    console.log("Redirecting to '/403' ");
+    return NextResponse.redirect(
+      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
   if (userObj.isShowWelcome) {
+    console.log("Redirecting to '/welcome'");
     return NextResponse.redirect(
       new URL('/welcome', process.env.NEXT_PUBLIC_APP_URL),
     );
@@ -208,38 +252,55 @@ const middleware = async (request: NextRequest) => {
     (pathname.includes('/console') || pathname === '/') &&
     !isUserHaveOrg(userObj)
   ) {
+    console.log("Redirecting to '/onboarding' ");
     return NextResponse.redirect(
       new URL('/onboarding', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
-  if (
-    pathname.includes('/console') &&
-    (userObj.role === Role_Type.RoleInvalid ||
-      userObj.role === Role_Type.RoleUser)
-  ) {
-    return NextResponse.redirect(
-      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
-    );
-  }
-
   if (pathname.includes('/welcome') && userObj.role !== Role_Type.RoleOwner) {
+    console.log("Redirecting to '/' ");
     return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_APP_URL));
   }
 
-  if (
-    pathname.includes('/manage') &&
-    userObj.role !== Role_Type.RoleOwner &&
-    userObj.role !== Role_Type.RoleAdmin
-  ) {
+  if (pathname.includes('/manage') && userObj.role !== Role_Type.RoleOwner) {
+    console.log("Redirecting to '/unauthorized' ");
     return NextResponse.redirect(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 
-  if (pathname === '/' && isUserHaveOrg(userObj) && isValidUser(userObj)) {
+  if (
+    (pathname.includes('/console/nodes') ||
+      pathname.includes('/console/sites')) &&
+    userObj.role !== Role_Type.RoleOwner &&
+    userObj.role !== Role_Type.RoleAdmin
+  ) {
+    console.log("Redirecting to '/unauthorized' ");
+    return NextResponse.redirect(
+      new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
+  if (
+    pathname === '/' &&
+    isUserHaveOrg(userObj) &&
+    isValidUser(userObj) &&
+    isValidRole(userObj.role)
+  ) {
+    console.log("Redirecting to '/console/home'");
     return NextResponse.redirect(
       new URL('/console/home', process.env.NEXT_PUBLIC_APP_URL),
+    );
+  }
+
+  if (
+    userObj.role === Role_Type.RoleUser &&
+    pathname !== '/403' &&
+    pathname !== '/logout'
+  ) {
+    return NextResponse.redirect(
+      new URL('/403', process.env.NEXT_PUBLIC_APP_URL),
     );
   }
 

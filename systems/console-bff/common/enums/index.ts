@@ -81,10 +81,10 @@ registerEnumType(NETWORK_STATUS, {
 });
 
 export enum SIM_TYPES {
-  UNKNOWN = "unknown",
-  TEST = "test",
-  OPERATOR_DATA = "operator_data",
-  UKAMA_DATA = "ukama_data",
+  unknown = "unknown",
+  test = "test",
+  operator_data = "operator_data",
+  ukama_data = "ukama_data",
 }
 registerEnumType(SIM_TYPES, {
   name: "SIM_TYPES",
@@ -123,12 +123,25 @@ registerEnumType(ROLE_TYPE, {
   name: "ROLE_TYPE",
 });
 
+export enum SIM_STATUS {
+  ALL = "ALL",
+  ASSIGNED = "ASSIGNED",
+  UNASSIGNED = "UNASSIGNED",
+}
+registerEnumType(SIM_STATUS, {
+  name: "SIM_STATUS",
+});
+
 export enum NOTIFICATION_TYPE {
   NOTIF_INVALID = "NOTIF_INVALID",
   NOTIF_INFO = "NOTIF_INFO",
   NOTIF_WARNING = "NOTIF_WARNING",
   NOTIF_ERROR = "NOTIF_ERROR",
   NOTIF_CRITICAL = "NOTIF_CRITICAL",
+  NOTIF_ACTIONABLE_INFO = "NOTIF_ACTIONABLE_INFO",
+  NOTIF_ACTIONABLE_WARNING = "NOTIF_ACTIONABLE_WARNING",
+  NOTIF_ACTIONABLE_ERROR = "NOTIF_ACTIONABLE_ERROR",
+  NOTIF_ACTIONABLE_CRITICAL = "NOTIF_ACTIONABLE_CRITICAL",
 }
 registerEnumType(NOTIFICATION_TYPE, {
   name: "NOTIFICATION_TYPE",
@@ -216,6 +229,14 @@ export const NotificationTypeEnumValue = (e: number) => {
       return NOTIFICATION_TYPE.NOTIF_ERROR;
     case 4:
       return NOTIFICATION_TYPE.NOTIF_CRITICAL;
+    case 5:
+      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_INFO;
+    case 6:
+      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_WARNING;
+    case 7:
+      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_ERROR;
+    case 8:
+      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_CRITICAL;
     default:
       return NOTIFICATION_TYPE.NOTIF_INVALID;
   }

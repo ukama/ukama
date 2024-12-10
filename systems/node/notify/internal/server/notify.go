@@ -56,7 +56,7 @@ func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 }
 
 func (n *NotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Infof("Getting notification %v", req.NotificationId)
+	log.Infof("Getting node notification %v", req.NotificationId)
 
 	notificationId, err := uuid.FromString(req.GetNotificationId())
 	if err != nil {
@@ -66,7 +66,7 @@ func (n *NotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResp
 
 	nt, err := n.notifyRepo.Get(notificationId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "notification")
+		return nil, grpc.SqlErrorToGrpc(err, "notifications")
 	}
 
 	return &pb.GetResponse{Notification: dbNotificationToPbNotification(nt)}, nil
@@ -205,7 +205,7 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 		Details:     details,
 	}
 
-	log.Debugf("New notification is : %+v.", notification)
+	log.Debugf("New node notification is : %+v.", notification)
 
 	err = notifyRepo.Add(notification)
 	if err != nil {

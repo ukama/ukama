@@ -45,7 +45,13 @@ const PageContainerHeader = ({
             </Grid>
           )}
           {showSearch && (
-            <Grid item xs={12} md={'auto'} ml={{ xs: 0, md: 1.4 }}>
+            <Grid
+              item
+              xs={12}
+              md={'auto'}
+              ml={{ xs: 0, md: 1.4 }}
+              mt={{ xs: 1, md: 0 }}
+            >
               <TextField
                 id="subscriber-search"
                 variant="outlined"

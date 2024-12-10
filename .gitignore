@@ -32,3 +32,4 @@ dump.rdb
 interfaces/console/pkg
 systems/billing/provider/.env
 build
+builder/scripts/buildSystems.log

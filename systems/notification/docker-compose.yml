@@ -25,8 +25,8 @@ services:
    - MAILER_PORT=${MAILER_PORT}
    - MAILER_PASSWORD=${MAILER_PASSWORD}
    - MAILER_USERNAME=${MAILER_USERNAME}
-   - TEMPLATESPATH=${TEMPLATESPATH}
    - MAILER_FROM=${MAILER_FROM}
+   - TEMPLATESPATH=${TEMPLATESPATH}
   restart: always
   networks:
    - ukama-net
@@ -75,9 +75,7 @@ services:
    - postgresd-notification
 
  api-gateway-notification:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
    - 8058:8080
@@ -121,7 +119,9 @@ services:
    - DB_HOST=postgresd-notification
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
+   - GRPC_PORT=9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
    - SYSTEM=notification
   restart: always
   networks:

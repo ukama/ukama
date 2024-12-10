@@ -14,18 +14,26 @@
  package ukama.events.v1;
 
  message EventSubscriberAdded{
-    string firstName = 1 [json_name = "first_name"];
-    string lastName = 2 [json_name = "last_name"];
-    string subscriberId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-    string networkId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-    string email  = 5;
-    string phoneNumber  = 6 [json_name = "phone_number"];
-    string createdAt = 7;
-    string dob = 8 [json_name = "date_of_birth"];
-    string gender = 9;
-    string address = 10;
+    string name = 1 [json_name = "name"];
+    string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+    string email  = 4;
+    string phoneNumber  = 5 [json_name = "phone_number"];
+    string createdAt = 6;
+    string dob = 7 [json_name = "dob"];
+    string gender = 8;
+    string address = 9;
 }
 
 message EventSubscriberDeleted{
     string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+}
+
+message EventSubscriberUpdate{
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
+    string phoneNumber = 3  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
+    string address = 4;
+    string idSerial =5;
+    string proofOfIdentification =6 [json_name = "proof_of_identification"];
 }

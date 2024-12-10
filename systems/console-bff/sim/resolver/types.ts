@@ -7,7 +7,7 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { SIM_TYPES } from "../../common/enums";
+import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 
 @InputType()
 export class AllocateSimInputDto {
@@ -84,18 +84,6 @@ export class SimDetailsDto {
   isPhysical: boolean;
 
   @Field()
-  firstActivatedOn: string;
-
-  @Field()
-  lastActivatedOn: string;
-
-  @Field()
-  activationsCount: number;
-
-  @Field()
-  deactivationsCount: number;
-
-  @Field()
   allocatedAt: string;
 }
 
@@ -115,15 +103,17 @@ export class RemovePackageFromSimResDto {
   packageId?: string;
 }
 @ObjectType()
-export class AddPackageSimResDto {
+export class AddPackagSimResDto {
   @Field(() => String, { nullable: true })
-  packageId?: string;
+  packageId: string;
 }
+
 @ObjectType()
-export class SetActivePackageForSimResDto {
-  @Field(() => String, { nullable: true })
-  packageId?: string;
+export class AddPackagesSimResDto {
+  @Field(() => [AddPackagSimResDto])
+  packages: AddPackagSimResDto[];
 }
+
 @InputType()
 export class RemovePackageFormSimInputDto {
   @Field()
@@ -223,10 +213,7 @@ export class DeleteSimInputDto {
 }
 
 @InputType()
-export class AddPackageToSimInputDto {
-  @Field()
-  sim_id: string;
-
+export class PackagesToSimInputDto {
   @Field()
   package_id: string;
 
@@ -234,12 +221,12 @@ export class AddPackageToSimInputDto {
   start_date: string;
 }
 @InputType()
-export class SetActivePackageForSimInputDto {
+export class AddPackagesToSimInputDto {
   @Field()
   sim_id: string;
 
-  @Field()
-  package_id: string;
+  @Field(() => [PackagesToSimInputDto])
+  packages: PackagesToSimInputDto[];
 }
 
 @ObjectType()
@@ -294,18 +281,6 @@ export class AllocateSimAPIDto {
   @Field()
   traffic_policy: number;
 
-  @Field({ nullable: true })
-  firstActivatedOn?: string;
-
-  @Field({ nullable: true })
-  lastActivatedOn?: string;
-
-  @Field()
-  activationsCount: string;
-
-  @Field()
-  deactivationsCount: string;
-
   @Field()
   allocated_at: string;
 
@@ -327,7 +302,7 @@ export class SimAPIDto {
   id: string;
 
   @Field()
-  is_allocated: string;
+  is_allocated: boolean;
 
   @Field()
   is_physical: string;
@@ -346,11 +321,96 @@ export class SimAPIDto {
 }
 
 @ObjectType()
-export class SubscriberToSimsDto {
+export class SubscriberToSimsResDto {
   @Field()
   subscriber_id: string;
-  @Field(() => [SimDto])
-  sims: SimDto[];
+  @Field(() => [SubscriberSimsAPIDto])
+  sims: SubscriberSimsAPIDto[];
+}
+
+@ObjectType()
+export class SubscriberToSimsDto {
+  @Field()
+  subscriberId: string;
+  @Field(() => [SubscriberSimsDto])
+  sims: SubscriberSimsDto[];
+}
+
+@ObjectType()
+export class SubscriberSimsDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field()
+  syncStatus: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  isPhysical: boolean;
+
+  @Field()
+  trafficPolicy: number;
+
+  @Field()
+  allocatedAt: string;
+}
+@ObjectType()
+export class SubscriberSimsAPIDto {
+  @Field()
+  id: string;
+
+  @Field()
+  subscriber_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  imsi: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  status: string;
+
+  @Field()
+  is_physical: boolean;
+
+  @Field()
+  traffic_policy: number;
+
+  @Field()
+  allocated_at: string;
+
+  @Field()
+  sync_status: string;
 }
 @ObjectType()
 export class SimDto {
@@ -367,7 +427,7 @@ export class SimDto {
   id: string;
 
   @Field()
-  isAllocated: string;
+  isAllocated: boolean;
 
   @Field()
   isPhysical: string;
@@ -457,4 +517,19 @@ export class UploadSimsInputDto {
 
   @Field(() => SIM_TYPES)
   simType: SIM_TYPES;
+}
+
+@InputType()
+export class GetSimsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
+
+  @Field(() => SIM_STATUS)
+  status: SIM_STATUS;
+}
+
+@InputType()
+export class GetSimPoolStatsInput {
+  @Field(() => SIM_TYPES)
+  type: SIM_TYPES;
 }

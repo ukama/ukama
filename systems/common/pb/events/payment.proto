@@ -28,4 +28,6 @@ message Payment {
     string country = 13;
     string description = 14;
     string status = 15;
+    string failureReason = 16 [json_name = "failure_reason"];
+    bytes metadata = 17;
 }

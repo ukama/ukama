@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { Role_Type } from '@/client/graphql/generated';
 import { MEMBER_ROLES } from '@/constants';
 import CloseIcon from '@mui/icons-material/Close';
 import {

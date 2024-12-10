@@ -29,6 +29,7 @@ type Config struct {
 	LagoAPIKey        string
 	OrgName           string
 	OrgId             string
+	WebhookUrl        string
 }
 
 func NewConfig(name string) *Config {
@@ -48,7 +49,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update",
 				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
-				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activatepackage",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage",
 				"event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage",

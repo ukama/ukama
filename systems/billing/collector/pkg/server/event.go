@@ -14,17 +14,19 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -37,7 +39,8 @@ const (
 	handlerTimeoutFactor      = 3
 	defaultChargeModel        = "package"
 	defaultCurrency           = "USD"
-	defaultBillingInterval    = "monthly"
+	postpaidBillingInterval   = "monthly"
+	prepaidBillingInterval    = "yearly"
 	testBillingInterval       = "weekly"
 	DefaultBillableMetricCode = "data_usage"
 )
@@ -48,17 +51,18 @@ type BillableMetric struct {
 }
 
 type CollectorEventServer struct {
-	orgName string
-	orgId   string
-	bMetric BillableMetric
-	client  client.BillingClient
+	orgName    string
+	orgId      string
+	bMetric    BillableMetric
+	webhookUrl string
+	client     client.BillingClient
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewCollectorEventServer(orgName, orgId string, client client.BillingClient) (*CollectorEventServer, error) {
+func NewCollectorEventServer(orgName, orgId, webhookUrl string, client client.BillingClient) (*CollectorEventServer, error) {
 	log.Infof("Starting billing collector for org: %s", orgName)
 
-	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId)
+	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId, webhookUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to initialize billable metric: %w", err)
 	}
@@ -69,10 +73,11 @@ func NewCollectorEventServer(orgName, orgId string, client client.BillingClient)
 	}
 
 	return &CollectorEventServer{
-		orgName: orgName,
-		orgId:   orgId,
-		client:  client,
-		bMetric: bMetric,
+		orgName:    orgName,
+		orgId:      orgId,
+		client:     client,
+		bMetric:    bMetric,
+		webhookUrl: webhookUrl,
 	}, nil
 }
 
@@ -164,9 +169,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// Send usage event
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"),
-		msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.fakeusage"):
+		// Send usage event
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -224,7 +228,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
-		amount, err := strconv.Atoi(accountItem.OpexFee)
+		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
 			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
 				accountItem.OpexFee, accountItem.Id, err)
@@ -232,20 +236,14 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name: accountItem.Item + ": " + accountItem.Id,
-			Code: accountItem.Id,
+			Name:        accountItem.Item + ": " + accountItem.Id,
+			Code:        accountItem.Id,
+			Interval:    postpaidBillingInterval,
+			AmountCents: int(amount * 100),
 
-			//TODO: update with defaultBillingIntervall for production
-			Interval: testBillingInterval,
-
-			// 0 values are not sent by the upstream billing provider client. see above Todos
-			AmountCents: amount * 100,
-
+			//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 			AmountCurrency: defaultCurrency,
-
-			//TODO: fails on false (postpaid). See abouve Todos
-			// PayInAdvance: true,
-			PayInAdvance: false,
+			PayInAdvance:   false,
 		}
 
 		log.Infof("Sending plan create event %v with no charge to billing", newPlan)
@@ -262,7 +260,6 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Id:         accountItem.Id,
 			CustomerId: b.orgId,
 			PlanCode:   accountItem.Id,
-			// SubscriptionAt: &subscriptionAt,
 		}
 
 		log.Infof("Sending org subscription event %v to billing server", subscriptionInput)
@@ -294,7 +291,7 @@ func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *CollectorEv
 		Code:           b.bMetric.Code,
 		SentAt:         time.Now(),
 
-		AdditionalProperties: map[string]string{
+		AdditionalProperties: map[string]any{
 			"bytes_used": fmt.Sprint(simUsage.BytesUsed),
 			"sim_id":     simUsage.SimId,
 		},
@@ -311,50 +308,53 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	// TODO: upstream billing provider fails on a DB constraint when pay in advance
-	// is set to false (postpaid). Somwhow, false bool value from go is sent as null
-	// to upstream DB. Need to investigate this between upstream go client and DB.
-
-	// TODO updates: It seems like 0, false values are not sent by go client.
-
-	// payAdvance := false
-	// if ukama.ParsePackageType(pkg.Type) == ukama.PackageTypePrepaid {
-	// payAdvance = true
-	// }
-
-	// Get the cost of the package per bytke
+	// Get the cost of the package per byte
 	dataUnit := ukama.ParseDataUnitType(pkg.DataUnit)
 	if dataUnit == ukama.DataUnitTypeUnknown {
 		return fmt.Errorf("invalid data unit type: %s", pkg.DataUnit)
 	}
 
+	// Get the type of the package
+	pkgType := ukama.ParsePackageType(pkg.Type)
+	if pkgType == ukama.PackageTypeUnknown {
+		return fmt.Errorf("invalid package type: %s", pkg.DataUnit)
+	}
+
+	var amount string
+
+	pkgIntervall := prepaidBillingInterval
+
+	switch pkgType {
+	case ukama.PackageTypePostpaid:
+		pkgIntervall = postpaidBillingInterval
+		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', 2, 64)
+
+	case ukama.PackageTypePrepaid:
+		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
+		amount = strconv.FormatFloat(dataUnitCost, 'f', 2, 64)
+	}
+
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
-	amountCents := strconv.Itoa(int(pkg.DataUnitCost * 100))
 
 	charge := client.PlanCharge{
-		BillableMetricID:     b.bMetric.Id,
-		ChargeModel:          defaultChargeModel,
-		ChargeAmountCents:    amountCents,
+		BillableMetricID: b.bMetric.Id,
+		ChargeModel:      defaultChargeModel,
+		ChargeAmount:     amount,
+
+		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 		ChargeAmountCurrency: defaultCurrency,
 		PackageSize:          int(billableDataSize),
 	}
 
 	newPlan := client.Plan{
-		Name: "Plan: " + pkg.Uuid,
-		Code: pkg.Uuid,
-
-		//TODO: set to defaultBillingInterval for production
-		Interval: testBillingInterval,
-
-		//TODO: 0 values are not sent by the upstream billing provider client. see above Todos
-		// AmountCents: 1,
+		Name:        "Plan: " + pkg.Uuid,
+		Code:        pkg.Uuid,
+		Interval:    pkgIntervall,
 		AmountCents: 0,
 
+		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 		AmountCurrency: defaultCurrency,
-
-		//TOdO: fails on false (postpaid). See abouve Todos
-		// PayInAdvance: true,
-		PayInAdvance: false,
+		PayInAdvance:   false,
 	}
 
 	log.Infof("Sending plan create event %v with charges %v to billing", newPlan, charge)
@@ -379,10 +379,11 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
+		Type:    client.IndividualCustomerType,
 	}
 
 	log.Infof("Sending subscriber create event %v to billing server", customer)
@@ -407,7 +408,7 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 
 	customer := client.Customer{
 		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.FirstName,
+		Name:    subscriber.Subscriber.Name,
 		Email:   subscriber.Subscriber.Email,
 		Address: subscriber.Subscriber.Address,
 		Phone:   subscriber.Subscriber.PhoneNumber,
@@ -453,15 +454,12 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	// subscriptionAt := time.Now()
-
 	// Because the Plan object does not expose an external_plan_id, we need to use
 	// our backend plan_id as billing provider's plan_code
 	subscriptionInput := client.Subscription{
 		Id:         sim.Id,
 		CustomerId: sim.SubscriberId,
 		PlanCode:   sim.DataPlanId,
-		// SubscriptionAt: &subscriptionAt,
 	}
 
 	log.Infof("Sending subscripton creation event %v to billing server",
@@ -500,13 +498,10 @@ func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimAc
 			subscriptionId)
 	}
 
-	// subscriptionAt := sim.PackageStartDate.AsTime()
-
 	subscriptionInput := client.Subscription{
 		Id:         sim.Id,
 		CustomerId: sim.SubscriberId,
 		PlanCode:   sim.PlanId,
-		// SubscriptionAt: &subscriptionAt,
 	}
 
 	log.Infof("Sending sim package activation event %v to billing server",
@@ -670,7 +665,7 @@ func unmarshalSimPackageExpire(msg *anypb.Any) (*epb.EventSimPackageExpire, erro
 	return p, nil
 }
 
-func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string) (string, error) {
+func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId, webhookUrl string) (string, error) {
 	log.Infof("Initializing billing defaults")
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
@@ -682,6 +677,17 @@ func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId string
 		log.Infof("Creating org billable account: %s", orgId)
 
 		_, err = createOrgCustomer(clt, orgId, orgName)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	webhooks, err := clt.ListWebhooks(ctx)
+	if err != nil || webhooks == nil || len(webhooks) == 0 || !slices.Contains(webhooks, webhookUrl) {
+		log.Warnf("failure while getting the list of existing webhook endppints: %v, %v, %v", webhooks, webhookUrl, err)
+		log.Infof("Registering default webhook endppint: %s", webhookUrl)
+
+		_, err := registerWebhookEndpoint(clt, webhookUrl)
 		if err != nil {
 			return "", err
 		}
@@ -710,6 +716,7 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 	customer := client.Customer{
 		Id:   orgId,
 		Name: OrgName,
+		Type: client.CompanyCustomerType,
 
 		// TODO: we might need additional fields such as Email, Address, Phone.
 	}
@@ -753,4 +760,26 @@ func createBillableMetric(clt client.BillingClient) (string, error) {
 	log.Infof("Successfuly created billable metric. Id: %s", bm)
 
 	return bm, nil
+}
+
+func registerWebhookEndpoint(clt client.BillingClient, webhookUrl string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	defer cancel()
+
+	webhook := client.WebhookEndpoint{
+		Url:           webhookUrl,
+		SignatureAlgo: client.JwtSignatureAlgoType,
+	}
+
+	log.Infof("Sending org customer create event %v to billing server",
+		webhook)
+
+	webhookEndpointId, err := clt.CreateWebhook(ctx, webhook)
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("New webhook endppint: %q", webhookEndpointId)
+
+	return webhookEndpointId, nil
 }

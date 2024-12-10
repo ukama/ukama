@@ -19,6 +19,7 @@ import (
 	notif "github.com/ukama/ukama/systems/common/notification"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
@@ -36,7 +37,7 @@ var notification = db.Notification{
 	Description: "Description1",
 	Type:        notif.TYPE_INFO,
 	Scope:       notif.SCOPE_ORG,
-	ResourceId:  uuid.NewV4(),
+	ResourceId:  ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE).String(),
 	OrgId:       testOrgId,
 	UserId:      testUserId.String(),
 	CreatedAt:   time.Now(),
@@ -50,8 +51,8 @@ var ns = db.Notifications{
 	Type:        notification.Type,
 	Scope:       notification.Scope,
 	IsRead:      false,
-	CreatedAt:   time.Now().Format(time.RFC3339),
-	UpdatedAt:   time.Now().Format(time.RFC3339),
+	CreatedAt:   time.Now(),
+	UpdatedAt:   time.Now(),
 }
 
 var user = db.Users{

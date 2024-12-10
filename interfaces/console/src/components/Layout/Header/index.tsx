@@ -6,16 +6,24 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  NotificationsResDto,
-  Role_Type,
-} from '@/client/graphql/generated/subscriptions';
+import { Role_Type } from '@/client/graphql/generated';
+import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
-import { IconButton, Stack, Toolbar, styled } from '@mui/material';
-import MuiAppBar, { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
+import {
+  Box,
+  Divider,
+  IconButton,
+  Stack,
+  Toolbar,
+  Typography,
+  styled,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { AppBarProps as MuiAppBarProps } from '@mui/material/AppBar';
 import dynamic from 'next/dynamic';
 import AccountPopover from './AccountPopover';
 import Alert from './Alert';
@@ -23,6 +31,11 @@ import Alert from './Alert';
 const Logo = dynamic(() =>
   import('../../../../public/svg/Logo').then((module) => ({
     default: module.Logo,
+  })),
+);
+const ULogo = dynamic(() =>
+  import('../../../../public/svg/ULogo').then((module) => ({
+    default: module.ULogo,
   })),
 );
 
@@ -38,7 +51,7 @@ interface AppBarProps extends MuiAppBarProps {
   open: boolean;
 }
 
-const AppBar = styled(MuiAppBar, {
+const AppBar = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'open',
 })<AppBarProps>(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
@@ -54,7 +67,6 @@ const AppBar = styled(MuiAppBar, {
     background: colors.darkBlueGradiant,
   }),
   ...(open && {
-    width: '100%',
     height: 60,
   }),
 }));
@@ -66,27 +78,43 @@ const Header = ({
   notifications,
   handleNotificationRead,
 }: IHeaderProps) => {
+  const theme = useTheme();
   const { user } = useAppContext();
-  const isManager =
-    user.role === Role_Type.RoleOwner || user.role === Role_Type.RoleAdmin;
+  const isManager = user.role === Role_Type.RoleOwner;
+  const matches = useMediaQuery(theme.breakpoints.up('sm'));
 
   return (
     <AppBar
       open={isOpen}
       sx={{
         py: 1,
-        px: 3,
+        px: { xs: 1.5, md: 3 },
         height: 'fit-content',
         justifyContent: 'center',
         boxShadow: '2px 2px 6px rgba(0, 0, 0, 0.05)',
       }}
     >
-      <Toolbar sx={{ alignSelf: 'center', width: '100%' }}>
+      <Toolbar sx={{ alignSelf: 'center', padding: '0px !important' }}>
         <HorizontalContainerJustify>
           <IconButton onClick={() => onNavigate('Root', '/')}>
-            <Logo width={'100%'} height={'28px'} color={colors.white} />
+            {matches ? (
+              <Logo width={'100%'} height={'28px'} color={colors.white} />
+            ) : (
+              <ULogo width={'100%'} height={'28px'} color={colors.white} />
+            )}
           </IconButton>
-          <Stack direction={'row'} alignItems={'center'} spacing={1.75}>
+          <Stack
+            direction={'row'}
+            alignItems={'center'}
+            spacing={{ xs: 1, md: 1.75 }}
+          >
+            <Typography variant="body1" fontWeight={600} color={colors.white}>
+              {user.orgName}
+            </Typography>
+            <Divider
+              orientation="vertical"
+              sx={{ width: '0.5px', height: '24px', bgcolor: colors.darkGray }}
+            />
             {isManager && (
               <IconButton
                 onClick={() => onNavigate('Manage', '/manage')}

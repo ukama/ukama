@@ -11,6 +11,7 @@ package clients
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	lago "github.com/getlago/lago-go-client"
 	guuid "github.com/google/uuid"
@@ -22,6 +23,7 @@ type lagoClient struct {
 	e LagoEvent
 	p LagoPlan
 	s LagoSubscription
+	w LagoWebhookEndpoint
 }
 
 func NewLagoClient(APIKey, Host string, Port uint) BillingClient {
@@ -29,28 +31,31 @@ func NewLagoClient(APIKey, Host string, Port uint) BillingClient {
 	c := lago.New().SetBaseURL(lagoBaseURL).SetApiKey(APIKey).SetDebug(true)
 
 	return &lagoClient{
-		b: c.BillableMetric(), c: c.Customer(),
-		e: c.Event(), p: c.Plan(), s: c.Subscription(),
+		b: c.BillableMetric(), c: c.Customer(), e: c.Event(),
+		p: c.Plan(), s: c.Subscription(), w: c.WebhookEndpoint(),
 	}
 }
 
 func NewLagoClientFromClients(b LagoBillableMetric, c LagoCustomer,
-	e LagoEvent, p LagoPlan, s LagoSubscription) BillingClient {
+	e LagoEvent, p LagoPlan, s LagoSubscription, w LagoWebhookEndpoint) BillingClient {
 
-	return &lagoClient{b: b, c: c, e: e, p: p, s: s}
+	return &lagoClient{b: b, c: c, e: e, p: p, s: s, w: w}
 }
 
 func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	eventInput := &lago.EventInput{
 		TransactionID:          ev.TransactionId,
-		ExternalCustomerID:     ev.CustomerId,
 		ExternalSubscriptionID: ev.SubscriptionId,
 		Code:                   ev.Code,
-		Timestamp:              ev.SentAt.Unix(),
 		Properties:             ev.AdditionalProperties,
 	}
 
-	err := l.e.Create(ctx, eventInput)
+	timestamp := ev.SentAt.Unix()
+	strTimestamp := strconv.FormatInt(timestamp, 10)
+
+	eventInput.Timestamp = strTimestamp
+
+	_, err := l.e.Create(ctx, eventInput)
 	if err != nil {
 		msg := "error while sending sim usage event"
 
@@ -123,7 +128,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 
 		props := make(map[string]interface{})
 
-		props["amount"] = charge.ChargeAmountCents
+		props["amount"] = charge.ChargeAmount
 		props["free_units"] = charge.FreeUnits
 		props["package_size"] = charge.PackageSize
 
@@ -131,8 +136,7 @@ func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCha
 			BillableMetricID: bMetricId,
 			ChargeModel:      lago.ChargeModel(charge.ChargeModel),
 			AmountCurrency:   lago.Currency(pl.AmountCurrency),
-			// PayInAdvance:     true,
-			Properties: props,
+			Properties:       props,
 		}
 
 		// Appending charge to plan
@@ -174,12 +178,19 @@ func (l *lagoClient) GetCustomer(ctx context.Context, custId string) (string, er
 }
 
 func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string, error) {
+	var customerType lago.CustomerType = lago.IndividualCustomerType
+
+	if cust.Type == CompanyCustomerType {
+		customerType = lago.CompanyCustomerType
+	}
+
 	newCust := &lago.CustomerInput{
 		ExternalID:   cust.Id,
 		Name:         cust.Name,
 		Email:        cust.Email,
 		AddressLine1: cust.Address,
 		Phone:        cust.Phone,
+		CustomerType: customerType,
 	}
 
 	customer, err := l.c.Create(ctx, newCust)
@@ -230,6 +241,8 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 		ExternalCustomerID: sub.CustomerId,
 		PlanCode:           sub.PlanCode,
 		SubscriptionAt:     sub.SubscriptionAt,
+		// EndingAt
+		// Name
 	}
 
 	subscription, err := l.s.Create(ctx, newSub)
@@ -242,16 +255,60 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 	return subscription.LagoID.String(), nil
 }
 
-func (l *lagoClient) TerminateSubscription(ctx context.Context, subscritionId string) (string, error) {
-	subscription, err := l.s.Terminate(ctx, subscritionId)
+func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId string) (string, error) {
+	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
+		ExternalID: subscriptionId,
+	}
+
+	subscription, err := l.s.Terminate(ctx, subscriptionTerminateInput)
 	if err != nil {
 		msg := fmt.Sprintf("error while sending subscription termination event with Id (%s)",
-			subscritionId)
+			subscriptionTerminateInput.ExternalID)
 
 		return "", unpackLagoError(msg, err)
 	}
 
 	return subscription.LagoID.String(), nil
+}
+
+func (l *lagoClient) CreateWebhook(ctx context.Context, wh WebhookEndpoint) (string, error) {
+	var signatureAlgoType lago.SignatureAlgo = lago.JWT
+
+	if wh.SignatureAlgo == HmacSignatureAlgoType {
+		signatureAlgoType = lago.HMac
+	}
+
+	newWebHook := &lago.WebhookEndpointInput{
+		WebhookURL:    wh.Url,
+		SignatureAlgo: signatureAlgoType,
+	}
+
+	webhook, err := l.w.Create(ctx, newWebHook)
+	if err != nil {
+		msg := fmt.Sprintf("error while sending webhook create event with URL (%s)",
+			wh.Url)
+
+		return "", unpackLagoError(msg, err)
+	}
+
+	return webhook.LagoID.String(), nil
+}
+
+func (l *lagoClient) ListWebhooks(ctx context.Context) ([]string, error) {
+	endppints := []string{}
+
+	webhooks, err := l.w.GetList(ctx, &lago.WebhookEndpointListInput{})
+	if err != nil {
+		msg := "error while sending webhook list event"
+
+		return nil, unpackLagoError(msg, err)
+	}
+
+	for _, wh := range webhooks.WebhookEndpoints {
+		endppints = append(endppints, wh.WebhookURL)
+	}
+
+	return endppints, nil
 }
 
 type LagoBillableMetric interface {
@@ -267,7 +324,7 @@ type LagoCustomer interface {
 }
 
 type LagoEvent interface {
-	Create(context.Context, *lago.EventInput) *lago.Error
+	Create(context.Context, *lago.EventInput) (*lago.Event, *lago.Error)
 }
 
 type LagoPlan interface {
@@ -278,17 +335,21 @@ type LagoPlan interface {
 
 type LagoSubscription interface {
 	Create(context.Context, *lago.SubscriptionInput) (*lago.Subscription, *lago.Error)
-	Terminate(context.Context, string) (*lago.Subscription, *lago.Error)
+	Terminate(context.Context, lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error)
+}
+
+type LagoWebhookEndpoint interface {
+	Create(context.Context, *lago.WebhookEndpointInput) (*lago.WebhookEndpoint, *lago.Error)
+	GetList(context.Context, *lago.WebhookEndpointListInput) (*lago.WebhookEndpointResult, *lago.Error)
 }
 
 func unpackLagoError(msg string, err *lago.Error) error {
 	cltError := &Error{
 		Code: err.HTTPStatusCode,
-		Msg:  err.Msg,
+		Msg:  err.Message,
 		Err:  err.Err,
 	}
 
 	return fmt.Errorf(msg+": %s. code: %d. %w",
-		err.Msg, err.HTTPStatusCode, cltError)
-
+		err.Message, err.HTTPStatusCode, cltError)
 }

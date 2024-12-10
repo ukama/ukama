@@ -5,19 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 
 import { colors } from '@/theme';
 import { getDataPlanUsage, getDuration } from '@/utils';
 import { Card, Grid, Stack, Typography } from '@mui/material';
 import OptionsPopover from '../OptionsPopover';
-
 interface IPlanCard {
   uuid: string;
   name: string;
@@ -45,8 +37,7 @@ const PlanCard = ({
     <Card
       variant="outlined"
       sx={{
-        px: 3,
-        py: 2,
+        p: { xs: 1.5, md: 3 },
         display: 'flex',
         boxShadow: 'none',
         borderRadius: '4px',

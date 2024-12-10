@@ -65,7 +65,7 @@ func (s *sim) GetSim(id string) (*csub.SimInfo, error) {
 	return sim, nil
 }
 
-func (s *sim) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
+func (s *sim) ConfigureSim(subscriberId, orgId, networkId, name,
 	email, phoneNumber, address, dob, proofOfID, idSerial, packageId, simType,
 	simToken string, trafficPolicy uint32) (*csub.SimInfo, error) {
 	if subscriberId == "" {
@@ -73,8 +73,7 @@ func (s *sim) ConfigureSim(subscriberId, orgId, networkId, firstName, lastName,
 			csub.AddSubscriberRequest{
 				OrgId:                 orgId,
 				NetworkId:             networkId,
-				FirstName:             firstName,
-				LastName:              lastName,
+				Name:                  name,
 				Email:                 email,
 				PhoneNumber:           phoneNumber,
 				Address:               address,

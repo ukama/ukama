@@ -27,7 +27,7 @@ type Notification struct {
 	Description  string
 	Type         notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope        notif.NotificationScope `gorm:"type:uint;not null;default:0"`
-	ResourceId   uuid.UUID
+	ResourceId   string
 	OrgId        string
 	NetworkId    string
 	SubscriberId string
@@ -35,8 +35,8 @@ type Notification struct {
 	NodeId       string
 	EventMsgID   uint
 	EventMsg     EventMsg
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
@@ -69,8 +69,9 @@ type Notifications struct {
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	IsRead      bool                    `gorm:"default:false"`
-	CreatedAt   string
-	UpdatedAt   string
+	ResourceId  string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type EventMsg struct {

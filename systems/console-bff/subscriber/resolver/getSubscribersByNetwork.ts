@@ -8,7 +8,11 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SubscribersResDto } from "./types";
+import {
+  SubscriberDto,
+  SubscriberSimsResDto,
+  SubscribersResDto,
+} from "./types";
 
 @Resolver()
 export class GetSubscribersByNetworkResolver {
@@ -18,9 +22,31 @@ export class GetSubscribersByNetworkResolver {
     @Ctx() ctx: Context
   ): Promise<SubscribersResDto> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getSubscribersByNetwork(
-      baseURL,
-      networkId
-    );
+    const networkSub: SubscriberDto[] = [];
+    const sims: SubscriberSimsResDto =
+      await dataSources.dataSource.getSimsByNetwork(baseURL, networkId);
+
+    const subs: SubscribersResDto =
+      await dataSources.dataSource.getSubscribersByNetwork(baseURL, networkId);
+
+    for (const sub of subs.subscribers) {
+      sub.sim = sims.sims.filter(sim => sim.subscriberId === sub.uuid);
+      networkSub.push({
+        dob: sub.dob,
+        uuid: sub.uuid,
+        name: sub.name,
+        phone: sub.phone,
+        email: sub.email,
+        gender: sub.gender,
+        address: sub.address,
+        idSerial: sub.idSerial,
+        networkId: sub.networkId,
+        proofOfIdentification: sub.proofOfIdentification,
+        sim: sub.sim,
+      });
+    }
+    return {
+      subscribers: networkSub,
+    };
   }
 }

@@ -49,8 +49,8 @@ func TestNodeServer_Add(t *testing.T) {
 		Type: testNode.GetNodeType(),
 		Status: db.NodeStatus{
 			NodeId:       nodeId,
-			State:        ukama.Undefined,
-			Connectivity: ukama.Unknown,
+			State:        ukama.Unknown,
+			Connectivity: ukama.Undefined,
 		},
 	}
 

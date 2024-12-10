@@ -33,7 +33,7 @@ import {
 } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { Field, FormikProvider, FormikValues, useFormik } from 'formik';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import NetworkInfo from '../../../../../../../public/svg/NetworkInfo';
 
@@ -56,6 +56,7 @@ interface IPage {
 const Page = ({ params }: IPage) => {
   const { id, name } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const gclasses = globalUseStyles();
   const { setSnackbarMessage } = useAppContext();
   const searchParams = useSearchParams();
@@ -65,7 +66,8 @@ const Page = ({ params }: IPage) => {
   const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
@@ -172,9 +174,34 @@ const Page = ({ params }: IPage) => {
     },
   });
 
-  const handleBack = async () => router.back();
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
+  };
 
   const handleSubmit = (values: FormikValues) => {
+    if (
+      qpAddress === '' ||
+      qpPower === '' ||
+      qpSwitch === '' ||
+      qpbackhaul === ''
+    ) {
+      setSnackbarMessage({
+        id: 'add-site-error',
+        message: 'Require data is missing. Please complete the previous steps',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
     const accessId =
       accessComponentsData?.getComponentsByUserId.components.find(
         (component) => component.partNumber === id,
@@ -193,25 +220,27 @@ const Page = ({ params }: IPage) => {
       return;
     }
     setIsLoading(true);
-    if (isCreateNetwork) {
-      setLoadingMessage('Creating network...');
-      addNetwork({
-        variables: {
-          data: {
-            isDefault: false,
-            name: values.name,
-            budget: values.budget,
-            networks: values.networks,
-            countries: values.countries,
+    if (formik.isValid) {
+      if (isCreateNetwork) {
+        setLoadingMessage('Creating network...');
+        addNetwork({
+          variables: {
+            data: {
+              isDefault: false,
+              name: values.name,
+              budget: values.budget,
+              networks: values.networks,
+              countries: values.countries,
+            },
           },
-        },
-      }).then((res) => {
+        }).then((res) => {
+          setLoadingMessage('Creating site...');
+          addSiteCall(accessId, spectrumId, res.data?.addNetwork.id ?? '');
+        });
+      } else {
         setLoadingMessage('Creating site...');
-        addSiteCall(accessId, spectrumId, res.data?.addNetwork.id ?? '');
-      });
-    } else {
-      setLoadingMessage('Creating site...');
-      addSiteCall(accessId, spectrumId, values.name);
+        addSiteCall(accessId, spectrumId, values.name);
+      }
     }
   };
 
@@ -240,7 +269,7 @@ const Page = ({ params }: IPage) => {
   };
 
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       {isLoading ? (
         <SiteLoadingState msg={loadingMessage} />
       ) : (
@@ -252,10 +281,10 @@ const Page = ({ params }: IPage) => {
               fontWeight={400}
               sx={{
                 color: colors.black70,
-                display: stepTracker !== '1' ? 'none' : 'flex',
               }}
             >
-              <i>&nbsp;- optional</i>&nbsp;(6/6)
+              {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
+              {flow === 'onb' ? 6 : 4})
             </Typography>
           </Stack>
 
@@ -272,29 +301,10 @@ const Page = ({ params }: IPage) => {
                   always add more sites to it later! Please name it for your
                   ease of reference.
                 </Typography>
-
                 <SvgIcon sx={{ width: 240, height: 176, mt: 2, mb: 4 }}>
                   {NetworkInfo}
                 </SvgIcon>
-
-                {isCreateNetwork ? (
-                  <TextField
-                    fullWidth
-                    id={'name'}
-                    name={'name'}
-                    size="medium"
-                    label={'Network name'}
-                    placeholder="network-name"
-                    onBlur={formik.handleBlur}
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    error={formik.touched.name && Boolean(formik.errors.name)}
-                    helperText={formik.touched.name && formik.errors.name}
-                  />
-                ) : networksLoading ? (
+                {networksLoading ? (
                   <Skeleton variant="rounded" width={'100%'} height={42} />
                 ) : (
                   <Field
@@ -314,6 +324,11 @@ const Page = ({ params }: IPage) => {
                       },
                     }}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (e.target.value === 'new-network') {
+                        setIsCreateNetwork(true);
+                      } else {
+                        setIsCreateNetwork(false);
+                      }
                       formik.setFieldValue('name', e.target.value);
                     }}
                     helperText={formik.touched.name && formik.errors.name}
@@ -327,28 +342,26 @@ const Page = ({ params }: IPage) => {
                         {network.name}
                       </MenuItem>
                     ))}
+                    <MenuItem value="new-network">New Network</MenuItem>
                   </Field>
                 )}
-                {networksData?.getNetworks.networks &&
-                  networksData?.getNetworks.networks.length > 0 && (
-                    <Button
-                      variant="text"
-                      sx={{
-                        textTransform: 'none',
-                        px: 0,
-                        alignSelf: 'end',
-                        mt: '0px !important',
-                      }}
-                      onClick={() => {
-                        formik.setFieldValue('name', '');
-                        setIsCreateNetwork(!isCreateNetwork);
-                      }}
-                    >
-                      {isCreateNetwork
-                        ? 'Choose existing network'
-                        : 'Create new network'}
-                    </Button>
-                  )}
+                {isCreateNetwork && (
+                  <TextField
+                    fullWidth
+                    id={'name'}
+                    name={'name'}
+                    size="medium"
+                    label={'Network name'}
+                    placeholder="network-name"
+                    onBlur={formik.handleBlur}
+                    onChange={formik.handleChange}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    error={formik.touched.name && Boolean(formik.errors.name)}
+                    helperText={formik.touched.name && formik.errors.name}
+                  />
+                )}
               </Stack>
 
               <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
@@ -360,7 +373,7 @@ const Page = ({ params }: IPage) => {
                   Back
                 </Button>
                 <Button type="submit" variant="contained">
-                  Complete network creation
+                  Next
                 </Button>
               </Stack>
             </form>

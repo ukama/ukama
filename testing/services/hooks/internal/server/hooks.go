@@ -93,7 +93,7 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 	for _, payment := range payments {
 		depositWebhook, err := p.pawapayClient.GetDeposit(payment.Id)
 		if err != nil {
-			log.Errorf("error while fetching deposit webhook: %v", err)
+			log.Errorf("error while fetching get deposit: %v", err)
 			log.Warn("skipping posting empty payload")
 
 			continue
@@ -102,7 +102,7 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 		if depositWebhook.Status != webhookStatusPending {
 			_, err = p.webhooksClient.PostDepositHook(depositWebhook)
 			if err != nil {
-				log.Errorf("error while fetching deposit webhook: %v", err)
+				log.Errorf("error while making post deposit webhook: %v", err)
 			}
 		}
 	}

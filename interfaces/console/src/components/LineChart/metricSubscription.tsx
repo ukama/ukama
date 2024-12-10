@@ -6,12 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  Graphs_Type,
-  useGetMetricByTabSubSubscription,
-} from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
-import PubSub from 'pubsub-js';
+import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 
 interface IMetricSubscription {
   from: number;
@@ -19,23 +14,24 @@ interface IMetricSubscription {
 }
 
 const MetricSubscription = ({ from, type }: IMetricSubscription) => {
-  const { env } = useAppContext();
-  useGetMetricByTabSubSubscription({
-    // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
-    variables: {
-      from: from,
-      type: type,
-      orgId: 'ukama',
-      userId: 'salman',
-      nodeId: 'uk-test36-hnode-a1-00ff',
-    },
-    onData: (data) => {
-      PubSub.publish(data.data.data?.getMetricByTabSub.type ?? '', [
-        Math.floor(data.data.data?.getMetricByTabSub.value[0] ?? 0) * 1000,
-        data.data.data?.getMetricByTabSub.value[1],
-      ]);
-    },
-  });
+  console.log(from, type);
+  // const { env } = useAppContext();
+  // useGetMetricByTabSubSubscription({
+  //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),
+  //   variables: {
+  //     from: from,
+  //     type: type,
+  //     orgId: 'ukama',
+  //     userId: 'salman',
+  //     nodeId: 'uk-test36-hnode-a1-00ff',
+  //   },
+  //   onData: (data) => {
+  //     PubSub.publish(data.data.data?.getMetricByTabSub.type ?? '', [
+  //       Math.floor(data.data.data?.getMetricByTabSub.value[0] ?? 0) * 1000,
+  //       data.data.data?.getMetricByTabSub.value[1],
+  //     ]);
+  //   },
+  // });
   return <div></div>;
 };
 
