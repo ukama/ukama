@@ -261,6 +261,9 @@ copy_all_apps_to_image() {
         sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" "${PRIMARY}/ukama/apps/"
         sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" "${PASSIVE}/ukama/apps/"
     done
+
+    # cleanup
+    sudo rm -rf "${ukama_root}/build/"
 }
 
 copy_misc_files_to_image() {
