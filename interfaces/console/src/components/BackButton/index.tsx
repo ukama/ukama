@@ -39,7 +39,11 @@ const BackButton = ({ title }: IBackButton) => {
       <IconButton size="small" sx={{ p: 0 }}>
         <ArrowBack />
       </IconButton>
-      <Typography variant={'body2'} fontWeight={500}>
+      <Typography
+        variant={'body2'}
+        fontWeight={500}
+        display={{ xs: 'none', md: 'flex' }}
+      >
         {title}
       </Typography>
     </Stack>

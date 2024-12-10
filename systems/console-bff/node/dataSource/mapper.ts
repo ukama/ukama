@@ -45,8 +45,9 @@ export const parseNodeRes = (res: any): Node => {
     id: res.id,
     name: res.name,
     type: res.type,
-    orgId: res.org_id,
     site: parseSite(res),
+    latitude: res.latitude,
+    longitude: res.longitude,
     attached: parseAttached(res),
     status: {
       state: res.status.state,

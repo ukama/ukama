@@ -70,25 +70,25 @@ export const NavList = [
 export const MANAGE_MENU_LIST = [
   {
     id: 'manage-members',
-    name: 'Manage members',
+    name: 'Members',
     path: '/manage/members',
     icon: SubscriberIcon,
   },
   {
     id: 'manage-sim',
-    name: 'Manage sim pool',
+    name: 'Sim pool',
     path: '/manage/sims',
     icon: SimCardIcon,
   },
   {
     id: 'manage-node',
-    name: 'Manage node pool',
+    name: 'Node pool',
     path: '/manage/nodes',
     icon: AccountTreeIcon,
   },
   {
     id: 'manage-data-plan',
-    name: 'Manage data plans',
+    name: 'Data plans',
     path: '/manage/data-plans',
     icon: PermDataSettingIcon,
   },

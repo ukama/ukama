@@ -3,12 +3,14 @@
 fragment node on Node {
   id
   name
-  orgId
+  latitude
+  longitude
   type
   attached {
     id
     name
-    orgId
+    latitude
+    longitude
     type
     site {
       nodeId

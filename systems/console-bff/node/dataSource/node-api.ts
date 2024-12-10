@@ -80,7 +80,6 @@ class NodeAPI extends RESTDataSource {
       body: {
         name: args.name,
         node_id: args.id,
-        org_id: args.orgId,
       },
     }).then(res => parseNodeRes(res.node));
   }

@@ -429,6 +429,19 @@ const ConfigureStep = (
   }
 };
 
+const NodeEnumToString = (type: NodeTypeEnum): string => {
+  switch (type) {
+    case NodeTypeEnum.Tnode:
+      return 'Tower Node';
+    case NodeTypeEnum.Anode:
+      return 'Amplifier Node';
+    case NodeTypeEnum.Hnode:
+      return 'Home Node';
+    default:
+      return 'Unknown';
+  }
+};
+
 export {
   ConfigureStep,
   fileToBase64,
@@ -445,6 +458,7 @@ export {
   hexToRGB,
   inviteStatusEnumToString,
   isValidLatLng,
+  NodeEnumToString,
   provideStatusColor,
   roleEnumToString,
   structureNodeSiteDate,

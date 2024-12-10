@@ -231,3 +231,12 @@ interface Data {
 export interface TNotificationResDto {
   data: Data;
 }
+
+export type TNodePoolData = {
+  id: string;
+  type: string;
+  site: string;
+  network: string;
+  createdAt: string;
+  connectivity: string;
+};
