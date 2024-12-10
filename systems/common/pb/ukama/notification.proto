@@ -13,11 +13,15 @@
  package ukama.common.v1;
 
  enum NotificationType {
-    NOTIF_INVALID = 0;
-    NOTIF_INFO = 1;
-    NOTIF_WARNING = 2;
-    NOTIF_ERROR = 3;
-    NOTIF_CRITICAL = 4;
+    TYPE_INVALID              = 0;
+	TYPE_INFO                 = 1;
+	TYPE_WARNING              = 2;
+	TYPE_ERROR                = 3;
+	TYPE_CRITICAL             = 4;
+	TYPE_ACTIONABLE_INFO      = 5;
+	TYPE_ACTIONABLE_WARNING   = 6;
+	TYPE_ACTIONABLE_ERROR     = 7;
+	TYPE_ACTIONABLE_CRITICAL  = 8;
 }
 
 enum NotificationScope {
