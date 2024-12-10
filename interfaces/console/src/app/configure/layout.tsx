@@ -97,7 +97,7 @@ const ConfigureLayout = ({
         );
 
         setParts({
-          switchId: switchRecords?.id ?? '',
+          switchId: switchRecords?.description ?? '',
           powerName: powerRecords?.description ?? '',
           backhaulName: backhaulRecords?.description ?? '',
         });

@@ -19,14 +19,14 @@ import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import {
   AlertColor,
+  Autocomplete,
   Button,
-  MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { formatISO } from 'date-fns';
-import { Field, FormikProvider, useFormik } from 'formik';
+import { FormikProvider, useFormik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LoadingSkeleton from './skelton';
@@ -54,11 +54,12 @@ const SiteConfigure = ({ params }: IPage) => {
   const step = parseInt(searchParams.get('step') ?? '1');
   const qpbackhaul = searchParams.get('backhaul') ?? '';
   const { setSnackbarMessage, network } = useAppContext();
+
   const formik = useFormik({
     initialValues: {
-      power: qpPower,
-      switch: qpSwitch,
-      backhaul: qpbackhaul,
+      power: qpPower ?? '',
+      switch: qpSwitch ?? '7ab34d44-b189-4bd9-9efd-48ba81cc34aa',
+      backhaul: qpbackhaul ?? '',
     },
     validateOnChange: true,
     onSubmit: (values) => {
@@ -126,50 +127,62 @@ const SiteConfigure = ({ params }: IPage) => {
     },
   });
 
-  const { data: componentsData } = useGetComponentsByUserIdQuery({
-    fetchPolicy: 'cache-first',
-    variables: {
-      data: {
-        category: Component_Type.All,
+  const { data: componentsData, loading: componentsLoading } =
+    useGetComponentsByUserIdQuery({
+      fetchPolicy: 'cache-first',
+      variables: {
+        data: {
+          category: Component_Type.All,
+        },
       },
-    },
-    onCompleted: (data) => {
-      if (data.getComponentsByUserId.components.length > 0) {
-        const switchRecords = data.getComponentsByUserId.components.filter(
-          (comp) => comp.category === 'SWITCH',
-        );
+      onCompleted: (data) => {
+        if (data.getComponentsByUserId.components.length > 0) {
+          const switchRecords = data.getComponentsByUserId.components.filter(
+            (comp) => comp.category === 'SWITCH',
+          );
 
-        const powerRecords = data.getComponentsByUserId.components.filter(
-          (comp) => comp.category === 'POWER',
-        );
+          const powerRecords = data.getComponentsByUserId.components.filter(
+            (comp) => comp.category === 'POWER',
+          );
 
-        const backhaulRecords = data.getComponentsByUserId.components.filter(
-          (comp) => comp.category === 'BACKHAUL',
-        );
+          const backhaulRecords = data.getComponentsByUserId.components.filter(
+            (comp) => comp.category === 'BACKHAUL',
+          );
 
-        if (switchRecords.length === 1) {
-          setQueryParam('switch', switchRecords[0].id);
-          formik.setFieldValue('switch', switchRecords[0].id);
+          if (switchRecords.length === 1) {
+            formik.setFieldValue('switch', switchRecords[0].id);
+          }
+          if (powerRecords.length === 1) {
+            formik.setFieldValue('power', powerRecords[0].id);
+          }
+          if (backhaulRecords.length === 1) {
+            formik.setFieldValue('backhaul', backhaulRecords[0].id);
+          }
         }
-        if (powerRecords.length === 1) {
-          setQueryParam('power', switchRecords[0].id);
-          formik.setFieldValue('power', powerRecords[0].id);
-        }
-        if (backhaulRecords.length === 1) {
-          setQueryParam('backhaul', switchRecords[0].id);
-          formik.setFieldValue('backhaul', backhaulRecords[0].id);
-        }
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'components-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'components-msg',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  useEffect(() => {
+    if (formik.values.switch !== '') {
+      setQueryParam('switch', formik.values.switch);
+    }
+
+    if (formik.values.power !== '') {
+      setQueryParam('power', formik.values.power);
+    }
+
+    if (formik.values.backhaul !== '') {
+      setQueryParam('backhaul', formik.values.backhaul);
+    }
+  }, [formik.values]);
 
   useEffect(() => {
     if (addSiteLoading) setLoading(true);
@@ -282,99 +295,107 @@ const SiteConfigure = ({ params }: IPage) => {
               <br />
             </Typography>
 
-            <Field
-              as={TextField}
-              select
-              required
+            <Autocomplete
               fullWidth
-              name="switch"
-              label="SWITCH"
-              margin="normal"
-              InputLabelProps={{
-                shrink: true,
+              disablePortal
+              loading={componentsLoading}
+              options={
+                (componentsData &&
+                  componentsData?.getComponentsByUserId.components.filter(
+                    (comp) => comp.category === 'SWITCH',
+                  )) ??
+                []
+              }
+              getOptionLabel={(option) => option.description}
+              getOptionKey={(option) => option.id}
+              value={
+                componentsData?.getComponentsByUserId.components.find(
+                  (comp) => comp.id === formik.values.switch,
+                ) || null
+              }
+              onChange={(_, v: any) => {
+                setQueryParam('switch', v?.id || '');
+                formik.setFieldValue('switch', v?.id || '');
               }}
-              InputProps={{
-                classes: {
-                  input: gclasses.inputFieldStyle,
-                },
-              }}
-              onChange={(e: any) => {
-                setQueryParam('switch', e.target.value);
-                formik.handleChange(e);
-              }}
-              error={formik.touched.switch && Boolean(formik.errors.switch)}
-              helperText={formik.touched.switch && formik.errors.switch}
-            >
-              {componentsData?.getComponentsByUserId.components
-                .filter((comp) => comp.category === 'SWITCH')
-                .map((component) => (
-                  <MenuItem key={component.id} value={component.id}>
-                    {component.description}
-                  </MenuItem>
-                ))}
-            </Field>
-            <Field
-              as={TextField}
-              select
-              required
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="SWITCH"
+                  value={formik.values.switch}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  error={formik.touched.switch && Boolean(formik.errors.switch)}
+                  helperText={formik.touched.switch && formik.errors.switch}
+                />
+              )}
+            />
+            <Autocomplete
               fullWidth
-              name="power"
-              label="POWER"
-              margin="normal"
-              InputLabelProps={{
-                shrink: true,
+              disablePortal
+              loading={componentsLoading}
+              options={
+                (componentsData &&
+                  componentsData?.getComponentsByUserId.components.filter(
+                    (comp) => comp.category === 'POWER',
+                  )) ??
+                []
+              }
+              getOptionLabel={(option) => option.description}
+              getOptionKey={(option) => option.id}
+              value={
+                componentsData?.getComponentsByUserId.components.find(
+                  (comp) => comp.id === formik.values.power,
+                ) || null
+              }
+              onChange={(_, v: any) => {
+                setQueryParam('power', v?.id || '');
+                formik.setFieldValue('power', v?.id || '');
               }}
-              InputProps={{
-                classes: {
-                  input: gclasses.inputFieldStyle,
-                },
-              }}
-              onChange={(e: any) => {
-                setQueryParam('power', e.target.value);
-                formik.handleChange(e);
-              }}
-              error={formik.touched.power && Boolean(formik.errors.power)}
-              helperText={formik.touched.power && formik.errors.power}
-            >
-              {componentsData?.getComponentsByUserId.components
-                .filter((comp) => comp.category === 'POWER')
-                .map((component) => (
-                  <MenuItem key={component.id} value={component.id}>
-                    {component.description}
-                  </MenuItem>
-                ))}
-            </Field>
-            <Field
-              select
-              required
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="POWER"
+                  value={formik.values.switch}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  error={formik.touched.power && Boolean(formik.errors.power)}
+                  helperText={formik.touched.power && formik.errors.power}
+                />
+              )}
+            />
+            <Autocomplete
               fullWidth
-              as={TextField}
-              name="backhaul"
-              label="BACKHAUL"
-              margin="normal"
-              InputLabelProps={{
-                shrink: true,
+              disablePortal
+              loading={componentsLoading}
+              options={
+                (componentsData &&
+                  componentsData?.getComponentsByUserId.components.filter(
+                    (comp) => comp.category === 'BACKHAUL',
+                  )) ??
+                []
+              }
+              getOptionLabel={(option) => option.description}
+              getOptionKey={(option) => option.id}
+              value={
+                componentsData?.getComponentsByUserId.components.find(
+                  (comp) => comp.id === formik.values.backhaul,
+                ) || null
+              }
+              onChange={(_, v: any) => {
+                setQueryParam('backhaul', v?.id || '');
+                formik.setFieldValue('backhaul', v?.id || '');
               }}
-              InputProps={{
-                classes: {
-                  input: gclasses.inputFieldStyle,
-                },
-              }}
-              onChange={(e: any) => {
-                setQueryParam('backhaul', e.target.value);
-                formik.handleChange(e);
-              }}
-              error={formik.touched.backhaul && Boolean(formik.errors.backhaul)}
-              helperText={formik.touched.backhaul && formik.errors.backhaul}
-            >
-              {componentsData?.getComponentsByUserId.components
-                .filter((comp) => comp.category === 'BACKHAUL')
-                .map((component) => (
-                  <MenuItem key={component.id} value={component.id}>
-                    {component.description}
-                  </MenuItem>
-                ))}
-            </Field>
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="BACKHAUL"
+                  value={formik.values.switch}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  error={
+                    formik.touched.backhaul && Boolean(formik.errors.backhaul)
+                  }
+                  helperText={formik.touched.backhaul && formik.errors.backhaul}
+                />
+              )}
+            />
           </Stack>
           <Stack
             mt={{ xs: 4, md: 6 }}
