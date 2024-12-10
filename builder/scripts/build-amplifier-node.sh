@@ -128,7 +128,7 @@ install_starter_app() {
 
     path=$1
 
-    sudo chroot $path /bin/bash <<EOF
+    sudo chroot $path /bin/sh <<EOF
 
         cd /ukama/apps/pkgs/
         tar zxvf starterd_latest.tar.gz starterd_latest/sbin/starter.d .
@@ -193,7 +193,7 @@ EOF
   for app in "${apps_array[@]}"; do
     case "$app" in
       "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFSET_FILE}
+        cat <<EOF >> ${MANIFEST_FILE}
         {
             "name"   : "$app",
             "tag"    : "latest",
@@ -276,8 +276,8 @@ copy_misc_files_to_image() {
     rm ${MANIFEST_FILE}
 
     # install the starter.d app
-    install_starter_app $PRIMARY
-    install_starter_app $PASSIVE
+    install_starter_app "${PRIMARY}"
+    install_starter_app "${PASSIVE}"
 
     echo "Copy Ukama sys and vendor libs to the OS image"
     sudo mkdir -p "${PRIMARY}/lib/x86_64-linux-gnu/"
