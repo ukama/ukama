@@ -43,6 +43,20 @@ const getTitleFromPath = (path: string, id: string) => {
     );
   }
 
+  if (path.startsWith('/console/nodes') && id) {
+    return (
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="h5" sx={{ color: colors.black38 }}>
+          Nodes
+        </Typography>
+        <ArrowForwardIosIcon sx={{ color: colors.black38 }} />
+        <Typography variant="h5" sx={{ color: colors.black }}>
+          {id}
+        </Typography>
+      </Stack>
+    );
+  }
+
   switch (path) {
     case '/console/home':
       return 'Home';

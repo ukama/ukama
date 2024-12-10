@@ -14,6 +14,7 @@ export type MenuItemType = {
   id: number;
   title: string;
   route: string;
+  color?: string;
 };
 export type UserSettingsMenuType = {
   id: number;

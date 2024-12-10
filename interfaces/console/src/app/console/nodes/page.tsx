@@ -7,31 +7,30 @@
  */
 'use client';
 import {
-  Node,
-  Nodes,
-  useGetNodesLazyQuery,
   useGetNodesQuery,
+  useGetSitesLazyQuery,
 } from '@/client/graphql/generated';
-import AddNodeDialog from '@/components/AddNode';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
 import { PageContainer } from '@/styles/global';
+import { TNodePoolData } from '@/types';
+import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [nodes, setNodes] = useState<Nodes>({ nodes: [] });
-  const [availableNodes, setAvailableNodes] = useState<
-    Record<string, string | boolean>[] | undefined
-  >(undefined);
-  const { setSnackbarMessage } = useAppContext();
-  const [isShowAddNodeDialog, setIsShowAddNodeDialog] =
-    useState<boolean>(false);
+  const [pool, setPool] = useState<TNodePoolData[]>([]);
+  const [nodes, setNodes] = useState<TNodePoolData[]>([]);
+  const { setSnackbarMessage, network } = useAppContext();
+
+  const [getSites] = useGetSitesLazyQuery({
+    fetchPolicy: 'cache-first',
+  });
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
@@ -40,8 +39,44 @@ export default function Page() {
         isFree: false,
       },
     },
-    onCompleted: (data) => {
-      setNodes(data.getNodes ?? undefined);
+    onCompleted: async (data) => {
+      if (data?.getNodes.nodes.length > 0) {
+        const sites = await getSites({
+          variables: {
+            networkId: network.id,
+          },
+        });
+
+        const np: TNodePoolData[] = [];
+        data.getNodes.nodes.filter((node) => {
+          const s =
+            node.site.siteId &&
+            sites.data?.getSites.sites.find(
+              (site) => site.id === node.site.siteId,
+            )?.name;
+          const net =
+            node.site.networkId &&
+            sites.data?.getSites.sites.find(
+              (site) => site.id === node.site.networkId,
+            )?.name;
+          np.push({
+            id: node.id,
+            site: s ?? '-',
+            network: net ?? '-',
+            type: NodeEnumToString(node.type),
+            createdAt: node.site.addedAt ?? '-',
+            connectivity: node.status.connectivity,
+          });
+          if (
+            sites.data?.getSites.sites.find(
+              (site) => site.id === node.site.siteId,
+            )
+          )
+            return node;
+        });
+        setNodes(np);
+        setPool(np);
+      }
     },
     onError: (err) => {
       setSnackbarMessage({
@@ -53,42 +88,16 @@ export default function Page() {
     },
   });
 
-  const [getAvailableNodes, { loading: availableNodeLoading }] =
-    useGetNodesLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onCompleted: (data) => {
-        setAvailableNodes(
-          data.getNodes?.nodes?.map((node) => ({
-            id: node.id,
-            name: node.name,
-            isChecked: false,
-          })),
-        );
-      },
-      onError: (err) => {
-        setSnackbarMessage({
-          id: 'available-nodes-msg',
-          message: err.message,
-          type: 'error',
-          show: true,
-        });
-      },
-    });
-
   useEffect(() => {
     if (search.length > 3) {
-      const _nodes: Node[] =
-        nodesData?.getNodes.nodes.filter((node) => {
+      const _nodes: TNodePoolData[] =
+        pool.filter((node) => {
           const s = search.toLowerCase();
-          if (
-            node.name.toLowerCase().includes(s) ??
-            node.name.toLowerCase().includes(s)
-          )
-            return node;
+          if (node.id.toLowerCase().includes(s)) return node;
         }) ?? [];
-      setNodes({ nodes: _nodes });
+      setNodes(_nodes);
     } else if (search.length === 0) {
-      setNodes({ nodes: nodesData?.getNodes.nodes ?? [] });
+      setNodes(pool);
     }
   }, [search, nodesData?.getNodes.nodes]);
 
@@ -96,42 +105,27 @@ export default function Page() {
     setSearch(str);
   };
 
-  const handleAddNode = () => {};
-
-  const handleNodeCheck = (id: string, isChecked: boolean) => {
-    setAvailableNodes((prev) => {
-      const nodes = prev?.map((node) => {
-        if (node.id === id) {
-          return { ...node, isChecked };
-        }
-        return node;
-      });
-      return nodes;
-    });
+  const handleActionMenuClick = (action: string, id: string) => {
+    switch (id) {
+      case 'edit-node':
+        break;
+      case 'node-off':
+        break;
+      case 'restart-node':
+        break;
+      case 'restart-rf':
+        break;
+    }
   };
-
-  const handleClaimNodeAction = () => {
-    getAvailableNodes({
-      variables: {
-        data: {
-          isFree: true,
-        },
-      },
-    });
-    setIsShowAddNodeDialog(true);
-  };
-
-  const handleCloseAddNodeDialog = () => setIsShowAddNodeDialog(false);
-  const isLoading = nodesLoading ?? availableNodeLoading;
 
   return (
     <>
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={isLoading}
+        isLoading={nodesLoading}
         height={'calc(100vh - 212px)'}
-        cstyle={{ marginTop: isLoading ? '18px' : '0px' }}
+        cstyle={{ marginTop: nodesLoading ? '18px' : '0px' }}
       >
         <PageContainer>
           <Stack
@@ -146,31 +140,22 @@ export default function Page() {
               title={'My Nodes'}
               showSearch={true}
               onSearchChange={handleSearchChange}
-              subtitle={`${nodes.nodes?.length ?? 0}`}
-              handleButtonAction={handleClaimNodeAction}
+              subtitle={`${nodes.length}`}
             />
             <DataTableWithOptions
-              dataset={nodes ?? []}
+              dataset={nodes}
               icon={RouterIcon}
-              onMenuItemClick={() => {}}
               columns={NODE_TABLE_COLUMNS}
               menuOptions={NODE_TABLE_MENU}
-              emptyViewLabel={'No node yet!'}
+              emptyViewLabel={'No nodes yet!'}
+              onMenuItemClick={handleActionMenuClick}
+              emptyViewDescription={
+                'A node is the hardware piece (tower + amplifier) that connects your device to the network. Install your node, and other site components, to get started.'
+              }
             />
           </Stack>
         </PageContainer>
       </LoadingWrapper>
-      <AddNodeDialog
-        data={availableNodes}
-        labelNegativeBtn="Close"
-        labelSuccessBtn="Add Nodes"
-        isOpen={isShowAddNodeDialog}
-        handleNodeCheck={handleNodeCheck}
-        title="Add nodes to your network"
-        handleSuccessAction={handleAddNode}
-        handleCloseAction={handleCloseAddNodeDialog}
-        description="Add nodes to your network to start managing them here. If you cannot find a desired node, check to make sure it is not already added to another network."
-      />
     </>
   );
 }

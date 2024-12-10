@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { Role_Type, Sim_Types } from '@/client/graphql/generated';
+import { colors } from '@/theme';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -118,10 +119,10 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'state', label: 'State', minWidth: 140 },
-  { id: 'network', label: 'Network', minWidth: 140 },
+  { id: 'connectivity', label: 'State', minWidth: 140 },
+  { id: 'site', label: 'Site', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
 export const NODE_TABLE_MENU: MenuItemType[] = [
@@ -131,8 +132,27 @@ export const NODE_TABLE_MENU: MenuItemType[] = [
     title: 'Edit node',
     route: 'edit-node',
   },
-  { id: 2, Icon: null, title: 'Detach node', route: 'detach-node' },
-  { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
+  {
+    id: 2,
+    Icon: null,
+    title: 'Turn node off',
+    route: 'node-off',
+    color: colors.redMatt,
+  },
+  {
+    id: 3,
+    Icon: null,
+    title: 'Restart node',
+    route: 'restart-node',
+    color: colors.redMatt,
+  },
+  {
+    id: 4,
+    Icon: null,
+    title: 'Restart RF',
+    route: 'restart-rf',
+    color: colors.redMatt,
+  },
 ];
 export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 120 },
