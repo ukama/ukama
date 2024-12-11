@@ -236,7 +236,7 @@ export const NotificationTypeEnumValue = (e: number) => {
     case 7:
       return NOTIFICATION_TYPE.TYPE_ACTIONABLE_ERROR;
     case 8:
-      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_ERROR;
+      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_CRITICAL;
     default:
       return NOTIFICATION_TYPE.TYPE_INVALID;
   }

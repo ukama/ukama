@@ -14,7 +14,7 @@ import {
   useUpdateNotificationMutation,
 } from '@/client/graphql/generated';
 import {
-  NotificationsResDto,
+  NotificationsRes,
   useGetNotificationsLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import AddNetworkDialog from '@/components/AddNetworkDialog';
@@ -46,9 +46,9 @@ export default function ConosleLayout({
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();
-  const [notifications, setNotifications] = useState<
-    NotificationsResDto[] | []
-  >([]);
+  const [notifications, setNotifications] = useState<NotificationsRes>({
+    notifications: [],
+  });
   const [startTimeStamp] = useState<string>(new Date().getTime().toString());
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const {
@@ -102,7 +102,7 @@ export default function ConosleLayout({
   const [updateNotificationCall] = useUpdateNotificationMutation({
     onCompleted: () => {
       refetchNotifications().then((res) => {
-        setNotifications(res.data?.getNotifications.notifications);
+        setNotifications(res.data?.getNotifications);
       });
     },
   });
@@ -114,7 +114,7 @@ export default function ConosleLayout({
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getNotifications.notifications.length > 0) {
-        setNotifications(data.getNotifications.notifications);
+        setNotifications(data.getNotifications);
       }
       ServerNotificationSubscription(
         env.METRIC_URL,

@@ -43,7 +43,7 @@ const AlertBox = ({ alerts, handleNotificationRead }: AlertBoxProps) => {
       bgcolor={'white'}
       borderRadius={'10px'}
       width={'398px'}
-      height={'310px'}
+      height={'306px'}
     >
       <Box display="flex" justifyContent="flex-start" alignItems="center" p={2}>
         <Typography variant="h6">Alerts</Typography>

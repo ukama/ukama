@@ -7,7 +7,7 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -26,7 +26,7 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
-  notifications: NotificationsResDto[];
+  notifications: NotificationsRes;
   handleNotificationRead: (id: string) => void;
 }
 

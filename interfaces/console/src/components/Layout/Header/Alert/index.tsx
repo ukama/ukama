@@ -5,19 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
-import AlertBox from '@/components/AlertBox';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
+import { Notifications } from '@/components/NotificationsUI';
 import { IconStyle } from '@/styles/global';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { Badge, IconButton, Popover } from '@mui/material';
 import React, { useState } from 'react';
 
 interface IAlertsProps {
-  alerts: NotificationsResDto[] | undefined;
+  notifications: NotificationsRes;
   handleNotificationRead: (id: string) => void;
 }
 
-const Alerts = ({ alerts, handleNotificationRead }: IAlertsProps) => {
+const Alerts = ({ notifications, handleNotificationRead }: IAlertsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Handle popover open
@@ -30,7 +30,9 @@ const Alerts = ({ alerts, handleNotificationRead }: IAlertsProps) => {
     setAnchorEl(null);
   };
 
-  const unreadCount = alerts?.filter((alert) => !alert.isRead).length;
+  const unreadCount = notifications.notifications?.filter(
+    (alert) => !alert.isRead,
+  ).length;
   const open = Boolean(anchorEl);
   const id = open ? 'alert-popover' : undefined;
 
@@ -42,7 +44,7 @@ const Alerts = ({ alerts, handleNotificationRead }: IAlertsProps) => {
         </Badge>
       </IconButton>
       <Popover
-        sx={{ mt: 4 }}
+        sx={{ mt: 2 }}
         id={id}
         open={open}
         anchorEl={anchorEl}
@@ -56,9 +58,9 @@ const Alerts = ({ alerts, handleNotificationRead }: IAlertsProps) => {
           horizontal: 'center',
         }}
       >
-        <AlertBox
-          alerts={alerts}
-          handleNotificationRead={handleNotificationRead}
+        <Notifications
+          notifications={notifications}
+          handleAction={handleNotificationRead}
         />
       </Popover>
     </>

@@ -7,7 +7,7 @@
  */
 
 import { Role_Type } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -43,7 +43,7 @@ interface IHeaderProps {
   isOpen: boolean;
   isLoading: boolean;
   onNavigate: Function;
-  notifications: NotificationsResDto[];
+  notifications: NotificationsRes;
   handleNotificationRead: (id: string) => void;
 }
 
@@ -132,7 +132,7 @@ const Header = ({
             )}
             {/* <NotificationSubscription /> */}
             <Alert
-              alerts={notifications}
+              notifications={notifications}
               handleNotificationRead={handleNotificationRead}
             />
             <AccountPopover />
