@@ -89,6 +89,19 @@ function build_linux_kernel() {
     log "INFO" "Linux kernel build completed."
 }
 
+function build_apps_using_container() {
+
+    local ukama_root="$1"
+    local apps="$2"
+
+    log "INFO" "Packaging applications via container build ..."
+    cwd=$(pwd)
+
+    cd "${ukama_root}/builder/docker"
+    ./apps_setup.sh "alpine" "${ukama_root}" "${apps}"
+    cd ${cwd}
+}
+
 function download_alpine_rootfs() {
     log "INFO" "Downloading Alpine Linux Rootfs..."
     if [[ ! -f "$ALPINE_TAR" ]]; then
@@ -97,6 +110,20 @@ function download_alpine_rootfs() {
         log "INFO" "Using cached Alpine image."
     fi
     log "SUCCESS" "Alpine Linux downloaded."
+}
+
+function install_starter_app() {
+
+    path=$1
+
+    log "INFO" "Installing starter.d"
+
+    sudo chroot "$path" /bin/sh <<'EOF'
+cd /ukama/apps/pkgs/
+tar zxvf starterd_latest.tar.gz starterd_latest/sbin/starter.d .
+mv starterd_latest/sbin/starter.d /sbin/
+rm -rf starterd_latest/
+EOF
 }
 
 function copy_rootfs() {
@@ -108,7 +135,7 @@ function copy_rootfs() {
 }
 
 function copy_linux_kernel() {
-    log "INFO" "Building linux kernel..."
+    log "INFO" "Copying linux kernel..."
     local build_dir="${CWD}/build_access_node"
 
     cd "$TMP_LINUX"
@@ -131,8 +158,158 @@ function copy_linux_kernel() {
     log "SUCCESS" "Linux kernel copied"
 }
 
+function copy_all_apps() {
+    local ukama_root=$1
+    local apps=$2
+
+    log "INFO" "Copying apps"
+
+    sudo mkdir -p "${PRIMARY_MOUNT}/ukama/apps/"
+    sudo mkdir -p "${PASSIVE_MOUNT}/ukama/apps/"
+
+    IFS=',' read -r -a array <<< "$apps"
+    for app in "${array[@]}"; do
+        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
+             "${PRIMARY_MOUNT}/ukama/apps/"
+        sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
+             "${PASSIVE_MOUNT}/ukama/apps/"
+    done
+
+    # cleanup
+    sudo rm -rf "${ukama_root}/build/"
+}
+
+function copy_misc_files() {
+    local ukama_root=$1
+    local apps=$2
+
+    log "INFO" "Copying various files to image"
+
+    generate_manifest_file $apps
+    sudo cp ${MANIFEST_FILE} "${PRIMARY_MOUNT}/manifest.json"
+    sudo cp ${MANIFEST_FILE} "${PASSIVE_MOUNT}/manifest.json"
+    rm ${MANIFEST_FILE}
+
+    # install the starter.d app
+    install_starter_app "${PRIMARY_MOUNT}"
+    install_starter_app "${PASSIVE_MOUNT}"
+
+    echo "Copy Ukama sys lib to the OS image"
+    sudo mkdir -p "${PRIMARY_MOUNT}/lib/x86_64-linux-gnu/"
+    sudo mkdir -p "${PASSIVE_MOUNT}/lib/x86_64-linux-gnu/"
+
+    sudo cp "${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so" \
+         "${PRIMARY_MOUNT}/lib/x86_64-linux-gnu/"
+    sudo cp "${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so" \
+         "${PASSIVE_MOUNT}/lib/x86_64-linux-gnu/"
+
+    # update /etc/services to add ports
+    echo "Adding all the apps to /etc/services"
+    sudo mkdir -p "${PRIMARY_MOUNT}/etc"
+    sudo mkdir -p "${PASSIVE_MOOUNT}/etc"
+
+    sudo cp "${ukama_root}/nodes/ukamaOS/distro/scripts/files/services" \
+         "${PRIMARY_MOUNT}/etc/services"
+    sudo cp "${ukama_root}/nodes/ukamaOS/distro/scripts/files/services" \
+         "${PASSIVE_MOUNT}/etc/services"
+}
+
+function create_manifest_file() {
+    local apps_to_include="$1"
+    log "INFO" "Creating manifest file"
+
+    # Create an array from the comma-separated list
+    IFS=',' read -r -a apps_array <<< "$apps_to_include"
+
+   cat <<EOF > ${MANIFEST_FILE}
+{
+    "version": "0.1",
+
+    "spaces" : [
+        { "name" : "boot" },
+        { "name" : "services" },
+        { "name" : "reboot" }
+    ],
+
+    "capps": [
+        {
+            "name"   : "noded",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot"
+        },
+        {
+            "name"   : "bootstrap",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot",
+                "depends_on" : [
+                {
+                    "capp"  : "noded",
+                                "state" : "active"
+                        }
+                ]
+        },
+        {
+            "name"   : "meshd",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "boot",
+                "depends_on" : [
+                {
+                    "capp"  : "bootstrap",
+                                "state" : "done"
+                        }
+                ]
+        }
+EOF
+
+  echo '        ,' >> ${MANIFEST_FILE}
+  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
+
+  for app in "${apps_array[@]}"; do
+    case "$app" in
+      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
+        cat <<EOF >> ${MANIFEST_FILE}
+        {
+            "name"   : "$app",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+EOF
+        ;;
+    esac
+  done
+
+  echo '        ,' >> ${MANIFEST_FILE}
+  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
+
+  for app in "${apps_array[@]}"; do
+    case "$app" in
+      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
+        cat <<EOF >> ${MANIFEST_FILE}
+        {
+            "name"   : "$app",
+            "tag"    : "latest",
+            "restart": "yes",
+            "space"  : "services"
+        },
+EOF
+        ;;
+    esac
+  done
+
+  # Remove the last comma and close the JSON array
+  sed -i '$ s/,$//' ${MANIFEST_FILE}
+  echo '    ]}'  >> ${MANIFEST_FILE}
+  echo '}'       >> ${MANIFEST_FILE}
+}
+
+
 function create_disk_image() {
     log "INFO" "Creating disk image..."
+
     dd if=/dev/zero of="$IMG_NAME" bs=1M count=0 seek=$((1024 * ${IMG_SIZE%G}))
     LOOP_DEVICE=$(sudo losetup -fP --show "$IMG_NAME")
     log "SUCCESS" "Disk image created: $LOOP_DEVICE"
@@ -140,6 +317,7 @@ function create_disk_image() {
 
 function partition_disk_image() {
     log "INFO" "Partitioning disk image..."
+
     sudo parted --script "$LOOP_DEVICE" mklabel msdos
     sudo parted --script "$LOOP_DEVICE" mkpart primary fat32  1MiB  48MiB
     sudo parted --script "$LOOP_DEVICE" mkpart primary ext4  49MiB 300MiB
@@ -150,6 +328,7 @@ function partition_disk_image() {
 
 function format_partitions() {
     log "INFO" "Formatting partitions..."
+
     sudo mkfs.vfat -F 16 -n boot ${LOOP_DEVICE}p1
     sudo mkfs.ext4 -L primary    ${LOOP_DEVICE}p2
     sudo mkfs.ext4 -L passive    ${LOOP_DEVICE}p3
@@ -159,6 +338,7 @@ function format_partitions() {
 
 function mount_partitions() {
     log "INFO" "Mounting partitions..."
+
     sudo mkdir -p "$BOOT_MOUNT" "$PRIMARY_MOUNT" "$PASSIVE_MOUNT" "$UNUSED_MOUNT"
     sudo mount ${LOOP_DEVICE}p1 "$BOOT_MOUNT"
     sudo mount ${LOOP_DEVICE}p2 "$PRIMARY_MOUNT"
@@ -169,6 +349,7 @@ function mount_partitions() {
 
 function setup_rootfs() {
     log "INFO" "Setting up root filesystem..."
+
     sudo rsync -aAX "$TMP_ROOTFS/" "$PRIMARY_MOUNT/"
     echo "127.0.0.1 localhost" | sudo tee "$PRIMARY_MOUNT/etc/hosts"
     echo "nameserver 8.8.8.8" | sudo tee "$PRIMARY_MOUNT/etc/resolv.conf"
@@ -218,6 +399,14 @@ function pre_cleanup_and_dir_setup() {
 }
 
 # Main Script Execution
+
+UKAMA_ROOT=$1
+NODE_APPS=$2
+
+OS_TYPE="alpine"
+OS_VERSION="0.0.1"
+MANIFEST_FILE="manifest.json"
+
 check_sudo
 check_requirements
 pre_cleanup_and_dir_setup "$IMG_NAME" "$TMP_DIR" "${CWD}/build_access_node"
@@ -236,6 +425,11 @@ copy_linux_kernel
 copy_rootfs
 setup_rootfs
 setup_fstab
+
+build_apps_using_container "${NODE_APPS}"
+copy_all_apps   "${UKAMA_ROOT}" "${NODE_APPS}"
+copy_misc_files "${UKAMA_ROOT}" "${NODE_APPS}"
+
 unmount_partitions
 cleanup
 
