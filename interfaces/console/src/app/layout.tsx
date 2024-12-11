@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/svg/ulogo.svg',
+        url: '/ulogo.svg',
       },
     ],
   },
@@ -54,6 +54,9 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/svg+xml" href="/ulogo.svg" />
+      </head>
       <body className={inter.className}>
         <ApolloWrapper baseUrl={process.env.NEXT_PUBLIC_API_GW ?? ''}>
           <AppContextWrapper
