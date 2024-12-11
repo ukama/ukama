@@ -31,6 +31,13 @@ CWD=$(pwd)
 
 trap cleanup EXIT
 
+function check_sudo() {
+    if ! sudo -v; then
+        echo "You do not have sudo privileges or sudo is not configured correctly."
+        exit 1
+    fi
+}
+
 function log() {
     local type="$1"
     local message="$2"
@@ -102,10 +109,12 @@ function copy_rootfs() {
 
 function copy_linux_kernel() {
     log "INFO" "Building linux kernel..."
-    local build_dir="${CWD}/build_access_node/"
+    local build_dir="${CWD}/build_access_node"
 
     cd "$TMP_LINUX"
     sudo mkdir -p ${BOOT_MOUNT}/overlays/
+    sudo mkdir -p ${build_dir}/overlays/
+
     env PATH=$PATH make -j6 ARCH=arm64 \
         CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=${PRIMARY} modules_install
     cp arch/arm64/boot/Image               ${BOOT_MOUNT}/kernel8.img
@@ -209,6 +218,7 @@ function pre_cleanup_and_dir_setup() {
 }
 
 # Main Script Execution
+check_sudo
 check_requirements
 pre_cleanup_and_dir_setup "$IMG_NAME" "$TMP_DIR" "${CWD}/build_access_node"
 
