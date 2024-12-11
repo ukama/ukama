@@ -57,6 +57,9 @@ export class PaymentDto {
   status: string;
 
   @Field()
+  extras: string;
+
+  @Field()
   failureReason: string;
 
   @Field()
@@ -67,9 +70,6 @@ export class PaymentDto {
 export class ProcessPaymentDto {
   @Field(() => PaymentDto)
   payment: PaymentDto;
-
-  @Field()
-  extras: string;
 }
 
 @ObjectType()
@@ -126,6 +126,9 @@ export class PaymentAPIDto {
   status: string;
 
   @Field()
+  extras: string;
+
+  @Field()
   failure_reason: string;
 
   @Field()
@@ -136,9 +139,6 @@ export class PaymentAPIDto {
 export class ProcessPaymentAPIResDto {
   @Field(() => PaymentAPIDto)
   payment: PaymentAPIDto;
-
-  @Field(() => PaymentAPIDto)
-  extras: string;
 }
 
 @ObjectType()

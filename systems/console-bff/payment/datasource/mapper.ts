@@ -37,6 +37,7 @@ export const paymentDtoMapper = (req: PaymentAPIDto): PaymentDto => {
     description: req.description,
     status: req.status,
     failureReason: req.failure_reason,
+    extras: req.extras,
     createdAt: req.created_at,
   };
 };
@@ -60,7 +61,6 @@ export const dtoToProcessPaymentsDto = (
 ): ProcessPaymentDto => {
   return {
     payment: paymentDtoMapper(res.payment),
-    extras: res.extras,
   };
 };
 
@@ -78,14 +78,6 @@ export const dtoToCorspondantsDto = (
       label: item?.MNO || "",
       logo: item?.logo || "",
     });
-
-    // correspondents.push({
-    //   correspondent_code: correspondent,
-    //   label: CORRESPONDENT[res.country].find(
-    //     (c: any) => c.Correspondent === correspondent
-    //   ).MNO,
-    //   logo: correspondent.mno,
-    // });
   });
   return {
     correspondents: correspondents,
