@@ -1,5 +1,5 @@
 'use client';
-import React, { use } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -8,79 +8,171 @@ import {
   MenuItem,
   Stack,
   Divider,
+  Collapse,
+  Grid,
+  IconButton,
+  SelectChangeEvent,
+  Skeleton,
 } from '@mui/material';
+import { CreditCard, PaymentOutlined } from '@mui/icons-material';
 import colors from '@/theme/colors';
 
 interface PaymentCardProps {
   amount: string;
   startDate: string;
   endDate: string;
-  paymentMethod: string;
   onChangePaymentMethod: (method: string) => void;
   paymentMethods: string[];
+  onPaymentMethodSelect: (method: string) => void;
+  children?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 const PaymentCard: React.FC<PaymentCardProps> = ({
   amount,
   startDate,
   endDate,
-  paymentMethod,
   onChangePaymentMethod,
   paymentMethods,
+  onPaymentMethodSelect,
+  children,
+  isLoading = false,
 }) => {
+  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('');
+
+  useEffect(() => {
+    if (paymentMethods.includes('Stripe')) {
+      setPaymentMethod('Stripe');
+      onChangePaymentMethod('Stripe');
+      onPaymentMethodSelect('Stripe');
+      setIsPaymentFormOpen(true);
+    }
+  }, [paymentMethods]);
+
+  const handlePaymentMethodChange = (event: SelectChangeEvent) => {
+    const method = event.target.value;
+    setPaymentMethod(method);
+    onChangePaymentMethod(method);
+    onPaymentMethodSelect(method);
+    setIsPaymentFormOpen(method === 'Stripe');
+  };
+
+  const StripeFormSkeleton = () => (
+    <Box>
+      <Skeleton variant="rectangular" width="100%" height={50} sx={{ mb: 2 }} />
+      <Skeleton variant="rectangular" width="100%" height={50} sx={{ mb: 2 }} />
+    </Box>
+  );
+
   return (
-    <Box display="flex" gap={2}>
-      <Paper elevation={2} sx={{ padding: 4, flex: 1, borderRadius: '10px' }}>
-        <Stack direction="column" spacing={2} sx={{ mb: 2 }}>
-          <Stack
-            direction={'row'}
-            spacing={1}
-            alignItems={'center'}
-            justifyContent={'space-between'}
-          >
-            <Typography variant="subtitle1">Next payment</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {startDate} - {endDate}
+    <Grid container spacing={3}>
+      <Grid item xs={12} md={6}>
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 3,
+            borderRadius: 2,
+            backgroundColor: colors.white,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          }}
+        >
+          <Stack spacing={2}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography variant="h6" color="text.primary">
+                Next Payment
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {startDate} - {endDate}
+              </Typography>
+            </Box>
+
+            <Divider />
+
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography variant="h4" fontWeight="bold" color="primary">
+                ${amount}
+              </Typography>
+              <IconButton color="primary">
+                <PaymentOutlined />
+              </IconButton>
+            </Box>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontStyle: 'italic' }}
+            >
+              Detailed breakdown available below
             </Typography>
           </Stack>
+        </Paper>
+      </Grid>
 
-          <Typography
-            variant="body2"
-            sx={{ marginBottom: 1, color: colors.black54 }}
-          >
-            Detailed breakdown available below.
-          </Typography>
-          <Divider />
-        </Stack>
-
-        <Typography variant="h4">{amount}</Typography>
-      </Paper>
-
-      <Paper elevation={2} sx={{ padding: 4, flex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="bold">
-          Payment information
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-          PAYMENT METHOD
-        </Typography>
-        <Select
-          value={paymentMethod}
-          onChange={(e) => onChangePaymentMethod(e.target.value)}
-          fullWidth
-          displayEmpty
-          sx={{ marginTop: 1, marginBottom: 1 }}
+      <Grid item xs={12} md={6}>
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 3,
+            borderRadius: 2,
+            backgroundColor: colors.white,
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          }}
         >
-          {paymentMethods.map((method, index) => (
-            <MenuItem key={index} value={method}>
-              {method}
-            </MenuItem>
-          ))}
-        </Select>
-        <Typography variant="caption" color="text.secondary">
-          *Automatically charged EOD on the last day of the billing cycle
-        </Typography>
-      </Paper>
-    </Box>
+          <Stack spacing={2}>
+            <Typography
+              variant="h6"
+              color="text.primary"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              <CreditCard /> Payment Method
+            </Typography>
+            {isLoading ? (
+              <Skeleton
+                variant="rectangular"
+                width="100%"
+                height={50}
+                sx={{ mb: 2 }}
+              />
+            ) : (
+              <Select
+                value={paymentMethod}
+                onChange={handlePaymentMethodChange}
+                fullWidth
+                variant="outlined"
+                displayEmpty
+                sx={{
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  },
+                }}
+              >
+                {paymentMethods.map((method, index) => (
+                  <MenuItem key={index} value={method}>
+                    {method === 'Stripe' && <CreditCard sx={{ mr: 1 }} />}
+                    {method}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+
+            <Collapse in={isPaymentFormOpen}>
+              <Box mt={2}>{isLoading ? <StripeFormSkeleton /> : children}</Box>
+            </Collapse>
+          </Stack>
+        </Paper>
+      </Grid>
+    </Grid>
   );
 };
 

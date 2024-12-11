@@ -193,6 +193,8 @@ export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
 
+const PAYMENT_METHODS = ['Stripe'];
+
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
   {

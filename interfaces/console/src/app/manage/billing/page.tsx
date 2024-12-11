@@ -1,13 +1,6 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Tabs,
   Tab,
@@ -17,6 +10,8 @@ import {
   Stack,
   TextField,
   AlertColor,
+  Button,
+  Skeleton,
 } from '@mui/material';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
@@ -27,48 +22,206 @@ import {
   useGetPaymentsQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { Stripe, StripeElements } from '@stripe/stripe-js';
+import { PAYMENT_METHODS } from '@/constants';
 
-const PAYMENT_METHODS = [
-  {
-    value: 'no_payment_method_Set',
-    label: 'No payment method set',
-  },
-  {
-    value: 'stripe',
-    label: 'Stripe',
-  },
-  {
-    value: 'paypal',
-    label: 'PayPal',
-  },
-];
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
-const CREDIT_CARDS = [
-  'American Express - ending in 1234',
-  'Visa - ending in 5678',
-];
+if (!stripeKey) {
+  console.error(
+    'Stripe publishable key is missing. Ensure NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is set.',
+  );
+}
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-interface currentBillProps {
-  packagePaid: number;
+interface CurrentBillingProps {
+  dataUsagePaid: number;
+  notificationEmail: string;
+  nextPaymentAmount: number;
+  nextPaymentDate: string;
+  clientSecret: string;
 }
 
-const CurrentBilling: React.FC<currentBillProps> = () => {
-  const gclasses = globalUseStyles();
+const StripePaymentForm: React.FC<{
+  onStripeSubmit: (stripe: Stripe, elements: StripeElements) => Promise<void>;
+}> = ({ onStripeSubmit }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { setSnackbarMessage } = useAppContext();
+  const stripe = useStripe();
+  const elements = useElements();
 
-  const handlePaymentMethodChange = () => {
-    // Implement payment method change logic
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      setSnackbarMessage({
+        id: 'payment-error',
+        message: "Stripe.js hasn't loaded yet.",
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      await onStripeSubmit(stripe, elements);
+    } catch (error) {
+      console.error(error);
+      setSnackbarMessage({
+        id: 'payment-error',
+        message: 'An unexpected error occurred',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const cardElementOptions = {
+    hidePostalCode: true,
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+  };
+
+  return (
+    <Box sx={{ mt: 2, p: 2 }}>
+      <form onSubmit={handleSubmit}>
+        <Box
+          sx={{
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            padding: '10px',
+            marginBottom: '15px',
+          }}
+        >
+          <CardElement options={cardElementOptions} />
+        </Box>
+        <Button
+          type="submit"
+          disabled={isProcessing || !stripe}
+          variant="contained"
+          sx={{
+            width: '100%',
+            background: isProcessing ? colors.black38 : colors.primaryMain,
+          }}
+        >
+          {isProcessing ? 'Processing...' : 'Pay Now'}
+        </Button>
+      </form>
+    </Box>
+  );
+};
+
+const CurrentBilling: React.FC<CurrentBillingProps> = ({
+  dataUsagePaid,
+  notificationEmail,
+  nextPaymentAmount,
+  nextPaymentDate,
+  clientSecret,
+}) => {
+  const gclasses = globalUseStyles();
+  const { setSnackbarMessage } = useAppContext();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Stripe');
+
+  const handlePaymentMethodChange = useCallback((method: string) => {
+    setSelectedPaymentMethod(method);
+  }, []);
+
+  const handleStripeSubmit = async (
+    stripe: Stripe,
+    elements: StripeElements,
+  ) => {
+    try {
+      const cardElement = elements.getElement(CardElement);
+
+      if (!cardElement) {
+        throw new Error('Card Element not found');
+      }
+
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              email: notificationEmail,
+            },
+          },
+        },
+      );
+
+      if (error) {
+        console.error(error);
+        setSnackbarMessage({
+          id: 'payment-failed',
+          message: `Payment failed. ${error?.message}`,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      } else if (paymentIntent?.status === 'succeeded') {
+        setSnackbarMessage({
+          id: 'payment-success',
+          message: 'Payment completed successfully.',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setSnackbarMessage({
+        id: 'payment-error',
+        message: 'An unexpected error occurred',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    }
   };
 
   return (
     <Box sx={{ py: 2 }}>
-      <PaymentCard
-        amount="$20.00"
-        startDate="06/14/22"
-        endDate="07/14/22"
-        paymentMethod={PAYMENT_METHODS[0].label}
-        onChangePaymentMethod={handlePaymentMethodChange}
-        paymentMethods={CREDIT_CARDS}
-      />
+      {!clientSecret && (
+        <Skeleton
+          variant="rectangular"
+          width="100%"
+          height={50}
+          sx={{ mb: 2 }}
+        />
+      )}
+      <Elements stripe={stripePromise} options={{ clientSecret }}>
+        <PaymentCard
+          amount={nextPaymentAmount.toString()}
+          startDate={nextPaymentDate}
+          endDate={nextPaymentDate}
+          onChangePaymentMethod={handlePaymentMethodChange}
+          paymentMethods={PAYMENT_METHODS}
+          onPaymentMethodSelect={handlePaymentMethodChange}
+          isLoading={!stripePromise}
+        >
+          {selectedPaymentMethod === 'Stripe' && (
+            <StripePaymentForm onStripeSubmit={handleStripeSubmit} />
+          )}
+        </PaymentCard>
+      </Elements>
 
       <Paper
         elevation={2}
@@ -79,7 +232,7 @@ const CurrentBilling: React.FC<currentBillProps> = () => {
           bgcolor: colors.white,
         }}
       >
-        <Typography variant="h6">Data usage</Typography>
+        <Typography variant="h6">Data Usage</Typography>
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -88,7 +241,7 @@ const CurrentBilling: React.FC<currentBillProps> = () => {
           <Typography variant="body2" sx={{ color: colors.black54 }}>
             Data usage paid for by subscribers
           </Typography>
-          <Typography variant="body1">$ 0</Typography>
+          <Typography variant="h6">$ {dataUsagePaid}</Typography>
         </Stack>
       </Paper>
 
@@ -101,7 +254,7 @@ const CurrentBilling: React.FC<currentBillProps> = () => {
           bgcolor: colors.white,
         }}
       >
-        <Typography variant="h6">Notification settings</Typography>
+        <Typography variant="h6">Notification Settings</Typography>
         <Stack direction="column" spacing={2}>
           <Typography variant="body2" sx={{ color: colors.black54 }}>
             All entered emails will receive receipts for the monthly bill
@@ -109,6 +262,9 @@ const CurrentBilling: React.FC<currentBillProps> = () => {
           <TextField
             fullWidth
             label="PRIMARY EMAIL"
+            value={notificationEmail}
+            variant="outlined"
+            disabled
             InputLabelProps={{ shrink: true }}
             InputProps={{
               classes: { input: gclasses.inputFieldStyle },
@@ -128,24 +284,21 @@ const BillingHistory: React.FC = () => (
 
 const BillingSettingsPage: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
-  const { setSnackbarMessage, network, env } = useAppContext();
+  const [clientSecret, setClientSecret] = useState<string>();
+  const { setSnackbarMessage, user } = useAppContext();
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
-  };
-
-  const { data } = useGetPaymentsQuery({
+  const { data: paymentsData, loading: paymentsLoading } = useGetPaymentsQuery({
     variables: {
       data: {
         paymentMethod: 'stripe',
-        status: 'completed',
+        status: 'processing',
         type: 'package',
       },
     },
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
-        id: 'sims-error-msg',
+        id: 'payments-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -153,7 +306,7 @@ const BillingSettingsPage: React.FC = () => {
     },
   });
 
-  const { data: reports } = useGetReportsQuery({
+  const { data: reportsData, loading: reportsLoading } = useGetReportsQuery({
     variables: {
       data: {
         isPaid: false,
@@ -168,7 +321,7 @@ const BillingSettingsPage: React.FC = () => {
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
-        id: 'reports-error-msg',
+        id: 'reports-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -176,31 +329,49 @@ const BillingSettingsPage: React.FC = () => {
     },
   });
 
-  const totalAmountUSD = data?.getPayments.payments.reduce((total, payment) => {
-    return total + parseFloat(payment.amount) / 100;
-  }, 0);
+  const totalAmountUSD = useMemo(() => {
+    return (
+      paymentsData?.getPayments.payments.reduce((total, payment) => {
+        return total + parseFloat(payment.amount) * 100;
+      }, 0) || 0
+    );
+  }, [paymentsData]);
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
+    setCurrentTab(newValue);
+  };
 
   return (
-    <LoadingWrapper
-      width="100%"
-      radius="medium"
-      isLoading={false}
-      height="calc(100vh - 244px)"
-    >
-      <Tabs value={currentTab} onChange={handleTabChange}>
-        <Tab label="Current Billing" />
-        <Tab label="Billing History" />
-      </Tabs>
+    <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <LoadingWrapper
+        width="100%"
+        radius="medium"
+        isLoading={paymentsLoading || reportsLoading || !clientSecret}
+        height="calc(100vh - 244px)"
+      >
+        <Tabs value={currentTab} onChange={handleTabChange}>
+          <Tab label="Current Billing" />
+          <Tab label="Billing History" />
+        </Tabs>
+        {currentTab === 0 && (
+          <CurrentBilling
+            dataUsagePaid={
+              totalAmountUSD ? parseFloat(totalAmountUSD.toFixed(2)) : 0
+            }
+            notificationEmail={user.email}
+            nextPaymentAmount={
+              reportsData?.getReports?.reports[0]?.rawReport?.amountCents || 0
+            }
+            nextPaymentDate={
+              reportsData?.getReports?.reports[0]?.rawReport?.issuingDate || ''
+            }
+            clientSecret={clientSecret}
+          />
+        )}
 
-      {currentTab === 0 && (
-        <CurrentBilling
-          packagePaid={
-            totalAmountUSD ? parseFloat(totalAmountUSD.toFixed(2)) : 0
-          }
-        />
-      )}
-      {currentTab === 1 && <BillingHistory />}
-    </LoadingWrapper>
+        {currentTab === 1 && <BillingHistory />}
+      </LoadingWrapper>
+    </Elements>
   );
 };
 
