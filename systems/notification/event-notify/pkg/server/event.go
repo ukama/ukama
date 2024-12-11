@@ -298,8 +298,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventNodeOnline]
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -312,8 +312,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventNodeOffline]
 		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
