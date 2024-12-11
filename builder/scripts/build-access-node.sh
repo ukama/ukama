@@ -27,6 +27,8 @@ TMP_DIR="/tmp/access-node/"
 TMP_ROOTFS="${TMP_DIR}/alpine-rootfs"
 TMP_LINUX="${TMP_DIR}/linux"
 
+CWD=$(pwd)
+
 trap cleanup EXIT
 
 function log() {
@@ -100,6 +102,8 @@ function copy_rootfs() {
 
 function copy_linux_kernel() {
     log "INFO" "Building linux kernel..."
+    local build_dir="${CWD}/build_access_node/"
+
     cd "$TMP_LINUX"
     sudo mkdir -p ${BOOT_MOUNT}/overlays/
     env PATH=$PATH make -j6 ARCH=arm64 \
@@ -108,7 +112,13 @@ function copy_linux_kernel() {
     cp arch/arm64/boot/dts/broadcom/*.dtb  ${BOOT_MOUNT}/
     cp arch/arm64/boot/dts/overlays/*.dtb* ${BOOT_MOUNT}/overlays/
     cp arch/arm64/boot/dts/overlays/README ${BOOT_MOUNT}/overlays/
-    cd "$TMP_DIR"
+
+    # also copy kernel and dtb - needed to run in QEMU
+    cp arch/arm64/boot/Image               "${build_dir}/kernel8.img"
+    cp arch/arm64/boot/dts/broadcom/*.dtb  "${build_dir}/"
+    cp arch/arm64/boot/dts/overlays/*.dtb* "${build_dir}/overlays/"
+    cp arch/arm64/boot/dts/overlays/README "${build_dir}/overlays/"
+
     log "SUCCESS" "Linux kernel copied"
 }
 
@@ -177,19 +187,33 @@ function unmount_partitions() {
     log "SUCCESS" "Partitions unmounted."
 }
 
+function pre_cleanup_and_dir_setup() {
+
+    local image_name=$1
+    local tmp_dir=$2
+    local build_dir=$3
+
+    if [ -f "$image_name" ]; then
+        rm "$image_name"
+    fi
+
+    if [ -d "$tmp_dir" ]; then
+        rm -rf "$tmp_dir"
+    fi
+    mkdir -p "$tmp_dir"
+
+    if [ -d "$build_dir" ]; then
+        rm -rf "$build_dir"
+    fi
+    mkdir "$build_dir"
+}
+
 # Main Script Execution
 check_requirements
+pre_cleanup_and_dir_setup "$IMG_NAME" "$TMP_DIR" "${CWD}/build_access_node"
 
-if [ -f "${IMG_NAME}" ]; then
-    rm "${IMG_NAME}"
-fi
+cd ${TMP_DIR}
 
-if [ -d "${TMP_DIR}" ]; then
-    rm -rf "${TMP_DIR}"
-fi
-mkdir -p "${TMP_DIR}"
-
-CWD=$(pwd); cd ${TMP_DIR}
 build_linux_kernel
 download_alpine_rootfs
 
