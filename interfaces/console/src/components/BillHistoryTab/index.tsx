@@ -5,51 +5,51 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import React, { useMemo } from 'react';
+import DataTableWithOptions from '@/components/DataTableWithOptions';
+import { BILLING_HISTORY_TABLE_MENU, BILLING_TABLE_COLUMNS } from '@/constants';
+import SubscriberIcon from '@mui/icons-material/PeopleAlt';
+import { GetReportResDto } from '@/client/graphql/generated';
 
-import { HistoryBillingColumns } from '@/constants/tableColumns';
-import { RoundedCard } from '@/styles/global';
-import colors from '@/theme/colors';
-import { Box, Stack, Typography } from '@mui/material';
-import { NoBillYet } from '../../../public/svg';
-import LoadingWrapper from '../LoadingWrapper';
-import SimpleDataTable from '../SimpleDataTable';
-import TableHeader from '../TableHeader';
-
-interface IBillHistoryTab {
-  loading: boolean;
-  data: any;
+interface BillingHistoryProps {
+  bills: GetReportResDto[];
+  loading?: boolean;
+  onViewDetails?: (reportId: string) => void;
 }
 
-const BillHistoryTab = ({ loading, data }: IBillHistoryTab) => {
+const BillingHistory: React.FC<BillingHistoryProps> = ({
+  bills,
+  loading = false,
+  onViewDetails,
+}) => {
+  const billingHistoryDataset = useMemo(() => {
+    return bills.map((report: GetReportResDto) => ({
+      date: new Date(report.createdAt).toLocaleDateString(),
+      amount: `${report.rawReport.totalAmountCurrency} ${(report.rawReport.totalAmountCents / 100).toFixed(2)}`,
+      status: report.rawReport.paymentStatus || report.rawReport.status,
+      period: report.period,
+      id: report.id,
+    }));
+  }, [bills]);
+
+  const handleMenuItemClick = (id: string, type: string) => {
+    if (type === 'view_details' && onViewDetails) {
+      onViewDetails(id);
+    }
+  };
+
   return (
-    <LoadingWrapper
-      height={'100%'}
-      isLoading={loading}
-      cstyle={{
-        overflow: 'auto',
-        backgroundColor: loading ? colors.white : 'transparent',
-      }}
-    >
-      <RoundedCard radius="4px">
-        <TableHeader title={'Billing history'} showSecondaryButton={false} />
-        {data.length > 0 ? (
-          <SimpleDataTable columns={HistoryBillingColumns} dataset={data} />
-        ) : (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            minHeight="60vh"
-          >
-            <Stack direction="column" spacing={2}>
-              <NoBillYet color={colors.silver} color2={colors.white} />
-              <Typography variant="body1">No bill History yet!</Typography>
-            </Stack>
-          </Box>
-        )}
-      </RoundedCard>
-    </LoadingWrapper>
+    <DataTableWithOptions
+      columns={BILLING_TABLE_COLUMNS}
+      icon={SubscriberIcon}
+      dataset={billingHistoryDataset}
+      menuOptions={BILLING_HISTORY_TABLE_MENU}
+      onMenuItemClick={handleMenuItemClick}
+      emptyViewLabel="No billing history found"
+      isRowClickable={false}
+      // loading={loading}
+    />
   );
 };
 
-export default BillHistoryTab;
+export default BillingHistory;

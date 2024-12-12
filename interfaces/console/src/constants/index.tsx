@@ -108,12 +108,50 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
+export const BILLING_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  {
+    id: 'amount',
+    label: 'Amount',
+    minWidth: 100,
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    minWidth: 100,
+  },
+  {
+    id: 'paymentMethod',
+    label: 'Payment Method',
+    minWidth: 100,
+  },
+  {
+    id: 'date',
+    label: 'Date',
+    minWidth: 100,
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    minWidth: 100,
+  },
+];
 export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   {
     id: 1,
     Icon: null,
     title: 'Edit subscriber',
     route: 'edit-sub',
+  },
+  { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+];
+
+export const BILLING_HISTORY_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'View Details',
+    route: 'View Details',
   },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
   // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
@@ -193,7 +231,7 @@ export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
 
-const PAYMENT_METHODS = ['Stripe'];
+export const PAYMENT_METHODS = ['Stripe'];
 
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
@@ -209,11 +247,6 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
     title: 'Update available',
     route: 'update',
   },
-];
-
-const BillingTabs = [
-  { id: 0, label: 'CURRENT BILL', value: '1' },
-  { id: 1, label: 'BILLING HISTORY', value: '2' },
 ];
 
 const ROAMING_SELECT = [
@@ -344,7 +377,6 @@ export { NodeApps } from './stubData';
 export {
   APP_VERSION,
   BASIC_MENU_ACTIONS,
-  BillingTabs,
   COPY_RIGHTS,
   DataTableWithOptionColumns,
   DRAWER_WIDTH,

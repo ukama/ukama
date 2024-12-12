@@ -5,37 +5,69 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import React from 'react';
+import { Box, Skeleton, Grid } from '@mui/material';
+import CurrentBillCard from '@/components/CurrentBillCard';
+import PaymentMethodCard from '@/components/PaymentMethodCard';
+import DataUsageComponent from '@/components/DataUsageComponent';
+import NotificationEmailSettings from '@/components/NotificationEmailSettings';
 
-import { RoundedCard } from '@/styles/global';
-import { Divider, Stack, Typography } from '@mui/material';
-import LoadingWrapper from '../LoadingWrapper';
-type CurrentBillProps = {
-  amount: string;
-  loading: boolean;
-};
+interface CurrentBillProps {
+  dataUsagePaid: number;
+  nextPaymentAmount: number;
+  nextPaymentDate: string;
+  notificationEmail: string;
+  loading?: boolean;
+  onAddPaymentMethod: () => void;
+  handleAddPayment: () => void;
+}
 
-const CurrentBill = ({ amount, loading }: CurrentBillProps) => {
+const CurrentBill: React.FC<CurrentBillProps> = ({
+  dataUsagePaid,
+  nextPaymentAmount,
+  nextPaymentDate,
+  notificationEmail,
+  loading,
+  handleAddPayment,
+  onAddPaymentMethod,
+}) => {
   return (
-    <LoadingWrapper height={164} isLoading={loading}>
-      <RoundedCard radius={'4px'}>
-        <Stack direction="column" spacing={1.4} alignItems="flex-start">
-          <Stack direction="row" width={'100%'} justifyContent="space-between">
-            <Typography variant="body2" fontWeight={600}>
-              Billing Month
-            </Typography>
-            <Typography variant="caption">06/14/2022 - 07/14/2022</Typography>
-          </Stack>
-
-          <Typography variant="caption">
-            Detailed bill breakdown available below.
-          </Typography>
-          <Divider sx={{ width: '100%' }} />
-          <Typography variant="h4" sx={{ m: '18px 0px' }}>
-            {amount}
-          </Typography>
-        </Stack>
-      </RoundedCard>
-    </LoadingWrapper>
+    <Box sx={{ py: 2 }}>
+      {loading && (
+        <Skeleton
+          variant="rectangular"
+          width="100%"
+          height={50}
+          sx={{ mb: 2 }}
+        />
+      )}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <CurrentBillCard
+            amount={nextPaymentAmount.toString()}
+            startDate={nextPaymentDate}
+            endDate={nextPaymentDate}
+            onPay={handleAddPayment}
+          />
+        </Grid>
+        <Grid item xs={12}>
+          <PaymentMethodCard onAddPaymentMethod={onAddPaymentMethod} />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <DataUsageComponent
+            dataUsagePaid={dataUsagePaid}
+            subscriberCount={10}
+          />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <NotificationEmailSettings
+            primaryEmail={notificationEmail}
+            additionalEmails={[]}
+          />
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
+
 export default CurrentBill;
