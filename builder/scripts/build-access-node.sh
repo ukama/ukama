@@ -6,6 +6,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 set -e
+set -x
 
 # Variables
 ALPINE_VERSION="3.20.3"
@@ -399,7 +400,6 @@ function pre_cleanup_and_dir_setup() {
 }
 
 # Main Script Execution
-
 UKAMA_ROOT=$1
 NODE_APPS=$2
 
@@ -426,9 +426,9 @@ copy_rootfs
 setup_rootfs
 setup_fstab
 
-build_apps_using_container "${NODE_APPS}"
-copy_all_apps   "${UKAMA_ROOT}" "${NODE_APPS}"
-copy_misc_files "${UKAMA_ROOT}" "${NODE_APPS}"
+build_apps_using_container "${UKAMA_ROOT}" "${NODE_APPS}"
+copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
+copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 
 unmount_partitions
 cleanup
