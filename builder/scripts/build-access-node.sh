@@ -6,7 +6,6 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 set -e
-set -x
 
 # Variables
 ALPINE_VERSION="3.20.3"
@@ -99,7 +98,7 @@ function build_apps_using_container() {
     cwd=$(pwd)
 
     cd "${ukama_root}/builder/docker"
-    ./apps_setup.sh "alpine" "${ukama_root}" "${apps}"
+    ./apps_setup.sh "access" "alpine" "${ukama_root}" "${apps}"
     cd ${cwd}
 }
 
@@ -406,6 +405,7 @@ NODE_APPS=$2
 OS_TYPE="alpine"
 OS_VERSION="0.0.1"
 MANIFEST_FILE="manifest.json"
+export TARGET="access"
 
 check_sudo
 check_requirements

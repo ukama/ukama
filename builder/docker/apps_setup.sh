@@ -8,9 +8,10 @@
 
 set -e
 
-TARGET=$1
-UKAMA_ROOT=$2
-APPS=$3
+NODE=$1
+TARGET=$2
+UKAMA_ROOT=$3
+APPS=$4
 
 if [ "$TARGET" = "Darwin" ]; then
     TARGETPLATFORM="amd64/ubuntu:latest"
@@ -28,7 +29,7 @@ docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
 docker run --privileged \
        -v ${UKAMA_ROOT}:/workspace \
        apps-builder-${TARGETPLATFORM} \
-       /bin/bash -c "cd /workspace/builder/scripts/ && /workspace/builder/docker/apps_build.sh ${APPS} > /workspace/apps_build.log 2>&1"
+       /bin/bash -c "cd /workspace/builder/scripts/ && /workspace/builder/docker/apps_build.sh ${NODE} ${APPS} > /workspace/apps_build.log 2>&1"
 
 # clean up
 docker image rm --force apps-builder-${TARGETPLATFORM}

@@ -220,7 +220,7 @@ package_all_apps_via_container_build() {
     cwd=$(pwd)
 
     cd "${ukama_root}/builder/docker"
-    ./apps_setup.sh "alpine" "${ukama_root}" "${apps}"
+    ./apps_setup.sh "amplifier" "alpine" "${ukama_root}" "${apps}"
     cd ${cwd}
 }
 

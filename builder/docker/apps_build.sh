@@ -9,11 +9,12 @@
 
 set -e
 
+NODE=$1
+APPS=$2
+
 export UKAMA_ROOT=/workspace
 export ALPINE_BUILD=1
-
-#default branch is main
-APPS=$1
+export TARGET="$NODE"
 
 cd "${UKAMA_ROOT}/builder" && make clean && make ALPINE_BUILD=1 all
 
