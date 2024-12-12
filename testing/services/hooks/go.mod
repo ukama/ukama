@@ -15,6 +15,7 @@ require (
 	github.com/num30/config v0.1.2
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
+	github.com/stripe/stripe-go/v78 v78.12.0
 	github.com/ukama/ukama/systems/common v0.0.0-20240830112741-483a46e8eb2d
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2

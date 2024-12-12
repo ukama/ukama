@@ -8,6 +8,12 @@
 
 package util
 
+import stripelib "github.com/stripe/stripe-go/v78"
+
+type PaymentIntent struct {
+	*stripelib.PaymentIntent
+}
+
 type Deposit struct {
 	DepositId                string                               `json:"depositId,omitempty"`
 	Status                   string                               `json:"status,omitempty"`
