@@ -130,7 +130,9 @@ export const parseNotification = (
     scope: notification.scope,
     title: notification.title,
     isRead: notification.is_read,
+    eventKey: notification.event_key,
     createdAt: notification.created_at,
+    resourceId: notification.resource_id,
     description: notification.description,
   };
 };

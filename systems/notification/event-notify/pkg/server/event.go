@@ -682,6 +682,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
+	event.Key = ec.Name
 	err := event.Data.Set(msg)
 	if err != nil {
 		log.Errorf("failed to assing event: %v", err)

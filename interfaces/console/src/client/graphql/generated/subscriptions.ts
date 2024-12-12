@@ -98,8 +98,10 @@ export type NotificationsResDto = {
   __typename?: 'NotificationsResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  eventKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -168,7 +170,7 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', createdAt: string, description: string, id: string, isRead: boolean, scope: Notification_Scope, title: string, type: Notification_Type }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -181,7 +183,7 @@ export type NotificationSubscriptionSubscriptionVariables = Exact<{
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -203,13 +205,15 @@ export const GetNotificationsDocument = gql`
     role: $role
   ) {
     notifications {
-      createdAt
-      description
       id
-      isRead
+      type
       scope
       title
-      type
+      isRead
+      eventKey
+      createdAt
+      resourceId
+      description
     }
   }
 }
@@ -269,7 +273,9 @@ export const NotificationSubscriptionDocument = gql`
     scope
     title
     isRead
+    eventKey
     createdAt
+    resourceId
     description
   }
 }

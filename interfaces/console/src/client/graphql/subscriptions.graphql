@@ -19,13 +19,15 @@ query GetNotifications(
     role: $role
   ) {
     notifications {
-      createdAt
-      description
       id
-      isRead
+      type
       scope
       title
-      type
+      isRead
+      eventKey
+      createdAt
+      resourceId
+      description
     }
   }
 }
@@ -53,7 +55,9 @@ subscription NotificationSubscription(
     scope
     title
     isRead
+    eventKey
     createdAt
+    resourceId
     description
   }
 }

@@ -174,6 +174,12 @@ export class NotificationsAPIResDto {
   @Field()
   description: string;
 
+  @Field()
+  resource_id: string;
+
+  @Field()
+  event_key: string;
+
   @Field(() => NOTIFICATION_TYPE)
   type: NOTIFICATION_TYPE;
 
@@ -203,6 +209,12 @@ export class NotificationsResDto {
 
   @Field()
   description: string;
+
+  @Field()
+  eventKey: string;
+
+  @Field()
+  resourceId: string;
 
   @Field()
   createdAt: string;

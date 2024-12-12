@@ -181,12 +181,13 @@ func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.N
 		n := &pb.Notifications{
 			Id:          i.Id.String(),
 			Title:       i.Title,
+			IsRead:      i.IsRead,
+			EventKey:    i.EventKey,
+			ResourceId:  i.ResourceId,
 			Description: i.Description,
+			CreatedAt:   timestamppb.New(i.CreatedAt),
 			Type:        upb.NotificationType_name[int32(i.Type)],
 			Scope:       upb.NotificationScope_name[int32(i.Scope)],
-			IsRead:      i.IsRead,
-			CreatedAt:   timestamppb.New(i.CreatedAt),
-			ResourceId:  i.ResourceId,
 		}
 		res = append(res, n)
 	}
@@ -202,6 +203,7 @@ func dbNotificationToPbNotification(notification *db.Notification) *pb.Notificat
 		Scope:        upb.NotificationScope(notification.Scope),
 		OrgId:        notification.OrgId,
 		NetworkId:    notification.NetworkId,
+		EventKey:     notification.EventMsg.Key,
 		SubscriberId: notification.SubscriberId,
 		UserId:       notification.UserId,
 		CreatedAt:    timestamppb.New(notification.CreatedAt),

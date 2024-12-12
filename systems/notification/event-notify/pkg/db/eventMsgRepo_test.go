@@ -65,7 +65,7 @@ func TestEventMsgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), em.Data).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), em.Data).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "data"}).AddRow(1, em.Data))
 
 		mock.ExpectCommit()
