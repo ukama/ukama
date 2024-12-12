@@ -14,10 +14,10 @@ import React, { useState } from 'react';
 
 interface IAlertsProps {
   notifications: NotificationsRes;
-  handleNotificationRead: (id: string) => void;
+  handleAction: (action: string, id: string) => void;
 }
 
-const Alerts = ({ notifications, handleNotificationRead }: IAlertsProps) => {
+const Alerts = ({ notifications, handleAction }: IAlertsProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Handle popover open
@@ -60,7 +60,7 @@ const Alerts = ({ notifications, handleNotificationRead }: IAlertsProps) => {
       >
         <Notifications
           notifications={notifications}
-          handleAction={handleNotificationRead}
+          handleAction={handleAction}
         />
       </Popover>
     </>

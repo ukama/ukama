@@ -566,15 +566,15 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
-  NotifActionableCritical = 'NOTIF_ACTIONABLE_CRITICAL',
-  NotifActionableError = 'NOTIF_ACTIONABLE_ERROR',
-  NotifActionableInfo = 'NOTIF_ACTIONABLE_INFO',
-  NotifActionableWarning = 'NOTIF_ACTIONABLE_WARNING',
-  NotifCritical = 'NOTIF_CRITICAL',
-  NotifError = 'NOTIF_ERROR',
-  NotifInfo = 'NOTIF_INFO',
-  NotifInvalid = 'NOTIF_INVALID',
-  NotifWarning = 'NOTIF_WARNING'
+  TypeActionableCritical = 'TYPE_ACTIONABLE_CRITICAL',
+  TypeActionableError = 'TYPE_ACTIONABLE_ERROR',
+  TypeActionableInfo = 'TYPE_ACTIONABLE_INFO',
+  TypeActionableWarning = 'TYPE_ACTIONABLE_WARNING',
+  TypeCritical = 'TYPE_CRITICAL',
+  TypeError = 'TYPE_ERROR',
+  TypeInfo = 'TYPE_INFO',
+  TypeInvalid = 'TYPE_INVALID',
+  TypeWarning = 'TYPE_WARNING'
 }
 
 export type NetworkDto = {

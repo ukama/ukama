@@ -27,7 +27,7 @@ interface ILayoutProps {
   handleAddNetwork: Function;
   handleNetworkChange: Function;
   notifications: NotificationsRes;
-  handleNotificationRead: (id: string) => void;
+  handleAction: (action: string, id: string) => void;
 }
 
 const isHaveId = (pathname: string) => {
@@ -41,10 +41,10 @@ const AppLayout = ({
   isLoading,
   isDarkMode,
   placeholder,
+  handleAction,
+  notifications,
   handleAddNetwork,
   handleNetworkChange,
-  notifications,
-  handleNotificationRead,
 }: ILayoutProps) => {
   const pathname = usePathname();
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
@@ -76,7 +76,7 @@ const AppLayout = ({
         isLoading={isLoading}
         onNavigate={onNavigate}
         notifications={notifications}
-        handleNotificationRead={handleNotificationRead}
+        handleAction={handleAction}
       />
       <Stack height={'100%'} direction={'row'} spacing={2}>
         {!matches && (

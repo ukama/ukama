@@ -44,7 +44,7 @@ interface IHeaderProps {
   isLoading: boolean;
   onNavigate: Function;
   notifications: NotificationsRes;
-  handleNotificationRead: (id: string) => void;
+  handleAction: (action: string, id: string) => void;
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -76,7 +76,7 @@ const Header = ({
   isLoading,
   onNavigate,
   notifications,
-  handleNotificationRead,
+  handleAction,
 }: IHeaderProps) => {
   const theme = useTheme();
   const { user } = useAppContext();
@@ -131,10 +131,7 @@ const Header = ({
               </IconButton>
             )}
             {/* <NotificationSubscription /> */}
-            <Alert
-              notifications={notifications}
-              handleNotificationRead={handleNotificationRead}
-            />
+            <Alert notifications={notifications} handleAction={handleAction} />
             <AccountPopover />
           </Stack>
         </HorizontalContainerJustify>

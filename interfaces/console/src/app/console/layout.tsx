@@ -203,14 +203,16 @@ export default function ConosleLayout({
     });
   };
 
-  const handleNotificationRead = (id: string) => {
-    if (id) {
-      updateNotificationCall({
-        variables: {
-          isRead: true,
-          updateNotificationId: id,
-        },
-      });
+  const handleNotificationAction = (action: string, id: string) => {
+    switch (action) {
+      case 'mark-read':
+        updateNotificationCall({
+          variables: {
+            isRead: true,
+            updateNotificationId: id,
+          },
+        });
+        break;
     }
   };
 
@@ -270,7 +272,7 @@ export default function ConosleLayout({
           isDarkMode={isDarkMode}
           isLoading={networksLoading}
           placeholder={'Select Network'}
-          handleNotificationRead={handleNotificationRead}
+          handleAction={handleNotificationAction}
           handleAddNetwork={handleAddNetworkAction}
           handleNetworkChange={handleNetworkChange}
           networks={networksData?.getNetworks.networks ?? []}

@@ -8,8 +8,10 @@ import CriticalIcon from '@mui/icons-material/ReportGmailerrorred';
 import WarningIcon from '@mui/icons-material/WarningAmber';
 import {
   Box,
+  Button,
   Divider,
   IconButton,
+  Link,
   List,
   ListItem,
   Popover,
@@ -32,12 +34,13 @@ export const Notifications = ({
     <Stack
       spacing={1}
       width={'398px'}
-      height={'306px'}
       borderRadius={'12px'}
+      height={'fit-contnet'}
       bgcolor={colors.white}
     >
       <Stack
-        p={1.5}
+        py={1.2}
+        px={1.5}
         spacing={0.2}
         direction={'row'}
         alignItems="center"
@@ -67,6 +70,7 @@ export const Notifications = ({
                 id={notif.id}
                 type={notif.type}
                 title={notif.title}
+                isRead={notif.isRead}
                 createdAt={notif.createdAt}
                 description={notif.description}
                 handleMenuItemClick={handleAction}
@@ -89,6 +93,7 @@ export const Notifications = ({
 interface INotification {
   id: string;
   title: string;
+  isRead: boolean;
   createdAt: string;
   description: string;
   type: Notification_Type;
@@ -99,6 +104,7 @@ export const Notification = ({
   id: nid,
   type,
   title,
+  isRead,
   createdAt,
   description,
   handleMenuItemClick,
@@ -118,30 +124,42 @@ export const Notification = ({
 
   return (
     <Stack
-      p={1.5}
-      spacing={1}
+      py={1.2}
+      px={1.5}
+      spacing={0.4}
       width={'100%'}
-      bgcolor={hexToRGB(GetColorByType(type), 0.2)}
+      bgcolor={isRead ? 'none' : hexToRGB(GetColorByType(type), 0.2)}
     >
-      <Stack direction={'row'} spacing={0.5}>
+      <Stack direction={'row'} spacing={0.8} alignItems={'flex-start'}>
         {GetIcon(type)}
-        <Typography variant="h6" fontSize={'16px'} fontWeight="500">
-          {title}
-        </Typography>
-        <Box flexGrow={1} />
-        <Typography fontSize="12px" fontWeight="400">
-          {format(new Date(createdAt), 'MM/dd hha')}
-        </Typography>
+        <Stack
+          flexGrow={1}
+          spacing={0.5}
+          direction={'column'}
+          alignContent={'flex-start'}
+        >
+          <Typography variant="h6" fontSize={'16px'} fontWeight="500">
+            {title}
+          </Typography>
+
+          <Typography variant="body2" fontWeight="400" sx={{ flexGrow: 1 }}>
+            {description}
+          </Typography>
+
+          {Action(type, 'View', '/')}
+        </Stack>
+
+        <Stack direction={'column'} spacing={0.5} alignItems={'flex-end'}>
+          <Typography fontSize="12px" fontWeight="400">
+            {format(new Date(createdAt), 'MM/dd hha')}
+          </Typography>
+
+          <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>
+            <MoreHoriz />
+          </IconButton>
+        </Stack>
       </Stack>
-      <Stack direction={'row'} alignItems={'center'}>
-        <Typography variant="body2" fontWeight="400" sx={{ flexGrow: 1 }}>
-          {description}
-        </Typography>
-        <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>
-          <MoreHoriz />
-        </IconButton>
-      </Stack>
-      {Action(type)}
+
       <Popover
         id={id}
         open={open}
@@ -156,29 +174,79 @@ export const Notification = ({
           horizontal: 'center',
         }}
       >
-        <Typography
-          py={1}
-          px={1.5}
-          variant="body2"
-          onClick={() => handleMenuItemClick('mark-read', nid)}
+        <Button
+          variant="text"
+          sx={{ textTransform: 'none' }}
+          onClick={() => {
+            handleMenuItemClick('mark-read', nid);
+            handleClose();
+          }}
         >
           Mark as read
-        </Typography>
+        </Button>
       </Popover>
     </Stack>
   );
 };
 
-const Action = (type: Notification_Type) => {
+const Action = (type: Notification_Type, title: string, link: string) => {
   switch (type) {
-    case Notification_Type.NotifActionableInfo:
-      return <div></div>;
-    case Notification_Type.NotifActionableWarning:
-      return <div></div>;
-    case Notification_Type.NotifActionableError:
-      return <div></div>;
-    case Notification_Type.NotifActionableCritical:
-      return <div></div>;
+    case Notification_Type.TypeActionableInfo:
+      return (
+        <Link
+          href={link}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            marginTop: '12px !important',
+            color: GetColorByType(type),
+          }}
+        >
+          {title}
+        </Link>
+      );
+    case Notification_Type.TypeActionableWarning:
+      return (
+        <Link
+          href={link}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            marginTop: '12px !important',
+            color: GetColorByType(type),
+          }}
+        >
+          {title}
+        </Link>
+      );
+    case Notification_Type.TypeActionableError:
+      return (
+        <Link
+          href={link}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            marginTop: '12px !important',
+            color: GetColorByType(type),
+          }}
+        >
+          {title}
+        </Link>
+      );
+    case Notification_Type.TypeActionableCritical:
+      return (
+        <Link
+          href={link}
+          sx={{
+            fontSize: '14px',
+            fontWeight: 500,
+            marginTop: '12px !important',
+            color: GetColorByType(type),
+          }}
+        >
+          {title}
+        </Link>
+      );
     default:
       return <Box display={'none'} />;
   }
@@ -186,36 +254,76 @@ const Action = (type: Notification_Type) => {
 
 const GetIcon = (type: Notification_Type) => {
   switch (type) {
-    case Notification_Type.NotifInfo:
-    case Notification_Type.NotifActionableInfo:
-      return <InfoIcon sx={{ svg: { fill: colors.hoverColor } }} />;
-    case Notification_Type.NotifWarning:
-    case Notification_Type.NotifActionableWarning:
-      return <WarningIcon htmlColor={colors.yellow} />;
-    case Notification_Type.NotifError:
-    case Notification_Type.NotifActionableError:
-      return <ErrorIcon htmlColor={colors.redMatt} />;
-    case Notification_Type.NotifCritical:
-    case Notification_Type.NotifActionableCritical:
-      return <CriticalIcon htmlColor={colors.red} />;
+    case Notification_Type.TypeInfo:
+    case Notification_Type.TypeActionableInfo:
+      return (
+        <InfoIcon
+          sx={{
+            fontSize: '20px',
+            color: colors.hoverColor,
+            marginTop: '4px !important',
+          }}
+        />
+      );
+    case Notification_Type.TypeWarning:
+    case Notification_Type.TypeActionableWarning:
+      return (
+        <WarningIcon
+          sx={{
+            fontSize: '20px',
+            color: colors.yellow,
+            marginTop: '4px !important',
+          }}
+        />
+      );
+    case Notification_Type.TypeError:
+    case Notification_Type.TypeActionableError:
+      return (
+        <ErrorIcon
+          sx={{
+            fontSize: '20px',
+            color: colors.redMatt,
+            marginTop: '4px !important',
+          }}
+        />
+      );
+    case Notification_Type.TypeCritical:
+    case Notification_Type.TypeActionableCritical:
+      return (
+        <CriticalIcon
+          sx={{
+            color: colors.red,
+            fontSize: '20px',
+            marginTop: '4px !important',
+          }}
+        />
+      );
     default:
-      return <InfoIcon />;
+      return (
+        <InfoIcon
+          sx={{
+            fontSize: '20px',
+            color: colors.hoverColor,
+            marginTop: '4px !important',
+          }}
+        />
+      );
   }
 };
 
 const GetColorByType = (type: Notification_Type) => {
   switch (type) {
-    case Notification_Type.NotifInfo:
-    case Notification_Type.NotifActionableInfo:
+    case Notification_Type.TypeInfo:
+    case Notification_Type.TypeActionableInfo:
       return colors.hoverColor;
-    case Notification_Type.NotifWarning:
-    case Notification_Type.NotifActionableWarning:
+    case Notification_Type.TypeWarning:
+    case Notification_Type.TypeActionableWarning:
       return colors.yellow;
-    case Notification_Type.NotifError:
-    case Notification_Type.NotifActionableError:
+    case Notification_Type.TypeError:
+    case Notification_Type.TypeActionableError:
       return colors.redMatt;
-    case Notification_Type.NotifCritical:
-    case Notification_Type.NotifActionableCritical:
+    case Notification_Type.TypeCritical:
+    case Notification_Type.TypeActionableCritical:
       return colors.red;
     default:
       return colors.hoverColor;

@@ -78,11 +78,15 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
-  NotifCritical = 'NOTIF_CRITICAL',
-  NotifError = 'NOTIF_ERROR',
-  NotifInfo = 'NOTIF_INFO',
-  NotifInvalid = 'NOTIF_INVALID',
-  NotifWarning = 'NOTIF_WARNING'
+  TypeActionableCritical = 'TYPE_ACTIONABLE_CRITICAL',
+  TypeActionableError = 'TYPE_ACTIONABLE_ERROR',
+  TypeActionableInfo = 'TYPE_ACTIONABLE_INFO',
+  TypeActionableWarning = 'TYPE_ACTIONABLE_WARNING',
+  TypeCritical = 'TYPE_CRITICAL',
+  TypeError = 'TYPE_ERROR',
+  TypeInfo = 'TYPE_INFO',
+  TypeInvalid = 'TYPE_INVALID',
+  TypeWarning = 'TYPE_WARNING'
 }
 
 export type NotificationsRes = {
@@ -241,8 +245,8 @@ export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
-export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
 export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
@@ -338,8 +342,8 @@ export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
-export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
 export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
