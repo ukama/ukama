@@ -39,8 +39,10 @@ override LOCAL          = linux
 
 ifndef TARGET
 	override TARGET_BOARD = LOCAL
+	export TARGET=$(LOCAL)
 else
 	override TARGET_BOARD = $(TARGET)
+	export TARGET
 endif
 
 # Setup paths for configs
