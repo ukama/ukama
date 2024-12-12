@@ -194,6 +194,14 @@ export class NotificationsAPIResDto {
 }
 
 @ObjectType()
+export class NotificationRedirect {
+  @Field()
+  title: string;
+
+  @Field()
+  action: string;
+}
+@ObjectType()
 export class NotificationsAPIRes {
   @Field(() => [NotificationsAPIResDto])
   notifications: NotificationsAPIResDto[];
@@ -227,6 +235,9 @@ export class NotificationsResDto {
 
   @Field()
   isRead: boolean;
+
+  @Field(() => NotificationRedirect)
+  redirect?: NotificationRedirect;
 }
 
 @ObjectType()

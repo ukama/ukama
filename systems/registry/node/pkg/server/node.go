@@ -620,13 +620,14 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 			Connectivity: cpb.NodeConnectivity(cpb.NodeConnectivity_value[dbn.Status.Connectivity.String()]),
 			State:        cpb.NodeState(cpb.NodeState_value[dbn.Status.State.String()]),
 		},
-		Type: dbn.Type,
-		Name: dbn.Name,
+		Type:      dbn.Type,
+		Name:      dbn.Name,
+		Latitude:  dbn.Latitude,
+		Longitude: dbn.Longitude,
 	}
 
 	if dbn.Site.NodeId != "" {
 		n.Site = &pb.Site{}
-
 		n.Site.NodeId = dbn.Site.NodeId
 		n.Site.SiteId = dbn.Site.SiteId.String()
 		n.Site.NetworkId = dbn.Site.NetworkId.String()

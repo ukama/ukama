@@ -8,6 +8,7 @@
 'use client';
 import {
   Component_Type,
+  ComponentsResDto,
   useGetComponentsByUserIdQuery,
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
@@ -19,13 +20,8 @@ import colors from '@/theme/colors';
 import { ConfigureStep, isValidLatLng } from '@/utils';
 import { AlertColor, Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from 'next/navigation';
-import { useState } from 'react';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import DynamicNetwork from '../../../public/svg/DynamicNetwork';
 import { Logo } from '../../../public/svg/Logo';
 
@@ -34,16 +30,11 @@ const ConfigureLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
-  const router = useRouter();
   const path = usePathname();
   const params = useParams<{ id: string; name: string }>();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const qpPower = searchParams.get('power') ?? '';
-  const qpSwitch = searchParams.get('switch') ?? '';
-  const qpAddress = searchParams.get('address') ?? '';
-  const qpbackhaul = searchParams.get('backhaul') ?? '';
   const pstep = parseInt(searchParams.get('step') ?? '1');
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow, pstep);
@@ -75,7 +66,7 @@ const ConfigureLayout = ({
     },
   });
 
-  useGetComponentsByUserIdQuery({
+  const { data: components } = useGetComponentsByUserIdQuery({
     fetchPolicy: 'cache-first',
     variables: {
       data: {
@@ -84,23 +75,7 @@ const ConfigureLayout = ({
     },
     onCompleted: (data) => {
       if (data.getComponentsByUserId.components.length > 0) {
-        const switchRecords = data.getComponentsByUserId.components.find(
-          (comp) => comp.id === qpSwitch,
-        );
-
-        const powerRecords = data.getComponentsByUserId.components.find(
-          (comp) => comp.id === qpPower,
-        );
-
-        const backhaulRecords = data.getComponentsByUserId.components.find(
-          (comp) => comp.id === qpbackhaul,
-        );
-
-        setParts({
-          switchId: switchRecords?.description ?? '',
-          powerName: powerRecords?.description ?? '',
-          backhaulName: backhaulRecords?.description ?? '',
-        });
+        mapComponents(data.getComponentsByUserId);
       }
     },
     onError: (error) => {
@@ -113,44 +88,28 @@ const ConfigureLayout = ({
     },
   });
 
-  // if (flow !== ONBOARDING_FLOW && flow !== NETWORK_FLOW)
-  //   return (
-  //     <Box width="100%" height="100%" overflow="hidden">
-  //       <Stack height="100%">
-  //         <GradiantBarNoRadius />
-  //         <Container maxWidth={'sm'} sx={{ height: '100%' }}>
-  //           <CenterContainer>
-  //             <Stack spacing={2} p={{ xs: 4, md: 8 }}>
-  //               <Grid container size={12} rowSpacing={6} height={'fit-content'}>
-  //                 <Grid size={12}>
-  //                   {Logo({
-  //                     color: colors.primaryMain,
-  //                     width: 120,
-  //                     height: 37,
-  //                   })}
-  //                 </Grid>
-  //                 <Grid size={12}>
-  //                   <Typography
-  //                     fontWeight={600}
-  //                     variant="caption"
-  //                     lineHeight={'18px'}
-  //                     letterSpacing={'1.5px'}
-  //                     color={colors.tertiary}
-  //                   >
-  //                     STEP {`${currentStep}/${totalStep}`}
-  //                   </Typography>
-  //                 </Grid>
-  //                 <Grid size={12} height={'100%'}>
-  //                   {children}
-  //                 </Grid>
-  //               </Grid>
-  //             </Stack>
-  //           </CenterContainer>
-  //         </Container>
-  //       </Stack>
-  //       <AppSnackbar />
-  //     </Box>
-  //   );
+  useEffect(() => {
+    if (components && components?.getComponentsByUserId.components.length > 0) {
+      mapComponents(components.getComponentsByUserId);
+    }
+  }, [searchParams, components]);
+
+  const mapComponents = (components: ComponentsResDto) => {
+    const p = searchParams.get('power') ?? '';
+    const s = searchParams.get('switch') ?? '';
+    const b = searchParams.get('backhaul') ?? '';
+    const switchRecords = components.components.find((comp) => comp.id === s);
+
+    const powerRecords = components.components.find((comp) => comp.id === p);
+
+    const backhaulRecords = components.components.find((comp) => comp.id === b);
+
+    setParts({
+      switchId: switchRecords?.description ?? '',
+      powerName: powerRecords?.description ?? '',
+      backhaulName: backhaulRecords?.description ?? '',
+    });
+  };
 
   return (
     <Box width="100%" height="100%" overflow="hidden">
@@ -194,11 +153,11 @@ const ConfigureLayout = ({
           >
             <CenterContainer>
               {DynamicNetwork({
-                power: parts.powerName,
+                power: parts.powerName ? parts.powerName : 'Power',
                 powerIcon: parts.powerName ? colors.primaryMain : '#6F7979',
-                nodeId: parts.switchId,
+                nodeId: parts.switchId ? parts.switchId : 'Node',
                 nodeIcon: parts.switchId ? colors.primaryMain : '#6F7979',
-                backhaul: parts.backhaulName,
+                backhaul: parts.backhaulName ? parts.backhaulName : 'Backhaul',
                 backhaulIcon: parts.backhaulName
                   ? colors.primaryMain
                   : '#6F7979',

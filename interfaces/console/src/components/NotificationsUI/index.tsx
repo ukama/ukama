@@ -72,7 +72,9 @@ export const Notifications = ({
                 title={notif.title}
                 isRead={notif.isRead}
                 createdAt={notif.createdAt}
+                action={notif.redirect.action}
                 description={notif.description}
+                actionTitle={notif.redirect.title}
                 handleMenuItemClick={handleAction}
               />
             </ListItem>
@@ -93,8 +95,10 @@ export const Notifications = ({
 interface INotification {
   id: string;
   title: string;
+  action: string;
   isRead: boolean;
   createdAt: string;
+  actionTitle: string;
   description: string;
   type: Notification_Type;
   handleMenuItemClick: (action: string, id: string) => void;
@@ -105,8 +109,10 @@ export const Notification = ({
   type,
   title,
   isRead,
+  action,
   createdAt,
   description,
+  actionTitle,
   handleMenuItemClick,
 }: INotification) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -146,7 +152,12 @@ export const Notification = ({
             {description}
           </Typography>
 
-          {Action(type, 'View', '/')}
+          <NotificationAction
+            type={type}
+            title={actionTitle}
+            link={action}
+            handleNotificationRead={() => handleMenuItemClick('mark-read', nid)}
+          />
         </Stack>
 
         <Stack direction={'column'} spacing={0.5} alignItems={'flex-end'}>
@@ -189,67 +200,41 @@ export const Notification = ({
   );
 };
 
-const Action = (type: Notification_Type, title: string, link: string) => {
-  switch (type) {
-    case Notification_Type.TypeActionableInfo:
-      return (
-        <Link
-          href={link}
-          sx={{
-            fontSize: '14px',
-            fontWeight: 500,
-            marginTop: '12px !important',
-            color: GetColorByType(type),
-          }}
-        >
-          {title}
-        </Link>
-      );
-    case Notification_Type.TypeActionableWarning:
-      return (
-        <Link
-          href={link}
-          sx={{
-            fontSize: '14px',
-            fontWeight: 500,
-            marginTop: '12px !important',
-            color: GetColorByType(type),
-          }}
-        >
-          {title}
-        </Link>
-      );
-    case Notification_Type.TypeActionableError:
-      return (
-        <Link
-          href={link}
-          sx={{
-            fontSize: '14px',
-            fontWeight: 500,
-            marginTop: '12px !important',
-            color: GetColorByType(type),
-          }}
-        >
-          {title}
-        </Link>
-      );
-    case Notification_Type.TypeActionableCritical:
-      return (
-        <Link
-          href={link}
-          sx={{
-            fontSize: '14px',
-            fontWeight: 500,
-            marginTop: '12px !important',
-            color: GetColorByType(type),
-          }}
-        >
-          {title}
-        </Link>
-      );
-    default:
-      return <Box display={'none'} />;
+interface INotificationAction {
+  link: string;
+  title: string;
+  type: Notification_Type;
+  handleNotificationRead: () => void;
+}
+
+const NotificationAction = ({
+  link,
+  type,
+  title,
+  handleNotificationRead,
+}: INotificationAction) => {
+  if (
+    type !== Notification_Type.TypeActionableInfo &&
+    type !== Notification_Type.TypeActionableWarning &&
+    type !== Notification_Type.TypeActionableError &&
+    type !== Notification_Type.TypeActionableCritical
+  ) {
+    return <Box display={'none'} />;
   }
+  return (
+    <Link
+      href={link}
+      sx={{
+        fontSize: '14px',
+        fontWeight: 500,
+        marginTop: '12px !important',
+        color: GetColorByType(type),
+      }}
+      onClick={handleNotificationRead}
+    >
+      {title}
+    </Link>
+  );
 };
 
 const GetIcon = (type: Notification_Type) => {

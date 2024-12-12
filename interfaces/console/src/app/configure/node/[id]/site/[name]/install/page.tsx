@@ -211,15 +211,16 @@ const SiteConfigure = ({ params }: IPage) => {
       return;
     }
 
-    const accessId =
-      accessComponentsData?.getComponentsByUserId.components.find(
-        (component) => component.partNumber === id,
-      )?.id;
+    // TODO: Need to check if the user has ACCESS POINT in inventory
+    // const accessId =
+    //   accessComponentsData?.getComponentsByUserId.components.find(
+    //     (component) => component.partNumber === id,
+    //   )?.id;
 
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 
-    if (!accessId || !spectrumId) {
+    if (!id || !spectrumId) {
       setSnackbarMessage({
         id: 'add-site-error',
         message: 'Access or Spectrum components not found',
@@ -234,11 +235,7 @@ const SiteConfigure = ({ params }: IPage) => {
       networkData &&
       networkData?.getNetworks.networks.length > 0
     ) {
-      addSiteCall(
-        accessId,
-        spectrumId,
-        networkData?.getNetworks.networks[0].id,
-      );
+      addSiteCall(id, spectrumId, networkData?.getNetworks.networks[0].id);
     }
   };
 

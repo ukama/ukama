@@ -2,13 +2,10 @@ import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import { STORAGE_KEY } from "../../common/configs";
-import {
-  NotificationScopeEnumValue,
-  NotificationTypeEnumValue,
-} from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, openStore, removeFromStore } from "../../common/storage";
 import {
+  eventKeyToAction,
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
@@ -181,17 +178,19 @@ class SubscriptionsResolvers {
       if (!_data.isError) {
         const res = JSON.parse(_data.data);
         if (res && res.id) {
-          pubSub.publish(key, {
+          const n: NotificationsResDto = {
             id: res.id,
-            isRead: false,
+            type: res.type,
+            scope: res.scope,
             title: res.title,
-            eventKey: res.eventKey,
-            createdAt: res.createdAt,
-            resourceId: res.resourceId,
+            isRead: res.is_read,
+            eventKey: res.event_key,
+            createdAt: res.created_at,
+            resourceId: res.resource_id,
             description: res.description,
-            type: NotificationTypeEnumValue(res.type),
-            scope: NotificationScopeEnumValue(res.scope),
-          } as NotificationsResDto);
+          };
+          n.redirect = eventKeyToAction(res.event_key, n);
+          pubSub.publish(key, n);
         } else {
           return getErrorRes("No notification data found");
         }

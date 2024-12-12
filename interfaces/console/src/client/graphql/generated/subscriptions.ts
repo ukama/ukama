@@ -89,6 +89,12 @@ export enum Notification_Type {
   TypeWarning = 'TYPE_WARNING'
 }
 
+export type NotificationRedirect = {
+  __typename?: 'NotificationRedirect';
+  action: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
+
 export type NotificationsRes = {
   __typename?: 'NotificationsRes';
   notifications: Array<NotificationsResDto>;
@@ -101,6 +107,7 @@ export type NotificationsResDto = {
   eventKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  redirect: NotificationRedirect;
   resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
@@ -170,7 +177,7 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -183,7 +190,7 @@ export type NotificationSubscriptionSubscriptionVariables = Exact<{
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -214,6 +221,10 @@ export const GetNotificationsDocument = gql`
       createdAt
       resourceId
       description
+      redirect {
+        action
+        title
+      }
     }
   }
 }
@@ -277,6 +288,10 @@ export const NotificationSubscriptionDocument = gql`
     createdAt
     resourceId
     description
+    redirect {
+      action
+      title
+    }
   }
 }
     `;

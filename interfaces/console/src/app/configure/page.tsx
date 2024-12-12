@@ -29,9 +29,7 @@ const Page = () => {
   const handleNext = () => {
     if (isChecked) {
       const id = 'uk-sa9001-tnode-a1-1234';
-      router.push(
-        `/configure/node/${id}?step=${step + 1}&flow=${flow}&lat=-4.322447&lng=15.307045`,
-      );
+      router.push(`/configure/node/${id}?step=${step + 1}&flow=${flow}`);
     }
   };
   const handleSkip = () => {

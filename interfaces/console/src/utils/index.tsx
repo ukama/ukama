@@ -16,7 +16,7 @@ import {
   MetricRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { ONBOARDING_FLOW } from '@/constants';
+import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -438,8 +438,16 @@ const ConfigureStep = (
         return { currentStep: 3, totalStep: 6 };
       else if (path.includes('configure'))
         return { currentStep: 2, totalStep: 6 };
+    case INSTALLATION_FLOW:
+      if (path.includes('check')) return { currentStep: 1, totalStep: 4 };
+      else if (path.includes('install'))
+        return { currentStep: 4, totalStep: 4 };
+      else if (path.includes('site/name'))
+        return { currentStep: 3, totalStep: 4 };
+      else if (path.includes('configure/node'))
+        return { currentStep: 2, totalStep: 4 };
     default:
-      return { currentStep: 1, totalStep: 6 };
+      return { currentStep: 1, totalStep: 5 };
   }
 };
 

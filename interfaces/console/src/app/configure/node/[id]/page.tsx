@@ -8,11 +8,13 @@
 'use client';
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
+import { ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { Button, Skeleton, Stack, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import LoadingSkelton from './skelton';
 
 interface INodeConfigure {
   params: {
@@ -27,7 +29,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const flow = searchParams.get('flow') ?? 'onb';
+  const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
@@ -39,6 +41,11 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     isLoading: addressLoading,
     fetchAddress,
   } = useFetchAddress();
+
+  useEffect(() => {
+    if (latlng[0] === 0 && latlng[1] === 0)
+      router.push(`/configure/check?step=1&flow=${flow}`);
+  }, []);
 
   useEffect(() => {
     if (latlng[0] !== 0 && latlng[1] !== 0) handleFetchAddress();
@@ -74,6 +81,8 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     }
   };
 
+  if (isLoading || addressLoading) <LoadingSkelton />;
+
   return (
     <Stack spacing={2}>
       <Stack direction={'row'}>
@@ -90,20 +99,16 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           <br />
         </Typography>
 
-        {isLoading || addressLoading ? (
-          <Skeleton variant="rounded" width={'100%'} height={128} />
-        ) : (
-          <SiteMapComponent
-            posix={[latlng[0], latlng[1]]}
-            address={address}
-            height={'128px'}
-          />
-        )}
+        <SiteMapComponent
+          posix={[latlng[0], latlng[1]]}
+          address={address}
+          height={'128px'}
+        />
 
         <LField label="Node Id" value={id} />
         <LField
           label="SITE LOCATION"
-          value={`${address} [${qpLat}, ${qpLng}]`}
+          value={`${address} [${latlng[0]}, ${latlng[1]}]`}
         />
       </Stack>
 

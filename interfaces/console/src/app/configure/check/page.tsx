@@ -7,7 +7,10 @@
  */
 'use client';
 
-import { useGetSitesLazyQuery } from '@/client/graphql/generated';
+import {
+  useGetNodeQuery,
+  useGetSitesLazyQuery,
+} from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
 import {
   CHECK_SITE_FLOW,
@@ -16,14 +19,16 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import { useAppContext } from '@/context';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const Check = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
-  const [title, setTitle] = useState(
+  const nodeId = searchParams.get('nid') ?? '';
+  const [title] = useState(
     flow === NETWORK_FLOW
       ? 'Creating your network...'
       : flow === CHECK_SITE_FLOW
@@ -36,14 +41,39 @@ const Check = () => {
   const [description, setDescription] = useState('');
   const { network } = useAppContext();
 
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
   const [getSites] = useGetSitesLazyQuery({
     onCompleted: (data) => {
-      if (data.getSites.sites.length > 0) {
+      if (data.getSites.sites.length > 0 && !nodeId) {
         // TODO: CHECK IF ANY SITE IS AVAILABLE FOR CONFIGURE & REDIRECT TO SITE CONFIGURE STEP 3
         router.push(`/console/home`);
         // router.push(
         //     `/configure/node/uk-sa9001-tnode-a1-1234?step=1&flow=${INSTALLATION_FLOW}`,
         //   );
+      }
+    },
+  });
+
+  const { data: nodeData, loading: nodeLoading } = useGetNodeQuery({
+    skip: !nodeId,
+    variables: {
+      data: {
+        id: nodeId,
+      },
+    },
+    onCompleted: async (data) => {
+      if (data.getNode.latitude && data.getNode.longitude && nodeId) {
+        setTimeout(() => {}, 2000);
+        let p = setQueryParam('lat', data.getNode.latitude.toString());
+        p.set('lng', data.getNode.longitude.toString());
+        p.delete('nid');
+        router.push(`/configure/node/${data.getNode.id}?${p.toString()}`);
       }
     },
   });
