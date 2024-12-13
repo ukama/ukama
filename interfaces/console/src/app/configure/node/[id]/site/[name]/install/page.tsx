@@ -12,10 +12,9 @@ import {
   useGetComponentsByUserIdQuery,
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
-import { INSTALLATION_FLOW } from '@/constants';
+import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
-import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import {
   AlertColor,
@@ -110,9 +109,11 @@ const SiteConfigure = ({ params }: IPage) => {
         type: 'success' as AlertColor,
         show: true,
       });
-      router.push(
-        `/configure/sims?step=${flow !== INSTALLATION_FLOW ? 4 : 5}&flow=${flow}`,
-      );
+      if (flow === ONBOARDING_FLOW) {
+        router.push(`/configure/sims?${searchParams.toString()}`);
+      } else {
+        router.push(`/configure/complete?${searchParams.toString()}`);
+      }
     },
     onError: (error) => {
       setLoading(false);
@@ -209,16 +210,15 @@ const SiteConfigure = ({ params }: IPage) => {
       return;
     }
 
-    // TODO: Need to check if the user has ACCESS POINT in inventory
-    // const accessId =
-    //   accessComponentsData?.getComponentsByUserId.components.find(
-    //     (component) => component.partNumber === id,
-    //   )?.id;
+    const accessId =
+      accessComponentsData?.getComponentsByUserId.components.find(
+        (component) => component.partNumber === id,
+      )?.id;
 
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 
-    if (!id || !spectrumId) {
+    if (!accessId || !spectrumId) {
       setSnackbarMessage({
         id: 'add-site-error',
         message: 'Access or Spectrum components not found',
@@ -233,7 +233,11 @@ const SiteConfigure = ({ params }: IPage) => {
       networkData &&
       networkData?.getNetworks.networks.length > 0
     ) {
-      addSiteCall(id, spectrumId, networkData?.getNetworks.networks[0].id);
+      addSiteCall(
+        accessId,
+        spectrumId,
+        networkData?.getNetworks.networks[0].id,
+      );
     }
   };
 
