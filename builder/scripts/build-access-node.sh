@@ -164,15 +164,15 @@ function copy_all_apps() {
 
     log "INFO" "Copying apps"
 
-    sudo mkdir -p "${PRIMARY_MOUNT}/ukama/apps/"
-    sudo mkdir -p "${PASSIVE_MOUNT}/ukama/apps/"
+    sudo mkdir -p "${PRIMARY_MOUNT}/ukama/apps/pkgs"
+    sudo mkdir -p "${PASSIVE_MOUNT}/ukama/apps/pkgs"
 
     IFS=',' read -r -a array <<< "$apps"
     for app in "${array[@]}"; do
         sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
-             "${PRIMARY_MOUNT}/ukama/apps/"
+             "${PRIMARY_MOUNT}/ukama/apps/pkgs"
         sudo cp "${ukama_root}/build/pkgs/${app}_latest.tar.gz" \
-             "${PASSIVE_MOUNT}/ukama/apps/"
+             "${PASSIVE_MOUNT}/ukama/apps/pkgs"
     done
 
     # cleanup
@@ -185,7 +185,7 @@ function copy_misc_files() {
 
     log "INFO" "Copying various files to image"
 
-    generate_manifest_file $apps
+    create_manifest_file $apps
     sudo cp ${MANIFEST_FILE} "${PRIMARY_MOUNT}/manifest.json"
     sudo cp ${MANIFEST_FILE} "${PASSIVE_MOUNT}/manifest.json"
     rm ${MANIFEST_FILE}
@@ -429,6 +429,8 @@ setup_fstab
 build_apps_using_container "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
+
+cp "${TMP_DIR}/${IMG_NAME}" ${CWD}
 
 unmount_partitions
 cleanup
