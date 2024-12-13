@@ -89,7 +89,7 @@ type PaymentInfo struct {
 	Description          string `json:"description,omitempty"`
 	Status               string `json:"status,omitempty"`
 	FailureReason        string `json:"faillure_reason,omitempty"`
-	ExternalId           string `json:"externa_id,omitempty"`
+	ExternalId           string `json:"external_id,omitempty"`
 	CreatedAt            string `json:"created_at,omitempty"`
 	Metadata             []byte `json:"metadata,omitempty"`
 }
