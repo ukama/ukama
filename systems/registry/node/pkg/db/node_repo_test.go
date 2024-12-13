@@ -92,7 +92,8 @@ func TestNodeRepo_Add(t *testing.T) {
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(node.Id, node.Name, node.Type, node.ParentNodeId,
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg())
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
 		// Act

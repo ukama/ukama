@@ -29,8 +29,6 @@ const SiteName = ({ params }: ISiteName) => {
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const address = searchParams.get('address') ?? '';
-  const flow = searchParams.get('flow') ?? 'onb';
-  const step = parseInt(searchParams.get('step') ?? '1');
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -47,7 +45,6 @@ const SiteName = ({ params }: ISiteName) => {
   ]);
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
@@ -59,9 +56,8 @@ const SiteName = ({ params }: ISiteName) => {
   };
 
   const handleSubmit = (values: FormikValues) => {
-    const p = setQueryParam('step', (step + 1).toString());
     router.push(
-      `/configure/node/${id}/site/${values.name}/install?${p.toString()}`,
+      `/configure/node/${id}/site/${values.name}/install?${searchParams.toString()}`,
     );
   };
 

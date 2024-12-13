@@ -35,14 +35,22 @@ fragment node on Node {
   }
 }
 
-query getNode($data: NodeInput!) {
+query GetNode($data: NodeInput!) {
   getNode(data: $data) {
     ...node
   }
 }
 
-query getNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
+query GetNodes {
+  getNodes {
+    nodes {
+      ...node
+    }
+  }
+}
+
+query GetNodesByState($data: GetNodesByStateInput!) {
+  getNodesByState(data: $data) {
     nodes {
       ...node
     }

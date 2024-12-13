@@ -28,17 +28,15 @@ export enum API_METHOD_TYPE {
   DELETE = "delete",
   PATCH = "patch",
 }
-export enum NODE_STATUS {
-  ACTIVE = "active",
-  MAINTENANCE = "maintenance",
-  FAULTY = "faulty",
-  ONBOARDED = "onboarded",
+export enum NODE_STATE {
+  UNKNOWN = "unknown",
   CONFIGURED = "configured",
-  UNDEFINED = "undefined",
+  OPERATIONAL = "operational",
+  FAULTY = "faulty",
 }
-registerEnumType(NODE_STATUS, {
-  name: "NodeStatusEnum",
-  description: "Node status enums",
+registerEnumType(NODE_STATE, {
+  name: "NodeStateEnum",
+  description: "Node state enums",
 });
 
 export enum NODE_CONNECTIVITY {

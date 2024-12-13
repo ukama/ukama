@@ -17,6 +17,8 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -88,20 +90,6 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetAll(free bool) (*pb.GetNodesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{
-		Free: free,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
 func (n *Node) GetNetworkNodes(networkId string) (*pb.GetByNetworkResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
@@ -130,12 +118,25 @@ func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetAllNodes(free bool) (*pb.GetNodesResponse, error) {
+func (n *Node) GetNodes() (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{
-		Free: free,
+	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (n *Node) GetNodesByState(connectivity, state string) (*pb.GetNodesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.GetNodesByState(ctx, &pb.GetNodesByStateRequest{
+		Connectivity: cpb.NodeConnectivity(ukama.ParseNodeConnectivity(connectivity)),
+		State:        cpb.NodeState(ukama.ParseNodeState(state)),
 	})
 	if err != nil {
 		return nil, err

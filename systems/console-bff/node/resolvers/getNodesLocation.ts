@@ -8,17 +8,15 @@
 import crypto from "crypto";
 import { Arg, Query, Resolver } from "type-graphql";
 
-import { NODE_STATUS } from "../../common/enums";
+import { NODE_STATE } from "../../common/enums";
 import { NodeLocation, NodesInput, NodesLocation } from "./types";
 
 const getRandomNodeState = () => {
   const nodeStates = [
-    NODE_STATUS.ACTIVE,
-    NODE_STATUS.CONFIGURED,
-    NODE_STATUS.FAULTY,
-    NODE_STATUS.MAINTENANCE,
-    NODE_STATUS.ONBOARDED,
-    NODE_STATUS.UNDEFINED,
+    NODE_STATE.UNKNOWN,
+    NODE_STATE.CONFIGURED,
+    NODE_STATE.FAULTY,
+    NODE_STATE.OPERATIONAL,
   ];
   return nodeStates[Math.floor(crypto.randomInt(1, nodeStates.length))];
 };
@@ -64,7 +62,7 @@ export class GetNodesLocationResolver {
     return {
       networkId: data.networkId,
       nodes:
-        data.nodeFilterState === NODE_STATUS.UNDEFINED
+        data.nodeFilterState === NODE_STATE.UNKNOWN
           ? nodes
           : nodes.filter(
               (node: NodeLocation) => node.state === data.nodeFilterState

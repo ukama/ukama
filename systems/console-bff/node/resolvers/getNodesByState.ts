@@ -5,16 +5,19 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Ctx, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { Nodes } from "./types";
+import { GetNodesByStateInput, Nodes } from "./types";
 
 @Resolver()
-export class GetNodesResolver {
+export class GetNodesByStateResolver {
   @Query(() => Nodes)
-  async getNodes(@Ctx() context: Context) {
+  async getNodesByState(
+    @Arg("data") data: GetNodesByStateInput,
+    @Ctx() context: Context
+  ) {
     const { dataSources, baseURL } = context;
-    return await dataSources.dataSource.getNodes(baseURL);
+    return await dataSources.dataSource.getNodesByState(baseURL, data);
   }
 }

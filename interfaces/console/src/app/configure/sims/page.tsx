@@ -30,7 +30,6 @@ const Sims = () => {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
-  const step = parseInt(searchParams.get('step') ?? '1');
   const { env, setSnackbarMessage } = useAppContext();
   const [file, setFile] = useState<any>();
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({

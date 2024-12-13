@@ -30,7 +30,6 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
-  const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
@@ -44,7 +43,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
 
   useEffect(() => {
     if (latlng[0] === 0 && latlng[1] === 0)
-      router.push(`/configure/check?step=1&flow=${flow}`);
+      router.push(`/configure/check?flow=${flow}`);
   }, []);
 
   useEffect(() => {
@@ -70,14 +69,12 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   };
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
   const handleNext = () => {
     if (address) {
-      const p = setQueryParam('step', (step + 1).toString());
-      router.push(`/configure/node/${id}/site/name?${p.toString()}`);
+      router.push(`/configure/node/${id}/site/name?${searchParams.toString()}`);
     }
   };
 

@@ -67,7 +67,6 @@ const Page = ({ params }: IPage) => {
   const qpAddress = searchParams.get('address') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
   const flow = searchParams.get('flow') ?? 'onb';
-  const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [isCreateNetwork, setIsCreateNetwork] = useState<boolean>(false);
@@ -182,7 +181,6 @@ const Page = ({ params }: IPage) => {
   };
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
@@ -274,19 +272,7 @@ const Page = ({ params }: IPage) => {
         <SiteLoadingState msg={loadingMessage} />
       ) : (
         <Box>
-          <Stack direction={'row'}>
-            <Typography variant="h6">{'Name network'}</Typography>
-            <Typography
-              variant="h6"
-              fontWeight={400}
-              sx={{
-                color: colors.black70,
-              }}
-            >
-              {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
-              {flow === 'onb' ? 6 : 4})
-            </Typography>
-          </Stack>
+          <Typography variant="h6">{'Name network'}</Typography>
 
           <FormikProvider value={formik}>
             <form onSubmit={formik.handleSubmit}>

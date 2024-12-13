@@ -50,7 +50,7 @@ func ParseNodeState(value string) NodeState {
 		return NodeState(i)
 	}
 
-	t := map[string]CdrType{"unknown": 0, "configured": 1, "operational": 2, "faulty": 3}
+	t := map[string]NodeState{"unknown": 0, "configured": 1, "operational": 2, "faulty": 3}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
@@ -58,4 +58,11 @@ func ParseNodeState(value string) NodeState {
 	}
 
 	return NodeState(v)
+}
+
+func IsValidNodeState(value string) bool {
+	t := map[string]NodeState{"unknown": 0, "configured": 1, "operational": 2, "faulty": 3}
+
+	_, ok := t[strings.ToLower(value)]
+	return ok
 }

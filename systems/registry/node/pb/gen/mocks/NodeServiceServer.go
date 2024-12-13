@@ -224,6 +224,36 @@ func (_m *NodeServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesRequ
 	return r0, r1
 }
 
+// GetNodesByState provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) GetNodesByState(_a0 context.Context, _a1 *gen.GetNodesByStateRequest) (*gen.GetNodesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodesByState")
+	}
+
+	var r0 *gen.GetNodesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesByStateRequest) (*gen.GetNodesResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodesByStateRequest) *gen.GetNodesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetNodesResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesByStateRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodesForNetwork provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) GetNodesForNetwork(_a0 context.Context, _a1 *gen.GetByNetworkRequest) (*gen.GetByNetworkResponse, error) {
 	ret := _m.Called(_a0, _a1)

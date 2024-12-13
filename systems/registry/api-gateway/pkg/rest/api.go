@@ -104,8 +104,9 @@ type GetNodeRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type GetNodesRequest struct {
-	Free bool `form:"free" json:"free" query:"free" binding:"required"`
+type GetNodesByStateRequest struct {
+	Connectivity string `form:"connectivity" json:"connectivity,omitempty" validate:"eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" binding:"required"`
+	State        string `form:"state" json:"state,omitempty" validate:"eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" binding:"required"`
 }
 
 type GetOrgNodesRequest struct {

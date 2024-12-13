@@ -419,11 +419,7 @@ const isValidLatLng = (position: LatLngTuple): boolean => {
   );
 };
 
-const ConfigureStep = (
-  path: string,
-  flow: string,
-  step: number,
-): TConfigureStep => {
+const ConfigureStep = (path: string, flow: string): TConfigureStep => {
   switch (flow) {
     case ONBOARDING_FLOW:
       if (path.includes('configure/network'))

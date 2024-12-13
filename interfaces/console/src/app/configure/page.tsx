@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { INSTALLATION_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import {
   Button,
@@ -22,19 +22,15 @@ const Page = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
-  const totalSteps = flow === ONBOARDING_FLOW ? 5 : 4;
-  const step = parseInt(searchParams.get('step') ?? '1');
   const [isChecked, setIsChecked] = useState(false);
 
   const handleNext = () => {
     if (isChecked) {
-      const id = 'uk-sa9001-tnode-a1-1234';
-      router.push(`/configure/node/${id}?step=${step + 1}&flow=${flow}`);
+      router.push(`/configure/check?flow=${flow}`);
     }
   };
   const handleSkip = () => {
-    //TODO: HANDLE SKIP LOGIC
-    router.push(`/configure/sims?step=5&flow=${flow}`);
+    router.push(`/configure/sims?flow=${flow}`);
   };
 
   const handleOnInstalled = (isChecked: boolean) => {

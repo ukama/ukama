@@ -17,11 +17,12 @@ import "google/protobuf/timestamp.proto";
 package ukama.registry.node.v1;
 
 service NodeService {
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
     rpc GetNodesForNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
-    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc GetNodesByState(GetNodesByStateRequest) returns (GetNodesResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
@@ -47,6 +48,8 @@ message GetNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
 }
 
+message GetNodesRequest{}
+
 message GetNodeResponse{
     Node node = 1;
 }
@@ -69,8 +72,9 @@ message GetByNetworkResponse{
     repeated Node nodes = 2;
 }
 
-message GetNodesRequest{
-    bool free = 1;
+message GetNodesByStateRequest{
+    ukama.common.v1.NodeConnectivity connectivity = 1;
+    ukama.common.v1.NodeState state = 2; 
 }
 
 message GetNodesResponse{

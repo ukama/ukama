@@ -35,9 +35,8 @@ const ConfigureLayout = ({
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const pstep = parseInt(searchParams.get('step') ?? '1');
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
-  const { currentStep, totalStep } = ConfigureStep(path, flow, pstep);
+  const { currentStep, totalStep } = ConfigureStep(path, flow);
   const { network, setNetwork, setSnackbarMessage } = useAppContext();
   const [parts, setParts] = useState({
     switchId: '',

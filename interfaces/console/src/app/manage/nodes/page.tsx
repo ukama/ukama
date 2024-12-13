@@ -28,11 +28,6 @@ const Page = () => {
 
   const { data: nodes, loading } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
-    variables: {
-      data: {
-        isFree: true,
-      },
-    },
     onError: (err) => {
       setSnackbarMessage({
         id: 'available-nodes-msg',

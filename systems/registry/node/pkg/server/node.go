@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -189,13 +190,39 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 }
 
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	if req.Free {
-		// return only free nodes
-		return n.getFreeNodes(ctx, req)
+	log.Infof("Getting all nodes.")
+
+	nodes, err := n.nodeRepo.GetAll()
+
+	if err != nil {
+		log.Error("error getting all nodes" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	// otherwise return all nodes
-	return n.getAllNodes(ctx, req)
+	resp := &pb.GetNodesResponse{
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
+	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(), req.GetState())
+
+	nodes, err := n.nodeRepo.GetNodesByState(uint8(req.GetConnectivity()), uint8(req.GetState()))
+	if err != nil {
+		log.Error("error getting all nodes by state" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	resp := &pb.GetNodesResponse{
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	fmt.Printf("Nodes Resp returning %v", resp)
+	return resp, nil
 }
 
 func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
@@ -534,42 +561,6 @@ func processNodeDuplErrors(err error, nodeId string) error {
 	return grpc.SqlErrorToGrpc(err, "node")
 }
 
-func (n *NodeServer) getAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Getting all nodes.")
-
-	nodes, err := n.nodeRepo.GetAll()
-
-	if err != nil {
-		log.Error("error getting all nodes" + err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
-}
-
-func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Getting all free nodes")
-
-	nodes, err := n.siteRepo.GetFreeNodes()
-
-	if err != nil {
-		log.Errorf("error getting all free nodes: %s", err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
-}
-
 func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 	nodesCount, onlineCount, offlineCount, err := n.nodeRepo.GetNodeCount()
 	if err != nil {
@@ -617,8 +608,8 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		Id: dbn.Id,
 		Status: &pb.NodeStatus{
-			Connectivity: cpb.NodeConnectivity(cpb.NodeConnectivity_value[dbn.Status.Connectivity.String()]),
-			State:        cpb.NodeState(cpb.NodeState_value[dbn.Status.State.String()]),
+			Connectivity: cpb.NodeConnectivity(dbn.Status.Connectivity),
+			State:        cpb.NodeState(dbn.Status.State),
 		},
 		Type:      dbn.Type,
 		Name:      dbn.Name,

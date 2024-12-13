@@ -8,7 +8,7 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
-import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
+import { NODE_CONNECTIVITY, NODE_STATE, NODE_TYPE } from "../../common/enums";
 
 @ObjectType()
 export class NodeStatus {
@@ -99,9 +99,12 @@ export class NodeInput {
 
 @ArgsType()
 @InputType()
-export class GetNodesInput {
-  @Field()
-  isFree?: boolean;
+export class GetNodesByStateInput {
+  @Field(() => NODE_CONNECTIVITY)
+  connectivity: NODE_CONNECTIVITY;
+
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -152,8 +155,8 @@ export class UpdateNodeStateInput {
   @Field()
   id: string;
 
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -161,8 +164,8 @@ export class NodeState {
   @Field()
   id: string;
 
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -241,8 +244,8 @@ export class NodeLocation {
   @Field()
   lng: string;
 
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ArgsType()
@@ -251,8 +254,8 @@ export class NodesInput {
   @Field()
   networkId: string;
 
-  @Field(() => NODE_STATUS)
-  nodeFilterState: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  nodeFilterState: NODE_STATE;
 }
 
 @ObjectType()

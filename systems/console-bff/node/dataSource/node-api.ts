@@ -13,6 +13,7 @@ import {
   AddNodeInput,
   AddNodeToSiteInput,
   DeleteNode,
+  GetNodesByStateInput,
   Node,
   NodeInput,
   Nodes,
@@ -30,11 +31,18 @@ class NodeAPI extends RESTDataSource {
       parseNodeRes(res.node)
     );
   }
-  async getNodes(baseURL: string, args: boolean): Promise<Nodes> {
+  async getNodes(baseURL: string): Promise<Nodes> {
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${NODES}?free=${args}`).then(res =>
-      parseNodesRes(res)
-    );
+    return this.get(`/${VERSION}/${NODES}`).then(res => parseNodesRes(res));
+  }
+  async getNodesByState(
+    baseURL: string,
+    data: GetNodesByStateInput
+  ): Promise<Nodes> {
+    this.baseURL = baseURL;
+    return this.get(
+      `/${VERSION}/${NODES}/state?connectivity=${data.connectivity}&state=${data.state}`
+    ).then(res => parseNodesRes(res));
   }
   async getNodesByNetwork(baseURL: string, networkId: string): Promise<Nodes> {
     this.baseURL = baseURL;

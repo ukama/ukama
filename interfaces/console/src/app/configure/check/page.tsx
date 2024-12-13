@@ -19,6 +19,7 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import { useAppContext } from '@/context';
+import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -26,6 +27,7 @@ const Check = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [showReturn, setShowReturn] = useState(false);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const nodeId = searchParams.get('nid') ?? '';
   const [title] = useState(
@@ -84,6 +86,7 @@ const Check = () => {
 
   const onInstallProgressComplete = () => {
     if (flow !== NETWORK_FLOW) {
+      setShowReturn(true);
       setSubtitle('❗ Site not detected');
       setDescription(
         'It is taking longer than usual to load up your site. Please check on your site to make sure that all parts are installed correctly.',
@@ -101,14 +104,27 @@ const Check = () => {
   };
 
   return (
-    <InstallSiteLoading
-      duration={10}
-      title={title}
-      subtitle={subtitle}
-      handleBack={handleBack}
-      description={description}
-      onCompleted={onInstallProgressComplete}
-    />
+    <Stack spacing={{ xs: 4, md: 6 }}>
+      <InstallSiteLoading
+        duration={10}
+        title={title}
+        subtitle={subtitle}
+        handleBack={handleBack}
+        description={description}
+        onCompleted={onInstallProgressComplete}
+      />
+      {showReturn && (
+        <Button
+          variant="contained"
+          sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
+          onClick={() => {
+            router.push('/console/home');
+          }}
+        >
+          Return to home
+        </Button>
+      )}
+    </Stack>
   );
 };
 

@@ -3,7 +3,7 @@ import { faker } from "@faker-js/faker";
 import { buildSchema } from "type-graphql";
 
 import { SUB_GRAPHS } from "../../common/configs";
-import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
+import { NODE_STATE, NODE_TYPE } from "../../common/enums";
 import { openStore } from "../../common/storage";
 import { getBaseURL, parseGatewayHeaders } from "../../common/utils";
 import NetworkApi from "../../network/datasource/network_api";
@@ -325,7 +325,10 @@ describe("Node API integration tests", () => {
       {
         query: GET_NODES_LOCATION,
         variables: {
-          data: { networkId: networkId, nodeFilterState: NODE_STATUS.ACTIVE },
+          data: {
+            networkId: networkId,
+            nodeFilterState: NODE_STATE.CONFIGURED,
+          },
         },
       },
       {
@@ -362,7 +365,7 @@ describe("Node API integration tests", () => {
     const res = await server.executeOperation(
       {
         query: UPDATE_NODE_STATE,
-        variables: { data: { id: nodeId, state: NODE_STATUS.FAULTY } },
+        variables: { data: { id: nodeId, state: NODE_STATE.FAULTY } },
       },
       {
         contextValue: contextValue,
@@ -374,7 +377,7 @@ describe("Node API integration tests", () => {
     expect(singleResult.errors).toBeUndefined();
     const { data } = singleResult;
     expect(data.updateNodeState.id).toEqual(nodeId);
-    expect(data.updateNodeState.status.state).toEqual(NODE_STATUS.FAULTY);
+    expect(data.updateNodeState.status.state).toEqual(NODE_STATE.FAULTY);
   });
 
   it("should detach a node", async () => {

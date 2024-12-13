@@ -7,7 +7,9 @@
  */
 'use client';
 import {
-  useGetNodesQuery,
+  NodeConnectivityEnum,
+  NodeStateEnum,
+  useGetNodesByStateQuery,
   useGetSitesLazyQuery,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
@@ -32,15 +34,16 @@ export default function Page() {
     fetchPolicy: 'cache-first',
   });
 
-  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
+  const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
     fetchPolicy: 'cache-and-network',
     variables: {
       data: {
-        isFree: false,
+        connectivity: NodeConnectivityEnum.Online,
+        state: NodeStateEnum.Unknown,
       },
     },
     onCompleted: async (data) => {
-      if (data?.getNodes.nodes.length > 0) {
+      if (data?.getNodesByState.nodes.length > 0) {
         const sites = await getSites({
           variables: {
             networkId: network.id,
@@ -48,7 +51,7 @@ export default function Page() {
         });
 
         const np: TNodePoolData[] = [];
-        data.getNodes.nodes.filter((node) => {
+        data.getNodesByState.nodes.filter((node) => {
           const s =
             node.site.siteId &&
             sites.data?.getSites.sites.find(
@@ -99,7 +102,7 @@ export default function Page() {
     } else if (search.length === 0) {
       setNodes(pool);
     }
-  }, [search, nodesData?.getNodes.nodes]);
+  }, [search, nodesData?.getNodesByState.nodes]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);

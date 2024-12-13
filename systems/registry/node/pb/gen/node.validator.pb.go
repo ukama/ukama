@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -37,6 +37,9 @@ func (this *GetNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
+	return nil
+}
+func (this *GetNodesRequest) Validate() error {
 	return nil
 }
 func (this *GetNodeResponse) Validate() error {
@@ -82,7 +85,7 @@ func (this *GetByNetworkResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetNodesRequest) Validate() error {
+func (this *GetNodesByStateRequest) Validate() error {
 	return nil
 }
 func (this *GetNodesResponse) Validate() error {

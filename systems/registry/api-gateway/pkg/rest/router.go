@@ -90,10 +90,10 @@ type member interface {
 type node interface {
 	AddNode(nodeId, name, state string, latitude, longitude float64) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
-	GetAll(free bool) (*nodepb.GetNodesResponse, error)
+	GetNodes() (*nodepb.GetNodesResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
-	GetAllNodes(free bool) (*nodepb.GetNodesResponse, error)
+	GetNodesByState(connectivity, state string) (*nodepb.GetNodesResponse, error)
 	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
 	UpdateNode(nodeId string, name string, latitude, longitude float64) (*nodepb.UpdateNodeResponse, error)
 	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
@@ -211,7 +211,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Node routes
 		const node = "/nodes"
 		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
-		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getAllNodesHandler, http.StatusOK))
+		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getNodes, http.StatusOK))
+		nodes.GET("/state", formatDoc("Get Nodes by state", "Get all nodes by state"), tonic.Handler(r.getNodesByState, http.StatusOK))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
 		nodes.GET("sites/:site_id", formatDoc("Get Nodes For Site", "Get all nodes of a site"), tonic.Handler(r.getSiteNodesHandler, http.StatusOK))
 		nodes.GET("networks/:net_id", formatDoc("Get Nodes For Network", "Get all nodes of a network"), tonic.Handler(r.getNetworkNodesHandler, http.StatusOK))
@@ -234,8 +235,12 @@ func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (
 	return r.clients.Node.GetSiteNodes(req.SiteId)
 }
 
-func (r *Router) getAllNodesHandler(c *gin.Context, req *GetNodesRequest) (*nodepb.GetNodesResponse, error) {
-	return r.clients.Node.GetAllNodes(req.Free)
+func (r *Router) getNodes(c *gin.Context) (*nodepb.GetNodesResponse, error) {
+	return r.clients.Node.GetNodes()
+}
+
+func (r *Router) getNodesByState(c *gin.Context, req *GetNodesByStateRequest) (*nodepb.GetNodesResponse, error) {
+	return r.clients.Node.GetNodesByState(req.Connectivity, req.State)
 }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {

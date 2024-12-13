@@ -42,7 +42,6 @@ const SiteConfigure = ({ params }: IPage) => {
   const { id, name } = params;
   const router = useRouter();
   const pathname = usePathname();
-  const gclasses = globalUseStyles();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<boolean>(false);
   const qpLat = searchParams.get('lat') ?? '';
@@ -51,7 +50,6 @@ const SiteConfigure = ({ params }: IPage) => {
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
-  const step = parseInt(searchParams.get('step') ?? '1');
   const qpbackhaul = searchParams.get('backhaul') ?? '';
   const { setSnackbarMessage, network } = useAppContext();
 
@@ -264,7 +262,6 @@ const SiteConfigure = ({ params }: IPage) => {
   };
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
