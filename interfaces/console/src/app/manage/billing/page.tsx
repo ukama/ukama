@@ -7,7 +7,7 @@
  */
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Tabs, Tab, AlertColor, Paper } from '@mui/material';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import CurrentBill from '@/components/CurrentBill';
@@ -18,12 +18,13 @@ import {
 import { useAppContext } from '@/context';
 import BillingHistory from '@/components/BillHistoryTab';
 import StripePaymentDialog from '@/components/StripePaymentDialog';
+import { format } from 'date-fns';
 
 const BillingSettingsPage: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const { setSnackbarMessage, user } = useAppContext();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [clientSecret, setClientSecret] = useState('');
+  const [clientSecret, setClientSecret] = useState<string>('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
   const handleAddPaymentMethod = () => {
@@ -44,6 +45,7 @@ const BillingSettingsPage: React.FC = () => {
   };
 
   const handlePaymentError = (error: any) => {
+    console.log('BRACKLEY :', error);
     setSnackbarMessage({
       id: 'payment-error',
       message: error.message || 'Payment failed',
@@ -97,11 +99,22 @@ const BillingSettingsPage: React.FC = () => {
       });
     },
   });
+  useEffect(() => {
+    if (
+      paymentsData?.getPayments?.payments &&
+      paymentsData.getPayments.payments.length > 0
+    ) {
+      const firstPayment = paymentsData.getPayments.payments[0];
+      const extractedSecret = firstPayment.extra ?? '';
+      console.log('Extracted Client Secret:', extractedSecret);
+      setClientSecret(extractedSecret);
+    }
+  }, [paymentsData]);
 
   const totalAmountUSD = useMemo(() => {
     return (
       paymentsData?.getPayments.payments.reduce((total, payment) => {
-        return total + parseFloat(payment.amount) * 100;
+        return total + parseFloat(payment.amount);
       }, 0) || 0
     );
   }, [paymentsData]);
@@ -125,17 +138,25 @@ const BillingSettingsPage: React.FC = () => {
       </Tabs>
       {currentTab === 0 && (
         <CurrentBill
-          dataUsagePaid={
-            totalAmountUSD ? parseFloat(totalAmountUSD.toFixed(2)) : 0
-          }
+          dataUsagePaid={0}
           notificationEmail={user.email}
           nextPaymentAmount={
-            reportsData?.getReports?.reports[0]?.rawReport?.amountCents || 0
+            paymentsData?.getPayments?.payments &&
+            paymentsData.getPayments.payments.length > 0
+              ? Number(paymentsData.getPayments.payments[0]?.amount) || 0
+              : 0
           }
           nextPaymentDate={
-            reportsData?.getReports?.reports[0]?.rawReport?.issuingDate || ''
+            paymentsData?.getPayments?.payments &&
+            paymentsData.getPayments.payments.length > 0 &&
+            paymentsData.getPayments.payments[0]?.createdAt
+              ? format(
+                  new Date(paymentsData.getPayments.payments[0].createdAt),
+                  'dd MMM yyyy',
+                )
+              : 'N/A'
           }
-          loading={paymentsLoading || reportsLoading}
+          loading={paymentsLoading}
           onAddPaymentMethod={handleAddPaymentMethod}
           handleAddPayment={handleAddPayment}
         />
@@ -162,9 +183,9 @@ const BillingSettingsPage: React.FC = () => {
         onClose={() => setIsPaymentDialogOpen(false)}
         clientSecret={clientSecret}
         amount={parseFloat(
-          paymentsData?.getPayments.payments[0].amount as string,
+          paymentsData?.getPayments?.payments?.[0]?.amount ?? '0',
         )}
-        loading={paymentLoading}
+        // loading={paymentLoading}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentError={handlePaymentError}
       />

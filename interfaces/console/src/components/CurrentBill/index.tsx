@@ -33,39 +33,70 @@ const CurrentBill: React.FC<CurrentBillProps> = ({
 }) => {
   return (
     <Box sx={{ py: 2 }}>
-      {loading && (
-        <Skeleton
-          variant="rectangular"
-          width="100%"
-          height={50}
-          sx={{ mb: 2 }}
-        />
+      {(loading || !nextPaymentAmount) && (
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={200}
+              sx={{ borderRadius: 2, mb: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={150}
+              sx={{ borderRadius: 2, mb: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+        </Grid>
       )}
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <CurrentBillCard
-            amount={nextPaymentAmount.toString()}
-            startDate={nextPaymentDate}
-            endDate={nextPaymentDate}
-            onPay={handleAddPayment}
-          />
+
+      {!loading && nextPaymentAmount > 0 && (
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <CurrentBillCard
+              amount={nextPaymentAmount.toString()}
+              startDate={nextPaymentDate}
+              endDate={nextPaymentDate}
+              onPay={handleAddPayment}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <PaymentMethodCard onAddPaymentMethod={onAddPaymentMethod} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <DataUsageComponent
+              dataUsagePaid={dataUsagePaid}
+              subscriberCount={0}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <NotificationEmailSettings
+              primaryEmail={notificationEmail}
+              additionalEmails={[]}
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12}>
-          <PaymentMethodCard onAddPaymentMethod={onAddPaymentMethod} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <DataUsageComponent
-            dataUsagePaid={dataUsagePaid}
-            subscriberCount={10}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <NotificationEmailSettings
-            primaryEmail={notificationEmail}
-            additionalEmails={[]}
-          />
-        </Grid>
-      </Grid>
+      )}
     </Box>
   );
 };

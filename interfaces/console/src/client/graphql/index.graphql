@@ -379,6 +379,28 @@ mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
 
 ### Package End ###
 ### Payment start ###
+
+fragment payment on PaymentDto {
+  id
+  itemId
+  itemType
+  amount
+  currency
+  paymentMethod
+  depositedAmount
+  paidAt
+  payerName
+  payerEmail
+  payerPhone
+  correspondent
+  country
+  description
+  status
+  failureReason
+  extra
+  createdAt
+}
+
 mutation AddPayment($data: AddPaymentInputDto!) {
   addPayment(data: $data) {
     id
@@ -402,45 +424,14 @@ mutation AddPayment($data: AddPaymentInputDto!) {
 }
 query GetPayment($paymentId: String!) {
   getPayment(paymentId: $paymentId) {
-    id
-    itemId
-    itemType
-    amount
-    currency
-    paymentMethod
-    depositedAmount
-    paidAt
-    payerName
-    payerEmail
-    payerPhone
-    correspondent
-    country
-    description
-    status
-    failureReason
-    createdAt
+    ...payment
   }
 }
+
 query GetPayments($data: GetPaymentsInputDto!) {
   getPayments(data: $data) {
     payments {
-      id
-      itemId
-      itemType
-      amount
-      currency
-      paymentMethod
-      depositedAmount
-      paidAt
-      payerName
-      payerEmail
-      payerPhone
-      correspondent
-      country
-      description
-      status
-      failureReason
-      createdAt
+      ...payment
     }
   }
 }

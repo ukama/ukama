@@ -6,34 +6,20 @@ import {
   DialogActions,
   Button,
   CircularProgress,
+  Box,
+  Typography,
 } from '@mui/material';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
-  CardElement,
+  PaymentElement,
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
 
-interface StripePaymentDialogProps {
-  open: boolean;
-  onClose: () => void;
-  clientSecret: string;
-  amount: number;
-  currency?: string;
-  loading?: boolean;
-  onPaymentSuccess?: () => void;
-  onPaymentError?: (error: any) => void;
-}
-
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-);
-
 const PaymentForm: React.FC<{
   clientSecret: string;
   amount: number;
-  currency: string;
   onPaymentSuccess?: () => void;
   onPaymentError?: (error: any) => void;
 }> = ({ clientSecret, amount, onPaymentSuccess, onPaymentError }) => {
@@ -41,30 +27,19 @@ const PaymentForm: React.FC<{
   const stripe = useStripe();
   const elements = useElements();
 
-  const isPaymentReady = clientSecret && stripe && elements;
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!isPaymentReady) return;
+    if (!stripe || !elements) {
+      return;
+    }
 
     setIsProcessing(true);
 
-    const cardElement = elements.getElement(CardElement);
-
-    if (!cardElement) return;
-
-    const { error, paymentIntent } = await stripe.confirmCardPayment(
-      clientSecret,
-      {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            // Optional: Add minimal billing details if needed
-          },
-        },
-      },
-    );
+    const { error, paymentIntent } = await stripe.confirmPayment({
+      elements,
+      redirect: 'if_required',
+    });
 
     if (error) {
       setIsProcessing(false);
@@ -77,63 +52,70 @@ const PaymentForm: React.FC<{
 
   return (
     <form onSubmit={handleSubmit}>
-      <CardElement
+      <PaymentElement
         options={{
-          style: {
-            base: {
-              fontSize: '16px',
-              color: '#424770',
-              '::placeholder': {
-                color: '#aab7c4',
-              },
-            },
-            invalid: {
-              color: '#9e2146',
-            },
-          },
-          hidePostalCode: true,
+          layout: 'tabs',
+          defaultValues: {},
         }}
       />
+
       <Button
         type="submit"
         variant="contained"
         color="primary"
-        disabled={isProcessing || !isPaymentReady}
+        disabled={isProcessing || !stripe}
         fullWidth
-        sx={{ mt: 2 }}
+        sx={{ mt: 2, py: 1.5 }}
       >
-        {isProcessing ? <CircularProgress size={24} /> : `Pay $${amount}`}
+        {isProcessing ? (
+          <CircularProgress size={24} />
+        ) : (
+          `Pay $${amount.toFixed(2)}`
+        )}
       </Button>
     </form>
   );
 };
-const StripePaymentDialog: React.FC<StripePaymentDialogProps> = ({
+
+const StripePaymentDialog: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  clientSecret: string;
+  amount: number;
+  onPaymentSuccess?: () => void;
+  onPaymentError?: (error: any) => void;
+}> = ({
   open,
   onClose,
   clientSecret,
   amount,
-  currency = 'usd',
-  loading = false,
   onPaymentSuccess,
   onPaymentError,
 }) => {
+  const stripePromise = loadStripe(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
+  );
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Complete Payment</DialogTitle>
       <DialogContent>
-        {loading ? (
-          <CircularProgress />
-        ) : (
-          <Elements stripe={stripePromise}>
-            <PaymentForm
-              clientSecret={clientSecret}
-              amount={amount}
-              currency={currency}
-              onPaymentSuccess={onPaymentSuccess}
-              onPaymentError={onPaymentError}
-            />
-          </Elements>
-        )}
+        <Elements
+          stripe={stripePromise}
+          options={{
+            clientSecret,
+            appearance: {
+              theme: 'stripe',
+            },
+          }}
+        >
+          <PaymentForm
+            clientSecret={clientSecret}
+            amount={amount}
+            onPaymentSuccess={onPaymentSuccess}
+            onPaymentError={onPaymentError}
+          />
+        </Elements>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="secondary">

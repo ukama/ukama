@@ -996,6 +996,7 @@ export type PaymentDto = {
   currency: Scalars['String']['output'];
   depositedAmount: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  extra: Scalars['String']['output'];
   failureReason: Scalars['String']['output'];
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
@@ -1015,7 +1016,6 @@ export type PaymentsDto = {
 
 export type ProcessPaymentDto = {
   __typename?: 'ProcessPaymentDto';
-  extras: Scalars['String']['output'];
   payment: PaymentDto;
 };
 
@@ -1917,6 +1917,8 @@ export type UpdatePacakgeMutationVariables = Exact<{
 
 export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
 
+export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
+
 export type AddPaymentMutationVariables = Exact<{
   data: AddPaymentInputDto;
 }>;
@@ -1929,14 +1931,14 @@ export type GetPaymentQueryVariables = Exact<{
 }>;
 
 
-export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string } };
 
 export type GetPaymentsQueryVariables = Exact<{
   data: GetPaymentsInputDto;
 }>;
 
 
-export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string }> } };
+export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
 
 export type GetReportPdfQueryVariables = Exact<{
   getReportPdfId: Scalars['String']['input'];
@@ -2335,6 +2337,28 @@ export const PackageFragmentDoc = gql`
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
+export const PaymentFragmentDoc = gql`
+    fragment payment on PaymentDto {
+  id
+  itemId
+  itemType
+  amount
+  currency
+  paymentMethod
+  depositedAmount
+  paidAt
+  payerName
+  payerEmail
+  payerPhone
+  correspondent
+  country
+  description
+  status
+  failureReason
+  extra
+  createdAt
+}
+    `;
 export const SimPoolFragmentDoc = gql`
     fragment SimPool on SimDto {
   activationCode
@@ -3784,26 +3808,10 @@ export type AddPaymentMutationOptions = Apollo.BaseMutationOptions<AddPaymentMut
 export const GetPaymentDocument = gql`
     query GetPayment($paymentId: String!) {
   getPayment(paymentId: $paymentId) {
-    id
-    itemId
-    itemType
-    amount
-    currency
-    paymentMethod
-    depositedAmount
-    paidAt
-    payerName
-    payerEmail
-    payerPhone
-    correspondent
-    country
-    description
-    status
-    failureReason
-    createdAt
+    ...payment
   }
 }
-    `;
+    ${PaymentFragmentDoc}`;
 
 /**
  * __useGetPaymentQuery__
@@ -3841,27 +3849,11 @@ export const GetPaymentsDocument = gql`
     query GetPayments($data: GetPaymentsInputDto!) {
   getPayments(data: $data) {
     payments {
-      id
-      itemId
-      itemType
-      amount
-      currency
-      paymentMethod
-      depositedAmount
-      paidAt
-      payerName
-      payerEmail
-      payerPhone
-      correspondent
-      country
-      description
-      status
-      failureReason
-      createdAt
+      ...payment
     }
   }
 }
-    `;
+    ${PaymentFragmentDoc}`;
 
 /**
  * __useGetPaymentsQuery__
