@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodeStatusEnum } from '@/client/graphql/generated';
+import { NodeStateEnum } from '@/client/graphql/generated';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -100,8 +100,8 @@ export const SitesTree = ({ sites }: ISitesTree) => {
 };
 
 interface ISitesSelection {
-  filterState: NodeStatusEnum;
-  handleFilterState: (value: NodeStatusEnum) => void;
+  filterState: NodeStateEnum;
+  handleFilterState: (value: NodeStateEnum) => void;
 }
 
 export const SitesSelection = ({
@@ -110,7 +110,7 @@ export const SitesSelection = ({
 }: ISitesSelection) => {
   const [open, setIsOpen] = useState(false);
 
-  const handleToggle = (value: NodeStatusEnum) => () => {
+  const handleToggle = (value: NodeStateEnum) => () => {
     handleFilterState(value);
   };
   return (
@@ -147,16 +147,16 @@ export const SitesSelection = ({
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {[
-              { id: 0, label: 'All', value: NodeStatusEnum.Undefined },
-              { id: 1, label: 'Configured', value: NodeStatusEnum.Configured },
+              { id: 0, label: 'All', value: NodeStateEnum.Unknown },
+              { id: 1, label: 'Configured', value: NodeStateEnum.Configured },
               {
                 id: 2,
                 label: 'Maintenance',
-                value: NodeStatusEnum.Maintenance,
+                value: NodeStateEnum.Operational,
               },
-              { id: 3, label: 'Faulty', value: NodeStatusEnum.Faulty },
-              { id: 4, label: 'Onboarded', value: NodeStatusEnum.Onboarded },
-              { id: 5, label: 'Active', value: NodeStatusEnum.Active },
+              { id: 3, label: 'Faulty', value: NodeStateEnum.Faulty },
+              { id: 4, label: 'Onboarded', value: NodeStateEnum.Configured },
+              { id: 5, label: 'Active', value: NodeStateEnum.Unknown },
             ].map(({ id, label, value }) => {
               const labelId = `checkbox-list-label-${value}`;
 

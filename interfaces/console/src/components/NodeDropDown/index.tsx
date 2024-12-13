@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node, NodeStatusEnum } from '@/client/graphql/generated';
+import { Node, NodeStateEnum } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
 import { AddCircleOutlineRounded } from '@mui/icons-material';
@@ -25,18 +25,16 @@ import {
 import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, useStyles } from './styles';
 
-const getStatus = (status: NodeStatusEnum, time: number) => {
+const getStatus = (status: NodeStateEnum, time: number) => {
   let str = '';
   switch (status) {
-    case NodeStatusEnum.Active:
+    case NodeStateEnum.Unknown:
       str = 'Active';
-    case NodeStatusEnum.Maintenance:
-      str = 'Maintainance';
-    case NodeStatusEnum.Configured:
+    case NodeStateEnum.Configured:
       str = 'Configured';
-    case NodeStatusEnum.Onboarded:
+    case NodeStateEnum.Operational:
       str = 'Onboarded';
-    case NodeStatusEnum.Faulty:
+    case NodeStateEnum.Faulty:
       str = 'Faulty';
     default:
       str = 'Unknown';
@@ -48,17 +46,15 @@ const getStatus = (status: NodeStatusEnum, time: number) => {
   );
 };
 
-const getStatusIcon = (status: NodeStatusEnum) => {
+const getStatusIcon = (status: NodeStateEnum) => {
   switch (status) {
-    case NodeStatusEnum.Active:
+    case NodeStateEnum.Unknown:
       return <CheckCircleIcon htmlColor={colors.green} fontSize={'small'} />;
-    case NodeStatusEnum.Maintenance:
-      return <InfoIcon htmlColor={colors.yellow} fontSize={'small'} />;
-    case NodeStatusEnum.Configured:
+    case NodeStateEnum.Configured:
       return <InfoIcon htmlColor={colors.black38} fontSize={'small'} />;
-    case NodeStatusEnum.Onboarded:
+    case NodeStateEnum.Operational:
       return <InfoIcon htmlColor={colors.darkGreen05} fontSize={'small'} />;
-    case NodeStatusEnum.Faulty:
+    case NodeStateEnum.Faulty:
       return <InfoIcon htmlColor={colors.red} fontSize={'small'} />;
     default:
       return <CircleIcon htmlColor={colors.black38} fontSize={'small'} />;
@@ -89,7 +85,7 @@ const NodeDropDown = ({
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
       {selectedNode &&
-        getStatusIcon(selectedNode.status.state as NodeStatusEnum)}
+        getStatusIcon(selectedNode.status.state as NodeStateEnum)}
 
       <LoadingWrapper
         height={'fit-content'}
