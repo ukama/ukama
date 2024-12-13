@@ -4,6 +4,9 @@ body {
   height: 100%;
   overflow-x: hidden;
 }
+a {
+  color: #2190f6;
+}
 *.highcharts-credits {
   display: none;
 }
