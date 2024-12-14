@@ -12,7 +12,6 @@ import {
   NodeStateEnum,
   useGetNodeQuery,
   useGetNodesByStateQuery,
-  useGetSitesLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
 import {
@@ -24,7 +23,7 @@ import {
 import { useAppContext } from '@/context';
 import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const Check = () => {
   const router = useRouter();
@@ -53,18 +52,6 @@ const Check = () => {
     return p;
   };
 
-  const [getSites] = useGetSitesLazyQuery({
-    onCompleted: (data) => {
-      if (data.getSites.sites.length > 0 && !nodeId) {
-        // TODO: CHECK IF ANY SITE IS AVAILABLE FOR CONFIGURE & REDIRECT TO SITE CONFIGURE STEP 3
-        router.push(`/console/home`);
-        // router.push(
-        //     `/configure/node/uk-sa9001-tnode-a1-1234?step=1&flow=${INSTALLATION_FLOW}`,
-        //   );
-      }
-    },
-  });
-
   useGetNodesByStateQuery({
     skip: !!nodeId,
     variables: {
@@ -75,24 +62,29 @@ const Check = () => {
     },
     onCompleted: (data) => {
       if (data.getNodesByState.nodes.length > 0) {
-        setTimeout(() => {}, 2000);
-        let p = setQueryParam(
-          'lat',
-          data.getNodesByState.nodes[0].latitude.toString(),
-        );
-        p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
-        p.set(
-          'flow',
-          flow === NETWORK_FLOW
-            ? ONBOARDING_FLOW
-            : flow === CHECK_SITE_FLOW
-              ? INSTALLATION_FLOW
-              : flow,
-        );
-        p.delete('nid');
-        router.push(
-          `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
-        );
+        if (
+          data.getNodesByState.nodes[0].latitude &&
+          data.getNodesByState.nodes[0].longitude
+        ) {
+          setTimeout(() => {}, 2000);
+          let p = setQueryParam(
+            'lat',
+            data.getNodesByState.nodes[0].latitude.toString(),
+          );
+          p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
+          p.set(
+            'flow',
+            flow === NETWORK_FLOW
+              ? ONBOARDING_FLOW
+              : flow === CHECK_SITE_FLOW
+                ? INSTALLATION_FLOW
+                : flow,
+          );
+          p.delete('nid');
+          router.push(
+            `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
+          );
+        }
       }
     },
   });
@@ -122,10 +114,6 @@ const Check = () => {
       }
     },
   });
-
-  useEffect(() => {
-    getSites({ variables: { networkId: network.id } });
-  }, []);
 
   const onInstallProgressComplete = () => {
     if (flow !== NETWORK_FLOW) {

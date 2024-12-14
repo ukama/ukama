@@ -7,13 +7,16 @@
  */
 'use client';
 
-import { useAddNetworkMutation } from '@/client/graphql/generated';
+import {
+  useAddNetworkMutation,
+  useGetNetworksQuery,
+} from '@/client/graphql/generated';
 import { CHECK_SITE_FLOW, NETWORK_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import * as Yup from 'yup';
 import NetworkSkelton from './skelton';
 
@@ -51,6 +54,25 @@ const Network = () => {
   const [loading, setLoading] = useState(true);
   const { setSnackbarMessage, network, setNetwork } = useAppContext();
 
+  useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+    onCompleted: (data) => {
+      if (data.getNetworks.networks.length > 0) {
+        router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
+      } else {
+        setLoading(false);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'networks-msg',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
   const [addNetwork] = useAddNetworkMutation({
     onCompleted: (data) => {
       if (data.addNetwork.id) {
@@ -71,12 +93,6 @@ const Network = () => {
       });
     },
   });
-
-  useEffect(() => {
-    if (network.id) {
-      router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
-    } else setLoading(false);
-  }, []);
 
   const handleAddNetwork = (values: any) => {
     setLoading(true);

@@ -13,14 +13,19 @@ import {
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
-import { ONBOARDING_FLOW } from '@/constants';
+import { CHECK_SITE_FLOW, ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
 import { ConfigureStep, isValidLatLng } from '@/utils';
 import { AlertColor, Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { useParams, usePathname, useSearchParams } from 'next/navigation';
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
 import { useEffect, useState } from 'react';
 import DynamicNetwork from '../../../public/svg/DynamicNetwork';
 import { Logo } from '../../../public/svg/Logo';
@@ -30,6 +35,7 @@ const ConfigureLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => {
+  const router = useRouter();
   const path = usePathname();
   const params = useParams<{ id: string; name: string }>();
   const searchParams = useSearchParams();
@@ -46,6 +52,7 @@ const ConfigureLayout = ({
   });
 
   useGetNetworksQuery({
+    skip: path.includes('/configure/network'),
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0) {
@@ -53,6 +60,7 @@ const ConfigureLayout = ({
           id: data.getNetworks.networks[0].id,
           name: data.getNetworks.networks[0].name,
         });
+      
         // router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
       }
     },
