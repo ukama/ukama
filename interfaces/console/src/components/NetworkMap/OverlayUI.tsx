@@ -58,7 +58,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
     <Box
       sx={{
         top: 24,
-        right: 24,
+        left: 24,
         zIndex: 400,
         display: 'flex',
         p: { xs: 1, md: 2 },
@@ -69,7 +69,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
         background: (theme) => theme.palette.background.paper,
       }}
     >
-      <Stack spacing={0.5}>
+      <Stack spacing={0.5} width={'100%'}>
         <Typography variant="body1" fontWeight={600}>
           Network ({sites.length})
         </Typography>
@@ -88,7 +88,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
                 <TreeItem
                   itemId={site.nodeId}
                   label={site.nodeName}
-                  onClick={() => router.push(`/nodes/${site.nodeId}`)}
+                  onClick={() => router.push(`/console/nodes/${site.nodeId}`)}
                 />
               </TreeItem>
             );

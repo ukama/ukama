@@ -8,8 +8,11 @@
 
 import {
   Invitation_Status,
+  Node,
+  Nodes,
   NodeTypeEnum,
   Role_Type,
+  SitesResDto,
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
@@ -269,18 +272,17 @@ const getDuration = (number: number): string => {
   return number > 1 ? `${number} Days` : `${number} Day`;
 };
 
-const structureNodeSiteDate = (data: any) => {
-  let count = 1;
+const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
   const t: TNodeSiteTree[] = [];
 
-  data.forEach((node: any) => {
+  nodes.nodes.forEach((node: Node) => {
     if (node.type === NodeTypeEnum.Tnode) {
       t.push({
-        id: node.site?.siteId ?? '',
-        name: `Site ${count++}`,
+        id: node.site.siteId ?? '',
+        name: `${sites.sites.find((site) => site.id === node.site.siteId)?.name} (Site)`,
         nodeId: node.id,
         nodeType: node.type,
-        nodeName: node.name,
+        nodeName: `${node.name} (Node)`,
       });
     }
   });

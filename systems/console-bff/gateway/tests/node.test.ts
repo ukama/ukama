@@ -17,7 +17,6 @@ import { DetachNodeResolver } from "../../node/resolvers/detachNode";
 import { GetAppsChangeLogResolver } from "../../node/resolvers/getAppsChangeLog";
 import { GetNodeResolver } from "../../node/resolvers/getNode";
 import { GetNodeAppsResolver } from "../../node/resolvers/getNodeApps";
-import { GetNodeLocationResolver } from "../../node/resolvers/getNodeLocation";
 import { GetNodesResolver } from "../../node/resolvers/getNodes";
 import { GetNodesByNetworkResolver } from "../../node/resolvers/getNodesByNetwork";
 import { GetNodesLocationResolver } from "../../node/resolvers/getNodesLocation";
@@ -65,7 +64,6 @@ const createSchema = async () => {
       GetNodeResolver,
       GetNodesResolver,
       GetNodeAppsResolver,
-      GetNodeLocationResolver,
       GetNodesByNetworkResolver,
       GetNodesLocationResolver,
       ReleaseNodeFromSiteResolver,
@@ -299,7 +297,6 @@ describe("Node API integration tests", () => {
     expect(data.getNodeLocation.id).toEqual(nodeId);
     expect(data.getNodeLocation.lat).toBeDefined();
     expect(data.getNodeLocation.lng).toBeDefined();
-    expect(data.getNodeLocation.state).toBeDefined();
   });
 
   it("should get nodes by network", async () => {

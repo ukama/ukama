@@ -127,26 +127,14 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
   }
 }
 
-query GetNodesLocation($data: NodesInput!) {
-  getNodesLocation(data: $data) {
-    networkId
+query GetNodesLocation {
+  getNodesLocation {
     nodes {
-      id
-      lat
-      lng
-      state
+      ...node
     }
   }
 }
 
-query GetNodeLocation($data: NodeInput!) {
-  getNodeLocation(data: $data) {
-    id
-    lat
-    lng
-    state
-  }
-}
 ### End Node ###
 
 ### Member Start ###

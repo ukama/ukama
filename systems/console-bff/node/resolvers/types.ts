@@ -239,13 +239,10 @@ export class NodeLocation {
   id: string;
 
   @Field()
-  lat: string;
+  lat: number;
 
   @Field()
-  lng: string;
-
-  @Field(() => NODE_STATE)
-  state: NODE_STATE;
+  lng: number;
 }
 
 @ArgsType()
@@ -260,9 +257,6 @@ export class NodesInput {
 
 @ObjectType()
 export class NodesLocation {
-  @Field()
-  networkId: string;
-
   @Field(() => [NodeLocation])
   nodes: NodeLocation[];
 }
