@@ -13,7 +13,7 @@ import {
   useGetNetworksQuery,
 } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
-import { CHECK_SITE_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -60,8 +60,6 @@ const ConfigureLayout = ({
           id: data.getNetworks.networks[0].id,
           name: data.getNetworks.networks[0].name,
         });
-      
-        // router.push(`/configure/check?flow=${CHECK_SITE_FLOW}`);
       }
     },
     onError: (error) => {

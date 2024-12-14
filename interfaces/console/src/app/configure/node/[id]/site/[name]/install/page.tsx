@@ -264,7 +264,7 @@ const SiteConfigure = ({ params }: IPage) => {
   if (loading) return <LoadingSkeleton />;
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} overflow={'scroll'}>
       <Typography variant="h4" fontWeight={500}>
         Configure site settings
       </Typography>

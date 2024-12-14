@@ -81,7 +81,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   if (isLoading || addressLoading) <LoadingSkelton />;
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} overflow={'scroll'}>
       <Stack direction={'row'}>
         <Typography variant="h4" fontWeight={500}>
           Site installed

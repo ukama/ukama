@@ -38,7 +38,7 @@ const Page = () => {
   };
 
   return (
-    <Stack direction="column" spacing={2}>
+    <Stack direction="column" spacing={2} overflow={'scroll'}>
       <Typography variant="h4" fontWeight={500}>
         Install site
       </Typography>

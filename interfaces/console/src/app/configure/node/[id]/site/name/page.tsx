@@ -62,7 +62,7 @@ const SiteName = ({ params }: ISiteName) => {
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2} overflow={'scroll'}>
       <Typography variant="h4" fontWeight={500}>
         Name site
       </Typography>
