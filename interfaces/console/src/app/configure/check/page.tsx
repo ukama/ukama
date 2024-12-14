@@ -81,6 +81,14 @@ const Check = () => {
           data.getNodesByState.nodes[0].latitude.toString(),
         );
         p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
+        p.set(
+          'flow',
+          flow === NETWORK_FLOW
+            ? ONBOARDING_FLOW
+            : flow === CHECK_SITE_FLOW
+              ? INSTALLATION_FLOW
+              : flow,
+        );
         p.delete('nid');
         router.push(
           `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
@@ -101,6 +109,14 @@ const Check = () => {
         setTimeout(() => {}, 2000);
         let p = setQueryParam('lat', data.getNode.latitude.toString());
         p.set('lng', data.getNode.longitude.toString());
+        p.set(
+          'flow',
+          flow === NETWORK_FLOW
+            ? ONBOARDING_FLOW
+            : flow === CHECK_SITE_FLOW
+              ? INSTALLATION_FLOW
+              : flow,
+        );
         p.delete('nid');
         router.push(`/configure/node/${data.getNode.id}?${p.toString()}`);
       }

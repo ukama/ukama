@@ -38,10 +38,8 @@ export default function ConosleLayout({
     env,
     user,
     network,
-    metaInfo,
     isDarkMode,
     setNetwork,
-    setMetaInfo,
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();

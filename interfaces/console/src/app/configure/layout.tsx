@@ -33,6 +33,7 @@ const ConfigureLayout = ({
   const path = usePathname();
   const params = useParams<{ id: string; name: string }>();
   const searchParams = useSearchParams();
+  const isSimsPath = path.includes('sims');
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;

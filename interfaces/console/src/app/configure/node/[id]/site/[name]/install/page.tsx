@@ -214,7 +214,6 @@ const SiteConfigure = ({ params }: IPage) => {
       accessComponentsData?.getComponentsByUserId.components.find(
         (component) => component.partNumber === id,
       )?.id;
-
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 
@@ -228,16 +227,8 @@ const SiteConfigure = ({ params }: IPage) => {
       return;
     }
 
-    if (
-      formik.isValid &&
-      networkData &&
-      networkData?.getNetworks.networks.length > 0
-    ) {
-      addSiteCall(
-        accessId,
-        spectrumId,
-        networkData?.getNetworks.networks[0].id,
-      );
+    if (formik.isValid && network.id) {
+      addSiteCall(accessId, spectrumId, network.id);
     }
   };
 
@@ -246,6 +237,7 @@ const SiteConfigure = ({ params }: IPage) => {
     spectrumId: string,
     networkId: string,
   ) => {
+    console.log(accessId, spectrumId, networkId);
     addSite({
       variables: {
         data: {
