@@ -6,6 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import {
+  Notification_Scope,
+  Notification_Type,
+} from '@/client/graphql/generated';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
@@ -220,9 +224,15 @@ interface NotificationSubscription {
   description: string;
   id: string;
   isRead: boolean;
-  scope: string;
+  scope: Notification_Scope;
   title: string;
-  type: string;
+  type: Notification_Type;
+  eventKey: string;
+  resourceId: string;
+  redirect: {
+    action: string;
+    title: string;
+  };
 }
 
 interface Data {

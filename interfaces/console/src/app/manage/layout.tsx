@@ -55,8 +55,9 @@ const ManageMenu = () => {
       }}
     >
       <Stack
-        px={{ xs: 1.4, md: 1 }}
-        py={{ xs: 1.5, md: 3 }}
+        width={'100%'}
+        px={{ xs: 1.4, md: 1.5 }}
+        py={{ xs: 1.5, md: 1.5 }}
         spacing={{ xs: 0.5, md: 1.5 }}
         direction={{ xs: 'row', md: 'column' }}
       >

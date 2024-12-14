@@ -2,6 +2,10 @@ import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import { STORAGE_KEY } from "../../common/configs";
+import {
+  NotificationScopeEnumValue,
+  NotificationTypeEnumValue,
+} from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, openStore, removeFromStore } from "../../common/storage";
 import {
@@ -180,14 +184,14 @@ class SubscriptionsResolvers {
         if (res && res.id) {
           const n: NotificationsResDto = {
             id: res.id,
-            type: res.type,
-            scope: res.scope,
+            isRead: false,
             title: res.title,
-            isRead: res.is_read,
-            eventKey: res.event_key,
-            createdAt: res.created_at,
-            resourceId: res.resource_id,
+            eventKey: res.eventKey,
+            createdAt: res.createdAt,
+            resourceId: res.resourceId,
             description: res.description,
+            type: NotificationTypeEnumValue(res.type),
+            scope: NotificationScopeEnumValue(res.scope),
           };
           n.redirect = eventKeyToAction(res.event_key, n);
           pubSub.publish(key, n);
@@ -202,6 +206,7 @@ class SubscriptionsResolvers {
       logger.info(
         `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
+      worker.terminate();
     });
     return notifications;
   }

@@ -184,22 +184,39 @@ export default function ConosleLayout({
 
   const handleNotification = (_: any, data: string) => {
     const parsedData: TNotificationResDto = JSON.parse(data);
-    const { id, type, scope, title, isRead, description, createdAt } =
-      parsedData.data.notificationSubscription;
-    setNotifications((prev: any) => {
-      if (!prev) return prev;
-      return [
-        {
-          id,
-          type,
-          scope,
-          title,
-          isRead,
-          createdAt,
-          description,
-        },
-        ...prev,
-      ];
+    const {
+      id,
+      type,
+      scope,
+      title,
+      isRead,
+      eventKey,
+      createdAt,
+      resourceId,
+      description,
+      redirect: { action, title: redirectTitle },
+    } = parsedData.data.notificationSubscription;
+
+    const newNotification = {
+      id,
+      type,
+      scope,
+      title,
+      isRead,
+      eventKey,
+      createdAt,
+      resourceId,
+      description,
+      redirect: {
+        action,
+        title: redirectTitle,
+      },
+    };
+
+    setNotifications((prev) => {
+      return {
+        notifications: [newNotification, ...prev.notifications],
+      };
     });
   };
 
