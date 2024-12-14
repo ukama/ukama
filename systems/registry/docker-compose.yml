@@ -73,6 +73,7 @@ services:
    - NODE_SERVICE_PORT=9090
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
   restart: always
   networks:
    - ukama-net

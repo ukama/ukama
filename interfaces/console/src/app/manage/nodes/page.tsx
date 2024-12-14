@@ -17,6 +17,7 @@ import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Box, Paper } from '@mui/material';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 const Page = () => {
@@ -66,13 +67,17 @@ const Page = () => {
           node.site.networkId &&
           sites.getSites.sites.find((site) => site.id === node.site.networkId)
             ?.name;
+        console.log(node.status.state);
         np.push({
           id: node.id,
           site: s ?? '-',
           network: net ?? '-',
+          state: node.status.state,
           type: NodeEnumToString(node.type),
-          createdAt: node.site.addedAt ?? '-',
           connectivity: node.status.connectivity,
+          createdAt: node.site.addedAt
+            ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+            : '-',
         });
         if (sites.getSites.sites.find((site) => site.id === node.site.siteId))
           return node;

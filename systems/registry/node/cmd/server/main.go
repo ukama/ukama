@@ -29,6 +29,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
@@ -80,6 +81,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Invalid organization identifier %s. Error %s", serviceConfig.OrgId, err)
 	}
 
+	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
+
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -92,7 +95,7 @@ func runGrpcServer(gormdb sql.Db) {
 	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
 		serviceConfig.PushGateway, mbClient,
 		providers.NewSiteClientProvider(serviceConfig.SiteHost),
-		orgId)
+		orgId, invClient)
 
 	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv)
 

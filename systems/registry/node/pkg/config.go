@@ -25,9 +25,14 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	SiteHost         string           `default:"site:9090"`
+	Http             HttpServices
 	Service          *uconf.Service
 	OrgName          string
 	OrgId            string
+}
+
+type HttpServices struct {
+	InventoryClient string `defaut:"http://api-gateway-inventory:8080"`
 }
 
 const (
@@ -68,6 +73,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
+				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 			},
 		},
 	}

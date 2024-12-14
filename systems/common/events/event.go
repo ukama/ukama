@@ -23,7 +23,7 @@ type EventId int
 const (
 	EventInvalid EventId = iota
 	EventOrgAdd
-	EventSiteAdd
+	EventSiteCreate
 	EventSiteUpdate
 	EventUserAdd
 	EventUserDeactivate
@@ -72,7 +72,7 @@ const (
 
 var EventRoutingKey = [...]string{
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
-	EventSiteAdd:            "event.cloud.local.{{ .Org}}.registry.site.site.add",
+	EventSiteCreate:         "event.cloud.local.{{ .Org}}.registry.site.site.create",
 	EventSiteUpdate:         "event.cloud.local.{{ .Org}}.registry.site.site.update",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
@@ -128,9 +128,9 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
-	EventSiteAdd: {
-		Key:         EventSiteAdd,
-		Name:        "EventSiteAdd",
+	EventSiteCreate: {
+		Key:         EventSiteCreate,
+		Name:        "EventSiteCreate",
 		Title:       "Site Added",
 		Description: "Site Added",
 		Scope:       notif.SCOPE_SITE,

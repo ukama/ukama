@@ -22,6 +22,7 @@ import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
+import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
@@ -32,6 +33,9 @@ export default function Page() {
 
   const [getSites] = useGetSitesLazyQuery({
     fetchPolicy: 'cache-first',
+    variables: {
+      networkId: network.id,
+    },
   });
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
@@ -39,7 +43,7 @@ export default function Page() {
     variables: {
       data: {
         connectivity: NodeConnectivityEnum.Online,
-        state: NodeStateEnum.Unknown,
+        state: NodeStateEnum.Configured,
       },
     },
     onCompleted: async (data) => {
@@ -66,9 +70,12 @@ export default function Page() {
             id: node.id,
             site: s ?? '-',
             network: net ?? '-',
+            state: node.status.state,
             type: NodeEnumToString(node.type),
-            createdAt: node.site.addedAt ?? '-',
             connectivity: node.status.connectivity,
+            createdAt: node.site.addedAt
+              ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+              : '-',
           });
           if (
             sites.data?.getSites.sites.find(
@@ -109,7 +116,7 @@ export default function Page() {
   };
 
   const handleActionMenuClick = (action: string, id: string) => {
-    switch (id) {
+    switch (action) {
       case 'edit-node':
         break;
       case 'node-off':
@@ -122,43 +129,41 @@ export default function Page() {
   };
 
   return (
-    <>
-      <LoadingWrapper
-        radius="small"
-        width={'100%'}
-        isLoading={nodesLoading}
-        height={'calc(100vh - 212px)'}
-        cstyle={{ marginTop: nodesLoading ? '18px' : '0px' }}
-      >
-        <PageContainer>
-          <Stack
-            spacing={2}
-            height={'100%'}
-            direction={'column'}
-            alignItems={'center'}
-            justifyContent={'flex-start'}
-          >
-            <PageContainerHeader
-              search={search}
-              title={'My Nodes'}
-              showSearch={true}
-              onSearchChange={handleSearchChange}
-              subtitle={`${nodes.length}`}
-            />
-            <DataTableWithOptions
-              dataset={nodes}
-              icon={RouterIcon}
-              columns={NODE_TABLE_COLUMNS}
-              menuOptions={NODE_TABLE_MENU}
-              emptyViewLabel={'No nodes yet!'}
-              onMenuItemClick={handleActionMenuClick}
-              emptyViewDescription={
-                'A node is the hardware piece (tower + amplifier) that connects your device to the network. Install your node, and other site components, to get started.'
-              }
-            />
-          </Stack>
-        </PageContainer>
-      </LoadingWrapper>
-    </>
+    <LoadingWrapper
+      radius="small"
+      width={'100%'}
+      isLoading={nodesLoading}
+      height={'calc(100vh - 212px)'}
+      cstyle={{ marginTop: nodesLoading ? '18px' : '0px' }}
+    >
+      <PageContainer>
+        <Stack
+          spacing={2}
+          height={'100%'}
+          direction={'column'}
+          alignItems={'center'}
+          justifyContent={'flex-start'}
+        >
+          <PageContainerHeader
+            search={search}
+            title={'My Nodes'}
+            showSearch={true}
+            onSearchChange={handleSearchChange}
+            subtitle={`${nodes.length}`}
+          />
+          <DataTableWithOptions
+            dataset={nodes}
+            icon={RouterIcon}
+            columns={NODE_TABLE_COLUMNS}
+            menuOptions={NODE_TABLE_MENU}
+            emptyViewLabel={'No nodes yet!'}
+            onMenuItemClick={handleActionMenuClick}
+            emptyViewDescription={
+              'A node is the hardware piece (tower + amplifier) that connects your device to the network. Install your node, and other site components, to get started.'
+            }
+          />
+        </Stack>
+      </PageContainer>
+    </LoadingWrapper>
   );
 }

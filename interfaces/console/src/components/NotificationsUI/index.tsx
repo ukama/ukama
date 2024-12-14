@@ -34,6 +34,8 @@ export const Notifications = ({
     <Stack
       spacing={1}
       width={'398px'}
+      minHeight={'264px'}
+      maxHeight={'300px'}
       borderRadius={'12px'}
       height={'fit-contnet'}
       bgcolor={colors.white}
@@ -62,31 +64,40 @@ export const Notifications = ({
           bgcolor: colors.whiteLilac,
         }}
       />
-      <List disablePadding sx={{ margin: '0px !important' }}>
-        {notifications.notifications.map((notif) => (
-          <Stack key={notif.id} spacing={1}>
-            <ListItem disablePadding>
-              <Notification
-                id={notif.id}
-                type={notif.type}
-                title={notif.title}
-                isRead={notif.isRead}
-                createdAt={notif.createdAt}
-                action={notif.redirect.action}
-                description={notif.description}
-                actionTitle={notif.redirect.title}
-                handleMenuItemClick={handleAction}
+
+      <List disablePadding sx={{ margin: '0px !important', height: '100%' }}>
+        {notifications.notifications.length > 0 ? (
+          notifications.notifications.map((notif) => (
+            <Stack key={notif.id} spacing={1}>
+              <ListItem disablePadding>
+                <Notification
+                  id={notif.id}
+                  type={notif.type}
+                  title={notif.title}
+                  isRead={notif.isRead}
+                  createdAt={notif.createdAt}
+                  action={notif.redirect.action}
+                  description={notif.description}
+                  actionTitle={notif.redirect.title}
+                  handleMenuItemClick={handleAction}
+                />
+              </ListItem>
+              <Divider
+                variant="fullWidth"
+                sx={{
+                  margin: '0px !important',
+                  bgcolor: colors.whiteLilac,
+                }}
               />
-            </ListItem>
-            <Divider
-              variant="fullWidth"
-              sx={{
-                margin: '0px !important',
-                bgcolor: colors.whiteLilac,
-              }}
-            />
+            </Stack>
+          ))
+        ) : (
+          <Stack py={1} alignItems={'center'}>
+            <Typography variant="body1" height={'100%'}>
+              No notification yet
+            </Typography>
           </Stack>
-        ))}
+        )}
       </List>
     </Stack>
   );
@@ -134,7 +145,7 @@ export const Notification = ({
       px={1.5}
       spacing={0.4}
       width={'100%'}
-      bgcolor={isRead ? 'none' : hexToRGB(GetColorByType(type), 0.2)}
+      bgcolor={isRead ? 'none' : hexToRGB(GetColorByType(type), 0.15)}
     >
       <Stack direction={'row'} spacing={0.8} alignItems={'flex-start'}>
         {GetIcon(type)}

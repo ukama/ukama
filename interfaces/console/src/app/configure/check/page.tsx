@@ -8,7 +8,10 @@
 'use client';
 
 import {
+  NodeConnectivityEnum,
+  NodeStateEnum,
   useGetNodeQuery,
+  useGetNodesByStateQuery,
   useGetSitesLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
@@ -27,9 +30,9 @@ const Check = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [showReturn, setShowReturn] = useState(false);
-  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const nodeId = searchParams.get('nid') ?? '';
+  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
+  const [showReturn, setShowReturn] = useState(false);
   const [title] = useState(
     flow === NETWORK_FLOW
       ? 'Creating your network...'
@@ -62,7 +65,31 @@ const Check = () => {
     },
   });
 
-  const { data: nodeData, loading: nodeLoading } = useGetNodeQuery({
+  useGetNodesByStateQuery({
+    skip: !!nodeId,
+    variables: {
+      data: {
+        state: NodeStateEnum.Unknown,
+        connectivity: NodeConnectivityEnum.Online,
+      },
+    },
+    onCompleted: (data) => {
+      if (data.getNodesByState.nodes.length > 0) {
+        setTimeout(() => {}, 2000);
+        let p = setQueryParam(
+          'lat',
+          data.getNodesByState.nodes[0].latitude.toString(),
+        );
+        p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
+        p.delete('nid');
+        router.push(
+          `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
+        );
+      }
+    },
+  });
+
+  useGetNodeQuery({
     skip: !nodeId,
     variables: {
       data: {

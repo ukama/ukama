@@ -151,6 +151,15 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
+      ) : column.id === 'state' ? (
+        <Chip
+          sx={{
+            p: 1,
+            color: (theme) => theme.palette.text.primary,
+            backgroundColor: colors.secondaryLight,
+          }}
+          label={row[column.id]}
+        />
       ) : (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
           {row[column.id] === true

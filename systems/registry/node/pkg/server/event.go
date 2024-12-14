@@ -71,6 +71,17 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
+		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.s.addNodeToSite(msg.AccessId, msg.SiteId, msg.NetworkId)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}

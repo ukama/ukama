@@ -237,6 +237,7 @@ export type TNodePoolData = {
   id: string;
   type: string;
   site: string;
+  state: string;
   network: string;
   createdAt: string;
   connectivity: string;

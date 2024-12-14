@@ -121,17 +121,11 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'connectivity', label: 'State', minWidth: 140 },
+  { id: 'connectivity', label: 'Connectivity', minWidth: 140 },
   { id: 'site', label: 'Site', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
 export const NODE_TABLE_MENU: MenuItemType[] = [
-  {
-    id: 1,
-    Icon: null,
-    title: 'Edit node',
-    route: 'edit-node',
-  },
   {
     id: 2,
     Icon: null,
@@ -193,7 +187,8 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'connectivity', label: 'Connectivity', minWidth: 180 },
+  { id: 'connectivity', label: 'Connectivity', minWidth: 120 },
+  { id: 'state', label: 'State', minWidth: 120 },
   { id: 'site', label: 'Site', minWidth: 180 },
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];

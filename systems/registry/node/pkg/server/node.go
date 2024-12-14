@@ -33,39 +33,42 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
 type NodeServer struct {
-	orgName        string
-	org            uuid.UUID
-	nodeRepo       db.NodeRepo
-	siteRepo       db.SiteRepo
-	nodeStatusRepo db.NodeStatusRepo
-	nameGenerator  namegenerator.Generator
-	siteService    providers.SiteClientProvider
-	pushGateway    string
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	orgName         string
+	org             uuid.UUID
+	nodeRepo        db.NodeRepo
+	siteRepo        db.SiteRepo
+	nodeStatusRepo  db.NodeStatusRepo
+	nameGenerator   namegenerator.Generator
+	siteService     providers.SiteClientProvider
+	pushGateway     string
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	inventoryClient cinvent.ComponentClient
 	pb.UnimplementedNodeServiceServer
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
-		orgName:        orgName,
-		org:            org,
-		nodeRepo:       nodeRepo,
-		nodeStatusRepo: nodeStatusRepo,
-		siteRepo:       siteRepo,
-		siteService:    siteService,
-		nameGenerator:  namegenerator.NewNameGenerator(seed),
-		pushGateway:    pushGateway,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:         orgName,
+		org:             org,
+		nodeRepo:        nodeRepo,
+		nodeStatusRepo:  nodeStatusRepo,
+		siteRepo:        siteRepo,
+		siteService:     siteService,
+		nameGenerator:   namegenerator.NewNameGenerator(seed),
+		pushGateway:     pushGateway,
+		msgbus:          msgBus,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		inventoryClient: inventoryClientProvider,
 	}
 }
 
@@ -545,6 +548,45 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 	}
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
+}
+
+func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
+	r, err := n.inventoryClient.Get(nodeId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "node not found in inventory against component id: %s, Error %s", nodeId, err.Error())
+	}
+
+	netID, err := uuid.FromString(networkId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+	}
+
+	siteID, err := uuid.FromString(siteId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
+	}
+
+	site := &db.Site{
+		NodeId:    r.PartNumber,
+		SiteId:    siteID,
+		NetworkId: netID,
+	}
+
+	err = n.siteRepo.AddNode(site, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	_, err = n.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+		NodeId:       r.PartNumber,
+		Connectivity: cpb.NodeConnectivity_Online.String(),
+		State:        cpb.NodeState_Configured.String(),
+	})
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to update node status %s", err.Error())
+	}
+
+	return nil
 }
 
 func invalidNodeIDError(nodeId string, err error) error {

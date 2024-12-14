@@ -381,8 +381,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteAdd]):
-		c := evt.EventToEventConfig[evt.EventSiteAdd]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
+		c := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
