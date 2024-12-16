@@ -146,7 +146,7 @@ const Sims = () => {
             <IconButton
               onClick={() => {
                 setFile(null);
-                acceptedFiles?.pop();
+                // acceptedFiles?.pop();
               }}
               size="small"
             >

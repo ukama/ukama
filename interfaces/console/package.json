@@ -7,6 +7,7 @@
     "build": "next build",
     "lint": "next lint",
     "start": "PORT=8080 node server.js",
+    "prod": "next start",
     "prettier": "prettier --write --ignore-unknown .",
     "codegen": "graphql-codegen --config codegen.yml",
     "subscriptions-codegen": "graphql-codegen --config subscriptions-codegen.yml"

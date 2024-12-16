@@ -43,7 +43,7 @@ const Check = () => {
     flow === NETWORK_FLOW ? 'Loading up your network...' : '',
   );
   const [description, setDescription] = useState('');
-  const { network } = useAppContext();
+  const { setSnackbarMessage } = useAppContext();
 
   const setQueryParam = (key: string, value: string) => {
     const p = new URLSearchParams(searchParams.toString());
@@ -66,24 +66,38 @@ const Check = () => {
           data.getNodesByState.nodes[0].latitude &&
           data.getNodesByState.nodes[0].longitude
         ) {
-          setTimeout(() => {}, 2000);
-          let p = setQueryParam(
-            'lat',
-            data.getNodesByState.nodes[0].latitude.toString(),
-          );
-          p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
-          p.set(
-            'flow',
-            flow === NETWORK_FLOW
-              ? ONBOARDING_FLOW
-              : flow === CHECK_SITE_FLOW
-                ? INSTALLATION_FLOW
-                : flow,
-          );
-          p.delete('nid');
-          router.push(
-            `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
-          );
+          if (
+            data.getNodesByState.nodes[0].status.connectivity ===
+              NodeConnectivityEnum.Online &&
+            data.getNodesByState.nodes[0].status.state === NodeStateEnum.Unknown
+          ) {
+            setTimeout(() => {}, 2000);
+            let p = setQueryParam(
+              'lat',
+              data.getNodesByState.nodes[0].latitude.toString(),
+            );
+            p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
+            p.set(
+              'flow',
+              flow === NETWORK_FLOW
+                ? ONBOARDING_FLOW
+                : flow === CHECK_SITE_FLOW
+                  ? INSTALLATION_FLOW
+                  : flow,
+            );
+            p.delete('nid');
+            router.push(
+              `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
+            );
+          } else {
+            setSnackbarMessage({
+              id: 'node-configured-warn',
+              message: `Node ${data.getNodesByState.nodes[0].id} is already configured.`,
+              type: 'warning',
+              show: true,
+            });
+            router.push(`/console/home`);
+          }
         }
       }
     },
@@ -98,19 +112,32 @@ const Check = () => {
     },
     onCompleted: async (data) => {
       if (data.getNode.latitude && data.getNode.longitude && nodeId) {
-        setTimeout(() => {}, 2000);
-        let p = setQueryParam('lat', data.getNode.latitude.toString());
-        p.set('lng', data.getNode.longitude.toString());
-        p.set(
-          'flow',
-          flow === NETWORK_FLOW
-            ? ONBOARDING_FLOW
-            : flow === CHECK_SITE_FLOW
-              ? INSTALLATION_FLOW
-              : flow,
-        );
-        p.delete('nid');
-        router.push(`/configure/node/${data.getNode.id}?${p.toString()}`);
+        if (
+          data.getNode.status.connectivity === NodeConnectivityEnum.Online &&
+          data.getNode.status.state === NodeStateEnum.Unknown
+        ) {
+          setTimeout(() => {}, 2000);
+          let p = setQueryParam('lat', data.getNode.latitude.toString());
+          p.set('lng', data.getNode.longitude.toString());
+          p.set(
+            'flow',
+            flow === NETWORK_FLOW
+              ? ONBOARDING_FLOW
+              : flow === CHECK_SITE_FLOW
+                ? INSTALLATION_FLOW
+                : flow,
+          );
+          p.delete('nid');
+          router.push(`/configure/node/${data.getNode.id}?${p.toString()}`);
+        } else {
+          setSnackbarMessage({
+            id: 'node-configured-warn',
+            message: `Node ${data.getNode.id} is already configured.`,
+            type: 'warning',
+            show: true,
+          });
+          router.push(`/console/home`);
+        }
       }
     },
   });
