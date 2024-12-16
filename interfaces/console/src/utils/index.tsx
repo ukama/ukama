@@ -22,7 +22,7 @@ import {
 import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { LatLngTuple } from 'leaflet';
 
@@ -32,27 +32,17 @@ type TConfigureStep = {
 };
 
 const getTitleFromPath = (path: string, id: string) => {
-  if (path.startsWith('/console/sites') && id) {
+  if (id) {
     return (
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={0.6}>
         <Typography variant="h5" sx={{ color: colors.black38 }}>
-          Site
+          {path.startsWith('/console/sites')
+            ? 'Site'
+            : path.startsWith('/console/nodes')
+              ? 'Nodes'
+              : ''}
         </Typography>
-        <ArrowForwardIosIcon sx={{ color: colors.black38 }} />
-        <Typography variant="h5" sx={{ color: colors.black }}>
-          {id}
-        </Typography>
-      </Stack>
-    );
-  }
-
-  if (path.startsWith('/console/nodes') && id) {
-    return (
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Typography variant="h5" sx={{ color: colors.black38 }}>
-          Nodes
-        </Typography>
-        <ArrowForwardIosIcon sx={{ color: colors.black38 }} />
+        <ChevronRightIcon sx={{ color: colors.black38 }} />
         <Typography variant="h5" sx={{ color: colors.black }}>
           {id}
         </Typography>

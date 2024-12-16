@@ -11,6 +11,7 @@ const colors = {
   redMatt: '#D83C3E',
   green: '#03744B',
   yellow: '#FBC34D',
+  orange: '#E27429',
   silver: '#C4C4C4',
   hoverColor: '#009DF5',
   hoverColor08: '#EBF5FF',

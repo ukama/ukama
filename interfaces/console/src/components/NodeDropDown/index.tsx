@@ -9,13 +9,10 @@
 import { Node, NodeStateEnum } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
-import { AddCircleOutlineRounded } from '@mui/icons-material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CircleIcon from '@mui/icons-material/Circle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import {
-  Button,
-  Divider,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -47,17 +44,19 @@ const getStatus = (status: NodeStateEnum, time: number) => {
 };
 
 const getStatusIcon = (status: NodeStateEnum) => {
-  switch (status) {
+  switch (status.toUpperCase()) {
     case NodeStateEnum.Unknown:
-      return <CheckCircleIcon htmlColor={colors.green} fontSize={'small'} />;
+      return (
+        <CheckCircleIcon sx={{ color: colors.black54 }} fontSize={'small'} />
+      );
     case NodeStateEnum.Configured:
-      return <InfoIcon htmlColor={colors.black38} fontSize={'small'} />;
+      return <InfoIcon sx={{ color: colors.orange }} fontSize={'small'} />;
     case NodeStateEnum.Operational:
       return <InfoIcon htmlColor={colors.darkGreen05} fontSize={'small'} />;
     case NodeStateEnum.Faulty:
       return <InfoIcon htmlColor={colors.red} fontSize={'small'} />;
     default:
-      return <CircleIcon htmlColor={colors.black38} fontSize={'small'} />;
+      return <CircleIcon htmlColor={colors.black54} fontSize={'small'} />;
   }
 };
 
@@ -87,17 +86,15 @@ const NodeDropDown = ({
       {selectedNode &&
         getStatusIcon(selectedNode.status.state as NodeStateEnum)}
 
-      <LoadingWrapper
-        height={'fit-content'}
-        isLoading={loading}
-        width={loading ? '144px' : 'fit-content'}
-      >
+      <LoadingWrapper radius="small" isLoading={loading} width={'244px'}>
         <Select
           disableUnderline
           variant="standard"
           onChange={handleChange}
-          value={selectedNode?.name}
-          SelectDisplayProps={SelectDisplayProps}
+          value={selectedNode?.name ?? ''}
+          SelectDisplayProps={{
+            style: { ...SelectDisplayProps.style, marginRight: '8px' },
+          }}
           MenuProps={{
             disablePortal: true,
             anchorOrigin: {
@@ -124,7 +121,7 @@ const NodeDropDown = ({
               value={name}
               sx={{
                 m: 0,
-                p: '6px 16px',
+                p: '6px 24px',
                 backgroundColor: `${
                   id === selectedNode?.id
                     ? hexToRGB(colors.secondaryLight, 0.25)
@@ -135,37 +132,13 @@ const NodeDropDown = ({
                 },
               }}
             >
-              <Typography variant="body1">{name}</Typography>
+              <Typography variant="body1" pr={2}>
+                {name}
+              </Typography>
             </MenuItem>
           ))}
-          <Divider />
-          <MenuItem
-            onClick={(e) => {
-              onAddNode();
-              e.stopPropagation();
-            }}
-          >
-            <Button
-              variant="text"
-              sx={{
-                p: 0,
-                typography: 'body1',
-                textTransform: 'none',
-              }}
-              startIcon={<AddCircleOutlineRounded />}
-            >
-              Add node
-            </Button>
-          </MenuItem>
         </Select>
       </LoadingWrapper>
-
-      {/* <LoadingWrapper
-        height={38}
-        width={'fit-content'}
-      >
-        {getStatus(nodeStatus.status, nodeStatus.uptime)}
-      </LoadingWrapper> */}
     </Stack>
   );
 };

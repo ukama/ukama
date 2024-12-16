@@ -9,7 +9,8 @@
 import { HorizontalContainer } from '@/styles/global';
 import { TVariant } from '@/types';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
+import { IconButton, Tooltip, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import Zoom from '@mui/material/Zoom';
 
 interface INodeStatItem {
@@ -37,7 +38,7 @@ const TextWithToolTip = ({
   <HorizontalContainer>
     <Typography
       fontWeight={500}
-      variant="body2"
+      variant="body1"
       color={isAlert ? 'error' : 'default'}
     >
       {title}
@@ -88,14 +89,14 @@ const NodeStatItem = ({
 }: INodeStatItem) => {
   return (
     <Grid container spacing={2}>
-      <Grid item xs={variants(variant, 'NG')}>
+      <Grid size={{ xs: variants(variant, 'NG') }}>
         <TextWithToolTip
           title={name}
           showToottip={!!nameInfo}
           tooltipText={nameInfo}
         />
       </Grid>
-      <Grid item xs={variants(variant, 'VG')}>
+      <Grid size={{ xs: variants(variant, 'VG') }}>
         <TextWithToolTip
           title={value}
           isAlert={showAlertInfo}

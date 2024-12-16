@@ -7,7 +7,8 @@
  */
 
 import { Node } from '@/client/graphql/generated';
-import { Button, Grid } from '@mui/material';
+import { Button } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/styles';
 import LoadingWrapper from '../LoadingWrapper';
 import NodeDropDown from '../NodeDropDown';
@@ -27,7 +28,6 @@ interface INodeStatus {
   handleEditNodeClick: Function;
   selectedNode: Node | undefined;
   handleNodeActionClick: Function;
-  handleNodeActionItemSelected: Function;
 }
 
 const NodeStatus = ({
@@ -39,14 +39,13 @@ const NodeStatus = ({
   handleNodeSelected,
   handleEditNodeClick,
   handleNodeActionClick,
-  handleNodeActionItemSelected,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
     handleEditNodeClick(nodes.find((item: any) => item.id === selectedNode));
 
   return (
-    <Grid container>
-      <Grid item xs={12} md={8}>
+    <Grid container alignItems={'center'}>
+      <Grid size={{ xs: 12, md: 9 }}>
         <NodeDropDown
           nodes={nodes}
           loading={loading}
@@ -55,8 +54,13 @@ const NodeStatus = ({
           onNodeSelected={handleNodeSelected}
         />
       </Grid>
-      <Grid item md={4} xs={12} container spacing={2} justifyContent="flex-end">
-        <Grid item>
+      <Grid
+        container
+        columnSpacing={2}
+        size={{ xs: 12, md: 3 }}
+        justifyContent="flex-end"
+      >
+        <Grid>
           <LoadingWrapper isLoading={loading} height={40}>
             <StyledBtn variant="contained" onClick={handleUpdateNode}>
               Edit NODE
@@ -64,12 +68,11 @@ const NodeStatus = ({
           </LoadingWrapper>
         </Grid>
 
-        <Grid item>
-          <LoadingWrapper isLoading={loading} height={40}>
+        <Grid>
+          <LoadingWrapper isLoading={loading} height={40} width={'100%'}>
             <SplitButton
               options={nodeActionOptions}
               handleSplitActionClick={handleNodeActionClick}
-              handleSelectedItem={handleNodeActionItemSelected}
             />
           </LoadingWrapper>
         </Grid>

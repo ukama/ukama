@@ -258,11 +258,11 @@ const TooltipsText = {
 
 const NodePageTabs = [
   { id: 'node-tab-0', label: 'Overview', value: 0 },
-  { id: 'node-tab-1', label: 'Network', value: 1 },
-  { id: 'node-tab-2', label: 'Resources', value: 2 },
-  { id: 'node-tab-3', label: 'Radio', value: 3 },
-  { id: 'node-tab-4', label: 'Software', value: 4 },
-  { id: 'node-tab-5', label: 'Schematic', value: 5 },
+  // { id: 'node-tab-1', label: 'Network', value: 1 },
+  // { id: 'node-tab-2', label: 'Resources', value: 2 },
+  // { id: 'node-tab-3', label: 'Radio', value: 3 },
+  // { id: 'node-tab-4', label: 'Software', value: 4 },
+  // { id: 'node-tab-5', label: 'Schematic', value: 5 },
 ];
 
 const NodeResourcesTabConfigure: any = {
