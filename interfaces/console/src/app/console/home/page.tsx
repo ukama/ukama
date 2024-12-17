@@ -93,7 +93,7 @@ export default function Page() {
               ? `${network.name} is created.`
               : `No network selected.`
           }
-          subtitle={network.name ? 'No node attached to this network.' : ''}
+          subtitle={network.name ? '' : ''}
           loading={false}
           availableNodes={undefined}
           statusType="ONLINE"
@@ -156,13 +156,23 @@ export default function Page() {
                 id="network-map"
                 zoom={10}
                 className="network-map"
-                markersData={{ nodes: nodesData?.getNodesLocation.nodes || [] }}
+                markersData={{
+                  nodes:
+                    sitesRes && sitesRes?.getSites.sites.length > 0
+                      ? nodesData?.getNodesLocation.nodes || []
+                      : [],
+                }}
               >
                 {() => (
                   <>
                     <SitesTree
                       sites={structureNodeSiteDate(
-                        { nodes: nodesData?.getNodesLocation.nodes || [] },
+                        {
+                          nodes:
+                            sitesRes && sitesRes?.getSites.sites.length > 0
+                              ? nodesData?.getNodesLocation.nodes || []
+                              : [],
+                        },
                         { sites: sitesRes?.getSites.sites || [] },
                       )}
                     />

@@ -429,6 +429,16 @@ const Page = () => {
     });
 
   const handleAddSubscriberModal = () => {
+    // if (simPoolData && simPoolData?.getSims.sim.length === 0) {
+    //   setSnackbarMessage({
+    //     id: 'no-sims-error',
+    //     message: 'No fsims available in your sim pool.',
+    //     type: 'error' as AlertColor,
+    //     show: true,
+    //   });
+    //   return;
+    // }
+
     setOpenAddSubscriber(true);
     refetchSims();
   };

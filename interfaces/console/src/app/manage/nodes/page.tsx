@@ -67,7 +67,6 @@ const Page = () => {
           node.site.networkId &&
           sites.getSites.sites.find((site) => site.id === node.site.networkId)
             ?.name;
-        console.log(node.status.state);
         np.push({
           id: node.id,
           site: s ?? '-',

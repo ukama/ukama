@@ -14,7 +14,6 @@ interface IMetricSubscription {
 }
 
 const MetricSubscription = ({ from, type }: IMetricSubscription) => {
-  console.log(from, type);
   // const { env } = useAppContext();
   // useGetMetricByTabSubSubscription({
   //   // client: getMetricsClient(env.METRIC_URL, env.METRIC_WEBSOCKET_URL),

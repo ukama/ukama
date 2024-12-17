@@ -203,9 +203,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     // setMetricFrom(() => getUnixTime() - 120);
   };
 
-  const handleNodeActionClick = (action: string) => {
-    console.log(action);
-  };
+  const handleNodeActionClick = (action: string) => {};
 
   return (
     <Stack width={'100%'} mt={1} spacing={1}>

@@ -85,11 +85,11 @@ const ConfigureLayout = ({
 
       if (components.length === 0) return;
 
-      const componentId = params.id ?? nid;
-      if (!componentId) return;
+      const nodeId = params.id ?? nid;
+      if (!nodeId) return;
 
-      const component = components.find((comp) => comp.id === componentId);
-      if (!component) {
+      const component = components.find((comp) => comp.partNumber === nodeId);
+      if (!component?.id && flow !== ONBOARDING_FLOW) {
         setSnackbarMessage({
           id: 'components-msg',
           message: 'Access point not found in inventory.',

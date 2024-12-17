@@ -51,7 +51,6 @@ export default function RootLayout({
     name: 'token',
     value: '',
   };
-
   return (
     <html lang="en">
       <head>

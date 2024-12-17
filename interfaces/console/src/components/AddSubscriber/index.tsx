@@ -1,41 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { Formik, Form, Field } from 'formik';
-import * as Yup from 'yup';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  TextField,
-  Autocomplete,
-  Select,
-  MenuItem,
-  Box,
-  Stack,
-  OutlinedInput,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  IconButton,
-  AccordionSummary,
-  Accordion,
-  AccordionDetails,
-  CircularProgress,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { globalUseStyles } from '@/styles/global';
-import colors from '@/theme/colors';
-import { makeStyles } from '@mui/styles';
-import {
+  AllocateSimApiDto,
   PackageDto,
   SimDto,
-  AllocateSimApiDto,
 } from '@/client/graphql/generated';
-import QRCode from 'qrcode.react';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useAppContext } from '@/context';
+import { globalUseStyles } from '@/styles/global';
+import colors from '@/theme/colors';
 import { SubscriberDetailsType } from '@/types';
+import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Autocomplete,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormHelperText,
+  IconButton,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { makeStyles } from '@mui/styles';
+import { Field, Form, Formik } from 'formik';
+import QRCode from 'qrcode.react';
+import React, { useState } from 'react';
+import * as Yup from 'yup';
 
 const subscriberDetailsSchema = Yup.object().shape({
   simIccid: Yup.string()
@@ -89,6 +90,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   sims,
   isLoading,
 }) => {
+  const { setSnackbarMessage } = useAppContext();
   const [activeStep, setActiveStep] = useState(0);
   const [showQrCode, setShowQrCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,11 +110,30 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
 
   const handleClose = () => {
     setActiveStep(0);
+    setError(null);
     handleCloseAction();
   };
 
   const handleSubmit = async (values: SubscriberDetailsType) => {
     try {
+      if (values.plan === '') {
+        setSnackbarMessage({
+          show: true,
+          type: 'error',
+          id: 'plane-not-found',
+          message: 'Please select a plan',
+        });
+        return;
+      }
+      if (values.simIccid === '') {
+        setSnackbarMessage({
+          show: true,
+          type: 'error',
+          id: 'sim-not-found',
+          message: 'Please provide sim iccid.',
+        });
+        return;
+      }
       setError(null);
       const response = await handleAddSubscriber(values);
       setSubmissionData(response);
@@ -280,28 +301,30 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
               <Field name="simIccid">
                 {({ field, form, meta }: any) => (
                   <Autocomplete
-                    options={sims}
-                    getOptionLabel={(option) => option.iccid || ''}
-                    value={sims.find((sim) => sim.id === field.value) || null}
-                    onChange={(_, newValue) => {
-                      form.setFieldValue('simIccid', newValue?.iccid || '');
-                      setSelectedSim(newValue);
+                    freeSolo
+                    value={field.value}
+                    options={sims.map((option) => option.iccid)}
+                    sx={{
+                      '.MuiAutocomplete-inputRoot .MuiAutocomplete-input': {
+                        padding: '13px !important',
+                      },
+                    }}
+                    onInputChange={(_, newValue) => {
+                      form.setFieldValue('simIccid', newValue || undefined);
+                      setSelectedSim(
+                        sims.find((sim) => sim.iccid === newValue) || null,
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         {...field}
                         label="SIM ICCID*"
-                        error={meta.touched && Boolean(meta.error)}
-                        helperText={meta.touched && meta.error}
-                        InputLabelProps={{ shrink: true }}
+                        sx={{
+                          '.MuiOutlinedInput-root': { padding: 0 },
+                        }}
                       />
                     )}
-                    noOptionsText={
-                      sims.length === 0
-                        ? 'SIM pool is empty. Please upload SIMs to SIM pool first.'
-                        : 'No matching SIMs found'
-                    }
                     fullWidth
                   />
                 )}
@@ -310,9 +333,10 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
             <DialogActions
               sx={{ display: 'flex', justifyContent: 'space-between' }}
             >
-              <Box>
-                <Button onClick={handleBack}>Back</Button>
-              </Box>
+              <Button sx={{ p: 0 }} onClick={handleBack}>
+                Back
+              </Button>
+
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button
@@ -389,9 +413,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
             <DialogActions
               sx={{ display: 'flex', justifyContent: 'space-between' }}
             >
-              <Box>
-                <Button onClick={handleBack}>Back</Button>
-              </Box>
+              <Button sx={{ p: 0 }} onClick={handleBack}>
+                Back
+              </Button>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button

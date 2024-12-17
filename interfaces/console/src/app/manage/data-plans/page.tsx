@@ -22,6 +22,7 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
+import { CreatePlanType, DataUnitType } from '@/types';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper } from '@mui/material';
 import { useState } from 'react';
@@ -29,9 +30,9 @@ import { useState } from 'react';
 const INIT_DATAPLAN = {
   id: '',
   name: '',
-  dataVolume: 0,
-  dataUnit: '',
-  amount: 0,
+  dataVolume: undefined,
+  dataUnit: DataUnitType.GigaBytes,
+  amount: undefined,
   duration: 0,
   currency: '',
   country: '',
@@ -40,7 +41,7 @@ const INIT_DATAPLAN = {
 const Page = () => {
   const [data, setData] = useState<any>([]);
   const { network, user, setSnackbarMessage } = useAppContext();
-  const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
+  const [dataplan, setDataplan] = useState<CreatePlanType>(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
   const [getCurrencySymbol, { data: currencyData }] =
@@ -169,7 +170,7 @@ const Page = () => {
   };
 
   const handleDataPlanAction = (action: string) => {
-    if (action === 'add') {
+    if (action === 'add' && dataplan.amount && dataplan.dataVolume) {
       addDataPlan({
         variables: {
           data: {
@@ -212,11 +213,11 @@ const Page = () => {
         id: id,
         name: d?.name ?? '',
         duration: d?.duration ?? 0,
-        dataUnit: d?.dataUnit ?? '',
         dataVolume: d?.dataVolume ?? 0,
         country: d?.country ?? '',
         currency: d?.currency ?? '',
         amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
+        dataUnit: d?.dataUnit as DataUnitType,
       });
       setIsDataPlan(true);
     }

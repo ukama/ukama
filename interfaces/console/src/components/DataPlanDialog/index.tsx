@@ -6,8 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { AddPackageInputDto } from '@/client/graphql/generated';
 import { DATA_DURATION, DATA_UNIT } from '@/constants';
+import { CreatePlanType } from '@/types';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  Grid,
   IconButton,
   InputAdornment,
   InputLabel,
@@ -26,10 +25,11 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { Dispatch, SetStateAction, useMemo } from 'react';
 
 interface IDataPlanDialog {
-  data: AddPackageInputDto;
+  data: CreatePlanType;
   setData: Dispatch<SetStateAction<any>>;
   title: string;
   action: string;
@@ -97,7 +97,7 @@ const DataPlanDialog = ({
           alignItems={'center'}
           justifyContent={'center'}
         >
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               required
@@ -114,14 +114,12 @@ const DataPlanDialog = ({
           </Grid>
           {action !== 'update' && (
             <Grid
-              item
               container
-              xs={12}
-              sm={6}
+              size={{ xs: 12, sm: 6 }}
               columnSpacing={1}
               rowSpacing={2}
             >
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel htmlFor="package-price">PRICE</InputLabel>
                   <OutlinedInput
@@ -145,7 +143,7 @@ const DataPlanDialog = ({
                   />
                 </FormControl>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   fullWidth
                   required
@@ -168,14 +166,12 @@ const DataPlanDialog = ({
           )}
           {action !== 'update' && (
             <Grid
-              item
               container
-              xs={12}
-              sm={6}
+              size={{ xs: 12, sm: 6 }}
               columnSpacing={1}
               rowSpacing={2}
             >
-              <Grid item xs={5}>
+              <Grid size={{ xs: 5 }}>
                 <FormControl fullWidth>
                   <InputLabel id={'data-plan-unit-label'} shrink>
                     UNIT*
@@ -203,7 +199,7 @@ const DataPlanDialog = ({
                 </FormControl>
               </Grid>
 
-              <Grid item xs={7}>
+              <Grid size={{ xs: 7 }}>
                 <FormControl fullWidth>
                   <InputLabel
                     id={'data-plan-unit-price-label'}

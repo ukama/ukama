@@ -238,7 +238,6 @@ const SiteConfigure = ({ params }: IPage) => {
     spectrumId: string,
     networkId: string,
   ) => {
-    console.log(accessId, spectrumId, networkId);
     addSite({
       variables: {
         data: {

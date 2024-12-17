@@ -252,3 +252,21 @@ export type TNodePoolData = {
   createdAt: string;
   connectivity: string;
 };
+
+export enum DataUnitType {
+  Bytes = 'Bytes',
+  KiloBytes = 'KiloBytes',
+  MegaBytes = 'MegaBytes',
+  GigaBytes = 'GigaBytes',
+}
+
+export type CreatePlanType = {
+  id: string;
+  name: string;
+  dataVolume: undefined | number;
+  dataUnit: DataUnitType;
+  amount: undefined | number;
+  duration: number;
+  currency: string;
+  country: string;
+};

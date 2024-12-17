@@ -88,14 +88,6 @@ const Check = () => {
         );
         p.delete('nid');
         router.push(`/configure/node/${filterNodes[0].id}?${p.toString()}`);
-      } else {
-        setSnackbarMessage({
-          id: 'node-configured-warn',
-          message: `No node available for configuration.`,
-          type: 'warning',
-          show: true,
-        });
-        router.push(`/console/home`);
       }
     },
   });
