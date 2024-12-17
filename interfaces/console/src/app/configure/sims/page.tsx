@@ -87,10 +87,10 @@ const Sims = () => {
       const file: any = acceptedFiles[0];
       fileToBase64(file)
         .then((base64String) => {
-          handleUploadSimsAction('success', base64String, env.SIM_TYPE);
+          handleUploadSimsAction('success', base64String);
         })
         .catch((error) => {
-          handleUploadSimsAction('error', error, env.SIM_TYPE);
+          handleUploadSimsAction('error', error);
         });
     } else {
       setSnackbarMessage({
@@ -102,11 +102,7 @@ const Sims = () => {
     }
   };
 
-  const handleUploadSimsAction = (
-    action: string,
-    value: string,
-    type: string,
-  ) => {
+  const handleUploadSimsAction = (action: string, value: string) => {
     if (action === 'error') {
       setSnackbarMessage({
         id: 'sim-pool-parsing-error',
@@ -119,7 +115,7 @@ const Sims = () => {
         variables: {
           data: {
             data: value,
-            simType: type as Sim_Types,
+            simType: env.SIM_TYPE as Sim_Types,
           },
         },
       });
