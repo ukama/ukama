@@ -12,7 +12,7 @@ import (
 	stripelib "github.com/stripe/stripe-go/v78"
 )
 
-type PaymentIntent struct {
+type Intent struct {
 	*stripelib.PaymentIntent
 }
 
