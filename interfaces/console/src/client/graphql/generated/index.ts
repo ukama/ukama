@@ -149,6 +149,13 @@ export enum Component_Type {
   Switch = 'SWITCH'
 }
 
+export type Component = {
+  __typename?: 'Component';
+  componentId?: Maybe<Scalars['String']['output']>;
+  componentName?: Maybe<Scalars['String']['output']>;
+  elementType: Scalars['String']['output'];
+};
+
 export type ComponentDto = {
   __typename?: 'ComponentDto';
   category: Scalars['String']['output'];
@@ -197,6 +204,13 @@ export type CurrencyRes = {
   code: Scalars['String']['output'];
   image: Scalars['String']['output'];
   symbol: Scalars['String']['output'];
+};
+
+export type DataPlan = {
+  __typename?: 'DataPlan';
+  elementType: Scalars['String']['output'];
+  planId: Scalars['String']['output'];
+  planName: Scalars['String']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -313,6 +327,13 @@ export type MemberDto = {
   name: Scalars['String']['output'];
   role: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type Members = {
+  __typename?: 'Members';
+  activeMembers: Scalars['String']['output'];
+  inactiveMembers: Scalars['String']['output'];
+  totalMembers: Scalars['String']['output'];
 };
 
 export type MembersResDto = {
@@ -578,6 +599,15 @@ export enum Notification_Type {
   TypeWarning = 'TYPE_WARNING'
 }
 
+export type Network = {
+  __typename?: 'Network';
+  elementType: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  networkName: Scalars['String']['output'];
+  sites: Array<Site>;
+  subscribers?: Maybe<Subscribers>;
+};
+
 export type NetworkDto = {
   __typename?: 'NetworkDto';
   budget: Scalars['Float']['output'];
@@ -639,9 +669,9 @@ export type NodeAppsChangeLogInput = {
 
 /** Node connectivity enums */
 export enum NodeConnectivityEnum {
-  Offline = 'OFFLINE',
-  Online = 'ONLINE',
-  Unknown = 'UNKNOWN'
+  Offline = 'Offline',
+  Online = 'Online',
+  Unknown = 'Unknown'
 }
 
 export type NodeInput = {
@@ -668,10 +698,10 @@ export type NodeSite = {
 
 /** Node state enums */
 export enum NodeStateEnum {
-  Configured = 'CONFIGURED',
-  Faulty = 'FAULTY',
-  Operational = 'OPERATIONAL',
-  Unknown = 'UNKNOWN'
+  Configured = 'Configured',
+  Faulty = 'Faulty',
+  Operational = 'Operational',
+  Unknown = 'Unknown'
 }
 
 export type NodeStatus = {
@@ -723,6 +753,22 @@ export type NotificationsResDto = {
   notifications: Array<NotificationsDto>;
 };
 
+export type Org = {
+  __typename?: 'Org';
+  country: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  dataplans: Array<DataPlan>;
+  elementType: Scalars['String']['output'];
+  members?: Maybe<Members>;
+  networks: Array<Network>;
+  orgId: Scalars['String']['output'];
+  orgName: Scalars['String']['output'];
+  ownerEmail: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  ownerName: Scalars['String']['output'];
+  sims?: Maybe<Sims>;
+};
+
 export type OrgDto = {
   __typename?: 'OrgDto';
   certificate: Scalars['String']['output'];
@@ -733,6 +779,11 @@ export type OrgDto = {
   isDeactivated: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   owner: Scalars['String']['output'];
+};
+
+export type OrgTreeRes = {
+  __typename?: 'OrgTreeRes';
+  org: Org;
 };
 
 export type OrgsResDto = {
@@ -828,6 +879,7 @@ export type Query = {
   getNotification: NotificationResDto;
   getNotifications: NotificationsResDto;
   getOrg: OrgDto;
+  getOrgTree: OrgTreeRes;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
   getPackages: PackagesResDto;
@@ -1110,9 +1162,24 @@ export type SimToPackagesDto = {
   start_date: Scalars['String']['output'];
 };
 
+export type Sims = {
+  __typename?: 'Sims';
+  availableSims: Scalars['String']['output'];
+  consumed: Scalars['String']['output'];
+  totalSims: Scalars['String']['output'];
+};
+
 export type SimsResDto = {
   __typename?: 'SimsResDto';
   sim: Array<SimDto>;
+};
+
+export type Site = {
+  __typename?: 'Site';
+  components: Array<Component>;
+  elementType: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
+  siteName: Scalars['String']['output'];
 };
 
 export type SiteDto = {
@@ -1209,6 +1276,13 @@ export type SubscriberToSimsDto = {
   __typename?: 'SubscriberToSimsDto';
   sims: Array<SubscriberSimsDto>;
   subscriberId: Scalars['String']['output'];
+};
+
+export type Subscribers = {
+  __typename?: 'Subscribers';
+  activeSubscribers: Scalars['String']['output'];
+  inactiveSubscribers: Scalars['String']['output'];
+  totalSubscribers: Scalars['String']['output'];
 };
 
 export type SubscribersResDto = {

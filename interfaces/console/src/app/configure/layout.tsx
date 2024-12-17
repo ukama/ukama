@@ -42,6 +42,7 @@ const ConfigureLayout = ({
   const isSimsPath = path.includes('sims');
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
+  const nid = searchParams.get('nid') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow);
   const { network, setNetwork, setSnackbarMessage } = useAppContext();
@@ -80,9 +81,26 @@ const ConfigureLayout = ({
       },
     },
     onCompleted: (data) => {
-      if (data.getComponentsByUserId.components.length > 0) {
-        mapComponents(data.getComponentsByUserId);
+      const { components } = data.getComponentsByUserId;
+
+      if (components.length === 0) return;
+
+      const componentId = params.id ?? nid;
+      if (!componentId) return;
+
+      const component = components.find((comp) => comp.id === componentId);
+      if (!component) {
+        setSnackbarMessage({
+          id: 'components-msg',
+          message: 'Access point not found in inventory.',
+          type: 'warning',
+          show: true,
+        });
+        router.push('/console/home');
+        return;
       }
+
+      mapComponents(data.getComponentsByUserId);
     },
     onError: (error) => {
       setSnackbarMessage({

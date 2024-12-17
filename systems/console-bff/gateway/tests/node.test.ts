@@ -324,7 +324,7 @@ describe("Node API integration tests", () => {
         variables: {
           data: {
             networkId: networkId,
-            nodeFilterState: NODE_STATE.CONFIGURED,
+            nodeFilterState: NODE_STATE.Configured,
           },
         },
       },
@@ -362,7 +362,7 @@ describe("Node API integration tests", () => {
     const res = await server.executeOperation(
       {
         query: UPDATE_NODE_STATE,
-        variables: { data: { id: nodeId, state: NODE_STATE.FAULTY } },
+        variables: { data: { id: nodeId, state: NODE_STATE.Faulty } },
       },
       {
         contextValue: contextValue,
@@ -374,7 +374,7 @@ describe("Node API integration tests", () => {
     expect(singleResult.errors).toBeUndefined();
     const { data } = singleResult;
     expect(data.updateNodeState.id).toEqual(nodeId);
-    expect(data.updateNodeState.status.state).toEqual(NODE_STATE.FAULTY);
+    expect(data.updateNodeState.status.state).toEqual(NODE_STATE.Faulty);
   });
 
   it("should detach a node", async () => {

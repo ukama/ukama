@@ -29,10 +29,10 @@ export enum API_METHOD_TYPE {
   PATCH = "patch",
 }
 export enum NODE_STATE {
-  UNKNOWN = "unknown",
-  CONFIGURED = "configured",
-  OPERATIONAL = "operational",
-  FAULTY = "faulty",
+  Unknown = "unknown",
+  Configured = "configured",
+  Operational = "operational",
+  Faulty = "faulty",
 }
 registerEnumType(NODE_STATE, {
   name: "NodeStateEnum",
@@ -40,9 +40,9 @@ registerEnumType(NODE_STATE, {
 });
 
 export enum NODE_CONNECTIVITY {
-  UNKNOWN = "unkown",
-  OFFLINE = "offline",
-  ONLINE = "online",
+  Unknown = "unkown",
+  Offline = "offline",
+  Online = "online",
 }
 registerEnumType(NODE_CONNECTIVITY, {
   name: "NodeConnectivityEnum",

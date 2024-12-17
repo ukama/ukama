@@ -214,6 +214,7 @@ const SiteConfigure = ({ params }: IPage) => {
       accessComponentsData?.getComponentsByUserId.components.find(
         (component) => component.partNumber === id,
       )?.id;
+
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 

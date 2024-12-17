@@ -61,44 +61,41 @@ const Check = () => {
       },
     },
     onCompleted: (data) => {
-      if (data.getNodesByState.nodes.length > 0) {
-        if (
-          data.getNodesByState.nodes[0].latitude &&
-          data.getNodesByState.nodes[0].longitude
-        ) {
-          if (
-            data.getNodesByState.nodes[0].status.connectivity ===
-              NodeConnectivityEnum.Online &&
-            data.getNodesByState.nodes[0].status.state === NodeStateEnum.Unknown
-          ) {
-            setTimeout(() => {}, 2000);
-            let p = setQueryParam(
-              'lat',
-              data.getNodesByState.nodes[0].latitude.toString(),
-            );
-            p.set('lng', data.getNodesByState.nodes[0].longitude.toString());
-            p.set(
-              'flow',
-              flow === NETWORK_FLOW
-                ? ONBOARDING_FLOW
-                : flow === CHECK_SITE_FLOW
-                  ? INSTALLATION_FLOW
-                  : flow,
-            );
-            p.delete('nid');
-            router.push(
-              `/configure/node/${data.getNodesByState.nodes[0].id}?${p.toString()}`,
-            );
-          } else {
-            setSnackbarMessage({
-              id: 'node-configured-warn',
-              message: `Node ${data.getNodesByState.nodes[0].id} is already configured.`,
-              type: 'warning',
-              show: true,
-            });
-            router.push(`/console/home`);
-          }
-        }
+      const filterNodes = data.getNodesByState.nodes.filter(
+        (node) =>
+          node.latitude !== 0 &&
+          node.longitude !== 0 &&
+          node.status.connectivity === NodeConnectivityEnum.Online &&
+          node.status.state === NodeStateEnum.Unknown,
+      );
+      if (
+        filterNodes.length > 0 &&
+        filterNodes[0].latitude !== 0 &&
+        filterNodes[0].longitude !== 0 &&
+        filterNodes[0].status.connectivity === NodeConnectivityEnum.Online &&
+        filterNodes[0].status.state === NodeStateEnum.Unknown
+      ) {
+        setTimeout(() => {}, 2000);
+        let p = setQueryParam('lat', filterNodes[0].latitude.toString());
+        p.set('lng', filterNodes[0].longitude.toString());
+        p.set(
+          'flow',
+          flow === NETWORK_FLOW
+            ? ONBOARDING_FLOW
+            : flow === CHECK_SITE_FLOW
+              ? INSTALLATION_FLOW
+              : flow,
+        );
+        p.delete('nid');
+        router.push(`/configure/node/${filterNodes[0].id}?${p.toString()}`);
+      } else {
+        setSnackbarMessage({
+          id: 'node-configured-warn',
+          message: `No node available for configuration.`,
+          type: 'warning',
+          show: true,
+        });
+        router.push(`/console/home`);
       }
     },
   });
@@ -176,10 +173,14 @@ const Check = () => {
           variant="contained"
           sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
           onClick={() => {
-            router.push('/console/home');
+            flow === INSTALLATION_FLOW
+              ? router.push('/console/home')
+              : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
           }}
         >
-          Return to home
+          {flow === INSTALLATION_FLOW
+            ? 'Return to home'
+            : 'Skip site configuration'}
         </Button>
       )}
     </Stack>
