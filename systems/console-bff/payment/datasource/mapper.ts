@@ -37,7 +37,7 @@ export const paymentDtoMapper = (req: PaymentAPIDto): PaymentDto => {
     description: req.description,
     status: req.status,
     failureReason: req.failure_reason,
-    extras: req.extras,
+    extra: req.extra,
     createdAt: req.created_at,
   };
 };

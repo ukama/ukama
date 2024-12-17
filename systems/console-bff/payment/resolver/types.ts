@@ -57,7 +57,7 @@ export class PaymentDto {
   status: string;
 
   @Field()
-  extras: string;
+  extra: string;
 
   @Field()
   failureReason: string;
@@ -126,7 +126,7 @@ export class PaymentAPIDto {
   status: string;
 
   @Field()
-  extras: string;
+  extra: string;
 
   @Field()
   failure_reason: string;
