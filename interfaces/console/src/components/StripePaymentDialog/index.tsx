@@ -16,6 +16,7 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import { useAppContext } from '@/context';
 
 const PaymentForm: React.FC<{
   clientSecret: string;
@@ -92,9 +93,9 @@ const StripePaymentDialog: React.FC<{
   onPaymentSuccess,
   onPaymentError,
 }) => {
-  const stripePromise = loadStripe(
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!,
-  );
+  const { env } = useAppContext();
+  const stripePromise = loadStripe(env.STRIPE_PK!);
+  console.log('BRACKLEY :', process.env.STRIPE_PK);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

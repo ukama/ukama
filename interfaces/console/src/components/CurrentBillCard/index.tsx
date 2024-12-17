@@ -18,9 +18,9 @@ import {
 import colors from '@/theme/colors';
 
 interface BillCardProps {
-  amount?: string;
-  startDate?: string;
-  endDate?: string;
+  amount: string;
+  startDate: string;
+  endDate: string;
   isLoading?: boolean;
   onPay?: () => void;
 }
@@ -39,10 +39,10 @@ const CurrentBillCard: React.FC<BillCardProps> = ({
           <Paper
             elevation={3}
             sx={{
-              padding: 3,
+              padding: 2,
               borderRadius: 2,
               backgroundColor: colors.white,
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              boxShadow: `0 4px 6px ${colors.black40}`,
             }}
           >
             <Stack spacing={2}>
@@ -85,17 +85,20 @@ const CurrentBillCard: React.FC<BillCardProps> = ({
         >
           <Stack spacing={2}>
             <Stack direction="row" spacing={2} justifyContent={'space-between'}>
-              <Typography variant="h6">Next bill </Typography>
+              <Typography variant="h6" sx={{ color: colors.vulcan }}>
+                Ukama plan{' '}
+              </Typography>
               <Typography variant="body2">
                 {startDate} - {endDate}
               </Typography>
             </Stack>
-            <Typography variant="body2" sx={{ color: colors.black54 }}>
-              Monthly SaaS fee for Ukama Console. Due EOD {startDate}
+            <Typography variant="body2" sx={{ color: colors.vulcan }}>
+              Monthly SaaS fee for Ukama Console. Bill available August 17,
+              2024. {startDate}
             </Typography>
             <Divider />
             <Stack direction="row" spacing={2} justifyContent={'space-between'}>
-              <Typography variant="h5">Total due: $ {amount}</Typography>
+              <Typography variant="body1">Total due: $ {amount}</Typography>
               <Button
                 variant="contained"
                 size="large"

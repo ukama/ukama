@@ -98,7 +98,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
       />
       <Typography
         variant="body1"
-        color={isActive ? colors.black : colors.black54}
+        sx={{ color: isActive ? colors.black : colors.vulcan }}
       >
         {name}
       </Typography>

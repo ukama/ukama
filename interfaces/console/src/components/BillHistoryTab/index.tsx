@@ -10,6 +10,7 @@ import DataTableWithOptions from '@/components/DataTableWithOptions';
 import { BILLING_HISTORY_TABLE_MENU, BILLING_TABLE_COLUMNS } from '@/constants';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import { GetReportResDto } from '@/client/graphql/generated';
+import { Paper } from '@mui/material';
 
 interface BillingHistoryProps {
   bills: GetReportResDto[];
@@ -39,16 +40,24 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({
   };
 
   return (
-    <DataTableWithOptions
-      columns={BILLING_TABLE_COLUMNS}
-      icon={SubscriberIcon}
-      dataset={billingHistoryDataset}
-      menuOptions={BILLING_HISTORY_TABLE_MENU}
-      onMenuItemClick={handleMenuItemClick}
-      emptyViewLabel="No billing history found"
-      isRowClickable={false}
-      // loading={loading}
-    />
+    <Paper
+      elevation={2}
+      sx={{
+        p: 4,
+        borderRadius: '10px',
+      }}
+    >
+      <DataTableWithOptions
+        columns={BILLING_TABLE_COLUMNS}
+        icon={SubscriberIcon}
+        dataset={billingHistoryDataset}
+        menuOptions={BILLING_HISTORY_TABLE_MENU}
+        onMenuItemClick={handleMenuItemClick}
+        emptyViewLabel="No billing history found"
+        isRowClickable={false}
+        // loading={loading}
+      />
+    </Paper>
   );
 };
 
