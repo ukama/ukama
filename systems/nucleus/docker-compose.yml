@@ -95,7 +95,7 @@ services:
    - postgresd-nucleus
 
  initclient-nucleus:
-  image: main-init
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
