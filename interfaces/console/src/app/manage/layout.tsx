@@ -75,15 +75,6 @@ const MenuItem: React.FC<MenuItemProps> = ({
       spacing={{ xs: 1, md: 2 }}
       alignItems={{ xs: 'center', md: 'flex-start' }}
       direction={{ xs: 'column', md: 'row' }}
-      sx={{
-        '& svg': {
-          color: isActive
-            ? colors.black
-            : isDarkMode
-              ? colors.black10
-              : colors.black54,
-        },
-      }}
     >
       <Icon
         sx={{
@@ -96,10 +87,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
               : colors.vulcan100,
         }}
       />
-      <Typography
-        variant="body1"
-        sx={{ color: isActive ? colors.black : colors.vulcan }}
-      >
+      <Typography variant="body1" fontWeight={400} color={colors.vulcan100}>
         {name}
       </Typography>
     </Stack>
@@ -160,13 +148,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
       <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>
         <Stack direction="row" spacing={10} alignItems="center">
           <BackButton title="BACK TO CONSOLE" />
-          <Typography
-            sx={{
-              fontSize: { xs: '1.2rem', md: '1.5rem' },
-            }}
-          >
-            Settings
-          </Typography>
+          <Typography variant="h5">Settings</Typography>
         </Stack>
 
         <Divider />
