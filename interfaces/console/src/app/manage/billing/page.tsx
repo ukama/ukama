@@ -23,6 +23,27 @@ import BillingOwnerDetailsCard from '@/components/BillingOwnerDetailsCard';
 import BillingHistory from '@/components/BillHistoryTab';
 import OutStandingBillCard from '@/components/OutStandingBillCard';
 
+export const dummyBills: any[] = [
+  {
+    id: '1',
+    amount: 20.0,
+    dueDate: '10/05/25',
+    plan: 'Ukama Console',
+  },
+  {
+    id: '2',
+    amount: 35.5,
+    dueDate: '11/15/25',
+    plan: 'Enterprise Tier',
+  },
+  {
+    id: '3',
+    amount: 15.75,
+    dueDate: '09/20/25',
+    plan: 'Basic Support',
+  },
+];
+
 const BillingSettingsPage: React.FC = () => {
   const { setSnackbarMessage, user } = useAppContext();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -141,7 +162,7 @@ const BillingSettingsPage: React.FC = () => {
           />
         </Grid>
         <Grid item xs={12}>
-          <OutStandingBillCard totalAmount={''} />
+          <OutStandingBillCard bills={dummyBills} />
         </Grid>
         <Grid item xs={12} md={6}>
           <FeatureUsageCard

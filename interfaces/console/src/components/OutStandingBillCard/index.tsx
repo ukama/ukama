@@ -1,11 +1,4 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Paper,
@@ -17,17 +10,56 @@ import {
   useTheme,
 } from '@mui/material';
 import colors from '@/theme/colors';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+
+interface Bill {
+  id: string;
+  amount: number;
+  dueDate: string;
+  plan: string;
+}
 
 interface OutStandingBillCardProps {
-  totalAmount: string;
+  bills: Bill[];
   loading?: boolean;
 }
 
 const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
+  bills = [],
   loading = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [currentBillIndex, setCurrentBillIndex] = useState(0);
+
+  if (bills.length === 0) {
+    return (
+      <Box>
+        <Paper
+          elevation={2}
+          sx={{
+            p: isMobile ? 2 : 4,
+            borderRadius: '10px',
+          }}
+        >
+          <Typography variant="body1">No outstanding bills</Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  const currentBill = bills[currentBillIndex];
+
+  const handleNextBill = () => {
+    setCurrentBillIndex((prev) => (prev + 1) % bills.length);
+  };
+
+  const handlePrevBill = () => {
+    setCurrentBillIndex((prev) => (prev - 1 + bills.length) % bills.length);
+  };
+
+  const totalDueAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
 
   return (
     <Box>
@@ -73,25 +105,90 @@ const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
             fontSize: isMobile ? '0.8rem' : '0.875rem',
           }}
         >
-          Overdue bills for Ukama Console plan.
+          Overdue bills for {currentBill.plan} plan
         </Typography>
         <Divider sx={{ mb: 2 }} />
+
+        {bills.length > 1 && (
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 2 }}
+          >
+            <Button
+              onClick={handlePrevBill}
+              disabled={bills.length <= 1}
+              startIcon={<ChevronLeftIcon />}
+            >
+              Previous
+            </Button>
+            <Typography variant="body2">
+              Bill {currentBillIndex + 1} of {bills.length}
+            </Typography>
+            <Button
+              onClick={handleNextBill}
+              disabled={bills.length <= 1}
+              endIcon={<ChevronRightIcon />}
+            >
+              Next
+            </Button>
+          </Stack>
+        )}
+
         <Stack
           direction={isMobile ? 'column' : 'row'}
           spacing={2}
           justifyContent={'space-between'}
           alignItems={isMobile ? 'stretch' : 'center'}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              color: colors.vulcan,
-              fontSize: isMobile ? '0.8rem' : '0.875rem',
-              textAlign: isMobile ? 'left' : 'inherit',
-            }}
-          >
-            Total due: $20.00 Overdue on 10/05/25
-          </Typography>
+          <Stack direction="column" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.vulcan,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  textAlign: isMobile ? 'left' : 'inherit',
+                }}
+              >
+                Total due:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.vulcan,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  textAlign: isMobile ? 'left' : 'inherit',
+                }}
+              >
+                ${totalDueAmount.toFixed(2)}
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.vulcan,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  textAlign: isMobile ? 'left' : 'inherit',
+                }}
+              >
+                Overdue on
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.red,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  textAlign: isMobile ? 'left' : 'inherit',
+                }}
+              >
+                {currentBill.dueDate}
+              </Typography>
+            </Stack>
+          </Stack>
 
           <Button
             variant="contained"
