@@ -14,7 +14,7 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/testing/services/hooks/util"
+	"github.com/ukama/ukama/systems/common/util/payments"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -25,8 +25,8 @@ const (
 )
 
 type WebhooksClient interface {
-	PostDepositHook(*util.Deposit) (*WebhookInfo, error)
-	PostPaymentIntentHook(*util.PaymentIntent) (*WebhookInfo, error)
+	PostDepositHook(*payments.Deposit) (*WebhookInfo, error)
+	PostPaymentIntentHook(*payments.Intent) (*WebhookInfo, error)
 }
 
 type webhooksClient struct {
@@ -47,7 +47,7 @@ func NewWebhooksClient(h string) *webhooksClient {
 	}
 }
 
-func (p *webhooksClient) PostDepositHook(req *util.Deposit) (*WebhookInfo, error) {
+func (p *webhooksClient) PostDepositHook(req *payments.Deposit) (*WebhookInfo, error) {
 	log.Debugf("Posting deposit webhook response: %v", req)
 
 	b, err := json.Marshal(req)
@@ -76,7 +76,7 @@ func (p *webhooksClient) PostDepositHook(req *util.Deposit) (*WebhookInfo, error
 	return webhook.WebhookInfo, nil
 }
 
-func (p *webhooksClient) PostPaymentIntentHook(req *util.PaymentIntent) (*WebhookInfo, error) {
+func (p *webhooksClient) PostPaymentIntentHook(req *payments.Intent) (*WebhookInfo, error) {
 	log.Debugf("Posting payment intent webhook response: %v", req)
 
 	b, err := json.Marshal(req)

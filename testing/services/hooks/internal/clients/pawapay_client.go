@@ -14,7 +14,7 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/testing/services/hooks/util"
+	"github.com/ukama/ukama/systems/common/util/payments"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -33,9 +33,9 @@ const (
 )
 
 type PawapayClient interface {
-	GetDeposit(string) (*util.Deposit, error)
-	AddDeposit(AddDepositRequest) (*util.Deposit, error)
-	ResendDepositCallback(CallbackRequest) (*util.Deposit, error)
+	GetDeposit(string) (*payments.Deposit, error)
+	AddDeposit(AddDepositRequest) (*payments.Deposit, error)
+	ResendDepositCallback(CallbackRequest) (*payments.Deposit, error)
 	PredictMno(MsisdnRequest) (*Operator, error)
 	GetMnosAvailability() ([]CountryOperators, error)
 }
@@ -58,10 +58,10 @@ func NewPawapayClient(h string, key string) *pawapayClient {
 	}
 }
 
-func (p *pawapayClient) GetDeposit(id string) (*util.Deposit, error) {
+func (p *pawapayClient) GetDeposit(id string) (*payments.Deposit, error) {
 	log.Debugf("Getting deposit: %v", id)
 
-	dep := []util.Deposit{}
+	dep := []payments.Deposit{}
 
 	resp, err := p.R.Get(p.u.String() + DepositEndpoint + "/" + id)
 	if err != nil {
@@ -85,7 +85,7 @@ func (p *pawapayClient) GetDeposit(id string) (*util.Deposit, error) {
 	return &dep[0], nil
 }
 
-func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*util.Deposit, error) {
+func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*payments.Deposit, error) {
 	log.Debugf("Adding deposit: %v", req)
 
 	b, err := json.Marshal(req)
@@ -93,7 +93,7 @@ func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*util.Deposit, error)
 		return nil, fmt.Errorf(requestMarshalErrorMsg, err)
 	}
 
-	dep := util.Deposit{}
+	dep := payments.Deposit{}
 
 	resp, err := p.R.Post(p.u.String()+DepositEndpoint, b)
 	if err != nil {
@@ -128,7 +128,7 @@ func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*util.Deposit, error)
 	return &dep, nil
 }
 
-func (p *pawapayClient) ResendDepositCallback(req CallbackRequest) (*util.Deposit, error) {
+func (p *pawapayClient) ResendDepositCallback(req CallbackRequest) (*payments.Deposit, error) {
 	log.Debugf("Re-requesting callback for deposit: %v", req)
 
 	b, err := json.Marshal(req)
@@ -136,7 +136,7 @@ func (p *pawapayClient) ResendDepositCallback(req CallbackRequest) (*util.Deposi
 		return nil, fmt.Errorf(requestMarshalErrorMsg, err)
 	}
 
-	dep := util.Deposit{}
+	dep := payments.Deposit{}
 
 	resp, err := p.R.Post(p.u.String()+DepositEndpoint+"/resend-callback", b)
 	if err != nil {
@@ -211,15 +211,15 @@ func (p *pawapayClient) GetMnosAvailability() ([]CountryOperators, error) {
 }
 
 type AddDepositRequest struct {
-	DepositId            string     `json:"depositId" validate:"required"`
-	Amount               string     `json:"amount" validate:"required"`
-	Currency             string     `json:"currency" validate:"required"`
-	Country              string     `json:"country" validate:"required"`
-	Correspondent        string     `json:"correspondent" validate:"required"`
-	Payer                util.Payer `json:"payer" validate:"required"`
-	CustomerTimestamp    string     `json:"customerTimestamp" validate:"required"`
-	StatementDescription string     `json:"statementDescription" validate:"required"`
-	PreAuthorisationCode string     `json:"preAuthorisationCode"`
+	DepositId            string         `json:"depositId" validate:"required"`
+	Amount               string         `json:"amount" validate:"required"`
+	Currency             string         `json:"currency" validate:"required"`
+	Country              string         `json:"country" validate:"required"`
+	Correspondent        string         `json:"correspondent" validate:"required"`
+	Payer                payments.Payer `json:"payer" validate:"required"`
+	CustomerTimestamp    string         `json:"customerTimestamp" validate:"required"`
+	StatementDescription string         `json:"statementDescription" validate:"required"`
+	PreAuthorisationCode string         `json:"preAuthorisationCode"`
 }
 
 type CallbackRequest struct {

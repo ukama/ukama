@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/util/payments"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/testing/services/hooks/internal"
 	"github.com/ukama/ukama/testing/services/hooks/internal/clients"
 	"github.com/ukama/ukama/testing/services/hooks/internal/scheduler"
-	"github.com/ukama/ukama/testing/services/hooks/util"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -139,7 +139,7 @@ func (p *HookServer) startScheduler() (*pb.StartResponse, error) {
 	return &pb.StartResponse{}, nil
 }
 
-func fetchPawapayDeposit(externalId string, p *HookServer) (*util.Deposit, error) {
+func fetchPawapayDeposit(externalId string, p *HookServer) (*payments.Deposit, error) {
 	depositWebhook, err := p.pawapayClient.GetDeposit(externalId)
 	if err != nil {
 		return nil, err
@@ -148,7 +148,7 @@ func fetchPawapayDeposit(externalId string, p *HookServer) (*util.Deposit, error
 	return depositWebhook, nil
 }
 
-func fetchStripePaymentIntent(externalId string, p *HookServer) (*util.PaymentIntent, error) {
+func fetchStripePaymentIntent(externalId string, p *HookServer) (*payments.Intent, error) {
 	intentHook, err := p.stripeClient.GetPaymentIntent(externalId)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func fetchStripePaymentIntent(externalId string, p *HookServer) (*util.PaymentIn
 	return intentHook, nil
 }
 
-func postPawapayDeposit(depositWebhook *util.Deposit, p *HookServer) error {
+func postPawapayDeposit(depositWebhook *payments.Deposit, p *HookServer) error {
 	if depositWebhook.Status != pawapayHookStatusPending {
 		_, err := p.webhooksClient.PostDepositHook(depositWebhook)
 		if err != nil {
@@ -168,7 +168,7 @@ func postPawapayDeposit(depositWebhook *util.Deposit, p *HookServer) error {
 	return nil
 }
 
-func postStripePaymentIntent(intentHook *util.PaymentIntent, p *HookServer) error {
+func postStripePaymentIntent(intentHook *payments.Intent, p *HookServer) error {
 	if intentHook.Status != stripeStatusRequiresPaymentMethod {
 		_, err := p.webhooksClient.PostPaymentIntentHook(intentHook)
 		if err != nil {

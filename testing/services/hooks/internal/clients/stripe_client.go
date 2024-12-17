@@ -12,14 +12,14 @@ import (
 	"fmt"
 
 	"github.com/stripe/stripe-go/v78/client"
-	"github.com/ukama/ukama/testing/services/hooks/util"
+	"github.com/ukama/ukama/systems/common/util/payments"
 
 	log "github.com/sirupsen/logrus"
 	stripelib "github.com/stripe/stripe-go/v78"
 )
 
 type StripeClient interface {
-	GetPaymentIntent(id string) (*util.PaymentIntent, error)
+	GetPaymentIntent(id string) (*payments.Intent, error)
 }
 
 type StripeClientWrapper struct {
@@ -46,7 +46,7 @@ func NewStripeClient(key string, options ...Option) *StripeClientWrapper {
 	return c
 }
 
-func (s *StripeClientWrapper) GetPaymentIntent(id string) (*util.PaymentIntent, error) {
+func (s *StripeClientWrapper) GetPaymentIntent(id string) (*payments.Intent, error) {
 	log.Infof("Getting payment internt %v", id)
 
 	intentParams := &stripelib.PaymentIntentParams{}
@@ -61,7 +61,7 @@ func (s *StripeClientWrapper) GetPaymentIntent(id string) (*util.PaymentIntent, 
 	log.Infof("Successfuly got a stripe payment intent request %s from payment provider",
 		paymentIntent.ID)
 
-	return &util.PaymentIntent{paymentIntent}, nil
+	return &payments.Intent{paymentIntent}, nil
 }
 
 type Option func(*StripeClientWrapper)
