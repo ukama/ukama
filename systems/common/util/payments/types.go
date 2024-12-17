@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package ukama
+package payments
 
 import (
 	stripelib "github.com/stripe/stripe-go/v78"
