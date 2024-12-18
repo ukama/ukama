@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 interface CurrentBillCardProps {
   currentBill?: GetReportResDto | null;
   isLoading?: boolean;
-  onPay?: (billId?: string) => void;
+  onPay: (billId: string) => void;
 }
 
 const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
@@ -70,7 +70,9 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
 
             <Stack direction="row" spacing={2} alignItems={'center'}>
               <Typography variant="body2" sx={{ color: colors.vulcan }}>
-                Monthly SaaS fee for Ukama Console. Bill available
+                {currentBill && currentBill?.rawReport?.amountCents < 1
+                  ? `Monthly SaaS fee for Ukama Console. Free trial active.`
+                  : `Monthly SaaS fee for Ukama Console. Bill available`}
               </Typography>
               {renderContent(
                 currentBill?.createdAt,
@@ -89,19 +91,23 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
                 currentBill?.rawReport?.amountCents ?? 0,
                 (amountCents) => (
                   <Typography variant="body1">
-                    Total due: $ {(amountCents / 100).toFixed(2)}
+                    {amountCents < 1
+                      ? `Free trial $0`
+                      : `Total due: $${(amountCents / 100).toFixed(2)}`}
                   </Typography>
                 ),
                 { width: 100, height: 20 },
               )}
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handlePay}
-                disabled={!onPay || isLoading || !currentBill?.id}
-              >
-                Pay now
-              </Button>
+              {(currentBill?.rawReport?.amountCents ?? 0) >= 1 && (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handlePay}
+                  disabled={!onPay || isLoading || !currentBill?.id}
+                >
+                  Pay now
+                </Button>
+              )}
             </Stack>
           </Stack>
         </Paper>

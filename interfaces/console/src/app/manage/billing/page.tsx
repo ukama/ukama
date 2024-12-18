@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AlertColor, Box, Grid, Paper, Tabs, Tab } from '@mui/material';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import {
   useGetReportsQuery,
   useGetPaymentsQuery,
   GetReportResDto,
+  useGetSubscribersByNetworkQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import StripePaymentDialog from '@/components/StripePaymentDialog';
@@ -19,9 +20,10 @@ import { BILLING_HISTORY_TABLE_MENU, BILLING_TABLE_COLUMNS } from '@/constants';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 
 const BillingSettingsPage: React.FC = () => {
-  const { setSnackbarMessage, user } = useAppContext();
+  const { setSnackbarMessage, network, user } = useAppContext();
+
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string>('');
+  const [extraKey, setExtraKey] = useState<string>('');
   const [tabValue, setTabValue] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -89,20 +91,12 @@ const BillingSettingsPage: React.FC = () => {
     },
   });
 
-  useEffect(() => {
-    if (
-      paymentsData?.getPayments?.payments &&
-      paymentsData.getPayments.payments.length > 0
-    ) {
-      const firstPayment = paymentsData.getPayments.payments[0];
-      const extractedSecret = firstPayment.extra ?? '';
-      console.log('Extracted Client Secret:', extractedSecret);
-      setClientSecret(extractedSecret);
-    }
-  }, [paymentsData]);
-
-  const handleAddPayment = () => {
+  const handleAddPayment = (billId: string) => {
     setIsPaymentDialogOpen(true);
+    const currentPaymentSection = paymentsData?.getPayments?.payments.find(
+      (payment) => payment.itemId === billId,
+    );
+    setExtraKey(currentPaymentSection?.extra ?? '');
   };
 
   const billingHistoryDataset = useMemo(() => {
@@ -115,7 +109,9 @@ const BillingSettingsPage: React.FC = () => {
     }));
   }, [reportsData]);
 
-  const handleMenuItemClick = (id: string, type: string) => {};
+  const handleMenuItemClick = (id: string, type: string) => {
+    //handle click on billing on history
+  };
   const currentBill = React.useMemo(() => {
     if (!reportsData?.getReports || reportsData.getReports.reports.length === 0)
       return null;
@@ -129,6 +125,31 @@ const BillingSettingsPage: React.FC = () => {
 
     return unpaidBills[0] || null;
   }, [reportsData]);
+
+  const { data: subscribersData, loading: getSubscriberByNetworkLoading } =
+    useGetSubscribersByNetworkQuery({
+      skip: !network.id,
+      variables: {
+        networkId: network.id,
+      },
+      fetchPolicy: 'network-only',
+      nextFetchPolicy: 'network-only',
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'subscriber-msg',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  const subscriberCount = subscribersData?.getSubscribersByNetwork
+    ? subscribersData.getSubscribersByNetwork.subscribers.length
+    : 0;
+  const outstandingReports = reportsData?.getReports.reports.filter(
+    (report) => !report.isPaid,
+  );
 
   return (
     <LoadingWrapper
@@ -157,23 +178,28 @@ const BillingSettingsPage: React.FC = () => {
                   isLoading={reportsLoading || paymentsLoading}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <OutStandingBillCard
-                  reports={reportsData?.getReports?.reports || []}
-                  onPayAll={() => {}}
-                  onPaySingle={(reportId) => {}}
-                />
-              </Grid>
+              {outstandingReports && (
+                <Grid item xs={12}>
+                  <OutStandingBillCard
+                    reports={reportsData?.getReports?.reports || []}
+                    onPayAll={() => {}}
+                    onPaySingle={(reportId) => {
+                      handleAddPayment(reportId);
+                    }}
+                  />
+                </Grid>
+              )}
+
               <Grid item xs={12} md={6}>
                 <FeatureUsageCard
-                  upTime={'12'}
-                  totalDataUsage={'12'}
-                  ActiveSubscriberCount={40}
-                  loading={false}
+                  upTime={'90'}
+                  totalDataUsage={'0'}
+                  ActiveSubscriberCount={subscriberCount}
+                  loading={getSubscriberByNetworkLoading}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
-                <BillingOwnerDetailsCard loading={false} name={user?.name} />
+                <BillingOwnerDetailsCard email={user?.email} />
               </Grid>
             </Grid>
           </Box>
@@ -202,17 +228,18 @@ const BillingSettingsPage: React.FC = () => {
           </Box>
         )}
       </Box>
-
-      <StripePaymentDialog
-        open={isPaymentDialogOpen}
-        onClose={() => setIsPaymentDialogOpen(false)}
-        clientSecret={clientSecret}
-        amount={parseFloat(
-          paymentsData?.getPayments?.payments?.[0]?.amount ?? '0',
-        )}
-        onPaymentSuccess={handlePaymentSuccess}
-        onPaymentError={handlePaymentError}
-      />
+      {extraKey && (
+        <StripePaymentDialog
+          open={isPaymentDialogOpen}
+          onClose={() => setIsPaymentDialogOpen(false)}
+          extraKey={extraKey}
+          amount={parseFloat(
+            paymentsData?.getPayments?.payments?.[0]?.amount ?? '0',
+          )}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentError={handlePaymentError}
+        />
+      )}
     </LoadingWrapper>
   );
 };

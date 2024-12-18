@@ -6,17 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Paper, Typography, Stack, Box, Skeleton } from '@mui/material';
+import { Paper, Typography, Stack, Skeleton } from '@mui/material';
 import colors from '@/theme/colors';
 
 interface BillingOwnerDetailsCardProps {
-  name: string;
-  loading?: boolean;
+  email: string;
 }
 
 const BillingOwnerDetailsCard: React.FC<BillingOwnerDetailsCardProps> = ({
-  name,
-  loading = false,
+  email,
 }) => {
   return (
     <Paper
@@ -34,13 +32,13 @@ const BillingOwnerDetailsCard: React.FC<BillingOwnerDetailsCardProps> = ({
       </Typography>
       <Stack direction={'column'} spacing={2}>
         <Typography variant="body2" sx={{ color: colors.black54 }}>
-          NAME
+          OWNER EMAIL
         </Typography>
-        {loading ? (
+        {!email ? (
           <Skeleton variant="text" width="100%" />
         ) : (
           <Typography variant="body2" sx={{ color: colors.vulcan }}>
-            {name}
+            {email}
           </Typography>
         )}
       </Stack>

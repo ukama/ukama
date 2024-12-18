@@ -1,9 +1,15 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Button,
   CircularProgress,
   Typography,
@@ -23,7 +29,7 @@ import colors from '@/theme/colors';
 const StripePaymentDialog: React.FC<{
   open: boolean;
   onClose: () => void;
-  clientSecret: string;
+  extraKey: string;
   amount: number;
   onPaymentSuccess?: () => void;
   onPaymentError?: (error: any) => void;
@@ -31,7 +37,7 @@ const StripePaymentDialog: React.FC<{
 }> = ({
   open,
   onClose,
-  clientSecret,
+  extraKey,
   amount,
   onPaymentSuccess,
   onPaymentError,
@@ -52,7 +58,7 @@ const StripePaymentDialog: React.FC<{
         <Elements
           stripe={stripePromise}
           options={{
-            clientSecret,
+            clientSecret: extraKey,
             appearance: {
               theme: 'stripe',
             },

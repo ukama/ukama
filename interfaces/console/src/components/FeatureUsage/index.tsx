@@ -6,9 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Box, Paper, Stack, Typography, Button } from '@mui/material';
+import { Box, Paper, Stack, Typography } from '@mui/material';
 import colors from '@/theme/colors';
-
+import CustomLoadingSkeleton from '@/components/CustomLoadingSkeleton';
 interface FeatureUsageCardProps {
   upTime: string;
   totalDataUsage: string;
@@ -45,25 +45,37 @@ const FeatureUsageCard: React.FC<FeatureUsageCardProps> = ({
             <Typography variant="body2" sx={{ color: colors.vulcan }}>
               Up Time
             </Typography>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              {upTime} %
-            </Typography>
+            {loading ? (
+              <CustomLoadingSkeleton width={50} height={20} />
+            ) : (
+              <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                {upTime} %
+              </Typography>
+            )}
           </Stack>
           <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
             <Typography variant="body2" sx={{ color: colors.vulcan }}>
               Total Data Usage
             </Typography>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              {totalDataUsage} GB
-            </Typography>
+            {loading ? (
+              <CustomLoadingSkeleton width={50} height={20} />
+            ) : (
+              <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                {totalDataUsage} GB
+              </Typography>
+            )}
           </Stack>
           <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
             <Typography variant="body2" sx={{ color: colors.vulcan }}>
               Active Subscribers
             </Typography>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              {ActiveSubscriberCount}
-            </Typography>
+            {loading ? (
+              <CustomLoadingSkeleton width={50} height={20} />
+            ) : (
+              <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                {ActiveSubscriberCount}
+              </Typography>
+            )}
           </Stack>
         </Stack>
       </Paper>
