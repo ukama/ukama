@@ -304,66 +304,64 @@ function setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created."
 }
 
-function configure_openrc_service() {
-    local rootfs_path=$1
+function configure_systemd_service() {
+    log "INFO" "Configuring systemd service for starter.d in target rootfs"
 
-    log "INFO" "Setting up minimal Debian rootfs with debootstrap"
-
-    # Step 1: Install debootstrap if not already installed
-    if ! command -v debootstrap &>/dev/null; then
-        log "INFO" "Installing debootstrap"
-        sudo apt update && sudo apt install debootstrap -y
+    # Ensure PRIMARY_MOUNT path exists
+    if [ ! -d "$PRIMARY_MOUNT" ]; then
+        log "ERROR" "PRIMARY_MOUNT path does not exist: $PRIMARY_MOUNT"
+        exit 1
     fi
 
-    # Step 2: Bootstrap a minimal Debian system
-    if [ ! -d "$rootfs_path" ]; then
-        log "INFO" "Bootstrapping Debian system at $rootfs_path"
-        sudo debootstrap --variant=minbase stable "$rootfs_path" http://deb.debian.org/debian/
-        log "SUCCESS" "Minimal Debian system installed at $rootfs_path"
-    else
-        log "INFO" "Rootfs path already exists at $rootfs_path, skipping debootstrap"
-    fi
+    # Create the systemd service file in the target root filesystem
+    SERVICE_FILE="$PRIMARY_MOUNT/etc/systemd/system/starter.service"
+    log "INFO" "Creating systemd service file at $SERVICE_FILE"
 
-    # Step 3: Bind system directories for chroot
+    sudo bash -c "cat <<'EOF' > $SERVICE_FILE
+[Unit]
+Description=Starter service for running starter.d
+After=network.target
+
+[Service]
+ExecStart=/sbin/starter.d
+Restart=always
+User=root
+PIDFile=/var/run/starter.pid
+
+[Install]
+WantedBy=multi-user.target
+EOF"
+
+    # Bind mount necessary system directories
     log "INFO" "Binding system directories for chroot"
-    sudo mount --bind /dev "$rootfs_path/dev"
-    sudo mount --bind /proc "$rootfs_path/proc"
-    sudo mount --bind /sys "$rootfs_path/sys"
+    sudo mount --bind /dev "$PRIMARY_MOUNT/dev"
+    sudo mount --bind /proc "$PRIMARY_MOUNT/proc"
+    sudo mount --bind /sys "$PRIMARY_MOUNT/sys"
 
-    # Step 4: Install OpenRC and configure the service
-    log "INFO" "Installing OpenRC and configuring service in Debian chroot"
-    sudo chroot "$rootfs_path" /bin/bash <<'EOF'
-# Update apt repositories
-apt update
+    # Chroot into the target and configure the systemd service
+    log "INFO" "Chrooting into target rootfs to enable the systemd service"
+    sudo chroot "$PRIMARY_MOUNT" /bin/bash <<'EOF'
+# Set locale to avoid warnings
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+locale-gen en_US.UTF-8 || true
 
-# Install OpenRC
-apt install -y openrc
+# Reload systemd and enable the service
+systemctl daemon-reload
+systemctl enable starter.service
 
-# Create OpenRC service script
-cat <<'SERVICE' > /etc/init.d/starter
-#!/sbin/openrc-run
-description="Starter service for running starter.d"
-
-command="/sbin/starter.d"
-command_args=""
-command_user="root"
-pidfile="/var/run/starter.pid"
-SERVICE
-
-# Make the service script executable
-chmod +x /etc/init.d/starter
-
-# Add the service to the default runlevel
-rc-update add starter default
+# Remove any SysV init script association (if necessary)
+rm -f /etc/init.d/starter || true
 EOF
 
-    # Step 5: Unmount system directories
+    # Unmount system directories
     log "INFO" "Unmounting system directories"
-    sudo umount "$rootfs_path/dev"
-    sudo umount "$rootfs_path/proc"
-    sudo umount "$rootfs_path/sys"
+    sudo umount "$PRIMARY_MOUNT/dev"
+    sudo umount "$PRIMARY_MOUNT/proc"
+    sudo umount "$PRIMARY_MOUNT/sys"
 
-    log "SUCCESS" "OpenRC service for starter.d configured in Debian rootfs"
+    log "SUCCESS" "Systemd service for starter.d configured in target rootfs"
 }
 
 function unmount_partitions() {
@@ -375,19 +373,17 @@ function unmount_partitions() {
 function create_ssh_user() {
     log "INFO" "Adding ssh user..."
 
-    local path=$1
-
-    sudo echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" \
-         >> "${path}/etc/passwd"
-    sudo echo "${USER_NAME}:x:1001:" \
-         >> "${path}/etc/group"
-    sudo echo "${USER_NAME}::19000:0:99999:7:::" \
-         >> "${path}/etc/shadow"
+    echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" \
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/passwd" > /dev/null
+    echo "${USER_NAME}:x:1001:" \
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/group" > /dev/null
+    echo "${USER_NAME}::19000:0:99999:7:::" \
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/shadow" > /dev/null
 
     # Create home directory
-    mkdir -p        "${path}/home/${USER_NAME}"
-    chown 1001:1001 "${path}/home/${USER_NAME}"
-    chmod 700       "${path}/home/${USER_NAME}"
+    mkdir -p        "${PRIMARY_MOUNT}/home/${USER_NAME}"
+    chown 1001:1001 "${PRIMARY_MOUNT}/home/${USER_NAME}"
+    chmod 700       "${PRIMARY_MOUNT}/home/${USER_NAME}"
 
     log "SUCCESS" "User $USER_NAME added with no password."
 }
@@ -444,12 +440,12 @@ copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_linux_kernel
 
-# setup openrc to run starter.d
-configure_openrc_service "${PRIMARY_MOUNT}"
+# setup system.d to run starter.d
+configure_systemd_service
 cp "${TMP_DIR}/${RPI_IMG}" "${CWD}/build_access_node/${IMG_NAME}"
 
 # create ssh user
-create_ssh_user "${PRIMARY_MOUNT}"
+create_ssh_user
 
 # cleanup
 unmount_partitions
