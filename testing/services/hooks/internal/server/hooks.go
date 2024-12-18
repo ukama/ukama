@@ -172,7 +172,7 @@ func postPawapayDeposit(depositWebhook *payments.Deposit, p *HookServer) error {
 func postStripePaymentIntent(intentHook *payments.Intent, p *HookServer) error {
 	if intentHook.Status != stripeStatusRequiresPaymentMethod {
 		log.Infof("status updated, will post payment hook.: %v", *intentHook)
-		_, err := p.webhooksClient.PostPaymentIntentHook(intentHook)
+		_, err := p.webhooksClient.PostPaymentIntentHook(intentHook.PaymentIntent)
 		if err != nil {
 			return err
 		}

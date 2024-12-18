@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/stripe/stripe-go/v78"
 	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/util/payments"
 
@@ -26,7 +27,7 @@ const (
 
 type WebhooksClient interface {
 	PostDepositHook(*payments.Deposit) (*WebhookInfo, error)
-	PostPaymentIntentHook(*payments.Intent) (*WebhookInfo, error)
+	PostPaymentIntentHook(*stripe.PaymentIntent) (*WebhookInfo, error)
 }
 
 type webhooksClient struct {
@@ -76,7 +77,7 @@ func (p *webhooksClient) PostDepositHook(req *payments.Deposit) (*WebhookInfo, e
 	return webhook.WebhookInfo, nil
 }
 
-func (p *webhooksClient) PostPaymentIntentHook(req *payments.Intent) (*WebhookInfo, error) {
+func (p *webhooksClient) PostPaymentIntentHook(req *stripe.PaymentIntent) (*WebhookInfo, error) {
 	log.Debugf("Posting payment intent webhook response: %v", req)
 
 	b, err := json.Marshal(req)
