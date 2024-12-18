@@ -377,9 +377,12 @@ function create_ssh_user() {
 
     local path=$1
 
-    echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" >> "${path}/etc/passwd"
-    echo "${USER_NAME}:x:1001:"                                   >> "${path}/etc/group"
-    echo "${USER_NAME}::19000:0:99999:7:::"                       >> "${path}/etc/shadow"
+    sudo echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" \
+         >> "${path}/etc/passwd"
+    sudo echo "${USER_NAME}:x:1001:" \
+         >> "${path}/etc/group"
+    sudo echo "${USER_NAME}::19000:0:99999:7:::" \
+         >> "${path}/etc/shadow"
 
     # Create home directory
     mkdir -p        "${path}/home/${USER_NAME}"
