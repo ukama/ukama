@@ -20,6 +20,8 @@ TMP_DIR="/tmp/access-node"
 TMP_ROOTFS="${TMP_DIR}/alpine-rootfs"
 TMP_LINUX="${TMP_DIR}/linux"
 
+USER_NAME="ukama"
+
 CWD=$(pwd)
 
 trap cleanup EXIT
@@ -370,6 +372,23 @@ function unmount_partitions() {
     log "SUCCESS" "Partitions unmounted."
 }
 
+function create_ssh_user() {
+    log "INFO" "Adding ssh user..."
+
+    local path=$1
+
+    echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" >> "${path}/etc/passwd"
+    echo "${USER_NAME}:x:1001:"                                   >> "${path}/etc/group"
+    echo "${USER_NAME}::19000:0:99999:7:::"                       >> "${path}/etc/shadow"
+
+    # Create home directory
+    mkdir -p        "${path}/home/${USER_NAME}"
+    chown 1001:1001 "${path}/home/${USER_NAME}"
+    chmod 700       "${path}/home/${USER_NAME}"
+
+    log "SUCCESS" "User $USER_NAME added with no password."
+}
+
 function pre_cleanup_and_dir_setup() {
 
     local image_name=$1
@@ -425,6 +444,9 @@ copy_linux_kernel
 # setup openrc to run starter.d
 configure_openrc_service "${PRIMARY_MOUNT}"
 cp "${TMP_DIR}/${RPI_IMG}" "${CWD}/build_access_node/${IMG_NAME}"
+
+# create ssh user
+create_ssh_user "${PRIMARY_MOUNT}"
 
 # cleanup
 unmount_partitions
