@@ -1,53 +1,32 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { AlertColor, Box, Grid, Paper } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AlertColor, Box, Grid, Paper, Tabs, Tab } from '@mui/material';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import {
   useGetReportsQuery,
   useGetPaymentsQuery,
+  GetReportResDto,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import StripePaymentDialog from '@/components/StripePaymentDialog';
-import { format } from 'date-fns';
 import CurrentBillCard from '@/components/CurrentBillCard';
 import FeatureUsageCard from '@/components/FeatureUsage';
 import BillingOwnerDetailsCard from '@/components/BillingOwnerDetailsCard';
-import BillingHistory from '@/components/BillHistoryTab';
 import OutStandingBillCard from '@/components/OutStandingBillCard';
-
-export const dummyBills: any[] = [
-  {
-    id: '1',
-    amount: 20.0,
-    dueDate: '10/05/25',
-    plan: 'Ukama Console',
-  },
-  {
-    id: '2',
-    amount: 35.5,
-    dueDate: '11/15/25',
-    plan: 'Enterprise Tier',
-  },
-  {
-    id: '3',
-    amount: 15.75,
-    dueDate: '09/20/25',
-    plan: 'Basic Support',
-  },
-];
+import DataTableWithOptions from '@/components/DataTableWithOptions';
+import { BILLING_HISTORY_TABLE_MENU, BILLING_TABLE_COLUMNS } from '@/constants';
+import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 
 const BillingSettingsPage: React.FC = () => {
   const { setSnackbarMessage, user } = useAppContext();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>('');
+  const [tabValue, setTabValue] = useState(0);
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
+  };
 
   const handlePaymentSuccess = () => {
     setSnackbarMessage({
@@ -109,6 +88,7 @@ const BillingSettingsPage: React.FC = () => {
       });
     },
   });
+
   useEffect(() => {
     if (
       paymentsData?.getPayments?.payments &&
@@ -124,61 +104,104 @@ const BillingSettingsPage: React.FC = () => {
   const handleAddPayment = () => {
     setIsPaymentDialogOpen(true);
   };
+
+  const billingHistoryDataset = useMemo(() => {
+    return reportsData?.getReports?.reports.map((report: GetReportResDto) => ({
+      date: new Date(report.createdAt).toLocaleDateString(),
+      amount: `${report.rawReport.totalAmountCurrency} ${(report.rawReport.totalAmountCents / 100).toFixed(2)}`,
+      status: report.rawReport.paymentStatus || report.rawReport.status,
+      period: report.period,
+      id: report.id,
+    }));
+  }, [reportsData]);
+
+  const handleMenuItemClick = (id: string, type: string) => {};
+  const currentBill = React.useMemo(() => {
+    if (!reportsData?.getReports || reportsData.getReports.reports.length === 0)
+      return null;
+
+    const unpaidBills = reportsData.getReports.reports
+      .filter((b) => b.isPaid === false)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+
+    return unpaidBills[0] || null;
+  }, [reportsData]);
+
   return (
     <LoadingWrapper
       width="100%"
-      radius="medium"
       isLoading={paymentsLoading || reportsLoading}
       height="calc(100vh - 244px)"
     >
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <CurrentBillCard
-            amount={
-              paymentsData?.getPayments?.payments &&
-              paymentsData?.getPayments?.payments.length &&
-              paymentsData?.getPayments?.payments[0]?.amount
-                ? paymentsData?.getPayments?.payments[0]?.amount
-                : '0'
-            }
-            startDate={
-              paymentsData?.getPayments.payments[0]?.createdAt
-                ? format(
-                    new Date(paymentsData.getPayments.payments[0].createdAt),
-                    'dd MMM yyyy',
-                  )
-                : 'N/A'
-            }
-            endDate={
-              paymentsData?.getPayments.payments[0]?.createdAt
-                ? format(
-                    new Date(paymentsData.getPayments.payments[0].createdAt),
-                    'dd MMM yyyy',
-                  )
-                : 'N/A'
-            }
-            onPay={handleAddPayment}
-            isLoading={false}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <OutStandingBillCard bills={dummyBills} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <FeatureUsageCard
-            upTime={'12'}
-            totalDataUsage={'12'}
-            ActiveSubscriberCount={40}
-            loading={false}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <BillingOwnerDetailsCard loading={false} name={user?.name} />
-        </Grid>
-        <Grid item xs={12}>
-          <BillingHistory bills={[]} />
-        </Grid>
-      </Grid>
+      <Box sx={{ width: '100%' }}>
+        <Tabs
+          value={tabValue}
+          onChange={handleTabChange}
+          aria-label="billing tabs"
+          sx={{ borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Current Bill" />
+          <Tab label="Billing History" />
+        </Tabs>
+
+        {tabValue === 0 && (
+          <Box sx={{ py: 2 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <CurrentBillCard
+                  currentBill={currentBill}
+                  onPay={handleAddPayment}
+                  isLoading={reportsLoading || paymentsLoading}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <OutStandingBillCard
+                  reports={reportsData?.getReports?.reports || []}
+                  onPayAll={() => {}}
+                  onPaySingle={(reportId) => {}}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FeatureUsageCard
+                  upTime={'12'}
+                  totalDataUsage={'12'}
+                  ActiveSubscriberCount={40}
+                  loading={false}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <BillingOwnerDetailsCard loading={false} name={user?.name} />
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {tabValue === 1 && (
+          <Box sx={{ py: 2 }}>
+            <Paper
+              sx={{
+                height: '100%',
+                borderRadius: '10px',
+                px: { xs: 2, md: 3 },
+                py: { xs: 2, md: 4 },
+              }}
+            >
+              <DataTableWithOptions
+                columns={BILLING_TABLE_COLUMNS}
+                icon={SubscriberIcon}
+                dataset={billingHistoryDataset}
+                menuOptions={BILLING_HISTORY_TABLE_MENU}
+                onMenuItemClick={handleMenuItemClick}
+                emptyViewLabel="No billing history found"
+                isRowClickable={false}
+              />
+            </Paper>
+          </Box>
+        )}
+      </Box>
 
       <StripePaymentDialog
         open={isPaymentDialogOpen}

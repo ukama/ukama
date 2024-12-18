@@ -27,7 +27,7 @@ const FeatureUsageCard: React.FC<FeatureUsageCardProps> = ({
       <Paper
         elevation={2}
         sx={{
-          p: 4,
+          p: 2,
           borderRadius: '10px',
         }}
       >

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -10,56 +10,34 @@ import {
   useTheme,
 } from '@mui/material';
 import colors from '@/theme/colors';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-interface Bill {
-  id: string;
-  amount: number;
-  dueDate: string;
-  plan: string;
-}
+import { GetReportResDto } from '@/client/graphql/generated';
+import { format } from 'date-fns';
 
 interface OutStandingBillCardProps {
-  bills: Bill[];
+  reports?: GetReportResDto[];
   loading?: boolean;
+  onPayAll?: () => void;
+  onPaySingle?: (reportId: string) => void;
 }
 
 const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
-  bills = [],
+  reports = [],
   loading = false,
+  onPayAll,
+  onPaySingle,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [currentBillIndex, setCurrentBillIndex] = useState(0);
+  const outstandingReports = reports.filter((report) => !report.isPaid);
 
-  if (bills.length === 0) {
-    return (
-      <Box>
-        <Paper
-          elevation={2}
-          sx={{
-            p: isMobile ? 2 : 4,
-            borderRadius: '10px',
-          }}
-        >
-          <Typography variant="body1">No outstanding bills</Typography>
-        </Paper>
-      </Box>
-    );
+  const totalOutstandingAmount = outstandingReports.reduce(
+    (total, report) => total + report.rawReport.totalAmountCents / 100,
+    0,
+  );
+
+  if (outstandingReports.length === 0) {
+    return null;
   }
-
-  const currentBill = bills[currentBillIndex];
-
-  const handleNextBill = () => {
-    setCurrentBillIndex((prev) => (prev + 1) % bills.length);
-  };
-
-  const handlePrevBill = () => {
-    setCurrentBillIndex((prev) => (prev - 1 + bills.length) % bills.length);
-  };
-
-  const totalDueAmount = bills.reduce((sum, bill) => sum + bill.amount, 0);
 
   return (
     <Box>
@@ -84,18 +62,21 @@ const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
               mb: isMobile ? 1 : 0,
             }}
           >
-            Outstanding bills
+            Outstanding Bills
           </Typography>
-          <Button
-            variant="contained"
-            fullWidth={isMobile}
-            sx={{
-              py: isMobile ? 1 : 'auto',
-              px: isMobile ? 2 : 'auto',
-            }}
-          >
-            Pay all outstanding bills
-          </Button>
+          {onPayAll && (
+            <Button
+              variant="contained"
+              onClick={onPayAll}
+              fullWidth={isMobile}
+              sx={{
+                py: isMobile ? 1 : 'auto',
+                px: isMobile ? 2 : 'auto',
+              }}
+            >
+              Pay all outstanding bills
+            </Button>
+          )}
         </Stack>
         <Typography
           variant="body2"
@@ -105,102 +86,71 @@ const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
             fontSize: isMobile ? '0.8rem' : '0.875rem',
           }}
         >
-          Overdue bills for {currentBill.plan} plan
+          {`${outstandingReports.length} overdue bill${outstandingReports.length > 1 ? 's' : ''} for Ukama Console plan`}
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
-        {bills.length > 1 && (
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center"
-            sx={{ mb: 2 }}
-          >
-            <Button
-              onClick={handlePrevBill}
-              disabled={bills.length <= 1}
-              startIcon={<ChevronLeftIcon />}
+        {outstandingReports.map((report, index) => (
+          <React.Fragment key={report.id}>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              spacing={2}
+              justifyContent={'space-between'}
+              alignItems={isMobile ? 'stretch' : 'center'}
+              sx={{ mb: index < outstandingReports.length - 1 ? 2 : 0 }}
             >
-              Previous
-            </Button>
-            <Typography variant="body2">
-              Bill {currentBillIndex + 1} of {bills.length}
-            </Typography>
-            <Button
-              onClick={handleNextBill}
-              disabled={bills.length <= 1}
-              endIcon={<ChevronRightIcon />}
-            >
-              Next
-            </Button>
-          </Stack>
-        )}
+              <Typography
+                variant="body2"
+                sx={{
+                  color: colors.vulcan,
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  textAlign: isMobile ? 'left' : 'inherit',
+                }}
+              >
+                {`Due: ${report.rawReport.totalAmountCurrency} ${(report.rawReport.totalAmountCents / 100).toFixed(2)} `}
+                {report.period && `for ${report.period}`}
+                {report.createdAt &&
+                  ` (Created on ${format(new Date(report.createdAt), 'MM/dd/yy')})`}
+              </Typography>
 
+              {onPaySingle && (
+                <Button
+                  variant="contained"
+                  onClick={() => onPaySingle(report.id)}
+                  fullWidth={isMobile}
+                  sx={{
+                    py: isMobile ? 1 : 'auto',
+                    px: isMobile ? 2 : 'auto',
+                    mt: isMobile ? 1 : 0,
+                  }}
+                >
+                  Pay now
+                </Button>
+              )}
+            </Stack>
+            {index < outstandingReports.length - 1 && (
+              <Divider sx={{ my: 2 }} />
+            )}
+          </React.Fragment>
+        ))}
+
+        <Divider sx={{ mt: 2, mb: 1 }} />
         <Stack
           direction={isMobile ? 'column' : 'row'}
-          spacing={2}
-          justifyContent={'space-between'}
-          alignItems={isMobile ? 'stretch' : 'center'}
+          justifyContent="space-between"
+          alignItems={isMobile ? 'flex-start' : 'center'}
         >
-          <Stack direction="column" spacing={1} alignItems="center">
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography
-                variant="body2"
-                sx={{
-                  color: colors.vulcan,
-                  fontSize: isMobile ? '0.8rem' : '0.875rem',
-                  textAlign: isMobile ? 'left' : 'inherit',
-                }}
-              >
-                Total due:
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: colors.vulcan,
-                  fontSize: isMobile ? '0.8rem' : '0.875rem',
-                  textAlign: isMobile ? 'left' : 'inherit',
-                }}
-              >
-                ${totalDueAmount.toFixed(2)}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography
-                variant="body2"
-                sx={{
-                  color: colors.vulcan,
-                  fontSize: isMobile ? '0.8rem' : '0.875rem',
-                  textAlign: isMobile ? 'left' : 'inherit',
-                }}
-              >
-                Overdue on
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: colors.red,
-                  fontSize: isMobile ? '0.8rem' : '0.875rem',
-                  textAlign: isMobile ? 'left' : 'inherit',
-                }}
-              >
-                {currentBill.dueDate}
-              </Typography>
-            </Stack>
-          </Stack>
-
-          <Button
-            variant="contained"
-            fullWidth={isMobile}
+          <Typography
+            variant="body1"
+            fontWeight="bold"
             sx={{
-              py: isMobile ? 1 : 'auto',
-              px: isMobile ? 2 : 'auto',
-              mt: isMobile ? 1 : 0,
+              fontSize: isMobile ? '1rem' : '1.125rem',
             }}
           >
-            Pay now
-          </Button>
+            Total Outstanding:{' '}
+            {outstandingReports[0]?.rawReport?.totalAmountCurrency || '$'}
+            {totalOutstandingAmount.toFixed(2)}
+          </Typography>
         </Stack>
       </Paper>
     </Box>

@@ -6,70 +6,39 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import {
-  Typography,
-  Paper,
-  Stack,
-  Divider,
-  Grid,
-  Button,
-  Skeleton,
-} from '@mui/material';
+import { Typography, Paper, Stack, Divider, Grid, Button } from '@mui/material';
 import colors from '@/theme/colors';
+import { GetReportResDto } from '@/client/graphql/generated';
+import CustomLoadingSkeleton from '../CustomLoadingSkeleton';
+import { format } from 'date-fns';
 
-interface BillCardProps {
-  amount: string;
-  startDate: string;
-  endDate: string;
+interface CurrentBillCardProps {
+  currentBill?: GetReportResDto | null;
   isLoading?: boolean;
-  onPay?: () => void;
+  onPay?: (billId?: string) => void;
 }
 
-const CurrentBillCard: React.FC<BillCardProps> = ({
-  amount = '',
-  startDate = '',
-  endDate = '',
+const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
+  currentBill,
   isLoading = false,
   onPay,
 }) => {
-  if (isLoading) {
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Paper
-            elevation={3}
-            sx={{
-              padding: 2,
-              borderRadius: 2,
-              backgroundColor: colors.white,
-              boxShadow: `0 4px 6px ${colors.black40}`,
-            }}
-          >
-            <Stack spacing={2}>
-              <Stack
-                direction="row"
-                spacing={2}
-                justifyContent={'space-between'}
-              >
-                <Skeleton variant="text" width="30%" />
-                <Skeleton variant="text" width="20%" />
-              </Stack>
-              <Skeleton variant="text" width="100%" />
-              <Divider />
-              <Stack
-                direction="row"
-                spacing={2}
-                justifyContent={'space-between'}
-              >
-                <Skeleton variant="text" width="40%" />
-                <Skeleton variant="rectangular" width={120} height={40} />
-              </Stack>
-            </Stack>
-          </Paper>
-        </Grid>
-      </Grid>
-    );
-  }
+  const renderContent = <T,>(
+    content: T,
+    renderFn: (value: T) => React.ReactNode,
+    skeletonProps?: { width?: number; height?: number },
+  ) => {
+    if (isLoading || !content) {
+      return <CustomLoadingSkeleton {...skeletonProps} />;
+    }
+    return renderFn(content);
+  };
+
+  const handlePay = () => {
+    if (onPay && currentBill?.id) {
+      onPay(currentBill.id);
+    }
+  };
 
   return (
     <Grid container spacing={3}>
@@ -77,7 +46,7 @@ const CurrentBillCard: React.FC<BillCardProps> = ({
         <Paper
           elevation={3}
           sx={{
-            padding: 3,
+            padding: 2,
             borderRadius: 2,
             backgroundColor: colors.white,
             boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
@@ -86,24 +55,50 @@ const CurrentBillCard: React.FC<BillCardProps> = ({
           <Stack spacing={2}>
             <Stack direction="row" spacing={2} justifyContent={'space-between'}>
               <Typography variant="h6" sx={{ color: colors.vulcan }}>
-                Ukama plan{' '}
+                Ukama plan
               </Typography>
-              <Typography variant="body2">
-                {startDate} - {endDate}
-              </Typography>
+              {renderContent(
+                currentBill?.createdAt,
+                (date) => (
+                  <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                    {format(new Date(date || ''), 'MMM dd, yyyy')}
+                  </Typography>
+                ),
+                { width: 100, height: 20 },
+              )}
             </Stack>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              Monthly SaaS fee for Ukama Console. Bill available August 17,
-              2024. {startDate}
-            </Typography>
+
+            <Stack direction="row" spacing={2} alignItems={'center'}>
+              <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                Monthly SaaS fee for Ukama Console. Bill available
+              </Typography>
+              {renderContent(
+                currentBill?.createdAt,
+                (date) => (
+                  <Typography variant="body2" sx={{ color: colors.vulcan }}>
+                    {format(new Date(date || ''), 'MMM dd, yyyy')}
+                  </Typography>
+                ),
+                { width: 100, height: 20 },
+              )}
+            </Stack>
+
             <Divider />
             <Stack direction="row" spacing={2} justifyContent={'space-between'}>
-              <Typography variant="body1">Total due: $ {amount}</Typography>
+              {renderContent(
+                currentBill?.rawReport?.amountCents ?? 0,
+                (amountCents) => (
+                  <Typography variant="body1">
+                    Total due: $ {(amountCents / 100).toFixed(2)}
+                  </Typography>
+                ),
+                { width: 100, height: 20 },
+              )}
               <Button
                 variant="contained"
                 size="large"
-                onClick={onPay}
-                disabled={!onPay}
+                onClick={handlePay}
+                disabled={!onPay || isLoading || !currentBill?.id}
               >
                 Pay now
               </Button>
