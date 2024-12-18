@@ -61,7 +61,15 @@ func (s *StripeClientWrapper) GetPaymentIntent(id string) (*payments.Intent, err
 	log.Infof("Successfuly got a stripe payment intent request %s from payment provider",
 		paymentIntent.ID)
 
-	return &payments.Intent{paymentIntent}, nil
+	wrappedPaymentIntent := payments.Intent{
+		PaymentIntent: paymentIntent,
+	}
+
+	log.Infof("Payment intent details: %v", wrappedPaymentIntent.PaymentIntent)
+
+	log.Infof("Wrapped payment intent details: %v", wrappedPaymentIntent)
+
+	return &wrappedPaymentIntent, nil
 }
 
 type Option func(*StripeClientWrapper)

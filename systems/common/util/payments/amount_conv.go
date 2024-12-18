@@ -28,7 +28,7 @@ var (
 )
 
 func ToAmountCents(s string) (int64, error) {
-	ok, err := regexp.MatchString("^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,3}[1-9])?$", s)
+	ok, err := regexp.MatchString("^([0]|([1-9][0-9]{0,17}))([.][0-9]{0,2})?$", s)
 	if err != nil {
 		return 0, fmt.Errorf(errFormatMsg, ErrParseExp, err)
 	}

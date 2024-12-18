@@ -35,21 +35,35 @@ func TestToAmountCents(t *testing.T) {
 		},
 
 		{
-			name:        "mal formed positive amount",
+			name:        "positive amount with 2 decimals",
 			amount:      "1.20",
+			amountCents: 120,
+			expErr:      nil,
+		},
+
+		{
+			name:        "positive amount with 3 decimals",
+			amount:      "1.200",
 			amountCents: 0,
 			expErr:      ErrMatch,
 		},
 
 		{
 			name:        "negative amount",
+			amount:      "-7",
+			amountCents: 0,
+			expErr:      ErrMatch,
+		},
+
+		{
+			name:        "negative float amount",
 			amount:      "-1.5",
 			amountCents: 0,
 			expErr:      ErrMatch,
 		},
 
 		{
-			name:        "positive lesser than 100",
+			name:        "positive lesser than 1",
 			amount:      "0.1",
 			amountCents: 10,
 			expErr:      nil,
@@ -59,7 +73,7 @@ func TestToAmountCents(t *testing.T) {
 			name:        "zero",
 			amount:      "0.00",
 			amountCents: 0,
-			expErr:      ErrMatch,
+			expErr:      nil,
 		},
 	}
 
@@ -69,11 +83,11 @@ func TestToAmountCents(t *testing.T) {
 
 			if test.expErr != nil {
 				if err == nil {
-					t.Errorf("fail, expecting error but got nil")
+					t.Errorf("fail %s: expecting error but got nil", test.name)
 				}
 
 				if !errors.Is(err, test.expErr) {
-					t.Errorf("fail, expecting %q error but got : %q", test.expErr, err)
+					t.Errorf("fail %s: expecting %q error but got : %q", test.name, test.expErr, err)
 				}
 
 				return
@@ -105,7 +119,7 @@ func TestToAmount(t *testing.T) {
 		},
 
 		{
-			name:        "positive lesser than 100",
+			name:        "positive lesser than 1",
 			amountCents: 1,
 			amount:      "0.01",
 		},
