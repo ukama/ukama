@@ -63,7 +63,7 @@ func NewHookServer(orgName string, pawapayClient clients.PawapayClient, stripeCl
 
 	_, err := h.startScheduler()
 	if err != nil {
-		log.Warnf("failed to auto start webhook scheduler. You need to start RPC manually. Err: %v",
+		log.Warnf("Failed to auto start webhook scheduler. You need to start RPC manually. Err: %v",
 			err)
 	}
 
@@ -100,29 +100,28 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 		if _, err = uuid.FromString(payment.ExternalId); err == nil {
 			depositWebhook, err := fetchPawapayDeposit(payment.ExternalId, p)
 			if err != nil {
-				log.Errorf("error while fetching deposit: %v", err)
-				log.Warn("skipping posting empty payload")
+				log.Errorf("Error while fetching deposit: %v", err)
+				log.Warn("Skipping posting empty payload")
 
 				continue
 			}
 
 			err = postPawapayDeposit(depositWebhook, p)
 			if err != nil {
-				log.Errorf("error while making post deposit webhook: %v", err)
+				log.Errorf("Error while making post deposit webhook: %v", err)
 			}
 		} else {
 			intentWebhook, err := fetchStripePaymentIntent(payment.ExternalId, p)
 			if err != nil {
-				log.Errorf("error while fetching intent: %v", err)
-				log.Warn("skipping posting empty payload")
+				log.Errorf("Error while fetching intent: %v", err)
+				log.Warn("Skipping posting empty payload")
 
 				continue
 			}
 
-			log.Infof("about to post payment hook.: %v", *intentWebhook)
 			err = postStripePaymentIntent(intentWebhook, p)
 			if err != nil {
-				log.Errorf("error while making post payment intent webhook: %v", err)
+				log.Errorf("Error while making post payment intent webhook: %v", err)
 			}
 		}
 	}
@@ -171,7 +170,7 @@ func postPawapayDeposit(depositWebhook *payments.Deposit, p *HookServer) error {
 
 func postStripePaymentIntent(intentHook *payments.Intent, p *HookServer) error {
 	if intentHook.Status != stripeStatusRequiresPaymentMethod {
-		log.Infof("status updated, will post payment hook.: %v", *intentHook)
+		log.Infof("New status update (%v), will post payment hook...", intentHook.Status)
 		_, err := p.webhooksClient.PostPaymentIntentHook(intentHook.PaymentIntent)
 		if err != nil {
 			return err

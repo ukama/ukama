@@ -71,7 +71,7 @@ func (p *pawapayClient) GetDeposit(id string) (*payments.Deposit, error) {
 	}
 	err = json.Unmarshal(resp.Body(), &dep)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "deposit", err.Error())
+		log.Tracef(deserializeLogMsg, "Deposit", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "deposit", err)
 	}
@@ -104,7 +104,7 @@ func (p *pawapayClient) AddDeposit(req AddDepositRequest) (*payments.Deposit, er
 
 	err = json.Unmarshal(resp.Body(), &dep)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "deposit", err.Error())
+		log.Tracef(deserializeLogMsg, "Deposit", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "deposit", err)
 	}
@@ -147,7 +147,7 @@ func (p *pawapayClient) ResendDepositCallback(req CallbackRequest) (*payments.De
 
 	err = json.Unmarshal(resp.Body(), &dep)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "deposit", err.Error())
+		log.Tracef(deserializeLogMsg, "Deposit", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "deposit", err)
 	}
@@ -176,7 +176,7 @@ func (p *pawapayClient) PredictMno(req MsisdnRequest) (*Operator, error) {
 
 	err = json.Unmarshal(resp.Body(), &op)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "operator", err.Error())
+		log.Tracef(deserializeLogMsg, "Operator", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "operator", err)
 	}
@@ -200,7 +200,7 @@ func (p *pawapayClient) GetMnosAvailability() ([]CountryOperators, error) {
 
 	err = json.Unmarshal(resp.Body(), &ops)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "country operators", err.Error())
+		log.Tracef(deserializeLogMsg, "Country operators", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "country operators", err)
 	}

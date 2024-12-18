@@ -67,8 +67,6 @@ func (s *StripeClientWrapper) GetPaymentIntent(id string) (*payments.Intent, err
 
 	log.Infof("Payment intent details: %v", wrappedPaymentIntent.PaymentIntent)
 
-	log.Infof("Wrapped payment intent details: %v", wrappedPaymentIntent)
-
 	return &wrappedPaymentIntent, nil
 }
 

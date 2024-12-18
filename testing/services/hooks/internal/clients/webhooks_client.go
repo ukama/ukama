@@ -67,7 +67,7 @@ func (p *webhooksClient) PostDepositHook(req *payments.Deposit) (*WebhookInfo, e
 
 	err = json.Unmarshal(resp.Body(), &webhook)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "webhook", err.Error())
+		log.Tracef(deserializeLogMsg, "Webhook", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "webhook", err)
 	}
@@ -96,7 +96,7 @@ func (p *webhooksClient) PostPaymentIntentHook(req *stripe.PaymentIntent) (*Webh
 
 	err = json.Unmarshal(resp.Body(), &webhook)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "webhook", err.Error())
+		log.Tracef(deserializeLogMsg, "Webhook", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "webhook", err)
 	}

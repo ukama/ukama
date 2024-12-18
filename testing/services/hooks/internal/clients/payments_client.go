@@ -58,7 +58,7 @@ func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error
 	err = json.Unmarshal(resp.Body(), &payments)
 	log.Infof("Error %v", err)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "payments", err.Error())
+		log.Tracef(deserializeLogMsg, "Payments", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "payments", err)
 	}
