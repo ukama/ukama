@@ -76,12 +76,13 @@ ifeq ($(TOWER_NODE), $(TARGET_BOARD))
 endif
 
 ifeq ($(ACCESS_NODE), $(TARGET_BOARD))
-	override CC     = gcc
+	override CC     = aarch64-linux-gnu-gcc
 	override ARCH   = $(ARCH_ARM64)
-	XCROSS_COMPILER = gcc
-	XGCC            = gcc
-	XLD             = ld
-	XGXX            = g++
+
+	XCROSS_COMPILER = aarch64-linux-gnu-gcc
+	XGCC            = aarch64-linux-gnu-gcc
+	XLD             = aarch64-linux-gnu-ld
+	XGXX            = aarch64-linux-gnu-g++
 	HOST            = aarch64-linux-gnu
 	OPENSSLTARGET   = linux-aarch64
 	XGCCPATH        = /usr/bin/

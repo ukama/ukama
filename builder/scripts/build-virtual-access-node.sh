@@ -96,7 +96,7 @@ function build_apps_using_container() {
     cwd=$(pwd)
 
     cd "${ukama_root}/builder/docker"
-    ./apps_setup.sh "access" "alpine" "${ukama_root}" "${apps}"
+    ./apps_setup.sh "access" "arm64" "${ukama_root}" "${apps}"
     cd ${cwd}
 }
 

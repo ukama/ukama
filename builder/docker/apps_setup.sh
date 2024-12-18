@@ -22,8 +22,14 @@ else
 fi
 
 # Build docker image using local Dockerfile
-docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
-       -t apps-builder-${TARGETPLATFORM} .
+if [ "$TARGET" = "arm64" ]; then
+    # rpi (access-node)
+    docker build --build-arg TARGETPLARFORM="arm64v8/ubuntu:20.04" \
+           -t apps-builder-arm64 .
+else
+    docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
+           -t apps-builder-${TARGETPLATFORM} .
+fi
 
 # Run the docker to build the apps 
 docker run --privileged \
