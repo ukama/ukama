@@ -74,11 +74,11 @@ function build_linux_kernel() {
 
     if [ -f "${TMP_LINUX}/arch/arm64/boot/Image" ]; then
         log "INFO" "Kernel image already exists, skipping"
-    else 
+    else
         # build linux kernel suitable for qemu
-        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make defconfig        || true
-        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make kvm_guest.config || true
-        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make -j8              || true
+        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make defconfig
+        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make kvm_guest.config
+        ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make -j8
     fi
 
     cd "${TMP_DIR}"
@@ -129,15 +129,15 @@ function install_starter_app() {
 
     sudo chroot "$path" /bin/sh <<'EOF'
 cd /ukama/apps/pkgs/
-tar zxvf starterd_latest.tar.gz starterd_latest/sbin/starter.d .
-mv starterd_latest/sbin/starter.d /sbin/
+tar zxvf starterd_latest.tar.gz
+cp starterd_latest/sbin/starter.d /sbin/
 rm -rf starterd_latest/
 EOF
 }
 
 function copy_linux_kernel() {
     log "INFO" "Copying linux kernel..."
-    cp "${TMP_LINUX}/arch/arm64/boot/Image" "${CWD}/build_access_node/"
+    cp "${TMP_LINUX}/arch/arm64/boot/Image" "${CWD}/build_access_node/kernel.img"
     log "SUCCESS" "Linux kernel copied"
 }
 
@@ -380,21 +380,19 @@ function pre_cleanup_and_dir_setup() {
         rm "$image_name"
     fi
 
-#    if [ -d "$tmp_dir" ]; then
-#        rm -rf "$tmp_dir"
-#    fi
-    mkdir -p "$tmp_dir"
-
     if [ -d "$build_dir" ]; then
         rm -rf "$build_dir"
     fi
-    mkdir "$build_dir"
+
+    mkdir -p "$build_dir"
+    mkdir -p "$tmp_dir"
 }
 
 # Main Script Execution
-UKAMA_ROOT=$1
-NODE_APPS=$2
-NODE_ID=$3
+OS_TYPE="alpine"
+OS_VERSION="0.0.1"
+MANIFEST_FILE="manifest.json"
+export TARGET="access"
 
 if [[ $# -ne 3 ]]; then
     log "ERROR" "Error: Exactly 3 arguments are required!"
@@ -402,10 +400,9 @@ if [[ $# -ne 3 ]]; then
     exit 1
 fi
 
-OS_TYPE="alpine"
-OS_VERSION="0.0.1"
-MANIFEST_FILE="manifest.json"
-export TARGET="access"
+UKAMA_ROOT=$1
+NODE_APPS=$2
+NODE_ID=$3
 
 check_sudo
 check_requirements
@@ -423,6 +420,7 @@ setup_ukama_dirs
 build_apps_using_container "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
+copy_linux_kernel
 
 # setup openrc to run starter.d
 configure_openrc_service "${PRIMARY_MOUNT}"

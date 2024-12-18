@@ -5,15 +5,15 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-# Run the generated disk image in QEMU
+# Run the generated image with compiled kernel in QEMU (rpi)
 
 set -e
+set -x
 
 BUILD_DIR="./build_access_node"
 IMG_NAME="access-node.img"
-KERNEL_IMAGE="kernel8.img"
-DTB_FILE="bcm2711-rpi-cm4.dtb"
-RAM_SIZE="2G"
+KERNEL_IMAGE="kernel.img"
+RAM_SIZE="4G"
 
 function log() {
     local type="$1"
@@ -26,24 +26,23 @@ function error_exit() {
     exit 1
 }
 
-[ -f "$IMG_NAME" ]     || error_exit "Disk image '$IMG_NAME' not found"
-[ -f "$KERNEL_IMAGE" ] || error_exit "Kernel '$KERNEL_IMAGE' not found"
-[ -f "$DTB_FILE" ]     || error_exit "DTB '$DTB_FILE' not found"
+[ -f "${BUILD_DIR}/${IMG_NAME}" ]     || error_exit "Disk image '$IMG_NAME' not found"
+[ -f "${BUILD_DIR}/${KERNEL_IMAGE}" ] || error_exit "Kernel '$KERNEL_IMAGE' not found"
 
 log "INFO" "Starting QEMU for access node (rpi cm4) ..." 
 
 if ! qemu-system-aarch64 \
-    -M raspi3 \
-    -cpu cortex-a72 \
-    -m "$RAM_SIZE" \
-    -kernel "${BUILD_DIR}/$KERNEL_IMAGE" \
-    -dtb "${BUILD_DIR}/$DTB_FILE" \
-    -drive file="$IMG_NAME",if=sd,format=raw \
-    -append "rw root=/dev/mmcblk0p2 console=ttyAMA0" \
-    -serial mon:stdio \
-    -nographic \
-    -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-    -device usb-net,netdev=net0; then
+     -machine virt \
+     -cpu cortex-a72 \
+     -smp 6 \
+     -m "${RAM_SIZE}" \
+     -kernel "${BUILD_DIR}/${KERNEL_IMAGE}" \
+     -append "root=/dev/vda2 rootfstype=ext4 rw panic=0 console=ttyAMA0" \
+     -drive format=raw,file="${BUILD_DIR}/${IMG_NAME}",if=none,id=hd0,cache=writeback \
+     -device virtio-blk,drive=hd0,bootindex=0 \
+     -netdev user,id=mynet,hostfwd=tcp::2222-:22 \
+     -device virtio-net-pci,netdev=mynet \
+     -monitor telnet:127.0.0.1:5555,server,nowait; then
     error_exit "QEMU execution failed."
 fi
 
