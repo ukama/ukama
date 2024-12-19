@@ -12,29 +12,29 @@ NODE=$1
 TARGET=$2
 UKAMA_ROOT=$3
 APPS=$4
+DOCKER_IMG=
 
 if [ "$TARGET" = "Darwin" ]; then
     TARGETPLATFORM="amd64/ubuntu:latest"
+    DOCKER_IMG="apps-builder-amd64"
 elif [ "$TARGET" = "alpine" ]; then
     TARGETPLATFORM="alpine:latest"
+    DOCKER_IMG="apps-builder-alpine"
+elif [ "$TARGET" = "arm64" ]; then
+    TARGETPLATFORM="arm64v8/ubuntu:20.04"
+    DOCKER_IMG="apps-builder-arm64"
 else
     TARGETPLATFORM="ubuntu:latest"
+    DOCKER_IMG="apps-builder-ubuntu"
 fi
 
-# Build docker image using local Dockerfile
-if [ "$TARGET" = "arm64" ]; then
-    # rpi (access-node)
-    docker build --build-arg TARGETPLARFORM="arm64v8/ubuntu:20.04" \
-           -t apps-builder-arm64 .
-else
-    docker build --build-arg TARGETPLATFORM=${TARGETPLATFORM} \
-           -t apps-builder-${TARGETPLATFORM} .
-fi
+# Build the container
+docker build --build-arg TARGETPLATRFORM=${TARGETPLATFORM} -t ${DOCKER_IMG} .
 
 # Run the docker to build the apps 
 docker run --privileged \
        -v ${UKAMA_ROOT}:/workspace \
-       apps-builder-${TARGETPLATFORM} \
+       ${DOCKER_IMG} \
        /bin/bash -c "cd /workspace/builder/scripts/ && /workspace/builder/docker/apps_build.sh ${NODE} ${APPS} > /workspace/apps_build.log 2>&1"
 
 # clean up

@@ -66,7 +66,7 @@ function build_linux_kernel() {
 
     if [ -d "${TMP_LINUX}" ]; then
         log "INFO" "Using existing linux kernel at: ${TMP_LINUX}"
-    else 
+    else
         wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.34.tar.xz
         tar xJf linux-6.1.34.tar.xz
         mv linux-6.1.34 "${TMP_LINUX}"

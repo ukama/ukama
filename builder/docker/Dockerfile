@@ -11,7 +11,7 @@ ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM}
 
 # Install dependencies based on platform
-RUN if [ "${TARGETPLATFORM}" = "alpine:latest" ]; then \
+RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         apk add --no-cache \
         build-base \
         make \
@@ -32,7 +32,7 @@ RUN if [ "${TARGETPLATFORM}" = "alpine:latest" ]; then \
         linux-headers \
         bsd-compat-headers \
         musl-dev; \
-    elif [ "${TARGETPLATFORM}" = "ubuntu:latest" ]; then \
+    elif echo "${TARGETPLATFORM}" | grep -q "ubuntu"; then \
         apt-get update && apt-get install -y \
         software-properties-common \
         && add-apt-repository universe \
@@ -67,6 +67,10 @@ RUN if [ "${TARGETPLATFORM}" = "alpine:latest" ]; then \
         kpartx \
         fdisk \
         util-linux \
+        libgnutls28-dev \
+        libmicrohttpd-dev \
+        libcurl4-openssl-dev \
+        libjansson-dev \
         && rm -rf /var/lib/apt/lists/*; \
     else \
         echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
@@ -122,9 +126,9 @@ RUN git clone https://github.com/ukama/prometheus-client.git && \
 FROM builder as final
 
 # Conditional logic for final stage
-RUN if [[ "$TARGETPLATFORM" == *"ubuntu"* ]]; then \
+RUN if echo "${TARGETPLATFORM}" | grep -q "ubuntu"; then \
         apt-get update && apt-get install -y extlinux; \
-    elif [[ "$TARGETPLATFORM" == *"alpine"* ]]; then \
+    elif echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         echo "No additional packages for Alpine."; \
     fi
 
