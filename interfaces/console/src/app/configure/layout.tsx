@@ -178,14 +178,14 @@ const ConfigureLayout = ({
             <CenterContainer>
               <Box py={20} px={6} height={'100%'}>
                 {OnBoardingDynamic({
-                  orgName: user.orgName,
-                  siteName: params.name,
                   textColor: colors.black,
                   isShowSimpool: isSimsPath,
-                  networkName: network.name,
                   selectedColor: colors.primaryMain,
                   isShowSite: params.id ? true : false,
                   isShowComponents: params.name ? true : false,
+                  siteName: params.name ? params.name : 'Site 1',
+                  networkName: network.name ? network.name : 'Network',
+                  orgName: user.orgName ? user.orgName : 'Organization',
                   backhaulName: parts.backhaulName
                     ? parts.backhaulName
                     : 'Backhaul',

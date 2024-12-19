@@ -48,7 +48,7 @@ class NodeAPI extends RESTDataSource {
   ): Promise<Nodes> {
     this.baseURL = baseURL;
     return this.get(
-      `/${VERSION}/${NODES}/state?connectivity=${data.connectivity}&state=${data.state}`
+      `/${VERSION}/${NODES}/state?connectivity=${data.connectivity.toLocaleLowerCase()}&state=${data.state.toLocaleLowerCase()}`
     ).then(res => parseNodesRes(res));
   }
   async getNodesByNetwork(baseURL: string, networkId: string): Promise<Nodes> {
