@@ -704,6 +704,16 @@ export enum NodeStateEnum {
   Unknown = 'Unknown'
 }
 
+export type NodeStateRes = {
+  __typename?: 'NodeStateRes';
+  createdAt: Scalars['String']['output'];
+  currentState: NodeStateEnum;
+  id: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  previousState?: Maybe<NodeStateEnum>;
+  previousStateId?: Maybe<Scalars['String']['output']>;
+};
+
 export type NodeStatus = {
   __typename?: 'NodeStatus';
   connectivity: Scalars['String']['output'];
@@ -872,6 +882,7 @@ export type Query = {
   getNode: Node;
   getNodeApps: NodeApps;
   getNodeLatestMetric: NodeLatestMetric;
+  getNodeState: NodeStateRes;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
   getNodesByState: Nodes;
@@ -967,6 +978,11 @@ export type QueryGetNodeAppsArgs = {
 
 export type QueryGetNodeLatestMetricArgs = {
   data: GetNodeLatestMetricInput;
+};
+
+
+export type QueryGetNodeStateArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -1498,6 +1514,13 @@ export type GetNodesLocationQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+
+export type GetNodeStateQueryVariables = Exact<{
+  getNodeStateId: Scalars['String']['input'];
+}>;
+
+
+export type GetNodeStateQuery = { __typename?: 'Query', getNodeState: { __typename?: 'NodeStateRes', id: string, nodeId: string, previousStateId?: string | null, previousState?: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -2683,6 +2706,51 @@ export type GetNodesLocationQueryHookResult = ReturnType<typeof useGetNodesLocat
 export type GetNodesLocationLazyQueryHookResult = ReturnType<typeof useGetNodesLocationLazyQuery>;
 export type GetNodesLocationSuspenseQueryHookResult = ReturnType<typeof useGetNodesLocationSuspenseQuery>;
 export type GetNodesLocationQueryResult = Apollo.QueryResult<GetNodesLocationQuery, GetNodesLocationQueryVariables>;
+export const GetNodeStateDocument = gql`
+    query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
+    id
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
+  }
+}
+    `;
+
+/**
+ * __useGetNodeStateQuery__
+ *
+ * To run a query within a React component, call `useGetNodeStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeStateQuery({
+ *   variables: {
+ *      getNodeStateId: // value for 'getNodeStateId'
+ *   },
+ * });
+ */
+export function useGetNodeStateQuery(baseOptions: Apollo.QueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables> & ({ variables: GetNodeStateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
+      }
+export function useGetNodeStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
+        }
+export function useGetNodeStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
+        }
+export type GetNodeStateQueryHookResult = ReturnType<typeof useGetNodeStateQuery>;
+export type GetNodeStateLazyQueryHookResult = ReturnType<typeof useGetNodeStateLazyQuery>;
+export type GetNodeStateSuspenseQueryHookResult = ReturnType<typeof useGetNodeStateSuspenseQuery>;
+export type GetNodeStateQueryResult = Apollo.QueryResult<GetNodeStateQuery, GetNodeStateQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

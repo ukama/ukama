@@ -135,6 +135,17 @@ query GetNodesLocation {
   }
 }
 
+query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
+    id
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
+  }
+}
+
 ### End Node ###
 
 ### Member Start ###

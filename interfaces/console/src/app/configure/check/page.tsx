@@ -8,10 +8,12 @@
 'use client';
 
 import {
+  Node,
   NodeConnectivityEnum,
   NodeStateEnum,
   useGetNodeQuery,
   useGetNodesByStateQuery,
+  useGetNodeStateLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
 import {
@@ -23,12 +25,13 @@ import {
 import { useAppContext } from '@/context';
 import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const Check = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [node, setNode] = useState<Node | undefined>(undefined);
   const nodeId = searchParams.get('nid') ?? '';
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [showReturn, setShowReturn] = useState(false);
@@ -75,19 +78,7 @@ const Check = () => {
         filterNodes[0].status.connectivity === NodeConnectivityEnum.Online &&
         filterNodes[0].status.state === NodeStateEnum.Unknown
       ) {
-        setTimeout(() => {}, 2000);
-        let p = setQueryParam('lat', filterNodes[0].latitude.toString());
-        p.set('lng', filterNodes[0].longitude.toString());
-        p.set(
-          'flow',
-          flow === NETWORK_FLOW
-            ? ONBOARDING_FLOW
-            : flow === CHECK_SITE_FLOW
-              ? INSTALLATION_FLOW
-              : flow,
-        );
-        p.delete('nid');
-        router.push(`/configure/node/${filterNodes[0].id}?${p.toString()}`);
+        setNode(filterNodes[0]);
       }
     },
   });
@@ -105,19 +96,7 @@ const Check = () => {
           data.getNode.status.connectivity === NodeConnectivityEnum.Online &&
           data.getNode.status.state === NodeStateEnum.Unknown
         ) {
-          setTimeout(() => {}, 2000);
-          let p = setQueryParam('lat', data.getNode.latitude.toString());
-          p.set('lng', data.getNode.longitude.toString());
-          p.set(
-            'flow',
-            flow === NETWORK_FLOW
-              ? ONBOARDING_FLOW
-              : flow === CHECK_SITE_FLOW
-                ? INSTALLATION_FLOW
-                : flow,
-          );
-          p.delete('nid');
-          router.push(`/configure/node/${data.getNode.id}?${p.toString()}`);
+          setNode(data.getNode);
         } else {
           setSnackbarMessage({
             id: 'node-configured-warn',
@@ -130,6 +109,36 @@ const Check = () => {
       }
     },
   });
+
+  const [getNodeState] = useGetNodeStateLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (node && data.getNodeState.currentState === NodeStateEnum.Unknown) {
+        let p = setQueryParam('lat', node.latitude.toString());
+        p.set('lng', node.longitude.toString());
+        p.set(
+          'flow',
+          flow === NETWORK_FLOW
+            ? ONBOARDING_FLOW
+            : flow === CHECK_SITE_FLOW
+              ? INSTALLATION_FLOW
+              : flow,
+        );
+        p.delete('nid');
+        router.push(`/configure/node/${node.id}?${p.toString()}`);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (node?.id) {
+      getNodeState({
+        variables: {
+          getNodeStateId: node.id,
+        },
+      });
+    }
+  }, [node]);
 
   const onInstallProgressComplete = () => {
     if (flow !== NETWORK_FLOW) {

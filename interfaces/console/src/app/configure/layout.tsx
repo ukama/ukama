@@ -17,7 +17,7 @@ import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { CenterContainer, GradiantBarNoRadius } from '@/styles/global';
 import colors from '@/theme/colors';
-import { ConfigureStep, isValidLatLng } from '@/utils';
+import { ConfigureStep } from '@/utils';
 import { AlertColor, Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import {
@@ -27,8 +27,8 @@ import {
   useSearchParams,
 } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import DynamicNetwork from '../../../public/svg/DynamicNetwork';
 import { Logo } from '../../../public/svg/Logo';
+import OnBoardingDynamic from '../../../public/svg/OnBoardingDynamic';
 
 const ConfigureLayout = ({
   children,
@@ -45,7 +45,7 @@ const ConfigureLayout = ({
   const nid = searchParams.get('nid') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow);
-  const { network, setNetwork, setSnackbarMessage } = useAppContext();
+  const { user, network, setNetwork, setSnackbarMessage } = useAppContext();
   const [parts, setParts] = useState({
     switchId: '',
     powerName: '',
@@ -176,26 +176,24 @@ const ConfigureLayout = ({
             display={{ xs: 'none', md: 'flex' }}
           >
             <CenterContainer>
-              {DynamicNetwork({
-                power: parts.powerName ? parts.powerName : 'Power',
-                powerIcon: parts.powerName ? colors.primaryMain : '#6F7979',
-                nodeId: parts.switchId ? parts.switchId : 'Node',
-                nodeIcon: parts.switchId ? colors.primaryMain : '#6F7979',
-                backhaul: parts.backhaulName ? parts.backhaulName : 'Backhaul',
-                backhaulIcon: parts.backhaulName
-                  ? colors.primaryMain
-                  : '#6F7979',
-                network: network.name ? network.name : 'Network',
-                networkIcon: network.name ? colors.primaryMain : '#6F7979',
-                siteOneIcon:
-                  qpLat &&
-                  qpLng &&
-                  isValidLatLng([parseFloat(qpLat), parseFloat(qpLng)])
-                    ? colors.primaryMain
-                    : '#6F7979',
-                siteOne: params.name ? params.name : 'Site 1',
-                isShowComponents: params.name ? true : false,
-              })}
+              <Box py={20} px={6} height={'100%'}>
+                {OnBoardingDynamic({
+                  orgName: user.orgName,
+                  siteName: params.name,
+                  textColor: colors.black,
+                  isShowSimpool: isSimsPath,
+                  networkName: network.name,
+                  selectedColor: colors.primaryMain,
+                  isShowSite: params.id ? true : false,
+                  isShowComponents: params.name ? true : false,
+                  backhaulName: parts.backhaulName
+                    ? parts.backhaulName
+                    : 'Backhaul',
+                  powerName: parts.powerName ? parts.powerName : 'Power',
+                  switchName: parts.switchId ? parts.switchId : 'Switch',
+                  nodeName: params.id,
+                })}
+              </Box>
             </CenterContainer>
           </Grid>
         </Grid>

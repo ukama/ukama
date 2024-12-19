@@ -287,7 +287,6 @@ const SiteConfigure = ({ params }: IPage) => {
 
             <Autocomplete
               fullWidth
-              disablePortal
               loading={componentsLoading}
               options={
                 (componentsData &&
@@ -320,7 +319,6 @@ const SiteConfigure = ({ params }: IPage) => {
             />
             <Autocomplete
               fullWidth
-              disablePortal
               loading={componentsLoading}
               options={
                 (componentsData &&
@@ -353,7 +351,6 @@ const SiteConfigure = ({ params }: IPage) => {
             />
             <Autocomplete
               fullWidth
-              disablePortal
               loading={componentsLoading}
               options={
                 (componentsData &&

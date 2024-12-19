@@ -260,3 +260,24 @@ export class NodesLocation {
   @Field(() => [NodeLocation])
   nodes: NodeLocation[];
 }
+
+@ObjectType()
+export class NodeStateRes {
+  @Field()
+  id: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field({ nullable: true })
+  previousStateId: string;
+
+  @Field(() => NODE_STATE, { nullable: true })
+  previousState: NODE_STATE;
+
+  @Field(() => NODE_STATE)
+  currentState: NODE_STATE;
+
+  @Field()
+  createdAt: string;
+}

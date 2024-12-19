@@ -231,6 +231,8 @@ const getSystemNameByService = (service: string): string => {
       return "metrics";
     case "planning-tool":
       return "planning";
+    case "nodeState":
+      return "node";
     default:
       return "";
   }

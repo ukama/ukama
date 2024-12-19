@@ -5,7 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Node, NodeSite, Nodes } from "../resolvers/types";
+import { NODE_STATE } from "../../common/enums";
+import { Node, NodeSite, NodeStateRes, Nodes } from "../resolvers/types";
 
 export const parseNodesRes = (res: any): Nodes => {
   const nodes = res.nodes.map((node: any) => {
@@ -53,5 +54,22 @@ export const parseNodeRes = (res: any): Node => {
       state: res.status.state,
       connectivity: res.status.connectivity,
     },
+  };
+};
+
+export const getNodeState = (res: any): NodeStateRes => {
+  const states: any = res.states;
+  states.sort(
+    (a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  return {
+    id: states[0].id,
+    nodeId: states[0].nodeId,
+    createdAt: states[0].createdAt,
+    currentState: states[0].currentState as NODE_STATE,
+    previousState: states[0].previousState as NODE_STATE,
+    previousStateId: states[0].previousStateId,
   };
 };

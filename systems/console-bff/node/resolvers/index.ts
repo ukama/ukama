@@ -15,6 +15,7 @@ import { DetachNodeResolver } from "./detachNode";
 import { GetAppsChangeLogResolver } from "./getAppsChangeLog";
 import { GetNodeResolver } from "./getNode";
 import { GetNodeAppsResolver } from "./getNodeApps";
+import { GetNodeStateResolver } from "./getNodeState";
 import { GetNodesResolver } from "./getNodes";
 import { GetNodesByNetworkResolver } from "./getNodesByNetwork";
 import { GetNodesByStateResolver } from "./getNodesByState";
@@ -31,6 +32,7 @@ const resolvers: NonEmptyArray<any> = [
   UpdateNodeResolver,
   DetachNodeResolver,
   GetNodeAppsResolver,
+  GetNodeStateResolver,
   AddNodeToSiteResolver,
   GetNodesByStateResolver,
   UpdateNodeStateResolver,
