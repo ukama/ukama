@@ -142,8 +142,10 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 
 	/* Add node if you can't find a node */
 	if node == nil {
+		id := strings.ToLower(msg.GetNodeId())
 		req := &pb.AddNodeRequest{
-			NodeId: msg.GetNodeId(),
+			NodeId: id,
+			Name  id[len(id)-7:]
 		}
 		_, err = n.s.AddNode(context.Background(), req)
 		if err != nil {
