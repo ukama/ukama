@@ -19,6 +19,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/billing/report/pkg/db"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -183,7 +184,7 @@ func TestReportRepo_List(t *testing.T) {
 		report := &db.Report{
 			Id:        uuid.NewV4(),
 			OwnerId:   uuid.NewV4(),
-			OwnerType: db.OwnerTypeOrg,
+			OwnerType: ukama.OwnerTypeOrg,
 			IsPaid:    false,
 		}
 
@@ -201,8 +202,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List("", db.OwnerTypeUnknown, "",
-			db.ReportTypeUnknown, false, 0, false)
+		reps, err := r.List("", ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeUnknown, false, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -214,7 +215,7 @@ func TestReportRepo_List(t *testing.T) {
 		report := &db.Report{
 			Id:        uuid.NewV4(),
 			OwnerId:   uuid.NewV4(),
-			OwnerType: db.OwnerTypeOrg,
+			OwnerType: ukama.OwnerTypeOrg,
 			IsPaid:    false,
 		}
 
@@ -232,8 +233,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List(report.OwnerId.String(), db.OwnerTypeUnknown, "",
-			db.ReportTypeUnknown, false, 0, false)
+		reps, err := r.List(report.OwnerId.String(), ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeUnknown, false, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -247,7 +248,7 @@ func TestReportRepo_List(t *testing.T) {
 		report := &db.Report{
 			Id:        uuid.NewV4(),
 			OwnerId:   uuid.NewV4(),
-			OwnerType: db.OwnerTypeSubscriber,
+			OwnerType: ukama.OwnerTypeSubscriber,
 			NetworkId: uuid.NewV4(),
 			IsPaid:    false,
 		}
@@ -258,7 +259,7 @@ func TestReportRepo_List(t *testing.T) {
 			AddRow(report.Id, report.OwnerId, report.OwnerType, report.NetworkId, report.IsPaid)
 
 		mock.ExpectQuery(`^SELECT.*reports.*`).
-			WithArgs(db.OwnerTypeSubscriber).
+			WithArgs(ukama.OwnerTypeSubscriber).
 			WillReturnRows(rows)
 
 		r := db.NewReportRepo(&UkamaDbMock{
@@ -266,8 +267,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List("", db.OwnerTypeSubscriber, "",
-			db.ReportTypeUnknown, false, 0, isSorted)
+		reps, err := r.List("", ukama.OwnerTypeSubscriber, "",
+			ukama.ReportTypeUnknown, false, 0, isSorted)
 
 		// Assert
 		assert.NoError(t, err)
@@ -281,7 +282,7 @@ func TestReportRepo_List(t *testing.T) {
 		report := &db.Report{
 			Id:        uuid.NewV4(),
 			OwnerId:   uuid.NewV4(),
-			OwnerType: db.OwnerTypeSubscriber,
+			OwnerType: ukama.OwnerTypeSubscriber,
 			NetworkId: uuid.NewV4(),
 			IsPaid:    false,
 		}
@@ -300,8 +301,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List("", db.OwnerTypeUnknown, report.NetworkId.String(),
-			db.ReportTypeUnknown, false, count, false)
+		reps, err := r.List("", ukama.OwnerTypeUnknown, report.NetworkId.String(),
+			ukama.ReportTypeUnknown, false, count, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -313,8 +314,8 @@ func TestReportRepo_List(t *testing.T) {
 		report := &db.Report{
 			Id:        uuid.NewV4(),
 			OwnerId:   uuid.NewV4(),
-			OwnerType: db.OwnerTypeOrg,
-			Type:      db.ReportTypeInvoice,
+			OwnerType: ukama.OwnerTypeOrg,
+			Type:      ukama.ReportTypeInvoice,
 			IsPaid:    true,
 		}
 
@@ -332,8 +333,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List("", db.OwnerTypeUnknown, "",
-			db.ReportTypeInvoice, true, 0, false)
+		reps, err := r.List("", ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeInvoice, true, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -353,8 +354,8 @@ func TestReportRepo_List(t *testing.T) {
 		})
 
 		// Act
-		reps, err := r.List("", db.OwnerTypeUnknown, "",
-			db.ReportTypeUnknown, false, 0, false)
+		reps, err := r.List("", ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeUnknown, false, 0, false)
 
 		// Assert
 		assert.Error(t, err)

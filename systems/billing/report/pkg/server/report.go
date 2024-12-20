@@ -27,6 +27,7 @@ import (
 	"github.com/ukama/ukama/systems/billing/report/pkg/util"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -93,7 +94,8 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 
 	report := &db.Report{
 		OwnerId:   ownerId,
-		OwnerType: db.OwnerTypeOrg,
+		OwnerType: ukama.OwnerTypeOrg,
+		Type:      ukama.ReportTypeInvoice,
 	}
 
 	if ownerId != i.OrgId {
@@ -103,7 +105,8 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		}
 
 		report.NetworkId = subscriberInfo.NetworkId
-		report.OwnerType = db.OwnerTypeSubscriber
+		report.OwnerType = ukama.OwnerTypeSubscriber
+		report.Type = ukama.ReportTypeConsumption
 	}
 
 	rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", report.Id.String())
@@ -143,7 +146,7 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		Report: dbReportToPbReport(report),
 	}
 
-	route := i.baseRoutingKey.SetAction("generate").SetObject("invoice").MustBuild()
+	route := i.baseRoutingKey.SetAction("generate").SetObject(report.Type.String()).MustBuild()
 
 	err = i.msgbus.PublishRequest(route, resp.Report)
 	if err != nil {
@@ -185,10 +188,10 @@ func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		req.OwnerId = ownerId.String()
 	}
 
-	ownerType := db.OwnerTypeUnknown
+	ownerType := ukama.OwnerTypeUnknown
 	if req.OwnerType != "" {
-		ownerType = db.ParseOwnerType(req.OwnerType)
-		if ownerType == db.OwnerTypeUnknown {
+		ownerType = ukama.ParseOwnerType(req.OwnerType)
+		if ownerType == ukama.OwnerTypeUnknown {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid value for owner type: %s", req.OwnerType)
 		}
@@ -204,10 +207,10 @@ func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		req.NetworkId = networkId.String()
 	}
 
-	reportType := db.ReportTypeUnknown
+	reportType := ukama.ReportTypeUnknown
 	if req.ReportType != "" {
-		reportType = db.ParseReportType(req.ReportType)
-		if reportType == db.ReportTypeUnknown {
+		reportType = ukama.ParseReportType(req.ReportType)
+		if reportType == ukama.ReportTypeUnknown {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid value for report type: %s", req.ReportType)
 		}

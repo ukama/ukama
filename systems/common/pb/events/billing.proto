@@ -8,62 +8,12 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/billing/report/pb/gen";
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
 
 import "validator.proto";
-
-
-package ukama.billing.report.v1;
-
-service ReportService {
-    rpc Add(AddRequest) returns (AddResponse);
-    rpc Get(GetRequest) returns (GetResponse);
-    rpc List(ListRequest) returns (ListResponse);
-    // Update
-    rpc Delete(DeleteRequest) returns (DeleteResponse);
-}
-
-
-message AddRequest{
-    string rawReport = 1 [json_name = "raw_report"];
-}
-
-message AddResponse{
-    Report report = 2;
-}
-
-
-message GetRequest{
-    string reportId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "report_id"];
-    bool asPdf = 2 [json_name = "as_pdf"];
-}
-
-message GetResponse{
-    Report report = 1;
-}
-
-
-message ListRequest {
-    string ownerId = 1 [json_name = "owner_id"];
-    string ownerType = 2 [json_name = "owner_type"];
-    string networkId = 3 [json_name = "network_Id"];
-    string reportType = 4 [json_name = "report_type"];
-    bool isPaid = 5 [json_name = "is_paid"];
-    uint32 count = 6;
-    bool sort = 7;
-}
-
-message ListResponse {
-    repeated Report reports = 1;
-}
-
-
-message DeleteRequest{
-    string reportId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "report_id"];
-}
-
-message DeleteResponse{
-}
+import "google/protobuf/timestamp.proto";
 
 
 message Report {

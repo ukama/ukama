@@ -22,6 +22,7 @@ import (
 	"github.com/ukama/ukama/systems/billing/report/mocks"
 	"github.com/ukama/ukama/systems/billing/report/pkg/db"
 	"github.com/ukama/ukama/systems/billing/report/pkg/server"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
@@ -553,12 +554,12 @@ func TestReportServer_List(t *testing.T) {
 		reportResp := db.Report{
 			Id:        reportId,
 			OwnerId:   OwnerId,
-			OwnerType: db.OwnerTypeOrg,
+			OwnerType: ukama.OwnerTypeOrg,
 		}
 
 		resp[0] = reportResp
 
-		repo.On("List", "", db.OwnerTypeUnknown, "", db.ReportTypeUnknown, false,
+		repo.On("List", "", ukama.OwnerTypeUnknown, "", ukama.ReportTypeUnknown, false,
 			uint32(0), false).Return(resp, nil)
 
 		s := server.NewReportServer(OrgName, OrgId, repo, nil, nil)
@@ -574,13 +575,13 @@ func TestReportServer_List(t *testing.T) {
 		reportResp := db.Report{
 			Id:        reportId,
 			OwnerId:   OwnerId,
-			OwnerType: db.OwnerTypeSubscriber,
+			OwnerType: ukama.OwnerTypeSubscriber,
 		}
 
 		resp[0] = reportResp
 
-		repo.On("List", OwnerId.String(), db.OwnerTypeUnknown, "",
-			db.ReportTypeUnknown, false, uint32(0), false).Return(resp, nil)
+		repo.On("List", OwnerId.String(), ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeUnknown, false, uint32(0), false).Return(resp, nil)
 
 		s := server.NewReportServer(OrgName, OrgId, repo, nil, nil)
 		list, err := s.List(context.TODO(), &pb.ListRequest{
@@ -596,8 +597,8 @@ func TestReportServer_List(t *testing.T) {
 		repo := &mocks.ReportRepo{}
 		notFoundId := uuid.NewV4()
 
-		repo.On("List", notFoundId.String(), db.OwnerTypeUnknown, "",
-			db.ReportTypeUnknown, false, uint32(0), false).
+		repo.On("List", notFoundId.String(), ukama.OwnerTypeUnknown, "",
+			ukama.ReportTypeUnknown, false, uint32(0), false).
 			Return(nil, errors.New("not found"))
 
 		s := server.NewReportServer(OrgName, OrgId, repo, nil, nil)
@@ -614,14 +615,14 @@ func TestReportServer_List(t *testing.T) {
 		reportResp := db.Report{
 			Id:        reportId,
 			OwnerId:   OwnerId,
-			OwnerType: db.OwnerTypeSubscriber,
+			OwnerType: ukama.OwnerTypeSubscriber,
 			NetworkId: networkId,
 		}
 
 		resp[0] = reportResp
 
-		repo.On("List", "", db.OwnerTypeUnknown, networkId.String(),
-			db.ReportTypeUnknown, false, uint32(0), false).Return(resp, nil)
+		repo.On("List", "", ukama.OwnerTypeUnknown, networkId.String(),
+			ukama.ReportTypeUnknown, false, uint32(0), false).Return(resp, nil)
 
 		s := server.NewReportServer(OrgName, OrgId, repo, nil, nil)
 		list, err := s.List(context.TODO(), &pb.ListRequest{
@@ -651,13 +652,13 @@ func TestReportServer_List(t *testing.T) {
 		reportResp := db.Report{
 			Id:        reportId,
 			OwnerId:   OwnerId,
-			OwnerType: db.OwnerTypeOrg,
-			Type:      db.ReportTypeInvoice,
+			OwnerType: ukama.OwnerTypeOrg,
+			Type:      ukama.ReportTypeInvoice,
 		}
 
 		resp[0] = reportResp
 
-		repo.On("List", "", db.OwnerTypeOrg, "", db.ReportTypeInvoice,
+		repo.On("List", "", ukama.OwnerTypeOrg, "", ukama.ReportTypeInvoice,
 			false, uint32(0), true).
 			Return(resp, nil)
 
@@ -679,13 +680,13 @@ func TestReportServer_List(t *testing.T) {
 		reportResp := db.Report{
 			Id:        reportId,
 			OwnerId:   OwnerId,
-			OwnerType: db.OwnerTypeSubscriber,
+			OwnerType: ukama.OwnerTypeSubscriber,
 			IsPaid:    true,
 		}
 
 		resp[0] = reportResp
 
-		repo.On("List", "", db.OwnerTypeSubscriber, "", db.ReportTypeUnknown,
+		repo.On("List", "", ukama.OwnerTypeSubscriber, "", ukama.ReportTypeUnknown,
 			isPaid, uint32(0), false).Return(resp, nil)
 
 		s := server.NewReportServer(OrgName, OrgId, repo, nil, nil)

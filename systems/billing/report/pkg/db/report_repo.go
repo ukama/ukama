@@ -13,13 +13,14 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type ReportRepo interface {
 	Add(report *Report, nestedFunc func(*Report, *gorm.DB) error) error
 	Get(id uuid.UUID) (*Report, error)
-	List(ownerId string, ownerType OwnerType, networkId string, reportType ReportType,
+	List(ownerId string, ownerType ukama.OwnerType, networkId string, reportType ukama.ReportType,
 		isPaid bool, count uint32, sort bool) ([]Report, error)
 
 	// Update(orgId uint, network *Network) error
@@ -66,8 +67,8 @@ func (i *reportRepo) Get(id uuid.UUID) (*Report, error) {
 	return &rep, nil
 }
 
-func (r *reportRepo) List(ownerId string, ownerType OwnerType, networkId string,
-	reportType ReportType, isPaid bool, count uint32, sort bool) ([]Report, error) {
+func (r *reportRepo) List(ownerId string, ownerType ukama.OwnerType, networkId string,
+	reportType ukama.ReportType, isPaid bool, count uint32, sort bool) ([]Report, error) {
 	reports := []Report{}
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
@@ -76,7 +77,7 @@ func (r *reportRepo) List(ownerId string, ownerType OwnerType, networkId string,
 		tx = tx.Where("owner_id = ?", ownerId)
 	}
 
-	if ownerType != OwnerTypeUnknown {
+	if ownerType != ukama.OwnerTypeUnknown {
 		tx = tx.Where("owner_type = ?", ownerType)
 	}
 
@@ -84,7 +85,7 @@ func (r *reportRepo) List(ownerId string, ownerType OwnerType, networkId string,
 		tx = tx.Where("network_id = ?", networkId)
 	}
 
-	if reportType != ReportTypeUnknown {
+	if reportType != ukama.ReportTypeUnknown {
 		tx = tx.Where("type = ?", reportType)
 	}
 
@@ -103,10 +104,6 @@ func (r *reportRepo) List(ownerId string, ownerType OwnerType, networkId string,
 	result := tx.Find(&reports)
 	if result.Error != nil {
 		return nil, result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
 	}
 
 	return reports, nil
