@@ -16,6 +16,7 @@ message Webhook {
     string requestId = 1 [json_name = "request_id"];
     string orgName = 2 [json_name = "org_name"];
     string payload = 3;
+    string updatedAt = 4 [json_name = "updated_at"];
 }
 
 message WebhookDeletedEvent{
