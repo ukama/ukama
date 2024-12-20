@@ -228,7 +228,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
-		time.Sleep(2)
+		time.Sleep(1 * time.Second)
 
 		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
