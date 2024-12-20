@@ -33,6 +33,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
@@ -142,13 +143,41 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		log.Infof("finishing PDF generation")
 	}()
 
+	pbReport := dbReportToPbReport(report)
+
 	resp := &pb.AddResponse{
-		Report: dbReportToPbReport(report),
+		Report: pbReport,
 	}
 
 	route := i.baseRoutingKey.SetAction("generate").SetObject(report.Type.String()).MustBuild()
 
-	err = i.msgbus.PublishRequest(route, resp.Report)
+	val := &epb.RawReport{}
+	m := protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+
+	err = m.Unmarshal([]byte(report.RawReport.String()), val)
+	if err != nil {
+		log.Errorf("Failed to unmarshal RawReport JSON to epb.RawReport proto: %v", err)
+
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal RawReport JSON paylod to epb.RawReport. Error %s", err)
+	}
+
+	evt := &epb.Report{
+		Id:        pbReport.Id,
+		OwnerId:   pbReport.OwnerId,
+		OwnerType: pbReport.OwnerType,
+		NetworkId: pbReport.NetworkId,
+		Type:      pbReport.Type,
+		Period:    pbReport.Period,
+		RawReport: val,
+		IsPaid:    pbReport.IsPaid,
+		CreatedAt: pbReport.CreatedAt,
+	}
+
+	err = i.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			req, route, err.Error())

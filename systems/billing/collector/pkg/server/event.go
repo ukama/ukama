@@ -228,6 +228,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
+		time.Sleep(2)
+
 		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
 			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
