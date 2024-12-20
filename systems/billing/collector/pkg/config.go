@@ -56,8 +56,8 @@ func NewConfig(name string) *Config {
 
 				// TODO: we need to add the relevant arch in order to support listening
 				// global events from Ukama to a local deployed org.
-				"event.cloud.global.{{ .Org}}.orchestrator.constructor.org.deploy",
-				"event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync",
+				"event.cloud.local.{{ .Org}}.orchestrator.constructor.org.deploy",
+				"event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync",
 			},
 		},
 	}

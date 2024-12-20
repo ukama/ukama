@@ -132,7 +132,7 @@ func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
 
 func TestCollectorEventServer_HandleOrgSubscriptionEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
-	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync")
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync")
 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()

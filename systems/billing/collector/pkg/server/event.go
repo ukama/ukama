@@ -86,7 +86,7 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 
 	switch e.RoutingKey {
 	// Update org subscription
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
 		msg, err := unmarshalOrgSubscription(e.Msg)
 		if err != nil {
 			return nil, err
