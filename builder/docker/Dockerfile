@@ -71,6 +71,10 @@ RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         libmicrohttpd-dev \
         libcurl4-openssl-dev \
         libjansson-dev \
+        gcc-aarch64-linux-gnu \
+        g++-aarch64-linux-gnu \
+        uuid-dev \
+        sqlite3-dev \
         && rm -rf /var/lib/apt/lists/*; \
     else \
         echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
@@ -126,11 +130,11 @@ RUN git clone https://github.com/ukama/prometheus-client.git && \
 FROM builder as final
 
 # Conditional logic for final stage
-RUN if echo "${TARGETPLATFORM}" | grep -q "ubuntu"; then \
-        apt-get update && apt-get install -y extlinux; \
-    elif echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
-        echo "No additional packages for Alpine."; \
-    fi
+#RUN if echo "${TARGETPLATFORM}" | grep -q "ubuntu"; then \
+#        apt-get update && apt-get install -y extlinux; \
+#    elif echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
+#        echo "No additional packages for Alpine."; \
+#    fi
 
 # Optionally set the working directory again if it was overridden
 WORKDIR /workspace
