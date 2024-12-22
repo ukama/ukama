@@ -165,7 +165,7 @@ const Sims = () => {
             <div {...getRootProps({ className: 'dropzone' })}>
               <input {...getInputProps()} />
               <Typography variant="body2" sx={{ cursor: 'inherit' }}>
-                Drag & Drop file here Or click to select file.
+                Drag & Drop Or Choose file to upload.
               </Typography>
             </div>
           </Box>

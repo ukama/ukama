@@ -260,13 +260,18 @@ export enum DataUnitType {
   GigaBytes = 'GigaBytes',
 }
 
+export enum DurationType {
+  Day = 1,
+  Month = 30,
+}
+
 export type CreatePlanType = {
   id: string;
   name: string;
-  dataVolume: undefined | number;
-  dataUnit: DataUnitType;
-  amount: undefined | number;
-  duration: number;
-  currency: string;
   country: string;
+  currency: string;
+  duration: string;
+  dataUnit: DataUnitType;
+  amount: number | undefined;
+  dataVolume: number | undefined;
 };

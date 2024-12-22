@@ -30,12 +30,12 @@ import { useState } from 'react';
 const INIT_DATAPLAN = {
   id: '',
   name: '',
+  country: '',
+  duration: '',
+  currency: '',
+  amount: undefined,
   dataVolume: undefined,
   dataUnit: DataUnitType.GigaBytes,
-  amount: undefined,
-  duration: 0,
-  currency: '',
-  country: '',
 };
 
 const Page = () => {
@@ -169,28 +169,28 @@ const Page = () => {
     }
   };
 
-  const handleDataPlanAction = (action: string) => {
-    if (action === 'add' && dataplan.amount && dataplan.dataVolume) {
+  const handleDataPlanAction = (action: string, values: CreatePlanType) => {
+    if (action === 'add' && values.amount && values.dataVolume) {
       addDataPlan({
         variables: {
           data: {
-            name: dataplan.name,
-            amount: dataplan.amount,
-            dataUnit: dataplan.dataUnit,
-            dataVolume: dataplan.dataVolume,
-            duration: dataplan.duration,
+            name: values.name,
+            amount: values?.amount,
+            dataUnit: values.dataUnit,
             country: user.country ?? '',
             currency: user.currency ?? '',
+            dataVolume: values?.dataVolume,
+            duration: parseInt(values.duration),
           },
         },
       });
     } else if (action === 'update') {
       updatePackage({
         variables: {
-          packageId: dataplan.id,
+          packageId: values.id,
           data: {
-            name: dataplan.name,
             active: true,
+            name: values.name,
           },
         },
       });
@@ -212,7 +212,7 @@ const Page = () => {
       setDataplan({
         id: id,
         name: d?.name ?? '',
-        duration: d?.duration ?? 0,
+        duration: d?.duration.toString() ?? '',
         dataVolume: d?.dataVolume ?? 0,
         country: d?.country ?? '',
         currency: d?.currency ?? '',

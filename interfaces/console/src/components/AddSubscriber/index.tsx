@@ -320,6 +320,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                         {...params}
                         {...field}
                         label="SIM ICCID*"
+                        InputLabelProps={{ shrink: true }}
                         sx={{
                           '.MuiOutlinedInput-root': { padding: 0 },
                         }}

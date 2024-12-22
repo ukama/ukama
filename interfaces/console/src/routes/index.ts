@@ -76,7 +76,7 @@ export const MANAGE_MENU_LIST = [
   },
   {
     id: 'manage-sim',
-    name: 'Sim pool',
+    name: 'SIM pool',
     path: '/manage/sims',
     icon: SimCardIcon,
   },
@@ -103,7 +103,7 @@ export const MANAGE_MENU_LIST_SMALL = [
   },
   {
     id: 'manage-sim',
-    name: 'Sim pool',
+    name: 'SIM pool',
     path: '/manage/sims',
     icon: SimCardIcon,
   },

@@ -160,13 +160,13 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
+      ) : column.id === 'isAllocated' ? (
+        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+          {row[column.id] === true ? 'Assigned' : 'Unassigned'}
+        </Typography>
       ) : (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
-          {row[column.id] === true
-            ? 'Assigned'
-            : row[column.id] === false
-              ? 'N/A'
-              : row[column.id]}
+          {row[column.id]}
         </Typography>
       )}
     </TableCell>
