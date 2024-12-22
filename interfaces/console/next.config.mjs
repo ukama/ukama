@@ -5,6 +5,9 @@ const nextConfig = {
     config.cache = false;
     return config;
   },
+  images: {
+    domains: ['ukama-site-assets.s3.amazonaws.com'],
+  },
 };
 
 export default nextConfig;

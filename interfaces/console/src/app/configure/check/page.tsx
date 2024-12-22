@@ -147,10 +147,7 @@ const Check = () => {
       setDescription(
         'It is taking longer than usual to load up your site. Please check on your site to make sure that all parts are installed correctly.',
       );
-    } else {
-      // TODO: CHECK IF ANY SITE IS AVAILABLE FOR CONFIGURE & REDIRECT TO SITE CONFIGURE STEP 3
-      router.push(`/configure?step=2&flow=${ONBOARDING_FLOW}`);
-    }
+    } else router.push(`/configure?step=2&flow=${ONBOARDING_FLOW}`);
   };
 
   const handleBack = () => {

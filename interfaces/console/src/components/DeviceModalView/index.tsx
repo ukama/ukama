@@ -8,6 +8,7 @@
 
 import { NODE_IMAGES } from '@/constants';
 import { Box } from '@mui/material';
+import Image from 'next/image';
 
 interface IDeviceModalView {
   nodeType: string | undefined;
@@ -25,10 +26,15 @@ const DeviceModalView = ({ nodeType = 'hnode' }: IDeviceModalView) => {
         justifyContent: 'center',
       }}
     >
-      <img
-        src={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
-        alt="node-img"
-        style={{ maxWidth: '100%', maxHeight: '500px' }}
+      <Image
+        sizes="100vw"
+        style={{
+          objectFit: 'contain',
+        }}
+        width={300}
+        height={300}
+        alt={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
+        src="https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png"
       />
     </Box>
   );

@@ -61,7 +61,7 @@ const NodeOverviewTab = ({
   };
 
   return (
-    <Grid container columnSpacing={3}>
+    <Grid container columnSpacing={3} rowSpacing={2}>
       <Grid size={{ xs: 12, md: 4 }}>
         <Stack spacing={2}>
           <NodeStatsContainer
