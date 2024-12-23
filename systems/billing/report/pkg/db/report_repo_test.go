@@ -364,6 +364,103 @@ func TestReportRepo_List(t *testing.T) {
 	})
 }
 
+func TestReportRepo_Update(t *testing.T) {
+	t.Run("ReportFound", func(t *testing.T) {
+		reportId := uuid.NewV4()
+
+		rows := sqlmock.NewRows([]string{"report_id", "item_id", "item_type", "status"}).
+			AddRow(reportId, uuid.NewV4(), ukama.ItemTypeInvoice, ukama.StatusTypePending)
+
+		mock, gdb := prepare_db(t)
+
+		report := &db.Report{
+			IsPaid: true,
+		}
+
+		report.Id = reportId
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*reports.*`).
+			WithArgs(report.IsPaid, sqlmock.AnyArg(), report.Id).
+			WillReturnRows(rows)
+
+		mock.ExpectCommit()
+
+		r := db.NewReportRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(report, nil)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReportNotFound", func(t *testing.T) {
+		reportId := uuid.NewV4()
+
+		rows := sqlmock.NewRows([]string{"report_id", "item_id", "item_type", "status"})
+
+		mock, gdb := prepare_db(t)
+
+		report := &db.Report{
+			IsPaid: true,
+		}
+
+		report.Id = reportId
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*reports.*`).
+			WithArgs(report.IsPaid, sqlmock.AnyArg(), report.Id).
+			WillReturnRows(rows)
+
+		mock.ExpectCommit()
+
+		r := db.NewReportRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(report, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Error(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReportUpdateError", func(t *testing.T) {
+		reportId := uuid.NewV4()
+		mock, gdb := prepare_db(t)
+
+		report := &db.Report{
+			IsPaid: true,
+		}
+
+		report.Id = reportId
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*reports.*`).
+			WithArgs(report.IsPaid, sqlmock.AnyArg(), report.Id).
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewReportRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(report, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
 func TestReportRepo_Delete(t *testing.T) {
 	t.Run("reportFound", func(t *testing.T) {
 		// Arrange

@@ -114,6 +114,24 @@ func (_m *ReportRepo) List(ownerId string, ownerType ukama.OwnerType, networkId 
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *ReportRepo) Update(_a0 *db.Report, _a1 func(*db.Report, *gorm.DB) error) error {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Report, func(*db.Report, *gorm.DB) error) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewReportRepo creates a new instance of ReportRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewReportRepo(t interface {

@@ -23,7 +23,7 @@ type ReportRepo interface {
 	List(ownerId string, ownerType ukama.OwnerType, networkId string, reportType ukama.ReportType,
 		isPaid bool, count uint32, sort bool) ([]Report, error)
 
-	// Update(orgId uint, network *Network) error
+	Update(*Report, func(*Report, *gorm.DB) error) error
 	Delete(reportId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
@@ -107,6 +107,32 @@ func (r *reportRepo) List(ownerId string, ownerType ukama.OwnerType, networkId s
 	}
 
 	return reports, nil
+}
+
+// Update report given an `id`. Only fields that are not nil are updated.
+func (r *reportRepo) Update(report *Report, nestedFunc func(*Report, *gorm.DB) error) error {
+	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Clauses(clause.Returning{}).Updates(report)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(report, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (r *reportRepo) Delete(ownerId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
