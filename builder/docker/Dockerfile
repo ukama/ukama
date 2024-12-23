@@ -74,7 +74,7 @@ RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         gcc-aarch64-linux-gnu \
         g++-aarch64-linux-gnu \
         uuid-dev \
-        sqlite3-dev \
+        libsqlite3-dev \
         && rm -rf /var/lib/apt/lists/*; \
     else \
         echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
