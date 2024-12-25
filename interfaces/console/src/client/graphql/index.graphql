@@ -234,6 +234,56 @@ query getOrg {
     ...Org
   }
 }
+
+query GetOrgTree {
+  getOrgTree {
+    org {
+      orgId
+      orgName
+      country
+      currency
+      ownerName
+      ownerEmail
+      ownerId
+      elementType
+      networks {
+        networkId
+        networkName
+        elementType
+        sites {
+          siteId
+          siteName
+          elementType
+          components {
+            componentId
+            componentName
+            elementType
+          }
+        }
+        subscribers {
+          totalSubscribers
+          activeSubscribers
+          inactiveSubscribers
+        }
+      }
+      dataplans {
+        planId
+        planName
+        elementType
+      }
+      sims {
+        availableSims
+        consumed
+        totalSims
+      }
+      members {
+        totalMembers
+        activeMembers
+        inactiveMembers
+      }
+    }
+  }
+}
 ### Org End ###
 
 ### Package Start ###

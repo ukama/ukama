@@ -35,6 +35,7 @@
     "qrcode.react": "^3.1.0",
     "react": "^18",
     "react-cool-onclickoutside": "^1.7.0",
+    "react-d3-tree": "^3.6.2",
     "react-dom": "^18",
     "react-dropzone": "^14.2.3",
     "react-leaflet": "^4.2.1",

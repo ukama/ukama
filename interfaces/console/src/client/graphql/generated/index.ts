@@ -1577,6 +1577,11 @@ export type GetOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string } };
 
+export type GetOrgTreeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetOrgTreeQuery = { __typename?: 'Query', getOrgTree: { __typename?: 'OrgTreeRes', org: { __typename?: 'Org', orgId: string, orgName: string, country: string, currency: string, ownerName: string, ownerEmail: string, ownerId: string, elementType: string, networks: Array<{ __typename?: 'Network', networkId: string, networkName: string, elementType: string, sites: Array<{ __typename?: 'Site', siteId: string, siteName: string, elementType: string, components: Array<{ __typename?: 'Component', componentId?: string | null, componentName?: string | null, elementType: string }> }>, subscribers?: { __typename?: 'Subscribers', totalSubscribers: string, activeSubscribers: string, inactiveSubscribers: string } | null }>, dataplans: Array<{ __typename?: 'DataPlan', planId: string, planName: string, elementType: string }>, sims?: { __typename?: 'Sims', availableSims: string, consumed: string, totalSims: string } | null, members?: { __typename?: 'Members', totalMembers: string, activeMembers: string, inactiveMembers: string } | null } } };
+
 export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
 
 export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
@@ -3064,6 +3069,89 @@ export type GetOrgQueryHookResult = ReturnType<typeof useGetOrgQuery>;
 export type GetOrgLazyQueryHookResult = ReturnType<typeof useGetOrgLazyQuery>;
 export type GetOrgSuspenseQueryHookResult = ReturnType<typeof useGetOrgSuspenseQuery>;
 export type GetOrgQueryResult = Apollo.QueryResult<GetOrgQuery, GetOrgQueryVariables>;
+export const GetOrgTreeDocument = gql`
+    query GetOrgTree {
+  getOrgTree {
+    org {
+      orgId
+      orgName
+      country
+      currency
+      ownerName
+      ownerEmail
+      ownerId
+      elementType
+      networks {
+        networkId
+        networkName
+        elementType
+        sites {
+          siteId
+          siteName
+          elementType
+          components {
+            componentId
+            componentName
+            elementType
+          }
+        }
+        subscribers {
+          totalSubscribers
+          activeSubscribers
+          inactiveSubscribers
+        }
+      }
+      dataplans {
+        planId
+        planName
+        elementType
+      }
+      sims {
+        availableSims
+        consumed
+        totalSims
+      }
+      members {
+        totalMembers
+        activeMembers
+        inactiveMembers
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetOrgTreeQuery__
+ *
+ * To run a query within a React component, call `useGetOrgTreeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetOrgTreeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetOrgTreeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetOrgTreeQuery(baseOptions?: Apollo.QueryHookOptions<GetOrgTreeQuery, GetOrgTreeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetOrgTreeQuery, GetOrgTreeQueryVariables>(GetOrgTreeDocument, options);
+      }
+export function useGetOrgTreeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetOrgTreeQuery, GetOrgTreeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetOrgTreeQuery, GetOrgTreeQueryVariables>(GetOrgTreeDocument, options);
+        }
+export function useGetOrgTreeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgTreeQuery, GetOrgTreeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetOrgTreeQuery, GetOrgTreeQueryVariables>(GetOrgTreeDocument, options);
+        }
+export type GetOrgTreeQueryHookResult = ReturnType<typeof useGetOrgTreeQuery>;
+export type GetOrgTreeLazyQueryHookResult = ReturnType<typeof useGetOrgTreeLazyQuery>;
+export type GetOrgTreeSuspenseQueryHookResult = ReturnType<typeof useGetOrgTreeSuspenseQuery>;
+export type GetOrgTreeQueryResult = Apollo.QueryResult<GetOrgTreeQuery, GetOrgTreeQueryVariables>;
 export const GetPackagesDocument = gql`
     query getPackages {
   getPackages {

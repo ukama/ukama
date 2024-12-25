@@ -8,6 +8,7 @@
 
 import { Role_Type } from '@/client/graphql/generated';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import HomeIcon from '@mui/icons-material/Home';
 import LocationIcon from '@mui/icons-material/LocationOn';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -92,6 +93,12 @@ export const MANAGE_MENU_LIST = [
     path: '/manage/data-plans',
     icon: PermDataSettingIcon,
   },
+  {
+    id: 'org-overview',
+    name: 'Org overview',
+    path: '/manage/org-overview',
+    icon: CorporateFareIcon,
+  },
 ];
 
 export const MANAGE_MENU_LIST_SMALL = [
@@ -118,5 +125,11 @@ export const MANAGE_MENU_LIST_SMALL = [
     name: 'Data plans',
     path: '/manage/data-plans',
     icon: PermDataSettingIcon,
+  },
+  {
+    id: 'org-overview',
+    name: 'Org overview',
+    path: '/manage/org-overview',
+    icon: CorporateFareIcon,
   },
 ];
