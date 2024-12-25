@@ -424,6 +424,10 @@ function create_ssh_user() {
     chown 1001:1001 "${PRIMARY_MOUNT}/home/${USER_NAME}"
     chmod 700       "${PRIMARY_MOUNT}/home/${USER_NAME}"
 
+    # Add to sudoer
+    echo "ukama ALL=(ALL:ALL) ALL" | sudo tee "${PRIMARY_MOUNT}/etc/sudoers.d/ukama"
+    sudo chmod 0440 "${PRIMARY_MOUNT}/etc/sudoers.d/ukama"
+
     log "SUCCESS" "User $USER_NAME added with no password."
 }
 
