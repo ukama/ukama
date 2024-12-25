@@ -9,6 +9,7 @@ set -e
 set -x
 
 # Variables
+LOG_FILE="build_run.log"
 IMG_NAME="access-node.img"
 RPI_BASE_URL="https://downloads.raspberrypi.com"
 RPI_URL_PATH="raspios_oldstable_armhf/images/raspios_oldstable_armhf-2024-10-28"
@@ -36,7 +37,45 @@ function check_sudo() {
 function log() {
     local type="$1"
     local message="$2"
-    echo -e "\033[1;34m${type}:\033[0m ${message}"
+    local timestamp
+    local file_name
+    local func_name
+    local color
+    local reset="\033[0m"
+
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    file_name=$(basename "${BASH_SOURCE[1]}")
+    func_name="${FUNCNAME[1]}"
+
+    # Set color based on log type
+    case "$type" in
+        INFO)
+            color="\033[1;34m" # Blue
+            ;;
+        SUCCESS)
+            color="\033[1;32m" # Green
+            ;;
+        WARNING)
+            color="\033[1;33m" # Yellow
+            ;;
+        ERROR)
+            color="\033[1;31m" # Red
+            ;;
+        *)
+            color="$reset" # Default (no color)
+            ;;
+    esac
+
+    printf "%s %b%s%b %s:%s \"%s\"\n" "$timestamp" "$color" "$type" "$reset" "$file_name" "$func_name" "$message" | tee -a "$LOG_FILE"
+}
+
+function LOG_EXEC() {
+    log "EXEC" "$*"
+    "$@" >>"$LOG_FILE" 2>&1
+    if [[ $? -ne 0 ]]; then
+        log "ERROR" "Command failed: $*"
+        exit 1
+    fi
 }
 
 function check_command() {
@@ -374,11 +413,11 @@ function create_ssh_user() {
     log "INFO" "Adding ssh user..."
 
     echo "${USER_NAME}:x:1001:1001::/home/${USER_NAME}:/bin/bash" \
-        | sudo tee -a "${PRIMARY_MOUNT}/etc/passwd" > /dev/null
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/passwd"
     echo "${USER_NAME}:x:1001:" \
-        | sudo tee -a "${PRIMARY_MOUNT}/etc/group" > /dev/null
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/group"
     echo "${USER_NAME}::19000:0:99999:7:::" \
-        | sudo tee -a "${PRIMARY_MOUNT}/etc/shadow" > /dev/null
+        | sudo tee -a "${PRIMARY_MOUNT}/etc/shadow"
 
     # Create home directory
     mkdir -p        "${PRIMARY_MOUNT}/home/${USER_NAME}"
@@ -412,6 +451,8 @@ OS_VERSION="0.0.1"
 MANIFEST_FILE="manifest.json"
 export TARGET="access"
 
+rm -rf ${LOG_FILE}
+
 if [[ $# -ne 3 ]]; then
     log "ERROR" "Error: Exactly 3 arguments are required!"
     log "INFO"  "Usage: $0 <ukama_root> <node_apps> <node_id>"
@@ -440,15 +481,12 @@ copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_linux_kernel
 
-# setup system.d to run starter.d
 configure_systemd_service
-cp "${TMP_DIR}/${RPI_IMG}" "${CWD}/build_access_node/${IMG_NAME}"
-
-# create ssh user
 create_ssh_user
 
 # cleanup
 unmount_partitions
+cp "${TMP_DIR}/${RPI_IMG}" "${CWD}/build_access_node/${IMG_NAME}"
 cleanup
 
 cd ${CWD}
