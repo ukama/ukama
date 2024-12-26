@@ -12,10 +12,15 @@ set -x
 LOG_FILE="build_run.log"
 IMG_NAME="access-node.img"
 RPI_BASE_URL="https://downloads.raspberrypi.com"
-RPI_URL_PATH="raspios_oldstable_armhf/images/raspios_oldstable_armhf-2024-10-28"
-RPI_IMG="2024-10-22-raspios-bullseye-armhf.img"
-RPI_IMG_OFFSET="272629760"
+RPI_URL_PATH="raspios_lite_arm64/images/raspios_lite_arm64-2024-11-19"
+RPI_IMG="2024-11-19-raspios-bookworm-arm64-lite.img"
+RPI_IMG_OFFSET="541065216"
 PRIMARY_MOUNT="/mnt/access-node"
+
+# for 32-bit ARM
+#RPI_URL_PATH="raspios_oldstable_armhf/images/raspios_oldstable_armhf-2024-10-28"
+#RPI_IMG="2024-10-22-raspios-bullseye-armhf.img"
+#RPI_IMG_OFFSET="272629248"
 
 TMP_DIR="/tmp/access-node"
 TMP_ROOTFS="${TMP_DIR}/alpine-rootfs"
