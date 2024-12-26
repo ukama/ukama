@@ -185,7 +185,7 @@ func (r *Router) RemoveReport(c *gin.Context, req *GetReportRequest) error {
 func (r *Router) Pdf(c *gin.Context, req *GetReportRequest) error {
 	content, err := r.clients.p.GetPdf(req.ReportId)
 	if err != nil {
-		if errors.Is(err, client.ErrInvoicePDFNotFound) {
+		if errors.Is(err, client.ErrReportPDFNotFound) {
 			c.Status(http.StatusNotFound)
 		}
 

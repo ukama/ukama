@@ -69,28 +69,17 @@ func (r *report) Add(rawReport string) (*pb.ReportResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Add(ctx, &pb.AddRequest{
+	return r.client.Add(ctx, &pb.AddRequest{
 		RawReport: rawReport})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *report) Get(reportId string) (*pb.ReportResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{
+	return r.client.Get(ctx, &pb.GetRequest{
 		ReportId: reportId})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *report) List(ownerId, ownerType, networkId, reportType string,
@@ -114,16 +103,10 @@ func (r *report) Update(reportId string, isPaid bool) (*pb.ReportResponse, error
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Update(ctx, &pb.UpdateRequest{
+	return r.client.Update(ctx, &pb.UpdateRequest{
 		ReportId: reportId,
 		IsPaid:   isPaid,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *report) Remove(reportId string) error {

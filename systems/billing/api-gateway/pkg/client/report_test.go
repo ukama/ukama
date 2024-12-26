@@ -25,7 +25,7 @@ import (
 
 func TestReportClient_Add(t *testing.T) {
 	t.Run("OwnerIdValid", func(t *testing.T) {
-		var bc = &mocks.ReportServiceClient{}
+		var rc = &mocks.ReportServiceClient{}
 
 		var raw = `{
 	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
@@ -129,19 +129,19 @@ func TestReportClient_Add(t *testing.T) {
 			NetworkId: uuid.NewV4().String(),
 		}}
 
-		bc.On("Add", mock.Anything, reportReq).Return(reportResp, nil)
+		rc.On("Add", mock.Anything, reportReq).Return(reportResp, nil)
 
-		i := client.NewReportFromClient(bc)
+		r := client.NewReportFromClient(rc)
 
-		resp, err := i.Add(raw)
+		resp, err := r.Add(raw)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
-		bc.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 
 	t.Run("OwnerIdNotValid", func(t *testing.T) {
-		var bc = &mocks.ReportServiceClient{}
+		var rc = &mocks.ReportServiceClient{}
 
 		var raw = `{
 	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
@@ -239,21 +239,21 @@ func TestReportClient_Add(t *testing.T) {
 			RawReport: raw,
 		}
 
-		bc.On("Add", mock.Anything, reportReq).Return(nil,
+		rc.On("Add", mock.Anything, reportReq).Return(nil,
 			status.Errorf(codes.InvalidArgument, "invalid ownerId"))
 
-		i := client.NewReportFromClient(bc)
+		r := client.NewReportFromClient(rc)
 
-		resp, err := i.Add(raw)
+		resp, err := r.Add(raw)
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		bc.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 }
 
 func TestReportClient_Get(t *testing.T) {
-	var ic = &mocks.ReportServiceClient{}
+	var rc = &mocks.ReportServiceClient{}
 
 	t.Run("ReportFound", func(t *testing.T) {
 		reportId := uuid.NewV4()
@@ -267,16 +267,16 @@ func TestReportClient_Get(t *testing.T) {
 			OwnerId: uuid.NewV4().String(),
 		}}
 
-		ic.On("Get", mock.Anything, reportReq).Return(reportResp, nil)
+		rc.On("Get", mock.Anything, reportReq).Return(reportResp, nil)
 
-		i := client.NewReportFromClient(ic)
+		r := client.NewReportFromClient(rc)
 
-		resp, err := i.Get(reportId.String())
+		resp, err := r.Get(reportId.String())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, resp.Report.Id, reportId.String())
-		ic.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 
 	t.Run("ReportNotFound", func(t *testing.T) {
@@ -286,22 +286,22 @@ func TestReportClient_Get(t *testing.T) {
 			ReportId: reportId.String(),
 		}
 
-		ic.On("Get", mock.Anything, reportReq).Return(nil,
+		rc.On("Get", mock.Anything, reportReq).Return(nil,
 			status.Errorf(codes.NotFound, "report not found"))
 
-		i := client.NewReportFromClient(ic)
+		r := client.NewReportFromClient(rc)
 
-		resp, err := i.Get(reportId.String())
+		resp, err := r.Get(reportId.String())
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		assert.Contains(t, err.Error(), "not found")
-		ic.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 }
 func TestReportClient_List(t *testing.T) {
 	var (
-		ic = &mocks.ReportServiceClient{}
+		rc = &mocks.ReportServiceClient{}
 
 		reportId            = uuid.NewV4().String()
 		ownerId             = uuid.NewV4().String()
@@ -331,20 +331,70 @@ func TestReportClient_List(t *testing.T) {
 			IsPaid:    isPaid,
 		}}}
 
-	ic.On("List", mock.Anything, listReq).Return(listResp, nil)
+	rc.On("List", mock.Anything, listReq).Return(listResp, nil)
 
-	n := client.NewReportFromClient(ic)
+	r := client.NewReportFromClient(rc)
 
-	resp, err := n.List(ownerId, ownerTypeSubscriber, networkId,
+	resp, err := r.List(ownerId, ownerTypeSubscriber, networkId,
 		reportTypeInvoice, isPaid, uint32(1), true)
 
 	assert.NoError(t, err)
 	assert.Equal(t, resp.Reports[0].Id, reportId)
-	ic.AssertExpectations(t)
+	rc.AssertExpectations(t)
+}
+
+func TestReportClient_Update(t *testing.T) {
+	var rc = &mocks.ReportServiceClient{}
+
+	t.Run("ReportFound", func(t *testing.T) {
+		reportId := uuid.NewV4()
+
+		reportReq := &pb.UpdateRequest{
+			ReportId: reportId.String(),
+			IsPaid:   true,
+		}
+
+		reportResp := &pb.ReportResponse{Report: &pb.Report{
+			Id:      reportId.String(),
+			OwnerId: uuid.NewV4().String(),
+		}}
+
+		rc.On("Update", mock.Anything, reportReq).Return(reportResp, nil)
+
+		r := client.NewReportFromClient(rc)
+
+		resp, err := r.Update(reportId.String(), true)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Equal(t, resp.Report.Id, reportId.String())
+		rc.AssertExpectations(t)
+	})
+
+	t.Run("ReportNotFound", func(t *testing.T) {
+		reportId := uuid.NewV4()
+
+		reportReq := &pb.UpdateRequest{
+			ReportId: reportId.String(),
+			IsPaid:   true,
+		}
+
+		rc.On("Update", mock.Anything, reportReq).Return(nil,
+			status.Errorf(codes.NotFound, "report not found"))
+
+		r := client.NewReportFromClient(rc)
+
+		resp, err := r.Update(reportId.String(), true)
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Contains(t, err.Error(), "not found")
+		rc.AssertExpectations(t)
+	})
 }
 
 func TestReportClient_Remove(t *testing.T) {
-	var bc = &mocks.ReportServiceClient{}
+	var rc = &mocks.ReportServiceClient{}
 
 	t.Run("ReportFound", func(t *testing.T) {
 		reportId := uuid.NewV4()
@@ -353,14 +403,14 @@ func TestReportClient_Remove(t *testing.T) {
 			ReportId: reportId.String(),
 		}
 
-		bc.On("Delete", mock.Anything, reportReq).Return(nil, nil)
+		rc.On("Delete", mock.Anything, reportReq).Return(nil, nil)
 
-		i := client.NewReportFromClient(bc)
+		r := client.NewReportFromClient(rc)
 
-		err := i.Remove(reportId.String())
+		err := r.Remove(reportId.String())
 
 		assert.NoError(t, err)
-		bc.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 
 	t.Run("ReportNotFound", func(t *testing.T) {
@@ -370,15 +420,15 @@ func TestReportClient_Remove(t *testing.T) {
 			ReportId: reportId.String(),
 		}
 
-		bc.On("Delete", mock.Anything, reportReq).Return(nil,
+		rc.On("Delete", mock.Anything, reportReq).Return(nil,
 			status.Errorf(codes.NotFound, "report not found"))
 
-		i := client.NewReportFromClient(bc)
+		r := client.NewReportFromClient(rc)
 
-		err := i.Remove(reportId.String())
+		err := r.Remove(reportId.String())
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
-		bc.AssertExpectations(t)
+		rc.AssertExpectations(t)
 	})
 }

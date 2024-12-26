@@ -9,9 +9,9 @@ type Pdf struct {
 	mock.Mock
 }
 
-// GetPdf provides a mock function with given fields: invoiceId
-func (_m *Pdf) GetPdf(invoiceId string) ([]byte, error) {
-	ret := _m.Called(invoiceId)
+// GetPdf provides a mock function with given fields: reportId
+func (_m *Pdf) GetPdf(reportId string) ([]byte, error) {
+	ret := _m.Called(reportId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPdf")
@@ -20,10 +20,10 @@ func (_m *Pdf) GetPdf(invoiceId string) ([]byte, error) {
 	var r0 []byte
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) ([]byte, error)); ok {
-		return rf(invoiceId)
+		return rf(reportId)
 	}
 	if rf, ok := ret.Get(0).(func(string) []byte); ok {
-		r0 = rf(invoiceId)
+		r0 = rf(reportId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]byte)
@@ -31,7 +31,7 @@ func (_m *Pdf) GetPdf(invoiceId string) ([]byte, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(invoiceId)
+		r1 = rf(reportId)
 	} else {
 		r1 = ret.Error(1)
 	}
