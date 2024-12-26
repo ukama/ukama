@@ -1,6 +1,8 @@
 module github.com/ukama/ukama/systems/billing/report
 
-go 1.22.0
+go 1.22.7
+
+toolchain go1.23.2
 
 replace github.com/ukama/ukama/systems/common => ../../common
 

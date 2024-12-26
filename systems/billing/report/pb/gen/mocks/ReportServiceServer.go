@@ -15,23 +15,23 @@ type ReportServiceServer struct {
 }
 
 // Add provides a mock function with given fields: _a0, _a1
-func (_m *ReportServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.AddResponse, error) {
+func (_m *ReportServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.ReportResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
-	var r0 *gen.AddResponse
+	var r0 *gen.ReportResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) (*gen.AddResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) (*gen.ReportResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.AddResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.ReportResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddResponse)
+			r0 = ret.Get(0).(*gen.ReportResponse)
 		}
 	}
 
@@ -75,23 +75,23 @@ func (_m *ReportServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteReques
 }
 
 // Get provides a mock function with given fields: _a0, _a1
-func (_m *ReportServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
+func (_m *ReportServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.ReportResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *gen.GetResponse
+	var r0 *gen.ReportResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) (*gen.GetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) (*gen.ReportResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.GetResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.ReportResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetResponse)
+			r0 = ret.Get(0).(*gen.ReportResponse)
 		}
 	}
 
@@ -126,6 +126,36 @@ func (_m *ReportServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *ReportServiceServer) Update(_a0 context.Context, _a1 *gen.UpdateRequest) (*gen.ReportResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *gen.ReportResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateRequest) (*gen.ReportResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateRequest) *gen.ReportResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ReportResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

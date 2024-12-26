@@ -31,8 +31,6 @@ import (
 )
 
 const (
-	OrgName             = "testorg"
-	OrgId               = "fb97e9fa-45ad-4ba2-b42d-64eb80769b16"
 	ownerTypeOrg        = "org"
 	reportTypeInvoice   = "invoice"
 	ownerTypeSubscriber = "subscriber"

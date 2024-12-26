@@ -29,6 +29,7 @@ const (
 	ReportService_Add_FullMethodName    = "/ukama.billing.report.v1.ReportService/Add"
 	ReportService_Get_FullMethodName    = "/ukama.billing.report.v1.ReportService/Get"
 	ReportService_List_FullMethodName   = "/ukama.billing.report.v1.ReportService/List"
+	ReportService_Update_FullMethodName = "/ukama.billing.report.v1.ReportService/Update"
 	ReportService_Delete_FullMethodName = "/ukama.billing.report.v1.ReportService/Delete"
 )
 
@@ -36,10 +37,10 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReportServiceClient interface {
-	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*ReportResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*ReportResponse, error)
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
-	// Update
+	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*ReportResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
@@ -51,9 +52,9 @@ func NewReportServiceClient(cc grpc.ClientConnInterface) ReportServiceClient {
 	return &reportServiceClient{cc}
 }
 
-func (c *reportServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
+func (c *reportServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddResponse)
+	out := new(ReportResponse)
 	err := c.cc.Invoke(ctx, ReportService_Add_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -61,9 +62,9 @@ func (c *reportServiceClient) Add(ctx context.Context, in *AddRequest, opts ...g
 	return out, nil
 }
 
-func (c *reportServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+func (c *reportServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetResponse)
+	out := new(ReportResponse)
 	err := c.cc.Invoke(ctx, ReportService_Get_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -75,6 +76,16 @@ func (c *reportServiceClient) List(ctx context.Context, in *ListRequest, opts ..
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, ReportService_List_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *reportServiceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*ReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReportResponse)
+	err := c.cc.Invoke(ctx, ReportService_Update_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +106,10 @@ func (c *reportServiceClient) Delete(ctx context.Context, in *DeleteRequest, opt
 // All implementations must embed UnimplementedReportServiceServer
 // for forward compatibility.
 type ReportServiceServer interface {
-	Add(context.Context, *AddRequest) (*AddResponse, error)
-	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Add(context.Context, *AddRequest) (*ReportResponse, error)
+	Get(context.Context, *GetRequest) (*ReportResponse, error)
 	List(context.Context, *ListRequest) (*ListResponse, error)
-	// Update
+	Update(context.Context, *UpdateRequest) (*ReportResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedReportServiceServer()
 }
@@ -110,14 +121,17 @@ type ReportServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedReportServiceServer struct{}
 
-func (UnimplementedReportServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
+func (UnimplementedReportServiceServer) Add(context.Context, *AddRequest) (*ReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedReportServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+func (UnimplementedReportServiceServer) Get(context.Context, *GetRequest) (*ReportResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedReportServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedReportServiceServer) Update(context.Context, *UpdateRequest) (*ReportResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedReportServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -197,6 +211,24 @@ func _ReportService_List_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReportService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReportService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportServiceServer).Update(ctx, req.(*UpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ReportService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
@@ -233,6 +265,10 @@ var ReportService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "List",
 			Handler:    _ReportService_List_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _ReportService_Update_Handler,
 		},
 		{
 			MethodName: "Delete",
