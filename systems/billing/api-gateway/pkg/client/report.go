@@ -20,10 +20,12 @@ import (
 )
 
 type Report interface {
-	Add(rawReport string) (*pb.AddResponse, error)
-	Get(reportId string, asPDF bool) (*pb.GetResponse, error)
+	Add(rawReport string) (*pb.ReportResponse, error)
+	Get(reportId string) (*pb.ReportResponse, error)
 	List(ownerId, ownerType, networkId, reportType string,
 		isPaid bool, count uint32, sort bool) (*pb.ListResponse, error)
+
+	Update(reportId string, isPaid bool) (*pb.ReportResponse, error)
 	Remove(reportId string) error
 }
 
@@ -63,7 +65,7 @@ func (r *report) Close() {
 	r.conn.Close()
 }
 
-func (r *report) Add(rawReport string) (*pb.AddResponse, error) {
+func (r *report) Add(rawReport string) (*pb.ReportResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
@@ -77,13 +79,12 @@ func (r *report) Add(rawReport string) (*pb.AddResponse, error) {
 	return res, nil
 }
 
-func (r *report) Get(reportId string, AsPDF bool) (*pb.GetResponse, error) {
+func (r *report) Get(reportId string) (*pb.ReportResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	res, err := r.client.Get(ctx, &pb.GetRequest{
-		ReportId: reportId,
-		AsPdf:    AsPDF})
+		ReportId: reportId})
 
 	if err != nil {
 		return nil, err
@@ -107,6 +108,22 @@ func (r *report) List(ownerId, ownerType, networkId, reportType string,
 			Count:      count,
 			Sort:       sort,
 		})
+}
+
+func (r *report) Update(reportId string, isPaid bool) (*pb.ReportResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.Update(ctx, &pb.UpdateRequest{
+		ReportId: reportId,
+		IsPaid:   isPaid,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (r *report) Remove(reportId string) error {

@@ -123,7 +123,7 @@ func TestReportClient_Add(t *testing.T) {
 			RawReport: raw,
 		}
 
-		reportResp := &pb.AddResponse{Report: &pb.Report{
+		reportResp := &pb.ReportResponse{Report: &pb.Report{
 			Id:        uuid.NewV4().String(),
 			OwnerId:   "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
 			NetworkId: uuid.NewV4().String(),
@@ -260,10 +260,9 @@ func TestReportClient_Get(t *testing.T) {
 
 		reportReq := &pb.GetRequest{
 			ReportId: reportId.String(),
-			AsPdf:    false,
 		}
 
-		reportResp := &pb.GetResponse{Report: &pb.Report{
+		reportResp := &pb.ReportResponse{Report: &pb.Report{
 			Id:      reportId.String(),
 			OwnerId: uuid.NewV4().String(),
 		}}
@@ -272,7 +271,7 @@ func TestReportClient_Get(t *testing.T) {
 
 		i := client.NewReportFromClient(ic)
 
-		resp, err := i.Get(reportId.String(), false)
+		resp, err := i.Get(reportId.String())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -285,7 +284,6 @@ func TestReportClient_Get(t *testing.T) {
 
 		reportReq := &pb.GetRequest{
 			ReportId: reportId.String(),
-			AsPdf:    false,
 		}
 
 		ic.On("Get", mock.Anything, reportReq).Return(nil,
@@ -293,7 +291,7 @@ func TestReportClient_Get(t *testing.T) {
 
 		i := client.NewReportFromClient(ic)
 
-		resp, err := i.Get(reportId.String(), false)
+		resp, err := i.Get(reportId.String())
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)

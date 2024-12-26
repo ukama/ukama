@@ -47,14 +47,14 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	i client.Report
+	r client.Report
 	p client.Pdf
 }
 
 func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
 
-	c.i = client.NewReportClient(grpcEndpoints.Report, grpcEndpoints.Timeout)
+	c.r = client.NewReportClient(grpcEndpoints.Report, grpcEndpoints.Timeout)
 	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
 
 	return c
@@ -125,25 +125,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		reports.GET("", formatDoc("Get Reports", "Get all Reports of a owner"), tonic.Handler(r.GetReports, http.StatusOK))
 		reports.GET("/:report_id", formatDoc("Get Report", "Get a specific report"), tonic.Handler(r.GetReport, http.StatusOK))
 		reports.POST("", formatDoc("Add Report", "Add a new report for a owner"), tonic.Handler(r.PostReport, http.StatusCreated))
-		// update report
+		reports.PATCH("/:report_id", formatDoc("Update Report", "Update a specific report"), tonic.Handler(r.UpdateReport, http.StatusOK))
 		reports.DELETE("/:report_id", formatDoc("Remove Report", "Remove a specific report"), tonic.Handler(r.RemoveReport, http.StatusOK))
 
 		// pdf file routes
 		pdfs := auth.Group("pdf", "PDF Reports", "Operations on report PDF files")
 		pdfs.GET("/:report_id", formatDoc("Get Report PDF file", "Get a specific report file as PDF"), tonic.Handler(r.Pdf, http.StatusOK))
 	}
-}
-
-func (r *Router) GetReport(c *gin.Context, req *GetReportRequest) (*pb.GetResponse, error) {
-	return r.clients.i.Get(req.ReportId, req.AsPdf)
-}
-
-func (r *Router) GetReports(c *gin.Context, req *GetReportsRequest) (*pb.ListResponse, error) {
-	return r.clients.i.List(req.OwnerId, req.OwnerType, req.NetworkId, req.ReortType, req.IsPaid, req.Count, req.Sort)
-}
-
-func (r *Router) RemoveReport(c *gin.Context, req *GetReportRequest) error {
-	return r.clients.i.Remove(req.ReportId)
 }
 
 func (r *Router) PostReport(c *gin.Context, req *WebHookRequest) error {
@@ -170,12 +158,28 @@ func (r *Router) PostReport(c *gin.Context, req *WebHookRequest) error {
 		return fmt.Errorf("failed to marshal RawReport payload into rawReport JSON %w", err)
 	}
 
-	resp, err := r.clients.i.Add(string(rwReportBytes))
+	resp, err := r.clients.r.Add(string(rwReportBytes))
 	if err == nil {
 		c.JSON(http.StatusCreated, resp)
 	}
 
 	return err
+}
+
+func (r *Router) GetReport(c *gin.Context, req *GetReportRequest) (*pb.ReportResponse, error) {
+	return r.clients.r.Get(req.ReportId)
+}
+
+func (r *Router) GetReports(c *gin.Context, req *GetReportsRequest) (*pb.ListResponse, error) {
+	return r.clients.r.List(req.OwnerId, req.OwnerType, req.NetworkId, req.ReortType, req.IsPaid, req.Count, req.Sort)
+}
+
+func (r *Router) UpdateReport(c *gin.Context, req *UpdateReportRequest) (*pb.ReportResponse, error) {
+	return r.clients.r.Update(req.ReportId, req.IsPaid)
+}
+
+func (r *Router) RemoveReport(c *gin.Context, req *GetReportRequest) error {
+	return r.clients.r.Remove(req.ReportId)
 }
 
 func (r *Router) Pdf(c *gin.Context, req *GetReportRequest) error {

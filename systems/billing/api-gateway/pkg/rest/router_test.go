@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	reportPb = pb.GetResponse{
+	reportPb = pb.ReportResponse{
 		Report: &pb.Report{
 			Id:      reportId,
 			OwnerId: ownerId,
@@ -106,7 +106,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(&Clients{
-		i: client.NewReportFromClient(im),
+		r: client.NewReportFromClient(im),
 		p: pm,
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -141,10 +141,10 @@ func TestRouter_PostReport(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", ownerndpoint, bytes.NewReader(body))
 
-		im.On("Add", mock.Anything, reportReq).Return(&pb.AddResponse{}, nil)
+		im.On("Add", mock.Anything, reportReq).Return(&pb.ReportResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -175,7 +175,7 @@ func TestRouter_PostReport(t *testing.T) {
 		req, _ := http.NewRequest("POST", ownerndpoint, bytes.NewReader(body))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -215,7 +215,7 @@ func TestRouter_PostReport(t *testing.T) {
 			fmt.Errorf("some unexpected error"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -245,7 +245,7 @@ func TestRouter_GetReport(t *testing.T) {
 		im.On("Get", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -272,7 +272,7 @@ func TestRouter_GetReport(t *testing.T) {
 		im.On("Get", mock.Anything, pReq).Return(&reportPb, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -312,7 +312,7 @@ func TestRouter_GetReports(t *testing.T) {
 		req, _ := http.NewRequest("GET", ownerndpoint, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -349,7 +349,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerId), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -391,7 +391,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerId, true, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -430,7 +430,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, networkId), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -471,7 +471,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerType, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -500,7 +500,7 @@ func TestRouter_DeleteReport(t *testing.T) {
 			status.Errorf(codes.NotFound, "report not found"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -527,7 +527,7 @@ func TestRouter_DeleteReport(t *testing.T) {
 		im.On("Delete", mock.Anything, pReq).Return(&pb.DeleteResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -555,7 +555,7 @@ func TestRouter_Pdf(t *testing.T) {
 		pm.On("GetPdf", invoiceId).Return(content, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
@@ -579,7 +579,7 @@ func TestRouter_Pdf(t *testing.T) {
 		pm.On("GetPdf", invoiceId).Return(nil, client.ErrInvoicePDFNotFound)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
+			r: client.NewReportFromClient(im),
 			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
