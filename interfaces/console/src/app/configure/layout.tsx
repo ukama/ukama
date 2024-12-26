@@ -43,6 +43,8 @@ const ConfigureLayout = ({
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const nid = searchParams.get('nid') ?? '';
+  const accessId = searchParams.get('access') ?? '';
+  const siteName = searchParams.get('name') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow);
   const { user, network, setNetwork, setSnackbarMessage } = useAppContext();
@@ -181,9 +183,12 @@ const ConfigureLayout = ({
                   textColor: colors.black,
                   isShowSimpool: isSimsPath,
                   selectedColor: colors.primaryMain,
-                  isShowSite: params.id ? true : false,
-                  isShowComponents: params.name ? true : false,
-                  siteName: params.name ? params.name : 'Site 1',
+                  isShowSite: params.id ? true : accessId ? true : false,
+                  isShowComponents: params.name || siteName ? true : false,
+                  siteName:
+                    params.name || siteName
+                      ? (params.name ?? siteName)
+                      : 'Site 1',
                   networkName: network.name ? network.name : 'Network',
                   orgName: user.orgName ? user.orgName : 'Organization',
                   backhaulName: parts.backhaulName
@@ -191,7 +196,7 @@ const ConfigureLayout = ({
                     : 'Backhaul',
                   powerName: parts.powerName ? parts.powerName : 'Power',
                   switchName: parts.switchId ? parts.switchId : 'Switch',
-                  nodeName: params.id,
+                  nodeName: params.id ?? accessId,
                 })}
               </Box>
             </CenterContainer>

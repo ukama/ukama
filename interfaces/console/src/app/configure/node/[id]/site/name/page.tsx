@@ -48,13 +48,6 @@ const SiteName = ({ params }: ISiteName) => {
     router.back();
   };
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const handleSubmit = (values: FormikValues) => {
     router.push(
       `/configure/node/${id}/site/${values.name}/install?${searchParams.toString()}`,

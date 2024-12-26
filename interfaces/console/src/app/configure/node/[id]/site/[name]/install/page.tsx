@@ -10,7 +10,6 @@ import {
   Component_Type,
   useAddSiteMutation,
   useGetComponentsByUserIdQuery,
-  useGetNetworksQuery,
 } from '@/client/graphql/generated';
 import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
@@ -55,7 +54,7 @@ const SiteConfigure = ({ params }: IPage) => {
   const formik = useFormik({
     initialValues: {
       power: qpPower ?? '',
-      switch: qpSwitch ?? '7ab34d44-b189-4bd9-9efd-48ba81cc34aa',
+      switch: qpSwitch ?? '',
       backhaul: qpbackhaul ?? '',
     },
     validateOnChange: true,
@@ -65,7 +64,12 @@ const SiteConfigure = ({ params }: IPage) => {
     validationSchema: SiteConfigureSchema,
   });
 
-  const { data: networkData } = useGetNetworksQuery();
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
 
   const { data: accessComponentsData } = useGetComponentsByUserIdQuery({
     fetchPolicy: 'cache-and-network',
@@ -109,10 +113,12 @@ const SiteConfigure = ({ params }: IPage) => {
         type: 'success' as AlertColor,
         show: true,
       });
+      const p = setQueryParam('access', id);
+      p.set('name', name);
       if (flow === ONBOARDING_FLOW) {
-        router.push(`/configure/sims?${searchParams.toString()}`);
+        router.push(`/configure/sims?${p.toString()}`);
       } else {
-        router.push(`/configure/complete?${searchParams.toString()}`);
+        router.push(`/configure/complete?${p.toString()}`);
       }
     },
     onError: (error) => {
@@ -186,13 +192,6 @@ const SiteConfigure = ({ params }: IPage) => {
   useEffect(() => {
     if (addSiteLoading) setLoading(true);
   }, [addSiteLoading]);
-
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
 
   const handleSubmit = () => {
     if (

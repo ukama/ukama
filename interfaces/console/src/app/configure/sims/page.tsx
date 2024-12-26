@@ -48,7 +48,7 @@ const Sims = () => {
           type: 'success' as AlertColor,
           show: true,
         });
-        router.push(`/configure/complete?flow=${flow}`);
+        router.push(`/configure/complete?${searchParams.toString()}`);
       },
       onError: (error) => {
         setLoading(false);
@@ -75,7 +75,7 @@ const Sims = () => {
   }, [acceptedFiles]);
 
   const handleSkip = () => {
-    router.push(`/configure/complete?flow=${flow}`);
+    router.push(`/configure/complete?${searchParams.toString()}`);
   };
 
   const handleNext = () => {
