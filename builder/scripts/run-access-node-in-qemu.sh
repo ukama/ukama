@@ -34,7 +34,7 @@ log "INFO" "Starting QEMU for access node (rpi cm4) ..."
 if ! qemu-system-aarch64 \
      -machine virt \
      -cpu cortex-a72 \
-     -smp 6 \
+     -smp 4 \
      -m "${RAM_SIZE}" \
      -kernel "${BUILD_DIR}/${KERNEL_IMAGE}" \
      -append "root=/dev/vda2 rootfstype=ext4 rw panic=0 console=ttyAMA0" \
