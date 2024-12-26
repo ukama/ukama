@@ -217,7 +217,7 @@ function copy_misc_files() {
     install_starter_app "${PRIMARY_MOUNT}"
 
     log "INFO" "Copy Ukama sys lib to the image"
-    sudo mkdir -p "${PRIMARY_MOUNT}/lib/x86_64-linux-gnu/"
+    sudo mkdir -p "${PRIMARY_MOUNT}/lib/aarch64-linux-gnu/"
     sudo cp "${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so" \
          "${PRIMARY_MOUNT}/lib/x86_64-linux-gnu/"
 
