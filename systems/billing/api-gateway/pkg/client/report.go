@@ -38,7 +38,6 @@ type report struct {
 
 func NewReportClient(reportHost string, timeout time.Duration) *report {
 	// using same context for three connections
-
 	conn, err := grpc.NewClient(reportHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to report host %q.Error: %v", reportHost, err)

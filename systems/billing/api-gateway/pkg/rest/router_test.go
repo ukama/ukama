@@ -29,7 +29,6 @@ import (
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	pmocks "github.com/ukama/ukama/systems/billing/api-gateway/mocks"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
 	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
 	rmocks "github.com/ukama/ukama/systems/billing/report/pb/gen/mocks"
@@ -98,7 +97,6 @@ func init() {
 
 func TestRouter_PingRoute(t *testing.T) {
 	var rm = &rmocks.ReportServiceClient{}
-	var pm = &pmocks.Pdf{}
 	var arc = &providers.AuthRestClient{}
 
 	// arrange
@@ -107,7 +105,6 @@ func TestRouter_PingRoute(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		r: client.NewReportFromClient(rm),
-		p: pm,
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -120,7 +117,6 @@ func TestRouter_PostReport(t *testing.T) {
 	t.Run("ReportValid", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
 		var rm = &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
 
@@ -145,7 +141,6 @@ func TestRouter_PostReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -159,7 +154,6 @@ func TestRouter_PostReport(t *testing.T) {
 	t.Run("WebhookTypeNotValid", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
 		var rm = &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		reportPayload := &WebHookRequest{
 			WebhookType: "lol",
@@ -176,7 +170,6 @@ func TestRouter_PostReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -190,7 +183,6 @@ func TestRouter_PostReport(t *testing.T) {
 	t.Run("UnexpectedError", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
 		var rm = &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
 
@@ -216,7 +208,6 @@ func TestRouter_PostReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -236,7 +227,6 @@ func TestRouter_GetReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.GetRequest{
 			ReportId: reportId,
@@ -246,7 +236,6 @@ func TestRouter_GetReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -263,7 +252,6 @@ func TestRouter_GetReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.GetRequest{
 			ReportId: reportId,
@@ -273,7 +261,6 @@ func TestRouter_GetReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -288,7 +275,6 @@ func TestRouter_GetReport(t *testing.T) {
 func TestRouter_GetReports(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 	rm := &rmocks.ReportServiceClient{}
-	pm := &pmocks.Pdf{}
 
 	t.Run("GetAll", func(t *testing.T) {
 		inv := invReq
@@ -313,7 +299,6 @@ func TestRouter_GetReports(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -350,7 +335,6 @@ func TestRouter_GetReports(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -392,7 +376,6 @@ func TestRouter_GetReports(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -431,7 +414,6 @@ func TestRouter_GetReports(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -472,7 +454,6 @@ func TestRouter_GetReports(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -501,7 +482,6 @@ func TestRouter_UpdateReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.UpdateRequest{
 			ReportId: reportId,
@@ -512,7 +492,6 @@ func TestRouter_UpdateReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -538,7 +517,6 @@ func TestRouter_UpdateReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.UpdateRequest{
 			ReportId: reportId,
@@ -549,7 +527,6 @@ func TestRouter_UpdateReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -568,7 +545,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.DeleteRequest{
 			ReportId: reportId,
@@ -578,7 +554,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -595,7 +570,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		var arc = &providers.AuthRestClient{}
 		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
 
 		pReq := &pb.DeleteRequest{
 			ReportId: reportId,
@@ -605,7 +579,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		r := NewRouter(&Clients{
 			r: client.NewReportFromClient(rm),
-			p: pm,
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -613,58 +586,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		rm.AssertExpectations(t)
-	})
-}
-
-func TestRouter_Pdf(t *testing.T) {
-	t.Run("ReportFound", func(t *testing.T) {
-		reportId := uuid.NewV4().String()
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, reportId), nil)
-
-		var arc = &providers.AuthRestClient{}
-		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
-
-		var content = []byte("some fake pdf data")
-
-		pm.On("GetPdf", reportId).Return(content, nil)
-
-		r := NewRouter(&Clients{
-			r: client.NewReportFromClient(rm),
-			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		rm.AssertExpectations(t)
-	})
-
-	t.Run("ReportNotFound", func(t *testing.T) {
-		reportId := uuid.NewV4().String()
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, reportId), nil)
-
-		var arc = &providers.AuthRestClient{}
-		rm := &rmocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
-
-		pm.On("GetPdf", reportId).Return(nil, client.ErrReportPDFNotFound)
-
-		r := NewRouter(&Clients{
-			r: client.NewReportFromClient(rm),
-			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusNotFound, w.Code)
 		rm.AssertExpectations(t)
 	})
 }

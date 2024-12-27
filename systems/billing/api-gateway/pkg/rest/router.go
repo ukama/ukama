@@ -10,7 +10,6 @@ package rest
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -48,14 +47,12 @@ type RouterConfig struct {
 
 type Clients struct {
 	r client.Report
-	p client.Pdf
 }
 
 func NewClientsSet(grpcEndpoints *pkg.GrpcEndpoints, httpEndpoints *pkg.HttpEndpoints, debugMode bool) *Clients {
 	c := &Clients{}
 
 	c.r = client.NewReportClient(grpcEndpoints.Report, grpcEndpoints.Timeout)
-	c.p = client.NewPdfClient(httpEndpoints.Files, debugMode)
 
 	return c
 }
@@ -127,10 +124,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		reports.POST("", formatDoc("Add Report", "Add a new report for a owner"), tonic.Handler(r.PostReport, http.StatusCreated))
 		reports.PATCH("/:report_id", formatDoc("Update Report", "Update a specific report"), tonic.Handler(r.UpdateReport, http.StatusOK))
 		reports.DELETE("/:report_id", formatDoc("Remove Report", "Remove a specific report"), tonic.Handler(r.RemoveReport, http.StatusOK))
-
-		// pdf file routes
-		pdfs := auth.Group("pdf", "PDF Reports", "Operations on report PDF files")
-		pdfs.GET("/:report_id", formatDoc("Get Report PDF file", "Get a specific report file as PDF"), tonic.Handler(r.Pdf, http.StatusOK))
 	}
 }
 
@@ -180,33 +173,6 @@ func (r *Router) UpdateReport(c *gin.Context, req *UpdateReportRequest) (*pb.Rep
 
 func (r *Router) RemoveReport(c *gin.Context, req *GetReportRequest) error {
 	return r.clients.r.Remove(req.ReportId)
-}
-
-func (r *Router) Pdf(c *gin.Context, req *GetReportRequest) error {
-	content, err := r.clients.p.GetPdf(req.ReportId)
-	if err != nil {
-		if errors.Is(err, client.ErrReportPDFNotFound) {
-			c.Status(http.StatusNotFound)
-		}
-
-		return err
-	}
-
-	fileName := req.ReportId + ".pdf"
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Type", "application/pdf")
-	c.Header("Accept-Length", fmt.Sprintf("%d", len(content)))
-
-	_, err = c.Writer.Write(content)
-	if err != nil {
-		return err
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"info": "download report pdf file successfully",
-	})
-
-	return nil
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
