@@ -12,7 +12,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -23,7 +22,6 @@ import (
 
 	"github.com/ukama/ukama/systems/billing/report/pkg"
 	"github.com/ukama/ukama/systems/billing/report/pkg/db"
-	"github.com/ukama/ukama/systems/billing/report/pkg/pdf"
 	"github.com/ukama/ukama/systems/billing/report/pkg/util"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -35,11 +33,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
-)
-
-const (
-	defaultTemplate = "templates/invoice.html.tmpl"
-	pdfFolder       = "/srv/static/"
 )
 
 type ReportServer struct {
@@ -132,16 +125,6 @@ func (r *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.ReportR
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
-
-	log.Infof("starting PDF generation")
-	go func() {
-		err = generateReportPDF(rwInvoceStruct, defaultTemplate, filepath.Join(pdfFolder, report.Id.String()+".pdf"))
-		if err != nil {
-			log.Errorf("PDF generation failure: failed to generate invoice PDF: %v", err)
-		}
-
-		log.Infof("finishing PDF generation")
-	}()
 
 	pbReport := dbReportToPbReport(report)
 
@@ -348,29 +331,6 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 	}
 
 	return report, nil
-}
-
-func generateReportPDF(data any, templatePath, outputPath string) error {
-	r := pdf.NewInvoicePDF("")
-
-	err := r.ParseTemplate(templatePath, data)
-	if err != nil {
-		log.Errorf("failed to parse PDF template: %v", err)
-
-		return fmt.Errorf("failed to parse PDF template: %w", err)
-
-	}
-
-	err = r.GeneratePDF(outputPath)
-	if err != nil {
-		log.Errorf("failed to generate PDF invoice: %v", err)
-
-		return fmt.Errorf("failed to generate PDF invoice: %w", err)
-	}
-
-	log.Info("PDF invoice generated successfully")
-
-	return nil
 }
 
 func dbReportToPbReport(report *db.Report) *pb.Report {
