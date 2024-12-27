@@ -37,7 +37,7 @@ type ReportEventServer struct {
 }
 
 func NewReportEventServer(orgName, orgId string, reportRepo db.ReportRepo,
-	msgBus mb.MsgBusServiceClient) (*ReportEventServer, error) {
+	msgBus mb.MsgBusServiceClient) *ReportEventServer {
 	return &ReportEventServer{
 		orgName:    orgName,
 		orgId:      orgId,
@@ -45,7 +45,7 @@ func NewReportEventServer(orgName, orgId string, reportRepo db.ReportRepo,
 		msgBus:     msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
 			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-	}, nil
+	}
 }
 
 func (r *ReportEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {

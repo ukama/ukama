@@ -52,8 +52,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -81,8 +80,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -118,8 +116,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -252,8 +249,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -274,8 +270,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -296,8 +291,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
-		assert.NoError(t, err)
+		s := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 

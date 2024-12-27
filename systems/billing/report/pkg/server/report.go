@@ -296,7 +296,7 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	route := baseRoutingKey.SetAction("upate").SetObject(report.Type.String()).MustBuild()
+	route := baseRoutingKey.SetAction("update").SetObject(report.Type.String()).MustBuild()
 
 	val := &epb.RawReport{}
 	m := protojson.UnmarshalOptions{
