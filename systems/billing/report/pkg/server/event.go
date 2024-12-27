@@ -16,10 +16,10 @@ import (
 
 	"github.com/ukama/ukama/systems/billing/report/pkg"
 	"github.com/ukama/ukama/systems/billing/report/pkg/db"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -52,8 +52,6 @@ func (r *ReportEventServer) EventNotification(ctx context.Context, e *epb.Event)
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-
-	// Update customer
 	case msgbus.PrepareRoute(r.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):
 		msg, err := unmarshalPaymentSuccess(e.Msg)
 		if err != nil {

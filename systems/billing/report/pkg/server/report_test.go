@@ -162,6 +162,256 @@ func TestReportServer_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, ownerId.String(), res.Report.OwnerId)
+
+		reportRepo.AssertExpectations(t)
+	})
+
+	t.Run("ErrorOnAdd", func(t *testing.T) {
+		// Arrange
+		var raw = `{
+	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"sequential_id": 2,
+	"number": "LAG-1234-001-002",
+	"issuing_date": "2022-04-30",
+	"status": "finalized",
+	"payment_status": "succeeded",
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"credit_amount_cents": 10,
+	"credit_amount_currency": "EUR",
+	"total_amount_cents": 110,
+	"total_amount_currency": "EUR",
+	"file_url": "https://getlago.com/invoice/file",
+	"legacy": false,
+	"customer": {
+	"lago_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"address_line1": "5230 Penfield Ave",
+	"address_line2": null,
+	"city": "Woodland Hills",
+	"country": "US",
+	"created_at": "2022-04-29T08:59:51Z",
+	"email": "dinesh@piedpiper.test",
+	"legal_name": "Coleman-Blair",
+	"legal_number": "49-008-2965",
+	"logo_url": "http://hooli.com/logo.png",
+	"name": "Gavin Belson",
+	"phone": "1-171-883-3711 x245",
+	"state": "CA",
+	"url": "http://hooli.com",
+	"vat_rate": 20.0,
+	"zipcode": "91364"
+	},
+	"subscriptions": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"external_id": "susbcription_external_id",
+	"lago_customer_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_customer_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"canceled_at": "2022-04-29T08:59:51Z",
+	"created_at": "2022-04-29T08:59:51Z",
+	"plan_code": "new_code",
+	"started_at": "2022-04-29T08:59:51Z",
+	"status": "active",
+	"terminated_at": null
+	}
+	],
+	"fees": [
+	{
+	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
+	"lago_group_id": null,
+	"item": {
+	"type": "subscription",
+	"code": "plan_code",
+	"name": "Plan"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"total_amount_cents": 120,
+	"total_amount_currency": "EUR",
+	"units": "0.32",
+	"events_count": 23
+	}
+	],
+	"credits": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"item": {
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"type": "coupon",
+	"code": "coupon_code",
+	"name": "Coupon"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR"
+	}
+	],
+	"metadata": [
+	{
+	"lago_id": "27f12d13-4ae0-437b-b822-8771bcd62e3a",
+	"key": "digital_ref_id",
+	"value": "INV-0123456-98765",
+	"created_at": "2022-04-29T08:59:51Z"
+	}
+	]
+	}`
+
+		var ownerIdString = "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba"
+
+		ownerId, err := uuid.FromString(ownerIdString)
+		if err != nil {
+			t.Fatalf("invalid OwnerId input: %s", ownerIdString)
+		}
+
+		reportRepo := &mocks.ReportRepo{}
+		subscriberClient := &cmocks.SubscriberClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		reportRepo.On("Add", mock.Anything, mock.Anything).
+			Return(errors.New("some unexpectged error has occured")).Once()
+
+		subscriberClient.On("Get", ownerId.String()).Return(&csub.SubscriberInfo{
+			SubscriberId: ownerId,
+			NetworkId:    uuid.NewV4(),
+		}, nil).Once()
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, subscriberClient, msgbusClient)
+
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			RawReport: raw,
+		})
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, res)
+
+		reportRepo.AssertExpectations(t)
+	})
+
+	t.Run("OwnerDoesNotExist", func(t *testing.T) {
+		// Arrange
+		var raw = `{
+	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"sequential_id": 2,
+	"number": "LAG-1234-001-002",
+	"issuing_date": "2022-04-30",
+	"status": "finalized",
+	"payment_status": "succeeded",
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"credit_amount_cents": 10,
+	"credit_amount_currency": "EUR",
+	"total_amount_cents": 110,
+	"total_amount_currency": "EUR",
+	"file_url": "https://getlago.com/invoice/file",
+	"legacy": false,
+	"customer": {
+	"lago_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"address_line1": "5230 Penfield Ave",
+	"address_line2": null,
+	"city": "Woodland Hills",
+	"country": "US",
+	"created_at": "2022-04-29T08:59:51Z",
+	"email": "dinesh@piedpiper.test",
+	"legal_name": "Coleman-Blair",
+	"legal_number": "49-008-2965",
+	"logo_url": "http://hooli.com/logo.png",
+	"name": "Gavin Belson",
+	"phone": "1-171-883-3711 x245",
+	"state": "CA",
+	"url": "http://hooli.com",
+	"vat_rate": 20.0,
+	"zipcode": "91364"
+	},
+	"subscriptions": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"external_id": "susbcription_external_id",
+	"lago_customer_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_customer_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"canceled_at": "2022-04-29T08:59:51Z",
+	"created_at": "2022-04-29T08:59:51Z",
+	"plan_code": "new_code",
+	"started_at": "2022-04-29T08:59:51Z",
+	"status": "active",
+	"terminated_at": null
+	}
+	],
+	"fees": [
+	{
+	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
+	"lago_group_id": null,
+	"item": {
+	"type": "subscription",
+	"code": "plan_code",
+	"name": "Plan"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"total_amount_cents": 120,
+	"total_amount_currency": "EUR",
+	"units": "0.32",
+	"events_count": 23
+	}
+	],
+	"credits": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"item": {
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"type": "coupon",
+	"code": "coupon_code",
+	"name": "Coupon"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR"
+	}
+	],
+	"metadata": [
+	{
+	"lago_id": "27f12d13-4ae0-437b-b822-8771bcd62e3a",
+	"key": "digital_ref_id",
+	"value": "INV-0123456-98765",
+	"created_at": "2022-04-29T08:59:51Z"
+	}
+	]
+	}`
+
+		var ownerIdString = "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba"
+
+		ownerId, err := uuid.FromString(ownerIdString)
+		if err != nil {
+			t.Fatalf("invalid OwnerId input: %s", ownerIdString)
+		}
+
+		reportRepo := &mocks.ReportRepo{}
+		subscriberClient := &cmocks.SubscriberClient{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		subscriberClient.On("Get", ownerId.String()).
+			Return(nil, errors.New("not found")).Once()
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, subscriberClient, msgbusClient)
+
+		// Act
+		res, err := s.Add(context.TODO(), &pb.AddRequest{
+			RawReport: raw,
+		})
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 
@@ -272,6 +522,7 @@ func TestReportServer_Add(t *testing.T) {
 		// Assert
 		assert.Error(t, err)
 		assert.Nil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 
@@ -383,6 +634,7 @@ func TestReportServer_Add(t *testing.T) {
 		// Assert
 		assert.Error(t, err)
 		assert.Nil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 }
@@ -506,6 +758,7 @@ func TestReportServer_Get(t *testing.T) {
 		assert.NotNil(t, res)
 		assert.Equal(t, report.Id.String(), res.GetReport().GetId())
 		assert.Equal(t, false, res.GetReport().IsPaid)
+
 		reportRepo.AssertExpectations(t)
 	})
 
@@ -735,6 +988,209 @@ func TestReportServer_List(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, list)
+
+		// repo.AssertExpectations(t)
+	})
+}
+
+func TestReportServer_Update(t *testing.T) {
+	t.Run("InvalidReportId", func(t *testing.T) {
+		var reportId = "lol"
+
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, nil, msgbusClient)
+
+		res, err := s.Update(context.TODO(), &pb.UpdateRequest{
+			ReportId: reportId,
+			IsPaid:   true,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+
+		reportRepo.AssertExpectations(t)
+	})
+
+	t.Run("ReportNotFound", func(t *testing.T) {
+		var reportId = uuid.NewV4()
+
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(nil, errors.New("not found")).Once()
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, nil, msgbusClient)
+
+		res, err := s.Update(context.TODO(), &pb.UpdateRequest{
+			ReportId: reportId.String(),
+			IsPaid:   true,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+
+		reportRepo.AssertExpectations(t)
+	})
+
+	t.Run("UpdateError", func(t *testing.T) {
+		var reportId = uuid.NewV4()
+
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		report := &db.Report{
+			Id:     reportId,
+			IsPaid: false,
+		}
+
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(report, nil).Once()
+
+		reportRepo.On("Update", report, mock.Anything).
+			Return(errors.New("Error on update")).Once()
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, nil, msgbusClient)
+
+		res, err := s.Update(context.TODO(), &pb.UpdateRequest{
+			ReportId: reportId.String(),
+			IsPaid:   true,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+
+		reportRepo.AssertExpectations(t)
+	})
+
+	t.Run("ReportUpdated", func(t *testing.T) {
+
+		var raw = `{
+	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"sequential_id": 2,
+	"number": "LAG-1234-001-002",
+	"issuing_date": "2022-04-30",
+	"status": "finalized",
+	"payment_status": "succeeded",
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"credit_amount_cents": 10,
+	"credit_amount_currency": "EUR",
+	"total_amount_cents": 110,
+	"total_amount_currency": "EUR",
+	"file_url": "https://getlago.com/invoice/file",
+	"legacy": false,
+	"customer": {
+	"lago_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"address_line1": "5230 Penfield Ave",
+	"address_line2": null,
+	"city": "Woodland Hills",
+	"country": "US",
+	"created_at": "2022-04-29T08:59:51Z",
+	"email": "dinesh@piedpiper.test",
+	"legal_name": "Coleman-Blair",
+	"legal_number": "49-008-2965",
+	"logo_url": "http://hooli.com/logo.png",
+	"name": "Gavin Belson",
+	"phone": "1-171-883-3711 x245",
+	"state": "CA",
+	"url": "http://hooli.com",
+	"vat_rate": 20.0,
+	"zipcode": "91364"
+	},
+	"subscriptions": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"external_id": "susbcription_external_id",
+	"lago_customer_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_customer_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"canceled_at": "2022-04-29T08:59:51Z",
+	"created_at": "2022-04-29T08:59:51Z",
+	"plan_code": "new_code",
+	"started_at": "2022-04-29T08:59:51Z",
+	"status": "active",
+	"terminated_at": null
+	}
+	],
+	"fees": [
+	{
+	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
+	"lago_group_id": null,
+	"item": {
+	"type": "subscription",
+	"code": "plan_code",
+	"name": "Plan"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"total_amount_cents": 120,
+	"total_amount_currency": "EUR",
+	"units": "0.32",
+	"events_count": 23
+	}
+	],
+	"credits": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"item": {
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"type": "coupon",
+	"code": "coupon_code",
+	"name": "Coupon"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR"
+	}
+	],
+	"metadata": [
+	{
+	"lago_id": "27f12d13-4ae0-437b-b822-8771bcd62e3a",
+	"key": "digital_ref_id",
+	"value": "INV-0123456-98765",
+	"created_at": "2022-04-29T08:59:51Z"
+	}
+	]
+	}`
+		var reportId = uuid.NewV4()
+
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		report := &db.Report{
+			Id:        reportId,
+			IsPaid:    false,
+			RawReport: datatypes.JSON([]byte(raw)),
+		}
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(report, nil).Once()
+
+		reportRepo.On("Update", report, mock.Anything).
+			Return(nil).Once()
+
+		report.IsPaid = true
+
+		s := server.NewReportServer(OrgName, OrgId, reportRepo, nil, msgbusClient)
+
+		res, err := s.Update(context.TODO(), &pb.UpdateRequest{
+			ReportId: reportId.String(),
+			IsPaid:   true,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+
+		reportRepo.AssertExpectations(t)
 	})
 }
 
@@ -756,6 +1212,7 @@ func TestReportServer_Delete(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 
@@ -774,6 +1231,7 @@ func TestReportServer_Delete(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 
@@ -790,6 +1248,7 @@ func TestReportServer_Delete(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
+
 		reportRepo.AssertExpectations(t)
 	})
 }

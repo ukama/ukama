@@ -8,87 +8,299 @@
 
 package server_test
 
-const (
-	OrgName    = "testOrg"
-	OrgId      = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
-	webhookUrl = "http://webhooks:8080/reports"
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
+	"gorm.io/datatypes"
+
+	"github.com/ukama/ukama/systems/billing/report/mocks"
+	"github.com/ukama/ukama/systems/billing/report/pkg/db"
+	"github.com/ukama/ukama/systems/billing/report/pkg/server"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"google.golang.org/protobuf/types/known/anypb"
+
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
-// func TestReportEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) {
-// billingClient := &mocks.BillingClient{}
-// routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update")
+const (
+	OrgName = "testOrg"
+	OrgId   = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
+)
 
-// billingClient.On("GetCustomer", mock.Anything,
-// OrgId).Return(custId, nil).Once()
+func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success")
 
-// s, err := server.NewReportEventServer(OrgName, OrgId, webhookUrl, billingClient)
+	t.Run("ReportIdNotValid", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 
-// assert.NoError(t, err)
+		payment := epb.Payment{
+			ItemId: "lol",
+		}
 
-// t.Run("UpdateCustomerEventSent", func(t *testing.T) {
-// billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
-// Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
 
-// subs := &upb.Subscriber{
-// Name:        "Fox Doe",
-// Email:       "Fox.doe@example.com",
-// Address:     "This is my address",
-// PhoneNumber: "000111222",
-// }
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
 
-// subscriber := epb.UpdateSubscriber{
-// Subscriber: subs,
-// }
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
 
-// anyE, err := anypb.New(&subscriber)
-// assert.NoError(t, err)
+		_, err = s.EventNotification(context.TODO(), msg)
 
-// msg := &epb.Event{
-// RoutingKey: routingKey,
-// Msg:        anyE,
-// }
+		assert.Error(t, err)
+	})
 
-// _, err = s.EventNotification(context.TODO(), msg)
+	t.Run("ReportNotFound", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 
-// assert.NoError(t, err)
-// })
+		reportId := uuid.NewV4()
 
-// t.Run("UpdateCustomerFaillure", func(t *testing.T) {
-// billingClient.On("UpdateCustomer", mock.Anything, mock.Anything).
-// Return("", errors.New("failed to send update customer event")).Once()
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(nil, errors.New("not found")).Once()
 
-// subs := &upb.Subscriber{}
+		payment := epb.Payment{
+			ItemId: reportId.String(),
+		}
 
-// subscriber := epb.UpdateSubscriber{
-// Subscriber: subs,
-// }
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
 
-// anyE, err := anypb.New(&subscriber)
-// assert.NoError(t, err)
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
 
-// msg := &epb.Event{
-// RoutingKey: routingKey,
-// Msg:        anyE,
-// }
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
 
-// _, err = s.EventNotification(context.TODO(), msg)
+		_, err = s.EventNotification(context.TODO(), msg)
 
-// assert.Error(t, err)
-// })
+		assert.Error(t, err)
+	})
 
-// t.Run("UpdateCustomerEventNotSent", func(t *testing.T) {
-// subscriber := epb.Notification{}
+	t.Run("ErrroOnUpdate", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 
-// anyE, err := anypb.New(&subscriber)
-// assert.NoError(t, err)
+		reportId := uuid.NewV4()
 
-// msg := &epb.Event{
-// RoutingKey: routingKey,
-// Msg:        anyE,
-// }
+		report := &db.Report{
+			Id:     reportId,
+			IsPaid: false,
+		}
 
-// _, err = s.EventNotification(context.TODO(), msg)
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(report, nil).Once()
 
-// assert.Error(t, err)
-// })
-// }
+		reportRepo.On("Update", report, mock.Anything).
+			Return(errors.New("Error on update")).Once()
+
+		payment := epb.Payment{
+			ItemId: reportId.String(),
+		}
+
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("PaymentSuccessEventSent", func(t *testing.T) {
+
+		var raw = `{
+	"lago_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"sequential_id": 2,
+	"number": "LAG-1234-001-002",
+	"issuing_date": "2022-04-30",
+	"status": "finalized",
+	"payment_status": "succeeded",
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"credit_amount_cents": 10,
+	"credit_amount_currency": "EUR",
+	"total_amount_cents": 110,
+	"total_amount_currency": "EUR",
+	"file_url": "https://getlago.com/invoice/file",
+	"legacy": false,
+	"customer": {
+	"lago_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"address_line1": "5230 Penfield Ave",
+	"address_line2": null,
+	"city": "Woodland Hills",
+	"country": "US",
+	"created_at": "2022-04-29T08:59:51Z",
+	"email": "dinesh@piedpiper.test",
+	"legal_name": "Coleman-Blair",
+	"legal_number": "49-008-2965",
+	"logo_url": "http://hooli.com/logo.png",
+	"name": "Gavin Belson",
+	"phone": "1-171-883-3711 x245",
+	"state": "CA",
+	"url": "http://hooli.com",
+	"vat_rate": 20.0,
+	"zipcode": "91364"
+	},
+	"subscriptions": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"external_id": "susbcription_external_id",
+	"lago_customer_id": "99a6094e-199b-4101-896a-54e927ce7bd7",
+	"external_customer_id": "5eb02857-a71e-4ea2-bcf9-57d3a41bc6ba",
+	"canceled_at": "2022-04-29T08:59:51Z",
+	"created_at": "2022-04-29T08:59:51Z",
+	"plan_code": "new_code",
+	"started_at": "2022-04-29T08:59:51Z",
+	"status": "active",
+	"terminated_at": null
+	}
+	],
+	"fees": [
+	{
+	"lago_id": "6be23c42-47d2-45a3-9770-5b3572f225c3",
+	"lago_group_id": null,
+	"item": {
+	"type": "subscription",
+	"code": "plan_code",
+	"name": "Plan"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR",
+	"vat_amount_cents": 20,
+	"vat_amount_currency": "EUR",
+	"total_amount_cents": 120,
+	"total_amount_currency": "EUR",
+	"units": "0.32",
+	"events_count": 23
+	}
+	],
+	"credits": [
+	{
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"item": {
+	"lago_id": "b7ab2926-1de8-4428-9bcd-779314ac129b",
+	"type": "coupon",
+	"code": "coupon_code",
+	"name": "Coupon"
+	},
+	"amount_cents": 100,
+	"amount_currency": "EUR"
+	}
+	],
+	"metadata": [
+	{
+	"lago_id": "27f12d13-4ae0-437b-b822-8771bcd62e3a",
+	"key": "digital_ref_id",
+	"value": "INV-0123456-98765",
+	"created_at": "2022-04-29T08:59:51Z"
+	}
+	]
+	}`
+
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		reportId := uuid.NewV4()
+
+		report := &db.Report{
+			Id:        reportId,
+			IsPaid:    false,
+			RawReport: datatypes.JSON([]byte(raw)),
+		}
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		reportRepo.On("Get", reportId, mock.Anything).
+			Return(report, nil).Once()
+
+		reportRepo.On("Update", report, mock.Anything).
+			Return(nil).Once()
+
+		payment := epb.Payment{
+			ItemId: reportId.String(),
+		}
+
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("PaymentSuccessPayloadNotSent", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		payment := epb.Notification{}
+
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("PaymentSuccessEventNotSent", func(t *testing.T) {
+		reportRepo := &mocks.ReportRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		payment := epb.Notification{}
+
+		anyE, err := anypb.New(&payment)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s, err := server.NewReportEventServer(OrgName, OrgId, reportRepo, msgbusClient)
+		assert.NoError(t, err)
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}

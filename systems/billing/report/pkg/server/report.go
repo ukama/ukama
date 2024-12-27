@@ -301,17 +301,19 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 			"invalid format for payment uuid: %s format for report update. Error %v", reportId, err)
 	}
 
-	updatedReport := &db.Report{
-		Id:     repId,
-		IsPaid: isPaid,
-	}
-
-	err = reportRepo.Update(updatedReport, nil)
+	report, err := reportRepo.Get(repId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	route := baseRoutingKey.SetAction("upate").SetObject(updatedReport.Type.String()).MustBuild()
+	report.IsPaid = isPaid
+
+	err = reportRepo.Update(report, nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "report")
+	}
+
+	route := baseRoutingKey.SetAction("upate").SetObject(report.Type.String()).MustBuild()
 
 	val := &epb.RawReport{}
 	m := protojson.UnmarshalOptions{
@@ -319,7 +321,7 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 		DiscardUnknown: true,
 	}
 
-	err = m.Unmarshal([]byte(updatedReport.RawReport.String()), val)
+	err = m.Unmarshal([]byte(report.RawReport.String()), val)
 	if err != nil {
 		log.Errorf("Failed to unmarshal RawReport JSON to epb.RawReport proto: %v", err)
 
@@ -328,15 +330,15 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 	}
 
 	evt := &epb.Report{
-		Id:        updatedReport.Id.String(),
-		OwnerId:   updatedReport.OwnerId.String(),
-		OwnerType: updatedReport.OwnerType.String(),
-		NetworkId: updatedReport.NetworkId.String(),
-		Type:      updatedReport.Type.String(),
-		Period:    updatedReport.Period.Format(time.RFC3339),
+		Id:        report.Id.String(),
+		OwnerId:   report.OwnerId.String(),
+		OwnerType: report.OwnerType.String(),
+		NetworkId: report.NetworkId.String(),
+		Type:      report.Type.String(),
+		Period:    report.Period.Format(time.RFC3339),
 		RawReport: val,
-		IsPaid:    updatedReport.IsPaid,
-		CreatedAt: updatedReport.CreatedAt.Format(time.RFC3339),
+		IsPaid:    report.IsPaid,
+		CreatedAt: report.CreatedAt.Format(time.RFC3339),
 	}
 
 	err = msgBus.PublishRequest(route, evt)
@@ -345,7 +347,7 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 			evt, route, err.Error())
 	}
 
-	return updatedReport, nil
+	return report, nil
 }
 
 func generateReportPDF(data any, templatePath, outputPath string) error {
