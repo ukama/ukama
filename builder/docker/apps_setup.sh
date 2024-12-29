@@ -53,6 +53,6 @@ else
 fi
 
 # clean up
-docker image rm --force apps-builder-${TARGETPLATFORM}
+docker image rm --force "${DOCKER_IMG}"
 
 exit 0
