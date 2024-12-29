@@ -132,7 +132,6 @@ function build_linux_kernel() {
 }
 
 function build_apps_using_container() {
-
     local ukama_root="$1"
     local apps="$2"
 
@@ -219,13 +218,144 @@ function copy_misc_files() {
     log "INFO" "Copy Ukama sys lib to the image"
     sudo mkdir -p "${PRIMARY_MOUNT}/lib/aarch64-linux-gnu/"
     sudo cp "${ukama_root}/nodes/ukamaOS/distro/platform/build/libusys.so" \
-         "${PRIMARY_MOUNT}/lib/x86_64-linux-gnu/"
+         "${PRIMARY_MOUNT}/lib/aarch64-linux-gnu/"
 
     # update /etc/services to add ports
     log "INFO" "Adding all the apps to /etc/services"
     sudo mkdir -p "${PRIMARY_MOUNT}/etc"
     sudo cp "${ukama_root}/nodes/ukamaOS/distro/scripts/files/services" \
          "${PRIMARY_MOUNT}/etc/services"
+}
+
+resize_disk_image() {
+    log "INFO" "Resizing the disk image: ${RPI_IMG}"
+
+    truncate -s "8G" "${RPI_IMG}"
+
+    # Use fdisk to modify the partition table
+    echo -e "d\n2\nn\np\n2\n1056768\n\nw\n" | fdisk "${RPI_IMG}"
+
+    loop_device=$(sudo losetup -Pf --show "${RPI_IMG}")
+    if [[ -z "$loop_device" ]]; then
+        log "ERROR" "Failed to map the image to a loop device."
+    fi
+    sudo resize2fs "${loop_device}p2"
+    sudo losetup -d "$loop_device"
+
+    log "SUCCESS" "disk image '${RPI_IMG}' has been resized and parition extended."
+}
+
+function install_required_libs() {
+    log "INFO" "Installing library"
+
+        # Bind mount necessary system directories
+    log "INFO" "Binding system directories for chroot"
+    sudo mount --bind /dev "$PRIMARY_MOUNT/dev"
+    sudo mount --bind /dev/pts "$PRIMARY_MOUNT/dev/pts"
+    sudo mount --bind /proc "$PRIMARY_MOUNT/proc"
+    sudo mount --bind /sys "$PRIMARY_MOUNT/sys"
+    sudo mount --bind /run "$PRIMARY_MOUNT/run"
+
+    # Chroot into the target and configure the systemd service
+    log "INFO" "Chrooting into target rootfs to install libs and pkgs"
+    sudo chroot "$PRIMARY_MOUNT" /bin/bash <<'EOF'
+set -e
+
+# Configure locales
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+locale-gen
+dpkg-reconfigure --frontend=noninteractive locales
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+
+apt-get update && apt-get install -y \
+    software-properties-common \
+    build-essential \
+    git \
+    wget \
+    autoconf \
+    automake \
+    libtool \
+    pkg-config \
+    libssl-dev \
+    texinfo \
+    cmake \
+    tcl \
+    zlib1g-dev \
+    texlive \
+    texlive-latex-extra \
+    ghostscript \
+    gperf \
+    gtk-doc-tools \
+    libev-dev \
+    bison \
+    jq \
+    util-linux \
+    libgnutls28-dev \
+    libmicrohttpd-dev \
+    libcurl4-openssl-dev \
+    libjansson-dev \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    uuid-dev \
+    libsqlite3-dev
+
+apt-get clean && rm -rf /var/lib/apt/lists/*
+
+#build and install libs from source
+git clone https://github.com/babelouest/orcania.git && \
+    cd orcania && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install && \
+    cd ../../ && rm -rf orcania
+
+# Clone and build Ulfius with Yder disabled
+git clone https://github.com/babelouest/ulfius.git && \
+    cd ulfius && \
+    mkdir build && \
+    cd build && \
+    cmake -DWITH_YDER=off -DWITH_JOURNALD=off -DCMAKE_C_FLAGS="-Wno-stringop-overflow" .. && \
+    make YDERFLAG=1 && \
+    make install && \
+    cd ../../ && rm -rf ulfius
+
+# Install tomlc99
+git clone https://github.com/cktan/tomlc99.git && \
+    cd tomlc99 && \
+    make && \
+    cp toml.h /usr/include/ && \
+    cp libtoml.* /usr/lib/ && \
+    cd .. && rm -rf tomlc99
+
+# Clone Prometheus client repository and build it
+git clone https://github.com/ukama/prometheus-client.git && \
+    cd prometheus-client && \
+    mkdir -p prom/build && \
+    cd prom/build && \
+    cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_C_FLAGS="-I/usr/include" \
+        -DCMAKE_LD_FLAGS="-L/usr/lib" && \
+    make install DESTDIR=/usr && \
+    mkdir -p ../../promhttp/build && \
+    cd ../../promhttp/build && \
+    cmake ../ -DCMAKE_C_COMPILER=gcc -DCMAKE_C_FLAGS="-I/usr/include" \
+        -DCMAKE_LD_FLAGS="-L/usr/lib" && \
+    make install DESTDIR=/usr && \
+    cd ../../.. && \
+    rm -rf prometheus-client
+EOF
+
+    # Unmount system directories
+    log "INFO" "Unmounting system directories"
+    sudo umount "$PRIMARY_MOUNT/dev/pts"
+    sudo umount "$PRIMARY_MOUNT/dev"
+    sudo umount "$PRIMARY_MOUNT/proc"
+    sudo umount "$PRIMARY_MOUNT/sys"
+    sudo umount "$PRIMARY_MOUNT/run"
+
+    log "SUCCESS" "Requried libraries and pkgs installed"
 }
 
 function create_manifest_file() {
@@ -481,6 +611,7 @@ cd ${TMP_DIR}
 # Build linux kernel and get rpi image (rootfs)
 build_linux_kernel
 download_rpi_rootfs
+resize_disk_image
 
 # Mount partition, create ukama dir, build apps
 mount_partitions
@@ -490,6 +621,7 @@ copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_linux_kernel
 
+install_required_libs
 configure_systemd_service
 create_ssh_user
 
