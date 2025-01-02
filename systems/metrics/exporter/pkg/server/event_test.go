@@ -18,7 +18,6 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg"
 	"github.com/ukama/ukama/systems/metrics/exporter/pkg/collector"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -123,9 +122,9 @@ func TestEvent_EventNotification(t *testing.T) {
 		OrgId:        "75ec112a-8745-49f9-ab64-1a37edade794",
 		Type:         "test_simple",
 		BytesUsed:    uint64(rand.Int63n(4096000)),
-		SessionId:    uuid.NewV4().String(),
-		StartTime:    time.Now().Unix() - int64(rand.Intn(30000)),
-		EndTime:      time.Now().Unix(),
+		SessionId:    rand.Uint64(),
+		StartTime:    uint64(time.Now().Unix() - int64(rand.Intn(30000))),
+		EndTime:      uint64(time.Now().Unix()),
 	}
 
 	anyE, err := anypb.New(&simUsage)

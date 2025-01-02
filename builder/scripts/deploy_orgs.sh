@@ -231,6 +231,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     }
 
     getSysPorts(){
+        MET_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["metrics"]')
         DP_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["dataplan"]')
         SUB_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["subscriber"]')
         REG_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["registry"]')
@@ -240,12 +241,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         PGA_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["pg-admin"]')
         RABBITMQ_P1=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-1"]')
         RABBITMQ_P2=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-2"]')
+        PROMETHEUS=$(echo "$ORG" | jq -r '.["sys-ports"]["prometheus"]')
         REGAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["registry"]')
         NODEAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["node"]')
         NODEGW_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["nodegw"]')
         NOTAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["notification"]')
         SUBAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["subscriber"]')
         DPAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["dataplan"]')
+        METRICS_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["metrics"]')
         MSGCLIENT_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["msgclient"]')
     }
 
@@ -316,12 +319,14 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
                 sed -i '' "s/- 8058:8080/- ${NOTAPI_PORT}:8080/g" docker-compose.yml # NOTIFICATION SYS APIGW
                 sed -i '' "s/- 8097:8080/- ${SUBAPI_PORT}:8080/g" docker-compose.yml # SUBSCRIBER SYS APIGW
                 sed -i '' "s/- 8074:8080/- ${DPAPI_PORT}:8080/g" docker-compose.yml # DATAPLAN SYS APIGW
+                sed -i '' "s/- 8067:8080/- ${METRICS_PORT}:8080/g" docker-compose.yml # METRICS SYS APIGW
 
                 sed -i '' "s/- 5405:5432/- ${REG_PORT}:5432/g" docker-compose.yml # REGISTRY SYS PG
                 sed -i '' "s/- 5489:5432/- ${NODE_PORT}:5432/g" docker-compose.yml # NODE SYS PG
                 sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS PG
                 sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS PG
                 sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS PG
+                sed -i '' "s/- 5407:5432/- ${MET_PORT}:5432/g" docker-compose.yml # METRICS SYS PG
                 
                 sed -i '' "s/api-gateway-init:8080/${INITCLIENT_HOST}:8080/g" docker-compose.yml
                 sed -i '' "s/api-gateway-nucleus:8080/${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml
@@ -329,6 +334,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
 
                 sed -i '' "s/9095/${MSGCLIENT_PORT}/g" docker-compose.yml
                 sed -i '' "s/5672/${RABBITMQ_P1}/g" docker-compose.yml
+                sed -i '' "s/9079/${PROMETHEUS}/g" docker-compose.yml
             fi
 
             if [[ $WITHSUBAUTH == false ]]; then

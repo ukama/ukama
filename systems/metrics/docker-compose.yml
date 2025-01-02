@@ -3,7 +3,7 @@ services:
  postgresd-metrics:
   image: postgres:13.3
   ports:
-   - '5407:5432'
+   - 5407:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -24,11 +24,7 @@ services:
    - ukama-net
 
  exporter:
-  build:
-   context: ./exporter
-   dockerfile: ./Dockerfile
-  ports:
-   - '10251:10251'
+  build: ./exporter
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd
@@ -44,11 +40,9 @@ services:
    - ukama-net
 
  metricsgateway:
-  build:
-   context: ./api-gateway
-   dockerfile: ./Dockerfile
+  build: ./api-gateway
   ports:
-   - '8067:8080'
+   - 8067:8080
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
    - BYPASS_AUTH_MODE=true
@@ -59,11 +53,7 @@ services:
    - ukama-net
 
  msgclient-metrics:
-  build:
-   context: ../services/msgClient
-   dockerfile: ./Dockerfile
-  ports:
-   - '9065:9095'
+  build: ../services/msgClient
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-metrics
@@ -101,7 +91,7 @@ services:
   image: prom/pushgateway
   restart: unless-stopped
   ports:
-   - '9063:9091'
+   - 9063:9091
   networks:
    - ukama-net
 

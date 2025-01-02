@@ -18,7 +18,8 @@
     "dataplan": 5428,
     "registry": 5429,
     "subscriber": 5430,
-    "notification": 5431
+    "notification": 5431,
+    "metrics": 5407
    }
   },
   {
@@ -38,7 +39,8 @@
     "dataplan": 5438,
     "registry": 5439,
     "subscriber": 5440,
-    "notification": 5441
+    "notification": 5441,
+    "metrics": 5442
    },
    "sys-ports": {
     "pg-admin": 8091,
@@ -50,7 +52,9 @@
     "registry": 8014,
     "subscriber": 8015,
     "notification": 8016,
-    "msgclient": 9096
+    "metrics": 8017,
+    "msgclient": 9096,
+    "prometheus": 9097
    }
   }
  ]
