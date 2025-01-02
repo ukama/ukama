@@ -197,35 +197,20 @@ export class UpdatePaymentInputDto {
   @Field()
   id: string;
 
-  @Field()
-  country: string;
+  @Field({ nullable: true })
+  country?: string;
 
-  @Field()
-  currency: string;
+  @Field({ nullable: true })
+  currency?: string;
 
-  @Field()
-  description: string;
+  @Field({ nullable: true })
+  payerEmail?: string;
 
-  @Field()
-  amount: string;
+  @Field({ nullable: true })
+  payerName?: string;
 
-  @Field()
-  paidAt: string;
-
-  @Field()
-  payerEmail: string;
-
-  @Field()
-  payerName: string;
-
-  @Field()
-  payerPhone: string;
-
-  @Field()
-  paymentMethod: string;
-
-  @Field()
-  status: string;
+  @Field({ nullable: true })
+  paymentMethod?: string;
 }
 
 @InputType()
@@ -233,8 +218,8 @@ export class ProcessPaymentInputDto {
   @Field()
   id: string;
 
-  @Field()
-  correspondent: string;
+  @Field({ nullable: true })
+  correspondent?: string;
 
   @Field()
   token: string;
@@ -287,12 +272,12 @@ export class TokenResDto {
 
 @InputType()
 export class GetPaymentsInputDto {
-  @Field()
-  type: string;
+  @Field({ nullable: true })
+  type?: string;
 
-  @Field()
-  paymentMethod: string;
+  @Field({ nullable: true })
+  paymentMethod?: string;
 
-  @Field()
-  status: string;
+  @Field({ nullable: true })
+  status?: string;
 }

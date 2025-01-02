@@ -8,15 +8,15 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { GetReportsInputDto, GetReportsResDto } from "./types";
+import { GetReportsDto, GetReportsInputDto } from "./types";
 
 @Resolver()
 export class GetReportsResolver {
-  @Query(() => GetReportsResDto)
+  @Query(() => GetReportsDto)
   async getReports(
     @Arg("data") data: GetReportsInputDto,
     @Ctx() ctx: Context
-  ): Promise<GetReportsResDto> {
+  ): Promise<GetReportsDto> {
     const { dataSources, baseURL } = ctx;
     return await dataSources.dataSource.getReports(baseURL, data);
   }

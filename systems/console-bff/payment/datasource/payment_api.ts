@@ -28,50 +28,7 @@ import {
 } from "./mapper";
 
 class PaymentAPI extends RESTDataSource {
-  add = async (
-    baseURL: string,
-    req: AddPaymentInputDto
-  ): Promise<PaymentDto> => {
-    logger.info(`[POST] AddPayment: ${baseURL}/${VERSION}/payments`);
-    logger.info(
-      `[POST] AddPayment Payload: ${JSON.stringify({
-        amount: req.amount,
-        item_id: req.itemId,
-        country: req.country,
-        currency: req.currency,
-        item_type: req.itemType,
-        payer_email: req.payerEmail,
-        payer_phone: req.payerPhone,
-        description: req.description,
-        payment_method: req.paymentMethod,
-        metadata: {
-          simId: req.simId,
-          subscriberId: req.subscriberId,
-        },
-      })}`
-    );
-    this.baseURL = baseURL;
-
-    return this.post(`/${VERSION}/payments`, {
-      body: {
-        amount: req.amount,
-        item_id: req.itemId,
-        country: req.country,
-        currency: req.currency,
-        item_type: req.itemType,
-        payer_email: req.payerEmail,
-        payer_phone: req.payerPhone,
-        description: req.description,
-        payment_method: req.paymentMethod,
-        metadata: {
-          simId: req.simId,
-          targetId: req.subscriberId,
-        },
-      },
-    }).then(res => dtoToPaymentDto(res));
-  };
-
-  update: any = async (
+  updatePayment: any = async (
     baseURL: string,
     req: UpdatePaymentInputDto
   ): Promise<PaymentDto> => {
@@ -83,14 +40,9 @@ class PaymentAPI extends RESTDataSource {
       body: {
         country: req.country,
         currency: req.currency,
-        deposited_amount: req.amount,
-        description: req.description,
-        paid_at: req.paidAt,
         payer_email: req.payerEmail,
         payer_name: req.payerName,
-        payer_phone: req.payerPhone,
         payment_method: req.paymentMethod,
-        status: req.status,
       },
     }).then(res => dtoToPaymentDto(res));
   };
@@ -139,7 +91,7 @@ class PaymentAPI extends RESTDataSource {
     );
   };
 
-  processPayments = async (
+  processPayment = async (
     baseURL: string,
     req: ProcessPaymentInputDto
   ): Promise<ProcessPaymentDto> => {

@@ -9,9 +9,9 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { VERSION } from "../../common/configs";
 import {
-  GetReportResDto,
+  GetReportDto,
+  GetReportsDto,
   GetReportsInputDto,
-  GetReportsResDto,
 } from "../resolvers/types";
 import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
@@ -19,7 +19,7 @@ class BillingAPI extends RESTDataSource {
   getReports = async (
     baseURL: string,
     req: GetReportsInputDto
-  ): Promise<GetReportsResDto> => {
+  ): Promise<GetReportsDto> => {
     this.logger.info(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
     this.baseURL = baseURL;
     const params = "sort=true";
@@ -46,14 +46,14 @@ class BillingAPI extends RESTDataSource {
     );
   };
 
-  getReport = async (baseURL: string, id: string): Promise<GetReportResDto> => {
+  getReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
     this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/reports/${id}`).then(res =>
       dtoToReportDto(res)
     );
   };
-  getPDFReport = async (baseURL: string, id: string): Promise<Report> => {
+  getPDFReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
     this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/reports/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/pdf/${id}?as_pdf=true`).then(res => res);
