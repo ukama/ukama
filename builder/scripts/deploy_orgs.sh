@@ -86,6 +86,7 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export MASTER_ORG_NAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP
         export COMPONENT_ENVIRONMENT=test
+        export PROMETHEUS_HTTP_URL="http://${LOCAL_HOST_IP}:${PROMETHEUS}/v1/prometheus"
     }
 
     function run_docker_compose() {

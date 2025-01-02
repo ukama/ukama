@@ -67,6 +67,7 @@ function set_env() {
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
     export COMPONENT_ENVIRONMENT=test
+    export PROMETHEUS_HTTP_URL="http://${LOCAL_HOST_IP}:9079/v1/prometheus"
 }
 
 function run_docker_compose() {
@@ -250,6 +251,11 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         ./start_provider.sh
         cd ../..
     fi
+    if [ "$SYSTEM" == "metrics" ]; then
+        cd ./metrics/prometheus
+        sed -i '' "s/localhost:9079/${LOCAL_HOST_IP}:9079/g" docker-compose.yml
+        cd ../..
+    fi
     
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
     export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
@@ -273,6 +279,11 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
+        ;;
+    "metrics")
+        cd ./metrics/prometheus
+        sed -i '' "s/${LOCAL_HOST_IP}/localhost:9079/g" docker-compose.yml
+        cd ../..
         ;;
     "dataplan")
         sleep 2
