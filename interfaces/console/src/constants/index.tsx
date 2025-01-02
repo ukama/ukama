@@ -110,28 +110,28 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
 ];
 export const BILLING_TABLE_COLUMNS: ColumnsWithOptions[] = [
   {
-    id: 'amount',
-    label: 'Amount',
+    id: 'billing',
+    label: 'Billing period',
     minWidth: 100,
   },
   {
-    id: 'status',
-    label: 'Status',
+    id: 'posted',
+    label: 'Posted',
     minWidth: 100,
   },
   {
-    id: 'paymentMethod',
-    label: 'Payment Method',
+    id: 'description',
+    label: 'Description',
     minWidth: 100,
   },
   {
-    id: 'date',
-    label: 'Date',
+    id: 'payment',
+    label: 'Payment',
     minWidth: 100,
   },
   {
-    id: 'actions',
-    label: 'Actions',
+    id: 'pdf',
+    label: 'Pdf',
     minWidth: 100,
   },
 ];

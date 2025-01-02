@@ -246,15 +246,17 @@ export type DataPlan = {
   planName: Scalars['String']['output'];
 }
 export type Customer = {
-  __typename?: 'Customer';
-  AddressLine1: Scalars['String']['output'];
+  __typename?: 'CustomerDto';
+  addressLine1?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
-  email: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
   externalId: Scalars['String']['output'];
-  legalName: Scalars['String']['output'];
-  legalNumber: Scalars['String']['output'];
+  legalName?: Maybe<Scalars['String']['output']>;
+  legalNumber?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
-  phone: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
+  timezone?: Maybe<Scalars['String']['output']>;
   vatRate: Scalars['Float']['output'];
 };
 
@@ -298,22 +300,15 @@ export type DeleteSimResDto = {
   simId?: Maybe<Scalars['String']['output']>;
 };
 
-export type Fee = {
-  __typename?: 'Fee';
-  amountCents: Scalars['Float']['output'];
-  amountCurrency: Scalars['String']['output'];
-  eventsCount: Scalars['Float']['output'];
-  owner: Owner;
-  totalAmountCents: Scalars['Float']['output'];
+export type FeeDto = {
+  __typename?: 'FeeDto';
+  eventsCount: Scalars['String']['output'];
+  item: ItemResDto;
+  taxesAmountCents: Scalars['String']['output'];
+  taxesPreciseAmount: Scalars['String']['output'];
+  totalAmountCents: Scalars['String']['output'];
   totalAmountCurrency: Scalars['String']['output'];
   units: Scalars['Float']['output'];
-  vatAmountCents: Scalars['Float']['output'];
-  vatAmountCurrency: Scalars['String']['output'];
-};
-
-export type Fees = {
-  __typename?: 'Fees';
-  fees: Array<Fee>;
 };
 
 export type GetNodeLatestMetricInput = {
@@ -331,37 +326,29 @@ export type GetPackagesForSimInputDto = {
 };
 
 export type GetPaymentsInputDto = {
-  paymentMethod: Scalars['String']['input'];
-  status: Scalars['String']['input'];
-  type: Scalars['String']['input'];
+  paymentMethod?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type GetReportResDto = {
-  __typename?: 'GetReportResDto';
-  createdAt: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isPaid: Scalars['Boolean']['output'];
-  networkId: Scalars['String']['output'];
-  ownerId: Scalars['String']['output'];
-  ownerType: Scalars['String']['output'];
-  period: Scalars['String']['output'];
-  rawReport: RawReport;
-  type: Scalars['String']['output'];
+export type GetReportDto = {
+  __typename?: 'GetReportDto';
+  report: ReportDto;
+};
+
+export type GetReportsDto = {
+  __typename?: 'GetReportsDto';
+  reports: Array<ReportDto>;
 };
 
 export type GetReportsInputDto = {
-  count: Scalars['Float']['input'];
-  isPaid: Scalars['Boolean']['input'];
-  networkId: Scalars['String']['input'];
-  ownerId: Scalars['String']['input'];
+  count?: InputMaybe<Scalars['Float']['input']>;
+  isPaid?: InputMaybe<Scalars['Boolean']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  ownerId?: InputMaybe<Scalars['String']['input']>;
   ownerType: Scalars['String']['input'];
   report_type: Scalars['String']['input'];
-  sort: Scalars['Boolean']['input'];
-};
-
-export type GetReportsResDto = {
-  __typename?: 'GetReportsResDto';
-  reports: Array<GetReportResDto>;
+  sort?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type GetSimBySubscriberInputDto = {
@@ -413,6 +400,13 @@ export type InvitationDto = {
 export type InvitationsResDto = {
   __typename?: 'InvitationsResDto';
   invitations: Array<InvitationDto>;
+};
+
+export type ItemResDto = {
+  __typename?: 'ItemResDto';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type MemberDto = {
@@ -918,13 +912,6 @@ export type OrgsResDto = {
   user: Scalars['String']['output'];
 };
 
-export type Owner = {
-  __typename?: 'Owner';
-  code: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  type: Scalars['String']['output'];
-};
-
 export enum Payment_Item_Type {
   Invoice = 'INVOICE',
   Package = 'PACKAGE',
@@ -1064,9 +1051,9 @@ export type Query = {
   getPackagesForSim: GetSimPackagesDtoApi;
   getPayment: PaymentDto;
   getPayments: PaymentsDto;
-  getReport: GetReportResDto;
-  getReportPdf: GetReportResDto;
-  getReports: GetReportsResDto;
+  getReport: GetReportDto;
+  getReportPdf: GetReportDto;
+  getReports: GetReportsDto;
   getSim: SimDto;
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
@@ -1282,21 +1269,26 @@ export enum Role_Type {
   RoleVendor = 'ROLE_VENDOR'
 }
 
-export type RawReport = {
-  __typename?: 'RawReport';
-  amountCents: Scalars['Float']['output'];
-  amountCurrency: Scalars['String']['output'];
-  customer: Customer;
-  fees: Fees;
-  fileURL: Scalars['String']['output'];
+export type RawReportDto = {
+  __typename?: 'RawReportDto';
+  currency: Scalars['String']['output'];
+  customer: CustomerDto;
+  fees: Array<FeeDto>;
+  feesAmountCents: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
+  invoiceType: Scalars['String']['output'];
   issuingDate: Scalars['String']['output'];
+  paymentDueDate: Scalars['String']['output'];
+  paymentOverdue: Scalars['Boolean']['output'];
   paymentStatus: Scalars['String']['output'];
   status: Scalars['String']['output'];
-  subscriptions: Subscriptions;
-  totalAmountCents: Scalars['Float']['output'];
-  totalAmountCurrency: Scalars['String']['output'];
-  vatAmountCents: Scalars['Float']['output'];
-  vatAmountCurrency: Scalars['String']['output'];
+  subTotalExcludingTaxesAmountCents: Scalars['String']['output'];
+  subTotalIncludingTaxesAmountCents: Scalars['String']['output'];
+  subscriptions: Array<SubscriptionDto>;
+  taxesAmountCents: Scalars['String']['output'];
+  totalAmountCents: Scalars['String']['output'];
+  vatAmountCents: Scalars['String']['output'];
+  vatAmountCurrency?: Maybe<Scalars['String']['output']>;
 };
 
 export type RemovePackageFormSimInputDto = {
@@ -1307,6 +1299,19 @@ export type RemovePackageFormSimInputDto = {
 export type RemovePackageFromSimResDto = {
   __typename?: 'RemovePackageFromSimResDto';
   packageId?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReportDto = {
+  __typename?: 'ReportDto';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isPaid: Scalars['Boolean']['output'];
+  networkId: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  ownerType: Scalars['String']['output'];
+  period: Scalars['String']['output'];
+  rawReport: RawReportDto;
+  type: Scalars['String']['output'];
 };
 
 export type RestartNodeInputDto = {
@@ -1531,21 +1536,17 @@ export type SubscribersResDto = {
   subscribers: Array<SubscriberDto>;
 };
 
-export type Subscription = {
-  __typename?: 'Subscription';
-  canceldAt: Scalars['String']['output'];
+export type SubscriptionDto = {
+  __typename?: 'SubscriptionDto';
+  canceledAt?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   externalCustomerId: Scalars['String']['output'];
   externalId: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
   planCode: Scalars['String']['output'];
   startedAt: Scalars['String']['output'];
   status: Scalars['String']['output'];
-  terminatedAt: Scalars['String']['output'];
-};
-
-export type Subscriptions = {
-  __typename?: 'Subscriptions';
-  subscriptions: Array<Subscription>;
+  terminatedAt?: Maybe<Scalars['String']['output']>;
 };
 
 export type TimezoneDto = {
@@ -1614,17 +1615,12 @@ export type UpdatePackageInputDto = {
 };
 
 export type UpdatePaymentInputDto = {
-  amount: Scalars['String']['input'];
-  country: Scalars['String']['input'];
-  currency: Scalars['String']['input'];
-  description: Scalars['String']['input'];
+  country?: InputMaybe<Scalars['String']['input']>;
+  currency?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  paidAt: Scalars['String']['input'];
-  payerEmail: Scalars['String']['input'];
-  payerName: Scalars['String']['input'];
-  payerPhone: Scalars['String']['input'];
-  paymentMethod: Scalars['String']['input'];
-  status: Scalars['String']['input'];
+  payerEmail?: InputMaybe<Scalars['String']['input']>;
+  payerName?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSiteInputDto = {
@@ -1926,6 +1922,13 @@ export type AddPaymentMutationVariables = Exact<{
 
 export type AddPaymentMutation = { __typename?: 'Mutation', addPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
 
+export type UpdatePaymentMutationVariables = Exact<{
+  data: UpdatePaymentInputDto;
+}>;
+
+
+export type UpdatePaymentMutation = { __typename?: 'Mutation', updatePayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
 export type GetPaymentQueryVariables = Exact<{
   paymentId: Scalars['String']['input'];
 }>;
@@ -1940,26 +1943,27 @@ export type GetPaymentsQueryVariables = Exact<{
 
 export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
 
-export type GetReportPdfQueryVariables = Exact<{
-  getReportPdfId: Scalars['String']['input'];
-}>;
+export type CustomerFragment = { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string };
 
+export type SubscriptionFragment = { __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null };
 
-export type GetReportPdfQuery = { __typename?: 'Query', getReportPdf: { __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } } };
+export type FeeFragment = { __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } };
+
+export type RawReportFragment = { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> };
 
 export type GetReportsQueryVariables = Exact<{
   data: GetReportsInputDto;
 }>;
 
 
-export type GetReportsQuery = { __typename?: 'Query', getReports: { __typename?: 'GetReportsResDto', reports: Array<{ __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } }> } };
+export type GetReportsQuery = { __typename?: 'Query', getReports: { __typename?: 'GetReportsDto', reports: Array<{ __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } }> } };
 
 export type GetReportQueryVariables = Exact<{
-  getReportId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
 }>;
 
 
-export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportResDto', type: string, createdAt: string, id: string, isPaid: boolean, networkId: string, ownerId: string, ownerType: string, period: string, rawReport: { __typename?: 'RawReport', amountCents: number, amountCurrency: string, fileURL: string, issuingDate: string, paymentStatus: string, status: string, totalAmountCents: number, totalAmountCurrency: string, vatAmountCents: number, vatAmountCurrency: string, customer: { __typename?: 'Customer', AddressLine1: string, createdAt: string, email: string, externalId: string, legalName: string, legalNumber: string, name: string, phone: string, vatRate: number }, fees: { __typename?: 'Fees', fees: Array<{ __typename?: 'Fee', amountCents: number, amountCurrency: string, eventsCount: number, totalAmountCents: number, totalAmountCurrency: string, units: number, vatAmountCents: number, vatAmountCurrency: string, owner: { __typename?: 'Owner', code: string, name: string, type: string } }> }, subscriptions: { __typename?: 'Subscriptions', subscriptions: Array<{ __typename?: 'Subscription', canceldAt: string, createdAt: string, externalCustomerId: string, externalId: string, planCode: string, startedAt: string, status: string, terminatedAt: string }> } } } };
+export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportDto', report: { __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } } } };
 
 export type GetSimPoolStatsQueryVariables = Exact<{
   data: GetSimPoolStatsInput;
@@ -2359,6 +2363,79 @@ export const PaymentFragmentDoc = gql`
   createdAt
 }
     `;
+export const CustomerFragmentDoc = gql`
+    fragment customer on CustomerDto {
+  externalId
+  name
+  email
+  addressLine1
+  legalName
+  legalNumber
+  phone
+  currency
+  timezone
+  vatRate
+  createdAt
+}
+    `;
+export const SubscriptionFragmentDoc = gql`
+    fragment subscription on SubscriptionDto {
+  externalCustomerId
+  externalId
+  planCode
+  name
+  status
+  createdAt
+  startedAt
+  canceledAt
+  terminatedAt
+}
+    `;
+export const FeeFragmentDoc = gql`
+    fragment fee on FeeDto {
+  taxesAmountCents
+  taxesPreciseAmount
+  totalAmountCents
+  totalAmountCurrency
+  eventsCount
+  units
+  item {
+    type
+    code
+    name
+  }
+}
+    `;
+export const RawReportFragmentDoc = gql`
+    fragment rawReport on RawReportDto {
+  issuingDate
+  paymentDueDate
+  paymentOverdue
+  invoiceType
+  status
+  paymentStatus
+  feesAmountCents
+  taxesAmountCents
+  subTotalExcludingTaxesAmountCents
+  subTotalIncludingTaxesAmountCents
+  vatAmountCents
+  vatAmountCurrency
+  totalAmountCents
+  currency
+  fileUrl
+  customer {
+    ...customer
+  }
+  subscriptions {
+    ...subscription
+  }
+  fees {
+    ...fee
+  }
+}
+    ${CustomerFragmentDoc}
+${SubscriptionFragmentDoc}
+${FeeFragmentDoc}`;
 export const SimPoolFragmentDoc = gql`
     fragment SimPool on SimDto {
   activationCode
@@ -3805,6 +3882,55 @@ export function useAddPaymentMutation(baseOptions?: Apollo.MutationHookOptions<A
 export type AddPaymentMutationHookResult = ReturnType<typeof useAddPaymentMutation>;
 export type AddPaymentMutationResult = Apollo.MutationResult<AddPaymentMutation>;
 export type AddPaymentMutationOptions = Apollo.BaseMutationOptions<AddPaymentMutation, AddPaymentMutationVariables>;
+export const UpdatePaymentDocument = gql`
+    mutation UpdatePayment($data: UpdatePaymentInputDto!) {
+  updatePayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+    `;
+export type UpdatePaymentMutationFn = Apollo.MutationFunction<UpdatePaymentMutation, UpdatePaymentMutationVariables>;
+
+/**
+ * __useUpdatePaymentMutation__
+ *
+ * To run a mutation, you first call `useUpdatePaymentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePaymentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updatePaymentMutation, { data, loading, error }] = useUpdatePaymentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdatePaymentMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePaymentMutation, UpdatePaymentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdatePaymentMutation, UpdatePaymentMutationVariables>(UpdatePaymentDocument, options);
+      }
+export type UpdatePaymentMutationHookResult = ReturnType<typeof useUpdatePaymentMutation>;
+export type UpdatePaymentMutationResult = Apollo.MutationResult<UpdatePaymentMutation>;
+export type UpdatePaymentMutationOptions = Apollo.BaseMutationOptions<UpdatePaymentMutation, UpdatePaymentMutationVariables>;
 export const GetPaymentDocument = gql`
     query GetPayment($paymentId: String!) {
   getPayment(paymentId: $paymentId) {
@@ -3887,173 +4013,25 @@ export type GetPaymentsQueryHookResult = ReturnType<typeof useGetPaymentsQuery>;
 export type GetPaymentsLazyQueryHookResult = ReturnType<typeof useGetPaymentsLazyQuery>;
 export type GetPaymentsSuspenseQueryHookResult = ReturnType<typeof useGetPaymentsSuspenseQuery>;
 export type GetPaymentsQueryResult = Apollo.QueryResult<GetPaymentsQuery, GetPaymentsQueryVariables>;
-export const GetReportPdfDocument = gql`
-    query GetReportPdf($getReportPdfId: String!) {
-  getReportPdf(id: $getReportPdfId) {
-    type
-    createdAt
-    id
-    isPaid
-    networkId
-    ownerId
-    ownerType
-    period
-    rawReport {
-      amountCents
-      amountCurrency
-      customer {
-        AddressLine1
-        createdAt
-        email
-        externalId
-        legalName
-        legalNumber
-        name
-        phone
-        vatRate
-      }
-      fees {
-        fees {
-          amountCents
-          amountCurrency
-          eventsCount
-          owner {
-            code
-            name
-            type
-          }
-          totalAmountCents
-          totalAmountCurrency
-          units
-          vatAmountCents
-          vatAmountCurrency
-        }
-      }
-      subscriptions {
-        subscriptions {
-          canceldAt
-          createdAt
-          externalCustomerId
-          externalId
-          planCode
-          startedAt
-          status
-          terminatedAt
-        }
-      }
-      fileURL
-      issuingDate
-      paymentStatus
-      status
-      totalAmountCents
-      totalAmountCurrency
-      vatAmountCents
-      vatAmountCurrency
-    }
-  }
-}
-    `;
-
-/**
- * __useGetReportPdfQuery__
- *
- * To run a query within a React component, call `useGetReportPdfQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetReportPdfQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetReportPdfQuery({
- *   variables: {
- *      getReportPdfId: // value for 'getReportPdfId'
- *   },
- * });
- */
-export function useGetReportPdfQuery(baseOptions: Apollo.QueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables> & ({ variables: GetReportPdfQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
-      }
-export function useGetReportPdfLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
-        }
-export function useGetReportPdfSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportPdfQuery, GetReportPdfQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetReportPdfQuery, GetReportPdfQueryVariables>(GetReportPdfDocument, options);
-        }
-export type GetReportPdfQueryHookResult = ReturnType<typeof useGetReportPdfQuery>;
-export type GetReportPdfLazyQueryHookResult = ReturnType<typeof useGetReportPdfLazyQuery>;
-export type GetReportPdfSuspenseQueryHookResult = ReturnType<typeof useGetReportPdfSuspenseQuery>;
-export type GetReportPdfQueryResult = Apollo.QueryResult<GetReportPdfQuery, GetReportPdfQueryVariables>;
 export const GetReportsDocument = gql`
     query GetReports($data: GetReportsInputDto!) {
   getReports(data: $data) {
     reports {
-      type
-      createdAt
       id
-      isPaid
-      networkId
       ownerId
       ownerType
+      networkId
       period
+      type
       rawReport {
-        amountCents
-        amountCurrency
-        customer {
-          AddressLine1
-          createdAt
-          email
-          externalId
-          legalName
-          legalNumber
-          name
-          phone
-          vatRate
-        }
-        fees {
-          fees {
-            amountCents
-            amountCurrency
-            eventsCount
-            owner {
-              code
-              name
-              type
-            }
-            totalAmountCents
-            totalAmountCurrency
-            units
-            vatAmountCents
-            vatAmountCurrency
-          }
-        }
-        subscriptions {
-          subscriptions {
-            canceldAt
-            createdAt
-            externalCustomerId
-            externalId
-            planCode
-            startedAt
-            status
-            terminatedAt
-          }
-        }
-        fileURL
-        issuingDate
-        paymentStatus
-        status
-        totalAmountCents
-        totalAmountCurrency
-        vatAmountCents
-        vatAmountCurrency
+        ...rawReport
       }
+      isPaid
+      createdAt
     }
   }
 }
-    `;
+    ${RawReportFragmentDoc}`;
 
 /**
  * __useGetReportsQuery__
@@ -4088,71 +4066,24 @@ export type GetReportsLazyQueryHookResult = ReturnType<typeof useGetReportsLazyQ
 export type GetReportsSuspenseQueryHookResult = ReturnType<typeof useGetReportsSuspenseQuery>;
 export type GetReportsQueryResult = Apollo.QueryResult<GetReportsQuery, GetReportsQueryVariables>;
 export const GetReportDocument = gql`
-    query GetReport($getReportId: String!) {
-  getReport(id: $getReportId) {
-    type
-    createdAt
-    id
-    isPaid
-    networkId
-    ownerId
-    ownerType
-    period
-    rawReport {
-      amountCents
-      amountCurrency
-      customer {
-        AddressLine1
-        createdAt
-        email
-        externalId
-        legalName
-        legalNumber
-        name
-        phone
-        vatRate
+    query GetReport($id: String!) {
+  getReport(id: $id) {
+    report {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
       }
-      fees {
-        fees {
-          amountCents
-          amountCurrency
-          eventsCount
-          owner {
-            code
-            name
-            type
-          }
-          totalAmountCents
-          totalAmountCurrency
-          units
-          vatAmountCents
-          vatAmountCurrency
-        }
-      }
-      subscriptions {
-        subscriptions {
-          canceldAt
-          createdAt
-          externalCustomerId
-          externalId
-          planCode
-          startedAt
-          status
-          terminatedAt
-        }
-      }
-      fileURL
-      issuingDate
-      paymentStatus
-      status
-      totalAmountCents
-      totalAmountCurrency
-      vatAmountCents
-      vatAmountCurrency
+      isPaid
+      createdAt
     }
   }
 }
-    `;
+    ${RawReportFragmentDoc}`;
 
 /**
  * __useGetReportQuery__
@@ -4166,7 +4097,7 @@ export const GetReportDocument = gql`
  * @example
  * const { data, loading, error } = useGetReportQuery({
  *   variables: {
- *      getReportId: // value for 'getReportId'
+ *      id: // value for 'id'
  *   },
  * });
  */

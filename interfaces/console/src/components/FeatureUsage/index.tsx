@@ -10,15 +10,11 @@ import { Box, Paper, Stack, Typography } from '@mui/material';
 import colors from '@/theme/colors';
 import CustomLoadingSkeleton from '@/components/CustomLoadingSkeleton';
 interface FeatureUsageCardProps {
-  upTime: string;
-  totalDataUsage: string;
   ActiveSubscriberCount: number;
   loading?: boolean;
 }
 
 const FeatureUsageCard: React.FC<FeatureUsageCardProps> = ({
-  upTime,
-  totalDataUsage,
   ActiveSubscriberCount,
   loading = false,
 }) => {
@@ -41,30 +37,6 @@ const FeatureUsageCard: React.FC<FeatureUsageCardProps> = ({
         </Stack>
 
         <Stack direction={'column'} spacing={2}>
-          <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              Up Time
-            </Typography>
-            {loading ? (
-              <CustomLoadingSkeleton width={50} height={20} />
-            ) : (
-              <Typography variant="body2" sx={{ color: colors.vulcan }}>
-                {upTime} %
-              </Typography>
-            )}
-          </Stack>
-          <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
-            <Typography variant="body2" sx={{ color: colors.vulcan }}>
-              Total Data Usage
-            </Typography>
-            {loading ? (
-              <CustomLoadingSkeleton width={50} height={20} />
-            ) : (
-              <Typography variant="body2" sx={{ color: colors.vulcan }}>
-                {totalDataUsage} GB
-              </Typography>
-            )}
-          </Stack>
           <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
             <Typography variant="body2" sx={{ color: colors.vulcan }}>
               Active Subscribers

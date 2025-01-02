@@ -15,7 +15,7 @@ services:
         - NEXT_PUBLIC_API_GW_4SS=http://bff:8080
         - NEXT_PUBLIC_APP_DOMAIN=localhost
         - NEXT_PUBLIC_SIM_TYPE=test
-        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY={STRIPE_PK}
+        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=test
     ports:
       - '3000:8080'
     networks:

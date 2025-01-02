@@ -1,60 +1,42 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 'use client';
-
-import React, { useState, useMemo } from 'react';
-import { AlertColor, Box, Grid, Paper, Tabs, Tab } from '@mui/material';
+import React, { useState, useCallback } from 'react';
+import { Box, Grid } from '@mui/material';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import {
   useGetReportsQuery,
   useGetPaymentsQuery,
-  GetReportResDto,
-  useGetSubscribersByNetworkQuery,
+  useUpdatePaymentMutation,
+  ReportDto,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import StripePaymentDialog from '@/components/StripePaymentDialog';
 import CurrentBillCard from '@/components/CurrentBillCard';
-import FeatureUsageCard from '@/components/FeatureUsage';
 import BillingOwnerDetailsCard from '@/components/BillingOwnerDetailsCard';
 import OutStandingBillCard from '@/components/OutStandingBillCard';
-import DataTableWithOptions from '@/components/DataTableWithOptions';
-import { BILLING_HISTORY_TABLE_MENU, BILLING_TABLE_COLUMNS } from '@/constants';
-import SubscriberIcon from '@mui/icons-material/PeopleAlt';
+import BillingHistoryTable from '@/components/BillingHistory';
 
 const BillingSettingsPage: React.FC = () => {
-  const { setSnackbarMessage, network, user } = useAppContext();
-
+  const { setSnackbarMessage, user } = useAppContext();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [extraKey, setExtraKey] = useState<string>('');
-  const [tabValue, setTabValue] = useState(0);
+  const [myBill, setMyBill] = useState<ReportDto>();
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  const handlePaymentSuccess = () => {
-    setSnackbarMessage({
-      id: 'payment-success',
-      message: 'Payment completed successfully',
-      type: 'success' as AlertColor,
-      show: true,
-    });
-    setIsPaymentDialogOpen(false);
-  };
-
-  const handlePaymentError = (error: any) => {
-    setSnackbarMessage({
-      id: 'payment-error',
-      message: error.message || 'Payment failed',
-      type: 'error' as AlertColor,
-      show: true,
-    });
-  };
-
-  const { data: reportsData, loading: reportsLoading } = useGetReportsQuery({
+  const {
+    data: reportsData,
+    loading: reportsLoading,
+    refetch: refetchReports,
+  } = useGetReportsQuery({
     variables: {
       data: {
-        isPaid: false,
         report_type: 'invoice',
-        count: 0,
+        count: 100,
         networkId: '',
         ownerId: '',
         ownerType: '',
@@ -66,178 +48,224 @@ const BillingSettingsPage: React.FC = () => {
       setSnackbarMessage({
         id: 'reports-error',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
   });
 
-  const { data: paymentsData, loading: paymentsLoading } = useGetPaymentsQuery({
+  const {
+    data: paymentsData,
+    loading: paymentsLoading,
+    refetch: refetchPayments,
+  } = useGetPaymentsQuery({
     variables: {
       data: {
-        paymentMethod: 'stripe',
-        status: 'processing',
         type: 'invoice',
       },
     },
     fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
-        id: 'reports-error',
+        id: 'payments-error',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
   });
 
-  const handleAddPayment = (billId: string) => {
-    setIsPaymentDialogOpen(true);
-    const currentPaymentSection = paymentsData?.getPayments?.payments.find(
-      (payment) => payment.itemId === billId,
-    );
-    setExtraKey(currentPaymentSection?.extra ?? '');
-  };
+  const [updatePayment] = useUpdatePaymentMutation({
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'update-payment-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
 
-  const billingHistoryDataset = useMemo(() => {
-    return reportsData?.getReports?.reports.map((report: GetReportResDto) => ({
-      date: new Date(report.createdAt).toLocaleDateString(),
-      amount: `${report.rawReport.totalAmountCurrency} ${(report.rawReport.totalAmountCents / 100).toFixed(2)}`,
-      status: report.rawReport.paymentStatus || report.rawReport.status,
-      period: report.period,
-      id: report.id,
-    }));
-  }, [reportsData]);
-
-  const handleMenuItemClick = (id: string, type: string) => {
-    //handle click on billing on history
-  };
-  const currentBill = React.useMemo(() => {
-    if (!reportsData?.getReports || reportsData.getReports.reports.length === 0)
-      return null;
-
-    const unpaidBills = reportsData.getReports.reports
-      .filter((b) => b.isPaid === false)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  const handleAddPayment = useCallback(
+    async (billId: string) => {
+      const currentPayment = paymentsData?.getPayments?.payments.find(
+        (payment) => payment.itemId === billId,
       );
+      const myBill = reportsData?.getReports?.reports.find(
+        (bill) => bill.id === billId,
+      );
+      setMyBill(myBill);
 
-    return unpaidBills[0] || null;
-  }, [reportsData]);
-
-  const { data: subscribersData, loading: getSubscriberByNetworkLoading } =
-    useGetSubscribersByNetworkQuery({
-      skip: !network.id,
-      variables: {
-        networkId: network.id,
-      },
-      fetchPolicy: 'network-only',
-      nextFetchPolicy: 'network-only',
-      onError: (error) => {
+      if (!currentPayment) {
         setSnackbarMessage({
-          id: 'subscriber-msg',
-          message: error.message,
-          type: 'error' as AlertColor,
+          id: 'payment-error',
+          message: 'Payment not found for this bill.',
+          type: 'error',
           show: true,
         });
-      },
-    });
+        return;
+      }
 
-  const subscriberCount = subscribersData?.getSubscribersByNetwork
-    ? subscribersData.getSubscribersByNetwork.subscribers.length
-    : 0;
-  const outstandingReports = reportsData?.getReports.reports.filter(
-    (report) => !report.isPaid,
+      try {
+        if (currentPayment?.extra) {
+          setExtraKey(currentPayment.extra);
+          setIsPaymentDialogOpen(true);
+        } else {
+          const currentPaymentId = currentPayment?.id;
+          if (!currentPaymentId) {
+            setSnackbarMessage({
+              id: 'payment-error',
+              message: 'Payment ID is missing.',
+              type: 'error',
+              show: true,
+            });
+            return;
+          }
+
+          const result = await updatePayment({
+            variables: {
+              data: {
+                id: currentPaymentId,
+                paymentMethod: 'stripe',
+                payerEmail: user?.email,
+                payerName: user?.name,
+              },
+            },
+          });
+
+          if (result.errors) {
+            setSnackbarMessage({
+              id: 'payment-error',
+              message: result.errors[0].message,
+              type: 'error',
+              show: true,
+            });
+            return;
+          }
+
+          if (result.data) {
+            const updatedPaymentsData = await refetchPayments();
+
+            const updatedPaymentSection =
+              updatedPaymentsData?.data?.getPayments?.payments.find(
+                (payment) => payment.itemId === billId,
+              );
+
+            if (updatedPaymentSection?.extra) {
+              setExtraKey(updatedPaymentSection.extra);
+              setIsPaymentDialogOpen(true);
+            }
+          }
+        }
+      } catch (error) {
+        setSnackbarMessage({
+          id: 'payment-error',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          type: 'error',
+          show: true,
+        });
+      }
+    },
+    [
+      paymentsData,
+      reportsData,
+      updatePayment,
+      refetchPayments,
+      user,
+      setSnackbarMessage,
+    ],
+  );
+
+  const handlePaymentSuccess = async () => {
+    try {
+      setSnackbarMessage({
+        id: 'payment-success',
+        message: 'Payment completed successfully',
+        type: 'success',
+        show: true,
+      });
+
+      await Promise.all([refetchReports(), refetchPayments()]);
+
+      setIsPaymentDialogOpen(false);
+      setExtraKey('');
+      setMyBill(undefined);
+    } catch (error) {
+      setSnackbarMessage({
+        id: 'payment-error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        type: 'error',
+        show: true,
+      });
+    }
+  };
+
+  const billingHistoryDataset = reportsData?.getReports?.reports.map(
+    (report) => ({
+      id: report.id,
+      posted: new Date(report.createdAt).toLocaleDateString(),
+      billing: report.rawReport?.subscriptions
+        .map(
+          (sub) =>
+            `${new Date(sub.startedAt).toLocaleDateString()} - ${
+              sub.terminatedAt
+                ? new Date(sub.terminatedAt).toLocaleDateString()
+                : 'Present'
+            }`,
+        )
+        .join(', '),
+      payment: report.isPaid ? 'Paid' : 'Unpaid',
+      description: report.rawReport?.fees[0].item.name,
+      pdf: report.rawReport?.fileUrl,
+    }),
   );
 
   return (
     <LoadingWrapper
       width="100%"
-      isLoading={paymentsLoading || reportsLoading}
+      isLoading={reportsLoading || paymentsLoading}
       height="calc(100vh - 244px)"
     >
       <Box sx={{ width: '100%' }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="billing tabs"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Current Bill" />
-          <Tab label="Billing History" />
-        </Tabs>
-
-        {tabValue === 0 && (
-          <Box sx={{ py: 2 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <CurrentBillCard
-                  currentBill={currentBill}
-                  onPay={handleAddPayment}
-                  isLoading={reportsLoading || paymentsLoading}
-                />
-              </Grid>
-              {outstandingReports && (
-                <Grid item xs={12}>
-                  <OutStandingBillCard
-                    reports={reportsData?.getReports?.reports || []}
-                    onPayAll={() => {}}
-                    onPaySingle={(reportId) => {
-                      handleAddPayment(reportId);
-                    }}
-                  />
-                </Grid>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <CurrentBillCard
+              bills={reportsData?.getReports?.reports.filter(
+                (report) => !report.isPaid,
               )}
-
-              <Grid item xs={12} md={6}>
-                <FeatureUsageCard
-                  upTime={'90'}
-                  totalDataUsage={'0'}
-                  ActiveSubscriberCount={subscriberCount}
-                  loading={getSubscriberByNetworkLoading}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <BillingOwnerDetailsCard email={user?.email} />
-              </Grid>
-            </Grid>
-          </Box>
-        )}
-
-        {tabValue === 1 && (
-          <Box sx={{ py: 2 }}>
-            <Paper
-              sx={{
-                height: '100%',
-                borderRadius: '10px',
-                px: { xs: 2, md: 3 },
-                py: { xs: 2, md: 4 },
-              }}
-            >
-              <DataTableWithOptions
-                columns={BILLING_TABLE_COLUMNS}
-                icon={SubscriberIcon}
-                dataset={billingHistoryDataset}
-                menuOptions={BILLING_HISTORY_TABLE_MENU}
-                onMenuItemClick={handleMenuItemClick}
-                emptyViewLabel="No billing history found"
-                isRowClickable={false}
-              />
-            </Paper>
-          </Box>
-        )}
+              onPay={handleAddPayment}
+              isLoading={reportsLoading || paymentsLoading}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <OutStandingBillCard
+              reports={reportsData?.getReports?.reports.filter(
+                (report) => !report.isPaid,
+              )}
+              onPaySingle={handleAddPayment}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <BillingOwnerDetailsCard email={user?.email} />
+          </Grid>
+          <Grid item xs={12}>
+            {billingHistoryDataset && (
+              <BillingHistoryTable data={billingHistoryDataset} />
+            )}
+          </Grid>
+        </Grid>
       </Box>
       {extraKey && (
         <StripePaymentDialog
           open={isPaymentDialogOpen}
-          onClose={() => setIsPaymentDialogOpen(false)}
+          onClose={() => {
+            setIsPaymentDialogOpen(false);
+            setExtraKey('');
+            setMyBill(undefined);
+          }}
           extraKey={extraKey}
-          amount={parseFloat(
-            paymentsData?.getPayments?.payments?.[0]?.amount ?? '0',
-          )}
+          bill={myBill}
           onPaymentSuccess={handlePaymentSuccess}
-          onPaymentError={handlePaymentError}
         />
       )}
     </LoadingWrapper>

@@ -422,6 +422,50 @@ mutation AddPayment($data: AddPaymentInputDto!) {
     createdAt
   }
 }
+mutation UpdatePayment($data: UpdatePaymentInputDto!) {
+  updatePayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+mutation ProcessPayment($data: ProcessPaymentInputDto!) {
+  processPayment(data: $data) {
+    payment {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
 query GetPayment($paymentId: String!) {
   getPayment(paymentId: $paymentId) {
     ...payment
@@ -438,197 +482,106 @@ query GetPayments($data: GetPaymentsInputDto!) {
 
 ### Payment end ###
 ### Billing start ###
-query GetReportPdf($getReportPdfId: String!) {
-  getReportPdf(id: $getReportPdfId) {
+# Fragments for reusable parts
+fragment customer on CustomerDto {
+  externalId
+  name
+  email
+  addressLine1
+  legalName
+  legalNumber
+  phone
+  currency
+  timezone
+  vatRate
+  createdAt
+}
+
+fragment subscription on SubscriptionDto {
+  externalCustomerId
+  externalId
+  planCode
+  name
+  status
+  createdAt
+  startedAt
+  canceledAt
+  terminatedAt
+}
+
+fragment fee on FeeDto {
+  taxesAmountCents
+  taxesPreciseAmount
+  totalAmountCents
+  totalAmountCurrency
+  eventsCount
+  units
+  item {
     type
-    createdAt
-    id
-    isPaid
-    networkId
-    ownerId
-    ownerType
-    period
-    rawReport {
-      amountCents
-      amountCurrency
-      customer {
-        AddressLine1
-        createdAt
-        email
-        externalId
-        legalName
-        legalNumber
-        name
-        phone
-        vatRate
-      }
-      fees {
-        fees {
-          amountCents
-          amountCurrency
-          eventsCount
-          owner {
-            code
-            name
-            type
-          }
-          totalAmountCents
-          totalAmountCurrency
-          units
-          vatAmountCents
-          vatAmountCurrency
-        }
-      }
-      subscriptions {
-        subscriptions {
-          canceldAt
-          createdAt
-          externalCustomerId
-          externalId
-          planCode
-          startedAt
-          status
-          terminatedAt
-        }
-      }
-      fileURL
-      issuingDate
-      paymentStatus
-      status
-      totalAmountCents
-      totalAmountCurrency
-      vatAmountCents
-      vatAmountCurrency
-    }
+    code
+    name
   }
 }
+
+fragment rawReport on RawReportDto {
+  issuingDate
+  paymentDueDate
+  paymentOverdue
+  invoiceType
+  status
+  paymentStatus
+  feesAmountCents
+  taxesAmountCents
+  subTotalExcludingTaxesAmountCents
+  subTotalIncludingTaxesAmountCents
+  vatAmountCents
+  vatAmountCurrency
+  totalAmountCents
+  currency
+  fileUrl
+  customer {
+    ...customer
+  }
+  subscriptions {
+    ...subscription
+  }
+  fees {
+    ...fee
+  }
+}
+
 query GetReports($data: GetReportsInputDto!) {
   getReports(data: $data) {
     reports {
-      type
-      createdAt
       id
-      isPaid
-      networkId
       ownerId
       ownerType
+      networkId
       period
+      type
       rawReport {
-        amountCents
-        amountCurrency
-        customer {
-          AddressLine1
-          createdAt
-          email
-          externalId
-          legalName
-          legalNumber
-          name
-          phone
-          vatRate
-        }
-        fees {
-          fees {
-            amountCents
-            amountCurrency
-            eventsCount
-            owner {
-              code
-              name
-              type
-            }
-            totalAmountCents
-            totalAmountCurrency
-            units
-            vatAmountCents
-            vatAmountCurrency
-          }
-        }
-        subscriptions {
-          subscriptions {
-            canceldAt
-            createdAt
-            externalCustomerId
-            externalId
-            planCode
-            startedAt
-            status
-            terminatedAt
-          }
-        }
-        fileURL
-        issuingDate
-        paymentStatus
-        status
-        totalAmountCents
-        totalAmountCurrency
-        vatAmountCents
-        vatAmountCurrency
+        ...rawReport
       }
+      isPaid
+      createdAt
     }
   }
 }
-query GetReport($getReportId: String!) {
-  getReport(id: $getReportId) {
-    type
-    createdAt
-    id
-    isPaid
-    networkId
-    ownerId
-    ownerType
-    period
-    rawReport {
-      amountCents
-      amountCurrency
-      customer {
-        AddressLine1
-        createdAt
-        email
-        externalId
-        legalName
-        legalNumber
-        name
-        phone
-        vatRate
+
+query GetReport($id: String!) {
+  getReport(id: $id) {
+    report {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
       }
-      fees {
-        fees {
-          amountCents
-          amountCurrency
-          eventsCount
-          owner {
-            code
-            name
-            type
-          }
-          totalAmountCents
-          totalAmountCurrency
-          units
-          vatAmountCents
-          vatAmountCurrency
-        }
-      }
-      subscriptions {
-        subscriptions {
-          canceldAt
-          createdAt
-          externalCustomerId
-          externalId
-          planCode
-          startedAt
-          status
-          terminatedAt
-        }
-      }
-      fileURL
-      issuingDate
-      paymentStatus
-      status
-      totalAmountCents
-      totalAmountCurrency
-      vatAmountCents
-      vatAmountCurrency
+      isPaid
+      createdAt
     }
   }
 }
