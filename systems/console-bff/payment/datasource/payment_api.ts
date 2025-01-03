@@ -10,7 +10,6 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 import { VERSION } from "../../common/configs";
 import { logger } from "../../common/logger";
 import {
-  AddPaymentInputDto,
   CorrespondentsResDto,
   GetPaymentsInputDto,
   PaymentDto,

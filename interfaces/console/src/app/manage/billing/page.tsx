@@ -97,12 +97,6 @@ const BillingSettingsPage: React.FC = () => {
       setMyBill(myBill);
 
       if (!currentPayment) {
-        setSnackbarMessage({
-          id: 'payment-error',
-          message: 'Payment not found for this bill.',
-          type: 'error',
-          show: true,
-        });
         return;
       }
 
@@ -113,12 +107,6 @@ const BillingSettingsPage: React.FC = () => {
         } else {
           const currentPaymentId = currentPayment?.id;
           if (!currentPaymentId) {
-            setSnackbarMessage({
-              id: 'payment-error',
-              message: 'Payment ID is missing.',
-              type: 'error',
-              show: true,
-            });
             return;
           }
 
@@ -171,8 +159,8 @@ const BillingSettingsPage: React.FC = () => {
       reportsData,
       updatePayment,
       refetchPayments,
-      user,
       setSnackbarMessage,
+      refetchReports,
     ],
   );
 
@@ -185,7 +173,8 @@ const BillingSettingsPage: React.FC = () => {
         show: true,
       });
 
-      await Promise.all([refetchReports(), refetchPayments()]);
+      await refetchReports();
+      await refetchPayments();
 
       setIsPaymentDialogOpen(false);
       setExtraKey('');
@@ -235,6 +224,7 @@ const BillingSettingsPage: React.FC = () => {
               )}
               onPay={handleAddPayment}
               isLoading={reportsLoading || paymentsLoading}
+              key={reportsData?.getReports?.reports?.length}
             />
           </Grid>
           <Grid item xs={12}>
@@ -250,7 +240,10 @@ const BillingSettingsPage: React.FC = () => {
           </Grid>
           <Grid item xs={12}>
             {billingHistoryDataset && (
-              <BillingHistoryTable data={billingHistoryDataset} />
+              <BillingHistoryTable
+                data={billingHistoryDataset}
+                key={reportsData?.getReports?.reports?.length}
+              />
             )}
           </Grid>
         </Grid>
