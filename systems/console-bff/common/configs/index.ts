@@ -23,7 +23,8 @@ export const CONSOLE_APP_URL =
   process.env.CONSOLE_APP_URL ?? "http://localhost:3000";
 
 // UTILS
-export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";
+export const SIM_TYPE = process.env.SIM_TYPE ?? "operator_data";
+export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "localhost";
 export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
@@ -52,6 +53,8 @@ const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
+
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
@@ -116,6 +119,12 @@ export const SUB_GRAPHS = {
     name: "package",
     port: PACKAGE_PORT,
     url: `http://localhost:${PACKAGE_PORT}`,
+    isPingedSuccess: false,
+  },
+  controller: {
+    name: "controller",
+    port: CONTROLLER_PORT,
+    url: `http://localhost:${CONTROLLER_PORT}`,
     isPingedSuccess: false,
   },
   rate: {

@@ -30,7 +30,7 @@ func TestStatusType(t *testing.T) {
 
 		assert.NotNil(t, status)
 		assert.Equal(t, uint8(status), uint8(3))
-		assert.Equal(t, status.String(), "completed")
+		assert.Equal(t, status.String(), "failed")
 	})
 
 	t.Run("StatusTypeNonValidString", func(tt *testing.T) {

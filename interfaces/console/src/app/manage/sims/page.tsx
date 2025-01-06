@@ -8,6 +8,7 @@
 'use client';
 import {
   SimDto,
+  Sim_Status,
   Sim_Types,
   useGetSimsQuery,
   useUploadSimsMutation,
@@ -25,14 +26,17 @@ import { useState } from 'react';
 
 const Page = () => {
   const [data, setData] = useState<SimDto[]>([]);
-  const { setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage, env } = useAppContext();
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
 
   const { loading: simsLoading, refetch: refetchSims } = useGetSimsQuery({
     fetchPolicy: 'cache-and-network',
     skip: false,
     variables: {
-      type: Sim_Types.OperatorData,
+      data: {
+        status: Sim_Status.All,
+        type: env.SIM_TYPE as Sim_Types,
+      },
     },
     onCompleted: (data) => {
       setData(data?.getSims?.sim ?? []);
@@ -98,16 +102,16 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      height={'calc(100vh - 400px)'}
+      height={'calc(100vh - 244px)'}
       isLoading={uploadSimsLoading ?? simsLoading}
     >
       <Paper
         sx={{
-          py: 3,
-          px: 4,
+          py: { xs: 1.5, md: 3 },
+          px: { xs: 2, md: 4 },
           overflow: 'scroll',
           borderRadius: '10px',
-          height: 'calc(100vh - 400px)',
+          height: '100%',
         }}
       >
         <Box sx={{ width: '100%', height: '100%' }}>

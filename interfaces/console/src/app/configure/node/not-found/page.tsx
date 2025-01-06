@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 const NodeNotFoundPage = () => {
   const router = useRouter();
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       <Stack direction={'column'} spacing={2}>
         <Typography variant="h6">No new node found!</Typography>
         <Typography variant="body1">

@@ -19,6 +19,12 @@ export class OrgAPIDto {
   owner: string;
 
   @Field()
+  country: string;
+
+  @Field()
+  currency: string;
+
+  @Field()
   certificate: string;
 
   @Field()
@@ -56,6 +62,12 @@ export class OrgDto {
 
   @Field()
   owner: string;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
 
   @Field()
   certificate: string;

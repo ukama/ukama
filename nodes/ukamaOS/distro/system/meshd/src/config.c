@@ -16,6 +16,7 @@
 #include "usys_log.h"
 #include "usys_file.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 
 #include "mesh.h"
 #include "config.h"

@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { Sim_Types } from '@/client/graphql/generated';
 import AppContextWrapper from '@/context';
 import '@/styles/global.css';
 import AppThemeProvider from '@/theme/AppThemeProvider';
@@ -38,17 +39,19 @@ export default function RootLayout({
     name: 'theme',
     value: 'light',
   };
-  const meta = cookieStore.get('app') ? true : false;
   const role = headersList.get('role');
   const name = headersList.get('name');
   const email = headersList.get('email');
   const orgId = headersList.get('org-id');
   const userId = headersList.get('user-id');
+  const country = headersList.get('country');
   const orgName = headersList.get('org-name');
+  const currency = headersList.get('currency');
   const tokenStr = cookieStore.get('token') ?? {
     name: 'token',
     value: '',
   };
+
   return (
     <html lang="en">
       <body className={inter.className}>
@@ -57,7 +60,8 @@ export default function RootLayout({
             token={tokenStr.value}
             initEnv={{
               APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? '',
-              SIM_TYPE: process.env.NEXT_PUBLIC_SIM_TYPE ?? 'operator_data',
+              SIM_TYPE:
+                process.env.NEXT_PUBLIC_SIM_TYPE ?? Sim_Types.OperatorData,
               METRIC_URL: process.env.NEXT_PUBLIC_METRIC_URL ?? '',
               API_GW_URL: process.env.NEXT_PUBLIC_API_GW ?? '',
               AUTH_APP_URL: process.env.NEXT_PUBLIC_AUTH_APP_URL ?? '',
@@ -72,6 +76,8 @@ export default function RootLayout({
               email: email ?? '',
               orgId: orgId ?? '',
               orgName: orgName ?? '',
+              country: country ?? '',
+              currency: currency ?? '',
             }}
           >
             <AppThemeProvider themeCookie={cookieTheme?.value}>

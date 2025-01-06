@@ -18,7 +18,6 @@ import {
 } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
-import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
@@ -37,7 +36,6 @@ const parseHeaders = (reqHeader: any): THeaders => {
     orgName: "",
   };
   if (reqHeader.get("introspection") === "true") return headers;
-
   if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
     if (reqHeader.get("x-session-token")) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;
@@ -56,7 +54,7 @@ const parseHeaders = (reqHeader: any): THeaders => {
       if (t !== "") {
         headers.token = t.replace("token=", "");
       } else {
-        throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+        throw new HTTP401Error(Messages.TOKEN_HEADER_NOT_FOUND);
       }
     }
   } else {
@@ -242,34 +240,27 @@ const getBaseURL = async (
   store: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  if (store) {
-    const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
-    if (baseURL) {
-      logger.info(
-        `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
-      );
-      return {
-        status: 200,
-        message: baseURL,
-      };
-    }
-  }
+  logger.info(`${store.get("org")}`);
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
-    const intRes = await initAPI.getSystem(orgName, sysName);
-    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
-    if (store) await addInStore(store, `${orgName}-${sysName}`, url);
-    return {
-      status: 200,
-      message: url,
-    };
-  } else {
-    return {
-      status: 500,
-      message: "Unable to reach system",
-    };
+    try {
+      const intRes = await initAPI.getSystem(orgName, sysName);
+      const url = intRes.url
+        ? intRes.url
+        : `http://${intRes.ip}:${intRes.port}`;
+      return {
+        status: 200,
+        message: url,
+      };
+    } catch (e) {
+      logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
+    }
   }
+  return {
+    status: 500,
+    message: "Unable to reach system",
+  };
 };
 
 const csvToBase64 = (filePath: string) => {

@@ -1,0 +1,4 @@
+# VIRTUAL board - used in virtual node for qemu
+
+INIT_APP:         no
+BUSYBOX_INIT_APP: yes

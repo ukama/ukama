@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 import {
   GRAPHS_TYPE,
@@ -145,7 +145,6 @@ export class SubMetricRangeInput {
   from: number;
 }
 
-@ArgsType()
 @InputType()
 export class SubMetricByTabInput {
   @Field()
@@ -224,7 +223,6 @@ export class NotificationsRes {
   notifications: NotificationsResDto[];
 }
 
-@ArgsType()
 @InputType()
 export class GetNotificationsInput {
   @Field({ nullable: false })

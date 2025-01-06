@@ -7,9 +7,14 @@
  */
 import {
   GetSubscriberAPIResDto,
+  SimPackageAPIDto,
+  SimPackageDto,
+  SimsAPIResDto,
+  SubSimAPIDto,
   SubscriberAPIResDto,
   SubscriberDto,
   SubscriberSimDto,
+  SubscriberSimsResDto,
   SubscribersAPIResDto,
   SubscribersResDto,
 } from "../resolver/types";
@@ -22,12 +27,11 @@ export const addSubscriberReqToSubscriberResDto = (
     email: res.Subscriber.email,
     gender: res.Subscriber.gender,
     address: res.Subscriber.address,
-    dob: res.Subscriber.date_of_birth,
+    dob: res.Subscriber.dob,
     phone: res.Subscriber.phone_number,
     idSerial: res.Subscriber.id_serial,
     uuid: res.Subscriber.subscriber_id,
-    lastName: res.Subscriber.last_name,
-    firstName: res.Subscriber.first_name,
+    name: res.Subscriber.name,
     networkId: res.Subscriber.network_id,
     proofOfIdentification: res.Subscriber.proof_of_identification,
   };
@@ -47,24 +51,20 @@ export const dtoToSubscriberResDto = (
       package: sim.package,
       networkId: sim.network_id,
       isPhysical: sim.is_physical,
+      sync_status: sim.sync_status,
       allocatedAt: sim.allocated_at,
       subscriberId: sim.subscriber_id,
-      lastActivatedOn: sim.last_activated_on,
-      activationsCount: sim.activations_count,
-      firstActivatedOn: sim.first_activated_on,
-      deactivationsCount: sim.deactivations_count,
     })) ?? [];
   return {
     sim: sims,
     email: res.subscriber.email,
     gender: res.subscriber.gender,
     address: res.subscriber.address,
-    dob: res.subscriber.date_of_birth,
+    dob: res.subscriber.dob,
     phone: res.subscriber.phone_number,
     idSerial: res.subscriber.id_serial,
     uuid: res.subscriber.subscriber_id,
-    lastName: res.subscriber.last_name,
-    firstName: res.subscriber.first_name,
+    name: res.subscriber.name,
     networkId: res.subscriber.network_id,
     proofOfIdentification: res.subscriber.proof_of_identification,
   };
@@ -82,4 +82,45 @@ export const dtoToSubscribersResDto = (
   return {
     subscribers: subscribers,
   };
+};
+
+export const dtoToSimPackageDto = (res: SimPackageAPIDto): SimPackageDto => {
+  return {
+    id: res.id,
+    package_id: res.package_id,
+    start_date: res.start_date,
+    end_date: res.end_date,
+    is_active: res.is_active,
+    created_at: res.created_at,
+    updated_at: res.updated_at,
+  };
+};
+export const dtoToSimDto = (res: SubSimAPIDto): SubscriberSimDto => {
+  return {
+    id: res.id,
+    subscriberId: res.subscriber_id,
+    networkId: res.network_id,
+    iccid: res.iccid,
+    msisdn: res.msisdn,
+    imsi: res.imsi || "",
+    type: res.type,
+    status: res.status,
+    allocatedAt: res.allocated_at,
+    sync_status: res.sync_status || "",
+    isPhysical: res.is_physical ?? false,
+    package:
+      res.package && res.package.id
+        ? dtoToSimPackageDto(res.package)
+        : undefined,
+  };
+};
+
+export const dtoToSimsResDto = (res: SimsAPIResDto): SubscriberSimsResDto => {
+  const subSims: SubscriberSimDto[] = [];
+  for (const sim of res.sims) {
+    const s = dtoToSimDto(sim);
+    subSims.push(s);
+  }
+
+  return { sims: subSims };
 };

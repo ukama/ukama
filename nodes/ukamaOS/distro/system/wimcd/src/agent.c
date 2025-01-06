@@ -23,6 +23,10 @@
 #include "usys_mem.h"
 #include "usys_log.h"
 #include "usys_services.h"
+#include "usys_file.h"
+
+/* db.c */
+extern void update_local_db(sqlite3 *db, char *name, char *tag, char *path);
 
 struct Response {
     char *buffer;
@@ -42,7 +46,6 @@ int process_agent_update_request(WTasks **tasks,
                                  AgentReq *req,
                                  sqlite3 *db) {
 
-  int ret=WIMC_OK;
   Update *update;
   char idStr1[36+1] = {0};
   char idStr2[36+1] = {0};
@@ -155,7 +158,7 @@ void create_wimc_request(WimcReq **request,
       usys_free(fetch);
       usys_free(content);
 
-      return NULL;
+      return;
   }
 
   (*request)->type = WREQ_FETCH;
@@ -241,7 +244,6 @@ bool communicate_with_agent(WimcReq *request,
                             char *agentMethod,
                             Config *config) {
 
-    long code=0;
     json_t *json=NULL;
     long agentRetCode=0;
 

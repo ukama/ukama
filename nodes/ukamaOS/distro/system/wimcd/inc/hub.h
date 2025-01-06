@@ -16,7 +16,7 @@
 #include "wimc.h"
 
 void free_artifact(Artifact *artifact);
-int get_artifacts_info_from_hub(Artifact *artifact, Config *config,
-				char *name, char *tag, CURLcode *curlCode);
+bool get_artifacts_info_from_hub(Artifact *artifact, Config *config,
+                                 char *name, char *tag, int *status);
 
 #endif /* WIMC_HUB_H */

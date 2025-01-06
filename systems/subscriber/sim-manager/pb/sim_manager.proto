@@ -23,15 +23,21 @@ service SimManagerService {
     rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
     rpc GetSim(GetSimRequest) returns (GetSimResponse);
     rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
+	// Deprecated: Use pkg.server.ListSims with subscriberId as filtering param instead.
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
+	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
+
     // Sim pacakge
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
-    rpc GetPackagesBySim(GetPackagesBySimRequest) returns (GetPackagesBySimResponse);
+    rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
+	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
+    rpc GetPackagesForSim(GetPackagesForSimRequest) returns (GetPackagesForSimResponse);
     rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
+
     // Usage
     rpc GetUsages(UsageRequest) returns (UsageResponse);
 }
@@ -61,6 +67,16 @@ message GetSimResponse {
 
 
 message ListSimsRequest{
+   string iccid = 1 [json_name = "iccid"];
+   string imsi = 2 [json_name = "imsi"];
+   string subscriberId = 3 [json_name = "subscriber_id"];
+   string networkId = 4 [json_name = "network_id"];
+   string simType = 5 [json_name = "sim_type"];
+   string simStatus = 6 [json_name = "sim_status"];
+   uint32 trafficPolicy = 7 [json_name = "traffic_policy"];
+   bool isPhysical = 8 [json_name = "is_physical"];
+   uint32 count = 9;
+   bool sort = 10;
 }
 
 message ListSimsResponse {
@@ -114,11 +130,29 @@ message AddPackageResponse{
 }
 
 
-message GetPackagesBySimRequest {
+message ListPackagesForSimRequest{
+   string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+   string dataPlanId = 2 [json_name = "data_paln_id"];
+   string fromStartDate = 3 [json_name = "from_start_date"];
+   string toStartDate = 4 [json_name = "to_start_date"];
+   string fromEndDate = 5 [json_name = "from_end_date"];
+   string toEndDate = 6 [json_name = "to_end_date"];
+   bool isActive = 7 [json_name = "is_active"];
+   bool asExpired = 8 [json_name = "as_expired"];
+   uint32 count = 9;
+   bool sort = 10;
+}
+
+message ListPackagesForSimResponse {
+    repeated Package packages = 1;
+}
+
+
+message GetPackagesForSimRequest {
     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
 }
 
-message GetPackagesBySimResponse {
+message GetPackagesForSimResponse {
     string simId = 1 [json_name = "sim_id"];
     repeated Package packages = 2;
 }
@@ -165,8 +199,9 @@ message Package {
     string startDate = 3 [json_name = "start_date"];
     string endDate = 4 [json_name = "end_date"];
     bool isActive = 5  [json_name = "is_active"];
-    string createdAt = 6 [json_name = "created_at"];
-    string updatedAt = 7 [json_name = "updated_at"];
+    bool asExpired = 6  [json_name = "as_expired"];
+    string createdAt = 7 [json_name = "created_at"];
+    string updatedAt = 8 [json_name = "updated_at"];
 }
 
 

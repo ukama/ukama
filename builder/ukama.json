@@ -28,12 +28,6 @@
         "orgid" : "fbc2a80d-339e-4d3c-acaa-329dd1b22100",
         "orgname" : "ukama-org",
         "key" : "this-key-has-to-be-32-bytes-long",
-        "mailer_port" : "465",
-        "mailer_host" : "smtp.gmail.com",
-        "mailer_password" : "smtp_password",
-        "mailer_username" : "smtp",
-        "mailer_from" : "test@ukama.com",
-        "templatespath" : "member-invite",
         "lago_api_key" : "ad5ca9af-9d60-47e3-9b8c-43d354d5f6c7",
         "masterorgname" : "ukama"
     },

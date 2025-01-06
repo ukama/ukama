@@ -8,8 +8,13 @@ include ../../../config.mk
 
 TARGET_EXEC = wimc.d
 AGENT_EXEC  = agent
+VERSION_FILE = version.h
 
-UKAMAOS_ROOT = ../../../
+ARTIFACTS = $(TARGET_EXEC) $(AGENT_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG =
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -24,7 +29,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target.
-VENDOR_PKG = tomlc ulfius curl jansson
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc ulfius curl jansson
+endif
 PLATFORM = platform
 
 # Setting up various compile and link flags.
@@ -46,8 +56,11 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed.
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB+=-lyder
+endif
 CURL_LIB=-lcurl -lssl -lcrypto
 
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
@@ -98,9 +111,18 @@ $(PLATFORM):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+$(VERSION_FILE):
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 clean:
 	rm -f $(TARGET_EXEC) $(AGENT_EXEC) $(OBJFILES) $(COMM_OBJFILES) version.h
 	rm -f $(AGENT_OBJFILES)
+
+install: $(ARTIFACTS) $(VERSION_FILE)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi
+

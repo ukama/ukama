@@ -70,7 +70,8 @@ message Notifications {
     string type = 4;
     string scope = 5;
     bool isRead = 6 [json_name = "is_read"];
-    google.protobuf.Timestamp createdAt = 7 [json_name = "created_at"];
+    string resourceId = 7 [json_name = "resource_id"];
+    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
 }
 
 

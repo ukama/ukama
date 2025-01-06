@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -165,10 +165,10 @@ func (this *AddPackageResponse) Validate() error {
 	return nil
 }
 
-var _regex_GetPackagesBySimRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_ListPackagesForSimRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *GetPackagesBySimRequest) Validate() error {
-	if !_regex_GetPackagesBySimRequest_SimId.MatchString(this.SimId) {
+func (this *ListPackagesForSimRequest) Validate() error {
+	if !_regex_ListPackagesForSimRequest_SimId.MatchString(this.SimId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
 	}
 	if this.SimId == "" {
@@ -176,7 +176,29 @@ func (this *GetPackagesBySimRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetPackagesBySimResponse) Validate() error {
+func (this *ListPackagesForSimResponse) Validate() error {
+	for _, item := range this.Packages {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Packages", err)
+			}
+		}
+	}
+	return nil
+}
+
+var _regex_GetPackagesForSimRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetPackagesForSimRequest) Validate() error {
+	if !_regex_GetPackagesForSimRequest_SimId.MatchString(this.SimId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
+	}
+	if this.SimId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
+	}
+	return nil
+}
+func (this *GetPackagesForSimResponse) Validate() error {
 	for _, item := range this.Packages {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {

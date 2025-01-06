@@ -23,6 +23,7 @@
 #include "usys_types.h"
 #include "usys_log.h"
 #include "usys_api.h"
+#include "usys_mem.h"
 
 #define AGENT_CB_EP "app"
 #define WIMC_EP     "v1/agents"
@@ -31,20 +32,6 @@ struct Response {
     char *buffer;
     size_t size;
 };
-
-static int get_task_status(TaskStatus state) {
-
-    if (state == (TaskStatus)WSTATUS_PEND) {
-        return REQUEST;
-    } else if (state == (TaskStatus)WSTATUS_START ||
-               state == (TaskStatus)WSTATUS_RUNNING) {
-        return FETCH;
-    } else if (state == (TaskStatus)WSTATUS_DONE) {
-        return DONE;
-    } else if (state == (TaskStatus)WSTATUS_ERROR) {
-        return ERR;
-    }
-}
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
@@ -125,7 +112,6 @@ long communicate_with_wimc(int reqType,
                            void *data) {
 
     long code=0;
-
     json_t   *json=NULL;
     TStats   *stats=NULL;
 

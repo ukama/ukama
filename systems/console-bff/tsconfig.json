@@ -22,6 +22,7 @@
     "invitation",
     "member",
     "init",
+    "controller",
     "notification"
   ],
   "compilerOptions": {

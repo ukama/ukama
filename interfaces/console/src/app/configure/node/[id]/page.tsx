@@ -10,9 +10,8 @@ import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface INodeConfigure {
@@ -24,10 +23,12 @@ interface INodeConfigure {
 const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? 'onb';
+  const step = parseInt(searchParams.get('step') ?? '1');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
@@ -54,22 +55,27 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     await fetchAddress(latlng[0], latlng[1]);
   };
 
-  const handleBack = () => router.back();
-
   const setQueryParam = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
-    window.history.pushState(null, '', `?${params.toString()}`);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
+  const handleBack = () => {
+    setQueryParam('step', (step - 1).toString());
+    router.back();
   };
 
   const handleNext = () => {
     if (address) {
-      router.push(`/configure/node/${id}/site?${searchParams.toString()}`);
+      const p = setQueryParam('step', (step + 1).toString());
+      router.push(`/configure/node/${id}/site/name?${p.toString()}`);
     }
   };
 
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
       <Stack direction={'row'}>
         <Typography variant="h6">{'Install site'}</Typography>
         <Typography
@@ -77,27 +83,19 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           fontWeight={400}
           sx={{
             color: colors.black70,
-            display: stepTracker !== '1' ? 'none' : 'flex',
           }}
         >
-          <i>&nbsp;- optional</i>&nbsp;(3/6)
+          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
+          {flow === 'onb' ? 6 : 4})
         </Typography>
       </Stack>
 
       <Stack mt={3} mb={3} direction={'column'} spacing={2}>
-        {isLoading ? (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <Skeleton variant="circular" width={24} height={24} />
-            <Skeleton variant="text" width={200} height={20} />
-          </Stack>
-        ) : (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <CheckCircleIcon sx={{ color: colors.green }} />
-            <Typography variant={'body1'} sx={{ fontWeight: 700 }}>
-              Your site is online
-            </Typography>
-          </Stack>
-        )}
+        <Typography variant={'body1'}>
+          Your installed site is online, and requires configuration, so that you
+          can properly manage your network. If the following details are
+          incorrect, please check on your site installation.
+        </Typography>
 
         {isLoading || addressLoading ? (
           <Skeleton variant="rounded" width={'100%'} height={128} />
@@ -110,7 +108,10 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         )}
 
         <LField label="Node" value={id} />
-        <LField label="SITE LOCATION" value={address} />
+        <LField
+          label="SITE LOCATION"
+          value={`${address} [${qpLat}, ${qpLng}]`}
+        />
       </Stack>
       <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
         <Button

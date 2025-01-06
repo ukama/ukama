@@ -19,24 +19,23 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
-	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	subPb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	submocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 	smPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	smmocks "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen/mocks"
 	spPb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	spmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 var Iccid = "1234567890123456789"
@@ -363,7 +362,7 @@ func TestRouter_Subscriber(t *testing.T) {
 
 		preq := &subPb.UpdateSubscriberRequest{
 			SubscriberId:          s.SubscriberId,
-			Name:                  data.Name,	
+			Name:                  data.Name,
 			PhoneNumber:           data.Phone,
 			Address:               data.Address,
 			ProofOfIdentification: data.ProofOfIdentification,
@@ -402,8 +401,8 @@ func TestRouter_SimManager(t *testing.T) {
 		IsPhysical:   false,
 		Package: &smPb.Package{
 			Id:        uuid.NewV4().String(),
-			StartDate: timestamppb.New(time.Now().UTC()).String(),
-			EndDate:   timestamppb.New(time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC)).String(),
+			StartDate: time.Now().UTC().Format(time.RFC3339),
+			EndDate:   time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
 		},
 	}
 
@@ -454,10 +453,10 @@ func TestRouter_SimManager(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/sim/packages/"+sim.Id,
 			nil)
 
-		preq := &smPb.GetPackagesBySimRequest{
+		preq := &smPb.GetPackagesForSimRequest{
 			SimId: sim.Id,
 		}
-		csm.On("GetPackagesBySim", mock.Anything, preq).Return(&smPb.GetPackagesBySimResponse{
+		csm.On("GetPackagesForSim", mock.Anything, preq).Return(&smPb.GetPackagesForSimResponse{
 			SimId:    sim.Id,
 			Packages: []*smPb.Package{sim.Package},
 		}, nil)
@@ -472,7 +471,7 @@ func TestRouter_SimManager(t *testing.T) {
 	})
 
 	t.Run("addPkgForSim", func(t *testing.T) {
-		p := AddPkgToSimReq{
+		p := PostPkgToSimReq{
 			SimId:     sim.Id,
 			PackageId: sim.Package.Id,
 			StartDate: sim.Package.StartDate,

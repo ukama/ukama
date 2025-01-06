@@ -18,6 +18,8 @@ import {
   SimsAPIResDto,
   SimsAlloAPIResDto,
   SimsResDto,
+  SubscriberToSimsDto,
+  SubscriberToSimsResDto,
 } from "../resolver/types";
 
 export const dtoToAllocateSimResDto = (
@@ -30,10 +32,6 @@ export const dtoToAllocateSimResDto = (
     type: res.sim.type as SIM_TYPES,
     is_physical: res.sim.is_physical,
     allocated_at: res.sim.allocated_at,
-    firstActivatedOn: res.sim?.firstActivatedOn ?? "",
-    lastActivatedOn: res.sim?.lastActivatedOn ?? "",
-    activationsCount: res.sim.activationsCount,
-    deactivationsCount: res.sim.deactivationsCount,
     subscriber_id: res.sim.subscriber_id,
     network_id: res.sim.network_id,
     package: res.sim?.package ?? {},
@@ -57,10 +55,6 @@ export const dtoToAllocateSimDetailsDto = (response: any): SimDetailsDto => {
     type,
     status,
     isPhysical,
-    firstActivatedOn,
-    lastActivatedOn,
-    activationsCount,
-    deactivationsCount,
     allocatedAt,
   } = response;
 
@@ -76,10 +70,6 @@ export const dtoToAllocateSimDetailsDto = (response: any): SimDetailsDto => {
     type,
     status,
     isPhysical,
-    firstActivatedOn: firstActivatedOn?.toDate(),
-    lastActivatedOn: lastActivatedOn?.toDate(),
-    activationsCount,
-    deactivationsCount,
     allocatedAt: allocatedAt?.toDate(),
   };
 };
@@ -124,10 +114,6 @@ export const dtoToSimDetailsDto = (response: any): SimDetailsDto => {
     type,
     status,
     isPhysical,
-    firstActivatedOn,
-    lastActivatedOn,
-    activationsCount,
-    deactivationsCount,
     allocatedAt,
   } = response;
 
@@ -143,11 +129,29 @@ export const dtoToSimDetailsDto = (response: any): SimDetailsDto => {
     type,
     status,
     isPhysical,
-    firstActivatedOn: firstActivatedOn?.toDate(),
-    lastActivatedOn: lastActivatedOn?.toDate(),
-    activationsCount,
-    deactivationsCount,
     allocatedAt: allocatedAt?.toDate(),
+  };
+};
+
+export const mapSubscriberToSimsResDto = (
+  resDto: SubscriberToSimsResDto
+): SubscriberToSimsDto => {
+  return {
+    subscriberId: resDto.subscriber_id,
+    sims: resDto.sims.map(sim => ({
+      id: sim.id,
+      subscriberId: sim.subscriber_id,
+      networkId: sim.network_id,
+      iccid: sim.iccid,
+      msisdn: sim.msisdn,
+      imsi: sim.imsi,
+      type: sim.type,
+      status: sim.status,
+      isPhysical: sim.is_physical,
+      trafficPolicy: sim.traffic_policy,
+      allocatedAt: sim.allocated_at,
+      syncStatus: sim.sync_status,
+    })),
   };
 };
 

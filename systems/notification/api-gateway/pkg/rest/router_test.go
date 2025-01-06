@@ -22,10 +22,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
-
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	crest "github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
 	dmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
 	emocks "github.com/ukama/ukama/systems/notification/event-notify/pb/gen/mocks"
 	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
@@ -147,7 +146,6 @@ func TestRouter_mailer(t *testing.T) {
 			To:           "test@ukama.com",
 			TemplateName: "test-template",
 			Values:       map[string]string{"Name": "test", "Message": "welcome to ukama"},
-			Status:       "sent",
 		}, nil)
 
 		r.ServeHTTP(w, req)
