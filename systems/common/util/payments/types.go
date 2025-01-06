@@ -6,7 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package util
+package payments
+
+import (
+	stripelib "github.com/stripe/stripe-go/v78"
+)
+
+type Intent struct {
+	*stripelib.PaymentIntent
+}
 
 type Deposit struct {
 	DepositId                string                               `json:"depositId,omitempty"`

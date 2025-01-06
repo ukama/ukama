@@ -13,18 +13,21 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/stripe/stripe-go/v78"
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/testing/services/hooks/util"
+	"github.com/ukama/ukama/systems/common/util/payments"
 
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	MopayHooksEndpoint = "/v1/pawapay"
+	MopayHooksEndpoint  = "/v1/pawapay"
+	StripeHooksEndpoint = "/v1/stripe"
 )
 
 type WebhooksClient interface {
-	PostDepositHook(*util.Deposit) (*WebhookInfo, error)
+	PostDepositHook(*payments.Deposit) (*WebhookInfo, error)
+	PostPaymentIntentHook(*stripe.PaymentIntent) (*WebhookInfo, error)
 }
 
 type webhooksClient struct {
@@ -45,7 +48,7 @@ func NewWebhooksClient(h string) *webhooksClient {
 	}
 }
 
-func (p *webhooksClient) PostDepositHook(req *util.Deposit) (*WebhookInfo, error) {
+func (p *webhooksClient) PostDepositHook(req *payments.Deposit) (*WebhookInfo, error) {
 	log.Debugf("Posting deposit webhook response: %v", req)
 
 	b, err := json.Marshal(req)
@@ -64,7 +67,36 @@ func (p *webhooksClient) PostDepositHook(req *util.Deposit) (*WebhookInfo, error
 
 	err = json.Unmarshal(resp.Body(), &webhook)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "webhook", err.Error())
+		log.Tracef(deserializeLogMsg, "Webhook", err.Error())
+
+		return nil, fmt.Errorf(deserializeErrorMsg, "webhook", err)
+	}
+
+	log.Infof(resourceLogMsg, "Webhook", webhook.WebhookInfo)
+
+	return webhook.WebhookInfo, nil
+}
+
+func (p *webhooksClient) PostPaymentIntentHook(req *stripe.PaymentIntent) (*WebhookInfo, error) {
+	log.Debugf("Posting payment intent webhook response: %v", req)
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf(requestMarshalErrorMsg, err)
+	}
+
+	webhook := Webhook{}
+
+	resp, err := p.R.Post(p.u.String()+StripeHooksEndpoint, b)
+	if err != nil {
+		log.Errorf("PostPaymentIntentHook failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("PostPaymentIntentHook failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &webhook)
+	if err != nil {
+		log.Tracef(deserializeLogMsg, "Webhook", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "webhook", err)
 	}

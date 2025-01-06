@@ -38,10 +38,12 @@ func main() {
 	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+
 	r.Run()
 }
 
 func initConfig() {
 	svcConf = pkg.NewConfig()
+
 	config.LoadConfig(pkg.ServiceName, svcConf)
 }
