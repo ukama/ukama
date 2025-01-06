@@ -1,4 +1,4 @@
-import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
+import { Arg, Ctx, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import { STORAGE_KEY } from "../../common/configs";
@@ -7,7 +7,7 @@ import {
   NotificationTypeEnumValue,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
-import { addInStore, openStore, removeFromStore } from "../../common/storage";
+import { addInStore, removeFromStore } from "../../common/storage";
 import {
   getBaseURL,
   getGraphsKeyByType,
@@ -45,9 +45,11 @@ const getErrorRes = (msg: string) =>
 @Resolver(String)
 class SubscriptionsResolvers {
   @Query(() => MetricsRes)
-  async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
-    //Get system base url
-    const store = openStore();
+  async getMetricByTab(
+    @Arg("data") data: GetMetricByTabInput,
+    @Ctx() ctx: any
+  ) {
+    const { store } = ctx;
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
       data.orgName,
@@ -108,7 +110,7 @@ class SubscriptionsResolvers {
           }
         });
         worker.on("exit", (code: any) => {
-          removeFromStore(openStore(), `${orgId}/${userId}/${type}/${from}`);
+          removeFromStore(store, `${orgId}/${userId}/${type}/${from}`);
           logger.info(
             `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
           );
@@ -126,9 +128,10 @@ class SubscriptionsResolvers {
     @Arg("orgName") orgName: string,
     @Arg("networkId") networkId: string,
     @Arg("subscriberId") subscriberId: string,
-    @Arg("startTimestamp") startTimestamp: string
+    @Arg("startTimestamp") startTimestamp: string,
+    @Ctx() ctx: any
   ) {
-    const store = openStore();
+    const { store } = ctx;
     const { message: baseURL, status } = await getBaseURL(
       "notification",
       orgName,
@@ -214,11 +217,13 @@ class SubscriptionsResolvers {
     },
   })
   async getMetricByTabSub(
+    @Ctx() ctx: any,
     @Root() payload: LatestMetricRes,
     @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
+    const { store } = ctx;
     await addInStore(
-      openStore(),
+      store,
       `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
       getTimestampCount("0")
     );
@@ -231,17 +236,19 @@ class SubscriptionsResolvers {
     },
   })
   async notificationSubscription(
-    @Root() payload: NotificationsResDto,
-    @Arg("orgId") orgId: string,
+    @Ctx() ctx: any,
     @Arg("role") role: string,
+    @Arg("orgId") orgId: string,
     @Arg("userId") userId: string,
     @Arg("orgName") orgName: string,
     @Arg("networkId") networkId: string,
+    @Root() payload: NotificationsResDto,
     @Arg("subscriberId") subscriberId: string,
     @Arg("startTimestamp") startTimestamp: string
   ): Promise<NotificationsResDto> {
+    const { store } = ctx;
     await addInStore(
-      openStore(),
+      store,
       `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`,
       getTimestampCount("0")
     );

@@ -5,6 +5,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUBSCRIPTIONS_PORT } from "../common/configs";
 import { logger } from "../common/logger";
+import { openStore } from "../common/storage";
 import resolvers from "./resolvers";
 import { pubSub } from "./resolvers/pubsub";
 
@@ -14,7 +15,13 @@ async function bootstrap() {
     pubSub,
   });
 
-  const yoga = createYoga({ schema });
+  const store = openStore();
+  const yoga = createYoga({
+    schema,
+    context: {
+      store: store,
+    },
+  });
 
   const server = createServer(yoga);
 
