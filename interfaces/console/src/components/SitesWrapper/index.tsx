@@ -27,11 +27,13 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import colors from '@/theme/colors';
+import { useRouter } from 'next/navigation';
 
 interface ISitesWrapper {
   sites: SiteDto[];
   loading: boolean;
   handleSiteNameUpdate: any;
+  subscriberCount: number | undefined;
 }
 
 const SiteCardSkeleton = (
@@ -46,13 +48,14 @@ const SiteCardSkeleton = (
 const SitesWrapper = ({
   loading,
   sites,
+  subscriberCount,
   handleSiteNameUpdate,
 }: ISitesWrapper) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
+  const router = useRouter();
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
     siteId: string,
@@ -64,6 +67,10 @@ const SitesWrapper = ({
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedSiteId(null);
+  };
+
+  const handleSiteNameClick = (siteId: string) => {
+    router.push(`/console/sites/${siteId}`);
   };
 
   if (loading)
@@ -141,14 +148,11 @@ const SitesWrapper = ({
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 500,
                   textDecoration: 'underline',
                   cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                 }}
-                onClick={() => console.log(`Navigate to site ${site.id}`)}
+                onClick={() => handleSiteNameClick(site.id)}
               >
                 {site.name}
               </Typography>
@@ -166,14 +170,13 @@ const SitesWrapper = ({
                 <MenuItem
                   onClick={() => {
                     handleMenuClose();
-                    handleSiteNameUpdate(site.id);
+                    handleSiteNameUpdate(site.id, site.name);
                   }}
                 >
                   Edit Name
                 </MenuItem>
               </Menu>
             </Box>
-            {/* Limit site.location text length */}
             <Typography
               variant="body2"
               color="text.secondary"
@@ -197,7 +200,7 @@ const SitesWrapper = ({
             >
               <Stack direction="row" spacing={0.5} alignItems="center">
                 <GroupIcon />
-                <Typography variant="body2">{12}</Typography>
+                <Typography variant="body2">{subscriberCount || 0}</Typography>
               </Stack>
 
               <Box

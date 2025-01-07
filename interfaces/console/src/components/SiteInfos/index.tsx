@@ -6,44 +6,58 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Paper, Stack, Typography } from '@mui/material';
+import { Box, Paper, Stack, Typography } from '@mui/material';
 import { SiteDto } from '@/client/graphql/generated';
+import { format } from 'date-fns';
 
 interface SiteInfoProps {
   selectedSite: SiteDto;
   address: string | null;
+  nodeId: string;
 }
 
-const SiteInfo: React.FC<SiteInfoProps> = ({ selectedSite, address }) => {
+const SiteInfo: React.FC<SiteInfoProps> = ({
+  selectedSite,
+  address,
+  nodeId,
+}) => {
+  const formattedDate = selectedSite.createdAt
+    ? format(new Date(selectedSite.createdAt), 'MMMM d, yyyy')
+    : 'N/A';
   return (
-    <Paper
-      elevation={3}
+    <Box
       sx={{
-        p: 2,
-        flex: 1,
-        height: '100%',
+        px: 3,
         borderRadius: '5px',
-        position: 'relative',
+        py: 2,
       }}
     >
       <Stack direction="column" spacing={2}>
-        <Typography variant="h6">Site Information</Typography>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Location:</Typography>
-          <Typography variant="subtitle1">{selectedSite.location}</Typography>
+        <Typography variant="body1" fontWeight="Bold">
+          Site Information
+        </Typography>
+
+        <Stack direction="row" spacing={2} justifyItems="center">
+          <Typography variant="subtitle1">Date Created:</Typography>
+          <Typography variant="subtitle1">{formattedDate}</Typography>
         </Stack>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Coordinates:</Typography>
+
+        <Stack direction="row" spacing={2} justifyItems="center">
+          <Typography variant="subtitle1">Location:</Typography>
           <Typography variant="subtitle1">
-            ( {selectedSite.latitude}, {selectedSite.longitude} )
+            {address ||
+              `${selectedSite.location} (${selectedSite.latitude}, ${selectedSite.longitude})` ||
+              'N/A'}
+            ({selectedSite.latitude}, {selectedSite.longitude})
           </Typography>
         </Stack>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Address:</Typography>
-          <Typography variant="subtitle1">{address}</Typography>
+
+        <Stack direction="row" spacing={2} justifyItems="center">
+          <Typography variant="subtitle1">Node:</Typography>
+          <Typography variant="subtitle1">{nodeId}</Typography>
         </Stack>
       </Stack>
-    </Paper>
+    </Box>
   );
 };
 

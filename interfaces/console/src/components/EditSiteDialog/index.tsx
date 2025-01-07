@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { globalUseStyles } from '@/styles/global';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, FieldProps } from 'formik';
 import * as Yup from 'yup';
 
 interface EditSiteDialogProps {
@@ -60,7 +60,7 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
 }) => {
   const handleSubmit = async (
     values: { siteName: string },
-    { setSubmitting }: any,
+    { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void },
   ) => {
     try {
       await onSave(siteId, values.siteName.trim());
@@ -89,12 +89,13 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
         validationSchema={UpdateSiteSchema}
         onSubmit={handleSubmit}
         validateOnMount
+        enableReinitialize
       >
         {({ isValid, dirty, touched, errors, isSubmitting }) => (
           <Form>
             <DialogContent>
               <Field name="siteName">
-                {({ field }: { field: any }) => (
+                {({ field }: FieldProps) => (
                   <>
                     <TextField
                       {...field}

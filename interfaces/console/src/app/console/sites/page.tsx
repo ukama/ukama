@@ -14,6 +14,7 @@ import {
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
   useGetSitesQuery,
+  useGetSubscribersByNetworkQuery,
   useUpdateSiteMutation,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
@@ -210,6 +211,23 @@ const Sites = () => {
   const closeEditSiteDialog = () => {
     setEditSitedialogOpen(false);
   };
+  const { data: subscribers } = useGetSubscribersByNetworkQuery({
+    variables: {
+      networkId: site.network,
+    },
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'subscriber-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  console.log('SITE :', currentSite);
+
   return (
     <Box mt={2}>
       <Paper
@@ -227,6 +245,9 @@ const Sites = () => {
           loading={sitesLoading || networksLoading}
           sites={sitesList}
           handleSiteNameUpdate={handleSiteNameUpdate}
+          subscriberCount={
+            subscribers?.getSubscribersByNetwork.subscribers.length
+          }
         />
       </Paper>
       <ConfigureSiteDialog

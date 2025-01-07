@@ -15,24 +15,44 @@ import {
   useGetNetworksQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
+  useGetNodesByNetworkLazyQuery,
+  useGetSubscribersByNetworkQuery,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
+import SiteOverview from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
+import colors from '@/theme/colors';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
+import GroupIcon from '@mui/icons-material/Group';
+import {
+  AlertColor,
+  Box,
+  Grid,
+  Paper,
+  Skeleton,
+  Typography,
+} from '@mui/material';
 import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
   {
     ssr: false,
+    loading: () => (
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="100%"
+        sx={{ borderRadius: '5px' }}
+      />
+    ),
   },
 );
 
@@ -229,6 +249,30 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+  const [fetchNode, { data: nodeData, loading: nodeLoading }] =
+    useGetNodesByNetworkLazyQuery();
+  const { data: subscribers } = useGetSubscribersByNetworkQuery({
+    variables: {
+      networkId: activeSite.networkId,
+    },
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'subscriber-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  useEffect(() => {
+    if (activeSite?.id) {
+      fetchNode({ variables: { networkId: activeSite.networkId } });
+    }
+  }, [activeSite, fetchNode]);
+
+  const nodeId = nodeData?.getNodesByNetwork.nodes[0]?.id || 'N/A';
 
   useEffect(() => {
     getComponents({
@@ -333,7 +377,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     <Box
       sx={{
         overflow: 'auto',
-        borderRadius: '10px',
         height: 'calc(100vh - 228px)',
       }}
     >
@@ -343,17 +386,71 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
+        onRestartSite={() => console.log('Restart site clicked')}
       />
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+      <Grid container spacing={2} sx={{ height: 'auto' }}>
+        <Grid item xs={4}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteInfo
+              selectedSite={activeSite}
+              address={CurrentSiteaddress}
+              nodeId={nodeId}
+            />
+          </Paper>
         </Grid>
-        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteMapComponent
-            posix={[activeSite.latitude, activeSite.longitude]}
-            address={CurrentSiteaddress}
-            height={'100%'}
-          />
+
+        <Grid item xs={5}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteOverview
+              inputPower="120W"
+              solarStorage="80%"
+              consumption="40W"
+            />
+          </Paper>
+        </Grid>
+        <Grid item xs={3}>
+          <Paper
+            sx={{ height: '250px', overflow: 'hidden', position: 'relative' }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 206,
+                left: 8,
+                zIndex: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                backgroundColor: colors.white,
+                borderRadius: '4px',
+                p: 1,
+              }}
+            >
+              <GroupIcon fontSize="small" />
+              <Typography variant="body2" fontWeight="medium">
+                {subscribers?.getSubscribersByNetwork.subscribers.length || 0}
+              </Typography>
+            </Box>
+
+            <Box sx={{ position: 'relative', zIndex: 1, height: '100%' }}>
+              <Suspense
+                fallback={
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    sx={{ borderRadius: '5px' }}
+                  />
+                }
+              >
+                <SiteMapComponent
+                  posix={[activeSite.latitude, activeSite.longitude]}
+                  address={CurrentSiteaddress}
+                  height={'100%'}
+                />
+              </Suspense>
+            </Box>
+          </Paper>
         </Grid>
       </Grid>
 

@@ -9,5 +9,12 @@ import { DataBilling } from './DataBilling';
 import { NoBillYet } from './NoBillYet';
 import { SiteHealth } from './SiteHealth';
 import { SiteStatusIcon } from './SiteStatusIcon';
+import SiteOverViewPlaceHolder from './SiteOverViewPlaceHolder';
 
-export { DataBilling, NoBillYet, SiteHealth, SiteStatusIcon };
+export {
+  DataBilling,
+  NoBillYet,
+  SiteHealth,
+  SiteStatusIcon,
+  SiteOverViewPlaceHolder,
+};
