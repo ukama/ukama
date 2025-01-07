@@ -43,7 +43,7 @@ message RawReport {
     int64 vatAmountCents = 11 [json_name = "vat_amount_cents"];
     string vatAmountCurrency = 12 [json_name = "vat_amount_currency"];
     int64 totalAmountCents = 13 [json_name = "total_amount_cents"];
-    string Currency = 14 [json_name = "currency"];
+    string currency = 14 [json_name = "currency"];
     string fileURL = 15 [json_name = "file_url"];
     Customer customer = 16 [json_name = "customer"];
     repeated Subscription subscriptions = 17 [json_name = "subscriptions"];
