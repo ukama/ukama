@@ -216,21 +216,18 @@ const Sites = () => {
         sx={{
           p: 4,
           overflow: 'auto',
-          padding: '24px 32px',
           borderRadius: '10px',
           height: 'calc(100vh - 212px)',
         }}
       >
-        <Stack spacing={2} direction={'column'} height="100%">
-          <Typography variant="h6" color="initial">
-            My sites
-          </Typography>
-          <SitesWrapper
-            loading={sitesLoading || networksLoading}
-            sites={sitesList}
-            handleSiteNameUpdate={handleSiteNameUpdate}
-          />
-        </Stack>
+        <Typography variant="h6" color="initial" sx={{ mb: 2 }}>
+          My sites
+        </Typography>
+        <SitesWrapper
+          loading={sitesLoading || networksLoading}
+          sites={sitesList}
+          handleSiteNameUpdate={handleSiteNameUpdate}
+        />
       </Paper>
       <ConfigureSiteDialog
         site={site}
