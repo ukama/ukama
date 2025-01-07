@@ -9,11 +9,7 @@ import { open } from "lmdb";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import WebSocket from "ws";
 
-const TIMESTAMP_DIVISOR = 1000;
-const MAX_OCCURRENCE = 1;
-
-const getTimestampCount = count =>
-  `${Math.floor(Date.now() / TIMESTAMP_DIVISOR)}-${count}`;
+const MAX_OCCURRENCE = 10;
 
 const openStore = () => {
   const path = process.env.STORAGE_KEY;
@@ -23,6 +19,7 @@ const openStore = () => {
   return open({
     path,
     compression: true,
+    maxReaders: 1024,
   });
 };
 
@@ -62,26 +59,27 @@ const runWorker = async () => {
     const ws = new WebSocket(reqUrl);
 
     ws.on("error", e => {
+      store.close();
       console.error("WebSocket error: ", e.message);
       parentPort.postMessage({ isError: true, message: e.message, data: null });
     });
 
     ws.close = () => {
+      store.close();
       console.error("WebSocket closed");
       ws.terminate();
     };
 
     ws.on("open", async () => {
       console.error("WebSocket opened");
-      await addInStore(store, key, getTimestampCount("0"));
+      await addInStore(store, key, 0);
     });
 
     ws.on("message", async data => {
       console.error("WebSocket message", data.toString());
       const value = await getFromStore(store, key);
-      let occurrence = value ? parseInt(value.split("-")[1]) : 0;
-      occurrence += 1;
-      await addInStore(store, key, getTimestampCount(`${occurrence}`));
+      let occurrence = parseInt(value ?? "0") + 1;
+      await addInStore(store, key, occurrence);
       if (occurrence > MAX_OCCURRENCE) {
         ws.terminate();
         ws.close();

@@ -154,15 +154,28 @@ const Sims = () => {
             sx={{
               py: 8,
               width: '100%',
+              height: '94px',
               display: 'flex',
               cursor: 'pointer',
               borderRadius: '4px',
               justifyContent: 'center',
-              border: `2px dashed ${colors.primaryMain}`,
+              border: '1px dashed grey',
               backgroundColor: colors.primaryMain02,
+              ':hover': {
+                border: `1px dashed ${colors.primaryMain}`,
+              },
             }}
           >
-            <div {...getRootProps({ className: 'dropzone' })}>
+            <div
+              {...getRootProps({ className: 'dropzone' })}
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <input {...getInputProps()} />
               <Typography variant="body2" sx={{ cursor: 'inherit' }}>
                 Drag & Drop Or Choose file to upload.

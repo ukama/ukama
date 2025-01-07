@@ -47,7 +47,6 @@ const getErrorRes = (msg: string) =>
 class SubscriptionsResolvers {
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
-    //Get system base url
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
@@ -108,11 +107,12 @@ class SubscriptionsResolvers {
             }
           }
         });
-        worker.on("exit", (code: any) => {
-          removeFromStore(openStore(), `${orgId}/${userId}/${type}/${from}`);
+        worker.on("exit", async (code: any) => {
+          await removeFromStore(store, `${orgId}/${userId}/${type}/${from}`);
           logger.info(
             `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
           );
+          await store.close();
         });
       });
     }
@@ -201,11 +201,12 @@ class SubscriptionsResolvers {
       }
     });
 
-    worker.on("exit", (code: any) => {
-      removeFromStore(store, key);
+    worker.on("exit", async (code: any) => {
+      await removeFromStore(store, key);
       logger.info(
         `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
+      store.close();
       worker.terminate();
     });
     return notifications;
@@ -223,11 +224,13 @@ class SubscriptionsResolvers {
     @Root() payload: LatestMetricRes,
     @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
+    const store = openStore();
     await addInStore(
-      openStore(),
+      store,
       `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
       getTimestampCount("0")
     );
+    await store.close();
     return payload;
   }
 
@@ -246,12 +249,14 @@ class SubscriptionsResolvers {
     @Arg("subscriberId") subscriberId: string,
     @Arg("startTimestamp") startTimestamp: string
   ): Promise<NotificationsResDto> {
+    const store = openStore();
     await addInStore(
-      openStore(),
+      store,
       `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`,
-      getTimestampCount("0")
+      0
     );
     logger.info("Notification payload :", payload);
+    await store.close();
     return payload;
   }
 }
