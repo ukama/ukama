@@ -23,6 +23,7 @@ type Config struct {
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
+	System            string `default:"report"`
 	PdfHost           string `default:""`
 	PdfPort           int    `default:"3000"`
 	PdfPrefix         string `default:"/pdf/"`

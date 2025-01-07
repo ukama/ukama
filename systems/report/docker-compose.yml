@@ -30,27 +30,8 @@ services:
    - postgresd-report
    - report-generator
 
- msg-client-report:
-  build: ../services/msgClient
-  ports:
-   - '9790:9095'
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-report
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - SYSTEM=report
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-report
-
  report-generator:
   build: ./generator
-  ports:
-   - '9792:9090'
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-report
@@ -62,6 +43,23 @@ services:
    - GENERATOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-report
+
+
+ msg-client-report:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-report
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - GRPC_PORT=9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=report
   restart: always
   networks:
    - ukama-net
