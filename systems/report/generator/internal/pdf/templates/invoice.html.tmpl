@@ -76,7 +76,7 @@
                           <td style="font-size: 12px; color: #5b5b5b; font-family: 'Open Sans', sans-serif; line-height: 18px; vertical-align: top; text-align: left;">
                             <!-- Hello, Philip Brooks. -->
                             <!-- <br> Thank you for using our network. -->
-                            Hello, {{ .RawInvoice.Customer.Name }}.
+                            Hello, {{ .RawReport.Customer.Name }}.
                             <br> Thank you for using our network.
                           </td>
                         </tr>
@@ -106,8 +106,7 @@
                           <td style="font-size: 12px; color: #5b5b5b; font-family: 'Open Sans', sans-serif; line-height: 18px; vertical-align: top; text-align: right;">
                             <!-- <small>BILL</small> #800000025<br /> -->
                             <!-- <small>MARCH 4TH 2016</small> -->
-                            <small>BILL</small> {{ .RawInvoice.Number }}<br />
-                            <small>{{ .RawInvoice.IssuingDate }}</small>
+                            <small>{{ .RawReport.IssuingDate }}</small>
                           </td>
                         </tr>
                       </tbody>
@@ -163,7 +162,7 @@
                       <td height="10" colspan="4"></td>
                     </tr>
 
-                    {{ range .RawInvoice.Fees  }}
+                    {{ range .RawReport.Fees  }}
                     <!-- <tr> -->
                       <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #22ccd4;  line-height: 18px;  vertical-align: top; padding:10px 0;" class="article"> -->
                         <!-- Beats Studio Over-Ear Headphones -->
@@ -241,14 +240,14 @@
                       </td>
                       <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #000; line-height: 22px; vertical-align: top; text-align:right; ">
                         <!-- <strong>$344.90</strong> -->
-                        <strong>{{ .RawInvoice.TotalAmountCurrency }} {{ .RawInvoice.TotalAmountCents }}</strong>
+                        <strong>{{ .RawReport.Currency }} {{ .RawReport.TotalAmountCents }}</strong>
                       </td>
                     </tr>
                     <tr>
                       <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #b0b0b0; line-height: 22px; vertical-align: top; text-align:right; "><small>TAX</small></td>
                       <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #b0b0b0; line-height: 22px; vertical-align: top; text-align:right; ">
                         <!-- <small>$72.40</small> -->
-                        <small>{{ .RawInvoice.VatAmountCurrency }} {{ .RawInvoice.VatAmountCents }}</small>
+                        <small>{{ .RawReport.VatAmountCurrency }} {{ .RawReport.VatAmountCents }}</small>
                       </td>
                     </tr>
                   </tbody>
@@ -298,14 +297,13 @@
                             <tr>
                               <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">
                                 <!-- Philip Brooks<br> Public Wales, Somewhere<br> New York NY<br> 4468, United States<br> T: 202-555-0133 -->
-                                {{ .RawInvoice.Customer.Name }}<br> {{ .RawInvoice.Customer.AddressLine1 }}<br> {{ .RawInvoice.Customer.City }} {{ .RawInvoice.Customer.State }}<br> {{ .RawInvoice.Customer.Zipcode }}, {{ .RawInvoice.Customer.Country }}<br> T: {{ .RawInvoice.Customer.Phone }}
                               </td>
                             </tr>
                           </tbody>
                         </table>
 
 
-                        {{ if (eq .RawInvoice.PaymentStatus "succeeded") }}
+                        {{ if (eq .RawReport.PaymentStatus "succeeded") }}
                         <table width="220" border="0" cellpadding="0" cellspacing="0" align="right" class="col">
                           <tbody>
                             <tr class="visibleMobile">

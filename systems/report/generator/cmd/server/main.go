@@ -93,7 +93,6 @@ func runGrpcServer() {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
-
 	})
 
 	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder,

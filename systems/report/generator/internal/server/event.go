@@ -53,7 +53,7 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.invoice.invoice.generate"):
+	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.invoice.generate"):
 		msg, err := unmarshalInvoiceGenerateEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -71,7 +71,7 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	return &epb.EventResponse{}, nil
 }
 
-func (g *GeneratorEventServer) handleInvoiceGenerateEvent(key string, msg *epb.Invoice) error {
+func (g *GeneratorEventServer) handleInvoiceGenerateEvent(key string, msg *epb.Report) error {
 	err := g.GeneratePDF(msg, defaultTemplate, filepath.Join(pdfFolder, msg.Id+".pdf"))
 	if err != nil {
 		log.Errorf("Failed to generate invoice PDF: %v", err)
@@ -80,8 +80,8 @@ func (g *GeneratorEventServer) handleInvoiceGenerateEvent(key string, msg *epb.I
 	return err
 }
 
-func unmarshalInvoiceGenerateEvent(msg *anypb.Any) (*epb.Invoice, error) {
-	p := &epb.Invoice{}
+func unmarshalInvoiceGenerateEvent(msg *anypb.Any) (*epb.Report, error) {
+	p := &epb.Report{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal invoice generated message with : %+v. Error %s.", msg, err.Error())

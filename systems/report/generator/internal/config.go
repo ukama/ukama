@@ -23,7 +23,6 @@ type Config struct {
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
-	SubscriberHost    string `default:"http://subscriber-api-gw:8080"`
 	PdfHost           string `default:""`
 	PdfPort           int    `default:"3000"`
 	PdfPrefix         string `default:"/pdf/"`
@@ -43,7 +42,7 @@ func NewConfig(name string) *Config {
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.billing.invoice.invoice.generate",
+				"event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
 			},
 		},
 	}

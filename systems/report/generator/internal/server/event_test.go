@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -126,7 +127,7 @@ var raw = `{
 func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
 	routingKey := msgbus.PrepareRoute(OrgName,
-		"event.cloud.local.{{ .Org}}.billing.invoice.invoice.generate")
+		"event.cloud.local.{{ .Org}}.billing.report.invoice.generate")
 
 	t.Run("InvoiceGeneratedEventSent", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
@@ -140,7 +141,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
 			Return(nil).Once()
 
-		val := &epb.RawInvoice{}
+		val := &epb.RawReport{}
 
 		m := protojson.UnmarshalOptions{
 			AllowPartial:   true,
@@ -150,12 +151,12 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 		err := m.Unmarshal([]byte(raw), val)
 		assert.NoError(t, err)
 
-		evt := &epb.Invoice{
-			Id:           uuid.NewV4().String(),
-			SubscriberId: uuid.NewV4().String(),
-			NetworkId:    uuid.NewV4().String(),
-			RawInvoice:   val,
-			IsPaid:       false,
+		evt := &epb.Report{
+			Id:        uuid.NewV4().String(),
+			OwnerId:   uuid.NewV4().String(),
+			OwnerType: ukama.OwnerTypeOrg.String(),
+			RawReport: val,
+			IsPaid:    false,
 		}
 
 		anyE, err := anypb.New(evt)
@@ -175,7 +176,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 
 	t.Run("ErrorOnConfigurePDF", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
-		val := &epb.RawInvoice{}
+		val := &epb.RawReport{}
 
 		pdfEngine.On("Configure", mock.Anything, mock.Anything).
 			Return(errors.New("fail to generate file")).Once()
@@ -188,12 +189,13 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 		err := m.Unmarshal([]byte(raw), val)
 		assert.NoError(t, err)
 
-		evt := &epb.Invoice{
-			Id:           uuid.NewV4().String(),
-			SubscriberId: uuid.NewV4().String(),
-			NetworkId:    uuid.NewV4().String(),
-			RawInvoice:   val,
-			IsPaid:       false,
+		evt := &epb.Report{
+			Id:        uuid.NewV4().String(),
+			OwnerId:   uuid.NewV4().String(),
+			OwnerType: ukama.OwnerTypeSubscriber.String(),
+			NetworkId: uuid.NewV4().String(),
+			RawReport: val,
+			IsPaid:    false,
 		}
 
 		anyE, err := anypb.New(evt)
@@ -213,7 +215,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 
 	t.Run("ErrorOnGeneratePDF", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
-		val := &epb.RawInvoice{}
+		val := &epb.RawReport{}
 
 		pdfEngine.On("Configure", mock.Anything, mock.Anything).
 			Return(nil).Once()
@@ -229,12 +231,12 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 		err := m.Unmarshal([]byte(raw), val)
 		assert.NoError(t, err)
 
-		evt := &epb.Invoice{
-			Id:           uuid.NewV4().String(),
-			SubscriberId: uuid.NewV4().String(),
-			NetworkId:    uuid.NewV4().String(),
-			RawInvoice:   val,
-			IsPaid:       false,
+		evt := &epb.Report{
+			Id:        uuid.NewV4().String(),
+			OwnerId:   uuid.NewV4().String(),
+			OwnerType: ukama.OwnerTypeOrg.String(),
+			RawReport: val,
+			IsPaid:    false,
 		}
 
 		anyE, err := anypb.New(evt)
