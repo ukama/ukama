@@ -280,11 +280,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
         ;;
-    "metrics")
-        cd ./metrics/prometheus
-        sed -i '' "s/${LOCAL_HOST_IP}/localhost:9079/g" docker-compose.yml
-        cd ../..
-        ;;
     "dataplan")
         sleep 2
         echo  "$TAG Add default baserate in dataplan..."

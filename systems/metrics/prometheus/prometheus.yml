@@ -42,6 +42,6 @@ scrape_configs:
           env: dev
   - job_name: ukama-nodes
     scrape_interval: "10s"
-    http_sd_configs:
-      - url: "http://localhost:9079/v1/prometheus"
-    metrics_path: "/metrics/metrics"
+    static_configs:
+      - targets: ['10.1.0.65:7001']
+    metrics_path: "/metrics"
