@@ -17,6 +17,7 @@ import {
   useGetSitesQuery,
   useGetNodesByNetworkLazyQuery,
   useGetSubscribersByNetworkQuery,
+  useRestartSiteMutation,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
@@ -208,6 +209,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+  const [restartSite, { loading: restartSiteLoading }] = useRestartSiteMutation(
+    {
+      onCompleted: (data) => {
+        setSnackbarMessage({
+          id: 'restart-site-success',
+          message: 'Site received restart command!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'restart-site-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    },
+  );
+
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
       setSite({
@@ -251,6 +273,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   });
   const [fetchNode, { data: nodeData, loading: nodeLoading }] =
     useGetNodesByNetworkLazyQuery();
+
   const { data: subscribers } = useGetSubscribersByNetworkQuery({
     variables: {
       networkId: activeSite.networkId,
@@ -372,24 +395,35 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Grid>
     );
   }
+  const handleSiteRestart = () => {
+    setSnackbarMessage({
+      id: 'site-restart',
+      type: 'info',
+      show: true,
+      message: 'Restarting site',
+    });
+    restartSite({
+      variables: {
+        data: {
+          siteId: activeSite.id,
+          networkId: activeSite.networkId,
+        },
+      },
+    });
+  };
 
   return (
-    <Box
-      sx={{
-        overflow: 'auto',
-        height: 'calc(100vh - 228px)',
-      }}
-    >
+    <Box>
       <SiteDetailsHeader
         addSite={handleSiteConfigOpen}
         siteList={sitesList || []}
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
-        onRestartSite={() => console.log('Restart site clicked')}
+        onRestartSite={handleSiteRestart}
       />
       <Grid container spacing={2} sx={{ height: 'auto' }}>
-        <Grid item xs={4}>
+        <Grid item xs={12} md={4}>
           <Paper sx={{ height: '250px', overflow: 'auto' }}>
             <SiteInfo
               selectedSite={activeSite}
@@ -399,7 +433,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           </Paper>
         </Grid>
 
-        <Grid item xs={5}>
+        <Grid item xs={12} md={5}>
           <Paper sx={{ height: '250px', overflow: 'auto' }}>
             <SiteOverview
               inputPower="120W"
@@ -408,7 +442,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             />
           </Paper>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={12} md={3}>
           <Paper
             sx={{ height: '250px', overflow: 'hidden', position: 'relative' }}
           >
@@ -463,6 +497,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           controllerHealth={'good'}
           batteryHealth={'good'}
           backhaulHealth={'good'}
+          node={nodeData?.getNodesByNetwork.nodes || []}
         />
       </Paper>
 

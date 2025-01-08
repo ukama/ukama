@@ -236,6 +236,15 @@ query getOrg {
 }
 ### Org End ###
 
+### Controller Start ###
+
+mutation restartSite($data: RestartSiteInputDto!) {
+  restartSite(data: $data) {
+    success
+  }
+}
+### Controller End ###
+
 ### Package Start ###
 fragment PackageRate on PackageDto {
   rate {

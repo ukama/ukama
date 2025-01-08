@@ -1577,6 +1577,13 @@ export type GetOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string } };
 
+export type RestartSiteMutationVariables = Exact<{
+  data: RestartSiteInputDto;
+}>;
+
+
+export type RestartSiteMutation = { __typename?: 'Mutation', restartSite: { __typename?: 'CBooleanResponse', success: boolean } };
+
 export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
 
 export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
@@ -3064,6 +3071,39 @@ export type GetOrgQueryHookResult = ReturnType<typeof useGetOrgQuery>;
 export type GetOrgLazyQueryHookResult = ReturnType<typeof useGetOrgLazyQuery>;
 export type GetOrgSuspenseQueryHookResult = ReturnType<typeof useGetOrgSuspenseQuery>;
 export type GetOrgQueryResult = Apollo.QueryResult<GetOrgQuery, GetOrgQueryVariables>;
+export const RestartSiteDocument = gql`
+    mutation restartSite($data: RestartSiteInputDto!) {
+  restartSite(data: $data) {
+    success
+  }
+}
+    `;
+export type RestartSiteMutationFn = Apollo.MutationFunction<RestartSiteMutation, RestartSiteMutationVariables>;
+
+/**
+ * __useRestartSiteMutation__
+ *
+ * To run a mutation, you first call `useRestartSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRestartSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [restartSiteMutation, { data, loading, error }] = useRestartSiteMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useRestartSiteMutation(baseOptions?: Apollo.MutationHookOptions<RestartSiteMutation, RestartSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RestartSiteMutation, RestartSiteMutationVariables>(RestartSiteDocument, options);
+      }
+export type RestartSiteMutationHookResult = ReturnType<typeof useRestartSiteMutation>;
+export type RestartSiteMutationResult = Apollo.MutationResult<RestartSiteMutation>;
+export type RestartSiteMutationOptions = Apollo.BaseMutationOptions<RestartSiteMutation, RestartSiteMutationVariables>;
 export const GetPackagesDocument = gql`
     query getPackages {
   getPackages {

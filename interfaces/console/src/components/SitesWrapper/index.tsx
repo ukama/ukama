@@ -24,6 +24,7 @@ import {
   Paper,
   useMediaQuery,
   useTheme,
+  Button,
 } from '@mui/material';
 import { useState } from 'react';
 import colors from '@/theme/colors';
@@ -34,6 +35,7 @@ interface ISitesWrapper {
   loading: boolean;
   handleSiteNameUpdate: any;
   subscriberCount: number | undefined;
+  unnamedNodes: any[];
 }
 
 const SiteCardSkeleton = (
@@ -50,12 +52,14 @@ const SitesWrapper = ({
   sites,
   subscriberCount,
   handleSiteNameUpdate,
+  unnamedNodes,
 }: ISitesWrapper) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
+
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
     siteId: string,
@@ -73,6 +77,10 @@ const SitesWrapper = ({
     router.push(`/console/sites/${siteId}`);
   };
 
+  const handleConfigureSite = (nodeId: string) => {
+    console.log('Configure Site for Node:', nodeId);
+  };
+
   if (loading)
     return (
       <Grid container columnSpacing={2}>
@@ -84,7 +92,7 @@ const SitesWrapper = ({
       </Grid>
     );
 
-  if (sites.length === 0)
+  if (sites.length === 0 && unnamedNodes.length === 0)
     return (
       <Box
         sx={{
@@ -220,6 +228,55 @@ const SitesWrapper = ({
                 {!isMobile && <Typography variant="body2">Strong</Typography>}
               </Box>
             </Box>
+          </Paper>
+        </Grid>
+      ))}
+
+      {unnamedNodes.map((node) => (
+        <Grid item xs={12} md={4} lg={4} key={node.id}>
+          <Paper
+            sx={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              border: `1px solid ${colors.black10}`,
+              borderRadius: '5px',
+            }}
+            elevation={3}
+          >
+            <Stack direction="column" spacing={1}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 500,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                }}
+              >
+                Undefined site
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mb: 3,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                Node ID: {node.id}
+              </Typography>
+              <Button
+                variant="contained"
+                sx={{
+                  width: '50%',
+                }}
+                onClick={() => handleConfigureSite(node.id)}
+              >
+                Configure Site
+              </Button>
+            </Stack>
           </Paper>
         </Grid>
       ))}

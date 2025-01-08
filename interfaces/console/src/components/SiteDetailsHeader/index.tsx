@@ -13,9 +13,9 @@ import {
   MenuItem,
   Typography,
   Skeleton,
-  Divider,
   Button,
   Grid,
+  useMediaQuery,
 } from '@mui/material';
 import { CheckCircle, Add, ArrowDropDown } from '@mui/icons-material';
 import { SiteDto } from '@/client/graphql/generated';
@@ -39,6 +39,9 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  // Check if the screen size is mobile
+  const isMobile = useMediaQuery('(max-width:600px)');
+
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -57,7 +60,7 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
 
   return (
     <Grid container spacing={2} justifyItems={'center'} sx={{ mb: 1 }}>
-      <Grid item xs={6}>
+      <Grid item xs={12} md={6}>
         <Box display="flex" alignItems="center" gap={1}>
           {isLoading ? (
             <>
@@ -109,15 +112,18 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
         </Box>
       </Grid>
 
-      <Grid item xs={6} justifyContent="flex-end" container sx={{ mt: 1 }}>
-        <Button
-          variant="outlined"
-          onClick={onRestartSite}
-          disabled={!selectedSiteId}
-        >
-          Restart Site
-        </Button>
-      </Grid>
+      {/* Hide the Restart Site button on mobile */}
+      {!isMobile && (
+        <Grid item xs={6} justifyContent="flex-end" container sx={{ mt: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={onRestartSite}
+            disabled={!selectedSiteId}
+          >
+            Restart Site
+          </Button>
+        </Grid>
+      )}
     </Grid>
   );
 };

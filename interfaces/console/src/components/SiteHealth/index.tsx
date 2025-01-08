@@ -1,14 +1,8 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import React, { useState } from 'react';
 import { Grid, Box, Typography } from '@mui/material';
 import { SiteHealth } from '@/../public/svg';
 import colors from '@/theme/colors';
+import { Nodes } from '@/client/graphql/generated';
 
 interface BatteryInfo {
   label: string;
@@ -23,6 +17,7 @@ interface SiteOverallHealthProps {
   controllerHealth: 'good' | 'warning';
   batteryHealth: 'good' | 'warning';
   backhaulHealth: 'good' | 'warning';
+  node: any[];
 }
 
 const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
@@ -34,6 +29,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
     controllerHealth,
     batteryHealth,
     backhaulHealth,
+    node,
   }) => {
     const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
 
@@ -80,6 +76,15 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
       }
     };
 
+    const renderNodeInfo = () => {
+      return node.map((n, index) => (
+        <Typography key={index} variant="body1" color="initial">
+          Node #{n.id}: {n.status.state} and{' '}
+          {n.status.connectivity.toLowerCase()}
+        </Typography>
+      ));
+    };
+
     return (
       <>
         <Grid container spacing={2}>
@@ -117,9 +122,13 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
               >
                 {renderKpiInfo()}
               </Typography>
-              <Typography variant="body1" color="initial">
-                {`Site Metrics are coming soon!`}
-              </Typography>
+              {selectedKpi === 'Node' && node ? (
+                renderNodeInfo()
+              ) : (
+                <Typography variant="body1" color="initial">
+                  Site Metrics are coming soon!
+                </Typography>
+              )}
             </Box>
           </Grid>
         </Grid>
