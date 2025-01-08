@@ -243,14 +243,14 @@ func (s *StateServer) GetStatesHistory(ctx context.Context, req *pb.GetStatesHis
 	if req.GetStartTime() != "" {
 		from, err = time.Parse(time.RFC3339, req.GetStartTime())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for start_time: "+err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for start_time. Error: %s", err.Error())
 		}
 	}
 
 	if req.GetEndTime() != "" {
 		to, err = time.Parse(time.RFC3339, req.GetEndTime())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for end_time: "+err.Error())
+			return nil, status.Errorf(codes.InvalidArgument, "invalid time format for end_time. Error: %s", err.Error())
 		}
 	}
 
