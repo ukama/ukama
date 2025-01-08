@@ -29,7 +29,6 @@ func TestEventNotification(t *testing.T) {
 	onlineMsg, _ := anypb.New(onlineEvent)
 
 	repo.On("Add", mock.Anything).Return(nil).Once()
-
 	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
 		Run(func(args mock.Arguments) {
 			notification := args.Get(1).(*epb.Notification)
@@ -39,7 +38,6 @@ func TestEventNotification(t *testing.T) {
 			assert.Equal(t, "low", notification.Severity)
 			assert.Equal(t, "event", notification.Type)
 			assert.Equal(t, "mesh", notification.ServiceName)
-			// assert.Equal(t, []byte(`{"value":"Mesh Node Online"}`), notification.Details)
 		}).
 		Return(nil).Once()
 
