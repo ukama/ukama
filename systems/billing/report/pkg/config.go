@@ -23,7 +23,8 @@ type Config struct {
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Service           *config.Service
-	SubscriberHost    string `default:"http://subscriber-api-gw:8080"`
+	System            string `default:"billing"`
+	SubscriberHost    string `default:"http://api-gateway-subscriber:8080"`
 	PdfHost           string `default:""`
 	PdfPort           int    `default:"3000"`
 	PdfPrefix         string `default:"/pdf/"`
@@ -41,7 +42,11 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
+			Host:    "msg-client-billing:9095",
 			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.payments.processor.payment.success",
+			},
 		},
 	}
 }

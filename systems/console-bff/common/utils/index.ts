@@ -10,6 +10,8 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
+import { NotificationsResDto } from "../../subscriptions/resolvers/types";
+import { CONSOLE_APP_URL } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -229,6 +231,8 @@ const getSystemNameByService = (service: string): string => {
       return "metrics";
     case "planning-tool":
       return "planning";
+    case "nodeState":
+      return "node";
     default:
       return "";
   }
@@ -284,8 +288,29 @@ const getScopesByRole = (userRole: string): Array<NOTIFICATION_SCOPE> => {
   return RoleToNotificationScopes[roleType] ?? [];
 };
 
+type TEventKeyToAction = {
+  title: string;
+  action: string;
+};
+
+const eventKeyToAction = (
+  key: string,
+  data: NotificationsResDto
+): TEventKeyToAction => {
+  switch (key) {
+    case "EventNodeOnline":
+      return {
+        title: "Configure node",
+        action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
+      };
+    default:
+      return { title: "Network Updated", action: "updated" };
+  }
+};
+
 export {
   csvToBase64,
+  eventKeyToAction,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,

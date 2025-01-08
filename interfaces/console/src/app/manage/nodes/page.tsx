@@ -6,81 +6,102 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { NetworkDto, useGetNetworksQuery } from '@/client/graphql/generated';
+import { useGetNodesQuery, useGetSitesQuery } from '@/client/graphql/generated';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
 import SimpleDataTable from '@/components/SimpleDataTable';
 import { MANAGE_NODE_POOL_COLUMN } from '@/constants';
 import { useAppContext } from '@/context';
+import { TNodePoolData } from '@/types';
+import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
-import { AlertColor, Box, Paper } from '@mui/material';
-import { useState } from 'react';
+import { Box, Paper } from '@mui/material';
+import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 const Page = () => {
-  // const [data, setData] = useState([]);
+  const { network } = useAppContext();
+  const [pool, setPool] = useState<TNodePoolData[]>([]);
+  const [data, setData] = useState<TNodePoolData[]>([]);
   const [search, setSearch] = useState('');
   const { setSnackbarMessage } = useAppContext();
-  const [networkList, setNetworkList] = useState<NetworkDto[]>([]);
 
-  // const [getNodes, { loading: getNodesLoading }] = useGetNodesLazyQuery({
-  //   fetchPolicy: 'cache-and-network',
-  //   onCompleted: (data) => {
-  //     const filteredNodes = data?.getNodes.nodes;
-  // .filter((node) => node.created_at)
-  // .map((node) => ({
-  //   ...node,
-  //   created_at: format(parseISO(node.created_at), 'dd MMM yyyy'),
-  // }));
-
-  //     setData((prev: any) => ({
-  //       ...prev,
-  //       node: filteredNodes ?? [],
-  //     }));
-  //   },
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'node',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
-
-  const { loading: networkLoading } = useGetNetworksQuery({
+  const { data: nodes, loading } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setNetworkList(data?.getNetworks.networks ?? []);
-    },
-    onError: (error) => {
+    onError: (err) => {
       setSnackbarMessage({
-        id: 'network',
-        message: error.message,
-        type: 'error' as AlertColor,
+        id: 'available-nodes-msg',
+        message: err.message,
+        type: 'error',
         show: true,
       });
     },
   });
 
-  // useEffect(() => {
-  //   if (nodeSearch.length > 3) {
-  //     const nodes = data.node.filter((node: any) => {
-  //       if (node.id.includes(nodeSearch)) return node;
-  //     });
-  //     setData((prev: any) => ({ ...prev, node: nodes ?? [] }));
-  //   } else if (nodeSearch.length === 0) {
-  //     setData((prev: any) => ({ ...prev, node: data.node }));
-  //   }
-  // }, [nodeSearch]);
+  const { data: sites } = useGetSitesQuery({
+    skip: !network?.id,
+    variables: {
+      networkId: network?.id,
+    },
+    fetchPolicy: 'cache-and-network',
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'sites-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
 
-  const handleCreateNetwork = () => {};
+  useEffect(() => {
+    if (nodes && nodes?.getNodes.nodes.length > 0 && sites) {
+      const np: TNodePoolData[] = [];
+      nodes.getNodes.nodes.filter((node) => {
+        const s =
+          node.site.siteId &&
+          sites.getSites.sites.find((site) => site.id === node.site.siteId)
+            ?.name;
+        const net =
+          node.site.networkId &&
+          sites.getSites.sites.find((site) => site.id === node.site.networkId)
+            ?.name;
+        np.push({
+          id: node.id,
+          site: s ?? '-',
+          network: net ?? '-',
+          state: node.status.state,
+          type: NodeEnumToString(node.type),
+          connectivity: node.status.connectivity,
+          createdAt: node.site.addedAt
+            ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+            : '-',
+        });
+        if (sites.getSites.sites.find((site) => site.id === node.site.siteId))
+          return node;
+      });
+      setData(np);
+      setPool(np);
+    }
+  }, [sites, nodes]);
+
+  useEffect(() => {
+    if (search.length > 3) {
+      const nodes = pool.filter((node: any) => {
+        if (node.id.includes(search)) return node;
+      });
+      setData(nodes ?? []);
+    } else if (search.length === 0) {
+      setData(pool);
+    }
+  }, [search]);
 
   return (
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={networkLoading}
+      isLoading={loading}
       height={'calc(100vh - 244px)'}
     >
       <Paper
@@ -101,15 +122,10 @@ const Page = () => {
             onSearchChange={(e: string) => setSearch(e)}
           />
           <br />
-          {[].length === 0 ? (
+          {data.length === 0 ? (
             <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
           ) : (
-            <SimpleDataTable
-              dataset={[]}
-              networkList={networkList}
-              columns={MANAGE_NODE_POOL_COLUMN}
-              handleCreateNetwork={handleCreateNetwork}
-            />
+            <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
           )}
         </Box>
       </Paper>

@@ -11,11 +11,9 @@ import {
   Graphs_Type,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { HealtChartsConfigure, TooltipsText } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack, Typography, capitalize } from '@mui/material';
+import { Stack, capitalize } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
-import LineChart from '../LineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -63,8 +61,8 @@ const NodeOverviewTab = ({
   };
 
   return (
-    <Grid container columnSpacing={3}>
-      <Grid item xs={12} md={4}>
+    <Grid container columnSpacing={3} rowSpacing={2}>
+      <Grid size={{ xs: 12, md: 4 }}>
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
@@ -93,7 +91,7 @@ const NodeOverviewTab = ({
                 </Grid>
               )} */}
           </NodeStatsContainer>
-          <NodeStatsContainer
+          {/* <NodeStatsContainer
             index={1}
             loading={loading}
             isClickable={true}
@@ -123,8 +121,8 @@ const NodeOverviewTab = ({
                 value={uptime ? `${Math.floor(uptime / 60 / 60)} hours` : 'NA'}
               />
             )}
-          </NodeStatsContainer>
-          {selectedNode?.type !== NodeTypeEnum.Anode && (
+          </NodeStatsContainer> */}
+          {/* {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
               loading={loading}
@@ -148,10 +146,10 @@ const NodeOverviewTab = ({
                 nameInfo={TooltipsText.ACTIVE}
               />
             </NodeStatsContainer>
-          )}
+          )} */}
         </Stack>
       </Grid>
-      <Grid item xs={12} md={8}>
+      <Grid size={{ xs: 12, md: 8 }}>
         {selected === 0 && (
           <NodeDetailsCard
             nodeType={selectedNode?.type ?? undefined}
@@ -162,7 +160,7 @@ const NodeOverviewTab = ({
             isUpdateAvailable={isUpdateAvailable}
           />
         )}
-        {selected === 1 && (
+        {/* {selected === 1 && (
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Node Health</Typography>
@@ -264,7 +262,7 @@ const NodeOverviewTab = ({
               )}
             </Stack>
           </Paper>
-        )}
+        )} */}
       </Grid>
     </Grid>
   );

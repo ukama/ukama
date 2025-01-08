@@ -60,7 +60,14 @@ export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
+const NODE_STATE_PORT = parseInt(process.env.NODE_STATE_PORT ?? "5058");
 export const SUB_GRAPHS = {
+  nodeState: {
+    name: "nodeState",
+    port: NODE_STATE_PORT,
+    url: `http://localhost:${NODE_STATE_PORT}`,
+    isPingedSuccess: false,
+  },
   metric: {
     name: "metric",
     port: METRIC_PORT,

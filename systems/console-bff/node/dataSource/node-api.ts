@@ -13,14 +13,16 @@ import {
   AddNodeInput,
   AddNodeToSiteInput,
   DeleteNode,
+  GetNodesByStateInput,
   Node,
   NodeInput,
+  NodeStateRes,
   Nodes,
   UpdateNodeInput,
   UpdateNodeStateInput,
 } from "../resolvers/types";
 import { AttachNodeInput } from "./../resolvers/types";
-import { parseNodeRes, parseNodesRes } from "./mapper";
+import { getNodeState, parseNodeRes, parseNodesRes } from "./mapper";
 
 const NODES = "nodes";
 class NodeAPI extends RESTDataSource {
@@ -30,11 +32,24 @@ class NodeAPI extends RESTDataSource {
       parseNodeRes(res.node)
     );
   }
-  async getNodes(baseURL: string, args: boolean): Promise<Nodes> {
+  async getNodes(baseURL: string): Promise<Nodes> {
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${NODES}?free=${args}`).then(res =>
-      parseNodesRes(res)
+    return this.get(`/${VERSION}/${NODES}`).then(res => parseNodesRes(res));
+  }
+  async getNodeState(baseURL: string, id: string): Promise<NodeStateRes> {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/state/${id}/history`).then(res =>
+      getNodeState(res)
     );
+  }
+  async getNodesByState(
+    baseURL: string,
+    data: GetNodesByStateInput
+  ): Promise<Nodes> {
+    this.baseURL = baseURL;
+    return this.get(
+      `/${VERSION}/${NODES}/state?connectivity=${data.connectivity.toLocaleLowerCase()}&state=${data.state.toLocaleLowerCase()}`
+    ).then(res => parseNodesRes(res));
   }
   async getNodesByNetwork(baseURL: string, networkId: string): Promise<Nodes> {
     this.baseURL = baseURL;
@@ -80,7 +95,6 @@ class NodeAPI extends RESTDataSource {
       body: {
         name: args.name,
         node_id: args.id,
-        org_id: args.orgId,
       },
     }).then(res => parseNodeRes(res.node));
   }

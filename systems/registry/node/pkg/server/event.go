@@ -10,8 +10,12 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -58,11 +62,60 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.notification.store"):
+		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		msg, err := epb.UnmarshalNotification(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleNotifyEvent(ctx, e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
+		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.s.addNodeToSite(msg.AccessId, msg.SiteId, msg.NetworkId)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
+}
+
+func (n *NodeEventServer) handleNotifyEvent(ctx context.Context, key string, msg *epb.Notification) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	var details map[string]interface{}
+	if err := json.Unmarshal(msg.Details, &details); err != nil {
+		log.WithError(err).Error("Failed to unmarshal details")
+		return err
+	}
+	lat := details["latitude"]
+	lon := details["longitude"]
+	if lat == nil || lon == nil {
+		log.Errorf("Latitude or Longitude key not found in details")
+		return fmt.Errorf("latitude or longitude key not found in details")
+	}
+
+	updateRequest := &pb.UpdateNodeRequest{
+		NodeId:    msg.NodeId,
+		Latitude:  lat.(float64),
+		Longitude: lon.(float64),
+	}
+
+	_, err := n.s.UpdateNode(ctx, updateRequest)
+	if err != nil {
+		log.WithError(err).Error("Failed to update node")
+		return err
+	}
+	return nil
 }
 
 func (n *NodeEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
@@ -90,8 +143,10 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 
 	/* Add node if you can't find a node */
 	if node == nil {
+		id := strings.ToLower(msg.GetNodeId())
 		req := &pb.AddNodeRequest{
-			NodeId: msg.GetNodeId(),
+			NodeId: id,
+			Name:   id[len(id)-7:],
 		}
 		_, err = n.s.AddNode(context.Background(), req)
 		if err != nil {

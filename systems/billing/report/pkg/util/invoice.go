@@ -17,27 +17,28 @@ import (
 type Currency string
 
 type RawInvoice struct {
-	LagoID               uuid.UUID                 `json:"lago_id,omitempty"`
-	SequentialID         int                       `json:"sequential_id,omitempty"`
-	Number               string                    `json:"number,omitempty"`
-	IssuingDate          string                    `json:"issuing_date,omitempty"`
-	Status               string                    `json:"status,omitempty"`
-	PaymentStatus        string                    `json:"payment_status,omitempty"`
-	AmountCents          int                       `json:"amount_cents,omitempty"`
-	AmountCurrency       string                    `json:"amount_currency,omitempty"`
-	VatAmountCents       int                       `json:"vat_amount_cents,omitempty"`
-	VatAmountCurrency    string                    `json:"vat_amount_currency,omitempty"`
-	CreditAmountCents    int                       `json:"credit_amount_cents,omitempty"`
-	CreditAmountCurrency string                    `json:"credit_amount_currency,omitempty"`
-	TotalAmountCents     int                       `json:"total_amount_cents,omitempty"`
-	TotalAmountCurrency  string                    `json:"total_amount_currency,omitempty"`
-	FileURL              string                    `json:"file_url,omitempty"`
-	Legacy               bool                      `json:"legacy,omitempty"`
-	Customer             *Customer                 `json:"customer,omitempty"`
-	Subscriptions        []Subscription            `json:"subscriptions,omitempty"`
-	Fees                 []Fee                     `json:"fees,omitempty"`
-	Credits              []InvoiceCredit           `json:"credits,omitempty"`
-	Metadata             []InvoiceMetadataResponse `json:"metadata,omitempty"`
+	LagoID                            uuid.UUID                 `json:"lago_id,omitempty"`
+	SequentialID                      int                       `json:"sequential_id,omitempty"`
+	Number                            string                    `json:"number,omitempty"`
+	IssuingDate                       string                    `json:"issuing_date,omitempty"`
+	PaymentDueDate                    string                    `json:"payment_due_date,omitempty"`
+	PaymentOverdue                    bool                      `json:"payment_overdue,omitempty"`
+	InvoiceType                       string                    `json:"invoice_type,omitempty"`
+	Status                            string                    `json:"status,omitempty"`
+	PaymentStatus                     string                    `json:"payment_status,omitempty"`
+	Currency                          string                    `json:"currency,omitempty"`
+	FeesAmountCents                   int                       `json:"fees_amount_cents,omitempty"`
+	TaxesAmountCents                  int                       `json:"taxes_amount_cents,omitempty"`
+	SubTotalExcludingTaxesAmountCents int                       `json:"sub_total_excluding_taxes_amount_cents,omitempty"`
+	SubTotalIncludingTaxesAmountCents int                       `json:"sub_total_including_taxes_amount_cents,omitempty"`
+	TotalAmountCents                  int                       `json:"total_amount_cents,omitempty"`
+	FileURL                           string                    `json:"file_url,omitempty"`
+	Legacy                            bool                      `json:"legacy,omitempty"`
+	Customer                          *Customer                 `json:"customer,omitempty"`
+	Subscriptions                     []Subscription            `json:"subscriptions,omitempty"`
+	Fees                              []Fee                     `json:"fees,omitempty"`
+	Credits                           []InvoiceCredit           `json:"credits,omitempty"`
+	Metadata                          []InvoiceMetadataResponse `json:"metadata,omitempty"`
 }
 
 type InvoiceCreditItem struct {
@@ -66,14 +67,13 @@ type Fee struct {
 	LagoGroupID         uuid.UUID `json:"lago_group_id,omitempty"`
 	AmountCents         int       `json:"amount_cents,omitempty"`
 	AmountCurrency      string    `json:"amount_currenty,omitempty"`
-	VatAmountCents      int       `json:"vat_amount_cents,omitempty"`
-	VatAmountCurrency   string    `json:"vat_amount_currency,omitempty"`
+	TaxesAmountCents    int       `json:"taxes_amount_cents,omitempty"`
+	TaxesPreciseAmount  string    `json:"taxes_precise_amount,omitempty"`
 	TotalAmountCents    int       `json:"total_amount_cents,omitempty"`
 	TotalAmountCurrency string    `json:"total_amount_currency,omitempty"`
 	Units               string    `json:"units,omitempty"`
 	EventsCount         int       `json:"events_count,omitempty"`
 	Item                FeeItem   `json:"item,omitempty"`
-	// Units               float32   `json:"units,omitempty"`
 }
 
 type FeeItem struct {
@@ -98,6 +98,8 @@ type Customer struct {
 	LogoURL      string    `json:"logo_url,omitempty"`
 	Phone        string    `json:"phone,omitempty"`
 	URL          string    `json:"url,omitempty"`
+	Currency     string    `json:"currency,omitempty"`
+	Timezone     string    `json:"timezone,omitempty"`
 	VatRate      float32   `json:"vat_rate,omitempty"`
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 }
@@ -108,6 +110,7 @@ type Subscription struct {
 	ExternalCustomerID string     `json:"external_customer_id"`
 	ExternalID         string     `json:"external_id"`
 	PlanCode           string     `json:"plan_code"`
+	Name               string     `json:"name"`
 	Status             string     `json:"status"`
 	CreatedAt          *time.Time `json:"created_at"`
 	StartedAt          *time.Time `json:"started_at"`

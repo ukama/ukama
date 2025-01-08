@@ -28,8 +28,6 @@ type Config struct {
 	OrgName          string
 }
 
-
-
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &uconf.Database{
@@ -40,8 +38,8 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				evt.EventRoutingKey[evt.EventNodeCreate],
-				evt.EventRoutingKey[evt.EventMeshNodeOnline],
-				evt.EventRoutingKey[evt.EventMeshNodeOffline],
+				evt.EventRoutingKey[evt.EventNodeOnline],
+				evt.EventRoutingKey[evt.EventNodeOffline],
 			},
 		},
 	}

@@ -8,8 +8,13 @@
 import { NonEmptyArray } from "type-graphql";
 
 import { GetOrgResolver } from "./getOrg";
+import { GetOrgTreeResolver } from "./getOrgTree";
 import { GetOrgsResolver } from "./getOrgs";
 
-const resolvers: NonEmptyArray<any> = [GetOrgResolver, GetOrgsResolver];
+const resolvers: NonEmptyArray<any> = [
+  GetOrgResolver,
+  GetOrgsResolver,
+  GetOrgTreeResolver,
+];
 
 export default resolvers;

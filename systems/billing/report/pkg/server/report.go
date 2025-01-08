@@ -12,7 +12,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -23,21 +22,17 @@ import (
 
 	"github.com/ukama/ukama/systems/billing/report/pkg"
 	"github.com/ukama/ukama/systems/billing/report/pkg/db"
-	"github.com/ukama/ukama/systems/billing/report/pkg/pdf"
 	"github.com/ukama/ukama/systems/billing/report/pkg/util"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
-)
-
-const (
-	defaultTemplate = "templates/invoice.html.tmpl"
-	pdfFolder       = "/srv/static/"
 )
 
 type ReportServer struct {
@@ -45,7 +40,7 @@ type ReportServer struct {
 	OrgId            uuid.UUID
 	reportRepo       db.ReportRepo
 	subscriberClient csub.SubscriberClient
-	msgbus           mb.MsgBusServiceClient
+	msgBus           mb.MsgBusServiceClient
 	baseRoutingKey   msgbus.RoutingKeyBuilder
 	pb.UnimplementedReportServiceServer
 }
@@ -61,13 +56,13 @@ func NewReportServer(orgName, org string, reportRepo db.ReportRepo, subscriberCl
 		OrgId:            orgId,
 		reportRepo:       reportRepo,
 		subscriberClient: subscriberClient,
-		msgbus:           msgBus,
+		msgBus:           msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
 			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
-func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+func (r *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.ReportResponse, error) {
 	log.Infof("Unmarshalling raw report from webhook: %v", req.RawReport)
 
 	rwInvoceStruct := &util.RawInvoice{}
@@ -93,17 +88,19 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 
 	report := &db.Report{
 		OwnerId:   ownerId,
-		OwnerType: db.OwnerTypeOrg,
+		OwnerType: ukama.OwnerTypeOrg,
+		Type:      ukama.ReportTypeInvoice,
 	}
 
-	if ownerId != i.OrgId {
-		subscriberInfo, err := i.subscriberClient.Get(ownerId.String())
+	if ownerId != r.OrgId {
+		subscriberInfo, err := r.subscriberClient.Get(ownerId.String())
 		if err != nil {
 			return nil, err
 		}
 
 		report.NetworkId = subscriberInfo.NetworkId
-		report.OwnerType = db.OwnerTypeSubscriber
+		report.OwnerType = ukama.OwnerTypeSubscriber
+		report.Type = ukama.ReportTypeConsumption
 	}
 
 	rwInvoceStruct.FileURL = fmt.Sprintf("http://{API_ENDPOINT}/pdf/%s.pdf", report.Id.String())
@@ -118,7 +115,7 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 	report.RawReport = datatypes.JSON(rwReportBytes)
 
 	log.Infof("Adding report for owner: %s", ownerId)
-	err = i.reportRepo.Add(report, func(*db.Report, *gorm.DB) error {
+	err = r.reportRepo.Add(report, func(*db.Report, *gorm.DB) error {
 		report.Id = uuid.NewV4()
 		report.Period = time.Now().UTC()
 
@@ -129,23 +126,41 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	log.Infof("starting PDF generation")
-	go func() {
-		err = generateReportPDF(rwInvoceStruct, defaultTemplate, filepath.Join(pdfFolder, report.Id.String()+".pdf"))
-		if err != nil {
-			log.Errorf("PDF generation failure: failed to generate invoice PDF: %v", err)
-		}
+	pbReport := dbReportToPbReport(report)
 
-		log.Infof("finishing PDF generation")
-	}()
-
-	resp := &pb.AddResponse{
-		Report: dbReportToPbReport(report),
+	resp := &pb.ReportResponse{
+		Report: pbReport,
 	}
 
-	route := i.baseRoutingKey.SetAction("generate").SetObject("invoice").MustBuild()
+	route := r.baseRoutingKey.SetAction("generate").SetObject(report.Type.String()).MustBuild()
 
-	err = i.msgbus.PublishRequest(route, resp.Report)
+	val := &epb.RawReport{}
+	m := protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+
+	err = m.Unmarshal([]byte(report.RawReport.String()), val)
+	if err != nil {
+		log.Errorf("Failed to unmarshal RawReport JSON to epb.RawReport proto: %v", err)
+
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal RawReport JSON paylod to epb.RawReport. Error %s", err)
+	}
+
+	evt := &epb.Report{
+		Id:        pbReport.Id,
+		OwnerId:   pbReport.OwnerId,
+		OwnerType: pbReport.OwnerType,
+		NetworkId: pbReport.NetworkId,
+		Type:      pbReport.Type,
+		Period:    pbReport.Period,
+		RawReport: val,
+		IsPaid:    pbReport.IsPaid,
+		CreatedAt: pbReport.CreatedAt,
+	}
+
+	err = r.msgBus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			req, route, err.Error())
@@ -154,24 +169,24 @@ func (i *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResp
 	return resp, nil
 }
 
-func (i *ReportServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (r *ReportServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.ReportResponse, error) {
 	reportId, err := uuid.FromString(req.ReportId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid format of report uuid. Error %s", err.Error())
 	}
 
-	report, err := i.reportRepo.Get(reportId)
+	report, err := r.reportRepo.Get(reportId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	return &pb.GetResponse{
+	return &pb.ReportResponse{
 		Report: dbReportToPbReport(report),
 	}, nil
 }
 
-func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+func (r *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	log.Infof("Getting reports matching: %v", req)
 
 	if req.OwnerId != "" {
@@ -185,10 +200,10 @@ func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		req.OwnerId = ownerId.String()
 	}
 
-	ownerType := db.OwnerTypeUnknown
+	ownerType := ukama.OwnerTypeUnknown
 	if req.OwnerType != "" {
-		ownerType = db.ParseOwnerType(req.OwnerType)
-		if ownerType == db.OwnerTypeUnknown {
+		ownerType = ukama.ParseOwnerType(req.OwnerType)
+		if ownerType == ukama.OwnerTypeUnknown {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid value for owner type: %s", req.OwnerType)
 		}
@@ -204,16 +219,16 @@ func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 		req.NetworkId = networkId.String()
 	}
 
-	reportType := db.ReportTypeUnknown
+	reportType := ukama.ReportTypeUnknown
 	if req.ReportType != "" {
-		reportType = db.ParseReportType(req.ReportType)
-		if reportType == db.ReportTypeUnknown {
+		reportType = ukama.ParseReportType(req.ReportType)
+		if reportType == ukama.ReportTypeUnknown {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid value for report type: %s", req.ReportType)
 		}
 	}
 
-	reports, err := i.reportRepo.List(req.OwnerId, ownerType, req.NetworkId, reportType, req.IsPaid, req.Count, req.Sort)
+	reports, err := r.reportRepo.List(req.OwnerId, ownerType, req.NetworkId, reportType, req.IsPaid, req.Count, req.Sort)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "reports")
 	}
@@ -221,7 +236,17 @@ func (i *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 	return &pb.ListResponse{Reports: dbReportsToPbReports(reports)}, nil
 }
 
-func (i *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (r *ReportServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.ReportResponse, error) {
+	report, err := update(req.ReportId, req.IsPaid, r.reportRepo, r.msgBus, r.baseRoutingKey)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.ReportResponse{Report: dbReportToPbReport(report)}, nil
+}
+
+func (r *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting report %s", req.ReportId)
 
 	reportId, err := uuid.FromString(req.ReportId)
@@ -230,16 +255,16 @@ func (i *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.D
 			"invalid format of report uuid. Error %s", err.Error())
 	}
 
-	err = i.reportRepo.Delete(reportId, nil)
+	err = r.reportRepo.Delete(reportId, nil)
 	if err != nil {
 		log.Error(err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	route := i.baseRoutingKey.SetAction("delete").SetObject("invoice").MustBuild()
+	route := r.baseRoutingKey.SetAction("delete").SetObject("invoice").MustBuild()
 
-	err = i.msgbus.PublishRequest(route, req)
+	err = r.msgBus.PublishRequest(route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			req, route, err.Error())
@@ -248,27 +273,64 @@ func (i *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.D
 	return &pb.DeleteResponse{}, nil
 }
 
-func generateReportPDF(data any, templatePath, outputPath string) error {
-	r := pdf.NewInvoicePDF("")
+func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.MsgBusServiceClient,
+	baseRoutingKey msgbus.RoutingKeyBuilder) (*db.Report, error) {
 
-	err := r.ParseTemplate(templatePath, data)
+	log.Infof("Updating report: %v", reportId)
+
+	repId, err := uuid.FromString(reportId)
 	if err != nil {
-		log.Errorf("failed to parse PDF template: %v", err)
-
-		return fmt.Errorf("failed to parse PDF template: %w", err)
-
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format for payment uuid: %s format for report update. Error %v", reportId, err)
 	}
 
-	err = r.GeneratePDF(outputPath)
+	report, err := reportRepo.Get(repId)
 	if err != nil {
-		log.Errorf("failed to generate PDF invoice: %v", err)
-
-		return fmt.Errorf("failed to generate PDF invoice: %w", err)
+		return nil, grpc.SqlErrorToGrpc(err, "report")
 	}
 
-	log.Info("PDF invoice generated successfully")
+	report.IsPaid = isPaid
 
-	return nil
+	err = reportRepo.Update(report, nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "report")
+	}
+
+	route := baseRoutingKey.SetAction("update").SetObject(report.Type.String()).MustBuild()
+
+	val := &epb.RawReport{}
+	m := protojson.UnmarshalOptions{
+		AllowPartial:   true,
+		DiscardUnknown: true,
+	}
+
+	err = m.Unmarshal([]byte(report.RawReport.String()), val)
+	if err != nil {
+		log.Errorf("Failed to unmarshal RawReport JSON to epb.RawReport proto: %v", err)
+
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal RawReport JSON paylod to epb.RawReport. Error %s", err)
+	}
+
+	evt := &epb.Report{
+		Id:        report.Id.String(),
+		OwnerId:   report.OwnerId.String(),
+		OwnerType: report.OwnerType.String(),
+		NetworkId: report.NetworkId.String(),
+		Type:      report.Type.String(),
+		Period:    report.Period.Format(time.RFC3339),
+		RawReport: val,
+		IsPaid:    report.IsPaid,
+		CreatedAt: report.CreatedAt.Format(time.RFC3339),
+	}
+
+	err = msgBus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+			evt, route, err.Error())
+	}
+
+	return report, nil
 }
 
 func dbReportToPbReport(report *db.Report) *pb.Report {

@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { DataUnitType } from '@/types';
 import * as Yup from 'yup';
 
 // Validation rules
@@ -115,13 +116,31 @@ const SiteConfigureSchema = Yup.object().shape({
   backhaul: Yup.string().required('Backhaul is required'),
 });
 
+const DataPlanSchema = Yup.object().shape({
+  dataUnit: Yup.mixed<DataUnitType>()
+    .oneOf(Object.values(DataUnitType), 'Invalid data unit')
+    .default(DataUnitType.GigaBytes)
+    .required(),
+  duration: Yup.string().required('Duration is required'),
+  amount: Yup.number().required().positive("Value can't be negative").min(1),
+  dataVolume: Yup.number()
+    .required()
+    .positive("Data volume can't be negative")
+    .min(1),
+  id: Yup.string(),
+  country: Yup.string(),
+  currency: Yup.string(),
+  name: Yup.string().required().min(5, "Name can't be less than 5 characters"),
+});
+
 export {
   AddSiteValidationSchema,
+  DataPlanSchema,
   ESIM_FORM_SCHEMA,
   NetworkNameSchemaValidation,
   PHYSICAL_SIM_FORM_SCHEMA,
-  STEPPER_FORM_SCHEMA,
   SiteConfigureSchema,
   SiteNameSchemaValidation,
+  STEPPER_FORM_SCHEMA,
   UpdateSiteSchema,
 };

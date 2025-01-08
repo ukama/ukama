@@ -29,5 +29,6 @@ message Payment {
     string description = 14;
     string status = 15;
     string failureReason = 16 [json_name = "failure_reason"];
-    bytes metadata = 17;
+    string externalId = 17 [json_name = "external_id"];
+    bytes metadata = 18;
 }

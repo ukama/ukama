@@ -7,7 +7,7 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
@@ -26,8 +26,8 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
-  notifications: NotificationsResDto[];
-  handleNotificationRead: (id: string) => void;
+  notifications: NotificationsRes;
+  handleAction: (action: string, id: string) => void;
 }
 
 const isHaveId = (pathname: string) => {
@@ -41,10 +41,10 @@ const AppLayout = ({
   isLoading,
   isDarkMode,
   placeholder,
+  handleAction,
+  notifications,
   handleAddNetwork,
   handleNetworkChange,
-  notifications,
-  handleNotificationRead,
 }: ILayoutProps) => {
   const pathname = usePathname();
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
@@ -76,7 +76,7 @@ const AppLayout = ({
         isLoading={isLoading}
         onNavigate={onNavigate}
         notifications={notifications}
-        handleNotificationRead={handleNotificationRead}
+        handleAction={handleAction}
       />
       <Stack height={'100%'} direction={'row'} spacing={2}>
         {!matches && (

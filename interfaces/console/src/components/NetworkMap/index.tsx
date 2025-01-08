@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodesLocation } from '@/client/graphql/generated';
+import { Nodes } from '@/client/graphql/generated';
 import styles from '@/styles/Map.module.css';
 import Leaflet from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
@@ -28,7 +28,7 @@ interface IMap {
   zoom: number;
   children: any;
   className?: string;
-  markersData: NodesLocation | undefined;
+  markersData: Nodes | undefined;
 }
 
 const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {

@@ -22,6 +22,7 @@ type ItemProps = {
   Icon: any;
   type: string;
   title: string;
+  titleColor?: string;
   isShowUpdate: boolean;
   handleItemClick: Function;
 };
@@ -32,6 +33,7 @@ const OptionItem = ({
   title,
   isShowUpdate,
   handleItemClick,
+  titleColor = 'inherit',
 }: ItemProps) => (
   <MenuItem
     onClick={() => handleItemClick(type)}
@@ -44,6 +46,7 @@ const OptionItem = ({
     )}
     <ListItemText
       sx={{
+        color: titleColor,
         mr: 1,
         '.MuiTypography-root': {
           color: title.toLowerCase() === 'delete' ? colors.redMatt : 'inherit',
@@ -123,13 +126,14 @@ const OptionsPopover = ({
           horizontal: 'right',
         }}
       >
-        {menuOptions.map(({ id: optId, Icon, title, route }: any) => (
+        {menuOptions.map(({ id: optId, Icon, title, color, route }: any) => (
           <OptionItem
-            key={`${title}-${optId}`}
-            type={route}
             Icon={Icon}
+            type={route}
             title={title}
+            titleColor={color}
             isShowUpdate={true}
+            key={`${title}-${optId}`}
             handleItemClick={(type: string) => {
               handleItemClick(type);
               handlePopoverClose();

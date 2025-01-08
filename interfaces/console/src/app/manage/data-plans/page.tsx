@@ -22,6 +22,7 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
+import { CreatePlanType, DataUnitType } from '@/types';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper } from '@mui/material';
 import { useState } from 'react';
@@ -29,18 +30,18 @@ import { useState } from 'react';
 const INIT_DATAPLAN = {
   id: '',
   name: '',
-  dataVolume: 0,
-  dataUnit: '',
-  amount: 0,
-  duration: 0,
-  currency: '',
   country: '',
+  duration: '',
+  currency: '',
+  amount: undefined,
+  dataVolume: undefined,
+  dataUnit: DataUnitType.GigaBytes,
 };
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
   const { network, user, setSnackbarMessage } = useAppContext();
-  const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
+  const [dataplan, setDataplan] = useState<CreatePlanType>(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
   const [getCurrencySymbol, { data: currencyData }] =
@@ -168,28 +169,28 @@ const Page = () => {
     }
   };
 
-  const handleDataPlanAction = (action: string) => {
-    if (action === 'add') {
+  const handleDataPlanAction = (action: string, values: CreatePlanType) => {
+    if (action === 'add' && values.amount && values.dataVolume) {
       addDataPlan({
         variables: {
           data: {
-            name: dataplan.name,
-            amount: dataplan.amount,
-            dataUnit: dataplan.dataUnit,
-            dataVolume: dataplan.dataVolume,
-            duration: dataplan.duration,
+            name: values.name,
+            amount: values?.amount,
+            dataUnit: values.dataUnit,
             country: user.country ?? '',
             currency: user.currency ?? '',
+            dataVolume: values?.dataVolume,
+            duration: parseInt(values.duration),
           },
         },
       });
     } else if (action === 'update') {
       updatePackage({
         variables: {
-          packageId: dataplan.id,
+          packageId: values.id,
           data: {
-            name: dataplan.name,
             active: true,
+            name: values.name,
           },
         },
       });
@@ -211,12 +212,12 @@ const Page = () => {
       setDataplan({
         id: id,
         name: d?.name ?? '',
-        duration: d?.duration ?? 0,
-        dataUnit: d?.dataUnit ?? '',
+        duration: d?.duration.toString() ?? '',
         dataVolume: d?.dataVolume ?? 0,
         country: d?.country ?? '',
         currency: d?.currency ?? '',
         amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
+        dataUnit: d?.dataUnit as DataUnitType,
       });
       setIsDataPlan(true);
     }

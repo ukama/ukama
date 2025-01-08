@@ -23,7 +23,7 @@ type EventId int
 const (
 	EventInvalid EventId = iota
 	EventOrgAdd
-	EventSiteAdd
+	EventSiteCreate
 	EventSiteUpdate
 	EventUserAdd
 	EventUserDeactivate
@@ -41,8 +41,8 @@ const (
 	EventInviteCreate
 	EventInviteDelete
 	EventInviteUpdate
-	EventMeshNodeOnline
-	EventMeshNodeOffline
+	EventNodeOnline
+	EventNodeOffline
 	EventSimActivate
 	EventSimAllocate
 	EventSimDelete
@@ -72,7 +72,7 @@ const (
 
 var EventRoutingKey = [...]string{
 	EventOrgAdd:             "event.cloud.local.{{ .Org}}.nucleus.org.org.add",
-	EventSiteAdd:            "event.cloud.local.{{ .Org}}.registry.site.site.add",
+	EventSiteCreate:         "event.cloud.local.{{ .Org}}.registry.site.site.create",
 	EventSiteUpdate:         "event.cloud.local.{{ .Org}}.registry.site.site.update",
 	EventUserAdd:            "event.cloud.local.{{ .Org}}.nucleus.user.user.add",
 	EventUserDeactivate:     "event.cloud.local.{{ .Org}}.nucleus.user.user.deactivate",
@@ -90,8 +90,8 @@ var EventRoutingKey = [...]string{
 	EventInviteCreate:       "event.cloud.local.{{ .Org}}.registry.invitation.invite.create",
 	EventInviteDelete:       "event.cloud.local.{{ .Org}}.registry.invitation.invite.delete",
 	EventInviteUpdate:       "event.cloud.local.{{ .Org}}.registry.invitation.invite.update",
-	EventMeshNodeOnline:     "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-	EventMeshNodeOffline:    "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+	EventNodeOnline:         "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+	EventNodeOffline:        "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 	EventSimActivate:        "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate",
 	EventSimAllocate:        "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 	EventSimDelete:          "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.delete",
@@ -128,9 +128,9 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
-	EventSiteAdd: {
-		Key:         EventSiteAdd,
-		Name:        "EventSiteAdd",
+	EventSiteCreate: {
+		Key:         EventSiteCreate,
+		Name:        "EventSiteCreate",
 		Title:       "Site Added",
 		Description: "Site Added",
 		Scope:       notif.SCOPE_SITE,
@@ -203,8 +203,8 @@ var EventToEventConfig = map[EventId]EventConfig{
 	EventNodeCreate: {
 		Key:         EventNodeCreate,
 		Name:        "EventNodeCreate",
-		Title:       "Node Created",
-		Description: "Node Created",
+		Title:       "Node added",
+		Description: "Node added",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
@@ -272,19 +272,19 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
-	EventMeshNodeOnline: {
-		Key:         EventMeshNodeOnline,
-		Name:        "EventMeshNodeOnline",
-		Title:       "Mesh Node Online",
-		Description: "Mesh Node Online",
+	EventNodeOnline: {
+		Key:         EventNodeOnline,
+		Name:        "EventNodeOnline",
+		Title:       "Node Online",
+		Description: "Node Online",
 		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},
-	EventMeshNodeOffline: {
-		Key:         EventMeshNodeOffline,
-		Name:        "EventMeshNodeOffline",
-		Title:       "Mesh Node Offline",
-		Description: "Mesh Node Offline",
+	EventNodeOffline: {
+		Key:         EventNodeOffline,
+		Name:        "EventNodeOffline",
+		Title:       "Node Offline",
+		Description: "Node Offline",
 		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},

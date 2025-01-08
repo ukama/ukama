@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 interface UseFetchAddressResult {
   address: string;
@@ -28,6 +28,9 @@ export const useFetchAddress = (): UseFetchAddressResult => {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat || 37.7749}&lon=${lng || -122.4194}`,
         {
           cache: 'force-cache',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+          },
         },
       );
 

@@ -46,8 +46,9 @@ export default async function ServerNotificationSubscription(
     method: 'GET',
     headers: myHeaders,
   };
+
   const res = await fetch(
-    `${url}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%${orgId}%22+orgName%3A%${orgName}%22+role%3A%${role}%22+startTimestamp%3A%${startTimestamp}%22+subscriberId%3A%${''}%22+userId%3A%${userId}%22%29%7BcreatedAt+description+id+isRead+scope+title+type%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
+    `${url}/graphql?query=subscription+NotificationSubscription%7BnotificationSubscription%28networkId%3A%22${networkId}%22+orgId%3A%22${orgId}%22+orgName%3A%22${orgName}%22+role%3A%22${role}%22+startTimestamp%3A%22${startTimestamp}%22+subscriberId%3A%22%22+userId%3A%22${userId}%22%29%7Bid+title+description+createdAt+isRead+scope+type+eventKey+resourceId+redirect%7Baction+title%7D%7D%7D&operationName=NotificationSubscription&extensions=%7B%7D`,
     requestOptions,
   );
 
