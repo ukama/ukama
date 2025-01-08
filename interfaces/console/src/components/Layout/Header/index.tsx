@@ -7,7 +7,7 @@
  */
 
 import { Role_Type } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify, IconStyle } from '@/styles/global';
 import colors from '@/theme/colors';
@@ -43,8 +43,8 @@ interface IHeaderProps {
   isOpen: boolean;
   isLoading: boolean;
   onNavigate: Function;
-  notifications: NotificationsResDto[];
-  handleNotificationRead: (id: string) => void;
+  notifications: NotificationsRes;
+  handleAction: (action: string, id: string) => void;
 }
 
 interface AppBarProps extends MuiAppBarProps {
@@ -76,7 +76,7 @@ const Header = ({
   isLoading,
   onNavigate,
   notifications,
-  handleNotificationRead,
+  handleAction,
 }: IHeaderProps) => {
   const theme = useTheme();
   const { user } = useAppContext();
@@ -131,10 +131,7 @@ const Header = ({
               </IconButton>
             )}
             {/* <NotificationSubscription /> */}
-            <Alert
-              alerts={notifications}
-              handleNotificationRead={handleNotificationRead}
-            />
+            <Alert notifications={notifications} handleAction={handleAction} />
             <AccountPopover />
           </Stack>
         </HorizontalContainerJustify>

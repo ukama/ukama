@@ -143,7 +143,6 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetActionCreate().SetObject("site").MustBuild()
-
 		evt := &epb.EventAddSite{
 			SiteId:        site.Id.String(),
 			NetworkId:     site.NetworkId.String(),

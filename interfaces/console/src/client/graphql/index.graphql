@@ -3,12 +3,14 @@
 fragment node on Node {
   id
   name
-  orgId
+  latitude
+  longitude
   type
   attached {
     id
     name
-    orgId
+    latitude
+    longitude
     type
     site {
       nodeId
@@ -33,14 +35,22 @@ fragment node on Node {
   }
 }
 
-query getNode($data: NodeInput!) {
+query GetNode($data: NodeInput!) {
   getNode(data: $data) {
     ...node
   }
 }
 
-query getNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
+query GetNodes {
+  getNodes {
+    nodes {
+      ...node
+    }
+  }
+}
+
+query GetNodesByState($data: GetNodesByStateInput!) {
+  getNodesByState(data: $data) {
     nodes {
       ...node
     }
@@ -117,26 +127,25 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
   }
 }
 
-query GetNodesLocation($data: NodesInput!) {
-  getNodesLocation(data: $data) {
-    networkId
+query GetNodesLocation {
+  getNodesLocation {
     nodes {
-      id
-      lat
-      lng
-      state
+      ...node
     }
   }
 }
 
-query GetNodeLocation($data: NodeInput!) {
-  getNodeLocation(data: $data) {
+query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
     id
-    lat
-    lng
-    state
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
   }
 }
+
 ### End Node ###
 
 ### Member Start ###

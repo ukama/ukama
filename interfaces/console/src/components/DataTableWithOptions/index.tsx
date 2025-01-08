@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Invitation_Status, NetworkDto } from '@/client/graphql/generated';
+import colors from '@/theme/colors';
 import { getInvitationStatusColor, roleEnumToString } from '@/utils';
 import EmptyView from '../EmptyView';
 import OptionsPopover from '../OptionsPopover';
@@ -43,6 +44,7 @@ interface DataTableWithOptionsInterface {
   columns: ColumnsWithOptions[];
   networkList?: NetworkDto[];
   getSelectedNetwork?: Function;
+  emptyViewDescription?: string;
 }
 
 type CellValueByTypeProps = {
@@ -63,9 +65,9 @@ const CellValueByType = ({
   withStatusColumn,
 }: CellValueByTypeProps) => {
   switch (type) {
-    case 'name':
+    case 'id':
       return isRowClickable ? (
-        <Link href={`nodes/uk-test36-hnode-a1-00ff`} unselectable="on">
+        <Link href={`nodes/${row[type]}`} unselectable="on">
           {row[type]}
         </Link>
       ) : (
@@ -84,6 +86,17 @@ const CellValueByType = ({
         row[type],
         new Date(row['expireAt']) < new Date(),
       );
+    case 'connectivity':
+      return (
+        <Chip
+          sx={{
+            p: 1,
+            backgroundColor: colors.primaryLight,
+            color: (theme) => theme.palette.text.primary,
+          }}
+          label={row[type]}
+        />
+      );
     case 'actions':
       if (
         (withStatusColumn &&
@@ -100,6 +113,7 @@ const CellValueByType = ({
             handleItemClick={onMenuItemClick}
           />
         );
+
     default:
       return <Typography variant="body2">{row[type]}</Typography>;
   }
@@ -112,10 +126,11 @@ const DataTableWithOptions = ({
   menuOptions,
   networkList,
   onMenuItemClick,
-  withStatusColumn = false,
   getSelectedNetwork,
   emptyViewLabel = '',
+  emptyViewDescription,
   isRowClickable = true,
+  withStatusColumn = false,
 }: DataTableWithOptionsInterface) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedNetwork, setSelectedNetwork] = useState<any>();
@@ -235,7 +250,12 @@ const DataTableWithOptions = ({
           </Table>
         </TableContainer>
       ) : (
-        <EmptyView size="medium" title={emptyViewLabel} icon={Icon} />
+        <EmptyView
+          icon={Icon}
+          size="medium"
+          title={emptyViewLabel}
+          description={emptyViewDescription}
+        />
       )}
     </Box>
   );

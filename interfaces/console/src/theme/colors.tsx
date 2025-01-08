@@ -11,6 +11,7 @@ const colors = {
   redMatt: '#D83C3E',
   green: '#03744B',
   yellow: '#FBC34D',
+  orange: '#E27429',
   silver: '#C4C4C4',
   hoverColor: '#009DF5',
   hoverColor08: '#EBF5FF',
@@ -60,6 +61,7 @@ const colors = {
   nightGrey12: '#2E2E2E',
   nightGrey16: '#383838',
   blueGray: '#e9f4feff',
+  tertiary: '#6F7979',
   darkGreen05:
     'linear-gradient(0deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), #121212',
   darkBlueGradiant:

@@ -8,6 +8,7 @@
 
 import ChipDropdown from '@/components/ChipDropDown';
 import { useAppContext } from '@/context';
+import colors from '@/theme/colors';
 import { ColumnsWithOptions } from '@/types';
 import {
   getSimValuefromSimType,
@@ -141,13 +142,31 @@ const SimpleTableCell = ({
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
           {row[column.id] === 'true' ? 'pSIM' : 'eSIM'}
         </Typography>
+      ) : column.id === 'connectivity' ? (
+        <Chip
+          sx={{
+            p: 1,
+            color: (theme) => theme.palette.text.primary,
+            backgroundColor: colors.primaryLight,
+          }}
+          label={row[column.id]}
+        />
+      ) : column.id === 'state' ? (
+        <Chip
+          sx={{
+            p: 1,
+            color: (theme) => theme.palette.text.primary,
+            backgroundColor: colors.secondaryLight,
+          }}
+          label={row[column.id]}
+        />
+      ) : column.id === 'isAllocated' ? (
+        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+          {row[column.id] === true ? 'Assigned' : 'Unassigned'}
+        </Typography>
       ) : (
         <Typography variant={'body2'} sx={{ padding: '8px' }}>
-          {row[column.id] === true
-            ? 'Assigned'
-            : row[column.id] === false
-              ? 'N/A'
-              : row[column.id]}
+          {row[column.id]}
         </Typography>
       )}
     </TableCell>

@@ -45,8 +45,8 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 
-	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventNodeOnline]
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -56,8 +56,8 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventNodeOffline]
 		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 
-		err = n.handleNodeCreateEvent(msg,c.Title)
+		err = n.handleNodeCreateEvent(msg, c.Title)
 		if err != nil {
 			return nil, err
 		}
@@ -156,4 +156,3 @@ func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, n
 		n.baseRoutingKey,
 	)
 }
-

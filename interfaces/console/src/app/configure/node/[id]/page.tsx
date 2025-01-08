@@ -8,11 +8,13 @@
 'use client';
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
+import { ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import LoadingSkelton from './skelton';
 
 interface INodeConfigure {
   params: {
@@ -27,8 +29,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const flow = searchParams.get('flow') ?? 'onb';
-  const step = parseInt(searchParams.get('step') ?? '1');
+  const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
@@ -39,6 +40,11 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     isLoading: addressLoading,
     fetchAddress,
   } = useFetchAddress();
+
+  useEffect(() => {
+    if (latlng[0] === 0 && latlng[1] === 0)
+      router.push(`/configure/check?flow=${flow}`);
+  }, []);
 
   useEffect(() => {
     if (latlng[0] !== 0 && latlng[1] !== 0) handleFetchAddress();
@@ -63,57 +69,51 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   };
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
   const handleNext = () => {
     if (address) {
-      const p = setQueryParam('step', (step + 1).toString());
-      router.push(`/configure/node/${id}/site/name?${p.toString()}`);
+      router.push(`/configure/node/${id}/site/name?${searchParams.toString()}`);
     }
   };
 
+  if (isLoading || addressLoading) <LoadingSkelton />;
+
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
+    <Stack spacing={2} overflow={'scroll'}>
       <Stack direction={'row'}>
-        <Typography variant="h6">{'Install site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
-          {flow === 'onb' ? 6 : 4})
+        <Typography variant="h4" fontWeight={500}>
+          Site installed
         </Typography>
       </Stack>
 
-      <Stack mt={3} mb={3} direction={'column'} spacing={2}>
-        <Typography variant={'body1'}>
-          Your installed site is online, and requires configuration, so that you
-          can properly manage your network. If the following details are
-          incorrect, please check on your site installation.
+      <Stack mt={3} mb={3} direction={'column'} spacing={3}>
+        <Typography variant={'body1'} fontWeight={400}>
+          You have successfully installed your site, and it is online now!
+          Please check to make sure you are satisfied with the location details.
+          <br />
+          <br />
         </Typography>
 
-        {isLoading || addressLoading ? (
-          <Skeleton variant="rounded" width={'100%'} height={128} />
-        ) : (
-          <SiteMapComponent
-            posix={[latlng[0], latlng[1]]}
-            address={address}
-            height={'128px'}
-          />
-        )}
+        <SiteMapComponent
+          posix={[latlng[0], latlng[1]]}
+          address={address}
+          height={'128px'}
+        />
 
-        <LField label="Node" value={id} />
+        <LField label="Node Id" value={id} />
         <LField
           label="SITE LOCATION"
-          value={`${address} [${qpLat}, ${qpLng}]`}
+          value={`${address} [${latlng[0]}, ${latlng[1]}]`}
         />
       </Stack>
-      <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
+
+      <Stack
+        direction={'row'}
+        pt={{ xs: 4, md: 6 }}
+        justifyContent={'space-between'}
+      >
         <Button
           variant="text"
           onClick={handleBack}
@@ -125,7 +125,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           Next
         </Button>
       </Stack>
-    </Paper>
+    </Stack>
   );
 };
 

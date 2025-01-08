@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodeStatusEnum } from '@/client/graphql/generated';
+import { NodeStateEnum } from '@/client/graphql/generated';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
 import TuneIcon from '@mui/icons-material/Tune';
 import {
@@ -58,7 +58,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
     <Box
       sx={{
         top: 24,
-        right: 24,
+        left: 24,
         zIndex: 400,
         display: 'flex',
         p: { xs: 1, md: 2 },
@@ -69,7 +69,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
         background: (theme) => theme.palette.background.paper,
       }}
     >
-      <Stack spacing={0.5}>
+      <Stack spacing={0.5} width={'100%'}>
         <Typography variant="body1" fontWeight={600}>
           Network ({sites.length})
         </Typography>
@@ -88,7 +88,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
                 <TreeItem
                   itemId={site.nodeId}
                   label={site.nodeName}
-                  onClick={() => router.push(`/nodes/${site.nodeId}`)}
+                  onClick={() => router.push(`/console/nodes/${site.nodeId}`)}
                 />
               </TreeItem>
             );
@@ -100,8 +100,8 @@ export const SitesTree = ({ sites }: ISitesTree) => {
 };
 
 interface ISitesSelection {
-  filterState: NodeStatusEnum;
-  handleFilterState: (value: NodeStatusEnum) => void;
+  filterState: NodeStateEnum;
+  handleFilterState: (value: NodeStateEnum) => void;
 }
 
 export const SitesSelection = ({
@@ -110,7 +110,7 @@ export const SitesSelection = ({
 }: ISitesSelection) => {
   const [open, setIsOpen] = useState(false);
 
-  const handleToggle = (value: NodeStatusEnum) => () => {
+  const handleToggle = (value: NodeStateEnum) => () => {
     handleFilterState(value);
   };
   return (
@@ -147,16 +147,16 @@ export const SitesSelection = ({
         <Collapse in={open} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
             {[
-              { id: 0, label: 'All', value: NodeStatusEnum.Undefined },
-              { id: 1, label: 'Configured', value: NodeStatusEnum.Configured },
+              { id: 0, label: 'All', value: NodeStateEnum.Unknown },
+              { id: 1, label: 'Configured', value: NodeStateEnum.Configured },
               {
                 id: 2,
                 label: 'Maintenance',
-                value: NodeStatusEnum.Maintenance,
+                value: NodeStateEnum.Operational,
               },
-              { id: 3, label: 'Faulty', value: NodeStatusEnum.Faulty },
-              { id: 4, label: 'Onboarded', value: NodeStatusEnum.Onboarded },
-              { id: 5, label: 'Active', value: NodeStatusEnum.Active },
+              { id: 3, label: 'Faulty', value: NodeStateEnum.Faulty },
+              { id: 4, label: 'Onboarded', value: NodeStateEnum.Configured },
+              { id: 5, label: 'Active', value: NodeStateEnum.Unknown },
             ].map(({ id, label, value }) => {
               const labelId = `checkbox-list-label-${value}`;
 

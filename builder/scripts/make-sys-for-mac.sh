@@ -33,13 +33,16 @@ filter_make_sys() {
                 PATHS+=("notification/distributor" "notification/event-notify" "notification/mailer" "notification/api-gateway")
                 ;;
             "node")
-                PATHS+=("node/configurator" "node/controller" "node/health" "node/node-gateway" "node/software" "node/api-gateway" "node/notify")
+                PATHS+=("node/configurator" "node/controller" "node/health" "node/node-gateway" "node/software" "node/api-gateway" "node/notify" "node/state")
                 ;;
             "init")
                 PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway")
                 ;;
             "inventory")
                 PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
+                ;;
+            "messaging")
+                PATHS+=("messaging/mesh" "messaging/nns" "messaging/node-feeder" "messaging/api-gateway")
                 ;;
             "services")
                 PATHS+=("services/msgClient")

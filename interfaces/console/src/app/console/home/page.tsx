@@ -6,19 +6,24 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import {
+  useGetNodesLocationQuery,
+  useGetSitesQuery,
+} from '@/client/graphql/generated';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
-import { LabelOverlayUI, SitesTree } from '@/components/NetworkMap/OverlayUI';
+import { SitesTree } from '@/components/NetworkMap/OverlayUI';
 import NetworkStatus from '@/components/NetworkStatus';
 import { MONTH_FILTER, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
+import { structureNodeSiteDate } from '@/utils';
 import DataVolume from '@mui/icons-material/DataSaverOff';
 import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
 import Throughput from '@mui/icons-material/NetworkCheck';
-import { Box, Paper, Skeleton, Stack } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import { AlertColor, Box, Paper, Skeleton, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
@@ -46,74 +51,56 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
 const networkLoading = false;
 const networkNodesLoading = false;
 export default function Page() {
-  const { network } = useAppContext();
-  // const [filterState, setFilterState] = useState<NodeStatusEnum>(
-  //   NodeStatusEnum.Undefined,
-  // );
-  // const { data: networkRes, loading: networkLoading } = useGetSitesQuery({
-  //   fetchPolicy: 'no-cache',
-  //   variables: {
-  //     networkId: network.id,
-  //   },
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'home-sites-err-msg',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
+  const { network, setSnackbarMessage } = useAppContext();
+  const { data: sitesRes, loading: sitesLoading } = useGetSitesQuery({
+    fetchPolicy: 'no-cache',
+    variables: {
+      networkId: network.id,
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'home-sites-err-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
+  const { data: nodesData, loading: nodesLoading } = useGetNodesLocationQuery({
+    fetchPolicy: 'cache-and-network',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'home-nodes-err-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
   //   client: getMetricClient("", ""),
   //   fetchPolicy: 'cache-and-network',
   // });
 
-  // const { data: nodesLocationData, loading: nodesLocationLoading } =
-  //   useGetNodesLocationQuery({
-  //     fetchPolicy: 'cache-first',
-  //     variables: {
-  //       data: {
-  //         nodeFilterState: filterState,
-  //         networkId: network.id,
-  //       },
-  //     },
-  //   });
-
-  // const { data: networkNodes, loading: networkNodesLoading } =
-  //   useGetNodesByNetworkQuery({
-  //     fetchPolicy: 'cache-and-network',
-  //     variables: {
-  //       networkId: network.id,
-  //     },
-  //     onError: (error) => {
-  //       setSnackbarMessage({
-  //         id: 'home-network-nodes-err-msg',
-  //         message: error.message,
-  //         type: 'error' as AlertColor,
-  //         show: true,
-  //       });
-  //     },
-  //   });
-
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
-      <Grid xs={12}>
+      <Grid size={12}>
         <NetworkStatus
           title={
             network.name
               ? `${network.name} is created.`
               : `No network selected.`
           }
-          subtitle={network.name ? 'No node attached to this network.' : ''}
+          subtitle={network.name ? '' : ''}
           loading={false}
           availableNodes={undefined}
           statusType="ONLINE"
           tooltipInfo="Network is online"
         />
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <Stack direction={'row'}>
           <StatusCard
             option={''}
@@ -152,7 +139,7 @@ export default function Page() {
           />
         </Stack>
       </Grid>
-      <Grid xs={12}>
+      <Grid size={12}>
         <Paper
           sx={{
             borderRadius: '10px',
@@ -163,22 +150,31 @@ export default function Page() {
             <LoadingWrapper
               radius="small"
               width={'100%'}
-              isLoading={networkNodesLoading}
+              isLoading={networkNodesLoading || sitesLoading || nodesLoading}
             >
               <NetworkMap
                 id="network-map"
                 zoom={10}
                 className="network-map"
-                markersData={{ nodes: [], networkId: '' }}
+                markersData={{
+                  nodes:
+                    sitesRes && sitesRes?.getSites.sites.length > 0
+                      ? nodesData?.getNodesLocation.nodes || []
+                      : [],
+                }}
               >
                 {() => (
                   <>
-                    <LabelOverlayUI name={network.name} />
                     <SitesTree
-                      sites={[]}
-                      // sites={structureNodeSiteDate(
-                      //   networkNodes?.getNodesByNetwork.nodes ?? [],
-                      // )}
+                      sites={structureNodeSiteDate(
+                        {
+                          nodes:
+                            sitesRes && sitesRes?.getSites.sites.length > 0
+                              ? nodesData?.getNodesLocation.nodes || []
+                              : [],
+                        },
+                        { sites: sitesRes?.getSites.sites || [] },
+                      )}
                     />
                     {/* <SitesSelection
                       filterState={filterState}

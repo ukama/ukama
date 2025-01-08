@@ -7,6 +7,7 @@
  */
 'use client';
 
+import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/BackButton';
 import { useAppContext } from '@/context';
@@ -27,21 +28,36 @@ import { usePathname } from 'next/navigation';
 
 const ManageMenu = () => {
   const theme = useTheme();
-  const matches = useMediaQuery(theme.breakpoints.down('md'));
   const pathname = usePathname();
-  const { isDarkMode } = useAppContext();
+  const { isDarkMode, setNetwork } = useAppContext();
+  const matches = useMediaQuery(theme.breakpoints.down('md'));
+
+  useGetNetworksQuery({
+    fetchPolicy: 'cache-first',
+    onCompleted: (data) => {
+      if (data.getNetworks.networks.length > 0) {
+        setNetwork({
+          id: data.getNetworks.networks[0].id,
+          name: data.getNetworks.networks[0].name,
+        });
+      }
+    },
+  });
+
   return (
     <Paper
       sx={{
         display: 'flex',
+        minWidth: '206px',
         borderRadius: '10px',
         width: 'max-content',
         height: 'fit-content',
       }}
     >
       <Stack
-        px={{ xs: 1.4, md: 1 }}
-        py={{ xs: 1.5, md: 3 }}
+        width={'100%'}
+        px={{ xs: 1.4, md: 1.5 }}
+        py={{ xs: 1.5, md: 1.5 }}
         spacing={{ xs: 0.5, md: 1.5 }}
         direction={{ xs: 'row', md: 'column' }}
       >
@@ -95,7 +111,12 @@ const ManageLayout = ({
   return (
     <Container maxWidth={'xl'} sx={{ my: { xs: 2, md: 8 } }}>
       <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>
-        <BackButton title="BACK TO CONSOLE" />
+        <Stack direction={'row'} spacing={{ xs: 2, md: 9 }}>
+          <BackButton title="BACK TO CONSOLE" />
+          <Typography variant="h5" fontWeight={400} color={colors.vulcan100}>
+            Manage organization
+          </Typography>
+        </Stack>
         <Divider />
         <Stack
           direction={{ xs: 'column', md: 'row' }}

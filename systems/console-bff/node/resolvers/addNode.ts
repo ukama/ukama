@@ -18,7 +18,6 @@ export class AddNodeResolver {
     return await dataSources.dataSource.addNode(baseURL, {
       id: data.id,
       name: data.name,
-      orgId: data.orgId,
     });
   }
 }

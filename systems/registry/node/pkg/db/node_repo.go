@@ -27,6 +27,7 @@ type NodeRepo interface {
 	Add(*Node, func(*Node, *gorm.DB) error) error
 	Get(ukama.NodeID) (*Node, error)
 	GetAll() ([]Node, error)
+	GetNodesByState(connectivity, status uint8) ([]Node, error)
 	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
 	Update(*Node, func(*Node, *gorm.DB) error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
@@ -75,6 +76,19 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	}
 
 	return &node, nil
+}
+
+func (n *nodeRepo) GetNodesByState(connectivity, status uint8) ([]Node, error) {
+	var nodes []Node
+	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
+		Where("node_statuses.connectivity = ? AND node_statuses.state = ? AND node_statuses.deleted_at IS NULL", connectivity, status).
+		Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
 }
 
 func (n *nodeRepo) GetAll() ([]Node, error) {
@@ -263,12 +277,12 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 		return 0, 0, 0, err
 	}
 
-	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", ukama.Online).Scan(&onlineCount)
+	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL", ukama.Online).Scan(&onlineCount)
 	if res1.Error != nil {
 		return 0, 0, 0, err
 	}
 
-	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.conn = ? AND node_statuses.deleted_at IS NULL", ukama.Offline).Scan(&offlineCount)
+	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL", ukama.Offline).Scan(&offlineCount)
 	if res2.Error != nil {
 		return 0, 0, 0, err
 	}

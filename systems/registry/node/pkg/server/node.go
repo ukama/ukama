@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -32,39 +33,42 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
 type NodeServer struct {
-	orgName        string
-	org            uuid.UUID
-	nodeRepo       db.NodeRepo
-	siteRepo       db.SiteRepo
-	nodeStatusRepo db.NodeStatusRepo
-	nameGenerator  namegenerator.Generator
-	siteService    providers.SiteClientProvider
-	pushGateway    string
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	orgName         string
+	org             uuid.UUID
+	nodeRepo        db.NodeRepo
+	siteRepo        db.SiteRepo
+	nodeStatusRepo  db.NodeStatusRepo
+	nameGenerator   namegenerator.Generator
+	siteService     providers.SiteClientProvider
+	pushGateway     string
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	inventoryClient cinvent.ComponentClient
 	pb.UnimplementedNodeServiceServer
 }
 
 func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
-	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID) *NodeServer {
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
-		orgName:        orgName,
-		org:            org,
-		nodeRepo:       nodeRepo,
-		nodeStatusRepo: nodeStatusRepo,
-		siteRepo:       siteRepo,
-		siteService:    siteService,
-		nameGenerator:  namegenerator.NewNameGenerator(seed),
-		pushGateway:    pushGateway,
-		msgbus:         msgBus,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:         orgName,
+		org:             org,
+		nodeRepo:        nodeRepo,
+		nodeStatusRepo:  nodeStatusRepo,
+		siteRepo:        siteRepo,
+		siteService:     siteService,
+		nameGenerator:   namegenerator.NewNameGenerator(seed),
+		pushGateway:     pushGateway,
+		msgbus:          msgBus,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		inventoryClient: inventoryClientProvider,
 	}
 }
 
@@ -88,8 +92,10 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Connectivity: ukama.Undefined,
 			State:        ukama.Unknown,
 		},
-		Type: nId.GetNodeType(),
-		Name: req.Name,
+		Type:      nId.GetNodeType(),
+		Name:      req.Name,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
@@ -101,9 +107,11 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		route := n.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
 
 		evt := &epb.EventRegistryNodeCreate{
-			NodeId: nId.StringLowercase(),
-			Name:   node.Name,
-			Type:   node.Type,
+			NodeId:    nId.StringLowercase(),
+			Name:      node.Name,
+			Type:      node.Type,
+			Latitude:  node.Latitude,
+			Longitude: node.Longitude,
 		}
 
 		err = n.msgbus.PublishRequest(route, evt)
@@ -185,13 +193,39 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 }
 
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	if req.Free {
-		// return only free nodes
-		return n.getFreeNodes(ctx, req)
+	log.Infof("Getting all nodes.")
+
+	nodes, err := n.nodeRepo.GetAll()
+
+	if err != nil {
+		log.Error("error getting all nodes" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	// otherwise return all nodes
-	return n.getAllNodes(ctx, req)
+	resp := &pb.GetNodesResponse{
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	return resp, nil
+}
+
+func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
+	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(), req.GetState())
+
+	nodes, err := n.nodeRepo.GetNodesByState(uint8(req.GetConnectivity()), uint8(req.GetState()))
+	if err != nil {
+		log.Error("error getting all nodes by state" + err.Error())
+
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	resp := &pb.GetNodesResponse{
+		Nodes: dbNodesToPbNodes(nodes),
+	}
+
+	fmt.Printf("Nodes Resp returning %v", resp)
+	return resp, nil
 }
 
 func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
@@ -264,8 +298,10 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 	}
 
 	nodeUpdates := &db.Node{
-		Id:   nodeId.StringLowercase(),
-		Name: req.Name,
+		Id:        nodeId.StringLowercase(),
+		Name:      req.Name,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
 	}
 
 	err = n.nodeRepo.Update(nodeUpdates, nil)
@@ -280,8 +316,10 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	resp := &pb.UpdateNodeResponse{
 		Node: &pb.Node{
-			Id:   req.NodeId,
-			Name: req.Name,
+			Id:        req.NodeId,
+			Name:      req.Name,
+			Latitude:  req.Latitude,
+			Longitude: req.Longitude,
 		},
 	}
 
@@ -512,6 +550,45 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
 
+func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
+	r, err := n.inventoryClient.Get(nodeId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "node not found in inventory against component id: %s, Error %s", nodeId, err.Error())
+	}
+
+	netID, err := uuid.FromString(networkId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
+	}
+
+	siteID, err := uuid.FromString(siteId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
+	}
+
+	site := &db.Site{
+		NodeId:    r.PartNumber,
+		SiteId:    siteID,
+		NetworkId: netID,
+	}
+
+	err = n.siteRepo.AddNode(site, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	_, err = n.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+		NodeId:       r.PartNumber,
+		Connectivity: cpb.NodeConnectivity_Online.String(),
+		State:        cpb.NodeState_Configured.String(),
+	})
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to update node status %s", err.Error())
+	}
+
+	return nil
+}
+
 func invalidNodeIDError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }
@@ -524,42 +601,6 @@ func processNodeDuplErrors(err error, nodeId string) error {
 	}
 
 	return grpc.SqlErrorToGrpc(err, "node")
-}
-
-func (n *NodeServer) getAllNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Getting all nodes.")
-
-	nodes, err := n.nodeRepo.GetAll()
-
-	if err != nil {
-		log.Error("error getting all nodes" + err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
-}
-
-func (n *NodeServer) getFreeNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Getting all free nodes")
-
-	nodes, err := n.siteRepo.GetFreeNodes()
-
-	if err != nil {
-		log.Errorf("error getting all free nodes: %s", err.Error())
-
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
-	}
-
-	return resp, nil
 }
 
 func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
@@ -609,16 +650,17 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		Id: dbn.Id,
 		Status: &pb.NodeStatus{
-			Connectivity: cpb.NodeConnectivity(cpb.NodeConnectivity_value[dbn.Status.Connectivity.String()]),
-			State:        cpb.NodeState(cpb.NodeState_value[dbn.Status.State.String()]),
+			Connectivity: cpb.NodeConnectivity(dbn.Status.Connectivity),
+			State:        cpb.NodeState(dbn.Status.State),
 		},
-		Type: dbn.Type,
-		Name: dbn.Name,
+		Type:      dbn.Type,
+		Name:      dbn.Name,
+		Latitude:  dbn.Latitude,
+		Longitude: dbn.Longitude,
 	}
 
 	if dbn.Site.NodeId != "" {
 		n.Site = &pb.Site{}
-
 		n.Site.NodeId = dbn.Site.NodeId
 		n.Site.SiteId = dbn.Site.SiteId.String()
 		n.Site.NetworkId = dbn.Site.NetworkId.String()

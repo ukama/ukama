@@ -69,6 +69,7 @@ type Notifications struct {
 	Type        notif.NotificationType  `gorm:"type:uint;not null;default:0"`
 	Scope       notif.NotificationScope `gorm:"type:uint;not null;default:0"`
 	IsRead      bool                    `gorm:"default:false"`
+	EventKey    string                  `gorm:"not null"`
 	ResourceId  string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -76,5 +77,6 @@ type Notifications struct {
 
 type EventMsg struct {
 	gorm.Model
+	Key  string       `gorm:"not null"`
 	Data pgtype.JSONB `gorm:"type:jsonb;default:'[]';not null"`
 }
