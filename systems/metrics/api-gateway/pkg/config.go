@@ -82,9 +82,9 @@ var defaultPrometheusMetric = map[string]Metric{
 	"temperature_S2_rfe_hn": Metric{false, "rfe_sensors_tempsensor2_pa2", ""},
 
 	//Uptime Metrics
-	"uptime_trx": Metric{false, "trx_generic_system_uptime_seconds ", ""},
-	"uptime_com": Metric{false, "com_generic_system_uptime_seconds ", ""},
-	"uptime_ctl": Metric{false, "ctl_generic_system_uptime_seconds ", ""},
+	"uptime_trx": Metric{false, "trx_generic_system_uptime_seconds", ""},
+	"uptime_com": Metric{false, "com_generic_system_uptime_seconds", ""},
+	"uptime_ctl": Metric{false, "ctl_generic_system_uptime_seconds", ""},
 
 	//Subscribers Metrics
 	"subscribers_active":   Metric{false, "trx_lte_core_active_ue", ""},

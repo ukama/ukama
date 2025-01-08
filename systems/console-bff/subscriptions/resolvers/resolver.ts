@@ -57,7 +57,17 @@ class SubscriptionsResolvers {
       logger.error(`Error getting base URL for notification: ${baseURL}`);
       return { notifications: [] };
     }
-    const { type, orgId, userId, nodeId, withSubscription, from } = data;
+    const {
+      // to,
+      // step,
+      type,
+      from,
+      orgId,
+      userId,
+      nodeId,
+      // orgName,
+      withSubscription,
+    } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
     const metrics: MetricsRes = { metrics: [] };

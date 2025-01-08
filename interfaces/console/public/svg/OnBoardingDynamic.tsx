@@ -124,7 +124,7 @@ const OnBoardingDynamic = ({
         <path
           d="M176.094 238L176.012 265.182C176.006 267.391 177.791 269.187 180 269.194L204.695 269.268"
           stroke="#B0B9C6"
-          stroke-miterlimit="16"
+          strokeMiterlimit="16"
           strokeLinecap="round"
         />
         <path

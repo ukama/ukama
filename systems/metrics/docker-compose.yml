@@ -39,7 +39,7 @@ services:
   networks:
    - ukama-net
 
- metricsgateway:
+ api-gateway-metrics:
   build: ./api-gateway
   ports:
    - 8067:8080
