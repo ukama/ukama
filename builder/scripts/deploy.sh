@@ -251,11 +251,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         ./start_provider.sh
         cd ../..
     fi
-    if [ "$SYSTEM" == "metrics" ]; then
-        cd ./metrics/prometheus
-        sed -i '' "s/localhost:9079/${LOCAL_HOST_IP}:9079/g" docker-compose.yml
-        cd ../..
-    fi
     
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
     export COMPOSE_PROJECT_NAME=$(echo "$SYSTEM_OBJECT" | jq -r '.key')
