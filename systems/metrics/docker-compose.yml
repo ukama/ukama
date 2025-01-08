@@ -13,7 +13,7 @@ services:
    - postgress-data:/var/lib/postgresql
 
  prometheus:
-  image: prom/prometheus:v2.55.2
+  image: prom/prometheus:v2.55.1
   ports:
    - 9079:9090
   volumes:
