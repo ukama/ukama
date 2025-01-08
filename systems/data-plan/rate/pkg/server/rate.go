@@ -245,7 +245,7 @@ func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.G
 		SimType:  req.SimType,
 	})
 	if err != nil {
-		log.Errorf("error while getting base rates" + err.Error())
+		log.Errorf("error while getting base rates. Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "baserates")
 	}
 
@@ -285,7 +285,7 @@ func (r *RateServer) GetRateById(ctx context.Context, req *pb.GetRateByIdRequest
 		Uuid: req.BaseRate,
 	})
 	if err != nil {
-		log.Errorf("error while getting base rates" + err.Error())
+		log.Errorf("error while getting base rates. Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "baserates")
 	}
 

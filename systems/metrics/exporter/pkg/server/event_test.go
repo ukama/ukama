@@ -122,7 +122,7 @@ func TestEvent_EventNotification(t *testing.T) {
 		OrgId:        "75ec112a-8745-49f9-ab64-1a37edade794",
 		Type:         "test_simple",
 		BytesUsed:    uint64(rand.Int63n(4096000)),
-		SessionId:    rand.Uint64(),
+		SessionId:    12,
 		StartTime:    uint64(time.Now().Unix() - int64(rand.Intn(30000))),
 		EndTime:      uint64(time.Now().Unix()),
 	}

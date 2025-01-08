@@ -18,7 +18,6 @@ import (
 	"time"
 
 	confr "github.com/num30/config"
-	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/config"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -65,9 +64,9 @@ func Test_FullFlow(t *testing.T) {
 		OrgId:        "880f7c63-eb57-461a-b514-248ce91e9b3e",
 		Type:         "test_simple",
 		BytesUsed:    uint64(rand.Int63n(4096000)),
-		SessionId:    uuid.NewV4().String(),
-		StartTime:    time.Now().Unix() - int64(rand.Intn(30000)),
-		EndTime:      time.Now().Unix(),
+		SessionId:    12,
+		StartTime:    uint64(time.Now().Unix() - int64(rand.Intn(30000))),
+		EndTime:      uint64(time.Now().Unix()),
 	}
 
 	anyE, err := anypb.New(&simUsage)
