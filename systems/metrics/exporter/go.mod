@@ -16,7 +16,6 @@ require (
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.2
 	github.com/prometheus/client_golang v1.19.1
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
@@ -84,6 +83,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
