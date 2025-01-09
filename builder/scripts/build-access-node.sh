@@ -81,10 +81,18 @@ function cleanup() {
 function build_linux_kernel() {
     log "INFO" "Building linux kernel..."
     cd "$TMP_DIR"
-    git clone --depth=1 https://github.com/raspberrypi/linux || true
-    cd "$TMP_LINUX"
-    make -j6 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcm2711_defconfig  || true
-    make -j6 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- Image modules dtbs || true
+
+    wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.1.34.tar.xz
+    tar xvJf linux-6.1.34.tar.xz
+    mv linux-6.1.34 "${TMP_LINUX}"
+
+    cd "${TMP_LINUX}"
+
+    # build linux kernel suitable for qemu
+    ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make defconfig        || true
+    ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make kvm_guest.config || true
+    ARCH=arm64 CROSS_COMPILE=/bin/aarch64-linux-gnu- make -j8              || true
+
     cd "$TMP_DIR"
     log "INFO" "Linux kernel build completed."
 }
@@ -112,6 +120,16 @@ function download_alpine_rootfs() {
     log "SUCCESS" "Alpine Linux downloaded."
 }
 
+function download_rpi_rootfs() {
+
+    log "INFO" "Downloading rpi image..."
+    
+    wget https://downloads.raspberrypi.com/raspios_arm64/images/raspios_arm64-2024-11-19/2024-11-19-raspios-bookworm-arm64.img.xz || true
+    xz -d 2024-11-19-raspios-bookworm-arm64.img.xz || true
+
+    log "SUCCESS" "Rpi rootfs image downloaded."
+}
+
 function install_starter_app() {
 
     path=$1
@@ -136,25 +154,7 @@ function copy_rootfs() {
 
 function copy_linux_kernel() {
     log "INFO" "Copying linux kernel..."
-    local build_dir="${CWD}/build_access_node"
-
-    cd "$TMP_LINUX"
-    sudo mkdir -p ${BOOT_MOUNT}/overlays/
-    sudo mkdir -p ${build_dir}/overlays/
-
-    env PATH=$PATH make -j6 ARCH=arm64 \
-        CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=${PRIMARY} modules_install
-    cp arch/arm64/boot/Image               ${BOOT_MOUNT}/kernel8.img
-    cp arch/arm64/boot/dts/broadcom/*.dtb  ${BOOT_MOUNT}/
-    cp arch/arm64/boot/dts/overlays/*.dtb* ${BOOT_MOUNT}/overlays/
-    cp arch/arm64/boot/dts/overlays/README ${BOOT_MOUNT}/overlays/
-
-    # also copy kernel and dtb - needed to run in QEMU
-    cp arch/arm64/boot/Image               "${build_dir}/kernel8.img"
-    cp arch/arm64/boot/dts/broadcom/*.dtb  "${build_dir}/"
-    cp arch/arm64/boot/dts/overlays/*.dtb* "${build_dir}/overlays/"
-    cp arch/arm64/boot/dts/overlays/README "${build_dir}/overlays/"
-
+    cp "${TMP_LINUX}/arch/arm64/boot/Image" "${CWD}/build_access_node/" || true
     log "SUCCESS" "Linux kernel copied"
 }
 
@@ -371,6 +371,33 @@ function setup_fstab() {
     log "SUCCESS" "fstab configured."
 }
 
+function configure_openrc_service() {
+    local rootfs_path=$1
+
+    log "INFO" "Configuring OpenRC service for starter.d"
+
+    sudo chroot "$rootfs_path" /bin/sh <<'EOF'
+# Create OpenRC service script
+cat <<'SERVICE' > /etc/init.d/starter
+#!/sbin/openrc-run
+description="Starter service for running starter.d"
+
+command="/sbin/starter.d"
+command_args=""
+command_user="root"
+pidfile="/var/run/starter.pid"
+SERVICE
+
+# Make the service script executable
+chmod +x /etc/init.d/starter
+
+# Add the service to the default runlevel
+rc-update add starter default
+EOF
+
+    log "SUCCESS" "OpenRC service for starter.d configured"
+}
+
 function unmount_partitions() {
     log "INFO" "Unmounting partitions..."
     sudo umount -R "$BOOT_MOUNT" "$PRIMARY_MOUNT" "$PASSIVE_MOUNT" "$UNUSED_MOUNT"
@@ -414,7 +441,7 @@ pre_cleanup_and_dir_setup "$IMG_NAME" "$TMP_DIR" "${CWD}/build_access_node"
 cd ${TMP_DIR}
 
 build_linux_kernel
-download_alpine_rootfs
+download_rpi_rootfs
 
 create_disk_image
 partition_disk_image
@@ -430,10 +457,13 @@ build_apps_using_container "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
 copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 
+configure_openrc_service "${PRIMARY_MOUNT}"
+configure_openrc_service "${PASSIVE_MOUNT}"
+
 cp "${TMP_DIR}/${IMG_NAME}" ${CWD}
 
-unmount_partitions
-cleanup
+#unmount_partitions
+#cleanup
 
 cd ${CWD}
 log "SUCCESS" "Access node image built successfully: $IMG_NAME"

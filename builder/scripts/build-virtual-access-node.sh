@@ -131,6 +131,26 @@ function build_linux_kernel() {
     log "SUCCESS" "Linux kernel build completed."
 }
 
+function build_apps_using_target() {
+
+    # Idea is to run QEMU so we can build everything on the target
+    # rather than doing docker. This avoid lib mismatch.
+    #
+    # Steps:
+    # 1. copy repo to workspace.
+    # 2. mount the workspace.
+    # 3. update system.d to run the following script:
+    # 3. after running QEMU:
+    #    install all pkgs (look into dockerfile)
+    #    compile all pkgs (run the scripts under docker)
+    #    copy the pkgs to right location (copy_all_apps)
+    #    exit the qemu
+    # 4. remove the above script from the system.d
+    # 5. rest of stuff as before
+   
+
+}
+
 function build_apps_using_container() {
     local ukama_root="$1"
     local apps="$2"
@@ -345,8 +365,12 @@ git clone https://github.com/ukama/prometheus-client.git && \
     make install DESTDIR=/usr && \
     cd ../../.. && \
     rm -rf prometheus-client
-EOF
 
+# Copy libs to default location to avoid seeting LD_LIBRARY_PATH
+cp -rf /usr/local/lib/* /lib/aarch64-linux-gnu/
+
+EOF
+    
     # Unmount system directories
     log "INFO" "Unmounting system directories"
     sudo umount "$PRIMARY_MOUNT/dev/pts"

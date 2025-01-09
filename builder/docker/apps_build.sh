@@ -8,6 +8,7 @@
 # To run within specific container
 
 set -e
+set -x
 
 NODE=$1
 APPS=$2
