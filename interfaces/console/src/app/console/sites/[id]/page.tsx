@@ -19,7 +19,6 @@ import {
   useGetSubscribersByNetworkQuery,
   useRestartSiteMutation,
 } from '@/client/graphql/generated';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
@@ -37,7 +36,6 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material';
-import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, Suspense } from 'react';
@@ -158,29 +156,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const handleSiteConfiguration = async (data: any) => {
-    const variables = {
-      access_id: data.access,
-      backhaul_id: data.backhaul,
-      install_date: formatISO(new Date()),
-      latitude: data.coordinates.lat,
-      location: data.location,
-      longitude: data.coordinates.lng,
-      name: data.siteName,
-      network_id: data.selectedNetwork,
-      power_id: data.power,
-      spectrum_id: data.spectrumId || '',
-      switch_id: data.switch,
-      is_deactivated: data.is_deactivated || false,
-    };
-
-    try {
-      await addSite({ variables: { data: variables } });
-    } catch (error) {
-      console.error('Error submitting site configuration:', error);
-    }
-  };
-
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -294,8 +269,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       fetchNode({ variables: { networkId: activeSite.networkId } });
     }
   }, [activeSite, fetchNode]);
-
-  const nodeId = nodeData?.getNodesByNetwork.nodes[0]?.id || 'N/A';
 
   useEffect(() => {
     getComponents({
@@ -422,18 +395,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         isLoading={sitesLoading}
         onRestartSite={handleSiteRestart}
       />
-      <Grid container spacing={2} sx={{ height: 'auto' }}>
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}>
           <Paper sx={{ height: '250px', overflow: 'auto' }}>
             <SiteInfo
               selectedSite={activeSite}
               address={CurrentSiteaddress}
-              nodeId={nodeId}
+              nodes={nodeData?.getNodesByNetwork.nodes || []}
             />
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={5}>
+        <Grid item xs={12} md={6}>
           <Paper sx={{ height: '250px', overflow: 'auto' }}>
             <SiteOverview
               inputPower="120W"
@@ -481,35 +454,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
                   posix={[activeSite.latitude, activeSite.longitude]}
                   address={CurrentSiteaddress}
                   height={'100%'}
+                  mapStyle="satellite"
                 />
               </Suspense>
             </Box>
           </Paper>
         </Grid>
+        <Grid item xs={12} md={12}>
+          <Paper elevation={3} sx={{ p: 4 }}>
+            <SiteOverallHealth
+              batteryInfo={[]}
+              solarHealth={'good'}
+              nodeHealth={'good'}
+              switchHealth={'good'}
+              controllerHealth={'good'}
+              batteryHealth={'good'}
+              backhaulHealth={'good'}
+              nodes={nodeData?.getNodesByNetwork.nodes || []}
+            />
+          </Paper>
+        </Grid>
       </Grid>
-
-      <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-        <SiteOverallHealth
-          batteryInfo={[]}
-          solarHealth={'good'}
-          nodeHealth={'good'}
-          switchHealth={'good'}
-          controllerHealth={'good'}
-          batteryHealth={'good'}
-          backhaulHealth={'good'}
-          node={nodeData?.getNodesByNetwork.nodes || []}
-        />
-      </Paper>
-
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
     </Box>
   );
 };

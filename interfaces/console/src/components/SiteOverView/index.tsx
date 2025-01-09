@@ -26,65 +26,44 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         Site Overview
       </Typography>
 
-      <Stack direction="row" spacing={4} alignItems="center" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        spacing={2}
+        justifyItems="center"
+        alignItems={'center'}
+      >
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            width: 10,
+            height: 10,
+            backgroundColor: 'grey.300',
+            borderRadius: '2px',
           }}
-        >
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              backgroundColor: 'grey.300',
-              borderRadius: '2px',
-            }}
-          />
-          <Typography variant="caption">Input Power: {inputPower}</Typography>
-        </Box>
+        />
+        <Typography variant="caption">Input Power: {inputPower}</Typography>
 
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            width: 10,
+            height: 10,
+            backgroundColor: 'grey.300',
+            borderRadius: '2px',
           }}
-        >
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              backgroundColor: 'grey.300',
-              borderRadius: '2px',
-            }}
-          />
-          <Typography variant="caption">
-            Solar Storage: {solarStorage}
-          </Typography>
-        </Box>
+        />
+        <Typography variant="caption">Solar Storage: {solarStorage}</Typography>
 
         <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
+            width: 10,
+            height: 10,
+            backgroundColor: 'grey.300',
+            borderRadius: '2px',
           }}
-        >
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              backgroundColor: 'grey.300',
-              borderRadius: '2px',
-            }}
-          />
-          <Typography variant="caption">Consumption: {consumption}</Typography>
-        </Box>
+        />
+        <Typography variant="caption">Consumption: {consumption}</Typography>
       </Stack>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+      <Box sx={{ width: '100%' }}>
         <SiteOverViewPlaceHolder />
       </Box>
     </Box>

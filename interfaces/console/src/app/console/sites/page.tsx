@@ -12,14 +12,11 @@ import {
   SiteDto,
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
-  useGetNetworksQuery,
   useGetSitesQuery,
   useGetNodesQuery,
   useGetSubscribersByNetworkQuery,
-  useGetNodesByNetworkLazyQuery,
   useUpdateSiteMutation,
 } from '@/client/graphql/generated';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
@@ -27,7 +24,7 @@ import { TSiteForm } from '@/types';
 import { AlertColor, Box, Paper, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 const SITE_INIT = {
   switch: '',
   power: '',
@@ -42,6 +39,7 @@ const SITE_INIT = {
 };
 
 const Sites = () => {
+  const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const { setSnackbarMessage, network } = useAppContext();
@@ -129,49 +127,6 @@ const Sites = () => {
       });
     },
   });
-  const { data: nodesss } = useGetNodesQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (res) => {
-      if (res.getNodes.nodes.length === 0) {
-        setSnackbarMessage({
-          id: 'no-nodes-msg',
-          message: 'Please create a node first.',
-          type: 'warning' as AlertColor,
-          show: true,
-        });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'nodes-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-  console.log('NODES :', nodesss);
-  const { data: networks, loading: networksLoading } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (res) => {
-      if (res.getNetworks.networks.length === 0) {
-        setSnackbarMessage({
-          id: 'no-network-msg',
-          message: 'Please create a network first.',
-          type: 'warning' as AlertColor,
-          show: true,
-        });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
 
   useEffect(() => {
     if (!network.id)
@@ -187,11 +142,6 @@ const Sites = () => {
       },
     });
   }, []);
-
-  const handleCloseSiteConfig = () => {
-    setSite(SITE_INIT);
-    setOpenSiteConfig(false);
-  };
 
   const handleSiteConfiguration = (values: TSiteForm) => {
     setSite(values);
@@ -232,35 +182,13 @@ const Sites = () => {
       },
     });
   };
-  const [fetchNodes, { data: nodes, loading: nodesLoading }] =
-    useGetNodesByNetworkLazyQuery({
-      fetchPolicy: 'network-only',
-      nextFetchPolicy: 'network-only',
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'nodes-msg',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
 
-  useEffect(() => {
-    if (network) {
-      fetchNodes({
-        variables: {
-          networkId: network.id, // Pass networkId directly
-        },
-      });
-    }
-  }, [network, fetchNodes]);
   const closeEditSiteDialog = () => {
     setEditSitedialogOpen(false);
   };
   const { data: subscribers } = useGetSubscribersByNetworkQuery({
     variables: {
-      networkId: site.network,
+      networkId: network.id,
     },
     fetchPolicy: 'network-only',
     nextFetchPolicy: 'network-only',
@@ -273,23 +201,8 @@ const Sites = () => {
       });
     },
   });
-  const { data: nodesData } = useGetNodesQuery({
+  const { data: nodes } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
-    onCompleted: (res) => {
-      if (res.getNodes.nodes.length === 0) {
-        setSnackbarMessage({
-          id: 'no-nodes-msg',
-          message: 'Please create a node first.',
-          type: 'warning' as AlertColor,
-          show: true,
-        });
-      } else {
-        const unnamedNodes = res.getNodes.nodes.filter(
-          (node) => !node.site.siteId,
-        );
-        setUnnamedNodes(unnamedNodes);
-      }
-    },
     onError: (error) => {
       setSnackbarMessage({
         id: 'nodes-msg',
@@ -299,6 +212,17 @@ const Sites = () => {
       });
     },
   });
+  useEffect(() => {
+    if (nodes) {
+      const unnamedNodes = nodes.getNodes.nodes.filter(
+        (node) => !node.site.siteId,
+      );
+      setUnnamedNodes(unnamedNodes);
+    }
+  }, [nodes]);
+  const handleSiteConfig = () => {
+    router.push(`/configure/network?step=1`);
+  };
   return (
     <Box mt={2}>
       <Paper
@@ -313,24 +237,16 @@ const Sites = () => {
           My sites
         </Typography>
         <SitesWrapper
-          loading={sitesLoading || networksLoading}
+          loading={sitesLoading}
           sites={sitesList}
           handleSiteNameUpdate={handleSiteNameUpdate}
           subscriberCount={
             subscribers?.getSubscribersByNetwork.subscribers.length
           }
           unnamedNodes={unnamedNodes}
+          handleConfigureSite={handleSiteConfig}
         />
       </Paper>
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
       <EditSiteDialog
         open={editSitedialogOpen}
         siteId={currentSite.siteId}

@@ -6,20 +6,20 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Box, Paper, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { SiteDto } from '@/client/graphql/generated';
 import { format } from 'date-fns';
 
 interface SiteInfoProps {
   selectedSite: SiteDto;
   address: string | null;
-  nodeId: string;
+  nodes: any[];
 }
 
 const SiteInfo: React.FC<SiteInfoProps> = ({
   selectedSite,
   address,
-  nodeId,
+  nodes,
 }) => {
   const formattedDate = selectedSite.createdAt
     ? format(new Date(selectedSite.createdAt), 'MMMM d, yyyy')
@@ -38,13 +38,13 @@ const SiteInfo: React.FC<SiteInfoProps> = ({
         </Typography>
 
         <Stack direction="row" spacing={2} justifyItems="center">
-          <Typography variant="subtitle1">Date Created:</Typography>
-          <Typography variant="subtitle1">{formattedDate}</Typography>
+          <Typography variant="subtitle2">Date Created:</Typography>
+          <Typography variant="subtitle2">{formattedDate}</Typography>
         </Stack>
 
         <Stack direction="row" spacing={2} justifyItems="center">
-          <Typography variant="subtitle1">Location:</Typography>
-          <Typography variant="subtitle1">
+          <Typography variant="subtitle2">Location:</Typography>
+          <Typography variant="subtitle2">
             {address ||
               `${selectedSite.location} (${selectedSite.latitude}, ${selectedSite.longitude})` ||
               'N/A'}
@@ -53,8 +53,14 @@ const SiteInfo: React.FC<SiteInfoProps> = ({
         </Stack>
 
         <Stack direction="row" spacing={2} justifyItems="center">
-          <Typography variant="subtitle1">Node:</Typography>
-          <Typography variant="subtitle1">{nodeId}</Typography>
+          <Typography variant="subtitle2">Node:</Typography>
+          <Stack direction={'column'} spacing={1}>
+            {nodes.map((n, index) => (
+              <Typography key={index} variant="subtitle2">
+                #{n.id}
+              </Typography>
+            ))}
+          </Stack>
         </Stack>
       </Stack>
     </Box>

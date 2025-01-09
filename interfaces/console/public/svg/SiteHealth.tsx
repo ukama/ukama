@@ -66,7 +66,7 @@ export const SiteHealth = ({
   return (
     <svg
       width="569"
-      height="423"
+      height="353"
       viewBox="0 0 569 423"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

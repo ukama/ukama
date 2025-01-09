@@ -39,7 +39,6 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  // Check if the screen size is mobile
   const isMobile = useMediaQuery('(max-width:600px)');
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -112,7 +111,6 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
         </Box>
       </Grid>
 
-      {/* Hide the Restart Site button on mobile */}
       {!isMobile && (
         <Grid item xs={6} justifyContent="flex-end" container sx={{ mt: 1 }}>
           <Button

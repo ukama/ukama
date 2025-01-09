@@ -36,6 +36,7 @@ interface ISitesWrapper {
   handleSiteNameUpdate: any;
   subscriberCount: number | undefined;
   unnamedNodes: any[];
+  handleConfigureSite: (nodeId: string) => void;
 }
 
 const SiteCardSkeleton = (
@@ -53,6 +54,7 @@ const SitesWrapper = ({
   subscriberCount,
   handleSiteNameUpdate,
   unnamedNodes,
+  handleConfigureSite,
 }: ISitesWrapper) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -75,10 +77,6 @@ const SitesWrapper = ({
 
   const handleSiteNameClick = (siteId: string) => {
     router.push(`/console/sites/${siteId}`);
-  };
-
-  const handleConfigureSite = (nodeId: string) => {
-    console.log('Configure Site for Node:', nodeId);
   };
 
   if (loading)
@@ -270,7 +268,7 @@ const SitesWrapper = ({
               <Button
                 variant="contained"
                 sx={{
-                  width: '50%',
+                  width: { xs: '100%', md: '50%', xl: '50%' },
                 }}
                 onClick={() => handleConfigureSite(node.id)}
               >

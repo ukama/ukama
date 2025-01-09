@@ -17,7 +17,7 @@ interface SiteOverallHealthProps {
   controllerHealth: 'good' | 'warning';
   batteryHealth: 'good' | 'warning';
   backhaulHealth: 'good' | 'warning';
-  node: any[];
+  nodes: any[];
 }
 
 const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
@@ -29,7 +29,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
     controllerHealth,
     batteryHealth,
     backhaulHealth,
-    node,
+    nodes,
   }) => {
     const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
 
@@ -77,7 +77,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
     };
 
     const renderNodeInfo = () => {
-      return node.map((n, index) => (
+      return nodes.map((n, index) => (
         <Typography key={index} variant="body1" color="initial">
           Node #{n.id}: {n.status.state} and{' '}
           {n.status.connectivity.toLowerCase()}
@@ -122,7 +122,7 @@ const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
               >
                 {renderKpiInfo()}
               </Typography>
-              {selectedKpi === 'Node' && node ? (
+              {selectedKpi === 'Node' && nodes ? (
                 renderNodeInfo()
               ) : (
                 <Typography variant="body1" color="initial">
