@@ -49,7 +49,7 @@ func TestGetQuery(t *testing.T) {
 func TestGetAggregateQuery(t *testing.T) {
 	t.Run("AggregateOrg", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
-		r := m.getAggregateQuery(NewFilter().WithOrg("org1"), "sum")
+		r := m.getAggregateQuery(NewFilter(), "sum")
 
 		assert.Equal(t, "sum(memory {org='org1'}) without (job,instance,receive,tenant_id,nodeid,network)", r)
 	})
