@@ -8,7 +8,7 @@
 
 package internal
 
-const ServiceName = "report"
+const ServiceName = "generator"
 const SystemName = "report"
 
 var InstanceId = "debug"

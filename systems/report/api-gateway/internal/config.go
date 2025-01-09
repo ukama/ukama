@@ -48,11 +48,11 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:   3 * time.Second,
-			Generator: "report-generator:9090",
+			Generator: "generator:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
-			Files:       `http://report-generator:3000`,
+			Files:       `http://generator:3000`,
 			NodeMetrics: "http://localhost",
 		},
 

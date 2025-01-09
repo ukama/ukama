@@ -27,10 +27,10 @@ services:
   networks:
    - ukama-net
   depends_on:
+   - generator
    - postgresd-report
-   - report-generator
 
- report-generator:
+ generator:
   build: ./generator
   environment:
    - DEBUGMODE=true
@@ -39,7 +39,7 @@ services:
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msg-client-report:9095
-   - GENERATOR_SERVICE_HOST=report-generator
+   - GENERATOR_SERVICE_HOST=generator
    - GENERATOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
@@ -48,6 +48,7 @@ services:
    - ukama-net
   depends_on:
    - postgresd-report
+   - msg-client-report
 
 
  msg-client-report:
@@ -75,7 +76,7 @@ services:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=report
    - ENV_DNS_REFRESH_TIME_PERIOD=30
-   - ENV_SYSTEM_DNS=api-gateway-report
+   - ENV_SYSTEM_DNS=report-api-gateway
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate

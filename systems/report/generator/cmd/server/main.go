@@ -89,9 +89,8 @@ func runGrpcServer() {
 		log.Fatalf("failed to get new PDF engine: %v", err)
 	}
 
-	eSrv := server.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, mbClient)
-
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		eSrv := server.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, mbClient)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 

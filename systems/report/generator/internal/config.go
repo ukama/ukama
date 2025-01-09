@@ -41,6 +41,7 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 
 		MsgClient: &config.MsgClient{
+			Host:    "msg-client-report:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
