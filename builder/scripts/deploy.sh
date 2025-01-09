@@ -17,6 +17,7 @@ root_dir=$(pwd)
 JSON_FILE="../deploy_config.json"
 MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
+IS_INCLUDE_BFF=false
 BILLINGSYSKEY="billing"
 OWNEREMAIL=$(jq -r '.setup.email' "$JSON_FILE")
 PASSWORD=$(jq -r '.setup.password' "$JSON_FILE")
@@ -242,6 +243,9 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
         IS_INVENTORY_SYS=true
     fi
+    if [ "$SYSTEM" == 'bff' ]; then
+        IS_INCLUDE_BFF=true
+    fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
     fi
@@ -301,25 +305,28 @@ fi
 # Update system url in lookup db
 sleep 5
 
-# SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-# SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-# SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-# SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-# SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-# SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-# SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-# SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
-# SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
-
-SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
-SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
-SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://localhost:8060' WHERE systems."name" = 'nucleus'";
-SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://localhost:8078' WHERE systems."name" = 'subscriber'";
-SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://localhost:8074' WHERE systems."name" = 'dataplan'";
-SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://localhost:8077' WHERE systems."name" = 'inventory'";
-SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
-SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
-SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
+if [ "$IS_INCLUDE_BFF" = true ]; then
+    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
+    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
+    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
+    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
+    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
+    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
+    SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
+    SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
+fi
+if [ "$IS_INCLUDE_BFF" = false ]; then
+    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
+    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
+    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://localhost:8060' WHERE systems."name" = 'nucleus'";
+    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://localhost:8078' WHERE systems."name" = 'subscriber'";
+    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://localhost:8074' WHERE systems."name" = 'dataplan'";
+    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://localhost:8077' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
+    SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
+    SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
+fi
 
 
 echo "$TAG Registering systems URL in lookup db..."
