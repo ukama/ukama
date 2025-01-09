@@ -43,7 +43,6 @@ export const parseLatestMetricRes = (
     return {
       success: true,
       msg: "success",
-      orgId: data.metric.org,
       nodeId: args.nodeId,
       type: args.type,
       value: data.value,
@@ -60,7 +59,6 @@ export const parseMetricRes = (res: any, type: string): MetricRes => {
       type: type,
       success: true,
       msg: "success",
-      orgId: data.metric.org,
       nodeId: data.metric.nodeid,
       values: fixTimestampInMetricData(data.values),
     };
@@ -81,7 +79,6 @@ export const parseNodeMetricRes = (
         type: args.type,
         success: true,
         msg: "success",
-        orgId: result[0].metric.org,
         nodeId: result[0].metric.nodeid,
         values: fixTimestampInMetricData(result[0].values),
       }
@@ -115,7 +112,6 @@ export const parsePromethRes = (
       type: args.type,
       success: true,
       msg: "success",
-      orgId: metric.metric.org,
       nodeId: metric.metric.nodeid,
       values: fixTimestampInMetricData(metric.values),
     };

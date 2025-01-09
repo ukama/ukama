@@ -128,7 +128,7 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
         return ["uptime_trx", "temperature_trx", "temperature_rfe"];
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
-      else return ["temperature_trx", "temperature_com"];
+      else return ["uptime_trx", "temperature_trx", "temperature_com"];
     case GRAPHS_TYPE.NETWORK:
       if (!nodeId.includes(NODE_TYPE.anode))
         return ["rrc", "rlc", "erab", "throughputuplink", "throughputdownlink"];

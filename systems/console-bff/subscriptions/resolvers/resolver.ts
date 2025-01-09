@@ -1,7 +1,6 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
-import { STORAGE_KEY } from "../../common/configs";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
@@ -13,7 +12,6 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
-  getTimestampCount,
 } from "../../common/utils";
 import {
   getNodeRangeMetric,
@@ -30,7 +28,7 @@ import {
   SubMetricByTabInput,
 } from "./types";
 
-const WS_THREAD = "./threads/MetricsWSThread.js";
+const WS_THREAD = "./threads/MetricsWSThread.mjs";
 const NOTIFICATION_THREAD = "./threads/NotificationsWSThread.mjs";
 
 const getErrorRes = (msg: string) =>
@@ -57,17 +55,7 @@ class SubscriptionsResolvers {
       logger.error(`Error getting base URL for notification: ${baseURL}`);
       return { notifications: [] };
     }
-    const {
-      // to,
-      // step,
-      type,
-      from,
-      orgId,
-      userId,
-      nodeId,
-      // orgName,
-      withSubscription,
-    } = data;
+    const { type, from, nodeId, userId, orgName, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
     const metrics: MetricsRes = { metrics: [] };
@@ -85,15 +73,14 @@ class SubscriptionsResolvers {
       metrics.metrics.forEach((metric: MetricRes) => {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
-      subKey = subKey.slice(0, -1);
+      // subKey = subKey.slice(0, -1);
       subKey.split(",").forEach((key: string) => {
+        if (key === "") return;
         const workerData = {
-          type: key,
-          orgId,
           userId,
-          url: `${baseURL}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
-          key: STORAGE_KEY,
+          type: key,
           timestamp: from,
+          url: `${baseURL}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
         };
         const worker = new Worker(WS_THREAD, {
           workerData,
@@ -103,13 +90,14 @@ class SubscriptionsResolvers {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(key, {
+              pubSub.publish(`${userId}/${type}/${from}`, {
                 success: true,
                 msg: "success",
-                orgId: result.metric.org,
+                orgName: orgName,
                 nodeId: nodeId,
-                type: key,
                 userId: userId,
+                from: from,
+                type: key,
                 value: result.value,
               } as LatestMetricRes);
             } else {
@@ -118,9 +106,9 @@ class SubscriptionsResolvers {
           }
         });
         worker.on("exit", async (code: any) => {
-          await removeFromStore(store, `${orgId}/${userId}/${type}/${from}`);
+          await removeFromStore(store, `${userId}/${type}/${from}`);
           logger.info(
-            `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+            `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
           );
           await store.close();
         });
@@ -224,10 +212,7 @@ class SubscriptionsResolvers {
 
   @Subscription(() => LatestMetricRes, {
     topics: ({ args }) => {
-      return getGraphsKeyByType(args.type, args.nodeId);
-    },
-    filter: ({ payload, args }) => {
-      return args.nodeId === payload.nodeId && args.userId === payload.userId;
+      return `${args.data.userId}/${args.data.type}/${args.data.from}`;
     },
   })
   async getMetricByTabSub(
@@ -235,11 +220,7 @@ class SubscriptionsResolvers {
     @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
     const store = openStore();
-    await addInStore(
-      store,
-      `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
-      getTimestampCount("0")
-    );
+    await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
     await store.close();
     return payload;
   }
