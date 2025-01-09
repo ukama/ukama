@@ -117,7 +117,7 @@ func TestGetComponents(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/components/user/"+uId.String(), nil)
 	q := req.URL.Query()
-	q.Add("category", "access")
+	q.Add("category", cpb.ComponentCategory_name[1])
 	req.URL.RawQuery = q.Encode()
 
 	arc := &providers.AuthRestClient{}
