@@ -28,7 +28,7 @@ import (
 const (
 	invoiceItemType = "invoice"
 	defaultTemplate = "templates/invoice.html.tmpl"
-	pdfFolder       = "/srv/static/"
+	pdfFolder       = "/home/ukama/srv/static/"
 )
 
 type GeneratorEventServer struct {

@@ -27,7 +27,7 @@ type Config struct {
 	PdfHost           string `default:""`
 	PdfPort           int    `default:"3000"`
 	PdfPrefix         string `default:"/pdf/"`
-	PdfFolder         string `default:"/srv/static"`
+	PdfFolder         string `default:"/home/ukama/srv/static"`
 	OrgName           string
 	OrgId             string
 }
