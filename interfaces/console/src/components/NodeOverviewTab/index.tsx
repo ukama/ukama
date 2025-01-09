@@ -11,9 +11,12 @@ import {
   Graphs_Type,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { Stack, capitalize } from '@mui/material';
+import { HealtChartsConfigure, TooltipsText } from '@/constants';
+import { getMetricValue, isMetricValue } from '@/utils';
+import { Paper, Stack, Typography, capitalize } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
+import LineChart from '../LineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -91,7 +94,7 @@ const NodeOverviewTab = ({
                 </Grid>
               )} */}
           </NodeStatsContainer>
-          {/* <NodeStatsContainer
+          <NodeStatsContainer
             index={1}
             loading={loading}
             isClickable={true}
@@ -121,8 +124,8 @@ const NodeOverviewTab = ({
                 value={uptime ? `${Math.floor(uptime / 60 / 60)} hours` : 'NA'}
               />
             )}
-          </NodeStatsContainer> */}
-          {/* {selectedNode?.type !== NodeTypeEnum.Anode && (
+          </NodeStatsContainer>
+          {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
               loading={loading}
@@ -146,7 +149,7 @@ const NodeOverviewTab = ({
                 nameInfo={TooltipsText.ACTIVE}
               />
             </NodeStatsContainer>
-          )} */}
+          )}
         </Stack>
       </Grid>
       <Grid size={{ xs: 12, md: 8 }}>
@@ -160,8 +163,14 @@ const NodeOverviewTab = ({
             isUpdateAvailable={isUpdateAvailable}
           />
         )}
-        {/* {selected === 1 && (
-          <Paper sx={{ p: 3 }}>
+        {selected === 1 && (
+          <Paper
+            sx={{
+              p: 3,
+              overflow: 'auto',
+              height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+            }}
+          >
             <Stack spacing={4}>
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
@@ -229,6 +238,25 @@ const NodeOverviewTab = ({
                   tabSection={Graphs_Type.Subscribers}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
+                  topic={HealtChartsConfigure[nodeType][3].id}
+                  title={HealtChartsConfigure[nodeType][3].name}
+                  initData={getMetricValue(
+                    HealtChartsConfigure[nodeType][3].id,
+                    metrics,
+                  )}
+                  hasData={isMetricValue(
+                    HealtChartsConfigure[nodeType][3].id,
+                    metrics,
+                  )}
+                />
+              )}
+              {HealtChartsConfigure[
+                (selectedNode?.type as string) ?? 'hnode'
+              ][4].show && (
+                <LineChart
+                  tabSection={Graphs_Type.Subscribers}
+                  metricFrom={metricFrom}
+                  loading={metricsLoading}
                   topic={HealtChartsConfigure[nodeType][4].id}
                   title={HealtChartsConfigure[nodeType][4].name}
                   initData={getMetricValue(
@@ -241,28 +269,9 @@ const NodeOverviewTab = ({
                   )}
                 />
               )}
-              {HealtChartsConfigure[
-                (selectedNode?.type as string) ?? 'hnode'
-              ][5].show && (
-                <LineChart
-                  tabSection={Graphs_Type.Subscribers}
-                  metricFrom={metricFrom}
-                  loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][5].id}
-                  title={HealtChartsConfigure[nodeType][5].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][5].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][5].id,
-                    metrics,
-                  )}
-                />
-              )}
             </Stack>
           </Paper>
-        )} */}
+        )}
       </Grid>
     </Grid>
   );

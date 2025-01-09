@@ -311,6 +311,7 @@ const HealtChartsConfigure: any = {
   tnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperature_trx' },
     { name: 'Temp. (COM)', show: true, id: 'temperature_com' },
+    { name: 'Uptime', show: true, id: 'uptime_trx' },
     { name: 'Attached ', show: true, id: 'subscribers_attached' },
     { name: 'Active ', show: true, id: 'subscribers_active' },
   ],

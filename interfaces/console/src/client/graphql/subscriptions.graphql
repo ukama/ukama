@@ -73,13 +73,22 @@ subscription NotificationSubscription(
 query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
-      success
       msg
-      orgId
       nodeId
+      success
       type
       values
     }
+  }
+}
+
+subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
+  getMetricByTabSub(data: $data) {
+    msg
+    nodeId
+    success
+    type
+    value
   }
 }
 
