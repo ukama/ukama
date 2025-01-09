@@ -5,10 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import Correspondents from "../../common/data/correspondent";
 import {
-  CorrespondentsAPIDto,
-  CorrespondentsResDto,
   PaymentAPIDto,
   PaymentAPIResDto,
   PaymentDto,
@@ -17,7 +14,6 @@ import {
   ProcessPaymentAPIResDto,
   ProcessPaymentDto,
 } from "../resolver/types";
-import { CorrespondentsDto } from "./../resolver/types";
 
 export const paymentDtoMapper = (req: PaymentAPIDto): PaymentDto => {
   return {
@@ -61,26 +57,5 @@ export const dtoToProcessPaymentsDto = (
 ): ProcessPaymentDto => {
   return {
     payment: paymentDtoMapper(res.payment),
-  };
-};
-
-export const dtoToCorspondantsDto = (
-  res: CorrespondentsAPIDto
-): CorrespondentsResDto => {
-  const correspondents: CorrespondentsDto[] = [];
-
-  res.correspondents.forEach((correspondent: string) => {
-    const item = Correspondents[`${res.country}`].find(
-      (c: any) => c.Correspondent === correspondent
-    );
-    correspondents.push({
-      correspondent_code: correspondent,
-      label: item?.MNO || "",
-      logo: item?.logo || "",
-    });
-  });
-  return {
-    correspondents: correspondents,
-    country: res.country,
   };
 };

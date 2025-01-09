@@ -225,45 +225,6 @@ export class ProcessPaymentInputDto {
   token: string;
 }
 
-@InputType()
-export class CorrespondentsInputDto {
-  @Field()
-  phoneNumber: string;
-
-  @Field()
-  paymentMethod: string;
-}
-
-@ObjectType()
-export class CorrespondentsAPIDto {
-  @Field(() => [String])
-  correspondents: string[];
-
-  @Field()
-  country: string;
-}
-
-@ObjectType()
-export class CorrespondentsDto {
-  @Field()
-  label: string;
-
-  @Field()
-  logo: string;
-
-  @Field()
-  correspondent_code: string;
-}
-
-@ObjectType()
-export class CorrespondentsResDto {
-  @Field(() => [CorrespondentsDto])
-  correspondents: CorrespondentsDto[];
-
-  @Field()
-  country: string;
-}
-
 @ObjectType()
 export class TokenResDto {
   @Field()

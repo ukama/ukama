@@ -10,7 +10,6 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 import { VERSION } from "../../common/configs";
 import { logger } from "../../common/logger";
 import {
-  CorrespondentsResDto,
   GetPaymentsInputDto,
   PaymentDto,
   PaymentsDto,
@@ -20,7 +19,6 @@ import {
   UpdatePaymentInputDto,
 } from "../resolver/types";
 import {
-  dtoToCorspondantsDto,
   dtoToPaymentDto,
   dtoToPaymentsDto,
   dtoToProcessPaymentsDto,
@@ -105,21 +103,6 @@ class PaymentAPI extends RESTDataSource {
         token: req.token,
       },
     }).then(res => dtoToProcessPaymentsDto(res));
-  };
-
-  getCorrespondents = async (
-    baseURL: string,
-    phoneNumber: string,
-    paymentMethod: string
-  ): Promise<CorrespondentsResDto> => {
-    logger.info(
-      `[GET] GetCorrespondents: ${baseURL}/${VERSION}/correspondents/${phoneNumber}?payment_method=${paymentMethod}`
-    );
-    this.baseURL = baseURL;
-
-    return this.get(
-      `/${VERSION}/correspondents/${phoneNumber}?payment_method=${paymentMethod}`
-    ).then(res => dtoToCorspondantsDto(res));
   };
 }
 
