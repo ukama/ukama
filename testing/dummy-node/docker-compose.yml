@@ -1,0 +1,26 @@
+services:
+ dummy:
+  build:
+   context: .
+   dockerfile: Dockerfile.dummy
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.89
+  environment:
+   - NODE_ID=${NODE_ID}
+   - MY_POD_IP=10.1.0.89
+
+ metrics:
+  build:
+   context: .
+   dockerfile: Dockerfile.metrics
+  ports:
+   - 7001:7001
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.90
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
