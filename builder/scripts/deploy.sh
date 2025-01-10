@@ -76,7 +76,7 @@ function run_docker_compose() {
 
     CONTAINER_NAME=$3
     while true; do
-        docker compose up --build -d > /dev/null 2>&1
+        docker compose up --build -d
         # docker-compose down  > /dev/null 2>&1
         # docker-compose build > /dev/null 2>&1
         # docker compose up --build -d > /dev/null 2>&1
@@ -158,11 +158,14 @@ sort_systems_by_dependency() {
             "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            "subscriber")
+            "billing")
                 SYSTEMS+=("9 $key")
                 ;;
-            *)
+            "subscriber")
                 SYSTEMS+=("10 $key")
+                ;;
+            *)
+                SYSTEMS+=("11 $key")
                 ;;
         esac
     done
@@ -308,6 +311,7 @@ SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' 
 SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
 SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
 SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
+SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-billing:8080' WHERE systems."name" = 'billing'";
 
 
 echo "$TAG Registering systems URL in lookup db..."

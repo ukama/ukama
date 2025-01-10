@@ -305,6 +305,13 @@ const eventKeyToAction = (
         title: "Configure node",
         action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
       };
+
+    case "EventInvoiceGenerate":
+      return {
+        title: "Your Ukama SaaS bill is now available. Click to view.",
+        action: `${CONSOLE_APP_URL}/manage/billing`,
+      };
+
     default:
       return { title: "Network Updated", action: "updated" };
   }
