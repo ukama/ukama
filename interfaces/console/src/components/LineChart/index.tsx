@@ -97,7 +97,7 @@ const getOptions = (topic: string, title: string, initData: any) => {
       type: 'datetime',
       title: false,
       labels: {
-        enabled: true,
+        enabled: false,
         formate: '{value:%H:%M:%S}',
       },
     },

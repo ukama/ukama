@@ -103,7 +103,14 @@ const NodeResourcesTab = ({
         </NodeStatsContainer>
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
-        <Paper sx={{ p: 3, width: '100%' }}>
+        <Paper
+          sx={{
+            p: 3,
+            width: '100%',
+            overflow: 'auto',
+            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+          }}
+        >
           <Stack spacing={4}>
             {NodeResourcesTabConfigure[nodeType][0].show && (
               <LineChart

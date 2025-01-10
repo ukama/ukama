@@ -258,9 +258,9 @@ const TooltipsText = {
 
 const NodePageTabs = [
   { id: 'node-tab-0', label: 'Overview', value: 0 },
-  // { id: 'node-tab-1', label: 'Network', value: 1 },
-  // { id: 'node-tab-2', label: 'Resources', value: 2 },
-  // { id: 'node-tab-3', label: 'Radio', value: 3 },
+  { id: 'node-tab-1', label: 'Network', value: 1 },
+  { id: 'node-tab-2', label: 'Resources', value: 2 },
+  { id: 'node-tab-3', label: 'Radio', value: 3 },
   // { id: 'node-tab-4', label: 'Software', value: 4 },
   // { id: 'node-tab-5', label: 'Schematic', value: 5 },
 ];
@@ -294,6 +294,18 @@ const NodeResourcesTabConfigure: any = {
     { name: 'POWER', show: true, id: 'power_level' },
   ],
 };
+const NetworkChartsConfig: any = [
+  { name: 'Throughput (D/L)', show: true, id: 'network_throughput_down' },
+  { name: 'Throughput (U/L)', show: true, id: 'network_throughput_up' },
+  { name: 'RRC CNX Success', show: true, id: 'network_latency' },
+  { name: 'ERAB Drop Rate', show: true, id: 'network_packet_loss' },
+  { name: 'RLS  Drop Rate', show: true, id: 'network_overall_status' },
+];
+const RadioChartsConfig: any = [
+  { name: 'TX Power', show: true, id: 'tx_power' },
+  { name: 'RX Power', show: true, id: 'rx_power' },
+  { name: 'PA Power', show: true, id: 'pa_power' },
+];
 const HealtChartsConfigure: any = {
   hnode: [
     { name: 'Uptime', show: true, id: 'uptime_trx' },
@@ -354,10 +366,12 @@ export {
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
+  NetworkChartsConfig,
   NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
   NodePageTabs,
   NodeResourcesTabConfigure,
+  RadioChartsConfig,
   ROAMING_SELECT,
   SETTING_MENU,
   SITE_CONFIG_STEPS,

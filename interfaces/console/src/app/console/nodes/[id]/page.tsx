@@ -21,7 +21,10 @@ import {
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
+import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
+import NodeRadioTab from '@/components/NodeRadioTab';
+import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
@@ -197,8 +200,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
             sx={
               {
                 // display:
-                //   (selectedNode?.type === 'HOME' && label === 'Radio') ??
-                //   (selectedNode?.type === 'AMPLIFIER' && label === 'Network')
+                //   ((selectedNode?.type === NodeTypeEnum.Hnode &&
+                //     label === 'Radio') ??
+                //   (selectedNode?.type === NodeTypeEnum.Anode &&
+                //     label === 'Network'))
                 //     ? 'none'
                 //     : 'block',
               }
@@ -230,28 +235,28 @@ const Page: React.FC<INodePage> = ({ params }) => {
             handleOverviewSectionChange={handleOverviewSectionChange}
           />
         </TabPanel>
-        {/* <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
+        <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
-        {/* <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
+        </TabPanel>
+        <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
-        {/* <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
+        </TabPanel>
+        <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
+        </TabPanel>
         {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <NodeSoftwareTab
             loading={nodeAppsLoading}

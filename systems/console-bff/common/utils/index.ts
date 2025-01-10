@@ -155,7 +155,7 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
           "memory_com_used",
         ];
     case GRAPHS_TYPE.RADIO:
-      if (nodeId.includes(NODE_TYPE.hnode))
+      if (nodeId.includes(NODE_TYPE.tnode))
         return ["tx_power", "rx_power", "pa_power"];
       else return [];
     case GRAPHS_TYPE.SUBSCRIBERS:
