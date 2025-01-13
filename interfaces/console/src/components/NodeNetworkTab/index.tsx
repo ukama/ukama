@@ -76,7 +76,6 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
         <Paper
           sx={{
             p: 3,
-            width: '100%',
             overflow: 'auto',
             height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
           }}
