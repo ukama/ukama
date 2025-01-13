@@ -51,7 +51,8 @@ func StartNetworkUpdates() {
 	publisher, err := rabbitmq.NewPublisher(queueHost, amqp.Config{},
 		rabbitmq.WithPublisherOptionsLogging)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error: %v", err)
+		return
 	}
 
 	for {
