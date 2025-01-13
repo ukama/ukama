@@ -6,7 +6,7 @@ import {
   NotificationTypeEnumValue,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
-import { addInStore, openStore, removeFromStore } from "../../common/storage";
+import { addInStore, openStore } from "../../common/storage";
 import {
   eventKeyToAction,
   getBaseURL,
@@ -73,7 +73,6 @@ class SubscriptionsResolvers {
       metrics.metrics.forEach((metric: MetricRes) => {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
-      // subKey = subKey.slice(0, -1);
       subKey.split(",").forEach((key: string) => {
         if (key === "") return;
         const workerData = {
@@ -106,11 +105,10 @@ class SubscriptionsResolvers {
           }
         });
         worker.on("exit", async (code: any) => {
-          await removeFromStore(store, `${userId}/${type}/${from}`);
+          await store.close();
           logger.info(
             `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
           );
-          await store.close();
         });
       });
     }
@@ -200,11 +198,10 @@ class SubscriptionsResolvers {
     });
 
     worker.on("exit", async (code: any) => {
-      await removeFromStore(store, key);
+      await store.close();
       logger.info(
         `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
-      store.close();
       worker.terminate();
     });
     return notifications;
