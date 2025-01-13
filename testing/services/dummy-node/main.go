@@ -14,8 +14,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
 	"github.com/wagslane/go-rabbitmq"
@@ -77,7 +75,7 @@ func StartNetworkUpdates() {
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"message": link,
+			"message": link.String(),
 		}).Info("Published message")
 		time.Sleep(time.Minute)
 	}
@@ -113,11 +111,11 @@ func StartEchoServer() {
 }
 
 // metrics
-var reg = prometheus.NewRegistry()
+// var reg = prometheus.NewRegistry()
 
-var (
-	activeUe = promauto.NewGauge((prometheus.GaugeOpts{
-		Name: "epc_active_ue",
-		Help: "The total of active users",
-	}))
-)
+// var (
+// 	activeUe = promauto.NewGauge((prometheus.GaugeOpts{
+// 		Name: "epc_active_ue",
+// 		Help: "The total of active users",
+// 	}))
+// )

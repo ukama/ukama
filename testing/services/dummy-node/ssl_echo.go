@@ -15,7 +15,7 @@ import (
 var localhostCert string
 
 // certs/out/localhost.csr
-var localhostCsr string
+// var localhostCsr string
 
 // certs/out/localhost.key
 var localhostKey string
@@ -41,12 +41,22 @@ func StartSslEchoServer() {
 			body = []byte(fmt.Sprintf("error reading request body: %s", err))
 		}
 		resp := fmt.Sprintf("Hello, %s from Simple Server!", body)
-		w.Write([]byte(resp))
+		if _, err := w.Write([]byte(resp)); err != nil {
+			log.Printf("Error writing response: %v", err)
+			return
+		}
 		log.Printf("SimpleServer: Sent response %s", resp)
 	})
 
-	os.WriteFile("localhost.crt", []byte(localhostCert), 0644)
-	os.WriteFile("localhost.key", []byte(localhostKey), 0644)
+	if err := os.WriteFile("localhost.crt", []byte(localhostCert), 0644); err != nil {
+		log.Printf("Error writing localhost.crt: %v", err)
+		return
+	}
+
+	if err := os.WriteFile("localhost.key", []byte(localhostKey), 0644); err != nil {
+		log.Printf("Error writing localhost.key: %v", err)
+		return
+	}
 
 	log.Printf("Starting HTTPS server on host %s and port %s", host, port)
 	if err := server.ListenAndServeTLS("localhost.crt", "localhost.key"); err != nil {
