@@ -19,11 +19,13 @@ import NodeStatsContainer from '../NodeStatsContainer';
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeResourcesTab {
   metrics: any;
+  nodeId: string;
   loading: boolean;
   metricFrom: number;
   selectedNode: Node | undefined;
 }
 const NodeResourcesTab = ({
+  nodeId,
   metrics,
   loading,
   metricFrom,
@@ -113,6 +115,7 @@ const NodeResourcesTab = ({
           <Stack spacing={4}>
             {NodeResourcesTabConfigure[nodeType][0].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][0].id,
@@ -130,6 +133,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][1].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][1].id,
@@ -147,6 +151,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][2].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][2].id,
@@ -164,6 +169,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][3].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][3].id,
@@ -181,6 +187,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][4].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][4].id,
@@ -198,6 +205,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][5].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][5].id,
@@ -215,6 +223,7 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][6].show && (
               <LineChart
+                nodeId={nodeId}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][6].id,

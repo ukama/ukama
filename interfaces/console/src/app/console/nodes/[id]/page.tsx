@@ -29,7 +29,9 @@ import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { useAppContext } from '@/context';
+import MetricSubscription from '@/lib/metricSubscription';
 import { colors } from '@/theme';
+import { TMetricResDto } from '@/types';
 import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
@@ -125,6 +127,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
+      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
       getNodeMetricByTab({
         variables: {
           data: {
@@ -132,19 +135,47 @@ const Page: React.FC<INodePage> = ({ params }) => {
             userId: user.id,
             type: graphType,
             from: metricFrom,
-            orgName: 'ukama',
             to: metricFrom + 120,
+            orgName: user.orgName,
             withSubscription: true,
           },
         },
+      }).then(() => {
+        MetricSubscription({
+          nodeId: id,
+          key: psKey,
+          type: graphType,
+          userId: user.id,
+          from: metricFrom,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+        });
       });
+
+      PubSub.subscribe(psKey, handleNotification);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     metricFrom,
     nodeMetricsVariables?.data?.from,
     getNodeMetricByTab,
     graphType,
   ]); // Added all missing dependencies
+
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, type, value, nodeId, success } =
+      parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+      // setMetrics((prev) => {
+      //   const updatedMetrics = prev.metrics.map((m) =>
+      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
+      //   );
+      //   return { ...prev, metrics: updatedMetrics };
+      // });
+    }
+  };
 
   const handleNodeSelected = (node: Node) => {
     setSelectedNode(node);
@@ -222,6 +253,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
             uptime={0}
+            nodeId={id}
             loading={false}
             metrics={metrics}
             connectedUsers={'0'}
@@ -237,6 +269,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
@@ -244,6 +277,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
@@ -252,6 +286,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}

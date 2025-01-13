@@ -22,6 +22,7 @@ import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
 interface INodeOverviewTab {
+  nodeId: string;
   metricFrom: number;
   metrics: MetricsRes;
   loading: boolean;
@@ -37,6 +38,7 @@ interface INodeOverviewTab {
 }
 
 const NodeOverviewTab = ({
+  nodeId,
   metrics,
   uptime,
   loading,
@@ -125,7 +127,7 @@ const NodeOverviewTab = ({
               />
             )}
           </NodeStatsContainer>
-          {selectedNode?.type !== NodeTypeEnum.Anode && (
+          {/* {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
               loading={loading}
@@ -149,7 +151,7 @@ const NodeOverviewTab = ({
                 nameInfo={TooltipsText.ACTIVE}
               />
             </NodeStatsContainer>
-          )}
+          )} */}
         </Stack>
       </Grid>
       <Grid size={{ xs: 12, md: 8 }}>
@@ -175,6 +177,7 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
+                  nodeId={nodeId}
                   tabSection={Graphs_Type.NodeHealth}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
@@ -192,6 +195,7 @@ const NodeOverviewTab = ({
               )}
               {HealtChartsConfigure[nodeType][1].show && (
                 <LineChart
+                  nodeId={nodeId}
                   tabSection={Graphs_Type.NodeHealth}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
@@ -209,6 +213,7 @@ const NodeOverviewTab = ({
               )}
               {HealtChartsConfigure[nodeType][2].show && (
                 <LineChart
+                  nodeId={nodeId}
                   tabSection={Graphs_Type.NodeHealth}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
@@ -227,7 +232,7 @@ const NodeOverviewTab = ({
             </Stack>
           </Paper>
         )}
-        {selected === 2 && nodeType !== NodeTypeEnum.Anode && (
+        {/* {selected === 2 && nodeType !== NodeTypeEnum.Anode && (
           <Paper sx={{ p: 3 }}>
             <Stack spacing={4}>
               <Typography variant="h6">Subscribers</Typography>
@@ -235,6 +240,7 @@ const NodeOverviewTab = ({
                 (selectedNode?.type as string) ?? 'hnode'
               ][4].show && (
                 <LineChart
+                  nodeId={nodeId}
                   tabSection={Graphs_Type.Subscribers}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
@@ -254,6 +260,7 @@ const NodeOverviewTab = ({
                 (selectedNode?.type as string) ?? 'hnode'
               ][4].show && (
                 <LineChart
+                  nodeId={nodeId}
                   tabSection={Graphs_Type.Subscribers}
                   metricFrom={metricFrom}
                   loading={metricsLoading}
@@ -271,7 +278,7 @@ const NodeOverviewTab = ({
               )}
             </Stack>
           </Paper>
-        )}
+        )} */}
       </Grid>
     </Grid>
   );

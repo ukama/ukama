@@ -20,11 +20,17 @@ import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
+  nodeId: string;
   metrics: MetricsRes;
   metricFrom: number;
   loading: boolean;
 }
-const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
+const NodeNetworkTab = ({
+  nodeId,
+  loading,
+  metrics,
+  metricFrom,
+}: INodeOverviewTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
 
@@ -82,6 +88,7 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
         >
           <Stack spacing={4}>
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               metricFrom={metricFrom}
               topic={NetworkChartsConfig[0].id}
@@ -91,6 +98,7 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
               hasData={isMetricValue(NetworkChartsConfig[0].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               metricFrom={metricFrom}
               title={NetworkChartsConfig[1].name}
@@ -100,6 +108,7 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
               hasData={isMetricValue(NetworkChartsConfig[1].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               topic={NetworkChartsConfig[2].id}
               title={NetworkChartsConfig[2].name}
               loading={loading}
@@ -109,6 +118,7 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
               hasData={isMetricValue(NetworkChartsConfig[2].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               topic={NetworkChartsConfig[3].id}
               title={NetworkChartsConfig[3].name}
               loading={loading}
@@ -118,6 +128,7 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
               hasData={isMetricValue(NetworkChartsConfig[3].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               topic={NetworkChartsConfig[4].id}
               title={NetworkChartsConfig[4].name}
               loading={loading}

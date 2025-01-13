@@ -17,11 +17,17 @@ import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
+  nodeId: string;
   metrics: any;
   loading: boolean;
   metricFrom: number;
 }
-const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
+const NodeRadioTab = ({
+  nodeId,
+  loading,
+  metrics,
+  metricFrom,
+}: INodeRadioTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
   return (
@@ -66,6 +72,7 @@ const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
         >
           <Stack spacing={4}>
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               topic={RadioChartsConfig[0].id}
               title={RadioChartsConfig[0].name}
@@ -75,6 +82,7 @@ const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
               initData={getMetricValue(RadioChartsConfig[0].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               topic={RadioChartsConfig[1].id}
               title={RadioChartsConfig[1].name}
@@ -84,6 +92,7 @@ const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
               initData={getMetricValue(RadioChartsConfig[1].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               topic={RadioChartsConfig[2].id}
               title={RadioChartsConfig[2].name}

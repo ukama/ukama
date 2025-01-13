@@ -6,15 +6,15 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NODE_IMAGES } from '@/constants';
 import { Box } from '@mui/material';
 import Image from 'next/image';
 
 interface IDeviceModalView {
+  image: string;
   nodeType: string | undefined;
 }
 
-const DeviceModalView = ({ nodeType = 'hnode' }: IDeviceModalView) => {
+const DeviceModalView = ({ image, nodeType = 'hnode' }: IDeviceModalView) => {
   return (
     <Box
       component={'div'}
@@ -28,13 +28,15 @@ const DeviceModalView = ({ nodeType = 'hnode' }: IDeviceModalView) => {
     >
       <Image
         sizes="100vw"
+        priority={true}
+        placeholder="empty"
         style={{
           objectFit: 'contain',
         }}
+        src={image}
         width={300}
         height={300}
-        alt={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
-        src="https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png"
+        alt={nodeType}
       />
     </Box>
   );
