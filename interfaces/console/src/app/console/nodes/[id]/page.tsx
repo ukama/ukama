@@ -252,7 +252,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            uptime={0}
             nodeId={id}
             loading={false}
             metrics={metrics}

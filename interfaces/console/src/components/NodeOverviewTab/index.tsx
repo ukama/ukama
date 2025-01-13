@@ -21,6 +21,8 @@ import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
+const PLACEHOLDER_VALUE = 'NA';
+
 interface INodeOverviewTab {
   nodeId: string;
   metricFrom: number;
@@ -28,7 +30,6 @@ interface INodeOverviewTab {
   loading: boolean;
   metricsLoading: boolean;
   onNodeSelected: Function;
-  uptime: number | undefined;
   isUpdateAvailable: boolean;
   handleUpdateNode: Function;
   selectedNode: Node | undefined;
@@ -40,7 +41,6 @@ interface INodeOverviewTab {
 const NodeOverviewTab = ({
   nodeId,
   metrics,
-  uptime,
   loading,
   metricFrom,
   selectedNode,
@@ -106,7 +106,7 @@ const NodeOverviewTab = ({
           >
             {HealtChartsConfigure[nodeType][0].show && (
               <NodeStatItem
-                value={'24 °C'}
+                value={PLACEHOLDER_VALUE}
                 name={HealtChartsConfigure[nodeType][0].name}
                 showAlertInfo={false}
                 nameInfo={TooltipsText.TRX}
@@ -114,7 +114,7 @@ const NodeOverviewTab = ({
             )}
             {HealtChartsConfigure[nodeType][1].show && (
               <NodeStatItem
-                value={'22 °C'}
+                value={PLACEHOLDER_VALUE}
                 name={HealtChartsConfigure[nodeType][1].name}
                 nameInfo={TooltipsText.COM}
               />
@@ -123,7 +123,7 @@ const NodeOverviewTab = ({
               <NodeStatItem
                 name={HealtChartsConfigure[nodeType][2].name}
                 nameInfo={TooltipsText.COM}
-                value={uptime ? `${Math.floor(uptime / 60 / 60)} hours` : 'NA'}
+                value={PLACEHOLDER_VALUE}
               />
             )}
           </NodeStatsContainer>
