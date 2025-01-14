@@ -55,6 +55,14 @@ class SubscriptionsResolvers {
       logger.error(`Error getting base URL for notification: ${baseURL}`);
       return { notifications: [] };
     }
+
+    let wsUrl = baseURL;
+    if (wsUrl?.includes("https://")) {
+      wsUrl = wsUrl.replace("https://", "wss://");
+    } else if (wsUrl?.startsWith("http://")) {
+      wsUrl = wsUrl.replace("http://", "ws://");
+    }
+
     const { type, from, nodeId, userId, orgName, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
@@ -79,7 +87,7 @@ class SubscriptionsResolvers {
           userId,
           type: key,
           timestamp: from,
-          url: `${baseURL}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          url: `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
         };
         const worker = new Worker(WS_THREAD, {
           workerData,
