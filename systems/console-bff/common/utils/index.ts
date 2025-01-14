@@ -308,7 +308,7 @@ const eventKeyToAction = (
 
     case "EventInvoiceGenerate":
       return {
-        title: "Your Ukama SaaS bill is now available. Click to view.",
+        title: "Ukama bill ready. View now.",
         action: `${CONSOLE_APP_URL}/manage/billing`,
       };
 
