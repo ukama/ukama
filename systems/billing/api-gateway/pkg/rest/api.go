@@ -30,7 +30,7 @@ type UpdateReportRequest struct {
 }
 
 type WebHookRequest struct {
-	WebhookType string          `example:"webhook-type" json:"webhook_type" validate:"required"`
-	ObjectType  string          `example:"object-type" json:"object_type" validate:"required"`
-	Invoice     util.RawInvoice `example:"{}" json:"invoice" validate:"required"`
+	WebhookType string         `example:"webhook-type" json:"webhook_type" validate:"required"`
+	ObjectType  string         `example:"object-type" json:"object_type" validate:"required"`
+	Invoice     util.RawReport `example:"{}" json:"invoice" validate:"required"`
 }
