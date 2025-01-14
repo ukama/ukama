@@ -16,7 +16,7 @@ import (
 
 type Currency string
 
-type RawInvoice struct {
+type RawReport struct {
 	LagoID                            uuid.UUID                 `json:"lago_id,omitempty"`
 	SequentialID                      int                       `json:"sequential_id,omitempty"`
 	Number                            string                    `json:"number,omitempty"`
@@ -63,17 +63,19 @@ type InvoiceMetadataResponse struct {
 }
 
 type Fee struct {
-	LagoID              uuid.UUID `json:"lago_id,omitempty"`
-	LagoGroupID         uuid.UUID `json:"lago_group_id,omitempty"`
-	AmountCents         int       `json:"amount_cents,omitempty"`
-	AmountCurrency      string    `json:"amount_currenty,omitempty"`
-	TaxesAmountCents    int       `json:"taxes_amount_cents,omitempty"`
-	TaxesPreciseAmount  string    `json:"taxes_precise_amount,omitempty"`
-	TotalAmountCents    int       `json:"total_amount_cents,omitempty"`
-	TotalAmountCurrency string    `json:"total_amount_currency,omitempty"`
-	Units               string    `json:"units,omitempty"`
-	EventsCount         int       `json:"events_count,omitempty"`
-	Item                FeeItem   `json:"item,omitempty"`
+	LagoID                 uuid.UUID `json:"lago_id,omitempty"`
+	LagoGroupID            uuid.UUID `json:"lago_group_id,omitempty"`
+	ExternalSubscriptionID string    `json:"external_subscription_id,omitempty"`
+	AmountCents            int       `json:"amount_cents,omitempty"`
+	AmountCurrency         string    `json:"amount_currenty,omitempty"`
+	TaxesAmountCents       int       `json:"taxes_amount_cents,omitempty"`
+	TaxesPreciseAmount     string    `json:"taxes_precise_amount,omitempty"`
+	TotalAmountCents       int       `json:"total_amount_cents,omitempty"`
+	TotalAmountCurrency    string    `json:"total_amount_currency,omitempty"`
+	Units                  string    `json:"units,omitempty"`
+	Description            string    `json:"description,omitempty"`
+	EventsCount            int       `json:"events_count,omitempty"`
+	Item                   FeeItem   `json:"item,omitempty"`
 }
 
 type FeeItem struct {
