@@ -70,7 +70,7 @@ func TestReportRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(report.Id, report.OwnerId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(report.Id, report.OwnerId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
@@ -102,7 +102,7 @@ func TestReportRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(report.Id, report.OwnerId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			WithArgs(report.Id, report.OwnerId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
@@ -374,7 +374,8 @@ func TestReportRepo_Update(t *testing.T) {
 		mock, gdb := prepare_db(t)
 
 		report := &db.Report{
-			IsPaid: true,
+			IsPaid:        true,
+			TransactionId: "111",
 		}
 
 		report.Id = reportId
@@ -382,7 +383,7 @@ func TestReportRepo_Update(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(`^UPDATE.*reports.*`).
-			WithArgs(report.IsPaid, sqlmock.AnyArg(), report.Id).
+			WithArgs(report.IsPaid, report.TransactionId, sqlmock.AnyArg(), report.Id).
 			WillReturnRows(rows)
 
 		mock.ExpectCommit()
