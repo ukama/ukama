@@ -138,7 +138,7 @@ func (r *Router) Pdf(c *gin.Context, req *GetReportRequest) error {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"info": "download report pdf file successfully",
+		"info": "report pdf file downloaded successfully",
 	})
 
 	return nil
