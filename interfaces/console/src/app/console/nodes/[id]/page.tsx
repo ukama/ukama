@@ -29,7 +29,7 @@ import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { useAppContext } from '@/context';
-import MetricSubscription from '@/lib/metricSubscription';
+import MetricSubscription from '@/lib/MetricSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
 import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
