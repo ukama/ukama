@@ -1,116 +1,115 @@
-version: '3.9'
+version: "3.9"
 
 services:
- postgresd-billing:
-  image: postgres:13.3
-  ports:
-   - 5413:5432
-  environment:
-   - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=Pass2020!
-  networks:
-   - ukama-net
-  volumes:
-   - postgress-data:/var/lib/postgresql
+  postgresd-billing:
+    image: postgres:13.3
+    ports:
+      - 5413:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
 
- # Billing System
+  # Billing System
 
- billing:
-  container_name: billing-api-gateway
-  build: ./api-gateway
-  ports:
-   - 8680:8080
-  environment:
-   - DEBUGMODE=true
-   - BYPASS_AUTH_MODE=true
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-billing
-   - billing-report
-   - billing-collector
+  api-gateway-billing:
+    build: ./api-gateway
+    ports:
+      - 8680:8080
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-billing
+      - billing-report
+      - billing-collector
 
- msg-client-billing:
-  build: ../services/msgClient
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-billing
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - GRPC_PORT=9095
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - SYSTEM=billing
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-billing
+  msg-client-billing:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-billing
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - GRPC_PORT=9095
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - SYSTEM=billing
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-billing
 
- billing-collector:
-  build: ./collector
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-billing
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msg-client-billing:9095
-   - COLLECTOR_SERVICE_HOST=billing-collector
-   - COLLECTOR_SERVICE_PORT=9090
-   - LAGOAPIKEY=${LAGO_API_KEY}
-   - LAGOHOST=${LOCAL_HOST_IP}
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-   - WEBHOOKURL=http://${LOCAL_HOST_IP}:8680/v1/reports
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-billing
+  billing-collector:
+    build: ./collector
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-billing
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msg-client-billing:9095
+      - COLLECTOR_SERVICE_HOST=billing-collector
+      - COLLECTOR_SERVICE_PORT=9090
+      - LAGOAPIKEY=${LAGO_API_KEY}
+      - LAGOHOST=${LOCAL_HOST_IP}
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+      - WEBHOOKURL=http://${LOCAL_HOST_IP}:8680/v1/reports
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-billing
 
- billing-report:
-  build: ./report
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-billing
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msg-client-billing:9095
-   - REPORT_SERVICE_HOST=billing-report
-   - REPORT_SERVICE_PORT=9090
-   - ORGNAME=${ORGNAME}
-   - ORGID=${ORGID}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-billing
+  billing-report:
+    build: ./report
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-billing
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msg-client-billing:9095
+      - REPORT_SERVICE_HOST=billing-report
+      - REPORT_SERVICE_PORT=9090
+      - ORGNAME=${ORGNAME}
+      - ORGID=${ORGID}
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-billing
 
- initclient-billing:
-  build: ../services/initClient
-  environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
-   - ENV_SYSTEM_NAME=billing
-   - ENV_DNS_REFRESH_TIME_PERIOD=30
-   - ENV_SYSTEM_DNS=api-gateway-billing
-   - ENV_DNS_SERVER=false
-   - ENV_SYSTEM_PORT=8080
-   - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=initclient-billing
-   - ENV_INIT_CLIENT_PORT=8080
-   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-  restart: always
-  networks:
-   - ukama-net
+  initclient-billing:
+    build: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=${ORGNAME}
+      - ENV_SYSTEM_NAME=billing
+      - ENV_DNS_REFRESH_TIME_PERIOD=30
+      - ENV_SYSTEM_DNS=api-gateway-billing
+      - ENV_DNS_SERVER=false
+      - ENV_SYSTEM_PORT=8080
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=initclient-billing
+      - ENV_INIT_CLIENT_PORT=8080
+      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+    restart: always
+    networks:
+      - ukama-net
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    external: true
+    name: services_ukama-net
 
 volumes:
- postgress-data:
+  postgress-data:

@@ -158,11 +158,14 @@ sort_systems_by_dependency() {
             "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            "subscriber")
+            "billing")
                 SYSTEMS+=("9 $key")
                 ;;
-            *)
+            "subscriber")
                 SYSTEMS+=("10 $key")
+                ;;
+            *)
+                SYSTEMS+=("11 $key")
                 ;;
         esac
     done
@@ -245,10 +248,39 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         cd ../../systems
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
+        echo "$TAG Current directory before billing setup: $(pwd)"
+        
+        # First, run the billing provider script
         cd ./billing/provider
+        echo "$TAG Running billing provider in: $(pwd)"
+        export COMPOSE_PROJECT_NAME="billing-provider"
         chmod +x start_provider.sh
         ./start_provider.sh
         cd ../..
+        
+        # Navigate to payments system and run deployment
+        echo "$TAG Setting up payments system..."
+        cd ../../payments/builder-script
+        export COMPOSE_PROJECT_NAME="payments"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+
+        # Navigate to webhooks system and run deployment
+        echo "$TAG Setting up webhooks system..."
+        cd ../../webhooks/builder-script
+        export COMPOSE_PROJECT_NAME="webhooks"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+        
+        # Now enter the testing and hooks setup
+        echo "$TAG Setting up hooks..."
+        cd ../../ukama/testing/services/hooks
+        export COMPOSE_PROJECT_NAME="hooks"
+        docker-compose up -d
+        cd ../../../../ukama/systems
+
+        export COMPOSE_PROJECT_NAME="billing"
+        echo "$TAG Returned to systems directory: $(pwd)"
     fi
     
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
@@ -308,6 +340,7 @@ SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' 
 SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
 SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
 SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
+SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-billing:8080' WHERE systems."name" = 'billing'";
 
 
 echo "$TAG Registering systems URL in lookup db..."
@@ -320,6 +353,7 @@ psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
 psql $DB_URI -c "$SYS_QUERY_8"
+psql $DB_URI -c "$SYS_QUERY_9"
 
 cleanup
 
