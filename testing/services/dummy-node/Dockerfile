@@ -10,6 +10,6 @@ COPY bin/ /usr/bin/
 
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-EXPOSE 8080 8081
+EXPOSE 8080 7001
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
