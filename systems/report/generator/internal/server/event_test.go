@@ -256,7 +256,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 
 	t.Run("InvalidEventTypeSent", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
-		evt := &epb.Payment{
+		evt := &epb.Notification{
 			Id: uuid.NewV4().String(),
 		}
 

@@ -1,442 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title> Order confirmation </title>
-<meta name="robots" content="noindex,nofollow" />
-<meta name="viewport" content="width=device-width; initial-scale=1.0;" />
-<style type="text/css">
-  @import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700);
-  body { margin: 0; padding: 0; background: #e1e1e1; }
-  div, p, a, li, td { -webkit-text-size-adjust: none; }
-  .ReadMsgBody { width: 100%; background-color: #ffffff; }
-  .ExternalClass { width: 100%; background-color: #ffffff; }
-  body { width: 100%; height: 100%; background-color: #e1e1e1; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-  html { width: 100%; }
-  p { padding: 0 !important; margin-top: 0 !important; margin-right: 0 !important; margin-bottom: 0 !important; margin-left: 0 !important; }
-  .visibleMobile { display: none; }
-  .hiddenMobile { display: block; }
-
-  @media only screen and (max-width: 600px) {
-  body { width: auto !important; }
-  table[class=fullTable] { width: 96% !important; clear: both; }
-  table[class=fullPadding] { width: 85% !important; clear: both; }
-  table[class=col] { width: 45% !important; }
-  .erase { display: none; }
-  }
-
-  @media only screen and (max-width: 420px) {
-  table[class=fullTable] { width: 100% !important; clear: both; }
-  table[class=fullPadding] { width: 85% !important; clear: both; }
-  table[class=col] { width: 100% !important; clear: both; }
-  table[class=col] td { text-align: left !important; }
-  .erase { display: none; font-size: 0; max-height: 0; line-height: 0; padding: 0; }
-  .visibleMobile { display: block !important; }
-  .hiddenMobile { display: none !important; }
-  }
-</style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Order confirmation</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="viewport" content="width=device-width; initial-scale=1.0;" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice</title>
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --text-color: #1f2937;
+        --border-color: #e5e7eb;
+      }      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, sans-serif;
+        line-height: 1.5;
+        color: var(--text-color);
+        margin: 0;
+        padding: 2rem;
+        background: #f3f4f6;
+      }      .invoice-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+      }      .invoice-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+      }      .logo {
+        width: 150px;
+        height: auto;
+      }      .invoice-title {
+        text-align: right;
+      }      .invoice-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }      .table-container {
+        margin: 2rem 0;
+        overflow-x: auto;
+      }      table {
+        width: 100%;
+        border-collapse: collapse;
+      }      th {
+        background: #f9fafb;
+        text-align: left;
+        padding: 0.75rem;
+        font-weight: 600;
+      }      td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+      }      .totals {
+        margin-left: auto;
+        width: 300px;
+      }      .totals-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+      }      .grand-total {
+        font-weight: 600;
+        font-size: 1.125rem;
+        border-top: 2px solid var(--border-color);
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+      }      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.875rem;
+        color: #6b7280;
+      }      @media (max-width: 640px) {
+        body {
+          padding: 1rem;
+        }
+        .invoice-header {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .invoice-details {
+          grid-template-columns: 1fr;
+        }
+        .totals {
+          width: 100%;
+        }
+      }
+    </style>
   </head>
-
   <body>
-
-<!-- Header -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#e1e1e1">
-  <tr>
-    <td height="20"></td>
-  </tr>
-  <tr>
-    <td>
-      <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff" style="border-radius: 10px 10px 0 0;">
-        <tr class="hiddenMobile">
-          <td height="40"></td>
-        </tr>
-        <tr class="visibleMobile">
-          <td height="30"></td>
-        </tr>
-
-        <tr>
-          <td>
-            <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding">
-              <tbody>
-                <tr>
-                  <td>
-                    <table width="220" border="0" cellpadding="0" cellspacing="0" align="left" class="col">
-                      <tbody>
-                        <tr>
-                          <!-- <td align="left"> <img src="http://www.supah.it/dribbble/017/logo.png" width="32" height="32" alt="logo" border="0" /></td> -->
-                          <td align="left"> <img src="https://avatars.githubusercontent.com/u/18661062?s=200&v=4" width="32" height="32" alt="logo" border="0" /></td>
-                        </tr>
-                        <tr class="hiddenMobile">
-                          <td height="40"></td>
-                        </tr>
-                        <tr class="visibleMobile">
-                          <td height="20"></td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 12px; color: #5b5b5b; font-family: 'Open Sans', sans-serif; line-height: 18px; vertical-align: top; text-align: left;">
-                            <!-- Hello, Philip Brooks. -->
-                            <!-- <br> Thank you for using our network. -->
-                            Hello, {{ .RawReport.Customer.Name }}.
-                            <br> Thank you for using our network.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <table width="220" border="0" cellpadding="0" cellspacing="0" align="right" class="col">
-                      <tbody>
-                        <tr class="visibleMobile">
-                          <td height="20"></td>
-                        </tr>
-                        <tr>
-                          <td height="5"></td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 21px; color: #22ccd4; letter-spacing: -1px; font-family: 'Open Sans', sans-serif; line-height: 1; vertical-align: top; text-align: right;">
-                            Invoice
-                          </td>
-                        </tr>
-                        <tr>
-                        <tr class="hiddenMobile">
-                          <td height="50"></td>
-                        </tr>
-                        <tr class="visibleMobile">
-                          <td height="20"></td>
-                        </tr>
-                        <tr>
-                          <td style="font-size: 12px; color: #5b5b5b; font-family: 'Open Sans', sans-serif; line-height: 18px; vertical-align: top; text-align: right;">
-                            <!-- <small>BILL</small> #800000025<br /> -->
-                            <!-- <small>MARCH 4TH 2016</small> -->
-                            <small>{{ .RawReport.IssuingDate }}</small>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-<!-- /Header -->
-<!-- Order Details -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#e1e1e1">
-  <tbody>
-    <tr>
-      <td>
-        <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
+    <div class="invoice-container">
+      <div class="invoice-header">
+        <div class="company">
+        <svg width="120" height="37" viewBox="0 0 120 37" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M41.9606 27.561C41.0591 26.5685 40.6089 25.1791 40.6089 23.3928V16.4086C40.6089 16.2251 40.6671 16.0749 40.7841 15.9579C40.9006 15.8419 41.0508 15.7832 41.2348 15.7832H44.364C44.5475 15.7832 44.7017 15.8419 44.827 15.9579C44.9523 16.0749 45.0149 16.2251 45.0149 16.4086V23.2425C45.0149 24.8786 45.7407 25.6959 47.1927 25.6959C47.8935 25.6959 48.4446 25.4796 48.8449 25.045C49.2452 24.6114 49.4459 24.0109 49.4459 23.2425V16.4086C49.4459 16.2251 49.5085 16.0749 49.6338 15.9579C49.7591 15.8419 49.9049 15.7832 50.0718 15.7832H53.201C53.3845 15.7832 53.5348 15.8419 53.6517 15.9579C53.7682 16.0749 53.8269 16.2251 53.8269 16.4086V28.1742C53.8269 28.3411 53.7682 28.4869 53.6517 28.6122C53.5348 28.7375 53.3845 28.8001 53.201 28.8001H50.2974C50.1305 28.8001 49.9842 28.7375 49.8594 28.6122C49.7341 28.4869 49.6715 28.3411 49.6715 28.1742V27.2228C48.8038 28.4414 47.4183 29.0502 45.516 29.0502C44.0464 29.0507 42.8621 28.5544 41.9606 27.561Z" fill="#00D3EB"/>
+        <path d="M56.7763 28.56C56.651 28.4347 56.5889 28.2889 56.5889 28.122V11.6001C56.5889 11.417 56.651 11.2663 56.7763 11.1498C56.9016 11.0333 57.0474 10.9746 57.2143 10.9746H60.1184C60.3019 10.9746 60.4521 11.0333 60.5691 11.1498C60.6856 11.2663 60.7443 11.417 60.7443 11.6001V19.9863L64.2239 16.1563C64.2572 16.1235 64.3198 16.0648 64.4113 15.9816C64.5028 15.8979 64.5993 15.8353 64.6991 15.7937C64.7989 15.7521 64.9159 15.731 65.0495 15.731H68.4038C68.5541 15.731 68.6828 15.7854 68.7914 15.8935C68.9 16.0026 68.9544 16.1314 68.9544 16.2816C68.9544 16.4656 68.8873 16.607 68.7542 16.7069L64.2484 21.5636L69.3801 27.7966C69.5133 27.9302 69.5803 28.055 69.5803 28.1719C69.5803 28.3393 69.526 28.4768 69.4173 28.5855C69.3087 28.6941 69.1712 28.7479 69.0043 28.7479H65.5746C65.3578 28.7479 65.1949 28.7147 65.0867 28.6476C64.9781 28.5811 64.8489 28.4729 64.6986 28.3227L60.7433 23.5662V28.1225C60.7433 28.2894 60.6846 28.4352 60.5681 28.5605C60.4512 28.6858 60.3009 28.7484 60.1174 28.7484H57.2133C57.0474 28.7474 56.9016 28.6853 56.7763 28.56Z" fill="#00D3EB"/>
+        <path d="M71.8353 28.5188C71.1096 28.1772 70.5419 27.7099 70.1332 27.1172C69.7241 26.525 69.52 25.8698 69.52 25.1518C69.52 24.0003 69.9913 23.0743 70.9344 22.373C71.8769 21.6722 73.1748 21.1882 74.827 20.9215L77.9562 20.4453V20.0949C77.9562 19.4606 77.8226 18.9933 77.5559 18.6933C77.2887 18.3928 76.8379 18.2425 76.2042 18.2425C75.82 18.2425 75.5034 18.3096 75.2528 18.4427C75.0027 18.5763 74.7433 18.7598 74.4771 18.9933C74.2432 19.1934 74.068 19.3275 73.9515 19.3936C73.9016 19.5272 73.8096 19.5942 73.6764 19.5942H70.9481C70.7812 19.5942 70.6432 19.5404 70.535 19.4313C70.4264 19.3226 70.3809 19.1934 70.3975 19.0432C70.4141 18.5925 70.6353 18.0923 71.0606 17.5417C71.4864 16.9907 72.1368 16.515 73.0133 16.1147C73.8893 15.7143 74.9699 15.5137 76.2551 15.5137C78.3076 15.5137 79.8262 15.9688 80.8108 16.8781C81.7955 17.7874 82.2878 19.0099 82.2878 20.5451V28.1552C82.2878 28.3221 82.2291 28.4679 82.1126 28.5932C81.9957 28.7185 81.8454 28.7812 81.6624 28.7812H78.7583C78.5914 28.7812 78.4456 28.7185 78.3203 28.5932C78.195 28.4679 78.1324 28.3221 78.1324 28.1552V27.2787C77.7653 27.7965 77.252 28.2179 76.5927 28.5428C75.933 28.8683 75.1534 29.0312 74.252 29.0312C73.3667 29.0322 72.5616 28.8609 71.8353 28.5188ZM77.2926 25.4273C77.7683 24.9272 78.0061 24.1931 78.0061 23.2246V22.8742L75.8782 23.25C74.3763 23.5172 73.6251 24.0424 73.6251 24.8269C73.6251 25.2448 73.8003 25.5742 74.1507 25.8159C74.5011 26.0582 74.9268 26.179 75.4275 26.179C76.1954 26.1786 76.8174 25.928 77.2926 25.4273Z" fill="#00D3EB"/>
+        <path d="M85.3798 28.6059C85.2628 28.4895 85.2046 28.3392 85.2046 28.1557V16.3902C85.2046 16.2067 85.2628 16.0564 85.3798 15.9394C85.4963 15.8235 85.6465 15.7647 85.83 15.7647H88.5589C88.7424 15.7647 88.8927 15.8235 89.0091 15.9394C89.1256 16.0564 89.1843 16.2067 89.1843 16.3902V17.2412C89.568 16.7406 90.0814 16.3275 90.724 16.0021C91.3661 15.6766 92.0884 15.5142 92.889 15.5142C94.7248 15.5142 95.9933 16.2321 96.6941 17.6665C97.0944 17.0328 97.6533 16.515 98.3712 16.1146C99.0882 15.7143 99.8561 15.5137 100.674 15.5137C102.042 15.5137 103.157 15.9766 104.016 16.9031C104.876 17.8295 105.305 19.2106 105.305 21.0458V28.1552C105.305 28.3221 105.247 28.4679 105.13 28.5932C105.013 28.7185 104.863 28.7811 104.68 28.7811H101.776C101.592 28.7811 101.438 28.7229 101.313 28.6059C101.188 28.4895 101.126 28.3392 101.126 28.1557V21.2215C101.126 20.3871 100.954 19.7861 100.612 19.419C100.27 19.052 99.8066 18.8685 99.2228 18.8685C98.6884 18.8685 98.2464 19.0559 97.896 19.4313C97.5456 19.8071 97.3704 20.4037 97.3704 21.221V28.1552C97.3704 28.3221 97.3117 28.4679 97.1952 28.5932C97.0783 28.7185 96.928 28.7811 96.7445 28.7811H93.8409C93.6574 28.7811 93.5067 28.7229 93.3902 28.6059C93.2732 28.4895 93.215 28.3392 93.215 28.1557V21.2215C93.215 20.4042 93.0354 19.8071 92.6766 19.4318C92.3174 19.0559 91.8628 18.869 91.3122 18.869C90.7778 18.869 90.3315 19.0564 89.9728 19.4318C89.614 19.8076 89.4344 20.3959 89.4344 21.1965V28.1557C89.4344 28.3226 89.3757 28.4684 89.2592 28.5937C89.1422 28.719 88.992 28.7816 88.8085 28.7816H85.8295C85.6465 28.7811 85.4963 28.7229 85.3798 28.6059Z" fill="#00D3EB"/>
+        <path d="M109.548 28.5188C108.822 28.1772 108.254 27.7099 107.846 27.1172C107.437 26.525 107.232 25.8698 107.232 25.1518C107.232 24.0003 107.704 23.0743 108.647 22.373C109.589 21.6722 110.887 21.1882 112.539 20.9215L115.669 20.4453V20.0949C115.669 19.4606 115.535 18.9933 115.268 18.6933C115.001 18.3928 114.55 18.2425 113.917 18.2425C113.532 18.2425 113.216 18.3096 112.965 18.4427C112.715 18.5763 112.456 18.7598 112.19 18.9933C111.956 19.1934 111.78 19.3275 111.664 19.3936C111.614 19.5272 111.522 19.5942 111.389 19.5942H108.66C108.494 19.5942 108.356 19.5404 108.247 19.4313C108.139 19.3226 108.093 19.1934 108.11 19.0432C108.127 18.5925 108.348 18.0923 108.773 17.5417C109.199 16.9907 109.849 16.515 110.726 16.1147C111.602 15.7143 112.682 15.5137 113.967 15.5137C116.02 15.5137 117.539 15.9688 118.523 16.8781C119.508 17.7874 120 19.0099 120 20.5451V28.1552C120 28.3221 119.942 28.4679 119.825 28.5932C119.708 28.7185 119.558 28.7812 119.375 28.7812H116.471C116.304 28.7812 116.158 28.7185 116.033 28.5932C115.907 28.4679 115.845 28.3221 115.845 28.1552V27.2787C115.478 27.7965 114.964 28.2179 114.305 28.5428C113.645 28.8683 112.866 29.0312 111.964 29.0312C111.079 29.0322 110.274 28.8609 109.548 28.5188ZM115.005 25.4273C115.481 24.9272 115.719 24.1931 115.719 23.2246V22.8742L113.591 23.25C112.089 23.5172 111.337 24.0424 111.337 24.8269C111.337 25.2448 111.513 25.5742 111.863 25.8159C112.213 26.0582 112.639 26.179 113.14 26.179C113.907 26.1786 114.529 25.928 115.005 25.4273Z" fill="#00D3EB"/>
+        <path d="M12.2911 18.8145V27.7063V28.0704H12.2877C12.2887 28.0934 12.2911 28.1164 12.2911 28.1399C12.2911 29.0785 11.5301 29.8395 10.5915 29.8395C9.6528 29.8395 8.8918 29.0785 8.8918 28.1399C8.8918 28.1164 8.89424 28.0939 8.89522 28.0704H8.89229V27.7063V18.8145L4.44614 23.2606L0 18.8145V27.7063V28.0704C0 32.9814 3.98122 36.9622 8.8918 36.9622H12.2906C17.2017 36.9622 21.1824 32.9809 21.1824 28.0704V27.7063V18.8145L16.7363 23.2606L12.2911 18.8145Z" fill="#00D3EB"/>
+        <path d="M2.80423 18.7285C3.31222 18.9306 3.86572 19.0427 4.44614 19.0427C5.02656 19.0427 5.58007 18.9306 6.08806 18.7285C7.6042 18.1256 8.71023 16.7132 8.87124 15.0243C8.88446 14.8833 8.89229 14.7409 8.89229 14.5965C8.89229 12.1413 6.90192 10.1504 4.44614 10.1504C1.99036 10.1504 0 12.1408 0 14.5965C0 14.7409 0.00734055 14.8833 0.0210436 15.0243C0.182054 16.7132 1.28808 18.1251 2.80423 18.7285Z" fill="#00D3EB"/>
+        <path d="M12.3809 14.5965C12.3809 14.7409 12.3882 14.8833 12.4019 15.0243C12.5629 16.7132 13.6689 18.1251 15.1851 18.7285C15.6931 18.9306 16.2466 19.0427 16.827 19.0427C17.4069 19.0427 17.9609 18.9306 18.4689 18.7285C19.9851 18.1256 21.0911 16.7132 21.2521 15.0243C21.2653 14.8833 21.2731 14.7409 21.2731 14.5965C21.2731 12.1413 19.2828 10.1504 16.827 10.1504C14.3712 10.1504 12.3809 12.1408 12.3809 14.5965Z" fill="#00D3EB"/>
+        <path d="M13.8291 9.43097C15.5654 7.69466 15.5654 4.87955 13.8291 3.14325C12.0928 1.40694 9.27764 1.40694 7.54133 3.14325C5.80502 4.87955 5.80502 7.69466 7.54133 9.43097C9.27764 11.1673 12.0928 11.1673 13.8291 9.43097Z" fill="#00D3EB"/>
+        </svg>
+          <div>Ukama Inc.</div>
+        </div>
+        <div class="invoice-title">
+          <h1>INVOICE</h1>
+          <div>Invoice #: {{ .RawReport.Number }}</div>
+          <div>Date: {{ .RawReport.IssuingDate }}</div>
+        </div>
+      </div>      <div class="invoice-details">
+        <div class="bill-to">
+          <h3>Bill To</h3>
+          <div>{{ .RawReport.Customer.Name }}</div>
+          <div>{{ .RawReport.Customer.AddressLine1 }}</div>
+          <div>
+            {{if .RawReport.Customer.City}}
+              {{ .RawReport.Customer.City }} 
+            {{end}}
+            {{ if .RawReport.Customer.State }}
+                , {{ .RawReport.Customer.State }} {{ .RawReport.Customer.ZipCode }}
+            {{end}}
+          </div>
+          <div>{{ .RawReport.Customer.Country }}</div>
+          <div>Phone: {{ .RawReport.Customer.Phone }}</div>
+        </div>
+        {{ if .IsPaid  }}
+        <div class="payment-info">
+          <h3>Payment Information</h3>
+          <div>Method: Credit Card</div>
+          <div>Type: Visa</div>
+          {{/*
+          <div>Transaction ID: {{ .TransactionId }}</div>
+          */}}
+        </div>
+        {{ end }}
+      </div>      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>SKU</th>
+              <th>Units</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
           <tbody>
+            {{ range .RawReport.Fees }}
             <tr>
-            <tr class="hiddenMobile">
-              <td height="60"></td>
-            </tr>
-            <tr class="visibleMobile">
-              <td height="40"></td>
-            </tr>
-            <tr>
-              <td>
-                <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding">
-                  <tbody>
-                    <tr>
-                      <th style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; font-weight: normal; line-height: 1; vertical-align: top; padding: 0 10px 7px 0;" width="52%" align="left">
-                        Sim (for now PackageId)
-                      </th>
-                      <th style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; font-weight: normal; line-height: 1; vertical-align: top; padding: 0 0 7px;" align="left">
-                        <small>SKU</small>
-                      </th>
-                      <th style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; font-weight: normal; line-height: 1; vertical-align: top; padding: 0 0 7px;" align="center">
-                        Bytes Used
-                      </th>
-                      <th style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #1e2b33; font-weight: normal; line-height: 1; vertical-align: top; padding: 0 0 7px;" align="right">
-                        Subtotal
-                      </th>
-                    </tr>
-
-                    <tr>
-                      <td height="1" style="background: #bebebe;" colspan="4"></td>
-                    </tr>
-                    <tr>
-                      <td height="10" colspan="4"></td>
-                    </tr>
-
-                    {{ range .RawReport.Fees  }}
-                    <!-- <tr> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #22ccd4;  line-height: 18px;  vertical-align: top; padding:10px 0;" class="article"> -->
-                        <!-- Beats Studio Over-Ear Headphones -->
-                      <!-- </td> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e;  line-height: 18px;  vertical-align: top; padding:10px 0;"><small>MH792AM/A</small></td> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e;  line-height: 18px;  vertical-align: top; padding:10px 0;" align="center">1</td> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #1e2b33;  line-height: 18px;  vertical-align: top; padding:10px 0;" align="right">$299.95</td> -->
-                    <!-- </tr> -->
-                    <!-- <tr> -->
-                      <!-- <td height="1" colspan="4" style="border-bottom:1px solid #e4e4e4"></td> -->
-                    <!-- </tr> -->
-
-                    <tr>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #22ccd4;  line-height: 18px;  vertical-align: top; padding:10px 0;" class="article">
-                        {{ .Item.Code }}
-                      </td>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e;  line-height: 18px;  vertical-align: top; padding:10px 0;"><small>MHDV2G/A</small></td>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e;  line-height: 18px;  vertical-align: top; padding:10px 0;" align="center">{{ .Units }}</td>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #1e2b33;  line-height: 18px;  vertical-align: top; padding:10px 0;" align="right">{{ .TotalAmountCurrency }} {{ .TotalAmountCents }}</td>
-                    </tr>
-                    <tr>
-                      <td height="1" colspan="4" style="border-bottom:1px solid #e4e4e4"></td>
-                    </tr>
-
-                    {{ end }}
-
-                  </tbody>
-                </table>
+              <td>{{ .Item.Name }}</td>
+              <td>{{ .Item.Code }}</td>
+              <td>{{ .Units }}</td>
+              <td class="text-right">
+                {{ .TotalAmountCurrency }} {{ formatAmount .AmountCents }}
               </td>
             </tr>
-            <tr>
-              <td height="20"></td>
-            </tr>
+            {{ end }}
           </tbody>
         </table>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<!-- /Order Details -->
-<!-- Total -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#e1e1e1">
-  <tbody>
-    <tr>
-      <td>
-        <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
-          <tbody>
-            <tr>
-              <td>
-
-                <!-- Table Total -->
-                <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding">
-                  <tbody>
-                    <!-- <tr> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e; line-height: 22px; vertical-align: top; text-align:right; "> -->
-                        <!-- Subtotal -->
-                      <!-- </td> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e; line-height: 22px; vertical-align: top; text-align:right; white-space:nowrap;" width="80"> -->
-                        <!-- $329.90 -->
-                      <!-- </td> -->
-                    <!-- </tr> -->
-
-                    <!-- <tr> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e; line-height: 22px; vertical-align: top; text-align:right; "> -->
-                        <!-- Fixed Fees &amp; Others -->
-                      <!-- </td> -->
-                      <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #646a6e; line-height: 22px; vertical-align: top; text-align:right; "> -->
-                        <!-- $00.00 -->
-                      <!-- </td> -->
-                    <!-- </tr> -->
-
-                    <tr>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #000; line-height: 22px; vertical-align: top; text-align:right; ">
-                        <strong>Grand Total (Incl.Tax)</strong>
-                      </td>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #000; line-height: 22px; vertical-align: top; text-align:right; ">
-                        <!-- <strong>$344.90</strong> -->
-                        <strong>{{ .RawReport.Currency }} {{ .RawReport.TotalAmountCents }}</strong>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #b0b0b0; line-height: 22px; vertical-align: top; text-align:right; "><small>TAX</small></td>
-                      <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #b0b0b0; line-height: 22px; vertical-align: top; text-align:right; ">
-                        <!-- <small>$72.40</small> -->
-                        <small>{{ .RawReport.VatAmountCurrency }} {{ .RawReport.VatAmountCents }}</small>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-                <!-- /Table Total -->
-
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<!-- /Total -->
-<!-- Information -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#e1e1e1">
-  <tbody>
-    <tr>
-      <td>
-        <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff">
-          <tbody>
-            <tr>
-            <tr class="hiddenMobile">
-              <td height="60"></td>
-            </tr>
-            <tr class="visibleMobile">
-              <td height="40"></td>
-            </tr>
-            <tr>
-              <td>
-                <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding">
-                  <tbody>
-                    <tr>
-                      <td>
-                        <table width="220" border="0" cellpadding="0" cellspacing="0" align="left" class="col">
-
-                          <tbody>
-                            <tr>
-                              <td style="font-size: 11px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 1; vertical-align: top; ">
-                                <strong>BILLING INFORMATION</strong>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td width="100%" height="10"></td>
-                            </tr>
-                            <tr>
-                              <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">
-                                <!-- Philip Brooks<br> Public Wales, Somewhere<br> New York NY<br> 4468, United States<br> T: 202-555-0133 -->
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-
-
-                        {{ if (eq .RawReport.PaymentStatus "succeeded") }}
-                        <table width="220" border="0" cellpadding="0" cellspacing="0" align="right" class="col">
-                          <tbody>
-                            <tr class="visibleMobile">
-                              <td height="20"></td>
-                            </tr>
-                            <tr>
-                              <td style="font-size: 11px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 1; vertical-align: top; ">
-                                <strong>PAYMENT METHOD</strong>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td width="100%" height="10"></td>
-                            </tr>
-                            <tr>
-                              <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; ">
-                                Credit Card<br> Credit Card Type: Visa<br> Worldpay Transaction ID: <a href="#" style="color: #22ccd4; text-decoration:underline;">4185939336</a><br>
-                                <a href="#" style="color:#b0b0b0;">Right of Withdrawal</a>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        {{ end }}
-
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </td>
-            </tr>
-
-            <!-- <tr> -->
-              <!-- <td> -->
-                <!-- <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding"> -->
-                  <!-- <tbody> -->
-                    <!-- <tr> -->
-                      <!-- <td> -->
-                        <!-- <table width="220" border="0" cellpadding="0" cellspacing="0" align="left" class="col"> -->
-                          <!-- <tbody> -->
-                            <!-- <tr class="hiddenMobile"> -->
-                              <!-- <td height="35"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr class="visibleMobile"> -->
-                              <!-- <td height="20"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td style="font-size: 11px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 1; vertical-align: top; "> -->
-                                <!-- <strong>SHIPPING INFORMATION</strong> -->
-                              <!-- </td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td width="100%" height="10"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; "> -->
-                                <!-- Sup Inc<br> Another Place, Somewhere<br> New York NY<br> 4468, United States<br> T: 202-555-0171 -->
-                              <!-- </td> -->
-                            <!-- </tr> -->
-                          <!-- </tbody> -->
-                        <!-- </table> -->
-
-
-                        <!-- <table width="220" border="0" cellpadding="0" cellspacing="0" align="right" class="col"> -->
-                          <!-- <tbody> -->
-                            <!-- <tr class="hiddenMobile"> -->
-                              <!-- <td height="35"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr class="visibleMobile"> -->
-                              <!-- <td height="20"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td style="font-size: 11px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 1; vertical-align: top; "> -->
-                                <!-- <strong>SHIPPING METHOD</strong> -->
-                              <!-- </td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td width="100%" height="10"></td> -->
-                            <!-- </tr> -->
-                            <!-- <tr> -->
-                              <!-- <td style="font-size: 12px; font-family: 'Open Sans', sans-serif; color: #5b5b5b; line-height: 20px; vertical-align: top; "> -->
-                                <!-- UPS: U.S. Shipping Services -->
-                              <!-- </td> -->
-                            <!-- </tr> -->
-                          <!-- </tbody> -->
-                        <!-- </table> -->
-                      <!-- </td> -->
-                    <!-- </tr> -->
-                  <!-- </tbody> -->
-                <!-- </table> -->
-              <!-- </td> -->
-            <!-- </tr> -->
-
-            <tr class="hiddenMobile">
-              <td height="60"></td>
-            </tr>
-            <tr class="visibleMobile">
-              <td height="30"></td>
-            </tr>
-          </tbody>
-        </table>
-      </td>
-    </tr>
-  </tbody>
-</table>
-<!-- /Information -->
-<table width="100%" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#e1e1e1">
-
-  <tr>
-    <td>
-      <table width="600" border="0" cellpadding="0" cellspacing="0" align="center" class="fullTable" bgcolor="#ffffff" style="border-radius: 0 0 10px 10px;">
-        <tr>
-          <td>
-            <table width="480" border="0" cellpadding="0" cellspacing="0" align="center" class="fullPadding">
-              <tbody>
-                <tr>
-                  <td style="font-size: 12px; color: #5b5b5b; font-family: 'Open Sans', sans-serif; line-height: 18px; vertical-align: top; text-align: left;">
-                    Have a nice day.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-        <tr class="spacer">
-          <td height="50"></td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td height="20"></td>
-  </tr>
-</table>
-
+      </div>      <div class="totals">
+        <div class="totals-row">
+          <span>Subtotal</span>
+          <span>{{ .RawReport.Currency }} {{formatAmount  .RawReport.SubTotalExcludingTaxesAmountCents }}</span>
+        </div>
+        <div class="totals-row">
+          <span>Tax</span>
+          <span>{{ .RawReport.Currency }} {{formatAmount  .RawReport.TaxesAmountCents }}</span>
+        </div>
+        <div class="totals-row grand-total">
+          <span>Total</span>
+          <span>{{ .RawReport.Currency }} {{formatAmount  .RawReport.TotalAmountCents }}</span>
+        </div>
+      </div>      <div class="footer">
+        <p>Thank you for your business!</p>
+        {{/*
+        {{ if .PaymentTerms }}
+        <p>Payment Terms: {{ .PaymentTerms }}</p>
+        {{ end }}
+        */}}
+      </div>
+    </div>
   </body>
 </html>

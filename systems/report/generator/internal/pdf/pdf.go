@@ -15,14 +15,14 @@ import (
 	"html/template"
 	"io"
 	"os"
-
-	"github.com/mattn/go-slim"
+	"path"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/util/payments"
 )
 
 //go:embed templates
-var templates embed.FS
+var templatesFs embed.FS
 
 const pdfDPI = 300
 
@@ -44,36 +44,15 @@ func NewPDFObject(body string, engine PdfEngine) *PdfObject {
 }
 
 func (p *PdfObject) ParseTemplate(templateFileName string, data interface{}) error {
-	t, err := template.ParseFS(templates, templateFileName)
+	t, err := template.New(path.Base(templateFileName)).Funcs(template.FuncMap{
+		"formatAmount": payments.ToAmount,
+	}).ParseFS(templatesFs, templateFileName)
 	if err != nil {
 		return err
 	}
 
 	buf := new(bytes.Buffer)
 	if err = t.Execute(buf, data); err != nil {
-		return err
-	}
-
-	p.body = buf.String()
-
-	return nil
-}
-
-func (p *PdfObject) ParseSlimTemplate(templateFileName string, data interface{}) error {
-	templateFile, err := templates.Open(templateFileName)
-	if err != nil {
-		return err
-	}
-
-	defer templateFile.Close()
-
-	t, err := slim.Parse(templateFile)
-	if err != nil {
-		return err
-	}
-
-	buf := new(bytes.Buffer)
-	if err = t.Execute(buf, slim.Values{"Invoice": data}); err != nil {
 		return err
 	}
 
