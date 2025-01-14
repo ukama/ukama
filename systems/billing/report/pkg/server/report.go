@@ -65,7 +65,7 @@ func NewReportServer(orgName, org string, reportRepo db.ReportRepo, subscriberCl
 func (r *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.ReportResponse, error) {
 	log.Infof("Unmarshalling raw report from webhook: %v", req.RawReport)
 
-	rwInvoceStruct := &util.RawInvoice{}
+	rwInvoceStruct := &util.RawReport{}
 
 	err := json.Unmarshal([]byte(req.RawReport), rwInvoceStruct)
 	if err != nil {
@@ -237,7 +237,7 @@ func (r *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 }
 
 func (r *ReportServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.ReportResponse, error) {
-	report, err := update(req.ReportId, req.IsPaid, r.reportRepo, r.msgBus, r.baseRoutingKey)
+	report, err := update(req.ReportId, req.IsPaid, req.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
 
 	if err != nil {
 		return nil, err
@@ -273,7 +273,7 @@ func (r *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.D
 	return &pb.DeleteResponse{}, nil
 }
 
-func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.MsgBusServiceClient,
+func update(reportId string, isPaid bool, transactionId string, reportRepo db.ReportRepo, msgBus mb.MsgBusServiceClient,
 	baseRoutingKey msgbus.RoutingKeyBuilder) (*db.Report, error) {
 
 	log.Infof("Updating report: %v", reportId)
@@ -290,6 +290,7 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 	}
 
 	report.IsPaid = isPaid
+	report.TransactionId = transactionId
 
 	err = reportRepo.Update(report, nil)
 	if err != nil {
@@ -313,15 +314,16 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 	}
 
 	evt := &epb.Report{
-		Id:        report.Id.String(),
-		OwnerId:   report.OwnerId.String(),
-		OwnerType: report.OwnerType.String(),
-		NetworkId: report.NetworkId.String(),
-		Type:      report.Type.String(),
-		Period:    report.Period.Format(time.RFC3339),
-		RawReport: val,
-		IsPaid:    report.IsPaid,
-		CreatedAt: report.CreatedAt.Format(time.RFC3339),
+		Id:            report.Id.String(),
+		OwnerId:       report.OwnerId.String(),
+		OwnerType:     report.OwnerType.String(),
+		NetworkId:     report.NetworkId.String(),
+		Type:          report.Type.String(),
+		Period:        report.Period.Format(time.RFC3339),
+		RawReport:     val,
+		IsPaid:        report.IsPaid,
+		TransactionId: report.TransactionId,
+		CreatedAt:     report.CreatedAt.Format(time.RFC3339),
 	}
 
 	err = msgBus.PublishRequest(route, evt)
@@ -335,14 +337,15 @@ func update(reportId string, isPaid bool, reportRepo db.ReportRepo, msgBus mb.Ms
 
 func dbReportToPbReport(report *db.Report) *pb.Report {
 	inv := &pb.Report{
-		Id:        report.Id.String(),
-		OwnerId:   report.OwnerId.String(),
-		OwnerType: report.OwnerType.String(),
-		NetworkId: report.NetworkId.String(),
-		Type:      report.Type.String(),
-		Period:    report.Period.String(),
-		IsPaid:    report.IsPaid,
-		CreatedAt: report.CreatedAt.String(),
+		Id:            report.Id.String(),
+		OwnerId:       report.OwnerId.String(),
+		OwnerType:     report.OwnerType.String(),
+		NetworkId:     report.NetworkId.String(),
+		Type:          report.Type.String(),
+		Period:        report.Period.String(),
+		IsPaid:        report.IsPaid,
+		TransactionId: report.TransactionId,
+		CreatedAt:     report.CreatedAt.String(),
 	}
 
 	if report.NetworkId != uuid.Nil {
