@@ -77,8 +77,7 @@ func NewRouterConfig(svcConf *internal.Config) *RouterConfig {
 func (rt *Router) Run() {
 	log.Info("Listening on port ", rt.config.serverConf.Port)
 
-	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
-	if err != nil {
+	if err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port)); err != nil {
 		panic(err)
 	}
 }

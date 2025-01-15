@@ -10,5 +10,4 @@ package rest
 
 type GetReportRequest struct {
 	ReportId string `example:"{{ReportUUID}}" path:"report_id" validate:"required"`
-	AsPdf    bool   `form:"as_pdf" json:"as_pdf" query:"as_pdf" binding:"required"`
 }

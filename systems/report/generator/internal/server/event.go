@@ -53,7 +53,8 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.invoice.generate"):
+	case msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.invoice.generate"),
+		msgbus.PrepareRoute(g.orgName, "event.cloud.local.{{ .Org}}.billing.report.invoice.update"):
 		msg, err := unmarshalInvoiceGenerateEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -93,6 +94,8 @@ func unmarshalInvoiceGenerateEvent(msg *anypb.Any) (*epb.Report, error) {
 }
 
 func (g *GeneratorEventServer) GeneratePDF(data any, templatePath, outputPath string) error {
+	log.Info("Generating new PDF... ")
+
 	pdf := pdf.NewPDFObject("", g.pdfEngine)
 
 	err := pdf.ParseTemplate(templatePath, data)

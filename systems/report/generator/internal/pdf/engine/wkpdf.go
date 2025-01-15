@@ -31,6 +31,7 @@ func NewWkGenerator() (*WkGenerator, error) {
 }
 
 func (w *WkGenerator) Configure(tmpFile io.ReadWriteCloser, dpi uint) error {
+	w.pdfGen.ResetPages()
 	w.pdfGen.AddPage(wk.NewPageReader(tmpFile))
 	w.pdfGen.PageSize.Set(wk.PageSizeA4)
 	w.pdfGen.Dpi.Set(dpi)

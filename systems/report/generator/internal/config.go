@@ -45,6 +45,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
+				"event.cloud.local.{{ .Org}}.billing.report.invoice.update",
 			},
 		},
 	}
