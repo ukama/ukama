@@ -13,10 +13,10 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
+
  # Billing System
 
- billing:
-  container_name: billing-api-gateway
+ api-gateway-billing:
   build: ./api-gateway
   ports:
    - 8680:8080
@@ -94,7 +94,7 @@ services:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_SYSTEM_NAME=billing
    - ENV_DNS_REFRESH_TIME_PERIOD=30
-   - ENV_SYSTEM_DNS=billing-api-gateway
+   - ENV_SYSTEM_DNS=api-gateway-billing
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
