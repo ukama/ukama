@@ -233,6 +233,8 @@ const getSystemNameByService = (service: string): string => {
       return "init";
     case "billing":
       return "billing";
+    case "payments":
+      return "payments";
     case "metrics":
       return "metrics";
     case "planning-tool":
@@ -309,6 +311,13 @@ const eventKeyToAction = (
         title: "Configure node",
         action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
       };
+
+    case "EventInvoiceGenerate":
+      return {
+        title: "Ukama bill ready. View now.",
+        action: `${CONSOLE_APP_URL}/manage/billing`,
+      };
+
     default:
       return { title: "Network Updated", action: "updated" };
   }

@@ -16,12 +16,12 @@ CUR_BUILD_DIRNAME = $(notdir $(patsubst %/,%,$(CURPATH)))
 NODES_DIR = $(shell echo $(CURPATH) | sed 's|\(.*nodes\)/.*|\1|')
 UKAMAOS_ROOT = $(NODES_DIR)/ukamaOS
 
-#OS
 OS = $(shell uname -s)
 NPROCS = 1
 ifeq ($(OS), Linux)
         NPROCS = $(shell grep -c ^processor /proc/cpuinfo)
 endif
+export NPROCS
 
 # Build system
 BUILD = x86_64-unknown-linux-gnu
@@ -30,19 +30,19 @@ BUILD = x86_64-unknown-linux-gnu
 ARCH_ARM    = arm
 ARCH_X86    = x86
 ARCH_X86_64 = x86_64
+ARCH_ARM64  = aarch64
 
-#if variables are not defined
-#amplifier Node
-override ANODEBOARD = anode
-override CNODEBOARD = cnode
-override HNODEBOARD = hnode
-override LOCAL  = linux
+override AMPLIFIER_NODE = amplifier
+override TOWER_NODE     = tower
+override ACCESS_NODE    = access
+override LOCAL          = linux
 
-#TARGET
 ifndef TARGET
-	override TARGETBOARD = ANODEBOARD
+	override TARGET_BOARD = LOCAL
+	export TARGET=$(LOCAL)
 else
-	override TARGETBOARD = $(TARGET)
+	override TARGET_BOARD = $(TARGET)
+	export TARGET
 endif
 
 # Setup paths for configs
@@ -52,9 +52,7 @@ NODE_APP_CONFIG_DIR = /conf
 # Setup paths for apps
 NODE_APP_DIR = /sbin/
 
-# Setup various compilier and linker options for various targets.
-
-ifeq ($(ANODEBOARD), $(TARGETBOARD))
+ifeq ($(AMPLIFIER_NODE), $(TARGET_BOARD))
 	override CC     = arm-linux-gnueabihf-gcc
 	override ARCH   = $(ARCH_ARM)
 	XCROSS_COMPILER = arm-linux-gnueabihf-
@@ -66,8 +64,8 @@ ifeq ($(ANODEBOARD), $(TARGETBOARD))
 	XGCCPATH        = /usr/bin/
 endif
 
-ifeq ($(CNODEBOARD), $(TARGETBOARD))
-	override CC     =
+ifeq ($(TOWER_NODE), $(TARGET_BOARD))
+	override CC     = x86_64-linux-musl-gcc
 	override ARCH   = $(ARCH_X86_64)
 	XCROSS_COMPILER = x86_64-linux-musl-
 	XGCC            = $(XCROSS_COMPILER)gcc
@@ -77,7 +75,20 @@ ifeq ($(CNODEBOARD), $(TARGETBOARD))
 	OPENSSLTARGET   = linux-generic64
 endif
 
-ifeq ($(LOCAL), $(TARGETBOARD))
+ifeq ($(ACCESS_NODE), $(TARGET_BOARD))
+	override CC     = aarch64-linux-gnu-gcc
+	override ARCH   = $(ARCH_ARM64)
+
+	XCROSS_COMPILER = aarch64-linux-gnu-gcc
+	XGCC            = aarch64-linux-gnu-gcc
+	XLD             = aarch64-linux-gnu-ld
+	XGXX            = aarch64-linux-gnu-g++
+	HOST            = aarch64-linux-gnu
+	OPENSSLTARGET   = linux-aarch64
+	XGCCPATH        = /usr/bin/
+endif
+
+ifeq ($(LOCAL), $(TARGET_BOARD))
 	override CC     = gcc
 	override ARCH   = $(ARCH_X86_64)
 	XGCC            = gcc

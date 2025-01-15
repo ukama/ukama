@@ -160,11 +160,14 @@ sort_systems_by_dependency() {
             "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            "subscriber")
+            "billing")
                 SYSTEMS+=("9 $key")
                 ;;
-            *)
+            "subscriber")
                 SYSTEMS+=("10 $key")
+                ;;
+            *)
+                SYSTEMS+=("11 $key")
                 ;;
         esac
     done
@@ -250,10 +253,39 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         cd ../../systems
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
+        echo "$TAG Current directory before billing setup: $(pwd)"
+        
+        # First, run the billing provider script
         cd ./billing/provider
+        echo "$TAG Running billing provider in: $(pwd)"
+        export COMPOSE_PROJECT_NAME="billing-provider"
         chmod +x start_provider.sh
         ./start_provider.sh
         cd ../..
+        
+        # Navigate to payments system and run deployment
+        echo "$TAG Setting up payments system..."
+        cd ../../payments/builder-script
+        export COMPOSE_PROJECT_NAME="payments"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+
+        # Navigate to webhooks system and run deployment
+        echo "$TAG Setting up webhooks system..."
+        cd ../../webhooks/builder-script
+        export COMPOSE_PROJECT_NAME="webhooks"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+        
+        # Now enter the testing and hooks setup
+        echo "$TAG Setting up hooks..."
+        cd ../../ukama/testing/services/hooks
+        export COMPOSE_PROJECT_NAME="hooks"
+        docker-compose up -d
+        cd ../../../../ukama/systems
+
+        export COMPOSE_PROJECT_NAME="billing"
+        echo "$TAG Returned to systems directory: $(pwd)"
     fi
     
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
@@ -327,7 +359,6 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
     SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
 fi
-
 
 echo "$TAG Registering systems URL in lookup db..."
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"

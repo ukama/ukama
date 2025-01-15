@@ -218,6 +218,7 @@ export type TEnv = {
   AUTH_APP_URL: string;
   MAP_BOX_TOKEN: string;
   METRIC_WEBSOCKET_URL: string;
+  STRIPE_PK: string;
 };
 
 interface NotificationSubscription {
