@@ -171,6 +171,14 @@ export enum INVITATION_STATUS {
 registerEnumType(INVITATION_STATUS, {
   name: "INVITATION_STATUS",
 });
+export enum PAYMENT_ITEM_TYPE {
+  UNKNOWN = "unknown",
+  PACKAGE = "package",
+  INVOICE = "invoice",
+}
+registerEnumType(PAYMENT_ITEM_TYPE, {
+  name: "PAYMENT_ITEM_TYPE",
+});
 
 export enum COMPONENT_TYPE {
   ALL = "ALL",

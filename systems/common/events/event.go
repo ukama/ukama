@@ -110,7 +110,7 @@ var EventRoutingKey = [...]string{
 	EventMarkupDelete:       "event.cloud.local.{{ .Org}}.dataplan.rate.markup.delete",
 	EventComponentsSync:     "event.cloud.local.{{ .Org}}.inventory.component.components.sync",
 	EventAccountingSync:     "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync",
-	EventInvoiceGenerate:    "event.cloud.local.{{ .Org}}.billing.invoice.invoice.generate",
+	EventInvoiceGenerate:    "event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
 	EventInvoiceDelete:      "event.cloud.local.{{ .Org}}.billing.invoice.invoice.delete",
 	EventHealthCappStore:    "event.cloud.local.{{ .Org}}.node.health.capps.store",
 	EventNotificationDelete: "event.cloud.local.{{ .Org}}.notification.notify.notification.delete",
@@ -438,7 +438,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Invoice Generated",
 		Description: "Invoice Generated",
 		Scope:       notif.SCOPE_ORG,
-		Type:        TypeDefault,
+		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},
 	EventInvoiceDelete: {
 		Key:         EventInvoiceDelete,
