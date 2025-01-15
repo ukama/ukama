@@ -55,7 +55,6 @@ while getopts "b" opt; do
     esac
 done
 
-
 function set_env() {
     export OWNERID=$OWNERID
     export OWNERAUTHID=$OWNERAUTHID
@@ -68,7 +67,6 @@ function set_env() {
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
     export COMPONENT_ENVIRONMENT=test
-    export PROMETHEUS_HTTP_URL="http://${LOCAL_HOST_IP}:9079/v1/prometheus"
 }
 
 function run_docker_compose() {
