@@ -3,12 +3,14 @@
 fragment node on Node {
   id
   name
-  orgId
+  latitude
+  longitude
   type
   attached {
     id
     name
-    orgId
+    latitude
+    longitude
     type
     site {
       nodeId
@@ -33,14 +35,22 @@ fragment node on Node {
   }
 }
 
-query getNode($data: NodeInput!) {
+query GetNode($data: NodeInput!) {
   getNode(data: $data) {
     ...node
   }
 }
 
-query getNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
+query GetNodes {
+  getNodes {
+    nodes {
+      ...node
+    }
+  }
+}
+
+query GetNodesByState($data: GetNodesByStateInput!) {
+  getNodesByState(data: $data) {
     nodes {
       ...node
     }
@@ -117,26 +127,25 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
   }
 }
 
-query GetNodesLocation($data: NodesInput!) {
-  getNodesLocation(data: $data) {
-    networkId
+query GetNodesLocation {
+  getNodesLocation {
     nodes {
-      id
-      lat
-      lng
-      state
+      ...node
     }
   }
 }
 
-query GetNodeLocation($data: NodeInput!) {
-  getNodeLocation(data: $data) {
+query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
     id
-    lat
-    lng
-    state
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
   }
 }
+
 ### End Node ###
 
 ### Member Start ###
@@ -369,6 +378,214 @@ mutation updatePacakge($packageId: String!, $data: UpdatePackageInputDto!) {
 }
 
 ### Package End ###
+### Payment start ###
+
+fragment payment on PaymentDto {
+  id
+  itemId
+  itemType
+  amount
+  currency
+  paymentMethod
+  depositedAmount
+  paidAt
+  payerName
+  payerEmail
+  payerPhone
+  correspondent
+  country
+  description
+  status
+  failureReason
+  extra
+  createdAt
+}
+
+mutation AddPayment($data: AddPaymentInputDto!) {
+  addPayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+mutation UpdatePayment($data: UpdatePaymentInputDto!) {
+  updatePayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+mutation ProcessPayment($data: ProcessPaymentInputDto!) {
+  processPayment(data: $data) {
+    payment {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
+query GetPayment($paymentId: String!) {
+  getPayment(paymentId: $paymentId) {
+    ...payment
+  }
+}
+
+query GetPayments($data: GetPaymentsInputDto!) {
+  getPayments(data: $data) {
+    payments {
+      ...payment
+    }
+  }
+}
+
+### Payment end ###
+### Billing start ###
+# Fragments for reusable parts
+fragment customer on CustomerDto {
+  externalId
+  name
+  email
+  addressLine1
+  legalName
+  legalNumber
+  phone
+  currency
+  timezone
+  vatRate
+  createdAt
+}
+
+fragment subscription on SubscriptionDto {
+  externalCustomerId
+  externalId
+  planCode
+  name
+  status
+  createdAt
+  startedAt
+  canceledAt
+  terminatedAt
+}
+
+fragment fee on FeeDto {
+  taxesAmountCents
+  taxesPreciseAmount
+  totalAmountCents
+  totalAmountCurrency
+  eventsCount
+  units
+  item {
+    type
+    code
+    name
+  }
+}
+
+fragment rawReport on RawReportDto {
+  issuingDate
+  paymentDueDate
+  paymentOverdue
+  invoiceType
+  status
+  paymentStatus
+  feesAmountCents
+  taxesAmountCents
+  subTotalExcludingTaxesAmountCents
+  subTotalIncludingTaxesAmountCents
+  vatAmountCents
+  vatAmountCurrency
+  totalAmountCents
+  currency
+  fileUrl
+  customer {
+    ...customer
+  }
+  subscriptions {
+    ...subscription
+  }
+  fees {
+    ...fee
+  }
+}
+
+query GetReports($data: GetReportsInputDto!) {
+  getReports(data: $data) {
+    reports {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+
+query GetReport($id: String!) {
+  getReport(id: $id) {
+    report {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+### Billing end ###
 
 ### SimPool Start ###
 query GetSimPoolStats($data: GetSimPoolStatsInput!) {

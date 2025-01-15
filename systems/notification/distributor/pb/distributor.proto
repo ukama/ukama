@@ -41,12 +41,14 @@ message Notification {
     string id = 1;
     string title = 2;
     string description = 3;
-    ukama.common.v1.NotificationType type = 4;
-    ukama.common.v1.NotificationScope scope = 5;
-    string orgId = 6 [json_name = "org_id"];
-    string networkId = 7 [json_name = "network_id"];
-    string subscriberId = 8 [json_name = "subscriber_id"];
-    string userId = 9 [json_name = "user_id"];
-    bool isRead = 10 [json_name = "is_read"];
-    string createdAt = 11 [json_name = "created_at"];
+    bool isRead = 4 [json_name = "is_read"];
+    ukama.common.v1.NotificationType type = 5;
+    ukama.common.v1.NotificationScope scope = 6;
+    string eventKey = 7 [json_name = "event_key"];
+    string createdAt = 8 [json_name = "created_at"];
+    string resourceId = 9 [json_name = "resource_id"];
+    string orgId = 10 [json_name = "org_id"];
+    string userId = 11 [json_name = "user_id"];
+    string networkId = 12 [json_name = "network_id"];
+    string subscriberId = 13 [json_name = "subscriber_id"];
 }

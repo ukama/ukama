@@ -57,12 +57,12 @@ const getLatLng = (sites: any[], links: any[]): ILink[] => {
       const siteB = links[i].siteB;
       const locs: LatLngTuple[] = [];
       sites.forEach((site) => {
-        if (site.id === siteA ?? site.id === siteB) {
-          locs.push([
-            parseFloat(site.location.lat),
-            parseFloat(site.location.lng),
-          ]);
-        }
+        // if (site.id === siteA ?? site.id === siteB) {
+        //   locs.push([
+        //     parseFloat(site.location.lat),
+        //     parseFloat(site.location.lng),
+        //   ]);
+        // }
       });
       if (locs.length > 1)
         data.push({ id: `${siteA}*${siteB}*${links[i].id}`, latlng: locs });
@@ -224,10 +224,10 @@ const CustomMarker = ({
       {data.length > 0 &&
         markers.length > 0 &&
         data.map((item) => {
-          const color =
-            (linkSites.siteA === item.id ?? linkSites.siteB === item.id)
-              ? colors.secondaryMain
-              : colors.black38;
+          const color = colors.black38;
+          // (linkSites.siteA === item.id ?? linkSites.siteB === item.id)
+          //   ? colors.secondaryMain
+          //   : colors.black38;
           const m = markers.find((m) => m.id === item.location.id);
           const svgIcon = Leaflet.divIcon({
             html: `<svg class="MuiSvgIcon-root MuiSvgIcon-fontSizeMedium MuiBox-root css-uqopch" focusable="false" aria-hidden="true" viewBox="0 0 24 24" data-testid="LocationOnIcon" fill=${color}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>`,

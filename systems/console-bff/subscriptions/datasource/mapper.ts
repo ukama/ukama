@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
@@ -124,15 +125,19 @@ export const parsePromethRes = (
 export const parseNotification = (
   notification: NotificationsAPIResDto
 ): NotificationsResDto => {
-  return {
+  const n: NotificationsResDto = {
     id: notification.id,
     type: notification.type,
     scope: notification.scope,
     title: notification.title,
     isRead: notification.is_read,
+    eventKey: notification.event_key,
     createdAt: notification.created_at,
+    resourceId: notification.resource_id,
     description: notification.description,
   };
+  n.redirect = eventKeyToAction(notification.event_key, n);
+  return n;
 };
 
 export const parseNotificationsRes = (

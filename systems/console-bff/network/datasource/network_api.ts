@@ -42,7 +42,7 @@ class NetworkApi extends RESTDataSource {
   ): Promise<NetworkDto> => {
     this.logger.info(`AddNetwork [POST]: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
-    return this.post(`/${VERSION}/networks`, {
+    const res = await this.post(`/${VERSION}/networks`, {
       body: {
         allowed_countries: [],
         allowed_networks: [],
@@ -53,11 +53,12 @@ class NetworkApi extends RESTDataSource {
         traffic_policy: 0,
       },
     }).then(async res => {
-      if (req.isDefault) {
-        await this.setDefaultNetwork(baseURL, res.id);
-      }
       return dtoToNetworkDto(res);
     });
+    if (req.isDefault) {
+      await this.setDefaultNetwork(baseURL, res.id);
+    }
+    return res;
   };
 
   setDefaultNetwork = async (

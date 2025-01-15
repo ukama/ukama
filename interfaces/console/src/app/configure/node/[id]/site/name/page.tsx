@@ -10,14 +10,7 @@ import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
 import { SiteNameSchemaValidation } from '@/helpers/formValidators';
 import colors from '@/theme/colors';
-import {
-  Button,
-  Divider,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Button, Divider, Stack, TextField, Typography } from '@mui/material';
 import { FormikProvider, FormikValues, useFormik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
@@ -36,8 +29,6 @@ const SiteName = ({ params }: ISiteName) => {
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
   const address = searchParams.get('address') ?? '';
-  const flow = searchParams.get('flow') ?? 'onb';
-  const step = parseInt(searchParams.get('step') ?? '1');
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -54,55 +45,39 @@ const SiteName = ({ params }: ISiteName) => {
   ]);
 
   const handleBack = () => {
-    setQueryParam('step', (step - 1).toString());
     router.back();
   };
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const handleSubmit = (values: FormikValues) => {
-    const p = setQueryParam('step', (step + 1).toString());
     router.push(
-      `/configure/node/${id}/site/${values.name}/install?${p.toString()}`,
+      `/configure/node/${id}/site/${values.name}/install?${searchParams.toString()}`,
     );
   };
 
   return (
-    <Paper elevation={0} sx={{ px: { xs: 2, md: 4 }, py: { xs: 1, md: 2 } }}>
-      <Stack direction={'row'}>
-        <Typography variant="h6">{'Name site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-          }}
-        >
-          {flow === 'onb' && <i>&nbsp;- optional</i>}&nbsp;({step}/
-          {flow === 'onb' ? 6 : 4})
-        </Typography>
-      </Stack>
+    <Stack spacing={2} overflow={'scroll'}>
+      <Typography variant="h4" fontWeight={500}>
+        Name site
+      </Typography>
 
       <FormikProvider value={formik}>
         <form onSubmit={formik.handleSubmit}>
-          <Stack direction="column" mt={3} mb={3} spacing={2}>
-            <Typography variant="body1">
+          <Stack direction="column">
+            <Typography variant="body1" mb={4}>
               Please name your recently created site for ease of reference.
             </Typography>
 
-            <SiteMapComponent
-              posix={[latlng[0], latlng[1]]}
-              address={address}
-              height={'128px'}
-            />
+            <Stack spacing={1} mb={3}>
+              <SiteMapComponent
+                posix={[latlng[0], latlng[1]]}
+                address={address}
+                height={'128px'}
+              />
 
-            <LField label="Site Location" value={address} />
-            <Divider sx={{ marginBottom: '8px !important' }} />
+              <LField label="Site Location" value={address} />
+            </Stack>
+
+            <Divider sx={{ marginBottom: '16px !important' }} />
 
             <TextField
               fullWidth
@@ -121,7 +96,12 @@ const SiteName = ({ params }: ISiteName) => {
               helperText={formik.touched.name && formik.errors.name}
             />
           </Stack>
-          <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
+
+          <Stack
+            direction={'row'}
+            mt={{ xs: 4, md: 6 }}
+            justifyContent={'space-between'}
+          >
             <Button
               variant="text"
               onClick={handleBack}
@@ -135,7 +115,7 @@ const SiteName = ({ params }: ISiteName) => {
           </Stack>
         </form>
       </FormikProvider>
-    </Paper>
+    </Stack>
   );
 };
 

@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/svg/ulogo.svg',
+        url: '/ulogo.svg',
       },
     ],
   },
@@ -51,9 +51,11 @@ export default function RootLayout({
     name: 'token',
     value: '',
   };
-
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" type="image/svg+xml" href="/ulogo.svg" />
+      </head>
       <body className={inter.className}>
         <ApolloWrapper baseUrl={process.env.NEXT_PUBLIC_API_GW ?? ''}>
           <AppContextWrapper
@@ -68,6 +70,7 @@ export default function RootLayout({
               MAP_BOX_TOKEN: process.env.NEXT_PUBLIC_MAP_BOX_TOKEN ?? '',
               METRIC_WEBSOCKET_URL:
                 process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL ?? '',
+              STRIPE_PK: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
             }}
             initalUserValues={{
               id: userId ?? '',

@@ -17,6 +17,8 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -57,13 +59,15 @@ func (n *Node) Close() {
 	n.conn.Close()
 }
 
-func (n *Node) AddNode(nodeId, name, state string) (*pb.AddNodeResponse, error) {
+func (n *Node) AddNode(nodeId, name, state string, latitude, longitude float64) (*pb.AddNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.AddNode(ctx, &pb.AddNodeRequest{
-		NodeId: nodeId,
-		Name:   name,
+		NodeId:    nodeId,
+		Name:      name,
+		Latitude:  latitude,
+		Longitude: longitude,
 	})
 	if err != nil {
 		return nil, err
@@ -78,20 +82,6 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 
 	res, err := n.client.GetNode(ctx, &pb.GetNodeRequest{
 		NodeId: nodeId,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-}
-
-func (n *Node) GetAll(free bool) (*pb.GetNodesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{
-		Free: free,
 	})
 	if err != nil {
 		return nil, err
@@ -128,12 +118,25 @@ func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
 	return res, nil
 }
 
-func (n *Node) GetAllNodes(free bool) (*pb.GetNodesResponse, error) {
+func (n *Node) GetNodes() (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{
-		Free: free,
+	res, err := n.client.GetNodes(ctx, &pb.GetNodesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (n *Node) GetNodesByState(connectivity, state string) (*pb.GetNodesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	res, err := n.client.GetNodesByState(ctx, &pb.GetNodesByStateRequest{
+		Connectivity: cpb.NodeConnectivity(ukama.ParseNodeConnectivity(connectivity)),
+		State:        cpb.NodeState(ukama.ParseNodeState(state)),
 	})
 	if err != nil {
 		return nil, err
@@ -157,13 +160,15 @@ func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeRespo
 	return res, nil
 }
 
-func (n *Node) UpdateNode(nodeId string, name string) (*pb.UpdateNodeResponse, error) {
+func (n *Node) UpdateNode(nodeId string, name string, latitude, longitude float64) (*pb.UpdateNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	res, err := n.client.UpdateNode(ctx, &pb.UpdateNodeRequest{
-		NodeId: nodeId,
-		Name:   name,
+		Name:      name,
+		NodeId:    nodeId,
+		Latitude:  latitude,
+		Longitude: longitude,
 	})
 	if err != nil {
 		return nil, err

@@ -33,7 +33,6 @@ export type AddNetworkInputDto = {
 export type AddNodeInput = {
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
 };
 
 export type AddNodeToSiteInput = {
@@ -65,6 +64,21 @@ export type AddPackagesSimResDto = {
 export type AddPackagesToSimInputDto = {
   packages: Array<PackagesToSimInputDto>;
   sim_id: Scalars['String']['input'];
+};
+
+export type AddPaymentInputDto = {
+  amount: Scalars['String']['input'];
+  correspondent: Scalars['String']['input'];
+  country: Scalars['String']['input'];
+  currency: Scalars['String']['input'];
+  description: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  itemType: Payment_Item_Type;
+  payerEmail: Scalars['String']['input'];
+  payerPhone: Scalars['String']['input'];
+  paymentMethod: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
 };
 
 export type AddSiteInputDto = {
@@ -128,8 +142,9 @@ export type AttachNodeInput = {
 export type AttachedNodes = {
   __typename?: 'AttachedNodes';
   id: Scalars['String']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
   name: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   site: NodeSite;
   status: NodeStatus;
   type: NodeTypeEnum;
@@ -148,6 +163,13 @@ export enum Component_Type {
   Spectrum = 'SPECTRUM',
   Switch = 'SWITCH'
 }
+
+export type Component = {
+  __typename?: 'Component';
+  componentId?: Maybe<Scalars['String']['output']>;
+  componentName?: Maybe<Scalars['String']['output']>;
+  elementType: Scalars['String']['output'];
+};
 
 export type ComponentDto = {
   __typename?: 'ComponentDto';
@@ -175,6 +197,24 @@ export type ComponentsResDto = {
   components: Array<ComponentDto>;
 };
 
+export type CorrespondentsDto = {
+  __typename?: 'CorrespondentsDto';
+  correspondent_code: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  logo: Scalars['String']['output'];
+};
+
+export type CorrespondentsInputDto = {
+  paymentMethod: Scalars['String']['input'];
+  phoneNumber: Scalars['String']['input'];
+};
+
+export type CorrespondentsResDto = {
+  __typename?: 'CorrespondentsResDto';
+  correspondents: Array<CorrespondentsDto>;
+  country: Scalars['String']['output'];
+};
+
 export type CountriesRes = {
   __typename?: 'CountriesRes';
   countries: Array<CountryDto>;
@@ -197,6 +237,27 @@ export type CurrencyRes = {
   code: Scalars['String']['output'];
   image: Scalars['String']['output'];
   symbol: Scalars['String']['output'];
+};
+
+export type DataPlan = {
+  __typename?: 'DataPlan';
+  elementType: Scalars['String']['output'];
+  planId: Scalars['String']['output'];
+  planName: Scalars['String']['output'];
+}
+export type Customer = {
+  __typename?: 'CustomerDto';
+  addressLine1?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  externalId: Scalars['String']['output'];
+  legalName?: Maybe<Scalars['String']['output']>;
+  legalNumber?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
+  timezone?: Maybe<Scalars['String']['output']>;
+  vatRate: Scalars['Float']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -239,17 +300,55 @@ export type DeleteSimResDto = {
   simId?: Maybe<Scalars['String']['output']>;
 };
 
+export type FeeDto = {
+  __typename?: 'FeeDto';
+  eventsCount: Scalars['String']['output'];
+  item: ItemResDto;
+  taxesAmountCents: Scalars['String']['output'];
+  taxesPreciseAmount: Scalars['String']['output'];
+  totalAmountCents: Scalars['String']['output'];
+  totalAmountCurrency: Scalars['String']['output'];
+  units: Scalars['Float']['output'];
+};
+
 export type GetNodeLatestMetricInput = {
   nodeId: Scalars['String']['input'];
   type: Scalars['String']['input'];
 };
 
-export type GetNodesInput = {
-  isFree: Scalars['Boolean']['input'];
+export type GetNodesByStateInput = {
+  connectivity: NodeConnectivityEnum;
+  state: NodeStateEnum;
 };
 
 export type GetPackagesForSimInputDto = {
   sim_id: Scalars['String']['input'];
+};
+
+export type GetPaymentsInputDto = {
+  paymentMethod?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type GetReportDto = {
+  __typename?: 'GetReportDto';
+  report: ReportDto;
+};
+
+export type GetReportsDto = {
+  __typename?: 'GetReportsDto';
+  reports: Array<ReportDto>;
+};
+
+export type GetReportsInputDto = {
+  count?: InputMaybe<Scalars['Float']['input']>;
+  isPaid?: InputMaybe<Scalars['Boolean']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  ownerId?: InputMaybe<Scalars['String']['input']>;
+  ownerType: Scalars['String']['input'];
+  report_type: Scalars['String']['input'];
+  sort?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type GetSimBySubscriberInputDto = {
@@ -303,6 +402,13 @@ export type InvitationsResDto = {
   invitations: Array<InvitationDto>;
 };
 
+export type ItemResDto = {
+  __typename?: 'ItemResDto';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+};
+
 export type MemberDto = {
   __typename?: 'MemberDto';
   email: Scalars['String']['output'];
@@ -312,6 +418,13 @@ export type MemberDto = {
   name: Scalars['String']['output'];
   role: Scalars['String']['output'];
   userId: Scalars['String']['output'];
+};
+
+export type Members = {
+  __typename?: 'Members';
+  activeMembers: Scalars['String']['output'];
+  inactiveMembers: Scalars['String']['output'];
+  totalMembers: Scalars['String']['output'];
 };
 
 export type MembersResDto = {
@@ -327,6 +440,7 @@ export type Mutation = {
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
   addPackagesToSim: AddPackagesSimResDto;
+  addPayment: PaymentDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -339,10 +453,15 @@ export type Mutation = {
   deleteSim: DeleteSimResDto;
   deleteSubscriber: CBooleanResponse;
   detachhNode: CBooleanResponse;
+  processPayment: ProcessPaymentDto;
   releaseNodeFromSite: CBooleanResponse;
   removeMember: CBooleanResponse;
   removePackageForSim: RemovePackageFromSimResDto;
+  restartNode: CBooleanResponse;
+  restartNodes: CBooleanResponse;
+  restartSite: CBooleanResponse;
   setDefaultNetwork: CBooleanResponse;
+  toggleInternetSwitch: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
   updateInvitation: UpdateInvitationResDto;
@@ -351,6 +470,7 @@ export type Mutation = {
   updateNodeState: Node;
   updateNotification: UpdateNotificationResDto;
   updatePackage: PackageDto;
+  updatePayment: PaymentDto;
   updateSite: SiteDto;
   updateSubscriber: CBooleanResponse;
   uploadSims: UploadSimsResDto;
@@ -384,6 +504,11 @@ export type MutationAddPackageArgs = {
 
 export type MutationAddPackagesToSimArgs = {
   data: AddPackagesToSimInputDto;
+};
+
+
+export type MutationAddPaymentArgs = {
+  data: AddPaymentInputDto;
 };
 
 
@@ -447,6 +572,11 @@ export type MutationDetachhNodeArgs = {
 };
 
 
+export type MutationProcessPaymentArgs = {
+  data: ProcessPaymentInputDto;
+};
+
+
 export type MutationReleaseNodeFromSiteArgs = {
   data: NodeInput;
 };
@@ -462,8 +592,28 @@ export type MutationRemovePackageForSimArgs = {
 };
 
 
+export type MutationRestartNodeArgs = {
+  data: RestartNodeInputDto;
+};
+
+
+export type MutationRestartNodesArgs = {
+  data: RestartNodesInputDto;
+};
+
+
+export type MutationRestartSiteArgs = {
+  data: RestartSiteInputDto;
+};
+
+
 export type MutationSetDefaultNetworkArgs = {
   data: SetDefaultNetworkInputDto;
+};
+
+
+export type MutationToggleInternetSwitchArgs = {
+  data: ToggleInternetSwitchInputDto;
 };
 
 
@@ -510,6 +660,11 @@ export type MutationUpdatePackageArgs = {
 };
 
 
+export type MutationUpdatePaymentArgs = {
+  data: UpdatePaymentInputDto;
+};
+
+
 export type MutationUpdateSiteArgs = {
   data: UpdateSiteInputDto;
   siteId: Scalars['String']['input'];
@@ -542,16 +697,25 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
-  NotifActionableCritical = 'NOTIF_ACTIONABLE_CRITICAL',
-  NotifActionableError = 'NOTIF_ACTIONABLE_ERROR',
-  NotifActionableInfo = 'NOTIF_ACTIONABLE_INFO',
-  NotifActionableWarning = 'NOTIF_ACTIONABLE_WARNING',
-  NotifCritical = 'NOTIF_CRITICAL',
-  NotifError = 'NOTIF_ERROR',
-  NotifInfo = 'NOTIF_INFO',
-  NotifInvalid = 'NOTIF_INVALID',
-  NotifWarning = 'NOTIF_WARNING'
+  TypeActionableCritical = 'TYPE_ACTIONABLE_CRITICAL',
+  TypeActionableError = 'TYPE_ACTIONABLE_ERROR',
+  TypeActionableInfo = 'TYPE_ACTIONABLE_INFO',
+  TypeActionableWarning = 'TYPE_ACTIONABLE_WARNING',
+  TypeCritical = 'TYPE_CRITICAL',
+  TypeError = 'TYPE_ERROR',
+  TypeInfo = 'TYPE_INFO',
+  TypeInvalid = 'TYPE_INVALID',
+  TypeWarning = 'TYPE_WARNING'
 }
+
+export type Network = {
+  __typename?: 'Network';
+  elementType: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  networkName: Scalars['String']['output'];
+  sites: Array<Site>;
+  subscribers?: Maybe<Subscribers>;
+};
 
 export type NetworkDto = {
   __typename?: 'NetworkDto';
@@ -584,8 +748,9 @@ export type Node = {
   __typename?: 'Node';
   attached: Array<AttachedNodes>;
   id: Scalars['String']['output'];
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
   name: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   site: NodeSite;
   status: NodeStatus;
   type: NodeTypeEnum;
@@ -611,6 +776,13 @@ export type NodeAppsChangeLogInput = {
   type: NodeTypeEnum;
 };
 
+/** Node connectivity enums */
+export enum NodeConnectivityEnum {
+  Offline = 'Offline',
+  Online = 'Online',
+  Unknown = 'Unknown'
+}
+
 export type NodeInput = {
   id: Scalars['String']['input'];
 };
@@ -625,14 +797,6 @@ export type NodeLatestMetric = {
   value: Array<Scalars['Float']['output']>;
 };
 
-export type NodeLocation = {
-  __typename?: 'NodeLocation';
-  id: Scalars['String']['output'];
-  lat: Scalars['String']['output'];
-  lng: Scalars['String']['output'];
-  state: NodeStatusEnum;
-};
-
 export type NodeSite = {
   __typename?: 'NodeSite';
   addedAt?: Maybe<Scalars['String']['output']>;
@@ -641,21 +805,29 @@ export type NodeSite = {
   siteId?: Maybe<Scalars['String']['output']>;
 };
 
+/** Node state enums */
+export enum NodeStateEnum {
+  Configured = 'Configured',
+  Faulty = 'Faulty',
+  Operational = 'Operational',
+  Unknown = 'Unknown'
+}
+
+export type NodeStateRes = {
+  __typename?: 'NodeStateRes';
+  createdAt: Scalars['String']['output'];
+  currentState: NodeStateEnum;
+  id: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
+  previousState?: Maybe<NodeStateEnum>;
+  previousStateId?: Maybe<Scalars['String']['output']>;
+};
+
 export type NodeStatus = {
   __typename?: 'NodeStatus';
   connectivity: Scalars['String']['output'];
   state: Scalars['String']['output'];
 };
-
-/** Node status enums */
-export enum NodeStatusEnum {
-  Active = 'ACTIVE',
-  Configured = 'CONFIGURED',
-  Faulty = 'FAULTY',
-  Maintenance = 'MAINTENANCE',
-  Onboarded = 'ONBOARDED',
-  Undefined = 'UNDEFINED'
-}
 
 /** Node type enums */
 export enum NodeTypeEnum {
@@ -667,17 +839,6 @@ export enum NodeTypeEnum {
 export type Nodes = {
   __typename?: 'Nodes';
   nodes: Array<Node>;
-};
-
-export type NodesInput = {
-  networkId: Scalars['String']['input'];
-  nodeFilterState: NodeStatusEnum;
-};
-
-export type NodesLocation = {
-  __typename?: 'NodesLocation';
-  networkId: Scalars['String']['output'];
-  nodes: Array<NodeLocation>;
 };
 
 export type NotificationResDto = {
@@ -711,6 +872,22 @@ export type NotificationsResDto = {
   notifications: Array<NotificationsDto>;
 };
 
+export type Org = {
+  __typename?: 'Org';
+  country: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  dataplans: Array<DataPlan>;
+  elementType: Scalars['String']['output'];
+  members?: Maybe<Members>;
+  networks: Array<Network>;
+  orgId: Scalars['String']['output'];
+  orgName: Scalars['String']['output'];
+  ownerEmail: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  ownerName: Scalars['String']['output'];
+  sims?: Maybe<Sims>;
+};
+
 export type OrgDto = {
   __typename?: 'OrgDto';
   certificate: Scalars['String']['output'];
@@ -723,12 +900,23 @@ export type OrgDto = {
   owner: Scalars['String']['output'];
 };
 
+export type OrgTreeRes = {
+  __typename?: 'OrgTreeRes';
+  org: Org;
+};
+
 export type OrgsResDto = {
   __typename?: 'OrgsResDto';
   memberOf: Array<OrgDto>;
   ownerOf: Array<OrgDto>;
   user: Scalars['String']['output'];
 };
+
+export enum Payment_Item_Type {
+  Invoice = 'INVOICE',
+  Package = 'PACKAGE',
+  Unknown = 'UNKNOWN'
+}
 
 export type PackageDto = {
   __typename?: 'PackageDto';
@@ -786,11 +974,51 @@ export type PackagesToSimInputDto = {
   start_date: Scalars['String']['input'];
 };
 
+export type PaymentDto = {
+  __typename?: 'PaymentDto';
+  amount: Scalars['String']['output'];
+  correspondent: Scalars['String']['output'];
+  country: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  currency: Scalars['String']['output'];
+  depositedAmount: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  extra: Scalars['String']['output'];
+  failureReason: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemType: Scalars['String']['output'];
+  paidAt: Scalars['String']['output'];
+  payerEmail: Scalars['String']['output'];
+  payerName: Scalars['String']['output'];
+  payerPhone: Scalars['String']['output'];
+  paymentMethod: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+};
+
+export type PaymentsDto = {
+  __typename?: 'PaymentsDto';
+  payments: Array<PaymentDto>;
+};
+
+export type ProcessPaymentDto = {
+  __typename?: 'ProcessPaymentDto';
+  payment: PaymentDto;
+};
+
+export type ProcessPaymentInputDto = {
+  correspondent: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  token: Scalars['String']['input'];
+};
+
 export type Query = {
   __typename?: 'Query';
+  example?: Maybe<Scalars['String']['output']>;
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
+  getCorrespondents: CorrespondentsResDto;
   getCountries: CountriesRes;
   getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
@@ -808,17 +1036,24 @@ export type Query = {
   getNode: Node;
   getNodeApps: NodeApps;
   getNodeLatestMetric: NodeLatestMetric;
-  getNodeLocation: NodeLocation;
+  getNodeState: NodeStateRes;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
-  getNodesLocation: NodesLocation;
+  getNodesByState: Nodes;
+  getNodesLocation: Nodes;
   getNotification: NotificationResDto;
   getNotifications: NotificationsResDto;
   getOrg: OrgDto;
+  getOrgTree: OrgTreeRes;
   getOrgs: OrgsResDto;
   getPackage: PackageDto;
   getPackages: PackagesResDto;
   getPackagesForSim: GetSimPackagesDtoApi;
+  getPayment: PaymentDto;
+  getPayments: PaymentsDto;
+  getReport: GetReportDto;
+  getReportPdf: GetReportDto;
+  getReports: GetReportsDto;
   getSim: SimDto;
   getSimPoolStats: SimPoolStatsDto;
   getSims: SimsResDto;
@@ -830,6 +1065,7 @@ export type Query = {
   getSubscriberMetricsByNetwork: SubscriberMetricsByNetworkDto;
   getSubscribersByNetwork: SubscribersResDto;
   getTimezones: TimezoneRes;
+  getToken: TokenResDto;
   getUser: UserResDto;
   whoami: WhoamiDto;
 };
@@ -847,6 +1083,11 @@ export type QueryGetComponentByIdArgs = {
 
 export type QueryGetComponentsByUserIdArgs = {
   data: ComponentTypeInputDto;
+};
+
+
+export type QueryGetCorrespondentsArgs = {
+  data: CorrespondentsInputDto;
 };
 
 
@@ -905,13 +1146,8 @@ export type QueryGetNodeLatestMetricArgs = {
 };
 
 
-export type QueryGetNodeLocationArgs = {
-  data: NodeInput;
-};
-
-
-export type QueryGetNodesArgs = {
-  data: GetNodesInput;
+export type QueryGetNodeStateArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -920,8 +1156,8 @@ export type QueryGetNodesByNetworkArgs = {
 };
 
 
-export type QueryGetNodesLocationArgs = {
-  data: NodesInput;
+export type QueryGetNodesByStateArgs = {
+  data: GetNodesByStateInput;
 };
 
 
@@ -937,6 +1173,31 @@ export type QueryGetPackageArgs = {
 
 export type QueryGetPackagesForSimArgs = {
   data: GetPackagesForSimInputDto;
+};
+
+
+export type QueryGetPaymentArgs = {
+  paymentId: Scalars['String']['input'];
+};
+
+
+export type QueryGetPaymentsArgs = {
+  data: GetPaymentsInputDto;
+};
+
+
+export type QueryGetReportArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetReportPdfArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueryGetReportsArgs = {
+  data: GetReportsInputDto;
 };
 
 
@@ -990,6 +1251,11 @@ export type QueryGetSubscribersByNetworkArgs = {
 };
 
 
+export type QueryGetTokenArgs = {
+  paymentId: Scalars['String']['input'];
+};
+
+
 export type QueryGetUserArgs = {
   userId: Scalars['String']['input'];
 };
@@ -1003,6 +1269,28 @@ export enum Role_Type {
   RoleVendor = 'ROLE_VENDOR'
 }
 
+export type RawReportDto = {
+  __typename?: 'RawReportDto';
+  currency: Scalars['String']['output'];
+  customer: CustomerDto;
+  fees: Array<FeeDto>;
+  feesAmountCents: Scalars['String']['output'];
+  fileUrl: Scalars['String']['output'];
+  invoiceType: Scalars['String']['output'];
+  issuingDate: Scalars['String']['output'];
+  paymentDueDate: Scalars['String']['output'];
+  paymentOverdue: Scalars['Boolean']['output'];
+  paymentStatus: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  subTotalExcludingTaxesAmountCents: Scalars['String']['output'];
+  subTotalIncludingTaxesAmountCents: Scalars['String']['output'];
+  subscriptions: Array<SubscriptionDto>;
+  taxesAmountCents: Scalars['String']['output'];
+  totalAmountCents: Scalars['String']['output'];
+  vatAmountCents: Scalars['String']['output'];
+  vatAmountCurrency?: Maybe<Scalars['String']['output']>;
+};
+
 export type RemovePackageFormSimInputDto = {
   packageId: Scalars['String']['input'];
   simId: Scalars['String']['input'];
@@ -1011,6 +1299,33 @@ export type RemovePackageFormSimInputDto = {
 export type RemovePackageFromSimResDto = {
   __typename?: 'RemovePackageFromSimResDto';
   packageId?: Maybe<Scalars['String']['output']>;
+};
+
+export type ReportDto = {
+  __typename?: 'ReportDto';
+  createdAt: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isPaid: Scalars['Boolean']['output'];
+  networkId: Scalars['String']['output'];
+  ownerId: Scalars['String']['output'];
+  ownerType: Scalars['String']['output'];
+  period: Scalars['String']['output'];
+  rawReport: RawReportDto;
+  type: Scalars['String']['output'];
+};
+
+export type RestartNodeInputDto = {
+  nodeId: Scalars['String']['input'];
+};
+
+export type RestartNodesInputDto = {
+  networkId: Scalars['String']['input'];
+  nodeIds: Array<Scalars['String']['input']>;
+};
+
+export type RestartSiteInputDto = {
+  networkId: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
 };
 
 export enum Sim_Status {
@@ -1093,9 +1408,24 @@ export type SimToPackagesDto = {
   start_date: Scalars['String']['output'];
 };
 
+export type Sims = {
+  __typename?: 'Sims';
+  availableSims: Scalars['String']['output'];
+  consumed: Scalars['String']['output'];
+  totalSims: Scalars['String']['output'];
+};
+
 export type SimsResDto = {
   __typename?: 'SimsResDto';
   sim: Array<SimDto>;
+};
+
+export type Site = {
+  __typename?: 'Site';
+  components: Array<Component>;
+  elementType: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
+  siteName: Scalars['String']['output'];
 };
 
 export type SiteDto = {
@@ -1194,9 +1524,29 @@ export type SubscriberToSimsDto = {
   subscriberId: Scalars['String']['output'];
 };
 
+export type Subscribers = {
+  __typename?: 'Subscribers';
+  activeSubscribers: Scalars['String']['output'];
+  inactiveSubscribers: Scalars['String']['output'];
+  totalSubscribers: Scalars['String']['output'];
+};
+
 export type SubscribersResDto = {
   __typename?: 'SubscribersResDto';
   subscribers: Array<SubscriberDto>;
+};
+
+export type SubscriptionDto = {
+  __typename?: 'SubscriptionDto';
+  canceledAt?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  externalCustomerId: Scalars['String']['output'];
+  externalId: Scalars['String']['output'];
+  name?: Maybe<Scalars['String']['output']>;
+  planCode: Scalars['String']['output'];
+  startedAt: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  terminatedAt?: Maybe<Scalars['String']['output']>;
 };
 
 export type TimezoneDto = {
@@ -1214,9 +1564,18 @@ export type TimezoneRes = {
   timezones: Array<TimezoneDto>;
 };
 
+export type ToggleInternetSwitchInputDto = {
+  siteId: Scalars['String']['input'];
+};
+
 export type ToggleSimStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
+};
+
+export type TokenResDto = {
+  __typename?: 'TokenResDto';
+  token: Scalars['String']['output'];
 };
 
 export type UpateInvitationInputDto = {
@@ -1242,7 +1601,7 @@ export type UpdateNodeInput = {
 
 export type UpdateNodeStateInput = {
   id: Scalars['String']['input'];
-  state: NodeStatusEnum;
+  state: NodeStateEnum;
 };
 
 export type UpdateNotificationResDto = {
@@ -1253,6 +1612,15 @@ export type UpdateNotificationResDto = {
 export type UpdatePackageInputDto = {
   active: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
+};
+
+export type UpdatePaymentInputDto = {
+  country?: InputMaybe<Scalars['String']['input']>;
+  currency?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  payerEmail?: InputMaybe<Scalars['String']['input']>;
+  payerName?: InputMaybe<Scalars['String']['input']>;
+  paymentMethod?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSiteInputDto = {
@@ -1308,28 +1676,33 @@ export type WhoamiDto = {
   user: UserResDto;
 };
 
-export type NodeFragment = { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
+export type NodeFragment = { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } };
 
 export type GetNodeQueryVariables = Exact<{
   data: NodeInput;
 }>;
 
 
-export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type GetNodesQueryVariables = Exact<{
-  data: GetNodesInput;
+export type GetNodesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+
+export type GetNodesByStateQueryVariables = Exact<{
+  data: GetNodesByStateInput;
 }>;
 
 
-export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesByStateQuery = { __typename?: 'Query', getNodesByState: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type GetNodesByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
 }>;
 
 
-export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1357,7 +1730,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type ReleaseNodeFromSiteMutationVariables = Exact<{
   data: NodeInput;
@@ -1378,14 +1751,14 @@ export type UpdateNodeStateMutationVariables = Exact<{
 }>;
 
 
-export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
 }>;
 
 
-export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, orgId: string, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, orgId: string, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
 export type GetNodeAppsQueryVariables = Exact<{
   data: NodeAppsChangeLogInput;
@@ -1394,19 +1767,17 @@ export type GetNodeAppsQueryVariables = Exact<{
 
 export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
 
-export type GetNodesLocationQueryVariables = Exact<{
-  data: NodesInput;
+export type GetNodesLocationQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
+
+export type GetNodeStateQueryVariables = Exact<{
+  getNodeStateId: Scalars['String']['input'];
 }>;
 
 
-export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'NodesLocation', networkId: string, nodes: Array<{ __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum }> } };
-
-export type GetNodeLocationQueryVariables = Exact<{
-  data: NodeInput;
-}>;
-
-
-export type GetNodeLocationQuery = { __typename?: 'Query', getNodeLocation: { __typename?: 'NodeLocation', id: string, lat: string, lng: string, state: NodeStatusEnum } };
+export type GetNodeStateQuery = { __typename?: 'Query', getNodeState: { __typename?: 'NodeStateRes', id: string, nodeId: string, previousStateId?: string | null, previousState?: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -1541,6 +1912,58 @@ export type UpdatePacakgeMutationVariables = Exact<{
 
 
 export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } } };
+
+export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
+
+export type AddPaymentMutationVariables = Exact<{
+  data: AddPaymentInputDto;
+}>;
+
+
+export type AddPaymentMutation = { __typename?: 'Mutation', addPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
+export type UpdatePaymentMutationVariables = Exact<{
+  data: UpdatePaymentInputDto;
+}>;
+
+
+export type UpdatePaymentMutation = { __typename?: 'Mutation', updatePayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
+export type GetPaymentQueryVariables = Exact<{
+  paymentId: Scalars['String']['input'];
+}>;
+
+
+export type GetPaymentQuery = { __typename?: 'Query', getPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string } };
+
+export type GetPaymentsQueryVariables = Exact<{
+  data: GetPaymentsInputDto;
+}>;
+
+
+export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
+
+export type CustomerFragment = { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string };
+
+export type SubscriptionFragment = { __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null };
+
+export type FeeFragment = { __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } };
+
+export type RawReportFragment = { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> };
+
+export type GetReportsQueryVariables = Exact<{
+  data: GetReportsInputDto;
+}>;
+
+
+export type GetReportsQuery = { __typename?: 'Query', getReports: { __typename?: 'GetReportsDto', reports: Array<{ __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } }> } };
+
+export type GetReportQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportDto', report: { __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } } } };
 
 export type GetSimPoolStatsQueryVariables = Exact<{
   data: GetSimPoolStatsInput;
@@ -1790,12 +2213,14 @@ export const NodeFragmentDoc = gql`
     fragment node on Node {
   id
   name
-  orgId
+  latitude
+  longitude
   type
   attached {
     id
     name
-    orgId
+    latitude
+    longitude
     type
     site {
       nodeId
@@ -1916,6 +2341,101 @@ export const PackageFragmentDoc = gql`
 }
     ${PackageRateFragmentDoc}
 ${PackageMarkupFragmentDoc}`;
+export const PaymentFragmentDoc = gql`
+    fragment payment on PaymentDto {
+  id
+  itemId
+  itemType
+  amount
+  currency
+  paymentMethod
+  depositedAmount
+  paidAt
+  payerName
+  payerEmail
+  payerPhone
+  correspondent
+  country
+  description
+  status
+  failureReason
+  extra
+  createdAt
+}
+    `;
+export const CustomerFragmentDoc = gql`
+    fragment customer on CustomerDto {
+  externalId
+  name
+  email
+  addressLine1
+  legalName
+  legalNumber
+  phone
+  currency
+  timezone
+  vatRate
+  createdAt
+}
+    `;
+export const SubscriptionFragmentDoc = gql`
+    fragment subscription on SubscriptionDto {
+  externalCustomerId
+  externalId
+  planCode
+  name
+  status
+  createdAt
+  startedAt
+  canceledAt
+  terminatedAt
+}
+    `;
+export const FeeFragmentDoc = gql`
+    fragment fee on FeeDto {
+  taxesAmountCents
+  taxesPreciseAmount
+  totalAmountCents
+  totalAmountCurrency
+  eventsCount
+  units
+  item {
+    type
+    code
+    name
+  }
+}
+    `;
+export const RawReportFragmentDoc = gql`
+    fragment rawReport on RawReportDto {
+  issuingDate
+  paymentDueDate
+  paymentOverdue
+  invoiceType
+  status
+  paymentStatus
+  feesAmountCents
+  taxesAmountCents
+  subTotalExcludingTaxesAmountCents
+  subTotalIncludingTaxesAmountCents
+  vatAmountCents
+  vatAmountCurrency
+  totalAmountCents
+  currency
+  fileUrl
+  customer {
+    ...customer
+  }
+  subscriptions {
+    ...subscription
+  }
+  fees {
+    ...fee
+  }
+}
+    ${CustomerFragmentDoc}
+${SubscriptionFragmentDoc}
+${FeeFragmentDoc}`;
 export const SimPoolFragmentDoc = gql`
     fragment SimPool on SimDto {
   activationCode
@@ -2073,7 +2593,7 @@ export const InvitationFragmentDoc = gql`
 }
     `;
 export const GetNodeDocument = gql`
-    query getNode($data: NodeInput!) {
+    query GetNode($data: NodeInput!) {
   getNode(data: $data) {
     ...node
   }
@@ -2104,8 +2624,8 @@ export function useGetNodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
         }
-export function useGetNodeSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeQuery, GetNodeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodeQuery, GetNodeQueryVariables>(GetNodeDocument, options);
         }
 export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
@@ -2113,8 +2633,8 @@ export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
 export type GetNodeSuspenseQueryHookResult = ReturnType<typeof useGetNodeSuspenseQuery>;
 export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
 export const GetNodesDocument = gql`
-    query getNodes($data: GetNodesInput!) {
-  getNodes(data: $data) {
+    query GetNodes {
+  getNodes {
     nodes {
       ...node
     }
@@ -2134,11 +2654,10 @@ export const GetNodesDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesQuery({
  *   variables: {
- *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetNodesQuery(baseOptions: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables> & ({ variables: GetNodesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetNodesQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
       }
@@ -2146,14 +2665,56 @@ export function useGetNodesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
         }
-export function useGetNodesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNodesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
         }
 export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
 export type GetNodesLazyQueryHookResult = ReturnType<typeof useGetNodesLazyQuery>;
 export type GetNodesSuspenseQueryHookResult = ReturnType<typeof useGetNodesSuspenseQuery>;
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
+export const GetNodesByStateDocument = gql`
+    query GetNodesByState($data: GetNodesByStateInput!) {
+  getNodesByState(data: $data) {
+    nodes {
+      ...node
+    }
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodesByStateQuery__
+ *
+ * To run a query within a React component, call `useGetNodesByStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesByStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesByStateQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodesByStateQuery(baseOptions: Apollo.QueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables> & ({ variables: GetNodesByStateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
+      }
+export function useGetNodesByStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
+        }
+export function useGetNodesByStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
+        }
+export type GetNodesByStateQueryHookResult = ReturnType<typeof useGetNodesByStateQuery>;
+export type GetNodesByStateLazyQueryHookResult = ReturnType<typeof useGetNodesByStateLazyQuery>;
+export type GetNodesByStateSuspenseQueryHookResult = ReturnType<typeof useGetNodesByStateSuspenseQuery>;
+export type GetNodesByStateQueryResult = Apollo.QueryResult<GetNodesByStateQuery, GetNodesByStateQueryVariables>;
 export const GetNodesByNetworkDocument = gql`
     query getNodesByNetwork($networkId: String!) {
   getNodesByNetwork(networkId: $networkId) {
@@ -2188,8 +2749,8 @@ export function useGetNodesByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
         }
-export function useGetNodesByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNodesByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
         }
 export type GetNodesByNetworkQueryHookResult = ReturnType<typeof useGetNodesByNetworkQuery>;
@@ -2500,8 +3061,8 @@ export function useGetNodeAppsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
         }
-export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNodeAppsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeAppsQuery, GetNodeAppsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(GetNodeAppsDocument, options);
         }
 export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
@@ -2509,18 +3070,14 @@ export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLaz
 export type GetNodeAppsSuspenseQueryHookResult = ReturnType<typeof useGetNodeAppsSuspenseQuery>;
 export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
 export const GetNodesLocationDocument = gql`
-    query GetNodesLocation($data: NodesInput!) {
-  getNodesLocation(data: $data) {
-    networkId
+    query GetNodesLocation {
+  getNodesLocation {
     nodes {
-      id
-      lat
-      lng
-      state
+      ...node
     }
   }
 }
-    `;
+    ${NodeFragmentDoc}`;
 
 /**
  * __useGetNodesLocationQuery__
@@ -2534,11 +3091,10 @@ export const GetNodesLocationDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesLocationQuery({
  *   variables: {
- *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetNodesLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables> & ({ variables: GetNodesLocationQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetNodesLocationQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
       }
@@ -2546,57 +3102,59 @@ export function useGetNodesLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
         }
-export function useGetNodesLocationSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNodesLocationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
         }
 export type GetNodesLocationQueryHookResult = ReturnType<typeof useGetNodesLocationQuery>;
 export type GetNodesLocationLazyQueryHookResult = ReturnType<typeof useGetNodesLocationLazyQuery>;
 export type GetNodesLocationSuspenseQueryHookResult = ReturnType<typeof useGetNodesLocationSuspenseQuery>;
 export type GetNodesLocationQueryResult = Apollo.QueryResult<GetNodesLocationQuery, GetNodesLocationQueryVariables>;
-export const GetNodeLocationDocument = gql`
-    query GetNodeLocation($data: NodeInput!) {
-  getNodeLocation(data: $data) {
+export const GetNodeStateDocument = gql`
+    query GetNodeState($getNodeStateId: String!) {
+  getNodeState(id: $getNodeStateId) {
     id
-    lat
-    lng
-    state
+    nodeId
+    previousStateId
+    previousState
+    currentState
+    createdAt
   }
 }
     `;
 
 /**
- * __useGetNodeLocationQuery__
+ * __useGetNodeStateQuery__
  *
- * To run a query within a React component, call `useGetNodeLocationQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetNodeStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetNodeLocationQuery({
+ * const { data, loading, error } = useGetNodeStateQuery({
  *   variables: {
- *      data: // value for 'data'
+ *      getNodeStateId: // value for 'getNodeStateId'
  *   },
  * });
  */
-export function useGetNodeLocationQuery(baseOptions: Apollo.QueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables> & ({ variables: GetNodeLocationQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetNodeStateQuery(baseOptions: Apollo.QueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables> & ({ variables: GetNodeStateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+        return Apollo.useQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
       }
-export function useGetNodeLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
+export function useGetNodeStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+          return Apollo.useLazyQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
         }
-export function useGetNodeLocationSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNodeLocationQuery, GetNodeLocationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNodeLocationQuery, GetNodeLocationQueryVariables>(GetNodeLocationDocument, options);
+export function useGetNodeStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodeStateQuery, GetNodeStateQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNodeStateQuery, GetNodeStateQueryVariables>(GetNodeStateDocument, options);
         }
-export type GetNodeLocationQueryHookResult = ReturnType<typeof useGetNodeLocationQuery>;
-export type GetNodeLocationLazyQueryHookResult = ReturnType<typeof useGetNodeLocationLazyQuery>;
-export type GetNodeLocationSuspenseQueryHookResult = ReturnType<typeof useGetNodeLocationSuspenseQuery>;
-export type GetNodeLocationQueryResult = Apollo.QueryResult<GetNodeLocationQuery, GetNodeLocationQueryVariables>;
+export type GetNodeStateQueryHookResult = ReturnType<typeof useGetNodeStateQuery>;
+export type GetNodeStateLazyQueryHookResult = ReturnType<typeof useGetNodeStateLazyQuery>;
+export type GetNodeStateSuspenseQueryHookResult = ReturnType<typeof useGetNodeStateSuspenseQuery>;
+export type GetNodeStateQueryResult = Apollo.QueryResult<GetNodeStateQuery, GetNodeStateQueryVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {
@@ -2632,8 +3190,8 @@ export function useGetMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
         }
-export function useGetMembersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMembersQuery, GetMembersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMembersQuery, GetMembersQueryVariables>(GetMembersDocument, options);
         }
 export type GetMembersQueryHookResult = ReturnType<typeof useGetMembersQuery>;
@@ -2672,8 +3230,8 @@ export function useGetMemberLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
         }
-export function useGetMemberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMemberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberQuery, GetMemberQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMemberQuery, GetMemberQueryVariables>(GetMemberDocument, options);
         }
 export type GetMemberQueryHookResult = ReturnType<typeof useGetMemberQuery>;
@@ -2818,8 +3376,8 @@ export function useGetMemberByUserIdLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
         }
-export function useGetMemberByUserIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMemberByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMemberByUserIdQuery, GetMemberByUserIdQueryVariables>(GetMemberByUserIdDocument, options);
         }
 export type GetMemberByUserIdQueryHookResult = ReturnType<typeof useGetMemberByUserIdQuery>;
@@ -2863,8 +3421,8 @@ export function useGetOrgsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
         }
-export function useGetOrgsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetOrgsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgsQuery, GetOrgsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetOrgsQuery, GetOrgsQueryVariables>(GetOrgsDocument, options);
         }
 export type GetOrgsQueryHookResult = ReturnType<typeof useGetOrgsQuery>;
@@ -2902,8 +3460,8 @@ export function useGetOrgLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Get
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
         }
-export function useGetOrgSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetOrgSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetOrgQuery, GetOrgQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetOrgQuery, GetOrgQueryVariables>(GetOrgDocument, options);
         }
 export type GetOrgQueryHookResult = ReturnType<typeof useGetOrgQuery>;
@@ -2943,8 +3501,8 @@ export function useGetPackagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
         }
-export function useGetPackagesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPackagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesQuery, GetPackagesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackagesQuery, GetPackagesQueryVariables>(GetPackagesDocument, options);
         }
 export type GetPackagesQueryHookResult = ReturnType<typeof useGetPackagesQuery>;
@@ -2983,8 +3541,8 @@ export function useGetPackageLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
         }
-export function useGetPackageSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPackageSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackageQuery, GetPackageQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackageQuery, GetPackageQueryVariables>(GetPackageDocument, options);
         }
 export type GetPackageQueryHookResult = ReturnType<typeof useGetPackageQuery>;
@@ -3023,8 +3581,8 @@ export function useGetSimsBySubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
         }
-export function useGetSimsBySubscriberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSimsBySubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimsBySubscriberQuery, GetSimsBySubscriberQueryVariables>(GetSimsBySubscriberDocument, options);
         }
 export type GetSimsBySubscriberQueryHookResult = ReturnType<typeof useGetSimsBySubscriberQuery>;
@@ -3165,8 +3723,8 @@ export function useGetPackagesForSimLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>(GetPackagesForSimDocument, options);
         }
-export function useGetPackagesForSimSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPackagesForSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPackagesForSimQuery, GetPackagesForSimQueryVariables>(GetPackagesForSimDocument, options);
         }
 export type GetPackagesForSimQueryHookResult = ReturnType<typeof useGetPackagesForSimQuery>;
@@ -3275,6 +3833,290 @@ export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
 export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
 export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
+export const AddPaymentDocument = gql`
+    mutation AddPayment($data: AddPaymentInputDto!) {
+  addPayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+    `;
+export type AddPaymentMutationFn = Apollo.MutationFunction<AddPaymentMutation, AddPaymentMutationVariables>;
+
+/**
+ * __useAddPaymentMutation__
+ *
+ * To run a mutation, you first call `useAddPaymentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddPaymentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addPaymentMutation, { data, loading, error }] = useAddPaymentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddPaymentMutation(baseOptions?: Apollo.MutationHookOptions<AddPaymentMutation, AddPaymentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AddPaymentMutation, AddPaymentMutationVariables>(AddPaymentDocument, options);
+      }
+export type AddPaymentMutationHookResult = ReturnType<typeof useAddPaymentMutation>;
+export type AddPaymentMutationResult = Apollo.MutationResult<AddPaymentMutation>;
+export type AddPaymentMutationOptions = Apollo.BaseMutationOptions<AddPaymentMutation, AddPaymentMutationVariables>;
+export const UpdatePaymentDocument = gql`
+    mutation UpdatePayment($data: UpdatePaymentInputDto!) {
+  updatePayment(data: $data) {
+    id
+    itemId
+    itemType
+    amount
+    currency
+    paymentMethod
+    depositedAmount
+    paidAt
+    payerName
+    payerEmail
+    payerPhone
+    correspondent
+    country
+    description
+    status
+    failureReason
+    createdAt
+  }
+}
+    `;
+export type UpdatePaymentMutationFn = Apollo.MutationFunction<UpdatePaymentMutation, UpdatePaymentMutationVariables>;
+
+/**
+ * __useUpdatePaymentMutation__
+ *
+ * To run a mutation, you first call `useUpdatePaymentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdatePaymentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updatePaymentMutation, { data, loading, error }] = useUpdatePaymentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdatePaymentMutation(baseOptions?: Apollo.MutationHookOptions<UpdatePaymentMutation, UpdatePaymentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdatePaymentMutation, UpdatePaymentMutationVariables>(UpdatePaymentDocument, options);
+      }
+export type UpdatePaymentMutationHookResult = ReturnType<typeof useUpdatePaymentMutation>;
+export type UpdatePaymentMutationResult = Apollo.MutationResult<UpdatePaymentMutation>;
+export type UpdatePaymentMutationOptions = Apollo.BaseMutationOptions<UpdatePaymentMutation, UpdatePaymentMutationVariables>;
+export const GetPaymentDocument = gql`
+    query GetPayment($paymentId: String!) {
+  getPayment(paymentId: $paymentId) {
+    ...payment
+  }
+}
+    ${PaymentFragmentDoc}`;
+
+/**
+ * __useGetPaymentQuery__
+ *
+ * To run a query within a React component, call `useGetPaymentQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPaymentQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPaymentQuery({
+ *   variables: {
+ *      paymentId: // value for 'paymentId'
+ *   },
+ * });
+ */
+export function useGetPaymentQuery(baseOptions: Apollo.QueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables> & ({ variables: GetPaymentQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+      }
+export function useGetPaymentLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+        }
+export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
+        }
+export type GetPaymentQueryHookResult = ReturnType<typeof useGetPaymentQuery>;
+export type GetPaymentLazyQueryHookResult = ReturnType<typeof useGetPaymentLazyQuery>;
+export type GetPaymentSuspenseQueryHookResult = ReturnType<typeof useGetPaymentSuspenseQuery>;
+export type GetPaymentQueryResult = Apollo.QueryResult<GetPaymentQuery, GetPaymentQueryVariables>;
+export const GetPaymentsDocument = gql`
+    query GetPayments($data: GetPaymentsInputDto!) {
+  getPayments(data: $data) {
+    payments {
+      ...payment
+    }
+  }
+}
+    ${PaymentFragmentDoc}`;
+
+/**
+ * __useGetPaymentsQuery__
+ *
+ * To run a query within a React component, call `useGetPaymentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPaymentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPaymentsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetPaymentsQuery(baseOptions: Apollo.QueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables> & ({ variables: GetPaymentsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+      }
+export function useGetPaymentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+        }
+export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
+        }
+export type GetPaymentsQueryHookResult = ReturnType<typeof useGetPaymentsQuery>;
+export type GetPaymentsLazyQueryHookResult = ReturnType<typeof useGetPaymentsLazyQuery>;
+export type GetPaymentsSuspenseQueryHookResult = ReturnType<typeof useGetPaymentsSuspenseQuery>;
+export type GetPaymentsQueryResult = Apollo.QueryResult<GetPaymentsQuery, GetPaymentsQueryVariables>;
+export const GetReportsDocument = gql`
+    query GetReports($data: GetReportsInputDto!) {
+  getReports(data: $data) {
+    reports {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+    ${RawReportFragmentDoc}`;
+
+/**
+ * __useGetReportsQuery__
+ *
+ * To run a query within a React component, call `useGetReportsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetReportsQuery(baseOptions: Apollo.QueryHookOptions<GetReportsQuery, GetReportsQueryVariables> & ({ variables: GetReportsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+      }
+export function useGetReportsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+        }
+export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
+        }
+export type GetReportsQueryHookResult = ReturnType<typeof useGetReportsQuery>;
+export type GetReportsLazyQueryHookResult = ReturnType<typeof useGetReportsLazyQuery>;
+export type GetReportsSuspenseQueryHookResult = ReturnType<typeof useGetReportsSuspenseQuery>;
+export type GetReportsQueryResult = Apollo.QueryResult<GetReportsQuery, GetReportsQueryVariables>;
+export const GetReportDocument = gql`
+    query GetReport($id: String!) {
+  getReport(id: $id) {
+    report {
+      id
+      ownerId
+      ownerType
+      networkId
+      period
+      type
+      rawReport {
+        ...rawReport
+      }
+      isPaid
+      createdAt
+    }
+  }
+}
+    ${RawReportFragmentDoc}`;
+
+/**
+ * __useGetReportQuery__
+ *
+ * To run a query within a React component, call `useGetReportQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetReportQuery(baseOptions: Apollo.QueryHookOptions<GetReportQuery, GetReportQueryVariables> & ({ variables: GetReportQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+      }
+export function useGetReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+        }
+export function useGetReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
+        }
+export type GetReportQueryHookResult = ReturnType<typeof useGetReportQuery>;
+export type GetReportLazyQueryHookResult = ReturnType<typeof useGetReportLazyQuery>;
+export type GetReportSuspenseQueryHookResult = ReturnType<typeof useGetReportSuspenseQuery>;
+export type GetReportQueryResult = Apollo.QueryResult<GetReportQuery, GetReportQueryVariables>;
 export const GetSimPoolStatsDocument = gql`
     query GetSimPoolStats($data: GetSimPoolStatsInput!) {
   getSimPoolStats(data: $data) {
@@ -3312,8 +4154,8 @@ export function useGetSimPoolStatsLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>(GetSimPoolStatsDocument, options);
         }
-export function useGetSimPoolStatsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSimPoolStatsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>(GetSimPoolStatsDocument, options);
         }
 export type GetSimPoolStatsQueryHookResult = ReturnType<typeof useGetSimPoolStatsQuery>;
@@ -3451,8 +4293,8 @@ export function useGetSimLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Get
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimQuery, GetSimQueryVariables>(GetSimDocument, options);
         }
-export function useGetSimSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimQuery, GetSimQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSimSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimQuery, GetSimQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimQuery, GetSimQueryVariables>(GetSimDocument, options);
         }
 export type GetSimQueryHookResult = ReturnType<typeof useGetSimQuery>;
@@ -3493,8 +4335,8 @@ export function useGetSimsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
         }
-export function useGetSimsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSimsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsQuery, GetSimsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSimsQuery, GetSimsQueryVariables>(GetSimsDocument, options);
         }
 export type GetSimsQueryHookResult = ReturnType<typeof useGetSimsQuery>;
@@ -3566,8 +4408,8 @@ export function useGetSubscriberLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
         }
-export function useGetSubscriberSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSubscriberSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberQuery, GetSubscriberQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscriberQuery, GetSubscriberQueryVariables>(GetSubscriberDocument, options);
         }
 export type GetSubscriberQueryHookResult = ReturnType<typeof useGetSubscriberQuery>;
@@ -3675,8 +4517,8 @@ export function useGetSubscribersByNetworkLazyQuery(baseOptions?: Apollo.LazyQue
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
         }
-export function useGetSubscribersByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSubscribersByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscribersByNetworkQuery, GetSubscribersByNetworkQueryVariables>(GetSubscribersByNetworkDocument, options);
         }
 export type GetSubscribersByNetworkQueryHookResult = ReturnType<typeof useGetSubscribersByNetworkQuery>;
@@ -3718,8 +4560,8 @@ export function useGetSubscriberMetricsByNetworkLazyQuery(baseOptions?: Apollo.L
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
         }
-export function useGetSubscriberMetricsByNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSubscriberMetricsByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>(GetSubscriberMetricsByNetworkDocument, options);
         }
 export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkQuery>;
@@ -3766,8 +4608,8 @@ export function useWhoamiLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Who
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
         }
-export function useWhoamiSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useWhoamiSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<WhoamiQuery, WhoamiQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<WhoamiQuery, WhoamiQueryVariables>(WhoamiDocument, options);
         }
 export type WhoamiQueryHookResult = ReturnType<typeof useWhoamiQuery>;
@@ -3806,8 +4648,8 @@ export function useGetUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
         }
-export function useGetUserSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserQuery, GetUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetUserQuery, GetUserQueryVariables>(GetUserDocument, options);
         }
 export type GetUserQueryHookResult = ReturnType<typeof useGetUserQuery>;
@@ -3847,8 +4689,8 @@ export function useGetNetworksLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
         }
-export function useGetNetworksSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNetworksSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworksQuery, GetNetworksQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNetworksQuery, GetNetworksQueryVariables>(GetNetworksDocument, options);
         }
 export type GetNetworksQueryHookResult = ReturnType<typeof useGetNetworksQuery>;
@@ -3887,8 +4729,8 @@ export function useGetNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
         }
-export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
         }
 export type GetNetworkQueryHookResult = ReturnType<typeof useGetNetworkQuery>;
@@ -3993,8 +4835,8 @@ export function useGetSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
         }
-export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteQuery, GetSiteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSiteQuery, GetSiteQueryVariables>(GetSiteDocument, options);
         }
 export type GetSiteQueryHookResult = ReturnType<typeof useGetSiteQuery>;
@@ -4068,8 +4910,8 @@ export function useGetSitesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
         }
-export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetSitesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSitesQuery, GetSitesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetSitesQuery, GetSitesQueryVariables>(GetSitesDocument, options);
         }
 export type GetSitesQueryHookResult = ReturnType<typeof useGetSitesQuery>;
@@ -4142,8 +4984,8 @@ export function useGetComponentByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
         }
-export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetComponentByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentByIdQuery, GetComponentByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetComponentByIdQuery, GetComponentByIdQueryVariables>(GetComponentByIdDocument, options);
         }
 export type GetComponentByIdQueryHookResult = ReturnType<typeof useGetComponentByIdQuery>;
@@ -4184,8 +5026,8 @@ export function useGetComponentsByUserIdLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
         }
-export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetComponentsByUserIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetComponentsByUserIdQuery, GetComponentsByUserIdQueryVariables>(GetComponentsByUserIdDocument, options);
         }
 export type GetComponentsByUserIdQueryHookResult = ReturnType<typeof useGetComponentsByUserIdQuery>;
@@ -4258,8 +5100,8 @@ export function useGetInvitationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
         }
-export function useGetInvitationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetInvitationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsQuery, GetInvitationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetInvitationsQuery, GetInvitationsQueryVariables>(GetInvitationsDocument, options);
         }
 export type GetInvitationsQueryHookResult = ReturnType<typeof useGetInvitationsQuery>;
@@ -4366,8 +5208,8 @@ export function useGetInvitationsByEmailLazyQuery(baseOptions?: Apollo.LazyQuery
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
         }
-export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetInvitationsByEmailSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetInvitationsByEmailQuery, GetInvitationsByEmailQueryVariables>(GetInvitationsByEmailDocument, options);
         }
 export type GetInvitationsByEmailQueryHookResult = ReturnType<typeof useGetInvitationsByEmailQuery>;
@@ -4408,8 +5250,8 @@ export function useGetCountriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCountriesQuery, GetCountriesQueryVariables>(GetCountriesDocument, options);
         }
-export function useGetCountriesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCountriesQuery, GetCountriesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetCountriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCountriesQuery, GetCountriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCountriesQuery, GetCountriesQueryVariables>(GetCountriesDocument, options);
         }
 export type GetCountriesQueryHookResult = ReturnType<typeof useGetCountriesQuery>;
@@ -4450,8 +5292,8 @@ export function useGetCurrencySymbolLazyQuery(baseOptions?: Apollo.LazyQueryHook
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
         }
-export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetCurrencySymbolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCurrencySymbolQuery, GetCurrencySymbolQueryVariables>(GetCurrencySymbolDocument, options);
         }
 export type GetCurrencySymbolQueryHookResult = ReturnType<typeof useGetCurrencySymbolQuery>;
@@ -4496,8 +5338,8 @@ export function useGetTimezonesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetTimezonesQuery, GetTimezonesQueryVariables>(GetTimezonesDocument, options);
         }
-export function useGetTimezonesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetTimezonesQuery, GetTimezonesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetTimezonesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetTimezonesQuery, GetTimezonesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetTimezonesQuery, GetTimezonesQueryVariables>(GetTimezonesDocument, options);
         }
 export type GetTimezonesQueryHookResult = ReturnType<typeof useGetTimezonesQuery>;

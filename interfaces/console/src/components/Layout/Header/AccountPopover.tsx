@@ -47,7 +47,7 @@ const AccountPopover = () => {
       <Popover
         id={id}
         open={open}
-        sx={{ mt: 1.5 }}
+        sx={{ mt: 2 }}
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{

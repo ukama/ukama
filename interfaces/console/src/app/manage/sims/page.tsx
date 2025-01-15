@@ -74,11 +74,7 @@ const Page = () => {
     },
   );
 
-  const handleUploadSimsAction = (
-    action: string,
-    value: string,
-    type: Sim_Types,
-  ) => {
+  const handleUploadSimsAction = (action: string, value: string) => {
     if (action === 'error') {
       setSnackbarMessage({
         id: 'sim-pool-parsing-error',
@@ -91,7 +87,7 @@ const Page = () => {
         variables: {
           data: {
             data: value,
-            simType: type,
+            simType: env.SIM_TYPE as Sim_Types,
           },
         },
       });

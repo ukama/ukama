@@ -7,7 +7,9 @@
  */
 
 import { colors } from '@/theme';
-import { Chip, Grid, Link, Paper, Stack, Typography } from '@mui/material';
+import { Chip, Link, Paper, Stack, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
+import DeviceModalView from '../DeviceModalView';
 import LoadingWrapper from '../LoadingWrapper';
 
 interface INodeDetailsCard {
@@ -29,18 +31,18 @@ const NodeDetailsCard = ({
   return (
     <LoadingWrapper
       width="100%"
-      height="100%"
       radius={'small'}
       isLoading={loading}
+      height="fit-content"
     >
       <Paper sx={{ p: 3, gap: 1 }}>
         <Stack spacing={3}>
           <Grid container>
-            <Grid item xs={5}>
+            <Grid size={{ xs: 5 }}>
               <Typography variant="h6">{nodeTitle}</Typography>
             </Grid>
             {isUpdateAvailable && (
-              <Grid item container xs={7} justifyContent="flex-end">
+              <Grid container size={{ xs: 7 }} justifyContent="flex-end">
                 <Chip
                   variant="outlined"
                   sx={{
@@ -69,7 +71,7 @@ const NodeDetailsCard = ({
             )}
           </Grid>
 
-          {/* <DeviceModalView nodeType={nodeType} /> */}
+          <DeviceModalView nodeType={nodeType} />
         </Stack>
       </Paper>
     </LoadingWrapper>

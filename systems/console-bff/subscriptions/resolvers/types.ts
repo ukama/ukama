@@ -174,6 +174,12 @@ export class NotificationsAPIResDto {
   @Field()
   description: string;
 
+  @Field()
+  resource_id: string;
+
+  @Field()
+  event_key: string;
+
   @Field(() => NOTIFICATION_TYPE)
   type: NOTIFICATION_TYPE;
 
@@ -187,6 +193,14 @@ export class NotificationsAPIResDto {
   created_at: string;
 }
 
+@ObjectType()
+export class NotificationRedirect {
+  @Field()
+  title: string;
+
+  @Field()
+  action: string;
+}
 @ObjectType()
 export class NotificationsAPIRes {
   @Field(() => [NotificationsAPIResDto])
@@ -205,6 +219,12 @@ export class NotificationsResDto {
   description: string;
 
   @Field()
+  eventKey: string;
+
+  @Field()
+  resourceId: string;
+
+  @Field()
   createdAt: string;
 
   @Field(() => NOTIFICATION_TYPE)
@@ -215,6 +235,9 @@ export class NotificationsResDto {
 
   @Field()
   isRead: boolean;
+
+  @Field(() => NotificationRedirect)
+  redirect?: NotificationRedirect;
 }
 
 @ObjectType()

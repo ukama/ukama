@@ -6,10 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
-import { Button, Paper, Stack, Typography } from '@mui/material';
+import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
 
 interface IWelcome {
+  role: string;
   orgName: string;
+  loading: boolean;
   operatingCountry: string;
   handleNext: () => void;
   handleBack: () => void;
@@ -33,7 +35,9 @@ export const LField = ({ label, value }: { label: string; value: string }) => {
 };
 
 const Welcome = ({
+  role,
   orgName,
+  loading,
   operatingCountry,
   handleBack,
   handleNext,
@@ -51,6 +55,7 @@ const Welcome = ({
 
         <LField label="Organization Name" value={orgName} />
         <LField label="Network Operating Country" value={operatingCountry} />
+        <LField label="Role" value={role} />
       </Stack>
       <Stack direction={'row'} justifyContent={'space-between'} spacing={2}>
         <Button
@@ -60,9 +65,13 @@ const Welcome = ({
         >
           Back to Singup
         </Button>
-        <Button variant="contained" color="primary" onClick={handleNext}>
-          Next
-        </Button>
+        {loading ? (
+          <Skeleton variant="rectangular" width={86} height={38.5} />
+        ) : (
+          <Button variant="contained" color="primary" onClick={handleNext}>
+            Next
+          </Button>
+        )}
       </Stack>
     </Paper>
   );

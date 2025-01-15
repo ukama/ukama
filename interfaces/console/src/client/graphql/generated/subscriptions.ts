@@ -78,12 +78,22 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
-  NotifCritical = 'NOTIF_CRITICAL',
-  NotifError = 'NOTIF_ERROR',
-  NotifInfo = 'NOTIF_INFO',
-  NotifInvalid = 'NOTIF_INVALID',
-  NotifWarning = 'NOTIF_WARNING'
+  TypeActionableCritical = 'TYPE_ACTIONABLE_CRITICAL',
+  TypeActionableError = 'TYPE_ACTIONABLE_ERROR',
+  TypeActionableInfo = 'TYPE_ACTIONABLE_INFO',
+  TypeActionableWarning = 'TYPE_ACTIONABLE_WARNING',
+  TypeCritical = 'TYPE_CRITICAL',
+  TypeError = 'TYPE_ERROR',
+  TypeInfo = 'TYPE_INFO',
+  TypeInvalid = 'TYPE_INVALID',
+  TypeWarning = 'TYPE_WARNING'
 }
+
+export type NotificationRedirect = {
+  __typename?: 'NotificationRedirect';
+  action: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
 
 export type NotificationsRes = {
   __typename?: 'NotificationsRes';
@@ -94,8 +104,11 @@ export type NotificationsResDto = {
   __typename?: 'NotificationsResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  eventKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  redirect: NotificationRedirect;
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -164,7 +177,7 @@ export type GetNotificationsQueryVariables = Exact<{
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', createdAt: string, description: string, id: string, isRead: boolean, scope: Notification_Scope, title: string, type: Notification_Type }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -177,7 +190,7 @@ export type NotificationSubscriptionSubscriptionVariables = Exact<{
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
@@ -199,13 +212,19 @@ export const GetNotificationsDocument = gql`
     role: $role
   ) {
     notifications {
-      createdAt
-      description
       id
-      isRead
+      type
       scope
       title
-      type
+      isRead
+      eventKey
+      createdAt
+      resourceId
+      description
+      redirect {
+        action
+        title
+      }
     }
   }
 }
@@ -241,8 +260,8 @@ export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
-export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
 export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
@@ -265,8 +284,14 @@ export const NotificationSubscriptionDocument = gql`
     scope
     title
     isRead
+    eventKey
     createdAt
+    resourceId
     description
+    redirect {
+      action
+      title
+    }
   }
 }
     `;
@@ -338,8 +363,8 @@ export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
-export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
 export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;

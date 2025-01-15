@@ -19,7 +19,6 @@ import * as React from 'react';
 
 type splitButtonProps = {
   options: any[];
-  handleSelectedItem: Function;
   handleSplitActionClick: Function;
 };
 const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
@@ -56,9 +55,10 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         variant="contained"
         ref={anchorRef}
         aria-label="split button"
-        sx={{ whiteSpace: 'nowrap', minWidth: 'max-content' }}
+        sx={{ whiteSpace: 'nowrap', width: '208px' }}
       >
         <Button
+          fullWidth
           onClick={() =>
             handleSplitActionClick(
               options.find((i) => i.id === selectedIndex).id,

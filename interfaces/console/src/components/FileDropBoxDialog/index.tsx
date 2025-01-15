@@ -6,8 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Sim_Types } from '@/client/graphql/generated';
-import { SIM_TYPES } from '@/constants';
 import { colors } from '@/theme';
 import { fileToBase64 } from '@/utils';
 import CloseIcon from '@mui/icons-material/Close';
@@ -19,11 +17,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
   IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Typography,
 } from '@mui/material';
@@ -48,7 +42,6 @@ const FileDropBoxDialog = ({
   handleSuccessAction,
 }: FileDropBoxDialogProps) => {
   const [file, setFile] = useState<any>();
-  const [simType, setSimType] = useState<Sim_Types>(Sim_Types.Unknown);
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
     accept: {
       'text/html': ['.csv'],
@@ -63,19 +56,15 @@ const FileDropBoxDialog = ({
   }, [acceptedFiles]);
 
   const handleUploadAction = () => {
-    if (
-      acceptedFiles &&
-      acceptedFiles.length > 0 &&
-      simType !== Sim_Types.Unknown
-    ) {
+    if (acceptedFiles && acceptedFiles.length > 0) {
       const file: any = acceptedFiles[0];
       fileToBase64(file)
         .then((base64String) => {
-          handleSuccessAction('success', base64String, simType);
+          handleSuccessAction('success', base64String);
           handleCloseAction();
         })
         .catch((error) => {
-          handleSuccessAction('error', error, simType);
+          handleSuccessAction('error', error);
           handleCloseAction();
         });
     }
@@ -102,39 +91,17 @@ const FileDropBoxDialog = ({
 
       <DialogContent>
         <Stack
+          height={'100%'}
           direction="column"
           alignItems="flex-start"
           justifyContent="center"
           spacing={2}
         >
-          {file ? (
-            <Typography variant="body1" fontWeight={400}>
-              Upload the SIM CSV file you received so that you can digitally
-              assign SIMs to your subscribers, and authorize them to use your
-              network.
-            </Typography>
-          ) : (
-            <FormControl fullWidth>
-              <InputLabel id={'simpool-sim-type-label'} shrink>
-                Sim Type
-              </InputLabel>
-              <Select
-                notched
-                required
-                label="Sim Type"
-                value={simType}
-                id={'simpool-sim-type-select'}
-                labelId="simpool-sim-type-label"
-                onChange={(e) => setSimType(e.target.value as Sim_Types)}
-              >
-                {SIM_TYPES.map(({ id, label, value }) => (
-                  <MenuItem key={id} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          )}
+          <Typography variant="body1" fontWeight={400}>
+            Upload the SIM CSV file you received so that you can digitally
+            assign SIMs to your subscribers, and authorize them to use your
+            network.
+          </Typography>
 
           {file ? (
             <Stack direction={'row'} spacing={2} alignItems={'center'}>
@@ -142,7 +109,7 @@ const FileDropBoxDialog = ({
               <IconButton
                 onClick={() => {
                   setFile(null);
-                  acceptedFiles.pop();
+                  // acceptedFiles.pop();
                 }}
                 size="small"
               >
@@ -152,12 +119,10 @@ const FileDropBoxDialog = ({
           ) : (
             <Box
               sx={{
-                py: 8,
                 width: '100%',
-                display: 'flex',
+                height: '196px',
                 cursor: 'pointer',
                 borderRadius: '4px',
-                justifyContent: 'center',
                 border: '1px dashed grey',
                 backgroundColor: colors.white38,
                 ':hover': {
@@ -165,10 +130,19 @@ const FileDropBoxDialog = ({
                 },
               }}
             >
-              <div {...getRootProps({ className: 'dropzone' })}>
+              <div
+                {...getRootProps({ className: 'dropzone' })}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <input {...getInputProps()} />
                 <Typography variant="body2" sx={{ cursor: 'inherit' }}>
-                  Drag & Drop file here Or click to select file.
+                  Drag & Drop Or Choose file to upload.
                 </Typography>
               </div>
             </Box>

@@ -28,23 +28,21 @@ export enum API_METHOD_TYPE {
   DELETE = "delete",
   PATCH = "patch",
 }
-export enum NODE_STATUS {
-  ACTIVE = "active",
-  MAINTENANCE = "maintenance",
-  FAULTY = "faulty",
-  ONBOARDED = "onboarded",
-  CONFIGURED = "configured",
-  UNDEFINED = "undefined",
+export enum NODE_STATE {
+  Unknown = "Unknown",
+  Configured = "Configured",
+  Operational = "Operational",
+  Faulty = "Faulty",
 }
-registerEnumType(NODE_STATUS, {
-  name: "NodeStatusEnum",
-  description: "Node status enums",
+registerEnumType(NODE_STATE, {
+  name: "NodeStateEnum",
+  description: "Node state enums",
 });
 
 export enum NODE_CONNECTIVITY {
-  UNKNOWN = "unkown",
-  OFFLINE = "offline",
-  ONLINE = "online",
+  Unknown = "Unkown",
+  Offline = "Offline",
+  Online = "Online",
 }
 registerEnumType(NODE_CONNECTIVITY, {
   name: "NodeConnectivityEnum",
@@ -133,15 +131,15 @@ registerEnumType(SIM_STATUS, {
 });
 
 export enum NOTIFICATION_TYPE {
-  NOTIF_INVALID = "NOTIF_INVALID",
-  NOTIF_INFO = "NOTIF_INFO",
-  NOTIF_WARNING = "NOTIF_WARNING",
-  NOTIF_ERROR = "NOTIF_ERROR",
-  NOTIF_CRITICAL = "NOTIF_CRITICAL",
-  NOTIF_ACTIONABLE_INFO = "NOTIF_ACTIONABLE_INFO",
-  NOTIF_ACTIONABLE_WARNING = "NOTIF_ACTIONABLE_WARNING",
-  NOTIF_ACTIONABLE_ERROR = "NOTIF_ACTIONABLE_ERROR",
-  NOTIF_ACTIONABLE_CRITICAL = "NOTIF_ACTIONABLE_CRITICAL",
+  TYPE_INVALID = "TYPE_INVALID",
+  TYPE_INFO = "TYPE_INFO",
+  TYPE_WARNING = "TYPE_WARNING",
+  TYPE_ERROR = "TYPE_ERROR",
+  TYPE_CRITICAL = "TYPE_CRITICAL",
+  TYPE_ACTIONABLE_INFO = "TYPE_ACTIONABLE_INFO",
+  TYPE_ACTIONABLE_WARNING = "TYPE_ACTIONABLE_WARNING",
+  TYPE_ACTIONABLE_ERROR = "TYPE_ACTIONABLE_ERROR",
+  TYPE_ACTIONABLE_CRITICAL = "TYPE_ACTIONABLE_CRITICAL",
 }
 registerEnumType(NOTIFICATION_TYPE, {
   name: "NOTIFICATION_TYPE",
@@ -172,6 +170,14 @@ export enum INVITATION_STATUS {
 }
 registerEnumType(INVITATION_STATUS, {
   name: "INVITATION_STATUS",
+});
+export enum PAYMENT_ITEM_TYPE {
+  UNKNOWN = "unknown",
+  PACKAGE = "package",
+  INVOICE = "invoice",
+}
+registerEnumType(PAYMENT_ITEM_TYPE, {
+  name: "PAYMENT_ITEM_TYPE",
 });
 
 export enum COMPONENT_TYPE {
@@ -220,24 +226,24 @@ export const NotificationScopeEnumValue = (e: number) => {
 export const NotificationTypeEnumValue = (e: number) => {
   switch (e) {
     case 0:
-      return NOTIFICATION_TYPE.NOTIF_INVALID;
+      return NOTIFICATION_TYPE.TYPE_INVALID;
     case 1:
-      return NOTIFICATION_TYPE.NOTIF_INFO;
+      return NOTIFICATION_TYPE.TYPE_INFO;
     case 2:
-      return NOTIFICATION_TYPE.NOTIF_WARNING;
+      return NOTIFICATION_TYPE.TYPE_WARNING;
     case 3:
-      return NOTIFICATION_TYPE.NOTIF_ERROR;
+      return NOTIFICATION_TYPE.TYPE_ERROR;
     case 4:
-      return NOTIFICATION_TYPE.NOTIF_CRITICAL;
+      return NOTIFICATION_TYPE.TYPE_CRITICAL;
     case 5:
-      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_INFO;
+      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_INFO;
     case 6:
-      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_WARNING;
+      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_WARNING;
     case 7:
-      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_ERROR;
+      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_ERROR;
     case 8:
-      return NOTIFICATION_TYPE.NOTIF_ACTIONABLE_CRITICAL;
+      return NOTIFICATION_TYPE.TYPE_ACTIONABLE_CRITICAL;
     default:
-      return NOTIFICATION_TYPE.NOTIF_INVALID;
+      return NOTIFICATION_TYPE.TYPE_INVALID;
   }
 };

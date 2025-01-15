@@ -52,15 +52,16 @@ message Notification {
     string id = 1;
     string title = 2;
     string description = 3;
-    ukama.common.v1.NotificationType type = 4;
-    ukama.common.v1.NotificationScope scope = 5;
-    string orgId = 6 [json_name = "org_id"];
-    string networkId = 7 [json_name = "network_id"];
-    string subscriberId = 8 [json_name = "subscriber_id"];
-    string userId = 9 [json_name = "user_id"];
-    google.protobuf.Timestamp createdAt = 10 [json_name = "created_at"];
+    string orgId = 4 [json_name = "org_id"];
+    string userId = 5 [json_name = "user_id"];
+    ukama.common.v1.NotificationType type = 6;
+    ukama.common.v1.NotificationScope scope = 7;
+    string eventKey = 8 [json_name = "event_key"];
+    bytes eventMsg = 9 [json_name = "event_msg"];
+    string networkId = 10 [json_name = "network_id"];
     string resourceId = 11 [json_name = "resource_id"];
-    bytes eventMsg = 12 [json_name = "event_msg"];
+    string subscriberId = 12 [json_name = "subscriber_id"];
+    google.protobuf.Timestamp createdAt = 13 [json_name = "created_at"];
 }
 
 message Notifications {
@@ -70,8 +71,9 @@ message Notifications {
     string type = 4;
     string scope = 5;
     bool isRead = 6 [json_name = "is_read"];
-    string resourceId = 7 [json_name = "resource_id"];
-    google.protobuf.Timestamp createdAt = 8 [json_name = "created_at"];
+    string eventKey = 7 [json_name = "event_key"];
+    string resourceId = 8 [json_name = "resource_id"];
+    google.protobuf.Timestamp createdAt = 9 [json_name = "created_at"];
 }
 
 

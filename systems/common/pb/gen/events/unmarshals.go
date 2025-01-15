@@ -404,6 +404,16 @@ func UnmarshalPayment(msg *anypb.Any, emsg string) (*Payment, error) {
 	return p, nil
 }
 
+func UnmarshalInvoiceGenerated(msg *anypb.Any, emsg string) (*Report, error) {
+	p := &Report{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalProfileUpdated(msg *anypb.Any, emsg string) (*ProfileUpdated, error) {
 	p := &ProfileUpdated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})

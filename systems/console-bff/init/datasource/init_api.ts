@@ -109,7 +109,11 @@ class InitAPI extends RESTDataSource {
 
           if (member && member.memberId) {
             role = member.role as ROLE_TYPE;
-            if (role === ROLE_TYPE.ROLE_OWNER) {
+            if (
+              role === ROLE_TYPE.ROLE_OWNER ||
+              role === ROLE_TYPE.ROLE_ADMIN ||
+              role === ROLE_TYPE.ROLE_NETWORK_OWNER
+            ) {
               const isAlreadyWelcomed = await getFromStore(
                 store,
                 `${userWhoami.user.uuid}-welcome`
