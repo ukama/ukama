@@ -716,17 +716,17 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 	defer cancel()
 
 	customer := client.Customer{
-		Id:      orgId,
-		Name:    OrgName,
+		Id:   orgId,
+		Name: OrgName,
+		Type: client.CompanyCustomerType,
+
+		// TODO: Hardcoding these values for now.
 		Email:   "test@example.com",
 		Phone:   "+001122334455",
 		Address: "35 Hollywood Boulevard",
 		City:    "Los Angeles",
 		State:   "California",
-		Country: "United States Of America",
-		Type:    client.CompanyCustomerType,
-
-		// TODO: we might need additional fields such as Email, Address, Phone.
+		Country: "US",
 	}
 
 	log.Infof("Sending org customer create event %v to billing server",
