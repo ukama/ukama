@@ -66,21 +66,6 @@ export type AddPackagesToSimInputDto = {
   sim_id: Scalars['String']['input'];
 };
 
-export type AddPaymentInputDto = {
-  amount: Scalars['String']['input'];
-  correspondent: Scalars['String']['input'];
-  country: Scalars['String']['input'];
-  currency: Scalars['String']['input'];
-  description: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
-  itemType: Payment_Item_Type;
-  payerEmail: Scalars['String']['input'];
-  payerPhone: Scalars['String']['input'];
-  paymentMethod: Scalars['String']['input'];
-  simId: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-};
-
 export type AddSiteInputDto = {
   access_id: Scalars['String']['input'];
   backhaul_id: Scalars['String']['input'];
@@ -197,24 +182,6 @@ export type ComponentsResDto = {
   components: Array<ComponentDto>;
 };
 
-export type CorrespondentsDto = {
-  __typename?: 'CorrespondentsDto';
-  correspondent_code: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  logo: Scalars['String']['output'];
-};
-
-export type CorrespondentsInputDto = {
-  paymentMethod: Scalars['String']['input'];
-  phoneNumber: Scalars['String']['input'];
-};
-
-export type CorrespondentsResDto = {
-  __typename?: 'CorrespondentsResDto';
-  correspondents: Array<CorrespondentsDto>;
-  country: Scalars['String']['output'];
-};
-
 export type CountriesRes = {
   __typename?: 'CountriesRes';
   countries: Array<CountryDto>;
@@ -239,13 +206,7 @@ export type CurrencyRes = {
   symbol: Scalars['String']['output'];
 };
 
-export type DataPlan = {
-  __typename?: 'DataPlan';
-  elementType: Scalars['String']['output'];
-  planId: Scalars['String']['output'];
-  planName: Scalars['String']['output'];
-}
-export type Customer = {
+export type CustomerDto = {
   __typename?: 'CustomerDto';
   addressLine1?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
@@ -258,6 +219,13 @@ export type Customer = {
   phone?: Maybe<Scalars['String']['output']>;
   timezone?: Maybe<Scalars['String']['output']>;
   vatRate: Scalars['Float']['output'];
+};
+
+export type DataPlan = {
+  __typename?: 'DataPlan';
+  elementType: Scalars['String']['output'];
+  planId: Scalars['String']['output'];
+  planName: Scalars['String']['output'];
 };
 
 export type DefaultMarkupHistoryDto = {
@@ -440,7 +408,6 @@ export type Mutation = {
   addNodeToSite: CBooleanResponse;
   addPackage: PackageDto;
   addPackagesToSim: AddPackagesSimResDto;
-  addPayment: PaymentDto;
   addSite: SiteDto;
   addSubscriber: SubscriberDto;
   allocateSim: AllocateSimApiDto;
@@ -504,11 +471,6 @@ export type MutationAddPackageArgs = {
 
 export type MutationAddPackagesToSimArgs = {
   data: AddPackagesToSimInputDto;
-};
-
-
-export type MutationAddPaymentArgs = {
-  data: AddPaymentInputDto;
 };
 
 
@@ -912,12 +874,6 @@ export type OrgsResDto = {
   user: Scalars['String']['output'];
 };
 
-export enum Payment_Item_Type {
-  Invoice = 'INVOICE',
-  Package = 'PACKAGE',
-  Unknown = 'UNKNOWN'
-}
-
 export type PackageDto = {
   __typename?: 'PackageDto';
   active: Scalars['Boolean']['output'];
@@ -1007,7 +963,7 @@ export type ProcessPaymentDto = {
 };
 
 export type ProcessPaymentInputDto = {
-  correspondent: Scalars['String']['input'];
+  correspondent?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   token: Scalars['String']['input'];
 };
@@ -1018,7 +974,6 @@ export type Query = {
   getAppsChangeLog: AppChangeLogs;
   getComponentById: ComponentDto;
   getComponentsByUserId: ComponentsResDto;
-  getCorrespondents: CorrespondentsResDto;
   getCountries: CountriesRes;
   getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
@@ -1083,11 +1038,6 @@ export type QueryGetComponentByIdArgs = {
 
 export type QueryGetComponentsByUserIdArgs = {
   data: ComponentTypeInputDto;
-};
-
-
-export type QueryGetCorrespondentsArgs = {
-  data: CorrespondentsInputDto;
 };
 
 
@@ -1915,19 +1865,19 @@ export type UpdatePacakgeMutation = { __typename?: 'Mutation', updatePackage: { 
 
 export type PaymentFragment = { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string };
 
-export type AddPaymentMutationVariables = Exact<{
-  data: AddPaymentInputDto;
-}>;
-
-
-export type AddPaymentMutation = { __typename?: 'Mutation', addPayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
-
 export type UpdatePaymentMutationVariables = Exact<{
   data: UpdatePaymentInputDto;
 }>;
 
 
 export type UpdatePaymentMutation = { __typename?: 'Mutation', updatePayment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } };
+
+export type ProcessPaymentMutationVariables = Exact<{
+  data: ProcessPaymentInputDto;
+}>;
+
+
+export type ProcessPaymentMutation = { __typename?: 'Mutation', processPayment: { __typename?: 'ProcessPaymentDto', payment: { __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, createdAt: string } } };
 
 export type GetPaymentQueryVariables = Exact<{
   paymentId: Scalars['String']['input'];
@@ -3833,55 +3783,6 @@ export function useUpdatePacakgeMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdatePacakgeMutationHookResult = ReturnType<typeof useUpdatePacakgeMutation>;
 export type UpdatePacakgeMutationResult = Apollo.MutationResult<UpdatePacakgeMutation>;
 export type UpdatePacakgeMutationOptions = Apollo.BaseMutationOptions<UpdatePacakgeMutation, UpdatePacakgeMutationVariables>;
-export const AddPaymentDocument = gql`
-    mutation AddPayment($data: AddPaymentInputDto!) {
-  addPayment(data: $data) {
-    id
-    itemId
-    itemType
-    amount
-    currency
-    paymentMethod
-    depositedAmount
-    paidAt
-    payerName
-    payerEmail
-    payerPhone
-    correspondent
-    country
-    description
-    status
-    failureReason
-    createdAt
-  }
-}
-    `;
-export type AddPaymentMutationFn = Apollo.MutationFunction<AddPaymentMutation, AddPaymentMutationVariables>;
-
-/**
- * __useAddPaymentMutation__
- *
- * To run a mutation, you first call `useAddPaymentMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddPaymentMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [addPaymentMutation, { data, loading, error }] = useAddPaymentMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useAddPaymentMutation(baseOptions?: Apollo.MutationHookOptions<AddPaymentMutation, AddPaymentMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AddPaymentMutation, AddPaymentMutationVariables>(AddPaymentDocument, options);
-      }
-export type AddPaymentMutationHookResult = ReturnType<typeof useAddPaymentMutation>;
-export type AddPaymentMutationResult = Apollo.MutationResult<AddPaymentMutation>;
-export type AddPaymentMutationOptions = Apollo.BaseMutationOptions<AddPaymentMutation, AddPaymentMutationVariables>;
 export const UpdatePaymentDocument = gql`
     mutation UpdatePayment($data: UpdatePaymentInputDto!) {
   updatePayment(data: $data) {
@@ -3931,6 +3832,57 @@ export function useUpdatePaymentMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdatePaymentMutationHookResult = ReturnType<typeof useUpdatePaymentMutation>;
 export type UpdatePaymentMutationResult = Apollo.MutationResult<UpdatePaymentMutation>;
 export type UpdatePaymentMutationOptions = Apollo.BaseMutationOptions<UpdatePaymentMutation, UpdatePaymentMutationVariables>;
+export const ProcessPaymentDocument = gql`
+    mutation ProcessPayment($data: ProcessPaymentInputDto!) {
+  processPayment(data: $data) {
+    payment {
+      id
+      itemId
+      itemType
+      amount
+      currency
+      paymentMethod
+      depositedAmount
+      paidAt
+      payerName
+      payerEmail
+      payerPhone
+      correspondent
+      country
+      description
+      status
+      failureReason
+      createdAt
+    }
+  }
+}
+    `;
+export type ProcessPaymentMutationFn = Apollo.MutationFunction<ProcessPaymentMutation, ProcessPaymentMutationVariables>;
+
+/**
+ * __useProcessPaymentMutation__
+ *
+ * To run a mutation, you first call `useProcessPaymentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useProcessPaymentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [processPaymentMutation, { data, loading, error }] = useProcessPaymentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useProcessPaymentMutation(baseOptions?: Apollo.MutationHookOptions<ProcessPaymentMutation, ProcessPaymentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ProcessPaymentMutation, ProcessPaymentMutationVariables>(ProcessPaymentDocument, options);
+      }
+export type ProcessPaymentMutationHookResult = ReturnType<typeof useProcessPaymentMutation>;
+export type ProcessPaymentMutationResult = Apollo.MutationResult<ProcessPaymentMutation>;
+export type ProcessPaymentMutationOptions = Apollo.BaseMutationOptions<ProcessPaymentMutation, ProcessPaymentMutationVariables>;
 export const GetPaymentDocument = gql`
     query GetPayment($paymentId: String!) {
   getPayment(paymentId: $paymentId) {
@@ -3963,8 +3915,8 @@ export function useGetPaymentLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
         }
-export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPaymentSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentQuery, GetPaymentQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPaymentQuery, GetPaymentQueryVariables>(GetPaymentDocument, options);
         }
 export type GetPaymentQueryHookResult = ReturnType<typeof useGetPaymentQuery>;
@@ -4005,8 +3957,8 @@ export function useGetPaymentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
         }
-export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPaymentsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPaymentsQuery, GetPaymentsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPaymentsQuery, GetPaymentsQueryVariables>(GetPaymentsDocument, options);
         }
 export type GetPaymentsQueryHookResult = ReturnType<typeof useGetPaymentsQuery>;
@@ -4057,8 +4009,8 @@ export function useGetReportsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
         }
-export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetReportsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportsQuery, GetReportsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetReportsQuery, GetReportsQueryVariables>(GetReportsDocument, options);
         }
 export type GetReportsQueryHookResult = ReturnType<typeof useGetReportsQuery>;
@@ -4109,8 +4061,8 @@ export function useGetReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
         }
-export function useGetReportSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportQuery, GetReportQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetReportQuery, GetReportQueryVariables>(GetReportDocument, options);
         }
 export type GetReportQueryHookResult = ReturnType<typeof useGetReportQuery>;
