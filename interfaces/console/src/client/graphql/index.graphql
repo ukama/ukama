@@ -401,27 +401,7 @@ fragment payment on PaymentDto {
   createdAt
 }
 
-mutation AddPayment($data: AddPaymentInputDto!) {
-  addPayment(data: $data) {
-    id
-    itemId
-    itemType
-    amount
-    currency
-    paymentMethod
-    depositedAmount
-    paidAt
-    payerName
-    payerEmail
-    payerPhone
-    correspondent
-    country
-    description
-    status
-    failureReason
-    createdAt
-  }
-}
+
 mutation UpdatePayment($data: UpdatePaymentInputDto!) {
   updatePayment(data: $data) {
     id

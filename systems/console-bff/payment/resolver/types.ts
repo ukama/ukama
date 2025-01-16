@@ -7,8 +7,6 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
-import { PAYMENT_ITEM_TYPE } from "../../common/enums";
-
 @ObjectType()
 export class PaymentDto {
   @Field()
@@ -151,45 +149,6 @@ export class PaymentAPIResDto {
 export class PaymentsAPIResDto {
   @Field(() => [PaymentAPIDto])
   payments: PaymentAPIDto[];
-}
-
-@InputType()
-export class AddPaymentInputDto {
-  @Field()
-  amount: string;
-
-  @Field()
-  country: string;
-
-  @Field()
-  currency: string;
-
-  @Field()
-  description: string;
-
-  @Field()
-  itemId: string;
-
-  @Field(() => PAYMENT_ITEM_TYPE)
-  itemType: PAYMENT_ITEM_TYPE;
-
-  @Field()
-  payerEmail: string;
-
-  @Field()
-  payerPhone: string;
-
-  @Field()
-  paymentMethod: string;
-
-  @Field()
-  correspondent?: string;
-
-  @Field()
-  simId: string;
-
-  @Field()
-  subscriberId: string;
 }
 
 @InputType()
