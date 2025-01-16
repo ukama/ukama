@@ -3,7 +3,7 @@ services:
   build: .
   ports:
    - 8083:8080
-   - 7001:7001
+   - 7001:8085
   networks:
    ukama-net:
     ipv4_address: 10.1.0.90
