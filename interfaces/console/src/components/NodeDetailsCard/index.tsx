@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NODE_IMAGES } from '@/constants';
 import { colors } from '@/theme';
 import { Chip, Link, Paper, Stack, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -70,8 +71,12 @@ const NodeDetailsCard = ({
               </Grid>
             )}
           </Grid>
-
-          <DeviceModalView nodeType={nodeType} />
+          {NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode'] && (
+            <DeviceModalView
+              nodeType={nodeType}
+              image={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
+            />
+          )}
         </Stack>
       </Paper>
     </LoadingWrapper>

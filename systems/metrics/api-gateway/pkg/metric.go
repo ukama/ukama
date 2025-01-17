@@ -39,7 +39,6 @@ type Interval struct {
 
 type Filter struct {
 	nodeId     string
-	org        string
 	network    string
 	subscriber string
 	sim        string
@@ -55,34 +54,25 @@ func (f *Filter) WithNodeId(nodeId string) *Filter {
 	return f
 }
 
-func (f *Filter) WithOrg(org string) *Filter {
-	f.org = org
-	return f
-}
-
-func (f *Filter) WithSite(org string,site string) *Filter {
+func (f *Filter) WithSite(site string) *Filter {
 	f.site = site
-	f.org = org
 	return f
 }
 
-func (f *Filter) WithSubscriber(org string, network string, subscriber string) *Filter {
-	f.org = org
+func (f *Filter) WithSubscriber(network string, subscriber string) *Filter {
 	f.network = network
 	f.subscriber = subscriber
 	return f
 }
 
-func (f *Filter) WithSim(org string, network string, subscriber string, sim string) *Filter {
-	f.org = org
+func (f *Filter) WithSim(network string, subscriber string, sim string) *Filter {
 	f.network = network
 	f.subscriber = subscriber
 	f.sim = sim
 	return f
 }
 
-func (f *Filter) WithAny(org string, network string, subscriber string, sim string, site string, nodeId string) *Filter {
-	f.org = org
+func (f *Filter) WithAny(network string, subscriber string, sim string, site string, nodeId string) *Filter {
 	f.network = network
 	f.subscriber = subscriber
 	f.sim = sim
@@ -105,9 +95,6 @@ func (f *Filter) GetFilter() string {
 	var filter []string
 	if f.nodeId != "" {
 		filter = append(filter, fmt.Sprintf("nodeid='%s'", f.nodeId))
-	}
-	if f.org != "" {
-		filter = append(filter, fmt.Sprintf("org='%s'", f.org))
 	}
 	if f.network != "" {
 		filter = append(filter, fmt.Sprintf("network='%s'", f.network))
@@ -145,6 +132,7 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	defer cancel()
 
 	u := fmt.Sprintf("%s/api/v1/query_range", strings.TrimSuffix(m.conf.MetricsServer, "/"))
+	logrus.Infof("GetMetricRange url: %s", u)
 
 	data := url.Values{}
 	data.Set("start", strconv.FormatInt(in.Start, 10))
@@ -304,7 +292,6 @@ func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggre
 func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
 	exludSt := getExcludeStatements("nodeid")
 
-	// org only filter
 	if !filter.HasNetwork() {
 		exludSt = getExcludeStatements("nodeid", "network")
 	}

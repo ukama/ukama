@@ -128,10 +128,16 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
         return ["uptime_trx", "temperature_trx", "temperature_rfe"];
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
-      else return ["temperature_trx", "temperature_com"];
+      else return ["uptime_trx", "temperature_trx", "temperature_com"];
     case GRAPHS_TYPE.NETWORK:
       if (!nodeId.includes(NODE_TYPE.anode))
-        return ["rrc", "rlc", "erab", "throughputuplink", "throughputdownlink"];
+        return [
+          "network_latency",
+          "network_packet_loss",
+          "network_overall_status",
+          "network_throughput_up",
+          "network_throughput_down",
+        ];
       else return [];
     case GRAPHS_TYPE.RESOURCES:
       if (nodeId.includes(NODE_TYPE.hnode))
@@ -149,7 +155,7 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
           "memory_com_used",
         ];
     case GRAPHS_TYPE.RADIO:
-      if (nodeId.includes(NODE_TYPE.hnode))
+      if (nodeId.includes(NODE_TYPE.tnode))
         return ["tx_power", "rx_power", "pa_power"];
       else return [];
     case GRAPHS_TYPE.SUBSCRIBERS:

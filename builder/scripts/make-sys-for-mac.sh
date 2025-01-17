@@ -44,6 +44,9 @@ filter_make_sys() {
             "inventory")
                 PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
                 ;;
+            "metrics")
+                PATHS+=("metrics/exporter" "metrics/api-gateway")
+                ;;
             "messaging")
                 PATHS+=("messaging/mesh" "messaging/nns" "messaging/node-feeder" "messaging/api-gateway")
                 ;;

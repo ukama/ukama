@@ -26,22 +26,20 @@ export enum Graphs_Type {
 }
 
 export type GetMetricByTabInput = {
-  from?: InputMaybe<Scalars['Float']['input']>;
+  from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
-  step?: InputMaybe<Scalars['Float']['input']>;
+  step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Graphs_Type;
   userId: Scalars['String']['input'];
-  withSubscription: Scalars['Boolean']['input'];
+  withSubscription?: Scalars['Boolean']['input'];
 };
 
 export type LatestMetricRes = {
   __typename?: 'LatestMetricRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Array<Scalars['Float']['output']>;
@@ -51,7 +49,6 @@ export type MetricRes = {
   __typename?: 'MetricRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   values: Array<Array<Scalars['Float']['output']>>;
@@ -139,7 +136,7 @@ export type QueryGetNotificationsArgs = {
 export type SubMetricByTabInput = {
   from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
   type: Graphs_Type;
   userId: Scalars['String']['input'];
 };
@@ -197,7 +194,14 @@ export type GetMetricByTabQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId: string, success: boolean, type: string, values: Array<Array<number>> }> } };
+
+export type GetMetricByTabSubSubscriptionVariables = Exact<{
+  data: SubMetricByTabInput;
+}>;
+
+
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -328,10 +332,9 @@ export const GetMetricByTabDocument = gql`
     query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
-      success
       msg
-      orgId
       nodeId
+      success
       type
       values
     }
@@ -371,3 +374,37 @@ export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQ
 export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
 export type GetMetricByTabSuspenseQueryHookResult = ReturnType<typeof useGetMetricByTabSuspenseQuery>;
 export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
+export const GetMetricByTabSubDocument = gql`
+    subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
+  getMetricByTabSub(data: $data) {
+    msg
+    nodeId
+    success
+    type
+    value
+  }
+}
+    `;
+
+/**
+ * __useGetMetricByTabSubSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricByTabSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricByTabSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricByTabSubSubscription({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables> & ({ variables: GetMetricByTabSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>(GetMetricByTabSubDocument, options);
+      }
+export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
+export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
