@@ -19,15 +19,16 @@ import (
 )
 
 type Report struct {
-	Id        uuid.UUID        `gorm:"primaryKey;type:uuid"`
-	OwnerId   uuid.UUID        `gorm:"uniqueIndex:report_id_period,where:deleted_at is null;not null;type:uuid"`
-	OwnerType ukama.OwnerType  `gorm:"not null"`
-	NetworkId uuid.UUID        `gorm:"type:uuid"`
-	Type      ukama.ReportType `gorm:"not null"`
-	Period    time.Time        `gorm:"uniqueIndex:report_id_period,where:deleted_at is null;not null"`
-	RawReport datatypes.JSON   `gorm:"not null"`
-	IsPaid    bool             `gorm:"default:false"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	Id            uuid.UUID        `gorm:"primaryKey;type:uuid"`
+	OwnerId       uuid.UUID        `gorm:"uniqueIndex:report_id_period,where:deleted_at is null;not null;type:uuid"`
+	OwnerType     ukama.OwnerType  `gorm:"not null"`
+	NetworkId     uuid.UUID        `gorm:"type:uuid"`
+	Type          ukama.ReportType `gorm:"not null"`
+	Period        time.Time        `gorm:"uniqueIndex:report_id_period,where:deleted_at is null;not null"`
+	RawReport     datatypes.JSON   `gorm:"not null"`
+	IsPaid        bool             `gorm:"default:false"`
+	TransactionId string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }

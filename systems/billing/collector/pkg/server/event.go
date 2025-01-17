@@ -238,7 +238,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name:        accountItem.Item + ": " + accountItem.Id,
+			Name:        accountItem.Item,
 			Code:        accountItem.Id,
 			Interval:    postpaidBillingInterval,
 			AmountCents: int(amount * 100),
@@ -720,7 +720,13 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 		Name: OrgName,
 		Type: client.CompanyCustomerType,
 
-		// TODO: we might need additional fields such as Email, Address, Phone.
+		// TODO: Hardcoding these values for now.
+		Email:   "test@example.com",
+		Phone:   "+001122334455",
+		Address: "35 Hollywood Boulevard",
+		City:    "Los Angeles",
+		State:   "California",
+		Country: "US",
 	}
 
 	log.Infof("Sending org customer create event %v to billing server",

@@ -25,29 +25,31 @@ message Report {
     string Type = 6;
     RawReport rawReport = 7 [json_name = "raw_report"];
     bool isPaid = 8 [json_name = "is_paid"];
-    string createdAt = 9 [json_name = "created_at"];
+    string transactionId = 9 [json_name = "transaction_id"];
+    string createdAt = 10 [json_name = "created_at"];
 }
 
 
 message RawReport {
-    string issuingDate = 1 [json_name = "issuing_date"];
-    string paymentDueDate = 2 [json_name = "payment_due_date"];
-    bool paymentOverdue = 3 [json_name = "payment_overdue"];
-    string invoiceType = 4 [json_name = "invoice_type"];
-    string status = 5 [json_name = "status"];
-    string paymentStatus = 6 [json_name = "payment_status"];
-    int64 feesAmountCents = 7 [json_name = "fees_amount_cents"];
-    int64 taxesAmountCents = 8 [json_name = "taxes_amount_cents"];
-    int64 subTotalExcludingTaxesAmountCents  = 9 [json_name = "sub_total_excluding_taxes_amount_cents"];
-    int64 subTotalIncludingTaxesAmountCents  = 10 [json_name = "sub_total_including_taxes_amount_cents"];
-    int64 vatAmountCents = 11 [json_name = "vat_amount_cents"];
-    string vatAmountCurrency = 12 [json_name = "vat_amount_currency"];
-    int64 totalAmountCents = 13 [json_name = "total_amount_cents"];
-    string Currency = 14 [json_name = "currency"];
-    string fileURL = 15 [json_name = "file_url"];
-    Customer customer = 16 [json_name = "customer"];
-    repeated Subscription subscriptions = 17 [json_name = "subscriptions"];
-    repeated Fee fees = 18 [json_name = "fees"];
+    string number = 1 [json_name = "number"];
+    string issuingDate = 2 [json_name = "issuing_date"];
+    string paymentDueDate = 3 [json_name = "payment_due_date"];
+    bool paymentOverdue = 4 [json_name = "payment_overdue"];
+    string invoiceType = 5 [json_name = "invoice_type"];
+    string status = 6 [json_name = "status"];
+    string paymentStatus = 7 [json_name = "payment_status"];
+    int64 feesAmountCents = 8 [json_name = "fees_amount_cents"];
+    int64 taxesAmountCents = 9 [json_name = "taxes_amount_cents"];
+    int64 subTotalExcludingTaxesAmountCents  = 10 [json_name = "sub_total_excluding_taxes_amount_cents"];
+    int64 subTotalIncludingTaxesAmountCents  = 11 [json_name = "sub_total_including_taxes_amount_cents"];
+    int64 vatAmountCents = 12 [json_name = "vat_amount_cents"];
+    string vatAmountCurrency = 13 [json_name = "vat_amount_currency"];
+    int64 totalAmountCents = 14 [json_name = "total_amount_cents"];
+    string Currency = 15 [json_name = "currency"];
+    string fileURL = 16 [json_name = "file_url"];
+    Customer customer = 17 [json_name = "customer"];
+    repeated Subscription subscriptions = 18 [json_name = "subscriptions"];
+    repeated Fee fees = 19 [json_name = "fees"];
 }
 
 message Subscription {
@@ -68,25 +70,33 @@ message Customer {
     string name = 2 [json_name = "name"];
     string email = 3 [json_name = "email"];
     string AddressLine1 = 4 [json_name = "address_line1"];
-    string legalName = 5 [json_name = "legal_name"];
-    string legalNumber = 6 [json_name = "legal_number"];
-    string phone = 7 [json_name = "phone"];
-    string currency = 8 [json_name = "currency"];
-    string timezone = 9 [json_name = "timezone"];
-    double vatRate = 10 [json_name = "vat_rate"];
-    string createdAt = 11 [json_name = "created_at"];
+    string phone = 5 [json_name = "phone"];
+    string city = 6 [json_name = "city"];
+    string state = 7 [json_name = "state"];
+    string zipcode = 8 [json_name = "zipcode"];
+    string country = 9 [json_name = "country"];
+    string legalName = 10 [json_name = "legal_name"];
+    string legalNumber = 11 [json_name = "legal_number"];
+    string logoUrl = 12 [json_name = "logo_url"];
+    string url = 13 [json_name = "url"];
+    string currency = 14 [json_name = "currency"];
+    string timezone = 15 [json_name = "timezone"];
+    double vatRate = 16 [json_name = "vat_rate"];
+    string createdAt = 17 [json_name = "created_at"];
 }
 
 message Fee {
-    int64 amountCents = 1 [json_name = "amount_cents"];
-    string amountCurrency = 2 [json_name = "amount_currency"];
-    int64 taxesAmountCents = 3 [json_name = "taxes_amount_cents"];
-    string taxesPreciseAmount = 4 [json_name = "taxes_precise_amount"];
-    int64 totalAmountCents = 5 [json_name = "total_amount_cents"];
-    string totalAmountCurrency = 6 [json_name = "total_amount_currency"];
-    int64 eventsCount = 7 [json_name = "events_count"];
-    double units = 8 [json_name = "units"];
-    FeeItem item = 9 [json_name = "item"];
+    string externalSubscriptionId = 1 [json_name = "external_subscription_id"];
+    int64 amountCents = 2 [json_name = "amount_cents"];
+    string amountCurrency = 3 [json_name = "amount_currency"];
+    int64 taxesAmountCents = 4 [json_name = "taxes_amount_cents"];
+    string taxesPreciseAmount = 5 [json_name = "taxes_precise_amount"];
+    int64 totalAmountCents = 6 [json_name = "total_amount_cents"];
+    string totalAmountCurrency = 7 [json_name = "total_amount_currency"];
+    int64 eventsCount = 8 [json_name = "events_count"];
+    double units = 9 [json_name = "units"];
+    string description = 10  [json_name = "description"];
+    FeeItem item = 11 [json_name = "item"];
 }
 
 message FeeItem {

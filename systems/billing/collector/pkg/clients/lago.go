@@ -188,8 +188,12 @@ func (l *lagoClient) CreateCustomer(ctx context.Context, cust Customer) (string,
 		ExternalID:   cust.Id,
 		Name:         cust.Name,
 		Email:        cust.Email,
-		AddressLine1: cust.Address,
 		Phone:        cust.Phone,
+		AddressLine1: cust.Address,
+		City:         cust.City,
+		State:        cust.State,
+		Zipcode:      cust.Zipcode,
+		Country:      cust.Country,
 		CustomerType: customerType,
 	}
 

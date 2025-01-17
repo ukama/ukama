@@ -21,14 +21,15 @@ message Payment {
     string paymentMethod = 6 [json_name = "payment_method"];
     int64 depositedAmountCents = 7 [json_name = "deposited_amount_cents"];
     string paidAt = 8 [json_name = "paid_at"];
-    string payerName = 9 [json_name = "payer_name"];
-    string payerEmail = 10 [json_name = "payer_email"];
-    string payerPhone = 11 [json_name = "payer_phone"];
-    string correspondant = 12;
-    string country = 13;
-    string description = 14;
-    string status = 15;
-    string failureReason = 16 [json_name = "failure_reason"];
-    string externalId = 17 [json_name = "external_id"];
-    bytes metadata = 18;
+    string transactionId = 9 [json_name = "transaction_id"];
+    string payerName = 10 [json_name = "payer_name"];
+    string payerEmail = 11 [json_name = "payer_email"];
+    string payerPhone = 12 [json_name = "payer_phone"];
+    string correspondant = 13;
+    string country = 14;
+    string description = 15;
+    string status = 16;
+    string failureReason = 17 [json_name = "failure_reason"];
+    string externalId = 18 [json_name = "external_id"];
+    bytes metadata = 19;
 }

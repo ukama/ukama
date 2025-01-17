@@ -74,7 +74,7 @@ func (r *ReportEventServer) handlePaymentSuccessEvent(key string, msg *epb.Payme
 	b *ReportEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	_, err := update(msg.ItemId, true, r.reportRepo, r.msgBus, r.baseRoutingKey)
+	_, err := update(msg.ItemId, true, msg.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
 
 	return err
 }
