@@ -44,7 +44,7 @@ const getOptions = (topic: string, title: string, initData: any) => {
             const series: any = chart?.series[0];
             PubSub.subscribe(topic, (_, data) => {
               if (topic === chart?.title?.textStr && series) {
-                series.addPoint(data, true, true);
+                series.addPoint(data, true, series.data.length > 180);
               }
             });
           }
