@@ -58,6 +58,12 @@ export class LatestMetricRes {
   value: [number, number];
 }
 
+@ObjectType()
+export class LatestMetricsRes {
+  @Field(() => [LatestMetricRes])
+  metrics: LatestMetricRes[];
+}
+
 @InputType()
 export class GetMetricRangeInput {
   @Field()

@@ -1,6 +1,7 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+import { getAllMetricsKeys } from "../../common/constants";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
@@ -14,6 +15,7 @@ import {
   getScopesByRole,
 } from "../../common/utils";
 import {
+  getLatestMetric,
   getNodeRangeMetric,
   getNotifications,
 } from "../datasource/subscriptions-api";
@@ -21,6 +23,7 @@ import { pubSub } from "./pubsub";
 import {
   GetMetricByTabInput,
   LatestMetricRes,
+  LatestMetricsRes,
   MetricRes,
   MetricsRes,
   NotificationsRes,
@@ -30,6 +33,14 @@ import {
 
 const WS_THREAD = "./threads/MetricsWSThread.mjs";
 const NOTIFICATION_THREAD = "./threads/NotificationsWSThread.mjs";
+
+const ERROR_RESPONSE = {
+  success: true,
+  msg: "success",
+  orgId: "",
+  nodeId: "",
+  type: "",
+};
 
 const getErrorRes = (msg: string) =>
   ({
@@ -254,6 +265,40 @@ class SubscriptionsResolvers {
     logger.info("Notification payload :", payload);
     await store.close();
     return payload;
+  }
+
+  @Query(() => LatestMetricsRes)
+  async getMetricsStat(
+    @Arg("nodeId") nodeId: string,
+    @Arg("orgName") orgName: string
+  ) {
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for notification: ${baseURL}`);
+      return { ...ERROR_RESPONSE, value: [0, 0] } as LatestMetricRes;
+    }
+
+    const types = getAllMetricsKeys(nodeId);
+    const metrics: LatestMetricRes[] = [];
+    for (let i = 0; i < types.length; i++) {
+      const metric = await getLatestMetric(baseURL, types[i], nodeId);
+      metrics.push({
+        success: metric.success,
+        msg: metric.msg,
+        nodeId: metric.nodeId,
+        type: types[i],
+        value: metric.value,
+      });
+    }
+
+    return {
+      metrics: metrics,
+    };
   }
 }
 
