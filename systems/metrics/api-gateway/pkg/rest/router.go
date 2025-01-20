@@ -245,7 +245,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 }
 
 func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter(), c.Writer)
+	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNodeId(in.NodeID), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
 

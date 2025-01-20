@@ -53,6 +53,7 @@ type GetMetricsRangeInput struct {
 }
 type GetMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
+	NodeID string `query:"node" validate:"required"`
 }
 
 type GetSimMetricsInput struct {
