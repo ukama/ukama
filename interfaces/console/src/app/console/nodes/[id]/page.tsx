@@ -18,6 +18,7 @@ import {
   Graphs_Type,
   MetricsRes,
   useGetMetricByTabLazyQuery,
+  useGetMetricsStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
@@ -67,6 +68,11 @@ const Page: React.FC<INodePage> = ({ params }) => {
       router.back();
     }
   }, []);
+
+  const [
+    getMetricsStat,
+    { data: metricsStateData, loading: metricsStateLoading },
+  ] = useGetMetricsStatLazyQuery({});
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
     skip: !id,
@@ -127,6 +133,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
+      getMetricsStat({
+        variables: {
+          nodeId: id,
+          orgName: user.orgName,
+        },
+      });
       const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
       getNodeMetricByTab({
         variables: {
@@ -211,7 +223,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
         onAddNode={() => {}}
-        loading={nodesLoading || updateNodeLoading}
+        loading={nodesLoading || updateNodeLoading || metricsStateLoading}
         selectedNode={selectedNode}
         handleEditNodeClick={() => {
           setIsEditNode(true);
@@ -245,7 +257,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={nodesLoading || updateNodeLoading}
+        isLoading={nodesLoading || updateNodeLoading || metricsStateLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
