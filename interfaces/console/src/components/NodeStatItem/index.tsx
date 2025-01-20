@@ -98,7 +98,7 @@ const NodeStatItem = ({
       </Grid>
       <Grid size={{ xs: variants(variant, 'VG') }}>
         <TextWithToolTip
-          title={value}
+          title={parseFloat(value).toFixed(2)}
           isAlert={showAlertInfo}
           tooltipText={valueInfo}
           showToottip={!!valueInfo}

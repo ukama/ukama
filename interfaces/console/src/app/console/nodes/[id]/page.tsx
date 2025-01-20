@@ -72,7 +72,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [
     getMetricsStat,
     { data: metricsStateData, loading: metricsStateLoading },
-  ] = useGetMetricsStatLazyQuery({});
+  ] = useGetMetricsStatLazyQuery({
+    client: subscriptionClient,
+  });
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
     skip: !id,
@@ -275,6 +277,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
             selectedNode={selectedNode}
             metricsLoading={nodeMetricsLoading}
             getNodeSoftwareUpdateInfos={() => {}}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? { metrics: [] }
+            }
             handleOverviewSectionChange={handleOverviewSectionChange}
           />
         </TabPanel>
@@ -284,6 +289,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? { metrics: [] }
+            }
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
@@ -293,6 +301,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metricFrom={metricFrom}
             selectedNode={selectedNode}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? { metrics: [] }
+            }
           />
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
@@ -301,6 +312,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? { metrics: [] }
+            }
           />
         </TabPanel>
         {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
