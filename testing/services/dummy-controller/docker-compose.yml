@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  dummy-controller-exporter-1:
+    build: .
+    ports:
+      - "2112:2112"
+    restart: always
+    environment:
+      - MOCK_BATTERY=true  
+    networks:
+      - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
