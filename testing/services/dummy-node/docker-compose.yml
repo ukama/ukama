@@ -1,8 +1,36 @@
 services:
- dummy-node:
-  build: .
+ postgresd-dummy-node:
+  image: postgres:13.3
   ports:
-   - 8083:8080
+   - 5421:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+
+ node:
+  build: ./node
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-dummy-node
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-dummy-node:9095
+   - NODE_SERVICE_HOST=node
+   - NODE_SERVICE_PORT=9090
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-dummy-node
+
+ metrics:
+  build: ./metrics
+  ports:
    - 8085:8085
   networks:
    ukama-net:
@@ -10,6 +38,32 @@ services:
   environment:
    - NODE_ID=${NODE_ID}
    - MY_POD_IP=10.1.0.90
+
+ api-gateway:
+  build: ./api-gateway
+  ports:
+   - 8083:8080
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+
+ msgclient-dummy-node:
+  build: ../../../systems/services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-dummy-node
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
+   - SYSTEM=dummynode
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-dummy-node
 
 networks:
  ukama-net:

@@ -1,0 +1,53 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen";
+  
+ package ukama.dummynode.node.v1;
+ 
+ service NodeService { 
+    rpc ResetNode(ResetRequest) returns (ResetResponse) {}
+    rpc NodeRFOn(NodeRFOnRequest) returns (NodeRFOnResponse) {}
+    rpc TurnNodeOff(TurnNodeOffRequest) returns (TurnNodeOffResponse) {}
+    rpc NodeRFOff(NodeRFOffRequest) returns (NodeRFOffResponse) {}
+ }
+ 
+message ResetRequest {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message ResetResponse {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message NodeRFOnRequest {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message NodeRFOnResponse {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message TurnNodeOffRequest {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message TurnNodeOffResponse {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message NodeRFOffRequest {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
+message NodeRFOffResponse {
+    string nodeId = 1 [json_name = "node_id"];
+}
+
