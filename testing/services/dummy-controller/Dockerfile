@@ -1,15 +1,11 @@
-FROM golang:alpine
+FROM alpine:latest
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY bin/dummy-controller .
 
-RUN go mod download
-
-COPY . .
-
-RUN go build -o main main.go
+ENV MOCK_BATTERY=true
 
 EXPOSE 2112
 
-CMD ["./main"]
+CMD ["./dummy-controller"]

@@ -8,7 +8,8 @@ import (
 	"os"
 	"time"
 
-	battery "github.com/ukama/ukama/testing/services/dummy-controller/internal/battery"
+	battery "metrics-generator/internal/battery"
+	"metrics-generator/internal/solar"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -119,10 +120,8 @@ func init() {
 }
 
 func main() {
-	// Create a logger
-	logger := log.New(os.Stdout, "SOLAR_EXPORTER: ", log.Ldate|log.Ltime|log.Lshortfile)
+	logger := log.New(os.Stdout, "Dummy Contoller : ", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// Try to get real battery metrics first
 	_, err := battery.GetBatteryMetrics()
 	if err != nil {
 		logger.Printf("Failed to access real battery metrics: %v", err)
@@ -130,10 +129,10 @@ func main() {
 		os.Setenv("MOCK_BATTERY", "true")
 	}
 
-	// Start a goroutine to update the metrics every second
+	solarProvider := solar.NewSolarProvider()
+
 	go func() {
 		for {
-			 // Get battery metrics (will always be mock data now)
 			 batteryMetrics, err := battery.GetBatteryMetrics()
 			 if err != nil {
 				 logger.Printf("Error getting battery metrics: %v", err)
@@ -157,32 +156,24 @@ func main() {
 				 batteryHealth.WithLabelValues("percentage").Set(healthValue)
 			 }
 
-			solarPowerGenerationValue := rand.Float64() * 1000 
-			logger.Printf("Setting solar power generation to: %f watts", solarPowerGenerationValue)
-			solarPowerGeneration.WithLabelValues("watts").Set(solarPowerGenerationValue)
-
-			solarEnergyTotalValue := rand.Float64() * 100 
-			logger.Printf("Setting solar energy total to: %f kWh", solarEnergyTotalValue)
-			solarEnergyTotal.WithLabelValues("kwh").Set(solarEnergyTotalValue)
-
-			solarPanelPowerValue := rand.Float64() * 500 
-			logger.Printf("Setting solar panel power to: %f watts", solarPanelPowerValue)
-			solarPanelPower.WithLabelValues("watts").Set(solarPanelPowerValue)
-
-			solarPanelCurrentValue := rand.Float64() * 10 
-			logger.Printf("Setting solar panel current to: %f amperes", solarPanelCurrentValue)
-			solarPanelCurrent.WithLabelValues("amperes").Set(solarPanelCurrentValue)
-
-			solarInverterStatusValue := float64(rand.Intn(2)) 
-			logger.Printf("Setting solar inverter status to: %f", solarInverterStatusValue)
-			solarInverterStatus.WithLabelValues("status").Set(solarInverterStatusValue)
+			 solarMetrics := solarProvider.GetMetrics()
+			 
+			 logger.Printf("Solar Status: Generation: %.1fW, Total: %.2fkWh, Panel Current: %.2fA, Inverter: %v",
+				 solarMetrics.PowerGeneration,
+				 solarMetrics.EnergyTotal,
+				 solarMetrics.PanelCurrent,
+				 solarMetrics.InverterStatus == 1.0)
+			 
+			 solarPowerGeneration.WithLabelValues("watts").Set(solarMetrics.PowerGeneration)
+			 solarEnergyTotal.WithLabelValues("kwh").Set(solarMetrics.EnergyTotal)
+			 solarPanelPower.WithLabelValues("watts").Set(solarMetrics.PanelPower)
+			 solarPanelCurrent.WithLabelValues("amperes").Set(solarMetrics.PanelCurrent)
+			 solarInverterStatus.WithLabelValues("status").Set(solarMetrics.InverterStatus)
 
 			switchPortStatusValue := float64(rand.Intn(2)) 
-			logger.Printf("Setting switch port status to: %f", switchPortStatusValue)
 			switchPortStatus.WithLabelValues("status").Set(switchPortStatusValue)
 
 			switchPortBandwidthValue := rand.Float64() * 1000 
-			logger.Printf("Setting switch port bandwidth to: %f Mbps", switchPortBandwidthValue)
 			switchPortBandwidth.WithLabelValues("mbps").Set(switchPortBandwidthValue)
 
 			time.Sleep(time.Second)
@@ -194,7 +185,7 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 
-	logger.Printf("Starting  Prometheus controller exporter on port %d", port)
+	logger.Printf("Starting Dummy controller Prometheus exporter on port %d", port)
 
 	err = http.ListenAndServe(address, nil)
 	if err != nil {

@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/testing/services/dummy-controller
+module metrics-generator
 
 go 1.23.2
 

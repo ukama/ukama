@@ -1,17 +1,23 @@
-version: '3'
-
 services:
-  dummy-controller-exporter-1:
-    build: .
+  dummy-controller:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dummy-controller
     ports:
       - "2112:2112"
-    restart: always
+    restart: unless-stopped
     environment:
-      - MOCK_BATTERY=true  
+      - MOCK_BATTERY=true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2112/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - ukama-net
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    name: services_ukama-net
+    external: true

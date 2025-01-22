@@ -14,7 +14,7 @@ type MockBatteryProvider struct {
 func NewMockBatteryProvider() *MockBatteryProvider {
     return &MockBatteryProvider{
         startTime:    time.Now(),
-        lastCapacity: 85.0, 
+        lastCapacity: 85.0,
         cycleCount:   0,
     }
 }

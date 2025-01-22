@@ -81,6 +81,7 @@ func findBatteryPath() string {
 
 func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
     if r.batteryPath == "" {
+        // If no battery found, try to find it again
         r.batteryPath = findBatteryPath()
         if r.batteryPath == "" {
             return nil, fmt.Errorf("no battery found in system")
@@ -90,6 +91,7 @@ func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
     metrics := &BatteryMetrics{}
     var errs []string
 
+    // Read capacity
     if capacity, err := r.readSysfs("capacity"); err == nil {
         if val, err := strconv.ParseFloat(capacity, 64); err == nil {
             metrics.Capacity = val
@@ -100,9 +102,10 @@ func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
         errs = append(errs, fmt.Sprintf("read capacity error: %v", err))
     }
 
+    // Read voltage
     if voltage, err := r.readSysfs("voltage_now"); err == nil {
         if val, err := strconv.ParseFloat(voltage, 64); err == nil {
-            metrics.Voltage = val / 1000000 
+            metrics.Voltage = val / 1000000 // Convert to volts
         } else {
             errs = append(errs, fmt.Sprintf("parse voltage error: %v", err))
         }
@@ -110,9 +113,10 @@ func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
         errs = append(errs, fmt.Sprintf("read voltage error: %v", err))
     }
 
+    // Read current
     if current, err := r.readSysfs("current_now"); err == nil {
         if val, err := strconv.ParseFloat(current, 64); err == nil {
-            metrics.Current = val / 1000000 
+            metrics.Current = val / 1000000 // Convert to amperes
         } else {
             errs = append(errs, fmt.Sprintf("parse current error: %v", err))
         }
@@ -120,9 +124,10 @@ func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
         errs = append(errs, fmt.Sprintf("read current error: %v", err))
     }
 
+    // Read temperature
     if temp, err := r.readSysfs("temp"); err == nil {
         if val, err := strconv.ParseFloat(temp, 64); err == nil {
-            metrics.Temperature = val / 10 
+            metrics.Temperature = val / 10 // Convert to celsius
         } else {
             errs = append(errs, fmt.Sprintf("parse temperature error: %v", err))
         }
@@ -130,19 +135,22 @@ func (r *RealBatteryProvider) GetMetrics() (*BatteryMetrics, error) {
         errs = append(errs, fmt.Sprintf("read temperature error: %v", err))
     }
 
+    // Read status
     if status, err := r.readSysfs("status"); err == nil {
         metrics.Status = status
     } else {
         errs = append(errs, fmt.Sprintf("read status error: %v", err))
     }
 
+    // Read health
     if health, err := r.readSysfs("health"); err == nil {
         metrics.Health = health
     } else {
         errs = append(errs, fmt.Sprintf("read health error: %v", err))
     }
 
-    if len(errs) == 6 { 
+    // Return error if no metrics were read successfully
+    if len(errs) == 6 { // All reads failed
         return nil, fmt.Errorf("failed to read any battery metrics: %s", strings.Join(errs, "; "))
     }
 
