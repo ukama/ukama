@@ -18,18 +18,13 @@ import (
 	u "github.com/ukama/ukama/systems/common/ukama"
 )
 
-const (
-	NodePort = 7070
-	MeshPort = 7071
-)
+
 
 func NewNodeOnline(data string) (protoreflect.ProtoMessage, error) {
 	nodeOnline := &epb.NodeOnlineEvent{
 		NodeId:       string(u.NewVirtualNodeId(u.NODE_ID_TYPE_TOWERNODE)),
 		NodeIp:       gofakeit.IPv4Address(),
-		NodePort:     NodePort,
 		MeshIp:       gofakeit.IPv4Address(),
-		MeshPort:     MeshPort,
 		MeshHostName: gofakeit.DomainName(),
 	}
 
