@@ -28,6 +28,10 @@ var RoutingMap = map[string]func(string) (protoreflect.ProtoMessage, error){
 	"subscriber.simmanager.sim.expirepackage": NewSimPackageExpire,
 	"subscriber.simmanager.sim.usage":         NewSimUsage,
 	"inventory.accounting.accounting.sync":    NewAccountingSync,
+	"messaging.mesh.node.online":              NewNodeOnline,
+	"messaging.mesh.node.offline":             NewNodeOffline,
+	"messaging.mesh.node.assign":              NewNodeAssign,
+	"messaging.mesh.node.release":             NewNodeRelease,
 }
 
 func WrapProto(f func(string) (protoreflect.ProtoMessage, error), data string) (*anypb.Any, error) {

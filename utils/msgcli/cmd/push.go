@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultOrg         = "ukamatestorg"
+	defaultOrg         = "ukama"
 	defaultScope       = "local"
 	defaultClusterURL  = "http://localhost:15672"
 	defaultVhost       = "%2F"

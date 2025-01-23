@@ -8,11 +8,9 @@ include ./config.mk
   
 .PHONY: build msgcli tool
 
-
 build: 
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/utils/msgcli/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/msgcli main.go
-
 
 # Go test
 test:
