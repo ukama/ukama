@@ -7,18 +7,56 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { BillHistoryDto, BillResponse } from "../resolvers/types";
-import { billHistoryDtoToDto, dtoToDto } from "./mapper";
+import { VERSION } from "../../common/configs";
+import {
+  GetReportDto,
+  GetReportsDto,
+  GetReportsInputDto,
+} from "../resolvers/types";
+import { dtoToReportDto, dtoToReportsDto } from "./mapper";
 
-const version = "/v1/invoices";
 class BillingAPI extends RESTDataSource {
-  baseURL = "" + version;
-  public getCurrentBill = async (): Promise<BillResponse> => {
-    return this.get("/current").then(res => dtoToDto(res));
+  getReports = async (
+    baseURL: string,
+    req: GetReportsInputDto
+  ): Promise<GetReportsDto> => {
+    this.logger.info(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
+    this.baseURL = baseURL;
+    const params = "sort=true";
+    if (req.networkId) {
+      params.concat(`&network_id=${req.networkId}`);
+    }
+    if (req.ownerId) {
+      params.concat(`&owner_id=${req.ownerId}`);
+    }
+    if (req.ownerType) {
+      params.concat(`&owner_type=${req.ownerType}`);
+    }
+    if (req.report_type) {
+      params.concat(`&report_type=${req.report_type}`);
+    }
+    if (req.count) {
+      params.concat(`&count=${req.count}`);
+    }
+    if (req.isPaid) {
+      params.concat(`&is_paid=${req.isPaid}`);
+    }
+    return this.get(`/${VERSION}/reports?${params}`).then(res =>
+      dtoToReportsDto(res)
+    );
   };
 
-  public getBillHistory = async (): Promise<BillHistoryDto[]> => {
-    return this.get("/history").then(res => billHistoryDtoToDto(res));
+  getReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
+    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${id}`);
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/reports/${id}`).then(res =>
+      dtoToReportDto(res)
+    );
+  };
+  getPDFReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
+    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/reports/${id}`);
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/pdf/${id}?as_pdf=true`).then(res => res);
   };
 }
 

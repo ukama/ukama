@@ -26,6 +26,7 @@ type Config struct {
 	System            string `default:"testing"`
 	OrgName           string
 	SchedulerInterval time.Duration `default:"10s"`
+	StripeKey         string
 	PawapayKey        string
 	PaymentsHost      string `default:"http://payments-api-gateway-payments-1:8080"`
 	WebhooksHost      string `default:"http://webhooks-api-gateway-webhooks-1:8080"`

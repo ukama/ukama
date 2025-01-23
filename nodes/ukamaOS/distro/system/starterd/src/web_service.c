@@ -14,7 +14,9 @@
 #include "config.h"
 
 #include "starter.h"
+
 #include "usys_log.h"
+#include "usys_mem.h"
 
 #include "version.h"
 
@@ -26,6 +28,8 @@ extern bool json_serialize_add_capp_to_array(JsonObj **json,
                                              char *tag,
                                              char *status,
                                              int  pid);
+
+extern bool find_matching_space(SpaceList **spaceList, char *name, Space **space);
 
 static char *capp_status_str(int status) {
 
@@ -94,9 +98,7 @@ static int add_new_capp_to_space(char *spaceName,
 
     SpaceList *currentSpaceList = NULL, *newSpaceList = NULL;
     CappList  *newCappList = NULL;
-    Space     *newSpace = NULL;
-
-    bool addSpace = USYS_TRUE;
+    bool      addSpace = USYS_TRUE;
 
     for (currentSpaceList = gSpaceList;
          currentSpaceList;
@@ -109,8 +111,8 @@ static int add_new_capp_to_space(char *spaceName,
 
     if (addSpace) {
         /* add new space */
-        SpaceList *newSpaceList = (SpaceList *) calloc(1, sizeof(SpaceList));
-        newSpaceList->space     = (Space *) calloc(1, sizeof(Space));
+        newSpaceList        = (SpaceList *) calloc(1, sizeof(SpaceList));
+        newSpaceList->space = (Space *) calloc(1, sizeof(Space));
 
         newSpaceList->space->name     = strdup(spaceName);
         newSpaceList->space->rootfs   = NULL;
@@ -185,9 +187,9 @@ int web_service_cb_get_status(const URequest *request,
                               UResponse *response,
                               void *epConfig) {
 
-    char   *cappName=NULL, *spaceName=NULL;
-    Capp   *capp = NULL;
-    int    status=-1;
+    const char   *cappName=NULL, *spaceName=NULL;
+    Capp *capp =NULL;
+    int  status=-1;
 
     cappName  = u_map_get(request->map_url, "name");
     spaceName = u_map_get(request->map_url, "space");
@@ -279,8 +281,8 @@ int web_service_cb_post_update(const URequest *request,
                                UResponse *response,
                                void *epConfig) {
 
-    char *cappName = NULL, *tag = NULL;
-    char *spaceName = NULL;
+    const char *cappName = NULL, *tag = NULL;
+    const char *spaceName = NULL;
     Capp *capp = NULL;
     int  status;
 

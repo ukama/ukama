@@ -11,9 +11,10 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import HomeIcon from '@mui/icons-material/Home';
 import LocationIcon from '@mui/icons-material/LocationOn';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
-import PermDataSettingIcon from '@mui/icons-material/PermDataSetting';
-import RouterIcon from '@mui/icons-material/Router';
 import SimCardIcon from '@mui/icons-material/SimCard';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import AppsIcon from '@mui/icons-material/Apps';
+import RouterIcon from '@mui/icons-material/Router';
 
 export const NavList = [
   {
@@ -90,33 +91,12 @@ export const MANAGE_MENU_LIST = [
     id: 'manage-data-plan',
     name: 'Data plans',
     path: '/manage/data-plans',
-    icon: PermDataSettingIcon,
-  },
-];
-
-export const MANAGE_MENU_LIST_SMALL = [
-  {
-    id: 'manage-members',
-    name: 'Members',
-    path: '/manage/members',
-    icon: SubscriberIcon,
+    icon: AppsIcon,
   },
   {
-    id: 'manage-sim',
-    name: 'SIM pool',
-    path: '/manage/sims',
-    icon: SimCardIcon,
-  },
-  {
-    id: 'manage-node',
-    name: 'Node pool',
-    path: '/manage/nodes',
-    icon: AccountTreeIcon,
-  },
-  {
-    id: 'manage-data-plan',
-    name: 'Data plans',
-    path: '/manage/data-plans',
-    icon: PermDataSettingIcon,
+    id: 'billing',
+    name: 'Billing',
+    path: '/manage/billing',
+    icon: AttachMoneyIcon,
   },
 ];

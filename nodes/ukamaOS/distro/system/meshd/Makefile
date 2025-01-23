@@ -9,7 +9,12 @@ include ../../../config.mk
 TARGET_EXEC = mesh.d
 TEST_EXEC   = test_runner
 
-UKAMAOS_ROOT = ../../../
+VERSION_FILE = version.h
+ARTIFACTS = $(TARGET_EXEC)
+
+APP_NAME = $(CUR_BUILD_DIRNAME)
+APP_CONFIG = $(APP_CONFIG_DIR)/$(APP_NAME)/config.toml
+TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -24,7 +29,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
-VENDOR_PKG = tomlc curl jansson ulfius libuuid amqp
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
+else
+	VENDOR_PKG = tomlc curl jansson ulfius libuuid amqp
+endif
 PLATFORM = platform
 
 # Setting up various compile and link flags
@@ -51,8 +61,11 @@ LDFLAGS+=--coverage
 
 # Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifneq ($(ALPINE_BUILD),1)
+ULFIUS_LIB+=-lyder
+endif
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml
 LIBS+=-ljansson
@@ -95,11 +108,11 @@ $(VENDOR_PKG):
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
-version.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_version.sh
+$(VERSION_FILE):
+	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 static.h:
-	./$(UKAMAOS_ROOT)/../builder/scripts/generate_static.sh
+	$(NODES_DIR)/utils/scripts/generate_static.sh
 
 %.o: %.c
 	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
@@ -110,6 +123,14 @@ test: version.h static.h $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFIL
 
 coverage: test
 	gcov $(TARGET_CFILES)
+
+install: $(ARTIFACTS) $(VERSION_FILE)
+	mkdir -p $(TARGET_CONFIG_DIR)
+	cp -vrf $(ARTIFACTS) $(INSTALL_DIR)$(NODE_APP_DIR)
+	cp -vrf $(VERSION_FILE) $(TARGET_CONFIG_DIR)
+	if [ "$(APP_CONFIG)" != "" ]; then \
+		cp -vrf $(APP_CONFIG) $(TARGET_CONFIG_DIR);\
+	fi
 
 clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) $(TEST_EXEC) $(TEST_OBJFILES) \

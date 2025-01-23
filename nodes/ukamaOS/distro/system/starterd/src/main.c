@@ -11,6 +11,7 @@
 #include "config.h"
 #include "starter.h"
 #include "manifest.h"
+#include "web_client.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -21,6 +22,22 @@
 #include "usys_services.h"
 
 #include "version.h"
+
+/* capp_runtime.c */
+extern void fetch_unpack_run(Space *space, Config *config);
+extern void run_space_all_capps(Space *space);
+
+/* network.c */
+extern int start_web_service(Config *config, UInst *serviceInst);
+
+/* space.c */
+extern void process_manifest_file(SpaceList **spaceList, Manifest *manifest);
+extern void print_spaces_list(SpaceList *spaceList);
+extern void copy_capps_to_rootfs(SpaceList *spaceList);
+extern bool find_matching_space(SpaceList **spaceList, char *name, Space **space);
+
+/* unpack.c */
+extern bool unpack_all_capps(SpaceList *spaceList);
 
 SpaceList *gSpaceList = NULL;
 
@@ -61,7 +78,7 @@ void usage() {
     usys_puts("-v, --version                 Software version");
 }
 
-void fetch_and_update(void *config) {
+void* fetch_and_update(void *config) {
 
     SpaceList *spacePtr = NULL;
 
@@ -83,8 +100,6 @@ void fetch_and_update(void *config) {
 
         sleep(FETCH_AND_UPDATE_RETRY);
     }
-
-    return NULL;
 }
 
 int main(int argc, char **argv) {

@@ -19,6 +19,9 @@
 #include "usys_mem.h"
 #include "usys_log.h"
 
+/* utils.c */
+extern char *convert_tx_state_to_str(TransferState state);
+
 static void json_log(json_t *json) {
 
     char *str = NULL;

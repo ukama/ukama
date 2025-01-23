@@ -43,6 +43,7 @@ const AppContext = createContext({
     AUTH_APP_URL: '',
     MAP_BOX_TOKEN: '',
     METRIC_WEBSOCKET_URL: '',
+    STRIPE_PK: '',
   },
   setEnv: (e: any) => {},
   setNetwork: (n: TNetwork) => {},

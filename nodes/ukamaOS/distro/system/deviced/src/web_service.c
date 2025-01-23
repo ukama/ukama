@@ -65,10 +65,7 @@ int web_service_cb_post_restart(const URequest *request,
                                 UResponse *response,
                                 void *epConfig) {
 
-    int ret = STATUS_NOK;
-    char *id=NULL;
-
-    id = u_map_get(request->map_url, "id");
+    //    id = u_map_get(request->map_url, "id");
     ulfius_set_empty_body_response(response, HttpStatus_Accepted);
 
     return U_CALLBACK_CONTINUE;
@@ -78,7 +75,7 @@ int web_service_cb_post_reboot(const URequest *request,
                                 UResponse *response,
                                 void *epConfig) {
 
-    char *id=NULL;
+    const char *id=NULL;
     Config *config=NULL;
 
     config = (Config *)epConfig;
@@ -104,9 +101,3 @@ int web_service_cb_post_reboot(const URequest *request,
 
     return U_CALLBACK_CONTINUE;
 }
-
-
-
-
-
-

@@ -39,8 +39,9 @@ extern char *queue;
 extern void websocket_manager(const URequest *request, WSManager *manager,
 							  void *data);
 extern void websocket_incoming_message(const URequest *request,
-									   WSManager *manager, WSMessage *message,
-									   void *data);
+                                       WSManager *manager,
+                                       const WSMessage *message,
+                                       void *data);
 extern void websocket_onclose(const URequest *request, WSManager *manager,
                               void *data);
 

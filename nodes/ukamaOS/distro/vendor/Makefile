@@ -12,7 +12,7 @@ CURPATH = $(dir $(CURMAKE))
 export DEPDIR = $(CURPATH)/build
 
 ifndef XGCCPATH
-	$(error XGCCPATH is missing)
+$(error XGCCPATH is missing)
 endif
 
 ifeq ($(TARGETBOARD), $(LOCAL))
@@ -85,12 +85,14 @@ LIST += p11-kit
 LIST += gnutls
 LIST += sqlite
 LIST += amqp
-LIST += protobuf
-LIST += protobuf-c
+#LIST += protobuf
+#LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
+LIST += psl
+LIST += libidn2
 
-.PHONY: $(LIST) iptables iproute2 
+.PHONY: $(LIST) iptables iproute2 dhcp dhcpcd
 
 build: $(LIST)
 
@@ -245,7 +247,38 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-curl: openssl gnutls 
+libidn2:
+	$(call print_msg,"libidn2")
+ifeq (,$(wildcard ${DEPDIR}/lib/libidn2.*))
+	#first host build and then crosscompile
+	cd $@ && ./bootstrap && \
+	    CC=gcc LDFLAGS="${LD_LIBARARY_PATH}" ./configure && make -j${NPROCS} && make clean && \
+        CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
+        ./configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
+        --host=${HOST} --disable-doc  --without-libiconv-prefix && \
+        make -j${NPROCS} && make -j${NPROCS} install
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+psl: libunistring libidn2
+	 $(call print_msg,"psl")
+ifeq (,$(wildcard ${DEPDIR}/lib/libpsl.*))
+	mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && \
+	cd ./${BUILD_DIR} && \
+        CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
+                ../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
+                --with-libunistring-prefix=${DEPDIR} --host=${HOST} && \
+        make -j${NPROCS} && make -j${NPROCS} install
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+curl: openssl gnutls psl
 	$(call print_msg,"curl")
 ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
@@ -254,7 +287,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 		../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
 		LIBS="-latomic -lhogweed -lnettle" \
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
-		--with-zlib=${DEPDIR} --host=${HOST} && \
+		--with-zlib=${DEPDIR} --without-zstd --with-libpsl=${DEPDIR} --without-brotli --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -421,6 +454,14 @@ dhcpcd:
 	$(MAKE) CC="${XCC}" DESTDIR=${DEPDIR} install && \
 	cd ./src && $(MAKE) clean && cd ..)
 	$(call post_build_cleanup,$@/src/build)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+dhcp:
+	$(call print_msg,"dhcp")
+	(cd $@/dhcp-4.4.3 && \
+    ./configure --host=${HOST} --with-randomdev=no LDFLAGS="-L${DEPDIR}/lib" && \
+	$(MAKE) CC="${XCC}" BUILD_CC=gcc LDFLAGS="-L${DEPDIR}/lib" && \
+	$(MAKE) install DESTDIR=${DEPDIR} )
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 sysctl:

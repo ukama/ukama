@@ -81,8 +81,12 @@ type Customer struct {
 	Id      string
 	Name    string
 	Email   string
-	Address string
 	Phone   string
+	Address string
+	City    string
+	State   string
+	Zipcode string
+	Country string
 	Type    string
 }
 

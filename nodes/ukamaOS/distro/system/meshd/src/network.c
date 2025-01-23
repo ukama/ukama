@@ -26,7 +26,8 @@
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager, void *data);
 extern void websocket_incoming_message(const URequest *request,
-                                       WSManager *manager, WSMessage *message,
+                                       WSManager *manager,
+                                       const WSMessage *message,
                                        void *data);
 extern void  websocket_onclose(const URequest *request, WSManager *manager, void *data);
 
@@ -76,8 +77,6 @@ STATIC void setup_websocket_endpoints(Config *config, UInst *instance) {
 }
 
 STATIC int start_framework(Config *config, UInst *instance, int flag) {
-
-  int ret;
   
   if (ulfius_start_framework(instance) != U_OK) {
       usys_log_error("Error starting the webservice/websocket.");
@@ -101,7 +100,7 @@ STATIC int start_framework(Config *config, UInst *instance, int flag) {
 }
 
 int start_websocket_client(Config *config,
-			   struct _websocket_client_handler *handler) {
+                           struct _websocket_client_handler *handler) {
 
   int ret=FALSE;
   struct _u_request request;

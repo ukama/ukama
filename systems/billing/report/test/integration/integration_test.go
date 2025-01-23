@@ -1,3 +1,4 @@
+// go:build integration
 //go:build integration
 // +build integration
 
@@ -157,7 +158,7 @@ func Test_FullFlow(t *testing.T) {
 	}
 	defer conn.Close()
 
-	repResp := &pb.AddResponse{}
+	repResp := &pb.ReportResponse{}
 
 	t.Run("AddReport", func(t *testing.T) {
 		var err error

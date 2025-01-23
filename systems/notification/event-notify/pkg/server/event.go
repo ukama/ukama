@@ -586,7 +586,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
 
-		if msg.ItemType != ukama.ItemTypePackage.String() {
+		if msg.ItemType != ukama.ItemTypeInvoice.String() {
 			log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
 			break
 		}
@@ -637,6 +637,22 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+		
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
+		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
+		msg, err := epb.UnmarshalInvoiceGenerated(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)
+
 		/*
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
 				c := evt.EventToEventConfig[evt.EventComponentsSync]
@@ -646,12 +662,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 				// }
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventAccountingSync]):
 				c := evt.EventToEventConfig[evt.EventAccountingSync]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
-				c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
 				// msg, err := epb.Unmarshal(e.Msg, c.Name)
 				// if err != nil {
 				// 	return nil, err

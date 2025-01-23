@@ -17,9 +17,16 @@
 
 #include "starter.h"
 #include "config.h"
+#include "web_client.h"
 
 #include "usys_types.h"
 #include "usys_log.h"
+
+/* space.c */
+void copy_capp_to_space_rootfs(char *spaceName,
+                               Capp *capp,
+                               char *sPath,
+                               char *dPath);
 
 extern char **environ;
 
@@ -100,7 +107,7 @@ static int create_args_list(char *exec, char *arg, char ***argv) {
     return count;
 }
 
-static bool execute_capp(void *arg) {
+static void* execute_capp(void *arg) {
 
     Capp *capp = (Capp *)arg;
     CappRuntime *runtime;
@@ -152,7 +159,7 @@ static bool execute_capp(void *arg) {
         }
     }
 
-    return USYS_TRUE;
+    return NULL;
 }
 
 static bool setup_and_execute_capp(Capp *capp, int *error) {
@@ -259,13 +266,15 @@ static bool copy_folder(char *srcFolder, char *destFolder) {
 
 static bool install_capp(char *appName, char *rootPath) {
 
-    char srcConfigFolder[MAX_BUFFER] = {0};
-    char destConfigFolder[MAX_BUFFER]  = {0};
-    char sbinFolder[MAX_BUFFER] = {0};
+    char srcConfigFolder[MAX_BUFFER]  = {0};
+    char destConfigFolder[MAX_BUFFER] = {0};
+    char sbinFolder[MAX_BUFFER]       = {0};
+    char libFolder[MAX_BUFFER]        = {0};
 
-    sprintf(srcConfigFolder, "%s/conf/", rootPath);
+    sprintf(srcConfigFolder,  "%s/conf/", rootPath);
     sprintf(destConfigFolder, "/ukama/configs/%s/", appName);
-    sprintf(sbinFolder,   "%s/sbin/", rootPath);
+    sprintf(sbinFolder,       "%s/sbin/", rootPath);
+    sprintf(libFolder,        "%s/lib/", rootPath);
 
     if (copy_folder(srcConfigFolder, destConfigFolder) == USYS_FALSE) {
         usys_log_debug("No config for %s. Skipping", rootPath);
@@ -273,6 +282,11 @@ static bool install_capp(char *appName, char *rootPath) {
 
     if (copy_folder(sbinFolder, "/sbin") == USYS_FALSE) {
         usys_log_error("No binary files for %s", rootPath);
+        return USYS_FALSE;
+    }
+
+    if (copy_folder(libFolder, "/lib") == USYS_FALSE) {
+        usys_log_error("No lib files for %s", rootPath);
         return USYS_FALSE;
     }
 

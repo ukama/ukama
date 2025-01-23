@@ -46,7 +46,10 @@ export default function ConosleLayout({
   const [notifications, setNotifications] = useState<NotificationsRes>({
     notifications: [],
   });
+<<<<<<< HEAD
   const [startTimeStamp] = useState<string>(new Date().getTime().toString());
+=======
+>>>>>>> main
   const [showAddNetwork, setShowAddNetwork] = useState<boolean>(false);
   const {
     data: networksData,
@@ -113,16 +116,6 @@ export default function ConosleLayout({
       if (data.getNotifications.notifications.length > 0) {
         setNotifications(data.getNotifications);
       }
-      ServerNotificationSubscription(
-        env.METRIC_URL,
-        `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
-        user.role,
-        user.orgId,
-        user.id,
-        user.orgName,
-        network.id,
-        startTimeStamp,
-      );
     },
     onError: () => {},
   });
@@ -135,6 +128,7 @@ export default function ConosleLayout({
 
   useEffect(() => {
     if (user.id && network.id && user.orgId && user.orgName) {
+      const startTimeStamp = new Date().getTime().toString();
       getNotifications({
         client: subscriptionClient,
         variables: {
@@ -146,6 +140,17 @@ export default function ConosleLayout({
           role: user.role,
           startTimestamp: startTimeStamp,
         },
+      }).then((data) => {
+        ServerNotificationSubscription(
+          env.METRIC_URL,
+          `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,
+          user.role,
+          user.orgId,
+          user.id,
+          user.orgName,
+          network.id,
+          startTimeStamp,
+        );
       });
 
       PubSub.subscribe(
@@ -188,7 +193,13 @@ export default function ConosleLayout({
 
     setNotifications((prev) => {
       return {
+<<<<<<< HEAD
         notifications: [newNotification, ...prev.notifications],
+=======
+        notifications: [newNotification, ...prev.notifications].filter(
+          (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
+        ),
+>>>>>>> main
       };
     });
   };

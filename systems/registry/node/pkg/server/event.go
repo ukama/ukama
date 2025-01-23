@@ -12,6 +12,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+<<<<<<< HEAD
+=======
+	"strings"
+>>>>>>> main
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -145,7 +149,11 @@ func (n *NodeEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineE
 		id := strings.ToLower(msg.GetNodeId())
 		req := &pb.AddNodeRequest{
 			NodeId: id,
+<<<<<<< HEAD
 			Name  id[len(id)-7:]
+=======
+			Name:   id[len(id)-7:],
+>>>>>>> main
 		}
 		_, err = n.s.AddNode(context.Background(), req)
 		if err != nil {

@@ -45,22 +45,35 @@ STATIC void clear_response(MResponse **resp) {
 	free(*resp);
 }
 
-STATIC int is_websocket_valid(WSManager *manager, char *port) {
+STATIC bool is_websocket_client_valid(struct _websocket_client_handler *handler,
+                                      char *port) {
 
-    int status;
+    if (handler == NULL) return USYS_FALSE;
 
-    if (manager == NULL) return FALSE;
-
-    status = ulfius_websocket_status(manager);
-
-    if (status == U_WEBSOCKET_STATUS_OPEN) {
-        return TRUE;
+    if (ulfius_websocket_client_connection_status(handler) == U_WEBSOCKET_STATUS_OPEN) {
+        return USYS_TRUE;
     } else {
+        handler->websocket = NULL;
         usys_log_debug("Websocket connection is closed with cloud at: %s", port);
-        return FALSE;
+        return USYS_FALSE;
     }
 
-    return FALSE;
+    return USYS_FALSE;
+}
+
+STATIC bool is_websocket_valid(WSManager *manager, char *port) {
+
+    if (manager == NULL) return USYS_FALSE;
+
+    if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_OPEN) {
+        return USYS_TRUE;
+    } else {
+        manager = NULL;
+        usys_log_debug("Websocket connection is closed with cloud at: %s", port);
+        return USYS_FALSE;
+    }
+
+    return USYS_FALSE;
 }
 
 void* monitor_websocket(void *args){
@@ -68,7 +81,7 @@ void* monitor_websocket(void *args){
     int ret;
     struct timespec ts;
     Config *config=NULL;
-    WSManager *handler=NULL;
+    struct _websocket_client_handler *handler=NULL;
     ThreadArgs *threadArgs;
 
     threadArgs = (ThreadArgs *)args;
@@ -85,7 +98,7 @@ void* monitor_websocket(void *args){
         ret = pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts);
         if (ret == ETIMEDOUT) {
             pthread_mutex_unlock(&websocketMutex);
-            if (!is_websocket_valid(handler, config->remoteConnect)) {
+            if (!is_websocket_client_valid(handler, config->remoteConnect)) {
                 usys_log_error("Trying to reconnect ...");
                 /* Connect again */
                 while (start_websocket_client(config, handler) == FALSE) {
@@ -186,9 +199,9 @@ void websocket_manager(const URequest *request, WSManager *manager,
 }
 
 void websocket_incoming_message(const URequest *request,
-								WSManager *manager,
-                                WSMessage *message,
-								void *config) {
+                                WSManager *manager,
+                                const WSMessage *message,
+                                void *config) {
 
 	MResponse *rcvdResp=NULL;
     Message *rcvdMessage=NULL;

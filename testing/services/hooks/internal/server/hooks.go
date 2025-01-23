@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/util/payments"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/testing/services/hooks/internal"
 	"github.com/ukama/ukama/testing/services/hooks/internal/clients"
 	"github.com/ukama/ukama/testing/services/hooks/internal/scheduler"
@@ -26,14 +28,17 @@ import (
 )
 
 const (
-	HookTaskTag          = "Hook Response"
-	queryPattern         = "?status=processing"
-	webhookStatusPending = "ACCEPTED"
+	HookTaskTag  = "Hook Response"
+	queryPattern = "?status=processing"
+
+	pawapayHookStatusPending          = "ACCEPTED"
+	stripeStatusRequiresPaymentMethod = "requires_payment_method"
 )
 
 type HookServer struct {
 	orgName        string
 	pawapayClient  clients.PawapayClient
+	stripeClient   clients.StripeClient
 	paymentsClient clients.PaymentsClient
 	webhooksClient clients.WebhooksClient
 	cdrScheduler   scheduler.HookScheduler
@@ -42,11 +47,12 @@ type HookServer struct {
 	pb.UnimplementedHookServiceServer
 }
 
-func NewHookServer(orgName string, pawapayClient clients.PawapayClient, paymentsClient clients.PaymentsClient,
+func NewHookServer(orgName string, pawapayClient clients.PawapayClient, stripeClient clients.StripeClient, paymentsClient clients.PaymentsClient,
 	webhooksClient clients.WebhooksClient, cdrScheduler scheduler.HookScheduler, msgBus mb.MsgBusServiceClient) *HookServer {
 	h := &HookServer{
 		orgName:        orgName,
 		pawapayClient:  pawapayClient,
+		stripeClient:   stripeClient,
 		paymentsClient: paymentsClient,
 		webhooksClient: webhooksClient,
 		cdrScheduler:   cdrScheduler,
@@ -57,7 +63,7 @@ func NewHookServer(orgName string, pawapayClient clients.PawapayClient, payments
 
 	_, err := h.startScheduler()
 	if err != nil {
-		log.Warnf("failed to auto start webhook scheduler. You need to start RPC manually. Err: %v",
+		log.Warnf("Failed to auto start webhook scheduler. You need to start RPC manually. Err: %v",
 			err)
 	}
 
@@ -91,18 +97,31 @@ func (p *HookServer) pullHooksResponse(placeHolder string) error {
 	}
 
 	for _, payment := range payments {
-		depositWebhook, err := p.pawapayClient.GetDeposit(payment.Id)
-		if err != nil {
-			log.Errorf("error while fetching get deposit: %v", err)
-			log.Warn("skipping posting empty payload")
-
-			continue
-		}
-
-		if depositWebhook.Status != webhookStatusPending {
-			_, err = p.webhooksClient.PostDepositHook(depositWebhook)
+		if _, err = uuid.FromString(payment.ExternalId); err == nil {
+			depositWebhook, err := fetchPawapayDeposit(payment.ExternalId, p)
 			if err != nil {
-				log.Errorf("error while making post deposit webhook: %v", err)
+				log.Errorf("Error while fetching deposit: %v", err)
+				log.Warn("Skipping posting empty payload")
+
+				continue
+			}
+
+			err = postPawapayDeposit(depositWebhook, p)
+			if err != nil {
+				log.Errorf("Error while making post deposit webhook: %v", err)
+			}
+		} else {
+			intentWebhook, err := fetchStripePaymentIntent(payment.ExternalId, p)
+			if err != nil {
+				log.Errorf("Error while fetching intent: %v", err)
+				log.Warn("Skipping posting empty payload")
+
+				continue
+			}
+
+			err = postStripePaymentIntent(intentWebhook, p)
+			if err != nil {
+				log.Errorf("Error while making post payment intent webhook: %v", err)
 			}
 		}
 	}
@@ -118,4 +137,45 @@ func (p *HookServer) startScheduler() (*pb.StartResponse, error) {
 	}
 
 	return &pb.StartResponse{}, nil
+}
+
+func fetchPawapayDeposit(externalId string, p *HookServer) (*payments.Deposit, error) {
+	depositWebhook, err := p.pawapayClient.GetDeposit(externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	return depositWebhook, nil
+}
+
+func fetchStripePaymentIntent(externalId string, p *HookServer) (*payments.Intent, error) {
+	intentHook, err := p.stripeClient.GetPaymentIntent(externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	return intentHook, nil
+}
+
+func postPawapayDeposit(depositWebhook *payments.Deposit, p *HookServer) error {
+	if depositWebhook.Status != pawapayHookStatusPending {
+		_, err := p.webhooksClient.PostDepositHook(depositWebhook)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func postStripePaymentIntent(intentHook *payments.Intent, p *HookServer) error {
+	if intentHook.Status != stripeStatusRequiresPaymentMethod {
+		log.Infof("New status update (%v), will post payment hook...", intentHook.Status)
+		_, err := p.webhooksClient.PostPaymentIntentHook(intentHook.PaymentIntent)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

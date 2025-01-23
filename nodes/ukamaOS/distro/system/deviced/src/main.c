@@ -20,6 +20,9 @@
 
 #include "version.h"
 
+/* network.c */
+int start_web_service(Config *config, UInst *serviceInst);
+
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
     usys_exit(0);

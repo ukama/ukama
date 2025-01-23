@@ -16,7 +16,6 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/testing/services/hooks/cmd/version"
 	"github.com/ukama/ukama/testing/services/hooks/internal"
 	"github.com/ukama/ukama/testing/services/hooks/internal/clients"
@@ -56,16 +55,10 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-	instanceId := os.Getenv("POD_NAME")
-
-	if instanceId == "" {
-		/* used on local machines */
-		instanceId = uuid.NewV4().String()
-	}
-
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewHookServer(serviceConfig.OrgName,
 			clients.NewPawapayClient(serviceConfig.PawapayHost, serviceConfig.PawapayKey),
+			clients.NewStripeClient(serviceConfig.StripeKey),
 			clients.NewPaymentsClient(serviceConfig.PaymentsHost),
 			clients.NewWebhooksClient(serviceConfig.WebhooksHost),
 			scheduler.NewCdrScheduler(serviceConfig.SchedulerInterval), nil)

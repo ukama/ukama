@@ -71,8 +71,8 @@ typedef struct _websocket_message WSMessage;
 typedef struct _u_map UMap;
 
 typedef struct {
-    void      *config;
-    WSManager *handler;
+    void   *config;
+    struct _websocket_client_handler *handler;
 } ThreadArgs;
 
 typedef struct {

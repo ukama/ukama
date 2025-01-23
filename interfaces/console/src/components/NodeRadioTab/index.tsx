@@ -7,7 +7,7 @@
  */
 
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { TooltipsText } from '@/constants';
+import { RadioChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
@@ -17,11 +17,17 @@ import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
+  nodeId: string;
   metrics: any;
   loading: boolean;
   metricFrom: number;
 }
-const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
+const NodeRadioTab = ({
+  nodeId,
+  loading,
+  metrics,
+  metricFrom,
+}: INodeRadioTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
   return (
@@ -57,34 +63,43 @@ const NodeRadioTab = ({ loading, metrics, metricFrom }: INodeRadioTab) => {
         </NodeStatsContainer>
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
-        <Paper sx={{ p: 3, width: '100%' }}>
+        <Paper
+          sx={{
+            p: 3,
+            overflow: 'auto',
+            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+          }}
+        >
           <Stack spacing={4}>
             <LineChart
+              nodeId={nodeId}
               loading={loading}
-              topic={'tx_power'}
-              title={'TX Power'}
+              topic={RadioChartsConfig[0].id}
+              title={RadioChartsConfig[0].name}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue('tx_power', metrics)}
-              initData={getMetricValue('tx_power', metrics)}
+              hasData={isMetricValue(RadioChartsConfig[0].id, metrics)}
+              initData={getMetricValue(RadioChartsConfig[0].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
-              topic={'rx_power'}
-              title={'RX Power'}
+              topic={RadioChartsConfig[1].id}
+              title={RadioChartsConfig[1].name}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue('rx_power', metrics)}
-              initData={getMetricValue('rx_power', metrics)}
+              hasData={isMetricValue(RadioChartsConfig[1].id, metrics)}
+              initData={getMetricValue(RadioChartsConfig[1].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
-              topic={'pa_power'}
-              title={'PA Power'}
+              topic={RadioChartsConfig[2].id}
+              title={RadioChartsConfig[2].name}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue('pa_power', metrics)}
-              initData={getMetricValue('pa_power', metrics)}
+              hasData={isMetricValue(RadioChartsConfig[2].id, metrics)}
+              initData={getMetricValue(RadioChartsConfig[2].id, metrics)}
             />
           </Stack>
         </Paper>

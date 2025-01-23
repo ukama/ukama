@@ -7,6 +7,7 @@ services:
    - HOOKS_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - PAWAPAYKEY=${PAWAPAYKEY}
+   - STRIPEKEY=${STRIPEKEY}
    - SCHEDULERINTERVAL=
   restart: always
   networks:

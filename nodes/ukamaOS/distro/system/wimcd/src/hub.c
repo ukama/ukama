@@ -165,10 +165,10 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  *  0: error processing response.
  *  1: Success and curlCode is CURLE_OK
  */
-bool get_artifact_info_from_hub(Artifact *artifact,
-                                Config *config,
-                                char *name, char *tag,
-                                int *status) {
+bool get_artifacts_info_from_hub(Artifact *artifact,
+                                 Config *config,
+                                 char *name, char *tag,
+                                 int *status) {
 
     int i, count=0;
     bool ret=USYS_FALSE;

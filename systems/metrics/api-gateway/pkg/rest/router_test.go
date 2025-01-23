@@ -95,18 +95,6 @@ func Test_GetMetrics(t *testing.T) {
 		assert.Contains(t, body, c.MetricsConfig.Metrics["cpu"].Metric)
 	})
 
-	t.Run("OrgMetrics", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/v1/orgs/org-id/metrics/cpu?from=1643106506&to=1644936312&step=3600", nil)
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, 200, w.Code)
-		assert.Contains(t, body, c.MetricsConfig.Metrics["cpu"].Metric)
-	})
-
 	t.Run("MissingMetric", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/v1/nodes/node-id/metrics/test-metrics-miss?from=1643106506&to=1644936312&step=3600", nil)

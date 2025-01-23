@@ -348,7 +348,7 @@ void free_config(Config *config) {
     }
 
     if (config->build) {
-        for (count =0; count < config->build->nodesCount; count++) {
+        for (count=0; count < config->build->nodesCount; count++) {
             usys_free(config->build->nodesIDList[count]);
         }
         usys_free(config->build->nodesIDList);
@@ -369,7 +369,7 @@ void free_config(Config *config) {
         usys_free(config->deploy->keyValuePair);
         usys_free(config->deploy->systemsList);
 
-        for (count =0; count < config->deploy->nodesCount; count++) {
+        for (count=0; count < config->deploy->nodesCount; count++) {
             usys_free(config->deploy->nodesIDList[count]);
         }
 

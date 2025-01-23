@@ -29,10 +29,9 @@ import (
 	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	pmocks "github.com/ukama/ukama/systems/billing/api-gateway/mocks"
 	pkg "github.com/ukama/ukama/systems/billing/api-gateway/pkg"
 	pb "github.com/ukama/ukama/systems/billing/report/pb/gen"
-	imocks "github.com/ukama/ukama/systems/billing/report/pb/gen/mocks"
+	rmocks "github.com/ukama/ukama/systems/billing/report/pb/gen/mocks"
 	crest "github.com/ukama/ukama/systems/common/rest"
 )
 
@@ -48,7 +47,7 @@ const (
 )
 
 var (
-	reportPb = pb.GetResponse{
+	reportPb = pb.ReportResponse{
 		Report: &pb.Report{
 			Id:      reportId,
 			OwnerId: ownerId,
@@ -97,8 +96,7 @@ func init() {
 }
 
 func TestRouter_PingRoute(t *testing.T) {
-	var im = &imocks.ReportServiceClient{}
-	var pm = &pmocks.Pdf{}
+	var rm = &rmocks.ReportServiceClient{}
 	var arc = &providers.AuthRestClient{}
 
 	// arrange
@@ -106,8 +104,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(&Clients{
-		i: client.NewReportFromClient(im),
-		p: pm,
+		r: client.NewReportFromClient(rm),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -119,12 +116,11 @@ func TestRouter_PingRoute(t *testing.T) {
 func TestRouter_PostReport(t *testing.T) {
 	t.Run("ReportValid", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
-		var im = &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		var rm = &rmocks.ReportServiceClient{}
 
 		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
 
-		invoicePayload := &WebHookRequest{
+		reportPayload := &WebHookRequest{
 			WebhookType: invoiceCreatedType,
 			ObjectType:  invoiceObject,
 		}
@@ -133,19 +129,18 @@ func TestRouter_PostReport(t *testing.T) {
 			RawReport: raw,
 		}
 
-		body, err := json.Marshal(invoicePayload)
+		body, err := json.Marshal(reportPayload)
 		if err != nil {
-			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+			t.Errorf("fail to marshal request data: %v. Error: %v", reportPayload, err)
 		}
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", ownerndpoint, bytes.NewReader(body))
 
-		im.On("Add", mock.Anything, reportReq).Return(&pb.AddResponse{}, nil)
+		rm.On("Add", mock.Anything, reportReq).Return(&pb.ReportResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -153,30 +148,28 @@ func TestRouter_PostReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("WebhookTypeNotValid", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
-		var im = &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		var rm = &rmocks.ReportServiceClient{}
 
-		invoicePayload := &WebHookRequest{
+		reportPayload := &WebHookRequest{
 			WebhookType: "lol",
 			ObjectType:  "bof",
 		}
 
-		body, err := json.Marshal(invoicePayload)
+		body, err := json.Marshal(reportPayload)
 		if err != nil {
-			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+			t.Errorf("fail to marshal request data: %v. Error: %v", reportPayload, err)
 		}
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", ownerndpoint, bytes.NewReader(body))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -184,17 +177,16 @@ func TestRouter_PostReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("UnexpectedError", func(t *testing.T) {
 		var arc = &providers.AuthRestClient{}
-		var im = &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		var rm = &rmocks.ReportServiceClient{}
 
 		var raw = "{\"lago_id\":\"00000000-0000-0000-0000-000000000000\"}"
 
-		invoicePayload := &WebHookRequest{
+		reportPayload := &WebHookRequest{
 			WebhookType: invoiceCreatedType,
 			ObjectType:  invoiceObject,
 		}
@@ -203,20 +195,19 @@ func TestRouter_PostReport(t *testing.T) {
 			RawReport: raw,
 		}
 
-		body, err := json.Marshal(invoicePayload)
+		body, err := json.Marshal(reportPayload)
 		if err != nil {
-			t.Errorf("fail to marshal request data: %v. Error: %v", invoicePayload, err)
+			t.Errorf("fail to marshal request data: %v. Error: %v", reportPayload, err)
 		}
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", ownerndpoint, bytes.NewReader(body))
 
-		im.On("Add", mock.Anything, reportReq).Return(nil,
+		rm.On("Add", mock.Anything, reportReq).Return(nil,
 			fmt.Errorf("some unexpected error"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -224,7 +215,7 @@ func TestRouter_PostReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 }
@@ -235,18 +226,16 @@ func TestRouter_GetReport(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", ownerndpoint, reportId), nil)
 
 		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		rm := &rmocks.ReportServiceClient{}
 
 		pReq := &pb.GetRequest{
 			ReportId: reportId,
 		}
 
-		im.On("Get", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
+		rm.On("Get", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -254,7 +243,7 @@ func TestRouter_GetReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("ReportFound", func(t *testing.T) {
@@ -262,18 +251,16 @@ func TestRouter_GetReport(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", ownerndpoint, reportId), nil)
 
 		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		rm := &rmocks.ReportServiceClient{}
 
 		pReq := &pb.GetRequest{
 			ReportId: reportId,
 		}
 
-		im.On("Get", mock.Anything, pReq).Return(&reportPb, nil)
+		rm.On("Get", mock.Anything, pReq).Return(&reportPb, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -281,14 +268,13 @@ func TestRouter_GetReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 }
 
 func TestRouter_GetReports(t *testing.T) {
 	arc := &providers.AuthRestClient{}
-	im := &imocks.ReportServiceClient{}
-	pm := &pmocks.Pdf{}
+	rm := &rmocks.ReportServiceClient{}
 
 	t.Run("GetAll", func(t *testing.T) {
 		inv := invReq
@@ -306,14 +292,13 @@ func TestRouter_GetReports(t *testing.T) {
 				IsPaid:    false,
 			}}}
 
-		im.On("List", mock.Anything, listReq).Return(listResp, nil)
+		rm.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", ownerndpoint, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -321,7 +306,7 @@ func TestRouter_GetReports(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), inv.OwnerId)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("GetForOwner", func(t *testing.T) {
@@ -341,7 +326,7 @@ func TestRouter_GetReports(t *testing.T) {
 				IsPaid:    false,
 			}}}
 
-		im.On("List", mock.Anything, listReq).Return(listResp, nil)
+		rm.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
@@ -349,8 +334,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerId), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -358,7 +342,7 @@ func TestRouter_GetReports(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), inv.OwnerId)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("GetSortedPaidReportForOwnerWithCount", func(t *testing.T) {
@@ -383,7 +367,7 @@ func TestRouter_GetReports(t *testing.T) {
 				IsPaid:    true,
 			}}}
 
-		im.On("List", mock.Anything, listReq).Return(listResp, nil)
+		rm.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
@@ -391,8 +375,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerId, true, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -400,7 +383,7 @@ func TestRouter_GetReports(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), inv.OwnerId)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("GetReportsForNetworkId", func(t *testing.T) {
@@ -422,7 +405,7 @@ func TestRouter_GetReports(t *testing.T) {
 				IsPaid:    false,
 			}}}
 
-		im.On("List", mock.Anything, listReq).Return(listResp, nil)
+		rm.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
@@ -430,8 +413,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, networkId), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -440,7 +422,7 @@ func TestRouter_GetReports(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), inv.OwnerId)
 		assert.Contains(t, w.Body.String(), networkId)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("GetSortedPaidOrgReportsWithCount", func(t *testing.T) {
@@ -463,7 +445,7 @@ func TestRouter_GetReports(t *testing.T) {
 				IsPaid:    true,
 			}}}
 
-		im.On("List", mock.Anything, listReq).Return(listResp, nil)
+		rm.On("List", mock.Anything, listReq).Return(listResp, nil)
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET",
@@ -471,8 +453,7 @@ func TestRouter_GetReports(t *testing.T) {
 				ownerndpoint, inv.OwnerType, uint32(1), true), nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -480,7 +461,80 @@ func TestRouter_GetReports(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Body.String(), inv.OwnerId)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
+	})
+}
+
+func TestRouter_UpdateReport(t *testing.T) {
+	t.Run("ReportNotFound", func(t *testing.T) {
+
+		reportUpdates := &UpdateReportRequest{
+			IsPaid: true,
+		}
+
+		body, err := json.Marshal(reportUpdates)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", reportUpdates, err)
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PATCH", fmt.Sprintf("%s/%s", ownerndpoint, reportId), bytes.NewReader(body))
+
+		var arc = &providers.AuthRestClient{}
+		rm := &rmocks.ReportServiceClient{}
+
+		pReq := &pb.UpdateRequest{
+			ReportId: reportId,
+			IsPaid:   true,
+		}
+
+		rm.On("Update", mock.Anything, pReq).Return(nil, fmt.Errorf("not found"))
+
+		r := NewRouter(&Clients{
+			r: client.NewReportFromClient(rm),
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		rm.AssertExpectations(t)
+	})
+
+	t.Run("ReportFound", func(t *testing.T) {
+		reportUpdates := &UpdateReportRequest{
+			IsPaid: true,
+		}
+
+		body, err := json.Marshal(reportUpdates)
+		if err != nil {
+			t.Errorf("fail to marshal request data: %v. Error: %v", reportUpdates, err)
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("PATCH", fmt.Sprintf("%s/%s", ownerndpoint, reportId), bytes.NewReader(body))
+
+		var arc = &providers.AuthRestClient{}
+		rm := &rmocks.ReportServiceClient{}
+
+		pReq := &pb.UpdateRequest{
+			ReportId: reportId,
+			IsPaid:   true,
+		}
+
+		rm.On("Update", mock.Anything, pReq).Return(&reportPb, nil)
+
+		r := NewRouter(&Clients{
+			r: client.NewReportFromClient(rm),
+		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		rm.AssertExpectations(t)
 	})
 }
 
@@ -490,18 +544,16 @@ func TestRouter_DeleteReport(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", ownerndpoint, reportId), nil)
 
 		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		rm := &rmocks.ReportServiceClient{}
 
 		pReq := &pb.DeleteRequest{
 			ReportId: reportId,
 		}
-		im.On("Delete", mock.Anything, pReq).Return(nil,
+		rm.On("Delete", mock.Anything, pReq).Return(nil,
 			status.Errorf(codes.NotFound, "report not found"))
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -509,7 +561,7 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusNotFound, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 
 	t.Run("ReportFound", func(t *testing.T) {
@@ -517,18 +569,16 @@ func TestRouter_DeleteReport(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", ownerndpoint, reportId), nil)
 
 		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
+		rm := &rmocks.ReportServiceClient{}
 
 		pReq := &pb.DeleteRequest{
 			ReportId: reportId,
 		}
 
-		im.On("Delete", mock.Anything, pReq).Return(&pb.DeleteResponse{}, nil)
+		rm.On("Delete", mock.Anything, pReq).Return(&pb.DeleteResponse{}, nil)
 
 		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
+			r: client.NewReportFromClient(rm),
 		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 		// act
@@ -536,58 +586,6 @@ func TestRouter_DeleteReport(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
-		im.AssertExpectations(t)
-	})
-}
-
-func TestRouter_Pdf(t *testing.T) {
-	t.Run("ReportFound", func(t *testing.T) {
-		invoiceId := uuid.NewV4().String()
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
-
-		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
-
-		var content = []byte("some fake pdf data")
-
-		pm.On("GetPdf", invoiceId).Return(content, nil)
-
-		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		im.AssertExpectations(t)
-	})
-
-	t.Run("ReportNotFound", func(t *testing.T) {
-		invoiceId := uuid.NewV4().String()
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
-
-		var arc = &providers.AuthRestClient{}
-		im := &imocks.ReportServiceClient{}
-		pm := &pmocks.Pdf{}
-
-		pm.On("GetPdf", invoiceId).Return(nil, client.ErrInvoicePDFNotFound)
-
-		r := NewRouter(&Clients{
-			i: client.NewReportFromClient(im),
-			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusNotFound, w.Code)
-		im.AssertExpectations(t)
+		rm.AssertExpectations(t)
 	})
 }

@@ -86,7 +86,7 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 
 	switch e.RoutingKey {
 	// Update org subscription
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
 		msg, err := unmarshalOrgSubscription(e.Msg)
 		if err != nil {
 			return nil, err
@@ -228,6 +228,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			}
 		}
 
+		time.Sleep(1 * time.Second)
+
 		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
 		if err != nil {
 			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
@@ -236,7 +238,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		// Then we recreate the plan and the subscription
 		newPlan := client.Plan{
-			Name:        accountItem.Item + ": " + accountItem.Id,
+			Name:        accountItem.Item,
 			Code:        accountItem.Id,
 			Interval:    postpaidBillingInterval,
 			AmountCents: int(amount * 100),
@@ -718,7 +720,13 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 		Name: OrgName,
 		Type: client.CompanyCustomerType,
 
-		// TODO: we might need additional fields such as Email, Address, Phone.
+		// TODO: Hardcoding these values for now.
+		Email:   "test@example.com",
+		Phone:   "+001122334455",
+		Address: "35 Hollywood Boulevard",
+		City:    "Los Angeles",
+		State:   "California",
+		Country: "US",
 	}
 
 	log.Infof("Sending org customer create event %v to billing server",

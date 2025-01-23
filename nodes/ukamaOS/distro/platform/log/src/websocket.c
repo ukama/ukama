@@ -44,14 +44,19 @@ static char dataToSend[MAX_LOG_LEN] = {0};
 static ThreadArgs gThreadArgs;
 static int logRemoteInitialized = 0;
 
-static int is_websocket_valid(WSManager *manager) {
+int start_websocket_client(char *serviceName, int rlogdPort);
 
-    if (manager == NULL) return USYS_FALSE;
+/* log.c */
+extern void log_enable_rlogd(int flag);
 
-    if (ulfius_websocket_status(manager) == U_WEBSOCKET_STATUS_OPEN) {
+static bool is_websocket_valid(struct _websocket_client_handler *handler) {
+
+    if (handler == NULL) return USYS_FALSE;
+
+    if (ulfius_websocket_client_connection_status(handler) == U_WEBSOCKET_STATUS_OPEN) {
         return USYS_TRUE;
     } else {
-        handler.websocket = NULL;
+        handler->websocket = NULL;
         return USYS_FALSE;
     }
 
@@ -70,7 +75,7 @@ static void* monitor_websocket(void *args) {
         /* timeout or socket failure */
         if (pthread_cond_timedwait(&websocketFail, &websocketMutex, &ts) == ETIMEDOUT) {
             pthread_mutex_unlock(&websocketMutex);
-            if (!is_websocket_valid(handler.websocket)) {
+            if (!is_websocket_valid(&handler)) {
                 while (start_websocket_client(gThreadArgs.serviceName,
                                               gThreadArgs.port) == USYS_FALSE) {
                     sleep(WEBSOCKET_MONITOR_TIMEOUT);
@@ -122,7 +127,7 @@ static void websocket_manager(const URequest *request,
 
 static void websocket_incoming_message(const URequest *request,
                                        WSManager *manager,
-                                       WSMessage *message,
+                                       const WSMessage *message,
                                        void *data) {
 	return;
 }
@@ -196,7 +201,7 @@ void log_remote_init(char *serviceName) {
     rlogdPort = usys_find_service_port(SERVICE_RLOG);
 
     if (handler.websocket) return;
-    if (rlogdPort == 0) return;
+    if (rlogdPort == 0)    return;
     if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
 
     pthread_mutex_init(&mutex, NULL);

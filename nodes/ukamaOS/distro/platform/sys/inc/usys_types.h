@@ -35,6 +35,7 @@ extern "C" {
 #include <time.h>
 #include <ulimit.h>
 #include <unistd.h>
+#include <poll.h>
 #include <asm/types.h>
 #include <arpa/inet.h>
 #include <linux/if_ether.h>
@@ -48,7 +49,6 @@ extern "C" {
 #include <netinet/udp.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/socket.h>

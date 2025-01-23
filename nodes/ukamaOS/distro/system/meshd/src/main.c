@@ -36,6 +36,12 @@ MapTable *ClientTable=NULL;
 pthread_mutex_t websocketMutex, mutex;
 pthread_cond_t  websocketFail, hasData;
 
+/* network.c */
+extern int start_web_services(Config *config, UInst *clientInst);
+extern int start_websocket_client(Config *config,
+                                  struct _websocket_client_handler *handler);
+extern int start_forward_services(Config *config, UInst *clientInst);
+
 void usage() {
 
 	printf("Usage: mesh.d [options] \n");
@@ -120,7 +126,7 @@ void catch_sigterm(void) {
 
     memset(&saction, 0, sizeof(saction));
 
-    saction.sa_sigaction = signal_term_handler;
+    saction.sa_handler = signal_term_handler;
     sigemptyset(&saction.sa_mask);
     saction.sa_flags     = 0;
 

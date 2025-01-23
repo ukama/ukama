@@ -72,32 +72,32 @@ func ParseToModel(slice []RawRates, effective_at, endAt, sim_type string) ([]db.
 
 		imsi, err := ParsedToInt(value.Imsi)
 		if err != nil {
-			return nil, fmt.Errorf("failed parsing imsi value." + err.Error())
+			return nil, fmt.Errorf("failed parsing imsi value. Error: %s", err.Error())
 		}
 
 		smo, err := ParseToRates(value.Sms_mo, "$")
 		if err != nil {
-			return nil, fmt.Errorf("failed parsing SMS MO rate." + err.Error())
+			return nil, fmt.Errorf("failed parsing SMS MO rate. Error %s", err.Error())
 		}
 
 		smt, err := ParseToRates(value.Sms_mt, "$")
 		if err != nil {
-			return nil, fmt.Errorf("failed parsing SMS MT rate." + err.Error())
+			return nil, fmt.Errorf("failed parsing SMS MT rate. Error: %s", err.Error())
 		}
 
 		data, err := ParseToRates(value.Data, "$")
 		if err != nil {
-			return nil, fmt.Errorf("failed parsing Data rate." + err.Error())
+			return nil, fmt.Errorf("failed parsing Data rate. Error: %s", err.Error())
 		}
 
 		bg, err := time.Parse(time.RFC3339, effective_at)
 		if err != nil {
-			return nil, fmt.Errorf("invalid time format for effective at " + err.Error())
+			return nil, fmt.Errorf("invalid time format for effective at. Error: %s", err.Error())
 		}
 
 		et, err := time.Parse(time.RFC3339, endAt)
 		if err != nil {
-			return nil, fmt.Errorf("invalid time format for end at " + err.Error())
+			return nil, fmt.Errorf("invalid time format for end at. Error: %s", err.Error())
 		}
 
 		rates = append(rates, db.BaseRate{

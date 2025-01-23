@@ -20,14 +20,6 @@ var _ = math.Inf
 func (this *AddRequest) Validate() error {
 	return nil
 }
-func (this *AddResponse) Validate() error {
-	if this.Report != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Report); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Report", err)
-		}
-	}
-	return nil
-}
 
 var _regex_GetRequest_ReportId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
@@ -40,7 +32,19 @@ func (this *GetRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetResponse) Validate() error {
+
+var _regex_UpdateRequest_ReportId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *UpdateRequest) Validate() error {
+	if !_regex_UpdateRequest_ReportId.MatchString(this.ReportId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("ReportId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.ReportId))
+	}
+	if this.ReportId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ReportId", fmt.Errorf(`value '%v' must not be an empty string`, this.ReportId))
+	}
+	return nil
+}
+func (this *ReportResponse) Validate() error {
 	if this.Report != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Report); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Report", err)
@@ -129,13 +133,13 @@ func (this *Customer) Validate() error {
 	return nil
 }
 func (this *Fee) Validate() error {
-	if this.Owner != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Owner); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Owner", err)
+	if this.Item != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Item); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Item", err)
 		}
 	}
 	return nil
 }
-func (this *Feeowner) Validate() error {
+func (this *FeeItem) Validate() error {
 	return nil
 }

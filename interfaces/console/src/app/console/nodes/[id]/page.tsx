@@ -14,15 +14,25 @@ import {
   useGetNodesByStateQuery,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
+import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
+import NodeRadioTab from '@/components/NodeRadioTab';
+import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { useAppContext } from '@/context';
+import MetricSubscription from '@/lib/MetricSubscription';
 import { colors } from '@/theme';
+import { TMetricResDto } from '@/types';
+import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -36,15 +46,14 @@ interface INodePage {
 const Page: React.FC<INodePage> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
-  // const router = useRouter();
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
-  // const [metricFrom, setMetricFrom] = useState<number>(0);
-  // const [graphType, setGraphType] = useState<Graphs_Type>(
-  //   Graphs_Type.NodeHealth,
-  // );
-  // const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [graphType, setGraphType] = useState<Graphs_Type>(
+    Graphs_Type.NodeHealth,
+  );
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
-  const { setSnackbarMessage, env } = useAppContext();
+  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
 
   useEffect(() => {
@@ -105,75 +114,68 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
-  // const [
-  //   getNodeMetricByTab,
-  //   { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
-  // ] = useGetMetricByTabLazyQuery({
-  //   client: getMetricsClient(env.METRIC_URL),
-  //   fetchPolicy: 'network-only',
-  //   onCompleted: (data) => {
-  //     setMetrics(data.getMetricByTab);
-  //   },
-  // });
+  const [
+    getNodeMetricByTab,
+    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricByTab);
+    },
+  });
 
-  // const [getApps, { data: nodeAppsRes, loading: nodeAppsLoading }] =
-  //   useGetNodeAppsLazyQuery({
-  //     fetchPolicy: 'cache-and-network',
-  //     onError: (err) => {
-  //       setSnackbarMessage({
-  //         id: 'node-apps-err-msg',
-  //         message: err.message,
-  //         type: 'error',
-  //         show: true,
-  //       });
-  //     },
-  //   });
+  useEffect(() => {
+    if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
+      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
+      getNodeMetricByTab({
+        variables: {
+          data: {
+            nodeId: id,
+            userId: user.id,
+            type: graphType,
+            from: metricFrom,
+            to: metricFrom + 120,
+            orgName: user.orgName,
+            withSubscription: true,
+          },
+        },
+      }).then(() => {
+        MetricSubscription({
+          nodeId: id,
+          key: psKey,
+          type: graphType,
+          userId: user.id,
+          from: metricFrom,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+        });
+      });
 
-  // useEffect(() => {
-  //   getNodes({
-  //     variables: {
-  //       data: {
-  //         isFree: false,
-  //       },
-  //     },
-  //   });
-  // });
+      PubSub.subscribe(psKey, handleNotification);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    metricFrom,
+    nodeMetricsVariables?.data?.from,
+    getNodeMetricByTab,
+    graphType,
+  ]); // Added all missing dependencies
 
-  // useEffect(() => {
-  //   if (selectedTab === 4) {
-  //     getApps({
-  //       variables: {
-  //         data: {
-  //           type: NodeTypeEnum.Hnode,
-  //         },
-  //       },
-  //     });
-  //   }
-  // }, [selectedTab, getApps]);
-
-  // useEffect(() => {
-  //   if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
-  //     getNodeMetricByTab({
-  //       variables: {
-  //         data: {
-  //           orgId: 'ukama',
-  //           userId: 'salman',
-  //           from: metricFrom,
-  //           type: graphType,
-  //           to: metricFrom + 120,
-  //           withSubscription: true,
-  //           orgName: 'ukama',
-  //           nodeId: 'uk-test36-hnode-a1-00ff',
-  //         },
-  //       },
-  //     });
-  //   }
-  // }, [
-  //   metricFrom,
-  //   nodeMetricsVariables?.data?.from,
-  //   getNodeMetricByTab,
-  //   graphType,
-  // ]); // Added all missing dependencies
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, type, value, nodeId, success } =
+      parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+      // setMetrics((prev) => {
+      //   const updatedMetrics = prev.metrics.map((m) =>
+      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
+      //   );
+      //   return { ...prev, metrics: updatedMetrics };
+      // });
+    }
+  };
 
   const handleNodeSelected = (node: Node) => {
     setSelectedNode(node);
@@ -193,14 +195,14 @@ const Page: React.FC<INodePage> = ({ params }) => {
   };
 
   const handleOverviewSectionChange = (type: Graphs_Type) => {
-    // setGraphType(type);
-    // setMetricFrom(() => getUnixTime() - 120);
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - 120);
   };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
-    // setGraphType(getNodeTabTypeByIndex(value));
-    // setMetricFrom(() => getUnixTime() - 120);
+    setGraphType(getNodeTabTypeByIndex(value));
+    setMetricFrom(() => getUnixTime() - 120);
   };
 
   const handleNodeActionClick = (action: string) => {};
@@ -229,8 +231,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
             sx={
               {
                 // display:
-                //   (selectedNode?.type === 'HOME' && label === 'Radio') ??
-                //   (selectedNode?.type === 'AMPLIFIER' && label === 'Network')
+                //   ((selectedNode?.type === NodeTypeEnum.Hnode &&
+                //     label === 'Radio') ??
+                //   (selectedNode?.type === NodeTypeEnum.Anode &&
+                //     label === 'Network'))
                 //     ? 'none'
                 //     : 'block',
               }
@@ -248,42 +252,45 @@ const Page: React.FC<INodePage> = ({ params }) => {
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
-            uptime={0}
-            metricFrom={0}
+            nodeId={id}
             loading={false}
+            metrics={metrics}
             connectedUsers={'0'}
-            metricsLoading={false}
+            metricFrom={metricFrom}
             isUpdateAvailable={false}
-            metrics={{ metrics: [] }}
             onNodeSelected={() => {}}
             handleUpdateNode={() => {}}
             selectedNode={selectedNode}
+            metricsLoading={nodeMetricsLoading}
             getNodeSoftwareUpdateInfos={() => {}}
             handleOverviewSectionChange={handleOverviewSectionChange}
           />
         </TabPanel>
-        {/* <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
+        <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
-        {/* <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
+        </TabPanel>
+        <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
-        {/* <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
+        </TabPanel>
+        <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
           />
-        </TabPanel> */}
+        </TabPanel>
         {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <NodeSoftwareTab
             loading={nodeAppsLoading}

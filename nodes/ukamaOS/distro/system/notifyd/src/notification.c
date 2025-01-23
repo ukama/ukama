@@ -200,7 +200,7 @@ static int get_code_and_severity(const Entry* entries, int numEntries,
         }
     }
 
-    return code;
+    return found;
 }
 
 static int notify_process_incoming_generic_notification(JsonObj *json, char *type,

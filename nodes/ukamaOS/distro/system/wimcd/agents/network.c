@@ -21,6 +21,7 @@
 #include "usys_log.h"
 #include "usys_services.h"
 #include "usys_api.h"
+#include "usys_file.h"
 
 static int get_agent_port(char *method) {
 

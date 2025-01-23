@@ -1,19 +1,17 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
-import { STORAGE_KEY } from "../../common/configs";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
-import { addInStore, openStore, removeFromStore } from "../../common/storage";
+import { addInStore, openStore } from "../../common/storage";
 import {
   eventKeyToAction,
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
-  getTimestampCount,
 } from "../../common/utils";
 import {
   getNodeRangeMetric,
@@ -30,7 +28,7 @@ import {
   SubMetricByTabInput,
 } from "./types";
 
-const WS_THREAD = "./threads/MetricsWSThread.js";
+const WS_THREAD = "./threads/MetricsWSThread.mjs";
 const NOTIFICATION_THREAD = "./threads/NotificationsWSThread.mjs";
 
 const getErrorRes = (msg: string) =>
@@ -47,7 +45,6 @@ const getErrorRes = (msg: string) =>
 class SubscriptionsResolvers {
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
-    //Get system base url
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
@@ -58,7 +55,15 @@ class SubscriptionsResolvers {
       logger.error(`Error getting base URL for notification: ${baseURL}`);
       return { notifications: [] };
     }
-    const { type, orgId, userId, nodeId, withSubscription, from } = data;
+
+    let wsUrl = baseURL;
+    if (wsUrl?.includes("https://")) {
+      wsUrl = wsUrl.replace("https://", "wss://");
+    } else if (wsUrl?.startsWith("http://")) {
+      wsUrl = wsUrl.replace("http://", "ws://");
+    }
+
+    const { type, from, nodeId, userId, orgName, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
     const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
     const metrics: MetricsRes = { metrics: [] };
@@ -76,15 +81,13 @@ class SubscriptionsResolvers {
       metrics.metrics.forEach((metric: MetricRes) => {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
-      subKey = subKey.slice(0, -1);
       subKey.split(",").forEach((key: string) => {
+        if (key === "") return;
         const workerData = {
-          type: key,
-          orgId,
           userId,
-          url: `${baseURL}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
-          key: STORAGE_KEY,
+          type: key,
           timestamp: from,
+          url: `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
         };
         const worker = new Worker(WS_THREAD, {
           workerData,
@@ -94,13 +97,14 @@ class SubscriptionsResolvers {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(key, {
+              pubSub.publish(`${userId}/${type}/${from}`, {
                 success: true,
                 msg: "success",
-                orgId: result.metric.org,
+                orgName: orgName,
                 nodeId: nodeId,
-                type: key,
                 userId: userId,
+                from: from,
+                type: key,
                 value: result.value,
               } as LatestMetricRes);
             } else {
@@ -108,10 +112,10 @@ class SubscriptionsResolvers {
             }
           }
         });
-        worker.on("exit", (code: any) => {
-          removeFromStore(openStore(), `${orgId}/${userId}/${type}/${from}`);
+        worker.on("exit", async (code: any) => {
+          await store.close();
           logger.info(
-            `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${type}`
+            `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
           );
         });
       });
@@ -201,8 +205,8 @@ class SubscriptionsResolvers {
       }
     });
 
-    worker.on("exit", (code: any) => {
-      removeFromStore(store, key);
+    worker.on("exit", async (code: any) => {
+      await store.close();
       logger.info(
         `WS_THREAD exited with code [${code}] for ${orgId}/${userId}/${networkId}/${subscriberId}/${startTimestamp}`
       );
@@ -213,21 +217,16 @@ class SubscriptionsResolvers {
 
   @Subscription(() => LatestMetricRes, {
     topics: ({ args }) => {
-      return getGraphsKeyByType(args.type, args.nodeId);
-    },
-    filter: ({ payload, args }) => {
-      return args.nodeId === payload.nodeId && args.userId === payload.userId;
+      return `${args.data.userId}/${args.data.type}/${args.data.from}`;
     },
   })
   async getMetricByTabSub(
     @Root() payload: LatestMetricRes,
     @Arg("data") data: SubMetricByTabInput
   ): Promise<LatestMetricRes> {
-    await addInStore(
-      openStore(),
-      `${data.orgId}/${data.userId}/${payload.type}/${data.from}`,
-      getTimestampCount("0")
-    );
+    const store = openStore();
+    await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
+    await store.close();
     return payload;
   }
 
@@ -246,12 +245,14 @@ class SubscriptionsResolvers {
     @Arg("subscriberId") subscriberId: string,
     @Arg("startTimestamp") startTimestamp: string
   ): Promise<NotificationsResDto> {
+    const store = openStore();
     await addInStore(
-      openStore(),
+      store,
       `notification-${orgId}-${userId}-${networkId}-${subscriberId}-${startTimestamp}`,
-      getTimestampCount("0")
+      0
     );
     logger.info("Notification payload :", payload);
+    await store.close();
     return payload;
   }
 }

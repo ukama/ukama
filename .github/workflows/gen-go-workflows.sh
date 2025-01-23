@@ -4,7 +4,7 @@
 WORKFLOW_TEMPLATE=$(cat workflow-template.yaml.templ)
 PR_RELEASE_TEMPLATE=$(cat pr-release-template.yaml.templ)
 
-WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 "
@@ -28,7 +28,7 @@ generate(){
 
         PR_RELEASE=$(echo "${PR_RELEASE_TEMPLATE}" | sed "s#{{SERVICE}}#${1}/${SERVICE}#g" | sed "s#{{SERVICE_NAME}}#${SERVICE}#g" | sed "s#{{HELMFILE_PREFIX}}#${2}#g" \
          | sed "s#{{SANITIZED_NAME}}#${SANITIZED}#g" | sed "s#{{WORKFLOW_PATH}}#${WORKFLOW_PATH}#g" | sed "s#{{SYSTEM_NAME}}#${SYSTEM_NAME}#g" )
-        
+
         # save workflow to .github/workflows/{ROUTE}
         echo "${WARNING}${WORKFLOW}" > ${WORKFLOW_PATH}.yaml
         echo "${WARNING}${PR_RELEASE}" > ${WORKFLOW_PATH}-pr-release.yaml
@@ -48,6 +48,7 @@ generate "systems/node"         "node"
 generate "systems/notification" "notification"
 generate "systems/nucleus"      "nucleus"
 generate "systems/registry"     "registry"
+generate "systems/report"       "report"
 generate "systems/services"     "services"
 generate "systems/subscriber"   "subscriber"
 generate "systems/ukama-agent"  "ukama-agent"

@@ -7,14 +7,15 @@
  */
 
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
+import { useAppContext } from '@/context';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
-import MetricSubscription from './metricSubscription';
 
 interface ILineChart {
+  nodeId: string;
   metricFrom: any;
   topic: string;
   initData: any;
@@ -84,6 +85,10 @@ const getOptions = (topic: string, title: string, initData: any) => {
       enabled: false,
     },
 
+    accessibility: {
+      enabled: false,
+    },
+
     series: [
       {
         name: title,
@@ -110,6 +115,7 @@ const getOptions = (topic: string, title: string, initData: any) => {
 
 const LineChart = ({
   topic,
+  nodeId,
   hasData,
   initData,
   metricFrom,
@@ -118,6 +124,8 @@ const LineChart = ({
   filter = 'LIVE',
   tabSection = Graphs_Type.NodeHealth,
 }: ILineChart) => {
+  const { user, env } = useAppContext();
+
   return (
     <GraphTitleWrapper
       filter={filter}
@@ -128,7 +136,15 @@ const LineChart = ({
       loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
-        <MetricSubscription type={tabSection} from={metricFrom} />
+        {/* <MetricSubscription
+          key=""
+          nodeId={nodeId}
+          userId={user.id}
+          type={tabSection}
+          from={metricFrom}
+          url={env.METRIC_URL}
+          orgName={user.orgName}
+        /> */}
         <HighchartsReact
           key={topic}
           options={getOptions(topic, title, initData)}

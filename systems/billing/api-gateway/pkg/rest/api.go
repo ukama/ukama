@@ -22,11 +22,15 @@ type GetReportsRequest struct {
 
 type GetReportRequest struct {
 	ReportId string `example:"{{ReportUUID}}" path:"report_id" validate:"required"`
-	AsPdf    bool   `form:"as_pdf" json:"as_pdf" query:"as_pdf" binding:"required"`
+}
+
+type UpdateReportRequest struct {
+	ReportId string `example:"{{ReportUUID}}" path:"report_id" validate:"required"`
+	IsPaid   bool   `json:"is_paid"`
 }
 
 type WebHookRequest struct {
-	WebhookType string          `example:"webhook-type" json:"webhook_type" validate:"required"`
-	ObjectType  string          `example:"object-type" json:"object_type" validate:"required"`
-	Invoice     util.RawInvoice `example:"{}" json:"invoice" validate:"required"`
+	WebhookType string         `example:"webhook-type" json:"webhook_type" validate:"required"`
+	ObjectType  string         `example:"object-type" json:"object_type" validate:"required"`
+	Invoice     util.RawReport `example:"{}" json:"invoice" validate:"required"`
 }

@@ -70,6 +70,7 @@ export default function RootLayout({
               MAP_BOX_TOKEN: process.env.NEXT_PUBLIC_MAP_BOX_TOKEN ?? '',
               METRIC_WEBSOCKET_URL:
                 process.env.NEXT_PUBLIC_METRIC_WEBSOCKET_URL ?? '',
+              STRIPE_PK: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
             }}
             initalUserValues={{
               id: userId ?? '',

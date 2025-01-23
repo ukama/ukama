@@ -232,7 +232,6 @@ int process_incoming_websocket_message(Message *message, Config *config) {
 	int httpStatus, ret;
 	char *responseLocal  = NULL;
     char *responseRemote = NULL;
-    json_t *jResp=NULL;
     URequest *request=NULL;
 
     if (deserialize_request_info(&request, message->data) == FALSE) {

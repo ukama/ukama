@@ -123,7 +123,7 @@ func (g *gitClient) GetDiff(prevSha string, curSha string, dir string) ([]string
 		return nil, err
 	}
 
-	log.Infof("Comparing from:" + prevCommit.Hash.String() + " to:" + commit.Hash.String())
+	log.Infof("Comparing from: %s to: %s", prevCommit.Hash.String(), commit.Hash.String())
 
 	isAncestor, err := commit.IsAncestor(prevCommit)
 	if err != nil {

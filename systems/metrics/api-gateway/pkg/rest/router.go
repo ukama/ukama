@@ -148,25 +148,20 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.metricHandler, http.StatusOK))
 
-		auth.GET("/subscriber/:subscriber/orgs/:org/networks/:network/metrics/:metric", []fizz.OperationOption{
+		auth.GET("/subscriber/:subscriber/networks/:network/metrics/:metric", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get metrics for a susbcriber. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.subscriberMetricHandler, http.StatusOK))
 
-		auth.GET("/sites/:site/orgs/:org/metrics/:metric", []fizz.OperationOption{
-				func(info *openapi.OperationInfo) {
-					info.Description = "Get metrics for a site. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-				}}, tonic.Handler(r.siteMetricHandler, http.StatusOK))
-	
-		auth.GET("/sims/:sim/orgs/:org/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
+		auth.GET("/sites/:site/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for a site. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.siteMetricHandler, http.StatusOK))
+
+		auth.GET("/sims/:sim/networks/:network/subscribers/:subscriber/metrics/:metric", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get metrics for a sim. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.simMetricHandler, http.StatusOK))
-
-		auth.GET("/orgs/:org/metrics/:metric", []fizz.OperationOption{
-			func(info *openapi.OperationInfo) {
-				info.Description = "Get metrics for an org. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-			}}, tonic.Handler(r.orgMetricHandler, http.StatusOK))
 
 		auth.GET("/networks/:network/metrics/:metric", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
@@ -255,35 +250,30 @@ func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
 }
 
 func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) error {
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID))
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Org, in.Network, in.Subscriber))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSubscriber(in.Network, in.Subscriber))
 }
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
 	logrus.Infof("Request Sim metrics: %+v", in)
 
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Org, in.Network, in.Subscriber, in.Sim))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Network, in.Subscriber, in.Sim))
 }
 
 func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput) error {
 	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
 	return httpErrorOrNil(httpCode, err)
 }
-func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput)  error {
+func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput) error {
 	logrus.Infof("Request Site metrics: %+v", in)
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSite(in.Org, in.SiteID))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSite(in.SiteID))
 }
 
 func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
 	return r.m.List(), nil
-}
-
-func (r *Router) orgMetricHandler(c *gin.Context, in *GetOrgMetricsInput) error {
-	httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithOrg(in.Org), c.Writer)
-	return httpErrorOrNil(httpCode, err)
 }
 
 func httpErrorOrNil(httpCode int, err error) error {
@@ -306,7 +296,7 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 }
 
 func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricIntput) error {
-	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Org, in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID), true)
+	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID), true)
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {

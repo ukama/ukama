@@ -31,7 +31,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
 void websocket_incoming_message(const URequest *request,
 								WSManager *manager,
-                                WSMessage *message,
+                                const WSMessage *message,
 								void *nodeID) {
 
     process_logs(nodeID, message->data);

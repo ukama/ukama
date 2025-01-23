@@ -134,7 +134,7 @@ func TestCommitRepo_Get(t *testing.T) {
 
 		// Assert
 		if assert.Error(t, err) {
-			assert.Equal(t, true, errors.Is(gorm.ErrRecordNotFound, err))
+			assert.Equal(t, true, errors.Is(err, gorm.ErrRecordNotFound))
 		}
 
 		err = mock.ExpectationsWereMet()

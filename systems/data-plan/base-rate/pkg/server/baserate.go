@@ -72,7 +72,7 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		log.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates: Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -88,7 +88,7 @@ func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *
 	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		log.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates. Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -103,18 +103,18 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from "+err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from. Error: %s", err.Error())
 	}
 
 	to, err := time.Parse(time.RFC3339, req.GetTo())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to. Error: %s", err.Error())
 	}
 
 	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		log.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates. Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -129,18 +129,18 @@ func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.Get
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from "+err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for from. Error: %s", err.Error())
 	}
 
 	to, err := time.Parse(time.RFC3339, req.GetTo())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to "+err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to. Error: %s", err.Error())
 	}
 
 	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
 
 	if err != nil {
-		log.Errorf("error while getting rates" + err.Error())
+		log.Errorf("error while getting rates, Error: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "rates")
 	}
 	rateList := &pb.GetBaseRatesResponse{
@@ -166,22 +166,22 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 
 	formattedEffectiveAt, err := validation.ValidateDate(effectiveAt)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 	if err := validation.IsFutureDate(formattedEffectiveAt); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 
 	formattedEndAt, err := validation.ValidateDate(endAt)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 	if err := validation.IsFutureDate(formattedEndAt); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 
 	}
 	if err := validation.IsAfterDate(formattedEndAt, formattedEffectiveAt); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 
 	}
 
@@ -195,7 +195,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	data, err := utils.FetchData(fileUrl)
 	if err != nil {
 		log.Infof("Error fetching data: %v", err.Error())
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "Error: %s", err.Error())
 	}
 
 	rates, err := utils.ParseToModel(data, formattedEffectiveAt, formattedEndAt, simType.String())

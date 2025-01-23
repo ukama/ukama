@@ -1,3 +1,4 @@
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,12 +109,50 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
+export const BILLING_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  {
+    id: 'billing',
+    label: 'Billing period',
+    minWidth: 100,
+  },
+  {
+    id: 'posted',
+    label: 'Posted',
+    minWidth: 100,
+  },
+  {
+    id: 'description',
+    label: 'Description',
+    minWidth: 100,
+  },
+  {
+    id: 'payment',
+    label: 'Payment',
+    minWidth: 100,
+  },
+  {
+    id: 'pdf',
+    label: 'Pdf',
+    minWidth: 100,
+  },
+];
 export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   {
     id: 1,
     Icon: null,
     title: 'Edit subscriber',
     route: 'edit-sub',
+  },
+  { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+];
+
+export const BILLING_HISTORY_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'View Details',
+    route: 'View Details',
   },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
   // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
@@ -193,6 +232,8 @@ export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
 
+export const PAYMENT_METHODS = ['Stripe'];
+
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
   {
@@ -207,11 +248,6 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
     title: 'Update available',
     route: 'update',
   },
-];
-
-const BillingTabs = [
-  { id: 0, label: 'CURRENT BILL', value: '1' },
-  { id: 1, label: 'BILLING HISTORY', value: '2' },
 ];
 
 const ROAMING_SELECT = [
@@ -258,9 +294,9 @@ const TooltipsText = {
 
 const NodePageTabs = [
   { id: 'node-tab-0', label: 'Overview', value: 0 },
-  // { id: 'node-tab-1', label: 'Network', value: 1 },
-  // { id: 'node-tab-2', label: 'Resources', value: 2 },
-  // { id: 'node-tab-3', label: 'Radio', value: 3 },
+  { id: 'node-tab-1', label: 'Network', value: 1 },
+  { id: 'node-tab-2', label: 'Resources', value: 2 },
+  { id: 'node-tab-3', label: 'Radio', value: 3 },
   // { id: 'node-tab-4', label: 'Software', value: 4 },
   // { id: 'node-tab-5', label: 'Schematic', value: 5 },
 ];
@@ -294,6 +330,18 @@ const NodeResourcesTabConfigure: any = {
     { name: 'POWER', show: true, id: 'power_level' },
   ],
 };
+const NetworkChartsConfig: any = [
+  { name: 'Throughput (D/L)', show: true, id: 'network_throughput_down' },
+  { name: 'Throughput (U/L)', show: true, id: 'network_throughput_up' },
+  { name: 'RRC CNX Success', show: true, id: 'network_latency' },
+  { name: 'ERAB Drop Rate', show: true, id: 'network_packet_loss' },
+  { name: 'RLS  Drop Rate', show: true, id: 'network_overall_status' },
+];
+const RadioChartsConfig: any = [
+  { name: 'TX Power', show: true, id: 'tx_power' },
+  { name: 'RX Power', show: true, id: 'rx_power' },
+  { name: 'PA Power', show: true, id: 'pa_power' },
+];
 const HealtChartsConfigure: any = {
   hnode: [
     { name: 'Uptime', show: true, id: 'uptime_trx' },
@@ -311,6 +359,7 @@ const HealtChartsConfigure: any = {
   tnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperature_trx' },
     { name: 'Temp. (COM)', show: true, id: 'temperature_com' },
+    { name: 'Uptime', show: true, id: 'uptime_trx' },
     { name: 'Attached ', show: true, id: 'subscribers_attached' },
     { name: 'Active ', show: true, id: 'subscribers_active' },
   ],
@@ -342,7 +391,6 @@ export { NodeApps } from './stubData';
 export {
   APP_VERSION,
   BASIC_MENU_ACTIONS,
-  BillingTabs,
   COPY_RIGHTS,
   DataTableWithOptionColumns,
   DRAWER_WIDTH,
@@ -353,10 +401,12 @@ export {
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
+  NetworkChartsConfig,
   NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
   NodePageTabs,
   NodeResourcesTabConfigure,
+  RadioChartsConfig,
   ROAMING_SELECT,
   SETTING_MENU,
   SITE_CONFIG_STEPS,

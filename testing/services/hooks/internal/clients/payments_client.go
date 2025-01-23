@@ -58,7 +58,7 @@ func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error
 	err = json.Unmarshal(resp.Body(), &payments)
 	log.Infof("Error %v", err)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "payments", err.Error())
+		log.Tracef(deserializeLogMsg, "Payments", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "payments", err)
 	}
@@ -89,6 +89,7 @@ type PaymentInfo struct {
 	Description          string `json:"description,omitempty"`
 	Status               string `json:"status,omitempty"`
 	FailureReason        string `json:"faillure_reason,omitempty"`
+	ExternalId           string `json:"external_id,omitempty"`
 	CreatedAt            string `json:"created_at,omitempty"`
 	Metadata             []byte `json:"metadata,omitempty"`
 }

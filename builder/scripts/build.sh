@@ -73,8 +73,8 @@ build_base_image() {
     fi
 
     # create bootable os image
-    echo "Creating bootsable OS image"
-    ./mkimage.sh ${base_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
+    echo "Creating bootsable OS image for virtual env."
+    ./mk_virtual_os_image.sh ${base_id} ${ukama_root} || { echo "Unable to make OS image"; exit 1; }
 
     # build all apps
     echo "Building all apps"

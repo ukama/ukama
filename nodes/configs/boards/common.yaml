@@ -1,0 +1,15 @@
+# Following apps are common to all board(s)
+# Each board.yaml maybe overwrite these as needed.
+
+BOOTSTRAP_APP: yes
+CONFIGD_APP: yes
+DEVICED_APP: yes
+INIT_APP: yes
+LOOKOUTD_APP: yes
+MESHD_APP: yes
+METRICSD_APP: yes
+NODED_APP: yes
+NOTIFYD_APP: yes
+RLOG_APP: yes
+STARTERD_APP: yes
+WIMCD_APP: yes

@@ -1,0 +1,5 @@
+# TRX board - used in tower node
+
+INIT_APP:         no
+BUSYBOX_INIT_APP: yes
+LTE_APP:          yes

@@ -23,9 +23,6 @@ export class MetricRes {
   msg: string;
 
   @Field()
-  orgId: string;
-
-  @Field()
   nodeId: string;
 
   @Field()
@@ -50,9 +47,6 @@ export class LatestMetricRes {
 
   @Field()
   msg: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   nodeId: string;
@@ -97,28 +91,25 @@ export class GetMetricByTabInput {
   nodeId: string;
 
   @Field()
-  orgId?: string;
+  orgName: string;
 
   @Field()
-  orgName: string;
+  userId: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;
 
   @Field()
-  userId?: string;
-
-  @Field({ nullable: true })
   from: number;
 
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ nullable: true })
-  step?: number;
+  @Field({ defaultValue: 1 })
+  step: number;
 
-  @Field({ nullable: false })
-  withSubscription?: boolean;
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
 }
 
 @ObjectType()
@@ -151,7 +142,7 @@ export class SubMetricByTabInput {
   nodeId: string;
 
   @Field()
-  orgId: string;
+  orgName: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;

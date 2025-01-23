@@ -29,4 +29,9 @@
 #define ENV_DOCKER_BUILD "DOCKER_BUILD"
 #define ENV_NATIVE_BUILD "NATIVE_BUILD"
 
+/* for board .config files */
+#define BOARD_COMMON_CONFIG     "boards/common.config"
+#define BOARD_CONTROLLER_CONFIG "boards/controller.config"
+#define BOARD_COMP_CONFIG       "boards/comp.config"
+
 #endif /* BUILDER_H_ */

@@ -26,10 +26,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	generated "github.com/ukama/ukama/systems/billing/report/pb/gen"
-	fs "github.com/ukama/ukama/systems/billing/report/pkg/pdf/server"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
@@ -101,22 +101,18 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	reportServer := server.NewReportServer(
-		serviceConfig.OrgName,
-		serviceConfig.OrgId,
-		db.NewReportRepo(gormDB),
-		csub.NewSubscriberClient(serviceConfig.SubscriberHost),
-		mbClient,
-	)
-
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		generated.RegisterReportServiceServer(s, reportServer)
+		srv := server.NewReportServer(
+			serviceConfig.OrgName,
+			serviceConfig.OrgId,
+			db.NewReportRepo(gormDB),
+			csub.NewSubscriberClient(serviceConfig.SubscriberHost),
+			mbClient)
+		generated.RegisterReportServiceServer(s, srv)
+
+		eSrv := server.NewReportEventServer(serviceConfig.OrgName, serviceConfig.OrgId, db.NewReportRepo(gormDB), mbClient)
+		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
-
-	pdfServer := fs.NewPDFServer(serviceConfig.PdfHost, serviceConfig.PdfFolder,
-		serviceConfig.PdfPrefix, serviceConfig.PdfPort)
-
-	go pdfServer.Start()
 
 	go msgBusListener(mbClient)
 

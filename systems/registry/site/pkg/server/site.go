@@ -89,7 +89,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 
 	instDate, err := ukama.ValidateDate(req.GetInstallDate())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
 
 	for _, componentIdStr := range []string{

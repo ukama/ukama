@@ -34,9 +34,6 @@
 [submodule "nodes/ukamaOS/distro/vendor/protobuf-c"]
 	path = nodes/ukamaOS/distro/vendor/protobuf-c
 	url = https://github.com/protobuf-c/protobuf-c.git
-[submodule "nodes/ukamaOS/distro/vendor/protobuf"]
-	path = nodes/ukamaOS/distro/vendor/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
 [submodule "nodes/ukamaOS/distro/vendor/dhcpcd"]
 	path = nodes/ukamaOS/distro/vendor/dhcpcd
 	url = https://github.com/NetworkConfiguration/dhcpcd.git
@@ -91,4 +88,13 @@
 	url = https://github.com/ukama/busybox.git
 [submodule "nodes/ukamaOS/kernel"]
 	path = nodes/ukamaOS/kernel
-	url = https://github.com/ukama/os.git
+	url = https://github.com/ukama/kernel.git
+[submodule "nodes/ukamaOS/distro/vendor/psl"]
+	path = nodes/ukamaOS/distro/vendor/psl
+	url = https://github.com/ukama/psl.git
+[submodule "nodes/ukamaOS/distro/vendor/protobuf"]
+	path = nodes/ukamaOS/distro/vendor/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "nodes/ukamaOS/distro/vendor/libidn2"]
+	path = nodes/ukamaOS/distro/vendor/libidn2
+	url = https://github.com/ukama/libidn2.git

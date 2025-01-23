@@ -156,24 +156,6 @@ void free_fetch_request(WFetch *ptr) {
     usys_free(ptr);
 }
 
-static void log_wait_status(int status) {
-
-    if (WIFEXITED(status)) {
-        usys_log_debug("agent exited, status=%d\n", WEXITSTATUS(status));
-    } else if (WIFSIGNALED(status)) {
-        usys_log_debug("agent killed by signal %d (%s)",
-                       WTERMSIG(status), strsignal(WTERMSIG(status)));
-        if (WCOREDUMP(status)) {
-            usys_log_debug("Reason: core dump");
-        }
-    } else if (WIFSTOPPED(status)) {
-        usys_log_debug("agent stopped by signal %d (%s)\n",
-                       WSTOPSIG(status), strsignal(WSTOPSIG(status)));
-    } else {
-        usys_log_debug("agent stopped for unknown reasons.");
-    }
-}
-
 static void configure_runtime_args(WFetch *fetch, char **args) {
 
     WContent *content=NULL;
@@ -220,11 +202,8 @@ static void *execute_agent(void *data) {
     TParams *params;
     pid_t pid=0;
     int ret=0, i=0;
-    char idStr[36+1] = {0}; /* 36-bytes for UUID + trailing `\0` */
-    char buffer[1024] = {0};
+    char buffer[1027] = {0};
     char *args[MAX_ARGS] = {0};
-
-    FILE *fp;
 
     fetch   = (WFetch *)data;
     params  = (TParams *)malloc(sizeof(TParams));
@@ -276,7 +255,7 @@ static void *execute_agent(void *data) {
         /* Thread to read the update status from agent and send to WIMC */
         // read_stats_and_update_wimc(params);
         ret = 1; /* We are good. */
-        return;
+        return NULL;
     }
 
 failure:
@@ -289,24 +268,17 @@ failure:
     }
     
     pthread_exit(&ret);
+
+    return NULL;
 }
 
 void process_capp_fetch_request(WFetch *fetch) {
 
-    /* Flow is as follows:
-     * 1. create thread.
-     * 2. Setup runtime argument for CA-Sync.
-     * 3. setup shared memory space for status update etc.
-     * 4. Fork and run ca-sysnc.
-     * 5. update the wimc, on the callback URL, transfer status after 'interval'
-     * 6. monitor child process exit and its status.
-     */
-
-    int ret, wstatus, status;
+    int ret, exitStatus;
+    void *status;
     pthread_t tid;
     pid_t pid, w;
 
-    /* Step1-4: Thread which will fork/exec the agent and send status via CB */
     ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
     if (ret) {
         usys_log_error("Error creating agent thread. Return code: %s", ret);
@@ -316,9 +288,11 @@ void process_capp_fetch_request(WFetch *fetch) {
     usys_log_debug("Waiting for agent thread to finish its work.");
 
     pthread_join(tid, &status);
-    if (status == 0) {
+
+    exitStatus = (int)(intptr_t)status;
+    if (exitStatus == 0) {
         usys_log_error("Error executing agent for request handler.");
-    } else if (status == 1) {
+    } else if (exitStatus == 1) {
         usys_log_debug("Successfully executed capp fetch request.");
     }
 }
