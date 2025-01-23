@@ -92,4 +92,4 @@ jobs:
           project-key: ukama_systems_billing_collector
           aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
           aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
-          aws-bucket-name: dev-workflows-reports
+          aws-bucket-name: ukama-dev-daily-workflows
