@@ -11,6 +11,8 @@ services:
 
  node:
   build: ./node
+  ports:
+   - 9061:9090
   environment:
    - DEBUGMODE=true
    - DB_USER=postgres

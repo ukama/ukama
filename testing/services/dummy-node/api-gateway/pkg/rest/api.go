@@ -8,22 +8,6 @@
 
 package rest
 
-type GetTestRequest struct{}
-
-type GetRequest struct {
-	Uuid string `example:"{{ComponentUUID}}" path:"uuid" validate:"required"`
-}
-
-type GetComponents struct {
-	UserId   string `example:"{{userId}}" path:"uuid" validate:"required"`
-	Category string `example:"{{componentCategory}}" query:"category" validate:"eq=ALL|eq=ACCESS|eq=BACKHAUL|eq=POWER|eq=SWITCH|eq=SPECTRUM"`
-}
-
-type GetAccounts struct {
-	UserId string `example:"{{userId}}" path:"uuid" validate:"required"`
-}
-
-type GetContracts struct {
-	Company  string `example:"{{company}}" path:"company" validate:"required"`
-	IsActive bool   `example:"{{true}}" query:"is_active" validate:"required"`
+type ReqNodeId struct {
+	Id string `example:"{{NodeId}}" json:"id" path:"id" validate:"required"`
 }

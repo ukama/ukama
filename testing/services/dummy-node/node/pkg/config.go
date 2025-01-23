@@ -14,11 +14,6 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
-const (
-	NumberOfSites = "number_of_sites"
-	GaugeType     = "gauge"
-)
-
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`
@@ -26,8 +21,6 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
-	PushGateway      string           `default:"http://localhost:9091"`
-	Network          string           `default:"network:9090"`
 	Service          *uconf.Service
 	OrgName          string
 }

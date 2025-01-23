@@ -13,13 +13,14 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type NodeDummy struct {
-	conn *grpc.ClientConn
-	// client  pb.NodeServiceClient
+	conn    *grpc.ClientConn
+	client  pb.NodeServiceClient
 	timeout time.Duration
 	host    string
 }
@@ -30,32 +31,72 @@ func NewNodeService(accountHost string, timeout time.Duration) *NodeDummy {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	// client := pb.NewNodeServiceClient(conn)
+	client := pb.NewNodeServiceClient(conn)
 
 	return &NodeDummy{
-		conn: conn,
-		// client:  client,
+		conn:    conn,
+		client:  client,
 		timeout: timeout,
 		host:    accountHost,
 	}
 }
 
-// func NewNodeServiceFromClient(mClient pb.NodeServiceClient) *NodeDummy {
-// 	return &NodeDummy{
-// 		host:    "localhost",
-// 		timeout: 1 * time.Second,
-// 		conn:    nil,
-// 		// client:  mClient,
-// 	}
-// }
+func NewNodeServiceFromClient(mClient pb.NodeServiceClient) *NodeDummy {
+	return &NodeDummy{
+		host:    "localhost",
+		timeout: 1 * time.Second,
+		conn:    nil,
+		client:  mClient,
+	}
+}
 
 func (r *NodeDummy) Close() {
 	r.conn.Close()
 }
 
-func (r *NodeDummy) Get() (string, error) {
-	_, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (r *NodeDummy) ResetNode(id string) (*pb.ResetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	return "uk-sa2450-tnode-v0-4e86", nil
+	res, err := r.client.ResetNode(ctx, &pb.ResetRequest{NodeId: id})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *NodeDummy) TurnNodeOff(id string) (*pb.TurnNodeOffResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.TurnNodeOff(ctx, &pb.TurnNodeOffRequest{NodeId: id})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (r *NodeDummy) TurnRFOn(id string) (*pb.NodeRFOnResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.NodeRFOn(ctx, &pb.NodeRFOnRequest{NodeId: id})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *NodeDummy) TurnRFOff(id string) (*pb.NodeRFOffResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.NodeRFOff(ctx, &pb.NodeRFOffRequest{NodeId: id})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }

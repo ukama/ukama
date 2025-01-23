@@ -11,9 +11,9 @@ package server
 import (
 	"context"
 
-	"github.com/google/uuid"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg"
 	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg/db"
@@ -29,23 +29,21 @@ type NodeServer struct {
 	nodeRepo       db.NodeRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
-	pushGateway    string
 }
 
-func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, pushGateway string) *NodeServer {
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
 	return &NodeServer{
+		msgbus:         msgBus,
 		orgName:        orgName,
 		nodeRepo:       nodeRepo,
-		msgbus:         msgBus,
-		pushGateway:    pushGateway,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
 func (s *NodeServer) ResetNode(ctx context.Context, req *pb.ResetRequest) (*pb.ResetResponse, error) {
-	nodeID, err := uuid.Parse(req.NodeId)
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
 	return &pb.ResetResponse{
@@ -53,10 +51,10 @@ func (s *NodeServer) ResetNode(ctx context.Context, req *pb.ResetRequest) (*pb.R
 	}, nil
 }
 
-func (s *NodeServer) ToggleNodeRFOn(ctx context.Context, req *pb.NodeRFOnRequest) (*pb.NodeRFOnResponse, error) {
-	nodeID, err := uuid.Parse(req.NodeId)
+func (s *NodeServer) NodeRFOn(ctx context.Context, req *pb.NodeRFOnRequest) (*pb.NodeRFOnResponse, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
 	return &pb.NodeRFOnResponse{
@@ -65,9 +63,9 @@ func (s *NodeServer) ToggleNodeRFOn(ctx context.Context, req *pb.NodeRFOnRequest
 }
 
 func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.NodeRFOffRequest) (*pb.NodeRFOffResponse, error) {
-	nodeID, err := uuid.Parse(req.NodeId)
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
 	return &pb.NodeRFOffResponse{
@@ -76,9 +74,9 @@ func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.NodeRFOffRequest) (*
 }
 
 func (s *NodeServer) TurnNodeOff(ctx context.Context, req *pb.TurnNodeOffRequest) (*pb.TurnNodeOffResponse, error) {
-	nodeID, err := uuid.Parse(req.NodeId)
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, uuidParsingError)
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
 	return &pb.TurnNodeOffResponse{

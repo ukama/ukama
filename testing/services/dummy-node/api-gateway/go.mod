@@ -6,13 +6,17 @@ replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
 replace github.com/ukama/ukama/testing/services/dummy-node/api-gateway => ./
 
+replace github.com/ukama/ukama/testing/services/dummy-node/node => ../node
+
 require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0
 	github.com/loopfz/gadgeto v0.11.4
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.9.0
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/testing/services/dummy-node/node v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.69.4
 )
@@ -35,6 +39,7 @@ require (
 	github.com/go-resty/resty/v2 v2.13.1 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -75,7 +80,7 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.19.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
@@ -90,10 +95,10 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241015192408-796eee8c2d53 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
-	google.golang.org/protobuf v1.36.1 // indirect
+	google.golang.org/protobuf v1.36.3 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.9 // indirect
-	gorm.io/gorm v1.25.11 // indirect
+	gorm.io/gorm v1.25.12 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )

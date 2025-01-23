@@ -23,6 +23,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
 )
 
 type Router struct {
@@ -42,7 +43,10 @@ type Clients struct {
 }
 
 type node interface {
-	Get() (string, error)
+	ResetNode(id string) (*pb.ResetResponse, error)
+	TurnNodeOff(id string) (*pb.TurnNodeOffResponse, error)
+	TurnRFOn(id string) (*pb.NodeRFOnResponse, error)
+	TurnRFOff(id string) (*pb.NodeRFOffResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -84,16 +88,15 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
-	group := r.f.Group("/v1", "API gateway", "Inventory system version v1")
+	group := r.f.Group("/v1", "API gateway", "Dummy node system version v1")
 
 	const dummy = "/dummy-node"
-	d := group.Group(dummy, "Dummy node", "Operations on Dummy node", nil)
-	d.GET("/", formatDoc("Get Dummy node", "Get dummy node id"), tonic.Handler(r.getDummyNodeId, http.StatusOK))
+	d := group.Group(dummy, "Dummy node", "Operations on Dummy node")
+	d.GET("/reset-node/:id", formatDoc("Reset node", "Reset dummy node by id"), tonic.Handler(r.resetNodeById, http.StatusOK))
+	d.GET("/node-rf-off/:id", formatDoc("Node RF OFF", "Turn node rf off by id"), tonic.Handler(r.turnRFOffByid, http.StatusOK))
+	d.GET("/node-rf-on/:id", formatDoc("Node RF ON", "Turn node rf on by id"), tonic.Handler(r.turnRFOnByid, http.StatusOK))
+	d.GET("/node-off/:id", formatDoc("Turn node OFF", "Turn node off by id"), tonic.Handler(r.turnNodeOffByid, http.StatusOK))
 
-}
-
-func (r *Router) getDummyNodeId(c *gin.Context, req *GetRequest) (string, error) {
-	return r.clients.Node.Get()
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -101,4 +104,20 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Summary = summary
 		info.Description = description
 	}}
+}
+
+func (r *Router) resetNodeById(c *gin.Context, req *ReqNodeId) (interface{}, error) {
+	return r.clients.Node.ResetNode(req.Id)
+}
+
+func (r *Router) turnNodeOffByid(c *gin.Context, req *ReqNodeId) (interface{}, error) {
+	return r.clients.Node.TurnNodeOff(req.Id)
+}
+
+func (r *Router) turnRFOffByid(c *gin.Context, req *ReqNodeId) (interface{}, error) {
+	return r.clients.Node.TurnRFOff(req.Id)
+}
+
+func (r *Router) turnRFOnByid(c *gin.Context, req *ReqNodeId) (interface{}, error) {
+	return r.clients.Node.TurnRFOn(req.Id)
 }
