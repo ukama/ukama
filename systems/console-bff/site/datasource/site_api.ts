@@ -74,7 +74,7 @@ class SiteApi extends RESTDataSource {
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SITES}/${siteId}`, {
       body: {
-        site: req.name,
+        name: req.name,
       },
     }).then(res => dtoToSiteDto(res));
   };

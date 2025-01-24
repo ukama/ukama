@@ -104,6 +104,9 @@ export enum GRAPHS_TYPE {
   NETWORK = "NETWORK",
   RESOURCES = "RESOURCES",
   RADIO = "RADIO",
+  BACKHAUL = "BACKHAUL",
+  POWER = "POWER",
+  SWITCH = "SWITCH",
 }
 registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
