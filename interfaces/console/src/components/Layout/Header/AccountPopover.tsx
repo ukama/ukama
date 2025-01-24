@@ -47,7 +47,7 @@ const AccountPopover = () => {
       <Popover
         id={id}
         open={open}
-        sx={{ mt: 1.5 }}
+        sx={{ mt: 2 }}
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{
@@ -84,7 +84,7 @@ const AccountPopover = () => {
             <Divider />
             <Link
               href={`/logout`}
-              prefetch={true}
+              prefetch={false}
               style={{
                 borderRadius: 4,
                 textDecoration: 'none',

@@ -5,16 +5,14 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Arg, Ctx, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
-import { Authentication } from "../../common/auth";
 import { Context } from "../context";
 import { DeleteSimInputDto, DeleteSimResDto } from "./types";
 
 @Resolver()
 export class DeleteSimResolver {
   @Mutation(() => DeleteSimResDto)
-  @UseMiddleware(Authentication)
   async deleteSim(
     @Arg("data") data: DeleteSimInputDto,
     @Ctx() ctx: Context

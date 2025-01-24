@@ -13,6 +13,7 @@ const openStore = (): RootDatabase => {
   return open({
     path: STORAGE_KEY,
     compression: true,
+    maxReaders: 1024,
   });
 };
 

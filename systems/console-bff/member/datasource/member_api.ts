@@ -42,9 +42,26 @@ class MemberApi extends RESTDataSource {
     );
     this.baseURL = baseURL;
     logger.info(`Request Url: ${baseURL}/${VERSION}/members/user/${userId}`);
-    return this.get(`/${VERSION}/members/user/${userId}`).then(res =>
-      dtoToMemberResDto(res)
-    );
+    return this.get(`/${VERSION}/members/user/${userId}`)
+      .then(res => {
+        return dtoToMemberResDto(res);
+      })
+      .catch(err => {
+        logger.error(`Error: ${err}`);
+        return {
+          id: "",
+          userId: "",
+          role: "",
+          isDeactivated: false,
+          orgId: "",
+          createdAt: "",
+          updatedAt: "",
+          memberId: "",
+          memberSince: "",
+          email: "",
+          name: "",
+        };
+      });
   };
 
   removeMember = async (

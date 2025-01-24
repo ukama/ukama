@@ -5,20 +5,25 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import colors from '@/theme/colors';
 import { LinearProgress, Stack, Typography } from '@mui/material';
 import React from 'react';
 
 interface IInstallSiteLoading {
+  title: string;
+  subtitle: string;
   duration: number;
+  description: string;
+  handleBack: () => void;
   onCompleted: () => void;
-  isShowStepTracker: boolean;
 }
 
 const InstallSiteLoading = ({
+  title,
+  subtitle,
   duration,
-  isShowStepTracker,
+  description,
   onCompleted,
+  handleBack,
 }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);
@@ -46,32 +51,25 @@ const InstallSiteLoading = ({
   }, [duration]);
 
   return (
-    <Stack direction="column">
-      <Stack direction={'row'}>
-        <Typography variant="h6"> {'Install site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-            display: isShowStepTracker ? 'flex' : 'none',
-          }}
-        >
-          <i>&nbsp;- optional</i>&nbsp;(2/6)
-        </Typography>
-      </Stack>
-
-      <Stack direction={'column'} mt={3} mb={3} spacing={1.5}>
-        <Typography variant="body1" fontWeight={700}>
-          Loading up your site...
-        </Typography>
+    <Stack width={'100%'} direction="column" spacing={2}>
+      <Typography variant="h4" fontWeight={500}>
+        {title}
+      </Typography>
+      <Stack direction={'column'} spacing={1.5}>
+        {subtitle && (
+          <Typography variant="h6" sx={{ fontSize: '16px !important' }}>
+            {subtitle}
+          </Typography>
+        )}
         <LinearProgress
           value={progress}
           variant="determinate"
           sx={{ height: '12px', borderRadius: '4px' }}
         />
-        <Typography variant="body1">
-          About {Math.ceil(remainingTime / 60)} minutes remaining
+        <Typography variant="body2">
+          {description
+            ? description
+            : `About ${Math.ceil(remainingTime)} seconds remaining`}
         </Typography>
       </Stack>
     </Stack>

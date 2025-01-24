@@ -6,14 +6,14 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { NodesLocation } from '@/client/graphql/generated';
+import { Nodes } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
 import Leaflet from 'leaflet';
 import { useEffect } from 'react';
 import * as ReactLeaflet from 'react-leaflet';
 interface IMapLayer {
-  data: NodesLocation | undefined;
+  data: Nodes | undefined;
 }
 
 const MapLayer = ({ data }: IMapLayer) => {
@@ -43,11 +43,11 @@ const MapLayer = ({ data }: IMapLayer) => {
     if (data && data.nodes.length > 0) {
       map.fitBounds(
         data.nodes.map((item) => [
-          parseFloat(item?.lat) ?? 0,
-          parseFloat(item?.lng) ?? 0,
+          item?.latitude ?? undefined,
+          item?.longitude ?? undefined,
         ]),
         {
-          maxZoom: 16,
+          maxZoom: 14,
         },
       );
     }
@@ -72,8 +72,8 @@ const MapLayer = ({ data }: IMapLayer) => {
               icon={svgIcon}
               title={`Node: ${item.id}`}
               position={{
-                lat: parseFloat(item?.lat) ?? 0,
-                lng: parseFloat(item?.lng) ?? 0,
+                lat: item?.latitude ?? undefined,
+                lng: item?.longitude ?? undefined,
               }}
               attribution={item.id}
             />

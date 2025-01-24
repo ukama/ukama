@@ -120,7 +120,6 @@ static bool unpack_all_capps_to_space_rootfs(CappList *cappList,
         }
     }
 
-    /* unpack the capps to: /capps/rootfs/[contained]/capps/pkgs/unpack/ */
     for (currentCapp = cappList;
          currentCapp;
          currentCapp = currentCapp->next) {

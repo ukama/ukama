@@ -14,22 +14,20 @@ NC='\033[0m'
 TAG="${BLUE}Ukama>${NC}"
 root_dir=$(pwd)
 # Parse the JSON file and initialize the variables
+JSON_FILE="../deploy_config.json"
 MASTERORGNAME="ukama"
 AUTHSYSKEY="auth-services"
+IS_INCLUDE_BFF=false
 BILLINGSYSKEY="billing"
-OWNEREMAIL=$(jq -r '.setup.email' "$1")
-PASSWORD=$(jq -r '.setup.password' "$1")
-OWNERNAME=$(jq -r '.setup.name' "$1")
-ORGNAME=$(jq -r '.setup["org-name"]' "$1")
-ORGID=$(jq -r '.setup["org-id"]' "$1")
-SYS=$(jq -r '.systems' "$1")
-KEY=$(jq -r '.key' "$1")
+OWNEREMAIL=$(jq -r '.setup.email' "$JSON_FILE")
+PASSWORD=$(jq -r '.setup.password' "$JSON_FILE")
+OWNERNAME=$(jq -r '.setup.name' "$JSON_FILE")
+ORGNAME=$(jq -r '.setup["org-name"]' "$JSON_FILE")
+ORGID=$(jq -r '.setup["org-id"]' "$JSON_FILE")
+SYS=$(jq -r '.systems' "$JSON_FILE")
+KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
-MAILERHOST=$(jq -r '.mailer.host' "$1")
-MAILERPORT=$(jq -r '.mailer.port' "$1")
-MAILERUSERNAME=$(jq -r '.mailer.username' "$1")
-MAILERPASSWORD=$(jq -r '.mailer.password' "$1")
-LAGOAPIKEY=$(jq -r '."lago-api-key"' "$1")
+LAGOAPIKEY=$(jq -r '."lago-api-key"' "$JSON_FILE")
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
     LOCAL_HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
@@ -40,6 +38,23 @@ fi
 OWNERAUTHID=""
 OWNERID=$(uuidgen)
 
+function buildSystems() {
+    echo  "$TAG Building systems..."
+    ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
+}
+
+while getopts "b" opt; do
+    case ${opt} in
+        b )
+            buildSystems
+            ;;
+        \? )
+            echo "Usage: cmd [-b]"
+            exit 1
+            ;;
+    esac
+done
+
 function set_env() {
     export OWNERID=$OWNERID
     export OWNERAUTHID=$OWNERAUTHID
@@ -48,12 +63,6 @@ function set_env() {
     export ORGID=$ORGID
     export ORGNAME=$ORGNAME
     export KEY=$KEY
-    export MAILER_PORT=$MAILERPORT
-    export MAILER_HOST=$MAILERHOST
-    export MAILER_PASSWORD=$MAILERPASSWORD
-    export MAILER_USERNAME=$MAILERUSERNAME
-    export MAILER_FROM=$OWNEREMAIL
-    export TEMPLATESPATH=member-invite
     export LAGO_API_KEY=$LAGOAPIKEY
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
@@ -146,11 +155,17 @@ sort_systems_by_dependency() {
             "dataplan")
                 SYSTEMS+=("7 $key")
                 ;;
-            "subscriber")
+            "node")
                 SYSTEMS+=("8 $key")
                 ;;
-            *)
+            "billing")
                 SYSTEMS+=("9 $key")
+                ;;
+            "subscriber")
+                SYSTEMS+=("10 $key")
+                ;;
+            *)
+                SYSTEMS+=("11 $key")
                 ;;
         esac
     done
@@ -163,6 +178,57 @@ sort_systems_by_dependency
 IS_INVENTORY_SYS=false
 INVENTORY_SYS_KEY="inventory"
 IS_INIT_SYS="init"
+
+cleanup() {
+    echo  "$TAG Cleaning up..."
+    cd $root_dir
+    cd ../../systems
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        if [ -d ".temp" ]; then
+            rm -rf docker-compose.yml
+            mv ".temp/docker-compose.yml" .
+            rm -rf ".temp"
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files(){
+    for SYSTEM in "${SYSTEMS[@]}"; do
+        cd ~
+        cd $root_dir
+        if [ "$SYSTEM" == $AUTHSYSKEY ]; then
+            cd ../../../ukama-auth/kratos
+            sed -i '' "s/\${LOCAL_HOST_IP}/$LOCAL_HOST_IP/g" "kratos.yml"
+            cd ../../ukama/builder/scripts
+        fi
+        if [ "$SYSTEM" != $AUTHSYSKEY ]; then
+            cd ../../systems
+        fi
+        SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
+        cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
+        mkdir -p ".temp"
+        cp docker-compose.yml ".temp"
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "s/build: \.\.\/services\/initClient/image: main-init/g" docker-compose.yml
+        fi
+    done
+    cd $root_dir
+}
+
+setup_docker_compose_files
 
 # Loop through the SYSTEMS array
 for SYSTEM in "${SYSTEMS[@]}"; do
@@ -178,14 +244,46 @@ for SYSTEM in "${SYSTEMS[@]}"; do
     if [ "$SYSTEM" == $INVENTORY_SYS_KEY ]; then
         IS_INVENTORY_SYS=true
     fi
+    if [ "$SYSTEM" == 'bff' ]; then
+        IS_INCLUDE_BFF=true
+    fi
     if [ "$SYSTEM" != $AUTHSYSKEY ]; then
         cd ../../systems
     fi
     if [ "$SYSTEM" == $BILLINGSYSKEY ]; then
+        echo "$TAG Current directory before billing setup: $(pwd)"
+        
+        # First, run the billing provider script
         cd ./billing/provider
+        echo "$TAG Running billing provider in: $(pwd)"
+        export COMPOSE_PROJECT_NAME="billing-provider"
         chmod +x start_provider.sh
         ./start_provider.sh
         cd ../..
+        
+        # Navigate to payments system and run deployment
+        echo "$TAG Setting up payments system..."
+        cd ../../payments/builder-script
+        export COMPOSE_PROJECT_NAME="payments"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+
+        # Navigate to webhooks system and run deployment
+        echo "$TAG Setting up webhooks system..."
+        cd ../../webhooks/builder-script
+        export COMPOSE_PROJECT_NAME="webhooks"
+        chmod +x deploy.sh
+        ./deploy.sh services $ORGNAME
+        
+        # Now enter the testing and hooks setup
+        echo "$TAG Setting up hooks..."
+        cd ../../ukama/testing/services/hooks
+        export COMPOSE_PROJECT_NAME="hooks"
+        docker-compose up -d
+        cd ../../../../ukama/systems
+
+        export COMPOSE_PROJECT_NAME="billing"
+        echo "$TAG Returned to systems directory: $(pwd)"
     fi
     
     SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
@@ -211,7 +309,6 @@ for SYSTEM in "${SYSTEMS[@]}"; do
         QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
         ;;
-
     "dataplan")
         sleep 2
         echo  "$TAG Add default baserate in dataplan..."
@@ -238,15 +335,28 @@ fi
 # Update system url in lookup db
 sleep 5
 
-SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
-
+if [ "$IS_INCLUDE_BFF" = true ]; then
+    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
+    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
+    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
+    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
+    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
+    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
+    SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
+    SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
+fi
+if [ "$IS_INCLUDE_BFF" = false ]; then
+    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
+    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
+    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://localhost:8060' WHERE systems."name" = 'nucleus'";
+    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://localhost:8078' WHERE systems."name" = 'subscriber'";
+    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://localhost:8074' WHERE systems."name" = 'dataplan'";
+    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://localhost:8077' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
+    SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
+    SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
+fi
 
 echo "$TAG Registering systems URL in lookup db..."
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
@@ -258,5 +368,8 @@ psql $DB_URI -c "$SYS_QUERY_5"
 psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
 psql $DB_URI -c "$SYS_QUERY_8"
+psql $DB_URI -c "$SYS_QUERY_9"
+
+cleanup
 
 echo "$TAG Task done."

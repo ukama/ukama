@@ -1,0 +1,138 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/systems/node/state/pb/gen";
+package ukama.node.state.v1;
+import "validator.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "ukama/node.proto";
+
+service StateService {
+    rpc AddState (AddStateRequest) returns (AddStateResponse);
+    rpc GetStateById (GetStateByIdRequest) returns (GetStateByIdResponse);
+    rpc GetStates(GetStatesRequest) returns(GetStatesResponse);
+    rpc GetLatestState(GetLatestStateRequest) returns (GetLatestStateResponse);  
+    rpc UpdateState(UpdateStateRequest) returns (UpdateStateResponse);
+    rpc GetStatesHistory(GetStatesHistoryRequest) returns (GetStatesHistoryResponse);
+    rpc EnforceStateTransition(EnforceStateTransitionRequest) returns (EnforceStateTransitionResponse);
+}
+
+message EnforceStateTransitionRequest {
+    string nodeId = 1;
+    string event =2;
+}
+
+message EnforceStateTransitionResponse {
+    
+}
+message GetStatesHistoryRequest {
+    string nodeId = 1;
+    string startTime = 2;
+    string endTime = 3;
+    int32 pageSize = 4;
+    int32 PageNumber = 5;   
+}
+
+message GetStatesHistoryResponse {
+    repeated State states = 1;
+    NodeConfig nodeConfig = 2;
+}
+
+
+message State {
+    string id = 1;
+    string nodeId = 2;
+    string previousStateId = 3;
+    State previousState = 4; 
+    ukama.common.v1.NodeState currentState = 5;  
+    repeated string subState = 6;
+    repeated string events = 7;
+    string  nodeType = 9;   
+    google.protobuf.Timestamp createdAt = 15;
+    google.protobuf.Timestamp updatedAt = 16;
+    google.protobuf.Timestamp deletedAt = 17;
+}
+message UpdateStateRequest {
+    string nodeId = 1;
+    repeated string subState = 2;
+    repeated string events = 3;
+}
+
+message UpdateStateResponse {
+    State updatedState = 1;
+}
+
+message AddStateRequest {
+    string nodeId = 1;
+    string previousStateId = 2;
+    ukama.common.v1.NodeState currentState = 3;
+    repeated string subState = 4;
+    repeated string events = 5;
+    string  nodeIp = 6;     
+    int32 nodePort = 8;    
+    string meshIp = 9;      
+    int32 meshPort = 10;    
+    string meshHostName = 11;
+    string  nodeType = 12;   
+
+}
+
+message AddStateResponse {
+    string id = 1;  
+}
+
+message GetStateByIdRequest {
+    string id = 1;
+}
+
+message GetStateByIdResponse {
+    State State = 1;
+}
+
+message GetStateCurrentRequest {
+    string nodeId = 1;
+}
+
+message GetCurrentStateResponse {
+    State State = 1;
+}
+
+message GetStatesRequest {
+    string nodeId = 1;
+}
+message NodeConfig {
+    string id = 1;
+    string nodeId = 2;
+    string nodeIp = 3;
+    int32 nodePort = 4;
+    string meshIp = 5;
+    int32 meshPort = 6;
+    string meshHostName = 7;
+    google.protobuf.Timestamp createdAt = 8;
+    google.protobuf.Timestamp updatedAt = 9;
+    google.protobuf.Timestamp deletedAt = 10;
+}
+
+
+message GetStatesResponse {
+    repeated State states = 1; 
+    NodeConfig nodeConfig = 2; 
+}
+
+message GetLatestStateRequest {
+    string nodeId = 1;
+}
+
+message GetLatestStateResponse {
+    State State = 1;
+}
+
+message subState {
+    
+}

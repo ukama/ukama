@@ -7,18 +7,19 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 import dayjs from "dayjs";
-import { GraphQLError } from "graphql";
 
 import {
   SubscriberDto,
   SubscriberInputDto,
   SubscriberMetricsByNetworkDto,
+  SubscriberSimsResDto,
   SubscribersResDto,
   UpdateSubscriberInputDto,
 } from "../resolver/types";
 import { CBooleanResponse } from "./../../common/types";
 import {
   addSubscriberReqToSubscriberResDto,
+  dtoToSimsResDto,
   dtoToSubscriberResDto,
   dtoToSubscribersResDto,
 } from "./mapper";
@@ -42,8 +43,7 @@ class SubscriberApi extends RESTDataSource {
         phone: req.phone,
         id_serial: "none",
         gender: "undefined",
-        last_name: req.last_name,
-        first_name: req.first_name,
+        name: req.name,
         network_id: req.network_id,
         proof_of_Identification: "default",
         dob: dayjs().subtract(10, "year").format(),
@@ -115,11 +115,22 @@ class SubscriberApi extends RESTDataSource {
       `GetSubscribersByNetwork [GET]: ${baseURL}/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`)
-      .then(res => dtoToSubscribersResDto(res))
-      .catch(err => {
-        throw new GraphQLError(err);
-      });
+    return this.get(`/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`).then(
+      res => dtoToSubscribersResDto(res)
+    );
+  };
+
+  getSimsByNetwork = async (
+    baseURL: string,
+    networkId: string
+  ): Promise<SubscriberSimsResDto> => {
+    this.logger.info(
+      `GetSimsByNetwork [GET]: ${baseURL}/${VERSION}/sims/networks/${networkId}`
+    );
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/sims/networks/${networkId}`).then(res =>
+      dtoToSimsResDto(res)
+    );
   };
 }
 

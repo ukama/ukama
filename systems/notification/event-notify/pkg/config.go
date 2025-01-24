@@ -59,8 +59,8 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventInviteCreate],
 				evt.EventRoutingKey[evt.EventInviteDelete],
 				evt.EventRoutingKey[evt.EventInviteUpdate],
-				evt.EventRoutingKey[evt.EventMeshNodeOnline],
-				evt.EventRoutingKey[evt.EventMeshNodeOffline],
+				evt.EventRoutingKey[evt.EventNodeOnline],
+				evt.EventRoutingKey[evt.EventNodeOffline],
 				evt.EventRoutingKey[evt.EventSimActivate],
 				evt.EventRoutingKey[evt.EventSimAllocate],
 				evt.EventRoutingKey[evt.EventSimDelete],
@@ -84,6 +84,8 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventHealthCappStore],
 				evt.EventRoutingKey[evt.EventNotificationDelete],
 				evt.EventRoutingKey[evt.EventNotificationStore],
+				evt.EventRoutingKey[evt.EventPaymentSuccess],
+				evt.EventRoutingKey[evt.EventPaymentFailed],
 			}},
 	}
 }

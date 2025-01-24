@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
 
@@ -95,6 +94,7 @@ func Test_FullFlow(t *testing.T) {
 			SimToken:     simToken,
 			SimType:      simType,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -102,6 +102,7 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.GetSim(ctx, &pb.GetSimRequest{
 			SimId: simResp.Sim.Id,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -110,6 +111,7 @@ func Test_FullFlow(t *testing.T) {
 			SimId:  simResp.Sim.Id,
 			Status: "active",
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -117,6 +119,7 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{
 			SubscriberId: subscriberID,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -124,6 +127,7 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{
 			NetworkId: networkID,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -132,6 +136,7 @@ func Test_FullFlow(t *testing.T) {
 			SimId:     simResp.Sim.Id,
 			PackageId: packageID,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -139,17 +144,19 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: packageID,
-			StartDate: timestamppb.New(startDate),
+			StartDate: startDate.Format(time.RFC3339),
 		})
+
 		assert.NoError(t, err)
 	})
 
-	pkgResp := &pb.GetPackagesBySimResponse{}
+	pkgResp := &pb.GetPackagesForSimResponse{}
 	t.Run("GetPackagesBySim", func(t *testing.T) {
 		var err error
-		pkgResp, err = c.GetPackagesBySim(ctx, &pb.GetPackagesBySimRequest{
+		pkgResp, err = c.GetPackagesForSim(ctx, &pb.GetPackagesForSimRequest{
 			SimId: simResp.Sim.Id,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -158,6 +165,7 @@ func Test_FullFlow(t *testing.T) {
 			SimId:     simResp.Sim.Id,
 			PackageId: pkgResp.Packages[0].Id,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -166,6 +174,7 @@ func Test_FullFlow(t *testing.T) {
 			SimId:     simResp.Sim.Id,
 			PackageId: pkgResp.Packages[0].Id,
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -174,6 +183,7 @@ func Test_FullFlow(t *testing.T) {
 			SimId:  simResp.Sim.Id,
 			Status: "inactive",
 		})
+
 		assert.NoError(t, err)
 	})
 
@@ -181,19 +191,23 @@ func Test_FullFlow(t *testing.T) {
 		_, err := c.DeleteSim(ctx, &pb.DeleteSimRequest{
 			SimId: simResp.Sim.Id,
 		})
+
 		assert.NoError(t, err)
 	})
 }
 
 func CreateSimManagerClient() (*grpc.ClientConn, pb.SimManagerServiceClient, error) {
 	log.Infoln("Connecting to Sim Manager ", tConfig.ServiceHost)
+
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
+
 	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	c := pb.NewSimManagerServiceClient(conn)
+
 	return conn, c, nil
 }

@@ -8,7 +8,7 @@
 import "reflect-metadata";
 import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
 
-import { NODE_STATUS, NODE_TYPE } from "../../common/enums";
+import { NODE_CONNECTIVITY, NODE_STATE, NODE_TYPE } from "../../common/enums";
 
 @ObjectType()
 export class NodeStatus {
@@ -43,7 +43,10 @@ export class AttachedNodes {
   name: string;
 
   @Field()
-  orgId: string;
+  latitude: number;
+
+  @Field()
+  longitude: number;
 
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
@@ -63,7 +66,10 @@ export class Node {
   name: string;
 
   @Field()
-  orgId: string;
+  latitude: number;
+
+  @Field()
+  longitude: number;
 
   @Field(() => NODE_TYPE)
   type: NODE_TYPE;
@@ -93,9 +99,12 @@ export class NodeInput {
 
 @ArgsType()
 @InputType()
-export class GetNodesInput {
-  @Field()
-  isFree?: boolean;
+export class GetNodesByStateInput {
+  @Field(() => NODE_CONNECTIVITY)
+  connectivity: NODE_CONNECTIVITY;
+
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -125,9 +134,6 @@ export class AddNodeInput {
 
   @Field()
   id: string;
-
-  @Field()
-  orgId: string;
 }
 
 @ArgsType()
@@ -149,8 +155,8 @@ export class UpdateNodeStateInput {
   @Field()
   id: string;
 
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -158,8 +164,8 @@ export class NodeState {
   @Field()
   id: string;
 
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  state: NODE_STATE;
 }
 
 @ObjectType()
@@ -233,13 +239,10 @@ export class NodeLocation {
   id: string;
 
   @Field()
-  lat: string;
+  lat: number;
 
   @Field()
-  lng: string;
-
-  @Field(() => NODE_STATUS)
-  state: NODE_STATUS;
+  lng: number;
 }
 
 @ArgsType()
@@ -248,15 +251,33 @@ export class NodesInput {
   @Field()
   networkId: string;
 
-  @Field(() => NODE_STATUS)
-  nodeFilterState: NODE_STATUS;
+  @Field(() => NODE_STATE)
+  nodeFilterState: NODE_STATE;
 }
 
 @ObjectType()
 export class NodesLocation {
-  @Field()
-  networkId: string;
-
   @Field(() => [NodeLocation])
   nodes: NodeLocation[];
+}
+
+@ObjectType()
+export class NodeStateRes {
+  @Field()
+  id: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field({ nullable: true })
+  previousStateId: string;
+
+  @Field(() => NODE_STATE, { nullable: true })
+  previousState: NODE_STATE;
+
+  @Field(() => NODE_STATE)
+  currentState: NODE_STATE;
+
+  @Field()
+  createdAt: string;
 }

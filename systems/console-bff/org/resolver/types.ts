@@ -19,6 +19,12 @@ export class OrgAPIDto {
   owner: string;
 
   @Field()
+  country: string;
+
+  @Field()
+  currency: string;
+
+  @Field()
   certificate: string;
 
   @Field()
@@ -58,6 +64,12 @@ export class OrgDto {
   owner: string;
 
   @Field()
+  country: string;
+
+  @Field()
+  currency: string;
+
+  @Field()
   certificate: string;
 
   @Field()
@@ -83,4 +95,142 @@ export class OrgsResDto {
 export class OrgResDto {
   @Field(() => OrgDto)
   org: OrgDto;
+}
+
+@ObjectType()
+export class Component {
+  @Field({ nullable: true })
+  componentId?: string;
+
+  @Field({ nullable: true })
+  componentName?: string;
+
+  @Field()
+  elementType: string;
+}
+
+@ObjectType()
+export class Site {
+  @Field()
+  siteId: string;
+
+  @Field()
+  siteName: string;
+
+  @Field()
+  elementType: string;
+
+  @Field(() => [Component])
+  components: Component[];
+}
+
+@ObjectType()
+export class Subscribers {
+  @Field()
+  totalSubscribers: string;
+
+  @Field()
+  activeSubscribers: string;
+
+  @Field()
+  inactiveSubscribers: string;
+}
+
+@ObjectType()
+export class Network {
+  @Field()
+  networkId: string;
+
+  @Field()
+  networkName: string;
+
+  @Field()
+  elementType: string;
+
+  @Field(() => [Site])
+  sites: Site[];
+
+  @Field(() => Subscribers, { nullable: true })
+  subscribers?: Subscribers;
+}
+
+@ObjectType()
+export class DataPlan {
+  @Field()
+  planId: string;
+
+  @Field()
+  planName: string;
+
+  @Field()
+  elementType: string;
+}
+
+@ObjectType()
+export class Sims {
+  @Field()
+  availableSims: string;
+
+  @Field()
+  consumed: string;
+
+  @Field()
+  totalSims: string;
+}
+
+@ObjectType()
+export class Members {
+  @Field()
+  totalMembers: string;
+
+  @Field()
+  activeMembers: string;
+
+  @Field()
+  inactiveMembers: string;
+}
+
+@ObjectType()
+export class Org {
+  @Field()
+  orgId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field()
+  country: string;
+
+  @Field()
+  currency: string;
+
+  @Field()
+  ownerName: string;
+
+  @Field()
+  ownerEmail: string;
+
+  @Field()
+  ownerId: string;
+
+  @Field()
+  elementType: string;
+
+  @Field(() => [Network])
+  networks?: Network[];
+
+  @Field(() => [DataPlan])
+  dataplans?: DataPlan[];
+
+  @Field(() => Sims, { nullable: true })
+  sims?: Sims;
+
+  @Field(() => Members, { nullable: true })
+  members?: Members;
+}
+
+@ObjectType()
+export class OrgTreeRes {
+  @Field(() => Org)
+  org?: Org;
 }

@@ -15,7 +15,6 @@ type GetNodeMetricsInput struct {
 
 type GetOrgMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
-	Org    string `path:"org" validate:"required"`
 }
 
 type GetNetworkMetricsInput struct {
@@ -33,22 +32,18 @@ type FilterBase struct {
 type GetSubscriberMetricsInput struct {
 	FilterBase
 	Metric     string `path:"metric" validate:"required"`
-	Org        string `path:"org" validate:"required"`
 	Network    string `path:"network" validate:"required"`
 	Subscriber string `path:"subscriber" validate:"required"`
 }
 
-
 type GetSiteMetricsInput struct {
 	FilterBase
-	SiteID   string `path:"site" validate:"required"`
-	Org      string `path:"org" validate:"required"`
-	Metric   string `path:"metric" validate:"required"`
+	SiteID string `path:"site" validate:"required"`
+	Metric string `path:"metric" validate:"required"`
 }
 
 type GetMetricsRangeInput struct {
 	FilterBase
-	Org        string `query:"org"`
 	Network    string `query:"network"`
 	Subscriber string `query:"subscriber" `
 	Sim        string `query:"sim"`
@@ -63,7 +58,6 @@ type GetMetricsInput struct {
 type GetSimMetricsInput struct {
 	FilterBase
 	Metric     string `path:"metric" validate:"required"`
-	Org        string `path:"org" validate:"required"`
 	Network    string `path:"network" validate:"required"`
 	Subscriber string `path:"subscriber" validate:"required"`
 	Sim        string `path:"sim" validate:"required"`
@@ -72,7 +66,6 @@ type GetSimMetricsInput struct {
 type GetWsMetricIntput struct {
 	Metric     string `query:"metric" validate:"required"`
 	Interval   int    `query:"interval" validate:"required"` //Node/Network/Organization/Site/Sub/User
-	Org        string `query:"org"`
 	Network    string `query:"network"`
 	Subscriber string `query:"subscriber" `
 	Sim        string `query:"sim"`

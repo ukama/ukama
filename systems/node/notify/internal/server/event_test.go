@@ -1,12 +1,4 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
-package server_test
+package server
 
 import (
 	"context"
@@ -14,104 +6,100 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/node/notify/internal/server"
-	"github.com/ukama/ukama/systems/node/notify/mocks"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/node/notify/mocks" // Replace with your mock package path
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
-func TestNotifyEventServer_HandleNotificationSentEvent(t *testing.T) {
+func TestEventNotification(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-	repo := mocks.NotificationRepo{}
 
-	node := ukama.NewVirtualHomeNodeId().String()
-	nt := NewTestDbNotification(node, "alert")
+	repo := new(mocks.NotificationRepo)
 
-	listenerRoutes := []string{"event.cloud.global.{{ .Org}}.nucleus.org.notification.sent",
-		"event.cloud.local.{{ .Org}}.registry.node.notification.sent"}
+	orgName := "testorg"
+	notifyEventServer := NewNotifyEventServer(orgName, repo, msgbusClient)
 
-	t.Run("NotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+	nodeId := ukama.NewVirtualHomeNodeId().String()
 
-		repo.On("Add", mock.Anything).Return(nil)
+	onlineEvent := &epb.NodeOnlineEvent{
+		NodeId: nodeId,
+	}
+	onlineMsg, _ := anypb.New(onlineEvent)
 
-		evt := &epb.Notification{
-			Id:          nt.Id.String(),
-			NodeId:      nt.NodeId,
-			NodeType:    nt.NodeType,
-			Severity:    nt.Severity.String(),
-			Type:        nt.Type.String(),
-			ServiceName: nt.ServiceName,
-			Status:      nt.Status,
-			Time:        nt.Time,
-		}
+	repo.On("Add", mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+		Run(func(args mock.Arguments) {
+			notification := args.Get(1).(*epb.Notification)
+			assert.NotEmpty(t, notification.Id)
+			assert.Equal(t, nodeId, notification.NodeId)
+			assert.Equal(t, "hnode", notification.NodeType)
+			assert.Equal(t, "low", notification.Severity)
+			assert.Equal(t, "event", notification.Type)
+			assert.Equal(t, "mesh", notification.ServiceName)
+		}).
+		Return(nil).Once()
 
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
+	eventOnline := &epb.Event{
+		RoutingKey: "event.cloud.local.testorg.messaging.mesh.node.online",
+		Msg:        onlineMsg,
+	}
+	_, err := notifyEventServer.EventNotification(context.Background(), eventOnline)
+	assert.NoError(t, err)
 
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
+	offlineEvent := &epb.NodeOfflineEvent{
+		NodeId: nodeId,
+	}
+	offlineMsg, _ := anypb.New(offlineEvent)
 
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
+	repo.On("Add", mock.Anything).Return(nil).Once()
 
-		_, err = s.EventNotification(context.TODO(), msg)
+	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+		Run(func(args mock.Arguments) {
+			notification := args.Get(1).(*epb.Notification)
+			assert.NotEmpty(t, notification.Id)
+			assert.Equal(t, nodeId, notification.NodeId)
+			assert.Equal(t, "hnode", notification.NodeType)
+			assert.Equal(t, "low", notification.Severity)
+			assert.Equal(t, "event", notification.Type)
+			assert.Equal(t, "mesh", notification.ServiceName)
+		}).
+		Return(nil).Once()
 
-		assert.NoError(t, err)
-	})
+	eventOffline := &epb.Event{
+		RoutingKey: "event.cloud.local.testorg.messaging.mesh.node.offline",
+		Msg:        offlineMsg,
+	}
+	_, err = notifyEventServer.EventNotification(context.Background(), eventOffline)
+	assert.NoError(t, err)
 
-	t.Run("InvalidNotificationEventSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.registry.node.notification.sent")
+	createdEvent := &epb.EventRegistryNodeCreate{
+		NodeId: nodeId,
+	}
+	createdMsg, _ := anypb.New(createdEvent)
 
-		evt := &epb.Notification{
-			Id:          nt.Id.String(),
-			NodeId:      "foo",
-			NodeType:    nt.NodeType,
-			Severity:    nt.Severity.String(),
-			Type:        "bar",
-			ServiceName: nt.ServiceName,
-			Status:      nt.Status,
-			Time:        nt.Time,
-		}
+	repo.On("Add", mock.Anything).Return(nil).Once()
 
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
+	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+		Run(func(args mock.Arguments) {
+			notification := args.Get(1).(*epb.Notification)
+			assert.NotEmpty(t, notification.Id)
+			assert.Equal(t, nodeId, notification.NodeId)
+			assert.Equal(t, "hnode", notification.NodeType)
+			assert.Equal(t, "low", notification.Severity)
+			assert.Equal(t, "event", notification.Type)
+			assert.Equal(t, "registry", notification.ServiceName)
+		}).
+		Return(nil).Once()
 
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
+	eventCreated := &epb.Event{
+		RoutingKey: "event.cloud.local.testorg.registry.node.node.create",
+		Msg:        createdMsg,
+	}
+	_, err = notifyEventServer.EventNotification(context.Background(), eventCreated)
+	assert.NoError(t, err)
 
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
-
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("NotificationEventNotSent", func(t *testing.T) {
-		routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.operator.cdr.sim.usage")
-
-		evt := epb.EventSimUsage{}
-
-		anyE, err := anypb.New(&evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewNotifyEventServer(OrgName, &repo, msgbusClient, listenerRoutes)
-
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.NoError(t, err)
-	})
+	repo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
 }

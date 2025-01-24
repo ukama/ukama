@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { ArgsType, Field, InputType, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 import {
   GRAPHS_TYPE,
@@ -21,9 +21,6 @@ export class MetricRes {
 
   @Field()
   msg: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   nodeId: string;
@@ -50,9 +47,6 @@ export class LatestMetricRes {
 
   @Field()
   msg: string;
-
-  @Field()
-  orgId: string;
 
   @Field()
   nodeId: string;
@@ -97,28 +91,25 @@ export class GetMetricByTabInput {
   nodeId: string;
 
   @Field()
-  orgId?: string;
+  orgName: string;
 
   @Field()
-  orgName: string;
+  userId: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;
 
   @Field()
-  userId?: string;
-
-  @Field({ nullable: true })
   from: number;
 
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ nullable: true })
-  step?: number;
+  @Field({ defaultValue: 1 })
+  step: number;
 
-  @Field({ nullable: false })
-  withSubscription?: boolean;
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
 }
 
 @ObjectType()
@@ -145,14 +136,13 @@ export class SubMetricRangeInput {
   from: number;
 }
 
-@ArgsType()
 @InputType()
 export class SubMetricByTabInput {
   @Field()
   nodeId: string;
 
   @Field()
-  orgId: string;
+  orgName: string;
 
   @Field(() => GRAPHS_TYPE)
   type: GRAPHS_TYPE;
@@ -175,6 +165,12 @@ export class NotificationsAPIResDto {
   @Field()
   description: string;
 
+  @Field()
+  resource_id: string;
+
+  @Field()
+  event_key: string;
+
   @Field(() => NOTIFICATION_TYPE)
   type: NOTIFICATION_TYPE;
 
@@ -188,6 +184,14 @@ export class NotificationsAPIResDto {
   created_at: string;
 }
 
+@ObjectType()
+export class NotificationRedirect {
+  @Field()
+  title: string;
+
+  @Field()
+  action: string;
+}
 @ObjectType()
 export class NotificationsAPIRes {
   @Field(() => [NotificationsAPIResDto])
@@ -206,6 +210,12 @@ export class NotificationsResDto {
   description: string;
 
   @Field()
+  eventKey: string;
+
+  @Field()
+  resourceId: string;
+
+  @Field()
   createdAt: string;
 
   @Field(() => NOTIFICATION_TYPE)
@@ -216,6 +226,9 @@ export class NotificationsResDto {
 
   @Field()
   isRead: boolean;
+
+  @Field(() => NotificationRedirect)
+  redirect?: NotificationRedirect;
 }
 
 @ObjectType()
@@ -224,7 +237,6 @@ export class NotificationsRes {
   notifications: NotificationsResDto[];
 }
 
-@ArgsType()
 @InputType()
 export class GetNotificationsInput {
   @Field({ nullable: false })

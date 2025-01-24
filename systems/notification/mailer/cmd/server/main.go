@@ -9,6 +9,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/num30/config"
@@ -66,8 +67,10 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
-	srv := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer, serviceConfig.TemplatesPath)
-
+	srv, err := server.NewMailerServer(db.NewMailerRepo(gormdb), serviceConfig.Mailer, serviceConfig.TemplatesPath)
+	if err != nil {
+		log.Fatalf("Failed to initialize mailer server: %v", err)
+	}
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterMailerServiceServer(s, srv)
 	})

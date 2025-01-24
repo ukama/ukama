@@ -12,9 +12,15 @@ import { ElementType } from 'react';
 interface IEmptyView {
   icon: ElementType;
   title: string;
+  description?: string;
   size?: 'small' | 'medium' | 'large';
 }
-const EmptyView = ({ title, icon: Icon, size = 'medium' }: IEmptyView) => {
+const EmptyView = ({
+  title,
+  description,
+  icon: Icon,
+  size = 'medium',
+}: IEmptyView) => {
   return (
     <Stack
       spacing={1}
@@ -24,12 +30,24 @@ const EmptyView = ({ title, icon: Icon, size = 'medium' }: IEmptyView) => {
         display: 'flex',
         overflow: 'auto',
         alignSelf: 'center',
-        justifyContent: 'center',
         alignItems: 'center',
+        justifyContent: 'center',
       }}
     >
       <Icon fontSize={size} color="textPrimary" style={{ opacity: 0.6 }} />
-      <Typography variant="body2">{title}</Typography>
+      <Typography variant="body1" fontWeight={500}>
+        {title}
+      </Typography>
+      {description && (
+        <Typography
+          variant="body2"
+          fontWeight={400}
+          textAlign={'center'}
+          width={{ xs: '60%', md: '25%' }}
+        >
+          {description}
+        </Typography>
+      )}
     </Stack>
   );
 };

@@ -6,6 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import {
+  Notification_Scope,
+  Notification_Type,
+} from '@/client/graphql/generated';
+import { LatestMetricRes } from '@/client/graphql/generated/subscriptions';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
@@ -14,6 +19,7 @@ export type MenuItemType = {
   id: number;
   title: string;
   route: string;
+  color?: string;
 };
 export type UserSettingsMenuType = {
   id: number;
@@ -118,7 +124,12 @@ export type UserActivateFormType = {
   serialNumber: string;
   securityCode: string;
 };
-
+export interface SubscriberDetailsType {
+  name: string;
+  email: string;
+  simIccid: string;
+  plan: string;
+}
 export type TVariant = 'small' | 'medium' | 'large';
 
 export type TObject = { [key: string]: boolean | string | number };
@@ -170,6 +181,8 @@ export type TUser = {
   role: string;
   orgId: string;
   orgName: string;
+  country: string;
+  currency: string;
 };
 
 export type TSnackbarMessage = {
@@ -205,6 +218,7 @@ export type TEnv = {
   AUTH_APP_URL: string;
   MAP_BOX_TOKEN: string;
   METRIC_WEBSOCKET_URL: string;
+  STRIPE_PK: string;
 };
 
 interface NotificationSubscription {
@@ -212,9 +226,15 @@ interface NotificationSubscription {
   description: string;
   id: string;
   isRead: boolean;
-  scope: string;
+  scope: Notification_Scope;
   title: string;
-  type: string;
+  type: Notification_Type;
+  eventKey: string;
+  resourceId: string;
+  redirect: {
+    action: string;
+    title: string;
+  };
 }
 
 interface Data {
@@ -224,3 +244,44 @@ interface Data {
 export interface TNotificationResDto {
   data: Data;
 }
+
+interface MetricsSubData {
+  getMetricByTabSub: LatestMetricRes;
+}
+
+export interface TMetricResDto {
+  data: MetricsSubData;
+}
+
+export type TNodePoolData = {
+  id: string;
+  type: string;
+  site: string;
+  state: string;
+  network: string;
+  createdAt: string;
+  connectivity: string;
+};
+
+export enum DataUnitType {
+  Bytes = 'Bytes',
+  KiloBytes = 'KiloBytes',
+  MegaBytes = 'MegaBytes',
+  GigaBytes = 'GigaBytes',
+}
+
+export enum DurationType {
+  Day = 1,
+  Month = 30,
+}
+
+export type CreatePlanType = {
+  id: string;
+  name: string;
+  country: string;
+  currency: string;
+  duration: string;
+  dataUnit: DataUnitType;
+  amount: number | undefined;
+  dataVolume: number | undefined;
+};

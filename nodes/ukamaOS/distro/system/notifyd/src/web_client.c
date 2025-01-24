@@ -143,7 +143,6 @@ int wc_forward_notification(char* httpURL,
 
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
-    JsonErrObj jErr;
 
     UResponse *httpResp = NULL;
     URequest* httpReq   = NULL;

@@ -1,10 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
@@ -33,32 +26,20 @@ export enum Graphs_Type {
 }
 
 export type GetMetricByTabInput = {
-  from?: InputMaybe<Scalars['Float']['input']>;
+  from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
-  step?: InputMaybe<Scalars['Float']['input']>;
+  step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Graphs_Type;
   userId: Scalars['String']['input'];
-  withSubscription: Scalars['Boolean']['input'];
-};
-
-export type GetNotificationsInput = {
-  networkId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  orgName: Scalars['String']['input'];
-  role: Role_Type;
-  startTimestamp: Scalars['String']['input'];
-  subscriberId: Scalars['String']['input'];
-  userId: Scalars['String']['input'];
+  withSubscription?: Scalars['Boolean']['input'];
 };
 
 export type LatestMetricRes = {
   __typename?: 'LatestMetricRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Array<Scalars['Float']['output']>;
@@ -68,7 +49,6 @@ export type MetricRes = {
   __typename?: 'MetricRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   values: Array<Array<Scalars['Float']['output']>>;
@@ -95,12 +75,22 @@ export enum Notification_Scope {
 }
 
 export enum Notification_Type {
-  NotifCritical = 'NOTIF_CRITICAL',
-  NotifError = 'NOTIF_ERROR',
-  NotifInfo = 'NOTIF_INFO',
-  NotifInvalid = 'NOTIF_INVALID',
-  NotifWarning = 'NOTIF_WARNING'
+  TypeActionableCritical = 'TYPE_ACTIONABLE_CRITICAL',
+  TypeActionableError = 'TYPE_ACTIONABLE_ERROR',
+  TypeActionableInfo = 'TYPE_ACTIONABLE_INFO',
+  TypeActionableWarning = 'TYPE_ACTIONABLE_WARNING',
+  TypeCritical = 'TYPE_CRITICAL',
+  TypeError = 'TYPE_ERROR',
+  TypeInfo = 'TYPE_INFO',
+  TypeInvalid = 'TYPE_INVALID',
+  TypeWarning = 'TYPE_WARNING'
 }
+
+export type NotificationRedirect = {
+  __typename?: 'NotificationRedirect';
+  action: Scalars['String']['output'];
+  title: Scalars['String']['output'];
+};
 
 export type NotificationsRes = {
   __typename?: 'NotificationsRes';
@@ -111,8 +101,11 @@ export type NotificationsResDto = {
   __typename?: 'NotificationsResDto';
   createdAt: Scalars['String']['output'];
   description: Scalars['String']['output'];
+  eventKey: Scalars['String']['output'];
   id: Scalars['String']['output'];
   isRead: Scalars['Boolean']['output'];
+  redirect: NotificationRedirect;
+  resourceId: Scalars['String']['output'];
   scope: Notification_Scope;
   title: Scalars['String']['output'];
   type: Notification_Type;
@@ -131,17 +124,22 @@ export type QueryGetMetricByTabArgs = {
 
 
 export type QueryGetNotificationsArgs = {
-  data: GetNotificationsInput;
+  networkId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+  startTimestamp: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 };
 
-export enum Role_Type {
-  RoleAdmin = 'ROLE_ADMIN',
-  RoleInvalid = 'ROLE_INVALID',
-  RoleNetworkOwner = 'ROLE_NETWORK_OWNER',
-  RoleOwner = 'ROLE_OWNER',
-  RoleUser = 'ROLE_USER',
-  RoleVendor = 'ROLE_VENDOR'
-}
+export type SubMetricByTabInput = {
+  from: Scalars['Float']['input'];
+  nodeId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
+};
 
 export type Subscription = {
   __typename?: 'Subscription';
@@ -151,62 +149,86 @@ export type Subscription = {
 
 
 export type SubscriptionGetMetricByTabSubArgs = {
-  from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  type: Graphs_Type;
-  userId: Scalars['String']['input'];
+  data: SubMetricByTabInput;
 };
 
 
 export type SubscriptionNotificationSubscriptionArgs = {
-  data: GetNotificationsInput;
+  networkId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+  startTimestamp: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 };
 
 export type GetNotificationsQueryVariables = Exact<{
-  data: GetNotificationsInput;
+  networkId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+  startTimestamp: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 }>;
 
 
-export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string }> } };
+export type GetNotificationsQuery = { __typename?: 'Query', getNotifications: { __typename?: 'NotificationsRes', notifications: Array<{ __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } }> } };
 
 export type NotificationSubscriptionSubscriptionVariables = Exact<{
-  data: GetNotificationsInput;
+  networkId: Scalars['String']['input'];
+  orgId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  role: Scalars['String']['input'];
+  startTimestamp: Scalars['String']['input'];
+  subscriberId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
 }>;
 
 
-export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, createdAt: string, description: string } };
+export type NotificationSubscriptionSubscription = { __typename?: 'Subscription', notificationSubscription: { __typename?: 'NotificationsResDto', id: string, type: Notification_Type, scope: Notification_Scope, title: string, isRead: boolean, eventKey: string, createdAt: string, resourceId: string, description: string, redirect: { __typename?: 'NotificationRedirect', action: string, title: string } } };
 
 export type GetMetricByTabQueryVariables = Exact<{
   data: GetMetricByTabInput;
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, values: Array<Array<number>> }> } };
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId: string, success: boolean, type: string, values: Array<Array<number>> }> } };
 
 export type GetMetricByTabSubSubscriptionVariables = Exact<{
-  nodeId: Scalars['String']['input'];
-  orgId: Scalars['String']['input'];
-  type: Graphs_Type;
-  userId: Scalars['String']['input'];
-  from: Scalars['Float']['input'];
+  data: SubMetricByTabInput;
 }>;
 
 
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', success: boolean, msg: string, orgId: string, nodeId: string, type: string, value: Array<number> } };
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
-    query GetNotifications($data: GetNotificationsInput!) {
-  getNotifications(data: $data) {
+    query GetNotifications($networkId: String!, $orgId: String!, $orgName: String!, $role: String!, $startTimestamp: String!, $subscriberId: String!, $userId: String!) {
+  getNotifications(
+    networkId: $networkId
+    orgId: $orgId
+    orgName: $orgName
+    startTimestamp: $startTimestamp
+    subscriberId: $subscriberId
+    userId: $userId
+    role: $role
+  ) {
     notifications {
       id
       type
       scope
       title
       isRead
+      eventKey
       createdAt
+      resourceId
       description
+      redirect {
+        action
+        title
+      }
     }
   }
 }
@@ -224,7 +246,13 @@ export const GetNotificationsDocument = gql`
  * @example
  * const { data, loading, error } = useGetNotificationsQuery({
  *   variables: {
- *      data: // value for 'data'
+ *      networkId: // value for 'networkId'
+ *      orgId: // value for 'orgId'
+ *      orgName: // value for 'orgName'
+ *      role: // value for 'role'
+ *      startTimestamp: // value for 'startTimestamp'
+ *      subscriberId: // value for 'subscriberId'
+ *      userId: // value for 'userId'
  *   },
  * });
  */
@@ -236,8 +264,8 @@ export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookO
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
-export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
         }
 export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
@@ -245,15 +273,29 @@ export type GetNotificationsLazyQueryHookResult = ReturnType<typeof useGetNotifi
 export type GetNotificationsSuspenseQueryHookResult = ReturnType<typeof useGetNotificationsSuspenseQuery>;
 export type GetNotificationsQueryResult = Apollo.QueryResult<GetNotificationsQuery, GetNotificationsQueryVariables>;
 export const NotificationSubscriptionDocument = gql`
-    subscription NotificationSubscription($data: GetNotificationsInput!) {
-  notificationSubscription(data: $data) {
+    subscription NotificationSubscription($networkId: String!, $orgId: String!, $orgName: String!, $role: String!, $startTimestamp: String!, $subscriberId: String!, $userId: String!) {
+  notificationSubscription(
+    networkId: $networkId
+    orgId: $orgId
+    orgName: $orgName
+    startTimestamp: $startTimestamp
+    subscriberId: $subscriberId
+    userId: $userId
+    role: $role
+  ) {
     id
     type
     scope
     title
     isRead
+    eventKey
     createdAt
+    resourceId
     description
+    redirect {
+      action
+      title
+    }
   }
 }
     `;
@@ -270,7 +312,13 @@ export const NotificationSubscriptionDocument = gql`
  * @example
  * const { data, loading, error } = useNotificationSubscriptionSubscription({
  *   variables: {
- *      data: // value for 'data'
+ *      networkId: // value for 'networkId'
+ *      orgId: // value for 'orgId'
+ *      orgName: // value for 'orgName'
+ *      role: // value for 'role'
+ *      startTimestamp: // value for 'startTimestamp'
+ *      subscriberId: // value for 'subscriberId'
+ *      userId: // value for 'userId'
  *   },
  * });
  */
@@ -284,10 +332,9 @@ export const GetMetricByTabDocument = gql`
     query GetMetricByTab($data: GetMetricByTabInput!) {
   getMetricByTab(data: $data) {
     metrics {
-      success
       msg
-      orgId
       nodeId
+      success
       type
       values
     }
@@ -319,8 +366,8 @@ export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
-export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
         }
 export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
@@ -328,18 +375,11 @@ export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricBy
 export type GetMetricByTabSuspenseQueryHookResult = ReturnType<typeof useGetMetricByTabSuspenseQuery>;
 export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
 export const GetMetricByTabSubDocument = gql`
-    subscription GetMetricByTabSub($nodeId: String!, $orgId: String!, $type: GRAPHS_TYPE!, $userId: String!, $from: Float!) {
-  getMetricByTabSub(
-    nodeId: $nodeId
-    orgId: $orgId
-    type: $type
-    userId: $userId
-    from: $from
-  ) {
-    success
+    subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
+  getMetricByTabSub(data: $data) {
     msg
-    orgId
     nodeId
+    success
     type
     value
   }
@@ -358,11 +398,7 @@ export const GetMetricByTabSubDocument = gql`
  * @example
  * const { data, loading, error } = useGetMetricByTabSubSubscription({
  *   variables: {
- *      nodeId: // value for 'nodeId'
- *      orgId: // value for 'orgId'
- *      type: // value for 'type'
- *      userId: // value for 'userId'
- *      from: // value for 'from'
+ *      data: // value for 'data'
  *   },
  * });
  */

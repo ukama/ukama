@@ -6,11 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-/*
- * Functions to interact with the hub.
- *
- */
-
 #include <sqlite3.h>
 #include <jansson.h>
 #include <ulfius.h>
@@ -22,7 +17,6 @@
 #include "jserdes.h"
 #include "methods.h"
 
-
 struct Response {
   char *buffer;
   size_t size;
@@ -30,17 +24,14 @@ struct Response {
 
 /* Function def. */
 static int process_response_from_provider(Config *cfg, long statusCode,
-					   void *resp, ServiceURL **urls);
+                                          void *resp, ServiceURL **urls);
 static void create_provider_url(Config *cfg, char *url, char *name,
-				char *tag);
+                                char *tag);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
-				void *userp);
+                                void *userp);
 int get_service_url_from_provider(Config *cfg, char *name, char *tag,
-				  ServiceURL **urls, int *count);
-/*
- * process_response_from_provider --
- *
- */
+                                  ServiceURL **urls, int *count);
+
 static int process_response_from_provider(Config *cfg, long statusCode,
 					   void *resp, ServiceURL **urls) {
 
@@ -75,27 +66,10 @@ static int process_response_from_provider(Config *cfg, long statusCode,
   }
 
  done:
-
-  /*
-  for (i=0; i<count; i++) {
-    if (urls[i]->method && urls[i]->url) {
-      free(urls[i]->method);
-      free(urls[i]->url);
-    }
-    free(urls[i]);
-  }
-
-  free(urls);
-  */
-
   json_decref(json);
   return count;
 }
 
-/*
- * create_provider_url -- create EP for the provider.
- *
- */
 static void create_provider_url(Config *cfg, char *url, char *name,
                                 char *tag) {
 
@@ -104,9 +78,6 @@ static void create_provider_url(Config *cfg, char *url, char *name,
   return;
 }
 
-/*
- * response_callback --
- */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp) {
 
@@ -128,14 +99,9 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
   return realsize;
 }
 
-/*
- * get_service_url_from_provider -- 
- *
- */
 int get_service_url_from_provider(Config *cfg, char *name, char *tag,
                                   ServiceURL **urls, int *count) {
   
-  int ret;
   long code=0;
   char providerEP[WIMC_MAX_URL_LEN] = {0};
   CURL *curl=NULL;

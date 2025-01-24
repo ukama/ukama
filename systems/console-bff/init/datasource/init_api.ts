@@ -71,6 +71,8 @@ class InitAPI extends RESTDataSource {
     let userId = "";
     let orgId = "";
     let orgName = "";
+    let country = "";
+    let currency = "";
     let isWelcomeEligible = false;
     let role = ROLE_TYPE.ROLE_INVALID;
     let userWhoami: WhoamiDto | null = null;
@@ -85,19 +87,17 @@ class InitAPI extends RESTDataSource {
     }
 
     if (userWhoami?.user?.uuid) {
-      orgId =
-        userWhoami.ownerOf.length > 0
-          ? userWhoami.ownerOf[0].id
-          : userWhoami.memberOf.length > 0
-          ? userWhoami.memberOf[0].id
-          : "";
-
-      orgName =
-        userWhoami.ownerOf.length > 0
-          ? userWhoami.ownerOf[0].name
-          : userWhoami.memberOf.length > 0
-          ? userWhoami.memberOf[0].name
-          : "";
+      if (userWhoami.ownerOf.length > 0) {
+        orgId = userWhoami.ownerOf[0].id;
+        orgName = userWhoami.ownerOf[0].name;
+        country = userWhoami.ownerOf[0].country;
+        currency = userWhoami.ownerOf[0].currency;
+      } else if (userWhoami.memberOf.length > 0) {
+        orgId = userWhoami.memberOf[0].id;
+        orgName = userWhoami.memberOf[0].name;
+        country = userWhoami.ownerOf[0].country;
+        currency = userWhoami.ownerOf[0].currency;
+      }
 
       if (orgId && orgName) {
         const baseURL = await getBaseURL("member", orgName, store);
@@ -106,18 +106,29 @@ class InitAPI extends RESTDataSource {
             baseURL.message,
             userWhoami.user.uuid
           );
-          role = member.role as ROLE_TYPE;
-          if (role === ROLE_TYPE.ROLE_OWNER) {
-            const isAlreadyWelcomed = await getFromStore(
-              store,
-              `${userWhoami.user.uuid}-welcome`
-            );
-            if (typeof isAlreadyWelcomed !== "boolean") {
-              await addInStore(store, `${userWhoami.user.uuid}-welcome`, true);
-              isWelcomeEligible = true;
-            } else {
-              isWelcomeEligible = false;
+
+          if (member && member.memberId) {
+            role = member.role as ROLE_TYPE;
+            if (
+              role === ROLE_TYPE.ROLE_OWNER ||
+              role === ROLE_TYPE.ROLE_ADMIN ||
+              role === ROLE_TYPE.ROLE_NETWORK_OWNER
+            ) {
+              const isAlreadyWelcomed = await getFromStore(
+                store,
+                `${userWhoami.user.uuid}-welcome`
+              );
+              if (typeof isAlreadyWelcomed !== "boolean") {
+                await addInStore(
+                  store,
+                  `${userWhoami.user.uuid}-welcome`,
+                  true
+                );
+                isWelcomeEligible = true;
+              }
             }
+          } else {
+            logger.error(`Error: member not found`);
           }
         } else {
           logger.error(`Error: ${baseURL.message}`);
@@ -126,7 +137,7 @@ class InitAPI extends RESTDataSource {
     }
     const cookie = `${orgId};${orgName};${userId};${name};${email};${role};${
       whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false
-    };${isWelcomeEligible}`;
+    };${isWelcomeEligible};${country};${currency}`;
     const base64Cookie = Buffer.from(cookie).toString("base64");
 
     return {
@@ -136,6 +147,8 @@ class InitAPI extends RESTDataSource {
       name: name,
       email: email,
       userId: userId,
+      country: country,
+      currency: currency,
       token: base64Cookie,
       isEmailVerified:
         whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,

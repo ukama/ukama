@@ -17,7 +17,7 @@ import NetworkApi from "../../network/datasource/network_api";
 import PackageApi from "../../package/datasource/package_api";
 import { Context } from "../../sim/context";
 import SimApi from "../../sim/datasource/sim_api";
-import { AddPackageToSimResolver } from "../../sim/resolver/addPackagetoSim";
+import { AddPackagesToSimResolver } from "../../sim/resolver/addPackagestoSim";
 import { AllocateSimResolver } from "../../sim/resolver/allocateSim";
 import { DeleteSimResolver } from "../../sim/resolver/delete";
 import { GetSimByNetworkResolver } from "../../sim/resolver/getByNetwork";
@@ -56,7 +56,7 @@ const simApi = new SimApi();
 const createSchema = async () => {
   return await buildSchema({
     resolvers: [
-      AddPackageToSimResolver,
+      AddPackagesToSimResolver,
       AllocateSimResolver,
       DeleteSimResolver,
       GetSimByNetworkResolver,
@@ -125,7 +125,7 @@ describe("Sim API integration tests", () => {
     const res = await server.executeOperation(
       {
         query: UPLOAD_SIMS,
-        variables: { data: { data: simData, simType: SIM_TYPES.TEST } },
+        variables: { data: { data: simData, simType: SIM_TYPES.test } },
       },
       {
         contextValue: contextValue,
@@ -154,6 +154,8 @@ describe("Sim API integration tests", () => {
         dataVolume: 10,
         duration: 30,
         name: "Test-Package",
+        country: "COD",
+        currency: "CF",
       },
       parsedHeaders
     );
@@ -208,8 +210,7 @@ describe("Sim API integration tests", () => {
       {
         email: email,
         network_id: networkId,
-        first_name: "First Name",
-        last_name: "Last Name",
+        name: "Name",
         phone: phone,
       }
     );
@@ -222,7 +223,7 @@ describe("Sim API integration tests", () => {
           data: {
             iccid: iccid,
             network_id: networkId,
-            sim_type: SIM_TYPES.TEST,
+            sim_type: SIM_TYPES.test,
             package_id: packageId,
             subscriber_id: subscriberId,
             traffic_policy: 123,
@@ -264,7 +265,7 @@ describe("Sim API integration tests", () => {
     const res = await server.executeOperation(
       {
         query: GET_SIM_STATS,
-        variables: { type: SIM_TYPES.TEST },
+        variables: { type: SIM_TYPES.test },
       },
       {
         contextValue: contextValue,

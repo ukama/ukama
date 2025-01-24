@@ -6,26 +6,43 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Invitation_Status, NodeTypeEnum } from '@/client/graphql/generated';
+import {
+  Invitation_Status,
+  Node,
+  Nodes,
+  NodeTypeEnum,
+  Role_Type,
+  SitesResDto,
+} from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
-  Role_Type,
 } from '@/client/graphql/generated/subscriptions';
+import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { LatLngTuple } from 'leaflet';
+
+type TConfigureStep = {
+  totalStep: number;
+  currentStep: number;
+};
+
 const getTitleFromPath = (path: string, id: string) => {
-  if (path.startsWith('/console/sites') && id) {
+  if (id) {
     return (
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={0.6}>
         <Typography variant="h5" sx={{ color: colors.black38 }}>
-          Site
+          {path.startsWith('/console/sites')
+            ? 'Site'
+            : path.startsWith('/console/nodes')
+              ? 'Nodes'
+              : ''}
         </Typography>
-        <ArrowForwardIosIcon sx={{ color: colors.black38 }} />
+        <ChevronRightIcon sx={{ color: colors.black38 }} />
         <Typography variant="h5" sx={{ color: colors.black }}>
           {id}
         </Typography>
@@ -219,8 +236,8 @@ const getDataPlanUsage = (
   dataVolume: string,
   dataUnit: string,
 ): string => {
-  const symbol = currency === 'Dollar' ? '$' : '';
-  return `${symbol}${amount} / ${dataVolume} ${getDataUsageSymbol(
+  const symbol = currency === 'Dollar' ? '$' : currency;
+  return `${symbol} ${amount} / ${dataVolume} ${getDataUsageSymbol(
     dataUnit,
   )} / ${duration}`;
 };
@@ -245,18 +262,17 @@ const getDuration = (number: number): string => {
   return number > 1 ? `${number} Days` : `${number} Day`;
 };
 
-const structureNodeSiteDate = (data: any) => {
-  let count = 1;
+const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
   const t: TNodeSiteTree[] = [];
 
-  data.forEach((node: any) => {
+  nodes.nodes.forEach((node: Node) => {
     if (node.type === NodeTypeEnum.Tnode) {
       t.push({
-        id: node.site?.siteId ?? '',
-        name: `Site ${count++}`,
+        id: node.site.siteId ?? '',
+        name: `${sites.sites.find((site) => site.id === node.site.siteId)?.name} (Site)`,
         nodeId: node.id,
         nodeType: node.type,
-        nodeName: node.name,
+        nodeName: `${node.name} (Node)`,
       });
     }
   });
@@ -287,7 +303,15 @@ const getSimValuefromSimType = (simType: string) => {
   }
 };
 
-const getInvitationStatusColor = (status: string) => {
+const getInvitationStatusColor = (status: string, isExpired: boolean) => {
+  if (isExpired) {
+    return (
+      <Typography variant="body2" color={colors.red}>
+        Expired
+      </Typography>
+    );
+  }
+
   switch (status) {
     case Invitation_Status.InviteAccepted:
       return (
@@ -313,7 +337,7 @@ const getInvitationStatusColor = (status: string) => {
 const provideStatusColor = (status: Invitation_Status) => {
   switch (status) {
     case Invitation_Status.InvitePending:
-      return 'info';
+      return colors.blueGray;
     case Invitation_Status.InviteAccepted:
       return 'success';
     case Invitation_Status.InviteDeclined:
@@ -387,7 +411,49 @@ const isValidLatLng = (position: LatLngTuple): boolean => {
   );
 };
 
+const ConfigureStep = (path: string, flow: string): TConfigureStep => {
+  switch (flow) {
+    case ONBOARDING_FLOW:
+      if (path.includes('configure/network'))
+        return { currentStep: 1, totalStep: 6 };
+      else if (path.includes('check')) return { currentStep: 1, totalStep: 6 };
+      else if (path.includes('sims')) return { currentStep: 6, totalStep: 6 };
+      else if (path.includes('install'))
+        return { currentStep: 5, totalStep: 6 };
+      else if (path.includes('site/name'))
+        return { currentStep: 4, totalStep: 6 };
+      else if (path.includes('configure/node'))
+        return { currentStep: 3, totalStep: 6 };
+      else if (path.includes('configure'))
+        return { currentStep: 2, totalStep: 6 };
+    case INSTALLATION_FLOW:
+      if (path.includes('check')) return { currentStep: 1, totalStep: 4 };
+      else if (path.includes('install'))
+        return { currentStep: 4, totalStep: 4 };
+      else if (path.includes('site/name'))
+        return { currentStep: 3, totalStep: 4 };
+      else if (path.includes('configure/node'))
+        return { currentStep: 2, totalStep: 4 };
+    default:
+      return { currentStep: 1, totalStep: 5 };
+  }
+};
+
+const NodeEnumToString = (type: NodeTypeEnum): string => {
+  switch (type) {
+    case NodeTypeEnum.Tnode:
+      return 'Tower Node';
+    case NodeTypeEnum.Anode:
+      return 'Amplifier Node';
+    case NodeTypeEnum.Hnode:
+      return 'Home Node';
+    default:
+      return 'Unknown';
+  }
+};
+
 export {
+  ConfigureStep,
   fileToBase64,
   formatBytes,
   formatBytesToMB,
@@ -402,6 +468,7 @@ export {
   hexToRGB,
   inviteStatusEnumToString,
   isValidLatLng,
+  NodeEnumToString,
   provideStatusColor,
   roleEnumToString,
   structureNodeSiteDate,

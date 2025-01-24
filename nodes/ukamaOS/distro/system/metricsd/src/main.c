@@ -31,7 +31,7 @@
 
 #include "version.h"
 
-#define METRIC_CONFIG "./config/metrics_config.toml"
+#define METRIC_CONFIG "./config/config.toml"
 #define DEF_LOG_LEVEL "TRACE"
 
 /* define in network.c */

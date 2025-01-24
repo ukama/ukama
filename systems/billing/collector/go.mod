@@ -15,7 +15,7 @@ replace github.com/ukama/ukama/systems/common/pb/gen/events => ../../common/pb/e
 replace github.com/ukama/ukama/systems/billing/collector => ./
 
 require (
-	github.com/getlago/lago-go-client v1.13.1
+	github.com/getlago/lago-go-client v1.15.0
 	github.com/google/uuid v1.6.0
 	github.com/num30/config v0.1.2
 	github.com/sirupsen/logrus v1.9.3

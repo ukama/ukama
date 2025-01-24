@@ -31,6 +31,9 @@ type BillingClient interface {
 	TerminateSubscription(context.Context, string) (string, error)
 
 	AddUsageEvent(context.Context, Event) error
+
+	CreateWebhook(context.Context, WebhookEndpoint) (string, error)
+	ListWebhooks(context.Context) ([]string, error)
 }
 
 type BillableMetric struct {
@@ -78,8 +81,12 @@ type Customer struct {
 	Id      string
 	Name    string
 	Email   string
-	Address string
 	Phone   string
+	Address string
+	City    string
+	State   string
+	Zipcode string
+	Country string
 	Type    string
 }
 
@@ -88,6 +95,16 @@ type Subscription struct {
 	CustomerId     string
 	PlanCode       string
 	SubscriptionAt *time.Time
+}
+
+const (
+	JwtSignatureAlgoType  = "jwt"
+	HmacSignatureAlgoType = "hmac"
+)
+
+type WebhookEndpoint struct {
+	Url           string
+	SignatureAlgo string
 }
 
 type Error struct {

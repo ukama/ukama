@@ -10,7 +10,7 @@ import {
   Graphs_Type,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { TooltipsText } from '@/constants';
+import { NetworkChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
 import { useState } from 'react';
@@ -20,11 +20,17 @@ import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
+  nodeId: string;
   metrics: MetricsRes;
   metricFrom: number;
   loading: boolean;
 }
-const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
+const NodeNetworkTab = ({
+  nodeId,
+  loading,
+  metrics,
+  metricFrom,
+}: INodeOverviewTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
 
@@ -43,82 +49,93 @@ const NodeNetworkTab = ({ loading, metrics, metricFrom }: INodeOverviewTab) => {
           <NodeStatItem
             variant={'large'}
             value={PLACEHOLDER_VALUE}
-            name={'Throughput (D/L)'}
+            name={NetworkChartsConfig[0].name}
             nameInfo={TooltipsText.DL}
           />
           <NodeStatItem
             variant={'large'}
             value={PLACEHOLDER_VALUE}
-            name={'Throughput (U/L)'}
+            name={NetworkChartsConfig[1].name}
             nameInfo={TooltipsText.UL}
           />
           <NodeStatItem
             value={PLACEHOLDER_VALUE}
             variant={'large'}
-            name={'RRC CNX Success'}
+            name={NetworkChartsConfig[2].name}
             nameInfo={TooltipsText.RRCCNX}
           />
           <NodeStatItem
             value={PLACEHOLDER_VALUE}
             variant={'large'}
-            name={'ERAB Drop Rate'}
+            name={NetworkChartsConfig[3].name}
             nameInfo={TooltipsText.ERAB}
           />
           <NodeStatItem
             value={PLACEHOLDER_VALUE}
             variant={'large'}
-            name={'RLS  Drop Rate'}
+            name={NetworkChartsConfig[4].name}
             nameInfo={TooltipsText.RLS}
           />
         </NodeStatsContainer>
       </Grid>
       <Grid item lg={isCollapse ? 11 : 8} md xs>
-        <Paper sx={{ p: 3, width: '100%' }}>
+        <Paper
+          sx={{
+            p: 3,
+            overflow: 'auto',
+            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+          }}
+        >
           <Stack spacing={4}>
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               metricFrom={metricFrom}
-              topic={'throughputuplink'}
-              title={'Throughput (U/L)'}
+              topic={NetworkChartsConfig[0].id}
+              title={NetworkChartsConfig[0].name}
               tabSection={Graphs_Type.Network}
-              initData={getMetricValue('throughputuplink', metrics)}
-              hasData={isMetricValue('throughputuplink', metrics)}
+              initData={getMetricValue(NetworkChartsConfig[0].id, metrics)}
+              hasData={isMetricValue(NetworkChartsConfig[0].id, metrics)}
             />
             <LineChart
+              nodeId={nodeId}
               loading={loading}
               metricFrom={metricFrom}
-              topic={'throughputdownlink'}
-              title={'Throughput (D/L)'}
+              title={NetworkChartsConfig[1].name}
               tabSection={Graphs_Type.Network}
-              initData={getMetricValue('throughputdownlink', metrics)}
-              hasData={isMetricValue('throughputdownlink', metrics)}
+              topic={NetworkChartsConfig[1].id}
+              initData={getMetricValue(NetworkChartsConfig[1].id, metrics)}
+              hasData={isMetricValue(NetworkChartsConfig[1].id, metrics)}
             />
             <LineChart
-              topic={'rrc'}
-              title={'RRC'}
+              nodeId={nodeId}
+              topic={NetworkChartsConfig[2].id}
+              title={NetworkChartsConfig[2].name}
               loading={loading}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Network}
-              initData={getMetricValue('rrc', metrics)}
-              hasData={isMetricValue('rrc', metrics)}
+              initData={getMetricValue(NetworkChartsConfig[2].id, metrics)}
+              hasData={isMetricValue(NetworkChartsConfig[2].id, metrics)}
             />
             <LineChart
-              topic={'erab'}
-              title={'ERAB'}
+              nodeId={nodeId}
+              topic={NetworkChartsConfig[3].id}
+              title={NetworkChartsConfig[3].name}
               loading={loading}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Network}
-              initData={getMetricValue('erab', metrics)}
-              hasData={isMetricValue('erab', metrics)}
+              initData={getMetricValue(NetworkChartsConfig[3].id, metrics)}
+              hasData={isMetricValue(NetworkChartsConfig[3].id, metrics)}
             />
             <LineChart
-              topic={'rlc'}
-              title={'RLC'}
+              nodeId={nodeId}
+              topic={NetworkChartsConfig[4].id}
+              title={NetworkChartsConfig[4].name}
               loading={loading}
               metricFrom={metricFrom}
               tabSection={Graphs_Type.Network}
-              initData={getMetricValue('rlc', metrics)}
-              hasData={isMetricValue('rlc', metrics)}
+              initData={getMetricValue(NetworkChartsConfig[4].id, metrics)}
+              hasData={isMetricValue(NetworkChartsConfig[4].id, metrics)}
             />
           </Stack>
         </Paper>

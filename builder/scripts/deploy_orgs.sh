@@ -22,11 +22,9 @@ INVENTORY_SYS_KEY="inventory"
 IS_INVENTORY_SYS=false
 METADATA=$(jq -c '.' ../metadata.json)
 JSON_FILE="../deploy_orgs_config.json"
-if [ "$1" == "-d" ]; then
-  ISDEBUGMODE=true
-else
-  ISDEBUGMODE=false
-fi
+ISDEBUGMODE=false
+MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
+
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
@@ -36,12 +34,30 @@ elif [[ "$(uname)" == "Linux" ]]; then
     LOCAL_HOST_IP=$(ifconfig enp0s25 | grep inet | awk '$1=="inet" {print $2}')
 fi
 
-MASTERORGNAME=$(jq -r '.["master-org-name"]' "$JSON_FILE")
+function buildSystems() {
+    echo  "$TAG Building systems..."
+    ./make-sys-for-mac.sh ../deploy_config.json 2>&1 | tee buildSystems.log
+}
+
+while getopts "bd" opt; do
+    case ${opt} in
+        b )
+            buildSystems
+            ;;
+        d )
+            ISDEBUGMODE=true
+            ;;
+        \? )
+            echo "Usage: cmd [-b, -d]"
+            exit 1
+            ;;
+    esac
+done
 
 jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     ORGNAME=$(echo "$ORG" | jq -r '.["org-name"]')
     echo "${TAG} Processing organization: ${YELLOW}${ORGNAME}${NC}"
-
+    docker network rm ${ORGNAME}_ukama-net > /dev/null 2>&1
     # Initialize the variables
     SUBNET=$(echo "$ORG" | jq -r '.subnet')
     ORG_TYPE=$(echo "$ORG" | jq -r '.type')
@@ -50,11 +66,8 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     OWNERNAME=$(echo "$ORG" | jq -r '.name')
     ORGID=$(echo "$ORG" | jq -r '.["org-id"]')
     KEY=$(echo "$ORG" | jq -r '.key')
-    MAILERHOST=$(echo "$ORG" | jq -r '.mailer.host')
-    MAILERPORT=$(echo "$ORG" | jq -r '.mailer.port')
-    MAILERUSERNAME=$(echo "$ORG" | jq -r '.mailer.username')
-    MAILERPASSWORD=$(echo "$ORG" | jq -r '.mailer.password')
     LAGOAPIKEY=$(echo "$ORG" | jq -r '.["lago-api-key"]')
+    WITHSUBAUTH=$(echo "$ORG" | jq -r '.["with-subscriber-auth"]')
     SYS=$(echo "$ORG" | jq -r '.systems')
     OWNERAUTHID=""
     OWNERID=$(uuidgen)
@@ -68,16 +81,12 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         export ORGID=$ORGID
         export ORGNAME=$ORGNAME
         export KEY=$KEY
-        export MAILER_PORT=$MAILERPORT
-        export MAILER_HOST=$MAILERHOST
-        export MAILER_PASSWORD=$MAILERPASSWORD
-        export MAILER_USERNAME=$MAILERUSERNAME
-        export MAILER_FROM=$OWNEREMAIL
-        export TEMPLATESPATH=member-invite
         export LAGO_API_KEY=$LAGOAPIKEY
         export MASTERORGNAME=$MASTERORGNAME
+        export MASTER_ORG_NAME=$MASTERORGNAME
         export LOCAL_HOST_IP=$LOCAL_HOST_IP
         export COMPONENT_ENVIRONMENT=test
+        export PROMETHEUS_HTTP_URL="http://${LOCAL_HOST_IP}:${PROMETHEUS}/v1/prometheus"
     }
 
     function run_docker_compose() {
@@ -131,22 +140,22 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
     register_org_to_init(){
         echo  "$TAG Add ${ORGNAME} org in lookup..."
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\",  \"country\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert', 'CD')"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"org_id\", \"certificate\") VALUES (NOW(), NOW(), '$ORGNAME', '$ORGID', 'ukama-cert')"
         psql $DB_URI -c "$QUERY"
     }
 
     get_user_id() {
         echo  "$TAG Fetching user ID..."
-        SQL_QUERY="SELECT PUBLIC.users.id FROM PUBLIC.users WHERE users.auth_id = '$OWNERAUTHID' AND users.deleted_at IS NULL ORDER BY users.id LIMIT 1;"
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/users"
-        OWNERID=$(psql $DB_URI -t -A -c "$SQL_QUERY")
+        response=$(curl --location --silent "http://localhost:8060/v1/users/auth/${OWNERAUTHID}" -H 'accept: application/json')
+        user_id=$(echo "$response" | jq -r '.user.id')
+        OWNERID="$user_id"
         echo "$TAG User ID: ${GREEN} $OWNERID ${NC}"
     }
 
     create_org() {
        echo  "$TAG Register org in nucleus..."
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5411/org"
-        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE)"
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5406/org"
+        QUERY="INSERT INTO \"public\".\"orgs\" (\"created_at\", \"updated_at\", \"name\", \"owner\", \"certificate\", \"id\", \"deactivated\", \"country\", \"currency\") VALUES (NOW(), NOW(), '$ORGNAME', '$OWNERID', 'ukama-cert', '$ORGID', FALSE, 'cod', 'cdf')"
         psql $DB_URI -c "$QUERY"
     }
 
@@ -222,6 +231,28 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
         SYSTEMS=($(for item in "${SYSTEMS[@]}"; do echo "$item"; done | sort -n -k1,1 | cut -d' ' -f2-))
     }
 
+    getSysPorts(){
+        MET_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["metrics"]')
+        DP_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["dataplan"]')
+        SUB_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["subscriber"]')
+        REG_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["registry"]')
+        NOT_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["notification"]')
+        NODE_PORT=$(echo "$ORG" | jq -r '.["sys-db-ports"]["node"]')
+
+        PGA_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["pg-admin"]')
+        RABBITMQ_P1=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-1"]')
+        RABBITMQ_P2=$(echo "$ORG" | jq -r '.["sys-ports"]["rbitmq-2"]')
+        PROMETHEUS=$(echo "$ORG" | jq -r '.["sys-ports"]["prometheus"]')
+        REGAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["registry"]')
+        NODEAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["node"]')
+        NODEGW_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["nodegw"]')
+        NOTAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["notification"]')
+        SUBAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["subscriber"]')
+        DPAPI_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["dataplan"]')
+        METRICS_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["metrics"]')
+        MSGCLIENT_PORT=$(echo "$ORG" | jq -r '.["sys-ports"]["msgclient"]')
+    }
+
     cleanup() {
         echo  "$TAG Cleaning up..."
         cd $root_dir
@@ -271,21 +302,47 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             fi
             
             if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
-                sed -i '' '/ports:/d' docker-compose.yml
-                sed -i '' '/- 8090:80/d' docker-compose.yml
-                sed -i '' '/- 5672:5672/d' docker-compose.yml
-                sed -i '' '/- 15672:15672/d' docker-compose.yml
-                sed -i '' '/- 8075:8080/d' docker-compose.yml
-                sed -i '' '/- 5405:5432/d' docker-compose.yml
-                sed -i '' '/- 5489:5432/d' docker-compose.yml
-                sed -i '' '/- 8036:8080/d' docker-compose.yml
-                sed -i '' '/- 8097:8080/d' docker-compose.yml
-                sed -i '' '/- 5632:5432/d' docker-compose.yml
-                sed -i '' '/- 8058:8080/d' docker-compose.yml
-                sed -i '' '/- 5412:5432/d' docker-compose.yml
-                sed -i '' '/- 8078:8080/d' docker-compose.yml
-                sed -i '' '/- 5404:5432/d' docker-compose.yml
-                sed -i '' '/- 8074:8080/d' docker-compose.yml
+                getSysPorts
+                INITCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-init-1)
+                NUCLEUSCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-nucleus-1)
+                INVENTORYCLIENT_HOST=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${MASTERORGNAME}-api-gateway-inventory-1)
+
+               if [ "$SYSTEM" == "services" ]; then
+                    sed -i '' "s/- 8090:80/- ${PGA_PORT}:80/g" docker-compose.yml # PG ADMIN
+                    sed -i '' "s/- 5672:5672/- ${RABBITMQ_P1}:5672/g" docker-compose.yml # RABBIT MQ P1
+                    sed -i '' "s/- 15672:15672/- ${RABBITMQ_P2}:15672/g" docker-compose.yml # RABBIT MQ P2
+                    continue
+                fi
+
+                sed -i '' "s/- 8075:8080/- ${REGAPI_PORT}:8080/g" docker-compose.yml # REGISTRY SYS APIGW
+                sed -i '' "s/- 8036:8080/- ${NODEAPI_PORT}:8080/g" docker-compose.yml # NODE SYS APIGW
+                sed -i '' "s/- 8097:8080/- ${NODEGW_PORT}:8080/g" docker-compose.yml # NODE SYS NODEGW
+                sed -i '' "s/- 8058:8080/- ${NOTAPI_PORT}:8080/g" docker-compose.yml # NOTIFICATION SYS APIGW
+                sed -i '' "s/- 8097:8080/- ${SUBAPI_PORT}:8080/g" docker-compose.yml # SUBSCRIBER SYS APIGW
+                sed -i '' "s/- 8074:8080/- ${DPAPI_PORT}:8080/g" docker-compose.yml # DATAPLAN SYS APIGW
+                sed -i '' "s/- 8067:8080/- ${METRICS_PORT}:8080/g" docker-compose.yml # METRICS SYS APIGW
+
+                sed -i '' "s/- 5405:5432/- ${REG_PORT}:5432/g" docker-compose.yml # REGISTRY SYS PG
+                sed -i '' "s/- 5489:5432/- ${NODE_PORT}:5432/g" docker-compose.yml # NODE SYS PG
+                sed -i '' "s/- 5632:5432/- ${NOT_PORT}:5432/g" docker-compose.yml # NOTIFICATION SYS PG
+                sed -i '' "s/- 5412:5432/- ${SUB_PORT}:5432/g" docker-compose.yml # SUBSCRIBER SYS PG
+                sed -i '' "s/- 5404:5432/- ${DP_PORT}:5432/g" docker-compose.yml # DATAPLAN SYS PG
+                sed -i '' "s/- 5407:5432/- ${MET_PORT}:5432/g" docker-compose.yml # METRICS SYS PG
+                
+                sed -i '' "s/api-gateway-init:8080/${INITCLIENT_HOST}:8080/g" docker-compose.yml
+                sed -i '' "s/api-gateway-nucleus:8080/${NUCLEUSCLIENT_HOST}:8080/g" docker-compose.yml
+                sed -i '' "s/api-gateway-inventory:8080/${INVENTORYCLIENT_HOST}:8080/g" docker-compose.yml
+
+                sed -i '' "s/9095/${MSGCLIENT_PORT}/g" docker-compose.yml
+                sed -i '' "s/5672/${RABBITMQ_P1}/g" docker-compose.yml
+                sed -i '' "s/9079/${PROMETHEUS}/g" docker-compose.yml
+            fi
+
+            if [[ $WITHSUBAUTH == false ]]; then
+                sed -i '' '/- 4446:4436/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4447:4437/d' docker-compose.yml # SUBSCRIBER MAILSERVER
+                sed -i '' '/- 4423:4423/d' docker-compose.yml # SUBSCRIBER AUTH
+                sed -i '' '/- 4424:4424/d' docker-compose.yml # SUBSCRIBER AUTH
             fi
         done
         cd $root_dir
@@ -331,12 +388,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             cd ../..
         fi
         if [[ " ${SYSTEM} " == " bff " ]]; then
-           cp .env.dev.example .env
-               echo ".env file created and content copied from .env.dev.example for bff"
+            cd console-bff
+            cp .env.dev.example .env
+            echo ".env file created and content copied from .env.dev.example for bff"
+            cd ..
         fi
         if [[ " ${SYSTEM} " == " console " ]]; then
-           cp .env.dev.example .env.local
-           echo ".env.local file created and content copied from .env.dev.example for console"
+            cd ../interfaces/console
+            cp .env.dev.example .env.local
+            echo ".env.local file created and content copied from .env.dev.example for console"
+            cd ../../systems
         fi
         
         SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
@@ -353,17 +414,16 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             ;;
 
         "dataplan")
-            # TODO: NEED TO BE FIXED
-            # sleep 2
-            # echo  "$TAG Add default baserate in dataplan..."
-            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/baserate"
-            # QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
-            # psql $DB_URI -c "$QUERY1"
+            sleep 2
+            echo  "$TAG Add default baserate in dataplan..."
+            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:${DP_PORT}/baserate"
+            QUERY1="INSERT INTO "base_rates" ("created_at","updated_at","deleted_at","uuid","country","provider","vpmn","imsi","sms_mo","sms_mt","data","x2g","x3g","x5g","lte","lte_m","apn","effective_at","end_at","sim_type","currency") VALUES ('2024-05-22 17:53:30.57','2024-05-22 17:53:30.57',NULL,'dd153d7f-d4aa-45e0-9e6a-0cc6407015ca','CD','OWS Tel','TTC',1,0,0,0,true,true,false,true,false,'Manual entry required','2024-06-10 00:00:00','2026-02-10 00:00:00',2,'Dollar')"
+            psql $DB_URI -c "$QUERY1"
 
-            # echo  "$TAG Set default markup..."
-            # DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5404/rate"
-            # QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
-            # psql $DB_URI -c "$QUERY2"
+            echo  "$TAG Set default markup..."
+            DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:${DP_PORT}/rate"
+            QUERY2="INSERT INTO "default_markups" ("created_at","updated_at","deleted_at","markup") VALUES ('2024-05-22 17:51:33.322','2024-05-22 17:51:33.322',NULL,1)"
+            psql $DB_URI -c "$QUERY2"
         esac
         cd ../
     done
@@ -377,28 +437,6 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             components=$(curl --location --silent --request PUT "http://${LOCAL_HOST_IP}:8077/v1/components/sync")
             echo "$TAG Org inventory synced up."
         fi
-
-        sleep 5
-
-        SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-        SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-        SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-        SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-        SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-        SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-        SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-        SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
-
-        echo "$TAG Registering systems URL in lookup db..."
-        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
-        psql $DB_URI -c "$SYS_QUERY_1"
-        psql $DB_URI -c "$SYS_QUERY_2"
-        psql $DB_URI -c "$SYS_QUERY_3"
-        psql $DB_URI -c "$SYS_QUERY_4"
-        psql $DB_URI -c "$SYS_QUERY_5"
-        psql $DB_URI -c "$SYS_QUERY_6"
-        psql $DB_URI -c "$SYS_QUERY_7"
-        psql $DB_URI -c "$SYS_QUERY_8"
     fi
 
     if [[ ! "$ORG_TYPE" == "$ORG_COMMUNITY" ]]; then
@@ -421,12 +459,20 @@ jq -c '.orgs[]' "$JSON_FILE" | while read -r ORG; do
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-controller-1
             docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-configurator-1
         fi
+        
         docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-bff-1
-
-        echo  "$TAG Updateing inventory..."
+        docker network connect ${ORGNAME}_ukama-net ${MASTERORGNAME}-org-1
+        docker network connect ${MASTERORGNAME}_ukama-net ${ORGNAME}-subscriber-auth-1
+        
+        echo  "$TAG Updateing inventory for ${ORGNAME}..."
         SQL_QUERY="UPDATE PUBLIC.components SET user_id = '$OWNERID';"
         DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5414/component"
         psql $DB_URI -t -A -c "$SQL_QUERY"
+        
+        sleep 3
+        SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://salman-org-subscriber-auth-1:4423' WHERE systems."name" = 'subscriber-auth'";
+        DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
+        psql $DB_URI -c "$SYS_QUERY_1"
     fi
 done
 

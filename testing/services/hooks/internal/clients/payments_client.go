@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -46,8 +45,7 @@ func NewPaymentsClient(h string) *paymentsClient {
 }
 
 func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error) {
-	log.Debugf("Listing payments matching: %v", queryString)
-
+	log.Infof("Listing payments matching: %v", queryString)
 	payments := &Payment{}
 
 	resp, err := p.R.Get(p.u.String() + PaymentEndpoint + queryString)
@@ -58,8 +56,9 @@ func (p *paymentsClient) ListPayments(queryString string) ([]*PaymentInfo, error
 	}
 
 	err = json.Unmarshal(resp.Body(), &payments)
+	log.Infof("Error %v", err)
 	if err != nil {
-		log.Tracef(deserializeLogMsg, "payments", err.Error())
+		log.Tracef(deserializeLogMsg, "Payments", err.Error())
 
 		return nil, fmt.Errorf(deserializeErrorMsg, "payments", err)
 	}
@@ -74,21 +73,23 @@ type Payment struct {
 }
 
 type PaymentInfo struct {
-	Id                   string     `json:"id,omitempty"`
-	ItemId               string     `json:"item_id,omitempty"`
-	ItemType             string     `json:"item_type,omitempty"`
-	AmountCents          int64      `json:"amount_cents,omitempty"`
-	DepositedAmountCents int64      `json:"deposited_amount_cents,omitempty"`
-	Currency             string     `json:"currency,omitempty"`
-	PaymentMethod        string     `json:"payment_method,omitempty"`
-	PaidAt               *time.Time `json:"paid_at,omitempty"`
-	PayerName            string     `json:"payer_name,omitempty"`
-	PayerEmail           string     `json:"payer_email,omitempty"`
-	PayerPhone           string     `json:"payer_phone,omitempty"`
-	Correspondent        string     `json:"correspondent,omitempty"`
-	Country              string     `json:"country,omitempty"`
-	Description          string     `json:"description,omitempty"`
-	Status               string     `json:"status,omitempty"`
-	FailureReason        string     `json:"faillure_reason,omitempty"`
-	CreatedAt            time.Time  `json:"created_at,omitempty"`
+	Id                   string `json:"id,omitempty"`
+	ItemId               string `json:"item_id,omitempty"`
+	ItemType             string `json:"item_type,omitempty"`
+	AmountCents          int64  `json:"amount_cents,omitempty"`
+	DepositedAmountCents int64  `json:"deposited_amount_cents,omitempty"`
+	Currency             string `json:"currency,omitempty"`
+	PaymentMethod        string `json:"payment_method,omitempty"`
+	PaidAt               string `json:"paid_at,omitempty"`
+	PayerName            string `json:"payer_name,omitempty"`
+	PayerEmail           string `json:"payer_email,omitempty"`
+	PayerPhone           string `json:"payer_phone,omitempty"`
+	Correspondent        string `json:"correspondent,omitempty"`
+	Country              string `json:"country,omitempty"`
+	Description          string `json:"description,omitempty"`
+	Status               string `json:"status,omitempty"`
+	FailureReason        string `json:"faillure_reason,omitempty"`
+	ExternalId           string `json:"external_id,omitempty"`
+	CreatedAt            string `json:"created_at,omitempty"`
+	Metadata             []byte `json:"metadata,omitempty"`
 }

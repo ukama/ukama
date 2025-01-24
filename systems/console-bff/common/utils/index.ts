@@ -10,6 +10,8 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
+import { NotificationsResDto } from "../../subscriptions/resolvers/types";
+import { CONSOLE_APP_URL } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -18,7 +20,6 @@ import {
 } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
-import { addInStore, getFromStore } from "../storage";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
@@ -37,7 +38,6 @@ const parseHeaders = (reqHeader: any): THeaders => {
     orgName: "",
   };
   if (reqHeader.get("introspection") === "true") return headers;
-
   if (reqHeader.get("x-session-token") ?? reqHeader.get("cookie")) {
     if (reqHeader.get("x-session-token")) {
       headers.auth.Authorization = reqHeader["x-session-token"] as string;
@@ -56,7 +56,7 @@ const parseHeaders = (reqHeader: any): THeaders => {
       if (t !== "") {
         headers.token = t.replace("token=", "");
       } else {
-        throw new HTTP401Error(Messages.HEADER_ERR_AUTH);
+        throw new HTTP401Error(Messages.TOKEN_HEADER_NOT_FOUND);
       }
     }
   } else {
@@ -128,10 +128,16 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
         return ["uptime_trx", "temperature_trx", "temperature_rfe"];
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
-      else return ["temperature_trx", "temperature_com"];
+      else return ["uptime_trx", "temperature_trx", "temperature_com"];
     case GRAPHS_TYPE.NETWORK:
       if (!nodeId.includes(NODE_TYPE.anode))
-        return ["rrc", "rlc", "erab", "throughputuplink", "throughputdownlink"];
+        return [
+          "network_latency",
+          "network_packet_loss",
+          "network_overall_status",
+          "network_throughput_up",
+          "network_throughput_down",
+        ];
       else return [];
     case GRAPHS_TYPE.RESOURCES:
       if (nodeId.includes(NODE_TYPE.hnode))
@@ -149,7 +155,7 @@ const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
           "memory_com_used",
         ];
     case GRAPHS_TYPE.RADIO:
-      if (nodeId.includes(NODE_TYPE.hnode))
+      if (nodeId.includes(NODE_TYPE.tnode))
         return ["tx_power", "rx_power", "pa_power"];
       else return [];
     case GRAPHS_TYPE.SUBSCRIBERS:
@@ -227,10 +233,14 @@ const getSystemNameByService = (service: string): string => {
       return "init";
     case "billing":
       return "billing";
+    case "payments":
+      return "payments";
     case "metrics":
       return "metrics";
     case "planning-tool":
       return "planning";
+    case "nodeState":
+      return "node";
     default:
       return "";
   }
@@ -242,34 +252,27 @@ const getBaseURL = async (
   store: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  if (store) {
-    const baseURL = await getFromStore(store, `${orgName}-${sysName}`);
-    if (baseURL) {
-      logger.info(
-        `Base URL found in store for ${orgName}-${sysName}: ${baseURL}`
-      );
-      return {
-        status: 200,
-        message: baseURL,
-      };
-    }
-  }
+  logger.info(`${store.get("org")}`);
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
-    const intRes = await initAPI.getSystem(orgName, sysName);
-    const url = intRes.url ? intRes.url : `http://${intRes.ip}:${intRes.port}`;
-    if (store) await addInStore(store, `${orgName}-${sysName}`, url);
-    return {
-      status: 200,
-      message: url,
-    };
-  } else {
-    return {
-      status: 500,
-      message: "Unable to reach system",
-    };
+    try {
+      const intRes = await initAPI.getSystem(orgName, sysName);
+      const url = intRes.url
+        ? intRes.url
+        : `http://${intRes.ip}:${intRes.port}`;
+      return {
+        status: 200,
+        message: url,
+      };
+    } catch (e) {
+      logger.error(`Error getting base URL for ${orgName}-${sysName}: ${e}`);
+    }
   }
+  return {
+    status: 500,
+    message: "Unable to reach system",
+  };
 };
 
 const csvToBase64 = (filePath: string) => {
@@ -293,8 +296,36 @@ const getScopesByRole = (userRole: string): Array<NOTIFICATION_SCOPE> => {
   return RoleToNotificationScopes[roleType] ?? [];
 };
 
+type TEventKeyToAction = {
+  title: string;
+  action: string;
+};
+
+const eventKeyToAction = (
+  key: string,
+  data: NotificationsResDto
+): TEventKeyToAction => {
+  switch (key) {
+    case "EventNodeOnline":
+      return {
+        title: "Configure node",
+        action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
+      };
+
+    case "EventInvoiceGenerate":
+      return {
+        title: "Ukama bill ready. View now.",
+        action: `${CONSOLE_APP_URL}/manage/billing`,
+      };
+
+    default:
+      return { title: "Network Updated", action: "updated" };
+  }
+};
+
 export {
   csvToBase64,
+  eventKeyToAction,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,

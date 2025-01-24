@@ -22,7 +22,9 @@
     "invitation",
     "member",
     "init",
-    "notification"
+    "controller",
+    "notification",
+    "payment"
   ],
   "compilerOptions": {
     /* Basic Options */

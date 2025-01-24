@@ -19,6 +19,10 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
+/* utils.c */
+extern TransferState convert_str_to_tx_state(char *state);
+extern char *convert_tx_state_to_str(TransferState state);
+
 void json_log(json_t *json) {
 
     char *str = NULL;
@@ -408,15 +412,4 @@ int serialize_result(WRespType type, char *str, json_t **json) {
   }
 
   return TRUE;
-}
-
-static void log_json(json_t *json) {
-
-  char *str = NULL;
-
-  str = json_dumps(json, 0);
-  if (str) {
-    log_debug("json str: %s", str);
-    free(str);
-  }
 }

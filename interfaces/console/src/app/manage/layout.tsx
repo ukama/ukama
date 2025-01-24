@@ -6,83 +6,204 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-
+import React from 'react';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/BackButton';
 import { useAppContext } from '@/context';
 import { MANAGE_MENU_LIST } from '@/routes';
 import '@/styles/console.css';
 import colors from '@/theme/colors';
-import { Container, Divider, Paper, Stack, Typography } from '@mui/material';
+import {
+  Container,
+  Divider,
+  Paper,
+  Stack,
+  SvgIconTypeMap,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
+import { useGetNetworksQuery } from '@/client/graphql/generated';
 
-const ManageMenu = () => {
-  const pathname = usePathname();
-  const { isDarkMode } = useAppContext();
-  return (
-    <Paper
+interface MenuItemProps {
+  id: string;
+  icon: OverridableComponent<SvgIconTypeMap>;
+  name: string;
+  path: string;
+  isActive: boolean;
+  isDarkMode: boolean;
+  isCompactView: boolean;
+}
+
+interface MenuSectionProps {
+  isCompactView: boolean;
+  pathname: string;
+  isDarkMode: boolean;
+}
+
+interface ManageLayoutProps {
+  children: React.ReactNode;
+}
+
+const MenuItem: React.FC<MenuItemProps> = ({
+  id,
+  icon: Icon,
+  name,
+  path,
+  isActive,
+  isDarkMode,
+  isCompactView,
+}) => (
+  <Link
+    href={path}
+    prefetch={id === 'manage-members'}
+    style={{
+      borderRadius: 4,
+      textDecoration: 'none',
+      backgroundColor: isActive ? colors.white38 : 'transparent',
+      minWidth: isCompactView ? 120 : 'auto',
+      flex: isCompactView ? '0 0 auto' : undefined,
+    }}
+  >
+    <Stack
+      pl={{ xs: 1, md: 2 }}
+      pr={{ xs: 2, md: 4 }}
+      py={1}
+      spacing={{ xs: 1, md: 2 }}
+      alignItems={{ xs: 'center', md: 'flex-start' }}
+      direction={{ xs: 'column', md: 'row' }}
       sx={{
-        width: '436px',
-        height: 'fit-content',
-        display: 'flex',
-        borderRadius: '10px',
-        maxWidth: 'fit-content',
+        '& svg': {
+          color: isActive
+            ? colors.black
+            : isDarkMode
+              ? colors.black10
+              : colors.black54,
+        },
       }}
     >
-      <Stack px={2} py={3} spacing={1.5} direction="column">
-        {MANAGE_MENU_LIST.map(({ id, icon: Icon, name, path }) => (
-          <Link
-            key={id}
-            href={path}
-            prefetch={id === 'manage-members'}
-            style={{
-              borderRadius: 4,
-              textDecoration: 'none',
-              backgroundColor:
-                pathname === path ? colors.white38 : 'transparent',
+      <Icon
+        sx={{
+          color: isActive
+            ? isDarkMode
+              ? colors.white
+              : colors.vulcan100
+            : isDarkMode
+              ? colors.white70
+              : colors.vulcan100,
+        }}
+      />
+      <Typography
+        variant="body1"
+        sx={{ color: isActive ? colors.black : colors.vulcan }}
+      >
+        {name}
+      </Typography>
+    </Stack>
+  </Link>
+);
+
+const MenuSection: React.FC<MenuSectionProps> = ({
+  isCompactView,
+  pathname,
+  isDarkMode,
+}) => (
+  <Stack
+    spacing={1}
+    sx={{
+      width: '100%',
+      flexDirection: isCompactView ? 'row' : 'column',
+      overflowX: isCompactView ? 'auto' : 'visible',
+      WebkitOverflowScrolling: 'touch',
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': { display: 'none' },
+      gap: isCompactView ? 2 : 1,
+    }}
+  >
+    {MANAGE_MENU_LIST.map(({ id, icon, name, path }) => (
+      <MenuItem
+        key={id}
+        id={id}
+        icon={icon}
+        name={name}
+        path={path}
+        isActive={pathname === path}
+        isDarkMode={isDarkMode}
+        isCompactView={isCompactView}
+      />
+    ))}
+  </Stack>
+);
+
+const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
+  const theme = useTheme();
+  const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
+  const pathname = usePathname();
+  const { isDarkMode, setNetwork } = useAppContext();
+
+  useGetNetworksQuery({
+    fetchPolicy: 'cache-first',
+    onCompleted: (data) => {
+      if (data.getNetworks.networks.length > 0) {
+        setNetwork({
+          id: data.getNetworks.networks[0].id,
+          name: data.getNetworks.networks[0].name,
+        });
+      }
+    },
+  });
+  return (
+    <Container maxWidth={'xl'} sx={{ my: { xs: 2, md: 8 } }}>
+      <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>
+        <Stack direction="row" spacing={10} alignItems="center">
+          <BackButton title="BACK TO CONSOLE" />
+          <Typography
+            sx={{
+              fontSize: { xs: '1.2rem', md: '1.5rem' },
+            }}
+          >
+            Settings
+          </Typography>
+        </Stack>
+
+        <Divider />
+
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={{ xs: 2, md: 4 }}
+        >
+          <Paper
+            sx={{
+              display: 'flex',
+              borderRadius: '10px',
+              width: { xs: '100%', md: '300px' },
+              height: 'fit-content',
+              overflowX: isCompactView ? 'auto' : 'visible',
             }}
           >
             <Stack
-              pl={2}
-              pr={4}
-              py={1}
-              spacing={2}
-              direction={'row'}
-              alignItems={'flex-start'}
+              px={{ xs: 1.4, md: 1 }}
+              py={{ xs: 1.5, md: 3 }}
+              spacing={{ xs: 0.5, md: 1.5 }}
+              direction={{ xs: 'row', md: 'column' }}
+              width="100%"
+              sx={{
+                overflowX: isCompactView ? 'auto' : 'visible',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+              }}
             >
-              <Icon
-                sx={{
-                  color: isDarkMode ? colors.white70 : colors.vulcan100,
-                }}
+              <MenuSection
+                isCompactView={isCompactView}
+                pathname={pathname}
+                isDarkMode={isDarkMode}
               />
-              <Typography
-                variant="body1"
-                fontWeight={400}
-                color={colors.vulcan100}
-              >
-                {name}
-              </Typography>
             </Stack>
-          </Link>
-        ))}
-      </Stack>
-    </Paper>
-  );
-};
-
-const ManageLayout = ({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) => {
-  return (
-    <Container maxWidth={'xl'} sx={{ my: 8 }}>
-      <Stack direction={'column'} spacing={4}>
-        <BackButton title="BACK TO CONSOLE" />
-        <Divider />
-        <Stack direction={'row'} spacing={4}>
-          <ManageMenu />
+          </Paper>
           {children}
           <AppSnackbar />
         </Stack>

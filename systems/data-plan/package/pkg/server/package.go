@@ -130,34 +130,34 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 
 	formattedFrom, err := validation.ValidateDate(req.From)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 	if err := validation.IsFutureDate(formattedFrom); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 
 	}
 
 	formattedTo, err := validation.ValidateDate(req.To)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 	if err := validation.IsFutureDate(formattedTo); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 
 	}
 	if err := validation.IsAfterDate(formattedTo, formattedFrom); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 
 	}
 
 	from, err := validation.FromString(formattedFrom)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 
 	to, err := validation.FromString(formattedTo)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "Error: %s", err.Error())
 	}
 
 	pkgUuid := uuid.NewV4()

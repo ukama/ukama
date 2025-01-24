@@ -8,12 +8,13 @@
 'use client';
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
+import { ONBOARDING_FLOW } from '@/constants';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { Button, Paper, Skeleton, Stack, Typography } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Button, Stack, Typography } from '@mui/material';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import LoadingSkelton from './skelton';
 
 interface INodeConfigure {
   params: {
@@ -24,10 +25,11 @@ interface INodeConfigure {
 const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
-  const stepTracker = searchParams.get('step') ?? '1';
+  const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
@@ -38,6 +40,11 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     isLoading: addressLoading,
     fetchAddress,
   } = useFetchAddress();
+
+  useEffect(() => {
+    if (latlng[0] === 0 && latlng[1] === 0)
+      router.push(`/configure/check?flow=${flow}`);
+  }, []);
 
   useEffect(() => {
     if (latlng[0] !== 0 && latlng[1] !== 0) handleFetchAddress();
@@ -54,65 +61,59 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     await fetchAddress(latlng[0], latlng[1]);
   };
 
-  const handleBack = () => router.back();
-
   const setQueryParam = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
-    window.history.pushState(null, '', `?${params.toString()}`);
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
+  const handleBack = () => {
+    router.back();
   };
 
   const handleNext = () => {
     if (address) {
-      router.push(`/configure/node/${id}/site?${searchParams.toString()}`);
+      router.push(`/configure/node/${id}/site/name?${searchParams.toString()}`);
     }
   };
 
+  if (isLoading || addressLoading) <LoadingSkelton />;
+
   return (
-    <Paper elevation={0} sx={{ px: 4, py: 2 }}>
+    <Stack spacing={2} overflow={'scroll'}>
       <Stack direction={'row'}>
-        <Typography variant="h6">{'Install site'}</Typography>
-        <Typography
-          variant="h6"
-          fontWeight={400}
-          sx={{
-            color: colors.black70,
-            display: stepTracker !== '1' ? 'none' : 'flex',
-          }}
-        >
-          <i>&nbsp;- optional</i>&nbsp;(3/6)
+        <Typography variant="h4" fontWeight={500}>
+          Site installed
         </Typography>
       </Stack>
 
-      <Stack mt={3} mb={3} direction={'column'} spacing={2}>
-        {isLoading ? (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <Skeleton variant="circular" width={24} height={24} />
-            <Skeleton variant="text" width={200} height={20} />
-          </Stack>
-        ) : (
-          <Stack direction="row" alignItems={'center'} spacing={1}>
-            <CheckCircleIcon sx={{ color: colors.green }} />
-            <Typography variant={'body1'} sx={{ fontWeight: 700 }}>
-              Your site is online
-            </Typography>
-          </Stack>
-        )}
+      <Stack mt={3} mb={3} direction={'column'} spacing={3}>
+        <Typography variant={'body1'} fontWeight={400}>
+          You have successfully installed your site, and it is online now!
+          Please check to make sure you are satisfied with the location details.
+          <br />
+          <br />
+        </Typography>
 
-        {isLoading || addressLoading ? (
-          <Skeleton variant="rounded" width={'100%'} height={128} />
-        ) : (
-          <SiteMapComponent
-            posix={[latlng[0], latlng[1]]}
-            address={address}
-            height={'128px'}
-          />
-        )}
+        <SiteMapComponent
+          posix={[latlng[0], latlng[1]]}
+          address={address}
+          height={'128px'}
+        />
 
-        <LField label="Node" value={id} />
-        <LField label="SITE LOCATION" value={address} />
+        <LField label="Node Id" value={id} />
+        <LField
+          label="SITE LOCATION"
+          value={`${address} [${latlng[0]}, ${latlng[1]}]`}
+        />
       </Stack>
-      <Stack mb={1} direction={'row'} justifyContent={'space-between'}>
+
+      <Stack
+        direction={'row'}
+        pt={{ xs: 4, md: 6 }}
+        justifyContent={'space-between'}
+      >
         <Button
           variant="text"
           onClick={handleBack}
@@ -124,7 +125,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           Next
         </Button>
       </Stack>
-    </Paper>
+    </Stack>
   );
 };
 

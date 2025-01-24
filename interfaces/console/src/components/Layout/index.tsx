@@ -7,13 +7,14 @@
  */
 
 import { NetworkDto } from '@/client/graphql/generated';
-import { NotificationsResDto } from '@/client/graphql/generated/subscriptions';
+import { NotificationsRes } from '@/client/graphql/generated/subscriptions';
 import { useAppContext } from '@/context';
 import { getTitleFromPath } from '@/utils';
 import { Divider, Stack, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
+import UDrawer from './Drawer';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
@@ -25,8 +26,8 @@ interface ILayoutProps {
   children: React.ReactNode;
   handleAddNetwork: Function;
   handleNetworkChange: Function;
-  notifications: NotificationsResDto[];
-  handleNotificationRead: (id: string) => void;
+  notifications: NotificationsRes;
+  handleAction: (action: string, id: string) => void;
 }
 
 const isHaveId = (pathname: string) => {
@@ -40,10 +41,10 @@ const AppLayout = ({
   isLoading,
   isDarkMode,
   placeholder,
+  handleAction,
+  notifications,
   handleAddNetwork,
   handleNetworkChange,
-  notifications,
-  handleNotificationRead,
 }: ILayoutProps) => {
   const pathname = usePathname();
   const id = isHaveId(pathname) ? pathname.split('/')[3] : '';
@@ -69,35 +70,46 @@ const AppLayout = ({
     ? selectedDefaultSite
     : id;
   return (
-    <Stack overflow={'hidden'}>
+    <Stack direction={'column'} height={'100%'}>
       <Header
         isOpen={open}
         isLoading={isLoading}
         onNavigate={onNavigate}
         notifications={notifications}
-        handleNotificationRead={handleNotificationRead}
+        handleAction={handleAction}
       />
-      <Stack direction={'row'}>
-        <Sidebar
-          isOpen={open}
-          isDarkMode={isDarkMode}
-          placeholder={placeholder}
-          networks={networks ?? []}
-          handleAddNetwork={handleAddNetwork}
-          handleNetworkChange={handleNetworkChange}
-        />
+      <Stack height={'100%'} direction={'row'} spacing={2}>
+        {!matches && (
+          <Sidebar
+            isOpen={open}
+            isDarkMode={isDarkMode}
+            placeholder={placeholder}
+            networks={networks ?? []}
+            handleAddNetwork={handleAddNetwork}
+            handleNetworkChange={handleNetworkChange}
+          />
+        )}
         <Stack
-          mr={2}
-          ml={30}
-          mt={8}
-          p={2}
           width={'100%'}
           height={'100%'}
+          overflow={'hidden'}
           direction={'column'}
+          pt={{ xs: 1, md: 2 }}
+          px={{ xs: 2, md: 3 }}
         >
-          <Typography variant="h5" fontWeight={400} mb={0.8}>
-            {getTitleFromPath(pathname, dynamicId)}
-          </Typography>
+          <Stack direction={'row'} spacing={{ xs: 2, md: 0 }}>
+            {matches && (
+              <UDrawer
+                placeholder={placeholder}
+                networks={networks ?? []}
+                handleAddNetwork={handleAddNetwork}
+                handleNetworkChange={handleNetworkChange}
+              />
+            )}
+            <Typography variant="h5" fontWeight={400}>
+              {getTitleFromPath(pathname, dynamicId)}
+            </Typography>
+          </Stack>
           <Divider sx={{ mb: 1 }} />
           {children}
         </Stack>

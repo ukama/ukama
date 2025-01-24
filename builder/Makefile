@@ -6,7 +6,8 @@
 
 include ../nodes/ukamaOS/config.mk
 
-TARGET_EXEC = builder
+BUILDER_EXEC = builder
+APP_BUILDER_EXEC = app_builder
 
 UKAMAOS_ROOT = ../nodes/ukamaOS/
 
@@ -23,7 +24,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 # Packages needed to compile target
-VENDOR_PKG = jansson ulfius
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+	VENDOR_PKG=
+else
+	VENDOR_PKG = jansson ulfius
+endif
 PLATFORM   = platform
 
 # Setting up various compile and link flags
@@ -38,33 +44,50 @@ CFLAGS+=-I./inc
 CFLAGS+=-I./inc/common/
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
+CFLAGS+=$(if $(ALPINE_BUILD),-DALPINE_BUILD=$(ALPINE_BUILD))
 
-LDFLAGS+=-L${VENDOR_LIB} 
+LDFLAGS+=-L$(VENDOR_LIB) 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 # Libraries needed
-ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding yder library for Alpine build)
+else
+    ULFIUS_LIB+=-lyder
+endif
 LIBS = $(ULFIUS_LIB)
 LIBS+=-ljansson
 LIBS+=-lusys
+LIBS+=-ltoml
 
 # Soruce files
-CFILES   = $(wildcard ./src/*.c)
+CFILES   = $(shell find ./src -name "*.c" ! -name "*_app.c")
 OBJFILES = $(CFILES:.c=.o)
+
+APP_CFILES   = $(wildcard ./src/*_app.c)
+APP_OBJFILES = $(APP_CFILES:.c=.o)
 
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC)
+.PHONY: all clean
 
-starter: $(TARGET_EXEC)
-
-$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+$(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
+	$(XGCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
+ifeq ($(ALPINE_BUILD),1)
+$(APP_BUILDER_EXEC): $(PLATFORM) $(APP_OBJFILES)
+	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+else
+$(APP_BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(APP_OBJFILES)
+	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+endif
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
@@ -74,7 +97,7 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: builder
+all: builder app_builder
 
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -f $(BUILDER_EXEC) $(APP_BUILDER_EXEC) $(OBJFILES) $(APP_OBJFILES)

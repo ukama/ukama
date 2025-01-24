@@ -24,10 +24,6 @@ set_env() {
     export ORGNAME=$(jq -r '.deploy.env.orgname' "$json_file")
     export ORGID=$(jq -r '.deploy.env.orgid' "$json_file")
     export KEY=$(jq -r '.deploy.env.key' "$json_file")
-    export MAILERHOST=$(jq -r '.deploy.env.mailer_host' "$json_file")
-    export MAILERPORT=$(jq -r '.deploy.env.mailer_port' "$json_file")
-    export MAILERUSERNAME=$(jq -r '.deploy.env.mailer_username' "$json_file")
-    export MAILERPASSWORD=$(jq -r '.deploy.env.mailer_password' "$json_file")
     export LAGOAPIKEY=$(jq -r '.deploy.env.lago_api_key' "$json_file")
     export LOCAL_HOST_IP=$(jq -r '.deploy.env.local_host_ip' "$json_file")
 }

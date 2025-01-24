@@ -10,7 +10,8 @@ import {
   PackageDto,
   useAddPackageMutation,
   useDeletePackageMutation,
-  useGetCurrencySymbolQuery,
+  useGetCurrencySymbolLazyQuery,
+  useGetNetworkQuery,
   useGetPackagesQuery,
   useUpdatePacakgeMutation,
 } from '@/client/graphql/generated';
@@ -21,6 +22,7 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
+import { CreatePlanType, DataUnitType } from '@/types';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Grid, Paper } from '@mui/material';
 import { useState } from 'react';
@@ -28,29 +30,42 @@ import { useState } from 'react';
 const INIT_DATAPLAN = {
   id: '',
   name: '',
-  dataVolume: 0,
-  dataUnit: '',
-  amount: 0,
-  duration: 0,
+  country: '',
+  duration: '',
+  currency: '',
+  amount: undefined,
+  dataVolume: undefined,
+  dataUnit: DataUnitType.GigaBytes,
 };
 
 const Page = () => {
   const [data, setData] = useState<any>([]);
-  const { metaInfo, setSnackbarMessage } = useAppContext();
-  const [dataplan, setDataplan] = useState(INIT_DATAPLAN);
+  const { network, user, setSnackbarMessage } = useAppContext();
+  const [dataplan, setDataplan] = useState<CreatePlanType>(INIT_DATAPLAN);
   const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
-  const { data: currencyData } = useGetCurrencySymbolQuery({
-    fetchPolicy: 'cache-and-network',
+  const [getCurrencySymbol, { data: currencyData }] =
+    useGetCurrencySymbolLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'currency-info-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
+
+  const { data: networkData } = useGetNetworkQuery({
     variables: {
-      code: metaInfo.currency,
+      networkId: network.id,
     },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'currency-info-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
+    onCompleted: (data) => {
+      getCurrencySymbol({
+        variables: {
+          code: user.currency,
+        },
       });
     },
   });
@@ -100,10 +115,7 @@ const Page = () => {
     useDeletePackageMutation({
       onCompleted: () => {
         getDataPlans().then((res) => {
-          setData((prev: any) => ({
-            ...prev,
-            dataPlan: res?.data?.getPackages.packages ?? [],
-          }));
+          setData(res?.data?.getPackages.packages ?? []);
         });
         setSnackbarMessage({
           id: 'delete-data-plan',
@@ -143,26 +155,42 @@ const Page = () => {
       },
     });
 
-  const handleDataPlanAction = (action: string) => {
-    if (action === 'add') {
+  const handleAddDataPlanAction = () => {
+    if (user.currency) {
+      setDataplan(INIT_DATAPLAN);
+      setIsDataPlan(true);
+    } else {
+      setSnackbarMessage({
+        id: 'network-not-selected',
+        message: 'Something went wrong, please try again',
+        type: 'warning' as AlertColor,
+        show: true,
+      });
+    }
+  };
+
+  const handleDataPlanAction = (action: string, values: CreatePlanType) => {
+    if (action === 'add' && values.amount && values.dataVolume) {
       addDataPlan({
         variables: {
           data: {
-            name: dataplan.name,
-            amount: dataplan.amount,
-            dataUnit: dataplan.dataUnit,
-            dataVolume: dataplan.dataVolume,
-            duration: dataplan.duration,
+            name: values.name,
+            amount: values?.amount,
+            dataUnit: values.dataUnit,
+            country: user.country ?? '',
+            currency: user.currency ?? '',
+            dataVolume: values?.dataVolume,
+            duration: parseInt(values.duration),
           },
         },
       });
     } else if (action === 'update') {
       updatePackage({
         variables: {
-          packageId: dataplan.id,
+          packageId: values.id,
           data: {
-            name: dataplan.name,
             active: true,
+            name: values.name,
           },
         },
       });
@@ -184,15 +212,16 @@ const Page = () => {
       setDataplan({
         id: id,
         name: d?.name ?? '',
-        duration: d?.duration ?? 0,
-        dataUnit: d?.dataUnit ?? '',
+        duration: d?.duration.toString() ?? '',
         dataVolume: d?.dataVolume ?? 0,
+        country: d?.country ?? '',
+        currency: d?.currency ?? '',
         amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
+        dataUnit: d?.dataUnit as DataUnitType,
       });
       setIsDataPlan(true);
     }
   };
-
   return (
     <LoadingWrapper
       width={'100%'}
@@ -203,16 +232,16 @@ const Page = () => {
         updatePkgLoading ??
         deletePkgLoading
       }
-      height={'calc(100vh - 400px)'}
+      height={'calc(100vh - 244px)'}
     >
       <Paper
         sx={{
-          py: 3,
-          px: 4,
+          py: { xs: 1.5, md: 3 },
+          px: { xs: 2, md: 4 },
           overflow: 'scroll',
           borderRadius: '10px',
           bgcolor: colors.white,
-          height: 'calc(100vh - 400px)',
+          height: '100%',
         }}
       >
         <Box sx={{ width: '100%', height: '100%' }}>
@@ -220,10 +249,7 @@ const Page = () => {
             showSearch={false}
             title={'Data plans'}
             buttonTitle={'CREATE DATA PLAN'}
-            handleButtonAction={() => {
-              setDataplan(INIT_DATAPLAN);
-              setIsDataPlan(true);
-            }}
+            handleButtonAction={handleAddDataPlanAction}
           />
           <br />
           {data.length === 0 ? (

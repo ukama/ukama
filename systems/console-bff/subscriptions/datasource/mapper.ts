@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
@@ -42,7 +43,6 @@ export const parseLatestMetricRes = (
     return {
       success: true,
       msg: "success",
-      orgId: data.metric.org,
       nodeId: args.nodeId,
       type: args.type,
       value: data.value,
@@ -59,7 +59,6 @@ export const parseMetricRes = (res: any, type: string): MetricRes => {
       type: type,
       success: true,
       msg: "success",
-      orgId: data.metric.org,
       nodeId: data.metric.nodeid,
       values: fixTimestampInMetricData(data.values),
     };
@@ -80,7 +79,6 @@ export const parseNodeMetricRes = (
         type: args.type,
         success: true,
         msg: "success",
-        orgId: result[0].metric.org,
         nodeId: result[0].metric.nodeid,
         values: fixTimestampInMetricData(result[0].values),
       }
@@ -114,7 +112,6 @@ export const parsePromethRes = (
       type: args.type,
       success: true,
       msg: "success",
-      orgId: metric.metric.org,
       nodeId: metric.metric.nodeid,
       values: fixTimestampInMetricData(metric.values),
     };
@@ -124,15 +121,19 @@ export const parsePromethRes = (
 export const parseNotification = (
   notification: NotificationsAPIResDto
 ): NotificationsResDto => {
-  return {
+  const n: NotificationsResDto = {
     id: notification.id,
     type: notification.type,
     scope: notification.scope,
     title: notification.title,
     isRead: notification.is_read,
+    eventKey: notification.event_key,
     createdAt: notification.created_at,
+    resourceId: notification.resource_id,
     description: notification.description,
   };
+  n.redirect = eventKeyToAction(notification.event_key, n);
+  return n;
 };
 
 export const parseNotificationsRes = (

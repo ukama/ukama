@@ -10,14 +10,16 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/notify/internal"
 	"github.com/ukama/ukama/systems/node/notify/internal/db"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
+
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -25,25 +27,15 @@ import (
 type NotifiyEventServer struct {
 	orgName        string
 	notifyRepo     db.NotificationRepo
-	listenerRoutes map[string]struct{}
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, routes []string) *NotifiyEventServer {
-
-	pRoutes := msgbus.PrepareRoutes(orgName, routes)
-	r := make(map[string]struct{}, len(routes))
-
-	for _, route := range pRoutes {
-		r[route] = struct{}{}
-	}
-
+func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient) *NotifiyEventServer {
 	return &NotifiyEventServer{
 		orgName:        orgName,
 		notifyRepo:     nRepo,
-		listenerRoutes: r,
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
 	}
@@ -51,38 +43,116 @@ func NewNotifyEventServer(orgName string, nRepo db.NotificationRepo, msgBus mb.M
 
 func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+	switch e.RoutingKey {
 
-	if _, ok := n.listenerRoutes[e.RoutingKey]; !ok {
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventNodeOnline]
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeOnlineEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventNodeOffline]
+		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeOfflineEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
+		c := evt.EventToEventConfig[evt.EventNodeCreate]
+		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeCreateEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
-
-		return nil, nil
-	}
-
-	msg, err := n.unmarshalNotificationSentEvent(e.Msg)
-	if err != nil {
-		return nil, err
-	}
-
-	err = n.handleNotificationSentEvent(e.RoutingKey, msg)
-	if err != nil {
-		return nil, err
 	}
 
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NotifiyEventServer) unmarshalNotificationSentEvent(msg *anypb.Any) (*epb.Notification, error) {
-	p := &epb.Notification{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal notification created message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
+func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, name string) error {
+	eventData := map[string]interface{}{
+		"value": name,
 	}
-	return p, nil
+	data, err := json.Marshal(eventData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event data: %v", err)
+	}
+
+	return add(
+		msg.NodeId,
+		string(db.Low),
+		db.NotificationType("event").String(),
+		"mesh",
+		data,
+		1,
+		1,
+		n.notifyRepo,
+		n.msgbus,
+		n.baseRoutingKey,
+	)
+
 }
 
-func (n *NotifiyEventServer) handleNotificationSentEvent(key string, msg *epb.Notification) error {
-	return add(msg.NodeId, msg.Severity, msg.Type, msg.ServiceName,
-		msg.Details, msg.Status, msg.Time, n.notifyRepo, n.msgbus, n.baseRoutingKey)
+func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCreate, name string) error {
+	eventData := map[string]interface{}{
+		"value": name,
+	}
+
+	data, err := json.Marshal(eventData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event data: %v", err)
+	}
+
+	return add(
+		msg.NodeId,
+		string(db.Low),
+		db.NotificationType("event").String(),
+		"registry",
+		data,
+		1,
+		1,
+		n.notifyRepo,
+		n.msgbus,
+		n.baseRoutingKey,
+	)
+}
+
+func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, name string) error {
+	eventData := map[string]interface{}{
+		"value": name,
+	}
+
+	data, err := json.Marshal(eventData)
+	if err != nil {
+		return fmt.Errorf("failed to marshal event data: %v", err)
+	}
+
+	return add(
+		msg.NodeId,
+		string(db.Low),
+		db.NotificationType("event").String(),
+		"mesh",
+		data,
+		1,
+		1,
+		n.notifyRepo,
+		n.msgbus,
+		n.baseRoutingKey,
+	)
 }

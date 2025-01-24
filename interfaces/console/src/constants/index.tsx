@@ -5,14 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Sim_Types } from '@/client/graphql/generated';
-import { Role_Type } from '@/client/graphql/generated/subscriptions';
+import { Role_Type, Sim_Types } from '@/client/graphql/generated';
+import { colors } from '@/theme';
 import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { DataTableWithOptionColumns } from './tableColumns';
 
+export const NETWORK_FLOW = 'net';
+export const ONBOARDING_FLOW = 'onb';
+export const INSTALLATION_FLOW = 'ins';
+export const CHECK_SITE_FLOW = 'chk';
 const DRAWER_WIDTH = 200;
 const APP_VERSION = 'v0.0.1';
 const COPY_RIGHTS = 'Copyright © Ukama Inc.';
@@ -44,9 +48,7 @@ const SITE_CONFIG_STEPS = [
 ];
 export const MEMBER_ROLES = [
   { id: 1, label: 'Administrator', value: Role_Type.RoleAdmin },
-  { id: 2, label: 'Vendor', value: Role_Type.RoleVendor },
-  { id: 3, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
-  { id: 4, label: 'User', value: Role_Type.RoleUser },
+  { id: 2, label: 'Network owner', value: Role_Type.RoleNetworkOwner },
 ];
 export const SITE_PLANNING_AP_OPTIONS = [
   { id: 1, label: 'Tower Node + 1 Amplifier Unit', value: 'ONE_TO_ONE' },
@@ -101,10 +103,37 @@ const TIME_FILTER = [
 
 export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'network', label: 'network', minWidth: 180 },
-  { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
+  { id: 'email', label: 'Email', minWidth: 180 },
+  // { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
+];
+export const BILLING_TABLE_COLUMNS: ColumnsWithOptions[] = [
+  {
+    id: 'billing',
+    label: 'Billing period',
+    minWidth: 100,
+  },
+  {
+    id: 'posted',
+    label: 'Posted',
+    minWidth: 100,
+  },
+  {
+    id: 'description',
+    label: 'Description',
+    minWidth: 100,
+  },
+  {
+    id: 'payment',
+    label: 'Payment',
+    minWidth: 100,
+  },
+  {
+    id: 'pdf',
+    label: 'Pdf',
+    minWidth: 100,
+  },
 ];
 export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   {
@@ -114,32 +143,55 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
     route: 'edit-sub',
   },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
-  { id: 3, Icon: null, title: 'Pause service', route: 'pause-service' },
-  { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
+];
+
+export const BILLING_HISTORY_TABLE_MENU: MenuItemType[] = [
+  {
+    id: 1,
+    Icon: null,
+    title: 'View Details',
+    route: 'View Details',
+  },
+  { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
+  // { id: 4, Icon: null, title: 'Delete subscriber', route: 'delete-sub' },
 ];
 export const NODE_TABLE_COLUMNS: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Name', minWidth: 160 },
+  { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'state', label: 'State', minWidth: 140 },
-  { id: 'network', label: 'Network', minWidth: 140 },
+  { id: 'connectivity', label: 'Connectivity', minWidth: 140 },
+  { id: 'site', label: 'Site', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
 export const NODE_TABLE_MENU: MenuItemType[] = [
   {
-    id: 1,
+    id: 2,
     Icon: null,
-    title: 'Edit node',
-    route: 'edit-node',
+    title: 'Turn node off',
+    route: 'node-off',
+    color: colors.redMatt,
   },
-  { id: 2, Icon: null, title: 'Detach node', route: 'detach-node' },
-  { id: 3, Icon: null, title: 'Delete node', route: 'delete-node' },
+  {
+    id: 3,
+    Icon: null,
+    title: 'Restart node',
+    route: 'restart-node',
+    color: colors.redMatt,
+  },
+  {
+    id: 4,
+    Icon: null,
+    title: 'Restart RF',
+    route: 'restart-rf',
+    color: colors.redMatt,
+  },
 ];
 export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Name', minWidth: 160 },
-  { id: 'role', label: 'Role', minWidth: 180 },
-  { id: 'status', label: 'Status', minWidth: 180 },
-  { id: 'email', label: 'Email', minWidth: 140 },
-  { id: 'actions', label: 'Action', minWidth: 140 },
+  { id: 'name', label: 'Name', minWidth: 120 },
+  { id: 'role', label: 'Role', minWidth: 144 },
+  { id: 'status', label: 'Status', minWidth: 144 },
+  { id: 'email', label: 'Email', minWidth: 120 },
+  { id: 'actions', label: 'Action', minWidth: 72 },
 ];
 export const INVITATION_TABLE_MENU: MenuItemType[] = [
   {
@@ -171,11 +223,15 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'isAllocated', label: 'Status', minWidth: 140 },
 ];
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
-  { id: 'name', label: 'Node #', minWidth: 160 },
+  { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
-  { id: 'network', label: 'Network', minWidth: 180 },
-  { id: 'created_at', label: 'Date claimed', minWidth: 140 },
+  { id: 'connectivity', label: 'Connectivity', minWidth: 120 },
+  { id: 'state', label: 'State', minWidth: 120 },
+  { id: 'site', label: 'Site', minWidth: 180 },
+  { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
+
+export const PAYMENT_METHODS = ['Stripe'];
 
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
   { id: 1, Icon: EditIcon, title: 'Edit', route: 'edit' },
@@ -191,11 +247,6 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
     title: 'Update available',
     route: 'update',
   },
-];
-
-const BillingTabs = [
-  { id: 0, label: 'CURRENT BILL', value: '1' },
-  { id: 1, label: 'BILLING HISTORY', value: '2' },
 ];
 
 const ROAMING_SELECT = [
@@ -245,8 +296,8 @@ const NodePageTabs = [
   { id: 'node-tab-1', label: 'Network', value: 1 },
   { id: 'node-tab-2', label: 'Resources', value: 2 },
   { id: 'node-tab-3', label: 'Radio', value: 3 },
-  { id: 'node-tab-4', label: 'Software', value: 4 },
-  { id: 'node-tab-5', label: 'Schematic', value: 5 },
+  // { id: 'node-tab-4', label: 'Software', value: 4 },
+  // { id: 'node-tab-5', label: 'Schematic', value: 5 },
 ];
 
 const NodeResourcesTabConfigure: any = {
@@ -278,6 +329,18 @@ const NodeResourcesTabConfigure: any = {
     { name: 'POWER', show: true, id: 'power_level' },
   ],
 };
+const NetworkChartsConfig: any = [
+  { name: 'Throughput (D/L)', show: true, id: 'network_throughput_down' },
+  { name: 'Throughput (U/L)', show: true, id: 'network_throughput_up' },
+  { name: 'RRC CNX Success', show: true, id: 'network_latency' },
+  { name: 'ERAB Drop Rate', show: true, id: 'network_packet_loss' },
+  { name: 'RLS  Drop Rate', show: true, id: 'network_overall_status' },
+];
+const RadioChartsConfig: any = [
+  { name: 'TX Power', show: true, id: 'tx_power' },
+  { name: 'RX Power', show: true, id: 'rx_power' },
+  { name: 'PA Power', show: true, id: 'pa_power' },
+];
 const HealtChartsConfigure: any = {
   hnode: [
     { name: 'Uptime', show: true, id: 'uptime_trx' },
@@ -295,6 +358,7 @@ const HealtChartsConfigure: any = {
   tnode: [
     { name: 'Temp. (TRX)', show: true, id: 'temperature_trx' },
     { name: 'Temp. (COM)', show: true, id: 'temperature_com' },
+    { name: 'Uptime', show: true, id: 'uptime_trx' },
     { name: 'Attached ', show: true, id: 'subscribers_attached' },
     { name: 'Active ', show: true, id: 'subscribers_active' },
   ],
@@ -326,7 +390,6 @@ export { NodeApps } from './stubData';
 export {
   APP_VERSION,
   BASIC_MENU_ACTIONS,
-  BillingTabs,
   COPY_RIGHTS,
   DataTableWithOptionColumns,
   DRAWER_WIDTH,
@@ -337,10 +400,12 @@ export {
   MASK_BY_TYPE,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
+  NetworkChartsConfig,
   NODE_ACTIONS_BUTTONS,
   NODE_IMAGES,
   NodePageTabs,
   NodeResourcesTabConfigure,
+  RadioChartsConfig,
   ROAMING_SELECT,
   SETTING_MENU,
   SITE_CONFIG_STEPS,

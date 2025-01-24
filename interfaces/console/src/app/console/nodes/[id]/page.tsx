@@ -7,13 +7,11 @@
  */
 'use client';
 
-import { getMetricsClient } from '@/client/client';
 import {
   Node,
-  NodeTypeEnum,
-  useGetNodeAppsLazyQuery,
-  useGetNodeQuery,
-  useGetNodesLazyQuery,
+  NodeConnectivityEnum,
+  NodeStateEnum,
+  useGetNodesByStateQuery,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -27,26 +25,26 @@ import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
-import NodeSchematicTab from '@/components/NodeSchematicTab';
-import NodeSoftwareTab from '@/components/NodeSoftwareTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
 import { useAppContext } from '@/context';
-import colors from '@/theme/colors';
+import MetricSubscription from '@/lib/MetricSubscription';
+import { colors } from '@/theme';
+import { TMetricResDto } from '@/types';
 import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-const SPEC_DATA = [
-  { id: 'pdf-1', title: 'PDF with Technical Specs', readingTime: '2mint' },
-  { id: 'pdf-2', title: 'PDF with Technical Specs', readingTime: '2mint' },
-  { id: 'pdf-3', title: 'PDF with Technical Specs', readingTime: '2mint' },
-  { id: 'pdf-3', title: 'PDF with Technical Specs', readingTime: '2mint' },
-];
+interface INodePage {
+  params: {
+    id: string;
+  };
+}
 
-export default function Page({ params }: Readonly<{ params: { id: string } }>) {
+const Page: React.FC<INodePage> = ({ params }) => {
+  const { id } = params;
   const router = useRouter();
   const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
@@ -55,25 +53,36 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
   );
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
+  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
-  const { setSnackbarMessage, env } = useAppContext();
 
-  const [
-    getNodes,
-    { data: getNodesData, loading: getNodesLoading, refetch: refetchNodes },
-  ] = useGetNodesLazyQuery({
-    fetchPolicy: 'cache-first',
-  });
+  useEffect(() => {
+    if (!id) {
+      setSnackbarMessage({
+        id: 'node-not-found-msg',
+        message: 'Node not found.',
+        type: 'error',
+        show: true,
+      });
+      router.back();
+    }
+  }, []);
 
-  const { loading: getNodeLoading } = useGetNodeQuery({
+  const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
+    skip: !id,
     fetchPolicy: 'cache-and-network',
     variables: {
       data: {
-        id: params.id,
+        connectivity: NodeConnectivityEnum.Online,
+        state: NodeStateEnum.Configured,
       },
     },
     onCompleted: (data) => {
-      setSelectedNode(data.getNode);
+      if (data.getNodesByState.nodes.length > 0) {
+        const node =
+          data.getNodesByState.nodes.find((n) => n.id === id) ?? undefined;
+        setSelectedNode(node);
+      }
     },
     onError: (err) => {
       setSnackbarMessage({
@@ -85,21 +94,9 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
     },
   });
 
-  const [
-    getNodeMetricByTab,
-    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
-  ] = useGetMetricByTabLazyQuery({
-    client: getMetricsClient(env.METRIC_URL),
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      setMetrics(data.getMetricByTab);
-    },
-  });
-
   const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
     onCompleted: (data) => {
       setSelectedNode(data.updateNode);
-      refetchNodes();
       setSnackbarMessage({
         id: 'update-node-success-msg',
         message: 'Node updated successfully.',
@@ -117,64 +114,68 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
     },
   });
 
-  const [getApps, { data: nodeAppsRes, loading: nodeAppsLoading }] =
-    useGetNodeAppsLazyQuery({
-      fetchPolicy: 'cache-and-network',
-      onError: (err) => {
-        setSnackbarMessage({
-          id: 'node-apps-err-msg',
-          message: err.message,
-          type: 'error',
-          show: true,
-        });
-      },
-    });
-
-  useEffect(() => {
-    getNodes({
-      variables: {
-        data: {
-          isFree: false,
-        },
-      },
-    });
+  const [
+    getNodeMetricByTab,
+    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricByTab);
+    },
   });
 
   useEffect(() => {
-    if (selectedTab === 4) {
-      getApps({
-        variables: {
-          data: {
-            type: NodeTypeEnum.Hnode,
-          },
-        },
-      });
-    }
-  }, [selectedTab, getApps]);
-
-  useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
+      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
       getNodeMetricByTab({
         variables: {
           data: {
-            orgId: 'ukama',
-            userId: 'salman',
-            from: metricFrom,
+            nodeId: id,
+            userId: user.id,
             type: graphType,
+            from: metricFrom,
             to: metricFrom + 120,
+            orgName: user.orgName,
             withSubscription: true,
-            orgName: 'ukama',
-            nodeId: 'uk-test36-hnode-a1-00ff',
           },
         },
+      }).then(() => {
+        MetricSubscription({
+          nodeId: id,
+          key: psKey,
+          type: graphType,
+          userId: user.id,
+          from: metricFrom,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+        });
       });
+
+      PubSub.subscribe(psKey, handleNotification);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     metricFrom,
     nodeMetricsVariables?.data?.from,
     getNodeMetricByTab,
     graphType,
   ]); // Added all missing dependencies
+
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, type, value, nodeId, success } =
+      parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+      // setMetrics((prev) => {
+      //   const updatedMetrics = prev.metrics.map((m) =>
+      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
+      //   );
+      //   return { ...prev, metrics: updatedMetrics };
+      // });
+    }
+  };
 
   const handleNodeSelected = (node: Node) => {
     setSelectedNode(node);
@@ -204,18 +205,21 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
     setMetricFrom(() => getUnixTime() - 120);
   };
 
+  const handleNodeActionClick = (action: string) => {};
+
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
-        nodes={getNodesData?.getNodes.nodes ?? []}
-        loading={getNodeLoading}
         onAddNode={() => {}}
+        loading={nodesLoading || updateNodeLoading}
         selectedNode={selectedNode}
-        handleNodeActionClick={() => {}}
+        handleEditNodeClick={() => {
+          setIsEditNode(true);
+        }}
         handleNodeSelected={handleNodeSelected}
-        handleNodeActionItemSelected={() => {}}
         nodeActionOptions={NODE_ACTIONS_BUTTONS}
-        handleEditNodeClick={() => setIsEditNode(true)}
+        handleNodeActionClick={handleNodeActionClick}
+        nodes={nodesData?.getNodesByState.nodes ?? []}
       />
 
       <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
@@ -227,8 +231,10 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
             sx={
               {
                 // display:
-                //   (selectedNode?.type === 'HOME' && label === 'Radio') ??
-                //   (selectedNode?.type === 'AMPLIFIER' && label === 'Network')
+                //   ((selectedNode?.type === NodeTypeEnum.Hnode &&
+                //     label === 'Radio') ??
+                //   (selectedNode?.type === NodeTypeEnum.Anode &&
+                //     label === 'Network'))
                 //     ? 'none'
                 //     : 'block',
               }
@@ -239,29 +245,30 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={getNodesLoading || updateNodeLoading}
+        isLoading={nodesLoading || updateNodeLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
       >
         <TabPanel id={'node-overview-tab'} value={selectedTab} index={0}>
           <NodeOverviewTab
+            nodeId={id}
+            loading={false}
             metrics={metrics}
+            connectedUsers={'0'}
             metricFrom={metricFrom}
-            isUpdateAvailable={true}
+            isUpdateAvailable={false}
+            onNodeSelected={() => {}}
+            handleUpdateNode={() => {}}
             selectedNode={selectedNode}
             metricsLoading={nodeMetricsLoading}
-            handleOverviewSectionChange={handleOverviewSectionChange}
-            handleUpdateNode={() => {}}
-            connectedUsers={'0'}
-            onNodeSelected={() => {}}
-            uptime={0}
             getNodeSoftwareUpdateInfos={() => {}}
-            loading={false}
+            handleOverviewSectionChange={handleOverviewSectionChange}
           />
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
@@ -269,6 +276,7 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
@@ -277,25 +285,26 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
+            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
           />
         </TabPanel>
-        <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
+        {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>
           <NodeSoftwareTab
             loading={nodeAppsLoading}
             nodeApps={nodeAppsRes?.getNodeApps.apps ?? []}
           />
-        </TabPanel>
-        <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
+        </TabPanel> */}
+        {/* <TabPanel id={'node-schematic-tab'} value={selectedTab} index={5}>
           <NodeSchematicTab
             getSearchValue={() => {}}
             schematicsSpecsData={SPEC_DATA}
             nodeTitle={selectedNode?.name ?? 'Node'}
             loading={false}
           />
-        </TabPanel>
+        </TabPanel> */}
       </LoadingWrapper>
       {isEditNode && (
         <EditNode
@@ -310,4 +319,6 @@ export default function Page({ params }: Readonly<{ params: { id: string } }>) {
       )}
     </Stack>
   );
-}
+};
+
+export default Page;

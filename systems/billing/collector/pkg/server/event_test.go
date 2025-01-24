@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	OrgName = "testOrg"
-	OrgId   = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
+	OrgName    = "testOrg"
+	OrgId      = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
+	webhookUrl = "http://webhooks:8080/reports"
 
 	sessionId = 22
 	bmId      = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
@@ -48,7 +49,25 @@ func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
 		billingClient.On("CreateCustomer", mock.Anything,
 			mock.Anything).Return("", errors.New("fail to create customer")).Once()
 
-		_, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		_, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
+		assert.Error(t, err)
+	})
+
+	t.Run("RegisterWebhookEndpintFaillure", func(t *testing.T) {
+		billingClient := &mocks.BillingClient{}
+
+		billingClient.On("GetCustomer", mock.Anything,
+			OrgId).Return("", errors.New("faillure")).Once()
+
+		billingClient.On("CreateCustomer", mock.Anything,
+			mock.Anything).Return(custId, nil).Once()
+
+		billingClient.On("ListWebhooks", mock.Anything).Return(nil, errors.New("faillure")).Once()
+
+		billingClient.On("CreateWebhook", mock.Anything,
+			mock.Anything).Return("", errors.New("fail to create customer")).Once()
+
+		_, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 		assert.Error(t, err)
 	})
 
@@ -61,13 +80,18 @@ func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
 		billingClient.On("CreateCustomer", mock.Anything,
 			mock.Anything).Return(custId, nil).Once()
 
+		billingClient.On("ListWebhooks", mock.Anything).Return(nil, errors.New("faillure")).Once()
+
+		billingClient.On("CreateWebhook", mock.Anything,
+			mock.Anything).Return(webhookUrl, nil).Once()
+
 		billingClient.On("GetBillableMetricId", mock.Anything,
 			server.DefaultBillableMetricCode).Return("", errors.New("faillure")).Once()
 
 		billingClient.On("CreateBillableMetric", mock.Anything,
 			mock.Anything).Return("", errors.New("faillure")).Once()
 
-		_, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		_, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 		assert.Error(t, err)
 	})
 
@@ -81,13 +105,18 @@ func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
 		billingClient.On("CreateCustomer", mock.Anything,
 			mock.Anything).Return(custId, nil).Once()
 
+		billingClient.On("ListWebhooks", mock.Anything).Return(nil, errors.New("faillure")).Once()
+
+		billingClient.On("CreateWebhook", mock.Anything,
+			mock.Anything).Return(webhookUrl, nil).Once()
+
 		billingClient.On("GetBillableMetricId", mock.Anything,
 			server.DefaultBillableMetricCode).Return("", errors.New("faillure")).Once()
 
 		billingClient.On("CreateBillableMetric", mock.Anything,
 			mock.Anything).Return(bmId, nil).Once()
 
-		s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+		s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 		assert.NoError(t, err)
 
 		msg := &epb.Event{
@@ -103,15 +132,17 @@ func TestCollectorEventServer_NewCollectorEventServer(t *testing.T) {
 
 func TestCollectorEventServer_HandleOrgSubscriptionEvent(t *testing.T) {
 	billingClient := &mocks.BillingClient{}
-	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.global.{{ .Org}}.inventory.accounting.accounting.sync")
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync")
 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 	assert.NoError(t, err)
 
 	t.Run("PlanFoundButSubscriptionNotTerminated", func(t *testing.T) {
@@ -312,10 +343,12 @@ func TestCollectorEventServer_HandleCdrSimUsageEvent(t *testing.T) {
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -390,10 +423,12 @@ func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -461,6 +496,35 @@ func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("PackageTypeNotValid", func(t *testing.T) {
+		pkg := epb.CreatePackageEvent{
+			Uuid:        "a20c61f1-1c5a-4559-bfff-cd00f746697d",
+			SimType:     "operator_data",
+			OrgId:       "75ec112a-8745-49f9-ab64-1a37edade794",
+			OwnerId:     "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			SmsVolume:   1000,
+			DataVolume:  5000000,
+			VoiceVolume: 500,
+			Type:        "unknown",
+			DataUnit:    "MegaBytes",
+			Flatrate:    false,
+			Country:     "USA",
+			Provider:    "ukama",
+		}
+
+		anyE, err := anypb.New(&pkg)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
 	t.Run("CreatePackageFaillure", func(t *testing.T) {
 		billingClient.On("CreatePlan", mock.Anything, mock.Anything, mock.Anything).
 			Return("", errors.New("failed to send create package event")).Once()
@@ -473,7 +537,7 @@ func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 			SmsVolume:   1000,
 			DataVolume:  5000000,
 			VoiceVolume: 500,
-			Type:        "prepaid",
+			Type:        "postpaid",
 			DataUnit:    "MegaBytes",
 			Flatrate:    false,
 			Country:     "USA",
@@ -517,10 +581,12 @@ func TestCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -531,7 +597,7 @@ func TestCollectorEventServer_HandleRegistrySubscriberCreateEvent(t *testing.T) 
 
 		subs := &upb.Subscriber{
 			SubscriberId: "c214f255-0ed6-4aa1-93e7-e333658c7318",
-			FirstName:    "John Doe",
+			Name:         "John Doe",
 			Email:        "john.doe@example.com",
 			Address:      "This is my address",
 			PhoneNumber:  "000111222",
@@ -601,10 +667,12 @@ func TestCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -613,7 +681,7 @@ func TestCollectorEventServer_HandleRegistrySubscriberUpdateEvent(t *testing.T) 
 			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
 
 		subs := &upb.Subscriber{
-			FirstName:   "Fox Doe",
+			Name:        "Fox Doe",
 			Email:       "Fox.doe@example.com",
 			Address:     "This is my address",
 			PhoneNumber: "000111222",
@@ -683,10 +751,12 @@ func TestCollectorEventServer_HandleRegistrySubscriberDeleteEvent(t *testing.T) 
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -762,10 +832,12 @@ func TestCollectorEventServer_HandleSimManagerSimAllocationEvent(t *testing.T) {
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -840,10 +912,12 @@ func TestCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *tes
 	billingClient.On("GetBillableMetricId", mock.Anything,
 		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
 
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
 	billingClient.On("GetCustomer", mock.Anything,
 		OrgId).Return(custId, nil).Once()
 
-	s, err := server.NewCollectorEventServer(OrgName, OrgId, billingClient)
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
 
 	assert.NoError(t, err)
 
@@ -929,6 +1003,85 @@ func TestCollectorEventServer_HandleSimManagerSetActivePackageForSimEvent(t *tes
 		sim := epb.Notification{}
 
 		anyE, err := anypb.New(&sim)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestCollectorEventServer_HandleSimManagerSimPackageExpireEvent(t *testing.T) {
+	billingClient := &mocks.BillingClient{}
+	routingKey := msgbus.PrepareRoute(OrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage")
+
+	billingClient.On("GetBillableMetricId", mock.Anything,
+		server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+
+	billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+
+	billingClient.On("GetCustomer", mock.Anything,
+		OrgId).Return(custId, nil).Once()
+
+	s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
+
+	assert.NoError(t, err)
+
+	t.Run("DeleteSubscriptionEventSent", func(t *testing.T) {
+		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
+			Return("75ec112a-8745-49f9-ab64-1a37edade794", nil).Once()
+
+		simExpiry := epb.EventSimPackageExpire{
+			Id:         "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			PackageId:  "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			DataPlanId: "75ec112a-8745-49f9-ab64-1a37edade794",
+		}
+
+		anyE, err := anypb.New(&simExpiry)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("DeleteSubscriptionFaillure", func(t *testing.T) {
+		billingClient.On("TerminateSubscription", mock.Anything, mock.Anything).
+			Return("", errors.New("failed to send delete subscription event")).Once()
+
+		simExpiry := epb.EventSimPackageExpire{
+			Id:         "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+			PackageId:  "c214f255-0ed6-4aa1-93e7-e333658c7318",
+			DataPlanId: "75ec112a-8745-49f9-ab64-1a37edade794",
+		}
+
+		anyE, err := anypb.New(&simExpiry)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("DeleteSubscriptionEventNotSent", func(t *testing.T) {
+		simExpiry := epb.Notification{}
+
+		anyE, err := anypb.New(&simExpiry)
 		assert.NoError(t, err)
 
 		msg := &epb.Event{

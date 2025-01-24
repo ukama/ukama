@@ -59,8 +59,7 @@ type GetSimReq struct {
 type AddSimReq struct {
 	SubscriberId          string `json:"subscriber_id"`
 	OrgId                 string `json:"org_id"`
-	FirstName             string `json:"first_name"`
-	LastName              string `json:"last_name"`
+	Name                  string `json:"name"`
 	Email                 string `json:"email"`
 	PhoneNumber           string `json:"phone_number"`
 	Address               string `json:"address"`

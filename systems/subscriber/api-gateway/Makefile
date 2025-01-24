@@ -15,7 +15,7 @@ lint:
 	golangci-lint run
 
 test:
-	go test ./...
+	go test -v ./...
 
 deps:
 	go get github.com/vektra/mockery/v2/.../

@@ -23,7 +23,8 @@ export const CONSOLE_APP_URL =
   process.env.CONSOLE_APP_URL ?? "http://localhost:3000";
 
 // UTILS
-export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "ukama.com";
+export const SIM_TYPE = process.env.SIM_TYPE ?? "operator_data";
+export const BASE_DOMAIN = process.env.BASE_DOMAIN ?? "localhost";
 export const COMMUNITY_ORG_NAME = process.env.COMMUNITY_ORG_NAME ?? "ukama";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "";
 export const PLANNING_TOOL_DB = process.env.PLANNING_TOOL_DB ?? "";
@@ -52,12 +53,22 @@ const NODE_PORT = parseInt(process.env.NODE_PORT ?? "5051");
 const SUBSCRIBER_PORT = parseInt(process.env.SUBSCRIBER_PORT ?? "5052");
 const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
+const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
+const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5059");
+
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
   process.env.COMPONENT_INVENTORY_PORT ?? "5056"
 );
 export const METRIC_PORT = parseInt(process.env.METRIC_PORT ?? "5057");
+const NODE_STATE_PORT = parseInt(process.env.NODE_STATE_PORT ?? "5058");
 export const SUB_GRAPHS = {
+  nodeState: {
+    name: "nodeState",
+    port: NODE_STATE_PORT,
+    url: `http://localhost:${NODE_STATE_PORT}`,
+    isPingedSuccess: false,
+  },
   metric: {
     name: "metric",
     port: METRIC_PORT,
@@ -118,16 +129,34 @@ export const SUB_GRAPHS = {
     url: `http://localhost:${PACKAGE_PORT}`,
     isPingedSuccess: false,
   },
+  controller: {
+    name: "controller",
+    port: CONTROLLER_PORT,
+    url: `http://localhost:${CONTROLLER_PORT}`,
+    isPingedSuccess: false,
+  },
   rate: {
     name: "rate",
     port: RATE_PORT,
     url: `http://localhost:${RATE_PORT}`,
     isPingedSuccess: false,
   },
+  billing: {
+    name: "billing",
+    port: BILLING_PORT,
+    url: `http://localhost:${BILLING_PORT}`,
+    isPingedSuccess: false,
+  },
   invitation: {
     name: "invitation",
     port: INVITATION_PORT,
     url: `http://localhost:${INVITATION_PORT}`,
+    isPingedSuccess: false,
+  },
+  payments: {
+    name: "payments",
+    port: PAYMENT_PORT,
+    url: `http://localhost:${PAYMENT_PORT}`,
     isPingedSuccess: false,
   },
   member: {

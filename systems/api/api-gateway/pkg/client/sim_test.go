@@ -130,8 +130,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 	trafficPolicy := uint32(0)
 
 	orgId := uuid.NewV4()
-	firstName := "John"
-	lastName := "Doe"
+	name := "John Doe"
 	email := "johndoe@example.com"
 	phoneNumber := "0123456789"
 	address := "2 Rivers"
@@ -145,8 +144,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		subscriberClient.On("Add", csub.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
-			FirstName:             firstName,
-			LastName:              lastName,
+			Name:                  name,
 			Email:                 email,
 			PhoneNumber:           phoneNumber,
 			Address:               address,
@@ -158,8 +156,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
-				FirstName:             firstName,
-				LastName:              lastName,
+				Name:                  name,
 				Email:                 email,
 				PhoneNumber:           phoneNumber,
 				Address:               address,
@@ -186,7 +183,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 			}, nil).Once()
 
 		simInfo, err := s.ConfigureSim("", orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.NoError(t, err)
@@ -201,8 +198,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 				SubscriberId:          subscriberId,
 				OrgId:                 orgId,
 				NetworkId:             networkId,
-				FirstName:             firstName,
-				LastName:              lastName,
+				Name:                  name,
 				Email:                 email,
 				PhoneNumber:           phoneNumber,
 				Address:               address,
@@ -229,7 +225,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 			}, nil).Once()
 
 		simInfo, err := s.ConfigureSim(subscriberId.String(), orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.NoError(t, err)
@@ -242,8 +238,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		subscriberClient.On("Add", csub.AddSubscriberRequest{
 			OrgId:                 orgId.String(),
 			NetworkId:             networkId.String(),
-			FirstName:             firstName,
-			LastName:              lastName,
+			Name:                  name,
 			Email:                 email,
 			PhoneNumber:           phoneNumber,
 			Address:               address,
@@ -253,7 +248,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		}).Return(nil, errors.New("some error")).Once()
 
 		simInfo, err := s.ConfigureSim("", orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.Error(t, err)
@@ -274,7 +269,7 @@ func TestCient_ConfigureSim(t *testing.T) {
 		}).Return(nil, errors.New("some error")).Once()
 
 		simInfo, err := s.ConfigureSim(subscriberId.String(), orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy)
 
 		assert.Error(t, err)

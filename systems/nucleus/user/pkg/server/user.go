@@ -68,14 +68,13 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 	user := &db.User{
 		Email:  strings.ToLower(req.User.Email),
 		Name:   req.User.Name,
-		Phone:  req.User.Phone,
 		AuthId: authId,
+		Phone:  req.User.Phone,
 	}
 
 	err = u.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
-		log.Infof("Adding user %s as member of default org", user.Id)
-
 		user.Id = uuid.NewV4()
+		log.Infof("Adding user %s as member of default org", user.Id)
 
 		svc, err := u.orgService.GetClient()
 		if err != nil {
@@ -371,6 +370,8 @@ func orgOgrsToUserOrgs(orgs []*orgpb.Organization) []*pb.Organization {
 			Id:            o.Id,
 			Name:          o.Name,
 			Owner:         o.Owner,
+			Currency:      o.Currency,
+			Country:       o.Country,
 			Certificate:   o.Certificate,
 			IsDeactivated: o.IsDeactivated,
 			CreatedAt:     o.CreatedAt,

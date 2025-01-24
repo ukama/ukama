@@ -50,7 +50,7 @@ services:
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
    - COUNTRY=COD
-   - CURRENCY=USD
+   - CURRENCY=CDF
    - LANGUAGE=en
    - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
   restart: always
@@ -73,6 +73,7 @@ services:
    - NODE_SERVICE_PORT=9090
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
+   - HTTP_INVENTORYCLIENT=http://api-gateway-inventory:8080
   restart: always
   networks:
    - ukama-net
@@ -90,7 +91,7 @@ services:
    - MSGCLIENT_HOST=msgclient-registry:9095
    - INVITATION_SERVICE_HOST=invitation
    - INVITATION_SERVICE_PORT=9090
-   - AUTHLOGINBASEURL=http://localhost:4455/auth/login
+   - CONSOLEAPPURL=http://localhost:3000/onboarding
    - INVITATIONEXPIRYTIME=72
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
@@ -123,9 +124,7 @@ services:
    - msgclient-registry
 
  api-gateway-registry:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+  build: ./api-gateway
   restart: always
   ports:
    - 8075:8080
@@ -152,6 +151,7 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - GRPC_PORT=9095
    - SYSTEM=registry
   restart: always
   networks:

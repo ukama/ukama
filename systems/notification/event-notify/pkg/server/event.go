@@ -19,6 +19,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
@@ -297,8 +298,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOnline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOnline]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
+		c := evt.EventToEventConfig[evt.EventNodeOnline]
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -311,8 +312,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMeshNodeOffline]):
-		c := evt.EventToEventConfig[evt.EventMeshNodeOffline]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
+		c := evt.EventToEventConfig[evt.EventNodeOffline]
 		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -380,8 +381,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteAdd]):
-		c := evt.EventToEventConfig[evt.EventSiteAdd]
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
+		c := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
@@ -573,6 +574,85 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
 
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
+		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
+		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		if msg.ItemType != ukama.ItemTypeInvoice.String() {
+			log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+			break
+		}
+
+		metadata := map[string]string{}
+
+		err = json.Unmarshal(msg.Metadata, &metadata)
+		if err != nil {
+			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
+		}
+
+		targetId, ok := metadata["targetId"]
+		if !ok {
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentFailed]):
+		c := evt.EventToEventConfig[evt.EventPaymentFailed]
+		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		if msg.ItemType != ukama.ItemTypePackage.String() {
+			log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+			break
+		}
+
+		metadata := map[string]string{}
+
+		err = json.Unmarshal(msg.Metadata, &metadata)
+		if err != nil {
+			log.Errorf("failed to Unmarshal payment metadata as map[string]string: %v", err)
+		}
+
+		targetId, ok := metadata["targetId"]
+		if !ok {
+			log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
+			break
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+		
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
+		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
+		msg, err := epb.UnmarshalInvoiceGenerated(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+
+		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)
+
 		/*
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventComponentsSync]):
 				c := evt.EventToEventConfig[evt.EventComponentsSync]
@@ -582,12 +662,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 				// }
 			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventAccountingSync]):
 				c := evt.EventToEventConfig[evt.EventAccountingSync]
-				// msg, err := epb.Unmarshal(e.Msg, c.Name)
-				// if err != nil {
-				// 	return nil, err
-				// }
-			case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
-				c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
 				// msg, err := epb.Unmarshal(e.Msg, c.Name)
 				// if err != nil {
 				// 	return nil, err
@@ -618,6 +692,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 	/* Store raw event */
 	event := &db.EventMsg{}
 	var id uint = 0
+	event.Key = ec.Name
 	err := event.Data.Set(msg)
 	if err != nil {
 		log.Errorf("failed to assing event: %v", err)
@@ -638,7 +713,7 @@ func (es *EventToNotifyEventServer) ProcessEvent(ec *evt.EventConfig, orgId, net
 		UserId:       userId,
 		NetworkId:    networkId,
 		NodeId:       nodeId,
-		ResourceId:   uuid.FromStringOrNil(rid),
+		ResourceId:   rid,
 		SubscriberId: subscriberId,
 	}
 

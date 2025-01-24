@@ -20,8 +20,8 @@ const (
 	StatusTypeUnknown StatusType = iota
 	StatusTypePending
 	StatusTypeProcessing
-	StatusTypeCompleted
 	StatusTypeFailed
+	StatusTypeCompleted
 )
 
 func (s *StatusType) Scan(value interface{}) error {
@@ -35,7 +35,7 @@ func (s StatusType) Value() (driver.Value, error) {
 }
 
 func (s StatusType) String() string {
-	t := map[StatusType]string{0: "unknown", 1: "pending", 2: "processing", 3: "completed", 4: "failed"}
+	t := map[StatusType]string{0: "unknown", 1: "pending", 2: "processing", 3: "failed", 4: "completed"}
 
 	v, ok := t[s]
 	if !ok {
@@ -51,7 +51,7 @@ func ParseStatusType(value string) StatusType {
 		return StatusType(i)
 	}
 
-	t := map[string]StatusType{"unknown": 0, "pending": 1, "processing": 2, "completed": 3, "failed": 4}
+	t := map[string]StatusType{"unknown": 0, "pending": 1, "processing": 2, "failed": 3, "completed": 4}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
