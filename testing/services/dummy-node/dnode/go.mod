@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/testing/services/dummy-node/node
+module github.com/ukama/ukama/testing/services/dummy-node/dnode
 
 go 1.22.0
 
@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../../../systems/services/msgClient
 
-replace github.com/ukama/ukama/testing/services/dummy-node/node => ./
+replace github.com/ukama/ukama/testing/services/dummy-node/dnode => ./
 
 require (
 	github.com/golang/protobuf v1.5.4

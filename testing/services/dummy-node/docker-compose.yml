@@ -9,8 +9,8 @@ services:
   networks:
    - ukama-net
 
- node:
-  build: ./node
+ dnode:
+  build: ./dnode
   ports:
    - 9061:9090
   environment:
@@ -20,8 +20,8 @@ services:
    - DB_HOST=postgresd-dummy-node
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-dummy-node:9095
-   - NODE_SERVICE_HOST=node
-   - NODE_SERVICE_PORT=9090
+   - DNODE_SERVICE_HOST=dnode
+   - DNODE_SERVICE_PORT=9090
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
   restart: always
@@ -30,8 +30,8 @@ services:
   depends_on:
    - msgclient-dummy-node
 
- metrics:
-  build: ./metrics
+ dmetrics:
+  build: ./dmetrics
   ports:
    - 8085:8085
   networks:

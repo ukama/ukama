@@ -9,7 +9,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.3
-// source: node.proto
+// source: dnode.proto
 
 package gen
 
@@ -26,10 +26,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NodeService_ResetNode_FullMethodName   = "/ukama.dummynode.node.v1.NodeService/ResetNode"
-	NodeService_NodeRFOn_FullMethodName    = "/ukama.dummynode.node.v1.NodeService/NodeRFOn"
-	NodeService_TurnNodeOff_FullMethodName = "/ukama.dummynode.node.v1.NodeService/TurnNodeOff"
-	NodeService_NodeRFOff_FullMethodName   = "/ukama.dummynode.node.v1.NodeService/NodeRFOff"
+	NodeService_ResetNode_FullMethodName   = "/ukama.dummynode.dnode.v1.NodeService/ResetNode"
+	NodeService_NodeRFOn_FullMethodName    = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOn"
+	NodeService_TurnNodeOff_FullMethodName = "/ukama.dummynode.dnode.v1.NodeService/TurnNodeOff"
+	NodeService_NodeRFOff_FullMethodName   = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOff"
 )
 
 // NodeServiceClient is the client API for NodeService service.
@@ -217,7 +217,7 @@ func _NodeService_NodeRFOff_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var NodeService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.dummynode.node.v1.NodeService",
+	ServiceName: "ukama.dummynode.dnode.v1.NodeService",
 	HandlerType: (*NodeServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -238,5 +238,5 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "node.proto",
+	Metadata: "dnode.proto",
 }

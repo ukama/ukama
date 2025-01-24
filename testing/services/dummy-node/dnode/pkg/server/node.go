@@ -14,9 +14,9 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
-	pb "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg/db"
+	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

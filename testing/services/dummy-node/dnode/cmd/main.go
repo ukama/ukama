@@ -22,11 +22,11 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/cmd/version"
-	generated "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg/db"
-	"github.com/ukama/ukama/testing/services/dummy-node/node/pkg/server"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/cmd/version"
+	generated "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/server"
 )
 
 var serviceConfig *pkg.Config

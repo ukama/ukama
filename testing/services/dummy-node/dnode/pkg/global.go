@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "node"
+const ServiceName = "dnode"
 const SystemName = "dummynode"
 
 var IsDebugMode = false

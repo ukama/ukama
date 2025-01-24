@@ -23,7 +23,7 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen"
+	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 )
 
 type Router struct {

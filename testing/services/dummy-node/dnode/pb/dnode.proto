@@ -8,9 +8,9 @@
 
  syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/testing/services/dummy-node/node/pb/gen";
+ option go_package = "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen";
   
- package ukama.dummynode.node.v1;
+ package ukama.dummynode.dnode.v1;
  
  service NodeService { 
     rpc ResetNode(ResetRequest) returns (ResetResponse) {}
