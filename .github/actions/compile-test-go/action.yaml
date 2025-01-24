@@ -42,10 +42,6 @@ runs:
       restore-keys: |
         ${{ runner.os }}-go-
 
-  - name: Update dependencies
-    shell: bash
-    run: go mod tidy
-    working-directory: ${{ inputs.working-directory }}
 
   - name: Build
     shell: bash
