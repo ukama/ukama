@@ -10,9 +10,9 @@ name: daily-systems-subscriber-sim-manager
 on:
   push:
     paths:
-        - "systems/subscriber/api-gateway/**"
+        - "systems/subscriber/sim-manager/**"
         - ".github/actions/**"
-        - ".github/workflows/systems-subscriber-api-gateway-daily.yaml"
+        - ".github/workflows/systems-subscriber-sim-manager-daily.yaml"
 
 
 jobs:
