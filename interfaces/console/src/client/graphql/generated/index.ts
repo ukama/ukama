@@ -279,11 +279,6 @@ export type FeeDto = {
   units: Scalars['Float']['output'];
 };
 
-export type GetNodeLatestMetricInput = {
-  nodeId: Scalars['String']['input'];
-  type: Scalars['String']['input'];
-};
-
 export type GetNodesByStateInput = {
   connectivity: NodeConnectivityEnum;
   state: NodeStateEnum;
@@ -340,6 +335,11 @@ export type GetSimPoolStatsInput = {
 export type GetSimsInput = {
   status: Sim_Status;
   type: Sim_Types;
+};
+
+export type GetSiteLatestMetricInput = {
+  siteId: Scalars['String']['input'];
+  type: Scalars['String']['input'];
 };
 
 export enum Invitation_Status {
@@ -749,16 +749,6 @@ export type NodeInput = {
   id: Scalars['String']['input'];
 };
 
-export type NodeLatestMetric = {
-  __typename?: 'NodeLatestMetric';
-  msg: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
-  orgId: Scalars['String']['output'];
-  success: Scalars['Boolean']['output'];
-  type: Scalars['String']['output'];
-  value: Array<Scalars['Float']['output']>;
-};
-
 export type NodeSite = {
   __typename?: 'NodeSite';
   addedAt?: Maybe<Scalars['String']['output']>;
@@ -990,7 +980,7 @@ export type Query = {
   getNetworks: NetworksResDto;
   getNode: Node;
   getNodeApps: NodeApps;
-  getNodeLatestMetric: NodeLatestMetric;
+  getNodeLatestMetric: SiteLatestMetric;
   getNodeState: NodeStateRes;
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
@@ -1092,7 +1082,7 @@ export type QueryGetNodeAppsArgs = {
 
 
 export type QueryGetNodeLatestMetricArgs = {
-  data: GetNodeLatestMetricInput;
+  data: GetSiteLatestMetricInput;
 };
 
 
@@ -1394,6 +1384,16 @@ export type SiteDto = {
   powerId: Scalars['String']['output'];
   spectrumId: Scalars['String']['output'];
   switchId: Scalars['String']['output'];
+};
+
+export type SiteLatestMetric = {
+  __typename?: 'SiteLatestMetric';
+  msg: Scalars['String']['output'];
+  orgId: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  value: Array<Scalars['Float']['output']>;
 };
 
 export type SitesResDto = {
@@ -1892,6 +1892,13 @@ export type GetPaymentsQueryVariables = Exact<{
 
 
 export type GetPaymentsQuery = { __typename?: 'Query', getPayments: { __typename?: 'PaymentsDto', payments: Array<{ __typename?: 'PaymentDto', id: string, itemId: string, itemType: string, amount: string, currency: string, paymentMethod: string, depositedAmount: string, paidAt: string, payerName: string, payerEmail: string, payerPhone: string, correspondent: string, country: string, description: string, status: string, failureReason: string, extra: string, createdAt: string }> } };
+
+export type RestartSiteMutationVariables = Exact<{
+  data: RestartSiteInputDto;
+}>;
+
+
+export type RestartSiteMutation = { __typename?: 'Mutation', restartSite: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type CustomerFragment = { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string };
 
@@ -3965,6 +3972,39 @@ export type GetPaymentsQueryHookResult = ReturnType<typeof useGetPaymentsQuery>;
 export type GetPaymentsLazyQueryHookResult = ReturnType<typeof useGetPaymentsLazyQuery>;
 export type GetPaymentsSuspenseQueryHookResult = ReturnType<typeof useGetPaymentsSuspenseQuery>;
 export type GetPaymentsQueryResult = Apollo.QueryResult<GetPaymentsQuery, GetPaymentsQueryVariables>;
+export const RestartSiteDocument = gql`
+    mutation restartSite($data: RestartSiteInputDto!) {
+  restartSite(data: $data) {
+    success
+  }
+}
+    `;
+export type RestartSiteMutationFn = Apollo.MutationFunction<RestartSiteMutation, RestartSiteMutationVariables>;
+
+/**
+ * __useRestartSiteMutation__
+ *
+ * To run a mutation, you first call `useRestartSiteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRestartSiteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [restartSiteMutation, { data, loading, error }] = useRestartSiteMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useRestartSiteMutation(baseOptions?: Apollo.MutationHookOptions<RestartSiteMutation, RestartSiteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RestartSiteMutation, RestartSiteMutationVariables>(RestartSiteDocument, options);
+      }
+export type RestartSiteMutationHookResult = ReturnType<typeof useRestartSiteMutation>;
+export type RestartSiteMutationResult = Apollo.MutationResult<RestartSiteMutation>;
+export type RestartSiteMutationOptions = Apollo.BaseMutationOptions<RestartSiteMutation, RestartSiteMutationVariables>;
 export const GetReportsDocument = gql`
     query GetReports($data: GetReportsInputDto!) {
   getReports(data: $data) {

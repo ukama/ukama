@@ -194,6 +194,10 @@ const SiteConfigure = ({ params }: IPage) => {
   }, [addSiteLoading]);
 
   const handleSubmit = () => {
+    console.log('ADDREs :', qpAddress);
+    console.log('POWER :', qpPower);
+    console.log('SWITCH :', qpSwitch);
+    console.log('BACKHAUL :', qpbackhaul);
     if (
       qpAddress === '' ||
       qpPower === '' ||

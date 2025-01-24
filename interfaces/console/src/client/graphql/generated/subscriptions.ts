@@ -18,11 +18,14 @@ export type Scalars = {
 };
 
 export enum Graphs_Type {
+  Backhaul = 'BACKHAUL',
   Network = 'NETWORK',
   NodeHealth = 'NODE_HEALTH',
+  Power = 'POWER',
   Radio = 'RADIO',
   Resources = 'RESOURCES',
-  Subscribers = 'SUBSCRIBERS'
+  Subscribers = 'SUBSCRIBERS',
+  Switch = 'SWITCH'
 }
 
 export type GetMetricByTabInput = {

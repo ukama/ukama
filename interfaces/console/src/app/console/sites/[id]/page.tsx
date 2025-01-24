@@ -10,29 +10,53 @@
 import {
   Component_Type,
   SiteDto,
-  useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
-  useGetNetworksQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
+  useGetNodesByNetworkLazyQuery,
+  useGetSubscribersByNetworkQuery,
+  useRestartSiteMutation,
 } from '@/client/graphql/generated';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
+import SiteOverview from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
-import { TSiteForm } from '@/types';
+import colors from '@/theme/colors';
+import { TMetricResDto, TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
-import { formatISO } from 'date-fns';
+import GroupIcon from '@mui/icons-material/Group';
+import { getSiteTabTypeByIndex, getUnixTime } from '@/utils';
+import {
+  AlertColor,
+  Box,
+  Grid,
+  Paper,
+  Skeleton,
+  Typography,
+} from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import MetricSubscription from '@/lib/MetricSubscription';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
   {
     ssr: false,
+    loading: () => (
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="100%"
+        sx={{ borderRadius: '5px' }}
+      />
+    ),
   },
 );
 
@@ -76,12 +100,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
-  const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [componentsList, setComponentsList] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.Power);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const { setSnackbarMessage, network, setSelectedDefaultSite } =
-    useAppContext();
+  const {
+    user,
+    setSnackbarMessage,
+    network,
+    setSelectedDefaultSite,
+    env,
+    subscriptionClient,
+  } = useAppContext();
   const {
     address: CurrentSiteaddress,
     isLoading: CurrentSiteAddressLoading,
@@ -91,33 +123,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [isDataReady, setIsDataReady] = useState(false);
 
   const router = useRouter();
-
-  const handleSiteConfigOpen = () => {
-    setOpenSiteConfig(true);
-  };
-
-  const handleCloseSiteConfig = () => {
-    setOpenSiteConfig(false);
-  };
-
-  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
-    onCompleted: (res) => {
-      setSnackbarMessage({
-        id: 'add-site-success',
-        message: 'Site added successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'add-subscriber-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
 
   const { loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -136,30 +141,53 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+  const [
+    getSiteMetricByTab,
+    { loading: siteMetricsLoading, variables: siteMetricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricByTab);
+    },
+  });
 
-  const handleSiteConfiguration = async (data: any) => {
-    const variables = {
-      access_id: data.access,
-      backhaul_id: data.backhaul,
-      install_date: formatISO(new Date()),
-      latitude: data.coordinates.lat,
-      location: data.location,
-      longitude: data.coordinates.lng,
-      name: data.siteName,
-      network_id: data.selectedNetwork,
-      power_id: data.power,
-      spectrum_id: data.spectrumId || '',
-      switch_id: data.switch,
-      is_deactivated: data.is_deactivated || false,
-    };
+  useEffect(() => {
+    if (metricFrom > 0 && siteMetricsVariables?.data?.from !== metricFrom) {
+      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
+      getSiteMetricByTab({
+        variables: {
+          data: {
+            nodeId: id,
+            userId: user.id,
+            type: graphType,
+            from: metricFrom,
+            to: metricFrom + 120,
+            orgName: user.orgName,
+            withSubscription: true,
+          },
+        },
+      }).then(() => {
+        MetricSubscription({
+          nodeId: id,
+          key: psKey,
+          type: graphType,
+          userId: user.id,
+          from: metricFrom,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+        });
+      });
 
-    try {
-      await addSite({ variables: { data: variables } });
-    } catch (error) {
-      console.error('Error submitting site configuration:', error);
+      PubSub.subscribe(psKey, handleNotification);
     }
-  };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    metricFrom,
+    siteMetricsVariables?.data?.from,
+    getSiteMetricByTab,
+    graphType,
+  ]); // Added all missing dependencies
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -175,18 +203,50 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, type, value, nodeId, success } =
+      parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+      // setMetrics((prev) => {
+      //   const updatedMetrics = prev.metrics.map((m) =>
+      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
+      //   );
+      //   return { ...prev, metrics: updatedMetrics };
+      // });
+    }
+  };
 
-  const { data: networks } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
+  const [restartSite, { loading: restartSiteLoading }] = useRestartSiteMutation(
+    {
+      onCompleted: (data) => {
+        setSnackbarMessage({
+          id: 'restart-site-success',
+          message: 'Site received restart command!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'restart-site-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
     },
-  });
+  );
+  useEffect(() => {
+    const value = 0; // Define the value variable
+    setGraphType(getSiteTabTypeByIndex(value) ?? Graphs_Type.Power);
+    setMetricFrom(() => getUnixTime() - 120);
+  }, [metrics]);
+  const handleOverviewSectionChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - 120);
+  };
 
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
@@ -229,6 +289,29 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+  const [fetchNode, { data: nodeData, loading: nodeLoading }] =
+    useGetNodesByNetworkLazyQuery();
+
+  const { data: subscribers } = useGetSubscribersByNetworkQuery({
+    variables: {
+      networkId: activeSite.networkId,
+    },
+    fetchPolicy: 'network-only',
+    nextFetchPolicy: 'network-only',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'subscriber-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+  useEffect(() => {
+    if (activeSite?.id) {
+      fetchNode({ variables: { networkId: activeSite.networkId } });
+    }
+  }, [activeSite, fetchNode]);
 
   useEffect(() => {
     getComponents({
@@ -328,56 +411,135 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Grid>
     );
   }
+  const handleSiteRestart = () => {
+    setSnackbarMessage({
+      id: 'site-restart',
+      type: 'info',
+      show: true,
+      message: 'Restarting site',
+    });
+    restartSite({
+      variables: {
+        data: {
+          siteId: activeSite.id,
+          networkId: activeSite.networkId,
+        },
+      },
+    });
+  };
 
   return (
-    <Box
-      sx={{
-        overflow: 'auto',
-        borderRadius: '10px',
-        height: 'calc(100vh - 228px)',
-      }}
-    >
+    <Box>
       <SiteDetailsHeader
-        addSite={handleSiteConfigOpen}
         siteList={sitesList || []}
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
+        onRestartSite={handleSiteRestart}
       />
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteInfo
+              selectedSite={activeSite}
+              address={CurrentSiteaddress}
+              nodes={nodeData?.getNodesByNetwork.nodes || []}
+            />
+          </Paper>
         </Grid>
-        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteMapComponent
-            posix={[activeSite.latitude, activeSite.longitude]}
-            address={CurrentSiteaddress}
-            height={'100%'}
-          />
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteOverview
+              inputPower="120W"
+              solarStorage="80%"
+              consumption="40W"
+            />
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper
+            sx={{ height: '250px', overflow: 'hidden', position: 'relative' }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 206,
+                left: 8,
+                zIndex: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                backgroundColor: colors.white,
+                borderRadius: '4px',
+                p: 1,
+              }}
+            >
+              <GroupIcon fontSize="small" />
+              <Typography variant="body2" fontWeight="medium">
+                {subscribers?.getSubscribersByNetwork.subscribers.length || 0}
+              </Typography>
+            </Box>
+
+            <Box sx={{ position: 'relative', zIndex: 1, height: '100%' }}>
+              <Suspense
+                fallback={
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    sx={{ borderRadius: '5px' }}
+                  />
+                }
+              >
+                <SiteMapComponent
+                  posix={[activeSite.latitude, activeSite.longitude]}
+                  address={CurrentSiteaddress}
+                  height={'100%'}
+                  mapStyle="satellite"
+                />
+              </Suspense>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          md={12}
+          sx={{
+            height: 'auto',
+          }}
+        >
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              height: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <SiteOverallHealth
+              batteryInfo={[]}
+              solarHealth={'good'}
+              nodeHealth={'good'}
+              switchHealth={'good'}
+              controllerHealth={'good'}
+              batteryHealth={'good'}
+              backhaulHealth={'good'}
+              nodes={nodeData?.getNodesByNetwork.nodes || []}
+              nodeId={activeSite.id}
+              metricFrom={0}
+              topic="Site Overall Health"
+              title="Site Overall Health"
+              initData={[]}
+              hasData={false}
+              loading={false}
+              tabSection={Graphs_Type.Power}
+            />
+          </Paper>
         </Grid>
       </Grid>
-
-      <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-        <SiteOverallHealth
-          batteryInfo={[]}
-          solarHealth={'good'}
-          nodeHealth={'good'}
-          switchHealth={'good'}
-          controllerHealth={'good'}
-          batteryHealth={'good'}
-          backhaulHealth={'good'}
-        />
-      </Paper>
-
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
     </Box>
   );
 };

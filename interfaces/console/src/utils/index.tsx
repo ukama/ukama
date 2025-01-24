@@ -200,6 +200,17 @@ export const getNodeTabTypeByIndex = (index: number) => {
   }
 };
 
+export const getSiteTabTypeByIndex = (index: number) => {
+  switch (index) {
+    case 0:
+      return Graphs_Type.Power;
+    case 1:
+      return Graphs_Type.Switch;
+    case 2:
+      return Graphs_Type.Backhaul;
+    case 3:
+  }
+};
 const formatBytes = (bytes = 0): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
