@@ -17,6 +17,7 @@ import (
 	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -26,14 +27,16 @@ const uuidParsingError = "Error parsing UUID"
 type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 	orgName        string
+	nodeId         string
 	nodeRepo       db.NodeRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
+func NewNodeServer(orgName string, nodeId string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
 	return &NodeServer{
 		msgbus:         msgBus,
+		nodeId:         nodeId,
 		orgName:        orgName,
 		nodeRepo:       nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -46,6 +49,8 @@ func (s *NodeServer) ResetNode(ctx context.Context, req *pb.ResetRequest) (*pb.R
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
+	utils.PushNodeReset(s.orgName, s.nodeId, s.msgbus)
+
 	return &pb.ResetResponse{
 		NodeId: nodeID.String(),
 	}, nil
@@ -56,6 +61,8 @@ func (s *NodeServer) NodeRFOn(ctx context.Context, req *pb.NodeRFOnRequest) (*pb
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
+
+	utils.PushNodeRFOn(s.orgName, s.nodeId, s.msgbus)
 
 	return &pb.NodeRFOnResponse{
 		NodeId: nodeID.String(),
@@ -68,6 +75,8 @@ func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.NodeRFOffRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
+	utils.PushNodeRFOff(s.orgName, s.nodeId, s.msgbus)
+
 	return &pb.NodeRFOffResponse{
 		NodeId: nodeID.String(),
 	}, nil
@@ -78,6 +87,8 @@ func (s *NodeServer) TurnNodeOff(ctx context.Context, req *pb.TurnNodeOffRequest
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
+
+	utils.PushNodeOff(s.orgName, s.nodeId, s.msgbus)
 
 	return &pb.TurnNodeOffResponse{
 		NodeId: nodeID.String(),

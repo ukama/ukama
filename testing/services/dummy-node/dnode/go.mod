@@ -9,6 +9,7 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../../../systems
 replace github.com/ukama/ukama/testing/services/dummy-node/dnode => ./
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.1.2
 	github.com/golang/protobuf v1.5.4
 	github.com/num30/config v0.1.2
 	github.com/sirupsen/logrus v1.9.3
