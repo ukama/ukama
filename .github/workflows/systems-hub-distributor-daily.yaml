@@ -2,7 +2,7 @@
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 
-name: daily-systems-subscriber-sim-manager
+name: daily-systems-hub-distributor
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -13,7 +13,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env:
-      working-directory: systems/subscriber/sim-manager
+      working-directory: systems/hub/distributor
     steps:
       - uses: actions/checkout@v4
       - name: lint
@@ -24,7 +24,7 @@ jobs:
 
   build:
     env:
-      working-directory: systems/subscriber/sim-manager
+      working-directory: systems/hub/distributor
     name: build and test
     runs-on: ubuntu-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/compile-test-go
       with:
-        project-key: ukama_systems_subscriber_sim-manager
+        project-key: ukama_systems_hub_distributor
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
@@ -41,7 +41,7 @@ jobs:
     needs: [build, lint]
     runs-on: ubuntu-latest
     env:
-      working-directory: systems/subscriber/sim-manager
+      working-directory: systems/hub/distributor
     steps:
       - uses: actions/checkout@v4
       - name: scan
@@ -50,14 +50,14 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_subscriber_sim-manager
+          project-key: ukama_systems_hub_distributor
 
   sonar-fetch:
     name: sonar-fetch
     needs: sonar-scan
     runs-on: ubuntu-latest
     env:
-      working-directory: systems/subscriber/sim-manager
+      working-directory: systems/hub/distributor
     steps:
       - uses: actions/checkout@v4
       - name: fetch
@@ -66,14 +66,14 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_systems_subscriber_sim-manager
+          project-key: ukama_systems_hub_distributor
 
   s3-upload:
     name: s3-upload
     needs: sonar-fetch
     runs-on: ubuntu-latest
     env:
-      working-directory: systems/subscriber/sim-manager
+      working-directory: systems/hub/distributor
     steps:
       - uses: actions/checkout@v4
       - name: fetch
@@ -81,7 +81,7 @@ jobs:
         with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-          project-key: ukama_systems_subscriber_sim-manager
+          project-key: ukama_systems_hub_distributor
           aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
           aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
           aws-bucket-name: ukama-dev-daily-workflows
