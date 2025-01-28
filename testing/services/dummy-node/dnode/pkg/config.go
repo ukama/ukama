@@ -23,7 +23,6 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	OrgName          string
-	NodeId           string
 }
 
 func NewConfig(name string) *Config {

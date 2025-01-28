@@ -13,23 +13,23 @@ type node struct {
 }
 
 // ResetNode provides a mock function with given fields: id
-func (_m *node) ResetNode(id string) (*gen.ResetResponse, error) {
+func (_m *node) ResetNode(id string) (*gen.Response, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResetNode")
 	}
 
-	var r0 *gen.ResetResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ResetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*gen.Response, error)); ok {
 		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ResetResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *gen.Response); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ResetResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
@@ -43,23 +43,53 @@ func (_m *node) ResetNode(id string) (*gen.ResetResponse, error) {
 }
 
 // TurnNodeOff provides a mock function with given fields: id
-func (_m *node) TurnNodeOff(id string) (*gen.TurnNodeOffResponse, error) {
+func (_m *node) TurnNodeOff(id string) (*gen.Response, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TurnNodeOff")
 	}
 
-	var r0 *gen.TurnNodeOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.TurnNodeOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*gen.Response, error)); ok {
 		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.TurnNodeOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *gen.Response); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.TurnNodeOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TurnNodeOnline provides a mock function with given fields: id
+func (_m *node) TurnNodeOnline(id string) (*gen.Response, error) {
+	ret := _m.Called(id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TurnNodeOnline")
+	}
+
+	var r0 *gen.Response
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.Response, error)); ok {
+		return rf(id)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.Response); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
@@ -73,23 +103,23 @@ func (_m *node) TurnNodeOff(id string) (*gen.TurnNodeOffResponse, error) {
 }
 
 // TurnRFOff provides a mock function with given fields: id
-func (_m *node) TurnRFOff(id string) (*gen.NodeRFOffResponse, error) {
+func (_m *node) TurnRFOff(id string) (*gen.Response, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TurnRFOff")
 	}
 
-	var r0 *gen.NodeRFOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.NodeRFOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*gen.Response, error)); ok {
 		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.NodeRFOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *gen.Response); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
@@ -103,23 +133,23 @@ func (_m *node) TurnRFOff(id string) (*gen.NodeRFOffResponse, error) {
 }
 
 // TurnRFOn provides a mock function with given fields: id
-func (_m *node) TurnRFOn(id string) (*gen.NodeRFOnResponse, error) {
+func (_m *node) TurnRFOn(id string) (*gen.Response, error) {
 	ret := _m.Called(id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TurnRFOn")
 	}
 
-	var r0 *gen.NodeRFOnResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.NodeRFOnResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*gen.Response, error)); ok {
 		return rf(id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.NodeRFOnResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *gen.Response); ok {
 		r0 = rf(id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOnResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 

@@ -24,70 +24,81 @@ import (
 type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 	orgName        string
-	nodeId         string
 	nodeRepo       db.NodeRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNodeServer(orgName string, nodeId string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
 	return &NodeServer{
 		msgbus:         msgBus,
-		nodeId:         nodeId,
 		orgName:        orgName,
 		nodeRepo:       nodeRepo,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh"),
 	}
 }
 
-func (s *NodeServer) ResetNode(ctx context.Context, req *pb.ResetRequest) (*pb.ResetResponse, error) {
+func (s *NodeServer) ResetNode(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeResetViaREST(s.orgName, s.nodeId, s.msgbus)
+	utils.PushNodeResetViaREST(s.orgName, nodeID.String(), s.msgbus)
 
-	return &pb.ResetResponse{
+	return &pb.Response{
 		NodeId: nodeID.String(),
 	}, nil
 }
 
-func (s *NodeServer) NodeRFOn(ctx context.Context, req *pb.NodeRFOnRequest) (*pb.NodeRFOnResponse, error) {
+func (s *NodeServer) NodeRFOn(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeRFOnViaREST(s.orgName, s.nodeId, s.msgbus)
+	utils.PushNodeRFOnViaREST(s.orgName, nodeID.String(), s.msgbus)
 
-	return &pb.NodeRFOnResponse{
+	return &pb.Response{
 		NodeId: nodeID.String(),
 	}, nil
 }
 
-func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.NodeRFOffRequest) (*pb.NodeRFOffResponse, error) {
+func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeRFOffViaREST(s.orgName, s.nodeId, s.msgbus)
+	utils.PushNodeRFOffViaREST(s.orgName, nodeID.String(), s.msgbus)
 
-	return &pb.NodeRFOffResponse{
+	return &pb.Response{
 		NodeId: nodeID.String(),
 	}, nil
 }
 
-func (s *NodeServer) TurnNodeOff(ctx context.Context, req *pb.TurnNodeOffRequest) (*pb.TurnNodeOffResponse, error) {
+func (s *NodeServer) TurnNodeOff(ctx context.Context, req *pb.Request) (*pb.Response, error) {
 	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeOffViaREST(s.orgName, s.nodeId, s.msgbus)
+	utils.PushNodeOffViaREST(s.orgName, nodeID.String(), s.msgbus)
 
-	return &pb.TurnNodeOffResponse{
+	return &pb.Response{
+		NodeId: nodeID.String(),
+	}, nil
+}
+
+func (s *NodeServer) TurnNodeOnline(ctx context.Context, req *pb.Request) (*pb.Response, error) {
+	nodeID, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
+	}
+
+	utils.PushNodeOnlineViaREST(s.orgName, nodeID.String(), s.msgbus)
+
+	return &pb.Response{
 		NodeId: nodeID.String(),
 	}, nil
 }

@@ -46,4 +46,10 @@ scrape_configs:
       - targets: ['10.1.0.90:8085']
         labels:
           nodeid: uk-sa2450-tnode-v0-4e86
+      - targets: ['10.1.0.90:8085']
+        labels:
+          nodeid: uk-sa2450-tnode-v0-4e87
+      - targets: ['10.1.0.90:8085']
+        labels:
+          nodeid: uk-sa2450-hnode-v0-4e88
     metrics_path: "/metrics"

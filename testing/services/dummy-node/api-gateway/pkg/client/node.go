@@ -54,11 +54,11 @@ func (r *NodeDummy) Close() {
 	r.conn.Close()
 }
 
-func (r *NodeDummy) ResetNode(id string) (*pb.ResetResponse, error) {
+func (r *NodeDummy) ResetNode(id string) (*pb.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.ResetNode(ctx, &pb.ResetRequest{NodeId: id})
+	res, err := r.client.ResetNode(ctx, &pb.Request{NodeId: id})
 	if err != nil {
 		return nil, err
 	}
@@ -66,22 +66,22 @@ func (r *NodeDummy) ResetNode(id string) (*pb.ResetResponse, error) {
 	return res, nil
 }
 
-func (r *NodeDummy) TurnNodeOff(id string) (*pb.TurnNodeOffResponse, error) {
+func (r *NodeDummy) TurnNodeOff(id string) (*pb.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.TurnNodeOff(ctx, &pb.TurnNodeOffRequest{NodeId: id})
+	res, err := r.client.TurnNodeOff(ctx, &pb.Request{NodeId: id})
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
 }
 
-func (r *NodeDummy) TurnRFOn(id string) (*pb.NodeRFOnResponse, error) {
+func (r *NodeDummy) TurnRFOn(id string) (*pb.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.NodeRFOn(ctx, &pb.NodeRFOnRequest{NodeId: id})
+	res, err := r.client.NodeRFOn(ctx, &pb.Request{NodeId: id})
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +89,23 @@ func (r *NodeDummy) TurnRFOn(id string) (*pb.NodeRFOnResponse, error) {
 	return res, nil
 }
 
-func (r *NodeDummy) TurnRFOff(id string) (*pb.NodeRFOffResponse, error) {
+func (r *NodeDummy) TurnRFOff(id string) (*pb.Response, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.NodeRFOff(ctx, &pb.NodeRFOffRequest{NodeId: id})
+	res, err := r.client.NodeRFOff(ctx, &pb.Request{NodeId: id})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (r *NodeDummy) TurnNodeOnline(id string) (*pb.Response, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.TurnNodeOnline(ctx, &pb.Request{NodeId: id})
 	if err != nil {
 		return nil, err
 	}

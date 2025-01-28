@@ -13,41 +13,17 @@
  package ukama.dummynode.dnode.v1;
  
  service NodeService { 
-    rpc ResetNode(ResetRequest) returns (ResetResponse) {}
-    rpc NodeRFOn(NodeRFOnRequest) returns (NodeRFOnResponse) {}
-    rpc TurnNodeOff(TurnNodeOffRequest) returns (TurnNodeOffResponse) {}
-    rpc NodeRFOff(NodeRFOffRequest) returns (NodeRFOffResponse) {}
+    rpc ResetNode(Request) returns (Response) {}
+    rpc NodeRFOn(Request) returns (Response) {}
+    rpc NodeRFOff(Request) returns (Response) {}
+    rpc TurnNodeOff(Request) returns (Response) {}
+    rpc TurnNodeOnline(Request) returns (Response) {}
  }
  
-message ResetRequest {
+message Request {
     string nodeId = 1 [json_name = "node_id"];
 }
 
-message ResetResponse {
+message Response {
     string nodeId = 1 [json_name = "node_id"];
 }
-
-message NodeRFOnRequest {
-    string nodeId = 1 [json_name = "node_id"];
-}
-
-message NodeRFOnResponse {
-    string nodeId = 1 [json_name = "node_id"];
-}
-
-message TurnNodeOffRequest {
-    string nodeId = 1 [json_name = "node_id"];
-}
-
-message TurnNodeOffResponse {
-    string nodeId = 1 [json_name = "node_id"];
-}
-
-message NodeRFOffRequest {
-    string nodeId = 1 [json_name = "node_id"];
-}
-
-message NodeRFOffResponse {
-    string nodeId = 1 [json_name = "node_id"];
-}
-

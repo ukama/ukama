@@ -17,7 +17,7 @@ type NodeServiceClient struct {
 }
 
 // NodeRFOff provides a mock function with given fields: ctx, in, opts
-func (_m *NodeServiceClient) NodeRFOff(ctx context.Context, in *gen.NodeRFOffRequest, opts ...grpc.CallOption) (*gen.NodeRFOffResponse, error) {
+func (_m *NodeServiceClient) NodeRFOff(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -31,20 +31,20 @@ func (_m *NodeServiceClient) NodeRFOff(ctx context.Context, in *gen.NodeRFOffReq
 		panic("no return value specified for NodeRFOff")
 	}
 
-	var r0 *gen.NodeRFOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOffRequest, ...grpc.CallOption) (*gen.NodeRFOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOffRequest, ...grpc.CallOption) *gen.NodeRFOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeRFOffRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -54,7 +54,7 @@ func (_m *NodeServiceClient) NodeRFOff(ctx context.Context, in *gen.NodeRFOffReq
 }
 
 // NodeRFOn provides a mock function with given fields: ctx, in, opts
-func (_m *NodeServiceClient) NodeRFOn(ctx context.Context, in *gen.NodeRFOnRequest, opts ...grpc.CallOption) (*gen.NodeRFOnResponse, error) {
+func (_m *NodeServiceClient) NodeRFOn(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -68,20 +68,20 @@ func (_m *NodeServiceClient) NodeRFOn(ctx context.Context, in *gen.NodeRFOnReque
 		panic("no return value specified for NodeRFOn")
 	}
 
-	var r0 *gen.NodeRFOnResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOnRequest, ...grpc.CallOption) (*gen.NodeRFOnResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOnRequest, ...grpc.CallOption) *gen.NodeRFOnResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOnResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeRFOnRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -91,7 +91,7 @@ func (_m *NodeServiceClient) NodeRFOn(ctx context.Context, in *gen.NodeRFOnReque
 }
 
 // ResetNode provides a mock function with given fields: ctx, in, opts
-func (_m *NodeServiceClient) ResetNode(ctx context.Context, in *gen.ResetRequest, opts ...grpc.CallOption) (*gen.ResetResponse, error) {
+func (_m *NodeServiceClient) ResetNode(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -105,20 +105,20 @@ func (_m *NodeServiceClient) ResetNode(ctx context.Context, in *gen.ResetRequest
 		panic("no return value specified for ResetNode")
 	}
 
-	var r0 *gen.ResetResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ResetRequest, ...grpc.CallOption) (*gen.ResetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ResetRequest, ...grpc.CallOption) *gen.ResetResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ResetResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ResetRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -128,7 +128,7 @@ func (_m *NodeServiceClient) ResetNode(ctx context.Context, in *gen.ResetRequest
 }
 
 // TurnNodeOff provides a mock function with given fields: ctx, in, opts
-func (_m *NodeServiceClient) TurnNodeOff(ctx context.Context, in *gen.TurnNodeOffRequest, opts ...grpc.CallOption) (*gen.TurnNodeOffResponse, error) {
+func (_m *NodeServiceClient) TurnNodeOff(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -142,20 +142,57 @@ func (_m *NodeServiceClient) TurnNodeOff(ctx context.Context, in *gen.TurnNodeOf
 		panic("no return value specified for TurnNodeOff")
 	}
 
-	var r0 *gen.TurnNodeOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TurnNodeOffRequest, ...grpc.CallOption) (*gen.TurnNodeOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TurnNodeOffRequest, ...grpc.CallOption) *gen.TurnNodeOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.TurnNodeOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.TurnNodeOffRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TurnNodeOnline provides a mock function with given fields: ctx, in, opts
+func (_m *NodeServiceClient) TurnNodeOnline(ctx context.Context, in *gen.Request, opts ...grpc.CallOption) (*gen.Response, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TurnNodeOnline")
+	}
+
+	var r0 *gen.Response
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) (*gen.Response, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request, ...grpc.CallOption) *gen.Response); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.Response)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

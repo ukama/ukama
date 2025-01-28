@@ -26,20 +26,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	NodeService_ResetNode_FullMethodName   = "/ukama.dummynode.dnode.v1.NodeService/ResetNode"
-	NodeService_NodeRFOn_FullMethodName    = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOn"
-	NodeService_TurnNodeOff_FullMethodName = "/ukama.dummynode.dnode.v1.NodeService/TurnNodeOff"
-	NodeService_NodeRFOff_FullMethodName   = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOff"
+	NodeService_ResetNode_FullMethodName      = "/ukama.dummynode.dnode.v1.NodeService/ResetNode"
+	NodeService_NodeRFOn_FullMethodName       = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOn"
+	NodeService_NodeRFOff_FullMethodName      = "/ukama.dummynode.dnode.v1.NodeService/NodeRFOff"
+	NodeService_TurnNodeOff_FullMethodName    = "/ukama.dummynode.dnode.v1.NodeService/TurnNodeOff"
+	NodeService_TurnNodeOnline_FullMethodName = "/ukama.dummynode.dnode.v1.NodeService/TurnNodeOnline"
 )
 
 // NodeServiceClient is the client API for NodeService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NodeServiceClient interface {
-	ResetNode(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error)
-	NodeRFOn(ctx context.Context, in *NodeRFOnRequest, opts ...grpc.CallOption) (*NodeRFOnResponse, error)
-	TurnNodeOff(ctx context.Context, in *TurnNodeOffRequest, opts ...grpc.CallOption) (*TurnNodeOffResponse, error)
-	NodeRFOff(ctx context.Context, in *NodeRFOffRequest, opts ...grpc.CallOption) (*NodeRFOffResponse, error)
+	ResetNode(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	NodeRFOn(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	NodeRFOff(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	TurnNodeOff(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	TurnNodeOnline(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 }
 
 type nodeServiceClient struct {
@@ -50,9 +52,9 @@ func NewNodeServiceClient(cc grpc.ClientConnInterface) NodeServiceClient {
 	return &nodeServiceClient{cc}
 }
 
-func (c *nodeServiceClient) ResetNode(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
+func (c *nodeServiceClient) ResetNode(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ResetResponse)
+	out := new(Response)
 	err := c.cc.Invoke(ctx, NodeService_ResetNode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -60,9 +62,9 @@ func (c *nodeServiceClient) ResetNode(ctx context.Context, in *ResetRequest, opt
 	return out, nil
 }
 
-func (c *nodeServiceClient) NodeRFOn(ctx context.Context, in *NodeRFOnRequest, opts ...grpc.CallOption) (*NodeRFOnResponse, error) {
+func (c *nodeServiceClient) NodeRFOn(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NodeRFOnResponse)
+	out := new(Response)
 	err := c.cc.Invoke(ctx, NodeService_NodeRFOn_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -70,9 +72,19 @@ func (c *nodeServiceClient) NodeRFOn(ctx context.Context, in *NodeRFOnRequest, o
 	return out, nil
 }
 
-func (c *nodeServiceClient) TurnNodeOff(ctx context.Context, in *TurnNodeOffRequest, opts ...grpc.CallOption) (*TurnNodeOffResponse, error) {
+func (c *nodeServiceClient) NodeRFOff(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TurnNodeOffResponse)
+	out := new(Response)
+	err := c.cc.Invoke(ctx, NodeService_NodeRFOff_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nodeServiceClient) TurnNodeOff(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Response)
 	err := c.cc.Invoke(ctx, NodeService_TurnNodeOff_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -80,10 +92,10 @@ func (c *nodeServiceClient) TurnNodeOff(ctx context.Context, in *TurnNodeOffRequ
 	return out, nil
 }
 
-func (c *nodeServiceClient) NodeRFOff(ctx context.Context, in *NodeRFOffRequest, opts ...grpc.CallOption) (*NodeRFOffResponse, error) {
+func (c *nodeServiceClient) TurnNodeOnline(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NodeRFOffResponse)
-	err := c.cc.Invoke(ctx, NodeService_NodeRFOff_FullMethodName, in, out, cOpts...)
+	out := new(Response)
+	err := c.cc.Invoke(ctx, NodeService_TurnNodeOnline_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +106,11 @@ func (c *nodeServiceClient) NodeRFOff(ctx context.Context, in *NodeRFOffRequest,
 // All implementations must embed UnimplementedNodeServiceServer
 // for forward compatibility.
 type NodeServiceServer interface {
-	ResetNode(context.Context, *ResetRequest) (*ResetResponse, error)
-	NodeRFOn(context.Context, *NodeRFOnRequest) (*NodeRFOnResponse, error)
-	TurnNodeOff(context.Context, *TurnNodeOffRequest) (*TurnNodeOffResponse, error)
-	NodeRFOff(context.Context, *NodeRFOffRequest) (*NodeRFOffResponse, error)
+	ResetNode(context.Context, *Request) (*Response, error)
+	NodeRFOn(context.Context, *Request) (*Response, error)
+	NodeRFOff(context.Context, *Request) (*Response, error)
+	TurnNodeOff(context.Context, *Request) (*Response, error)
+	TurnNodeOnline(context.Context, *Request) (*Response, error)
 	mustEmbedUnimplementedNodeServiceServer()
 }
 
@@ -108,17 +121,20 @@ type NodeServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedNodeServiceServer struct{}
 
-func (UnimplementedNodeServiceServer) ResetNode(context.Context, *ResetRequest) (*ResetResponse, error) {
+func (UnimplementedNodeServiceServer) ResetNode(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResetNode not implemented")
 }
-func (UnimplementedNodeServiceServer) NodeRFOn(context.Context, *NodeRFOnRequest) (*NodeRFOnResponse, error) {
+func (UnimplementedNodeServiceServer) NodeRFOn(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NodeRFOn not implemented")
 }
-func (UnimplementedNodeServiceServer) TurnNodeOff(context.Context, *TurnNodeOffRequest) (*TurnNodeOffResponse, error) {
+func (UnimplementedNodeServiceServer) NodeRFOff(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NodeRFOff not implemented")
+}
+func (UnimplementedNodeServiceServer) TurnNodeOff(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TurnNodeOff not implemented")
 }
-func (UnimplementedNodeServiceServer) NodeRFOff(context.Context, *NodeRFOffRequest) (*NodeRFOffResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NodeRFOff not implemented")
+func (UnimplementedNodeServiceServer) TurnNodeOnline(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TurnNodeOnline not implemented")
 }
 func (UnimplementedNodeServiceServer) mustEmbedUnimplementedNodeServiceServer() {}
 func (UnimplementedNodeServiceServer) testEmbeddedByValue()                     {}
@@ -142,7 +158,7 @@ func RegisterNodeServiceServer(s grpc.ServiceRegistrar, srv NodeServiceServer) {
 }
 
 func _NodeService_ResetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ResetRequest)
+	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -154,13 +170,13 @@ func _NodeService_ResetNode_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: NodeService_ResetNode_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).ResetNode(ctx, req.(*ResetRequest))
+		return srv.(NodeServiceServer).ResetNode(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _NodeService_NodeRFOn_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NodeRFOnRequest)
+	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -172,31 +188,13 @@ func _NodeService_NodeRFOn_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: NodeService_NodeRFOn_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).NodeRFOn(ctx, req.(*NodeRFOnRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NodeService_TurnNodeOff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TurnNodeOffRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NodeServiceServer).TurnNodeOff(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: NodeService_TurnNodeOff_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).TurnNodeOff(ctx, req.(*TurnNodeOffRequest))
+		return srv.(NodeServiceServer).NodeRFOn(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _NodeService_NodeRFOff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NodeRFOffRequest)
+	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -208,7 +206,43 @@ func _NodeService_NodeRFOff_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: NodeService_NodeRFOff_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NodeServiceServer).NodeRFOff(ctx, req.(*NodeRFOffRequest))
+		return srv.(NodeServiceServer).NodeRFOff(ctx, req.(*Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_TurnNodeOff_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).TurnNodeOff(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_TurnNodeOff_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).TurnNodeOff(ctx, req.(*Request))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NodeService_TurnNodeOnline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Request)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).TurnNodeOnline(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_TurnNodeOnline_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).TurnNodeOnline(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -229,12 +263,16 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _NodeService_NodeRFOn_Handler,
 		},
 		{
+			MethodName: "NodeRFOff",
+			Handler:    _NodeService_NodeRFOff_Handler,
+		},
+		{
 			MethodName: "TurnNodeOff",
 			Handler:    _NodeService_TurnNodeOff_Handler,
 		},
 		{
-			MethodName: "NodeRFOff",
-			Handler:    _NodeService_NodeRFOff_Handler,
+			MethodName: "TurnNodeOnline",
+			Handler:    _NodeService_TurnNodeOnline_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

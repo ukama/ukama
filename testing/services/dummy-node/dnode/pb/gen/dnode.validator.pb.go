@@ -14,27 +14,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *ResetRequest) Validate() error {
+func (this *Request) Validate() error {
 	return nil
 }
-func (this *ResetResponse) Validate() error {
-	return nil
-}
-func (this *NodeRFOnRequest) Validate() error {
-	return nil
-}
-func (this *NodeRFOnResponse) Validate() error {
-	return nil
-}
-func (this *TurnNodeOffRequest) Validate() error {
-	return nil
-}
-func (this *TurnNodeOffResponse) Validate() error {
-	return nil
-}
-func (this *NodeRFOffRequest) Validate() error {
-	return nil
-}
-func (this *NodeRFOffResponse) Validate() error {
+func (this *Response) Validate() error {
 	return nil
 }

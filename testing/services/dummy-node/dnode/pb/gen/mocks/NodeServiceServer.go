@@ -15,27 +15,27 @@ type NodeServiceServer struct {
 }
 
 // NodeRFOff provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) NodeRFOff(_a0 context.Context, _a1 *gen.NodeRFOffRequest) (*gen.NodeRFOffResponse, error) {
+func (_m *NodeServiceServer) NodeRFOff(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NodeRFOff")
 	}
 
-	var r0 *gen.NodeRFOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOffRequest) (*gen.NodeRFOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOffRequest) *gen.NodeRFOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeRFOffRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -45,27 +45,27 @@ func (_m *NodeServiceServer) NodeRFOff(_a0 context.Context, _a1 *gen.NodeRFOffRe
 }
 
 // NodeRFOn provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) NodeRFOn(_a0 context.Context, _a1 *gen.NodeRFOnRequest) (*gen.NodeRFOnResponse, error) {
+func (_m *NodeServiceServer) NodeRFOn(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NodeRFOn")
 	}
 
-	var r0 *gen.NodeRFOnResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOnRequest) (*gen.NodeRFOnResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeRFOnRequest) *gen.NodeRFOnResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeRFOnResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeRFOnRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -75,27 +75,27 @@ func (_m *NodeServiceServer) NodeRFOn(_a0 context.Context, _a1 *gen.NodeRFOnRequ
 }
 
 // ResetNode provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) ResetNode(_a0 context.Context, _a1 *gen.ResetRequest) (*gen.ResetResponse, error) {
+func (_m *NodeServiceServer) ResetNode(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ResetNode")
 	}
 
-	var r0 *gen.ResetResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ResetRequest) (*gen.ResetResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ResetRequest) *gen.ResetResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ResetResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ResetRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -105,27 +105,57 @@ func (_m *NodeServiceServer) ResetNode(_a0 context.Context, _a1 *gen.ResetReques
 }
 
 // TurnNodeOff provides a mock function with given fields: _a0, _a1
-func (_m *NodeServiceServer) TurnNodeOff(_a0 context.Context, _a1 *gen.TurnNodeOffRequest) (*gen.TurnNodeOffResponse, error) {
+func (_m *NodeServiceServer) TurnNodeOff(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TurnNodeOff")
 	}
 
-	var r0 *gen.TurnNodeOffResponse
+	var r0 *gen.Response
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TurnNodeOffRequest) (*gen.TurnNodeOffResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TurnNodeOffRequest) *gen.TurnNodeOffResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.TurnNodeOffResponse)
+			r0 = ret.Get(0).(*gen.Response)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.TurnNodeOffRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TurnNodeOnline provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) TurnNodeOnline(_a0 context.Context, _a1 *gen.Request) (*gen.Response, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TurnNodeOnline")
+	}
+
+	var r0 *gen.Response
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) (*gen.Response, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.Request) *gen.Response); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.Response)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.Request) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

@@ -24,7 +24,6 @@ services:
    - DNODE_SERVICE_PORT=9090
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
-   - NODEID=${NODE_ID}
   restart: always
   networks:
    - ukama-net

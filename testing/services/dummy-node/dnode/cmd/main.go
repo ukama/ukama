@@ -27,7 +27,6 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/server"
-	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/utils"
 )
 
 var serviceConfig *pkg.Config
@@ -75,7 +74,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	nodeServer := server.NewNodeServer(serviceConfig.OrgName, serviceConfig.NodeId, db.NewNodeRepo(gormdb),
+	nodeServer := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb),
 		mbClient)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
@@ -83,8 +82,6 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterNodeServiceServer(s, nodeServer)
 	})
-
-	utils.PushNodeOnlineViaREST(serviceConfig.OrgName, serviceConfig.NodeId, mbClient)
 
 	go grpcServer.StartServer()
 
