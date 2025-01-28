@@ -30,22 +30,6 @@ jobs:
       aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
       build-listener: false
 
- sonar-scan:
-  name: sonar-scan
-  needs: build
-  runs-on: ubuntu-latest
-  env:
-   working-directory: testing/services/dummy-node/dnode
-  steps:
-   - uses: actions/checkout@v3
-   - name: scan
-     uses: ./.github/actions/sonar-go
-     with:
-      working-directory: ${{ env.working-directory }}
-      github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-      sonar-token: ${{ secrets.SONAR_TOKEN }}
-      project-key: ukama_systems_dummy-node_dnode
-
  lint:
   name: lint
   runs-on: ubuntu-latest
