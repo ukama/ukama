@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-COPY bin/node /usr/bin/node
+COPY bin/dnode /usr/bin/dnode
 
-CMD ["/usr/bin/node"]
+CMD ["/usr/bin/dnode"]

@@ -15,7 +15,6 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/utils"
 	"google.golang.org/grpc/codes"
@@ -39,7 +38,7 @@ func NewNodeServer(orgName string, nodeId string, nodeRepo db.NodeRepo, msgBus m
 		nodeId:         nodeId,
 		orgName:        orgName,
 		nodeRepo:       nodeRepo,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh"),
 	}
 }
 
