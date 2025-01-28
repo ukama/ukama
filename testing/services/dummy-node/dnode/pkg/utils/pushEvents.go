@@ -1,17 +1,56 @@
 package utils
 
 import (
+	"fmt"
+	"io"
 	"log"
+	"os"
+	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"google.golang.org/protobuf/types/known/anypb"
+)
+
+const (
+	defaultDuration = 5 * time.Second
+)
+
+const (
+	defaultClusterURL  = "http://localhost:15672"
+	defaultVhost       = "%2F"
+	defaultExchange    = "amq.topic"
+	defaultClusterUsr  = "guest"
+	defaultClusterPswd = "guest"
 )
 
 func getRoutingKey(orgName string) msgbus.RoutingKeyBuilder {
 	return msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh")
+}
+
+func Run(org, route string, payload *anypb.Any, out io.Writer) error {
+
+	aClient := NewAmqpClient(defaultClusterURL, defaultClusterUsr, defaultClusterPswd, defaultDuration)
+
+	respData, err := aClient.PublishMessage(defaultVhost, defaultExchange, route, payload)
+	if err != nil {
+		return fmt.Errorf("failled to publish event: %w", err)
+	}
+
+	outputBuf, err := Serialize(respData, "json")
+	if err != nil {
+		return fmt.Errorf("error while serializing output data: %w", err)
+	}
+
+	_, err = fmt.Fprint(out, outputBuf)
+	if err != nil {
+		return fmt.Errorf("error while writting output: %w", err)
+	}
+
+	return nil
 }
 
 func PushNodeOnline(orgName, nodeId string, m mb.MsgBusServiceClient) {
@@ -31,6 +70,29 @@ func PushNodeOnline(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
+func PushNodeOnlineViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
+	route := getRoutingKey(org).SetAction("online").SetObject("node").MustBuild()
+
+	msg := epb.NodeOnlineEvent{
+		NodeId:       nodeId,
+		NodeIp:       gofakeit.IPv4Address(),
+		MeshIp:       gofakeit.IPv4Address(),
+		MeshHostName: gofakeit.DomainName(),
+	}
+
+	anyMsg, err := anypb.New(&msg)
+	if err != nil {
+		log.Fatalf("Failed to convert message to Any: %v", err)
+	}
+
+	err = Run(org, route, anyMsg, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+	}
+
+	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
+}
+
 func PushNodeReset(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("reset").SetObject("node").MustBuild()
 	evt := &epb.NodeOnlineEvent{
@@ -42,6 +104,29 @@ func PushNodeReset(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	if err := m.PublishRequest(route, evt); err != nil {
 		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
 	}
+}
+
+func PushNodeResetViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
+	route := getRoutingKey(org).SetAction("reset").SetObject("node").MustBuild()
+
+	msg := epb.NodeOnlineEvent{
+		NodeId:       nodeId,
+		NodeIp:       gofakeit.IPv4Address(),
+		MeshIp:       gofakeit.IPv4Address(),
+		MeshHostName: gofakeit.DomainName(),
+	}
+
+	anyMsg, err := anypb.New(&msg)
+	if err != nil {
+		log.Fatalf("Failed to convert message to Any: %v", err)
+	}
+
+	err = Run(org, route, anyMsg, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+	}
+
+	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
 }
 
 func PushNodeRFOn(orgName, nodeId string, m mb.MsgBusServiceClient) {
@@ -57,6 +142,29 @@ func PushNodeRFOn(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
+func PushNodeRFOnViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
+	route := getRoutingKey(org).SetAction("rfon").SetObject("node").MustBuild()
+
+	msg := epb.NodeOnlineEvent{
+		NodeId:       nodeId,
+		NodeIp:       gofakeit.IPv4Address(),
+		MeshIp:       gofakeit.IPv4Address(),
+		MeshHostName: gofakeit.DomainName(),
+	}
+
+	anyMsg, err := anypb.New(&msg)
+	if err != nil {
+		log.Fatalf("Failed to convert message to Any: %v", err)
+	}
+
+	err = Run(org, route, anyMsg, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+	}
+
+	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
+}
+
 func PushNodeRFOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("rfoff").SetObject("node").MustBuild()
 	evt := &epb.NodeOnlineEvent{
@@ -70,6 +178,29 @@ func PushNodeRFOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
+func PushNodeRFOffViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
+	route := getRoutingKey(org).SetAction("rfoff").SetObject("node").MustBuild()
+
+	msg := epb.NodeOnlineEvent{
+		NodeId:       nodeId,
+		NodeIp:       gofakeit.IPv4Address(),
+		MeshIp:       gofakeit.IPv4Address(),
+		MeshHostName: gofakeit.DomainName(),
+	}
+
+	anyMsg, err := anypb.New(&msg)
+	if err != nil {
+		log.Fatalf("Failed to convert message to Any: %v", err)
+	}
+
+	err = Run(org, route, anyMsg, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+	}
+
+	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
+}
+
 func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("off").SetObject("node").MustBuild()
 	evt := &epb.NodeOfflineEvent{
@@ -78,4 +209,27 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	if err := m.PublishRequest(route, evt); err != nil {
 		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
 	}
+}
+
+func PushNodeOffViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
+	route := getRoutingKey(org).SetAction("off").SetObject("node").MustBuild()
+
+	msg := epb.NodeOnlineEvent{
+		NodeId:       nodeId,
+		NodeIp:       gofakeit.IPv4Address(),
+		MeshIp:       gofakeit.IPv4Address(),
+		MeshHostName: gofakeit.DomainName(),
+	}
+
+	anyMsg, err := anypb.New(&msg)
+	if err != nil {
+		log.Fatalf("Failed to convert message to Any: %v", err)
+	}
+
+	err = Run(org, route, anyMsg, os.Stdout)
+	if err != nil {
+		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+	}
+
+	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
 }

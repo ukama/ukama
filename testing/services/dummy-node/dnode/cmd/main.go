@@ -84,7 +84,7 @@ func runGrpcServer(gormdb sql.Db) {
 		generated.RegisterNodeServiceServer(s, nodeServer)
 	})
 
-	utils.PushNodeOnline(serviceConfig.OrgName, serviceConfig.NodeId, mbClient)
+	utils.PushNodeOnlineViaREST(serviceConfig.OrgName, serviceConfig.NodeId, mbClient)
 
 	go grpcServer.StartServer()
 
