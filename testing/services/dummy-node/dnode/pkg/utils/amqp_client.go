@@ -13,11 +13,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -38,7 +38,7 @@ type amqpClient struct {
 func NewAmqpClient(h, usr, pwd string, timeout time.Duration) AmqpClient {
 	u, err := url.ParseRequestURI(h)
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s",
+		logrus.Errorf("Can't parse  %s url. Error: %s",
 			h, err.Error())
 	}
 

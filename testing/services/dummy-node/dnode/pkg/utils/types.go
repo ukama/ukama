@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -59,7 +58,7 @@ type ResultSet struct {
 	Routes []string
 }
 
-func Serialize(data interface{}, format string) (io.Writer, error) {
+func Serialize(data interface{}, format string) ([]byte, error) {
 	var err error
 	buf := &bytes.Buffer{}
 
@@ -76,5 +75,9 @@ func Serialize(data interface{}, format string) (io.Writer, error) {
 		return nil, fmt.Errorf("specified format not supported: %v", format)
 	}
 
-	return buf, err
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

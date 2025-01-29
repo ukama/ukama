@@ -74,7 +74,7 @@ func PushNodeOnline(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	logrus.Infof("Pushing NodeOnline event for node %s, rpc %+v", nodeId, evt)
 
 	if err := m.PublishRequest(route, evt); err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
@@ -222,11 +222,8 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 func PushNodeOffViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("off").SetObject("node").MustBuild()
 
-	msg := epb.NodeOnlineEvent{
-		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+	msg := epb.NodeOfflineEvent{
+		NodeId: nodeId,
 	}
 
 	anyMsg, err := anypb.New(&msg)
