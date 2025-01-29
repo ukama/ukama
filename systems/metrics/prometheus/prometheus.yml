@@ -40,10 +40,18 @@ scrape_configs:
       - targets: ["exporter:10251"]
         labels:
           env: dev
+
+  - job_name: "dummy-controller"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["dummy-controller:2112"]
+        labels:
+          env: dev
+
   - job_name: ukama-nodes
     scrape_interval: "10s"
     static_configs:
-      - targets: ['10.1.0.90:7001']
+      - targets: ["10.1.0.90:7001"]
         labels:
           nodeid: uk-sa2450-tnode-v0-4e86
     metrics_path: "/metrics"

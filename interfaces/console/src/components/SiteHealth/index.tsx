@@ -1,164 +1,95 @@
-import React, { useState } from 'react';
-import { Grid, Box, Typography } from '@mui/material';
-import { SiteHealth } from '@/../public/svg';
-import colors from '@/theme/colors';
+import React, { useState, useEffect } from 'react';
+import { Grid, Box, Typography, Stack } from '@mui/material';
 import LineChart from '../LineChart';
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { getMetricValue } from '@/utils';
-
-interface BatteryInfo {
-  label: string;
-  value: string;
-}
+import { getMetricValue, isMetricValue } from '@/utils';
+import {
+  Graphs_Type,
+  MetricsRes,
+} from '@/client/graphql/generated/subscriptions';
 
 interface SiteOverallHealthProps {
-  batteryInfo: BatteryInfo[];
-  solarHealth: 'good' | 'warning';
-  nodeHealth: 'good' | 'warning';
-  switchHealth: 'good' | 'warning';
-  controllerHealth: 'good' | 'warning';
-  batteryHealth: 'good' | 'warning';
-  backhaulHealth: 'good' | 'warning';
-  nodes: any[];
   nodeId: string;
   metricFrom: number;
-  topic: string;
-  initData: any;
-  title?: string;
-  filter?: string;
-  hasData?: boolean;
+  metrics: MetricsRes;
   loading?: boolean;
-  tabSection: Graphs_Type;
+  tabSection?: Graphs_Type;
+  onSiteKpiChange?: (kpi: Graphs_Type) => void;
 }
+
+const POWER_METRICS = [
+  {
+    id: 'power_input',
+    name: 'Power Input',
+    show: true,
+  },
+  {
+    id: 'solar_performance',
+    name: 'Solar Performance',
+    show: true,
+  },
+  {
+    id: 'battery_status',
+    name: 'Battery Status',
+    show: true,
+  },
+];
 
 const SiteOverallHealth: React.FC<SiteOverallHealthProps> = React.memo(
   ({
-    batteryInfo,
-    solarHealth,
-    nodeHealth,
-    switchHealth,
-    controllerHealth,
-    batteryHealth,
-    backhaulHealth,
-    nodes,
     nodeId,
     metricFrom,
-    topic,
-    initData,
-    title = '',
+    metrics,
     loading = false,
-    filter = 'LIVE',
-    tabSection = Graphs_Type.NodeHealth,
+    tabSection = Graphs_Type.Power,
+    onSiteKpiChange,
   }) => {
-    const [selectedKpi, setSelectedKpi] = useState<string | null>(null);
+    // Add debug logs
+    useEffect(() => {
+      console.log('SiteHealth received props:', {
+        nodeId,
+        metricFrom,
+        metrics,
+        loading,
+        tabSection,
+      });
+    }, [nodeId, metricFrom, metrics, loading, tabSection]);
 
-    const handleNodeClick = () => {
-      setSelectedKpi('Node');
-    };
+    const [selectedKpi, setSelectedKpi] = useState<Graphs_Type>(tabSection);
 
-    const handleSolarClick = () => {
-      setSelectedKpi('Solar');
-    };
-
-    const handleSwitchClick = () => {
-      setSelectedKpi('Switch');
-    };
-
-    const handleControllerClick = () => {
-      setSelectedKpi('Controller');
-    };
-
-    const handleBatteryClick = () => {
-      setSelectedKpi('Battery');
-    };
-
-    const handleBackhaulClick = () => {
-      setSelectedKpi('Backhaul');
-    };
-
-    const renderKpiInfo = () => {
-      switch (selectedKpi) {
-        case 'Node':
-          return 'Nodes';
-        case 'Solar':
-          return 'Solar panels KPIs';
-        case 'Switch':
-          return 'Switch overview';
-        case 'Controller':
-          return 'Charge controller overview';
-        case 'Battery':
-          return 'Batteries KPIs';
-        case 'Backhaul':
-          return 'Backhaul overview';
-        default:
-          return 'Please select a KPI to view information';
-      }
-    };
-
-    const renderNodeInfo = () => {
-      return nodes.map((n, index) => (
-        <Typography key={index} variant="body1" color="initial">
-          Node #{n.id}: {n.status.state} and{' '}
-          {n.status.connectivity.toLowerCase()}
-        </Typography>
-      ));
-    };
+    useEffect(() => {
+      // Initialize with Power metrics
+      onSiteKpiChange?.(Graphs_Type.Power);
+      setSelectedKpi(Graphs_Type.Power);
+    }, [nodeId, onSiteKpiChange]);
 
     return (
-      <>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <Typography
-              variant="body1"
-              color="initial"
-              sx={{ fontWeight: 'bold' }}
-            >
-              Site components
-            </Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <SiteHealth
-              solarHealth={solarHealth}
-              nodeHealth={nodeHealth}
-              switchHealth={switchHealth}
-              controllerHealth={controllerHealth}
-              batteryHealth={batteryHealth}
-              backhaulHealth={backhaulHealth}
-              onNodeClick={handleNodeClick}
-              onSolarClick={handleSolarClick}
-              onSwitchClick={handleSwitchClick}
-              onControllerClick={handleControllerClick}
-              onBatteryClick={handleBatteryClick}
-              onBackhaulClick={handleBackhaulClick}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ border: `1px solid ${colors.black40}`, p: 2 }}>
-              <Typography
-                variant="body1"
-                color="initial"
-                sx={{ fontWeight: 'bold' }}
-              >
-                {renderKpiInfo()}
-              </Typography>
-              {selectedKpi === 'Node' && nodes ? (
-                renderNodeInfo()
-              ) : (
-                <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
-                  loading={loading}
-                  topic={topic}
-                  title={title}
-                  initData={initData}
-                  hasData={false}
-                />
-              )}
-            </Box>
-          </Grid>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Typography variant="h6" sx={{ mb: 3 }}>
+            Site Power Metrics{' '}
+            {nodeId ? `(Node: ${nodeId})` : '(No node selected)'}
+          </Typography>
+          <Stack spacing={4}>
+            {POWER_METRICS.map(
+              (metric) =>
+                metric.show && (
+                  <Box key={metric.id}>
+                    <LineChart
+                      nodeId={nodeId}
+                      tabSection={selectedKpi}
+                      metricFrom={metricFrom}
+                      loading={loading}
+                      topic={metric.id}
+                      title={metric.name}
+                      initData={getMetricValue(metric.id, metrics)}
+                      hasData={isMetricValue(metric.id, metrics)}
+                    />
+                  </Box>
+                ),
+            )}
+          </Stack>
         </Grid>
-      </>
+      </Grid>
     );
   },
 );

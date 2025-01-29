@@ -13,6 +13,7 @@ import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
+import { useEffect } from 'react';
 
 interface ILineChart {
   nodeId: string;
@@ -124,7 +125,26 @@ const LineChart = ({
   filter = 'LIVE',
   tabSection = Graphs_Type.NodeHealth,
 }: ILineChart) => {
-  const { user, env } = useAppContext();
+  useEffect(() => {
+    console.log('LineChart mounting for:', {
+      topic,
+      nodeId,
+      hasData,
+      dataLength: initData?.length,
+      initData: initData?.slice(0, 2), // Log first two items for debugging
+    });
+  }, []);
+
+  const defaultData = [
+    [Date.now() - 60000, 0],
+    [Date.now(), 0],
+  ];
+
+  const chartOptions = getOptions(
+    topic,
+    title,
+    initData?.length > 0 ? initData : defaultData,
+  );
 
   return (
     <GraphTitleWrapper
@@ -133,21 +153,12 @@ const LineChart = ({
       variant="subtitle1"
       title={title}
       handleFilterChange={() => {}}
-      loading={loading ?? !initData}
+      loading={loading}
     >
       <Box sx={{ width: '100%' }}>
-        {/* <MetricSubscription
-          key=""
-          nodeId={nodeId}
-          userId={user.id}
-          type={tabSection}
-          from={metricFrom}
-          url={env.METRIC_URL}
-          orgName={user.orgName}
-        /> */}
         <HighchartsReact
-          key={topic}
-          options={getOptions(topic, title, initData)}
+          key={`${topic}-${nodeId}-${initData?.length}`}
+          options={chartOptions}
           highcharts={Highcharts}
         />
       </Box>

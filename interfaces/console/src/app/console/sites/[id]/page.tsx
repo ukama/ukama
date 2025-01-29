@@ -141,53 +141,33 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
-  const [
-    getSiteMetricByTab,
-    { loading: siteMetricsLoading, variables: siteMetricsVariables },
-  ] = useGetMetricByTabLazyQuery({
+
+  const [getSiteMetricByTab] = useGetMetricByTabLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
-      setMetrics(data.getMetricByTab);
+      console.log('Full metric response:', data);
+      if (data?.getMetricByTab?.metrics) {
+        setMetrics(data.getMetricByTab);
+      } else {
+        console.warn('Invalid metrics response:', data);
+      }
+    },
+    onError: (error) => {
+      console.error('Metric query error details:', {
+        message: error.message,
+        networkError: error.networkError,
+        graphQLErrors: error.graphQLErrors,
+      });
+      setSnackbarMessage({
+        id: 'metric-error',
+        message: `Failed to fetch metrics: ${error.message}`,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
-  useEffect(() => {
-    if (metricFrom > 0 && siteMetricsVariables?.data?.from !== metricFrom) {
-      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
-      getSiteMetricByTab({
-        variables: {
-          data: {
-            nodeId: id,
-            userId: user.id,
-            type: graphType,
-            from: metricFrom,
-            to: metricFrom + 120,
-            orgName: user.orgName,
-            withSubscription: true,
-          },
-        },
-      }).then(() => {
-        MetricSubscription({
-          nodeId: id,
-          key: psKey,
-          type: graphType,
-          userId: user.id,
-          from: metricFrom,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-        });
-      });
-
-      PubSub.subscribe(psKey, handleNotification);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    metricFrom,
-    siteMetricsVariables?.data?.from,
-    getSiteMetricByTab,
-    graphType,
-  ]); // Added all missing dependencies
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
       if (res.getComponentsByUserId) {
@@ -204,17 +184,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
   const handleNotification = (_: any, data: string) => {
+    console.log('Received metric notification:', data);
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, type, value, nodeId, success } =
-      parsedData.data.getMetricByTabSub;
+    const { type, value, success } = parsedData.data.getMetricByTabSub;
     if (success) {
+      console.log('Publishing metric update:', type, value);
       PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
-      // setMetrics((prev) => {
-      //   const updatedMetrics = prev.metrics.map((m) =>
-      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
-      //   );
-      //   return { ...prev, metrics: updatedMetrics };
-      // });
     }
   };
 
@@ -243,9 +218,16 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     setGraphType(getSiteTabTypeByIndex(value) ?? Graphs_Type.Power);
     setMetricFrom(() => getUnixTime() - 120);
   }, [metrics]);
-  const handleOverviewSectionChange = (type: Graphs_Type) => {
-    setGraphType(type);
-    setMetricFrom(() => getUnixTime() - 120);
+
+  const checkDataReadiness = () => {
+    if (
+      activeSite.id &&
+      CurrentSiteaddress &&
+      !getSiteLoading &&
+      !CurrentSiteAddressLoading
+    ) {
+      setIsDataReady(true);
+    }
   };
 
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
@@ -280,6 +262,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
       checkDataReadiness();
     },
+
     onError: (error) => {
       setSnackbarMessage({
         id: 'sites-msg',
@@ -289,8 +272,40 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   const [fetchNode, { data: nodeData, loading: nodeLoading }] =
     useGetNodesByNetworkLazyQuery();
+  useEffect(() => {
+    if (
+      metricFrom > 0 &&
+      selectedSiteId &&
+      nodeData?.getNodesByNetwork.nodes[0]?.id
+    ) {
+      const nodeId = nodeData.getNodesByNetwork.nodes[0].id;
+      console.log('Fetching metrics with config:', {
+        nodeId,
+        userId: user.id,
+        type: graphType,
+        from: metricFrom,
+        to: metricFrom + 120,
+        orgName: user.orgName,
+      });
+
+      getSiteMetricByTab({
+        variables: {
+          data: {
+            nodeId,
+            userId: user.id,
+            type: graphType,
+            from: Math.floor(metricFrom), // Ensure integer
+            to: Math.floor(metricFrom + 120), // Ensure integer
+            orgName: user.orgName,
+            withSubscription: true,
+          },
+        },
+      });
+    }
+  }, [metricFrom, selectedSiteId, graphType, nodeData]);
 
   const { data: subscribers } = useGetSubscribersByNetworkQuery({
     variables: {
@@ -365,28 +380,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   }, [activeSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
 
   useEffect(() => {
-    if (error) {
-      setSnackbarMessage({
-        id: 'error-fetching-address',
-        type: 'error',
-        show: true,
-        message: 'Error fetching address from coordinates',
-      });
-    }
-  }, [error, setSnackbarMessage]);
-
-  const checkDataReadiness = () => {
-    if (
-      activeSite.id &&
-      CurrentSiteaddress &&
-      !getSiteLoading &&
-      !CurrentSiteAddressLoading
-    ) {
-      setIsDataReady(true);
-    }
-  };
-
-  useEffect(() => {
     checkDataReadiness();
   }, [
     activeSite,
@@ -394,6 +387,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     getSiteLoading,
     CurrentSiteAddressLoading,
   ]);
+  // Initial metric setup
+
+  const handleOverviewSectionChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - 120);
+  };
+
+  // Initial metric setup
+  useEffect(() => {
+    setGraphType(Graphs_Type.Power);
+    setMetricFrom(() => getUnixTime() - 120);
+  }, []);
 
   if (!isDataReady) {
     return (
@@ -427,7 +432,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       },
     });
   };
-
+  console.log('METRICS :', metrics);
   return (
     <Box>
       <SiteDetailsHeader
@@ -520,22 +525,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             }}
           >
             <SiteOverallHealth
-              batteryInfo={[]}
-              solarHealth={'good'}
-              nodeHealth={'good'}
-              switchHealth={'good'}
-              controllerHealth={'good'}
-              batteryHealth={'good'}
-              backhaulHealth={'good'}
-              nodes={nodeData?.getNodesByNetwork.nodes || []}
-              nodeId={activeSite.id}
-              metricFrom={0}
-              topic="Site Overall Health"
-              title="Site Overall Health"
-              initData={[]}
-              hasData={false}
-              loading={false}
-              tabSection={Graphs_Type.Power}
+              nodeId={nodeData?.getNodesByNetwork.nodes[0]?.id ?? ''}
+              metricFrom={metricFrom}
+              metrics={metrics}
+              loading={sitesLoading}
+              onSiteKpiChange={handleOverviewSectionChange}
+              tabSection={graphType}
             />
           </Paper>
         </Grid>
