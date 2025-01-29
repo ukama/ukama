@@ -37,9 +37,6 @@ services:
   networks:
    ukama-net:
     ipv4_address: 10.1.0.90
-  environment:
-   - NODE_ID=${NODE_ID}
-   - MY_POD_IP=10.1.0.90
 
  api-gateway:
   build: ./api-gateway
