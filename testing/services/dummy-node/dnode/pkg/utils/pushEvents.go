@@ -228,12 +228,12 @@ func PushNodeOffViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 
 	anyMsg, err := anypb.New(&msg)
 	if err != nil {
-		log.Fatalf("Failed to convert message to Any: %v", err)
+		logrus.Errorf("Failed to convert message to Any: %v", err)
 	}
 
 	err = Run(org, route, anyMsg, os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 
 	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
