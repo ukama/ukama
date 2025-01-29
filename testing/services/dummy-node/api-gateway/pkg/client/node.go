@@ -29,7 +29,7 @@ func NewNodeService(accountHost string, timeout time.Duration) *NodeDummy {
 
 	conn, err := grpc.NewClient(accountHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("did not connect: %v", err)
 	}
 	client := pb.NewNodeServiceClient(conn)
 

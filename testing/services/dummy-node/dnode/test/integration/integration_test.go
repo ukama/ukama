@@ -28,7 +28,7 @@ func init() {
 
 	err := reader.Read(tConfig)
 	if err != nil {
-		log.Fatalf("Failed to read config: %v", err)
+		log.Errorf("Failed to read config: %v", err)
 	}
 
 	log.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
