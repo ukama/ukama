@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/utils"
 	"google.golang.org/grpc/codes"
@@ -24,16 +25,18 @@ import (
 type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 	orgName        string
+	amqpConfig     pkg.AmqpConfig
 	nodeRepo       db.NodeRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient) *NodeServer {
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, amqpConfig pkg.AmqpConfig) *NodeServer {
 	return &NodeServer{
 		msgbus:         msgBus,
 		orgName:        orgName,
 		nodeRepo:       nodeRepo,
+		amqpConfig:     amqpConfig,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh"),
 	}
 }
@@ -44,7 +47,7 @@ func (s *NodeServer) ResetNode(ctx context.Context, req *pb.Request) (*pb.Respon
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeResetViaREST(s.orgName, nodeID.String(), s.msgbus)
+	utils.PushNodeResetViaREST(s.amqpConfig, s.orgName, nodeID.String(), s.msgbus)
 
 	return &pb.Response{
 		NodeId: nodeID.String(),
@@ -57,7 +60,7 @@ func (s *NodeServer) NodeRFOn(ctx context.Context, req *pb.Request) (*pb.Respons
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeRFOnViaREST(s.orgName, nodeID.String(), s.msgbus)
+	utils.PushNodeRFOnViaREST(s.amqpConfig, s.orgName, nodeID.String(), s.msgbus)
 
 	return &pb.Response{
 		NodeId: nodeID.String(),
@@ -70,7 +73,7 @@ func (s *NodeServer) NodeRFOff(ctx context.Context, req *pb.Request) (*pb.Respon
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeRFOffViaREST(s.orgName, nodeID.String(), s.msgbus)
+	utils.PushNodeRFOffViaREST(s.amqpConfig, s.orgName, nodeID.String(), s.msgbus)
 
 	return &pb.Response{
 		NodeId: nodeID.String(),
@@ -83,7 +86,7 @@ func (s *NodeServer) TurnNodeOff(ctx context.Context, req *pb.Request) (*pb.Resp
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeOffViaREST(s.orgName, nodeID.String(), s.msgbus)
+	utils.PushNodeOffViaREST(s.amqpConfig, s.orgName, nodeID.String(), s.msgbus)
 
 	return &pb.Response{
 		NodeId: nodeID.String(),
@@ -96,7 +99,7 @@ func (s *NodeServer) TurnNodeOnline(ctx context.Context, req *pb.Request) (*pb.R
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err.Error())
 	}
 
-	utils.PushNodeOnlineViaREST(s.orgName, nodeID.String(), s.msgbus)
+	utils.PushNodeOnlineViaREST(s.amqpConfig, s.orgName, nodeID.String(), s.msgbus)
 
 	return &pb.Response{
 		NodeId: nodeID.String(),

@@ -24,6 +24,9 @@ services:
    - DNODE_SERVICE_PORT=9090
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
+   - AMQPCONFIG_URI=http://rabbitmq:15672
+   - AMQPCONFIG_USERNAME=guest
+   - AMQPCONFIG_PASSWORD=guest
   restart: always
   networks:
    - ukama-net

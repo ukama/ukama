@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -32,20 +33,20 @@ type AmqpClient interface {
 
 type amqpClient struct {
 	u *url.URL
-	c *httpClient
+	c *HttpClient
 }
 
-func NewAmqpClient(h, usr, pwd string, timeout time.Duration) AmqpClient {
-	u, err := url.ParseRequestURI(h)
+func NewAmqpClient(amqpConf pkg.AmqpConfig, timeout time.Duration) AmqpClient {
+	u, err := url.ParseRequestURI(amqpConf.Uri)
 	if err != nil {
 		logrus.Errorf("Can't parse  %s url. Error: %s",
-			h, err.Error())
+			amqpConf.Uri, err.Error())
 	}
 
 	headers := map[string]string{"Content-Type": "application/json"}
 	return &amqpClient{
 		u: u,
-		c: NewHttpClient(WithBasicAuth(usr, pwd),
+		c: NewHttpClient(WithBasicAuth(amqpConf.Username, amqpConf.Password),
 			WithHeaders(headers), WithTimeout(timeout)),
 	}
 }

@@ -23,6 +23,15 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	OrgName          string
+	AmqpConfig       AmqpConfig
+}
+
+type AmqpConfig struct {
+	Uri      string `default:"http://rabbitmq:15672"`
+	Username string `default:"guest"`
+	Password string `default:"guest"`
+	Exchange string `default:"amq.topic"`
+	Vhost    string `default:"%2F"`
 }
 
 func NewConfig(name string) *Config {

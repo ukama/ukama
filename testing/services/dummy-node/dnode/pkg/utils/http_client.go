@@ -17,13 +17,13 @@ import (
 	"time"
 )
 
-type httpClient struct {
+type HttpClient struct {
 	c       *http.Client
 	headers map[string]string
 }
 
-func NewHttpClient(opts ...Option) *httpClient {
-	c := &httpClient{
+func NewHttpClient(opts ...Option) *HttpClient {
+	c := &HttpClient{
 		c:       http.DefaultClient,
 		headers: make(map[string]string),
 	}
@@ -35,7 +35,7 @@ func NewHttpClient(opts ...Option) *httpClient {
 	return c
 }
 
-func (c *httpClient) Head(url string) (*http.Response, error) {
+func (c *HttpClient) Head(url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodHead, url, nil)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (c *httpClient) Head(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Options(url string) (*http.Response, error) {
+func (c *HttpClient) Options(url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodOptions, url, nil)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *httpClient) Options(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Get(url string) (*http.Response, error) {
+func (c *HttpClient) Get(url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (c *httpClient) Get(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Post(url string, body io.Reader) (*http.Response, error) {
+func (c *HttpClient) Post(url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPost, url, body)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (c *httpClient) Post(url string, body io.Reader) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Put(url string, body io.Reader) (*http.Response, error) {
+func (c *HttpClient) Put(url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPut, url, body)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (c *httpClient) Put(url string, body io.Reader) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Patch(url string, body io.Reader) (*http.Response, error) {
+func (c *HttpClient) Patch(url string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodPatch, url, body)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (c *httpClient) Patch(url string, body io.Reader) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Delete(url string) (*http.Response, error) {
+func (c *HttpClient) Delete(url string) (*http.Response, error) {
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (c *httpClient) Delete(url string) (*http.Response, error) {
 	return c.Do(req)
 }
 
-func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
+func (c *HttpClient) Do(req *http.Request) (*http.Response, error) {
 	for key, value := range c.headers {
 		req.Header.Set(key, value)
 	}
@@ -99,28 +99,28 @@ func (c *httpClient) Do(req *http.Request) (*http.Response, error) {
 	return c.c.Do(req)
 }
 
-type Option func(*httpClient)
+type Option func(*HttpClient)
 
 func WithClient(clt *http.Client) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		c.c = clt
 	}
 }
 
 func WithTimeout(timeout time.Duration) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		c.c.Timeout = timeout
 	}
 }
 
 func WithHeader(key, value string) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		c.headers[key] = value
 	}
 }
 
 func WithHeaders(headers map[string]string) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		for key, value := range headers {
 			c.headers[key] = value
 		}
@@ -128,7 +128,7 @@ func WithHeaders(headers map[string]string) Option {
 }
 
 func WithBasicAuth(username, password string) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		auth := username + ":" + password
 		encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
 		c.headers["Authorization"] = "Basic " + encodedAuth
@@ -136,13 +136,13 @@ func WithBasicAuth(username, password string) Option {
 }
 
 func WithBearerAuth(token string) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		c.headers["Authorization"] = "Bearer " + token
 	}
 }
 
 func WithUserAgent(ua string) Option {
-	return func(c *httpClient) {
+	return func(c *HttpClient) {
 		c.headers["User-Agent"] = ua
 	}
 }
