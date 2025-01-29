@@ -11,7 +11,6 @@ package utils
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 
@@ -90,12 +89,12 @@ func PushNodeOnlineViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 
 	anyMsg, err := anypb.New(&msg)
 	if err != nil {
-		log.Fatalf("Failed to convert message to Any: %v", err)
+		logrus.Errorf("Failed to convert message to Any: %v", err)
 	}
 
 	err = Run(org, route, anyMsg, os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 
 	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
@@ -110,7 +109,7 @@ func PushNodeReset(orgName, nodeId string, m mb.MsgBusServiceClient) {
 		MeshHostName: gofakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
@@ -126,12 +125,12 @@ func PushNodeResetViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 
 	anyMsg, err := anypb.New(&msg)
 	if err != nil {
-		log.Fatalf("Failed to convert message to Any: %v", err)
+		logrus.Errorf("Failed to convert message to Any: %v", err)
 	}
 
 	err = Run(org, route, anyMsg, os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 
 	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
@@ -146,7 +145,7 @@ func PushNodeRFOn(orgName, nodeId string, m mb.MsgBusServiceClient) {
 		MeshHostName: gofakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
@@ -162,12 +161,12 @@ func PushNodeRFOnViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 
 	anyMsg, err := anypb.New(&msg)
 	if err != nil {
-		log.Fatalf("Failed to convert message to Any: %v", err)
+		logrus.Errorf("Failed to convert message to Any: %v", err)
 	}
 
 	err = Run(org, route, anyMsg, os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 
 	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
@@ -182,7 +181,7 @@ func PushNodeRFOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 		MeshHostName: gofakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
@@ -198,12 +197,12 @@ func PushNodeRFOffViaREST(org, nodeId string, m mb.MsgBusServiceClient) {
 
 	anyMsg, err := anypb.New(&msg)
 	if err != nil {
-		log.Fatalf("Failed to convert message to Any: %v", err)
+		logrus.Errorf("Failed to convert message to Any: %v", err)
 	}
 
 	err = Run(org, route, anyMsg, os.Stdout)
 	if err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 
 	logrus.Infof("Successfully published NodeOnline event for node %s", nodeId)
@@ -215,7 +214,7 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 		NodeId: nodeId,
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
-		log.Fatalf("Failed to publish %s event. Error %s", route, err.Error())
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
