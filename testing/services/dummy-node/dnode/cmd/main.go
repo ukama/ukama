@@ -41,7 +41,7 @@ func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
-		log.Errorf("Error reading config ", err)
+		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
 		if err != nil {
