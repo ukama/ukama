@@ -89,6 +89,7 @@
 [submodule "nodes/ukamaOS/kernel"]
 	path = nodes/ukamaOS/kernel
 	url = https://github.com/ukama/kernel.git
+	branch = ukama-anode-latest
 [submodule "nodes/ukamaOS/distro/vendor/psl"]
 	path = nodes/ukamaOS/distro/vendor/psl
 	url = https://github.com/ukama/psl.git
