@@ -11,6 +11,7 @@ UKAMAOS_ROOT = ../../
 # Targets
 TAR_LIB := usys
 TARGET_LIB := lib$(TAR_LIB).so
+TARGET_STATIC_LIB := lib$(TAR_LIB).a 
 UTEST_BIN := platform
 DISTRO_DIR:=../
 
@@ -99,10 +100,9 @@ $(info CFILES :: $(CFILES))
 $(info OBJFILES :: $(OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGET_LIB) $(TEST_EXE) $(BUILD) formatcodestyle checkcodestyle memcheck clean
-
+.PHONY: install clean memcheck
 # Main target for building
-all: $(TARGET_LIB) $(UTEST_BIN)
+all: $(TARGET_STATIC_LIB) $(TARGET_LIB)
 	@echo Done.
 
 # CLANG FORMAT
@@ -158,6 +158,11 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 # Build Target lib
+$(TARGET_STATIC_LIB): $(OBJFILES)
+	@echo "Building static lib"
+	ar rcs  $(BUILD_DIR)/$@ $^
+
+# Build Target lib 
 $(TARGET_LIB): $(OBJFILES)
 	@echo "Building dynamic lib" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
@@ -176,7 +181,16 @@ $(BUILD_DIR)/%.o: %.c
 memcheck: $(UTEST_BIN)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
 
+install: $(TARGET_STATIC_LIB) $(TARGET_LIB)
+	mkdir -p $(VENDOR_BUILD)
+	mkdir -p $(VENDOR_INC)
+	@echo Installing platfrom lib
+	cp -rvf ./sys/inc/*.h $(VENDOR_INC)
+	cp -rvf ./log/inc/*.h $(VENDOR_INC)
+	cp -rvf ./build/libusys.* $(VENDOR_LIB)
+
 # Clean all build files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
+

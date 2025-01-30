@@ -5,11 +5,12 @@
 # Copyright (c) 2021-present, Ukama Inc.
 
 include ../../config.mk
+HOST=armv6-alpine-linux-musleabihf
 
 CURMAKE = $(abspath $(firstword $(MAKEFILE_LIST)))
 CURPATH = $(dir $(CURMAKE))
 
-export DEPDIR = $(CURPATH)/build
+export DEPDIR = $(CURPATH)build
 
 ifndef XGCCPATH
 $(error XGCCPATH is missing)
@@ -68,29 +69,15 @@ endif
 $(shell mkdir -p $(DEPDIR)/lib)
 
 # List of libs required to be build
-LIST = zlib
-LIST += orcania
+LIST = orcania
 LIST += yder
-LIST += libmicrohttpd
 LIST += jansson
 LIST += ulfius
 LIST += prometheus-client
 LIST += tomlc
-LIST += openssl
-LIST += curl
-LIST += libuuid
-LIST += nettle
-LIST += gmp
-LIST += p11-kit
-LIST += gnutls
-LIST += sqlite
 LIST += amqp
-#LIST += protobuf
-#LIST += protobuf-c
-LIST += libunistring
 LIST += libcap
-LIST += psl
-LIST += libidn2
+LIST += libuuid
 
 .PHONY: $(LIST) iptables iproute2 dhcp dhcpcd
 
@@ -142,10 +129,11 @@ else
 	@echo -e  ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-ulfius: orcania yder jansson p11-kit gnutls curl libmicrohttpd libunistring
+ulfius: orcania yder
 	$(call print_msg,"ulfius")
 ifeq (,$(wildcard ${DEPDIR}/lib/libulfius.a))
 	$(MAKE) -C $@/src CC=$(XCC) clean
+	$(MAKE) -C $@/src static-install CC=$(XCC) DESTDIR=$(DEPDIR)
 	$(MAKE) -C $@ install CC=$(XCC) DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
@@ -155,17 +143,9 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(mkdir -p $@/$(BUILD_DIR) && \
-	cd $@ && \
-	libtoolize --force --copy && \
-	aclocal --force && \
-	autoheader && \
-	autoconf && \
-	automake --add-missing --copy && \
-	autoreconf --force --install --verbose && \
-	cd $(BUILD_DIR) && \
-	../configure CC=$(XCC) --host=$(HOST) --enable-static --prefix=$(DEPDIR) && \
-	$(MAKE) && $(MAKE) install)
+	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && \
+        cmake ../ -DCMAKE_C_COMPILER=${XCC} -DJANSSON_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=$(DEPDIR) && \
+	$(MAKE) install )
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
@@ -221,9 +201,9 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libuuid.*))
 	autoreconf --force --install --verbose && cd -
 	mkdir -p $@/${BUILD_DIR} && cd $@ && \
 	aclocal && autoconf && cd ${BUILD_DIR} && \
-	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
+	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib -static" \
 		../configure --prefix=${DEPDIR} --host=${HOST} \
-		--build=${BUILD} && \
+		--build=${BUILD} --enable-static && \
 	make && make install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -437,7 +417,7 @@ endif
 
 libcap:
 	$(call print_msg,"libcap")
-ifeq (,$(wildcard ${DEPDIR}/lib64/libcap.*))
+ifeq (,$(wildcard ${DEPDIR}/libcap.*))
 	$(MAKE) -C $@ CC=$(XCC) clean
 	$(MAKE) -C $@ CC=$(XCC) BUILD_CC=gcc GOLANG=no install DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
