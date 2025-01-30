@@ -67,13 +67,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 # Build
 BUILD_DIR:=build
 
-# Compilers and flags
-ifdef XGCCPATH
-XCC=$(XGCCPATH)$(XGCC)
-#XLD=$(XGCCPATH)$(XLD)
-else
-XCC=gcc
-endif
 
 # VENDOR_PKG
 ifeq ($(ALPINE_BUILD),1)
@@ -235,27 +228,27 @@ $(PLATFORM_PKG):
 # Build Target
 $(TARGETBIN): $(SVC_OBJFILES)
 	@echo "Building $(TARGETBIN)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	$(CC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
 $(INVENTORY): $(INVT_OBJFILES) 
 	@echo "Building $(INVENTORY)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	$(CC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Schema utility
 $(SCHEMA): $(SCH_OBJFILES)
 	@echo "Building $(SCHEMA)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	$(CC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGETBIN)
-	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
+	$(CC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
 $(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) $(PLATFORM_PKG) 
 	mkdir -p $(dir $@)
-	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
 # Memory check
 memcheck: $(UTEST)

@@ -72,9 +72,6 @@ LIBS+=-lusys
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
 all: version.h rlog.d
@@ -83,7 +80,7 @@ all: version.h rlog.d
 rlog.d: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
@@ -93,7 +90,7 @@ $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh

@@ -8,52 +8,40 @@
 #ALLDIR := $(sort $(dir $(wildcard */.)))
 #FDIR = $(wildcard $(ALLDIR)/Make*)
 #FLTRDIR := $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' -printf '%h\0' | sort -zu | awk -F'./' '{$$1=$$1; print $$4}') 
-CURMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURPATH := $(dir $(CURMAKE))
+include ../../config.mk
 
-SYSTEMDIR := $(CURRPATH)
-SYSSUBDIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' | sed 's|/[^/]*$$||' | awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
+CUR_MAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
+CUR_PATH := $(dir $(CUR_MAKE))
+
+SYS_SUB_DIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' | sed 's|/[^/]*$$||' | awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
 
 
-.PHONY: subdirs $(SYSSUBDIRS) clean info
+.PHONY: subdirs $(SYS_SUB_DIRS) distclean clean info
 
-ifndef ROOTFSPATH
-override ROOTFSPATH = $(CURPATH)_ukamafs
-endif
-$(info Called for $(MAKECMDGOALS))
-ifeq ($(MAKECMDGOALS),"clean")
-# Check for cross compiler
-ifdef XGCCPATH
-ifeq (,$(wildcard $(XGCCPATH)))
-    $(error XGCCPATH not found at default $(XGCCPATH))
-    $(info  Provide XGCCPATH to make .)
-endif
-endif
-endif
-
-#Export variables
-export
 
 #Build sub-directories
-subdirs: $(SYSSUBDIRS)
-$(SYSSUBDIRS):
+subdirs: info $(SYS_SUB_DIRS)
+$(SYS_SUB_DIRS):
 	$(MAKE) -C $@
 
 #Clean sub-directories
 clean:
 	@echo "Cleaning System build."
-	rm -rf $(CURPATH)_ukamafs
-	for dir in $(SYSSUBDIRS); do \
+	for dir in $(SYS_SUB_DIRS); do \
                 $(MAKE) -C $$dir -f Makefile $@; \
         done
 
 #DistClean sub-directories
 distclean:
 	@echo "DistClean System build."
-	rm -rf $(CURPATH)_ukamafs
-	for dir in $(SYSSUBDIRS); do \
+	for dir in $(SYS_SUB_DIRS); do \
                 $(MAKE) -C $$dir -f Makefile $@; \
         done
 
-info: 
-	@echo $(SYSSUBDIRS)
+info:  
+	$(info ============ BUILD INFO ============)
+	$(info Target Board:   $(TARGET_BOARD))
+	$(info System Dirs:    $(SYS_SUB_DIRS))
+	$(info Architecture:   $(ARCH))
+	$(info Compiler:       $(CC))
+	$(info ====================================)

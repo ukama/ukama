@@ -82,9 +82,6 @@ COMM_OBJFILES = $(COMM_CFILES:.c=.o)
 AGENT_CFILES = $(wildcard ./agents/*.c)
 AGENT_OBJFILES = $(AGENT_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
 all: version.h wimc agent
@@ -94,11 +91,11 @@ wimc: $(TARGET_EXEC)
 agent: $(AGENT_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(AGENT_EXEC): $(VENDOR_PKG) $(AGENT_OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(AGENT_EXEC) $(AGENT_OBJFILES) $(COMM_OBJFILES) \
+	$(CC) -o $(AGENT_EXEC) $(AGENT_OBJFILES) $(COMM_OBJFILES) \
 		$(LDFLAGS) $(LIBS)
 	echo "Done."
 
@@ -109,7 +106,7 @@ $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh
