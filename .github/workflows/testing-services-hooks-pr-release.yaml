@@ -1,24 +1,24 @@
-# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: pr-release-testing-dummy-node
-on:  
+name: pr-release-testing-hooks
+on:
   workflow_dispatch:
 
-jobs:  
+jobs:
   build:
     runs-on: ubuntu-latest
     name: build and release
-    env: 
-      working-directory: testing/services/dummy-node
+    env:
+      working-directory: testing/services/hooks
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
 
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: testing/dummy-node
+        registry-name: testing/hooks
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,7 +32,7 @@ jobs:
       uses: denispalnitsky/gitops-release@v9
       with:
         filename: "releases/ukamax/pr-env.yaml"
-        key: "dummynodeImageTag"
+        key: "hooksImageTag"
         value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"

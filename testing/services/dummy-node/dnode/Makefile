@@ -4,18 +4,17 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
-include ../../config.mk
+include ../config.mk
 
 .PHONY: integration.test test
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-X github.com/ukama/ukama/systems/registry/node/cmd/version.Version=$(BIN_VER) -extldflags=-static" -o bin/node cmd/server/main.go
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/testing/services/dummy-node/dnode/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/dnode cmd/main.go
 
 test:
 	go test -v ./...
 
-# Go lint
 lint:
 	golangci-lint run
 
@@ -26,16 +25,14 @@ deps:
 			github.com/vektra/mockery/v2/.../
 
 gen:
-	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
- 			  node.proto
+	protoc -I ./pb -I ../../../../systems/common/pb -I ../../../../systems/common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
+ 			  dnode.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm -rf bin/
-
-# integration tests
 
 integration.test:
 	go test ./test/integration -tags integration  -v -count=1
