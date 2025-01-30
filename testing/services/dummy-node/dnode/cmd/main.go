@@ -20,12 +20,10 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/cmd/version"
 	generated "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
-	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/server"
 )
 
@@ -34,8 +32,7 @@ var serviceConfig *pkg.Config
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
-	nodeDb := initDb()
-	runGrpcServer(nodeDb)
+	runGrpcServer()
 }
 func initConfig() {
 	serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -51,16 +48,7 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Node{})
-	if err != nil {
-		log.Errorf("Database initialization failed. Error: %v", err)
-	}
-	return d
-}
-func runGrpcServer(gormdb sql.Db) {
+func runGrpcServer() {
 
 	instanceId := os.Getenv("POD_NAME")
 	if instanceId == "" {
@@ -74,8 +62,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	nodeServer := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb),
-		mbClient, serviceConfig.AmqpConfig)
+	nodeServer := server.NewNodeServer(serviceConfig.OrgName, mbClient, serviceConfig.AmqpConfig)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

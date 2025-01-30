@@ -16,7 +16,6 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
-	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/db"
 	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,16 +25,14 @@ type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 	orgName        string
 	amqpConfig     pkg.AmqpConfig
-	nodeRepo       db.NodeRepo
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewNodeServer(orgName string, nodeRepo db.NodeRepo, msgBus mb.MsgBusServiceClient, amqpConfig pkg.AmqpConfig) *NodeServer {
+func NewNodeServer(orgName string, msgBus mb.MsgBusServiceClient, amqpConfig pkg.AmqpConfig) *NodeServer {
 	return &NodeServer{
 		msgbus:         msgBus,
 		orgName:        orgName,
-		nodeRepo:       nodeRepo,
 		amqpConfig:     amqpConfig,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh"),
 	}
