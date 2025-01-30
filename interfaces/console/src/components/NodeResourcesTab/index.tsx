@@ -7,7 +7,10 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
+import {
+  Graphs_Type,
+  LatestMetricsRes,
+} from '@/client/graphql/generated/subscriptions';
 import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
@@ -23,6 +26,7 @@ interface INodeResourcesTab {
   loading: boolean;
   metricFrom: number;
   selectedNode: Node | undefined;
+  metricsStateData: LatestMetricsRes;
 }
 const NodeResourcesTab = ({
   nodeId,
@@ -30,6 +34,7 @@ const NodeResourcesTab = ({
   loading,
   metricFrom,
   selectedNode,
+  metricsStateData,
 }: INodeResourcesTab) => {
   const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
@@ -48,7 +53,12 @@ const NodeResourcesTab = ({
         >
           {NodeResourcesTabConfigure[nodeType][0].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][0].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               variant={'large'}
               name={NodeResourcesTabConfigure[nodeType][0].name}
               nameInfo={TooltipsText.MTRX}
@@ -56,7 +66,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][1].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][1].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               variant={'large'}
               name={NodeResourcesTabConfigure[nodeType][1].name}
               nameInfo={TooltipsText.MCOM}
@@ -64,7 +79,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][2].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][2].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               name={NodeResourcesTabConfigure[nodeType][2].name}
               variant={'large'}
               nameInfo={TooltipsText.CPUTRX}
@@ -72,7 +92,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][3].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][3].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               name={NodeResourcesTabConfigure[nodeType][3].name}
               variant={'large'}
               nameInfo={TooltipsText.CPUCOM}
@@ -80,7 +105,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][4].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][4].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               variant={'large'}
               name={NodeResourcesTabConfigure[nodeType][4].name}
               nameInfo={TooltipsText.DISKTRX}
@@ -88,7 +118,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][5].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][5].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               variant={'large'}
               name={NodeResourcesTabConfigure[nodeType][5].name}
               nameInfo={TooltipsText.DISKCOM}
@@ -96,7 +131,12 @@ const NodeResourcesTab = ({
           )}
           {NodeResourcesTabConfigure[nodeType][6].show && (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
+              value={`${
+                metricsStateData?.metrics.find(
+                  (metric) =>
+                    metric.type === NodeResourcesTabConfigure[nodeType][6].id,
+                )?.value[1] ?? PLACEHOLDER_VALUE
+              }`}
               name={NodeResourcesTabConfigure[nodeType][6].name}
               variant={'large'}
               nameInfo={TooltipsText.POWER}

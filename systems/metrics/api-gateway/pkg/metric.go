@@ -177,7 +177,7 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 	defer cancel()
 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
-
+	logrus.Infof("MetricFilter: %v", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
 	data := url.Values{}
 	data.Set("query", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
 

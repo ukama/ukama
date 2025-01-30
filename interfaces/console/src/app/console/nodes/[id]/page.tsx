@@ -16,8 +16,8 @@ import {
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
-  MetricsRes,
   useGetMetricByTabLazyQuery,
+  useGetMetricsStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
@@ -43,6 +43,8 @@ interface INodePage {
   };
 }
 
+const MetricEmptyRes = { metrics: [] };
+
 const Page: React.FC<INodePage> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
@@ -51,7 +53,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [graphType, setGraphType] = useState<Graphs_Type>(
     Graphs_Type.NodeHealth,
   );
-  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
@@ -67,6 +68,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
       router.back();
     }
   }, []);
+
+  const [
+    getMetricsStat,
+    { data: metricsStateData, loading: metricsStateLoading },
+  ] = useGetMetricsStatLazyQuery({
+    client: subscriptionClient,
+  });
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
     skip: !id,
@@ -116,17 +124,24 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const [
     getNodeMetricByTab,
-    { loading: nodeMetricsLoading, variables: nodeMetricsVariables },
+    {
+      data: metrics,
+      loading: nodeMetricsLoading,
+      variables: nodeMetricsVariables,
+    },
   ] = useGetMetricByTabLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      setMetrics(data.getMetricByTab);
-    },
   });
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
+      getMetricsStat({
+        variables: {
+          nodeId: id,
+          orgName: user.orgName,
+        },
+      });
       const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
       getNodeMetricByTab({
         variables: {
@@ -168,12 +183,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
       parsedData.data.getMetricByTabSub;
     if (success) {
       PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
-      // setMetrics((prev) => {
-      //   const updatedMetrics = prev.metrics.map((m) =>
-      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
-      //   );
-      //   return { ...prev, metrics: updatedMetrics };
-      // });
     }
   };
 
@@ -211,7 +220,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
         onAddNode={() => {}}
-        loading={nodesLoading || updateNodeLoading}
+        loading={nodesLoading || updateNodeLoading || metricsStateLoading}
         selectedNode={selectedNode}
         handleEditNodeClick={() => {
           setIsEditNode(true);
@@ -245,7 +254,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       <LoadingWrapper
         radius="small"
         width={'100%'}
-        isLoading={nodesLoading || updateNodeLoading}
+        isLoading={nodesLoading || updateNodeLoading || metricsStateLoading}
         cstyle={{
           backgroundColor: false ? colors.white : 'transparent',
         }}
@@ -254,7 +263,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
           <NodeOverviewTab
             nodeId={id}
             loading={false}
-            metrics={metrics}
+            metrics={metrics?.getMetricByTab ?? MetricEmptyRes}
             connectedUsers={'0'}
             metricFrom={metricFrom}
             isUpdateAvailable={false}
@@ -263,32 +272,44 @@ const Page: React.FC<INodePage> = ({ params }) => {
             selectedNode={selectedNode}
             metricsLoading={nodeMetricsLoading}
             getNodeSoftwareUpdateInfos={() => {}}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? MetricEmptyRes
+            }
             handleOverviewSectionChange={handleOverviewSectionChange}
           />
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
             nodeId={id}
-            metrics={metrics}
+            metrics={metrics?.getMetricByTab ?? MetricEmptyRes}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? MetricEmptyRes
+            }
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
             nodeId={id}
-            metrics={metrics}
+            metrics={metrics?.getMetricByTab ?? MetricEmptyRes}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? MetricEmptyRes
+            }
           />
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
             nodeId={id}
-            metrics={metrics}
+            metrics={metrics?.getMetricByTab ?? MetricEmptyRes}
             metricFrom={metricFrom}
             loading={nodeMetricsLoading}
+            metricsStateData={
+              metricsStateData?.getMetricsStat ?? MetricEmptyRes
+            }
           />
         </TabPanel>
         {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>

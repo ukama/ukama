@@ -92,6 +92,18 @@ subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
   }
 }
 
+query GetMetricsStat($nodeId: String!, $orgName: String!) {
+  getMetricsStat(nodeId: $nodeId, orgName: $orgName) {
+    metrics {
+      msg
+      nodeId
+      success
+      type
+      value
+    }
+  }
+}
+
 # subscription GetMetricByTabSub(
 #   $nodeId: String!
 #   $orgId: String!

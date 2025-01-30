@@ -6,7 +6,10 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
+import {
+  Graphs_Type,
+  LatestMetricsRes,
+} from '@/client/graphql/generated/subscriptions';
 import { RadioChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
@@ -21,12 +24,14 @@ interface INodeRadioTab {
   metrics: any;
   loading: boolean;
   metricFrom: number;
+  metricsStateData: LatestMetricsRes;
 }
 const NodeRadioTab = ({
   nodeId,
   loading,
   metrics,
   metricFrom,
+  metricsStateData,
 }: INodeRadioTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
@@ -43,19 +48,31 @@ const NodeRadioTab = ({
           onCollapse={handleCollapse}
         >
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === RadioChartsConfig[0].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             variant={'large'}
             name={'TX Power'}
             nameInfo={TooltipsText.TXPOWER}
           />
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === RadioChartsConfig[1].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             variant={'large'}
             name={'RX Power'}
             nameInfo={TooltipsText.RXPOWER}
           />
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === RadioChartsConfig[2].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             name={'PA Power'}
             variant={'large'}
             nameInfo={TooltipsText.PAPOWER}

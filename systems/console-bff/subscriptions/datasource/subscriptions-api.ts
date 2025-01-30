@@ -14,10 +14,12 @@ import { API_METHOD_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
   GetMetricRangeInput,
+  LatestMetricRes,
   MetricRes,
   NotificationsRes,
 } from "../resolvers/types";
 import {
+  parseLatestMetricRes,
   parseMetricRes,
   parseNodeMetricRes,
   parseNotificationsRes,
@@ -56,6 +58,17 @@ const getMetricRange = async (
     .catch(err => {
       throw new GraphQLError(err);
     });
+};
+
+const getLatestMetric = async (
+  baseUrl: string,
+  metrics: string,
+  nodeId: string
+): Promise<LatestMetricRes> => {
+  return await asyncRestCall({
+    method: API_METHOD_TYPE.GET,
+    url: `${baseUrl}/${VERSION}/metrics/${metrics}?node=${nodeId}`,
+  }).then(res => parseLatestMetricRes(res.data, { nodeId, type: metrics }));
 };
 
 const getNodeRangeMetric = async (
@@ -104,4 +117,10 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };
+export {
+  directCall,
+  getLatestMetric,
+  getMetricRange,
+  getNodeRangeMetric,
+  getNotifications,
+};

@@ -9,6 +9,7 @@
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
 import {
   Graphs_Type,
+  LatestMetricsRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
 import { HealtChartsConfigure, TooltipsText } from '@/constants';
@@ -33,6 +34,7 @@ interface INodeOverviewTab {
   isUpdateAvailable: boolean;
   handleUpdateNode: Function;
   selectedNode: Node | undefined;
+  metricsStateData: LatestMetricsRes;
   connectedUsers: string | undefined;
   getNodeSoftwareUpdateInfos: Function;
   handleOverviewSectionChange: Function;
@@ -49,6 +51,7 @@ const NodeOverviewTab = ({
   onNodeSelected,
   handleUpdateNode,
   isUpdateAvailable,
+  metricsStateData,
   getNodeSoftwareUpdateInfos,
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
@@ -106,7 +109,12 @@ const NodeOverviewTab = ({
           >
             {HealtChartsConfigure[nodeType][0].show && (
               <NodeStatItem
-                value={PLACEHOLDER_VALUE}
+                value={`${
+                  metricsStateData?.metrics.find(
+                    (metric) =>
+                      metric.type === HealtChartsConfigure[nodeType][0].id,
+                  )?.value[1] ?? PLACEHOLDER_VALUE
+                }`}
                 name={HealtChartsConfigure[nodeType][0].name}
                 showAlertInfo={false}
                 nameInfo={TooltipsText.TRX}
@@ -114,7 +122,12 @@ const NodeOverviewTab = ({
             )}
             {HealtChartsConfigure[nodeType][1].show && (
               <NodeStatItem
-                value={PLACEHOLDER_VALUE}
+                value={`${
+                  metricsStateData?.metrics.find(
+                    (metric) =>
+                      metric.type === HealtChartsConfigure[nodeType][1].id,
+                  )?.value[1] ?? PLACEHOLDER_VALUE
+                }`}
                 name={HealtChartsConfigure[nodeType][1].name}
                 nameInfo={TooltipsText.COM}
               />
@@ -123,7 +136,12 @@ const NodeOverviewTab = ({
               <NodeStatItem
                 name={HealtChartsConfigure[nodeType][2].name}
                 nameInfo={TooltipsText.COM}
-                value={PLACEHOLDER_VALUE}
+                value={`${
+                  metricsStateData?.metrics.find(
+                    (metric) =>
+                      metric.type === HealtChartsConfigure[nodeType][2].id,
+                  )?.value[1] ?? PLACEHOLDER_VALUE
+                }`}
               />
             )}
           </NodeStatsContainer>

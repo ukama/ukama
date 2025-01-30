@@ -8,6 +8,7 @@
 
 import {
   Graphs_Type,
+  LatestMetricsRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
 import { NetworkChartsConfig, TooltipsText } from '@/constants';
@@ -24,12 +25,14 @@ interface INodeOverviewTab {
   metrics: MetricsRes;
   metricFrom: number;
   loading: boolean;
+  metricsStateData: LatestMetricsRes;
 }
 const NodeNetworkTab = ({
   nodeId,
   loading,
   metrics,
   metricFrom,
+  metricsStateData,
 }: INodeOverviewTab) => {
   const [isCollapse, setIsCollapse] = useState<boolean>(false);
   const handleCollapse = () => setIsCollapse((prev) => !prev);
@@ -48,30 +51,50 @@ const NodeNetworkTab = ({
         >
           <NodeStatItem
             variant={'large'}
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === NetworkChartsConfig[0].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             name={NetworkChartsConfig[0].name}
             nameInfo={TooltipsText.DL}
           />
           <NodeStatItem
             variant={'large'}
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === NetworkChartsConfig[1].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             name={NetworkChartsConfig[1].name}
             nameInfo={TooltipsText.UL}
           />
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
             variant={'large'}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === NetworkChartsConfig[2].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             name={NetworkChartsConfig[2].name}
             nameInfo={TooltipsText.RRCCNX}
           />
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === NetworkChartsConfig[3].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             variant={'large'}
             name={NetworkChartsConfig[3].name}
             nameInfo={TooltipsText.ERAB}
           />
           <NodeStatItem
-            value={PLACEHOLDER_VALUE}
+            value={`${
+              metricsStateData?.metrics.find(
+                (metric) => metric.type === NetworkChartsConfig[4].id,
+              )?.value[1] ?? PLACEHOLDER_VALUE
+            }`}
             variant={'large'}
             name={NetworkChartsConfig[4].name}
             nameInfo={TooltipsText.RLS}

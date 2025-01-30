@@ -1,19 +1,19 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-systems-testing-dummy-node
+name: build-systems-dummy-node-dmetrics
 on:
  push:
   paths:
-   - 'testing/services/dummy-node/**'
-   - '.github/workflows/testing-services-dummy-node.yaml'
+   - 'testing/services/dummy-node/dmetrics/**'
+   - '.github/workflows/testing-services-dummy-node-dmetrics.yaml'
 
  workflow_dispatch:
 
 jobs:
  build:
   env:
-   working-directory: testing/services/dummy-node
+   working-directory: testing/services/dummy-node/dmetrics
 
   name: build and test
   runs-on: ubuntu-latest
@@ -23,34 +23,18 @@ jobs:
    - name: build app
      uses: ./.github/actions/build-go
      with:
-      registry-name: testing/dummy-node
+      registry-name: dummy-node/dmetrics
       working-directory: ${{ env.working-directory }}
       github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
       aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
       build-listener: false
 
- # sonar-scan:
- #   name: sonar-scan
- #   needs: build
- #   runs-on: ubuntu-latest
- #   env:
- #     working-directory: testing/services/dummy-node
- #   steps:
- #     - uses: actions/checkout@v3
- #     - name: scan
- #       uses: ./.github/actions/sonar-go
- #       with:
- #         working-directory: ${{ env.working-directory }}
- #         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
- #         sonar-token: ${{ secrets.SONAR_TOKEN }}
- #         project-key: ukama_systems_testing_dummy-node
-
  lint:
   name: lint
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy-node
+   working-directory: testing/services/dummy-node/dmetrics
   steps:
    - uses: actions/checkout@v3
    - name: lint
@@ -65,7 +49,7 @@ jobs:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy-node
+   working-directory: testing/services/dummy-node/dmetrics
   steps:
    - uses: actions/checkout@v3
 
@@ -76,8 +60,8 @@ jobs:
    - name: update gitops
      uses: denispalnitsky/gitops-release@v9
      with:
-      filename: 'releases/testing-helmfile.yaml'
-      key: 'dummynodeImageTag'
+      filename: 'releases/dummy-node-helmfile.yaml'
+      key: 'dummyNodeDmetricsImageTag'
       value: ${{ steps.vars_step.outputs.sha-short }}
       github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       github-org-and-repo: 'ukama/infra-as-code'
