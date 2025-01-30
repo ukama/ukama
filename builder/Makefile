@@ -76,7 +76,7 @@ XLD := $(XGCCPATH)$(XLD)
 .PHONY: all clean
 
 $(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
-	$(XGCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	$(XCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 ifeq ($(ALPINE_BUILD),1)

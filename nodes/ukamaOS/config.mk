@@ -45,6 +45,16 @@ else
 	export TARGET
 endif
 
+CC     = gcc
+ARCH   = $(ARCH_ARM)
+XGCC   = gcc
+XLD    = ld
+XGXX   = g++
+HOST   = armv6-alpine-linux-musleabihf
+OPENSSLTARGET   = linux-generic32
+GCCPATH        = /usr/bin/
+XGCCPATH       = /usr/bin/
+
 # Setup paths for configs
 APP_CONFIG_DIR = $(NODES_DIR)/configs/capps
 NODE_APP_CONFIG_DIR = /conf
@@ -53,13 +63,13 @@ NODE_APP_CONFIG_DIR = /conf
 NODE_APP_DIR = /sbin/
 
 ifeq ($(AMPLIFIER_NODE), $(TARGET_BOARD))
-	override CC     = arm-linux-gnueabihf-gcc
+	override CC     = armv6-alpine-linux-musleabihf-gcc
 	override ARCH   = $(ARCH_ARM)
-	XCROSS_COMPILER = arm-linux-gnueabihf-
+	XCROSS_COMPILER = armv6-alpine-linux-musleabihf-
 	XGCC            = $(XCROSS_COMPILER)gcc
 	XLD             = $(XCROSS_COMPILER)ld
 	XGXX            = $(XCROSS_COMPILER)g++
-	HOST            = arm-linux-gnueabihf
+	HOST            = armv6-alpine-linux-musleabihf
 	OPENSSLTARGET   = linux-generic32
 	XGCCPATH        = /usr/bin/
 endif
@@ -90,14 +100,14 @@ endif
 
 ifeq ($(LOCAL), $(TARGET_BOARD))
 	override CC     = gcc
-	override ARCH   = $(ARCH_X86_64)
+	override ARCH   = $(ARCH_ARM)
 	XGCC            = gcc
 	XLD             = ld
 	XGXX            = g++
-	HOST            = $(shell gcc -dumpmachine)
-	OPENSSLTARGET   = linux-generic64
+	HOST            = armv6-alpine-linux-musleabihf
+	OPENSSLTARGET   = linux-generic32
 	GCCPATH        = $(shell which gcc)
-	XGCCPATH       = $(dir $(GCCPATH))
+	XGCCPATH       = /usr/bin/
 endif
 
 export

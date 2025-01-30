@@ -18,7 +18,7 @@
 	url = https://github.com/babelouest/yder.git
 [submodule "nodes/ukamaOS/distro/vendor/jansson"]
 	path = nodes/ukamaOS/distro/vendor/jansson
-	url = https://github.com/akheron/jansson.git
+	url = https://github.com/ukama/jansson.git
 [submodule "nodes/ukamaOS/distro/vendor/curl"]
 	path = nodes/ukamaOS/distro/vendor/curl
 	url = https://github.com/curl/curl.git
