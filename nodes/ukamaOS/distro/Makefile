@@ -7,70 +7,51 @@
 include ../config.mk
 
 # Build RootFS for the UkamaDistro
-DISTROMAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
-DISTRODIR := $(dir $(DISTROMAKE))
+CUR_MAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
+CUR_DIR := $(dir $(CUR_MAKE))
 
 #Targets for the makefile
-DISTROSUBDIRS := system addons utils
+SUB_DIRS := system addons utils
 PLATFORM := platform
+VENDOR := vendor
 
-
-#Final UKAMA ROOTFS path and name
-ifndef ROOTFSPATH
-ROOTFSDIR := _ukamafs
-ROOTFSPATH := $(DISTRODIR)$(ROOTFSDIR)
-endif
-
-# Compiler path
-#ifneq ($(TARGETBOARD),$(LOCAL))
-#$(info	Building musl based gcc for $(TARGETBOARD))
-#XGCCPATH := $(DISTRODIR)tools/musl-cross-make/output/bin/
-#else
-#XGCCPATH = $(shell which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}')/
-#$(info Skipping CC tools for $(TARGETBOARD))
-#endif
-
-.PHONY: subdirs $(DISTROSUBDIRS) $(PLATFORM) vendor clean
-
-#Exporting Varibles
-export
-
-#UkamaFS
-ukamarfs: subdirs
+.PHONY: $(SUB_DIRS) $(PLATFORM) $(VENDOR) clean info
 
 #Build subdirs
-subdirs: $(DISTROSUBDIRS)
-$(DISTROSUBDIRS): rootfs $(PLATFORM)
+subdirs: info $(SUB_DIRS)
+
+$(SUB_DIRS): $(PLATFORM) $(VENDOR)
 	$(MAKE) -C $@
 
-$(PLATFORM): $(TOOLCHAIN)
-	 $(MAKE) -C $@ XCC=$(XGCCPATH)$(XGCC)
+$(PLATFORM): $(VENDOR) 
+	 $(MAKE) -C $@ XCC=$(CC)
 
-#Root FS directory hierarchy
-rootfs: vendor
-	@echo Creating rootfs directory $(ROOTFSPATH)
-	mkdir -p $(ROOTFSPATH)
-
-# vendor
-vendor: $(TOOLCHAIN)
+$(VENDOR):
 	$(MAKE) -C $@
 
 # Clean
 clean:
 	@echo "Cleaning Distro."
-	rm -rf $(ROOTFSPATH)
-	for dir in $(DISTROSUBDIRS); do \
-		if [ $$dir != $(CROSSCCDIR) ]; then \
-			$(MAKE) -C $$dir -f Makefile $@; \
-		fi \
+	for dir in $(SUB_DIRS); do \
+		$(MAKE) -C $$dir -f Makefile $@; \
 	done
 	@echo Cleaning vendor
-	$(MAKE) -C vendor -f Makefile $@;
+	$(MAKE) -C $(VENDOR) -f Makefile $@;
+	$(MAKE) -C $(PLATFORM) -f Makefile $@;
 
 distclean :
 	@echo "DistClean Distro subdirs."
-	rm -rf $(ROOTFSPATH);
-	for dir in $(DISTROSUBDIRS); do \
+	for dir in $(SUB_DIRS); do \
                 $(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
         done
+	@echo Cleaning vendor
+	$(MAKE) -C $(VENDOR) -f Makefile $@;
+	$(MAKE) -C $(PLATFORM) -f Makefile $@;
 
+info:
+	$(info ============ BUILD INFO ============)
+	$(info Target Board:   $(TARGET_BOARD))
+	$(info Sub Dirs:       $(SUB_DIRS))
+	$(info Architecture:   $(ARCH))
+	$(info Compiler:       $(CC))
+	$(info ====================================)

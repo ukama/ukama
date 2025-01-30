@@ -31,13 +31,6 @@ INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(VENDOR_INC)
 BUILD_DIR := build
 TEST_DIRS := test $(UNITY_ROOT)/src
 
-# Compilers and flags
-ifndef XGCC
-XCC:=gcc
-else 
-XCC:=$(XGCC)
-endif
-
 # Libraries
 CURL_LIB=-lcurl -lssl -lcrypto
 ULFIUS_LIB=-lulfius -lorcania -lmicrohttpd -lgnutls -lnettle
@@ -165,17 +158,17 @@ $(TARGET_STATIC_LIB): $(OBJFILES)
 # Build Target lib 
 $(TARGET_LIB): $(OBJFILES)
 	@echo "Building dynamic lib" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
+	$(CC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
 
 # Build Unit test binary
 $(UTEST_BIN):$(TEST_OBJFILES) $(TARGET_LIB)
-	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TAR_LIB)
+	$(CC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TAR_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
 $(BUILD_DIR)/%.o: %.c 
 	mkdir -p $(dir $@)
-	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
 # Memory check
 memcheck: $(UTEST_BIN)
