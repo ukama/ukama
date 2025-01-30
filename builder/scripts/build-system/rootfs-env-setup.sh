@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/rootfs"
 
@@ -8,7 +10,7 @@ ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
 MOUNT_SRC=""   # Source directory to mount
-MOUNT_DEST=""  # Destination inside chroot
+MOUNT_DEST="ukamarepo"  # Destination inside chroot
 
 # Parse command-line arguments
 while getopts "a:v:m:i:h" opt; do
@@ -28,6 +30,10 @@ while getopts "a:v:m:i:h" opt; do
   esac
 done
 
+# mount detination ignored by script
+MOUNT_DEST="ukamarepo"  # Destination inside chroot
+
+:'
 if [ -d "${INSTALL_DIR}" ]; then
   echo "Directory exists. Deleting ${INSTALL_DIR}"
   rm -rf "${INSTALL_DIR}"
@@ -60,7 +66,7 @@ else
   echo "Installation for rootfs env failed."
   exit 1
 fi
-
+'
 # mount dir
 mkdir -p ${INSTALL_DIR}${MOUNT_DEST}
 if [[ -n "{$MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
@@ -72,10 +78,10 @@ sleep 2;
 sync;
 
 # starting build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '${MOUNT_DEST}/builder/scripts/build-system/build-rootfs.sh "$@"' -- -p active -r v3.21 -n starterd -c /sbin/starterd
+${INSTALL_DIR}/enter-chroot /bin/ash -c '"/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- "-p active -r v3.21 -n starterd -c /sbin/starterd"
 if [ $? -eq 0 ]; then
   echo "rootfs created successfully."
 else
-  echo "rootfs creation fialed"
+  echo "rootfs creation failed"
   exit 1
 fi

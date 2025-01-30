@@ -16,6 +16,9 @@ UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/lib"
 
 UKAMA_REPO_APP_PKG="/ukama/build/pkg"
 
+LOG_FILE=/setup.log
+NODE_ID="uk-sa12-4567-a1"
+
 # Logging function
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Partition: $PARTITION_TYPE] [RootFS: $ROOTFS_VERSION] $1"
@@ -108,23 +111,19 @@ function copy_required_libs() {
 }
 
 function copy_misc_files() {
-    local ukama_root=$1
-    local apps=$2
-
     log "INFO" "Copying various files to image"
-
     create_manifest_file $apps
-    sudo cp ${MANIFEST_FILE} "${PRIMARY_MOUNT}/manifest.json"
+    sudo cp ${MANIFEST_FILE} "/manifest.json"
     rm ${MANIFEST_FILE}
 
     # install the starter.d app
-    install_starter_app "${PRIMARY_MOUNT}"
+    install_starter_app "/"
 
     # update /etc/services to add ports
     log "INFO" "Adding all the apps to /etc/services"
-    sudo mkdir -p "${PRIMARY_MOUNT}/etc"
-    sudo cp "${ukama_root}/nodes/ukamaOS/distro/scripts/files/services" \
-         "${PRIMARY_MOUNT}/etc/services"
+    sudo mkdir -p "/etc"
+    sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
+         "/etc/services"
 }
 
 
@@ -379,13 +378,22 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
 
-    echo "${NODE_ID}" > "$/ukama/nodeid"
-    echo "localhost"  > "$/ukama/bootstrap"
+    echo "${NODE_ID}" > "/ukama/nodeid"
+    echo "localhost"  > "/ukama/bootstrap"
 
     touch "/ukama/apps.log"
 
     log "SUCCESS" "Ukama directories created."
 }
+
+setup_ukama_dirs
+
+log "INFO" "Script ${0} called with args $#"
+index=0
+for arg in "$@"; do
+  log "INFO" "arg[${index}]: ${arg}"
+  index=$((index + 1))
+done
 
 # Parse options using getopts
 while getopts "p:n:c:a:" opt; do
@@ -414,7 +422,6 @@ fi
 
 # Main execution
 setup_rootfs  # Set up root filesystem
-setup_ukama_dirs
 update_fstab  # Update fstab
 configure_network  # Configure network
 create_openrc_service  # Create OpenRC service
