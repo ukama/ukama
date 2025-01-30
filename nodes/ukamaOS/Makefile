@@ -9,7 +9,7 @@ include config.mk
 CUR_MAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
 CUR_DIR := $(dir $(CUR_MAKE))
 
-SUB_DIRS := firmware kernel
+SUB_DIRS := firmware kernel distro
 
 
 .PHONY: $(SUB_DIRS) clean distclean info

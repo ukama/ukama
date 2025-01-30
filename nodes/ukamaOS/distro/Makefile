@@ -11,14 +11,19 @@ CUR_MAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
 CUR_DIR := $(dir $(CUR_MAKE))
 
 #Targets for the makefile
-SUB_DIRS := system addons utils
+SUB_DIRS := system
 PLATFORM := platform
 VENDOR := vendor
 
 .PHONY: $(SUB_DIRS) $(PLATFORM) $(VENDOR) clean info
 
 #Build subdirs
-subdirs: info $(SUB_DIRS)
+subdirs: info 
+ifeq ($(ARCH), $(ARCH_ARM))
+	@echo "Building in chroot env."	
+else
+	$(MAKE) -C $(SUB_DIRS)	
+endif
 
 $(SUB_DIRS): $(PLATFORM) $(VENDOR)
 	$(MAKE) -C $@
