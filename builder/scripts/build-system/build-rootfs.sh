@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -e
 set -x  
 
 # Initialize variables
@@ -11,18 +10,23 @@ SERVICE_CMD=""
 SERVICE_ARGS=""
 MAJOR_VERSION="v3.21"
 
-UKAMA_ROOT="/ukama_repo"
-UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkg"
-UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/lib"
+UKAMA_ROOT="/ukamarepo"
+UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
+UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
 
-UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkg"
+UKAMA_APP_PKG="/ukama/apps/pkgs"
 
 LOG_FILE=/setup.log
 NODE_ID="uk-sa12-4567-a1"
 
+MANIFEST_FILE="manifest.json"
+
+# Need to pass this as arg or read from file
+APP_NAMES=("wimcd" "configd" "metricsd" "lookoutd" "deviced" "notifyd" "noded" "rlog")
+
 # Logging function
 log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - [Partition: $PARTITION_TYPE] [RootFS: $ROOTFS_VERSION] $1"
+    log "INFO" "$(date '+%Y-%m-%d %H:%M:%S') - [Partition: $PARTITION_TYPE] [RootFS: $ROOTFS_VERSION] $1"
 }
 
 # Function to show usage
@@ -95,28 +99,107 @@ function install_starter_app() {
     rm -rf starterd_latest/
 }
 
+function copy_linux_files_for_x86_64() {
+   
+	# kernel
+    if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage" ]; then
+        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage /boot/
+    else
+        log "ERROR" "kernel file missing"
+        exit 1
+    fi
+ 
+    # modules
+    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
+
+}
+
+function copy_linux_files_for_armv7() {
+	# kernel
+	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage" ]; then
+		cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage /boot/
+	else
+		log "ERROR" "kernel file missing"
+		exit 1
+	fi
+    
+	# dtb
+	if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
+    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
+	else
+		log "ERROR" "dtb file missing"
+		exit 1
+	fi
+
+	# modules
+	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
+}
+
+function copy_linux_files_for_aarch64(){
+
+	# kernel
+	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image" ]; then
+    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image /boot/
+	else
+        log "ERROR" "kernel file missing"
+        exit 1
+    fi
+	
+	# dtb
+    if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
+        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
+    else
+        log "ERROR" "dtb file missing"
+        exit 1
+    fi
+
+    # modules
+    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
+
+}
+
 function copy_linux_kernel() {
     log "INFO" "Copying linux kernel..."
-    cp "${TMP_LINUX}/arch/arm64/boot/Image" "${CWD}/build_access_node/kernel.img"
-    log "SUCCESS" "Linux kernel copied"
+    #/ukamarepo/nodes/ukamaOS/kernel/build/
+	arch=$(uname -m)
+    # Check the architecture and perform different actions
+	if [[ "$arch" == "x86_64" ]]; then
+    	log "INFO" "System is 64-bit architecture (x86_64)"
+		copy_linux_files_for_x86_64
+	elif [[ "$arch" == "armv7l" ]]; then
+    	log "INFO" "System is 32-bit ARM architecture (armv7l)"
+ 		copy_linux_files_for_armv7
+	elif [[ "$arch" == "aarch64" ]]; then
+    	log "INFO" "System is 64-bit ARM architecture (aarch64)"
+		copy_linux_files_for_aarch64
+	else
+    	log "ERROR" "Unknown architecture: $arch"
+    	# Handle any other architecture types or errors
+		exit 1
+	fi 
+
 }
 
 function copy_all_apps() {
     log "INFO" "Copying apps"
-    cp -rvf ${UKAMA_REPO_APP_PKG} ${UAKAMA_APP_PKG}
+    cp -rvf ${UKAMA_REPO_APP_PKG} ${UKAMA_APP_PKG}
 }
 
 function copy_required_libs() {
     log "INFO" "Installing required libs"
-    cd ${UKAMA_REPO_LIBS_PKG}
-    tar zxvf vendor_libs.tgz -C /usr
+    pushd ${UKAMA_REPO_LIB_PKG}
+    tar zxvf vendor_libs.tgz 
+    cp -vrf ./build/* /usr/
+	popd
 }
 
 function copy_misc_files() {
-    log "INFO" "Copying various files to image"
-    create_manifest_file $apps
-    sudo cp ${MANIFEST_FILE} "/manifest.json"
+    
+	log "INFO" "Copying various files to image"
     rm ${MANIFEST_FILE}
+    create_manifest_file
+    
+    #sudo cp ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
     install_starter_app "/"
@@ -175,7 +258,7 @@ iface eth0 inet static
 NETWORK
 
     # Apply network changes
-    ifdown eth0 && ifup eth0
+    #ifdown eth0 && ifup eth0
     log_message "Network configuration updated for eth0"
 }
 
@@ -271,18 +354,11 @@ setup_rootfs() {
     rc-update add dhcpcd default
     rc-update add acpid default
 
-    # Create necessary directories
-    mkdir -p /recovery /data /passive /boot/firmware
-
-    log_message "Root filesystem setup completed."
+    log_message "INFO" "Root filesystem setup completed."
 }
 
 function create_manifest_file() {
-    local apps_to_include="$1"
     log "INFO" "Creating manifest file"
-
-    # Create an array from the comma-separated list
-    IFS=',' read -r -a apps_array <<< "$apps_to_include"
 
    cat <<EOF > ${MANIFEST_FILE}
 {
@@ -329,8 +405,8 @@ EOF
 
   echo '        ,' >> ${MANIFEST_FILE}
   echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${apps_array[@]}"; do
+  echo "Adding manifest for ${APP_NAMES[@]}"
+  for app in "${APP_NAMES[@]}"; do
     case "$app" in
       "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
         cat <<EOF >> ${MANIFEST_FILE}
@@ -348,7 +424,7 @@ EOF
   echo '        ,' >> ${MANIFEST_FILE}
   echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
 
-  for app in "${apps_array[@]}"; do
+  for app in "${APP_NAMES[@]}"; do
     case "$app" in
       "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
         cat <<EOF >> ${MANIFEST_FILE}
@@ -379,6 +455,10 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/pkgs"
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
+    mkdir -p "/passive"
+    mkdir -p "/boot/firmware"
+    mkdir -p "/data"
+    mkdir -p "/recovery"
 
     echo "${NODE_ID}" > "/ukama/nodeid"
     echo "localhost"  > "/ukama/bootstrap"
@@ -388,9 +468,28 @@ function setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created."
 }
 
+
+function get_apps_name() {
+
+	# Loop through each .tar.gz file in the directory
+	for file in "${UKAMA_REPO_APP_PKG}"/*.tar.gz; do
+    	[ -e "$file" ] || continue  # Skip if no .tar.gz files exist
+    	filename=$(basename "$file")  # Get filename without path
+    	prefix=${filename%%_*}  # Extract prefix before first underscore
+    	APP_NAMES+=("$prefix")  # Store in array
+	done
+
+	# Print the array elements
+	echo "Extracted app prefixes: ${APP_NAMES[@]}"
+}
+
+
+#Main 
+
 setup_ukama_dirs
 
 log "INFO" "Script ${0} called with args $#"
+
 index=0
 for arg in "$@"; do
   log "INFO" "arg[${index}]: ${arg}"
@@ -424,19 +523,29 @@ fi
 
 # Main execution
 setup_rootfs  # Set up root filesystem
-update_fstab  # Update fstab
+
+log "INFO" "Preparing mount for ${PARTITION_TYPE}"
+update_fstab  ${PARTITION_TYPE} #Update fstab
+
+log "INFO" "Network configuration"
 configure_network  # Configure network
-create_openrc_service  # Create OpenRC service
 
+log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
+create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}# Create OpenRC service
+
+log "INFO" "Copying libs"
 copy_required_libs
-copy_all_apps              "${UKAMA_ROOT}" "${NODE_APPS}"
-copy_misc_files            "${UKAMA_ROOT}" "${NODE_APPS}"
 
-install_starter_app
+log "INFO" "Copying apps"
+copy_all_apps
+#get_apps_name
 
+log "INFO" "Create manifest."
+copy_misc_files 
+
+log "INFO" "Copy kernel"
 copy_linux_kernel
 
-
-
-
+echo "Roootfs build success."
+exit 0
 ~                                                                     
