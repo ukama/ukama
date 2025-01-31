@@ -70,22 +70,19 @@ OBJFILES = $(CFILES:.c=.o)
 APP_CFILES   = $(wildcard ./src/*_app.c)
 APP_OBJFILES = $(APP_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: all clean
 
 $(BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES)
-	$(XCC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(BUILDER_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 ifeq ($(ALPINE_BUILD),1)
 $(APP_BUILDER_EXEC): $(PLATFORM) $(APP_OBJFILES)
-	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 else
 $(APP_BUILDER_EXEC): $(VENDOR_PKG) $(PLATFORM) $(APP_OBJFILES)
-	$(XCC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(APP_BUILDER_EXEC) $(APP_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 endif
 $(PLATFORM):
@@ -95,7 +92,7 @@ $(VENDOR_PKG):
 	$(MAKE) -C $(VENDOR_DIR) $@ 
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 all: builder app_builder
 
