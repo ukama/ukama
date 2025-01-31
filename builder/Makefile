@@ -28,7 +28,7 @@ ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
 	VENDOR_PKG=
 else
-	VENDOR_PKG = jansson ulfius
+	VENDOR_PKG = jansson ulfius tomlc
 endif
 PLATFORM   = platform
 
