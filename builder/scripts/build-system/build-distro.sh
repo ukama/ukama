@@ -1,8 +1,9 @@
-#!/bin/ash
+#!/bin/bash
 
 set -x
 
-MAJOR_VERSION="v3.21"
+MAJOR_VERSION=${1:-v3.21}
+UKAMA_REPO=${2:-/ukamarepo} 
 
 # ===== Set up resolv.conf =====
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -23,16 +24,16 @@ apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
 apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap libidn2   libmicrohttpd gnutls openssl-dev curl-dev  linux-headers bsd-compat-headers tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk build-base git tcpdump ethtool iperf3 htop vim doas
 
 #build apps
-/ukama/builder/scripts/build-all-apps.sh /ukama
+${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
 if [ $? -eq 0 ]; then
   echo "Apps build:"
-  ls -ltr /ukama/build/pkgs/*
+  ls -ltr ${UKAMA_REPO}/build/pkgs/*
 
   echo "Package vendor libs"
-  cd /ukama/nodes/ukamaOS/distro/vendor	
+  cd ${UKAMA_REPO}/nodes/ukamaOS/distro/vendor	
   ls -ltr /build/lib/*
-  mkdir -p /ukama/build/libs
-  tar -zcvf /ukama/build/libs/vendor_libs.tgz build/*
+  mkdir -p ${UKAMA_REPO}/build/libs
+  tar -zcvf ${UKAMA_REPO}/build/libs/vendor_libs.tgz build/*
 
 else 
   exit 1	

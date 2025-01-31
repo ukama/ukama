@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -x
-
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/rootfs"
 
@@ -10,7 +9,7 @@ ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
 MOUNT_SRC=""   # Source directory to mount
-MOUNT_DEST="ukamarepo"  # Destination inside chroot
+MOUNT_DEST="/ukamarepo"  # Destination inside chroot
 
 # Parse command-line arguments
 while getopts "a:v:m:i:h" opt; do
@@ -18,12 +17,10 @@ while getopts "a:v:m:i:h" opt; do
     a) ARCH="$OPTARG" ;;
     v) VERSION="$OPTARG" ;;
     m) MIRROR="$OPTARG" ;;
-    i)
-      IFS=":" read -r MOUNT_SRC MOUNT_DEST <<< "$OPTARG"
-      ;;
+    i) MOUNT_SRC="$OPTARG" ;;
     h) 
       echo "Usage: $0 [-a arch] [-v version] [-m mirror] [-i source]"
-      echo "Example: $0 -a armhf -v v3.21 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared:/mnt/shared"
+      echo "Example: $0 -a armhf -v v3.21 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared"
       exit 0
       ;;
     *) echo "Invalid option"; exit 1 ;;
@@ -33,7 +30,6 @@ done
 # mount detination ignored by script
 MOUNT_DEST="ukamarepo"  # Destination inside chroot
 
-:'
 if [ -d "${INSTALL_DIR}" ]; then
   echo "Directory exists. Deleting ${INSTALL_DIR}"
   rm -rf "${INSTALL_DIR}"
@@ -57,31 +53,40 @@ fi
 
 # Run the installation
 echo "Installing Alpine Linux ${VERSION} in ${INSTALL_DIR} with architecture ${ARCH} using mirror ${MIRROR}."
-alpine-chroot-install -d "${INSTALL_DIR}" -a "${ARCH}" -m "${MIRROR}" -b "${VERSION}"
+alpine-chroot-install -d "${INSTALL_DIR}" -a "${ARCH}" -m "${MIRROR}" -b "${VERSION}" -p "bash"
 
 # Check if installation was successful
 if [ $? -eq 0 ]; then
-  echo "Installation for rootfs env completed successfully."
+  echo "rootfs chroot env setup completed "
 else
-  echo "Installation for rootfs env failed."
+  echo "rootfs chroot env setup failed."
   exit 1
 fi
-'
+
 # mount dir
-mkdir -p ${INSTALL_DIR}${MOUNT_DEST}
+mkdir -p ${INSTALL_DIR}/${MOUNT_DEST}
 if [[ -n "{$MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
-  echo "Mounting ${MOUNT_SRC} to ${INSTALL_DIR}${MOUNT_DEST}"
-  mount --bind "${MOUNT_SRC}" "${INSTALL_DIR}${MOUNT_DEST}"
+  echo "Mounting ${MOUNT_SRC} to ${INSTALL_DIR}/${MOUNT_DEST}"
+  mount --bind "${MOUNT_SRC}" "${INSTALL_DIR}/${MOUNT_DEST}"
+  if [ $? -eq 0 ]; then
+        echo "Mount success"
+  else
+        echo "Mount failed"
+        ${INSTALL_DIR}/destroy
+        exit 1
+  fi
 fi
 
 sleep 2;
 sync;
 
 # starting build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '"/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- "-p active -r v3.21 -n starterd -c /sbin/starterd"
+${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- "-p" "active" "-r" "v3.21" "-n" "starterd" "-c" "/sbin/starterd"
 if [ $? -eq 0 ]; then
   echo "rootfs created successfully."
+  #${INSTALL_DIR}/destroy
 else
   echo "rootfs creation failed"
+  #${INSTALL_DIR}/destroy
   exit 1
 fi

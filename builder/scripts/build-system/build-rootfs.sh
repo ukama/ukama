@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 set -x  
 
@@ -14,7 +15,7 @@ UKAMA_ROOT="/ukama_repo"
 UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkg"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/lib"
 
-UKAMA_REPO_APP_PKG="/ukama/build/pkg"
+UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkg"
 
 LOG_FILE=/setup.log
 NODE_ID="uk-sa12-4567-a1"
@@ -23,6 +24,7 @@ NODE_ID="uk-sa12-4567-a1"
 log_message() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - [Partition: $PARTITION_TYPE] [RootFS: $ROOTFS_VERSION] $1"
 }
+
 # Function to show usage
 usage() {
     echo "Usage: $0 -p <partition_type> -r <rootfs_version> -n <service_name> -c <service_command> -a <service_args>"
@@ -396,7 +398,7 @@ for arg in "$@"; do
 done
 
 # Parse options using getopts
-while getopts "p:n:c:a:" opt; do
+while getopts "p:r:n:c:a:" opt; do
     case "${opt}" in
         p) PARTITION_TYPE="${OPTARG}" ;;
         r) ROOTFS_VERSION="${OPTARG}" ;;
