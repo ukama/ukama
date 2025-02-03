@@ -93,12 +93,11 @@ func (r *Router) init() {
 
 	const dummy = "/dummy-node"
 	d := group.Group(dummy, "Dummy node", "Operations on Dummy node")
-	d.GET("/reset/:id", formatDoc("Reset node", "Reset dummy node by id"), tonic.Handler(r.resetNodeById, http.StatusOK))
-	d.GET("/rf-off/:id", formatDoc("Node RF OFF", "Turn node rf off by id"), tonic.Handler(r.turnRFOffByid, http.StatusOK))
-	d.GET("/rf-on/:id", formatDoc("Node RF ON", "Turn node rf on by id"), tonic.Handler(r.turnRFOnByid, http.StatusOK))
-	d.GET("/off/:id", formatDoc("Turn node OFF", "Turn node off by id"), tonic.Handler(r.turnNodeOffByid, http.StatusOK))
-	d.GET("/online/:id", formatDoc("Turn node ONLINE", "Turn node online by id"), tonic.Handler(r.turnNodeOnlineByid, http.StatusOK))
-
+	d.PUT("/:id/reset", formatDoc("Reset node", "Reset dummy node by id"), tonic.Handler(r.resetNodeById, http.StatusOK))
+	d.PUT("/:id/rf-off", formatDoc("Node RF OFF", "Turn node rf off by id"), tonic.Handler(r.turnRFOffByid, http.StatusOK))
+	d.PUT("/:id/rf-on", formatDoc("Node RF ON", "Turn node rf on by id"), tonic.Handler(r.turnRFOnByid, http.StatusOK))
+	d.PUT("/:id/off", formatDoc("Turn node OFF", "Turn node off by id"), tonic.Handler(r.turnNodeOffByid, http.StatusOK))
+	d.PUT("/:id/online", formatDoc("Turn node ONLINE", "Turn node online by id"), tonic.Handler(r.turnNodeOnlineByid, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
