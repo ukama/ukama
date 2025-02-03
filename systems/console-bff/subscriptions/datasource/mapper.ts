@@ -5,7 +5,6 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { logger } from "../../common/logger";
 import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
