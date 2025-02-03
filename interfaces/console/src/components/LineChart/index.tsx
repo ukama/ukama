@@ -7,16 +7,16 @@
  */
 
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
-import GraphTitleWrapper from '../GraphTitleWrapper';
 import { useEffect } from 'react';
+import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
-  nodeId: string;
+  nodeId?: string;
+  siteId?: string;
   metricFrom: any;
   topic: string;
   initData: any;
@@ -27,7 +27,12 @@ interface ILineChart {
   tabSection: Graphs_Type;
 }
 
-const getOptions = (topic: string, title: string, initData: any) => {
+const getOptions = (
+  topic: string,
+  title: string,
+  initData: any,
+  entityId: string,
+) => {
   return {
     title: {
       text: topic,
@@ -39,12 +44,21 @@ const getOptions = (topic: string, title: string, initData: any) => {
         load: function () {
           const chart: any =
             Highcharts.charts.length > 0
-              ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+              ? Highcharts.charts.find(
+                  (c: any) =>
+                    c?.title?.textStr === topic &&
+                    c?.userOptions?.customData?.entityId === entityId,
+                )
               : null;
           if (chart) {
             const series: any = chart?.series[0];
             PubSub.subscribe(topic, (_, data) => {
-              if (topic === chart?.title?.textStr && series) {
+              if (
+                topic === chart?.title?.textStr &&
+                series &&
+                ((data.nodeId && data.nodeId === entityId) ||
+                  (data.siteId && data.siteId === entityId))
+              ) {
                 series.addPoint(data, true, true);
               }
             });
@@ -52,11 +66,12 @@ const getOptions = (topic: string, title: string, initData: any) => {
         },
       },
     },
-
+    customData: {
+      entityId,
+    },
     time: {
       useUTC: false,
     },
-
     rangeSelector: {
       buttons: [
         {
@@ -77,19 +92,15 @@ const getOptions = (topic: string, title: string, initData: any) => {
       inputEnabled: false,
       selected: 0,
     },
-
     exporting: {
       enabled: true,
     },
-
     navigator: {
       enabled: false,
     },
-
     accessibility: {
       enabled: false,
     },
-
     series: [
       {
         name: title,
@@ -117,6 +128,7 @@ const getOptions = (topic: string, title: string, initData: any) => {
 const LineChart = ({
   topic,
   nodeId,
+  siteId,
   hasData,
   initData,
   metricFrom,
@@ -126,24 +138,35 @@ const LineChart = ({
   tabSection = Graphs_Type.NodeHealth,
 }: ILineChart) => {
   useEffect(() => {
+    const entityType = siteId ? 'site' : 'node';
+    const entityId = siteId || nodeId;
+
     console.log('LineChart mounting for:', {
       topic,
-      nodeId,
+      entityType,
+      entityId,
       hasData,
       dataLength: initData?.length,
-      initData: initData?.slice(0, 2), // Log first two items for debugging
+      initData: initData?.slice(0, 2),
     });
-  }, []);
+
+    return () => {
+      PubSub.unsubscribe(topic);
+    };
+  }, [topic, nodeId, siteId, initData]);
 
   const defaultData = [
     [Date.now() - 60000, 0],
     [Date.now(), 0],
   ];
 
+  const entityId = siteId || nodeId;
+
   const chartOptions = getOptions(
     topic,
     title,
     initData?.length > 0 ? initData : defaultData,
+    entityId as string,
   );
 
   return (
@@ -155,10 +178,19 @@ const LineChart = ({
       handleFilterChange={() => {}}
       loading={loading}
     >
-      <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          width: '100%',
+        }}
+      >
         <HighchartsReact
-          key={`${topic}-${nodeId}-${initData?.length}`}
-          options={chartOptions}
+          key={`${topic}-${entityId}-${initData?.length}`}
+          options={{
+            ...chartOptions,
+            chart: {
+              ...chartOptions.chart,
+            },
+          }}
           highcharts={Highcharts}
         />
       </Box>

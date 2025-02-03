@@ -29,6 +29,8 @@ import {
 import { useState } from 'react';
 import colors from '@/theme/colors';
 import { useRouter } from 'next/navigation';
+import { getHealthStatus, getMetricValue } from '@/utils';
+import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 
 interface ISitesWrapper {
   sites: SiteDto[];
@@ -37,8 +39,8 @@ interface ISitesWrapper {
   subscriberCount: number | undefined;
   unnamedNodes: any[];
   handleConfigureSite: (nodeId: string) => void;
+  siteMetrics: Record<string, MetricsRes>;
 }
-
 const SiteCardSkeleton = (
   <Skeleton
     variant="rectangular"
@@ -55,6 +57,7 @@ const SitesWrapper = ({
   handleSiteNameUpdate,
   unnamedNodes,
   handleConfigureSite,
+  siteMetrics,
 }: ISitesWrapper) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -131,105 +134,122 @@ const SitesWrapper = ({
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
-      {sites.map((site) => (
-        <Grid item xs={12} md={4} lg={4} key={site.id}>
-          <Paper
-            sx={{
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              border: `1px solid ${colors.black10}`,
-              borderRadius: '5px',
-            }}
-            elevation={3}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 1,
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 500,
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                }}
-                onClick={() => handleSiteNameClick(site.id)}
-              >
-                {site.name}
-              </Typography>
-              <IconButton
-                onClick={(event) => handleMenuOpen(event, site.id)}
-                size="small"
-              >
-                <MoreVertIcon />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl) && selectedSiteId === site.id}
-                onClose={handleMenuClose}
-              >
-                <MenuItem
-                  onClick={() => {
-                    handleMenuClose();
-                    handleSiteNameUpdate(site.id, site.name);
-                  }}
-                >
-                  Edit Name
-                </MenuItem>
-              </Menu>
-            </Box>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                mb: 3,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {site.location}
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-                gap: 1,
-              }}
-            >
-              <Stack direction="row" spacing={0.5} alignItems="center">
-                <GroupIcon />
-                <Typography variant="body2">{subscriberCount || 0}</Typography>
-              </Stack>
+      {sites.map((site) => {
+        const health = getHealthStatus(site.id, siteMetrics[site.id]);
 
+        return (
+          <Grid item xs={12} md={4} lg={4} key={site.id}>
+            <Paper
+              sx={{
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                border: `1px solid ${colors.black10}`,
+                borderRadius: '5px',
+              }}
+              elevation={3}
+            >
               <Box
                 sx={{
                   display: 'flex',
-                  gap: 1,
+                  justifyContent: 'space-between',
                   alignItems: 'center',
+                  mb: 1,
                 }}
               >
-                <RouterIcon color="success" />
-                {!isMobile && <Typography variant="body2">Online</Typography>}
-
-                <BatteryChargingFullIcon color="success" />
-                {!isMobile && <Typography variant="body2">Charged</Typography>}
-
-                <SignalCellularAltIcon color="success" />
-                {!isMobile && <Typography variant="body2">Strong</Typography>}
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 500,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleSiteNameClick(site.id)}
+                >
+                  {site.name}
+                </Typography>
+                <IconButton
+                  onClick={(event) => handleMenuOpen(event, site.id)}
+                  size="small"
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl) && selectedSiteId === site.id}
+                  onClose={handleMenuClose}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      handleSiteNameUpdate(site.id, site.name);
+                    }}
+                  >
+                    Edit Name
+                  </MenuItem>
+                </Menu>
               </Box>
-            </Box>
-          </Paper>
-        </Grid>
-      ))}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  mb: 3,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {site.location}
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  width: '100%',
+                  gap: 1,
+                }}
+              >
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <GroupIcon />
+                  <Typography variant="body2">
+                    {subscriberCount || 0}
+                  </Typography>
+                </Stack>
 
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    alignItems: 'center',
+                  }}
+                >
+                  <RouterIcon color={health.network.status} />
+                  {!isMobile && (
+                    <Typography variant="body2">
+                      {health.network.label}
+                    </Typography>
+                  )}
+
+                  <BatteryChargingFullIcon color={health.battery.status} />
+                  {!isMobile && (
+                    <Typography variant="body2">
+                      {health.battery.label}
+                    </Typography>
+                  )}
+
+                  <SignalCellularAltIcon color={health.signal.status} />
+                  {!isMobile && (
+                    <Typography variant="body2">
+                      {health.signal.label}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        );
+      })}
       {unnamedNodes.map((node) => (
         <Grid item xs={12} md={4} lg={4} key={node.id}>
           <Paper

@@ -13,6 +13,7 @@ interface IMetricSubscription {
   key: string;
   from: number;
   nodeId: string;
+  siteId: string;
   userId: string;
   orgName: string;
   type: Graphs_Type;

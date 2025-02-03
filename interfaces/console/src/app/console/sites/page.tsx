@@ -22,9 +22,14 @@ import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { AlertColor, Box, Paper, Typography } from '@mui/material';
-import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
+import { getUnixTime } from '@/utils';
 const SITE_INIT = {
   switch: '',
   power: '',
@@ -42,11 +47,14 @@ const Sites = () => {
   const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const { setSnackbarMessage, network } = useAppContext();
-  const [openSiteConfig, setOpenSiteConfig] = useState(false);
+  const { setSnackbarMessage, user, subscriptionClient, network } =
+    useAppContext();
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
   const [unnamedNodes, setUnnamedNodes] = useState<any[]>([]);
+  const [siteMetrics, setSiteMetrics] = useState<Record<string, MetricsRes>>(
+    {},
+  );
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
@@ -143,27 +151,60 @@ const Sites = () => {
     });
   }, []);
 
-  const handleSiteConfiguration = (values: TSiteForm) => {
-    setSite(values);
-    setOpenSiteConfig(false);
-    addSite({
-      variables: {
-        data: {
-          name: values.siteName,
-          power_id: values.power,
-          location: values.address,
-          access_id: values.access,
-          switch_id: values.switch,
-          latitude: values.latitude,
-          network_id: values.network,
-          longitude: values.longitude,
-          backhaul_id: values.backhaul,
-          spectrum_id: values.spectrum,
-          install_date: formatISO(new Date()),
-        },
-      },
-    });
-  };
+  const [getSiteMetricByTab] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      const siteId = data.getMetricByTab.metrics[0]?.siteId;
+      if (siteId) {
+        setSiteMetrics((prev) => ({
+          ...prev,
+          [siteId]: {
+            ...prev[siteId],
+            metrics: [
+              ...(prev[siteId]?.metrics || []),
+              ...data.getMetricByTab.metrics,
+            ],
+          },
+        }));
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (sitesList.length > 0) {
+      sitesList.forEach((site) => {
+        getSiteMetricByTab({
+          variables: {
+            data: {
+              nodeId: '',
+              siteId: site.id,
+              userId: user.id,
+              type: Graphs_Type.Battery,
+              from: getUnixTime() - 140,
+              orgName: user.orgName,
+              withSubscription: true,
+            },
+          },
+        });
+
+        getSiteMetricByTab({
+          variables: {
+            data: {
+              nodeId: '',
+              siteId: site.id,
+              userId: user.id,
+              type: Graphs_Type.Backhaul,
+              from: getUnixTime() - 140,
+              orgName: user.orgName,
+              withSubscription: true,
+            },
+          },
+        });
+      });
+    }
+  }, [sitesList, user.id, user.orgName]);
+
   const handleSiteNameUpdate = (siteId: string, siteName: string) => {
     setCurrentSite((prevState) => ({
       ...prevState,
@@ -245,6 +286,7 @@ const Sites = () => {
           }
           unnamedNodes={unnamedNodes}
           handleConfigureSite={handleSiteConfig}
+          siteMetrics={siteMetrics}
         />
       </Paper>
       <EditSiteDialog

@@ -19,7 +19,11 @@ import {
   MetricRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import {
+  HEALTH_THRESHOLDS,
+  INSTALLATION_FLOW,
+  ONBOARDING_FLOW,
+} from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -199,18 +203,21 @@ export const getNodeTabTypeByIndex = (index: number) => {
       return Graphs_Type.NodeHealth;
   }
 };
-
 export const getSiteTabTypeByIndex = (index: number) => {
   switch (index) {
     case 0:
-      return Graphs_Type.Power;
+      return Graphs_Type.Battery;
     case 1:
-      return Graphs_Type.Switch;
-    case 2:
       return Graphs_Type.Backhaul;
+    case 2:
+      return Graphs_Type.Switch;
     case 3:
+      return Graphs_Type.Controller;
+    default:
+      return Graphs_Type.Solar;
   }
 };
+
 const formatBytes = (bytes = 0): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -292,13 +299,17 @@ const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
 };
 
 export const getMetricValue = (key: string, metrics: MetricsRes) => {
-  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
+  const metric = metrics.metrics.find((item: MetricRes) =>
+    item.type.toLowerCase().includes(key.toLowerCase()),
+  );
   return metric?.values ?? [];
 };
 
 export const isMetricValue = (key: string, metrics: MetricsRes) => {
-  const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
-  return (metric && metric.values.length > 1) ?? false;
+  const metric = metrics.metrics.find((item: MetricRes) =>
+    item.type.toLowerCase().includes(key.toLowerCase()),
+  );
+  return metric && metric.values.length > 0;
 };
 
 const getSimValuefromSimType = (simType: string) => {
@@ -463,17 +474,173 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
+const getComponentHealth = (component: string, metrics: MetricsRes): string => {
+  switch (component) {
+    case 'battery':
+      const batteryVoltage = getMetricValue('battery_voltage', metrics);
+      const batteryCapacity = getMetricValue('battery_capacity', metrics);
+
+      const latestBatteryVoltage =
+        batteryVoltage[batteryVoltage.length - 1]?.[1] ?? 0;
+      const latestBatteryCapacity =
+        batteryCapacity[batteryCapacity.length - 1]?.[1] ?? 0;
+
+      if (
+        latestBatteryVoltage < HEALTH_THRESHOLDS.battery.voltage.critical ||
+        latestBatteryCapacity < HEALTH_THRESHOLDS.battery.capacity.critical
+      ) {
+        return 'critical';
+      }
+      if (
+        latestBatteryVoltage < HEALTH_THRESHOLDS.battery.voltage.warning ||
+        latestBatteryCapacity < HEALTH_THRESHOLDS.battery.capacity.warning
+      ) {
+        return 'warning';
+      }
+      return 'healthy';
+
+    case 'solar':
+      const solarPower = getMetricValue('solar_power', metrics);
+      const solarVoltage = getMetricValue('solar_voltage', metrics);
+      const latestSolarPower = solarPower[solarPower.length - 1]?.[1] ?? 0;
+      const latestSolarVoltage =
+        solarVoltage[solarVoltage.length - 1]?.[1] ?? 0;
+
+      if (
+        latestSolarPower < HEALTH_THRESHOLDS.solar.power.critical ||
+        latestSolarVoltage < HEALTH_THRESHOLDS.solar.voltage.critical
+      ) {
+        return 'critical';
+      }
+      if (
+        latestSolarPower < HEALTH_THRESHOLDS.solar.power.warning ||
+        latestSolarVoltage < HEALTH_THRESHOLDS.solar.voltage.warning
+      ) {
+        return 'warning';
+      }
+      return 'healthy';
+
+    case 'switch':
+      const switchTemp = getMetricValue('switch_temperature', metrics);
+      const switchLoad = getMetricValue('switch_load', metrics);
+      const latestSwitchTemp = switchTemp[switchTemp.length - 1]?.[1] ?? 0;
+      const latestSwitchLoad = switchLoad[switchLoad.length - 1]?.[1] ?? 0;
+
+      if (
+        latestSwitchTemp > HEALTH_THRESHOLDS.switch.temperature.critical ||
+        latestSwitchLoad > HEALTH_THRESHOLDS.switch.load.critical
+      ) {
+        return 'critical';
+      }
+      if (
+        latestSwitchTemp > HEALTH_THRESHOLDS.switch.temperature.warning ||
+        latestSwitchLoad > HEALTH_THRESHOLDS.switch.load.warning
+      ) {
+        return 'warning';
+      }
+      return 'healthy';
+
+    default:
+      return 'healthy';
+  }
+};
+const getHealthStatus = (siteId: string, metrics: MetricsRes) => {
+  const batteryValues = getMetricValue(
+    'battery_voltage',
+    metrics || { metrics: [] },
+  );
+  const backhaulStatusValues = getMetricValue(
+    'backhaul_status',
+    metrics || { metrics: [] },
+  );
+  const backhaulSpeedValues = getMetricValue(
+    'backhaul_speed',
+    metrics || { metrics: [] },
+  );
+  const networkStatusValues = getMetricValue(
+    'network_status',
+    metrics || { metrics: [] },
+  );
+
+  const batteryValue =
+    batteryValues.length > 0
+      ? batteryValues[batteryValues.length - 1]?.[1]
+      : null;
+  const backhaulStatus =
+    backhaulStatusValues.length > 0
+      ? backhaulStatusValues[backhaulStatusValues.length - 1]?.[1]
+      : null;
+  const backhaulSpeed =
+    backhaulSpeedValues.length > 0
+      ? backhaulSpeedValues[backhaulSpeedValues.length - 1]?.[1]
+      : null;
+  const networkStatus =
+    networkStatusValues.length > 0
+      ? networkStatusValues[networkStatusValues.length - 1]?.[1]
+      : null;
+
+  return {
+    battery: {
+      status:
+        batteryValue === null
+          ? 'warning'
+          : batteryValue > 10
+            ? 'success'
+            : 'error',
+      label:
+        batteryValue === null
+          ? 'Unknown'
+          : batteryValue > 10
+            ? 'Charged'
+            : 'Low',
+      value: batteryValue,
+    } as const,
+    signal: {
+      status:
+        backhaulStatus === null
+          ? 'warning'
+          : backhaulStatus > 0
+            ? 'success'
+            : 'error',
+      label:
+        backhaulStatus === null
+          ? 'Unknown'
+          : backhaulStatus > 0
+            ? 'Strong'
+            : 'Weak',
+      value: backhaulStatus,
+    } as const,
+    network: {
+      status:
+        networkStatus === null
+          ? 'warning'
+          : networkStatus > 0
+            ? 'success'
+            : 'error',
+      label:
+        networkStatus === null
+          ? 'Unknown'
+          : networkStatus > 0
+            ? 'Online'
+            : 'Offline',
+      value: networkStatus || backhaulSpeed,
+    } as const,
+  };
+};
+
 export {
   ConfigureStep,
   fileToBase64,
   formatBytes,
   formatBytesToMB,
+  getComponentHealth,
   formatTime,
   getDataPlanUsage,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
   getSimValuefromSimType,
+  getHealthStatus,
   getTitleFromPath,
   getUnixTime,
   hexToRGB,
