@@ -31,7 +31,7 @@ const Page = () => {
               router.push('/console/home');
             }
           }}
-          operatingCountry={'Dominican Republic of Congo'}
+          operatingCountry={user.country}
           handleBack={() => router.push(`${env.AUTH_APP_URL}/user/logout`)}
           role={`${user.name} - ${roleEnumToString(user.role as Role_Type)}`}
         />

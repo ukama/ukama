@@ -212,9 +212,11 @@ fragment Org on OrgDto {
   id
   name
   owner
+  country
+  currency
+  createdAt
   certificate
   isDeactivated
-  createdAt
 }
 
 query getOrgs {
@@ -400,7 +402,6 @@ fragment payment on PaymentDto {
   extra
   createdAt
 }
-
 
 mutation UpdatePayment($data: UpdatePaymentInputDto!) {
   updatePayment(data: $data) {

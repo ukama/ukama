@@ -1772,17 +1772,17 @@ export type GetMemberByUserIdQueryVariables = Exact<{
 
 export type GetMemberByUserIdQuery = { __typename?: 'Query', getMemberByUserId: { __typename?: 'MemberDto', userId: string, name: string, email: string, memberId: string, isDeactivated: boolean, role: string, memberSince?: string | null } };
 
-export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string };
+export type OrgFragment = { __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean };
 
 export type GetOrgsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgsQuery = { __typename?: 'Query', getOrgs: { __typename?: 'OrgsResDto', user: string, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }> } };
+export type GetOrgsQuery = { __typename?: 'Query', getOrgs: { __typename?: 'OrgsResDto', user: string, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
 
 export type GetOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string } };
+export type GetOrgQuery = { __typename?: 'Query', getOrg: { __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean } };
 
 export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number } };
 
@@ -2015,7 +2015,7 @@ export type UserFragment = { __typename?: 'UserResDto', name: string, uuid: stri
 export type WhoamiQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', user: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, certificate: string, isDeactivated: boolean, createdAt: string }> } };
+export type WhoamiQuery = { __typename?: 'Query', whoami: { __typename?: 'WhoamiDto', user: { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string }, ownerOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }>, memberOf: Array<{ __typename?: 'OrgDto', id: string, name: string, owner: string, country: string, currency: string, createdAt: string, certificate: string, isDeactivated: boolean }> } };
 
 export type GetUserQueryVariables = Exact<{
   userId: Scalars['String']['input'];
@@ -2209,9 +2209,11 @@ export const OrgFragmentDoc = gql`
   id
   name
   owner
+  country
+  currency
+  createdAt
   certificate
   isDeactivated
-  createdAt
 }
     `;
 export const SimPackagesFragmentDoc = gql`
