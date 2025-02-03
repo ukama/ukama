@@ -23,7 +23,10 @@ export class MetricRes {
   msg: string;
 
   @Field()
-  nodeId: string;
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   type: string;
@@ -51,6 +54,9 @@ export class LatestMetricRes {
   @Field()
   nodeId: string;
 
+  @Field({ nullable: true })
+  siteId?: string;
+
   @Field()
   type: string;
 
@@ -72,6 +78,9 @@ export class GetMetricRangeInput {
   @Field()
   userId?: string;
 
+  @Field()
+  siteId?: string;
+
   @Field({ nullable: true })
   from: number;
 
@@ -89,6 +98,9 @@ export class GetMetricRangeInput {
 export class GetMetricByTabInput {
   @Field()
   nodeId: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   orgName: string;

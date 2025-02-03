@@ -2,6 +2,7 @@ import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
 import {
+  GRAPHS_TYPE,
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
 } from "../../common/enums";
@@ -16,6 +17,7 @@ import {
 import {
   getNodeRangeMetric,
   getNotifications,
+  getSiteRangeMetric,
 } from "../datasource/subscriptions-api";
 import { pubSub } from "./pubsub";
 import {
@@ -52,8 +54,8 @@ class SubscriptionsResolvers {
       store
     );
     if (status !== 200) {
-      logger.error(`Error getting base URL for notification: ${baseURL}`);
-      return { notifications: [] };
+      logger.error(`Error getting base URL for metrics: ${baseURL}`);
+      return { metrics: [] };
     }
 
     let wsUrl = baseURL;
@@ -63,60 +65,156 @@ class SubscriptionsResolvers {
       wsUrl = wsUrl.replace("http://", "ws://");
     }
 
-    const { type, from, nodeId, userId, orgName, withSubscription } = data;
+    const { type, from, nodeId, userId, siteId, orgName, withSubscription } =
+      data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+
+    const metricsKey: string[] = getGraphsKeyByType(type, nodeId, siteId);
     const metrics: MetricsRes = { metrics: [] };
+
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric(baseURL, {
-          ...data,
-          type: metricsKey[i],
-        });
-        metrics.metrics.push(res);
+        let res;
+        if (siteId) {
+          res = await getSiteRangeMetric(baseURL, {
+            ...data,
+            type: metricsKey[i],
+          });
+          if (res?.values?.length > 0) {
+            metrics.metrics.push({
+              ...res,
+              siteId,
+              type: metricsKey[i],
+            });
+          }
+        } else {
+          res = await getNodeRangeMetric(baseURL, {
+            ...data,
+            type: metricsKey[i],
+          });
+          if (res?.values?.length > 0) {
+            metrics.metrics.push(res);
+          }
+        }
       }
     }
+
     if (withSubscription && metrics.metrics.length > 0) {
       let subKey = "";
       metrics.metrics.forEach((metric: MetricRes) => {
         if (metric.values.length > 2) subKey = subKey + metric.type + ",";
       });
+
       subKey.split(",").forEach((key: string) => {
         if (key === "") return;
+
         const workerData = {
           userId,
           type: key,
           timestamp: from,
-          url: `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          url:
+            type === GRAPHS_TYPE.BACKHAUL ||
+            type === GRAPHS_TYPE.BATTERY ||
+            type === GRAPHS_TYPE.CONTROLLER ||
+            type === GRAPHS_TYPE.SWITCH ||
+            siteId
+              ? `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&site=${siteId}`
+              : `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          isNodeMetric: !(
+            type === GRAPHS_TYPE.BACKHAUL ||
+            type === GRAPHS_TYPE.SWITCH ||
+            type === GRAPHS_TYPE.CONTROLLER ||
+            type === GRAPHS_TYPE.BATTERY ||
+            siteId
+          ),
         };
+
         const worker = new Worker(WS_THREAD, {
           workerData,
         });
+
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
-            const res = JSON.parse(_data.data);
-            const result = res.data.result[0];
-            if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(`${userId}/${type}/${from}`, {
-                success: true,
-                msg: "success",
-                orgName: orgName,
-                nodeId: nodeId,
-                userId: userId,
-                from: from,
-                type: key,
-                value: result.value,
-              } as LatestMetricRes);
-            } else {
-              return getErrorRes("No metric data found");
+            try {
+              logger.debug("Received metric data:", JSON.stringify(_data));
+              const res = JSON.parse(_data.data);
+
+              let metricValue;
+              let metricMetadata;
+
+              if (res?.data?.result?.[0]) {
+                const result = res.data.result[0];
+                metricValue = result.value;
+                metricMetadata = result.metric;
+              } else if (res?.result?.[0]) {
+                const result = res.result[0];
+                metricValue = result.value;
+                metricMetadata = result.metric;
+              } else {
+                throw new Error("Invalid metric data structure");
+              }
+
+              if (
+                metricValue &&
+                Array.isArray(metricValue) &&
+                metricValue.length > 0
+              ) {
+                const formattedValue: [number, number] =
+                  Array.isArray(metricValue) && metricValue.length >= 2
+                    ? [Number(metricValue[0]), Number(metricValue[1])]
+                    : [Date.now() / 1000, 0];
+
+                pubSub.publish(`${userId}/${type}/${from}`, {
+                  success: true,
+                  msg: "success",
+                  orgName: orgName,
+                  nodeId: nodeId,
+                  siteId: siteId,
+                  userId: userId,
+                  from: from,
+                  type: key,
+                  value: formattedValue,
+                  metric: metricMetadata,
+                  isNodeMetric: workerData.isNodeMetric,
+                } as LatestMetricRes);
+              } else {
+                pubSub.publish(
+                  `${userId}/${type}/${from}`,
+                  getErrorRes("No metric values found")
+                );
+              }
+            } catch (error) {
+              logger.error(`Error processing metric data: ${error}`, {
+                data: _data?.data,
+                error,
+              });
+              pubSub.publish(
+                `${userId}/${type}/${from}`,
+                getErrorRes(`Error processing metric data: ${error}`)
+              );
             }
+          } else {
+            pubSub.publish(
+              `${userId}/${type}/${from}`,
+              getErrorRes("Worker reported an error")
+            );
           }
         });
-        worker.on("exit", async (code: any) => {
+
+        worker.on("error", error => {
+          logger.error(`Worker error for ${key}:`, error);
+          pubSub.publish(
+            `${userId}/${type}/${from}`,
+            getErrorRes(`Worker error: ${error.message}`)
+          );
+        });
+
+        worker.on("exit", async (code: number) => {
           await store.close();
           logger.info(
             `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
           );
+          worker.terminate();
         });
       });
     }

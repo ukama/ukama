@@ -47,6 +47,7 @@ scrape_configs:
       - targets: ["dummy-controller:2112"]
         labels:
           env: dev
+          siteId: 1
 
   - job_name: ukama-nodes
     scrape_interval: "10s"

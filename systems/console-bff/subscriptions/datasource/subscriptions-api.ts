@@ -22,6 +22,7 @@ import {
   parseNodeMetricRes,
   parseNotificationsRes,
   parsePromethRes,
+  parseSiteMetricRes,
 } from "./mapper";
 
 const directCall = async (
@@ -73,6 +74,26 @@ const getNodeRangeMetric = async (
     });
 };
 
+const getSiteRangeMetric = async (
+  baseUrl: string,
+  args: GetMetricRangeInput
+): Promise<MetricRes> => {
+  const { from, to = 0, step = 1 } = args;
+  const url = `${baseUrl}/${VERSION}/sites/${args.siteId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`;
+  logger.info(`Fetching site metrics from: ${url}`);
+
+  return await asyncRestCall({
+    method: API_METHOD_TYPE.GET,
+    url: url,
+  })
+    .then(res => {
+      return parseSiteMetricRes(res, args);
+    })
+    .catch(err => {
+      throw new GraphQLError(err);
+    });
+};
+
 const getNotifications = async (
   baseUrl: string,
   orgId: string,
@@ -104,4 +125,10 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };
+export {
+  directCall,
+  getMetricRange,
+  getNodeRangeMetric,
+  getSiteRangeMetric,
+  getNotifications,
+};

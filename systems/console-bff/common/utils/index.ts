@@ -124,7 +124,7 @@ const getPaginatedOutput = (
 const getGraphsKeyByType = (
   type: string,
   nodeId: string,
-  site?: string
+  siteId?: string
 ): string[] => {
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
@@ -168,19 +168,32 @@ const getGraphsKeyByType = (
       else if (nodeId.includes(NODE_TYPE.anode))
         return ["temperature_ctl", "temperature_rfe"];
       else return ["subscribers_active", "subscribers_attached"];
-    case GRAPHS_TYPE.POWER:
-      if (site)
+    case GRAPHS_TYPE.BATTERY:
+      if (siteId)
         return [
-          "solar_power_generation",
-          "solar_energy_total",
-          "solar_panel_power",
           "battery_charge_status",
-          "battery_voltage_volts",
-          "battery_health_percent",
+          "battery_voltage",
+          "battery_health",
+          "battery_temperature",
+        ];
+      else return [];
+    case GRAPHS_TYPE.BACKHAUL:
+      if (siteId)
+        return ["backhaul_latency", "backhaul_status", "backhaul_speed"];
+      else return [];
+    case GRAPHS_TYPE.CONTROLLER:
+      if (siteId) return ["solar_inverter_status"];
+      else return [];
+    case GRAPHS_TYPE.SOLAR:
+      if (siteId)
+        return [
+          "solar_panel_voltage",
+          "solar_panel_current",
+          "solar_panel_power",
         ];
       else return [];
     case GRAPHS_TYPE.SWITCH:
-      if (site) return ["switch_port_status", "switch_port_bandwidth_usage"];
+      if (siteId) return ["switch_port_status", "switch_port_bandwidth_usage"];
       else return [];
     default:
       return [];
