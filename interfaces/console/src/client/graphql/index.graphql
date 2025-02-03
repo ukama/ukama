@@ -401,7 +401,6 @@ fragment payment on PaymentDto {
   createdAt
 }
 
-
 mutation UpdatePayment($data: UpdatePaymentInputDto!) {
   updatePayment(data: $data) {
     id
@@ -461,6 +460,14 @@ query GetPayments($data: GetPaymentsInputDto!) {
 }
 
 ### Payment end ###
+### Controller Start ###
+
+mutation restartSite($data: RestartSiteInputDto!) {
+  restartSite(data: $data) {
+    success
+  }
+}
+### Controller End ###
 ### Billing start ###
 # Fragments for reusable parts
 fragment customer on CustomerDto {

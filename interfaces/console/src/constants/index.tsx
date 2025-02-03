@@ -336,6 +336,60 @@ const NetworkChartsConfig: any = [
   { name: 'ERAB Drop Rate', show: true, id: 'network_packet_loss' },
   { name: 'RLS  Drop Rate', show: true, id: 'network_overall_status' },
 ];
+const HEALTH_THRESHOLDS = {
+  battery: {
+    voltage: { warning: 11.5, critical: 10.5 },
+    capacity: { warning: 30, critical: 15 },
+  },
+  solar: {
+    power: { warning: 100, critical: 50 },
+    voltage: { warning: 18, critical: 15 },
+  },
+  switch: {
+    temperature: { warning: 70, critical: 85 },
+    load: { warning: 80, critical: 90 },
+  },
+  controller: {
+    temperature: { warning: 60, critical: 75 },
+    efficiency: { warning: 85, critical: 75 },
+  },
+  backhaul: {
+    latency: { warning: 100, critical: 200 },
+    speed: { warning: 5, critical: 2 },
+  },
+  node: {
+    uptime: { warning: 95, critical: 90 },
+    errors: { warning: 10, critical: 20 },
+  },
+};
+const BatteryChartsConfig: any = [
+  { name: 'Battery Charge Status', show: true, id: 'battery_charge_status' },
+  { name: 'Battery Voltage', show: true, id: 'battery_voltage' },
+  { name: 'Battery Health', show: true, id: 'battery_health' },
+  { name: 'Battery Temperature', show: true, id: 'battery_temperature' },
+];
+const SolarChartsConfig: any = [
+  { name: 'Solar Panel Voltage', show: true, id: 'solar_panel_voltage' },
+  { name: 'Solar Panel Current', show: true, id: 'solar_panel_current' },
+  { name: 'Solar Panel Power', show: true, id: 'solar_panel_power' },
+];
+const ControllerChartsConfig: any = [
+  { name: 'Controller Temperature', show: true, id: 'solar_inverter_status' },
+];
+const BackhaulChartsConfig: any = [
+  { name: 'Backhaul Status', show: true, id: 'backhaul_status' },
+  { name: 'Backhaul Latency', show: true, id: 'backhaul_latency' },
+  { name: 'Backhaul Speed', show: true, id: 'backhaul_speed' },
+];
+const SwitchChartConfig: any = [
+  { name: 'Switch Port Status', show: true, id: 'switch_port_status' },
+  {
+    name: 'Switch Port Bandwidth Usage',
+    show: true,
+    id: 'switch_port_bandwidth_usage',
+  },
+];
+
 const RadioChartsConfig: any = [
   { name: 'TX Power', show: true, id: 'tx_power' },
   { name: 'RX Power', show: true, id: 'rx_power' },
@@ -398,6 +452,11 @@ export {
   IPFY_URL,
   LANGUAGE_OPTIONS,
   MASK_BY_TYPE,
+  BackhaulChartsConfig,
+  BatteryChartsConfig,
+  ControllerChartsConfig,
+  SolarChartsConfig,
+  SwitchChartConfig,
   MASK_PLACEHOLDERS,
   MONTH_FILTER,
   NetworkChartsConfig,
@@ -407,6 +466,7 @@ export {
   NodeResourcesTabConfigure,
   RadioChartsConfig,
   ROAMING_SELECT,
+  HEALTH_THRESHOLDS,
   SETTING_MENU,
   SITE_CONFIG_STEPS,
   TIME_FILTER,

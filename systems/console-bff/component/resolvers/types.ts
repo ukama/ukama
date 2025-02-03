@@ -54,6 +54,7 @@ export class ComponentsResDto {
 export class ComponentAPIDto {
   @Field()
   id: string;
+
   @Field()
   inventory_id: string;
 

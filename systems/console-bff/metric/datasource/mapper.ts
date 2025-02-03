@@ -5,7 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { GetNodeLatestMetricInput, NodeLatestMetric } from "../resolver/types";
+import {
+  GetNodeLatestMetricInput,
+  GetSiteLatestMetricInput,
+  NodeLatestMetric,
+  SiteLatestMetric,
+} from "../resolver/types";
 
 const ERROR_RESPONSE = {
   success: true,
@@ -15,6 +20,13 @@ const ERROR_RESPONSE = {
   type: "",
 };
 
+const ERROR_RESPONSE_SITE = {
+  success: true,
+  msg: "success",
+  orgId: "",
+  siteId: "",
+  type: "",
+};
 export const parseNodeLatestMetricRes = (
   res: any,
   args: GetNodeLatestMetricInput
@@ -31,5 +43,24 @@ export const parseNodeLatestMetricRes = (
     };
   } else {
     return { ...ERROR_RESPONSE, value: [0, 0] } as NodeLatestMetric;
+  }
+};
+
+export const parseSiteLatestMetricRes = (
+  res: any,
+  args: GetSiteLatestMetricInput
+): SiteLatestMetric => {
+  const data = res.data.result[0];
+  if (data?.value?.length > 0) {
+    return {
+      success: true,
+      msg: "success",
+      orgId: data.metric.org,
+      siteId: args.siteId,
+      type: args.type,
+      value: data.value,
+    };
+  } else {
+    return { ...ERROR_RESPONSE_SITE, value: [0, 0] } as SiteLatestMetric;
   }
 };

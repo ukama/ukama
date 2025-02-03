@@ -9,10 +9,12 @@ import { NonEmptyArray } from "type-graphql";
 
 import { GetNetworkStatsResolver } from "./getNetworkStats";
 import { GetNodeLatestMetricResolver } from "./getNodeLatestMetric";
+import { GetSiteLatestMetricResolver } from "./getSiteLatestMetrics";
 
 const resolvers: NonEmptyArray<any> = [
   GetNodeLatestMetricResolver,
   GetNetworkStatsResolver,
+  GetSiteLatestMetricResolver,
 ];
 
 export default resolvers;

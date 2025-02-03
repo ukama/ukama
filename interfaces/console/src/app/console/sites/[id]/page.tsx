@@ -10,29 +10,53 @@
 import {
   Component_Type,
   SiteDto,
-  useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
-  useGetNetworksQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
+  useGetNodesByNetworkLazyQuery,
+  useGetSubscribersByNetworkQuery,
+  useRestartSiteMutation,
 } from '@/client/graphql/generated';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
+import SiteOverview from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
-import { TSiteForm } from '@/types';
+import colors from '@/theme/colors';
+import { TMetricResDto, TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
-import { formatISO } from 'date-fns';
+import GroupIcon from '@mui/icons-material/Group';
+import { getUnixTime } from '@/utils';
+import {
+  AlertColor,
+  Box,
+  Grid,
+  Paper,
+  Skeleton,
+  Typography,
+} from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, useMemo } from 'react';
+import MetricSubscription from '@/lib/MetricSubscription';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
   {
     ssr: false,
+    loading: () => (
+      <Skeleton
+        variant="rectangular"
+        width="100%"
+        height="100%"
+        sx={{ borderRadius: '5px' }}
+      />
+    ),
   },
 );
 
@@ -76,48 +100,28 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
-  const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [metricFrom, setMetricFrom] = useState<number>(getUnixTime() - 140);
+  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.Battery);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(id);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const { setSnackbarMessage, network, setSelectedDefaultSite } =
-    useAppContext();
+  const {
+    user,
+    setSnackbarMessage,
+    network,
+    setSelectedDefaultSite,
+    env,
+    subscriptionClient,
+  } = useAppContext();
   const {
     address: CurrentSiteaddress,
     isLoading: CurrentSiteAddressLoading,
     error,
     fetchAddress,
   } = useFetchAddress();
-  const [isDataReady, setIsDataReady] = useState(false);
 
   const router = useRouter();
-
-  const handleSiteConfigOpen = () => {
-    setOpenSiteConfig(true);
-  };
-
-  const handleCloseSiteConfig = () => {
-    setOpenSiteConfig(false);
-  };
-
-  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
-    onCompleted: (res) => {
-      setSnackbarMessage({
-        id: 'add-site-success',
-        message: 'Site added successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'add-subscriber-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
 
   const { loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -136,29 +140,32 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
-
-  const handleSiteConfiguration = async (data: any) => {
-    const variables = {
-      access_id: data.access,
-      backhaul_id: data.backhaul,
-      install_date: formatISO(new Date()),
-      latitude: data.coordinates.lat,
-      location: data.location,
-      longitude: data.coordinates.lng,
-      name: data.siteName,
-      network_id: data.selectedNetwork,
-      power_id: data.power,
-      spectrum_id: data.spectrumId || '',
-      switch_id: data.switch,
-      is_deactivated: data.is_deactivated || false,
-    };
-
-    try {
-      await addSite({ variables: { data: variables } });
-    } catch (error) {
-      console.error('Error submitting site configuration:', error);
-    }
-  };
+  const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
+    onCompleted: (res) => {
+      const siteData = res.getSite;
+      setSite({
+        power: siteData.powerId,
+        siteName: siteData.name,
+        switch: siteData.switchId,
+        access: siteData.accessId,
+        address: siteData.location,
+        latitude: siteData.latitude,
+        network: siteData.networkId,
+        spectrum: siteData.spectrumId,
+        backhaul: siteData.backhaulId,
+        longitude: siteData.longitude,
+      });
+      setActiveSite(siteData);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sites-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [getComponents] = useGetComponentsByUserIdLazyQuery({
     onCompleted: (res) => {
@@ -176,11 +183,38 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const { data: networks } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
+  const [restartSite, { loading: restartSiteLoading }] = useRestartSiteMutation(
+    {
+      onCompleted: () => {
+        setSnackbarMessage({
+          id: 'restart-site-success',
+          message: 'Site received restart command!',
+          type: 'success' as AlertColor,
+          show: true,
+        });
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'restart-site-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    },
+  );
+
+  const [fetchNode, { data: nodeData, loading: nodeLoading }] =
+    useGetNodesByNetworkLazyQuery({});
+
+  const { data: subscribers } = useGetSubscribersByNetworkQuery({
+    variables: {
+      networkId: activeSite.networkId,
+    },
+    fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
-        id: 'networks-msg',
+        id: 'subscriber-msg',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -188,47 +222,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
-    onCompleted: (res) => {
-      setSite({
-        power: res.getSite.powerId,
-        siteName: res.getSite.name,
-        switch: res.getSite.switchId,
-        access: res.getSite.accessId,
-        address: res.getSite.location,
-        latitude: res.getSite.latitude,
-        network: res.getSite.networkId,
-        spectrum: res.getSite.spectrumId,
-        backhaul: res.getSite.backhaulId,
-        longitude: res.getSite.longitude,
-      });
-      setActiveSite({
-        id: res.getSite.id,
-        accessId: res.getSite.accessId,
-        backhaulId: res.getSite.backhaulId,
-        createdAt: res.getSite.createdAt,
-        installDate: res.getSite.installDate,
-        isDeactivated: res.getSite.isDeactivated,
-        latitude: res.getSite.latitude,
-        location: res.getSite.location,
-        longitude: res.getSite.longitude,
-        name: res.getSite.name,
-        networkId: res.getSite.networkId,
-        powerId: res.getSite.powerId,
-        spectrumId: res.getSite.spectrumId,
-        switchId: res.getSite.switchId,
-      });
-      checkDataReadiness();
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sites-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+  useEffect(() => {
+    if (activeSite?.networkId) {
+      fetchNode({ variables: { networkId: activeSite.networkId } });
+    }
+  }, [activeSite, fetchNode]);
 
   useEffect(() => {
     getComponents({
@@ -238,146 +236,221 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         },
       },
     });
-  }, []);
+  }, [getComponents]);
 
   useEffect(() => {
-    getSite({ variables: { siteId: id } });
-  }, []);
-
-  useEffect(() => {
-    if (id) {
-      setSelectedSiteId(id);
-    } else if (sitesList.length > 0) {
-      setSelectedSiteId(sitesList[0].id);
+    if (activeSite.latitude && activeSite.longitude) {
+      fetchAddress(activeSite.latitude, activeSite.longitude);
     }
-  }, [id, sitesList]);
+    setSelectedDefaultSite(activeSite.name);
+  }, [activeSite, fetchAddress, setSelectedDefaultSite]);
 
   const handleSiteChange = (newSiteId: string) => {
     setSelectedSiteId(newSiteId);
     router.push(`/console/sites/${newSiteId}`);
   };
 
-  useEffect(() => {
-    if (selectedSiteId) {
-      getSite({ variables: { siteId: selectedSiteId } });
-    }
-  }, [selectedSiteId]);
-
-  useEffect(() => {
-    const handleFetchAddress = async () => {
-      setSnackbarMessage({
-        id: 'fetching-address',
-        type: 'info',
-        show: true,
-        message: 'Fetching address with coordinates',
-      });
-      await fetchAddress(activeSite.latitude, activeSite.longitude);
-    };
-
-    setSelectedDefaultSite(activeSite.name);
-
-    if (activeSite && activeSite.latitude && activeSite.longitude) {
-      handleFetchAddress();
-    }
-  }, [activeSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
-
-  useEffect(() => {
-    if (error) {
-      setSnackbarMessage({
-        id: 'error-fetching-address',
-        type: 'error',
-        show: true,
-        message: 'Error fetching address from coordinates',
-      });
-    }
-  }, [error, setSnackbarMessage]);
-
-  const checkDataReadiness = () => {
-    if (
-      activeSite.id &&
-      CurrentSiteaddress &&
-      !getSiteLoading &&
-      !CurrentSiteAddressLoading
-    ) {
-      setIsDataReady(true);
-    }
+  const handleSiteKpiChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(getUnixTime() - 140);
   };
 
+  const handleSiteRestart = () => {
+    restartSite({
+      variables: {
+        data: {
+          siteId: activeSite.id,
+          networkId: activeSite.networkId,
+        },
+      },
+    });
+  };
+  const [
+    getSiteMetricByTab,
+    { loading: siteMetricsLoading, variables: siteMetricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricByTab);
+      console.log('SiteOverallHealth metrics:', data);
+    },
+  });
+
+  const handleNotification = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, type, value, nodeId, success } =
+      parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+    }
+  };
   useEffect(() => {
-    checkDataReadiness();
+    if (
+      metricFrom > 0 &&
+      activeSite.id &&
+      siteMetricsVariables?.data?.from !== metricFrom
+    ) {
+      const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}-${activeSite.id}`;
+      getSiteMetricByTab({
+        variables: {
+          data: {
+            nodeId: '',
+            siteId: activeSite.id,
+            userId: user.id,
+            type: graphType,
+            from: metricFrom,
+            orgName: user.orgName,
+            withSubscription: true,
+          },
+        },
+      }).then(() => {
+        MetricSubscription({
+          nodeId: '',
+          siteId: activeSite.id,
+          key: psKey,
+          type: graphType,
+          userId: user.id,
+          from: metricFrom,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+        });
+      });
+
+      PubSub.subscribe(psKey, handleNotification);
+
+      return () => {
+        PubSub.unsubscribe(psKey);
+      };
+    }
   }, [
-    activeSite,
-    CurrentSiteaddress,
-    getSiteLoading,
-    CurrentSiteAddressLoading,
+    metricFrom,
+    graphType,
+    activeSite.id,
+    siteMetricsVariables?.data?.from,
+    getSiteMetricByTab,
   ]);
 
-  if (!isDataReady) {
+  const backhaulComponent = useMemo(() => {
     return (
-      <Grid container columnSpacing={2}>
-        {[1, 2].map((item) => (
-          <Grid item xs={6} key={item}>
-            <Skeleton
-              variant="rectangular"
-              height={158}
-              width={'100%'}
-              sx={{ borderRadius: '5px' }}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      componentsList.find(
+        (component) =>
+          component.id === activeSite?.backhaulId &&
+          component.category === 'BACKHAUL',
+      )?.type || ''
     );
-  }
+  }, [componentsList, activeSite?.backhaulId]);
+
+  useEffect(() => {
+    if (id) {
+      getSite({ variables: { siteId: id } });
+
+      getSiteMetricByTab({
+        variables: {
+          data: {
+            nodeId: '',
+            siteId: id,
+            userId: user.id,
+            type: Graphs_Type.Battery,
+            from: getUnixTime() - 140,
+            orgName: user.orgName,
+            withSubscription: true,
+          },
+        },
+      });
+    }
+  }, [id, getSite, getSiteMetricByTab, user.id, user.orgName]);
 
   return (
-    <Box
-      sx={{
-        overflow: 'auto',
-        borderRadius: '10px',
-        height: 'calc(100vh - 228px)',
-      }}
-    >
+    <Box>
       <SiteDetailsHeader
-        addSite={handleSiteConfigOpen}
         siteList={sitesList || []}
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
+        onRestartSite={handleSiteRestart}
       />
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={3}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteInfo
+              selectedSite={activeSite}
+              address={CurrentSiteaddress}
+              nodes={nodeData?.getNodesByNetwork.nodes || []}
+            />
+          </Paper>
         </Grid>
-        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteMapComponent
-            posix={[activeSite.latitude, activeSite.longitude]}
-            address={CurrentSiteaddress}
-            height={'100%'}
-          />
+
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ height: '250px', overflow: 'auto' }}>
+            <SiteOverview metrics={metrics} loading={siteMetricsLoading} />
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper
+            sx={{ height: '250px', overflow: 'hidden', position: 'relative' }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 206,
+                left: 8,
+                zIndex: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                backgroundColor: colors.white,
+                borderRadius: '4px',
+                p: 1,
+              }}
+            >
+              <GroupIcon fontSize="small" />
+              <Typography variant="body2" fontWeight="medium">
+                {subscribers?.getSubscribersByNetwork.subscribers.length || 0}
+              </Typography>
+            </Box>
+
+            <Box sx={{ position: 'relative', zIndex: 1, height: '100%' }}>
+              <Suspense
+                fallback={
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    sx={{ borderRadius: '5px' }}
+                  />
+                }
+              >
+                <SiteMapComponent
+                  posix={[activeSite.latitude, activeSite.longitude]}
+                  address={CurrentSiteaddress}
+                  height={'100%'}
+                  mapStyle="satellite"
+                />
+              </Suspense>
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={12}>
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              height: 'auto',
+            }}
+          >
+            <SiteOverallHealth
+              siteId={activeSite.id}
+              metricFrom={metricFrom}
+              metrics={metrics}
+              loading={siteMetricsLoading}
+              onGraphTypeChange={handleSiteKpiChange}
+              nodes={nodeData?.getNodesByNetwork}
+              backhaulComponent={backhaulComponent}
+            />
+          </Paper>
         </Grid>
       </Grid>
-
-      <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-        <SiteOverallHealth
-          batteryInfo={[]}
-          solarHealth={'good'}
-          nodeHealth={'good'}
-          switchHealth={'good'}
-          controllerHealth={'good'}
-          batteryHealth={'good'}
-          backhaulHealth={'good'}
-        />
-      </Paper>
-
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
     </Box>
   );
 };

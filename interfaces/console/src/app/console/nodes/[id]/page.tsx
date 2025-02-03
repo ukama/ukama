@@ -143,6 +143,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       }).then(() => {
         MetricSubscription({
           nodeId: id,
+          siteId: '',
           key: psKey,
           type: graphType,
           userId: user.id,
@@ -160,7 +161,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     nodeMetricsVariables?.data?.from,
     getNodeMetricByTab,
     graphType,
-  ]); // Added all missing dependencies
+  ]);
 
   const handleNotification = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);

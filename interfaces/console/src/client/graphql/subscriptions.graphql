@@ -75,6 +75,7 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
     metrics {
       msg
       nodeId
+      siteId
       success
       type
       values
@@ -86,6 +87,7 @@ subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
   getMetricByTabSub(data: $data) {
     msg
     nodeId
+    siteId
     success
     type
     value
