@@ -33,7 +33,7 @@ export const dtoToComponentsDto = (
 
 export const dtoToComponentDto = (res: ComponentAPIDto): ComponentDto => {
   return {
-    id: res.id,
+    id: res.id ,
     specification: res.specification,
     inventoryId: res.inventory_id,
     category: res.category,
