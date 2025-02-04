@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import { RadioChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
@@ -72,32 +71,26 @@ const NodeRadioTab = ({
         >
           <Stack spacing={4}>
             <LineChart
-              nodeId={nodeId}
+              from={metricFrom}
               loading={loading}
               topic={RadioChartsConfig[0].id}
               title={RadioChartsConfig[0].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
               hasData={isMetricValue(RadioChartsConfig[0].id, metrics)}
               initData={getMetricValue(RadioChartsConfig[0].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
+              from={metricFrom}
               loading={loading}
               topic={RadioChartsConfig[1].id}
               title={RadioChartsConfig[1].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
               hasData={isMetricValue(RadioChartsConfig[1].id, metrics)}
               initData={getMetricValue(RadioChartsConfig[1].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
+              from={metricFrom}
               loading={loading}
               topic={RadioChartsConfig[2].id}
               title={RadioChartsConfig[2].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
               hasData={isMetricValue(RadioChartsConfig[2].id, metrics)}
               initData={getMetricValue(RadioChartsConfig[2].id, metrics)}
             />

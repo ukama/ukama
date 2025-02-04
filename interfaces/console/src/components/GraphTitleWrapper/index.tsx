@@ -7,7 +7,8 @@
  */
 
 import BarChartIcon from '@mui/icons-material/BarChart';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { Variant } from '@mui/material/styles/createTypography';
 import React from 'react';
 import EmptyView from '../EmptyView';
@@ -41,18 +42,18 @@ const GraphTitleWrapper = ({
     <EmptyView size="large" title="No activity yet!" icon={BarChartIcon} />
   );
   return (
-    <Grid item container width="100%">
+    <Grid container width="100%">
       {(title ?? showFilter) && (
-        <Grid item container width="100%" mb={2}>
+        <Grid container width="100%" mb={2}>
           {title && (
-            <Grid item xs={6}>
+            <Grid size={{ xs: 6 }}>
               <Typography variant={variant} fontWeight={500}>
                 {title}
               </Typography>
             </Grid>
           )}
           {hasData && showFilter && (
-            <Grid item xs={6} display="flex" justifyContent="flex-end">
+            <Grid size={{ xs: 6 }} display="flex" justifyContent="flex-end">
               <TimeFilter
                 filter={filter}
                 handleFilterSelect={(v: string) => handleFilterChange?.(v)}
@@ -62,7 +63,6 @@ const GraphTitleWrapper = ({
         </Grid>
       )}
       <Grid
-        item
         container
         width={'100%'}
         height={'400px'}

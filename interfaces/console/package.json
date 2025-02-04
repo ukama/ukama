@@ -28,7 +28,7 @@
     "formik": "^2.4.6",
     "graphql": "^16.8.1",
     "graphql-ws": "^5.16.0",
-    "highcharts": "^11.4.3",
+    "highcharts": "^12.1.2",
     "highcharts-react-official": "^3.2.1",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",

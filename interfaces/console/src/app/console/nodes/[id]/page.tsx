@@ -37,6 +37,8 @@ import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const METRIC_RANGE_3600 = 3600;
+
 interface INodePage {
   params: {
     id: string;
@@ -135,7 +137,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
             userId: user.id,
             type: graphType,
             from: metricFrom,
-            to: metricFrom + 120,
+            to: metricFrom + METRIC_RANGE_3600,
             orgName: user.orgName,
             withSubscription: true,
           },
@@ -196,13 +198,13 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleOverviewSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - 120);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
     setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - 120);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
   const handleNodeActionClick = (action: string) => {};

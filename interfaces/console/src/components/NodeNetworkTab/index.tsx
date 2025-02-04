@@ -6,10 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  Graphs_Type,
-  MetricsRes,
-} from '@/client/graphql/generated/subscriptions';
+import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { NetworkChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
@@ -88,52 +85,42 @@ const NodeNetworkTab = ({
         >
           <Stack spacing={4}>
             <LineChart
-              nodeId={nodeId}
               loading={loading}
-              metricFrom={metricFrom}
+              from={metricFrom}
               topic={NetworkChartsConfig[0].id}
               title={NetworkChartsConfig[0].name}
-              tabSection={Graphs_Type.Network}
               initData={getMetricValue(NetworkChartsConfig[0].id, metrics)}
               hasData={isMetricValue(NetworkChartsConfig[0].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
               loading={loading}
-              metricFrom={metricFrom}
+              from={metricFrom}
               title={NetworkChartsConfig[1].name}
-              tabSection={Graphs_Type.Network}
               topic={NetworkChartsConfig[1].id}
               initData={getMetricValue(NetworkChartsConfig[1].id, metrics)}
               hasData={isMetricValue(NetworkChartsConfig[1].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
+              loading={loading}
+              from={metricFrom}
               topic={NetworkChartsConfig[2].id}
               title={NetworkChartsConfig[2].name}
-              loading={loading}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Network}
               initData={getMetricValue(NetworkChartsConfig[2].id, metrics)}
               hasData={isMetricValue(NetworkChartsConfig[2].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
+              loading={loading}
+              from={metricFrom}
               topic={NetworkChartsConfig[3].id}
               title={NetworkChartsConfig[3].name}
-              loading={loading}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Network}
               initData={getMetricValue(NetworkChartsConfig[3].id, metrics)}
               hasData={isMetricValue(NetworkChartsConfig[3].id, metrics)}
             />
             <LineChart
-              nodeId={nodeId}
+              loading={loading}
+              from={metricFrom}
               topic={NetworkChartsConfig[4].id}
               title={NetworkChartsConfig[4].name}
-              loading={loading}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Network}
               initData={getMetricValue(NetworkChartsConfig[4].id, metrics)}
               hasData={isMetricValue(NetworkChartsConfig[4].id, metrics)}
             />

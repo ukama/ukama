@@ -6,149 +6,201 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
+import { useState } from 'react';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
-  nodeId: string;
-  metricFrom: any;
   topic: string;
   initData: any;
   title?: string;
-  filter?: string;
+  from: number;
   hasData?: boolean;
   loading?: boolean;
-  tabSection: Graphs_Type;
 }
-
-const getOptions = (topic: string, title: string, initData: any) => {
-  return {
-    title: {
-      text: topic,
-      align: 'left',
-    },
-    chart: {
-      legend: { enabled: false },
-      events: {
-        load: function () {
-          const chart: any =
-            Highcharts.charts.length > 0
-              ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
-              : null;
-          if (chart) {
-            const series: any = chart?.series[0];
-            PubSub.subscribe(topic, (_, data) => {
-              if (topic === chart?.title?.textStr && series) {
-                series.addPoint(data, true, true);
-              }
-            });
-          }
-        },
-      },
-    },
-
-    time: {
-      useUTC: false,
-    },
-
-    rangeSelector: {
-      buttons: [
-        {
-          count: 30,
-          type: 'second',
-          text: '30S',
-        },
-        {
-          count: 1,
-          type: 'minute',
-          text: '1M',
-        },
-        {
-          type: 'all',
-          text: 'All',
-        },
-      ],
-      inputEnabled: false,
-      selected: 0,
-    },
-
-    exporting: {
-      enabled: true,
-    },
-
-    navigator: {
-      enabled: false,
-    },
-
-    accessibility: {
-      enabled: false,
-    },
-
-    series: [
-      {
-        name: title,
-        data: (function () {
-          const data = [...initData];
-          return data;
-        })(),
-      },
-    ],
-    xAxis: {
-      type: 'datetime',
-      title: false,
-      labels: {
-        enabled: true,
-        formate: '{value:%H:%M:%S}',
-      },
-    },
-    yAxis: {
-      title: false,
-      opposite: false,
-    },
-  };
-};
 
 const LineChart = ({
   topic,
-  nodeId,
   hasData,
   initData,
-  metricFrom,
   title = '',
   loading = false,
-  filter = 'LIVE',
-  tabSection = Graphs_Type.NodeHealth,
+  from: metricFrom,
 }: ILineChart) => {
-  const { user, env } = useAppContext();
+  const [filter, setFilter] = useState<string>('15m');
+  const [rangeValues, setRangeValues] = useState({
+    to: initData.length > 0 ? initData[initData.length - 1][0] : 0,
+    from:
+      initData.length > 0
+        ? initData[initData.length - 1][0]
+        : 0 - 15 * 60 * 1000,
+    range:
+      initData.length > 0
+        ? initData[initData.length - 1][0]
+        : 0 -
+          (initData.length > 0
+            ? initData[initData.length - 1][0]
+            : 0 - 15 * 60 * 1000),
+  });
+
+  const getOptions = (topic: string, title: string, initData: any) => {
+    let count = 0;
+    return {
+      title: {
+        text: topic,
+        align: 'left',
+      },
+      chart: {
+        type: 'spline',
+        scrollablePlotArea: {
+          minWidth: 600,
+          scrollPositionX: 1,
+        },
+        legend: { enabled: false },
+        events: {
+          load: function () {
+            const chart: any =
+              Highcharts.charts.length > 0
+                ? Highcharts.charts.find(
+                    (c: any) => c?.title?.textStr === topic,
+                  )
+                : null;
+
+            if (chart) {
+              const series: any = chart?.series[0];
+              PubSub.subscribe(topic, (_, data) => {
+                if (topic === chart?.title?.textStr && series) {
+                  if (count === 30) {
+                    count = 0;
+                    chart.xAxis[0].setExtremes(
+                      data[0] - rangeValues.range,
+                      data[0],
+                    );
+                    series.addPoint(data, true, true);
+                  } else {
+                    count++;
+                    series.addPoint(data, false, false);
+                  }
+                }
+              });
+            }
+          },
+        },
+      },
+
+      time: {
+        useUTC: false,
+      },
+
+      exporting: {
+        enabled: true,
+      },
+
+      navigator: {
+        enabled: false,
+      },
+
+      accessibility: {
+        enabled: false,
+      },
+
+      series: [
+        {
+          name: title,
+          data: (function () {
+            const data = [...initData];
+            return data;
+          })(),
+        },
+      ],
+      xAxis: {
+        type: 'datetime',
+        title: false,
+        labels: {
+          enabled: true,
+          format: '{value:%H:%M}',
+        },
+      },
+      yAxis: {
+        title: false,
+        opposite: false,
+      },
+    };
+  };
+
+  // useEffect(() => {
+  //   console.log(initData);
+  //   if (initData.length > 0) {
+  //     console.log(chartData.slice(0, -900));
+  //     setChartData(chartData.slice(0, -900));
+  //   }
+  // }, []);
+
+  const setRange = (f: string) => {
+    if (filter === f) return;
+
+    const chart: any =
+      Highcharts.charts.length > 0
+        ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+        : null;
+
+    const series = chart.series[0];
+    const data = series.data;
+
+    if (chart) {
+      const now = data[data.length - 1].x;
+      const from15 = now - 15 * 60 * 1000;
+      const from30 = now - 30 * 60 * 1000;
+      const from60 = now - 60 * 60 * 1000;
+
+      if (f === '30m') {
+        // setChartData(data.slice(0, -30 * 60));
+        chart.xAxis[0].setExtremes(from30, now);
+        setRangeValues({
+          to: now,
+          from: from30,
+          range: 30 * 60 * 1000,
+        });
+      } else if (f === '1h') {
+        // setChartData(data.slice(0, -60 * 60));
+        chart.xAxis[0].setExtremes(from60, now);
+        setRangeValues({
+          to: now,
+          from: from60,
+          range: 60 * 60 * 1000,
+        });
+      } else {
+        // setChartData(data.slice(0, -15 * 60));
+        chart.xAxis[0].setExtremes(from15, now);
+        setRangeValues({
+          to: now,
+          from: from15,
+          range: 15 * 60 * 1000,
+        });
+      }
+    }
+  };
 
   return (
     <GraphTitleWrapper
+      title={title}
       filter={filter}
       hasData={hasData}
       variant="subtitle1"
-      title={title}
-      handleFilterChange={() => {}}
+      handleFilterChange={(f: string) => {
+        setFilter(f);
+        setRange(f);
+      }}
       loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
-        {/* <MetricSubscription
-          key=""
-          nodeId={nodeId}
-          userId={user.id}
-          type={tabSection}
-          from={metricFrom}
-          url={env.METRIC_URL}
-          orgName={user.orgName}
-        /> */}
         <HighchartsReact
           key={topic}
-          options={getOptions(topic, title, initData)}
           highcharts={Highcharts}
+          options={getOptions(topic, title, initData)}
         />
       </Box>
     </GraphTitleWrapper>

@@ -24,7 +24,11 @@ interface ITimeFilter {
 const TimeFilter = ({
   filter = 'LIVE',
   handleFilterSelect,
-  options = [{ id: '1', label: 'LIVE' }],
+  options = [
+    { id: '1', label: '15m' },
+    { id: '2', label: '30m' },
+    { id: '3', label: '1h' },
+  ],
 }: ITimeFilter) => {
   return (
     <Box component="div">
@@ -33,7 +37,11 @@ const TimeFilter = ({
         size="small"
         color="primary"
         value={filter}
-        onChange={(_, value: string) => handleFilterSelect(value)}
+        onChange={(_, value: string) => {
+          if (value !== null) {
+            handleFilterSelect(value);
+          }
+        }}
       >
         {options.map(({ id, label }: StatsPeriodItemType) => (
           <ToggleButton

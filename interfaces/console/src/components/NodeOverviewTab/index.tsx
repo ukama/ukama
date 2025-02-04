@@ -177,9 +177,7 @@ const NodeOverviewTab = ({
               <Typography variant="h6">Node Health</Typography>
               {HealtChartsConfigure[nodeType][0].show && (
                 <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
+                  from={metricFrom}
                   loading={metricsLoading}
                   topic={HealtChartsConfigure[nodeType][0].id}
                   title={HealtChartsConfigure[nodeType][0].name}
@@ -195,9 +193,7 @@ const NodeOverviewTab = ({
               )}
               {HealtChartsConfigure[nodeType][1].show && (
                 <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
+                  from={metricFrom}
                   loading={metricsLoading}
                   topic={HealtChartsConfigure[nodeType][1].id}
                   title={HealtChartsConfigure[nodeType][1].name}
@@ -213,9 +209,7 @@ const NodeOverviewTab = ({
               )}
               {HealtChartsConfigure[nodeType][2].show && (
                 <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
+                  from={metricFrom}
                   loading={metricsLoading}
                   topic={HealtChartsConfigure[nodeType][2].id}
                   title={HealtChartsConfigure[nodeType][2].name}

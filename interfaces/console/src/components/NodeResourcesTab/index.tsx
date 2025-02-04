@@ -7,7 +7,6 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Grid, Paper, Stack } from '@mui/material';
@@ -115,14 +114,12 @@ const NodeResourcesTab = ({
           <Stack spacing={4}>
             {NodeResourcesTabConfigure[nodeType][0].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][0].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][0].id}
                 title={NodeResourcesTabConfigure[nodeType][0].name}
                 hasData={isMetricValue(
@@ -133,14 +130,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][1].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][1].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][1].id}
                 title={NodeResourcesTabConfigure[nodeType][1].name}
                 hasData={isMetricValue(
@@ -151,14 +146,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][2].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][2].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][2].id}
                 title={NodeResourcesTabConfigure[nodeType][2].name}
                 hasData={isMetricValue(
@@ -169,14 +162,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][3].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][3].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][3].id}
                 title={NodeResourcesTabConfigure[nodeType][3].name}
                 hasData={isMetricValue(
@@ -187,14 +178,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][4].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][4].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][4].id}
                 title={NodeResourcesTabConfigure[nodeType][4].name}
                 hasData={isMetricValue(
@@ -205,14 +194,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][5].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][5].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][5].id}
                 title={NodeResourcesTabConfigure[nodeType][5].name}
                 hasData={isMetricValue(
@@ -223,14 +210,12 @@ const NodeResourcesTab = ({
             )}
             {NodeResourcesTabConfigure[nodeType][6].show && (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
                 loading={loading}
                 initData={getMetricValue(
                   NodeResourcesTabConfigure[nodeType][6].id,
                   metrics,
                 )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
                 topic={NodeResourcesTabConfigure[nodeType][6].id}
                 title={NodeResourcesTabConfigure[nodeType][6].name}
                 hasData={isMetricValue(
