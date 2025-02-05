@@ -30,7 +30,7 @@ const LineChart = ({
   loading = false,
   from: metricFrom,
 }: ILineChart) => {
-  const [filter, setFilter] = useState<string>('15m');
+  const [filter, setFilter] = useState<string>('LIVE');
   const [rangeValues, setRangeValues] = useState({
     to: initData.length > 0 ? initData[initData.length - 1][0] : 0,
     from:
@@ -100,7 +100,13 @@ const LineChart = ({
       },
 
       navigator: {
-        enabled: false,
+        enabled: true,
+        maskFill: 'rgba(33, 144, 246, 0.15)',
+        xAxis: {
+          labels: {
+            format: '{value:%H:%M}',
+          },
+        },
       },
 
       accessibility: {
@@ -126,18 +132,9 @@ const LineChart = ({
       },
       yAxis: {
         title: false,
-        opposite: false,
       },
     };
   };
-
-  // useEffect(() => {
-  //   console.log(initData);
-  //   if (initData.length > 0) {
-  //     console.log(chartData.slice(0, -900));
-  //     setChartData(chartData.slice(0, -900));
-  //   }
-  // }, []);
 
   const setRange = (f: string) => {
     if (filter === f) return;
@@ -192,7 +189,7 @@ const LineChart = ({
       variant="subtitle1"
       handleFilterChange={(f: string) => {
         setFilter(f);
-        setRange(f);
+        // setRange(f);
       }}
       loading={loading ?? !initData}
     >

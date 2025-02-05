@@ -24,11 +24,7 @@ interface ITimeFilter {
 const TimeFilter = ({
   filter = 'LIVE',
   handleFilterSelect,
-  options = [
-    { id: '1', label: '15m' },
-    { id: '2', label: '30m' },
-    { id: '3', label: '1h' },
-  ],
+  options = [{ id: '1', label: 'LIVE' }],
 }: ITimeFilter) => {
   return (
     <Box component="div">
