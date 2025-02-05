@@ -10,7 +10,7 @@ import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
@@ -75,10 +75,6 @@ const LineChart = ({
                 if (topic === chart?.title?.textStr && series) {
                   if (count === 30) {
                     count = 0;
-                    chart.xAxis[0].setExtremes(
-                      data[0] - rangeValues.range,
-                      data[0],
-                    );
                     series.addPoint(data, true, true);
                   } else {
                     count++;
@@ -100,8 +96,14 @@ const LineChart = ({
       },
 
       navigator: {
-        enabled: true,
+        enabled: false,
         maskFill: 'rgba(33, 144, 246, 0.15)',
+        handles: {
+          symbols: ['doublearrow', 'doublearrow'],
+          lineWidth: 1,
+          width: 9,
+          height: 17,
+        },
         xAxis: {
           labels: {
             format: '{value:%H:%M}',
@@ -136,6 +138,20 @@ const LineChart = ({
     };
   };
 
+  useEffect(() => {
+    const chart: any =
+      Highcharts.charts.length > 0
+        ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+        : null;
+    if (chart) {
+      chart.update({
+        navigator: {
+          enabled: filter === 'ZOOM',
+        },
+      });
+    }
+  }, [filter]);
+
   const setRange = (f: string) => {
     if (filter === f) return;
 
@@ -154,7 +170,6 @@ const LineChart = ({
       const from60 = now - 60 * 60 * 1000;
 
       if (f === '30m') {
-        // setChartData(data.slice(0, -30 * 60));
         chart.xAxis[0].setExtremes(from30, now);
         setRangeValues({
           to: now,
@@ -162,7 +177,6 @@ const LineChart = ({
           range: 30 * 60 * 1000,
         });
       } else if (f === '1h') {
-        // setChartData(data.slice(0, -60 * 60));
         chart.xAxis[0].setExtremes(from60, now);
         setRangeValues({
           to: now,
@@ -170,7 +184,6 @@ const LineChart = ({
           range: 60 * 60 * 1000,
         });
       } else {
-        // setChartData(data.slice(0, -15 * 60));
         chart.xAxis[0].setExtremes(from15, now);
         setRangeValues({
           to: now,

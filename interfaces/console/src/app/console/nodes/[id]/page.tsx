@@ -170,12 +170,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
       parsedData.data.getMetricByTabSub;
     if (success) {
       PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
-      // setMetrics((prev) => {
-      //   const updatedMetrics = prev.metrics.map((m) =>
-      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
-      //   );
-      //   return { ...prev, metrics: updatedMetrics };
-      // });
     }
   };
 
