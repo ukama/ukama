@@ -36,13 +36,13 @@ export type GetMetricByTabInput = {
   withSubscription?: Scalars['Boolean']['input'];
 };
 
-export type LatestMetricRes = {
-  __typename?: 'LatestMetricRes';
+export type LatestMetricSubRes = {
+  __typename?: 'LatestMetricSubRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
-  value: Array<Scalars['Float']['output']>;
+  value: Array<Array<Scalars['Float']['output']>>;
 };
 
 export type MetricRes = {
@@ -143,7 +143,7 @@ export type SubMetricByTabInput = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  getMetricByTabSub: LatestMetricRes;
+  getMetricByTabSub: LatestMetricSubRes;
   notificationSubscription: NotificationsResDto;
 };
 
@@ -201,7 +201,7 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<Array<number>> } };
 
 
 export const GetNotificationsDocument = gql`

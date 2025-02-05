@@ -10,7 +10,6 @@ import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import PubSub from 'pubsub-js';
-import { useEffect, useState } from 'react';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
@@ -30,36 +29,14 @@ const LineChart = ({
   loading = false,
   from: metricFrom,
 }: ILineChart) => {
-  const [filter, setFilter] = useState<string>('LIVE');
-  const [rangeValues, setRangeValues] = useState({
-    to: initData.length > 0 ? initData[initData.length - 1][0] : 0,
-    from:
-      initData.length > 0
-        ? initData[initData.length - 1][0]
-        : 0 - 15 * 60 * 1000,
-    range:
-      initData.length > 0
-        ? initData[initData.length - 1][0]
-        : 0 -
-          (initData.length > 0
-            ? initData[initData.length - 1][0]
-            : 0 - 15 * 60 * 1000),
-  });
-
   const getOptions = (topic: string, title: string, initData: any) => {
-    let count = 0;
     return {
       title: {
         text: topic,
-        align: 'left',
       },
+
       chart: {
-        type: 'spline',
-        scrollablePlotArea: {
-          minWidth: 600,
-          scrollPositionX: 1,
-        },
-        legend: { enabled: false },
+        type: 'areaspline',
         events: {
           load: function () {
             const chart: any =
@@ -70,19 +47,34 @@ const LineChart = ({
                 : null;
 
             if (chart) {
-              const series: any = chart?.series[0];
               PubSub.subscribe(topic, (_, data) => {
-                if (topic === chart?.title?.textStr && series) {
-                  if (count === 30) {
-                    count = 0;
-                    series.addPoint(data, true, true);
-                  } else {
-                    count++;
-                    series.addPoint(data, false, false);
+                if (data && Array.isArray(data) && data.length > 0) {
+                  for (let i = 0; i < data.length; i++) {
+                    data && chart?.series[0].addPoint(data[i], false, true);
                   }
+                  chart.redraw();
                 }
               });
             }
+          },
+        },
+      },
+
+      plotOptions: {
+        areaspline: {
+          color: '#218FF6A2',
+          fillColor: {
+            linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+            stops: [
+              [0, '#218FF66F'],
+              [1, '#218FF61B'],
+            ],
+          },
+          threshold: null,
+          marker: {
+            lineWidth: 1,
+            lineColor: null,
+            fillColor: 'white',
           },
         },
       },
@@ -92,7 +84,7 @@ const LineChart = ({
       },
 
       exporting: {
-        enabled: true,
+        enabled: false,
       },
 
       navigator: {
@@ -124,12 +116,23 @@ const LineChart = ({
           })(),
         },
       ],
+
       xAxis: {
         type: 'datetime',
         title: false,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
+          dateTimeLabelFormats: {
+            millisecond: '%H:%M:%S.%L',
+            second: '%H:%M:%S',
+            minute: '%H:%M',
+            hour: '%H:%M',
+            day: '%e. %b',
+            week: '%e. %b',
+            month: "%b '%y",
+            year: '%Y',
+          },
         },
       },
       yAxis: {
@@ -138,71 +141,30 @@ const LineChart = ({
     };
   };
 
-  useEffect(() => {
-    const chart: any =
-      Highcharts.charts.length > 0
-        ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
-        : null;
-    if (chart) {
-      chart.update({
-        navigator: {
-          enabled: filter === 'ZOOM',
-        },
-      });
-    }
-  }, [filter]);
-
-  const setRange = (f: string) => {
-    if (filter === f) return;
-
-    const chart: any =
-      Highcharts.charts.length > 0
-        ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
-        : null;
-
-    const series = chart.series[0];
-    const data = series.data;
-
-    if (chart) {
-      const now = data[data.length - 1].x;
-      const from15 = now - 15 * 60 * 1000;
-      const from30 = now - 30 * 60 * 1000;
-      const from60 = now - 60 * 60 * 1000;
-
-      if (f === '30m') {
-        chart.xAxis[0].setExtremes(from30, now);
-        setRangeValues({
-          to: now,
-          from: from30,
-          range: 30 * 60 * 1000,
-        });
-      } else if (f === '1h') {
-        chart.xAxis[0].setExtremes(from60, now);
-        setRangeValues({
-          to: now,
-          from: from60,
-          range: 60 * 60 * 1000,
-        });
-      } else {
-        chart.xAxis[0].setExtremes(from15, now);
-        setRangeValues({
-          to: now,
-          from: from15,
-          range: 15 * 60 * 1000,
-        });
-      }
-    }
-  };
-
   return (
     <GraphTitleWrapper
       title={title}
-      filter={filter}
       hasData={hasData}
       variant="subtitle1"
       handleFilterChange={(f: string) => {
-        setFilter(f);
-        // setRange(f);
+        const chart: any =
+          Highcharts.charts.length > 0
+            ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+            : null;
+
+        if (chart) {
+          if (f === 'LIVE') {
+            chart.xAxis[0].setExtremes(null, null);
+          }
+          chart.update(
+            {
+              navigator: {
+                enabled: f === 'ZOOM',
+              },
+            },
+            true,
+          );
+        }
       }}
       loading={loading ?? !initData}
     >

@@ -20,7 +20,7 @@ import {
 import { pubSub } from "./pubsub";
 import {
   GetMetricByTabInput,
-  LatestMetricRes,
+  LatestMetricSubRes,
   MetricRes,
   MetricsRes,
   NotificationsRes,
@@ -92,23 +92,36 @@ class SubscriptionsResolvers {
         const worker = new Worker(WS_THREAD, {
           workerData,
         });
+
+        let count = 0;
+        const mvalues: [[Number, Number]] = [[0, 0]];
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(`${userId}/${type}/${from}`, {
-                success: true,
-                msg: "success",
-                orgName: orgName,
-                nodeId: nodeId,
-                userId: userId,
-                from: from,
-                type: key,
-                value: result.value,
-              } as LatestMetricRes);
-            } else {
-              return getErrorRes("No metric data found");
+              if (count === 0) {
+                mvalues.length = 1;
+                mvalues.pop();
+              }
+
+              count++;
+              mvalues.push([
+                Math.floor(result.value[0]) * 1000,
+                result.value[1],
+              ]);
+
+              if (count === 30) {
+                count = 0;
+
+                pubSub.publish(`${userId}/${type}/${from}`, {
+                  type: key,
+                  success: true,
+                  msg: "success",
+                  nodeId: nodeId,
+                  value: mvalues,
+                });
+              }
             }
           }
         });
@@ -215,15 +228,15 @@ class SubscriptionsResolvers {
     return notifications;
   }
 
-  @Subscription(() => LatestMetricRes, {
+  @Subscription(() => LatestMetricSubRes, {
     topics: ({ args }) => {
       return `${args.data.userId}/${args.data.type}/${args.data.from}`;
     },
   })
   async getMetricByTabSub(
-    @Root() payload: LatestMetricRes,
+    @Root() payload: LatestMetricSubRes,
     @Arg("data") data: SubMetricByTabInput
-  ): Promise<LatestMetricRes> {
+  ): Promise<LatestMetricSubRes> {
     const store = openStore();
     await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
     await store.close();

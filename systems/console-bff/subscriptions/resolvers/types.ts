@@ -58,6 +58,24 @@ export class LatestMetricRes {
   value: [number, number];
 }
 
+@ObjectType()
+export class LatestMetricSubRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field(() => [[Number, Number]])
+  value: [number, number][];
+}
+
 @InputType()
 export class GetMetricRangeInput {
   @Field()

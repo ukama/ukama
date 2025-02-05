@@ -14,18 +14,21 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import { useState } from 'react';
 
 interface ITimeFilter {
-  filter?: string;
   options?: StatsPeriodItemType[];
   handleFilterSelect: Function;
 }
 
 const TimeFilter = ({
-  filter = 'LIVE',
   handleFilterSelect,
-  options = [{ id: '1', label: 'LIVE' }, { id: '2', label: 'ZOOM' }],
+  options = [
+    { id: '1', label: 'LIVE' },
+    { id: '2', label: 'ZOOM' },
+  ],
 }: ITimeFilter) => {
+  const [filter, setFilter] = useState<string>('LIVE');
   return (
     <Box component="div">
       <ToggleButtonGroup
@@ -34,7 +37,8 @@ const TimeFilter = ({
         color="primary"
         value={filter}
         onChange={(_, value: string) => {
-          if (value !== null) {
+          if (value !== null && value !== filter) {
+            setFilter(value);
             handleFilterSelect(value);
           }
         }}

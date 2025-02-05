@@ -17,7 +17,6 @@ import TimeFilter from '../TimeFilter';
 
 interface IGraphTitleWrapper {
   title?: string;
-  filter?: string;
   hasData?: boolean;
   loading?: boolean;
   variant?: Variant;
@@ -29,7 +28,6 @@ interface IGraphTitleWrapper {
 const GraphTitleWrapper = ({
   children,
   title = '',
-  filter = 'LIVE',
   hasData = false,
   loading = true,
   showFilter = true,
@@ -55,7 +53,6 @@ const GraphTitleWrapper = ({
           {hasData && showFilter && (
             <Grid size={{ xs: 6 }} display="flex" justifyContent="flex-end">
               <TimeFilter
-                filter={filter}
                 handleFilterSelect={(v: string) => handleFilterChange?.(v)}
               />
             </Grid>

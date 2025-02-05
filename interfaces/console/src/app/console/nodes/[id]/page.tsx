@@ -169,7 +169,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     const { msg, type, value, nodeId, success } =
       parsedData.data.getMetricByTabSub;
     if (success) {
-      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
+      PubSub.publish(type, value.slice(0, 30));
     }
   };
 
