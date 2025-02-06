@@ -91,7 +91,10 @@ const fixTimestampInMetricData = (
   if (values.length > 0) {
     const fixedValues: [number, number][] = values.map(
       (value: [number, string]) => {
-        return [Math.floor(value[0]) * 1000, parseFloat(value[1])];
+        return [
+          Math.floor(value[0]) * 1000,
+          parseFloat(Number(value[1]).toFixed(2)),
+        ];
       }
     );
     return fixedValues;

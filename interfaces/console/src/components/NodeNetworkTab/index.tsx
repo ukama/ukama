@@ -9,8 +9,8 @@
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { NetworkChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -28,20 +28,15 @@ const NodeNetworkTab = ({
   metrics,
   metricFrom,
 }: INodeOverviewTab) => {
-  const [isCollapse, setIsCollapse] = useState<boolean>(false);
-  const handleCollapse = () => setIsCollapse((prev) => !prev);
-
   return (
     <Grid container spacing={3}>
-      <Grid md xs item lg={!isCollapse ? 4 : 1}>
+      <Grid size={{ xs: 12, md: 3.5 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
           loading={loading}
           title={'Network'}
-          isCollapsable={true}
-          isCollapse={isCollapse}
-          onCollapse={handleCollapse}
+          isCollapsable={false}
         >
           <NodeStatItem
             variant={'large'}
@@ -75,7 +70,7 @@ const NodeNetworkTab = ({
           />
         </NodeStatsContainer>
       </Grid>
-      <Grid item lg={isCollapse ? 11 : 8} md xs>
+      <Grid size={{ xs: 12, md: 8.5 }}>
         <Paper
           sx={{
             p: 3,

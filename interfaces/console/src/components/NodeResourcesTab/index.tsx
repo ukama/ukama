@@ -9,8 +9,8 @@
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
 import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -31,19 +31,16 @@ const NodeResourcesTab = ({
   selectedNode,
 }: INodeResourcesTab) => {
   const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
-  const [isCollapse, setIsCollapse] = useState<boolean>(false);
-  const handleCollapse = () => setIsCollapse((prev) => !prev);
+
   return (
     <Grid container spacing={3}>
-      <Grid item lg={!isCollapse ? 4 : 1} md xs>
+      <Grid size={{ xs: 12, md: 3.5 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
           loading={loading}
           title={'Resources'}
-          isCollapsable={true}
-          isCollapse={isCollapse}
-          onCollapse={handleCollapse}
+          isCollapsable={false}
         >
           {NodeResourcesTabConfigure[nodeType][0].show && (
             <NodeStatItem
@@ -103,7 +100,7 @@ const NodeResourcesTab = ({
           )}
         </NodeStatsContainer>
       </Grid>
-      <Grid item lg={isCollapse ? 11 : 8} md xs>
+      <Grid size={{ xs: 12, md: 8.5 }}>
         <Paper
           sx={{
             p: 3,

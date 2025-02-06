@@ -67,7 +67,7 @@ const NodeOverviewTab = ({
 
   return (
     <Grid container columnSpacing={3} rowSpacing={2}>
-      <Grid size={{ xs: 12, md: 4 }}>
+      <Grid size={{ xs: 12, md: 3.5 }}>
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
@@ -154,7 +154,7 @@ const NodeOverviewTab = ({
           )} */}
         </Stack>
       </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
+      <Grid size={{ xs: 12, md: 8.5 }}>
         {selected === 0 && (
           <NodeDetailsCard
             nodeType={selectedNode?.type ?? undefined}

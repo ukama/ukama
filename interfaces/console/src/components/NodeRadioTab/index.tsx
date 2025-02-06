@@ -8,8 +8,8 @@
 
 import { RadioChartsConfig, TooltipsText } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -27,19 +27,15 @@ const NodeRadioTab = ({
   metrics,
   metricFrom,
 }: INodeRadioTab) => {
-  const [isCollapse, setIsCollapse] = useState<boolean>(false);
-  const handleCollapse = () => setIsCollapse((prev) => !prev);
   return (
     <Grid container spacing={3}>
-      <Grid item lg={!isCollapse ? 4 : 1} md xs>
+      <Grid size={{ xs: 12, md: 3.5 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
           title={'Radio'}
           loading={loading}
-          isCollapsable={true}
-          isCollapse={isCollapse}
-          onCollapse={handleCollapse}
+          isCollapsable={false}
         >
           <NodeStatItem
             value={PLACEHOLDER_VALUE}
@@ -61,7 +57,7 @@ const NodeRadioTab = ({
           />
         </NodeStatsContainer>
       </Grid>
-      <Grid item lg={isCollapse ? 11 : 8} md xs>
+      <Grid size={{ xs: 12, md: 8.5 }}>
         <Paper
           sx={{
             p: 3,

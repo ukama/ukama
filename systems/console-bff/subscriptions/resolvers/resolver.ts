@@ -108,7 +108,7 @@ class SubscriptionsResolvers {
               count++;
               mvalues.push([
                 Math.floor(result.value[0]) * 1000,
-                result.value[1],
+                parseFloat(Number(result.value[1]).toFixed(2)),
               ]);
 
               if (count === 30) {
