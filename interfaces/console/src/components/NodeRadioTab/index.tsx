@@ -29,7 +29,7 @@ const NodeRadioTab = ({
 }: INodeRadioTab) => {
   return (
     <Grid container spacing={3}>
-      <Grid size={{ xs: 12, md: 3.5 }}>
+      <Grid size={{ xs: 12, md: 3 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
@@ -57,7 +57,7 @@ const NodeRadioTab = ({
           />
         </NodeStatsContainer>
       </Grid>
-      <Grid size={{ xs: 12, md: 8.5 }}>
+      <Grid size={{ xs: 12, md: 9 }}>
         <Paper
           sx={{
             p: 3,
