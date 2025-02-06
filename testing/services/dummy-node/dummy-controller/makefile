@@ -9,7 +9,9 @@ bin:
 
 # Build the binary
 build: bin deps
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/dummy-controller main.go
+	@echo Building version: \"$(BIN_VER)\"
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/dummy-controller cmd/main.go
+
 
 # Install dependencies
 deps:
