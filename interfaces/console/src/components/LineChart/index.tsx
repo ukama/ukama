@@ -48,11 +48,20 @@ const LineChart = ({
 
             if (chart) {
               PubSub.subscribe(topic, (_, data) => {
-                if (data && Array.isArray(data) && data.length > 0) {
-                  for (let i = 0; i < data.length; i++) {
-                    data && chart?.series[0].addPoint(data[i], false, true);
-                  }
-                  chart.redraw();
+                if (
+                  Array.isArray(data) &&
+                  data.length > 0 &&
+                  chart?.series?.[0]
+                ) {
+                  const series = chart.series[0];
+                  data.forEach((point, index) =>
+                    series.addPoint(
+                      point,
+                      data.length - 1 === index,
+                      true,
+                      true,
+                    ),
+                  );
                 }
               });
             }
@@ -120,21 +129,14 @@ const LineChart = ({
       xAxis: {
         type: 'datetime',
         title: false,
+        // endOnTick: true,
+        tickAmount: 6,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
-          dateTimeLabelFormats: {
-            millisecond: '%H:%M:%S.%L',
-            second: '%H:%M:%S',
-            minute: '%H:%M',
-            hour: '%H:%M',
-            day: '%e. %b',
-            week: '%e. %b',
-            month: "%b '%y",
-            year: '%Y',
-          },
         },
       },
+
       yAxis: {
         title: false,
       },
@@ -153,6 +155,9 @@ const LineChart = ({
             : null;
 
         if (chart) {
+          const series = chart.series[0].data.map((point: any) => {
+            return [point.x, point.y];
+          });
           if (f === 'LIVE') {
             chart.xAxis[0].setExtremes(null, null);
           }
@@ -161,6 +166,16 @@ const LineChart = ({
               navigator: {
                 enabled: f === 'ZOOM',
               },
+
+              series: [
+                {
+                  name: title,
+                  data: (function () {
+                    const data = [...series];
+                    return data;
+                  })(),
+                },
+              ],
             },
             true,
           );
