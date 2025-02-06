@@ -225,8 +225,8 @@ func (am *AuthManager) AuthorizeUser(ss, t, orgId, role, relation, object string
 		return nil, err
 	}
 	if check.Allowed {
-		logrus.Infof(role + " can " + " the " + object)
+		logrus.Infof("%v can the %v", role, object)
 		return resp, nil
 	}
-	return nil, fmt.Errorf(role + " is not authorized to " + " the " + object)
+	return nil, fmt.Errorf("%v is not authorized to the %v", role, object)
 }
