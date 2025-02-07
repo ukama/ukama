@@ -6,7 +6,7 @@ const (
     EmailTemplateSimAllocation     = "sim-allocation"
     EmailTemplateMemberInvite      = "member-invite"
     EmailTemplateOrgInvite         = "org-invite"
-    EmailTemplatePackageAddition   = "topup-plan"
+    EmailTemplatePackageAddition   = "topup-plan" 
 )
 type EmailTemplateKeys struct {
 	TemplateName string
@@ -44,8 +44,12 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
             "VOLUME",
             "UNIT",
             "ORG",
-            "START_DATE",
-            "END_DATE",
+			"AMOUNT",
+			"DURATION",
+			"PACKAGE",
+			"EXPIRATION_DATE",
+			"PACKAGES_COUNT",
+			"PACKAGES_DETAILS",
         },
     },
 }
@@ -62,6 +66,10 @@ const (
 	EmailKeyOrg        = "ORG"
 	EmailKeyOwner      = "OWNER"
 	EmailKeyRole       = "ROLE"
-	EmailKeyStartDate  = "START_DATE"  
-    EmailKeyEndDate    = "END_DATE"   
+	EmailKeyPackage    = "PACKAGE"
+	EmailKeyAmount     = "AMOUNT"
+	EmailKeyDuration   = "DURATION"
+	EmailKeyExpiration = "EXPIRATION_DATE"
+	EmailKeyPackagesCount = "PACKAGES_COUNT"
+	EmailKeyPackagesDetails = "PACKAGES_DETAILS"
 )

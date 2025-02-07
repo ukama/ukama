@@ -1,5 +1,4 @@
-Subject: [{{ .Values.ORG}}] Top Up Successful
-
+Subject:[{{ .Values.ORG}}] Top Up Successful
 MIME-version: 1.0;
 Content-Type: multipart/mixed;
         boundary="XXXXboundary text"
@@ -26,8 +25,28 @@ Content-Type: text/html; charset="UTF-8";
                   <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Top Up Success!</h1>
                   <p>Hi {{.Values.SUBSCRIBER}},</p>
                   <p>
-                    You have successfully purchased a new data plan, and it has been activated. The {{.Values.PLAN_NAME}} (${{.Values.PRICE}} / {{.Values.DATA}} / {{.Values.DURATION}}) expires {{.Values.EXPIRATION_DATE}} EOD.
+                    You have successfully purchased {{.Values.PACKAGES_COUNT}} new data plans; they will be activated in the order of purchase. 
                   </p>
+                  
+                  <table width="100%" style="border-collapse: collapse; margin-bottom: 20px;">
+                    <thead>
+                      <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Package Name</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Details</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Expiration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                  <tr>
+                      <td style="border: 1px solid #ddd; padding: 8px;">{{.Values.PACKAGE}}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px;">{{.Values.PACKAGES_DETAILS}}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px;">{{.Values.EXPIRATION_DATE}}</td>
+                  </tr>
+                    </tbody>
+                  </table>
+                  
+                  <p>Please note that each queued data plan will only be activated once the previous one has been used up, or expires.</p>
+                  
                   <p>Thanks,<br />The Ukama Team</p>
                   <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
                     <p>&copy; Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</p>

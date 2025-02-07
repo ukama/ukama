@@ -748,18 +748,19 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, err
 	}
 
+
 	err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 		To:           []string{remoteSubResp.Subscriber.Email},
 		TemplateName: emailTemplate.EmailTemplatePackageAddition,
 		Values: map[string]interface{}{
-			emailTemplate.EmailKeySubscriber: remoteSubResp.Subscriber.Name,
-			emailTemplate.EmailKeyNetwork:    netInfo.Name,
-			emailTemplate.EmailKeyName:       userInfos.Name,
-			emailTemplate.EmailKeyVolume:     fmt.Sprintf("%v", pkgInfo.DataVolume),
-			emailTemplate.EmailKeyUnit:       pkgInfo.DataUnit,
-			emailTemplate.EmailKeyOrg:        s.orgName,
-			emailTemplate.EmailKeyStartDate:  pkg.StartDate.Format(time.RFC3339),
-			emailTemplate.EmailKeyEndDate:    pkg.EndDate.Format(time.RFC3339),
+			emailTemplate.EmailKeySubscriber:       remoteSubResp.Subscriber.Name,
+			emailTemplate.EmailKeyNetwork:         netInfo.Name,
+			emailTemplate.EmailKeyName:            userInfos.Name,
+			emailTemplate.EmailKeyOrg:             s.orgName,
+			emailTemplate.EmailKeyPackagesCount:  fmt.Sprintf("%v", len(packages)),
+			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+			emailTemplate.EmailKeyExpiration: pkg.EndDate.Format("January 2, 2006"),
+			emailTemplate.EmailKeyPackage:pkgInfo.Name,   
 		},
 	})
 	if err != nil {
