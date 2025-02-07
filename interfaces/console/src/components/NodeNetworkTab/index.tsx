@@ -6,69 +6,87 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import { NetworkChartsConfig, TooltipsText } from '@/constants';
+import { Node, NodeTypeEnum } from '@/client/graphql/generated';
+import {
+  Graphs_Type,
+  MetricsRes,
+} from '@/client/graphql/generated/subscriptions';
+import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
+import { useState } from 'react';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
-  nodeId: string;
-  metrics: MetricsRes;
-  metricFrom: number;
   loading: boolean;
+  metricFrom: number;
+  metrics: MetricsRes;
+  selectedNode: Node | undefined;
+  handleSectionChange: Function;
 }
 const NodeNetworkTab = ({
-  nodeId,
   loading,
   metrics,
   metricFrom,
+  selectedNode,
+  handleSectionChange,
 }: INodeOverviewTab) => {
+  const [selected, setSelected] = useState<number>(0);
+  const networkCellular = NODE_KPIS.NETWORK_CELLULAR[NodeTypeEnum.Tnode];
+  const networkBackhaul = NODE_KPIS.NETWORK_BACKHAUL[NodeTypeEnum.Tnode];
+
+  const handleOnSelected = (value: number) => {
+    handleSectionChange(
+      value === 1
+        ? Graphs_Type.Network /* add Backhaul */
+        : Graphs_Type.Network /* add Cellular */,
+    );
+    setSelected(value);
+  };
+
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 3 }}>
-        <NodeStatsContainer
-          index={0}
-          selected={0}
-          loading={loading}
-          title={'Network'}
-          isCollapsable={false}
-        >
-          <NodeStatItem
-            variant={'large'}
-            value={PLACEHOLDER_VALUE}
-            name={NetworkChartsConfig[0].name}
-            nameInfo={TooltipsText.DL}
-          />
-          <NodeStatItem
-            variant={'large'}
-            value={PLACEHOLDER_VALUE}
-            name={NetworkChartsConfig[1].name}
-            nameInfo={TooltipsText.UL}
-          />
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            variant={'large'}
-            name={NetworkChartsConfig[2].name}
-            nameInfo={TooltipsText.RRCCNX}
-          />
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            variant={'large'}
-            name={NetworkChartsConfig[3].name}
-            nameInfo={TooltipsText.ERAB}
-          />
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            variant={'large'}
-            name={NetworkChartsConfig[4].name}
-            nameInfo={TooltipsText.RLS}
-          />
-        </NodeStatsContainer>
+        <Stack spacing={2}>
+          <NodeStatsContainer
+            index={0}
+            loading={loading}
+            title={'Cellular'}
+            selected={selected}
+            isCollapsable={false}
+            handleAction={handleOnSelected}
+          >
+            {networkCellular.map((config) => (
+              <NodeStatItem
+                key={config.id}
+                name={config.name}
+                value={KPI_PLACEHOLDER_VALUE}
+                nameInfo={config.description}
+              />
+            ))}
+          </NodeStatsContainer>
+          <NodeStatsContainer
+            index={1}
+            loading={loading}
+            isClickable={true}
+            selected={selected}
+            title={'Backhaul'}
+            handleAction={handleOnSelected}
+          >
+            {networkBackhaul.map((config) => (
+              <NodeStatItem
+                key={config.id}
+                name={config.name}
+                value={KPI_PLACEHOLDER_VALUE}
+                nameInfo={config.description}
+              />
+            ))}
+          </NodeStatsContainer>
+        </Stack>
       </Grid>
       <Grid size={{ xs: 12, md: 9 }}>
         <Paper
@@ -79,46 +97,29 @@ const NodeNetworkTab = ({
           }}
         >
           <Stack spacing={4}>
-            <LineChart
-              loading={loading}
-              from={metricFrom}
-              topic={NetworkChartsConfig[0].id}
-              title={NetworkChartsConfig[0].name}
-              initData={getMetricValue(NetworkChartsConfig[0].id, metrics)}
-              hasData={isMetricValue(NetworkChartsConfig[0].id, metrics)}
-            />
-            <LineChart
-              loading={loading}
-              from={metricFrom}
-              title={NetworkChartsConfig[1].name}
-              topic={NetworkChartsConfig[1].id}
-              initData={getMetricValue(NetworkChartsConfig[1].id, metrics)}
-              hasData={isMetricValue(NetworkChartsConfig[1].id, metrics)}
-            />
-            <LineChart
-              loading={loading}
-              from={metricFrom}
-              topic={NetworkChartsConfig[2].id}
-              title={NetworkChartsConfig[2].name}
-              initData={getMetricValue(NetworkChartsConfig[2].id, metrics)}
-              hasData={isMetricValue(NetworkChartsConfig[2].id, metrics)}
-            />
-            <LineChart
-              loading={loading}
-              from={metricFrom}
-              topic={NetworkChartsConfig[3].id}
-              title={NetworkChartsConfig[3].name}
-              initData={getMetricValue(NetworkChartsConfig[3].id, metrics)}
-              hasData={isMetricValue(NetworkChartsConfig[3].id, metrics)}
-            />
-            <LineChart
-              loading={loading}
-              from={metricFrom}
-              topic={NetworkChartsConfig[4].id}
-              title={NetworkChartsConfig[4].name}
-              initData={getMetricValue(NetworkChartsConfig[4].id, metrics)}
-              hasData={isMetricValue(NetworkChartsConfig[4].id, metrics)}
-            />
+            {selected === 1
+              ? networkBackhaul.map((config) => (
+                  <LineChart
+                    key={config.id}
+                    from={metricFrom}
+                    topic={config.id}
+                    loading={loading}
+                    title={config.name}
+                    hasData={isMetricValue(config.id, metrics)}
+                    initData={getMetricValue(config.id, metrics)}
+                  />
+                ))
+              : networkCellular.map((config) => (
+                  <LineChart
+                    key={config.id}
+                    from={metricFrom}
+                    topic={config.id}
+                    loading={loading}
+                    title={config.name}
+                    hasData={isMetricValue(config.id, metrics)}
+                    initData={getMetricValue(config.id, metrics)}
+                  />
+                ))}
           </Stack>
         </Paper>
       </Grid>

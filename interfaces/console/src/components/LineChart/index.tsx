@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { METRIC_RANGE_3600 } from '@/constants';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -58,7 +59,7 @@ const LineChart = ({
                     series.addPoint(
                       point,
                       data.length - 1 === index,
-                      true,
+                      series.data.length > METRIC_RANGE_3600,
                       true,
                     ),
                   );
@@ -129,7 +130,6 @@ const LineChart = ({
       xAxis: {
         type: 'datetime',
         title: false,
-        // endOnTick: true,
         tickAmount: 6,
         labels: {
           enabled: true,

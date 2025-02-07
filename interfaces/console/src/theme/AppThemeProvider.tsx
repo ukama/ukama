@@ -116,16 +116,16 @@ export default function AppThemeProvider({
       step: 8,
     },
     components: {
-      MuiRadio: {
-        styleOverrides: {
-          root: {
-            '& .MuiSvgIcon-root': {
-              height: 18,
-              width: 18,
-            },
-          },
-        },
-      },
+      // MuiRadio: {
+      //   styleOverrides: {
+      //     root: {
+      //       '& .MuiSvgIcon-root': {
+      //         height: 18,
+      //         width: 18,
+      //       },
+      //     },
+      //   },
+      // },
       MuiInputBase: {
         styleOverrides: {
           root: {

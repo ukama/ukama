@@ -7,7 +7,7 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
+import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
 import { getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -18,19 +18,17 @@ import NodeStatsContainer from '../NodeStatsContainer';
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeResourcesTab {
   metrics: any;
-  nodeId: string;
   loading: boolean;
   metricFrom: number;
   selectedNode: Node | undefined;
 }
 const NodeResourcesTab = ({
-  nodeId,
   metrics,
   loading,
   metricFrom,
   selectedNode,
 }: INodeResourcesTab) => {
-  const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
+  const resourcesConfig = NODE_KPIS.RESOURCES[NodeTypeEnum.Tnode];
 
   return (
     <Grid container spacing={3}>
@@ -42,62 +40,14 @@ const NodeResourcesTab = ({
           title={'Resources'}
           isCollapsable={false}
         >
-          {NodeResourcesTabConfigure[nodeType][0].show && (
+          {resourcesConfig.map((config) => (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][0].name}
-              nameInfo={TooltipsText.MTRX}
+              key={config.id}
+              name={config.name}
+              value={KPI_PLACEHOLDER_VALUE}
+              nameInfo={config.description}
             />
-          )}
-          {NodeResourcesTabConfigure[nodeType][1].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][1].name}
-              nameInfo={TooltipsText.MCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][2].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][2].name}
-              variant={'large'}
-              nameInfo={TooltipsText.CPUTRX}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][3].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][3].name}
-              variant={'large'}
-              nameInfo={TooltipsText.CPUCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][4].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][4].name}
-              nameInfo={TooltipsText.DISKTRX}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][5].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][5].name}
-              nameInfo={TooltipsText.DISKCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][6].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][6].name}
-              variant={'large'}
-              nameInfo={TooltipsText.POWER}
-            />
-          )}
+          ))}
         </NodeStatsContainer>
       </Grid>
       <Grid size={{ xs: 12, md: 9 }}>
@@ -109,118 +59,17 @@ const NodeResourcesTab = ({
           }}
         >
           <Stack spacing={4}>
-            {NodeResourcesTabConfigure[nodeType][0].show && (
+            {resourcesConfig.map((config) => (
               <LineChart
+                key={config.id}
                 from={metricFrom}
+                topic={config.id}
                 loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][0].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][0].id}
-                title={NodeResourcesTabConfigure[nodeType][0].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][0].id,
-                  metrics,
-                )}
+                title={config.name}
+                hasData={isMetricValue(config.id, metrics)}
+                initData={getMetricValue(config.id, metrics)}
               />
-            )}
-            {NodeResourcesTabConfigure[nodeType][1].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][1].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][1].id}
-                title={NodeResourcesTabConfigure[nodeType][1].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][1].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][2].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][2].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][2].id}
-                title={NodeResourcesTabConfigure[nodeType][2].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][2].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][3].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][3].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][3].id}
-                title={NodeResourcesTabConfigure[nodeType][3].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][3].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][4].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][4].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][4].id}
-                title={NodeResourcesTabConfigure[nodeType][4].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][4].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][5].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][5].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][5].id}
-                title={NodeResourcesTabConfigure[nodeType][5].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][5].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][6].show && (
-              <LineChart
-                from={metricFrom}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][6].id,
-                  metrics,
-                )}
-                topic={NodeResourcesTabConfigure[nodeType][6].id}
-                title={NodeResourcesTabConfigure[nodeType][6].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][6].id,
-                  metrics,
-                )}
-              />
-            )}
+            ))}
           </Stack>
         </Paper>
       </Grid>

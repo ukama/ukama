@@ -11,6 +11,7 @@ import {
   Node,
   NodeConnectivityEnum,
   NodeStateEnum,
+  NodeTypeEnum,
   useGetNodesByStateQuery,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
@@ -27,7 +28,11 @@ import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
-import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
+import {
+  METRIC_RANGE_3600,
+  NODE_ACTIONS_BUTTONS,
+  NodePageTabs,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import MetricSubscription from '@/lib/MetricSubscription';
 import { colors } from '@/theme';
@@ -36,8 +41,6 @@ import { getNodeTabTypeByIndex, getUnixTime } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
-const METRIC_RANGE_3600 = 3600;
 
 interface INodePage {
   params: {
@@ -195,6 +198,11 @@ const Page: React.FC<INodePage> = ({ params }) => {
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
+  const handleNetworkSectionChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+  };
+
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
     setGraphType(getNodeTabTypeByIndex(value));
@@ -224,17 +232,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
             key={id}
             label={label}
             id={`node-tab-${value}`}
-            sx={
-              {
-                // display:
-                //   ((selectedNode?.type === NodeTypeEnum.Hnode &&
-                //     label === 'Radio') ??
-                //   (selectedNode?.type === NodeTypeEnum.Anode &&
-                //     label === 'Network'))
-                //     ? 'none'
-                //     : 'block',
-              }
-            }
+            sx={{
+              display:
+                ((selectedNode?.type === NodeTypeEnum.Hnode &&
+                  label === 'Radio') ??
+                (selectedNode?.type === NodeTypeEnum.Anode &&
+                  label === 'Network'))
+                  ? 'none'
+                  : 'block',
+            }}
           />
         ))}
       </Tabs>
@@ -264,15 +270,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
+            selectedNode={selectedNode}
             loading={nodeMetricsLoading}
+            handleSectionChange={handleNetworkSectionChange}
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
@@ -281,9 +287,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
+            selectedNode={selectedNode}
             loading={nodeMetricsLoading}
           />
         </TabPanel>

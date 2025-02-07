@@ -45,7 +45,7 @@ const GraphTitleWrapper = ({
         <Grid container width="100%" mb={2}>
           {title && (
             <Grid size={{ xs: 6 }}>
-              <Typography variant={variant} fontWeight={500}>
+              <Typography variant={variant} fontWeight={600}>
                 {title}
               </Typography>
             </Grid>
