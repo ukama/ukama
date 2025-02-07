@@ -24,6 +24,7 @@
     "init",
     "controller",
     "notification",
+    "report",
     "payment"
   ],
   "compilerOptions": {

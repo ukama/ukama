@@ -14,6 +14,7 @@ import {
   useGetPaymentsQuery,
   useUpdatePaymentMutation,
   ReportDto,
+  useGetGeneratedPdfReportLazyQuery,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import StripePaymentDialog from '@/components/StripePaymentDialog';
@@ -21,13 +22,66 @@ import CurrentBillCard from '@/components/CurrentBillCard';
 import BillingOwnerDetailsCard from '@/components/BillingOwnerDetailsCard';
 import OutStandingBillCard from '@/components/OutStandingBillCard';
 import BillingHistoryTable from '@/components/BillingHistory';
+import { base64ToBlob } from '@/utils';
 
 const BillingSettingsPage: React.FC = () => {
   const { setSnackbarMessage, user } = useAppContext();
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [extraKey, setExtraKey] = useState<string>('');
   const [myBill, setMyBill] = useState<ReportDto>();
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
+  const handlePdfDownload = useCallback(
+    (report: { downloadUrl: string; filename: string }) => {
+      try {
+        const base64Data = report.downloadUrl.startsWith('data:')
+          ? report.downloadUrl
+          : `data:application/pdf;base64,${report.downloadUrl}`;
+
+        const blob = base64ToBlob(base64Data, 'application/pdf');
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = report.filename;
+        document.body.appendChild(link);
+        link.click();
+
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        setSnackbarMessage({
+          id: 'pdf-download-error',
+          message:
+            error instanceof Error ? error.message : 'Failed to download PDF',
+          type: 'error',
+          show: true,
+        });
+      }
+    },
+    [setSnackbarMessage],
+  );
+  const [getPdf] = useGetGeneratedPdfReportLazyQuery({
+    onCompleted: (data) => {
+      if (data.getGeneratedPdfReport && data.getGeneratedPdfReport.__typename) {
+        handlePdfDownload({
+          ...data.getGeneratedPdfReport,
+          filename: data.getGeneratedPdfReport.filename,
+          downloadUrl: data.getGeneratedPdfReport.downloadUrl,
+        });
+      }
+      setDownloadingId(null);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'pdf-download-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+      setDownloadingId(null);
+    },
+  });
   const {
     data: reportsData,
     loading: reportsLoading,
@@ -74,6 +128,13 @@ const BillingSettingsPage: React.FC = () => {
       });
     },
   });
+  const handleDownloadRequest = useCallback(
+    (reportId: string) => {
+      setDownloadingId(reportId);
+      getPdf({ variables: { Id: reportId } });
+    },
+    [getPdf],
+  );
 
   const [updatePayment] = useUpdatePaymentMutation({
     onError: (error) => {
@@ -243,6 +304,8 @@ const BillingSettingsPage: React.FC = () => {
               <BillingHistoryTable
                 data={billingHistoryDataset}
                 key={reportsData?.getReports?.reports?.length}
+                downloadingId={downloadingId}
+                onDownload={handleDownloadRequest}
               />
             )}
           </Grid>

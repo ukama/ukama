@@ -299,6 +299,14 @@ export type GetPaymentsInputDto = {
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type GetPdfReportUrlDto = {
+  __typename?: 'GetPdfReportUrlDto';
+  contentType: Scalars['String']['output'];
+  downloadUrl: Scalars['String']['output'];
+  filename: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+};
+
 export type GetReportDto = {
   __typename?: 'GetReportDto';
   report: ReportDto;
@@ -979,6 +987,7 @@ export type Query = {
   getDataUsage: SimDataUsage;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
+  getGeneratedPdfReport: GetPdfReportUrlDto;
   getInvitation: InvitationDto;
   getInvitations: InvitationsResDto;
   getInvitationsByEmail: InvitationsResDto;
@@ -1048,6 +1057,11 @@ export type QueryGetCurrencySymbolArgs = {
 
 export type QueryGetDataUsageArgs = {
   simId: Scalars['String']['input'];
+};
+
+
+export type QueryGetGeneratedPdfReportArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -2009,6 +2023,13 @@ export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
 
 
 export type GetSubscriberMetricsByNetworkQuery = { __typename?: 'Query', getSubscriberMetricsByNetwork: { __typename?: 'SubscriberMetricsByNetworkDto', total: number, active: number, inactive: number, terminated: number } };
+
+export type GetGeneratedPdfReportQueryVariables = Exact<{
+  Id: Scalars['String']['input'];
+}>;
+
+
+export type GetGeneratedPdfReportQuery = { __typename?: 'Query', getGeneratedPdfReport: { __typename?: 'GetPdfReportUrlDto', contentType: string, filename: string, downloadUrl: string } };
 
 export type UserFragment = { __typename?: 'UserResDto', name: string, uuid: string, email: string, phone: string, authId: string, isDeactivated: boolean, registeredSince: string };
 
@@ -4520,6 +4541,48 @@ export type GetSubscriberMetricsByNetworkQueryHookResult = ReturnType<typeof use
 export type GetSubscriberMetricsByNetworkLazyQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkLazyQuery>;
 export type GetSubscriberMetricsByNetworkSuspenseQueryHookResult = ReturnType<typeof useGetSubscriberMetricsByNetworkSuspenseQuery>;
 export type GetSubscriberMetricsByNetworkQueryResult = Apollo.QueryResult<GetSubscriberMetricsByNetworkQuery, GetSubscriberMetricsByNetworkQueryVariables>;
+export const GetGeneratedPdfReportDocument = gql`
+    query getGeneratedPdfReport($Id: String!) {
+  getGeneratedPdfReport(id: $Id) {
+    contentType
+    filename
+    downloadUrl
+  }
+}
+    `;
+
+/**
+ * __useGetGeneratedPdfReportQuery__
+ *
+ * To run a query within a React component, call `useGetGeneratedPdfReportQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetGeneratedPdfReportQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetGeneratedPdfReportQuery({
+ *   variables: {
+ *      Id: // value for 'Id'
+ *   },
+ * });
+ */
+export function useGetGeneratedPdfReportQuery(baseOptions: Apollo.QueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables> & ({ variables: GetGeneratedPdfReportQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>(GetGeneratedPdfReportDocument, options);
+      }
+export function useGetGeneratedPdfReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>(GetGeneratedPdfReportDocument, options);
+        }
+export function useGetGeneratedPdfReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>(GetGeneratedPdfReportDocument, options);
+        }
+export type GetGeneratedPdfReportQueryHookResult = ReturnType<typeof useGetGeneratedPdfReportQuery>;
+export type GetGeneratedPdfReportLazyQueryHookResult = ReturnType<typeof useGetGeneratedPdfReportLazyQuery>;
+export type GetGeneratedPdfReportSuspenseQueryHookResult = ReturnType<typeof useGetGeneratedPdfReportSuspenseQuery>;
+export type GetGeneratedPdfReportQueryResult = Apollo.QueryResult<GetGeneratedPdfReportQuery, GetGeneratedPdfReportQueryVariables>;
 export const WhoamiDocument = gql`
     query Whoami {
   whoami {

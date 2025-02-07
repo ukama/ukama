@@ -345,6 +345,7 @@ if [ "$IS_INCLUDE_BFF" = true ]; then
     SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
     SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
     SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
+    SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://report-api-gateway:8080' WHERE systems."name" = 'report';"
 fi
 if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
@@ -356,6 +357,7 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://localhost:4423' WHERE systems."name" = 'subscriber-auth'";
     SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
     SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
+    SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://localhost:8079' WHERE systems."name" = 'report'";
 fi
 
 echo "$TAG Registering systems URL in lookup db..."
@@ -369,6 +371,7 @@ psql $DB_URI -c "$SYS_QUERY_6"
 psql $DB_URI -c "$SYS_QUERY_7"
 psql $DB_URI -c "$SYS_QUERY_8"
 psql $DB_URI -c "$SYS_QUERY_9"
+psql $DB_URI -c "$SYS_QUERY_10"
 
 cleanup
 

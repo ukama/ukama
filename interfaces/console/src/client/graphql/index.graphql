@@ -401,7 +401,6 @@ fragment payment on PaymentDto {
   createdAt
 }
 
-
 mutation UpdatePayment($data: UpdatePaymentInputDto!) {
   updatePayment(data: $data) {
     id
@@ -735,6 +734,15 @@ query getSubscriberMetricsByNetwork($networkId: String!) {
 }
 
 ### Subscriber End ###
+
+### Report gen Start ###
+query getGeneratedPdfReport($Id: String!) {
+  getGeneratedPdfReport(id: $Id) {
+    contentType
+    filename
+    downloadUrl
+  }
+}
 
 ### User Start ###
 
