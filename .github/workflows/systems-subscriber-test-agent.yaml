@@ -29,6 +29,8 @@ jobs:
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
         build-listener: false
+        sonar-token: ${{ secrets.SONAR_TOKEN }}
+        project-key: ukama_systems_subscriber_test-agent
     
   sonar-scan:
     name: sonar-scan
