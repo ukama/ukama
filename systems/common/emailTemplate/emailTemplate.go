@@ -19,11 +19,13 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
 		Keys: []string{
 			"SUBSCRIBER",
 			"NETWORK",
-			"NAME",
-			"QRCODE",
+			"PACKAGE",
 			"VOLUME",
 			"UNIT",
+			"ENDDATE",
 			"ORG",
+			"DURATION",
+			"AMOUNT",
 		},
 	},
 	EmailTemplateMemberInvite: {
@@ -66,10 +68,12 @@ const (
 	EmailKeyOrg        = "ORG"
 	EmailKeyOwner      = "OWNER"
 	EmailKeyRole       = "ROLE"
-	EmailKeyPackage    = "PACKAGE"
-	EmailKeyAmount     = "AMOUNT"
-	EmailKeyDuration   = "DURATION"
 	EmailKeyExpiration = "EXPIRATION_DATE"
 	EmailKeyPackagesCount = "PACKAGES_COUNT"
 	EmailKeyPackagesDetails = "PACKAGES_DETAILS"
+	EmailKeyEndDate    = "ENDDATE"
+	EmailKeyPackage    = "PACKAGE"
+	EmailKeyAmount     = "AMOUNT"
+	EmailKeyDuration   = "DURATION"
+
 )
