@@ -625,11 +625,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	//TODO: Not so sure if this is always a good idea to bind on local cpu time for validation
-	// if err := validation.IsFutureDate(formattedStart); err != nil {
-	// return nil, status.Error(codes.InvalidArgument, err.Error())
-	// }
-
 	sim, err := s.getSim(req.SimId)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound,
@@ -724,6 +719,52 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
+	if err != nil {
+		return nil, err
+	}
+
+	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
+	if err != nil {
+		return nil, err
+	}
+
+	subscriberRegistrySvc, err := s.subscriberRegistryService.GetClient()
+	if err != nil {
+		return nil, err
+	}
+
+	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
+		SubscriberId: sim.SubscriberId.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	netInfo, err := s.networkClient.Get(sim.NetworkId.String())
+	if err != nil {
+		return nil, err
+	}
+
+
+	err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
+		To:           []string{remoteSubResp.Subscriber.Email},
+		TemplateName: emailTemplate.EmailTemplatePackageAddition,
+		Values: map[string]interface{}{
+			emailTemplate.EmailKeySubscriber:       remoteSubResp.Subscriber.Name,
+			emailTemplate.EmailKeyNetwork:         netInfo.Name,
+			emailTemplate.EmailKeyName:            userInfos.Name,
+			emailTemplate.EmailKeyOrg:             s.orgName,
+			emailTemplate.EmailKeyPackagesCount:  fmt.Sprintf("%v", len(packages) + 1),
+			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+			emailTemplate.EmailKeyExpiration: pkg.EndDate.Format("January 2, 2006"),
+			emailTemplate.EmailKeyPackage:pkgInfo.Name,   
+		},
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return &pb.AddPackageResponse{}, nil
