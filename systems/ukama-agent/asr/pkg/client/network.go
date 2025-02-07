@@ -61,7 +61,7 @@ func (N *network) ValidateNetwork(networkId string, orgId string) error {
 	err = json.Unmarshal(resp.Body(), &network)
 	if err != nil {
 		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
-		return fmt.Errorf("network info deserailization failure:" + err.Error())
+		return fmt.Errorf("network info deserailization failure: %v", err)
 	} else {
 		logrus.Infof("Network Info: %+v", network)
 	}

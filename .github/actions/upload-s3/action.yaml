@@ -1,0 +1,64 @@
+name: upload s3
+description: upload artifact to s3
+
+inputs:
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true
+  aws-access-key:
+    description: The AWS access key
+    required: true
+  aws-secret-key:
+    description: The AWS secret key
+    required: true
+  aws-bucket-name:
+    description: The AWS bucket name
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+  - name: Init vars
+    id: vars_step
+    uses: ./.github/actions/git-vars
+
+
+  - name: Granting private modules access
+    shell: bash
+    run: |
+      git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
+
+
+  - name: Configure AWS credentials
+    uses: aws-actions/configure-aws-credentials@v1
+    with:
+      aws-access-key-id: ${{ inputs.aws-access-key }}
+      aws-secret-access-key: ${{ inputs.aws-secret-key }}
+      aws-region: us-east-1
+
+  - name: Download code coverage results
+    uses: actions/download-artifact@v4
+    with:
+      name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}
+
+  - name: Download sonar scan results
+    uses: actions/download-artifact@v4
+    with:
+      name: sonar-reports-${{ inputs.project-Key }}-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}
+
+  - name: Upload coverage artifacts to AWS S3
+    uses: usualdesigner/s3-artifact-upload@main
+    with:
+      bucket-name: ${{ inputs.aws-bucket-name }}
+      file: ${{ inputs.working-directory }}/code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
+
+  - name: Upload sonar scan artifacts to AWS S3
+    uses: usualdesigner/s3-artifact-upload@main
+    with:
+      bucket-name: ${{ inputs.aws-bucket-name }}
+      file: ${{ inputs.working-directory }}/sonar-reports-${{ inputs.project-Key }}-${{ github.run_number }}.json
