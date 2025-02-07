@@ -22,7 +22,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
 
-	log "github.com/sirupsen/logrus"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
@@ -430,18 +429,14 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
-
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-
 		simPoolService := &mocks.SimPoolClientProvider{}
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
-
 		packageClient := &cmocks.PackageClient{}
 		netClient := &cmocks.NetworkClient{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
 		mailerClient := &cmocks.MailerClient{}
-
 		agentFactory := &mocks.AgentFactory{}
 
 		subscriberClient := subscriberService.On("GetClient").
@@ -455,20 +450,29 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 				Subscriber: &upb.Subscriber{
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
+					Email:        "test@example.com",
+					Name:        "Test User",
 				},
 			}, nil).Once()
 
+		packageInfo := &cdplan.PackageInfo{
+			IsActive:    true,
+			Duration:    3600,
+			SimType:     simTypeTest,
+			DataVolume:  10,
+			DataUnit:    "GB",
+			Name:        "Test Package",
+			Amount:      100,
+		}
 		packageClient.On("Get", packageID.String()).
-			Return(&cdplan.PackageInfo{
-				IsActive: true,
-				Duration: 3600,
-				SimType:  simTypeTest,
-			}, nil).Once()
+			Return(packageInfo, nil).
+			Times(2) 
 
 		netClient.On("Get", networkID.String()).
 			Return(&creg.NetworkInfo{
 				IsDeactivated: false,
 				TrafficPolicy: 0,
+				Name:         "Test Network",
 			}, nil).Once()
 
 		simPoolClient := simPoolService.On("GetClient").
@@ -485,6 +489,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					Iccid:      testIccid,
 					IsPhysical: false,
 					SimType:    simTypeTest,
+					QrCode:     "test-qr-code",
 				},
 			}, nil).Once().
 			ReturnArguments.Get(0).(*splpb.GetResponse)
@@ -519,12 +524,6 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		packageRepo.On("Add", pkg,
 			mock.Anything).Return(nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
-		mailerClient.On("SendEmail", mock.MatchedBy(func(req cnotif.SendEmailReq) bool {
-			return req.To[0] == "test@example.com"
-		})).Return(nil).Once()
-
 		orgClient.On("Get", OrgName).
 			Return(&cnuc.OrgInfo{
 				Name:  OrgName,
@@ -534,13 +533,17 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		userClient.On("GetById", OrgId.String()).
 			Return(&cnuc.UserInfo{
 				Name: "test-user",
-			},
-				nil).Once()
+			}, nil).Once()
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+		mailerClient.On("SendEmail", mock.MatchedBy(func(req cnotif.SendEmailReq) bool {
+			return req.To[0] == "test@example.com"
+		})).Return(nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo, agentFactory,
 			packageClient, subscriberService, simPoolService, "", msgbusClient, OrgId.String(), "", mailerClient, netClient, orgClient, userClient)
 
-		log.Info("SimManagerServer: ", s)
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
 			SubscriberId: subscriberID.String(),
 			NetworkId:    networkID.String(),
@@ -553,17 +556,16 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		assert.NotNil(t, resp)
 
 		simRepo.AssertExpectations(t)
-
 		subscriberService.AssertExpectations(t)
 		subscriberClient.AssertExpectations(t)
-
 		simPoolService.AssertExpectations(t)
 		simPoolClient.AssertExpectations(t)
-
 		packageRepo.AssertExpectations(t)
 		packageClient.AssertExpectations(t)
-
 		msgbusClient.AssertExpectations(t)
+		orgClient.AssertExpectations(t)
+		userClient.AssertExpectations(t)
+		mailerClient.AssertExpectations(t)
 	})
 
 	t.Run("SubscriberNotRegisteredOnProvidedNetwork", func(t *testing.T) {
