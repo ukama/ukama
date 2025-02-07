@@ -757,7 +757,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 			emailTemplate.EmailKeyNetwork:         netInfo.Name,
 			emailTemplate.EmailKeyName:            userInfos.Name,
 			emailTemplate.EmailKeyOrg:             s.orgName,
-			emailTemplate.EmailKeyPackagesCount:  fmt.Sprintf("%v", len(packages)),
+			emailTemplate.EmailKeyPackagesCount:  fmt.Sprintf("%v", len(packages) + 1),
 			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
 			emailTemplate.EmailKeyExpiration: pkg.EndDate.Format("January 2, 2006"),
 			emailTemplate.EmailKeyPackage:pkgInfo.Name,   
