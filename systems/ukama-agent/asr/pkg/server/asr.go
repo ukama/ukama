@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package server
 
 import (
@@ -404,7 +404,7 @@ func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (
 	if err != nil {
 		log.Errorf("Failed to update GUTI: %s", err.Error())
 		if err.Error() == db.GutiNotUpdatedErr {
-			return nil, status.Errorf(codes.AlreadyExists, err.Error())
+			return nil, status.Errorf(codes.AlreadyExists, "%v", err)
 		}
 		return nil, grpc.SqlErrorToGrpc(err, "guti")
 	}

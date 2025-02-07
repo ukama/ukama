@@ -5,11 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package db
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -220,7 +219,7 @@ func (r *asrRecordRepo) UpdateTai(imsi string, tai Tai) error {
 			return errors.Wrap(err, "error getting tai count")
 		}
 		if count > 0 {
-			return fmt.Errorf(TaiNotUpdatedErr)
+			return errors.New(TaiNotUpdatedErr)
 		}
 
 		err = tx.Where("asr_id=?", imsiM.ID).Delete(&Tai{}).Error

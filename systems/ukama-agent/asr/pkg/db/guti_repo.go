@@ -5,11 +5,10 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package db
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,7 +42,7 @@ func (g gutiRepo) Update(guti *Guti) error {
 				return errors.Wrap(err, "failed get guti count")
 			}
 			if count > 0 {
-				return fmt.Errorf(GutiNotUpdatedErr)
+				return errors.New(GutiNotUpdatedErr)
 			}
 
 			err = tx.Delete(&Guti{}, "imsi = ? and device_updated_at <= ?  ", guti.Imsi, guti.DeviceUpdatedAt).Error

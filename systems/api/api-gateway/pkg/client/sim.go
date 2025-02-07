@@ -21,7 +21,7 @@ import (
 type Sim interface {
 	GetSim(string) (*csub.SimInfo, error)
 	ConfigureSim(string, string, string, string, string, string, string, string, string, string,
-		string, string, string, string, uint32) (*csub.SimInfo, error)
+		string, string, string, uint32) (*csub.SimInfo, error)
 }
 
 type sim struct {

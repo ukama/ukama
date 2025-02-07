@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -62,7 +62,7 @@ func (N *network) GetSimDetails(iccid string, orgId string) error {
 	err = json.Unmarshal(resp.Body(), &network)
 	if err != nil {
 		logrus.Tracef("Failed to desrialize network info. Error message is %s", err.Error())
-		return fmt.Errorf("network info deserailization failure:" + err.Error())
+		return fmt.Errorf("network info deserailization failure: %s", err)
 	} else {
 		logrus.Infof("Network Info: %+v", network)
 	}
