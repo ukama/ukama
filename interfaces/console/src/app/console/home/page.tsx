@@ -21,8 +21,8 @@ import { structureNodeSiteDate } from '@/utils';
 import DataVolume from '@mui/icons-material/DataSaverOff';
 import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
-import Throughput from '@mui/icons-material/NetworkCheck';
-import { AlertColor, Box, Paper, Skeleton, Stack } from '@mui/material';
+import SalesIcon from '@mui/icons-material/MonetizationOn';
+import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
@@ -101,7 +101,29 @@ export default function Page() {
         />
       </Grid>
       <Grid size={12}>
-        <Stack direction={'row'}>
+        <Stack direction={'row'} spacing={{ xs: 0.5, md: 1 }}>
+          <StatusCard
+            option={'bill'}
+            subtitle2={`$`}
+            subtitle1={`${0}`}
+            Icon={SalesIcon}
+            options={MONTH_FILTER}
+            loading={networkLoading}
+            iconColor={colors.beige}
+            title={'Sales'}
+            handleSelect={(value: string) => {}}
+          />
+          <StatusCard
+            Icon={DataVolume}
+            option={'usage'}
+            subtitle2={`GBs`}
+            subtitle1={`${0}`}
+            options={TIME_FILTER}
+            loading={networkLoading}
+            title={'Data Volume'}
+            iconColor={colors.secondaryMain}
+            handleSelect={(value: string) => {}}
+          />
           <StatusCard
             option={''}
             subtitle2={''}
@@ -111,30 +133,6 @@ export default function Page() {
             loading={networkLoading}
             title={'Active subscribers'}
             iconColor={colors.primaryMain}
-            handleSelect={(value: string) => {}}
-          />
-          <Box p={{ xs: 0.5, md: 1 }} />
-          <StatusCard
-            Icon={DataVolume}
-            option={'usage'}
-            subtitle2={`dBM`}
-            subtitle1={`${0}`}
-            options={TIME_FILTER}
-            loading={networkLoading}
-            title={'Data Volume'}
-            iconColor={colors.secondaryMain}
-            handleSelect={(value: string) => {}}
-          />
-          <Box p={{ xs: 0.5, md: 1 }} />
-          <StatusCard
-            option={'bill'}
-            subtitle2={`bps`}
-            subtitle1={`${0}`}
-            Icon={Throughput}
-            options={MONTH_FILTER}
-            loading={networkLoading}
-            iconColor={colors.black54}
-            title={'Average throughput'}
             handleSelect={(value: string) => {}}
           />
         </Stack>

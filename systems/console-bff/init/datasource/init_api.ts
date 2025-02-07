@@ -10,6 +10,7 @@ import { RootDatabase } from "lmdb";
 
 import { whoami } from "../../common/auth/authCalls";
 import { INIT_API_GW, VERSION } from "../../common/configs";
+import COUNTRIES from "../../common/data/countries";
 import { ROLE_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, getFromStore } from "../../common/storage";
@@ -90,13 +91,13 @@ class InitAPI extends RESTDataSource {
       if (userWhoami.ownerOf.length > 0) {
         orgId = userWhoami.ownerOf[0].id;
         orgName = userWhoami.ownerOf[0].name;
-        country = userWhoami.ownerOf[0].country;
         currency = userWhoami.ownerOf[0].currency;
+        country = userWhoami.ownerOf[0].country.toUpperCase();
       } else if (userWhoami.memberOf.length > 0) {
         orgId = userWhoami.memberOf[0].id;
         orgName = userWhoami.memberOf[0].name;
         country = userWhoami.ownerOf[0].country;
-        currency = userWhoami.ownerOf[0].currency;
+        currency = userWhoami.ownerOf[0].currency.toUpperCase();
       }
 
       if (orgId && orgName) {
@@ -147,9 +148,9 @@ class InitAPI extends RESTDataSource {
       name: name,
       email: email,
       userId: userId,
-      country: country,
       currency: currency,
       token: base64Cookie,
+      country: COUNTRIES.find(c => c.code === country)?.name || country,
       isEmailVerified:
         whoamiRes?.data?.identity?.verifiable_addresses[0]?.verified || false,
       isShowWelcome: isWelcomeEligible,

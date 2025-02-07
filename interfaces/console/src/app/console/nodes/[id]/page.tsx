@@ -11,6 +11,7 @@ import {
   Node,
   NodeConnectivityEnum,
   NodeStateEnum,
+  NodeTypeEnum,
   useGetNodesByStateQuery,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
@@ -27,7 +28,11 @@ import NodeRadioTab from '@/components/NodeRadioTab';
 import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
-import { NODE_ACTIONS_BUTTONS, NodePageTabs } from '@/constants';
+import {
+  METRIC_RANGE_3600,
+  NODE_ACTIONS_BUTTONS,
+  NodePageTabs,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import MetricSubscription from '@/lib/MetricSubscription';
 import { colors } from '@/theme';
@@ -135,7 +140,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
             userId: user.id,
             type: graphType,
             from: metricFrom,
-            to: metricFrom + 120,
+            to: metricFrom + METRIC_RANGE_3600,
             orgName: user.orgName,
             withSubscription: true,
           },
@@ -167,13 +172,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     const { msg, type, value, nodeId, success } =
       parsedData.data.getMetricByTabSub;
     if (success) {
-      PubSub.publish(type, [Math.floor(value[0] ?? 0) * 1000, value[1]]);
-      // setMetrics((prev) => {
-      //   const updatedMetrics = prev.metrics.map((m) =>
-      //     m.type === type ? { ...m, values: [...m.values, value] } : m,
-      //   );
-      //   return { ...prev, metrics: updatedMetrics };
-      // });
+      PubSub.publish(type, value.slice(0, 30));
     }
   };
 
@@ -196,13 +195,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleOverviewSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - 120);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+  };
+
+  const handleNetworkSectionChange = (type: Graphs_Type) => {
+    setGraphType(type);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
     setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - 120);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
   const handleNodeActionClick = (action: string) => {};
@@ -228,17 +232,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
             key={id}
             label={label}
             id={`node-tab-${value}`}
-            sx={
-              {
-                // display:
-                //   ((selectedNode?.type === NodeTypeEnum.Hnode &&
-                //     label === 'Radio') ??
-                //   (selectedNode?.type === NodeTypeEnum.Anode &&
-                //     label === 'Network'))
-                //     ? 'none'
-                //     : 'block',
-              }
-            }
+            sx={{
+              display:
+                ((selectedNode?.type === NodeTypeEnum.Hnode &&
+                  label === 'Radio') ??
+                (selectedNode?.type === NodeTypeEnum.Anode &&
+                  label === 'Network'))
+                  ? 'none'
+                  : 'block',
+            }}
           />
         ))}
       </Tabs>
@@ -268,15 +270,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
           <NodeNetworkTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
+            selectedNode={selectedNode}
             loading={nodeMetricsLoading}
+            handleSectionChange={handleNetworkSectionChange}
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
           <NodeResourcesTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
@@ -285,9 +287,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
           <NodeRadioTab
-            nodeId={id}
             metrics={metrics}
             metricFrom={metricFrom}
+            selectedNode={selectedNode}
             loading={nodeMetricsLoading}
           />
         </TabPanel>

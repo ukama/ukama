@@ -46,7 +46,7 @@ const Page = () => {
 
   const [getCurrencySymbol, { data: currencyData }] =
     useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'cache-and-network',
+      fetchPolicy: 'network-only',
       onError: (error) => {
         setSnackbarMessage({
           id: 'currency-info-error',
@@ -57,11 +57,11 @@ const Page = () => {
       },
     });
 
-  const { data: networkData } = useGetNetworkQuery({
+  useGetNetworkQuery({
     variables: {
       networkId: network.id,
     },
-    onCompleted: (data) => {
+    onCompleted: () => {
       getCurrencySymbol({
         variables: {
           code: user.currency,

@@ -11,7 +11,7 @@ import { open } from "lmdb";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import WebSocket from "ws";
 
-const MAX_OCCURRENCE = 10;
+const MAX_OCCURRENCE = 40;
 
 const openStore = () => {
   const path = process.env.STORAGE_KEY;
@@ -66,7 +66,6 @@ const runWorker = async () => {
     });
 
     ws.on("message", async function message(data) {
-      console.info("WebSocket message", data.toString());
       const value = await getFromStore(store, key);
       let occurrence = parseInt(value ?? "0") + 1;
       await addInStore(store, key, occurrence);

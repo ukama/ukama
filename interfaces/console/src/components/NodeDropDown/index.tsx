@@ -6,11 +6,14 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node, NodeStateEnum } from '@/client/graphql/generated';
+import {
+  Node,
+  NodeConnectivityEnum,
+  NodeStateEnum,
+} from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { hexToRGB } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CircleIcon from '@mui/icons-material/Circle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import {
   MenuItem,
@@ -22,7 +25,7 @@ import {
 import LoadingWrapper from '../LoadingWrapper';
 import { PaperProps, SelectDisplayProps, useStyles } from './styles';
 
-const getStatus = (status: NodeStateEnum, time: number) => {
+const getStatus = (status: NodeStateEnum, time: number): JSX.Element => {
   let str = '';
   switch (status) {
     case NodeStateEnum.Unknown:
@@ -37,26 +40,23 @@ const getStatus = (status: NodeStateEnum, time: number) => {
       str = 'Unknown';
   }
   return (
-    <Typography variant={'h6'} mr={'6px'}>
+    <Typography variant={'subtitle1'}>
+      <b>UPTIME HERE: </b>
       {str}
     </Typography>
   );
 };
 
-const getStatusIcon = (status: NodeStateEnum) => {
-  switch (status.toUpperCase()) {
-    case NodeStateEnum.Unknown:
-      return (
-        <CheckCircleIcon sx={{ color: colors.black54 }} fontSize={'small'} />
-      );
-    case NodeStateEnum.Configured:
-      return <InfoIcon sx={{ color: colors.orange }} fontSize={'small'} />;
-    case NodeStateEnum.Operational:
-      return <InfoIcon htmlColor={colors.darkGreen05} fontSize={'small'} />;
-    case NodeStateEnum.Faulty:
-      return <InfoIcon htmlColor={colors.red} fontSize={'small'} />;
+const getStatusIcon = (status: NodeConnectivityEnum) => {
+  switch (status) {
+    case NodeConnectivityEnum.Unknown:
+      return <CheckCircleIcon fontSize={'small'} color="warning" />;
+    case NodeConnectivityEnum.Online:
+      return <CheckCircleIcon fontSize={'small'} color="success" />;
+    case NodeConnectivityEnum.Offline:
+      return <InfoIcon fontSize={'small'} color="error" />;
     default:
-      return <CircleIcon htmlColor={colors.black54} fontSize={'small'} />;
+      return <CheckCircleIcon fontSize={'small'} color="disabled" />;
   }
 };
 
@@ -84,9 +84,9 @@ const NodeDropDown = ({
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
       {selectedNode &&
-        getStatusIcon(selectedNode.status.state as NodeStateEnum)}
+        getStatusIcon(selectedNode.status.connectivity as NodeConnectivityEnum)}
 
-      <LoadingWrapper radius="small" isLoading={loading} width={'244px'}>
+      <LoadingWrapper radius="small" isLoading={loading} width={'fit-content'}>
         <Select
           disableUnderline
           variant="standard"
@@ -139,6 +139,8 @@ const NodeDropDown = ({
           ))}
         </Select>
       </LoadingWrapper>
+
+      {selectedNode && getStatus(selectedNode.status.state as NodeStateEnum, 0)}
     </Stack>
   );
 };
