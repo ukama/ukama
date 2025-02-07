@@ -20,7 +20,7 @@ export const AUTH_APP_URL = process.env.AUTH_APP_URL ?? "http://localhost:4455";
 export const PLAYGROUND_URL =
   process.env.PLAYGROUND_URL ?? "http://localhost:8080";
 export const CONSOLE_APP_URL =
-  process.env.CONSOLE_APP_URL ?? "http://localhost:3001";
+  process.env.CONSOLE_APP_URL ?? "http://localhost:3000";
 
 // UTILS
 export const SIM_TYPE = process.env.SIM_TYPE ?? "operator_data";
