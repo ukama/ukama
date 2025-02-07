@@ -1,4 +1,4 @@
-Subject: [{{ .Values.ORG}}] {{ .Values.NAME }} Welcome to Ukama!
+Subject:[{{ .Values.ORG}}] Welcome to Ukama! 
 MIME-version: 1.0;
 Content-Type: multipart/mixed;
         boundary="XXXXboundary text"
@@ -7,6 +7,7 @@ This is a multipart message in MIME format.
 
 --XXXXboundary text
 Content-Type: text/html; charset="UTF-8";
+
 
 <!DOCTYPE html>
 <html>
@@ -25,7 +26,7 @@ Content-Type: text/html; charset="UTF-8";
                   <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Welcome to Ukama!</h1>
                   <p>Hi {{.Values.SUBSCRIBER}},</p>
                   <p>
-                    You have been added as a subscriber to use the following network: {{.Values.NETWORK}}, and can enjoy fast, reliable, connectivity, within the range of the network. The {{.Values.PACKAGEID}} ($5 / {{.Values.VOLUME}} {{.Values.UNIT}} / 1 week) has been activated, and expires {{.Values.ENDDATE}} EOD.
+                    You have been added as a subscriber to use the following network: {{.Values.NETWORK}}, and can enjoy fast, reliable, connectivity, within the range of the network. The {{.Values.PACKAGE}} ({{.Values.AMOUNT}} / {{.Values.VOLUME}} {{.Values.UNIT}} / {{.Values.DURATION}} days) has been activated, and expires {{.Values.ENDDATE}} EOD.
                   </p>
                   <p>
                     You can use your data as is, but you can enhance your experience by securely monitoring your usage, remotely topping up your data, and more, in Ukama's free subscriber app found here, currently available for IoS.
