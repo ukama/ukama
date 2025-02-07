@@ -322,7 +322,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 				emailTemplate.EmailKeyVolume:     fmt.Sprintf("%v", packageInfo.DataVolume),
 				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
 				emailTemplate.EmailKeyOrg:        s.orgName,
-				emailTemplate.EmailKeyEndDate:    sim.Package.EndDate.Format(time.RFC3339),
+				emailTemplate.EmailKeyEndDate:    sim.Package.EndDate.Format("January 2, 2006"),
 				emailTemplate.EmailKeyPackage:    packageInfos.Name,
 				emailTemplate.EmailKeyDuration:   fmt.Sprintf("%v", packageInfo.Duration),
 				emailTemplate.EmailKeyAmount:     fmt.Sprintf("%v", packageInfo.Amount),
