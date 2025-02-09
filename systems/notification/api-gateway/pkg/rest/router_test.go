@@ -104,6 +104,7 @@ func TestRouter_mailer(t *testing.T) {
 			To:           []string{"test@ukama.com"},
 			TemplateName: "test-template",
 			Values:       map[string]interface{}{"Name": "test", "Message": "welcome to ukama"},
+			Attachments:  []Attachment{},
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -116,10 +117,19 @@ func TestRouter_mailer(t *testing.T) {
 		for key, value := range data.Values {
 			newValues[key] = fmt.Sprintf("%v", value)
 		}
+		pbAttachments := make([]*mailerpb.Attachment, len(data.Attachments))
+		for i, att := range data.Attachments {
+			pbAttachments[i] = &mailerpb.Attachment{
+				Filename:    att.Filename,
+				Content: att.Content,
+				ContentType: att.ContentType,
+			}
+		}
 		preq := &mailerpb.SendEmailRequest{
 			To:           data.To,
 			TemplateName: data.TemplateName,
 			Values:       newValues,
+			Attachments:  pbAttachments,
 		}
 
 		m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
