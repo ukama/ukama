@@ -55,6 +55,7 @@ const SIM_PORT = parseInt(process.env.SIM_PORT ?? "5053");
 const NOTIFICATION_PORT = parseInt(process.env.NOTIFICATION_PORT ?? "5054");
 const CONTROLLER_PORT = parseInt(process.env.CONTROLLER_PORT ?? "5058");
 const PAYMENT_PORT = parseInt(process.env.PAYMENT_PORT ?? "5059");
+const REPORT_PORT = parseInt(process.env.REPORT_PORT ?? "5060");
 
 export const BILLING_PORT = parseInt(process.env.BILLING_PORT ?? "5055");
 export const COMPONENT_INVENTORY_PORT = parseInt(
@@ -109,6 +110,12 @@ export const SUB_GRAPHS = {
     name: "subscriber",
     port: SUBSCRIBER_PORT,
     url: `http://localhost:${SUBSCRIBER_PORT}`,
+    isPingedSuccess: false,
+  },
+  report: {
+    name: "report",
+    port: REPORT_PORT,
+    url: `http://localhost:${REPORT_PORT}`,
     isPingedSuccess: false,
   },
   sim: {

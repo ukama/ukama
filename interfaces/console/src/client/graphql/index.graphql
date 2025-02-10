@@ -737,6 +737,15 @@ query getSubscriberMetricsByNetwork($networkId: String!) {
 
 ### Subscriber End ###
 
+### Report gen Start ###
+query getGeneratedPdfReport($Id: String!) {
+  getGeneratedPdfReport(id: $Id) {
+    contentType
+    filename
+    downloadUrl
+  }
+}
+
 ### User Start ###
 
 fragment User on UserResDto {

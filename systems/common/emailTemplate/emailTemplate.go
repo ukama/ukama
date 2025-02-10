@@ -1,11 +1,13 @@
 package emailTemplate
 
-const (
-	EmailTemplateSimAllocation = "sim-allocation"
-	EmailTemplateMemberInvite  = "member-invite"
-	EmailTemplateOrgInvite     = "org-invite"
-)
 
+
+const (
+    EmailTemplateSimAllocation     = "sim-allocation"
+    EmailTemplateMemberInvite      = "member-invite"
+    EmailTemplateOrgInvite         = "org-invite"
+    EmailTemplatePackageAddition   = "topup-plan" 
+)
 type EmailTemplateKeys struct {
 	TemplateName string
 	Keys         []string
@@ -17,11 +19,13 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
 		Keys: []string{
 			"SUBSCRIBER",
 			"NETWORK",
-			"NAME",
-			"QRCODE",
+			"PACKAGE",
 			"VOLUME",
 			"UNIT",
+			"ENDDATE",
 			"ORG",
+			"DURATION",
+			"AMOUNT",
 		},
 	},
 	EmailTemplateMemberInvite: {
@@ -33,7 +37,26 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
 			"ROLE",
 		},
 	},
+	EmailTemplatePackageAddition: { 
+        TemplateName: EmailTemplatePackageAddition,
+        Keys: []string{
+            "SUBSCRIBER",
+            "NETWORK",
+            "NAME",
+            "VOLUME",
+            "UNIT",
+            "ORG",
+			"AMOUNT",
+			"DURATION",
+			"PACKAGE",
+			"EXPIRATION_DATE",
+			"PACKAGES_COUNT",
+			"PACKAGES_DETAILS",
+        },
+    },
 }
+
+
 
 const (
 	EmailKeySubscriber = "SUBSCRIBER"
@@ -45,4 +68,12 @@ const (
 	EmailKeyOrg        = "ORG"
 	EmailKeyOwner      = "OWNER"
 	EmailKeyRole       = "ROLE"
+	EmailKeyExpiration = "EXPIRATION_DATE"
+	EmailKeyPackagesCount = "PACKAGES_COUNT"
+	EmailKeyPackagesDetails = "PACKAGES_DETAILS"
+	EmailKeyEndDate    = "ENDDATE"
+	EmailKeyPackage    = "PACKAGE"
+	EmailKeyAmount     = "AMOUNT"
+	EmailKeyDuration   = "DURATION"
+
 )

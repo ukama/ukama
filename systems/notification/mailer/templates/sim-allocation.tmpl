@@ -1,4 +1,4 @@
-Subject: [{{ .Values.ORG}}] {{ .Values.NAME }} invited you to use their network
+Subject:[{{ .Values.ORG}}] Welcome to Ukama! 
 MIME-version: 1.0;
 Content-Type: multipart/mixed;
         boundary="XXXXboundary text"
@@ -7,6 +7,7 @@ This is a multipart message in MIME format.
 
 --XXXXboundary text
 Content-Type: text/html; charset="UTF-8";
+
 
 <!DOCTYPE html>
 <html>
@@ -22,20 +23,15 @@ Content-Type: text/html; charset="UTF-8";
             <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer" style="background-color: #ffffff; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
               <tr>
                 <td style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                  <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Download your eSIM</h1>
+                  <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Welcome to Ukama!</h1>
                   <p>Hi {{.Values.SUBSCRIBER}},</p>
                   <p>
-                    {{.Values.NAME }} has invited you to join their network. To get started, scan the QR code below to download your eSIM and start using the {{.Values.NETWORK }} network. You have {{.Values.VOLUME }} {{.Values.UNIT }} of free data and will be charged at $5/GB while roaming.
+                    You have been added as a subscriber to use the following network: {{.Values.NETWORK}}, and can enjoy fast, reliable, connectivity, within the range of the network. The {{.Values.PACKAGE}} ({{.Values.AMOUNT}} / {{.Values.VOLUME}} {{.Values.UNIT}} / {{.Values.DURATION}} days) has been activated, and expires {{.Values.ENDDATE}} EOD.
                   </p>
                   <p>
-                    This invitation <span style="background-color: #fff3cd; padding: 2px 5px; border-radius: 3px;"><strong>expires in 48 hours</strong></span> for security purposes, but another invitation will be sent if you click on the link past the time period.
+                    You can use your data as is, but you can enhance your experience by securely monitoring your usage, remotely topping up your data, and more, in Ukama's free subscriber app found here, currently available for IoS.
                   </p>
-                  <p>Note: You don't have to do anything with your current SIM in your phone.</p>
-                  <div style="text-align: left; margin: 30px 0; border-radius: 8px; min-height: 200px;">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{.Values.QRCODE}}" alt="QR Code for eSIM" style="width: 200px; height: 200px; display: block; object-fit: contain; background-color: white; padding: 10px; border: 1px solid #ddd;" onerror="this.src='https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl={{.Values.QRCODE}}'"/>
-                  </div>
-                  <p>Having trouble with the QR code? Use the following link instead:</p>
-                  <a href="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{.Values.QRCODE}}" style="display: inline-block; background-color: #1D90F8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Download eSIM</a>
+                  <a href="https://apps.apple.com/app/ukama/id123456789" style="display: inline-block; background-color: #1D90F8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Open App in Store</a>
                   <p>Thanks,<br />The Ukama Team</p>
                   <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; text-align: center;">
                     <p>&copy; Ukama Inc. 1233 Quarry Lane #115, Pleasanton, CA 94566</p>

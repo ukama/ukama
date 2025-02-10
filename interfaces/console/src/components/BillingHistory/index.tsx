@@ -19,8 +19,10 @@ import {
   TextField,
   InputAdornment,
   Box,
+  CircularProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import colors from '@/theme/colors';
 
 interface BillingHistoryTableProps {
   data: {
@@ -29,11 +31,16 @@ interface BillingHistoryTableProps {
     billing: string;
     payment: string;
     description: string;
-    pdf: string;
   }[];
+  downloadingId: string | null;
+  onDownload: (reportId: string) => void;
 }
 
-const BillingHistoryTable: React.FC<BillingHistoryTableProps> = ({ data }) => {
+const BillingHistoryTable: React.FC<BillingHistoryTableProps> = ({
+  data,
+  downloadingId,
+  onDownload,
+}) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState('');
@@ -110,13 +117,24 @@ const BillingHistoryTable: React.FC<BillingHistoryTableProps> = ({ data }) => {
                       <TableCell>{row.payment}</TableCell>
                       <TableCell>{row.description}</TableCell>
                       <TableCell>
-                        <a
-                          href={row.pdf}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Download
-                        </a>
+                        {downloadingId === row.id ? (
+                          <CircularProgress size={20} />
+                        ) : (
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              onDownload(row.id);
+                            }}
+                            style={{
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              color: `${colors.primaryMain}`,
+                            }}
+                          >
+                            Download
+                          </a>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

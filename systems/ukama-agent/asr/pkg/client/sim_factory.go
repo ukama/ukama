@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -65,7 +65,7 @@ func (f *factory) ReadSimCardInfo(Iccid string) (*SimCardInfo, error) {
 	err = json.Unmarshal(resp.Body(), &card)
 	if err != nil {
 		logrus.Tracef("Failed to desrialize sim card info. Error message is %s", err.Error())
-		return nil, fmt.Errorf("simcard info deserailization failure: %s" + err.Error())
+		return nil, fmt.Errorf("simcard info deserailization failure: %s", err)
 	}
 
 	return &card, nil

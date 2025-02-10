@@ -225,6 +225,8 @@ const getSystemNameByService = (service: string): string => {
       return "init";
     case "billing":
       return "billing";
+    case "report":
+      return "report";
     case "payments":
       return "payments";
     case "metrics":

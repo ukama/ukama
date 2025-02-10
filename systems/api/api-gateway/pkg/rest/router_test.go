@@ -693,7 +693,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		}
 
 		simClient.On("ConfigureSim", subscriberId.String(), orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(simInfo, nil)
 
@@ -722,7 +722,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		}
 
 		simClient.On("ConfigureSim", subscriberId.String(), orgId.String(),
-			networkId.String(), firstName, lastName, email, phoneNumber, address,
+			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
 			Return(nil, errors.New("some unexpected error occured"))
 
