@@ -265,7 +265,7 @@ export const NODE_KPIS = {
         unit: '°',
         show: true,
         name: 'Hardware',
-        id: 'trx_soc_cpu_core3_softirq',
+        id: 'temperature_trx',
         description: 'Hardware health index (Temperature)',
         threshold: { min: 0, normal: 50, max: 100 },
       },

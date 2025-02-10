@@ -13,8 +13,13 @@ import {
   MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import { NODE_KPIS } from '@/constants';
-import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
-import { Paper, Stack, capitalize } from '@mui/material';
+import {
+  getKPIStatValue,
+  getMetricValue,
+  isMetricValue,
+  NodeEnumToString,
+} from '@/utils';
+import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
 import LineChart from '../LineChart';
@@ -83,7 +88,7 @@ const NodeOverviewTab = ({
             <NodeStatItem
               id={null}
               name={'Model type'}
-              value={`${capitalize(selectedNode?.type.toLowerCase() ?? 'HOME')} Node`}
+              value={NodeEnumToString(nodeType)}
             />
 
             <NodeStatItem

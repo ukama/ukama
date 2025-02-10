@@ -101,13 +101,16 @@ const NodeStatItem = ({
 
   useEffect(() => {
     if (id) {
-      PubSub.subscribe(id, (_, data) => {
+      const token = PubSub.subscribe(id, (_, data) => {
         if (Array.isArray(data) && data.length > 0) {
           const sum = data.reduce((acc, val) => acc + val[1], 0);
           const avg = sum / data.length;
           setTitle(`${parseFloat(Number(avg).toFixed(2))} ${unit}`);
         }
       });
+      return () => {
+        PubSub.unsubscribe(token);
+      };
     }
   }, [id]);
 
