@@ -18,6 +18,7 @@ import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
+  MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import {
   INSTALLATION_FLOW,
@@ -118,7 +119,7 @@ export const getNodeTabTypeByIndex = (index: number) => {
     case 0:
       return Graphs_Type.NodeHealth;
     case 1:
-      return Graphs_Type.Network;
+      return Graphs_Type.NetworkCellular;
     case 2:
       return Graphs_Type.Resources;
     case 3:
@@ -382,14 +383,14 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
-const getKPIStatValue = (values: number[][], loading: boolean): string => {
-  if (loading) return KPI_PLACEHOLDER_VALUE;
-  if (Array.isArray(values) && values.length > 0) {
-    const sum = values.reduce((acc, val) => acc + val[1], 0);
-    const avg = sum / values.length;
-    return `${parseFloat(Number(avg).toFixed(2))}`;
-  }
-  return KPI_PLACEHOLDER_VALUE;
+const getKPIStatValue = (
+  id: string,
+  loading: boolean,
+  statsData: MetricsStateRes,
+): string => {
+  if (loading || !statsData?.metrics) return KPI_PLACEHOLDER_VALUE;
+  const stat = statsData.metrics.find((item) => item.type === id);
+  return stat?.value?.toString() ?? KPI_PLACEHOLDER_VALUE;
 };
 
 export {

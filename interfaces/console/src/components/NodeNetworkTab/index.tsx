@@ -10,6 +10,7 @@ import { Node, NodeTypeEnum } from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricsRes,
+  MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import { NODE_KPIS } from '@/constants';
 import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
@@ -27,6 +28,7 @@ interface INodeOverviewTab {
   metrics: MetricsRes;
   selectedNode: Node | undefined;
   handleSectionChange: Function;
+  nodeMetricsStatData: MetricsStateRes;
 }
 const NodeNetworkTab = ({
   loading,
@@ -34,6 +36,7 @@ const NodeNetworkTab = ({
   metricFrom,
   selectedNode,
   handleSectionChange,
+  nodeMetricsStatData,
 }: INodeOverviewTab) => {
   const [selected, setSelected] = useState<number>(0);
   const networkCellular = NODE_KPIS.NETWORK_CELLULAR[NodeTypeEnum.Tnode];
@@ -41,9 +44,7 @@ const NodeNetworkTab = ({
 
   const handleOnSelected = (value: number) => {
     handleSectionChange(
-      value === 1
-        ? Graphs_Type.Network /* add Backhaul */
-        : Graphs_Type.Network /* add Cellular */,
+      value === 1 ? Graphs_Type.NetworkBackhaul : Graphs_Type.NetworkCellular,
     );
     setSelected(value);
   };
@@ -67,10 +68,7 @@ const NodeNetworkTab = ({
                 unit={config.unit}
                 key={`${config.id}-${i}`}
                 nameInfo={config.description}
-                value={getKPIStatValue(
-                  getMetricValue(config.id, metrics),
-                  loading,
-                )}
+                value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
               />
             ))}
           </NodeStatsContainer>
@@ -89,10 +87,7 @@ const NodeNetworkTab = ({
                 unit={config.unit}
                 key={`${config.id}-${i}`}
                 nameInfo={config.description}
-                value={getKPIStatValue(
-                  getMetricValue(config.id, metrics),
-                  loading,
-                )}
+                value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
               />
             ))}
           </NodeStatsContainer>

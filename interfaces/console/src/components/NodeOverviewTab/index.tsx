@@ -10,6 +10,7 @@ import { Node, NodeTypeEnum } from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricsRes,
+  MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import { NODE_KPIS } from '@/constants';
 import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
@@ -34,6 +35,7 @@ interface INodeOverviewTab {
   connectedUsers: string | undefined;
   getNodeSoftwareUpdateInfos: Function;
   handleOverviewSectionChange: Function;
+  nodeMetricsStatData: MetricsStateRes;
 }
 
 const NodeOverviewTab = ({
@@ -47,6 +49,7 @@ const NodeOverviewTab = ({
   onNodeSelected,
   handleUpdateNode,
   isUpdateAvailable,
+  nodeMetricsStatData,
   getNodeSoftwareUpdateInfos,
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
@@ -115,8 +118,9 @@ const NodeOverviewTab = ({
                 key={`${config.id}-${i}`}
                 nameInfo={config.description}
                 value={getKPIStatValue(
-                  getMetricValue(config.id, metrics),
+                  config.id,
                   metricsLoading,
+                  nodeMetricsStatData,
                 )}
               />
             ))}
@@ -138,8 +142,9 @@ const NodeOverviewTab = ({
                   key={`${config.id}-${i}`}
                   nameInfo={config.description}
                   value={getKPIStatValue(
-                    getMetricValue(config.id, metrics),
+                    config.id,
                     metricsLoading,
+                    nodeMetricsStatData,
                   )}
                 />
               ))}

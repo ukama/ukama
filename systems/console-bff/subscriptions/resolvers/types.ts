@@ -12,6 +12,7 @@ import {
   NOTIFICATION_SCOPE,
   NOTIFICATION_TYPE,
   ROLE_TYPE,
+  STATS_TYPE,
 } from "../../common/enums";
 
 @ObjectType()
@@ -104,6 +105,30 @@ export class GetMetricRangeInput {
 }
 
 @InputType()
+export class GetMetricsStatInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field()
+  userId: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  from: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ defaultValue: 1 })
+  step: number;
+}
+
+@InputType()
 export class GetMetricByTabInput {
   @Field()
   nodeId: string;
@@ -134,6 +159,30 @@ export class GetMetricByTabInput {
 export class MetricsRes {
   @Field(() => [MetricRes])
   metrics: MetricRes[];
+}
+
+@ObjectType()
+export class MetricStateRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  value: number;
+}
+
+@ObjectType()
+export class MetricsStateRes {
+  @Field(() => [MetricStateRes])
+  metrics: MetricStateRes[];
 }
 
 @InputType()

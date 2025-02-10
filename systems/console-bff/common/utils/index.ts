@@ -14,9 +14,9 @@ import { NotificationsResDto } from "../../subscriptions/resolvers/types";
 import { CONSOLE_APP_URL } from "../configs";
 import {
   GRAPHS_TYPE,
-  NODE_TYPE,
   NOTIFICATION_SCOPE,
   ROLE_TYPE,
+  STATS_TYPE,
 } from "../enums";
 import { HTTP401Error, Messages } from "../errors";
 import { logger } from "../logger";
@@ -124,46 +124,37 @@ const getPaginatedOutput = (
 const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
-      if (nodeId.includes(NODE_TYPE.hnode))
-        return ["uptime_trx", "temperature_trx", "temperature_rfe"];
-      else if (nodeId.includes(NODE_TYPE.anode))
-        return ["temperature_ctl", "temperature_rfe"];
-      else return ["uptime_trx", "temperature_trx", "temperature_com"];
-    case GRAPHS_TYPE.NETWORK:
-      if (!nodeId.includes(NODE_TYPE.anode))
-        return [
-          "network_latency",
-          "network_packet_loss",
-          "network_overall_status",
-          "network_throughput_up",
-          "network_throughput_down",
-        ];
-      else return [];
+      return ["uptime_trx", "uptime_trx"];
+    case STATS_TYPE.OVERVIEW:
+      return ["uptime_trx", "uptime_trx", "subscribers_active"];
+    case GRAPHS_TYPE.NETWORK_CELLULAR:
+      return ["network_throughput_up", "network_throughput_down"];
+    case GRAPHS_TYPE.NETWORK_BACKHAUL:
+      return [
+        "network_throughput_up",
+        "network_throughput_down",
+        "network_latency",
+      ];
+    case STATS_TYPE.NETWORK:
+      return [
+        "network_throughput_up",
+        "network_throughput_down",
+        "network_throughput_up",
+        "network_throughput_down",
+        "network_latency",
+      ];
+
+    case STATS_TYPE.RESOURCES:
     case GRAPHS_TYPE.RESOURCES:
-      if (nodeId.includes(NODE_TYPE.hnode))
-        return ["cpu_trx_usage", "memory_trx_used", "disk_trx_used"];
-      else if (nodeId.includes(NODE_TYPE.anode))
-        return ["cpu_ctl_used", "disk_ctl_used", "memory_ctl_used"];
-      else
-        return [
-          "power_level",
-          "cpu_trx_usage",
-          "cpu_com_usage",
-          "disk_trx_used",
-          "disk_com_used",
-          "memory_trx_used",
-          "memory_com_used",
-        ];
+      return [
+        "cpu_trx_usage",
+        "memory_trx_used",
+        "cpu_trx_usage",
+        "disk_trx_used",
+      ];
+    case STATS_TYPE.RADIO:
     case GRAPHS_TYPE.RADIO:
-      if (nodeId.includes(NODE_TYPE.tnode))
-        return ["tx_power", "rx_power", "pa_power"];
-      else return [];
-    case GRAPHS_TYPE.SUBSCRIBERS:
-      if (nodeId.includes(NODE_TYPE.hnode))
-        return ["subscribers_active", "subscribers_attached"];
-      else if (nodeId.includes(NODE_TYPE.anode))
-        return ["temperature_ctl", "temperature_rfe"];
-      else return ["subscribers_active", "subscribers_attached"];
+      return ["tx_power"];
     default:
       return [];
   }

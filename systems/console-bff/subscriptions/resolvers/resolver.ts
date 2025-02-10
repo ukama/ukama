@@ -20,9 +20,11 @@ import {
 import { pubSub } from "./pubsub";
 import {
   GetMetricByTabInput,
+  GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
   MetricsRes,
+  MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
   SubMetricByTabInput,
@@ -43,6 +45,45 @@ const getErrorRes = (msg: string) =>
 
 @Resolver(String)
 class SubscriptionsResolvers {
+  @Query(() => MetricsStateRes)
+  async getMetricsStat(@Arg("data") data: GetMetricsStatInput) {
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      data.orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for notification: ${baseURL}`);
+      return { notifications: [] };
+    }
+    const { type, from, nodeId } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metrics: MetricsStateRes = { metrics: [] };
+    if (metricsKey.length > 0) {
+      for (let i = 0; i < metricsKey.length; i++) {
+        const res = await getNodeRangeMetric(baseURL, {
+          ...data,
+          type: metricsKey[i],
+        });
+        let avg = 0;
+        if (Array.isArray(res.values) && res.values.length > 0) {
+          const sum = res.values.reduce((acc, val) => acc + val[1], 0);
+          avg = sum / res.values.length;
+        }
+        metrics.metrics.push({
+          msg: res.msg,
+          type: res.type,
+          nodeId: res.nodeId,
+          success: res.success,
+          value: parseFloat(Number(avg).toFixed(2)),
+        });
+      }
+    }
+    return metrics;
+  }
+
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
     const store = openStore();

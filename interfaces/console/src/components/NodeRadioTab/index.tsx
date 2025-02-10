@@ -7,6 +7,7 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { NODE_KPIS } from '@/constants';
 import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
@@ -21,12 +22,14 @@ interface INodeRadioTab {
   loading: boolean;
   metricFrom: number;
   selectedNode: Node | undefined;
+  nodeMetricsStatData: MetricsStateRes;
 }
 const NodeRadioTab = ({
   loading,
   metrics,
   metricFrom,
   selectedNode,
+  nodeMetricsStatData,
 }: INodeRadioTab) => {
   const radioConfig = NODE_KPIS.RADIO[NodeTypeEnum.Tnode];
   return (
@@ -46,10 +49,7 @@ const NodeRadioTab = ({
               unit={config.unit}
               key={`${config.id}-${i}`}
               nameInfo={config.description}
-              value={getKPIStatValue(
-                getMetricValue(config.id, metrics),
-                loading,
-              )}
+              value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
             />
           ))}
         </NodeStatsContainer>
