@@ -7,8 +7,8 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
@@ -39,12 +39,17 @@ const NodeRadioTab = ({
           loading={loading}
           isCollapsable={false}
         >
-          {radioConfig.map((config) => (
+          {radioConfig.map((config, i) => (
             <NodeStatItem
-              key={config.id}
+              id={config.id}
               name={config.name}
-              value={KPI_PLACEHOLDER_VALUE}
+              unit={config.unit}
+              key={`${config.id}-${i}`}
               nameInfo={config.description}
+              value={getKPIStatValue(
+                getMetricValue(config.id, metrics),
+                loading,
+              )}
             />
           ))}
         </NodeStatsContainer>
@@ -58,9 +63,9 @@ const NodeRadioTab = ({
           }}
         >
           <Stack spacing={4}>
-            {radioConfig.map((config) => (
+            {radioConfig.map((config, i) => (
               <LineChart
-                key={config.id}
+                key={`${config.id}-${i}`}
                 from={metricFrom}
                 topic={config.id}
                 loading={loading}

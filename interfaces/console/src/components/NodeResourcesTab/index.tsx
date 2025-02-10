@@ -7,8 +7,8 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
@@ -40,12 +40,17 @@ const NodeResourcesTab = ({
           title={'Resources'}
           isCollapsable={false}
         >
-          {resourcesConfig.map((config) => (
+          {resourcesConfig.map((config, i) => (
             <NodeStatItem
-              key={config.id}
+              id={config.id}
               name={config.name}
-              value={KPI_PLACEHOLDER_VALUE}
+              unit={config.unit}
+              key={`${config.id}-${i}`}
               nameInfo={config.description}
+              value={getKPIStatValue(
+                getMetricValue(config.id, metrics),
+                loading,
+              )}
             />
           ))}
         </NodeStatsContainer>
@@ -59,13 +64,13 @@ const NodeResourcesTab = ({
           }}
         >
           <Stack spacing={4}>
-            {resourcesConfig.map((config) => (
+            {resourcesConfig.map((config, i) => (
               <LineChart
-                key={config.id}
                 from={metricFrom}
                 topic={config.id}
                 loading={loading}
                 title={config.name}
+                key={`${config.id}-${i}`}
                 hasData={isMetricValue(config.id, metrics)}
                 initData={getMetricValue(config.id, metrics)}
               />

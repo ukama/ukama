@@ -11,8 +11,8 @@ import {
   Graphs_Type,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useState } from 'react';
@@ -60,12 +60,17 @@ const NodeNetworkTab = ({
             isCollapsable={false}
             handleAction={handleOnSelected}
           >
-            {networkCellular.map((config) => (
+            {networkCellular.map((config, i) => (
               <NodeStatItem
-                key={config.id}
+                id={config.id}
                 name={config.name}
-                value={KPI_PLACEHOLDER_VALUE}
+                unit={config.unit}
+                key={`${config.id}-${i}`}
                 nameInfo={config.description}
+                value={getKPIStatValue(
+                  getMetricValue(config.id, metrics),
+                  loading,
+                )}
               />
             ))}
           </NodeStatsContainer>
@@ -77,12 +82,17 @@ const NodeNetworkTab = ({
             title={'Backhaul'}
             handleAction={handleOnSelected}
           >
-            {networkBackhaul.map((config) => (
+            {networkBackhaul.map((config, i) => (
               <NodeStatItem
-                key={config.id}
+                id={config.id}
                 name={config.name}
-                value={KPI_PLACEHOLDER_VALUE}
+                unit={config.unit}
+                key={`${config.id}-${i}`}
                 nameInfo={config.description}
+                value={getKPIStatValue(
+                  getMetricValue(config.id, metrics),
+                  loading,
+                )}
               />
             ))}
           </NodeStatsContainer>
@@ -98,24 +108,24 @@ const NodeNetworkTab = ({
         >
           <Stack spacing={4}>
             {selected === 1
-              ? networkBackhaul.map((config) => (
+              ? networkBackhaul.map((config, i) => (
                   <LineChart
-                    key={config.id}
                     from={metricFrom}
                     topic={config.id}
                     loading={loading}
                     title={config.name}
+                    key={`${config.id}-${i}`}
                     hasData={isMetricValue(config.id, metrics)}
                     initData={getMetricValue(config.id, metrics)}
                   />
                 ))
-              : networkCellular.map((config) => (
+              : networkCellular.map((config, i) => (
                   <LineChart
-                    key={config.id}
                     from={metricFrom}
                     topic={config.id}
                     loading={loading}
                     title={config.name}
+                    key={`${config.id}-${i}`}
                     hasData={isMetricValue(config.id, metrics)}
                     initData={getMetricValue(config.id, metrics)}
                   />

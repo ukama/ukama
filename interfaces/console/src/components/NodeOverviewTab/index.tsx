@@ -11,8 +11,8 @@ import {
   Graphs_Type,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { KPI_PLACEHOLDER_VALUE, NODE_KPIS } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
 import { Paper, Stack, capitalize } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
@@ -78,13 +78,16 @@ const NodeOverviewTab = ({
             handleAction={handleOnSelected}
           >
             <NodeStatItem
-              value={`${capitalize(selectedNode?.type.toLowerCase() ?? 'HOME')} Node`}
+              id={null}
               name={'Model type'}
+              value={`${capitalize(selectedNode?.type.toLowerCase() ?? 'HOME')} Node`}
             />
 
             <NodeStatItem
-              value={selectedNode?.id.toLowerCase() ?? '-'}
+              id={null}
+              unit={''}
               name={'Serial #'}
+              value={selectedNode?.id.toLowerCase() ?? '-'}
             />
             {/* {selectedNode?.type === 'TOWER' && (
                 <Grid item xs={12}>
@@ -101,15 +104,20 @@ const NodeOverviewTab = ({
             loading={loading}
             isClickable={true}
             selected={selected}
-            title={'Node Health'}
+            title={'Health'}
             handleAction={handleOnSelected}
           >
-            {healthConfig.map((config) => (
+            {healthConfig.map((config, i) => (
               <NodeStatItem
-                key={config.id}
+                id={config.id}
                 name={config.name}
-                value={KPI_PLACEHOLDER_VALUE}
+                unit={config.unit}
+                key={`${config.id}-${i}`}
                 nameInfo={config.description}
+                value={getKPIStatValue(
+                  getMetricValue(config.id, metrics),
+                  metricsLoading,
+                )}
               />
             ))}
           </NodeStatsContainer>
@@ -122,12 +130,17 @@ const NodeOverviewTab = ({
               title={'Subscribers'}
               handleAction={handleOnSelected}
             >
-              {subscriberConfig.map((config) => (
+              {subscriberConfig.map((config, i) => (
                 <NodeStatItem
-                  key={config.id}
+                  id={config.id}
                   name={config.name}
-                  value={KPI_PLACEHOLDER_VALUE}
+                  unit={config.unit}
+                  key={`${config.id}-${i}`}
                   nameInfo={config.description}
+                  value={getKPIStatValue(
+                    getMetricValue(config.id, metrics),
+                    metricsLoading,
+                  )}
                 />
               ))}
             </NodeStatsContainer>
@@ -154,13 +167,13 @@ const NodeOverviewTab = ({
         >
           {selected === 1 && (
             <Stack spacing={4}>
-              {healthConfig.map((config) => (
+              {healthConfig.map((config, i) => (
                 <LineChart
-                  key={config.id}
                   from={metricFrom}
-                  loading={metricsLoading}
                   topic={config.id}
-                  title={config.description}
+                  title={config.name}
+                  loading={metricsLoading}
+                  key={`${config.id}-${i}`}
                   hasData={isMetricValue(config.id, metrics)}
                   initData={getMetricValue(config.id, metrics)}
                 />
@@ -169,13 +182,13 @@ const NodeOverviewTab = ({
           )}
           {selected === 2 && nodeType === NodeTypeEnum.Tnode && (
             <Stack spacing={4}>
-              {subscriberConfig.map((config) => (
+              {subscriberConfig.map((config, i) => (
                 <LineChart
-                  key={config.id}
                   from={metricFrom}
-                  loading={metricsLoading}
                   topic={config.id}
-                  title={config.description}
+                  title={config.name}
+                  loading={metricsLoading}
+                  key={`${config.id}-${i}`}
                   hasData={isMetricValue(config.id, metrics)}
                   initData={getMetricValue(config.id, metrics)}
                 />

@@ -6,14 +6,18 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { KPI_PLACEHOLDER_VALUE } from '@/constants';
 import { HorizontalContainer } from '@/styles/global';
 import { TVariant } from '@/types';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { IconButton, Tooltip, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Zoom from '@mui/material/Zoom';
+import { useEffect, useState } from 'react';
 
 interface INodeStatItem {
+  id: string | null;
+  unit?: string;
   name: string;
   value: string;
   variant?: TVariant;
@@ -80,6 +84,8 @@ const variants = (variant: TVariant, key: string) => {
 };
 
 const NodeStatItem = ({
+  id,
+  unit,
   name,
   value,
   nameInfo = '',
@@ -87,6 +93,24 @@ const NodeStatItem = ({
   variant = 'medium',
   showAlertInfo = false,
 }: INodeStatItem) => {
+  const [title, setTitle] = useState<string>('');
+
+  useEffect(() => {
+    setTitle(value === KPI_PLACEHOLDER_VALUE ? value : `${value} ${unit}`);
+  }, [value]);
+
+  useEffect(() => {
+    if (id) {
+      PubSub.subscribe(id, (_, data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const sum = data.reduce((acc, val) => acc + val[1], 0);
+          const avg = sum / data.length;
+          setTitle(`${parseFloat(Number(avg).toFixed(2))} ${unit}`);
+        }
+      });
+    }
+  });
+
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: variants(variant, 'NG') }}>
@@ -98,7 +122,7 @@ const NodeStatItem = ({
       </Grid>
       <Grid size={{ xs: variants(variant, 'VG') }}>
         <TextWithToolTip
-          title={value}
+          title={title}
           isAlert={showAlertInfo}
           tooltipText={valueInfo}
           showToottip={!!valueInfo}

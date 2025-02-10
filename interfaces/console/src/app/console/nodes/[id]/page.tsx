@@ -61,18 +61,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
 
-  useEffect(() => {
-    if (!id) {
-      setSnackbarMessage({
-        id: 'node-not-found-msg',
-        message: 'Node not found.',
-        type: 'error',
-        show: true,
-      });
-      router.back();
-    }
-  }, []);
-
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
     skip: !id,
     fetchPolicy: 'cache-and-network',
@@ -129,6 +117,42 @@ const Page: React.FC<INodePage> = ({ params }) => {
       setMetrics(data.getMetricByTab);
     },
   });
+
+  // const
+  //   { loading: nodeMetricsLoading, variables: nodeOverviiewMetricsVariables } = useGetMetricByTabLazyQuery({
+  //   client: subscriptionClient,
+  //   fetchPolicy: 'network-only',
+  //   onCompleted: (data) => {
+  //     setMetrics(data.getMetricByTab);
+  //   },
+  // });
+
+  useEffect(() => {
+    if (!id) {
+      setSnackbarMessage({
+        id: 'node-not-found-msg',
+        message: 'Node not found.',
+        type: 'error',
+        show: true,
+      });
+      router.back();
+    } else {
+      const now = getUnixTime();
+      getNodeMetricByTab({
+        variables: {
+          data: {
+            to: now,
+            nodeId: id,
+            userId: user.id,
+            type: graphType,
+            orgName: user.orgName,
+            withSubscription: true,
+            from: now - METRIC_RANGE_3600,
+          },
+        },
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {

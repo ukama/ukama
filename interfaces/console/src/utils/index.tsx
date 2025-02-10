@@ -19,7 +19,11 @@ import {
   MetricRes,
   MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import {
+  INSTALLATION_FLOW,
+  KPI_PLACEHOLDER_VALUE,
+  ONBOARDING_FLOW,
+} from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -106,80 +110,6 @@ const getGraphFilterByType = (type: string) => {
         to: Math.round(Date.now() / 1000),
         from: Math.round(Date.now() / 1000) - 2628002,
       };
-  }
-};
-
-const getTabByIndex = (index: number) => {
-  switch (index) {
-    case 0:
-      return 'Graphs_Tab.Overview';
-    case 1:
-      return 'Graphs_Tab.Network';
-    case 2:
-      return 'Graphs_Tab.Resources';
-    case 3:
-      return 'Graphs_Tab.Radio';
-    case 4:
-      return 'Graphs_Tab.Home';
-    default:
-      return 'Graphs_Tab.Overview';
-  }
-};
-
-const getTitleByKey = (key: string) => {
-  switch (key) {
-    case 'uptime_trx':
-      return 'Uptime TRX';
-    case 'temperaturetrx':
-      return 'Temp. (TRX)';
-    case 'temperaturerfe':
-      return 'Temp. (RFE)';
-    case 'subscribersactive':
-      return 'Active';
-    case 'subscribersattached':
-      return 'Attached';
-    case 'temperaturectl':
-      return 'Temp. (CTL)';
-    case 'temperaturecom':
-      return 'Temp. (COM)';
-    case 'rrc':
-      return 'RRC CNX success';
-    case 'rlc':
-      return 'RLS  drop rate';
-    case 'erab':
-      return 'ERAB drop rate';
-    case 'throughputuplink':
-      return 'Throughput (U/L)';
-    case 'throughputdownlink':
-      return 'Throughput (D/L)';
-    case 'cputrxusage':
-      return 'CPU-TRX';
-    case 'memorytrxused':
-      return 'Memory-TRX';
-    case 'disktrxused':
-      return 'DISK-TRX';
-    case 'cpuctlused':
-      return 'CPU-CTL';
-    case 'diskctlused':
-      return 'DISK-CTL';
-    case 'memoryctlused':
-      return 'Memory-CTL';
-    case 'powerlevel':
-      return 'Power';
-    case 'cpucomusage':
-      return 'CPU-COM';
-    case 'diskcomused':
-      return 'DISK-COM';
-    case 'memorycomused':
-      return 'Memory-COM';
-    case 'txpower':
-      return 'TX Power';
-    case 'rxpower':
-      return 'RX Power';
-    case 'papower':
-      return 'PA Power';
-    default:
-      return '';
   }
 };
 
@@ -452,6 +382,16 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
+const getKPIStatValue = (values: number[][], loading: boolean): string => {
+  if (loading) return KPI_PLACEHOLDER_VALUE;
+  if (Array.isArray(values) && values.length > 0) {
+    const sum = values.reduce((acc, val) => acc + val[1], 0);
+    const avg = sum / values.length;
+    return `${parseFloat(Number(avg).toFixed(2))}`;
+  }
+  return KPI_PLACEHOLDER_VALUE;
+};
+
 export {
   ConfigureStep,
   fileToBase64,
@@ -462,6 +402,7 @@ export {
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
+  getKPIStatValue,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,
