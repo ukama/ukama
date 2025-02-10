@@ -57,9 +57,9 @@ class SubscriptionsResolvers {
       logger.error(`Error getting base URL for notification: ${baseURL}`);
       return { notifications: [] };
     }
-    const { type, from, nodeId } = data;
+    const { type, from } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metricsKey: string[] = getGraphsKeyByType(type);
     const metrics: MetricsStateRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
@@ -104,9 +104,9 @@ class SubscriptionsResolvers {
       wsUrl = wsUrl.replace("http://", "ws://");
     }
 
-    const { type, from, nodeId, userId, orgName, withSubscription } = data;
+    const { type, from, nodeId, userId, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metricsKey: string[] = getGraphsKeyByType(type);
     const metrics: MetricsRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
@@ -135,7 +135,7 @@ class SubscriptionsResolvers {
         });
 
         let count = 0;
-        const mvalues: [[Number, Number]] = [[0, 0]];
+        const mvalues: [[number, number]] = [[0, 0]];
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
             const res = JSON.parse(_data.data);

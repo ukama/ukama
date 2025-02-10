@@ -121,7 +121,7 @@ const getPaginatedOutput = (
   };
 };
 
-const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
+const getGraphsKeyByType = (type: string): string[] => {
   // TODO: NEED TO UPDATE KPI KEYS
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
