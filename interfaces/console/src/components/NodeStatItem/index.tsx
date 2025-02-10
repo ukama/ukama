@@ -109,7 +109,7 @@ const NodeStatItem = ({
         }
       });
     }
-  });
+  }, [id]);
 
   return (
     <Grid container spacing={2}>

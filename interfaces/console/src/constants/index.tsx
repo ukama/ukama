@@ -250,6 +250,7 @@ export { NodeApps } from './stubData';
 export const KPI_PLACEHOLDER_VALUE = 'NA';
 
 export const NODE_KPIS = {
+  // TODO: NEED TO UPDATE KPI KEYS
   HEALTH: {
     tnode: [
       {
@@ -264,7 +265,7 @@ export const NODE_KPIS = {
         unit: '°',
         show: true,
         name: 'Hardware',
-        id: 'uptime_trx',
+        id: 'trx_soc_cpu_core3_softirq',
         description: 'Hardware health index (Temperature)',
         threshold: { min: 0, normal: 50, max: 100 },
       },

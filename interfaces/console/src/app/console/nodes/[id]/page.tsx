@@ -151,7 +151,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         },
       });
     }
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {

@@ -122,11 +122,12 @@ const getPaginatedOutput = (
 };
 
 const getGraphsKeyByType = (type: string, nodeId: string): string[] => {
+  // TODO: NEED TO UPDATE KPI KEYS
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
-      return ["uptime_trx", "uptime_trx"];
+      return ["uptime_trx", "trx_soc_cpu_core3_softirq"];
     case STATS_TYPE.OVERVIEW:
-      return ["uptime_trx", "uptime_trx", "subscribers_active"];
+      return ["uptime_trx", "trx_soc_cpu_core3_softirq", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
       return ["network_throughput_up", "network_throughput_down"];
     case GRAPHS_TYPE.NETWORK_BACKHAUL:
