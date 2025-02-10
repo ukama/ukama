@@ -1,97 +1,102 @@
 {
-  "services": {
-    "key": "services",
-    "name": "Ukama Services system",
-    "path": "./services"
-  },
-  "init": {
-    "key": "init",
-    "name": "Ukama Init system",
-    "path": "./init"
-  },
-  "nucleus": {
-    "key": "nucleus",
-    "name": "Ukama Nucleus system",
-    "path": "./nucleus"
-  },
-  "inventory": {
-    "key": "inventory",
-    "name": "Ukama Inventory system",
-    "path": "./inventory"
-  },
-  "dataplan": {
-    "key": "dataplan",
-    "name": "Ukama Dataplan system",
-    "path": "./data-plan"
-  },
-  "subscriber": {
-    "key": "subscriber",
-    "name": "Ukama Subscriber system",
-    "path": "./subscriber"
-  },
-  "registry": {
-    "key": "registry",
-    "name": "Ukama Registry system",
-    "path": "./registry"
-  },
-  "report": {
-    "key": "report",
-    "name": "Ukama Report system",
-    "path": "./report"
-  },
-  "notification": {
-    "key": "notification",
-    "name": "Ukama Notification system",
-    "path": "./notification"
-  },
-  "node": {
-    "key": "node",
-    "name": "Ukama Node system",
-    "path": "./node"
-  },
-  "metrics": {
-    "key": "metrics",
-    "name": "Ukama Metrics system",
-    "path": "./metrics"
-  },
-  "messaging": {
-    "key": "messaging",
-    "name": "Ukama Messaging system",
-    "path": "./messaging"
-  },
-  "planner": {
-    "key": "planner",
-    "name": "Ukama Planner system",
-    "path": "./planner"
-  },
-  "hub": {
-    "key": "hub",
-    "name": "Ukama Hub system",
-    "path": "./hub"
-  },
-  "billing": {
-    "key": "billing",
-    "name": "Ukama Billing system",
-    "path": "./billing"
-  },
-  "auth": {
-    "key": "auth",
-    "name": "Ukama Auth system",
-    "path": "./auth"
-  },
-  "bff": {
-    "key": "bff",
-    "name": "Ukama Bff system",
-    "path": "./console-bff"
-  },
-  "console": {
-    "key": "console",
-    "name": "Ukama Console",
-    "path": "../interfaces/console"
-  },
-  "auth-services": {
-    "key": "auth-services",
-    "name": "Ukama Auth Services",
-    "path": "../../../ukama-auth"
-  }
+ "services": {
+  "key": "services",
+  "name": "Ukama Services system",
+  "path": "./services"
+ },
+ "init": {
+  "key": "init",
+  "name": "Ukama Init system",
+  "path": "./init"
+ },
+ "nucleus": {
+  "key": "nucleus",
+  "name": "Ukama Nucleus system",
+  "path": "./nucleus"
+ },
+ "inventory": {
+  "key": "inventory",
+  "name": "Ukama Inventory system",
+  "path": "./inventory"
+ },
+ "dataplan": {
+  "key": "dataplan",
+  "name": "Ukama Dataplan system",
+  "path": "./data-plan"
+ },
+ "subscriber": {
+  "key": "subscriber",
+  "name": "Ukama Subscriber system",
+  "path": "./subscriber"
+ },
+ "registry": {
+  "key": "registry",
+  "name": "Ukama Registry system",
+  "path": "./registry"
+ },
+ "report": {
+  "key": "report",
+  "name": "Ukama Report system",
+  "path": "./report"
+ },
+ "notification": {
+  "key": "notification",
+  "name": "Ukama Notification system",
+  "path": "./notification"
+ },
+ "node": {
+  "key": "node",
+  "name": "Ukama Node system",
+  "path": "./node"
+ },
+ "metrics": {
+  "key": "metrics",
+  "name": "Ukama Metrics system",
+  "path": "./metrics"
+ },
+ "messaging": {
+  "key": "messaging",
+  "name": "Ukama Messaging system",
+  "path": "./messaging"
+ },
+ "planner": {
+  "key": "planner",
+  "name": "Ukama Planner system",
+  "path": "./planner"
+ },
+ "hub": {
+  "key": "hub",
+  "name": "Ukama Hub system",
+  "path": "./hub"
+ },
+ "billing": {
+  "key": "billing",
+  "name": "Ukama Billing system",
+  "path": "./billing"
+ },
+ "auth": {
+  "key": "auth",
+  "name": "Ukama Auth system",
+  "path": "./auth"
+ },
+ "bff": {
+  "key": "bff",
+  "name": "Ukama Bff system",
+  "path": "./console-bff"
+ },
+ "console": {
+  "key": "console",
+  "name": "Ukama Console",
+  "path": "../interfaces/console"
+ },
+ "auth-services": {
+  "key": "auth-services",
+  "name": "Ukama Auth Services",
+  "path": "../../../ukama-auth"
+ },
+ "ukamaagent": {
+  "key": "ukamaagent",
+  "name": "Ukama Agent system",
+  "path": "./ukama-agent"
+ }
 }
