@@ -112,7 +112,7 @@ const NodeStatItem = ({
         PubSub.unsubscribe(token);
       };
     }
-  }, [id]);
+  }, [id, unit]);
 
   return (
     <Grid container spacing={2}>
