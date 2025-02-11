@@ -31,7 +31,11 @@ export const SETTING_MENU = [
 ];
 
 export const NODE_ACTIONS_BUTTONS = [
-  { id: 'node-restart', name: 'Restart' },
+  {
+    id: 'node-restart',
+    name: 'Restart',
+    consent: 'Are you sure you want to restart node?',
+  },
   // { id: 'node-on-off', name: 'Turn Node Off' },
   // { id: 'node-rf-off', name: 'Turn RF Off' },
 ];

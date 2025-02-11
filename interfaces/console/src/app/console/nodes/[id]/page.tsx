@@ -111,7 +111,25 @@ const Page: React.FC<INodePage> = ({ params }) => {
   });
 
   const [restartNode, { loading: restartNodeLoading }] = useRestartNodeMutation(
-    {},
+    {
+      fetchPolicy: 'network-only',
+      onCompleted: () => {
+        setSnackbarMessage({
+          id: 'restart-node-success-msg',
+          message: 'Node restart initiated.',
+          type: 'success',
+          show: true,
+        });
+      },
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'restart-node-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    },
   );
 
   const [
