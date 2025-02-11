@@ -33,14 +33,16 @@ services:
   dummy-controller:
     build: ./dummy-controller
     ports:
-      - 9084:9090
+      - 9063:9090
     networks:
       - ukama-net
     environment:
       - DEBUGMODE=true
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
       - DUMMYCONTROLLER_SERVICE_HOST=dummycontroller
       - DUMMYCONTROLLER_SERVICE_PORT=9090
-      - SITE_ID=${SITE_ID}
+      - SITEID=${SITEID}
+      - ORGNAME=${ORGNAME}
 
   dmetrics:
     build: ./dmetrics
