@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "dummy-controller"
+const ServiceName = "dummycontroller"
 const SystemName = "dummynode"
 
 var IsDebugMode = false
