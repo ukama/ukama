@@ -11,6 +11,8 @@ type BackhaulMetrics struct {
 	Latency float64
 	Status  float64
 	Speed   float64
+	SwitchStatus  float64  
+	SwitchBandwidth float64 
 }
 
 // BatteryMetrics represents battery system measurements
@@ -102,17 +104,34 @@ func NewBackhaulProvider() *BackhaulProvider {
 
 // GetMetrics returns backhaul metrics
 func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
-	latency := 10.0 + (rand.Float64() * 90.0)
 	status := 1.0
 	if rand.Float64() > 0.95 {
 		status = 0.0
 	}
-	speed := 10.0 + (rand.Float64() * 90.0)
+
+	var latency, speed float64
+	
+	if status == 1.0 {
+		latency = 10.0 + (rand.Float64() * 90.0)
+		speed = 10.0 + (rand.Float64() * 90.0)
+	}
+
+	switchStatus := 1.0
+	if rand.Float64() > 0.98 { 
+		switchStatus = 0.0
+	}
+
+	var switchBandwidth float64
+	if switchStatus == 1.0 {
+		switchBandwidth = 100.0 + (rand.Float64() * 900.0)
+	}
 
 	return &BackhaulMetrics{
-		Latency: latency,
-		Status:  status,
-		Speed:   speed,
+		Latency:         latency,
+		Status:          status,
+		Speed:           speed,
+		SwitchStatus:    switchStatus,
+		SwitchBandwidth: switchBandwidth,
 	}
 }
 

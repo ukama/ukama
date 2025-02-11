@@ -1,15 +1,8 @@
 .PHONY: all build docker-build docker-run clean deps
 
-# Default target
-all: build
-
-# Ensure bin directory exists
-bin:
-	mkdir -p bin
-
 # Build the binary
-build: bin deps
-	@echo Building version: \"$(BIN_VER)\"
+build: integration.build
+    @echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/dummy-controller cmd/main.go
 
 

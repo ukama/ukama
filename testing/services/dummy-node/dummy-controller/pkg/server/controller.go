@@ -20,7 +20,8 @@ func NewControllerServer(orgName string) *ControllerServer {
 	}
 }
 
-func (s *ControllerServer) GetMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
+
+func (s *ControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
 	systemMetrics, err := s.metricsProvider.GetMetrics()
 	if err != nil {
 		return nil, err
@@ -43,9 +44,11 @@ func (s *ControllerServer) GetMetrics(ctx context.Context, req *pb.GetSiteMetric
 			Temperature:  systemMetrics.Battery.Temperature,
 		},
 		Network: &pb.NetworkMetrics{
-			BackhaulLatency: systemMetrics.Backhaul.Latency,
-			BackhaulStatus:  systemMetrics.Backhaul.Status,
-			BackhaulSpeed:   systemMetrics.Backhaul.Speed,
+			BackhaulLatency:      systemMetrics.Backhaul.Latency,
+			BackhaulStatus:       systemMetrics.Backhaul.Status,
+			BackhaulSpeed:        systemMetrics.Backhaul.Speed,
+			SwitchPortStatus:     systemMetrics.Backhaul.SwitchStatus,
+			SwitchPortBandwidth:  systemMetrics.Backhaul.SwitchBandwidth,
 		},
 	}, nil
 }
