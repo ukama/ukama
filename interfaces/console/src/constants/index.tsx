@@ -31,9 +31,9 @@ export const SETTING_MENU = [
 ];
 
 export const NODE_ACTIONS_BUTTONS = [
-  { id: 'node-on-off', name: 'Turn Node Off' },
   { id: 'node-restart', name: 'Restart' },
-  { id: 'node-rf-off', name: 'Turn RF Off' },
+  // { id: 'node-on-off', name: 'Turn Node Off' },
+  // { id: 'node-rf-off', name: 'Turn RF Off' },
 ];
 
 export const SITE_CONFIG_STEPS = [

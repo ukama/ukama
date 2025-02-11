@@ -22,9 +22,10 @@ type splitButtonProps = {
   handleSplitActionClick: Function;
 };
 const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
+  const isHaveOptions = options.length > 1;
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = React.useState('node-on-off');
+  const [selectedIndex, setSelectedIndex] = React.useState('node-restart');
 
   const handleOptionSelected = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
@@ -55,7 +56,10 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         variant="contained"
         ref={anchorRef}
         aria-label="split button"
-        sx={{ whiteSpace: 'nowrap', width: '208px' }}
+        sx={{
+          whiteSpace: 'nowrap',
+          width: isHaveOptions ? '208px' : 'fit-content',
+        }}
       >
         <Button
           fullWidth
@@ -67,16 +71,18 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         >
           {options.find((i) => i.id === selectedIndex).name}
         </Button>
-        <Button
-          size="small"
-          aria-controls={open ? 'split-button-menu' : undefined}
-          aria-expanded={open ? 'true' : undefined}
-          aria-label="select merge strategy"
-          aria-haspopup="menu"
-          onClick={handleToggle}
-        >
-          <ArrowDropDownIcon />
-        </Button>
+        {options.length > 1 && (
+          <Button
+            size="small"
+            aria-controls={open ? 'split-button-menu' : undefined}
+            aria-expanded={open ? 'true' : undefined}
+            aria-label="select merge strategy"
+            aria-haspopup="menu"
+            onClick={handleToggle}
+          >
+            <ArrowDropDownIcon />
+          </Button>
+        )}
       </ButtonGroup>
       <Popper
         open={open}

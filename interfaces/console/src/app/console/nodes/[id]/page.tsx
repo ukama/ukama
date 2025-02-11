@@ -13,6 +13,7 @@ import {
   NodeStateEnum,
   NodeTypeEnum,
   useGetNodesByStateQuery,
+  useRestartNodeMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -108,6 +109,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
       });
     },
   });
+
+  const [restartNode, { loading: restartNodeLoading }] = useRestartNodeMutation(
+    {},
+  );
 
   const [
     getNodeMetricByTab,
@@ -253,7 +258,19 @@ const Page: React.FC<INodePage> = ({ params }) => {
     setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
   };
 
-  const handleNodeActionClick = (action: string) => {};
+  const handleNodeActionClick = (action: string) => {
+    switch (action) {
+      case 'node-restart':
+        restartNode({
+          variables: {
+            data: {
+              nodeId: selectedNode?.id ?? '',
+            },
+          },
+        });
+        break;
+    }
+  };
 
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
