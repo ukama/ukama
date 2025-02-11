@@ -9,9 +9,12 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"time"
 
 	"github.com/num30/config"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
@@ -23,6 +26,7 @@ import (
 
 	generated "github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pkg"
+	"github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pkg/metrics"
 	"github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pkg/server"
 )
 
@@ -56,6 +60,11 @@ func runGrpcServer() {
     controllerServer := server.NewControllerServer(
         serviceConfig.OrgName,
     )
+	metricsProvider := metrics.NewMetricsProvider()
+	
+	prometheusExporter := metrics.NewPrometheusExporter(metricsProvider)
+	prometheusExporter.StartMetricsCollection(15 * time.Second) 
+
 
     grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
         generated.RegisterMetricsControllerServer(s, controllerServer)
@@ -63,7 +72,12 @@ func runGrpcServer() {
 
 	go grpcServer.StartServer()
 
-
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			log.Fatalf("Error starting metrics server: %v", err)
+		}
+	}()
 	waitForExit()
 }
 func waitForExit() {

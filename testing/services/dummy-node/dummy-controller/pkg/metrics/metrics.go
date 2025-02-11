@@ -4,7 +4,117 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
+type PrometheusExporter struct {
+	// Solar metrics
+	solarPowerGeneration prometheus.Gauge
+	solarEnergyTotal    prometheus.Gauge
+	solarPanelPower     prometheus.Gauge
+	solarPanelCurrent   prometheus.Gauge
+	solarPanelVoltage   prometheus.Gauge
+	solarInverterStatus prometheus.Gauge
+
+	// Battery metrics
+	batteryChargeStatus prometheus.Gauge
+	batteryVoltage      prometheus.Gauge
+	batteryHealth       prometheus.Gauge
+	batteryCurrent      prometheus.Gauge
+	batteryTemperature  prometheus.Gauge
+
+	// Network metrics
+	backhaulLatency      prometheus.Gauge
+	backhaulStatus       prometheus.Gauge
+	backhaulSpeed        prometheus.Gauge
+	switchPortStatus     prometheus.Gauge
+	switchPortBandwidth  prometheus.Gauge
+
+	metricsProvider *MetricsProvider
+}
+
+
+
+
+
+func NewPrometheusExporter(metricsProvider *MetricsProvider) *PrometheusExporter {
+	exporter := &PrometheusExporter{
+		metricsProvider: metricsProvider,
+
+		// Solar metrics
+		solarPowerGeneration: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_power_generation",
+			Help: "Current solar power generation in watts",
+		}),
+		solarEnergyTotal: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_energy_total",
+			Help: "Total solar energy generated in kilowatt-hours",
+		}),
+		solarPanelPower: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_panel_power",
+			Help: "Current solar panel power in watts",
+		}),
+		solarPanelCurrent: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_panel_current",
+			Help: "Current solar panel current in amperes",
+		}),
+		solarPanelVoltage: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_panel_voltage",
+			Help: "Current solar panel voltage in volts",
+		}),
+		solarInverterStatus: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "solar_inverter_status",
+			Help: "Solar inverter status (1 = working, 0 = not working)",
+		}),
+
+		// Battery metrics
+		batteryChargeStatus: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "battery_charge_status",
+			Help: "Battery charge status in percentage",
+		}),
+		batteryVoltage: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "battery_voltage_volts",
+			Help: "Battery voltage in volts",
+		}),
+		batteryHealth: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "battery_health",
+			Help: "Battery health status (1 = good, 0 = poor)",
+		}),
+		batteryCurrent: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "battery_current",
+			Help: "Battery current in amperes",
+		}),
+		batteryTemperature: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "battery_temperature",
+			Help: "Battery temperature in Celsius",
+		}),
+
+		// Network metrics
+		backhaulLatency: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "backhaul_latency_ms",
+			Help: "Backhaul latency in milliseconds",
+		}),
+		backhaulStatus: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "backhaul_status",
+			Help: "Backhaul status (1 = up, 0 = down)",
+		}),
+		backhaulSpeed: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "backhaul_speed_mbps",
+			Help: "Backhaul speed in Mbps",
+		}),
+		switchPortStatus: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "switch_port_status",
+			Help: "Switch port status (1 = up, 0 = down)",
+		}),
+		switchPortBandwidth: promauto.NewGauge(prometheus.GaugeOpts{
+			Name: "switch_port_bandwidth",
+			Help: "Switch port bandwidth in Mbps",
+		}),
+	}
+
+	return exporter
+}
 
 // BackhaulMetrics represents network backhaul measurements
 type BackhaulMetrics struct {
@@ -233,4 +343,45 @@ func (s *SolarProvider) GetMetrics() *SolarMetrics {
 		PanelVoltage:   panelVoltage,
 		InverterStatus: inverterStatus,
 	}
+}
+func (e *PrometheusExporter) StartMetricsCollection(interval time.Duration) {
+	go func() {
+		ticker := time.NewTicker(interval)
+		for range ticker.C {
+			e.collectMetrics()
+		}
+	}()
+}
+
+func (e *PrometheusExporter) collectMetrics() {
+	metrics, err := e.metricsProvider.GetMetrics()
+	if err != nil {
+		return
+	}
+
+	// Update Solar metrics
+	e.solarPowerGeneration.Set(metrics.Solar.PowerGeneration)
+	e.solarEnergyTotal.Set(metrics.Solar.EnergyTotal)
+	e.solarPanelPower.Set(metrics.Solar.PanelPower)
+	e.solarPanelCurrent.Set(metrics.Solar.PanelCurrent)
+	e.solarPanelVoltage.Set(metrics.Solar.PanelVoltage)
+	e.solarInverterStatus.Set(metrics.Solar.InverterStatus)
+
+	// Update Battery metrics
+	e.batteryChargeStatus.Set(metrics.Battery.Capacity)
+	e.batteryVoltage.Set(metrics.Battery.Voltage)
+	e.batteryHealth.Set(map[string]float64{
+		"Good": 1.0,
+		"Fair": 0.5,
+		"Poor": 0.0,
+	}[metrics.Battery.Health])
+	e.batteryCurrent.Set(metrics.Battery.Current)
+	e.batteryTemperature.Set(metrics.Battery.Temperature)
+
+	// Update Network metrics
+	e.backhaulLatency.Set(metrics.Backhaul.Latency)
+	e.backhaulStatus.Set(metrics.Backhaul.Status)
+	e.backhaulSpeed.Set(metrics.Backhaul.Speed)
+	e.switchPortStatus.Set(metrics.Backhaul.SwitchStatus)
+	e.switchPortBandwidth.Set(metrics.Backhaul.SwitchBandwidth)
 }
