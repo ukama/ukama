@@ -75,9 +75,9 @@ services:
    - postgresd-ukama-agent
 
  node-gateway-ukama-agent:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node-gateway
+  build: ./node-gateway
+  ports:
+   - 8072:8080
   restart: always
   networks:
    ukama-net:
@@ -92,6 +92,8 @@ services:
  api-gateway-ukama-agent:
   build: ./api-gateway
   restart: always
+  ports:
+   - 8073:8080
   networks:
    ukama-net:
     ipv4_address: 10.1.0.102
