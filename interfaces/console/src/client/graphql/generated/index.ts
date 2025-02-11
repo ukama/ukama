@@ -1743,6 +1743,20 @@ export type GetNodeStateQueryVariables = Exact<{
 
 export type GetNodeStateQuery = { __typename?: 'Query', getNodeState: { __typename?: 'NodeStateRes', id: string, nodeId: string, previousStateId?: string | null, previousState?: NodeStateEnum | null, currentState: NodeStateEnum, createdAt: string } };
 
+export type RestartNodeMutationVariables = Exact<{
+  data: RestartNodeInputDto;
+}>;
+
+
+export type RestartNodeMutation = { __typename?: 'Mutation', restartNode: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type ToggleRfMutationVariables = Exact<{
+  data: ToggleInternetSwitchInputDto;
+}>;
+
+
+export type ToggleRfMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
+
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
 export type GetMembersQueryVariables = Exact<{ [key: string]: never; }>;
@@ -3128,6 +3142,72 @@ export type GetNodeStateQueryHookResult = ReturnType<typeof useGetNodeStateQuery
 export type GetNodeStateLazyQueryHookResult = ReturnType<typeof useGetNodeStateLazyQuery>;
 export type GetNodeStateSuspenseQueryHookResult = ReturnType<typeof useGetNodeStateSuspenseQuery>;
 export type GetNodeStateQueryResult = Apollo.QueryResult<GetNodeStateQuery, GetNodeStateQueryVariables>;
+export const RestartNodeDocument = gql`
+    mutation RestartNode($data: RestartNodeInputDto!) {
+  restartNode(data: $data) {
+    success
+  }
+}
+    `;
+export type RestartNodeMutationFn = Apollo.MutationFunction<RestartNodeMutation, RestartNodeMutationVariables>;
+
+/**
+ * __useRestartNodeMutation__
+ *
+ * To run a mutation, you first call `useRestartNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRestartNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [restartNodeMutation, { data, loading, error }] = useRestartNodeMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useRestartNodeMutation(baseOptions?: Apollo.MutationHookOptions<RestartNodeMutation, RestartNodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RestartNodeMutation, RestartNodeMutationVariables>(RestartNodeDocument, options);
+      }
+export type RestartNodeMutationHookResult = ReturnType<typeof useRestartNodeMutation>;
+export type RestartNodeMutationResult = Apollo.MutationResult<RestartNodeMutation>;
+export type RestartNodeMutationOptions = Apollo.BaseMutationOptions<RestartNodeMutation, RestartNodeMutationVariables>;
+export const ToggleRfDocument = gql`
+    mutation ToggleRF($data: ToggleInternetSwitchInputDto!) {
+  toggleInternetSwitch(data: $data) {
+    success
+  }
+}
+    `;
+export type ToggleRfMutationFn = Apollo.MutationFunction<ToggleRfMutation, ToggleRfMutationVariables>;
+
+/**
+ * __useToggleRfMutation__
+ *
+ * To run a mutation, you first call `useToggleRfMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleRfMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [toggleRfMutation, { data, loading, error }] = useToggleRfMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useToggleRfMutation(baseOptions?: Apollo.MutationHookOptions<ToggleRfMutation, ToggleRfMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ToggleRfMutation, ToggleRfMutationVariables>(ToggleRfDocument, options);
+      }
+export type ToggleRfMutationHookResult = ReturnType<typeof useToggleRfMutation>;
+export type ToggleRfMutationResult = Apollo.MutationResult<ToggleRfMutation>;
+export type ToggleRfMutationOptions = Apollo.BaseMutationOptions<ToggleRfMutation, ToggleRfMutationVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

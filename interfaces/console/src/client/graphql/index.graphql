@@ -146,6 +146,18 @@ query GetNodeState($getNodeStateId: String!) {
   }
 }
 
+mutation RestartNode($data: RestartNodeInputDto!) {
+  restartNode(data: $data) {
+    success
+  }
+}
+
+mutation ToggleRF($data: ToggleInternetSwitchInputDto!) {
+  toggleInternetSwitch(data: $data) {
+    success
+  }
+}
+
 ### End Node ###
 
 ### Member Start ###
