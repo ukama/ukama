@@ -5,13 +5,14 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -144,7 +145,7 @@ func init() {
 	prometheus.MustRegister(txpower)
 }
 
-func generateRandomData(nodeId string, profile Profile) {
+func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 	config := []NodeKPIs{
 		// 0-Min, Min-Normal, Normal-Max
 		{
@@ -234,39 +235,55 @@ func generateRandomData(nodeId string, profile Profile) {
 	}
 
 	for {
-		labels := prometheus.Labels{"nodeid": nodeId}
-		values := make(map[string]float64)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			labels := prometheus.Labels{"nodeid": nodeId}
+			values := make(map[string]float64)
 
-		for _, kpi := range config {
-			switch profile {
-			case PROFILE_MIN:
-				values[kpi.Key] = rand.Float64() * kpi.Min
-			case PROFILE_MAX:
-				values[kpi.Key] = rand.Float64()*(kpi.Max-kpi.Normal) + kpi.Normal
-			default:
-				values[kpi.Key] = rand.Float64()*(kpi.Normal-kpi.Min) + kpi.Min
+			for _, kpi := range config {
+				switch profile {
+				case PROFILE_MIN:
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+				case PROFILE_MAX:
+					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
+				default:
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+				}
 			}
+
+			unit_health.With(labels).Set(values["unit_health"])
+			node_load.With(labels).Set(values["node_load"])
+			subscriber_active.With(labels).Set(values["trx_lte_core_active_ue"])
+			cellular_uplink.With(labels).Set(values["cellular_uplink"])
+			cellular_downlink.With(labels).Set(values["cellular_downlink"])
+			backhaul_uplink.With(labels).Set(values["backhaul_uplink"])
+			backhaul_downlink.With(labels).Set(values["backhaul_downlink"])
+			backhaul_latency.With(labels).Set(values["backhaul_latency"])
+			hwd_load.With(labels).Set(values["hwd_load"])
+			memory_usage.With(labels).Set(values["memory_usage"])
+			cpu_usage.With(labels).Set(values["cpu_usage"])
+			disk_usage.With(labels).Set(values["disk_usage"])
+			txpower.With(labels).Set(values["txpower"])
+
+			time.Sleep(1 * time.Second)
 		}
-
-		unit_health.With(labels).Set(values["unit_health"])
-		node_load.With(labels).Set(values["node_load"])
-		subscriber_active.With(labels).Set(values["trx_lte_core_active_ue"])
-		cellular_uplink.With(labels).Set(values["cellular_uplink"])
-		cellular_downlink.With(labels).Set(values["cellular_downlink"])
-		backhaul_uplink.With(labels).Set(values["backhaul_uplink"])
-		backhaul_downlink.With(labels).Set(values["backhaul_downlink"])
-		backhaul_latency.With(labels).Set(values["backhaul_latency"])
-		hwd_load.With(labels).Set(values["hwd_load"])
-		memory_usage.With(labels).Set(values["memory_usage"])
-		cpu_usage.With(labels).Set(values["cpu_usage"])
-		disk_usage.With(labels).Set(values["disk_usage"])
-		txpower.With(labels).Set(values["txpower"])
-
-		time.Sleep(1 * time.Second)
 	}
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+type Server struct {
+	cancelFuncs map[string]context.CancelFunc
+	mu          sync.Mutex
+}
+
+func NewServer() *Server {
+	return &Server{
+		cancelFuncs: make(map[string]context.CancelFunc),
+	}
+}
+
+func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
 	nodeId := r.URL.Query().Get("nodeid")
 	profileStr := r.URL.Query().Get("profile")
 
@@ -288,13 +305,23 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go generateRandomData(nodeId, profile)
+	s.mu.Lock()
+	if cancelFunc, exists := s.cancelFuncs[nodeId]; exists {
+		cancelFunc()
+	}
+	newCtx, cancelFunc := context.WithCancel(context.Background())
+	s.cancelFuncs[nodeId] = cancelFunc
+	s.mu.Unlock()
+
+	go generateRandomData(newCtx, nodeId, profile)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Metrics generation started"))
 }
 
 func main() {
-	http.HandleFunc("/start-metrics", metricsHandler)
+	server := NewServer()
+
+	http.HandleFunc("/start-metrics", server.metricsHandler)
 	http.Handle("/metrics", promhttp.Handler())
 
 	port := "8085"
