@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2024-present, Ukama Inc.
+
+# Script to build and package ukamaOS app
+
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/rootfs"
 

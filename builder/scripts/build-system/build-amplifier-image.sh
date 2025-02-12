@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-set -x
+set -e
 
 STAGE="init"
 DIR="$(pwd)"
