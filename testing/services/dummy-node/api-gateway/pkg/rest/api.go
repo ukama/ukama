@@ -11,3 +11,8 @@ package rest
 type ReqNodeId struct {
 	Id string `example:"{{NodeId}}" json:"id" path:"id" validate:"required"`
 }
+
+type NodeMetricsById struct {
+	Id      string `example:"{{NodeId}}" json:"id" path:"id" validate:"required"`
+	Profile string `example:"PROFILE_NORMAL" json:"profile" query:"profile" validate:"eq=PROFILE_NORMAL|eq=PROFILE_MIN|eq=PROFILE_MAX"`
+}

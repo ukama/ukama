@@ -11,8 +11,6 @@ services:
 
  dnode:
   build: ./dnode
-  ports:
-   - 9061:9090
   environment:
    - DEBUGMODE=true
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
@@ -35,8 +33,7 @@ services:
   ports:
    - 8085:8085
   networks:
-   ukama-net:
-    ipv4_address: 10.1.0.90
+   - ukama-net
 
  api-gateway:
   build: ./api-gateway
