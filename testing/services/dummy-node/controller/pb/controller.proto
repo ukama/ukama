@@ -1,0 +1,58 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+ syntax = "proto3";
+
+ option go_package = "github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pb/gen";
+  
+ package ukama.dummynode.controller.v1;
+
+// Solar metrics data
+message GetSiteMetricsRequest {
+  }
+  
+  message GetSiteMetricsResponse {
+    // Solar metrics
+    SolarMetrics solar = 1;
+    // Battery metrics
+    BatteryMetrics battery = 2;
+    // Network metrics
+    NetworkMetrics network = 3;
+  }
+  
+  message SolarMetrics {
+    double power_generation = 1;
+    double energy_total = 2;
+    double panel_power = 3;
+    double panel_current = 4;
+    double panel_voltage = 5;
+    double inverter_status = 6;
+  }
+  
+  message BatteryMetrics {
+    double charge_status = 1;
+    double voltage = 2;
+    double health = 3;
+    double current = 4;
+    double temperature = 5;
+  }
+  
+  message NetworkMetrics {
+    double switch_port_status = 1;
+    double switch_port_bandwidth = 2;
+    double backhaul_latency = 3;
+    double backhaul_status = 4;
+    double backhaul_speed = 5;
+  }
+// Service definition
+service MetricsController {
+    // Get current metrics
+    rpc GetSiteMetrics(GetSiteMetricsRequest) returns (GetSiteMetricsResponse) {}
+    
+}
+

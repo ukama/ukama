@@ -38,7 +38,7 @@ scrape_configs:
   - job_name: "dummy-controller"
     scrape_interval: 10s
     static_configs:
-      - targets: ["dummy-controller:2112"]
+      - targets: ["controller:2112"]
         labels:
           env: dev
           siteId: 1
