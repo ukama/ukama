@@ -44,7 +44,7 @@ fi
 
 
 # Run the installation
-echo "Installing Alpine Linux $VERSION in $INSTALL_DIR with architecture $ARCH using mirror $FULL_MIRROR..."
+echo "Installing AlpineLinux $VERSION in $INSTALL_DIR with architecture $ARCH using mirror $MIRROR..."
 alpine-chroot-install -d "$INSTALL_DIR" -a "$ARCH" -m "${MIRROR}" -b ${VERSION} -i ${MOUNT_SRC}
 
 # Check if installation was successful

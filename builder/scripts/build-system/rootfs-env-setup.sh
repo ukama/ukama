@@ -65,7 +65,7 @@ fi
 
 # mount dir
 mkdir -p ${INSTALL_DIR}/${MOUNT_DEST}
-if [[ -n "{$MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
+if [[ -n "${MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
   echo "Mounting ${MOUNT_SRC} to ${INSTALL_DIR}/${MOUNT_DEST}"
   mount --bind "${MOUNT_SRC}" "${INSTALL_DIR}/${MOUNT_DEST}"
   if [ $? -eq 0 ]; then
