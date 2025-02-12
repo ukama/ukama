@@ -11,6 +11,7 @@ UKAMAOS_ROOT = ../../
 # Targets
 TAR_LIB := usys
 TARGET_LIB := lib$(TAR_LIB).so
+TARGET_STATIC_LIB := lib$(TAR_LIB).a 
 UTEST_BIN := platform
 DISTRO_DIR:=../
 
@@ -29,13 +30,6 @@ SRC_DIRS := sys/src log/src
 INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(VENDOR_INC)
 BUILD_DIR := build
 TEST_DIRS := test $(UNITY_ROOT)/src
-
-# Compilers and flags
-ifndef XGCC
-XCC:=gcc
-else 
-XCC:=$(XGCC)
-endif
 
 # Libraries
 CURL_LIB=-lcurl -lssl -lcrypto
@@ -99,10 +93,9 @@ $(info CFILES :: $(CFILES))
 $(info OBJFILES :: $(OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGET_LIB) $(TEST_EXE) $(BUILD) formatcodestyle checkcodestyle memcheck clean
-
+.PHONY: install clean memcheck
 # Main target for building
-all: $(TARGET_LIB) $(UTEST_BIN)
+all: $(TARGET_STATIC_LIB) $(TARGET_LIB)
 	@echo Done.
 
 # CLANG FORMAT
@@ -158,25 +151,39 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 # Build Target lib
+$(TARGET_STATIC_LIB): $(OBJFILES)
+	@echo "Building static lib"
+	ar rcs  $(BUILD_DIR)/$@ $^
+
+# Build Target lib 
 $(TARGET_LIB): $(OBJFILES)
 	@echo "Building dynamic lib" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
+	$(CC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
 
 # Build Unit test binary
 $(UTEST_BIN):$(TEST_OBJFILES) $(TARGET_LIB)
-	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TAR_LIB)
+	$(CC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TAR_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
 $(BUILD_DIR)/%.o: %.c 
 	mkdir -p $(dir $@)
-	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
+	$(CC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
 # Memory check
 memcheck: $(UTEST_BIN)
 	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
 
+install: $(TARGET_STATIC_LIB) $(TARGET_LIB)
+	mkdir -p $(VENDOR_BUILD)
+	mkdir -p $(VENDOR_INC)
+	@echo Installing platfrom lib
+	cp -rvf ./sys/inc/*.h $(VENDOR_INC)
+	cp -rvf ./log/inc/*.h $(VENDOR_INC)
+	cp -rvf ./build/libusys.* $(VENDOR_LIB)
+
 # Clean all build files
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
+

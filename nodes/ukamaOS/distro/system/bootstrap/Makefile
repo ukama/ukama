@@ -33,7 +33,7 @@ ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
         VENDOR_PKG=
 else
-	VENDOR_PKG = tomlc curl jansson ulfius libuuid
+	VENDOR_PKG = tomlc jansson ulfius libuuid
 endif
 PLATFORM   = platform
 
@@ -99,15 +99,12 @@ TEST_TARGET_OBJFILES = $(TEST_TARGET_CFILES:.c=.o)
 UNITY_OBJFILES = $(UNITY_CFILES:.c=.o)
 TEST_OBJFILES  = $(TEST_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: all clean test coverage
 
 all: version.h $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
@@ -120,10 +117,10 @@ $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 %.o: %.c
-	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
+	$(CC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
 
 test: version.h $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES)
-	$(XCC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES) $(LDFLAGS) $(LIBS)
 	./$(TEST_EXEC)
 
 coverage: test

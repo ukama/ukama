@@ -32,7 +32,7 @@ ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
         VENDOR_PKG=
 else
-	VENDOR_PKG = tomlc curl jansson ulfius libuuid
+	VENDOR_PKG = tomlc jansson ulfius libuuid
 endif
 PLATFORM = platform
 
@@ -71,9 +71,6 @@ LIBS+=-lusys
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: $(TARGET_EXEC)
 
 all: version.h deviced
@@ -81,7 +78,7 @@ all: version.h deviced
 deviced: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
@@ -93,7 +90,7 @@ $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 install: $(ARTIFACTS) $(VERSION_FILE)
 	mkdir -p $(TARGET_CONFIG_DIR)
