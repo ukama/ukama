@@ -130,7 +130,6 @@ var (
 )
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
 	prometheus.MustRegister(unit_health)
 	prometheus.MustRegister(node_load)
 	prometheus.MustRegister(subscriber_active)
@@ -316,7 +315,10 @@ func (s *Server) metricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	go generateRandomData(newCtx, nodeId, profile)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Metrics generation started"))
+	_, err := w.Write([]byte("Metrics generation started"))
+	if err != nil {
+		log.Printf("Error writing response: %v", err)
+	}
 }
 
 func main() {
