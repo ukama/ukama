@@ -1,6 +1,9 @@
 package metrics
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"time"
@@ -33,6 +36,7 @@ type PrometheusExporter struct {
 
 	metricsProvider *MetricsProvider
 	siteId         string
+	shutdown       chan struct{} 
 }
 
 
@@ -43,7 +47,8 @@ func NewPrometheusExporter(metricsProvider *MetricsProvider,siteId string) *Prom
 	exporter := &PrometheusExporter{
 		metricsProvider: metricsProvider,
 		siteId:          siteId,
-		
+		shutdown:       make(chan struct{}), 
+
 		solarPowerGeneration: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_power_generation",
 			Help: "Current solar power generation in watts",
@@ -331,21 +336,38 @@ func (s *SolarProvider) GetMetrics() *SolarMetrics {
 		InverterStatus: inverterStatus,
 	}
 }
-func (e *PrometheusExporter) StartMetricsCollection(interval time.Duration) {
-	go func() {
-		ticker := time.NewTicker(interval)
-		for range ticker.C {
-			e.collectMetrics()
+
+func (e *PrometheusExporter) StartMetricsCollection(ctx context.Context, interval time.Duration) error {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("Stopping metrics collection due to context cancellation")
+			return ctx.Err()
+		case <-e.shutdown:
+			log.Printf("Stopping metrics collection due to shutdown signal")
+			return nil
+		case <-ticker.C:
+			if err := e.collectMetrics(); err != nil {
+				log.Printf("Error collecting metrics: %v", err)
+			}
 		}
-	}()
+	}
 }
 
-func (e *PrometheusExporter) collectMetrics() {
+func (e *PrometheusExporter) Shutdown() {
+	close(e.shutdown)
+}
+
+func (e *PrometheusExporter) collectMetrics() error {
 	metrics, err := e.metricsProvider.GetMetrics(e.siteId)
 	if err != nil {
-		return
+		return fmt.Errorf("failed to get metrics: %w", err)
 	}
 
+	// Update solar metrics
 	e.solarPowerGeneration.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PowerGeneration)
 	e.solarEnergyTotal.WithLabelValues("kwh", e.siteId).Set(metrics.Solar.EnergyTotal)
 	e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
@@ -353,6 +375,7 @@ func (e *PrometheusExporter) collectMetrics() {
 	e.solarPanelVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.PanelVoltage)
 	e.solarInverterStatus.WithLabelValues("status", e.siteId).Set(metrics.Solar.InverterStatus)
 
+	// Update battery metrics
 	e.batteryChargeStatus.WithLabelValues("capacity", e.siteId).Set(metrics.Battery.Capacity)
 	e.batteryVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Battery.Voltage)
 	e.batteryHealth.WithLabelValues("status", e.siteId).Set(map[string]float64{
@@ -363,9 +386,12 @@ func (e *PrometheusExporter) collectMetrics() {
 	e.batteryCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Battery.Current)
 	e.batteryTemperature.WithLabelValues("celsius", e.siteId).Set(metrics.Battery.Temperature)
 
+	// Update network metrics
 	e.backhaulLatency.WithLabelValues("ms", e.siteId).Set(metrics.Backhaul.Latency)
 	e.backhaulStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.Status)
 	e.backhaulSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.Speed)
 	e.switchPortStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.SwitchStatus)
 	e.switchPortBandwidth.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
+
+	return nil
 }

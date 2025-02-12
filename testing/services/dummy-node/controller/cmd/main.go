@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
@@ -56,7 +57,9 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-  
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
     controllerServer := server.NewControllerServer(
         serviceConfig.OrgName,
 		serviceConfig.SiteId,
@@ -64,8 +67,10 @@ func runGrpcServer() {
 	metricsProvider := metrics.NewMetricsProvider()
 	
 	prometheusExporter := metrics.NewPrometheusExporter(metricsProvider,serviceConfig.SiteId)
-	prometheusExporter.StartMetricsCollection(15 * time.Second) 
-
+	err := prometheusExporter.StartMetricsCollection(ctx, 15*time.Second)
+	if err != nil {
+		log.Errorf("Failed to start metrics collection: %v", err)
+	}
 
     grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
         generated.RegisterMetricsControllerServer(s, controllerServer)
