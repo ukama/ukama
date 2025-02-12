@@ -71,29 +71,33 @@ var defaultPrometheusMetric = map[string]Metric{
 	"subscribers_active":   Metric{false, "trx_lte_core_active_ue", ""},
 	"subscribers_attached": Metric{false, "trx_lte_core_subscribers", ""},
 
+	// New Metrics
+	"unit_health":       Metric{false, "unit_health", ""},
+	"unit_status":       Metric{false, "unit_status", ""},
+	"node_load":         Metric{false, "node_load", ""},
+	"cellular_uplink":   Metric{false, "cellular_uplink", ""},
+	"cellular_downlink": Metric{false, "cellular_downlink", ""},
+	"backhaul_uplink":   Metric{false, "backhaul_uplink", ""},
+	"backhaul_downlink": Metric{false, "backhaul_downlink", ""},
+	"backhaul_latency":  Metric{false, "backhaul_latency", ""},
+	"hwd_load":          Metric{false, "hwd_load", ""},
+	"memory_usage":      Metric{false, "memory_usage", ""},
+	"cpu_usage":         Metric{false, "cpu_usage", ""},
+	"disk_usage":        Metric{false, "disk_usage", ""},
+	"txpower":           Metric{false, "txpower", ""},
+	//
+
 	//Health metrics
-	// TODO: Revet all the temperature metric names to the original names
-	// "temperature_trx": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
-	// "temperature_com": Metric{false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
+	"temperature_trx": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
+	"temperature_com": Metric{false, "com_sensors_tempsensor1_temperature_microprocessor", ""},
 
-	// "temperature_ctl": Metric{false, "ctl_sensors_tempsensor_microprocessor", ""},
-	// "temperature_rfe": Metric{false, "rfe_sensors_tempsensor_pa", ""},
+	"temperature_ctl": Metric{false, "ctl_sensors_tempsensor_microprocessor", ""},
+	"temperature_rfe": Metric{false, "rfe_sensors_tempsensor_pa", ""},
 
-	// "temperature_S1_trx_hn": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
-	// "temperature_S2_trx_hn": Metric{false, "trx_sensors_tempsensor2_temperature", ""},
-	// "temperature_S1_rfe_hn": Metric{false, "rfe_sensors_tempsensor1_pa1", ""},
-	// "temperature_S2_rfe_hn": Metric{false, "rfe_sensors_tempsensor2_pa2", ""},
-
-	"temperature_trx": Metric{false, "trx_soc_cpu_core0_nice", ""},
-	"temperature_com": Metric{false, "trx_soc_cpu_core1_nice", ""},
-
-	"temperature_ctl": Metric{false, "trx_soc_cpu_core2_nice", ""},
-	"temperature_rfe": Metric{false, "trx_soc_cpu_core3_nice", ""},
-
-	"temperature_S1_trx_hn": Metric{false, "trx_soc_cpu_core0_nice", ""},
-	"temperature_S2_trx_hn": Metric{false, "trx_soc_cpu_core1_nice", ""},
-	"temperature_S1_rfe_hn": Metric{false, "trx_soc_cpu_core2_nice", ""},
-	"temperature_S2_rfe_hn": Metric{false, "trx_soc_cpu_core3_nice", ""},
+	"temperature_S1_trx_hn": Metric{false, "trx_sensors_tempsensor1_temperature", ""},
+	"temperature_S2_trx_hn": Metric{false, "trx_sensors_tempsensor2_temperature", ""},
+	"temperature_S1_rfe_hn": Metric{false, "rfe_sensors_tempsensor1_pa1", ""},
+	"temperature_S2_rfe_hn": Metric{false, "rfe_sensors_tempsensor2_pa2", ""},
 
 	//Uptime Metrics
 	"uptime_trx": Metric{false, "trx_generic_system_uptime_seconds", ""},
@@ -101,117 +105,61 @@ var defaultPrometheusMetric = map[string]Metric{
 	"uptime_ctl": Metric{false, "ctl_generic_system_uptime_seconds", ""},
 
 	//Radio Metrics
-	//Power Metrics (TX, RX, PA)
-	// TODO: Revet all the RADIO metric names to the original names
-	// "tx_power": Metric{false, "rfe_sensor_adc_tx_power", ""},
-	// "rx_power": Metric{false, "rfe_sensor_adc_rx_power", ""},
-	// "pa_power": Metric{false, "rfe_sensor_adc_pa_power", ""},
-	"tx_power": Metric{false, "trx_soc_cpu_steal", ""},
-	"rx_power": Metric{false, "trx_soc_cpu_steal", ""},
-	"pa_power": Metric{false, "trx_soc_cpu_steal", ""},
+	"tx_power": Metric{false, "rfe_sensor_adc_tx_power", ""},
+	"rx_power": Metric{false, "rfe_sensor_adc_rx_power", ""},
+	"pa_power": Metric{false, "rfe_sensor_adc_pa_power", ""},
 
 	//Resources Metrics
-	//Memory Metrics (TRX, COM, CTL)
-	// TODO: Revet all the Memory metric names to the original names
-	// "memory_trx_total": Metric{false, "trx_memory_ddr_total", ""},
-	// "memory_trx_used":  Metric{false, "trx_memory_ddr_used", ""},
-	// "memory_trx_free":  Metric{false, "trx_memory_ddr_free", ""},
-
-	// "memory_com_total": Metric{false, "com_memory_ddr_total", ""},
-	// "memory_com_used":  Metric{false, "com_memory_ddr_used", ""},
-	// "memory_com_free":  Metric{false, "com_memory_ddr_free", ""},
-
-	// "memory_ctl_total": Metric{false, "ctl_memory_ddr_total", ""},
-	// "memory_ctl_used":  Metric{false, "ctl_memory_ddr_used", ""},
-	// "memory_ctl_free":  Metric{false, "ctl_memory_ddr_free", ""},
-
 	"memory_trx_total": Metric{false, "trx_memory_ddr_total", ""},
 	"memory_trx_used":  Metric{false, "trx_memory_ddr_used", ""},
 	"memory_trx_free":  Metric{false, "trx_memory_ddr_free", ""},
 
-	"memory_com_total": Metric{false, "trx_memory_ddr_total", ""},
-	"memory_com_used":  Metric{false, "trx_memory_ddr_used", ""},
-	"memory_com_free":  Metric{false, "trx_memory_ddr_free", ""},
+	"memory_com_total": Metric{false, "com_memory_ddr_total", ""},
+	"memory_com_used":  Metric{false, "com_memory_ddr_used", ""},
+	"memory_com_free":  Metric{false, "com_memory_ddr_free", ""},
 
-	"memory_ctl_total": Metric{false, "trx_memory_ddr_total", ""},
-	"memory_ctl_used":  Metric{false, "trx_memory_ddr_used", ""},
-	"memory_ctl_free":  Metric{false, "trx_memory_ddr_free", ""},
+	"memory_ctl_total": Metric{false, "ctl_memory_ddr_total", ""},
+	"memory_ctl_used":  Metric{false, "ctl_memory_ddr_used", ""},
+	"memory_ctl_free":  Metric{false, "ctl_memory_ddr_free", ""},
 
 	//CPU Metrics (TRX, COM, CTL)
-	// TODO: Revet all the Cpu metric names to the original names
-	// "cpu_trx_usage":    Metric{false, "trx_soc_cpu_usage", ""},
-	// "cpu_trx_c0_usage": Metric{false, "trx_soc_cpu_core0_usage", ""},
-	// "cpu_trx_c1_usage": Metric{false, "trx_soc_cpu_core1_usage", ""},
-	// "cpu_trx_c2_usage": Metric{false, "trx_soc_cpu_core2_usage", ""},
-	// "cpu_trx_c3_usage": Metric{false, "trx_soc_cpu_core3_usage", ""},
-
-	// "cpu_com_usage":    Metric{false, "com_soc_cpu_usage", ""},
-	// "cpu_com_c0_usage": Metric{false, "com_soc_cpu_core0_usage", ""},
-	// "cpu_com_c1_usage": Metric{false, "com_soc_cpu_core1_usage", ""},
-	// "cpu_com_c2_usage": Metric{false, "com_soc_cpu_core2_usage", ""},
-	// "cpu_com_c3_usage": Metric{false, "com_soc_cpu_core3_usage", ""},
-
-	// "cpu_ctl_total": Metric{false, "ctl_soc_cpu_usage", ""},
-	// "cpu_ctl_used":  Metric{false, "ctl_soc_cpu_core0_usage", ""},
-
 	"cpu_trx_usage":    Metric{false, "trx_soc_cpu_usage", ""},
-	"cpu_trx_c0_usage": Metric{false, "trx_soc_cpu_core0_system_usage", ""},
-	"cpu_trx_c1_usage": Metric{false, "trx_soc_cpu_core1_system_usage", ""},
-	"cpu_trx_c2_usage": Metric{false, "trx_soc_cpu_core2_system_usage", ""},
-	"cpu_trx_c3_usage": Metric{false, "trx_soc_cpu_core3_system_usage", ""},
+	"cpu_trx_c0_usage": Metric{false, "trx_soc_cpu_core0_usage", ""},
+	"cpu_trx_c1_usage": Metric{false, "trx_soc_cpu_core1_usage", ""},
+	"cpu_trx_c2_usage": Metric{false, "trx_soc_cpu_core2_usage", ""},
+	"cpu_trx_c3_usage": Metric{false, "trx_soc_cpu_core3_usage", ""},
 
-	"cpu_com_usage":    Metric{false, "trx_soc_cpu_usage", ""},
-	"cpu_com_c0_usage": Metric{false, "trx_soc_cpu_core0_system_usage", ""},
-	"cpu_com_c1_usage": Metric{false, "trx_soc_cpu_core1_system_usage", ""},
-	"cpu_com_c2_usage": Metric{false, "trx_soc_cpu_core2_system_usage", ""},
-	"cpu_com_c3_usage": Metric{false, "trx_soc_cpu_core3_system_usage", ""},
+	"cpu_com_usage":    Metric{false, "com_soc_cpu_usage", ""},
+	"cpu_com_c0_usage": Metric{false, "com_soc_cpu_core0_usage", ""},
+	"cpu_com_c1_usage": Metric{false, "com_soc_cpu_core1_usage", ""},
+	"cpu_com_c2_usage": Metric{false, "com_soc_cpu_core2_usage", ""},
+	"cpu_com_c3_usage": Metric{false, "com_soc_cpu_core3_usage", ""},
 
-	"cpu_ctl_total": Metric{false, "trx_soc_cpu_usage", ""},
-	"cpu_ctl_used":  Metric{false, "trx_soc_cpu_core0_system_usage", ""},
+	"cpu_ctl_total": Metric{false, "ctl_soc_cpu_usage", ""},
+	"cpu_ctl_used":  Metric{false, "ctl_soc_cpu_core0_usage", ""},
 
 	//DISK Metrics (TRX, COM, CTL)
-	// TODO: Revet all the Disk metric names to the original names
-	// "disk_trx_total": Metric{false, "trx_storage_emmc_total", ""},
-	// "disk_trx_used":  Metric{false, "trx_storage_emmc_used", ""},
-	// "disk_trx_free":  Metric{false, "trx_storage_emmc_free", ""},
-
-	// "disk_com_total": Metric{false, "com_storage_emmc_total", ""},
-	// "disk_com_used":  Metric{false, "com_storage_emmc_used", ""},
-	// "disk_com_free":  Metric{false, "com_storage_emmc_free", ""},
-
-	// "disk_ctl_total": Metric{false, "ctl_storage_emmc_total", ""},
-	// "disk_ctl_used":  Metric{false, "ctl_storage_emmc_used", ""},
-	// "disk_ctl_free":  Metric{false, "ctl_storage_emmc_free", ""},
-
 	"disk_trx_total": Metric{false, "trx_storage_emmc_total", ""},
 	"disk_trx_used":  Metric{false, "trx_storage_emmc_used", ""},
 	"disk_trx_free":  Metric{false, "trx_storage_emmc_free", ""},
 
-	"disk_com_total": Metric{false, "trx_storage_emmc_total", ""},
-	"disk_com_used":  Metric{false, "trx_storage_emmc_used", ""},
-	"disk_com_free":  Metric{false, "trx_storage_emmc_free", ""},
+	"disk_com_total": Metric{false, "com_storage_emmc_total", ""},
+	"disk_com_used":  Metric{false, "com_storage_emmc_used", ""},
+	"disk_com_free":  Metric{false, "com_storage_emmc_free", ""},
 
-	"disk_ctl_total": Metric{false, "trx_storage_emmc_total", ""},
-	"disk_ctl_used":  Metric{false, "trx_storage_emmc_used", ""},
-	"disk_ctl_free":  Metric{false, "trx_storage_emmc_free", ""},
+	"disk_ctl_total": Metric{false, "ctl_storage_emmc_total", ""},
+	"disk_ctl_used":  Metric{false, "ctl_storage_emmc_used", ""},
+	"disk_ctl_free":  Metric{false, "ctl_storage_emmc_free", ""},
 
 	//Power Level
-	// TODO: Revet all the POWER metric names to the original names
-	// "power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
-	"power_level": Metric{false, "process_resident_memory_bytes", ""},
+	"power_level": Metric{false, "trx_sensors_powermanagement_power", ""},
 
 	// backhaul Metrics
-	// TODO: Revet all the network metric names to the original names
 	"network_latency":         Metric{false, "process_open_fds", ""},
 	"network_packet_loss":     Metric{false, "process_open_fds", ""},
 	"network_overall_status":  Metric{false, "process_open_fds", ""},
 	"network_throughput_up":   Metric{false, "trx_lte_stack_throughput_uplink", ""},
 	"network_throughput_down": Metric{false, "trx_lte_stack_throughput_downlink", ""},
-	// "network_latency":         Metric{false, "network_latency_ms", ""},
-	// "network_packet_loss":     Metric{false, "network_packet_loss", ""},
-	// "network_overall_status":  Metric{false, "network_overall_status", ""},
-	// "network_throughput_up":   Metric{false, "network_throughput_upload", ""},
-	// "network_throughput_down": Metric{false, "network_throughput_download", ""},
 
 	// Solar Power Metrics
 	"solar_power_generation": Metric{false, "solar_power_generation_watts", ""},
@@ -224,6 +172,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"battery_current":        Metric{false, "battery_current_amperes", ""},
 	"battery_temperature":    Metric{false, "battery_temperature", ""},
 	"solar_inverter_status":  Metric{false, "solar_inverter_status", ""},
+
 	// Internet Switch Metrics
 	"switch_port_status":    Metric{false, "switch_port_status", ""},
 	"switch_port_bandwidth": Metric{false, "switch_port_bandwidth_usage", ""},

@@ -125,37 +125,28 @@ const getGraphsKeyByType = (type: string): string[] => {
   // TODO: NEED TO UPDATE KPI KEYS
   switch (type) {
     case GRAPHS_TYPE.NODE_HEALTH:
-      return ["uptime_trx", "temperature_trx"];
+      return ["unit_health", "node_load"];
     case STATS_TYPE.OVERVIEW:
-      return ["uptime_trx", "temperature_trx", "subscribers_active"];
+      return ["unit_health", "node_load", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
-      return ["network_throughput_up", "network_throughput_down"];
+      return ["cellular_uplink", "cellular_downlink"];
     case GRAPHS_TYPE.NETWORK_BACKHAUL:
-      return [
-        "network_throughput_up",
-        "network_throughput_down",
-        "network_latency",
-      ];
+      return ["backhaul_uplink", "backhaul_downlink", "backhaul_latency"];
     case STATS_TYPE.NETWORK:
       return [
-        "network_throughput_up",
-        "network_throughput_down",
-        "network_throughput_up",
-        "network_throughput_down",
-        "network_latency",
+        "cellular_uplink",
+        "cellular_downlink",
+        "backhaul_uplink",
+        "backhaul_downlink",
+        "backhaul_latency",
       ];
 
     case STATS_TYPE.RESOURCES:
     case GRAPHS_TYPE.RESOURCES:
-      return [
-        "cpu_trx_usage",
-        "memory_trx_used",
-        "cpu_trx_usage",
-        "disk_trx_used",
-      ];
+      return ["hwd_load", "memory_usage", "cpu_usage", "disk_usage"];
     case STATS_TYPE.RADIO:
     case GRAPHS_TYPE.RADIO:
-      return ["tx_power"];
+      return ["txpower"];
     default:
       return [];
   }

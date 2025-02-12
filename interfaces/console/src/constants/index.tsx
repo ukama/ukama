@@ -251,27 +251,26 @@ export const NODE_IMAGES = {
 
 export { NodeApps } from './stubData';
 
-export const KPI_PLACEHOLDER_VALUE = 'NA';
+export const KPI_PLACEHOLDER_VALUE = '-';
 
 export const NODE_KPIS = {
-  // TODO: NEED TO UPDATE KPI KEYS
   HEALTH: {
     tnode: [
       {
         unit: '%',
         show: true,
         name: 'Load',
-        id: 'uptime_trx',
+        id: 'node_load',
         description: 'Node Load index',
-        threshold: { min: 0, normal: 50, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
       },
       {
         unit: '°',
         show: true,
         name: 'Hardware',
-        id: 'temperature_trx',
+        id: 'unit_health',
         description: 'Hardware health index (Temperature)',
-        threshold: { min: 0, normal: 50, max: 100 },
+        threshold: { min: 50, normal: 80, max: 100 },
       },
     ],
   },
@@ -293,14 +292,14 @@ export const NODE_KPIS = {
         name: 'Uplink',
         description: '',
         threshold: null,
-        id: 'network_throughput_up',
+        id: 'cellular_uplink',
       },
       {
         unit: 'Mbps',
         description: '',
         threshold: null,
         name: 'Downlink',
-        id: 'network_throughput_down',
+        id: 'cellular_downlink',
       },
     ],
   },
@@ -310,54 +309,54 @@ export const NODE_KPIS = {
         unit: 'Mbps',
         description: '',
         name: 'Uplink',
-        id: 'network_throughput_up',
+        id: 'backhaul_uplink',
         threshold: null,
       },
       {
         unit: 'Mbps',
         description: '',
         name: 'Downlink',
-        id: 'network_throughput_down',
+        id: 'backhaul_downlink',
         threshold: null,
       },
       {
         unit: 'ms',
         name: 'Latency',
         description: '',
-        id: 'network_latency',
-        threshold: { min: 0, normal: 50, max: 100 },
+        id: 'backhaul_latency',
+        threshold: { min: 30, normal: 50, max: 80 },
       },
     ],
   },
   RESOURCES: {
     tnode: [
       {
-        name: 'Load index',
-        id: 'cpu_trx_usage',
+        name: 'Load',
+        id: 'hwd_load',
         unit: '%',
         description: 'Hardware focus  NLI',
-        threshold: { min: 0, normal: 50, max: 100 },
+        threshold: { min: 50, normal: 70, max: 80 },
       },
       {
         unit: '',
         name: 'Memory',
         description: '',
-        id: 'memory_trx_used',
-        threshold: { min: 0, normal: 50, max: 100 },
+        id: 'memory_usage',
+        threshold: { min: 40, normal: 70, max: 80 },
       },
       {
         unit: '',
         name: 'CPU',
         description: '',
-        id: 'cpu_trx_usage',
-        threshold: { min: 0, normal: 50, max: 100 },
+        id: 'cpu_usage',
+        threshold: { min: 40, normal: 70, max: 80 },
       },
       {
         unit: '',
         name: 'Disk',
         description: '',
-        id: 'disk_trx_used',
-        threshold: { min: 0, normal: 50, max: 100 },
+        id: 'disk_usage',
+        threshold: { min: 40, normal: 70, max: 80 },
       },
     ],
   },
@@ -365,10 +364,10 @@ export const NODE_KPIS = {
     tnode: [
       {
         unit: 'dBm',
-        id: 'tx_power',
+        id: 'txpower',
         description: '',
         name: 'TX Power',
-        threshold: { min: 0, normal: 50, max: 100 },
+        threshold: { min: 30, normal: 60, max: 95 },
       },
     ],
   },
