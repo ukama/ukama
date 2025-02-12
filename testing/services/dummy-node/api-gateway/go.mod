@@ -8,8 +8,6 @@ replace github.com/ukama/ukama/testing/services/dummy-node/api-gateway => ./
 
 replace github.com/ukama/ukama/testing/services/dummy-node/dnode => ../dnode
 
-replace github.com/ukama/ukama/testing/services/dummy-node/dmetrics => ../dmetrics
-
 require (
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-gonic/gin v1.10.0

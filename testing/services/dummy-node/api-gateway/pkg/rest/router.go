@@ -23,7 +23,6 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	mpb "github.com/ukama/ukama/testing/services/dummy-node/dmetrics/pb/gen"
 	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 )
 
@@ -40,8 +39,7 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Node     node
-	Dmetrics dmetrics
+	Node node
 }
 
 type node interface {
@@ -52,14 +50,9 @@ type node interface {
 	TurnNodeOnline(id string) (*pb.Response, error)
 }
 
-type dmetrics interface {
-	NodeMetrics(id string, profile string) (*mpb.Response, error)
-}
-
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Node = client.NewNodeService(endpoints.Node, endpoints.Timeout)
-	c.Dmetrics = client.NewDmetricsService(endpoints.Dmetrics, endpoints.Timeout)
 
 	return c
 }
@@ -105,9 +98,6 @@ func (r *Router) init() {
 	d.PUT("/:id/rf-on", formatDoc("Node RF ON", "Turn node rf on by id"), tonic.Handler(r.turnRFOnByid, http.StatusOK))
 	d.PUT("/:id/off", formatDoc("Turn node OFF", "Turn node off by id"), tonic.Handler(r.turnNodeOffByid, http.StatusOK))
 	d.PUT("/:id/online", formatDoc("Turn node ONLINE", "Turn node online by id"), tonic.Handler(r.turnNodeOnlineByid, http.StatusOK))
-
-	m := group.Group("dmetrics", "Dummy node", "Dummy node metrics")
-	m.POST("/:id", formatDoc("Initiate node metrics", "Run node metrics"), tonic.Handler(r.metricsById, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -135,8 +125,4 @@ func (r *Router) turnRFOnByid(c *gin.Context, req *ReqNodeId) (*pb.Response, err
 
 func (r *Router) turnNodeOnlineByid(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
 	return r.clients.Node.TurnNodeOnline(req.Id)
-}
-
-func (r *Router) metricsById(c *gin.Context, req *NodeMetricsById) (*mpb.Response, error) {
-	return r.clients.Dmetrics.NodeMetrics(req.Id, req.Profile)
 }
