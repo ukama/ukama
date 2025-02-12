@@ -261,7 +261,7 @@ func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
 	
 	voltage := 11.4 + (capacity/100.0 * 1.2)
 	
-	current := 0.1
+	var current float64
 	if charging {
 		current = 2.0 + (dayNightCycle * 0.5)
 	} else {

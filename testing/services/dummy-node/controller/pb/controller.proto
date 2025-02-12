@@ -8,7 +8,7 @@
 
  syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/testing/services/dummy-node/dummy-controller/pb/gen";
+ option go_package = "github.com/ukama/ukama/testing/services/dummy-node/controller/pb/gen";
   
  package ukama.dummynode.controller.v1;
 

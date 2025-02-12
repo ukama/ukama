@@ -30,8 +30,8 @@ services:
     depends_on:
       - msgclient-dummy-node
 
-  dummy-controller:
-    build: ./dummy-controller
+  controller:
+    build: ./controller
     ports:
       - 9065:9090
     networks:
@@ -39,8 +39,8 @@ services:
     environment:
       - DEBUGMODE=true
       - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - DUMMYCONTROLLER_SERVICE_HOST=dummycontroller
-      - DUMMYCONTROLLER_SERVICE_PORT=9090
+      - CONTROLLER_SERVICE_HOST=controller
+      - CONTROLLER_SERVICE_PORT=9090
       - SITEID=${SITEID}
       - ORGNAME=${ORGNAME}
 
