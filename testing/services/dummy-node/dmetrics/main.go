@@ -130,6 +130,7 @@ var (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	prometheus.MustRegister(unit_health)
 	prometheus.MustRegister(node_load)
 	prometheus.MustRegister(subscriber_active)

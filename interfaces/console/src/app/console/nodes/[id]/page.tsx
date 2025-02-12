@@ -124,7 +124,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       onError: (err) => {
         setSnackbarMessage({
           id: 'restart-node-err-msg',
-          message: err.message,
+          message: "Couldn't restart node.",
           type: 'error',
           show: true,
         });
@@ -287,6 +287,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
+      default:
+        return;
     }
   };
 

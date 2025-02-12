@@ -32,7 +32,7 @@ jobs:
       uses: denispalnitsky/gitops-release@v9
       with:
         filename: "releases/ukamax/pr-env.yaml"
-        key: "dummyNodeDmetricsImageTag"
+        key: "dmetricsImageTag"
         value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"

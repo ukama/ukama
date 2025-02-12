@@ -27,7 +27,9 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
   const [consentDialog, setConsentDialog] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState('node-restart');
+  const [selectedIndex, setSelectedIndex] = React.useState(
+    options[0]?.id || 'node-restart',
+  );
 
   const handleOptionSelected = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
