@@ -10,113 +10,115 @@ import (
 )
 type PrometheusExporter struct {
 	// Solar metrics
-	solarPowerGeneration prometheus.Gauge
-	solarEnergyTotal    prometheus.Gauge
-	solarPanelPower     prometheus.Gauge
-	solarPanelCurrent   prometheus.Gauge
-	solarPanelVoltage   prometheus.Gauge
-	solarInverterStatus prometheus.Gauge
+	solarPowerGeneration *prometheus.GaugeVec
+	solarEnergyTotal    *prometheus.GaugeVec
+	solarPanelPower     *prometheus.GaugeVec
+	solarPanelCurrent   *prometheus.GaugeVec
+	solarPanelVoltage   *prometheus.GaugeVec
+	solarInverterStatus *prometheus.GaugeVec
 
 	// Battery metrics
-	batteryChargeStatus prometheus.Gauge
-	batteryVoltage      prometheus.Gauge
-	batteryHealth       prometheus.Gauge
-	batteryCurrent      prometheus.Gauge
-	batteryTemperature  prometheus.Gauge
+	batteryChargeStatus *prometheus.GaugeVec
+	batteryVoltage      *prometheus.GaugeVec
+	batteryHealth       *prometheus.GaugeVec
+	batteryCurrent      *prometheus.GaugeVec
+	batteryTemperature  *prometheus.GaugeVec
 
 	// Network metrics
-	backhaulLatency      prometheus.Gauge
-	backhaulStatus       prometheus.Gauge
-	backhaulSpeed        prometheus.Gauge
-	switchPortStatus     prometheus.Gauge
-	switchPortBandwidth  prometheus.Gauge
+	backhaulLatency      *prometheus.GaugeVec
+	backhaulStatus       *prometheus.GaugeVec
+	backhaulSpeed        *prometheus.GaugeVec
+	switchPortStatus     *prometheus.GaugeVec
+	switchPortBandwidth  *prometheus.GaugeVec
 
 	metricsProvider *MetricsProvider
+	siteId         string
 }
 
 
 
 
 
-func NewPrometheusExporter(metricsProvider *MetricsProvider) *PrometheusExporter {
+func NewPrometheusExporter(metricsProvider *MetricsProvider,siteId string) *PrometheusExporter {
 	exporter := &PrometheusExporter{
 		metricsProvider: metricsProvider,
-
-		// Solar metrics
-		solarPowerGeneration: promauto.NewGauge(prometheus.GaugeOpts{
+		siteId:          siteId,
+		
+		solarPowerGeneration: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_power_generation",
 			Help: "Current solar power generation in watts",
-		}),
-		solarEnergyTotal: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+
+		solarEnergyTotal: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_energy_total",
 			Help: "Total solar energy generated in kilowatt-hours",
-		}),
-		solarPanelPower: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+
+		solarPanelPower: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_power",
 			Help: "Current solar panel power in watts",
-		}),
-		solarPanelCurrent: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		solarPanelCurrent: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_current",
 			Help: "Current solar panel current in amperes",
-		}),
-		solarPanelVoltage: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		solarPanelVoltage: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_panel_voltage",
 			Help: "Current solar panel voltage in volts",
-		}),
-		solarInverterStatus: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		solarInverterStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_inverter_status",
 			Help: "Solar inverter status (1 = working, 0 = not working)",
-		}),
+		}, []string{"unit","site"}),
 
 		// Battery metrics
-		batteryChargeStatus: promauto.NewGauge(prometheus.GaugeOpts{
+		batteryChargeStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_charge_status",
 			Help: "Battery charge status in percentage",
-		}),
-		batteryVoltage: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		batteryVoltage: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_voltage_volts",
 			Help: "Battery voltage in volts",
-		}),
-		batteryHealth: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		batteryHealth: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_health",
 			Help: "Battery health status (1 = good, 0 = poor)",
-		}),
-		batteryCurrent: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		batteryCurrent: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_current",
 			Help: "Battery current in amperes",
-		}),
-		batteryTemperature: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		batteryTemperature: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "battery_temperature",
 			Help: "Battery temperature in Celsius",
-		}),
+		}, []string{"unit","site"}),
 
 		// Network metrics
-		backhaulLatency: promauto.NewGauge(prometheus.GaugeOpts{
-			Name: "backhaul_latency_ms",
+		backhaulLatency: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "backhaul_latency",
 			Help: "Backhaul latency in milliseconds",
-		}),
-		backhaulStatus: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		backhaulStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "backhaul_status",
 			Help: "Backhaul status (1 = up, 0 = down)",
-		}),
-		backhaulSpeed: promauto.NewGauge(prometheus.GaugeOpts{
-			Name: "backhaul_speed_mbps",
+		}, []string{"unit","site"}),
+		backhaulSpeed: promauto.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "backhaul_speed",
 			Help: "Backhaul speed in Mbps",
-		}),
-		switchPortStatus: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		switchPortStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "switch_port_status",
 			Help: "Switch port status (1 = up, 0 = down)",
-		}),
-		switchPortBandwidth: promauto.NewGauge(prometheus.GaugeOpts{
+		}, []string{"unit","site"}),
+		switchPortBandwidth: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "switch_port_bandwidth",
 			Help: "Switch port bandwidth in Mbps",
-		}),
+		}, []string{"unit","site"}),
 	}
 
 	return exporter
 }
 
-// BackhaulMetrics represents network backhaul measurements
 type BackhaulMetrics struct {
 	Latency float64
 	Status  float64
@@ -125,7 +127,6 @@ type BackhaulMetrics struct {
 	SwitchBandwidth float64 
 }
 
-// BatteryMetrics represents battery system measurements
 type BatteryMetrics struct {
 	Capacity    float64
 	Voltage     float64
@@ -135,7 +136,6 @@ type BatteryMetrics struct {
 	Health      string
 }
 
-// SolarMetrics represents solar system measurements
 type SolarMetrics struct {
 	PowerGeneration float64
 	EnergyTotal    float64
@@ -145,7 +145,6 @@ type SolarMetrics struct {
 	InverterStatus float64
 }
 
-// SystemMetrics combines all metrics into a single structure
 type ControllerMetrics struct {
 	Backhaul *BackhaulMetrics
 	Battery  *BatteryMetrics
@@ -153,33 +152,28 @@ type ControllerMetrics struct {
 	Time     time.Time
 }
 
-// BackhaulProvider handles backhaul metrics collection
 type BackhaulProvider struct {
 	lastUpdate time.Time
 }
 
-// BatteryProvider handles battery metrics collection
 type BatteryProvider struct {
 	startTime    time.Time
 	lastCapacity float64
 	cycleCount   int
 }
 
-// SolarProvider handles solar metrics collection
 type SolarProvider struct {
 	startTime      time.Time
 	energyTotal    float64
 	weatherPattern float64
 }
 
-// MetricsProvider combines all providers into a single interface
 type MetricsProvider struct {
 	backhaul *BackhaulProvider
 	battery  *BatteryProvider
 	solar    *SolarProvider
 }
 
-// NewMetricsProvider creates a new instance of the combined metrics provider
 func NewMetricsProvider() *MetricsProvider {
 	return &MetricsProvider{
 		backhaul: NewBackhaulProvider(),
@@ -188,8 +182,7 @@ func NewMetricsProvider() *MetricsProvider {
 	}
 }
 
-// GetMetrics returns all system metrics
-func (m *MetricsProvider) GetMetrics() (*ControllerMetrics, error) {
+func (m *MetricsProvider) GetMetrics(siteId string) (*ControllerMetrics, error) {
 	backhaulMetrics := m.backhaul.GetMetrics()
 	batteryMetrics, err := m.battery.GetMetrics()
 	if err != nil {
@@ -205,14 +198,12 @@ func (m *MetricsProvider) GetMetrics() (*ControllerMetrics, error) {
 	}, nil
 }
 
-// NewBackhaulProvider creates a new backhaul provider
 func NewBackhaulProvider() *BackhaulProvider {
 	return &BackhaulProvider{
 		lastUpdate: time.Now(),
 	}
 }
 
-// GetMetrics returns backhaul metrics
 func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
 	status := 1.0
 	if rand.Float64() > 0.95 {
@@ -245,7 +236,6 @@ func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
 	}
 }
 
-// NewBatteryProvider creates a new battery provider
 func NewBatteryProvider() *BatteryProvider {
 	return &BatteryProvider{
 		startTime:    time.Now(),
@@ -254,7 +244,6 @@ func NewBatteryProvider() *BatteryProvider {
 	}
 }
 
-// GetMetrics returns battery metrics
 func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
 	elapsed := time.Since(m.startTime).Seconds()
 	
@@ -302,7 +291,6 @@ func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
 	}, nil
 }
 
-// NewSolarProvider creates a new solar provider
 func NewSolarProvider() *SolarProvider {
 	return &SolarProvider{
 		startTime:      time.Now(),
@@ -311,7 +299,6 @@ func NewSolarProvider() *SolarProvider {
 	}
 }
 
-// GetMetrics returns solar metrics
 func (s *SolarProvider) GetMetrics() *SolarMetrics {
 	elapsed := time.Since(s.startTime).Seconds()
 	
@@ -354,34 +341,31 @@ func (e *PrometheusExporter) StartMetricsCollection(interval time.Duration) {
 }
 
 func (e *PrometheusExporter) collectMetrics() {
-	metrics, err := e.metricsProvider.GetMetrics()
+	metrics, err := e.metricsProvider.GetMetrics(e.siteId)
 	if err != nil {
 		return
 	}
 
-	// Update Solar metrics
-	e.solarPowerGeneration.Set(metrics.Solar.PowerGeneration)
-	e.solarEnergyTotal.Set(metrics.Solar.EnergyTotal)
-	e.solarPanelPower.Set(metrics.Solar.PanelPower)
-	e.solarPanelCurrent.Set(metrics.Solar.PanelCurrent)
-	e.solarPanelVoltage.Set(metrics.Solar.PanelVoltage)
-	e.solarInverterStatus.Set(metrics.Solar.InverterStatus)
+	e.solarPowerGeneration.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PowerGeneration)
+	e.solarEnergyTotal.WithLabelValues("kwh", e.siteId).Set(metrics.Solar.EnergyTotal)
+	e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
+	e.solarPanelCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Solar.PanelCurrent)
+	e.solarPanelVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.PanelVoltage)
+	e.solarInverterStatus.WithLabelValues("status", e.siteId).Set(metrics.Solar.InverterStatus)
 
-	// Update Battery metrics
-	e.batteryChargeStatus.Set(metrics.Battery.Capacity)
-	e.batteryVoltage.Set(metrics.Battery.Voltage)
-	e.batteryHealth.Set(map[string]float64{
+	e.batteryChargeStatus.WithLabelValues("capacity", e.siteId).Set(metrics.Battery.Capacity)
+	e.batteryVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Battery.Voltage)
+	e.batteryHealth.WithLabelValues("status", e.siteId).Set(map[string]float64{
 		"Good": 1.0,
 		"Fair": 0.5,
 		"Poor": 0.0,
 	}[metrics.Battery.Health])
-	e.batteryCurrent.Set(metrics.Battery.Current)
-	e.batteryTemperature.Set(metrics.Battery.Temperature)
+	e.batteryCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Battery.Current)
+	e.batteryTemperature.WithLabelValues("celsius", e.siteId).Set(metrics.Battery.Temperature)
 
-	// Update Network metrics
-	e.backhaulLatency.Set(metrics.Backhaul.Latency)
-	e.backhaulStatus.Set(metrics.Backhaul.Status)
-	e.backhaulSpeed.Set(metrics.Backhaul.Speed)
-	e.switchPortStatus.Set(metrics.Backhaul.SwitchStatus)
-	e.switchPortBandwidth.Set(metrics.Backhaul.SwitchBandwidth)
+	e.backhaulLatency.WithLabelValues("ms", e.siteId).Set(metrics.Backhaul.Latency)
+	e.backhaulStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.Status)
+	e.backhaulSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.Speed)
+	e.switchPortStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.SwitchStatus)
+	e.switchPortBandwidth.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
 }

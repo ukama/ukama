@@ -59,10 +59,11 @@ func runGrpcServer() {
   
     controllerServer := server.NewControllerServer(
         serviceConfig.OrgName,
+		serviceConfig.SiteId,
     )
 	metricsProvider := metrics.NewMetricsProvider()
 	
-	prometheusExporter := metrics.NewPrometheusExporter(metricsProvider)
+	prometheusExporter := metrics.NewPrometheusExporter(metricsProvider,serviceConfig.SiteId)
 	prometheusExporter.StartMetricsCollection(15 * time.Second) 
 
 

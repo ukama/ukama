@@ -214,20 +214,26 @@ var defaultPrometheusMetric = map[string]Metric{
 	// "network_throughput_down": Metric{false, "network_throughput_download", ""},
 
 	// Solar Power Metrics
-	"solar_power_generation": Metric{false, "solar_power_generation_watts", ""},
-	"solar_energy_total":     Metric{false, "solar_energy_total_kwh", ""},
-	"solar_panel_power":      Metric{false, "solar_panel_power_watts", ""},
-	"solar_panel_current":    Metric{false, "solar_panel_current_amperes", ""},
+	"solar_power_generation": Metric{false, "solar_power_generation", ""},
+	"solar_energy_total":     Metric{false, "solar_energy_total", ""},
+	"solar_panel_power":      Metric{false, "solar_panel_power", ""},
+	"solar_panel_current":    Metric{false, "solar_panel_current", ""},
 	"battery_charge_status":  Metric{false, "battery_charge_status", ""},
-	"battery_voltage":        Metric{false, "battery_voltage_volts", ""},
-	"battery_health":         Metric{false, "battery_health_percent", ""},
-	"battery_current":        Metric{false, "battery_current_amperes", ""},
+	"battery_voltage":        Metric{false, "battery_voltage", ""},
+	"battery_health":         Metric{false, "battery_health", ""},
+	"battery_current":        Metric{false, "battery_current", ""},
 	"battery_temperature":    Metric{false, "battery_temperature", ""},
 	"solar_inverter_status":  Metric{false, "solar_inverter_status", ""},
 	// Internet Switch Metrics
 	"switch_port_status":    Metric{false, "switch_port_status", ""},
 	"switch_port_bandwidth": Metric{false, "switch_port_bandwidth_usage", ""},
+	"backhaul_latency":      Metric{false,"backhaul_latency",""},
+    "backhaul_status":       Metric{false,"backhaul_status",""},
+    "backhaul_speed":        Metric{false,"backhaul_speed",""},
+
 }
+
+
 
 type GrpcEndpoints struct {
 	Timeout  time.Duration

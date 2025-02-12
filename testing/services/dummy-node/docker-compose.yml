@@ -33,7 +33,7 @@ services:
   dummy-controller:
     build: ./dummy-controller
     ports:
-      - 9063:9090
+      - 9065:9090
     networks:
       - ukama-net
     environment:

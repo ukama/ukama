@@ -11,18 +11,20 @@ type ControllerServer struct {
 	pb.UnimplementedMetricsControllerServer
 	orgName        string
 	metricsProvider *metrics.MetricsProvider
+	siteId          string
 }
 
-func NewControllerServer(orgName string) *ControllerServer {
+func NewControllerServer(orgName string, siteId string) *ControllerServer {
 	return &ControllerServer{
 		orgName:         orgName,
 		metricsProvider: metrics.NewMetricsProvider(),
+		siteId:          siteId,
 	}
 }
 
 
 func (s *ControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
-	systemMetrics, err := s.metricsProvider.GetMetrics()
+	systemMetrics, err := s.metricsProvider.GetMetrics(s.siteId)
 	if err != nil {
 		return nil, err
 	}
