@@ -49,6 +49,7 @@ const NodeResourcesTab = ({
               name={config.name}
               unit={config.unit}
               key={`${config.id}-${i}`}
+              threshold={config.threshold}
               nameInfo={config.description}
               value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
             />

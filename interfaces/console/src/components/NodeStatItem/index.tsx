@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { KPI_PLACEHOLDER_VALUE } from '@/constants';
 import { HorizontalContainer } from '@/styles/global';
 import { TVariant } from '@/types';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -15,12 +14,19 @@ import Grid from '@mui/material/Grid2';
 import Zoom from '@mui/material/Zoom';
 import { useEffect, useState } from 'react';
 
+interface IThreshold {
+  min: number;
+  normal: number;
+  max: number;
+}
+
 interface INodeStatItem {
   id: string | null;
   unit?: string;
   name: string;
   value: string;
   variant?: TVariant;
+  threshold?: IThreshold | null;
   nameInfo?: string; //Tooltip info about stat
   valueInfo?: string; //Tooltip info about stat value
   showAlertInfo?: boolean; //Pass true if its an alert value
@@ -88,15 +94,16 @@ const NodeStatItem = ({
   unit,
   name,
   value,
+  threshold,
   nameInfo = '',
   valueInfo = '',
   variant = 'medium',
   showAlertInfo = false,
 }: INodeStatItem) => {
-  const [title, setTitle] = useState<string>('');
+  const [v, setV] = useState<string>('');
 
   useEffect(() => {
-    setTitle(value === KPI_PLACEHOLDER_VALUE ? value : `${value} ${unit}`);
+    setV(value);
   }, [value]);
 
   useEffect(() => {
@@ -105,7 +112,7 @@ const NodeStatItem = ({
         if (Array.isArray(data) && data.length > 0) {
           const sum = data.reduce((acc, val) => acc + val[1], 0);
           const avg = sum / data.length;
-          setTitle(`${parseFloat(Number(avg).toFixed(2))} ${unit}`);
+          setV(`${parseFloat(Number(avg).toFixed(2))}`);
         }
       });
       return () => {
@@ -113,6 +120,13 @@ const NodeStatItem = ({
       };
     }
   }, [id, unit]);
+
+  const isAlert = (): boolean => {
+    if (id && threshold && parseFloat(v) > threshold.normal) {
+      return true;
+    }
+    return false;
+  };
 
   return (
     <Grid container spacing={2}>
@@ -125,8 +139,8 @@ const NodeStatItem = ({
       </Grid>
       <Grid size={{ xs: variants(variant, 'VG') }}>
         <TextWithToolTip
-          title={title}
-          isAlert={showAlertInfo}
+          title={`${v} ${unit}`}
+          isAlert={isAlert()}
           tooltipText={valueInfo}
           showToottip={!!valueInfo}
         />
