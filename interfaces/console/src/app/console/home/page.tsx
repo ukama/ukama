@@ -94,6 +94,7 @@ export default function Page() {
 
   const { loading: statLoading, variables: statVar } = useGetMetricsStatQuery({
     client: subscriptionClient,
+    fetchPolicy: 'network-only',
     variables: {
       data: {
         from: getFrom(),

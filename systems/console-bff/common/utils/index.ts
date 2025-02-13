@@ -134,6 +134,8 @@ const getGraphsKeyByType = (type: string): string[] => {
       ];
     case GRAPHS_TYPE.NODE_HEALTH:
       return ["unit_uptime", "unit_health", "node_load"];
+    case GRAPHS_TYPE.SUBSCRIBERS:
+      return ["subscribers_active"];
     case STATS_TYPE.OVERVIEW:
       return ["unit_uptime", "unit_health", "node_load", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
