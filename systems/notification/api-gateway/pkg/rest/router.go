@@ -166,12 +166,20 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.
 		To:           req.To,
 		TemplateName: req.TemplateName,
 		Values:       make(map[string]string),
+		Attachments:  make([]*mailerpb.Attachment, len(req.Attachments)),
 	}
 
-	// Convert map[string]interface{} to map[string]string
 	for key, value := range req.Values {
 		if strValue, ok := value.(string); ok {
 			payload.Values[key] = strValue
+		}
+	}
+
+	for i, att := range req.Attachments {
+		payload.Attachments[i] = &mailerpb.Attachment{
+			Filename:    att.Filename,
+			ContentType: att.ContentType,
+			Content:     att.Content,
 		}
 	}
 
@@ -183,7 +191,6 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.
 	return res, nil
 }
 
-// getEmailByIdHandler handles the get email by ID API endpoint.
 func (r *Router) getEmailByIdHandler(c *gin.Context, req *GetEmailByIdReq) (*mailerpb.GetEmailByIdResponse, error) {
 	mailerId := req.MailerId
 	res, err := r.clients.m.GetEmailById(mailerId)

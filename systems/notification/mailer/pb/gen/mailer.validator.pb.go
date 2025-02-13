@@ -49,6 +49,16 @@ func (this *SendEmailRequest) Validate() error {
 		return github_com_mwitkow_go_proto_validators.FieldError("TemplateName", fmt.Errorf(`value '%v' must not be an empty string`, this.TemplateName))
 	}
 	// Validation of proto3 map<> fields is unsupported.
+	for _, item := range this.Attachments {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Attachments", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *Attachment) Validate() error {
 	return nil
 }
 
