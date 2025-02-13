@@ -217,6 +217,9 @@ setup_docker_compose_files(){
         if [ "$SYSTEM" != $AUTHSYSKEY ]; then
             cd ../../systems
         fi
+        if [ "$SYSTEM" != "dummynode" ]; then
+            cd ../../../systems
+        fi
         SYSTEM_OBJECT=$(echo "$METADATA" | jq -c --arg SYSTEM "$SYSTEM" '.[$SYSTEM]')
         cd "$(echo "$SYSTEM_OBJECT" | jq -r '.path')"
         mkdir -p ".temp"

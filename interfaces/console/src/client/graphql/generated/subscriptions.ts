@@ -18,6 +18,7 @@ export type Scalars = {
 };
 
 export enum Graphs_Type {
+  Home = 'HOME',
   NetworkBackhaul = 'NETWORK_BACKHAUL',
   NetworkCellular = 'NETWORK_CELLULAR',
   NodeHealth = 'NODE_HEALTH',

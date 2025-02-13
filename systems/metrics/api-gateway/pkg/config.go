@@ -85,6 +85,12 @@ var defaultPrometheusMetric = map[string]Metric{
 	"cpu_usage":         Metric{false, "cpu_usage", ""},
 	"disk_usage":        Metric{false, "disk_usage", ""},
 	"txpower":           Metric{false, "txpower", ""},
+
+	"unit_uptime":         Metric{false, "unit_uptime", ""},
+	"network_sales":       Metric{false, "network_sales", ""},
+	"network_data_volume": Metric{false, "network_data_volume", ""},
+	"network_active_ue":   Metric{false, "network_active_ue", ""},
+	"network_uptime":      Metric{false, "network_uptime", ""},
 	//
 
 	//Health metrics

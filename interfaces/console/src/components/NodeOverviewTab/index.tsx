@@ -58,6 +58,7 @@ const NodeOverviewTab = ({
   getNodeSoftwareUpdateInfos,
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
+  console.log(nodeMetricsStatData);
   const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
   const healthConfig = NODE_KPIS.HEALTH[NodeTypeEnum.Tnode];
   const subscriberConfig = NODE_KPIS.SUBSCRIBER[NodeTypeEnum.Tnode];

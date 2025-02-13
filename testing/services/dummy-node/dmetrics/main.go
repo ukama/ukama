@@ -63,6 +63,13 @@ var (
 		},
 		[]string{"nodeid"},
 	)
+	unit_uptime = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "unit_uptime",
+			Help: "Node uptime",
+		},
+		[]string{"nodeid"},
+	)
 	unit_status = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "unit_status",
@@ -168,6 +175,7 @@ func init() {
 	prometheus.MustRegister(network_data_volume)
 	prometheus.MustRegister(network_active_ue)
 	prometheus.MustRegister(network_uptime)
+	prometheus.MustRegister(unit_uptime)
 	prometheus.MustRegister(unit_status)
 	prometheus.MustRegister(unit_health)
 	prometheus.MustRegister(node_load)
@@ -327,6 +335,7 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 			network_data_volume.With(labels).Set(values["network_data_volume"])
 			network_active_ue.With(labels).Set(values["network_active_ue"])
 			network_uptime.With(labels).Set(values["network_uptime"])
+			unit_uptime.With(labels).Set(values["unit_uptime"])
 			unit_status.With(labels).Set(1)
 			unit_health.With(labels).Set(values["unit_health"])
 			node_load.With(labels).Set(values["node_load"])
