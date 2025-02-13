@@ -45,6 +45,7 @@ import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const NODE_UPTIME_KEY = 'unit_uptime';
 interface INodePage {
   params: {
     id: string;
@@ -59,6 +60,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [graphType, setGraphType] = useState<Graphs_Type>(
     Graphs_Type.NodeHealth,
   );
+  const [nodeUptime, setNodeUptime] = useState<number>(0);
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
@@ -148,6 +150,14 @@ const Page: React.FC<INodePage> = ({ params }) => {
     { loading: nodeMetricsStatLoading, data: nodeMetricsStatData },
   ] = useGetMetricsStatLazyQuery({
     client: subscriptionClient,
+    onCompleted: (data) => {
+      if (data.getMetricsStat.metrics?.length > 0) {
+        const uptimeStat = data?.getMetricsStat.metrics.find(
+          (m) => m.type === NODE_UPTIME_KEY,
+        );
+        setNodeUptime(uptimeStat?.value ?? 0);
+      }
+    },
   });
 
   useEffect(() => {
@@ -239,6 +249,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
     const { msg, type, value, nodeId, success } =
       parsedData.data.getMetricByTabSub;
     if (success) {
+      if (type === NODE_UPTIME_KEY) {
+        setNodeUptime(value[value.length - 1][1]);
+      }
       PubSub.publish(type, value.slice(0, 30));
     }
   };
@@ -295,6 +308,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
       <NodeStatus
+        uptime={nodeUptime}
         onAddNode={() => {}}
         loading={nodesLoading || updateNodeLoading}
         selectedNode={selectedNode}

@@ -76,8 +76,15 @@ class SubscriptionsResolvers {
         });
         let avg = 0;
         if (Array.isArray(res.values) && res.values.length > 0) {
-          const sum = res.values.reduce((acc, val) => acc + val[1], 0);
-          avg = sum / res.values.length;
+          if (
+            metricsKey[i] === "unit_uptime" ||
+            metricsKey[i] === "network_uptime"
+          ) {
+            avg = res.values[res.values.length - 1][1];
+          } else {
+            const sum = res.values.reduce((acc, val) => acc + val[1], 0);
+            avg = sum / res.values.length;
+          }
         }
         metrics.metrics.push({
           msg: res.msg,

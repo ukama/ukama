@@ -12,7 +12,7 @@ import {
   NodeStateEnum,
 } from '@/client/graphql/generated';
 import { colors } from '@/theme';
-import { hexToRGB } from '@/utils';
+import { duration, hexToRGB } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
 import {
@@ -62,6 +62,7 @@ const getStatusIcon = (status: NodeConnectivityEnum) => {
 
 interface INodeDropDown {
   loading: boolean;
+  uptime: number;
   onAddNode: Function;
   nodes: Node[] | [];
   onNodeSelected: Function;
@@ -69,6 +70,7 @@ interface INodeDropDown {
 }
 
 const NodeDropDown = ({
+  uptime,
   nodes = [],
   onAddNode,
   selectedNode,
@@ -140,7 +142,11 @@ const NodeDropDown = ({
         </Select>
       </LoadingWrapper>
 
-      {selectedNode && getStatus(selectedNode.status.state as NodeStateEnum, 0)}
+      {selectedNode && (
+        <Typography variant={'subtitle1'}>
+          Node is up for <b>{duration(uptime)}</b>
+        </Typography>
+      )}
     </Stack>
   );
 };

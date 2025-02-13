@@ -54,9 +54,11 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
 });
 
 const getFrom = () => Math.floor(Date.now() / 1000) - 10000; //past 2.45 hours
+
 export default function Page() {
   const kpiConfig = NODE_KPIS.HOME.stats;
   const [networkStats, setNetworkStats] = useState({
+    uptime: 0,
     sales: 0,
     dataVolume: 0,
     activeSubscribers: 0,
@@ -94,7 +96,7 @@ export default function Page() {
     client: subscriptionClient,
     variables: {
       data: {
-        from: getFrom(), //past 2.45 hours
+        from: getFrom(),
         userId: user.id,
         orgName: user.orgName,
         type: Stats_Type.Home,
@@ -103,14 +105,18 @@ export default function Page() {
     },
     onCompleted: (data) => {
       if (data.getMetricsStat.metrics.length > 0) {
+        console.log(data.getMetricsStat.metrics);
         const metrics = data.getMetricsStat.metrics;
+        const uptime = metrics.find((m) => m.type === kpiConfig[0].id);
         const sales = metrics.find((m) => m.type === kpiConfig[1].id);
         const dataVolume = metrics.find((m) => m.type === kpiConfig[2].id);
         const activeSubscribers = metrics.find(
           (m) => m.type === kpiConfig[3].id,
         );
+
         setNetworkStats({
           sales: sales?.value || 0,
+          uptime: uptime?.value || 0,
           dataVolume: dataVolume?.value || 0,
           activeSubscribers: activeSubscribers?.value || 0,
         });
@@ -124,10 +130,10 @@ export default function Page() {
         <NetworkStatus
           title={
             network.name
-              ? `${network.name} is created.`
+              ? `${network.name} is created. Network is online for `
               : `No network selected.`
           }
-          subtitle={network.name ? '' : ''}
+          subtitle={network.name ? networkStats.uptime : 0}
           loading={false}
           availableNodes={undefined}
           statusType="ONLINE"

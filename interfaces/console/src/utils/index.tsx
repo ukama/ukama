@@ -29,6 +29,7 @@ import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
+import { formatDistance } from 'date-fns';
 import { LatLngTuple } from 'leaflet';
 
 type TConfigureStep = {
@@ -410,6 +411,9 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
 
   return new Blob(byteArrays, { type: contentType });
 };
+
+export const duration = (s: number) =>
+  formatDistance(0, s * 1000, { includeSeconds: true });
 
 export {
   base64ToBlob,

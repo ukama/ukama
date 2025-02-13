@@ -7,6 +7,7 @@
  */
 
 import { colors } from '@/theme';
+import { duration } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import {
@@ -45,7 +46,7 @@ const getIconByStatus = (status: string, info: string) => {
 
 type NetworkStatusProps = {
   title: string;
-  subtitle: string;
+  subtitle: number;
   loading?: boolean;
   tooltipInfo: string;
   availableNodes: number | undefined;
@@ -74,7 +75,7 @@ const NetworkStatus = ({
           variant={matches ? 'subtitle1' : 'h6'}
           sx={{ fontWeight: { xs: 400, md: 500 }, ml: 1 }}
         >
-          {title} {subtitle}
+          {title} {subtitle === 0 ? '-' : duration(subtitle)}
         </Typography>
         {/* <Typography variant={'h6'} sx={{ fontWeight: { xs: 400, md: 500 } }}>
           {subtitle}

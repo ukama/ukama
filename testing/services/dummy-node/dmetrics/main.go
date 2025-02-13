@@ -316,7 +316,7 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 				if kpi.Key == "network_uptime" || kpi.Key == "unit_uptime" {
 					values[kpi.Key] = count
 				} else if kpi.Key == "network_sales" {
-					values[kpi.Key] = increment / 6
+					values[kpi.Key] = increment / 12
 				} else if kpi.Key == "network_data_volume" {
 					values[kpi.Key] = increment
 				} else {
