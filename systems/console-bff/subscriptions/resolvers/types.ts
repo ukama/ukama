@@ -106,14 +106,17 @@ export class GetMetricRangeInput {
 
 @InputType()
 export class GetMetricsStatInput {
-  @Field()
-  nodeId: string;
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  networkId?: string;
 
   @Field()
   orgName: string;
 
-  @Field()
-  userId: string;
+  @Field({ nullable: true })
+  userId?: string;
 
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;

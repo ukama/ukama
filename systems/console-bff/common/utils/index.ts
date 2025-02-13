@@ -124,10 +124,18 @@ const getPaginatedOutput = (
 const getGraphsKeyByType = (type: string): string[] => {
   // TODO: NEED TO UPDATE KPI KEYS
   switch (type) {
+    case GRAPHS_TYPE.HOME:
+    case STATS_TYPE.HOME:
+      return [
+        "network_sales",
+        "network_data_volume",
+        "network_active_ue",
+        "network_uptime",
+      ];
     case GRAPHS_TYPE.NODE_HEALTH:
-      return ["unit_health", "node_load"];
+      return ["unit_uptime", "unit_health", "node_load"];
     case STATS_TYPE.OVERVIEW:
-      return ["unit_health", "node_load", "subscribers_active"];
+      return ["unit_uptime", "unit_health", "node_load", "subscribers_active"];
     case GRAPHS_TYPE.NETWORK_CELLULAR:
       return ["cellular_uplink", "cellular_downlink"];
     case GRAPHS_TYPE.NETWORK_BACKHAUL:

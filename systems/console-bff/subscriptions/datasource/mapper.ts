@@ -9,6 +9,7 @@ import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
+  GetMetricsStatInput,
   LatestMetricRes,
   MetricRes,
   NotificationsAPIRes,
@@ -52,19 +53,31 @@ export const parseLatestMetricRes = (
   }
 };
 
-export const parseMetricRes = (res: any, type: string): MetricRes => {
-  const data = res.data.result[0];
-  if (data?.values?.length > 0) {
-    return {
-      type: type,
-      success: true,
-      msg: "success",
-      nodeId: data.metric.nodeid,
-      values: fixTimestampInMetricData(data.values),
-    };
-  } else {
-    return { ...ERROR_RESPONSE, values: [[0, 0]] } as MetricRes;
-  }
+export const parseMetricRes = (
+  res: any,
+  type: string,
+  args: GetMetricsStatInput
+): MetricRes => {
+  const { result } = res.data.data;
+  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
+  return hasValues
+    ? {
+        type: type,
+        success: true,
+        msg: "success",
+        nodeId: result[0].metric.nodeid,
+        values: fixTimestampInMetricData(result[0].values),
+      }
+    : getEmptyMetric({
+        nodeId: result[0].metric.nodeid,
+        orgId: "",
+        to: args.to,
+        type: args.type,
+        from: args.from,
+        step: args.step,
+        userId: args.userId,
+        withSubscription: false,
+      });
 };
 export const parseNodeMetricRes = (
   { code, data }: { code: number; data: any },

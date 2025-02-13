@@ -35,6 +35,41 @@ type NodeKPIs struct {
 }
 
 var (
+	network_sales = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "network_sales",
+			Help: "Overall network sales",
+		},
+		[]string{"nodeid"},
+	)
+	network_data_volume = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "network_data_volume",
+			Help: "Network data volume",
+		},
+		[]string{"nodeid"},
+	)
+	network_active_ue = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "network_active_ue",
+			Help: "Active subscriber within the network",
+		},
+		[]string{"nodeid"},
+	)
+	network_uptime = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "network_uptime",
+			Help: "Network uptime",
+		},
+		[]string{"nodeid"},
+	)
+	unit_status = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "unit_status",
+			Help: "Unit status",
+		},
+		[]string{"nodeid"},
+	)
 	unit_health = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "unit_health",
@@ -129,6 +164,11 @@ var (
 )
 
 func init() {
+	prometheus.MustRegister(network_sales)
+	prometheus.MustRegister(network_data_volume)
+	prometheus.MustRegister(network_active_ue)
+	prometheus.MustRegister(network_uptime)
+	prometheus.MustRegister(unit_status)
 	prometheus.MustRegister(unit_health)
 	prometheus.MustRegister(node_load)
 	prometheus.MustRegister(subscriber_active)
@@ -148,10 +188,32 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 	config := []NodeKPIs{
 		// 0-Min, Min-Normal, Normal-Max
 		{
-			Key:    "unit_status",
+			Key:    "network_sales",
 			Min:    0,
-			Normal: 50,
-			Max:    100,
+			Normal: 10000,
+			Max:    50000,
+		},
+		{
+			Key:    "network_data_volume",
+			Min:    0,
+			Normal: 512000,
+			Max:    1024000,
+		},
+		{
+			Key:    "network_active_ue",
+			Min:    0,
+			Normal: 500,
+			Max:    10000,
+		},
+		{
+			Key: "network_uptime",
+			Min: 0,
+			Max: 2678400,
+		},
+		{
+			Key: "unit_uptime",
+			Min: 0,
+			Max: 2678400,
 		},
 		{
 			Key:    "unit_health",
@@ -232,7 +294,8 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 			Max:    95,
 		},
 	}
-
+	count := 1.0
+	increment := 10.0
 	for {
 		select {
 		case <-ctx.Done():
@@ -242,16 +305,29 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 			values := make(map[string]float64)
 
 			for _, kpi := range config {
-				switch profile {
-				case PROFILE_MIN:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
-				case PROFILE_MAX:
-					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
-				default:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+				if kpi.Key == "network_uptime" || kpi.Key == "unit_uptime" {
+					values[kpi.Key] = count
+				} else if kpi.Key == "network_sales" {
+					values[kpi.Key] = increment / 6
+				} else if kpi.Key == "network_data_volume" {
+					values[kpi.Key] = increment
+				} else {
+					switch profile {
+					case PROFILE_MIN:
+						values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+					case PROFILE_MAX:
+						values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
+					default:
+						values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+					}
 				}
 			}
 
+			network_sales.With(labels).Set(values["network_sales"])
+			network_data_volume.With(labels).Set(values["network_data_volume"])
+			network_active_ue.With(labels).Set(values["network_active_ue"])
+			network_uptime.With(labels).Set(values["network_uptime"])
+			unit_status.With(labels).Set(1)
 			unit_health.With(labels).Set(values["unit_health"])
 			node_load.With(labels).Set(values["node_load"])
 			subscriber_active.With(labels).Set(values["trx_lte_core_active_ue"])
@@ -267,6 +343,8 @@ func generateRandomData(ctx context.Context, nodeId string, profile Profile) {
 			txpower.With(labels).Set(values["txpower"])
 
 			time.Sleep(1 * time.Second)
+			count++
+			increment += 10
 		}
 	}
 }

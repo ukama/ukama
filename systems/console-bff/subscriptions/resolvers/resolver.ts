@@ -14,6 +14,7 @@ import {
   getScopesByRole,
 } from "../../common/utils";
 import {
+  getMetricRange,
   getNodeRangeMetric,
   getNotifications,
 } from "../datasource/subscriptions-api";
@@ -63,9 +64,15 @@ class SubscriptionsResolvers {
     const metrics: MetricsStateRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric(baseURL, {
-          ...data,
-          type: metricsKey[i],
+        const res = await getMetricRange(baseURL, metricsKey[i], {
+          from: from,
+          to: data.to,
+          type: data.type,
+          step: data.step,
+          nodeId: data.nodeId,
+          userId: data.userId,
+          orgName: data.orgName,
+          networkId: data.networkId,
         });
         let avg = 0;
         if (Array.isArray(res.values) && res.values.length > 0) {

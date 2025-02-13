@@ -254,6 +254,54 @@ export { NodeApps } from './stubData';
 export const KPI_PLACEHOLDER_VALUE = '-';
 
 export const NODE_KPIS = {
+  HOME: {
+    stats: [
+      {
+        unit: '',
+        show: true,
+        name: 'Network uptime',
+        id: 'network_uptime',
+        description: 'Network uptime',
+        threshold: { min: 0, normal: 0, max: 2678400 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Sales',
+        id: 'network_sales',
+        description: 'Network sales',
+        threshold: { min: 0, normal: 10000, max: 50000 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Data volume',
+        id: 'network_data_volume',
+        description: 'Network data volume',
+        threshold: { min: 0, normal: 512000, max: 1024000 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Network subscribers',
+        id: 'network_active_ue',
+        description: 'Network active subscribers',
+        threshold: { min: 0, normal: 500, max: 10000 },
+      },
+    ],
+  },
+  NODE_UPTIME: {
+    tnode: [
+      {
+        unit: '',
+        show: true,
+        name: 'Nde uptime',
+        id: 'unit_uptime',
+        description: 'Node uptime',
+        threshold: { min: 0, normal: 0, max: 2678400 },
+      },
+    ],
+  },
   HEALTH: {
     tnode: [
       {

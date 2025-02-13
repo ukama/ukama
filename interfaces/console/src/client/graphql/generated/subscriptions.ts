@@ -39,12 +39,13 @@ export type GetMetricByTabInput = {
 
 export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
   step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Stats_Type;
-  userId: Scalars['String']['input'];
+  userId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type LatestMetricSubRes = {

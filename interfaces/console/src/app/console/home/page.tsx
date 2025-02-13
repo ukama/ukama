@@ -10,11 +10,15 @@ import {
   useGetNodesLocationQuery,
   useGetSitesQuery,
 } from '@/client/graphql/generated';
+import {
+  Stats_Type,
+  useGetMetricsStatQuery,
+} from '@/client/graphql/generated/subscriptions';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { SitesTree } from '@/components/NetworkMap/OverlayUI';
 import NetworkStatus from '@/components/NetworkStatus';
-import { MONTH_FILTER, TIME_FILTER } from '@/constants';
+import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
 import { colors } from '@/theme';
 import { structureNodeSiteDate } from '@/utils';
@@ -25,6 +29,7 @@ import SalesIcon from '@mui/icons-material/MonetizationOn';
 import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
+import { useState } from 'react';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -48,10 +53,16 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
   ),
 });
 
-const networkLoading = false;
-const networkNodesLoading = false;
+const getFrom = () => Math.floor(Date.now() / 1000) - 10000; //past 2.45 hours
 export default function Page() {
-  const { network, setSnackbarMessage } = useAppContext();
+  const kpiConfig = NODE_KPIS.HOME.stats;
+  const [networkStats, setNetworkStats] = useState({
+    sales: 0,
+    dataVolume: 0,
+    activeSubscribers: 0,
+  });
+  const { user, network, setSnackbarMessage, subscriptionClient } =
+    useAppContext();
   const { data: sitesRes, loading: sitesLoading } = useGetSitesQuery({
     fetchPolicy: 'no-cache',
     variables: {
@@ -79,10 +90,33 @@ export default function Page() {
     },
   });
 
-  // const { data: statsRes, loading: statsLoading } = useGetStatsMetricQuery({
-  //   client: getMetricClient("", ""),
-  //   fetchPolicy: 'cache-and-network',
-  // });
+  const { loading: statLoading, variables: statVar } = useGetMetricsStatQuery({
+    client: subscriptionClient,
+    variables: {
+      data: {
+        from: getFrom(), //past 2.45 hours
+        userId: user.id,
+        orgName: user.orgName,
+        type: Stats_Type.Home,
+        step: 1,
+      },
+    },
+    onCompleted: (data) => {
+      if (data.getMetricsStat.metrics.length > 0) {
+        const metrics = data.getMetricsStat.metrics;
+        const sales = metrics.find((m) => m.type === kpiConfig[1].id);
+        const dataVolume = metrics.find((m) => m.type === kpiConfig[2].id);
+        const activeSubscribers = metrics.find(
+          (m) => m.type === kpiConfig[3].id,
+        );
+        setNetworkStats({
+          sales: sales?.value || 0,
+          dataVolume: dataVolume?.value || 0,
+          activeSubscribers: activeSubscribers?.value || 0,
+        });
+      }
+    },
+  });
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
@@ -105,10 +139,10 @@ export default function Page() {
           <StatusCard
             option={'bill'}
             subtitle2={`$`}
-            subtitle1={`${0}`}
+            subtitle1={`${networkStats.sales}`}
             Icon={SalesIcon}
             options={MONTH_FILTER}
-            loading={networkLoading}
+            loading={statLoading}
             iconColor={colors.beige}
             title={'Sales'}
             handleSelect={(value: string) => {}}
@@ -117,9 +151,9 @@ export default function Page() {
             Icon={DataVolume}
             option={'usage'}
             subtitle2={`GBs`}
-            subtitle1={`${0}`}
+            subtitle1={`${networkStats.dataVolume}`}
             options={TIME_FILTER}
-            loading={networkLoading}
+            loading={statLoading}
             title={'Data Volume'}
             iconColor={colors.secondaryMain}
             handleSelect={(value: string) => {}}
@@ -128,9 +162,9 @@ export default function Page() {
             option={''}
             subtitle2={''}
             Icon={GroupPeople}
-            subtitle1={`${0}`}
+            subtitle1={`${networkStats.activeSubscribers}`}
             options={TIME_FILTER}
-            loading={networkLoading}
+            loading={statLoading}
             title={'Active subscribers'}
             iconColor={colors.primaryMain}
             handleSelect={(value: string) => {}}
@@ -148,7 +182,7 @@ export default function Page() {
             <LoadingWrapper
               radius="small"
               width={'100%'}
-              isLoading={networkNodesLoading || sitesLoading || nodesLoading}
+              isLoading={sitesLoading || nodesLoading}
             >
               <NetworkMap
                 id="network-map"
