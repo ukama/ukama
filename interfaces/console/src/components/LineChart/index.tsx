@@ -139,6 +139,7 @@ const LineChart = ({
 
       yAxis: {
         title: false,
+        minRange: 8,
       },
     };
   };
