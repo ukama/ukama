@@ -105,7 +105,6 @@ export default function Page() {
     },
     onCompleted: (data) => {
       if (data.getMetricsStat.metrics.length > 0) {
-        console.log(data.getMetricsStat.metrics);
         const metrics = data.getMetricsStat.metrics;
         const uptime = metrics.find((m) => m.type === kpiConfig[0].id);
         const sales = metrics.find((m) => m.type === kpiConfig[1].id);
