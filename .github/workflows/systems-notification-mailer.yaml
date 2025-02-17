@@ -60,7 +60,6 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
-
   release:
       name: release
       needs: [build,lint]
