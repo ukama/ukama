@@ -66,10 +66,17 @@ func NewAgentFactory(testAgentHost, operatorAgentHost string, timeout time.Durat
 		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", operatorAgentHost, err)
 	}
 
+	// And UkamaAgent for ukama sim type
+	ukAgent, err := NewUkamaAgentAdapter(ukamaAgentHost, debug)
+	if err != nil {
+		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", ukamaAgentHost, err)
+	}
+
 	var factory = make(map[ukama.SimType]AgentAdapter)
 
 	factory[ukama.SimTypeTest] = tAgent
 	factory[ukama.SimTypeOperatorData] = opAgent
+	factory[ukama.SimTypeUkamaData] = ukAgent
 
 	return &agentFactory{
 		timeout: timeout,
