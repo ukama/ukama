@@ -1,18 +1,18 @@
-# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 name: build-systems-notification-mailer
-on:  
-  push:   
+on:
+  push:
     paths:
         - "systems/notification/mailer/**"
         - ".github/workflows/systems-notification-mailer.yaml"
- 
+
   workflow_dispatch:
 
-jobs:  
+jobs:
   build:
-    env: 
+    env:
       working-directory: systems/notification/mailer
 
     name: build and test
@@ -30,18 +30,18 @@ jobs:
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
         build-listener: false
         project-key: ukama_systems_notification_mailer
-    
+
   sonar-scan:
     name: sonar-scan
     needs: build
     runs-on: ubuntu-latest
-    env: 
+    env:
       working-directory: systems/notification/mailer
     steps:
       - uses: actions/checkout@v3
       - name: scan
         uses: ./.github/actions/sonar-go
-        with:         
+        with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
   lint:
     name: lint
     runs-on: ubuntu-latest
-    env: 
+    env:
       working-directory: systems/notification/mailer
     steps:
       - uses: actions/checkout@v3
@@ -59,7 +59,7 @@ jobs:
         with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-          
+
 
   release:
       name: release
@@ -70,7 +70,7 @@ jobs:
         working-directory: systems/notification/mailer
       steps:
         - uses: actions/checkout@v3
-        
+
         - name: Init vars
           id: vars_step
           uses: ./.github/actions/git-vars
