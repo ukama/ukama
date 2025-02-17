@@ -42,27 +42,25 @@ func NewAgentFactory(testAgentHost, operatorAgentHost, ukamaAgentHost string, ti
 	// we should lookup from provided config to get {realHost, realAgent, timeout} mappings
 	// in order to dynamically fill the factory map with available running agents
 
-	// for each {realHost, realAgent, timeout}}
-	// agent, err := NewRealAgent(realHost, timeout)
-	// handle err
-	// factory[SimTypeForAgent] = agent
-
 	// For now we will only use TestAgent for test sim type
 	tAgent, err := NewTestAgentAdapter(testAgentHost, timeout)
 	if err != nil {
-		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", testAgentHost, err)
+		log.Fatalf("Failed to connect to test agent service at %s. Error: %v",
+			testAgentHost, err)
 	}
 
 	// And OperatorAgent for telna sim type
 	opAgent, err := NewOperatorAgentAdapter(operatorAgentHost, debug)
 	if err != nil {
-		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", operatorAgentHost, err)
+		log.Fatalf("Failed to connect to operator agent service at %s. Error: %v",
+			operatorAgentHost, err)
 	}
 
 	// And UkamaAgent for ukama sim type
 	ukAgent, err := NewUkamaAgentAdapter(ukamaAgentHost, debug)
 	if err != nil {
-		log.Fatalf("Failed to connect to Agent service at %s. Error: %v", ukamaAgentHost, err)
+		log.Fatalf("Failed to connect to ukama agent service at %s. Error: %v",
+			ukamaAgentHost, err)
 	}
 
 	var factory = make(map[ukama.SimType]AgentAdapter)

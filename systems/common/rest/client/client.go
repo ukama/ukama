@@ -282,5 +282,5 @@ type AgentRequestData struct {
 	Imsi      string `json:"imsi,omitempty"`
 	SimId     string `json:"sim_id,omitempty"`
 	PackageId string `json:"package_id,omitempty"`
-	NetworkId string `json:"netwrok_id,omitempty"`
+	NetworkId string `json:"network_id,omitempty"`
 }

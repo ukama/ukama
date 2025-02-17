@@ -71,7 +71,7 @@ func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("ukama sim info deserailization failure: %w", err)
+		return nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("Ukama Sim Info: %+v", sim)
@@ -96,7 +96,7 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	if err != nil {
 		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
 
-		return nil, nil, fmt.Errorf("ukama sim info deserailization failure: %w", err)
+		return nil, nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("ukama data usage (of type %T): %+v", usage.Usage, usage.Usage)
