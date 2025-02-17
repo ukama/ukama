@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package operator_test
+package operatoragent_test
 
 import (
 	"bytes"
@@ -16,8 +16,7 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
-
-	"github.com/ukama/ukama/systems/common/rest/client/operator"
+	"github.com/ukama/ukama/systems/common/rest/client/operatoragent"
 )
 
 const (
@@ -34,7 +33,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			// fake sim info
 			sim := `{"sim":{"iccid": "890000000000000001234", "imsi": "20000233489900"}}`
@@ -50,7 +49,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -64,7 +63,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 
 	t.Run("SimNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			// error payload
 			resp := `{"error":"not found"}`
@@ -76,7 +75,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -88,7 +87,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -97,7 +96,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -109,12 +108,12 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return nil
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -130,7 +129,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
+				operatoragent.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			// fake usage usage
 			usage := `{"usage":{"890000000000000001234": 28901234567}, "cost":{"890000000000000001234":100.99}}`
@@ -146,7 +145,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
@@ -163,7 +162,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
+				operatoragent.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			return &http.Response{
 				StatusCode: 200,
@@ -172,7 +171,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -186,12 +185,12 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				operator.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
+				operatoragent.OperatorUsagesEndpoint, testIccid, cdrType, from, to, region))
 
 			return nil
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -206,7 +205,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 func TestOperatorClient_ActivateSim(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return &http.Response{
 				StatusCode: 201,
@@ -214,7 +213,7 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -225,7 +224,7 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 
 	t.Run("SimNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			// error payload
 			resp := `{"error":"not found"}`
@@ -237,7 +236,7 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -248,12 +247,12 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return nil
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -266,7 +265,7 @@ func TestOperatorClient_ActivateSim(t *testing.T) {
 func TestOperatorClient_DeactivateSim(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -274,7 +273,7 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -285,7 +284,7 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 
 	t.Run("SimNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			// error payload
 			resp := `{"error":"not found"}`
@@ -297,7 +296,7 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -308,12 +307,12 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return nil
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -326,7 +325,7 @@ func TestOperatorClient_DeactivateSim(t *testing.T) {
 func TestOperatorClient_TerminateSim(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -334,7 +333,7 @@ func TestOperatorClient_TerminateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -345,7 +344,7 @@ func TestOperatorClient_TerminateSim(t *testing.T) {
 
 	t.Run("SimNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			// error payload
 			resp := `{"error":"not found"}`
@@ -357,7 +356,7 @@ func TestOperatorClient_TerminateSim(t *testing.T) {
 			}
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
@@ -368,12 +367,12 @@ func TestOperatorClient_TerminateSim(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operator.OperatorSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), operatoragent.OperatorSimsEndpoint+"/"+testIccid)
 
 			return nil
 		}
 
-		testOperatorClient := operator.NewOperatorClient("")
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
