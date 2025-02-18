@@ -53,6 +53,9 @@ filter_make_sys() {
             "services")
                 PATHS+=("services/msgClient")
                 ;;
+            "ukamaagent")
+                PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr")
+                ;;
         esac
     done
 }
@@ -63,7 +66,6 @@ cd ../../systems
 root_dir=$(pwd)
 
 for path in "${PATHS[@]}"; do
-
     cd "$root_dir/$path" || { echo "Failed to change directory to $path"; exit 1; }
    
     go mod tidy && make lint && make

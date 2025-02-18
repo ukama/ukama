@@ -69,7 +69,8 @@ services:
    - MSGCLIENT_HOST=msgclient-subscriber:9095
    - SIMMANAGER_SERVICE_HOST=simmanager
    - SIMMANAGER_SERVICE_PORT=9090
-   - OPERATORAGENT=http://api-gateway-ukama-agent:8080
+   - OPERATORAGENT=http://api-gateway-operator-agent:8080
+   - UKAMAAGENT=http://api-gateway-ukama-agent:8080
    - HTTP_INITCLIENT=http://api-gateway-init:8080
    - HTTP_NUCLEUSCLIENT=http://api-gateway-nucleus:8080
   restart: always
