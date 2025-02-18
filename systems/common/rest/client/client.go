@@ -276,3 +276,11 @@ type ErrorStatus struct {
 func (e ErrorStatus) Error() string {
 	return fmt.Sprintf("%d: %s", e.StatusCode, e.RawError.Error())
 }
+
+type AgentRequestData struct {
+	Iccid     string `json:"iccid"`
+	Imsi      string `json:"imsi,omitempty"`
+	SimId     string `json:"sim_id,omitempty"`
+	PackageId string `json:"package_id,omitempty"`
+	NetworkId string `json:"network_id,omitempty"`
+}

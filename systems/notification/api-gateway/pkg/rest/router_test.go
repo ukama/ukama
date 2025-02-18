@@ -104,6 +104,7 @@ func TestRouter_mailer(t *testing.T) {
 			To:           []string{"test@ukama.com"},
 			TemplateName: "test-template",
 			Values:       map[string]interface{}{"Name": "test", "Message": "welcome to ukama"},
+			Attachments:  []Attachment{},
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -116,10 +117,19 @@ func TestRouter_mailer(t *testing.T) {
 		for key, value := range data.Values {
 			newValues[key] = fmt.Sprintf("%v", value)
 		}
+		pbAttachments := make([]*mailerpb.Attachment, len(data.Attachments))
+		for i, att := range data.Attachments {
+			pbAttachments[i] = &mailerpb.Attachment{
+				Filename:    att.Filename,
+				Content: att.Content,
+				ContentType: att.ContentType,
+			}
+		}
 		preq := &mailerpb.SendEmailRequest{
 			To:           data.To,
 			TemplateName: data.TemplateName,
 			Values:       newValues,
+			Attachments:  pbAttachments,
 		}
 
 		m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
@@ -151,6 +161,58 @@ func TestRouter_mailer(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
+	})
+	t.Run("sendEmailWithAttachments", func(t *testing.T) {
+		data := SendEmailReq{
+			To:           []string{"test@ukama.com"},
+			TemplateName: "test-template",
+			Values:       map[string]interface{}{"Name": "test", "Message": "welcome to ukama"},
+			Attachments: []Attachment{
+				{
+					Filename:    "test.txt",
+					Content:     []byte("dGVzdCBjb250ZW50"), 
+					ContentType: "text/plain",
+				},
+			},
+		}
+	
+		jdata, err := json.Marshal(&data)
+		assert.NoError(t, err)
+	
+		w := httptest.NewRecorder()
+		req, err := http.NewRequest("POST", "/v1/mailer/sendEmail", bytes.NewReader(jdata))
+		assert.NoError(t, err)
+	
+		newValues := make(map[string]string)
+		for key, value := range data.Values {
+			newValues[key] = fmt.Sprintf("%v", value)
+		}
+	
+		pbAttachments := make([]*mailerpb.Attachment, len(data.Attachments))
+		for i, att := range data.Attachments {
+			pbAttachments[i] = &mailerpb.Attachment{
+				Filename:    att.Filename,
+				Content:     att.Content,
+				ContentType: att.ContentType,
+			}
+		}
+	
+		preq := &mailerpb.SendEmailRequest{
+			To:           data.To,
+			TemplateName: data.TemplateName,
+			Values:       newValues,
+			Attachments:  pbAttachments,
+		}
+	
+		m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
+			Message: "email sent successfully",
+			MailId:  "65d969f7-d63e-44eb-b526-fd200e62a2b0",
+		}, nil)
+	
+		r.ServeHTTP(w, req)
+	
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})

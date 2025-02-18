@@ -1,84 +1,33 @@
-[submodule "nodes/ukamaOS/distro/vendor/openssl"]
-	path = nodes/ukamaOS/distro/vendor/openssl
-	url = https://github.com/openssl/openssl.git
 [submodule "nodes/ukamaOS/distro/vendor/orcania"]
 	path = nodes/ukamaOS/distro/vendor/orcania
 	url = https://github.com/babelouest/orcania.git
 [submodule "nodes/ukamaOS/distro/vendor/tomlc"]
 	path = nodes/ukamaOS/distro/vendor/tomlc
 	url = https://github.com/cktan/tomlc99.git
-[submodule "nodes/ukamaOS/distro/vendor/libmicrohttpd"]
-	path = nodes/ukamaOS/distro/vendor/libmicrohttpd
-	url = https://github.com/markhor/libmicrohttpd.git
-[submodule "nodes/ukamaOS/distro/vendor/zlib"]
-	path = nodes/ukamaOS/distro/vendor/zlib
-	url = https://github.com/madler/zlib.git
 [submodule "nodes/ukamaOS/distro/vendor/yder"]
 	path = nodes/ukamaOS/distro/vendor/yder
 	url = https://github.com/babelouest/yder.git
 [submodule "nodes/ukamaOS/distro/vendor/jansson"]
 	path = nodes/ukamaOS/distro/vendor/jansson
-	url = https://github.com/akheron/jansson.git
-[submodule "nodes/ukamaOS/distro/vendor/curl"]
-	path = nodes/ukamaOS/distro/vendor/curl
-	url = https://github.com/curl/curl.git
-[submodule "nodes/ukamaOS/distro/vendor/mbedtls"]
-	path = nodes/ukamaOS/distro/vendor/mbedtls
-	url = https://github.com/ARMmbed/mbedtls.git
+	url = https://github.com/ukama/jansson.git
 [submodule "nodes/ukamaOS/distro/vendor/amqp"]
 	path = nodes/ukamaOS/distro/vendor/amqp
 	url = https://github.com/alanxz/rabbitmq-c.git
 [submodule "nodes/ukamaOS/distro/vendor/Unity"]
 	path = nodes/ukamaOS/distro/vendor/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
-[submodule "nodes/ukamaOS/distro/vendor/protobuf-c"]
-	path = nodes/ukamaOS/distro/vendor/protobuf-c
-	url = https://github.com/protobuf-c/protobuf-c.git
-[submodule "nodes/ukamaOS/distro/vendor/dhcpcd"]
-	path = nodes/ukamaOS/distro/vendor/dhcpcd
-	url = https://github.com/NetworkConfiguration/dhcpcd.git
-[submodule "nodes/ukamaOS/distro/vendor/iproute2"]
-	path = nodes/ukamaOS/distro/vendor/iproute2
-	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
-[submodule "systems/planner/Signal-Server"]
-    path = systems/planner/Signal-Server
-    url = https://github.com/Cloud-RF/Signal-Server.git
-[submodule "nodes/ukamaOS/distro/vendor/libunistring"]
-	path = nodes/ukamaOS/distro/vendor/libunistring
-	url = https://github.com/ukama/libunistring.git
-[submodule "nodes/ukamaOS/distro/vendor/iptables"]
-	path = nodes/ukamaOS/distro/vendor/iptables
-	url = https://github.com/ukama/iptables.git
-[submodule "nodes/ukamaOS/distro/vendor/gmp"]
-	path = nodes/ukamaOS/distro/vendor/gmp
-	url = https://github.com/ukama/gmp.git
 [submodule "nodes/ukamaOS/distro/vendor/libcap"]
 	path = nodes/ukamaOS/distro/vendor/libcap
 	url = https://github.com/ukama/libcap.git
 [submodule "nodes/ukamaOS/distro/vendor/libuuid"]
 	path = nodes/ukamaOS/distro/vendor/libuuid
 	url = https://github.com/ukama/libuuid.git
-[submodule "nodes/ukamaOS/distro/vendor/nettle"]
-	path = nodes/ukamaOS/distro/vendor/nettle
-	url = https://github.com/ukama/nettle.git
-[submodule "nodes/ukamaOS/distro/vendor/p11-kit"]
-	path = nodes/ukamaOS/distro/vendor/p11-kit
-	url = https://github.com/ukama/p11-kit.git
 [submodule "nodes/ukamaOS/distro/vendor/prometheus-client"]
 	path = nodes/ukamaOS/distro/vendor/prometheus-client
 	url = https://github.com/ukama/prometheus-client.git
-[submodule "nodes/ukamaOS/distro/vendor/sqlite"]
-	path = nodes/ukamaOS/distro/vendor/sqlite
-	url = https://github.com/ukama/sqlite.git
-[submodule "nodes/ukamaOS/distro/vendor/sysctl"]
-	path = nodes/ukamaOS/distro/vendor/sysctl
-	url = https://github.com/ukama/sysctl.git
 [submodule "nodes/ukamaOS/distro/vendor/ulfius"]
 	path = nodes/ukamaOS/distro/vendor/ulfius
 	url = https://github.com/ukama/ulfius.git
-[submodule "nodes/ukamaOS/distro/vendor/gnutls"]
-	path = nodes/ukamaOS/distro/vendor/gnutls
-	url = https://github.com/ukama/gnutls.git
 [submodule "nodes/ukamaOS/firmware"]
 	path = nodes/ukamaOS/firmware
 	url = https://github.com/ukama/firmware.git
@@ -89,12 +38,4 @@
 [submodule "nodes/ukamaOS/kernel"]
 	path = nodes/ukamaOS/kernel
 	url = https://github.com/ukama/kernel.git
-[submodule "nodes/ukamaOS/distro/vendor/psl"]
-	path = nodes/ukamaOS/distro/vendor/psl
-	url = https://github.com/ukama/psl.git
-[submodule "nodes/ukamaOS/distro/vendor/protobuf"]
-	path = nodes/ukamaOS/distro/vendor/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
-[submodule "nodes/ukamaOS/distro/vendor/libidn2"]
-	path = nodes/ukamaOS/distro/vendor/libidn2
-	url = https://github.com/ukama/libidn2.git
+	branch = ukama-anode-latest

@@ -13,10 +13,17 @@ type SendEmailRes struct {
 	MailerId string `json:"mailer_id"`
 }
 
+type Attachment struct {
+	Filename    string `json:"filename" validate:"required"`
+	ContentType string `json:"content_type" validate:"required"`
+	Content     []byte `json:"content"`
+}
+
 type SendEmailReq struct {
-	To           []string `json:"to" validate:"required"`
-	TemplateName string   `json:"template_name" validate:"required"`
+	To           []string     `json:"to" validate:"required"`
+	TemplateName string       `json:"template_name" validate:"required"`
 	Values       map[string]interface{}
+	Attachments  []Attachment `json:"attachments"`
 }
 
 type GetEmailByIdReq struct {

@@ -32,7 +32,7 @@ ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
         VENDOR_PKG=
 else
-	VENDOR_PKG = tomlc curl jansson ulfius libuuid prometheus-client
+	VENDOR_PKG = tomlc jansson ulfius libuuid prometheus-client
 endif
 PLATFORM = platform
 
@@ -72,9 +72,6 @@ LIBS+=-lpromhttp
 CFILES   = $(wildcard ./src/*.c ./src/agents/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: $(TARGET_EXEC)
 
 all: version.h metricsd
@@ -82,7 +79,7 @@ all: version.h metricsd
 metricsd: $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
@@ -92,7 +89,7 @@ $(PLATFORM):
 	$(MAKE) -C $(PLATFORM_DIR)
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(VERSION_FILE):
 	$(NODES_DIR)/utils/scripts/generate_version.sh

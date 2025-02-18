@@ -13,17 +13,19 @@ package adapters
 import (
 	"context"
 
-	cop "github.com/ukama/ukama/systems/common/rest/client/operator"
+	"github.com/ukama/ukama/systems/common/rest/client"
+
+	cop "github.com/ukama/ukama/systems/common/rest/client/operatoragent"
 )
 
 type OperatorAgentAdaper struct {
 	host    string
 	isDebug bool
-	client  cop.OperatorClient
+	client  cop.OperatorAgentClient
 }
 
 func NewOperatorAgentAdapter(operatorAgentHost string, debug bool) (*OperatorAgentAdaper, error) {
-	c := cop.NewOperatorClient(operatorAgentHost)
+	c := cop.NewOperatorAgentClient(operatorAgentHost)
 
 	return &OperatorAgentAdaper{
 		host:    operatorAgentHost,
@@ -47,17 +49,17 @@ func (o *OperatorAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, fro
 	return o.client.GetUsages(iccid, cdrType, from, to, region)
 }
 
-func (o *OperatorAgentAdaper) ActivateSim(ctx context.Context, req ReqData) error {
+func (o *OperatorAgentAdaper) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
 	return o.client.ActivateSim(req.Iccid)
 }
 
-func (o *OperatorAgentAdaper) DeactivateSim(ctx context.Context, req ReqData) error {
+func (o *OperatorAgentAdaper) DeactivateSim(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
 	return o.client.DeactivateSim(req.Iccid)
 }
 
-func (o *OperatorAgentAdaper) UpdatePackage(ctx context.Context, req ReqData) error {
+func (o *OperatorAgentAdaper) UpdatePackage(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
 	return nil
 }
