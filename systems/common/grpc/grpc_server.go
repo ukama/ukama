@@ -44,7 +44,7 @@ func NewGrpcServerWithCustomHealthcheck(healthChecker *HealthChecker, config con
 }
 
 func (g *UkamaGrpcServer) StartServer() {
-	log.Infof("Starting gRpc on port " + fmt.Sprintf(":%d", g.config.Port))
+	log.Infof("Starting gRpc on port %s", fmt.Sprintf(":%d", g.config.Port))
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", g.config.Port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

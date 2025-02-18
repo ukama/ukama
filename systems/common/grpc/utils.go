@@ -28,15 +28,15 @@ func SqlErrorToGrpc(err error, entity string) error {
 	logrus.Error(err)
 	if err != nil {
 		if sql.IsNotFoundError(err) {
-			return status.Errorf(codes.NotFound, entity+" record not found")
+			return status.Errorf(codes.NotFound, "%s record not found", entity)
 		}
 
 		if sql.IsDuplicateKeyError(err) {
-			return status.Errorf(codes.AlreadyExists, entity+" already exist")
+			return status.Errorf(codes.AlreadyExists, "%s already exists", entity)
 		}
 	}
 
-	return status.Errorf(codes.Internal, err.Error())
+	return status.Error(codes.Internal, err.Error())
 }
 
 func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {

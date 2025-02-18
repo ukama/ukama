@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/utils"
 
@@ -113,11 +114,11 @@ func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simID, 
 
 	switch simStatus {
 	case statusActive:
-		return nil, f.testAgentAdapter.ActivateSim(ctx, adapters.ReqData{
+		return nil, f.testAgentAdapter.ActivateSim(ctx, client.AgentRequestData{
 			Iccid: fakeIccid,
 		})
 	case statusInactive:
-		return nil, f.testAgentAdapter.DeactivateSim(ctx, adapters.ReqData{
+		return nil, f.testAgentAdapter.DeactivateSim(ctx, client.AgentRequestData{
 			Iccid: fakeIccid,
 		})
 	default:

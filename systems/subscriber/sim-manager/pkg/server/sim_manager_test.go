@@ -24,6 +24,7 @@ import (
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -31,7 +32,6 @@ import (
 	subspb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	subsmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	db "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	splpb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	splmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"
@@ -451,28 +451,28 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 					SubscriberId: subscriberID.String(),
 					NetworkId:    networkID.String(),
 					Email:        "test@example.com",
-					Name:        "Test User",
+					Name:         "Test User",
 				},
 			}, nil).Once()
 
 		packageInfo := &cdplan.PackageInfo{
-			IsActive:    true,
-			Duration:    3600,
-			SimType:     simTypeTest,
-			DataVolume:  10,
-			DataUnit:    "GB",
-			Name:        "Test Package",
-			Amount:      100,
+			IsActive:   true,
+			Duration:   3600,
+			SimType:    simTypeTest,
+			DataVolume: 10,
+			DataUnit:   "GB",
+			Name:       "Test Package",
+			Amount:     100,
 		}
 		packageClient.On("Get", packageID.String()).
 			Return(packageInfo, nil).
-			Times(2) 
+			Times(2)
 
 		netClient.On("Get", networkID.String()).
 			Return(&creg.NetworkInfo{
 				IsDeactivated: false,
 				TrafficPolicy: 0,
-				Name:         "Test Network",
+				Name:          "Test Network",
 			}, nil).Once()
 
 		simPoolClient := simPoolService.On("GetClient").
@@ -752,7 +752,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
 		agentAdapter.On("UpdatePackage", mock.Anything,
-			mock.MatchedBy(func(a adapters.ReqData) bool {
+			mock.MatchedBy(func(a client.AgentRequestData) bool {
 				return a.Iccid == simd.Iccid
 			})).Return(nil).Once()
 
@@ -1027,8 +1027,6 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				SimType:  simTypeTest,
 			}, nil).Once()
 
-	
-
 		// Return an empty list for the initial package list check
 		packageRepo.On("List", sim.Id.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
@@ -1043,7 +1041,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 				StartDate: time.Now().UTC(),
 				EndDate:   time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
 				PackageId: packageID,
-				IsActive: true,
+				IsActive:  true,
 			},
 		}, nil).Once()
 

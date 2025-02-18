@@ -10,14 +10,16 @@ package rest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"testing"
+
 	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
-	"testing"
 )
 
 func Test_errorHook(t *testing.T) {
@@ -50,7 +52,7 @@ func Test_errorHook(t *testing.T) {
 		},
 		{
 			name:    "no_error",
-			err:     &grpcGate.HTTPStatusError{HTTPStatus: 404, Err: fmt.Errorf(dummyError)},
+			err:     &grpcGate.HTTPStatusError{HTTPStatus: 404, Err: errors.New(dummyError)},
 			expCode: 404,
 			expMsg:  dummyErrResp,
 		},
@@ -63,7 +65,7 @@ func Test_errorHook(t *testing.T) {
 
 		{
 			name:    "grpc_error_plain_description",
-			err:     status.Errorf(codes.NotFound, dummyError),
+			err:     status.Error(codes.NotFound, dummyError),
 			expCode: http.StatusNotFound,
 			expMsg:  dummyErrResp,
 		},

@@ -60,7 +60,7 @@ type MsgClient struct {
 	channel *amqp.Channel
 }
 
-//Servcie Config
+// Servcie Config
 type Config struct {
 }
 
@@ -118,14 +118,15 @@ func RemovePassFromConnection(connectioStr string) string {
 func connectClient(connectionString string) (*amqp.Connection, error) {
 	conn, err := amqp.Dial(fmt.Sprintf("%s/", connectionString))
 	if err != nil {
-		logrus.Errorf("Trying to connect to AMQP compatible broker at: " + RemovePassFromConnection(connectionString))
+		logrus.Errorf("Trying to connect to AMQP compatible broker at: %s", RemovePassFromConnection(connectionString))
+
 		return nil, err
 	}
 
 	return conn, nil
 }
 
-//Connect to Broker(RabbitMq server)
+// Connect to Broker(RabbitMq server)
 func (m *MsgClient) ConnectToBroker(connectionString string) {
 	if connectionString == "" {
 		panic("Cannot initialize connection to broker, connectionString not set.")
@@ -144,7 +145,7 @@ func (m *MsgClient) ConnectToBroker(connectionString string) {
 	}
 }
 
-//Publish to queue through exchange
+// Publish to queue through exchange
 func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error {
 
 	err := m.declareExchange(m.channel, exchangeName, exchangeType)
@@ -359,7 +360,7 @@ func (m *MsgClient) consume(ch *amqp.Channel, queueName string, consumerId strin
 	return msgs, nil
 }
 
-//Subscribe directly to queue
+// Subscribe directly to queue
 func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	ch, err := m.createChannel()
 	if err != nil {

@@ -36,6 +36,7 @@ import (
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -757,19 +758,18 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		return nil, err
 	}
 
-
 	err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 		To:           []string{remoteSubResp.Subscriber.Email},
 		TemplateName: emailTemplate.EmailTemplatePackageAddition,
 		Values: map[string]interface{}{
-			emailTemplate.EmailKeySubscriber:       remoteSubResp.Subscriber.Name,
+			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
 			emailTemplate.EmailKeyNetwork:         netInfo.Name,
 			emailTemplate.EmailKeyName:            userInfos.Name,
 			emailTemplate.EmailKeyOrg:             s.orgName,
-			emailTemplate.EmailKeyPackagesCount:  fmt.Sprintf("%v", len(packages) + 1),
+			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
 			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
-			emailTemplate.EmailKeyExpiration: pkg.EndDate.Format("January 2, 2006"),
-			emailTemplate.EmailKeyPackage:pkgInfo.Name,   
+			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
+			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
 		},
 	})
 	if err != nil {
@@ -952,7 +952,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
 	}
 
-	opReq := adapters.ReqData{
+	opReq := client.AgentRequestData{
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),
@@ -1034,7 +1034,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
 	}
 
-	req := adapters.ReqData{
+	req := client.AgentRequestData{
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),
@@ -1111,7 +1111,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
 	}
 
-	req := adapters.ReqData{
+	req := client.AgentRequestData{
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),

@@ -12,6 +12,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -49,19 +50,19 @@ func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, 
 	return nil, nil, nil
 }
 
-func (t *TestAgentAdapter) ActivateSim(ctx context.Context, req ReqData) error {
+func (t *TestAgentAdapter) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
 	_, err := t.client.ActivateSim(ctx, &pb.ActivateSimRequest{Iccid: req.Iccid})
 
 	return err
 }
 
-func (t *TestAgentAdapter) DeactivateSim(ctx context.Context, req ReqData) error {
+func (t *TestAgentAdapter) DeactivateSim(ctx context.Context, req client.AgentRequestData) error {
 	_, err := t.client.DeactivateSim(ctx, &pb.DeactivateSimRequest{Iccid: req.Iccid})
 
 	return err
 }
 
-func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req ReqData) error {
+func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
 	return nil
 }
