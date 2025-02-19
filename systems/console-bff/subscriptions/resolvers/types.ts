@@ -12,6 +12,7 @@ import {
   NOTIFICATION_SCOPE,
   NOTIFICATION_TYPE,
   ROLE_TYPE,
+  STATS_TYPE,
 } from "../../common/enums";
 
 @ObjectType()
@@ -58,6 +59,24 @@ export class LatestMetricRes {
   value: [number, number];
 }
 
+@ObjectType()
+export class LatestMetricSubRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field(() => [[Number, Number]])
+  value: [number, number][];
+}
+
 @InputType()
 export class GetMetricRangeInput {
   @Field()
@@ -83,6 +102,33 @@ export class GetMetricRangeInput {
 
   @Field({ nullable: true })
   withSubscription?: boolean;
+}
+
+@InputType()
+export class GetMetricsStatInput {
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field()
+  orgName: string;
+
+  @Field({ nullable: true })
+  userId?: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  from: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ defaultValue: 1 })
+  step: number;
 }
 
 @InputType()
@@ -116,6 +162,30 @@ export class GetMetricByTabInput {
 export class MetricsRes {
   @Field(() => [MetricRes])
   metrics: MetricRes[];
+}
+
+@ObjectType()
+export class MetricStateRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  value: number;
+}
+
+@ObjectType()
+export class MetricsStateRes {
+  @Field(() => [MetricStateRes])
+  metrics: MetricStateRes[];
 }
 
 @InputType()

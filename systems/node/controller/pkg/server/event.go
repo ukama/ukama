@@ -53,8 +53,8 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	return &epb.EventResponse{}, nil
 }
 
-func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
-	p := &epb.NodeCreatedEvent{}
+func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
+	p := &epb.EventRegistryNodeCreate{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
@@ -63,7 +63,7 @@ func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*
 	return p, nil
 }
 
-func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
+func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.EventRegistryNodeCreate) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	err := n.s.nRepo.Add(strings.ToLower(msg.NodeId))

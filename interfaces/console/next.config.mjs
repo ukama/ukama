@@ -6,7 +6,13 @@ const nextConfig = {
     return config;
   },
   images: {
-    domains: ['ukama-site-assets.s3.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ukama-site-assets.s3.amazonaws.com',
+        pathname: '**',
+      },
+    ],
   },
 };
 

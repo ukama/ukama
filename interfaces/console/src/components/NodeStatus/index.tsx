@@ -21,6 +21,7 @@ const StyledBtn = styled(Button)({
 
 interface INodeStatus {
   nodes: any;
+  uptime: number;
   loading: boolean;
   onAddNode: Function;
   nodeActionOptions: any[];
@@ -32,6 +33,7 @@ interface INodeStatus {
 
 const NodeStatus = ({
   nodes,
+  uptime,
   onAddNode,
   selectedNode,
   loading = false,
@@ -48,6 +50,7 @@ const NodeStatus = ({
       <Grid size={{ xs: 12, md: 9 }}>
         <NodeDropDown
           nodes={nodes}
+          uptime={uptime}
           loading={loading}
           onAddNode={onAddNode}
           selectedNode={selectedNode}

@@ -10,18 +10,22 @@ import { Node, NodeTypeEnum } from '@/client/graphql/generated';
 import {
   Graphs_Type,
   MetricsRes,
+  MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
-import { HealtChartsConfigure, TooltipsText } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
-import { Paper, Stack, Typography, capitalize } from '@mui/material';
+import { NODE_KPIS } from '@/constants';
+import {
+  getKPIStatValue,
+  getMetricValue,
+  isMetricValue,
+  NodeEnumToString,
+} from '@/utils';
+import { Paper, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { useEffect, useState } from 'react';
 import LineChart from '../LineChart';
 import NodeDetailsCard from '../NodeDetailsCard';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
-
-const PLACEHOLDER_VALUE = 'NA';
 
 interface INodeOverviewTab {
   nodeId: string;
@@ -36,6 +40,7 @@ interface INodeOverviewTab {
   connectedUsers: string | undefined;
   getNodeSoftwareUpdateInfos: Function;
   handleOverviewSectionChange: Function;
+  nodeMetricsStatData: MetricsStateRes;
 }
 
 const NodeOverviewTab = ({
@@ -49,10 +54,13 @@ const NodeOverviewTab = ({
   onNodeSelected,
   handleUpdateNode,
   isUpdateAvailable,
+  nodeMetricsStatData,
   getNodeSoftwareUpdateInfos,
   handleOverviewSectionChange,
 }: INodeOverviewTab) => {
-  const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
+  const nodeType = selectedNode?.type ?? NodeTypeEnum.Tnode;
+  const healthConfig = NODE_KPIS.HEALTH[NodeTypeEnum.Tnode];
+  const subscriberConfig = NODE_KPIS.SUBSCRIBER[NodeTypeEnum.Tnode];
   const [selected, setSelected] = useState<number>(0);
   useEffect(() => {
     setSelected(0);
@@ -67,7 +75,7 @@ const NodeOverviewTab = ({
 
   return (
     <Grid container columnSpacing={3} rowSpacing={2}>
-      <Grid size={{ xs: 12, md: 4 }}>
+      <Grid size={{ xs: 12, md: 3.5 }}>
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
@@ -78,13 +86,13 @@ const NodeOverviewTab = ({
             handleAction={handleOnSelected}
           >
             <NodeStatItem
-              value={`${capitalize(selectedNode?.type.toLowerCase() ?? 'HOME')} Node`}
               name={'Model type'}
+              value={NodeEnumToString(nodeType)}
             />
 
             <NodeStatItem
-              value={selectedNode?.id.toLowerCase() ?? '-'}
               name={'Serial #'}
+              value={selectedNode?.id.toLowerCase() ?? '-'}
             />
             {/* {selectedNode?.type === 'TOWER' && (
                 <Grid item xs={12}>
@@ -101,33 +109,26 @@ const NodeOverviewTab = ({
             loading={loading}
             isClickable={true}
             selected={selected}
-            title={'Node Health'}
+            title={'Health'}
             handleAction={handleOnSelected}
           >
-            {HealtChartsConfigure[nodeType][0].show && (
+            {healthConfig.map((config, i) => (
               <NodeStatItem
-                value={PLACEHOLDER_VALUE}
-                name={HealtChartsConfigure[nodeType][0].name}
-                showAlertInfo={false}
-                nameInfo={TooltipsText.TRX}
+                id={config.id}
+                name={config.name}
+                unit={config.unit}
+                key={`${config.id}-${i}`}
+                threshold={config.threshold}
+                nameInfo={config.description}
+                value={getKPIStatValue(
+                  config.id,
+                  metricsLoading,
+                  nodeMetricsStatData,
+                )}
               />
-            )}
-            {HealtChartsConfigure[nodeType][1].show && (
-              <NodeStatItem
-                value={PLACEHOLDER_VALUE}
-                name={HealtChartsConfigure[nodeType][1].name}
-                nameInfo={TooltipsText.COM}
-              />
-            )}
-            {HealtChartsConfigure[nodeType][2].show && (
-              <NodeStatItem
-                name={HealtChartsConfigure[nodeType][2].name}
-                nameInfo={TooltipsText.COM}
-                value={PLACEHOLDER_VALUE}
-              />
-            )}
+            ))}
           </NodeStatsContainer>
-          {/* {selectedNode?.type !== NodeTypeEnum.Anode && (
+          {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
               loading={loading}
@@ -136,25 +137,26 @@ const NodeOverviewTab = ({
               title={'Subscribers'}
               handleAction={handleOnSelected}
             >
-              <NodeStatItem
-                name={'Attached'}
-                value={connectedUsers}
-                nameInfo={TooltipsText.ATTACHED}
-              />
-              <NodeStatItem
-                name={'Active'}
-                value={`${
-                  connectedUsers === '0'
-                    ? parseInt(connectedUsers)
-                    : parseInt(connectedUsers) - 1
-                }`}
-                nameInfo={TooltipsText.ACTIVE}
-              />
+              {subscriberConfig.map((config, i) => (
+                <NodeStatItem
+                  id={config.id}
+                  name={config.name}
+                  unit={config.unit}
+                  key={`${config.id}-${i}`}
+                  threshold={config.threshold}
+                  nameInfo={config.description}
+                  value={getKPIStatValue(
+                    config.id,
+                    metricsLoading,
+                    nodeMetricsStatData,
+                  )}
+                />
+              ))}
             </NodeStatsContainer>
-          )} */}
+          )}
         </Stack>
       </Grid>
-      <Grid size={{ xs: 12, md: 8 }}>
+      <Grid size={{ xs: 12, md: 8.5 }}>
         {selected === 0 && (
           <NodeDetailsCard
             nodeType={selectedNode?.type ?? undefined}
@@ -165,120 +167,44 @@ const NodeOverviewTab = ({
             isUpdateAvailable={isUpdateAvailable}
           />
         )}
-        {selected === 1 && (
-          <Paper
-            sx={{
-              p: 3,
-              overflow: 'auto',
-              height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
-            }}
-          >
+        <Paper
+          sx={{
+            p: 3,
+            overflow: 'auto',
+            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+          }}
+        >
+          {selected === 1 && (
             <Stack spacing={4}>
-              <Typography variant="h6">Node Health</Typography>
-              {HealtChartsConfigure[nodeType][0].show && (
+              {healthConfig.map((config, i) => (
                 <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
+                  from={metricFrom}
+                  topic={config.id}
+                  title={config.name}
                   loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][0].id}
-                  title={HealtChartsConfigure[nodeType][0].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][0].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][0].id,
-                    metrics,
-                  )}
+                  key={`${config.id}-${i}`}
+                  hasData={isMetricValue(config.id, metrics)}
+                  initData={getMetricValue(config.id, metrics)}
                 />
-              )}
-              {HealtChartsConfigure[nodeType][1].show && (
-                <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
-                  loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][1].id}
-                  title={HealtChartsConfigure[nodeType][1].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][1].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][1].id,
-                    metrics,
-                  )}
-                />
-              )}
-              {HealtChartsConfigure[nodeType][2].show && (
-                <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.NodeHealth}
-                  metricFrom={metricFrom}
-                  loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][2].id}
-                  title={HealtChartsConfigure[nodeType][2].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][2].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][2].id,
-                    metrics,
-                  )}
-                />
-              )}
+              ))}
             </Stack>
-          </Paper>
-        )}
-        {/* {selected === 2 && nodeType !== NodeTypeEnum.Anode && (
-          <Paper sx={{ p: 3 }}>
+          )}
+          {selected === 2 && nodeType === NodeTypeEnum.Tnode && (
             <Stack spacing={4}>
-              <Typography variant="h6">Subscribers</Typography>
-              {HealtChartsConfigure[
-                (selectedNode?.type as string) ?? 'hnode'
-              ][4].show && (
+              {subscriberConfig.map((config, i) => (
                 <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.Subscribers}
-                  metricFrom={metricFrom}
+                  from={metricFrom}
+                  topic={config.id}
+                  title={config.name}
                   loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][3].id}
-                  title={HealtChartsConfigure[nodeType][3].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][3].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][3].id,
-                    metrics,
-                  )}
+                  key={`${config.id}-${i}`}
+                  hasData={isMetricValue(config.id, metrics)}
+                  initData={getMetricValue(config.id, metrics)}
                 />
-              )}
-              {HealtChartsConfigure[
-                (selectedNode?.type as string) ?? 'hnode'
-              ][4].show && (
-                <LineChart
-                  nodeId={nodeId}
-                  tabSection={Graphs_Type.Subscribers}
-                  metricFrom={metricFrom}
-                  loading={metricsLoading}
-                  topic={HealtChartsConfigure[nodeType][4].id}
-                  title={HealtChartsConfigure[nodeType][4].name}
-                  initData={getMetricValue(
-                    HealtChartsConfigure[nodeType][4].id,
-                    metrics,
-                  )}
-                  hasData={isMetricValue(
-                    HealtChartsConfigure[nodeType][4].id,
-                    metrics,
-                  )}
-                />
-              )}
+              ))}
             </Stack>
-          </Paper>
-        )} */}
+          )}
+        </Paper>
       </Grid>
     </Grid>
   );

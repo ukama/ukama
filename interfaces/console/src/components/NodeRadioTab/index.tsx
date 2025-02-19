@@ -6,101 +6,75 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { RadioChartsConfig, TooltipsText } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Node, NodeTypeEnum } from '@/client/graphql/generated';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
+import { Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
-  nodeId: string;
   metrics: any;
   loading: boolean;
   metricFrom: number;
+  selectedNode: Node | undefined;
+  nodeMetricsStatData: MetricsStateRes;
 }
 const NodeRadioTab = ({
-  nodeId,
   loading,
   metrics,
   metricFrom,
+  selectedNode,
+  nodeMetricsStatData,
 }: INodeRadioTab) => {
-  const [isCollapse, setIsCollapse] = useState<boolean>(false);
-  const handleCollapse = () => setIsCollapse((prev) => !prev);
+  const radioConfig = NODE_KPIS.RADIO[NodeTypeEnum.Tnode];
   return (
     <Grid container spacing={3}>
-      <Grid item lg={!isCollapse ? 4 : 1} md xs>
+      <Grid size={{ xs: 12, md: 3 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
           title={'Radio'}
           loading={loading}
-          isCollapsable={true}
-          isCollapse={isCollapse}
-          onCollapse={handleCollapse}
+          isCollapsable={false}
         >
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            variant={'large'}
-            name={'TX Power'}
-            nameInfo={TooltipsText.TXPOWER}
-          />
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            variant={'large'}
-            name={'RX Power'}
-            nameInfo={TooltipsText.RXPOWER}
-          />
-          <NodeStatItem
-            value={PLACEHOLDER_VALUE}
-            name={'PA Power'}
-            variant={'large'}
-            nameInfo={TooltipsText.PAPOWER}
-          />
+          {radioConfig.map((config, i) => (
+            <NodeStatItem
+              id={config.id}
+              name={config.name}
+              unit={config.unit}
+              key={`${config.id}-${i}`}
+              threshold={config.threshold}
+              nameInfo={config.description}
+              value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
+            />
+          ))}
         </NodeStatsContainer>
       </Grid>
-      <Grid item lg={isCollapse ? 11 : 8} md xs>
+      <Grid size={{ xs: 12, md: 9 }}>
         <Paper
           sx={{
             p: 3,
             overflow: 'auto',
-            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
+            height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 372px)' },
           }}
         >
           <Stack spacing={4}>
-            <LineChart
-              nodeId={nodeId}
-              loading={loading}
-              topic={RadioChartsConfig[0].id}
-              title={RadioChartsConfig[0].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue(RadioChartsConfig[0].id, metrics)}
-              initData={getMetricValue(RadioChartsConfig[0].id, metrics)}
-            />
-            <LineChart
-              nodeId={nodeId}
-              loading={loading}
-              topic={RadioChartsConfig[1].id}
-              title={RadioChartsConfig[1].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue(RadioChartsConfig[1].id, metrics)}
-              initData={getMetricValue(RadioChartsConfig[1].id, metrics)}
-            />
-            <LineChart
-              nodeId={nodeId}
-              loading={loading}
-              topic={RadioChartsConfig[2].id}
-              title={RadioChartsConfig[2].name}
-              metricFrom={metricFrom}
-              tabSection={Graphs_Type.Radio}
-              hasData={isMetricValue(RadioChartsConfig[2].id, metrics)}
-              initData={getMetricValue(RadioChartsConfig[2].id, metrics)}
-            />
+            {radioConfig.map((config, i) => (
+              <LineChart
+                key={`${config.id}-${i}`}
+                from={metricFrom}
+                topic={config.id}
+                loading={loading}
+                title={config.name}
+                hasData={isMetricValue(config.id, metrics)}
+                initData={getMetricValue(config.id, metrics)}
+              />
+            ))}
           </Stack>
         </Paper>
       </Grid>

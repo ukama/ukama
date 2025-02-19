@@ -14,6 +14,7 @@ import { API_METHOD_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
   GetMetricRangeInput,
+  GetMetricsStatInput,
   MetricRes,
   NotificationsRes,
 } from "../resolvers/types";
@@ -45,14 +46,25 @@ const directCall = async (
 
 const getMetricRange = async (
   baseUrl: string,
-  args: GetMetricRangeInput
+  type: string,
+  args: GetMetricsStatInput
 ): Promise<MetricRes> => {
-  const { from, to = 0, step = 1 } = args;
+  const { from, step = 1, nodeId, userId, networkId } = args;
+  let params = `from=${from}&step=${step}`;
+  if (nodeId) {
+    params = params + `&node=${nodeId}`;
+  }
+  if (networkId) {
+    params = params + `&network=${networkId}`;
+  }
+  if (userId) {
+    params = params + `&user=${userId}`;
+  }
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${baseUrl}/${VERSION}/range/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
+    url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res => parseMetricRes(res.data, args.type))
+    .then(res => parseMetricRes(res, type, args))
     .catch(err => {
       throw new GraphQLError(err);
     });

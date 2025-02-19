@@ -12,11 +12,21 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { IconButton, Tooltip, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Zoom from '@mui/material/Zoom';
+import { useEffect, useState } from 'react';
+
+interface IThreshold {
+  min: number;
+  normal: number;
+  max: number;
+}
 
 interface INodeStatItem {
+  id?: string;
+  unit?: string;
   name: string;
   value: string;
   variant?: TVariant;
+  threshold?: IThreshold | null;
   nameInfo?: string; //Tooltip info about stat
   valueInfo?: string; //Tooltip info about stat value
   showAlertInfo?: boolean; //Pass true if its an alert value
@@ -82,11 +92,42 @@ const variants = (variant: TVariant, key: string) => {
 const NodeStatItem = ({
   name,
   value,
+  id = '',
+  unit = '',
+  threshold,
   nameInfo = '',
   valueInfo = '',
   variant = 'medium',
   showAlertInfo = false,
 }: INodeStatItem) => {
+  const [v, setV] = useState<string>('');
+
+  useEffect(() => {
+    setV(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (id) {
+      const token = PubSub.subscribe(id, (_, data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const sum = data.reduce((acc, val) => acc + val[1], 0);
+          const avg = sum / data.length;
+          setV(`${parseFloat(Number(avg).toFixed(2))}`);
+        }
+      });
+      return () => {
+        PubSub.unsubscribe(token);
+      };
+    }
+  }, [id, unit]);
+
+  const isAlert = (): boolean => {
+    if (id && threshold && parseFloat(v) > threshold.normal) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <Grid container spacing={2}>
       <Grid size={{ xs: variants(variant, 'NG') }}>
@@ -98,8 +139,8 @@ const NodeStatItem = ({
       </Grid>
       <Grid size={{ xs: variants(variant, 'VG') }}>
         <TextWithToolTip
-          title={value}
-          isAlert={showAlertInfo}
+          title={`${v} ${unit}`}
+          isAlert={isAlert()}
           tooltipText={valueInfo}
           showToottip={!!valueInfo}
         />

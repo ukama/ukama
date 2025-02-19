@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { TIME_FILTER_OPTIONS } from '@/constants';
 import { colors } from '@/theme';
 import { StatsPeriodItemType } from '@/types';
 import {
@@ -14,18 +15,18 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import { useState } from 'react';
 
 interface ITimeFilter {
-  filter?: string;
   options?: StatsPeriodItemType[];
   handleFilterSelect: Function;
 }
 
 const TimeFilter = ({
-  filter = 'LIVE',
   handleFilterSelect,
-  options = [{ id: '1', label: 'LIVE' }],
+  options = TIME_FILTER_OPTIONS,
 }: ITimeFilter) => {
+  const [filter, setFilter] = useState<string>('LIVE');
   return (
     <Box component="div">
       <ToggleButtonGroup
@@ -33,7 +34,12 @@ const TimeFilter = ({
         size="small"
         color="primary"
         value={filter}
-        onChange={(_, value: string) => handleFilterSelect(value)}
+        onChange={(_, value: string) => {
+          if (value !== null && value !== filter) {
+            setFilter(value);
+            handleFilterSelect(value);
+          }
+        }}
       >
         {options.map(({ id, label }: StatsPeriodItemType) => (
           <ToggleButton

@@ -7,11 +7,11 @@
  */
 
 import { Node, NodeTypeEnum } from '@/client/graphql/generated';
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { NodeResourcesTabConfigure, TooltipsText } from '@/constants';
-import { getMetricValue, isMetricValue } from '@/utils';
-import { Grid, Paper, Stack } from '@mui/material';
-import { useState } from 'react';
+import { MetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { NODE_KPIS } from '@/constants';
+import { getKPIStatValue, getMetricValue, isMetricValue } from '@/utils';
+import { Paper, Stack } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
@@ -19,92 +19,44 @@ import NodeStatsContainer from '../NodeStatsContainer';
 const PLACEHOLDER_VALUE = 'NA';
 interface INodeResourcesTab {
   metrics: any;
-  nodeId: string;
   loading: boolean;
   metricFrom: number;
   selectedNode: Node | undefined;
+  nodeMetricsStatData: MetricsStateRes;
 }
 const NodeResourcesTab = ({
-  nodeId,
   metrics,
   loading,
   metricFrom,
   selectedNode,
+  nodeMetricsStatData,
 }: INodeResourcesTab) => {
-  const nodeType = selectedNode?.type ?? NodeTypeEnum.Hnode;
-  const [isCollapse, setIsCollapse] = useState<boolean>(false);
-  const handleCollapse = () => setIsCollapse((prev) => !prev);
+  const resourcesConfig = NODE_KPIS.RESOURCES[NodeTypeEnum.Tnode];
+
   return (
     <Grid container spacing={3}>
-      <Grid item lg={!isCollapse ? 4 : 1} md xs>
+      <Grid size={{ xs: 12, md: 3 }}>
         <NodeStatsContainer
           index={0}
           selected={0}
           loading={loading}
           title={'Resources'}
-          isCollapsable={true}
-          isCollapse={isCollapse}
-          onCollapse={handleCollapse}
+          isCollapsable={false}
         >
-          {NodeResourcesTabConfigure[nodeType][0].show && (
+          {resourcesConfig.map((config, i) => (
             <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][0].name}
-              nameInfo={TooltipsText.MTRX}
+              id={config.id}
+              name={config.name}
+              unit={config.unit}
+              key={`${config.id}-${i}`}
+              threshold={config.threshold}
+              nameInfo={config.description}
+              value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
             />
-          )}
-          {NodeResourcesTabConfigure[nodeType][1].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][1].name}
-              nameInfo={TooltipsText.MCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][2].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][2].name}
-              variant={'large'}
-              nameInfo={TooltipsText.CPUTRX}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][3].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][3].name}
-              variant={'large'}
-              nameInfo={TooltipsText.CPUCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][4].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][4].name}
-              nameInfo={TooltipsText.DISKTRX}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][5].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              variant={'large'}
-              name={NodeResourcesTabConfigure[nodeType][5].name}
-              nameInfo={TooltipsText.DISKCOM}
-            />
-          )}
-          {NodeResourcesTabConfigure[nodeType][6].show && (
-            <NodeStatItem
-              value={PLACEHOLDER_VALUE}
-              name={NodeResourcesTabConfigure[nodeType][6].name}
-              variant={'large'}
-              nameInfo={TooltipsText.POWER}
-            />
-          )}
+          ))}
         </NodeStatsContainer>
       </Grid>
-      <Grid item lg={isCollapse ? 11 : 8} md xs>
+      <Grid size={{ xs: 12, md: 9 }}>
         <Paper
           sx={{
             p: 3,
@@ -113,132 +65,17 @@ const NodeResourcesTab = ({
           }}
         >
           <Stack spacing={4}>
-            {NodeResourcesTabConfigure[nodeType][0].show && (
+            {resourcesConfig.map((config, i) => (
               <LineChart
-                nodeId={nodeId}
+                from={metricFrom}
+                topic={config.id}
                 loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][0].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][0].id}
-                title={NodeResourcesTabConfigure[nodeType][0].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][0].id,
-                  metrics,
-                )}
+                title={config.name}
+                key={`${config.id}-${i}`}
+                hasData={isMetricValue(config.id, metrics)}
+                initData={getMetricValue(config.id, metrics)}
               />
-            )}
-            {NodeResourcesTabConfigure[nodeType][1].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][1].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][1].id}
-                title={NodeResourcesTabConfigure[nodeType][1].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][1].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][2].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][2].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][2].id}
-                title={NodeResourcesTabConfigure[nodeType][2].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][2].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][3].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][3].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][3].id}
-                title={NodeResourcesTabConfigure[nodeType][3].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][3].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][4].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][4].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][4].id}
-                title={NodeResourcesTabConfigure[nodeType][4].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][4].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][5].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][5].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][5].id}
-                title={NodeResourcesTabConfigure[nodeType][5].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][5].id,
-                  metrics,
-                )}
-              />
-            )}
-            {NodeResourcesTabConfigure[nodeType][6].show && (
-              <LineChart
-                nodeId={nodeId}
-                loading={loading}
-                initData={getMetricValue(
-                  NodeResourcesTabConfigure[nodeType][6].id,
-                  metrics,
-                )}
-                metricFrom={metricFrom}
-                tabSection={Graphs_Type.Resources}
-                topic={NodeResourcesTabConfigure[nodeType][6].id}
-                title={NodeResourcesTabConfigure[nodeType][6].name}
-                hasData={isMetricValue(
-                  NodeResourcesTabConfigure[nodeType][6].id,
-                  metrics,
-                )}
-              />
-            )}
+            ))}
           </Stack>
         </Paper>
       </Grid>

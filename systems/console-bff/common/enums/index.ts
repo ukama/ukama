@@ -99,14 +99,27 @@ registerEnumType(TIME_FILTER, {
 });
 
 export enum GRAPHS_TYPE {
+  HOME = "HOME",
   NODE_HEALTH = "NODE_HEALTH",
   SUBSCRIBERS = "SUBSCRIBERS",
-  NETWORK = "NETWORK",
+  NETWORK_CELLULAR = "NETWORK_CELLULAR",
+  NETWORK_BACKHAUL = "NETWORK_BACKHAUL",
   RESOURCES = "RESOURCES",
   RADIO = "RADIO",
 }
 registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
+});
+
+export enum STATS_TYPE {
+  HOME = "HOME",
+  OVERVIEW = "OVERVIEW",
+  NETWORK = "NETWORK",
+  RESOURCES = "RESOURCES",
+  RADIO = "RADIO",
+}
+registerEnumType(STATS_TYPE, {
+  name: "STATS_TYPE",
 });
 
 export enum ROLE_TYPE {

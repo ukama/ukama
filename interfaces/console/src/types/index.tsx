@@ -10,7 +10,7 @@ import {
   Notification_Scope,
   Notification_Type,
 } from '@/client/graphql/generated';
-import { LatestMetricRes } from '@/client/graphql/generated/subscriptions';
+import { LatestMetricSubRes } from '@/client/graphql/generated/subscriptions';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
@@ -246,7 +246,7 @@ export interface TNotificationResDto {
 }
 
 interface MetricsSubData {
-  getMetricByTabSub: LatestMetricRes;
+  getMetricByTabSub: LatestMetricSubRes;
 }
 
 export interface TMetricResDto {
