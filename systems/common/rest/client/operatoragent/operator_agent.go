@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package operator
+package operatoragent
 
 import (
 	"encoding/json"
@@ -23,7 +23,7 @@ const (
 	OperatorUsagesEndpoint = "/v1/usages"
 )
 
-type OperatorClient interface {
+type OperatorAgentClient interface {
 	BindSim(iccid string) (*OperatorSimInfo, error)
 	GetSimInfo(iccid string) (*OperatorSimInfo, error)
 	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
@@ -32,30 +32,30 @@ type OperatorClient interface {
 	TerminateSim(iccid string) error
 }
 
-type operatorClient struct {
+type operatorAgentClient struct {
 	u *url.URL
 	R *client.Resty
 }
 
-func NewOperatorClient(h string, options ...client.Option) *operatorClient {
+func NewOperatorAgentClient(h string, options ...client.Option) *operatorAgentClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
 		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
 	}
 
-	return &operatorClient{
+	return &operatorAgentClient{
 		u: u,
 		R: client.NewResty(options...),
 	}
 }
 
 // Bind sim is a no-op for operator sims for now
-func (o *operatorClient) BindSim(iccid string) (*OperatorSimInfo, error) {
+func (o *operatorAgentClient) BindSim(iccid string) (*OperatorSimInfo, error) {
 	return &OperatorSimInfo{}, nil
 }
 
-func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
+func (o *operatorAgentClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	log.Debugf("Getting operator sim info: %v", iccid)
 
 	sim := OperatorSim{}
@@ -79,17 +79,17 @@ func (o *operatorClient) GetSimInfo(iccid string) (*OperatorSimInfo, error) {
 	return sim.SimInfo, nil
 }
 
-func (o *operatorClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
-	log.Debugf("Getting operator sim info: %v", iccid)
+func (o *operatorAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
+	log.Debugf("Getting operator sim usages: %v", iccid)
 
-	usage := OperatorUsage{}
+	usage := OperatorSimUsage{}
 
 	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
 		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))
 	if err != nil {
-		log.Errorf("GetSimInfo failure. error: %s", err.Error())
+		log.Errorf("GetSim usages failure. error: %s", err.Error())
 
-		return nil, nil, fmt.Errorf("GetSimInfo failure: %w", err)
+		return nil, nil, fmt.Errorf("GetSim usages failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &usage)
@@ -105,7 +105,7 @@ func (o *operatorClient) GetUsages(iccid, cdrType, from, to, region string) (map
 	return usage.Usage, usage.Cost, nil
 }
 
-func (o *operatorClient) ActivateSim(iccid string) error {
+func (o *operatorAgentClient) ActivateSim(iccid string) error {
 	log.Debugf("Activationg operator sim: %v", iccid)
 
 	_, err := o.R.Put(o.u.String()+OperatorSimsEndpoint+"/"+iccid, nil)
@@ -118,7 +118,7 @@ func (o *operatorClient) ActivateSim(iccid string) error {
 	return nil
 }
 
-func (o *operatorClient) DeactivateSim(iccid string) error {
+func (o *operatorAgentClient) DeactivateSim(iccid string) error {
 	log.Debugf("Deactivating operator sim: %v", iccid)
 
 	_, err := o.R.Patch(o.u.String()+OperatorSimsEndpoint+"/"+iccid, nil)
@@ -131,7 +131,7 @@ func (o *operatorClient) DeactivateSim(iccid string) error {
 	return nil
 }
 
-func (o *operatorClient) TerminateSim(iccid string) error {
+func (o *operatorAgentClient) TerminateSim(iccid string) error {
 	log.Debugf("Terminating operator sim: %v", iccid)
 
 	_, err := o.R.Delete(o.u.String() + OperatorSimsEndpoint + "/" + iccid)
@@ -153,7 +153,7 @@ type OperatorSim struct {
 	SimInfo *OperatorSimInfo `json:"sim"`
 }
 
-type OperatorUsage struct {
+type OperatorSimUsage struct {
 	Usage map[string]any `json:"usage"`
 	Cost  map[string]any `json:"cost"`
 }

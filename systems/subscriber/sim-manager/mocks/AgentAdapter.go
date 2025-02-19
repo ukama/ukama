@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	adapters "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
+	client "github.com/ukama/ukama/systems/common/rest/client"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -16,7 +16,7 @@ type AgentAdapter struct {
 }
 
 // ActivateSim provides a mock function with given fields: _a0, _a1
-func (_m *AgentAdapter) ActivateSim(_a0 context.Context, _a1 adapters.ReqData) error {
+func (_m *AgentAdapter) ActivateSim(_a0 context.Context, _a1 client.AgentRequestData) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -24,7 +24,7 @@ func (_m *AgentAdapter) ActivateSim(_a0 context.Context, _a1 adapters.ReqData) e
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, adapters.ReqData) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -69,7 +69,7 @@ func (_m *AgentAdapter) Close() {
 }
 
 // DeactivateSim provides a mock function with given fields: _a0, _a1
-func (_m *AgentAdapter) DeactivateSim(_a0 context.Context, _a1 adapters.ReqData) error {
+func (_m *AgentAdapter) DeactivateSim(_a0 context.Context, _a1 client.AgentRequestData) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -77,7 +77,7 @@ func (_m *AgentAdapter) DeactivateSim(_a0 context.Context, _a1 adapters.ReqData)
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, adapters.ReqData) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -174,7 +174,7 @@ func (_m *AgentAdapter) TerminateSim(_a0 context.Context, _a1 string) error {
 }
 
 // UpdatePackage provides a mock function with given fields: _a0, _a1
-func (_m *AgentAdapter) UpdatePackage(_a0 context.Context, _a1 adapters.ReqData) error {
+func (_m *AgentAdapter) UpdatePackage(_a0 context.Context, _a1 client.AgentRequestData) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -182,7 +182,7 @@ func (_m *AgentAdapter) UpdatePackage(_a0 context.Context, _a1 adapters.ReqData)
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, adapters.ReqData) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)

@@ -24,5 +24,5 @@ func ProcessVersionArgument(serviceName string, args []string, version string) {
 		os.Exit(0)
 	}
 
-	logrus.Infof("Starting " + serviceName + " Version: " + version)
+	logrus.Infof("Starting %s version: %s ", serviceName, version)
 }
