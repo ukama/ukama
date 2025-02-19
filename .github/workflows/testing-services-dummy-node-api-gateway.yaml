@@ -30,18 +30,18 @@ jobs:
       aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
       build-listener: false
 
- #  lint:
- #   name: lint
- #   runs-on: ubuntu-latest
- #   env:
- #    working-directory: testing/services/dummy-node/api-gateway
- #   steps:
- #    - uses: actions/checkout@v3
- #    - name: lint
- #      uses: ./.github/actions/lint-go
- #      with:
- #       working-directory: ${{ env.working-directory }}
- #       github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+ lint:
+  name: lint
+  runs-on: ubuntu-latest
+  env:
+   working-directory: testing/services/dummy-node/api-gateway
+  steps:
+   - uses: actions/checkout@v3
+   - name: lint
+     uses: ./.github/actions/lint-go
+     with:
+      working-directory: ${{ env.working-directory }}
+      github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
  release:
   name: release
