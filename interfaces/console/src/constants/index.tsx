@@ -420,3 +420,8 @@ export const NODE_KPIS = {
     ],
   },
 };
+
+export const TIME_FILTER_OPTIONS = [
+  { id: '1', label: 'LIVE' },
+  { id: '2', label: 'ZOOM' },
+];

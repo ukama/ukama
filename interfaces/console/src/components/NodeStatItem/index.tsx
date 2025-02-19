@@ -21,7 +21,7 @@ interface IThreshold {
 }
 
 interface INodeStatItem {
-  id: string | null;
+  id?: string;
   unit?: string;
   name: string;
   value: string;
@@ -90,10 +90,10 @@ const variants = (variant: TVariant, key: string) => {
 };
 
 const NodeStatItem = ({
-  id,
-  unit,
   name,
   value,
+  id = '',
+  unit = '',
   threshold,
   nameInfo = '',
   valueInfo = '',

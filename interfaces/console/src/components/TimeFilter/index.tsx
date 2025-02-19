@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { TIME_FILTER_OPTIONS } from '@/constants';
 import { colors } from '@/theme';
 import { StatsPeriodItemType } from '@/types';
 import {
@@ -23,10 +24,7 @@ interface ITimeFilter {
 
 const TimeFilter = ({
   handleFilterSelect,
-  options = [
-    { id: '1', label: 'LIVE' },
-    { id: '2', label: 'ZOOM' },
-  ],
+  options = TIME_FILTER_OPTIONS,
 }: ITimeFilter) => {
   const [filter, setFilter] = useState<string>('LIVE');
   return (

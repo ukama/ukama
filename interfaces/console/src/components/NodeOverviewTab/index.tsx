@@ -86,14 +86,11 @@ const NodeOverviewTab = ({
             handleAction={handleOnSelected}
           >
             <NodeStatItem
-              id={null}
               name={'Model type'}
               value={NodeEnumToString(nodeType)}
             />
 
             <NodeStatItem
-              id={null}
-              unit={''}
               name={'Serial #'}
               value={selectedNode?.id.toLowerCase() ?? '-'}
             />
