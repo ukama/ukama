@@ -1,0 +1,36 @@
+#!/sbin/openrc-run
+
+name="femaenable"
+description="FEMA enable script for OpenRC"
+
+command="/etc/femEnable.sh"  # Path to the script you want to run
+pidfile="/run/${name}.pid"
+
+depend() {
+    # You can specify dependencies like before net or after sysinit, etc.
+    # If you want the script to run right after system init:
+    need localmount
+    before net
+}
+
+start() {
+    ebegin "Running one-time script"
+
+    # Run your script
+    $command
+
+    eend $?  # End the script and return the exit status of the command
+    # After this, we will disable the service automatically to ensure it only runs once
+    #rc-update del $name default
+}
+
+stop() {
+    # No stopping necessary, as this is a one-time script
+    return 0
+}
+
+restart() {
+    # Just exit, since there's no restart for a one-time script
+    return 0
+}
+
