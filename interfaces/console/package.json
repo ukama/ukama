@@ -28,7 +28,7 @@
     "formik": "^2.4.6",
     "graphql": "^16.8.1",
     "graphql-ws": "^5.16.0",
-    "highcharts": "^11.4.3",
+    "highcharts": "^12.1.2",
     "highcharts-react-official": "^3.2.1",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
@@ -43,7 +43,8 @@
     "sharp": "^0.33.4",
     "stripe": "^17.4.0",
     "use-places-autocomplete": "^4.0.1",
-    "yup": "^1.4.0"
+    "yup": "^1.4.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.2",

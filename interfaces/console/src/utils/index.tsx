@@ -18,12 +18,18 @@ import {
   Graphs_Type,
   MetricRes,
   MetricsRes,
+  MetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
-import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import {
+  INSTALLATION_FLOW,
+  KPI_PLACEHOLDER_VALUE,
+  ONBOARDING_FLOW,
+} from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
+import { formatDistance } from 'date-fns';
 import { LatLngTuple } from 'leaflet';
 
 type TConfigureStep = {
@@ -109,86 +115,12 @@ const getGraphFilterByType = (type: string) => {
   }
 };
 
-const getTabByIndex = (index: number) => {
-  switch (index) {
-    case 0:
-      return 'Graphs_Tab.Overview';
-    case 1:
-      return 'Graphs_Tab.Network';
-    case 2:
-      return 'Graphs_Tab.Resources';
-    case 3:
-      return 'Graphs_Tab.Radio';
-    case 4:
-      return 'Graphs_Tab.Home';
-    default:
-      return 'Graphs_Tab.Overview';
-  }
-};
-
-const getTitleByKey = (key: string) => {
-  switch (key) {
-    case 'uptime_trx':
-      return 'Uptime TRX';
-    case 'temperaturetrx':
-      return 'Temp. (TRX)';
-    case 'temperaturerfe':
-      return 'Temp. (RFE)';
-    case 'subscribersactive':
-      return 'Active';
-    case 'subscribersattached':
-      return 'Attached';
-    case 'temperaturectl':
-      return 'Temp. (CTL)';
-    case 'temperaturecom':
-      return 'Temp. (COM)';
-    case 'rrc':
-      return 'RRC CNX success';
-    case 'rlc':
-      return 'RLS  drop rate';
-    case 'erab':
-      return 'ERAB drop rate';
-    case 'throughputuplink':
-      return 'Throughput (U/L)';
-    case 'throughputdownlink':
-      return 'Throughput (D/L)';
-    case 'cputrxusage':
-      return 'CPU-TRX';
-    case 'memorytrxused':
-      return 'Memory-TRX';
-    case 'disktrxused':
-      return 'DISK-TRX';
-    case 'cpuctlused':
-      return 'CPU-CTL';
-    case 'diskctlused':
-      return 'DISK-CTL';
-    case 'memoryctlused':
-      return 'Memory-CTL';
-    case 'powerlevel':
-      return 'Power';
-    case 'cpucomusage':
-      return 'CPU-COM';
-    case 'diskcomused':
-      return 'DISK-COM';
-    case 'memorycomused':
-      return 'Memory-COM';
-    case 'txpower':
-      return 'TX Power';
-    case 'rxpower':
-      return 'RX Power';
-    case 'papower':
-      return 'PA Power';
-    default:
-      return '';
-  }
-};
-
 export const getNodeTabTypeByIndex = (index: number) => {
   switch (index) {
     case 0:
       return Graphs_Type.NodeHealth;
     case 1:
-      return Graphs_Type.Network;
+      return Graphs_Type.NetworkCellular;
     case 2:
       return Graphs_Type.Resources;
     case 3:
@@ -452,6 +384,16 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
   }
 };
 
+const getKPIStatValue = (
+  id: string,
+  loading: boolean,
+  statsData: MetricsStateRes,
+): string => {
+  if (loading || !statsData?.metrics) return KPI_PLACEHOLDER_VALUE;
+  const stat = statsData.metrics.find((item) => item.type === id);
+  return stat?.value?.toString() ?? KPI_PLACEHOLDER_VALUE;
+};
+
 const base64ToBlob = (base64: string, contentType = ''): Blob => {
   const byteCharacters = atob(base64.split(',')[1] || base64);
   const byteArrays = [];
@@ -469,17 +411,22 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
 
   return new Blob(byteArrays, { type: contentType });
 };
+
+export const duration = (s: number) =>
+  formatDistance(0, s * 1000, { includeSeconds: true });
+
 export {
+  base64ToBlob,
   ConfigureStep,
   fileToBase64,
   formatBytes,
-  base64ToBlob,
   formatBytesToMB,
   formatTime,
   getDataPlanUsage,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
+  getKPIStatValue,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,

@@ -1,6 +1,5 @@
 FROM alpine:3.13.5
 
-WORKDIR /usr/bin/
-COPY bin/ /usr/bin/
+COPY bin/dmetric /usr/bin/dmetric
 
-CMD ["/usr/bin/metricsd"]
+CMD ["/usr/bin/dmetric"]

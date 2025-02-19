@@ -14,15 +14,18 @@ import {
   getScopesByRole,
 } from "../../common/utils";
 import {
+  getMetricRange,
   getNodeRangeMetric,
   getNotifications,
 } from "../datasource/subscriptions-api";
 import { pubSub } from "./pubsub";
 import {
   GetMetricByTabInput,
-  LatestMetricRes,
+  GetMetricsStatInput,
+  LatestMetricSubRes,
   MetricRes,
   MetricsRes,
+  MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
   SubMetricByTabInput,
@@ -43,6 +46,58 @@ const getErrorRes = (msg: string) =>
 
 @Resolver(String)
 class SubscriptionsResolvers {
+  @Query(() => MetricsStateRes)
+  async getMetricsStat(@Arg("data") data: GetMetricsStatInput) {
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      data.orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for notification: ${baseURL}`);
+      return { notifications: [] };
+    }
+    const { type, from } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+    const metricsKey: string[] = getGraphsKeyByType(type);
+    const metrics: MetricsStateRes = { metrics: [] };
+    if (metricsKey.length > 0) {
+      for (let i = 0; i < metricsKey.length; i++) {
+        const res = await getMetricRange(baseURL, metricsKey[i], {
+          from: from,
+          to: data.to,
+          type: data.type,
+          step: data.step,
+          nodeId: data.nodeId,
+          userId: data.userId,
+          orgName: data.orgName,
+          networkId: data.networkId,
+        });
+        let avg = 0;
+        if (Array.isArray(res.values) && res.values.length > 0) {
+          if (
+            metricsKey[i] === "unit_uptime" ||
+            metricsKey[i] === "network_uptime"
+          ) {
+            avg = res.values[res.values.length - 1][1];
+          } else {
+            const sum = res.values.reduce((acc, val) => acc + val[1], 0);
+            avg = sum / res.values.length;
+          }
+        }
+        metrics.metrics.push({
+          msg: res.msg,
+          type: res.type,
+          nodeId: res.nodeId,
+          success: res.success,
+          value: parseFloat(Number(avg).toFixed(2)),
+        });
+      }
+    }
+    return metrics;
+  }
+
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
     const store = openStore();
@@ -63,9 +118,9 @@ class SubscriptionsResolvers {
       wsUrl = wsUrl.replace("http://", "ws://");
     }
 
-    const { type, from, nodeId, userId, orgName, withSubscription } = data;
+    const { type, from, nodeId, userId, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type, nodeId);
+    const metricsKey: string[] = getGraphsKeyByType(type);
     const metrics: MetricsRes = { metrics: [] };
     if (metricsKey.length > 0) {
       for (let i = 0; i < metricsKey.length; i++) {
@@ -92,23 +147,36 @@ class SubscriptionsResolvers {
         const worker = new Worker(WS_THREAD, {
           workerData,
         });
+
+        let count = 0;
+        const mvalues: [[number, number]] = [[0, 0]];
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(`${userId}/${type}/${from}`, {
-                success: true,
-                msg: "success",
-                orgName: orgName,
-                nodeId: nodeId,
-                userId: userId,
-                from: from,
-                type: key,
-                value: result.value,
-              } as LatestMetricRes);
-            } else {
-              return getErrorRes("No metric data found");
+              if (count === 0) {
+                mvalues.length = 1;
+                mvalues.pop();
+              }
+
+              count++;
+              mvalues.push([
+                Math.floor(result.value[0]) * 1000,
+                parseFloat(Number(result.value[1]).toFixed(2)),
+              ]);
+
+              if (count === 30) {
+                count = 0;
+
+                pubSub.publish(`${userId}/${type}/${from}`, {
+                  type: key,
+                  success: true,
+                  msg: "success",
+                  nodeId: nodeId,
+                  value: mvalues,
+                });
+              }
             }
           }
         });
@@ -215,15 +283,15 @@ class SubscriptionsResolvers {
     return notifications;
   }
 
-  @Subscription(() => LatestMetricRes, {
+  @Subscription(() => LatestMetricSubRes, {
     topics: ({ args }) => {
       return `${args.data.userId}/${args.data.type}/${args.data.from}`;
     },
   })
   async getMetricByTabSub(
-    @Root() payload: LatestMetricRes,
+    @Root() payload: LatestMetricSubRes,
     @Arg("data") data: SubMetricByTabInput
-  ): Promise<LatestMetricRes> {
+  ): Promise<LatestMetricSubRes> {
     const store = openStore();
     await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
     await store.close();

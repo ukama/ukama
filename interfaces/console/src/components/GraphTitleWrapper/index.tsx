@@ -7,7 +7,8 @@
  */
 
 import BarChartIcon from '@mui/icons-material/BarChart';
-import { Grid, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { Variant } from '@mui/material/styles/createTypography';
 import React from 'react';
 import EmptyView from '../EmptyView';
@@ -16,7 +17,6 @@ import TimeFilter from '../TimeFilter';
 
 interface IGraphTitleWrapper {
   title?: string;
-  filter?: string;
   hasData?: boolean;
   loading?: boolean;
   variant?: Variant;
@@ -28,7 +28,6 @@ interface IGraphTitleWrapper {
 const GraphTitleWrapper = ({
   children,
   title = '',
-  filter = 'LIVE',
   hasData = false,
   loading = true,
   showFilter = true,
@@ -41,20 +40,19 @@ const GraphTitleWrapper = ({
     <EmptyView size="large" title="No activity yet!" icon={BarChartIcon} />
   );
   return (
-    <Grid item container width="100%">
+    <Grid container width="100%">
       {(title ?? showFilter) && (
-        <Grid item container width="100%" mb={2}>
+        <Grid container width="100%" mb={2}>
           {title && (
-            <Grid item xs={6}>
-              <Typography variant={variant} fontWeight={500}>
+            <Grid size={{ xs: 6 }}>
+              <Typography variant={variant} fontWeight={600}>
                 {title}
               </Typography>
             </Grid>
           )}
           {hasData && showFilter && (
-            <Grid item xs={6} display="flex" justifyContent="flex-end">
+            <Grid size={{ xs: 6 }} display="flex" justifyContent="flex-end">
               <TimeFilter
-                filter={filter}
                 handleFilterSelect={(v: string) => handleFilterChange?.(v)}
               />
             </Grid>
@@ -62,7 +60,6 @@ const GraphTitleWrapper = ({
         </Grid>
       )}
       <Grid
-        item
         container
         width={'100%'}
         height={'400px'}

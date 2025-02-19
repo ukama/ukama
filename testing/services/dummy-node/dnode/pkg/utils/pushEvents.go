@@ -14,7 +14,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
+	fakeit "github.com/brianvoe/gofakeit/v7"
 	"github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -58,9 +58,9 @@ func PushNodeOnline(orgName, nodeId string, m mb.MsgBusServiceClient) {
 
 	evt := &epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 
 	logrus.Infof("Pushing NodeOnline event for node %s, rpc %+v", nodeId, evt)
@@ -75,9 +75,9 @@ func PushNodeOnlineViaREST(amqpConf pkg.AmqpConfig, org, nodeId string, m mb.Msg
 
 	msg := epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 
 	anyMsg, err := anypb.New(&msg)
@@ -97,9 +97,9 @@ func PushNodeReset(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("reset").SetObject("node").MustBuild()
 	evt := &epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
 		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
@@ -111,9 +111,9 @@ func PushNodeResetViaREST(amqpConf pkg.AmqpConfig, org, nodeId string, m mb.MsgB
 
 	msg := epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 
 	anyMsg, err := anypb.New(&msg)
@@ -133,9 +133,9 @@ func PushNodeRFOn(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("rfon").SetObject("node").MustBuild()
 	evt := &epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
 		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
@@ -147,9 +147,9 @@ func PushNodeRFOnViaREST(amqpConf pkg.AmqpConfig, org, nodeId string, m mb.MsgBu
 
 	msg := epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 
 	anyMsg, err := anypb.New(&msg)
@@ -169,9 +169,9 @@ func PushNodeRFOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(orgName).SetAction("rfoff").SetObject("node").MustBuild()
 	evt := &epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
 		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
@@ -183,9 +183,9 @@ func PushNodeRFOffViaREST(amqpConf pkg.AmqpConfig, org, nodeId string, m mb.MsgB
 
 	msg := epb.NodeOnlineEvent{
 		NodeId:       nodeId,
-		NodeIp:       gofakeit.IPv4Address(),
-		MeshIp:       gofakeit.IPv4Address(),
-		MeshHostName: gofakeit.DomainName(),
+		NodeIp:       fakeit.IPv4Address(),
+		MeshIp:       fakeit.IPv4Address(),
+		MeshHostName: fakeit.DomainName(),
 	}
 
 	anyMsg, err := anypb.New(&msg)

@@ -6,8 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
-import { useAppContext } from '@/context';
+import { METRIC_RANGE_3600 } from '@/constants';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -15,140 +14,181 @@ import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
-  nodeId: string;
-  metricFrom: any;
   topic: string;
   initData: any;
   title?: string;
-  filter?: string;
+  from: number;
   hasData?: boolean;
   loading?: boolean;
-  tabSection: Graphs_Type;
 }
-
-const getOptions = (topic: string, title: string, initData: any) => {
-  return {
-    title: {
-      text: topic,
-      align: 'left',
-    },
-    chart: {
-      legend: { enabled: false },
-      events: {
-        load: function () {
-          const chart: any =
-            Highcharts.charts.length > 0
-              ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
-              : null;
-          if (chart) {
-            const series: any = chart?.series[0];
-            PubSub.subscribe(topic, (_, data) => {
-              if (topic === chart?.title?.textStr && series) {
-                series.addPoint(data, true, true);
-              }
-            });
-          }
-        },
-      },
-    },
-
-    time: {
-      useUTC: false,
-    },
-
-    rangeSelector: {
-      buttons: [
-        {
-          count: 30,
-          type: 'second',
-          text: '30S',
-        },
-        {
-          count: 1,
-          type: 'minute',
-          text: '1M',
-        },
-        {
-          type: 'all',
-          text: 'All',
-        },
-      ],
-      inputEnabled: false,
-      selected: 0,
-    },
-
-    exporting: {
-      enabled: true,
-    },
-
-    navigator: {
-      enabled: false,
-    },
-
-    accessibility: {
-      enabled: false,
-    },
-
-    series: [
-      {
-        name: title,
-        data: (function () {
-          const data = [...initData];
-          return data;
-        })(),
-      },
-    ],
-    xAxis: {
-      type: 'datetime',
-      title: false,
-      labels: {
-        enabled: true,
-        formate: '{value:%H:%M:%S}',
-      },
-    },
-    yAxis: {
-      title: false,
-      opposite: false,
-    },
-  };
-};
 
 const LineChart = ({
   topic,
-  nodeId,
   hasData,
   initData,
-  metricFrom,
   title = '',
   loading = false,
-  filter = 'LIVE',
-  tabSection = Graphs_Type.NodeHealth,
+  from: metricFrom,
 }: ILineChart) => {
-  const { user, env } = useAppContext();
+  const getOptions = (topic: string, title: string, initData: any) => {
+    return {
+      title: {
+        text: topic,
+      },
+
+      chart: {
+        type: 'areaspline',
+        events: {
+          load: function () {
+            const chart: any =
+              Highcharts.charts.length > 0
+                ? Highcharts.charts.find(
+                    (c: any) => c?.title?.textStr === topic,
+                  )
+                : null;
+
+            if (chart) {
+              PubSub.subscribe(topic, (_, data) => {
+                if (
+                  Array.isArray(data) &&
+                  data.length > 0 &&
+                  chart?.series?.[0]
+                ) {
+                  const series = chart.series[0];
+                  data.forEach((point, index) =>
+                    series.addPoint(
+                      point,
+                      data.length - 1 === index,
+                      series.data.length > METRIC_RANGE_3600,
+                      true,
+                    ),
+                  );
+                }
+              });
+            }
+          },
+        },
+      },
+
+      plotOptions: {
+        areaspline: {
+          color: '#218FF6A2',
+          fillColor: {
+            linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+            stops: [
+              [0, '#218FF66F'],
+              [1, '#218FF61B'],
+            ],
+          },
+          threshold: null,
+          marker: {
+            lineWidth: 1,
+            lineColor: null,
+            fillColor: 'white',
+          },
+        },
+      },
+
+      time: {
+        useUTC: false,
+      },
+
+      exporting: {
+        enabled: false,
+      },
+
+      navigator: {
+        enabled: false,
+        maskFill: 'rgba(33, 144, 246, 0.15)',
+        handles: {
+          symbols: ['doublearrow', 'doublearrow'],
+          lineWidth: 1,
+          width: 9,
+          height: 17,
+        },
+        xAxis: {
+          labels: {
+            format: '{value:%H:%M}',
+          },
+        },
+      },
+
+      accessibility: {
+        enabled: false,
+      },
+
+      series: [
+        {
+          name: title,
+          data: (function () {
+            const data = [...initData];
+            return data;
+          })(),
+        },
+      ],
+
+      xAxis: {
+        type: 'datetime',
+        title: false,
+        tickAmount: 6,
+        labels: {
+          enabled: true,
+          format: '{value:%H:%M}',
+        },
+      },
+
+      yAxis: {
+        title: false,
+        minRange: 8,
+      },
+    };
+  };
 
   return (
     <GraphTitleWrapper
-      filter={filter}
+      title={title}
       hasData={hasData}
       variant="subtitle1"
-      title={title}
-      handleFilterChange={() => {}}
+      handleFilterChange={(f: string) => {
+        const chart: any =
+          Highcharts.charts.length > 0
+            ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
+            : null;
+
+        if (chart) {
+          const series = chart.series[0].data.map((point: any) => {
+            return [point.x, point.y];
+          });
+          if (f === 'LIVE') {
+            chart.xAxis[0].setExtremes(null, null);
+          }
+          chart.update(
+            {
+              navigator: {
+                enabled: f === 'ZOOM',
+              },
+
+              series: [
+                {
+                  name: title,
+                  data: (function () {
+                    const data = [...series];
+                    return data;
+                  })(),
+                },
+              ],
+            },
+            true,
+          );
+        }
+      }}
       loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
-        {/* <MetricSubscription
-          key=""
-          nodeId={nodeId}
-          userId={user.id}
-          type={tabSection}
-          from={metricFrom}
-          url={env.METRIC_URL}
-          orgName={user.orgName}
-        /> */}
         <HighchartsReact
           key={topic}
-          options={getOptions(topic, title, initData)}
           highcharts={Highcharts}
+          options={getOptions(topic, title, initData)}
         />
       </Box>
     </GraphTitleWrapper>
