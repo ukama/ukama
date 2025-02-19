@@ -45,7 +45,7 @@ jobs:
 
  release:
   name: release
-  needs: [build]
+  needs: [build, lint]
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   env:
