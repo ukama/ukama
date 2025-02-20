@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/testing/services/dummy-node/dnode/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -36,7 +36,7 @@ type amqpClient struct {
 	c *HttpClient
 }
 
-func NewAmqpClient(amqpConf pkg.AmqpConfig, timeout time.Duration) AmqpClient {
+func NewAmqpClient(amqpConf config.AmqpConfig, timeout time.Duration) AmqpClient {
 	u, err := url.ParseRequestURI(amqpConf.Uri)
 	if err != nil {
 		logrus.Errorf("Can't parse  %s url. Error: %s",
