@@ -3,7 +3,7 @@
 name: slack notify
 on:
   workflow_run:
-    workflows: ["*daily.yaml"]
+    workflows: [daily*]
     types: [completed]
 
 jobs:
