@@ -19,7 +19,6 @@ import (
 
 func Worker(id string, updateChan chan config.WMessage, initial config.WMessage) {
 	count := 1.0
-	increment := 10.0
 	kpis := initial.Kpis
 	profile := initial.Profile
 	scenario := initial.Scenario
@@ -32,9 +31,9 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 			profile = msg.Profile
 			scenario = msg.Scenario
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, profile, scenario)
-		default:
-			fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
 		}
+
+		fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
 
 		labels := prometheus.Labels{"nodeid": id}
 		values := make(map[string]float64)
@@ -53,10 +52,8 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 				}
 			}
 			kpi.KPI.With(labels).Set(values[kpi.Key])
-
 		}
 		count += 0.1
-		increment += 1
 		time.Sleep(1 * time.Second)
 	}
 }

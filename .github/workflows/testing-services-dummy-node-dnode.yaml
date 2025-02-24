@@ -1,19 +1,19 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-systems-dummy-node-dnode
+name: build-systems-dummy-dnode
 on:
  push:
   paths:
-   - 'testing/services/dummy-node/dnode/**'
-   - '.github/workflows/testing-services-dummy-node-dnode.yaml'
+   - 'testing/services/dummy/dnode/**'
+   - '.github/workflows/testing-services-dummy-dnode.yaml'
 
  workflow_dispatch:
 
 jobs:
  build:
   env:
-   working-directory: testing/services/dummy-node/dnode
+   working-directory: testing/services/dummy/dnode
 
   name: build and test
   runs-on: ubuntu-latest
@@ -23,7 +23,7 @@ jobs:
    - name: build app
      uses: ./.github/actions/build-go
      with:
-      registry-name: dummy-node/dnode
+      registry-name: dummy/dnode
       working-directory: ${{ env.working-directory }}
       github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -34,7 +34,7 @@ jobs:
   name: lint
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy-node/dnode
+   working-directory: testing/services/dummy/dnode
   steps:
    - uses: actions/checkout@v3
    - name: lint
@@ -49,7 +49,7 @@ jobs:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy-node/dnode
+   working-directory: testing/services/dummy/dnode
   steps:
    - uses: actions/checkout@v3
 
@@ -60,7 +60,7 @@ jobs:
    - name: update gitops
      uses: denispalnitsky/gitops-release@v9
      with:
-      filename: 'releases/dummy-node-helmfile.yaml'
+      filename: 'releases/dummy-helmfile.yaml'
       key: 'dnodeImageTag'
       value: ${{ steps.vars_step.outputs.sha-short }}
       github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}

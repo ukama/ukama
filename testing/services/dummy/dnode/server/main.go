@@ -79,13 +79,16 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	updateChan := make(chan config.WMessage)
+	_, exists := s.coroutines[nodeId]
+	if !exists {
+		updateChan := make(chan config.WMessage)
+		s.coroutines[nodeId] = updateChan
 
-	s.coroutines[nodeId] = updateChan
-
-	log.Printf("Starting coroutine, NodeId: %s, Profile: %s, Scenario: %s", nodeID, config.PROFILE_NORMAL, "DEFAULT")
-
-	go utils.Worker(nodeId, updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: "DEFAULT", Kpis: config.KPI_CONFIG})
+		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID, config.PROFILE_NORMAL, "DEFAULT")
+		go utils.Worker(nodeId, updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: "DEFAULT", Kpis: config.KPI_CONFIG})
+	} else {
+		log.Printf("Coroutine already exists for NodeId: %s. Please use /update.", nodeID)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte("NodeId: " + nodeId))
