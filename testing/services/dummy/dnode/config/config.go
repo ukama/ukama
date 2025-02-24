@@ -10,6 +10,8 @@ package config
 import (
 	"strconv"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type AmqpConfig struct {
@@ -56,6 +58,7 @@ type NodeKPI struct {
 	Min    float64
 	Normal float64
 	Max    float64
+	KPI    *prometheus.GaugeVec
 }
 
 type NodeKPIs struct {
@@ -71,106 +74,232 @@ var KPI_CONFIG = NodeKPIs{
 			Min:    0,
 			Normal: 10000,
 			Max:    50000,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "network_sales",
+					Help: "Overall network sales",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "network_data_volume",
 			Min:    0,
 			Normal: 512000,
 			Max:    1024000,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "network_data_volume",
+					Help: "Overall network data volume",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "network_active_ue",
 			Min:    0,
 			Normal: 500,
 			Max:    10000,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "network_active_ue",
+					Help: "Active subscriber within the network",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key: "network_uptime",
 			Min: 0,
 			Max: 2678400,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "network_uptime",
+					Help: "Network uptime",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key: "unit_uptime",
 			Min: 0,
 			Max: 2678400,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "unit_uptime",
+					Help: "Node uptime",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "unit_health",
 			Min:    50,
 			Normal: 80,
 			Max:    100,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "unit_health",
+					Help: "Health status of the unit",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "trx_lte_core_active_ue",
 			Min:    80,
 			Normal: 95,
 			Max:    100,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "trx_lte_core_active_ue",
+					Help: "Active subscriber within the network",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "node_load",
 			Min:    50,
 			Normal: 75,
 			Max:    90,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "node_load",
+					Help: "Load on the node",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "cellular_uplink",
 			Min:    1024,
 			Normal: 5120,
 			Max:    10240,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "cellular_uplink",
+					Help: "Cellular uplink",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "cellular_downlink",
 			Min:    1024,
 			Normal: 8192,
 			Max:    10240,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "cellular_downlink",
+					Help: "Cellular downlink",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "backhaul_uplink",
 			Min:    1024,
 			Normal: 5120,
 			Max:    10240,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "backhaul_uplink",
+					Help: "Backhaul uplink",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "backhaul_downlink",
 			Min:    1024,
 			Normal: 8192,
 			Max:    10240,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "backhaul_downlink",
+					Help: "Backhaul downlink",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "backhaul_latency",
 			Min:    30,
 			Normal: 50,
 			Max:    80,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "backhaul_latency",
+					Help: "Backhaul latency",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "hwd_load",
 			Min:    50,
 			Normal: 70,
 			Max:    80,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "hwd_load",
+					Help: "Hardware load",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "memory_usage",
 			Min:    40,
 			Normal: 70,
 			Max:    80,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "memory_usage",
+					Help: "Memory usage",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "cpu_usage",
 			Min:    40,
 			Normal: 70,
 			Max:    80,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "cpu_usage",
+					Help: "Cpu usage",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "disk_usage",
 			Min:    40,
 			Normal: 70,
 			Max:    80,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "disk_usage",
+					Help: "Disk usage",
+				},
+				[]string{"nodeid"},
+			),
 		},
 		{
 			Key:    "txpower",
 			Min:    30,
 			Normal: 60,
 			Max:    95,
+			KPI: prometheus.NewGaugeVec(
+				prometheus.GaugeOpts{
+					Name: "txpower",
+					Help: "Transmit power",
+				},
+				[]string{"nodeid"},
+			),
 		},
 	},
 }

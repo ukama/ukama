@@ -10,26 +10,54 @@ package utils
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 )
 
 func Worker(id string, updateChan chan config.WMessage, initial config.WMessage) {
-	currentArg1 := initial.Profile
-	currentArg2 := initial.Scenario
+	count := 1.0
+	increment := 10.0
+	kpis := initial.Kpis
+	profile := initial.Profile
+	scenario := initial.Scenario
 
-	fmt.Printf("Coroutine %s started with: %d, %s\n", id, currentArg1, currentArg2)
+	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
 
 	for {
 		select {
 		case msg := <-updateChan:
-			currentArg1 = msg.Profile
-			currentArg2 = msg.Scenario
-			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, currentArg1, currentArg2)
+			profile = msg.Profile
+			scenario = msg.Scenario
+			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, profile, scenario)
 		default:
-			fmt.Printf("Coroutine %s working with: %d, %s\n", id, currentArg1, currentArg2)
-			time.Sleep(1 * time.Second)
+			fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
 		}
+
+		labels := prometheus.Labels{"nodeid": id}
+		values := make(map[string]float64)
+
+		for _, kpi := range kpis.KPIs {
+			if kpi.Key == "network_uptime" || kpi.Key == "unit_uptime" {
+				values[kpi.Key] = count
+			} else if kpi.Key == "network_sales" {
+				values[kpi.Key] = increment / 12
+			} else if kpi.Key == "network_data_volume" {
+				values[kpi.Key] = increment
+			} else {
+				switch profile {
+				case config.PROFILE_MIN:
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+				case config.PROFILE_MAX:
+					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
+				default:
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+				}
+			}
+			kpi.KPI.With(labels).Set(values[kpi.Key])
+		}
+		time.Sleep(1 * time.Second)
 	}
 }
