@@ -14,6 +14,18 @@ services:
   networks:
    - ukama-net
 
+ dcontroller:
+  build: ./dcontroller
+  ports:
+   - 8086:8086
+  environment:
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+
 networks:
  ukama-net:
   external: true
