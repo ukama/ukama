@@ -29,15 +29,19 @@ type Server struct {
 	coroutines map[string]chan config.WMessage
 }
 
-func NewServer(orgName string) *Server {
+func NewServer() *Server {
+	orgname := os.Getenv("ORGNAME")
+	amqp := os.Getenv("AMQPCONFIG_URI")
+	amqpUsername := os.Getenv("AMQPCONFIG_USERNAME")
+	amqpPassword := os.Getenv("AMQPCONFIG_PASSWORD")
 	return &Server{
-		orgName: orgName,
+		orgName: orgname,
 		amqpConfig: config.AmqpConfig{
-			Uri:      "http://rabbitmq:15672",
-			Username: "guest",
-			Password: "guest",
-			Exchange: "amq.topic",
+			Uri:      amqp,
 			Vhost:    "%2F",
+			Username: amqpUsername,
+			Password: amqpPassword,
+			Exchange: "amq.topic",
 		},
 		coroutines: make(map[string]chan config.WMessage),
 	}
@@ -50,8 +54,7 @@ func init() {
 }
 
 func main() {
-	ORGNAME := os.Getenv("ORGNAME")
-	server := NewServer(ORGNAME)
+	server := NewServer()
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("/update", server.updateHandler)
