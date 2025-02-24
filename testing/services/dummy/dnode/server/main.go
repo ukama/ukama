@@ -76,24 +76,24 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.PushNodeResetViaREST(s.amqpConfig, s.orgName, nodeID.String(), nil)
 
-	log.Printf("Online event pushed for NodeId: %s", nodeID)
+	log.Printf("Online event pushed for NodeId: %s", nodeID.String())
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, exists := s.coroutines[nodeId]
+	_, exists := s.coroutines[nodeID.String()]
 	if !exists {
 		updateChan := make(chan config.WMessage, 10)
-		s.coroutines[nodeId] = updateChan
+		s.coroutines[nodeID.String()] = updateChan
 
-		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID, config.PROFILE_NORMAL, "DEFAULT")
-		go utils.Worker(nodeId, updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: "DEFAULT", Kpis: config.KPI_CONFIG})
+		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), config.PROFILE_NORMAL, config.SCENARIO_DEFAULT)
+		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: config.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
 	} else {
-		log.Printf("Coroutine already exists for NodeId: %s", nodeID)
+		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("NodeId: " + nodeId))
+	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
 	if err != nil {
 		log.Printf("Error writing response: %v", err)
 	}
@@ -109,23 +109,23 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Updating coroutine, NodeId: %s, Profile: %s, Scenario: %s", nodeID, profile, scenario)
+	log.Printf("Updating coroutine, NodeId: %s, Profile: %s, Scenario: %s", nodeID.String(), profile, scenario)
 
-	updateChan, exists := s.coroutines[nodeId]
+	updateChan, exists := s.coroutines[nodeID.String()]
 	if !exists {
 		http.Error(w, "Coroutine not found", http.StatusNotFound)
 		return
 	}
 
 	updateChan <- config.WMessage{
-		NodeId:   nodeId,
-		Scenario: scenario,
+		NodeId:   nodeID.String(),
 		Kpis:     config.KPI_CONFIG,
 		Profile:  config.ParseProfileType(profile),
+		Scenario: config.ParseScenarioType(scenario),
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("NodeId: " + nodeId))
+	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
 	if err != nil {
 		log.Printf("Error writing response: %v", err)
 	}
