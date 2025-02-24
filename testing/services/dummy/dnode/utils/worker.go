@@ -24,7 +24,7 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 	profile := initial.Profile
 	scenario := initial.Scenario
 
-	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
+	fmt.Printf("Coroutine %s started\n", id)
 
 	for {
 		select {
@@ -40,12 +40,8 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		values := make(map[string]float64)
 
 		for _, kpi := range kpis.KPIs {
-			if kpi.Key == "network_uptime" || kpi.Key == "unit_uptime" {
+			if kpi.Key == "unit_uptime" {
 				values[kpi.Key] = count
-			} else if kpi.Key == "network_sales" {
-				values[kpi.Key] = increment / 12
-			} else if kpi.Key == "network_data_volume" {
-				values[kpi.Key] = increment
 			} else {
 				switch profile {
 				case config.PROFILE_MIN:
@@ -57,7 +53,10 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 				}
 			}
 			kpi.KPI.With(labels).Set(values[kpi.Key])
+
 		}
+		count += 0.1
+		increment += 1
 		time.Sleep(1 * time.Second)
 	}
 }

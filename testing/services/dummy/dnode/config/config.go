@@ -70,57 +70,6 @@ const PORT = 8085
 var KPI_CONFIG = NodeKPIs{
 	KPIs: []NodeKPI{
 		{
-			Key:    "network_sales",
-			Min:    0,
-			Normal: 10000,
-			Max:    50000,
-			KPI: prometheus.NewGaugeVec(
-				prometheus.GaugeOpts{
-					Name: "network_sales",
-					Help: "Overall network sales",
-				},
-				[]string{"nodeid"},
-			),
-		},
-		{
-			Key:    "network_data_volume",
-			Min:    0,
-			Normal: 512000,
-			Max:    1024000,
-			KPI: prometheus.NewGaugeVec(
-				prometheus.GaugeOpts{
-					Name: "network_data_volume",
-					Help: "Overall network data volume",
-				},
-				[]string{"nodeid"},
-			),
-		},
-		{
-			Key:    "network_active_ue",
-			Min:    0,
-			Normal: 500,
-			Max:    10000,
-			KPI: prometheus.NewGaugeVec(
-				prometheus.GaugeOpts{
-					Name: "network_active_ue",
-					Help: "Active subscriber within the network",
-				},
-				[]string{"nodeid"},
-			),
-		},
-		{
-			Key: "network_uptime",
-			Min: 0,
-			Max: 2678400,
-			KPI: prometheus.NewGaugeVec(
-				prometheus.GaugeOpts{
-					Name: "network_uptime",
-					Help: "Network uptime",
-				},
-				[]string{"nodeid"},
-			),
-		},
-		{
 			Key: "unit_uptime",
 			Min: 0,
 			Max: 2678400,
