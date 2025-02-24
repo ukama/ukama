@@ -60,8 +60,10 @@ func main() {
 	http.HandleFunc("/update", server.updateHandler)
 	http.HandleFunc("/online", server.onlineHandler)
 	log.Printf("Server listening on port %d", config.PORT)
-	http.ListenAndServe(fmt.Sprintf(":%d", config.PORT), nil)
-
+	err := http.ListenAndServe(fmt.Sprintf(":%d", config.PORT), nil)
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
 
 func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,13 +83,13 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, exists := s.coroutines[nodeId]
 	if !exists {
-		updateChan := make(chan config.WMessage)
+		updateChan := make(chan config.WMessage, 10)
 		s.coroutines[nodeId] = updateChan
 
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID, config.PROFILE_NORMAL, "DEFAULT")
 		go utils.Worker(nodeId, updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: "DEFAULT", Kpis: config.KPI_CONFIG})
 	} else {
-		log.Printf("Coroutine already exists for NodeId: %s. Please use /update.", nodeID)
+		log.Printf("Coroutine already exists for NodeId: %s", nodeID)
 	}
 
 	w.WriteHeader(http.StatusOK)
