@@ -87,7 +87,7 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 		s.coroutines[nodeID.String()] = updateChan
 
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), config.PROFILE_NORMAL, config.SCENARIO_DEFAULT)
-		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeId, Profile: config.PROFILE_NORMAL, Scenario: config.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
+		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: config.PROFILE_NORMAL, Scenario: config.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
 	}

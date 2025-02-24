@@ -26,6 +26,8 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
 
 	for {
+		count += 0.1
+		time.Sleep(1 * time.Second)
 		select {
 		case msg := <-updateChan:
 			profile = msg.Profile
@@ -34,8 +36,6 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		default:
 		}
 
-		count += 0.1
-		time.Sleep(1 * time.Second)
 		fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
 
 		labels := prometheus.Labels{"nodeid": id}
