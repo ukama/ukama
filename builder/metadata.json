@@ -74,7 +74,7 @@
   "name": "Ukama Billing system",
   "path": "./billing"
  },
- "dummynode": {
+ "dummy": {
   "key": "dummy",
   "name": "Dummy system",
   "path": "../testing/services/dummy"
