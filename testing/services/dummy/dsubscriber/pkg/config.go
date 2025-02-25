@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	cenums "github.com/ukama/ukama/testing/common/enums"
 )
 
 type Config struct {
@@ -27,6 +28,12 @@ type Config struct {
 
 type HttpServices struct {
 	InventoryClient string `defaut:"http://api-gateway-inventory:8080"`
+}
+
+type WMessage struct {
+	SubscriberId string           `json:"subscriberId"`
+	Profile      cenums.Profile   `json:"profile"`
+	Scenario     cenums.SCENARIOS `json:"scenario"`
 }
 
 func NewConfig(name string) *Config {

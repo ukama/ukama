@@ -1,8 +1,14 @@
 module github.com/ukama/ukama/testing/services/dummy/dsubscriber
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.24.0
+
+replace github.com/ukama/ukama/testing/services/dummy/dsubscriber => ./
 
 replace github.com/ukama/ukama/systems/common => ../../../../systems/common
+
+replace github.com/ukama/ukama/testing/common => ../../../common
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../../../systems/services/msgClient
 
@@ -12,6 +18,7 @@ require (
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/testing/common v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.70.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v2 v2.4.0
