@@ -72,7 +72,7 @@ func (s *DsubscriberServer) startHandler(w http.ResponseWriter, r *http.Request)
 		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
 	}
 
-	w.WriteHeader(http.StatusOK)ut
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
 	if err != nil {
 		log.Printf("Error writing response: %v", err)

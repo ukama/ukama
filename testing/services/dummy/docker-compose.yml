@@ -1,4 +1,14 @@
 services:
+ postgresd-dummy:
+  image: postgres:13.3
+  ports:
+   - 5421:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+
  dnode:
   build: ./dnode
   ports:
@@ -13,6 +23,46 @@ services:
   restart: always
   networks:
    - ukama-net
+
+ dsubscriber:
+  build: ./dsubscriber
+  environment:
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - DSUBSCRIBER_SERVICE_PORT=9090
+   - DSUBSCRIBER_SERVICE_HOST=dsubscriber
+   - MSGCLIENT_HOST=msgclient-dummy:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  restart: always
+  networks:
+   - ukama-net
+
+ api-gateway:
+  build: ./api-gateway
+  ports:
+   - 8083:8080
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+
+ msgclient-dummy:
+  build: ../../../systems/services/msgClient
+  environment:
+   - SYSTEM=dummy
+   - GRPC_PORT=9095
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-dummy
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-dummy
 
 networks:
  ukama-net:

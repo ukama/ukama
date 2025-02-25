@@ -8,7 +8,5 @@
 
 package pkg
 
-const ServiceName = "dsubscriber"
+const ServiceName = "gateway"
 const SystemName = "dummy"
-
-var IsDebugMode = false

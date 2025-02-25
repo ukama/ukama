@@ -30,15 +30,12 @@ func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
-		// msg, err := epb.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
-		// if err != nil {
-		// 	return nil, err
-		// }
+		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, "EventSimActivePackage")
+		if err != nil {
+			return nil, err
+		}
 
-		// err = l.simPoolRepo.UpdateStatus(msg.Iccid, true, false)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, msg)
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
