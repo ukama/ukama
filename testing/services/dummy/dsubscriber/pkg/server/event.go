@@ -29,6 +29,14 @@ func NewDsubEventServer(orgName string) *DsubEventServer {
 func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
+		if err != nil {
+			return nil, err
+		}
+
+		log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, msg)
+
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, "EventSimActivePackage")
 		if err != nil {
