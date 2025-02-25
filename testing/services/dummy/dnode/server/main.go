@@ -18,6 +18,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/ukama"
+	cconfig "github.com/ukama/ukama/testing/common/config"
+	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/utils"
 )
@@ -25,7 +27,7 @@ import (
 type Server struct {
 	orgName    string
 	mu         sync.Mutex
-	amqpConfig config.AmqpConfig
+	amqpConfig cconfig.Queue
 	coroutines map[string]chan config.WMessage
 }
 
@@ -36,7 +38,7 @@ func NewServer() *Server {
 	amqpPassword := os.Getenv("AMQPCONFIG_PASSWORD")
 	return &Server{
 		orgName: orgname,
-		amqpConfig: config.AmqpConfig{
+		amqpConfig: cconfig.Queue{
 			Uri:      amqp,
 			Vhost:    "%2F",
 			Username: amqpUsername,
@@ -86,8 +88,8 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 		updateChan := make(chan config.WMessage, 10)
 		s.coroutines[nodeID.String()] = updateChan
 
-		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), config.PROFILE_NORMAL, config.SCENARIO_DEFAULT)
-		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: config.PROFILE_NORMAL, Scenario: config.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
+		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
+		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: cenums.PROFILE_NORMAL, Scenario: cenums.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
 	}
@@ -120,8 +122,8 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 	updateChan <- config.WMessage{
 		NodeId:   nodeID.String(),
 		Kpis:     config.KPI_CONFIG,
-		Profile:  config.ParseProfileType(profile),
-		Scenario: config.ParseScenarioType(scenario),
+		Profile:  cenums.ParseProfileType(profile),
+		Scenario: cenums.ParseScenarioType(scenario),
 	}
 
 	w.WriteHeader(http.StatusOK)
