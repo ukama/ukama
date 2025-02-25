@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 )
 
@@ -46,9 +47,9 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 				values[kpi.Key] = count
 			} else {
 				switch profile {
-				case config.PROFILE_MIN:
+				case cenums.PROFILE_MIN:
 					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
-				case config.PROFILE_MAX:
+				case cenums.PROFILE_MAX:
 					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
 				default:
 					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1

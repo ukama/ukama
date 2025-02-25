@@ -19,7 +19,8 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
+	"github.com/ukama/ukama/testing/common/amqp"
+	conf "github.com/ukama/ukama/testing/common/config"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -31,16 +32,16 @@ func getRoutingKey(orgName string) msgbus.RoutingKeyBuilder {
 	return msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem("messaging").SetOrgName(orgName).SetService("mesh")
 }
 
-func Run(amqpConf config.AmqpConfig, route string, payload *anypb.Any, out io.Writer) error {
+func Run(amqpConf conf.Queue, route string, payload *anypb.Any, out io.Writer) error {
 
-	aClient := NewAmqpClient(amqpConf, defaultDuration)
+	aClient := amqp.NewAmqpClient(amqpConf, defaultDuration)
 
 	respData, err := aClient.PublishMessage(amqpConf.Vhost, amqpConf.Exchange, route, payload)
 	if err != nil {
 		return fmt.Errorf("failled to publish event: %w", err)
 	}
 
-	outputBuf, err := Serialize(respData, "json")
+	outputBuf, err := amqp.Serialize(respData, "json")
 	if err != nil {
 		return fmt.Errorf("error while serializing output data: %w", err)
 	}
@@ -70,7 +71,7 @@ func PushNodeOnline(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
-func PushNodeOnlineViaREST(amqpConf config.AmqpConfig, org, nodeId string, m mb.MsgBusServiceClient) {
+func PushNodeOnlineViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("online").SetObject("node").MustBuild()
 
 	msg := epb.NodeOnlineEvent{
@@ -106,7 +107,7 @@ func PushNodeReset(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
-func PushNodeResetViaREST(amqpConf config.AmqpConfig, org, nodeId string, m mb.MsgBusServiceClient) {
+func PushNodeResetViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("reset").SetObject("node").MustBuild()
 
 	msg := epb.NodeOnlineEvent{
@@ -142,7 +143,7 @@ func PushNodeRFOn(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
-func PushNodeRFOnViaREST(amqpConf config.AmqpConfig, org, nodeId string, m mb.MsgBusServiceClient) {
+func PushNodeRFOnViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("rfon").SetObject("node").MustBuild()
 
 	msg := epb.NodeOnlineEvent{
@@ -178,7 +179,7 @@ func PushNodeRFOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
-func PushNodeRFOffViaREST(amqpConf config.AmqpConfig, org, nodeId string, m mb.MsgBusServiceClient) {
+func PushNodeRFOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("rfoff").SetObject("node").MustBuild()
 
 	msg := epb.NodeOnlineEvent{
@@ -211,7 +212,7 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 	}
 }
 
-func PushNodeOffViaREST(amqpConf config.AmqpConfig, org, nodeId string, m mb.MsgBusServiceClient) {
+func PushNodeOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
 	route := getRoutingKey(org).SetAction("off").SetObject("node").MustBuild()
 
 	msg := epb.NodeOfflineEvent{
