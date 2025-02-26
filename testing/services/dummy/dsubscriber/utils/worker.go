@@ -27,9 +27,14 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 		count += 0.1
 		time.Sleep(1 * time.Second)
 		select {
-		case msg := <-updateChan:
+		case msg, ok := <-updateChan:
+			if !ok {
+				fmt.Printf("Coroutine %s stopping\n", iccid)
+				return
+			}
 			profile = msg.Profile
-			fmt.Printf("Coroutine %s updated args: %d\n", iccid, profile)
+			expiry = msg.Expiry
+			fmt.Printf("Coroutine %s updated args: %d, %s\n", iccid, profile, expiry)
 		default:
 		}
 

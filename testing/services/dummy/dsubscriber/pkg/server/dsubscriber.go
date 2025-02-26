@@ -10,9 +10,10 @@ package server
 
 import (
 	"context"
-	"log"
+
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
@@ -34,18 +35,20 @@ func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient) *Dsubsc
 	return &DsubscriberServer{
 		orgName:        orgName,
 		msgbus:         msgBus,
+		coroutines:     make(map[string]chan pkg.WMessage),
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
 func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+	log.Infof("Received Update request: %+v", req)
 	profile := cenums.ParseProfileType(req.Dsubscriber.Profile)
-	s.updateCoroutine(req.Dsubscriber.SubscriberId, profile, req.Dsubscriber.Status)
+	s.updateCoroutine(req.Dsubscriber.Iccid, profile, req.Dsubscriber.Status)
 	return &pb.UpdateResponse{
 		Dsubscriber: &pb.Dsubscriber{
-			SubscriberId: req.Dsubscriber.SubscriberId,
-			Profile:      req.Dsubscriber.Profile,
-			Status:       req.Dsubscriber.Status,
+			Iccid:   req.Dsubscriber.Iccid,
+			Profile: req.Dsubscriber.Profile,
+			Status:  req.Dsubscriber.Status,
 		},
 	}, nil
 }
@@ -87,12 +90,13 @@ func (s *DsubscriberServer) updateHandler(iccid string, pkgId string, expiry str
 }
 
 func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, status pb.Status) {
-	log.Printf("Update a message with ICCID %s, Profile %s, Status %d", iccid, profile, status)
+	log.Infof("Update a message with ICCID %s, Profile %d, Status %d", iccid, profile, status)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if status == pb.Status_INACTIVE {
 		log.Printf("Status is inactive, stopping coroutine for ICCID: %s", iccid)
-		s.mu.Lock()
-		defer s.mu.Unlock()
 		updateChan, exists := s.coroutines[iccid]
 		if exists {
 			close(updateChan)
@@ -105,11 +109,11 @@ func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile
 	if !exists {
 		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
 		return
-	} else {
-		updateChan <- pkg.WMessage{
-			Iccid:   iccid,
-			Profile: profile,
-			Status:  status,
-		}
+	}
+
+	updateChan <- pkg.WMessage{
+		Iccid:   iccid,
+		Profile: profile,
+		Status:  status,
 	}
 }

@@ -8,12 +8,8 @@
 
 package rest
 
-type GetRunningAppsRequest struct {
-	NodeId string `example:"{{NodeId}}" validate:"required" path:"node_id" `
-}
-
 type UpdateReq struct {
-	SubscriberID string `form:"subscriber_id" json:"subscriber_id"`
-	Profile      string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max"`
-	Scenario     string `form:"type" json:"type,omitempty"`
+	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
+	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
+	Status  string `form:"status" json:"status,omitempty" validate:"eq=ACTIVE|eq=INACTIVE" enum:"ACTIVE,INACTIVE"`
 }

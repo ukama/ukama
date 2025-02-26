@@ -113,8 +113,8 @@ func (r *Router) pingHandler(c *gin.Context) error {
 func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateResponse, error) {
 	return r.clients.Dsubscriber.Update(&pb.UpdateRequest{
 		Dsubscriber: &pb.Dsubscriber{
-			SubscriberId: req.SubscriberID,
-			Profile:      req.Profile,
-			Status:       "",
+			Iccid:   req.Iccid,
+			Profile: req.Profile,
+			Status:  pb.Status(pb.Status_value[req.Status]),
 		}})
 }

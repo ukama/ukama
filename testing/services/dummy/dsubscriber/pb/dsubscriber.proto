@@ -25,7 +25,7 @@ message UpdateResponse {
 }
 
 message Dsubscriber {
-    string subscriberId = 1 [json_name = "subscriber_id"];
+    string iccid = 1;
     Status status = 2;
     string profile = 3;
 }
