@@ -13,7 +13,6 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 package ukama.events.v1;
 
 import "validator.proto";
-import "google/protobuf/timestamp.proto";
 
 message EventOperatorCdrReport {
     string id = 1 [(validator.field) = {string_not_empty: true}];
