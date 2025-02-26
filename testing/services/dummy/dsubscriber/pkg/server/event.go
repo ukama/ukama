@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -45,10 +46,20 @@ func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, "EventSimActivePackage")
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventSimAllocate: %v", err)
 			return nil, err
 		}
 
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Error("Failed to store ")
+		}
+
+		log.Infof("JMSG: %+v", jmsg)
+
 		log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, msg)
+
+		log.Infof("Values %s, %s and %s", msg.Iccid, msg.PackageId, msg.PackageEndDate.String())
 
 		l.server.updateHandler(msg.Iccid, msg.PackageId, msg.PackageEndDate.String())
 

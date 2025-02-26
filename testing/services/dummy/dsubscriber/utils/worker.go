@@ -15,12 +15,13 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
 )
 
-func Worker(id string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
+func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 	count := 1.0
 	profile := initial.Profile
-	scenario := initial.Scenario
+	expiry := initial.Expiry
+	pkgId := initial.PackageId
 
-	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
+	fmt.Printf("Coroutine %s started with: %d, %s, %s\n", iccid, profile, expiry, pkgId)
 
 	for {
 		count += 0.1
@@ -28,11 +29,10 @@ func Worker(id string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 		select {
 		case msg := <-updateChan:
 			profile = msg.Profile
-			scenario = msg.Scenario
-			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, profile, scenario)
+			fmt.Printf("Coroutine %s updated args: %d\n", iccid, profile)
 		default:
 		}
 
-		fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
+		fmt.Printf("Coroutine %s working with: %d\n", iccid, profile)
 	}
 }
