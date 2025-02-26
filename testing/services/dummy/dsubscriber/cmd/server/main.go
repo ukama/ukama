@@ -22,9 +22,9 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/cmd/version"
 	generated "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg/server"
 )
@@ -67,7 +67,7 @@ func runGrpcServer() {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient)
-	nSrv := server.NewDsubEventServer(serviceConfig.OrgName)
+	nSrv := server.NewDsubEventServer(serviceConfig.OrgName, dsubServer)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

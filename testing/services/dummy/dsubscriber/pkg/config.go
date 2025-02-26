@@ -13,6 +13,7 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	cenums "github.com/ukama/ukama/testing/common/enums"
+	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 )
 
 type Config struct {
@@ -31,9 +32,11 @@ type HttpServices struct {
 }
 
 type WMessage struct {
-	SubscriberId string           `json:"subscriberId"`
-	Profile      cenums.Profile   `json:"profile"`
-	Scenario     cenums.SCENARIOS `json:"scenario"`
+	Iccid     string         `json:"iccid"`
+	Expiry    string         `json:"expiry"`
+	Status    pb.Status      `json:"status"`
+	Profile   cenums.Profile `json:"profile"`
+	PackageId string         `json:"package_id"`
 }
 
 func NewConfig(name string) *Config {

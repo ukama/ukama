@@ -11,12 +11,10 @@ package server
 import (
 	"context"
 	"log"
-	"net/http"
 	"sync"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/ukama"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
@@ -41,6 +39,8 @@ func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient) *Dsubsc
 }
 
 func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+	profile := cenums.ParseProfileType(req.Dsubscriber.Profile)
+	s.updateCoroutine(req.Dsubscriber.SubscriberId, profile, req.Dsubscriber.Status)
 	return &pb.UpdateResponse{
 		Dsubscriber: &pb.Dsubscriber{
 			SubscriberId: req.Dsubscriber.SubscriberId,
@@ -50,62 +50,66 @@ func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (
 	}, nil
 }
 
-func (s *DsubscriberServer) startHandler(w http.ResponseWriter, r *http.Request) {
-	nodeId := r.URL.Query().Get("nodeid")
-	nodeID, err := ukama.ValidateNodeId(nodeId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+func (s *DsubscriberServer) startHandler(iccid string, pkgId string, expiry string) {
+	log.Printf("Start a message with ICCID %s, PackageId %s, Expiry %s", iccid, pkgId, expiry)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, exists := s.coroutines[nodeID.String()]
+	_, exists := s.coroutines[iccid]
 	if !exists {
 		updateChan := make(chan pkg.WMessage, 10)
-		s.coroutines[nodeID.String()] = updateChan
+		s.coroutines[iccid] = updateChan
 
-		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
-		go utils.Worker(nodeID.String(), updateChan, pkg.WMessage{SubscriberId: nodeID.String(), Profile: cenums.PROFILE_NORMAL, Scenario: cenums.SCENARIO_DEFAULT})
+		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", iccid, cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
+		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, PackageId: pkgId, Expiry: expiry, Profile: cenums.PROFILE_NORMAL})
 	} else {
-		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
-	if err != nil {
-		log.Printf("Error writing response: %v", err)
+		log.Printf("Coroutine already exists for NodeId: %s", iccid)
 	}
 }
 
-func (s *DsubscriberServer) updateHandler(w http.ResponseWriter, r *http.Request) {
-	nodeId := r.URL.Query().Get("nodeid")
-	profile := r.URL.Query().Get("profile")
-	scenario := r.URL.Query().Get("scenario")
-	nodeID, err := ukama.ValidateNodeId(nodeId)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+func (s *DsubscriberServer) updateHandler(iccid string, pkgId string, expiry string) {
+	log.Printf("Update a message with ICCID %s, PackageId %s, Expiry %s", iccid, pkgId, expiry)
 
-	log.Printf("Updating coroutine, NodeId: %s, Profile: %s, Scenario: %s", nodeID.String(), profile, scenario)
-
-	updateChan, exists := s.coroutines[nodeID.String()]
+	updateChan, exists := s.coroutines[iccid]
 	if !exists {
-		http.Error(w, "Coroutine not found", http.StatusNotFound)
+		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
+		log.Printf("Starting new coroutine for ICCID: %s", iccid)
+		s.startHandler(iccid, pkgId, expiry)
+		return
+	} else {
+		updateChan <- pkg.WMessage{
+			Iccid:     iccid,
+			Expiry:    expiry,
+			PackageId: pkgId,
+		}
+	}
+}
+
+func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, status pb.Status) {
+	log.Printf("Update a message with ICCID %s, Profile %s, Status %d", iccid, profile, status)
+
+	if status == pb.Status_INACTIVE {
+		log.Printf("Status is inactive, stopping coroutine for ICCID: %s", iccid)
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		updateChan, exists := s.coroutines[iccid]
+		if exists {
+			close(updateChan)
+			delete(s.coroutines, iccid)
+		}
 		return
 	}
 
-	updateChan <- pkg.WMessage{
-		SubscriberId: "",
-		Profile:      cenums.ParseProfileType(profile),
-		Scenario:     cenums.ParseScenarioType(scenario),
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
-	if err != nil {
-		log.Printf("Error writing response: %v", err)
+	updateChan, exists := s.coroutines[iccid]
+	if !exists {
+		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
+		return
+	} else {
+		updateChan <- pkg.WMessage{
+			Iccid:   iccid,
+			Profile: profile,
+			Status:  status,
+		}
 	}
 }

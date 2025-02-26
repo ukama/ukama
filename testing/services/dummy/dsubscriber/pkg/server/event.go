@@ -18,14 +18,17 @@ import (
 
 type DsubEventServer struct {
 	orgName string
+	server  *DsubscriberServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewDsubEventServer(orgName string) *DsubEventServer {
+func NewDsubEventServer(orgName string, server *DsubscriberServer) *DsubEventServer {
 	return &DsubEventServer{
 		orgName: orgName,
+		server:  server,
 	}
 }
+
 func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
@@ -37,6 +40,8 @@ func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 
 		log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, msg)
 
+		l.server.startHandler(msg.Iccid, msg.PackageId, msg.PackageEndDate.String())
+
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, "EventSimActivePackage")
 		if err != nil {
@@ -44,6 +49,9 @@ func (l *DsubEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		}
 
 		log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, msg)
+
+		l.server.updateHandler(msg.Iccid, msg.PackageId, msg.PackageEndDate.String())
+
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}

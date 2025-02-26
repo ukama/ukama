@@ -26,7 +26,12 @@ message UpdateResponse {
 
 message Dsubscriber {
     string subscriberId = 1 [json_name = "subscriber_id"];
-    string status = 2;
+    Status status = 2;
     string profile = 3;
+}
+
+enum Status {
+    ACTIVE = 0;
+    INACTIVE = 1;
 }
  
