@@ -56,72 +56,62 @@ import (
 	 pkg.IsDebugMode = serviceConfig.DebugMode
  }
  
-func runGrpcServer() {
-    controllerServer := server.NewControllerServer(serviceConfig.OrgName)
-
-    grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-        generated.RegisterMetricsControllerServer(s, controllerServer)
-    })
-
-    go grpcServer.StartServer()
-
-    // Start the Prometheus metrics server
-   // Start the Prometheus metrics server
-go func() {
-    // Create a new HTTP server mux
-    mux := http.NewServeMux()
-    
-    // Register the Prometheus handler
-    mux.Handle("/metrics", promhttp.Handler())
-    
-    // Add a basic health check endpoint
-    mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(http.StatusOK)
-        w.Write([]byte("OK"))
-    })
-    
-    // Log that we're starting the metrics server
-    address := ":2112"
-    log.Infof("Starting metrics server on %s", address)
-    
-    // Start the server and handle errors properly
-    server := &http.Server{
-        Addr:    address,
-        Handler: mux,
-    }
-    
-    if err := server.ListenAndServe(); err != nil {
-        if err != http.ErrServerClosed {
-            log.Errorf("Metrics server error: %v", err)
-        }
-    }
-}()
-    // Set up graceful shutdown - use only one signal handler
-    sigs := make(chan os.Signal, 1)
-    signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-    
-    // Wait for termination signal
-    sig := <-sigs
-    log.Infof("Received signal %v, shutting down...", sig)
-    
-    // Clean up resources
-    controllerServer.Cleanup()
-    
-    log.Infof("Exiting service %s", pkg.ServiceName)
-}
+ func runGrpcServer() {
+	 controllerServer := server.NewControllerServer(serviceConfig.OrgName)
  
- func waitForExit() {
+	 grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		 generated.RegisterMetricsControllerServer(s, controllerServer)
+	 })
+ 
+	 go grpcServer.StartServer()
+ 
+	 // Start the Prometheus metrics server
+	 go startMetricsServer()
+	 
+	 // Set up graceful shutdown - use only one signal handler
 	 sigs := make(chan os.Signal, 1)
 	 signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	 done := make(chan bool, 1)
 	 
-	 go func() {
-		 sig := <-sigs
-		 log.Info(sig)
-		 done <- true
-	 }()
+	 // Wait for termination signal
+	 sig := <-sigs
+	 log.Infof("Received signal %v, shutting down...", sig)
+	 
+	 // Clean up resources
+	 controllerServer.Cleanup()
+	 
+	 log.Infof("Exiting service %s", pkg.ServiceName)
+ }
  
-	 log.Debug("awaiting terminate/interrupt signal")
-	 <-done
-	 log.Infof("exiting service %s", pkg.ServiceName)
+ // startMetricsServer starts a separate HTTP server for Prometheus metrics
+ func startMetricsServer() {
+	 // Create a new HTTP server mux
+	 mux := http.NewServeMux()
+	 
+	 // Register the Prometheus handler
+	 mux.Handle("/metrics", promhttp.Handler())
+	 
+	 // Add a basic health check endpoint
+	 mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		 w.WriteHeader(http.StatusOK)
+		 _, err := w.Write([]byte("OK"))
+		 if err != nil {
+			 log.Errorf("Failed to write health check response: %v", err)
+		 }
+	 })
+	 
+	 // Log that we're starting the metrics server
+	 address := ":2112"
+	 log.Infof("Starting metrics server on %s", address)
+	 
+	 // Start the server and handle errors properly
+	 server := &http.Server{
+		 Addr:    address,
+		 Handler: mux,
+	 }
+	 
+	 if err := server.ListenAndServe(); err != nil {
+		 if err != http.ErrServerClosed {
+			 log.Errorf("Metrics server error: %v", err)
+		 }
+	 }
  }

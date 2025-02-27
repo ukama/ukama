@@ -124,6 +124,7 @@ func (s *ControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetric
 	if config, exists := s.siteConfigs[siteId]; exists && config.Active {
 		return &pb.StartMetricsResponse{
 			Success: false,
+			Message: "Site metrics already active",
 		}, nil
 	}
 	
@@ -160,6 +161,7 @@ func (s *ControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetric
 	
 	return &pb.StartMetricsResponse{
 		Success: true,
+		Message: "Started metrics collection",
 	}, nil
 }
 
@@ -173,6 +175,7 @@ func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetr
 	if !exists || !config.Active {
 		return &pb.UpdateMetricsResponse{
 			Success: false,
+			Message: "Site metrics not active",
 		}, nil
 	}
 	
@@ -233,6 +236,7 @@ func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetr
 	
 	return &pb.UpdateMetricsResponse{
 		Success: true,
+		Message: statusMessage,
 	}, nil
 }
 

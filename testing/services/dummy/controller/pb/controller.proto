@@ -73,6 +73,7 @@ message StartMetricsRequest {
 
 message StartMetricsResponse {
   bool success = 1;
+  string message = 2;
 }
 
 message UpdateMetricsRequest {
@@ -85,6 +86,7 @@ message UpdateMetricsRequest {
 
 message UpdateMetricsResponse {
   bool success = 1;
+  string message = 2;
 }
 
 message PortUpdate {
