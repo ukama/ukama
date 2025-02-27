@@ -69,7 +69,7 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 			usage = MAX + rand.Float64()*(MAX-NORMAL)*0.1
 		}
 
-		cdrClient.AddCDR(clients.AddCDRRequest{
+		err := cdrClient.AddCDR(clients.AddCDRRequest{
 			Session:       uint64(count),
 			Imsi:          iccid,
 			NodeId:        nodeId,
@@ -83,6 +83,11 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 			RxBytes:       uint64(usage * 1024 * 1024),
 			TotalBytes:    uint64(usage * 1024 * 1024),
 		})
+
+		if err != nil {
+			fmt.Printf("Coroutine PostCDR for %s error: %v\n", iccid, err)
+		}
+
 		count += 1
 		mint += 10
 		time.Sleep(10 * time.Minute)
