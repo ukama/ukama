@@ -2,6 +2,8 @@ version: '3.9'
 services:
  postgresd-ukama-agent:
   image: postgres:13.3
+  ports:
+   - 5411:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!

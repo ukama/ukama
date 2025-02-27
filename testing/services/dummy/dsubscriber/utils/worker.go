@@ -69,23 +69,29 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage) {
 			usage = MAX + rand.Float64()*(MAX-NORMAL)*0.1
 		}
 
-		err := cdrClient.AddCDR(clients.AddCDRRequest{
-			Session:       uint64(count),
-			Imsi:          iccid,
-			NodeId:        nodeId,
-			Policy:        "policy",
-			ApnName:       "apn",
-			Ip:            "ip",
-			StartTime:     uint64(time.Now().Unix()),
-			EndTime:       uint64(time.Now().Unix() + 300),
-			LastUpdatedAt: uint64(time.Now().Unix()),
-			TxBytes:       uint64(usage * 1024 * 1024),
-			RxBytes:       uint64(usage * 1024 * 1024),
-			TotalBytes:    uint64(usage * 1024 * 1024),
-		})
+		if len(iccid) > 4 {
+			iccidInImsi := iccid[4:] //TODO: TEMP logic
 
-		if err != nil {
-			fmt.Printf("Coroutine PostCDR for %s error: %v\n", iccid, err)
+			err := cdrClient.AddCDR(clients.AddCDRRequest{
+				Session:       uint64(count),
+				Imsi:          iccidInImsi,
+				NodeId:        nodeId,
+				Policy:        "policy",
+				ApnName:       "apn",
+				Ip:            "ip",
+				StartTime:     uint64(time.Now().Unix()),
+				EndTime:       uint64(time.Now().Unix() + 300),
+				LastUpdatedAt: uint64(time.Now().Unix()),
+				TxBytes:       uint64(usage * 1024 * 1024),
+				RxBytes:       uint64(usage * 1024 * 1024),
+				TotalBytes:    uint64(usage * 1024 * 1024),
+			})
+
+			if err != nil {
+				fmt.Printf("Coroutine PostCDR for %s error: %v\n", iccid, err)
+			}
+		} else {
+			fmt.Println("String is too short to remove 4 characters")
 		}
 
 		count += 1
