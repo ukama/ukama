@@ -98,5 +98,10 @@
   "key": "auth-services",
   "name": "Ukama Auth Services",
   "path": "../../../ukama-auth"
+ },
+ "ukamaagent": {
+  "key": "ukamaagent",
+  "name": "Ukama Agent system",
+  "path": "./ukama-agent"
  }
 }

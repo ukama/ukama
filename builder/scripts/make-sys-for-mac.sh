@@ -59,6 +59,9 @@ filter_make_sys() {
             "dummy")
                 PATHS+=("dummy/dnode" "dummy/dsubscriber" "dummy/api-gateway")
                 ;;
+            "ukamaagent")
+                PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr")
+                ;;
         esac
     done
 }

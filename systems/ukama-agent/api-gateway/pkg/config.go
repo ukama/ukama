@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package pkg
 
 import (
@@ -51,7 +51,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
-			Asr:     "0.0.0.0:9090",
+			Asr:     "asr:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
