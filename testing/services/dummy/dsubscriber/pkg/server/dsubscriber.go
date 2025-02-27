@@ -17,6 +17,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
+	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/utils"
@@ -26,15 +27,19 @@ type DsubscriberServer struct {
 	pb.UnimplementedDsubscriberServiceServer
 	orgName        string
 	mu             sync.Mutex
+	agentURL       string
+	nodeID         string
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	coroutines     map[string]chan pkg.WMessage
 }
 
-func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient) *DsubscriberServer {
+func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, agentUrl string, nodeId string) *DsubscriberServer {
 	return &DsubscriberServer{
-		orgName:        orgName,
 		msgbus:         msgBus,
+		nodeID:         nodeId,
+		orgName:        orgName,
+		agentURL:       agentUrl,
 		coroutines:     make(map[string]chan pkg.WMessage),
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
@@ -43,7 +48,7 @@ func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient) *Dsubsc
 func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
 	log.Infof("Received Update request: %+v", req)
 	profile := cenums.ParseProfileType(req.Dsubscriber.Profile)
-	s.updateCoroutine(req.Dsubscriber.Iccid, profile, req.Dsubscriber.Status)
+	s.updateCoroutine(req.Dsubscriber.Iccid, profile, req.Dsubscriber.Status, req.Dsubscriber.NodeId)
 	return &pb.UpdateResponse{
 		Dsubscriber: &pb.Dsubscriber{
 			Iccid:   req.Dsubscriber.Iccid,
@@ -58,14 +63,14 @@ func (s *DsubscriberServer) startHandler(iccid string, pkgId string, expiry stri
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
+	cdrC := clients.NewCDRClient(s.agentURL)
 	_, exists := s.coroutines[iccid]
 	if !exists {
 		updateChan := make(chan pkg.WMessage, 10)
 		s.coroutines[iccid] = updateChan
 
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", iccid, cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
-		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, PackageId: pkgId, Expiry: expiry, Profile: cenums.PROFILE_NORMAL})
+		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, PackageId: pkgId, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: cdrC, NodeId: s.nodeID})
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", iccid)
 	}
@@ -89,7 +94,7 @@ func (s *DsubscriberServer) updateHandler(iccid string, pkgId string, expiry str
 	}
 }
 
-func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, status pb.Status) {
+func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, status pb.Status, nodeId string) {
 	log.Infof("Update a message with ICCID %s, Profile %d, Status %d", iccid, profile, status)
 
 	s.mu.Lock()
@@ -111,9 +116,20 @@ func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile
 		return
 	}
 
-	updateChan <- pkg.WMessage{
+	msg := pkg.WMessage{
 		Iccid:   iccid,
 		Profile: profile,
 		Status:  status,
+	}
+
+	if nodeId != "" && nodeId != s.nodeID {
+		msg.NodeId = nodeId
+	}
+
+	select {
+	case updateChan <- msg:
+		log.Infof("Sent update message to coroutine for ICCID: %s", iccid)
+	default:
+		log.Warnf("Coroutine channel for ICCID %s is full, dropping message", iccid)
 	}
 }

@@ -34,6 +34,8 @@ services:
    - DSUBSCRIBER_SERVICE_HOST=dsubscriber
    - MSGCLIENT_HOST=msgclient-dummy:9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - NODEID=uk-sa2450-tnode-v0-4e86
+   - HTTP_AGENTNODEGATEWAY=http://node-gateway-ukama-agent:8080
   restart: always
   networks:
    - ukama-net

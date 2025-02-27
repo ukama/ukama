@@ -115,6 +115,7 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateRespon
 		Dsubscriber: &pb.Dsubscriber{
 			Iccid:   req.Iccid,
 			Profile: req.Profile,
+			NodeId:  req.NodeId,
 			Status:  pb.Status(pb.Status_value[req.Status]),
 		}})
 }

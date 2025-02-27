@@ -13,6 +13,7 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	cenums "github.com/ukama/ukama/testing/common/enums"
+	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 )
 
@@ -25,10 +26,11 @@ type Config struct {
 	Service          *uconf.Service
 	OrgName          string
 	Http             HttpServices
+	NodeId           string
 }
 
 type HttpServices struct {
-	InventoryClient string `defaut:"http://api-gateway-inventory:8080"`
+	AgentNodeGateway string `defaut:"http://node-gateway-ukama-agent:8080"`
 }
 
 type WMessage struct {
@@ -37,6 +39,8 @@ type WMessage struct {
 	Status    pb.Status      `json:"status"`
 	Profile   cenums.Profile `json:"profile"`
 	PackageId string         `json:"package_id"`
+	NodeId    string         `json:"node_id"`
+	CDRClient clients.CDRClient
 }
 
 func NewConfig(name string) *Config {
