@@ -27,6 +27,14 @@ type Config struct {
 	OrgName          string
 	Http             HttpServices
 	NodeId           string
+	RoutineConfig    RoutineConfig
+}
+
+type RoutineConfig struct {
+	Min      float64 `default:"10"`
+	Normal   float64 `default:"20"`
+	Max      float64 `default:"40"`
+	Interval uint64  `default:"1"`
 }
 
 type HttpServices struct {

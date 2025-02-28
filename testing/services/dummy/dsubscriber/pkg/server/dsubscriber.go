@@ -29,13 +29,15 @@ type DsubscriberServer struct {
 	mu             sync.Mutex
 	agentURL       string
 	nodeID         string
+	routineConfig  pkg.RoutineConfig
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	coroutines     map[string]chan pkg.WMessage
 }
 
-func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, agentUrl string, nodeId string) *DsubscriberServer {
+func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, agentUrl string, nodeId string, rc pkg.RoutineConfig) *DsubscriberServer {
 	return &DsubscriberServer{
+		routineConfig:  rc,
 		msgbus:         msgBus,
 		nodeID:         nodeId,
 		orgName:        orgName,
@@ -70,7 +72,7 @@ func (s *DsubscriberServer) startHandler(iccid string, pkgId string, expiry stri
 		s.coroutines[iccid] = updateChan
 
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", iccid, cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
-		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, PackageId: pkgId, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: cdrC, NodeId: s.nodeID})
+		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, PackageId: pkgId, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: cdrC, NodeId: s.nodeID}, s.routineConfig)
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", iccid)
 	}

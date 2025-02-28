@@ -66,7 +66,7 @@ func runGrpcServer() {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.Http.AgentNodeGateway, serviceConfig.NodeId)
+	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.Http.AgentNodeGateway, serviceConfig.NodeId, serviceConfig.RoutineConfig)
 	nSrv := server.NewDsubEventServer(serviceConfig.OrgName, dsubServer)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
