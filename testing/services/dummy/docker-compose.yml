@@ -39,6 +39,7 @@ services:
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
    - CONTROLLER_SERVICE_HOST=controller
    - CONTROLLER_SERVICE_PORT=9090
+   - REGISTRYCLIENT=http://api-gateway-registry:8080
   restart: always
   networks:
    - ukama-net
@@ -57,6 +58,52 @@ services:
   networks:
    - ukama-net
 
+ api-gateway:
+  build: ./api-gateway
+  ports:
+   - 8082:8080
+  networks:
+   - ukama-net
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+
+
+ prometheus:
+  image: prom/prometheus:latest
+  container_name: prometheus
+  ports:
+   - "9090:9090"
+  volumes:
+   - ./prometheus.yml:/etc/prometheus/prometheus.yml
+   - prometheus-data:/prometheus
+  command:
+   - '--config.file=/etc/prometheus/prometheus.yml'
+   - '--storage.tsdb.path=/prometheus'
+   - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+   - '--web.console.templates=/usr/share/prometheus/consoles'
+  restart: always
+  networks:
+   - ukama-net
+
+ grafana:
+  image: grafana/grafana:latest
+  container_name: grafana
+  ports:
+   - "3000:3000"
+  environment:
+   - GF_SECURITY_ADMIN_USER=admin
+   - GF_SECURITY_ADMIN_PASSWORD=admin
+   - GF_USERS_ALLOW_SIGN_UP=false
+  volumes:
+   - grafana-data:/var/lib/grafana
+   - ./grafana/dashboards:/etc/grafana/dashboards
+   - ./grafana/provisioning:/etc/grafana/provisioning
+  depends_on:
+   - prometheus
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
  ukama-net:
@@ -65,5 +112,7 @@ networks:
 
 volumes:
  postgress-data:
+ prometheus-data:
+ grafana-data:
 
 
