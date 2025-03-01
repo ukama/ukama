@@ -41,7 +41,6 @@ type SiteMetricsConfig struct {
 type ControllerServer struct {
 	pb.UnimplementedMetricsControllerServer
 	orgName          string
-	orgId 		     string
 	metricsProviders map[string]*metrics.MetricsProvider
 	siteConfigs      map[string]*SiteMetricsConfig
 	mutex            sync.RWMutex
@@ -52,7 +51,7 @@ type ControllerServer struct {
 
 }
 
-func NewControllerServer(orgName string, orgId string, nodeClient creg.NodeClient,dnodeHost string, msgBus mb.MsgBusServiceClient) *ControllerServer {
+func NewControllerServer(orgName string, nodeClient creg.NodeClient,dnodeHost string, msgBus mb.MsgBusServiceClient) *ControllerServer {
 	dnodeClient := client.NewDNodeClient(dnodeHost, 5*time.Second)
 	return &ControllerServer{
 		orgName:          orgName,

@@ -22,7 +22,6 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	Service          *uconf.Service
 	OrgName          string
-	OrgId			 string
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Port 		     string `default:"2112"`
 	DnodeHost		string `default:"dnode:8085"`

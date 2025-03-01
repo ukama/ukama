@@ -78,7 +78,7 @@ import (
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-		controllerServer := server.NewControllerServer(serviceConfig.OrgName, serviceConfig.OrgId,nodeClient,serviceConfig.DnodeHost,mbClient)
+		controllerServer := server.NewControllerServer(serviceConfig.OrgName,nodeClient,serviceConfig.DnodeHost,mbClient)
 		nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
    
 	log.Debugf("MessageBus Client is %+v", mbClient)
