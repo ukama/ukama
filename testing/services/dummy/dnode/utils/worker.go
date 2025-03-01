@@ -30,7 +30,11 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		count += 0.1
 		time.Sleep(1 * time.Second)
 		select {
-		case msg := <-updateChan:
+		case msg, ok := <-updateChan:
+			if !ok {
+				fmt.Printf("Coroutine %s with Scenario is: %s, which leads to coroutine shutdown.", id, scenario)
+				return
+			}
 			profile = msg.Profile
 			scenario = msg.Scenario
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, profile, scenario)
@@ -43,9 +47,11 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		values := make(map[string]float64)
 
 		for _, kpi := range kpis.KPIs {
-			if kpi.Key == "unit_uptime" {
+			switch kpi.Key {
+			case "unit_uptime":
 				values[kpi.Key] = count
-			} else {
+			// TODO: Can handle different scenario cases here
+			default:
 				switch profile {
 				case cenums.PROFILE_MIN:
 					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
@@ -55,6 +61,7 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
 				}
 			}
+
 			kpi.KPI.With(labels).Set(values[kpi.Key])
 		}
 	}
