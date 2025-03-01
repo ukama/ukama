@@ -122,7 +122,7 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 		updateChan, exists := s.coroutines[nodeID.String()]
 		if exists {
 			close(updateChan)
-			delete(s.coroutines, nodeId)
+			delete(s.coroutines, nodeID.String())
 		}
 		w.WriteHeader(http.StatusOK)
 		return
