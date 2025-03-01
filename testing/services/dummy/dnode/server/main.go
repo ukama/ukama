@@ -113,6 +113,17 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Updating coroutine, NodeId: %s, Profile: %s, Scenario: %s", nodeID.String(), profile, scenario)
 
+	if cenums.ParseScenarioType(scenario) == cenums.SCENARIO_BACKHAUL_DOWN ||
+		cenums.ParseScenarioType(scenario) == cenums.SCENARIO_NODE_OFF {
+		log.Printf("Scenario is: %s, which leads to coroutine shutdown.", scenario)
+		updateChan, exists := s.coroutines[nodeId]
+		if exists {
+			close(updateChan)
+			delete(s.coroutines, nodeId)
+		}
+		return
+	}
+
 	updateChan, exists := s.coroutines[nodeID.String()]
 	if !exists {
 		http.Error(w, "Coroutine not found", http.StatusNotFound)
