@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package metrics
 
 import (
@@ -12,6 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 )
+
 type PrometheusExporter struct {
 	// Solar metrics
 	solarPowerGeneration *prometheus.GaugeVec
@@ -40,7 +49,7 @@ type PrometheusExporter struct {
 	shutdown       chan struct{} 
 }
 
-func NewPrometheusExporter(metricsProvider *MetricsProvider,siteId string) *PrometheusExporter {
+func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *PrometheusExporter {
 	exporter := &PrometheusExporter{
 		metricsProvider: metricsProvider,
 		siteId:          siteId,
@@ -156,7 +165,9 @@ type ControllerMetrics struct {
 
 type BackhaulProvider struct {
 	lastUpdate    time.Time
-	metricsProvider *MetricsProvider  
+	metricsProvider *MetricsProvider
+	jitterFactor float64
+	noiseAmplitude float64  
 }
 
 const (
@@ -170,14 +181,19 @@ type BatteryProvider struct {
 	startTime    time.Time
 	lastCapacity float64
 	cycleCount   int
-	metricsProvider *MetricsProvider  
+	metricsProvider *MetricsProvider
+	microFluctuationFactor float64
+	temperatureVariance float64
 }
 
 type SolarProvider struct {
 	startTime      time.Time
 	energyTotal    float64
 	weatherPattern float64
-	metricsProvider *MetricsProvider 
+	metricsProvider *MetricsProvider
+	cloudCoverFactor float64
+	microWeatherChanges float64
+	timeAcceleration float64
 }
 
 type MetricsProvider struct {
@@ -187,6 +203,8 @@ type MetricsProvider struct {
 	portStatus     map[int]bool  
 	scenarioActive string        
 	currentProfile cenums.Profile
+	globalVariationFactor float64
+	timeMultiplier float64
 }
 
 func (b *BackhaulProvider) UpdateMetricsProvider(provider *MetricsProvider) {
@@ -197,31 +215,62 @@ func (b *BatteryProvider) UpdateMetricsProvider(provider *MetricsProvider) {
 	b.metricsProvider = provider
 }
 
-// Added method to update metrics provider reference for SolarProvider
 func (s *SolarProvider) UpdateMetricsProvider(provider *MetricsProvider) {
 	s.metricsProvider = provider
 }
 
 func NewMetricsProvider() *MetricsProvider {
 	mp := &MetricsProvider{
-		backhaul:       NewBackhaulProvider(),
-		battery:        NewBatteryProvider(),
-		solar:          NewSolarProvider(),
-		portStatus:     map[int]bool{
+		backhaul: &BackhaulProvider{
+			lastUpdate: time.Now(),
+			jitterFactor: rand.Float64() * 0.5,
+			noiseAmplitude: rand.Float64() * 0.3,
+		},
+		battery: &BatteryProvider{
+			startTime: time.Now(),
+			lastCapacity: 85.0,
+			cycleCount: 0,
+			microFluctuationFactor: rand.Float64() * 0.2,
+			temperatureVariance: rand.Float64() * 2.0,
+		},
+		solar: &SolarProvider{
+			startTime: time.Now(),
+			energyTotal: 0,
+			weatherPattern: 1.0,
+			cloudCoverFactor: rand.Float64() * 0.4,
+			microWeatherChanges: rand.Float64() * 0.3,
+			timeAcceleration: 1.0, 
+		},
+		portStatus: map[int]bool{
 			PORT_AMPLIFIER: true,
-			PORT_TOWER:     true,
-			PORT_SOLAR:     true,
-			PORT_BACKHAUL:  true,
+			PORT_TOWER: true,
+			PORT_SOLAR: true,
+			PORT_BACKHAUL: true,
 		},
 		scenarioActive: "default",
 		currentProfile: cenums.PROFILE_NORMAL,
+		globalVariationFactor: rand.Float64(),
+		timeMultiplier: 1.0, 
 	}
 	
 	mp.backhaul.UpdateMetricsProvider(mp)
-	mp.battery.UpdateMetricsProvider(mp)  
-	mp.solar.UpdateMetricsProvider(mp)   
+	mp.battery.UpdateMetricsProvider(mp)
+	mp.solar.UpdateMetricsProvider(mp)
+	
+	go mp.updateGlobalVariation()
 	
 	return mp
+}
+
+
+func (m *MetricsProvider) updateGlobalVariation() {
+	ticker := time.NewTicker(1 * time.Second) 
+	defer ticker.Stop()
+	
+	for range ticker.C {
+		targetVariation := rand.Float64()
+		m.globalVariationFactor = m.globalVariationFactor*0.7 + targetVariation*0.3
+	}
 }
 
 func (m *MetricsProvider) SetProfile(profile cenums.Profile) {
@@ -237,52 +286,64 @@ func (m *MetricsProvider) GetMetrics(siteId string) (*ControllerMetrics, error) 
 	solarMetrics := m.solar.GetMetrics()
 
 	if !m.portStatus[PORT_BACKHAUL] {
-		// If backhaul port is down, zero out all backhaul metrics
 		backhaulMetrics.Latency = 0
 		backhaulMetrics.Status = 0
 		backhaulMetrics.Speed = 0
+		backhaulMetrics.SwitchStatus = 0
+		backhaulMetrics.SwitchBandwidth = 0
 	}
 
 	if !m.portStatus[PORT_SOLAR] {
-		// If solar port is down, zero out all solar metrics
 		solarMetrics.PowerGeneration = 0
 		solarMetrics.PanelPower = 0
 		solarMetrics.PanelCurrent = 0
 		solarMetrics.InverterStatus = 0
-		// Keep energy total as it's cumulative
 	}
 
-	// Apply scenario effects
 	switch m.scenarioActive {
 	case "power_down":
-		// Simulate power down - battery draining, solar off
 		solarMetrics.PowerGeneration = 0
 		solarMetrics.PanelPower = 0
 		solarMetrics.PanelCurrent = 0
+		solarMetrics.PanelVoltage = 0
 		solarMetrics.InverterStatus = 0
 		
-		// Battery discharging rapidly
-		if batteryMetrics.Capacity > 5 {
-			batteryMetrics.Capacity = math.Max(5, batteryMetrics.Capacity - 10)
+		batteryMetrics.Capacity = math.Max(0, batteryMetrics.Capacity - 0.5) 
+		batteryMetrics.Current = -3.0 
+		
+		if batteryMetrics.Capacity < 5 {
+			batteryMetrics.Voltage = math.Max(0, batteryMetrics.Voltage - 0.1) 
 		}
-		batteryMetrics.Current = -2.0 // Heavy discharge
 		
 	case "switch_off":
-		// Simulate switch being off - network port issues
 		backhaulMetrics.SwitchStatus = 0
 		backhaulMetrics.SwitchBandwidth = 0
 		
 	case "backhaul_down":
-		// Simulate backhaul down - all backhaul metrics to zero
 		backhaulMetrics.Latency = 0
 		backhaulMetrics.Status = 0
 		backhaulMetrics.Speed = 0
 	}
 
-	// Apply battery voltage effects
-	// If battery voltage is below 12V, solar metrics should be affected
-	if batteryMetrics.Voltage < 12.0 && solarMetrics.PowerGeneration < 50 {
+	if m.currentProfile == cenums.PROFILE_MIN && batteryMetrics.Voltage < 10.5 {
 		solarMetrics.InverterStatus = 0
+		if rand.Float64() > 0.7 {
+			solarMetrics.PowerGeneration *= 0.5 
+		}
+	} else if batteryMetrics.Voltage < 11.0 && solarMetrics.PowerGeneration < 100 {
+		solarMetrics.InverterStatus = 0
+	}
+
+	if rand.Float64() > 0.99 {
+		scenarios := []string{"default", "power_down", "switch_off", "backhaul_down"}
+		m.scenarioActive = scenarios[rand.Intn(len(scenarios))]
+		
+		log.Infof("Switching to scenario: %s", m.scenarioActive)
+		
+		go func(m *MetricsProvider) {
+			time.Sleep(5 * time.Second)
+			m.scenarioActive = "default"
+		}(m)
 	}
 
 	return &ControllerMetrics{
@@ -292,57 +353,79 @@ func (m *MetricsProvider) GetMetrics(siteId string) (*ControllerMetrics, error) 
 		Time:     time.Now(),
 	}, nil
 }
-
 func NewBackhaulProvider() *BackhaulProvider {
 	return &BackhaulProvider{
 		lastUpdate: time.Now(),
+		jitterFactor: rand.Float64() * 0.5,
+		noiseAmplitude: rand.Float64() * 0.3,
 	}
 }
+
 
 func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
 	status := 1.0
 	
-	// Profile-based backhaul metrics
+	microTime := float64(time.Now().UnixNano()) / 1e9 
+	microOscillation := math.Sin(microTime*2*math.Pi) * b.noiseAmplitude
+	
 	var baseLatency, baseSpeed float64
 	
-	// Get profile from metrics provider
 	profile := b.metricsProvider.currentProfile
+	globalFactor := b.metricsProvider.globalVariationFactor
 	
 	switch profile {
 	case cenums.PROFILE_MIN:
-		baseLatency = 100.0  // Higher latency
-		baseSpeed = 5.0      // Lower speed
-		if rand.Float64() > 0.8 { // More frequent downtime
+		baseLatency = 150.0 + 100.0*globalFactor  
+		baseSpeed = 0.5 + 2.0*globalFactor    
+		if rand.Float64() > 0.7 { 
 			status = 0.0
 		}
 	case cenums.PROFILE_MAX:
-		baseLatency = 20.0   // Lower latency
-		baseSpeed = 100.0    // Higher speed
-		if rand.Float64() > 0.98 { // Less frequent downtime
+		baseLatency = 5.0 + 15.0*globalFactor  
+		baseSpeed = 80.0 + 120.0*globalFactor  
+		if rand.Float64() > 0.98 { 
 			status = 0.0
 		}
-	default: // PROFILE_NORMAL
-		baseLatency = 50.0   // Normal latency
-		baseSpeed = 50.0     // Normal speed
+	default: 
+		baseLatency = 30.0 + 20.0*globalFactor 
+		baseSpeed = 20.0 + 30.0*globalFactor     
 		if rand.Float64() > 0.95 {
 			status = 0.0
 		}
 	}
 
-	var latency, speed float64
+	var latency, speed, switchBandwidth float64
+	var switchStatus float64 = 1.0
+
 	if status == 1.0 {
-		latency = baseLatency + (rand.Float64() * 20.0)
-		speed = baseSpeed + (rand.Float64() * 20.0)
-	}
-
-	switchStatus := 1.0
-	if rand.Float64() > 0.98 { 
-		switchStatus = 0.0
-	}
-
-	var switchBandwidth float64
-	if switchStatus == 1.0 {
-		switchBandwidth = 100.0 + (rand.Float64() * 900.0)
+		jitter := math.Sin(microTime*5) * 5
+		latency = baseLatency + jitter + microOscillation*10
+		speed = baseSpeed - (jitter*0.2) + microOscillation*2
+		
+		latency = math.Max(1.0, latency)
+		speed = math.Max(0.1, speed)
+		
+		if profile == cenums.PROFILE_MIN && rand.Float64() > 0.8 { 
+			switchStatus = 0.0
+		} else if rand.Float64() > 0.98 { 
+			switchStatus = 0.0
+		}
+		
+		if switchStatus == 1.0 {
+			switch profile {
+			case cenums.PROFILE_MIN:
+				switchBandwidth = 10.0 + (rand.Float64() * 40.0)
+			case cenums.PROFILE_MAX:
+				switchBandwidth = 500.0 + (rand.Float64() * 500.0) 
+			default: 
+				switchBandwidth = 100.0 + (rand.Float64() * 100.0) 
+			}
+		}
+	} else {
+		latency = 0
+		speed = 0
+		switchStatus = 0
+		switchBandwidth = 0
 	}
 
 	return &BackhaulMetrics{
@@ -354,60 +437,117 @@ func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
 	}
 }
 
+
 func NewBatteryProvider() *BatteryProvider {
 	return &BatteryProvider{
 		startTime:    time.Now(),
 		lastCapacity: 85.0,
 		cycleCount:   0,
+		microFluctuationFactor: rand.Float64() * 0.2,
+		temperatureVariance: rand.Float64() * 2.0,
 	}
 }
 
 func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
-	elapsed := time.Since(m.startTime).Seconds()
+	// Use current time for second-by-second changes
+	currentTime := float64(time.Now().UnixNano()) / 1e9
 	
-	dayNightCycle := math.Sin(elapsed/(24*3600)*2*math.Pi)
-	batteryCycle := math.Sin(elapsed/(4*3600)*2*math.Pi)
+	// Add micro-oscillations for every second change
+	microCycle := math.Sin(currentTime*2*math.Pi) * m.microFluctuationFactor
 	
-	// Base values adjusted by profile
+	// Base values adjusted by profile and global variation
+	globalFactor := m.metricsProvider.globalVariationFactor
 	var baseCapacity, baseVoltage float64
-	switch m.metricsProvider.currentProfile { // Changed from b.provider to m.metricsProvider
+	
+	switch m.metricsProvider.currentProfile {
 	case cenums.PROFILE_MIN:
-		baseCapacity = 45.0 // Lower base capacity
-		baseVoltage = 11.2  // Lower voltage
+		baseCapacity = 10.0 + (10.0 * globalFactor) // 10-20% capacity
+		baseVoltage = 10.0 + (1.5 * globalFactor)   // 10.0-11.5V
+		
+		// For very low profiles, we might want metrics to show critical condition
+		if baseCapacity < 15 && rand.Float64() > 0.7 {
+			baseCapacity = 0 // Complete battery drain
+			baseVoltage = 0  // System shutdown
+		}
 	case cenums.PROFILE_MAX:
-		baseCapacity = 95.0 // Higher base capacity
-		baseVoltage = 12.8  // Higher voltage
+		baseCapacity = 80.0 + (20.0 * globalFactor) // 80-100% capacity
+		baseVoltage = 12.0 + (0.8 * globalFactor)   // 12.0-12.8V
 	default: // PROFILE_NORMAL
-		baseCapacity = 85.0 // Normal base capacity
-		baseVoltage = 12.3  // Normal voltage
+		baseCapacity = 50.0 + (30.0 * globalFactor) // 50-80% capacity
+		baseVoltage = 12.0 + (0.5 * globalFactor)   // 12.0-12.5V
 	}
 	
-	capacity := baseCapacity + (dayNightCycle * 10.0) + (batteryCycle * 5.0)
-	capacity = math.Max(20.0, math.Min(100.0, capacity))
+	// Add second-by-second small variations
+	capacity := baseCapacity + (microCycle * 2.0)
+	capacity = math.Max(0.0, math.Min(100.0, capacity))
 	
-	voltage := baseVoltage + (capacity/100.0 * 0.5)
+	// Add small voltage fluctuations per second
+	voltage := baseVoltage + (microCycle * 0.1)
 	
-	charging := dayNightCycle > 0 && capacity < 95.0
+	// Determine charging state based on profile and time of day
+	hourOfDay := float64(time.Now().Hour())
+	daytime := hourOfDay >= 6 && hourOfDay <= 18
+	
+	charging := daytime && m.metricsProvider.currentProfile != cenums.PROFILE_MIN
 	status := "Discharging"
 	if charging {
 		status = "Charging"
 	}
 	
+	// Current varies by second and depends on charging state
 	var current float64
 	if charging {
-		current = 2.0 + (dayNightCycle * 0.5)
+		switch m.metricsProvider.currentProfile {
+		case cenums.PROFILE_MIN:
+			current = 0.5 + (microCycle * 0.2) // 0.3-0.7A charging
+		case cenums.PROFILE_MAX:
+			current = 5.0 + (microCycle * 1.0) // 4-6A charging
+		default: // PROFILE_NORMAL
+			current = 2.0 + (microCycle * 0.5) // 1.5-2.5A charging
+		}
 	} else {
-		current = -(1.0 + math.Abs(batteryCycle*0.5))
+		switch m.metricsProvider.currentProfile {
+		case cenums.PROFILE_MIN:
+			current = -(1.5 + microCycle * 0.5) // 1-2A discharge
+		case cenums.PROFILE_MAX:
+			current = -(0.5 + microCycle * 0.2) // 0.3-0.7A discharge
+		default: // PROFILE_NORMAL
+			current = -(1.0 + microCycle * 0.3) // 0.7-1.3A discharge
+		}
 	}
 	
-	ambientTemp := 22.0 + (dayNightCycle * 3.0)
-	temperature := ambientTemp + (math.Abs(current) * 0.5)
+	// Temperature varies by profile and with seconds
+	var temperature float64
+	switch m.metricsProvider.currentProfile {
+	case cenums.PROFILE_MIN:
+		temperature = 30.0 + (microCycle * 5.0) // 25-35C (running hot)
+	case cenums.PROFILE_MAX:
+		temperature = 20.0 + (microCycle * 2.0) // 18-22C (optimal)
+	default: // PROFILE_NORMAL
+		temperature = 25.0 + (microCycle * 3.0) // 22-28C (normal)
+	}
 	
-	timeBasedWear := elapsed / (365 * 24 * 3600) * 10
-	health := "Good"
-	if timeBasedWear > 20 {
-		health = "Fair"
-	} else if timeBasedWear > 50 {
+	// Health status
+	var health string
+	switch m.metricsProvider.currentProfile {
+	case cenums.PROFILE_MIN:
+		health = "Poor"
+		if rand.Float64() > 0.7 {
+			health = "Fair"
+		}
+	case cenums.PROFILE_MAX:
+		health = "Good"
+	default: // PROFILE_NORMAL
+		health = "Good"
+		if rand.Float64() > 0.8 {
+			health = "Fair"
+		}
+	}
+
+	// If battery is completely drained, zero out all metrics
+	if voltage == 0 || capacity == 0 {
+		current = 0
+		temperature = 0
 		health = "Poor"
 	}
 
@@ -428,39 +568,91 @@ func NewSolarProvider() *SolarProvider {
 		startTime:      time.Now(),
 		energyTotal:    0,
 		weatherPattern: 1.0,
+		cloudCoverFactor: rand.Float64() * 0.4,
+		microWeatherChanges: rand.Float64() * 0.3,
+		timeAcceleration: 5.0 + rand.Float64() * 10.0,
 	}
 }
 
 func (s *SolarProvider) GetMetrics() *SolarMetrics {
-	elapsed := time.Since(s.startTime).Seconds()
+	// Use current time for second-by-second changes
+	currentTime := float64(time.Now().UnixNano()) / 1e9
 	
+	// Determine current hour
 	hourOfDay := float64(time.Now().Hour())
-	daylight := math.Max(0, math.Sin((hourOfDay-6)*math.Pi/12))
+	daylight := 0.0
 	
-	// Profile-based solar generation
-	var maxPower float64
-	switch s.metricsProvider.currentProfile { 
-	case cenums.PROFILE_MIN:
-		maxPower = 500.0  // Lower maximum power
-		s.weatherPattern = 0.4 + (math.Sin(elapsed/14400)*0.2)  // Worse weather conditions
-	case cenums.PROFILE_MAX:
-		maxPower = 2000.0 // Higher maximum power
-		s.weatherPattern = 0.9 + (math.Sin(elapsed/14400)*0.1)  // Better weather conditions
-	default: // PROFILE_NORMAL
-		maxPower = 1000.0 // Normal maximum power
-		s.weatherPattern = 0.7 + (math.Sin(elapsed/14400)*0.3)  // Normal weather conditions
+	// Only generate solar power during daylight hours (6am-6pm)
+	if hourOfDay >= 6 && hourOfDay <= 18 {
+		// Peak at noon, lower at edges of daylight
+		daylight = math.Sin((hourOfDay-6)*math.Pi/12)
+		
+		// Add small second-by-second variations
+		daylight += math.Sin(currentTime*2*math.Pi) * 0.05
 	}
 	
-	s.weatherPattern = math.Max(0.1, math.Min(1.0, s.weatherPattern))
+	// Add cloud cover simulation with second-by-second changes
+	cloudCover := math.Sin(currentTime*0.5) * s.cloudCoverFactor
 	
-	powerGeneration := maxPower * daylight * s.weatherPattern
+	// Profile-based solar generation with global variation factor
+	globalFactor := s.metricsProvider.globalVariationFactor
+	var maxPower float64
 	
-	panelVoltage := 24.0 + (daylight * 4.0)
-	panelCurrent := powerGeneration / panelVoltage
+	switch s.metricsProvider.currentProfile { 
+	case cenums.PROFILE_MIN:
+		maxPower = 100.0 + 50.0*globalFactor  // 100-150W maximum
+		// More frequent cloud cover and poor conditions
+		daylight *= math.Max(0.1, 0.3 - cloudCover)
+		
+		// For PROFILE_MIN, sometimes all solar is offline
+		if rand.Float64() > 0.7 {
+			daylight = 0
+			maxPower = 0
+		}
+	case cenums.PROFILE_MAX:
+		maxPower = 1500.0 + 500.0*globalFactor // 1500-2000W maximum
+		// Less cloud impact
+		daylight *= math.Max(0.7, 0.8 - cloudCover*0.5)
+	default: // PROFILE_NORMAL
+		maxPower = 800.0 + 200.0*globalFactor // 800-1000W maximum
+		// Normal cloud impact
+		daylight *= math.Max(0.5, 0.6 - cloudCover*0.7)
+	}
 	
+	// Calculate power generation with second-by-second variations
+	powerGeneration := maxPower * daylight
+	powerGeneration += math.Sin(currentTime*5*math.Pi) * 10 // Small oscillations
+	
+	// Keep it positive
+	powerGeneration = math.Max(0, powerGeneration)
+	
+	// Panel voltage depends on daylight and varies by second
+	var panelVoltage float64
+	if daylight > 0 {
+		switch s.metricsProvider.currentProfile {
+		case cenums.PROFILE_MIN:
+			panelVoltage = 18.0 + (daylight * 5.0) + math.Sin(currentTime*2*math.Pi)*0.5
+		case cenums.PROFILE_MAX:
+			panelVoltage = 24.0 + (daylight * 12.0) + math.Sin(currentTime*2*math.Pi)*1.0
+		default: // PROFILE_NORMAL
+			panelVoltage = 20.0 + (daylight * 8.0) + math.Sin(currentTime*2*math.Pi)*0.8
+		}
+	}
+	
+	// Calculate current with a more dynamic relationship
+	var panelCurrent float64
+	if panelVoltage > 0 {
+		panelCurrent = powerGeneration / panelVoltage
+		// Add small second-by-second current variations
+		panelCurrent += math.Sin(currentTime*3*math.Pi) * 0.1
+		panelCurrent = math.Max(0, panelCurrent)
+	}
+	
+	// Update energy total
 	intervalHours := 1.0 / 3600.0
 	s.energyTotal += powerGeneration * intervalHours / 1000.0
 	
+	// Inverter status
 	inverterStatus := 0.0
 	if powerGeneration > 50.0 {
 		inverterStatus = 1.0
@@ -475,11 +667,15 @@ func (s *SolarProvider) GetMetrics() *SolarMetrics {
 		InverterStatus: inverterStatus,
 	}
 }
-
-
 func (e *PrometheusExporter) StartMetricsCollection(ctx context.Context, interval time.Duration) error {
-	ticker := time.NewTicker(interval)
+	// Use 1 second interval for real-time updates
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
+
+	// Initialize metrics with a first collection immediately
+	if err := e.collectMetrics(); err != nil {
+		log.Warnf("Initial metrics collection failed: %v", err)
+	}
 
 	for {
 		select {
@@ -497,6 +693,7 @@ func (e *PrometheusExporter) StartMetricsCollection(ctx context.Context, interva
 	}
 }
 
+
 func (e *PrometheusExporter) Shutdown() {
 	close(e.shutdown)
 }
@@ -506,10 +703,11 @@ func (e *PrometheusExporter) collectMetrics() error {
 	if err != nil {
 		return fmt.Errorf("failed to get metrics: %w", err)
 	}
-	log.Infof("Collecting metrics for site %s: Solar power: %f, Battery capacity: %f", 
+	log.Debugf("Collecting metrics for site %s: Solar power: %f, Battery capacity: %f", 
 	e.siteId, metrics.Solar.PowerGeneration, metrics.Battery.Capacity)
 
 	// Update solar metrics
+	
 	e.solarPowerGeneration.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PowerGeneration)
 	e.solarEnergyTotal.WithLabelValues("kwh", e.siteId).Set(metrics.Solar.EnergyTotal)
 	e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
@@ -548,4 +746,7 @@ func (m *MetricsProvider) SetPortStatus(port int, status bool) error {
 
 func (m *MetricsProvider) SetScenario(scenario string) {
 	m.scenarioActive = scenario
+}
+func (m *MetricsProvider) GetPowerStatus() (bool, error) {
+	return m.scenarioActive != string(cenums.SCENARIO_POWER_DOWN), nil
 }

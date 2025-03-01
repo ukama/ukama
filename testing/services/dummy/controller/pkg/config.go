@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package pkg
 
 import (
@@ -14,7 +22,11 @@ type Config struct {
 	Timeout          time.Duration    `default:"3s"`
 	Service          *uconf.Service
 	OrgName          string
+	OrgId			 string
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	Port 		     string `default:"2112"`
+	DnodeHost		string `default:"dnode:8085"`
+	RegistryClient string `defaut:"api-gateway-registry:8080"`
 }
 
 

@@ -16,12 +16,16 @@ import (
 
 	"github.com/num30/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 
 	"github.com/ukama/ukama/testing/services/dummy/controller/cmd/version"
 
@@ -57,40 +61,50 @@ import (
  }
  
  func runGrpcServer() {
-	 controllerServer := server.NewControllerServer(serviceConfig.OrgName)
+	instanceId := os.Getenv("POD_NAME")
+	if instanceId == "" {
+		inst := uuid.NewV4()
+		instanceId = inst.String()
+	}
+
+
+	nodeClient := creg.NewNodeClient(serviceConfig.RegistryClient)
+
+
+	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, serviceConfig.OrgId,nodeClient,serviceConfig.DnodeHost)
  
+	 mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
 	 grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		 generated.RegisterMetricsControllerServer(s, controllerServer)
 	 })
- 
+ 	go msgBusListener(mbClient)
+
 	 go grpcServer.StartServer()
  
-	 // Start the Prometheus metrics server
 	 go startMetricsServer()
 	 
-	 // Set up graceful shutdown - use only one signal handler
 	 sigs := make(chan os.Signal, 1)
 	 signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	 
-	 // Wait for termination signal
 	 sig := <-sigs
 	 log.Infof("Received signal %v, shutting down...", sig)
 	 
-	 // Clean up resources
 	 controllerServer.Cleanup()
 	 
 	 log.Infof("Exiting service %s", pkg.ServiceName)
  }
  
- // startMetricsServer starts a separate HTTP server for Prometheus metrics
  func startMetricsServer() {
-	 // Create a new HTTP server mux
 	 mux := http.NewServeMux()
 	 
-	 // Register the Prometheus handler
 	 mux.Handle("/metrics", promhttp.Handler())
 	 
-	 // Add a basic health check endpoint
 	 mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		 w.WriteHeader(http.StatusOK)
 		 _, err := w.Write([]byte("OK"))
@@ -99,13 +113,10 @@ import (
 		 }
 	 })
 	 
-	 // Log that we're starting the metrics server
-	 address := ":2112"
-	 log.Infof("Starting metrics server on %s", address)
+	 log.Infof("Starting metrics server on %s", serviceConfig.Port)
 	 
-	 // Start the server and handle errors properly
 	 server := &http.Server{
-		 Addr:    address,
+		 Addr:    serviceConfig.Port,
 		 Handler: mux,
 	 }
 	 
@@ -115,3 +126,12 @@ import (
 		 }
 	 }
  }
+ func msgBusListener(m mb.MsgBusServiceClient) {
+	if err := m.Register(); err != nil {
+		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	}
+
+	if err := m.Start(); err != nil {
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	}
+}

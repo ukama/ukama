@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package server
 
 import (
@@ -7,8 +15,11 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/client"
+
 	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/metrics"
 )
 
@@ -27,17 +38,23 @@ type SiteMetricsConfig struct {
 type ControllerServer struct {
 	pb.UnimplementedMetricsControllerServer
 	orgName          string
+	orgId 		     string
 	metricsProviders map[string]*metrics.MetricsProvider
 	siteConfigs      map[string]*SiteMetricsConfig
 	mutex            sync.RWMutex
+	nodeClient        creg.NodeClient
+	dnodeClient      *client.DNodeClient 
 }
 
-func NewControllerServer(orgName string) *ControllerServer {
+func NewControllerServer(orgName string, orgId string, nodeClient creg.NodeClient,dnodeHost string) *ControllerServer {
+	dnodeClient := client.NewDNodeClient(dnodeHost, 5*time.Second)
 	return &ControllerServer{
 		orgName:          orgName,
 		metricsProviders: make(map[string]*metrics.MetricsProvider),
 		siteConfigs:      make(map[string]*SiteMetricsConfig),
 		mutex:            sync.RWMutex{},
+		nodeClient:       nodeClient,
+		dnodeClient:      dnodeClient,
 	}
 }
 
@@ -168,6 +185,23 @@ func (s *ControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetric
 func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	siteId := req.SiteId
 	
+	log.Infof("Updating metrics for site ID: %s", siteId)
+	if siteId == "" {
+		return &pb.UpdateMetricsResponse{
+			Success: false,
+			Message: "Site ID is required",
+		}, nil	
+	}
+
+	// Get all nodes for the site
+	nodes, err := s.nodeClient.GetNodesBySite(siteId)
+	if err != nil {
+		return &pb.UpdateMetricsResponse{
+			Success: false,
+			Message: "Site not found",
+		}, nil
+	}
+	
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	
@@ -197,23 +231,45 @@ func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetr
 	}
 	
 	var scenarioChanged bool
+	var newScenario cenums.SCENARIOS = config.Scenario
+	
 	switch req.Scenario {
 	case pb.Scenario_SCENARIO_POWER_DOWN:
-		config.Scenario = cenums.SCENARIO_POWER_DOWN
-		provider.SetScenario(string(cenums.SCENARIO_POWER_DOWN))
+		newScenario = cenums.SCENARIO_POWER_DOWN
+		config.Scenario = newScenario
+		provider.SetScenario(string(newScenario))
 		scenarioChanged = true
 	case pb.Scenario_SCENARIO_BACKHAUL_DOWN:
-		config.Scenario = cenums.SCENARIO_BACKHAUL_DOWN
-		provider.SetScenario(string(cenums.SCENARIO_BACKHAUL_DOWN))
+		newScenario = cenums.SCENARIO_BACKHAUL_DOWN
+		config.Scenario = newScenario
+		provider.SetScenario(string(newScenario))
 		scenarioChanged = true
 	case pb.Scenario_SCENARIO_DEFAULT:
 		if config.Scenario != cenums.SCENARIO_DEFAULT {
-			config.Scenario = cenums.SCENARIO_DEFAULT
-			provider.SetScenario(string(cenums.SCENARIO_DEFAULT))
+			newScenario = cenums.SCENARIO_DEFAULT
+			config.Scenario = newScenario
+			provider.SetScenario(string(newScenario))
 			scenarioChanged = true
 		}
 	}
 	
+	// If scenario changed, update all nodes for the site
+	if scenarioChanged {
+		nodeIds := make([]string, len(nodes.Nodes))
+		for i, node := range nodes.Nodes {
+			nodeIds[i] = node.Id
+		}
+		go func(nodeList []string, scenario cenums.SCENARIOS, profile cenums.Profile) {
+			for _, nodeID := range nodeList {
+				err := s.dnodeClient.UpdateNodeScenario(nodeID, scenario, profile)
+				if err != nil {
+					log.Errorf("Failed to update node %s scenario: %v", nodeID, err)
+				}
+			}
+		}(nodeIds, newScenario, config.Profile)
+	}
+	
+	var portUpdatesApplied bool
 	if req.PortUpdates != nil {
 		for _, portUpdate := range req.PortUpdates {
 			portNumber := int(portUpdate.PortNumber)
@@ -223,8 +279,26 @@ func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetr
 			if err != nil {
 				log.Infof("Error updating port %d status: %v", portNumber, err)
 			} else {
+				portUpdatesApplied = true
 				log.Infof("Updated port %d status to %v for site %s", 
 					portNumber, portStatus, siteId)
+				
+				// If port status is changing to DOWN and it's a backhaul port
+				// notify all nodes in the site about backhaul down
+				if !portStatus && isBackhaulPort(portNumber) {
+					nodeIDs := make([]string, len(nodes.Nodes))
+					for i, node := range nodes.Nodes {
+						nodeIDs[i] = node.Id
+					}
+					go func(nodeList []string) {
+						for _, nodeID := range nodeList {
+							err := s.dnodeClient.NotifyNodeBackhaulDown(nodeID)
+							if err != nil {
+								log.Errorf("Failed to notify node %s of backhaul down: %v", nodeID, err)
+							}
+						}
+					}(nodeIDs)
+				}
 			}
 		}
 	}
@@ -233,13 +307,15 @@ func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetr
 	if scenarioChanged {
 		statusMessage += fmt.Sprintf(" - Scenario set to %s", config.Scenario)
 	}
+	if portUpdatesApplied {
+		statusMessage += " - Port updates applied"
+	}
 	
 	return &pb.UpdateMetricsResponse{
 		Success: true,
 		Message: statusMessage,
 	}, nil
 }
-
 func (s *ControllerServer) StopMetricsCollection(siteId string) bool {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -267,6 +343,56 @@ func (s *ControllerServer) Cleanup() {
 			config.CancelFunc()
 			config.Exporter.Shutdown()
 			config.Active = false
+		}
+	}
+}
+func isBackhaulPort(portNumber int) bool {
+
+	backhaulPorts := map[int]bool{
+		1: true, 
+		2: true, 
+	}
+	
+	return backhaulPorts[portNumber]
+}
+func (s *ControllerServer) MonitorPowerStatus(ctx context.Context, siteID string) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.mutex.RLock()
+			provider, exists := s.metricsProviders[siteID]
+			s.mutex.RUnlock()
+			
+			if !exists {
+				continue
+			}
+			
+			powerStatus, err := provider.GetPowerStatus()
+			if err != nil {
+				log.Errorf("Failed to get power status for site %s: %v", siteID, err)
+				continue
+			}
+			
+			// If power is down, notify all nodes
+			if !powerStatus {
+				nodes, err := s.nodeClient.GetNodesBySite(siteID)
+				if err != nil {
+					log.Errorf("Failed to get nodes for site %s: %v", siteID, err)
+					continue
+				}
+				
+				for _, node := range nodes.Nodes {
+					err := s.dnodeClient.NotifyNodePowerDown(node.Id)
+					if err != nil {
+						log.Errorf("Failed to notify node %s of power down: %v", node.Id, err)
+					}
+				}
+			}
 		}
 	}
 }
