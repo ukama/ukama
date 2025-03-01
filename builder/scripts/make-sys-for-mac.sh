@@ -53,6 +53,12 @@ filter_make_sys() {
             "services")
                 PATHS+=("services/msgClient")
                 ;;
+            "services")
+                PATHS+=("services/msgClient")
+                ;;
+            "dummy")
+                PATHS+=("dummy/dnode" "dummy/controller" "dummy/api-gateway")
+                ;;
         esac
     done
 }
@@ -63,9 +69,14 @@ cd ../../systems
 root_dir=$(pwd)
 
 for path in "${PATHS[@]}"; do
-
-    cd "$root_dir/$path" || { echo "Failed to change directory to $path"; exit 1; }
-   
+    cd "$root_dir"
+    if [[ "$path" == dummy* ]]; then
+        cd ../testing/services
+        cd "$path" || { echo "Failed to change directory to $path"; exit 1; }
+    else
+        cd "$path" || { echo "Failed to change directory to $path"; exit 1; }
+    fi
+    
     go mod tidy && make lint && make
 
     IFS='/' read -r -a path_array <<< "$path"

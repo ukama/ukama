@@ -24,6 +24,11 @@
   "name": "Ukama Dataplan system",
   "path": "./data-plan"
  },
+ "dummy": {
+    "key": "dummy",
+    "name": "Dummy system",
+    "path": "../testing/services/dummy"
+   },
  "subscriber": {
   "key": "subscriber",
   "name": "Ukama Subscriber system",

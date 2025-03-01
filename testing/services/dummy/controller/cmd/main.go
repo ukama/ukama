@@ -73,11 +73,13 @@ import (
 
 
 	
-	 mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	
+		mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+			serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+			serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	
 		controllerServer := server.NewControllerServer(serviceConfig.OrgName,nodeClient,serviceConfig.DnodeHost,mbClient)
 		nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
    
@@ -86,11 +88,12 @@ import (
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		 generated.RegisterMetricsControllerServer(s, controllerServer)
 	 })
- 	go msgBusListener(mbClient)
-
+ 	
 	 go grpcServer.StartServer()
- 
-	 go startMetricsServer()
+
+	go msgBusListener(mbClient)
+
+	waitForExit()
 	 
 	 sigs := make(chan os.Signal, 1)
 	 signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -137,4 +140,19 @@ import (
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
+}
+
+func waitForExit() {
+	sigs := make(chan os.Signal, 1)
+	done := make(chan bool, 1)
+	go func() {
+
+		sig := <-sigs
+		log.Info(sig)
+		done <- true
+	}()
+
+	log.Debug("awaiting terminate/interrrupt signal")
+	<-done
+	log.Infof("exiting service %s", pkg.ServiceName)
 }

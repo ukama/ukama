@@ -30,7 +30,6 @@ services:
  controller:
   build: ./controller
   ports:
-   - 9065:9090
    - 2112:2112  
   environment:
    - DEBUGMODE=true
