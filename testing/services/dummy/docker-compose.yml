@@ -47,6 +47,7 @@ services:
   build: ../../../systems/services/msgClient
   environment:
    - DEBUGMODE=true
+   - SYSTEM=dummy
    - DB_HOST=postgresd-dummy
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
@@ -57,6 +58,7 @@ services:
    - ukama-net
   depends_on:
    - postgresd-dummy
+   
 
 networks:
  ukama-net:
