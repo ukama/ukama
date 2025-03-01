@@ -15,9 +15,12 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy/controller/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/client"
 
 	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/metrics"
@@ -44,9 +47,12 @@ type ControllerServer struct {
 	mutex            sync.RWMutex
 	nodeClient        creg.NodeClient
 	dnodeClient      *client.DNodeClient 
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+
 }
 
-func NewControllerServer(orgName string, orgId string, nodeClient creg.NodeClient,dnodeHost string) *ControllerServer {
+func NewControllerServer(orgName string, orgId string, nodeClient creg.NodeClient,dnodeHost string, msgBus mb.MsgBusServiceClient) *ControllerServer {
 	dnodeClient := client.NewDNodeClient(dnodeHost, 5*time.Second)
 	return &ControllerServer{
 		orgName:          orgName,
@@ -55,6 +61,8 @@ func NewControllerServer(orgName string, orgId string, nodeClient creg.NodeClien
 		mutex:            sync.RWMutex{},
 		nodeClient:       nodeClient,
 		dnodeClient:      dnodeClient,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		msgbus: msgBus,
 	}
 }
 

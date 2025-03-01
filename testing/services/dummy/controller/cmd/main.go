@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
@@ -71,16 +72,18 @@ import (
 	nodeClient := creg.NewNodeClient(serviceConfig.RegistryClient)
 
 
-	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, serviceConfig.OrgId,nodeClient,serviceConfig.DnodeHost)
- 
+	
 	 mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-
+		controllerServer := server.NewControllerServer(serviceConfig.OrgName, serviceConfig.OrgId,nodeClient,serviceConfig.DnodeHost,mbClient)
+		nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
+   
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	 grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
+		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		 generated.RegisterMetricsControllerServer(s, controllerServer)
 	 })
  	go msgBusListener(mbClient)
@@ -116,7 +119,7 @@ import (
 	 log.Infof("Starting metrics server on %s", serviceConfig.Port)
 	 
 	 server := &http.Server{
-		 Addr:    serviceConfig.Port,
+		 Addr:    ":" + serviceConfig.Port,
 		 Handler: mux,
 	 }
 	 

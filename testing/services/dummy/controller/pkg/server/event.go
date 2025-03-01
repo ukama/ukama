@@ -16,25 +16,21 @@ import (
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy/controller/pkg"
 
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
  
  type DcontrollerEventServer struct {
 	 orgName        string
-	 msgbus         mb.MsgBusServiceClient
-	 baseRoutingKey msgbus.RoutingKeyBuilder
+	 server  *ControllerServer
 	 controllerClient pb.MetricsControllerClient 
 	 epb.UnimplementedEventNotificationServiceServer
  }
  
- func NewEventServer(orgName string, msgBus mb.MsgBusServiceClient) *DcontrollerEventServer {
+ func NewEventServer(orgName string, server *ControllerServer) *DcontrollerEventServer {
 	 return &DcontrollerEventServer{
 		 orgName:        orgName,
-		 msgbus:         msgBus,
-		 baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		 server:  server,
 	 }
  }
  
