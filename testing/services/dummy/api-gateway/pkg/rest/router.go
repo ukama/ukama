@@ -50,7 +50,11 @@ type controller interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Controller = client.NewController(endpoints.Controller, endpoints.Timeout)
+	controller, err := client.NewController(endpoints.Controller, endpoints.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to create controller client: %v", err)
+	}
+	c.Controller = controller
 	return c
 }
 
@@ -91,7 +95,7 @@ func (r *Router) init() {
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
 	health := endpoint.Group("/controller", "Dummy controller service", "Dummy controller service")
-	health.PUT("/update", formatDoc("Update controller coroutine", "Update contriller coroutine for specific site."), tonic.Handler(r.updateHandler, http.StatusCreated))
+	health.PUT("/update", formatDoc("Update controller coroutine", "Update controller coroutine for specific site."), tonic.Handler(r.updateHandler, http.StatusCreated))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -111,6 +115,16 @@ func (r *Router) pingHandler(c *gin.Context) error {
 }
 
 func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetricsResponse, error) {
+	profileValue, ok := pb.Profile_value[req.Profile]
+	if !ok {
+		return nil, fmt.Errorf("invalid profile: %s", req.Profile)
+	}
+
+	scenarioValue, ok := pb.Scenario_value[req.Scenario]
+	if !ok {
+		return nil, fmt.Errorf("invalid scenario: %s", req.Scenario)
+	}
+
 	portUpdates := make([]*pb.PortUpdate, len(req.PortUpdates))
 	for i, update := range req.PortUpdates {
 		portUpdates[i] = &pb.PortUpdate{
@@ -118,10 +132,11 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetric
 			Status:     update.Status,
 		}
 	}
+
 	return r.clients.Controller.Update(&pb.UpdateMetricsRequest{
-		SiteId: req.SiteId,
-		Profile: pb.Profile(pb.Profile_value[req.Profile]),
-		Scenario: pb.Scenario(pb.Scenario_value[req.Scenario]),
+		SiteId:      req.SiteId,
+		Profile:     pb.Profile(profileValue),
+		Scenario:    pb.Scenario(scenarioValue),
 		PortUpdates: portUpdates,
 	})
 }

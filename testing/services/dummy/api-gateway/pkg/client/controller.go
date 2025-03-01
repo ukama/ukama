@@ -10,11 +10,11 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -26,10 +26,10 @@ type Controller struct {
 	host    string
 }
 
-func NewController(controllerHost string, timeout time.Duration) *Controller {
-	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewController(controllerHost string, timeout time.Duration) (*Controller, error) {
+	conn, err := grpc.Dial(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		return nil, fmt.Errorf("failed to connect to controller: %w", err)
 	}
 	client := pb.NewMetricsControllerClient(conn)
 
@@ -38,7 +38,7 @@ func NewController(controllerHost string, timeout time.Duration) *Controller {
 		client:  client,
 		timeout: timeout,
 		host:    controllerHost,
-	}
+	}, nil
 }
 
 func NewHealthFromClient(mClient pb.MetricsControllerClient) *Controller {
