@@ -640,11 +640,11 @@ func (s *SolarProvider) GetMetrics() *SolarMetrics {
         controllerMode = "Absorption" 
     } else if batteryCap >= 90 && powerGeneration > 20 {
         controllerMode = "Float" 
-    } else if dayOfWeek := time.Now().Weekday(); dayOfWeek == time.Sunday && powerGeneration > 300 {
-        controllerMode = "Equalization" 
-        controllerMode = "Idle" 
-    }
-    
+	} else if dayOfWeek := time.Now().Weekday(); dayOfWeek == time.Sunday && powerGeneration > 300 {
+			controllerMode = "Equalization"
+	} else {
+			controllerMode = "Idle"
+	}
     batteryVoltage := 12.0 
     if s.metricsProvider.battery != nil {
         batteryMetrics, _ := s.metricsProvider.battery.GetMetrics()
