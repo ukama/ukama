@@ -44,6 +44,15 @@ type PrometheusExporter struct {
 	switchPortStatus     *prometheus.GaugeVec
 	switchPortBandwidth  *prometheus.GaugeVec
 
+	//solar controller metrics
+	chargeControllerStatus    *prometheus.GaugeVec
+    chargeControllerMode      *prometheus.GaugeVec
+    chargeControllerCurrent   *prometheus.GaugeVec
+    chargeControllerVoltage   *prometheus.GaugeVec
+    chargeControllerTemp      *prometheus.GaugeVec
+    chargeControllerEfficiency *prometheus.GaugeVec
+    
+
 	metricsProvider *MetricsProvider
 	siteId         string
 	shutdown       chan struct{} 
@@ -55,6 +64,36 @@ func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *Pro
 		siteId:          siteId,
 		shutdown:       make(chan struct{}), 
 
+		chargeControllerStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_status",
+            Help: "Charge controller status (1 = working, 0 = not working)",
+        }, []string{"unit","site"}),
+        
+        chargeControllerMode: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_mode",
+            Help: "Charge controller mode (0 = Bulk, 1 = Absorption, 2 = Float, 3 = Equalization)",
+        }, []string{"unit","site"}),
+        
+        chargeControllerCurrent: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_current",
+            Help: "Charge controller current in amperes",
+        }, []string{"unit","site"}),
+        
+        chargeControllerVoltage: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_voltage",
+            Help: "Charge controller voltage in volts",
+        }, []string{"unit","site"}),
+        
+        chargeControllerTemp: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_temperature",
+            Help: "Charge controller temperature in Celsius",
+        }, []string{"unit","site"}),
+        
+        chargeControllerEfficiency: promauto.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "charge_controller_efficiency",
+            Help: "Charge controller efficiency in percentage",
+        }, []string{"unit","site"}),
+    
 		solarPowerGeneration: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_power_generation",
 			Help: "Current solar power generation in watts",
@@ -125,6 +164,7 @@ func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *Pro
 			Name: "switch_port_bandwidth",
 			Help: "Switch port bandwidth in Mbps",
 		}, []string{"unit","site"}),
+
 	}
 
 	return exporter
@@ -154,6 +194,12 @@ type SolarMetrics struct {
 	PanelCurrent   float64
 	PanelVoltage   float64
 	InverterStatus float64
+	ControllerStatus    float64
+    ControllerMode      string
+    ControllerCurrent   float64
+    ControllerVoltage   float64
+    ControllerTemp      float64
+    ControllerEfficiency float64
 }
 
 type ControllerMetrics struct {
@@ -276,83 +322,87 @@ func (m *MetricsProvider) updateGlobalVariation() {
 func (m *MetricsProvider) SetProfile(profile cenums.Profile) {
 	m.currentProfile = profile
 }
-
 func (m *MetricsProvider) GetMetrics(siteId string) (*ControllerMetrics, error) {
-	backhaulMetrics := m.backhaul.GetMetrics()
-	batteryMetrics, err := m.battery.GetMetrics()
-	if err != nil {
-		return nil, err
-	}
-	solarMetrics := m.solar.GetMetrics()
+    backhaulMetrics := m.backhaul.GetMetrics()
+    batteryMetrics, err := m.battery.GetMetrics()
+    if err != nil {
+        return nil, err
+    }
+    solarMetrics := m.solar.GetMetrics()
 
-	if !m.portStatus[PORT_BACKHAUL] {
-		backhaulMetrics.Latency = 0
-		backhaulMetrics.Status = 0
-		backhaulMetrics.Speed = 0
-		backhaulMetrics.SwitchStatus = 0
-		backhaulMetrics.SwitchBandwidth = 0
-	}
+    if !m.portStatus[PORT_BACKHAUL] {
+        backhaulMetrics.Latency = 0
+        backhaulMetrics.Status = 0
+        backhaulMetrics.Speed = 0
+        backhaulMetrics.SwitchStatus = 0
+        backhaulMetrics.SwitchBandwidth = 0
+    }
 
-	if !m.portStatus[PORT_SOLAR] {
-		solarMetrics.PowerGeneration = 0
-		solarMetrics.PanelPower = 0
-		solarMetrics.PanelCurrent = 0
-		solarMetrics.InverterStatus = 0
-	}
+    if !m.portStatus[PORT_SOLAR] {
+        solarMetrics.PowerGeneration = 0
+        solarMetrics.PanelPower = 0
+        solarMetrics.PanelCurrent = 0
+        solarMetrics.InverterStatus = 0
+        solarMetrics.ControllerStatus = 0
+    }
 
-	switch m.scenarioActive {
-	case "power_down":
-		solarMetrics.PowerGeneration = 0
-		solarMetrics.PanelPower = 0
-		solarMetrics.PanelCurrent = 0
-		solarMetrics.PanelVoltage = 0
-		solarMetrics.InverterStatus = 0
-		
-		batteryMetrics.Capacity = math.Max(0, batteryMetrics.Capacity - 0.5) 
-		batteryMetrics.Current = -3.0 
-		
-		if batteryMetrics.Capacity < 5 {
-			batteryMetrics.Voltage = math.Max(0, batteryMetrics.Voltage - 0.1) 
-		}
-		
-	case "switch_off":
-		backhaulMetrics.SwitchStatus = 0
-		backhaulMetrics.SwitchBandwidth = 0
-		
-	case "backhaul_down":
-		backhaulMetrics.Latency = 0
-		backhaulMetrics.Status = 0
-		backhaulMetrics.Speed = 0
-	}
+    switch m.scenarioActive {
+    case "power_down":
+        solarMetrics.PowerGeneration = 0
+        solarMetrics.PanelPower = 0
+        solarMetrics.PanelCurrent = 0
+        solarMetrics.PanelVoltage = 0
+        solarMetrics.InverterStatus = 0
+        solarMetrics.ControllerStatus = 0
+        
+        batteryMetrics.Capacity = math.Max(0, batteryMetrics.Capacity - 0.5) 
+        batteryMetrics.Current = -3.0 
+        
+        if batteryMetrics.Capacity < 5 {
+            batteryMetrics.Voltage = math.Max(0, batteryMetrics.Voltage - 0.1) 
+        }
+        
+    case "switch_off":
+        backhaulMetrics.SwitchStatus = 0
+        backhaulMetrics.SwitchBandwidth = 0
+        
+    case "backhaul_down":
+        backhaulMetrics.Latency = 0
+        backhaulMetrics.Status = 0
+        backhaulMetrics.Speed = 0
+    }
 
-	if m.currentProfile == cenums.PROFILE_MIN && batteryMetrics.Voltage < 10.5 {
-		solarMetrics.InverterStatus = 0
-		if rand.Float64() > 0.7 {
-			solarMetrics.PowerGeneration *= 0.5 
-		}
-	} else if batteryMetrics.Voltage < 11.0 && solarMetrics.PowerGeneration < 100 {
-		solarMetrics.InverterStatus = 0
-	}
+    if m.currentProfile == cenums.PROFILE_MIN && batteryMetrics.Voltage < 10.5 {
+        solarMetrics.InverterStatus = 0
+        solarMetrics.ControllerStatus = 0
+        if rand.Float64() > 0.7 {
+            solarMetrics.PowerGeneration *= 0.5 
+        }
+    } else if batteryMetrics.Voltage < 11.0 && solarMetrics.PowerGeneration < 100 {
+        solarMetrics.InverterStatus = 0
+    }
 
-	if rand.Float64() > 0.99 {
-		scenarios := []string{"default", "power_down", "switch_off", "backhaul_down"}
-		m.scenarioActive = scenarios[rand.Intn(len(scenarios))]
-		
-		log.Infof("Switching to scenario: %s", m.scenarioActive)
-		
-		go func(m *MetricsProvider) {
-			time.Sleep(5 * time.Second)
-			m.scenarioActive = "default"
-		}(m)
-	}
+    if rand.Float64() > 0.99889 {
+        scenarios := []string{"default", "power_down", "switch_off", "backhaul_down"}
+        m.scenarioActive = scenarios[rand.Intn(len(scenarios))]
+        
+        log.Infof("Switching to scenario: %s", m.scenarioActive)
+        
+        go func(m *MetricsProvider) {
+            time.Sleep(30 * time.Second)
+            m.scenarioActive = "default"
+            log.Infof("Reverting to default scenario")
+        }(m)
+    }
 
-	return &ControllerMetrics{
-		Backhaul: backhaulMetrics,
-		Battery:  batteryMetrics,
-		Solar:    solarMetrics,
-		Time:     time.Now(),
-	}, nil
+    return &ControllerMetrics{
+        Backhaul: backhaulMetrics,
+        Battery:  batteryMetrics,
+        Solar:    solarMetrics,
+        Time:     time.Now(),
+    }, nil
 }
+
 func NewBackhaulProvider() *BackhaulProvider {
 	return &BackhaulProvider{
 		lastUpdate: time.Now(),
@@ -449,42 +499,35 @@ func NewBatteryProvider() *BatteryProvider {
 }
 
 func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
-	// Use current time for second-by-second changes
 	currentTime := float64(time.Now().UnixNano()) / 1e9
 	
-	// Add micro-oscillations for every second change
 	microCycle := math.Sin(currentTime*2*math.Pi) * m.microFluctuationFactor
 	
-	// Base values adjusted by profile and global variation
 	globalFactor := m.metricsProvider.globalVariationFactor
 	var baseCapacity, baseVoltage float64
 	
 	switch m.metricsProvider.currentProfile {
 	case cenums.PROFILE_MIN:
-		baseCapacity = 10.0 + (10.0 * globalFactor) // 10-20% capacity
-		baseVoltage = 10.0 + (1.5 * globalFactor)   // 10.0-11.5V
+		baseCapacity = 10.0 + (10.0 * globalFactor) 
+		baseVoltage = 10.0 + (1.5 * globalFactor)   
 		
-		// For very low profiles, we might want metrics to show critical condition
 		if baseCapacity < 15 && rand.Float64() > 0.7 {
-			baseCapacity = 0 // Complete battery drain
-			baseVoltage = 0  // System shutdown
+			baseCapacity = 0 
+			baseVoltage = 0  
 		}
 	case cenums.PROFILE_MAX:
-		baseCapacity = 80.0 + (20.0 * globalFactor) // 80-100% capacity
-		baseVoltage = 12.0 + (0.8 * globalFactor)   // 12.0-12.8V
-	default: // PROFILE_NORMAL
-		baseCapacity = 50.0 + (30.0 * globalFactor) // 50-80% capacity
-		baseVoltage = 12.0 + (0.5 * globalFactor)   // 12.0-12.5V
+		baseCapacity = 80.0 + (20.0 * globalFactor) 
+		baseVoltage = 12.0 + (0.8 * globalFactor)   
+	default: 
+		baseCapacity = 50.0 + (30.0 * globalFactor) 
+		baseVoltage = 12.0 + (0.5 * globalFactor)   
 	}
 	
-	// Add second-by-second small variations
 	capacity := baseCapacity + (microCycle * 2.0)
 	capacity = math.Max(0.0, math.Min(100.0, capacity))
 	
-	// Add small voltage fluctuations per second
 	voltage := baseVoltage + (microCycle * 0.1)
 	
-	// Determine charging state based on profile and time of day
 	hourOfDay := float64(time.Now().Hour())
 	daytime := hourOfDay >= 6 && hourOfDay <= 18
 	
@@ -494,40 +537,37 @@ func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
 		status = "Charging"
 	}
 	
-	// Current varies by second and depends on charging state
 	var current float64
 	if charging {
 		switch m.metricsProvider.currentProfile {
 		case cenums.PROFILE_MIN:
-			current = 0.5 + (microCycle * 0.2) // 0.3-0.7A charging
+			current = 0.5 + (microCycle * 0.2) 
 		case cenums.PROFILE_MAX:
-			current = 5.0 + (microCycle * 1.0) // 4-6A charging
-		default: // PROFILE_NORMAL
-			current = 2.0 + (microCycle * 0.5) // 1.5-2.5A charging
+			current = 5.0 + (microCycle * 1.0) 
+		default: 
+			current = 2.0 + (microCycle * 0.5) 
 		}
 	} else {
 		switch m.metricsProvider.currentProfile {
 		case cenums.PROFILE_MIN:
-			current = -(1.5 + microCycle * 0.5) // 1-2A discharge
+			current = -(1.5 + microCycle * 0.5) 
 		case cenums.PROFILE_MAX:
-			current = -(0.5 + microCycle * 0.2) // 0.3-0.7A discharge
-		default: // PROFILE_NORMAL
-			current = -(1.0 + microCycle * 0.3) // 0.7-1.3A discharge
+			current = -(0.5 + microCycle * 0.2)
+		default: 
+			current = -(1.0 + microCycle * 0.3) 
 		}
 	}
 	
-	// Temperature varies by profile and with seconds
 	var temperature float64
 	switch m.metricsProvider.currentProfile {
 	case cenums.PROFILE_MIN:
-		temperature = 30.0 + (microCycle * 5.0) // 25-35C (running hot)
+		temperature = 30.0 + (microCycle * 5.0) 
 	case cenums.PROFILE_MAX:
-		temperature = 20.0 + (microCycle * 2.0) // 18-22C (optimal)
-	default: // PROFILE_NORMAL
-		temperature = 25.0 + (microCycle * 3.0) // 22-28C (normal)
+		temperature = 20.0 + (microCycle * 2.0) 
+	default: 
+		temperature = 25.0 + (microCycle * 3.0) 
 	}
 	
-	// Health status
 	var health string
 	switch m.metricsProvider.currentProfile {
 	case cenums.PROFILE_MIN:
@@ -537,14 +577,13 @@ func (m *BatteryProvider) GetMetrics() (*BatteryMetrics, error) {
 		}
 	case cenums.PROFILE_MAX:
 		health = "Good"
-	default: // PROFILE_NORMAL
+	default: 
 		health = "Good"
 		if rand.Float64() > 0.8 {
 			health = "Fair"
 		}
 	}
 
-	// If battery is completely drained, zero out all metrics
 	if voltage == 0 || capacity == 0 {
 		current = 0
 		temperature = 0
@@ -575,89 +614,90 @@ func NewSolarProvider() *SolarProvider {
 }
 
 func (s *SolarProvider) GetMetrics() *SolarMetrics {
-	// Use current time for second-by-second changes
 	currentTime := float64(time.Now().UnixNano()) / 1e9
-	
-	// Determine current hour
 	hourOfDay := float64(time.Now().Hour())
-	daylight := 0.0
 	
-	// Only generate solar power during daylight hours (6am-6pm)
-	if hourOfDay >= 6 && hourOfDay <= 18 {
-		// Peak at noon, lower at edges of daylight
-		daylight = math.Sin((hourOfDay-6)*math.Pi/12)
-		
-		// Add small second-by-second variations
-		daylight += math.Sin(currentTime*2*math.Pi) * 0.05
+	baseGeneration := math.Sin((hourOfDay-6)*math.Pi/12) * 1000 
+	if hourOfDay < 6 || hourOfDay > 18 {
+		baseGeneration = 0 
 	}
 	
-	// Add cloud cover simulation with second-by-second changes
-	cloudCover := math.Sin(currentTime*0.5) * s.cloudCoverFactor
-	
-	// Profile-based solar generation with global variation factor
-	globalFactor := s.metricsProvider.globalVariationFactor
-	var maxPower float64
-	
-	switch s.metricsProvider.currentProfile { 
-	case cenums.PROFILE_MIN:
-		maxPower = 100.0 + 50.0*globalFactor  // 100-150W maximum
-		// More frequent cloud cover and poor conditions
-		daylight *= math.Max(0.1, 0.3 - cloudCover)
-		
-		// For PROFILE_MIN, sometimes all solar is offline
-		if rand.Float64() > 0.7 {
-			daylight = 0
-			maxPower = 0
-		}
-	case cenums.PROFILE_MAX:
-		maxPower = 1500.0 + 500.0*globalFactor // 1500-2000W maximum
-		// Less cloud impact
-		daylight *= math.Max(0.7, 0.8 - cloudCover*0.5)
-	default: // PROFILE_NORMAL
-		maxPower = 800.0 + 200.0*globalFactor // 800-1000W maximum
-		// Normal cloud impact
-		daylight *= math.Max(0.5, 0.6 - cloudCover*0.7)
-	}
-	
-	// Calculate power generation with second-by-second variations
-	powerGeneration := maxPower * daylight
-	powerGeneration += math.Sin(currentTime*5*math.Pi) * 10 // Small oscillations
-	
-	// Keep it positive
+	powerGeneration := baseGeneration * s.weatherPattern * (1 - s.cloudCoverFactor)
+	powerGeneration += math.Sin(currentTime*2)*s.microWeatherChanges*100
 	powerGeneration = math.Max(0, powerGeneration)
 	
-	// Panel voltage depends on daylight and varies by second
-	var panelVoltage float64
-	if daylight > 0 {
-		switch s.metricsProvider.currentProfile {
-		case cenums.PROFILE_MIN:
-			panelVoltage = 18.0 + (daylight * 5.0) + math.Sin(currentTime*2*math.Pi)*0.5
-		case cenums.PROFILE_MAX:
-			panelVoltage = 24.0 + (daylight * 12.0) + math.Sin(currentTime*2*math.Pi)*1.0
-		default: // PROFILE_NORMAL
-			panelVoltage = 20.0 + (daylight * 8.0) + math.Sin(currentTime*2*math.Pi)*0.8
-		}
+	controllerStatus := 0.0
+	if powerGeneration > 10.0 {
+        controllerStatus = 1.0
+    }
+    
+    var controllerMode string
+    batteryCap := s.metricsProvider.battery.lastCapacity 
+    
+    if batteryCap < 70 && powerGeneration > 200 {
+        controllerMode = "Bulk" 
+    } else if batteryCap >= 70 && batteryCap < 90 && powerGeneration > 50 {
+        controllerMode = "Absorption" 
+    } else if batteryCap >= 90 && powerGeneration > 20 {
+        controllerMode = "Float" 
+    } else if dayOfWeek := time.Now().Weekday(); dayOfWeek == time.Sunday && powerGeneration > 300 {
+        controllerMode = "Equalization" 
+        controllerMode = "Idle" 
+    }
+    
+    batteryVoltage := 12.0 
+    if s.metricsProvider.battery != nil {
+        batteryMetrics, _ := s.metricsProvider.battery.GetMetrics()
+        if batteryMetrics != nil {
+            batteryVoltage = batteryMetrics.Voltage
+        }
+    }
+    
+    var controllerVoltage float64
+    switch controllerMode {
+    case "Bulk":
+        controllerVoltage = batteryVoltage + 1.0 + (math.Sin(currentTime*2.5)*0.2)
+    case "Absorption":
+        controllerVoltage = batteryVoltage + 0.5 + (math.Sin(currentTime*2.5)*0.1)
+    case "Float":
+        controllerVoltage = batteryVoltage + 0.2 + (math.Sin(currentTime*2.5)*0.05)
+    case "Equalization":
+        controllerVoltage = batteryVoltage + 1.5 + (math.Sin(currentTime*2.5)*0.3)
+    default:
+        controllerVoltage = batteryVoltage
+    }
+    
+    var controllerCurrent float64
+    if controllerStatus > 0 {
+        switch controllerMode {
+        case "Bulk":
+            controllerCurrent = math.Min(powerGeneration/14.0, 20.0) 
+        case "Absorption":
+            controllerCurrent = math.Min(powerGeneration/14.5, 10.0) 
+        case "Float":
+            controllerCurrent = math.Min(powerGeneration/15.0, 2.0)  
+        case "Equalization":
+            controllerCurrent = math.Min(powerGeneration/14.0, 15.0) 
+        default:
+            controllerCurrent = 0
+        }
+        
+        controllerCurrent += math.Sin(currentTime*4)*0.2
+        controllerCurrent = math.Max(0, controllerCurrent)
+    }
+    
+    controllerTemp := 25.0 + (controllerCurrent * 0.5) + math.Sin(currentTime*0.5)*2
+    
+    controllerEfficiency := 97.0 - (math.Abs(controllerCurrent-10)/20)*5 - (math.Max(0, controllerTemp-30)/10)*2
+    controllerEfficiency = math.Max(80, math.Min(99, controllerEfficiency))
+    
+	panelVoltage := 24.0 + math.Sin(currentTime*3)*0.5 
+	panelCurrent := powerGeneration / panelVoltage      
+	inverterStatus := 1.0
+	if powerGeneration < 10.0 {
+		inverterStatus = 0.0
 	}
-	
-	// Calculate current with a more dynamic relationship
-	var panelCurrent float64
-	if panelVoltage > 0 {
-		panelCurrent = powerGeneration / panelVoltage
-		// Add small second-by-second current variations
-		panelCurrent += math.Sin(currentTime*3*math.Pi) * 0.1
-		panelCurrent = math.Max(0, panelCurrent)
-	}
-	
-	// Update energy total
-	intervalHours := 1.0 / 3600.0
-	s.energyTotal += powerGeneration * intervalHours / 1000.0
-	
-	// Inverter status
-	inverterStatus := 0.0
-	if powerGeneration > 50.0 {
-		inverterStatus = 1.0
-	}
-	
+
 	return &SolarMetrics{
 		PowerGeneration: powerGeneration,
 		EnergyTotal:    s.energyTotal,
@@ -665,14 +705,19 @@ func (s *SolarProvider) GetMetrics() *SolarMetrics {
 		PanelCurrent:   panelCurrent,
 		PanelVoltage:   panelVoltage,
 		InverterStatus: inverterStatus,
-	}
+        ControllerStatus:    controllerStatus,
+        ControllerMode:      controllerMode,
+        ControllerCurrent:   controllerCurrent,
+        ControllerVoltage:   controllerVoltage,
+        ControllerTemp:      controllerTemp,
+        ControllerEfficiency: controllerEfficiency,
+    }
 }
+
 func (e *PrometheusExporter) StartMetricsCollection(ctx context.Context, interval time.Duration) error {
-	// Use 1 second interval for real-time updates
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	// Initialize metrics with a first collection immediately
 	if err := e.collectMetrics(); err != nil {
 		log.Warnf("Initial metrics collection failed: %v", err)
 	}
@@ -699,41 +744,53 @@ func (e *PrometheusExporter) Shutdown() {
 }
 
 func (e *PrometheusExporter) collectMetrics() error {
-	metrics, err := e.metricsProvider.GetMetrics(e.siteId)
-	if err != nil {
-		return fmt.Errorf("failed to get metrics: %w", err)
-	}
-	log.Debugf("Collecting metrics for site %s: Solar power: %f, Battery capacity: %f", 
-	e.siteId, metrics.Solar.PowerGeneration, metrics.Battery.Capacity)
+    metrics, err := e.metricsProvider.GetMetrics(e.siteId)
+    if err != nil {
+        return fmt.Errorf("failed to get metrics: %w", err)
+    }
+    log.Debugf("Collecting metrics for site %s: Solar power: %f, Battery capacity: %f", 
+    e.siteId, metrics.Solar.PowerGeneration, metrics.Battery.Capacity)
 
-	// Update solar metrics
-	
-	e.solarPowerGeneration.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PowerGeneration)
-	e.solarEnergyTotal.WithLabelValues("kwh", e.siteId).Set(metrics.Solar.EnergyTotal)
-	e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
-	e.solarPanelCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Solar.PanelCurrent)
-	e.solarPanelVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.PanelVoltage)
-	e.solarInverterStatus.WithLabelValues("status", e.siteId).Set(metrics.Solar.InverterStatus)
+    e.solarPowerGeneration.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PowerGeneration)
+    e.solarEnergyTotal.WithLabelValues("kwh", e.siteId).Set(metrics.Solar.EnergyTotal)
+    e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
+    e.solarPanelCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Solar.PanelCurrent)
+    e.solarPanelVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.PanelVoltage)
+    e.solarInverterStatus.WithLabelValues("status", e.siteId).Set(metrics.Solar.InverterStatus)
+    
+    e.chargeControllerStatus.WithLabelValues("status", e.siteId).Set(metrics.Solar.ControllerStatus)
+    e.chargeControllerCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Solar.ControllerCurrent)
+    e.chargeControllerVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.ControllerVoltage)
+    e.chargeControllerTemp.WithLabelValues("celsius", e.siteId).Set(metrics.Solar.ControllerTemp)
+    e.chargeControllerEfficiency.WithLabelValues("percent", e.siteId).Set(metrics.Solar.ControllerEfficiency)
+    
+    modeValue := map[string]float64{
+        "Idle": -1,
+        "Bulk": 0,
+        "Absorption": 1,
+        "Float": 2,
+        "Equalization": 3,
+    }[metrics.Solar.ControllerMode]
+    
+    e.chargeControllerMode.WithLabelValues("mode", e.siteId).Set(modeValue)
 
-	// Update battery metrics
-	e.batteryChargeStatus.WithLabelValues("capacity", e.siteId).Set(metrics.Battery.Capacity)
-	e.batteryVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Battery.Voltage)
-	e.batteryHealth.WithLabelValues("status", e.siteId).Set(map[string]float64{
-		"Good": 1.0,
-		"Fair": 0.5,
-		"Poor": 0.0,
-	}[metrics.Battery.Health])
-	e.batteryCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Battery.Current)
-	e.batteryTemperature.WithLabelValues("celsius", e.siteId).Set(metrics.Battery.Temperature)
+    e.batteryChargeStatus.WithLabelValues("capacity", e.siteId).Set(metrics.Battery.Capacity)
+    e.batteryVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Battery.Voltage)
+    e.batteryHealth.WithLabelValues("status", e.siteId).Set(map[string]float64{
+        "Good": 1.0,
+        "Fair": 0.5,
+        "Poor": 0.0,
+    }[metrics.Battery.Health])
+    e.batteryCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Battery.Current)
+    e.batteryTemperature.WithLabelValues("celsius", e.siteId).Set(metrics.Battery.Temperature)
 
-	// Update network metrics
-	e.backhaulLatency.WithLabelValues("ms", e.siteId).Set(metrics.Backhaul.Latency)
-	e.backhaulStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.Status)
-	e.backhaulSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.Speed)
-	e.switchPortStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.SwitchStatus)
-	e.switchPortBandwidth.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
+    e.backhaulLatency.WithLabelValues("ms", e.siteId).Set(metrics.Backhaul.Latency)
+    e.backhaulStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.Status)
+    e.backhaulSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.Speed)
+    e.switchPortStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.SwitchStatus)
+    e.switchPortBandwidth.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
 
-	return nil
+    return nil
 }
 
 func (m *MetricsProvider) SetPortStatus(port int, status bool) error {

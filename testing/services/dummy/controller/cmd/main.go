@@ -90,6 +90,7 @@ import (
 	 })
  	
 	 go grpcServer.StartServer()
+	 go startMetricsServer()
 
 	go msgBusListener(mbClient)
 

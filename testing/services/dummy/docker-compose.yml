@@ -27,10 +27,12 @@ services:
   networks:
    - ukama-net
 
+	
  controller:
   build: ./controller
   ports:
    - 2112:2112  
+   - 9090:9090
   environment:
    - DEBUGMODE=true
    - ORGID=${ORGID}
@@ -39,6 +41,9 @@ services:
    - CONTROLLER_SERVICE_HOST=controller
    - CONTROLLER_SERVICE_PORT=9090
    - MSGCLIENT_HOST=msgclient-dummy:9095
+   - PORT=2112
+   - DNODEHOST=dnode:8085
+   - REGISTRYCLIENT=api-gateway-registry:8080
   restart: always
   networks:
    - ukama-net
