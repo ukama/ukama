@@ -25,9 +25,9 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 	cdrClient := initial.CDRClient
 	profile := initial.Profile
 	expiry := initial.Expiry
-	pkgId := initial.PackageId
+	status := initial.Status
 
-	fmt.Printf("Coroutine %s started with: %d, %s, %s\n", iccid, profile, expiry, pkgId)
+	fmt.Printf("Coroutine %s started with: %d, %s\n", iccid, profile, expiry)
 
 	runLogic(iccid, nodeId, profile, cdrClient, count, interval, rc)
 
@@ -46,11 +46,14 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 			}
 			profile = msg.Profile
 			expiry = msg.Expiry
+			status = msg.Status
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", iccid, profile, expiry)
 		case <-ticker.C:
-			runLogic(iccid, nodeId, profile, cdrClient, count, interval, rc)
-			count += 1
-			interval += rc.Interval
+			if status {
+				runLogic(iccid, nodeId, profile, cdrClient, count, interval, rc)
+				count += 1
+				interval += rc.Interval
+			}
 		}
 		expiryDate, _ := time.Parse(time.RFC3339, expiry)
 		diff := time.Until(expiryDate)
@@ -76,7 +79,7 @@ func runLogic(iccid, nodeId string, profile cenums.Profile, cdrClient clients.CD
 		iccidInImsi := iccid[4:] //TODO: TEMP logic
 		start := time.Now()
 		end := start.Add(time.Duration(rc.Interval*60) * time.Second)
-		fmt.Printf("Coroutine PostCDR for %s: %d, %d\n", iccid, start.Unix(), end.Unix())
+		fmt.Printf("Coroutine PostCDR for %s , %d, %d\n", iccid, start.Unix(), end.Unix())
 		err := cdrClient.AddCDR(clients.AddCDRRequest{
 			Session:       uint64(count),
 			Imsi:          iccidInImsi,

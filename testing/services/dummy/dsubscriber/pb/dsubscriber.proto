@@ -26,13 +26,5 @@ message UpdateResponse {
 
 message Dsubscriber {
     string iccid = 1;
-    Status status = 2;
-    string profile = 3;
-    string nodeId = 4;
+    string profile = 2;
 }
-
-enum Status {
-    ACTIVE = 0;
-    INACTIVE = 1;
-}
- 

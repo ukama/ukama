@@ -21,8 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/cmd/version"
 	generated "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
@@ -66,7 +69,16 @@ func runGrpcServer() {
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
-	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.Http.AgentNodeGateway, serviceConfig.NodeId, serviceConfig.RoutineConfig)
+	cdrC := clients.NewCDRClient(serviceConfig.Http.AgentNodeGateway)
+
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	nodeClient := creg.NewNodeClient(regUrl.String())
+
+	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.RoutineConfig, nodeClient, cdrC)
 	nSrv := server.NewDsubEventServer(serviceConfig.OrgName, dsubServer)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)

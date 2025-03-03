@@ -14,7 +14,6 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
-	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 )
 
 type Config struct {
@@ -26,7 +25,6 @@ type Config struct {
 	Service          *uconf.Service
 	OrgName          string
 	Http             HttpServices
-	NodeId           string
 	RoutineConfig    RoutineConfig
 }
 
@@ -39,14 +37,14 @@ type RoutineConfig struct {
 
 type HttpServices struct {
 	AgentNodeGateway string `defaut:"http://node-gateway-ukama-agent:8080"`
+	InitClient       string `defaut:"api-gateway-init:8080"`
 }
 
 type WMessage struct {
 	Iccid     string         `json:"iccid"`
 	Expiry    string         `json:"expiry"`
-	Status    pb.Status      `json:"status"`
+	Status    bool           `json:"status"`
 	Profile   cenums.Profile `json:"profile"`
-	PackageId string         `json:"package_id"`
 	NodeId    string         `json:"node_id"`
 	CDRClient clients.CDRClient
 }
@@ -59,6 +57,10 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage",
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.deactivate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate",
 			},
 		},
 	}
