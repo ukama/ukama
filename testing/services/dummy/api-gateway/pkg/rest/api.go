@@ -7,7 +7,3 @@
  */
 
 package rest
-
-type ReqNodeId struct {
-	Id string `example:"{{NodeId}}" json:"id" path:"id" validate:"required"`
-}

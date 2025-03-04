@@ -9,4 +9,4 @@
 package pkg
 
 const ServiceName = "gateway"
-const SystemName = "dummynode"
+const SystemName = "dummy"

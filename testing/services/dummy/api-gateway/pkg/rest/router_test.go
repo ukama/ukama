@@ -45,7 +45,6 @@ func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
 		Timeout: 1 * time.Second,
-		Node:    "node:9090",
 	})
 }
 

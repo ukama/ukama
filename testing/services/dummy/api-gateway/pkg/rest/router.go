@@ -15,15 +15,12 @@ import (
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/cmd/version"
 	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/pkg"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
-	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/testing/services/dummy-node/dnode/pb/gen"
 )
 
 type Router struct {
@@ -39,20 +36,10 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Node node
-}
-
-type node interface {
-	ResetNode(id string) (*pb.Response, error)
-	TurnNodeOff(id string) (*pb.Response, error)
-	TurnRFOn(id string) (*pb.Response, error)
-	TurnRFOff(id string) (*pb.Response, error)
-	TurnNodeOnline(id string) (*pb.Response, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Node = client.NewNodeService(endpoints.Node, endpoints.Timeout)
 
 	return c
 }
@@ -91,13 +78,7 @@ func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
 	group := r.f.Group("/v1", "API gateway", "Dummy node system version v1")
 
-	const dummy = "/dummy-node"
-	d := group.Group(dummy, "Dummy node", "Operations on Dummy node")
-	d.PUT("/:id/reset", formatDoc("Reset node", "Reset dummy node by id"), tonic.Handler(r.resetNodeById, http.StatusOK))
-	d.PUT("/:id/rf-off", formatDoc("Node RF OFF", "Turn node rf off by id"), tonic.Handler(r.turnRFOffByid, http.StatusOK))
-	d.PUT("/:id/rf-on", formatDoc("Node RF ON", "Turn node rf on by id"), tonic.Handler(r.turnRFOnByid, http.StatusOK))
-	d.PUT("/:id/off", formatDoc("Turn node OFF", "Turn node off by id"), tonic.Handler(r.turnNodeOffByid, http.StatusOK))
-	d.PUT("/:id/online", formatDoc("Turn node ONLINE", "Turn node online by id"), tonic.Handler(r.turnNodeOnlineByid, http.StatusOK))
+	group.GET("/ping", formatDoc("Ping API", "Ping to get status"), r.ping)
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -107,22 +88,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) resetNodeById(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
-	return r.clients.Node.ResetNode(req.Id)
-}
-
-func (r *Router) turnNodeOffByid(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
-	return r.clients.Node.TurnNodeOff(req.Id)
-}
-
-func (r *Router) turnRFOffByid(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
-	return r.clients.Node.TurnRFOff(req.Id)
-}
-
-func (r *Router) turnRFOnByid(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
-	return r.clients.Node.TurnRFOn(req.Id)
-}
-
-func (r *Router) turnNodeOnlineByid(c *gin.Context, req *ReqNodeId) (*pb.Response, error) {
-	return r.clients.Node.TurnNodeOnline(req.Id)
+func (r *Router) ping(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "pong"})
 }

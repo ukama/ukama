@@ -25,7 +25,6 @@ type Config struct {
 
 type GrpcEndpoints struct {
 	Timeout time.Duration
-	Node    string
 }
 
 type HttpEndpoints struct {
@@ -45,7 +44,6 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout: 10 * time.Second,
-			Node:    "dnode:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,
