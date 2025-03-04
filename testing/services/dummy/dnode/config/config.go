@@ -185,7 +185,7 @@ var KPI_CONFIG = NodeKPIs{
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cpu_usage",
-					Help: "Cpu usage",
+					Help: "CPU usage",
 				},
 				[]string{"nodeid"},
 			),
