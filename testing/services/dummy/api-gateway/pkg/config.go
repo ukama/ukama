@@ -21,15 +21,16 @@ type Config struct {
 	Server            rest.HttpConfig
 	Services          GrpcEndpoints `mapstructure:"services"`
 	HttpServices      HttpEndpoints `mapstructure:"httpServices"`
+	Auth              *config.Auth  `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
+	Timeout     time.Duration
+	Dsubscriber string
 }
 
 type HttpEndpoints struct {
-	Timeout     time.Duration
-	NodeMetrics string
+	Timeout time.Duration
 }
 
 func NewConfig() *Config {
@@ -41,15 +42,13 @@ func NewConfig() *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
 		},
-
 		Services: GrpcEndpoints{
-			Timeout: 10 * time.Second,
+			Timeout:     3 * time.Second,
+			Dsubscriber: "Dsubscriber:9090",
 		},
 		HttpServices: HttpEndpoints{
-			Timeout:     3 * time.Second,
-			NodeMetrics: "http://localhost",
+			Timeout: 3 * time.Second,
 		},
-
 		Server: rest.HttpConfig{
 			Port: 8080,
 			Cors: defaultCors,

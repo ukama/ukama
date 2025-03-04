@@ -6,9 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package rest
+package pkg
 
-type UpdateReq struct {
-	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
-	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
-}
+const ServiceName = "dsubscriber"
+const SystemName = "dummy"
+
+var IsDebugMode = false

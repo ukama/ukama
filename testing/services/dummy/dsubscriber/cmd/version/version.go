@@ -6,9 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package rest
+package version
 
-type UpdateReq struct {
-	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
-	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
-}
+// Minor version is autoupdated by the build system
+// NOTE: use go build -ldflags "-X github.com/ukama/ukama/systems/registry/site/cmd/version.Version==$(git describe)".
+var Version = "v0.0.debug"
