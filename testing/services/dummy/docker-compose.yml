@@ -40,6 +40,20 @@ services:
   networks:
    - ukama-net
 
+ dsimfactory:
+  build: ./dsimfactory
+  environment:
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - DSIMFACTORY_SERVICE_PORT=9090
+   - DSIMFACTORY_SERVICE_HOST=dsimfactory
+   - MSGCLIENT_HOST=msgclient-dummy:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  restart: always
+  networks:
+   - ukama-net
+
  api-gateway:
   build: ./api-gateway
   ports:
