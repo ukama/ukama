@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -24,6 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	spb "github.com/ukama/ukama/testing/services/dummy/dsimfactory/pb/gen"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 )
 
@@ -42,15 +44,22 @@ type RouterConfig struct {
 
 type Clients struct {
 	Dsubscriber dsubscriber
+	Dsimfactory dsimfactory
 }
 
 type dsubscriber interface {
 	Update(req *pb.UpdateRequest) (*pb.UpdateResponse, error)
 }
 
+type dsimfactory interface {
+	GetSims(simType string) (*spb.GetSimsResponse, error)
+	UploadSimsToSimPool(req *spb.UploadRequest) (*spb.UploadResponse, error)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Dsubscriber = client.NewDsubscriber(endpoints.Dsubscriber, endpoints.Timeout)
+	c.Dsimfactory = client.NewDsimfactory(endpoints.Dsimfactory, endpoints.Timeout)
 	return c
 }
 
@@ -90,8 +99,13 @@ func (r *Router) init() {
 	endpoint := r.f.Group("/v1", "API gateway", "Dummy system version v1")
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
-	health := endpoint.Group("/dsubscriber", "Dsubscriber", "Dummy subscriber service")
-	health.PUT("/update", formatDoc("Update dsubscriber coroutine", "Update dsubscriber coroutine for specific subscriber."), tonic.Handler(r.updateHandler, http.StatusCreated))
+	dsub := endpoint.Group("/dsubscriber", "Dsubscriber", "Dummy subscriber service")
+	dsub.PUT("/update", formatDoc("Update dsubscriber coroutine", "Update dsubscriber coroutine for specific subscriber."), tonic.Handler(r.updateHandler, http.StatusCreated))
+
+	dsim := endpoint.Group("/dsimfactory", "Dsimfactory", "Dummy sim factory")
+	dsim.GET("/sims", formatDoc("Get SIMs", ""), tonic.Handler(r.getSims, http.StatusOK))
+	dsim.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
+
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -116,4 +130,32 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateRespon
 			Iccid:   req.Iccid,
 			Profile: req.Profile,
 		}})
+}
+
+func (r *Router) getSims(c *gin.Context, req *SimPoolStatReq) (*spb.GetSimsResponse, error) {
+	resp, err := r.clients.Dsimfactory.GetSims(req.SimType)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*spb.UploadResponse, error) {
+
+	data, err := base64.StdEncoding.DecodeString(req.Data)
+	if err != nil {
+		log.Fatal("error:", err)
+	}
+
+	pbResp, err := r.clients.Dsimfactory.UploadSimsToSimPool(&spb.UploadRequest{
+		SimData: data,
+		SimType: req.SimType,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pbResp, nil
 }

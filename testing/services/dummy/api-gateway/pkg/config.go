@@ -27,6 +27,7 @@ type Config struct {
 type GrpcEndpoints struct {
 	Timeout     time.Duration
 	Dsubscriber string
+	Dsimfactory string
 }
 
 type HttpEndpoints struct {
@@ -44,7 +45,8 @@ func NewConfig() *Config {
 		},
 		Services: GrpcEndpoints{
 			Timeout:     3 * time.Second,
-			Dsubscriber: "Dsubscriber:9090",
+			Dsubscriber: "dsubscriber:9090",
+			Dsimfactory: "dsimfactory:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout: 3 * time.Second,
