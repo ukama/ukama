@@ -14,6 +14,7 @@
 
 // Solar metrics data
 message GetSiteMetricsRequest {
+    string siteId = 1;
   }
   
   message GetSiteMetricsResponse {

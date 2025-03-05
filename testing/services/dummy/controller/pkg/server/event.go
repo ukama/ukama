@@ -20,21 +20,21 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
  
- type DcontrollerEventServer struct {
+ type DControllerEventServer struct {
 	 orgName        string
 	 server  *ControllerServer
 	 controllerClient pb.MetricsControllerClient 
 	 epb.UnimplementedEventNotificationServiceServer
  }
  
- func NewEventServer(orgName string, server *ControllerServer) *DcontrollerEventServer {
-	 return &DcontrollerEventServer{
+ func NewEventServer(orgName string, server *ControllerServer) *DControllerEventServer {
+	 return &DControllerEventServer{
 		 orgName:        orgName,
 		 server:  server,
 	 }
  }
  
- func (n *DcontrollerEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+ func (n *DControllerEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	 log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	 switch e.RoutingKey {
  
@@ -56,7 +56,7 @@ import (
 	 return &epb.EventResponse{}, nil
  }
  
- func (n *DcontrollerEventServer) handleSiteCreateEvent(msg *epb.EventAddSite, name string) error {
+ func (n *DControllerEventServer) handleSiteCreateEvent(msg *epb.EventAddSite, name string) error {
     log.Infof("Handling site create event for site ID: %s", msg.SiteId)
 
     req := &pb.StartMetricsRequest{

@@ -18,21 +18,26 @@ import (
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
 	"google.golang.org/grpc"
 )
- 
+   
  type Controller struct {
 	 conn    *grpc.ClientConn
 	 client  pb.MetricsControllerClient
 	 timeout time.Duration
 	 host    string
  }
- 
+   
  func NewController(controllerHost string, timeout time.Duration) (*Controller, error) {
-	 conn, err := grpc.Dial(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	 // Use grpc.NewClient with context-based options if needed
+	 opts := []grpc.DialOption{
+		 grpc.WithTransportCredentials(insecure.NewCredentials()),
+	 }
+	 
+	 conn, err := grpc.NewClient(controllerHost, opts...)
 	 if err != nil {
 		 return nil, fmt.Errorf("failed to connect to controller: %w", err)
 	 }
 	 client := pb.NewMetricsControllerClient(conn)
- 
+   
 	 return &Controller{
 		 conn:    conn,
 		 client:  client,
@@ -40,7 +45,7 @@ import (
 		 host:    controllerHost,
 	 }, nil
  }
- 
+   
  func NewControllerFromClient(mClient pb.MetricsControllerClient) *Controller {
 	 return &Controller{
 		 host:    "localhost",
@@ -49,31 +54,31 @@ import (
 		 client:  mClient,
 	 }
  }
- 
+   
  func (r *Controller) Close() {
 	 r.conn.Close()
  }
- 
+   
  func (h *Controller) Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	 ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	 defer cancel()
- 
+   
 	 resp, err := h.client.UpdateMetrics(ctx, req)
 	 if err != nil {
 		 return nil, err
 	 }
- 
+   
 	 return resp, nil
  }
-
+  
  func (h *Controller) Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
-	defer cancel()
-
-	resp, err := h.client.StartMetrics(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	 ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+	 defer cancel()
+  
+	 resp, err := h.client.StartMetrics(ctx, req)
+	 if err != nil {
+		 return nil, err
+	 }
+  
+	 return resp, nil
  }

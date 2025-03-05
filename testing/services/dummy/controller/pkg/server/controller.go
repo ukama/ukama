@@ -66,19 +66,16 @@ func NewControllerServer(orgName string, nodeClient creg.NodeClient,dnodeHost st
 }
 
 func (s *ControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
-	var siteId string
-	var provider *metrics.MetricsProvider
+	siteId := req.SiteId
+	if siteId == "" {
+		return nil, fmt.Errorf("site ID is required")
+	}
 	
 	s.mutex.RLock()
-	if len(s.metricsProviders) > 0 {
-		for id, p := range s.metricsProviders {
-			siteId = id
-			provider = p
-			break
-		}
-	} else {
+	provider, exists := s.metricsProviders[siteId]
+	if !exists {
 		s.mutex.RUnlock()
-		return nil, fmt.Errorf("no site metrics available")
+		return nil, fmt.Errorf("no metrics available for site %s", siteId)
 	}
 	s.mutex.RUnlock()
 
