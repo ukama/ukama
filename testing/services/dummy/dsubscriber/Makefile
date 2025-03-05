@@ -8,7 +8,11 @@ include ../config.mk
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
+<<<<<<<< HEAD:testing/services/dummy/dsubscriber/Makefile
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/testing/services/dummy/dsubscriber/version.Version=$(BIN_VER) -extldflags=-static' -o bin/dsubscriber cmd/server/main.go
+========
+	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/testing/services/dummy/dnode/version.Version=$(BIN_VER) -extldflags=-static' -o bin/dnode server/main.go
+>>>>>>>> main:testing/services/dummy/dnode/Makefile
 
 test:
 	go test -v ./...
@@ -21,6 +25,7 @@ deps:
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
 			github.com/vektra/mockery/v2/.../
+<<<<<<<< HEAD:testing/services/dummy/dsubscriber/Makefile
 
 
 gen:
@@ -30,3 +35,10 @@ gen:
 
 clean:
 	rm -rf bin
+========
+clean:
+	rm -rf bin/
+
+server:
+	go run server/main.go
+>>>>>>>> main:testing/services/dummy/dnode/Makefile
