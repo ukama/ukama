@@ -20,6 +20,7 @@ type RawSim struct {
 	ActivationCode string `csv:"ActivationCode"`
 	QrCode         string `csv:"QrCode"`
 	IsPhysical     string `csv:"IsPhysical"`
+	Imsi           string `csv:"IMSI"`
 }
 
 func ParseBytesToRawSim(b []byte) ([]RawSim, error) {
@@ -41,6 +42,7 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			ActivationCode: value.ActivationCode,
 			IsPhysical:     value.IsPhysical == "TRUE",
 			QrCode:         value.QrCode,
+			Imsi:           value.Imsi,
 		})
 	}
 	return s
