@@ -76,7 +76,8 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.PushNodeResetViaREST(s.amqpConfig, s.orgName, nodeID.String(), nil)
+
+	utils.PushNodeOnlineViaREST(s.amqpConfig, s.orgName, nodeID.String(), nil)
 
 	log.Printf("Online event pushed for NodeId: %s", nodeID.String())
 
