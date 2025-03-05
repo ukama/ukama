@@ -26,7 +26,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 
 	"github.com/ukama/ukama/testing/services/dummy/controller/cmd/version"
 
@@ -67,12 +66,6 @@ import (
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-
-
-	nodeClient := creg.NewNodeClient(serviceConfig.RegistryClient)
-
-
-	
 	
 		mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 			serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -80,7 +73,7 @@ import (
 			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 			serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 	
-		controllerServer := server.NewControllerServer(serviceConfig.OrgName,nodeClient,serviceConfig.DnodeHost,mbClient)
+		controllerServer := server.NewControllerServer(serviceConfig.OrgName,mbClient)
 		nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
    
 	log.Debugf("MessageBus Client is %+v", mbClient)

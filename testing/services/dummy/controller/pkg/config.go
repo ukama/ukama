@@ -24,8 +24,6 @@ type Config struct {
 	OrgName          string
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Port 		     string `default:"2112"`
-	DnodeHost		string `default:"dnode:8085"`
-	RegistryClient string `default:"api-gateway-registry:8080"`
 }
 
 

@@ -9,7 +9,6 @@ const (
 	SCENARIO_BACKHAUL_DOWN          SCENARIOS = "backhaul_down"
 	SCENARIO_BACKHAUL_DOWNLINK_DOWN SCENARIOS = "backhaul_downlink_down"
 	SCENARIO_NODE_OFF               SCENARIOS = "node_off"
-    SCENARIO_POWER_DOWN             SCENARIOS = "power_down"
 )
 
 func ParseScenarioType(value string) SCENARIOS {
@@ -18,7 +17,6 @@ func ParseScenarioType(value string) SCENARIOS {
 		"backhaul_down":          SCENARIO_BACKHAUL_DOWN,
 		"backhaul_downlink_down": SCENARIO_BACKHAUL_DOWNLINK_DOWN,
 		"node_off":               SCENARIO_NODE_OFF,
-		"power_down":             SCENARIO_POWER_DOWN,
 	}
 
 	v, ok := t[strings.ToLower(value)]
