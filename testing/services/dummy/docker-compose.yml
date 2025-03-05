@@ -1,0 +1,20 @@
+services:
+ dnode:
+  build: ./dnode
+  ports:
+   - 8085:8085
+  environment:
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - AMQPCONFIG_URI=http://rabbitmq:15672
+   - AMQPCONFIG_USERNAME=guest
+   - AMQPCONFIG_PASSWORD=guest
+  restart: always
+  networks:
+   - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
