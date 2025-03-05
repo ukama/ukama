@@ -8,7 +8,7 @@
 
 package rest
 
- type UpdateReq struct {
+ type UpdateSiteMetricsReq struct {
 	 SiteId  string `form:"siteId" json:"siteId,omitempty"`
 	 Profile string `form:"profile" json:"profile,omitempty" validate:"required"`
 	 Scenario string `form:"scenario" json:"scenario,omitempty" validate:"required"`
@@ -25,3 +25,7 @@ package rest
 	 Profile string `form:"profile" json:"profile,omitempty"`
 	 Scenario string `form:"scenario" json:"scenario,omitempty"`
 	 }
+type UpdateReq struct {
+	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
+	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
+}

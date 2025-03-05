@@ -36,10 +36,11 @@ type NodeStatusInfo struct {
 type NodeInfo struct {
 	Id        string         `json:"id,omitempty"`
 	Name      string         `json:"name,omitempty"`
-	OrgId     string         `json:"org_id,omitempty"`
 	Type      string         `json:"type,omitempty"`
 	Status    NodeStatusInfo `json:"status,omitempty"`
 	Site      NodeSiteInfo   `json:"site,omitempty"`
+	Latitude  float64        `json:"latitude,omitempty"`
+	Longitude float64        `json:"longitude,omitempty"`
 	Attahced  []NodeInfo     `json:"attached_nodes,omitempty"`
 	CreatedAt time.Time      `json:"created_at,omitempty"`
 }
@@ -47,6 +48,10 @@ type NodeInfo struct {
 type NodesBySite struct {
 	Nodes  []NodeInfo `json:"nodes"`
 	SiteId string     `json:"site_id"`
+}
+
+type Nodes struct {
+	Nodes []*NodeInfo `json:"nodes"`
 }
 
 type Node struct {
@@ -76,7 +81,7 @@ type AddToSiteRequest struct {
 
 type NodeClient interface {
 	Get(string) (*NodeInfo, error)
-	GetAll() ([]*NodeInfo, error)
+	GetAll() (*Nodes, error)
 	GetNodesBySite(string) (*NodesBySite, error)
 	Add(AddNodeRequest) (*NodeInfo, error)
 	Attach(string, AttachNodesRequest) error
@@ -232,12 +237,8 @@ func (n *nodeClient) Delete(nodeId string) error {
 	return nil
 }
 
-func (n *nodeClient) GetAll() ([]*NodeInfo, error) {
+func (n *nodeClient) GetAll() (*Nodes, error) {
 	log.Debugf("Getting all nodes.")
-
-	type Nodes struct {
-		NodeList []*NodeInfo
-	}
 
 	nodes := Nodes{}
 
@@ -255,7 +256,7 @@ func (n *nodeClient) GetAll() ([]*NodeInfo, error) {
 		return nil, fmt.Errorf("node info deserailization failure: %w", err)
 	}
 
-	return nodes.NodeList, nil
+	return &nodes, nil
 }
 
 func (n *nodeClient) GetNodesBySite(id string) (*NodesBySite, error) {

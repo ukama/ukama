@@ -12,39 +12,46 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/cmd/version"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg/client"
-	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
-
-	"github.com/gin-gonic/gin"
+	pbdc "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 )
 
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
+	logger  *logrus.Logger
 }
 
 type RouterConfig struct {
+	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
-	httpEndpoints *pkg.HttpEndpoints
 }
 
 
 type Clients struct {
 	DController dcontroller
+	Dsubscriber dsubscriber
+}
+
+type dsubscriber interface {
+	Update(req *pb.UpdateRequest) (*pb.UpdateResponse, error)
 }
 type dcontroller interface {
-	Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error)
-	Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error)
+	Update(req *pbdc.UpdateMetricsRequest) (*pbdc.UpdateMetricsResponse, error)
+	Start(req *pbdc.StartMetricsRequest) (*pbdc.StartMetricsResponse, error)
 }
 
 
@@ -56,6 +63,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 		log.Fatalf("Failed to create controller client: %v", err)
 	}
 	c.DController = dcontroller
+	c.Dsubscriber = client.NewDsubscriber(endpoints.Dsubscriber, endpoints.Timeout)
 	return c
 }
 
@@ -65,6 +73,7 @@ func NewRouter(clients *Clients, config *RouterConfig) *Router {
 	r := &Router{
 		clients: clients,
 		config:  config,
+		logger:  log.New(),
 	}
 
 	if !config.debugMode {
@@ -93,13 +102,15 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
-	group := r.f.Group("/v1", "API gateway", "Dummy node system version v1")
+	endpoint := r.f.Group("/v1", "API gateway", "Dummy system version v1")
+	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
-	group.GET("/ping", formatDoc("Ping API", "Ping to get status"), r.ping)
-	dcontroller := group.Group("/controller", "Dummy controller service", "Dummy controller service")
-	dcontroller.PUT("/update", formatDoc("Update metrics", "Update metrics"),tonic.Handler(r.updateHandler, http.StatusCreated))
-	dcontroller.POST("/start", formatDoc("Start controller", "Start controller"), tonic.Handler(r.startHandler, http.StatusCreated))
+	dcontroller := endpoint.Group("/controller", "Dummy controller service", "Dummy controller service")
+	dcontroller.PUT("/update", formatDoc("Update site metrics", "Update metrics"),tonic.Handler(r.updateSiteMetricsHandler, http.StatusCreated))
+	dcontroller.POST("/start", formatDoc("Start dcontroller metrics", "Start controller"), tonic.Handler(r.startHandler, http.StatusCreated))
 
+	health := endpoint.Group("/dsubscriber", "Dsubscriber", "Dummy subscriber service")
+	health.PUT("/update", formatDoc("Update dsubscriber coroutine", "Update dsubscriber coroutine for specific subscriber."), tonic.Handler(r.updateHandler, http.StatusCreated))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -109,41 +120,54 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) ping(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "pong"})
+func (r *Router) pingHandler(c *gin.Context) error {
+	response := make(map[string]string)
+	response["status"] = pkg.SystemName + " is running"
+	response["version"] = version.Version
+	c.JSON(http.StatusOK, response)
+
+	return nil
 }
 
-func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetricsResponse, error) {
-	profileValue, ok := pb.Profile_value[req.Profile]
+func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateResponse, error) {
+	return r.clients.Dsubscriber.Update(&pb.UpdateRequest{
+		Dsubscriber: &pb.Dsubscriber{
+			Iccid:   req.Iccid,
+			Profile: req.Profile,
+		}})
+}
+
+func (r *Router) updateSiteMetricsHandler(c *gin.Context, req *UpdateSiteMetricsReq) (*pbdc.UpdateMetricsResponse, error) {
+	profileValue, ok := pbdc.Profile_value[req.Profile]
 	if !ok {
 		return nil, fmt.Errorf("invalid profile: %s", req.Profile)
 	}
 
-	scenarioValue, ok := pb.Scenario_value[req.Scenario]
+	scenarioValue, ok := pbdc.Scenario_value[req.Scenario]
 	if !ok {
 		return nil, fmt.Errorf("invalid scenario: %s", req.Scenario)
 	}
 
-	portUpdates := make([]*pb.PortUpdate, len(req.PortUpdates))
+	portUpdates := make([]*pbdc.PortUpdate, len(req.PortUpdates))
 	for i, update := range req.PortUpdates {
-		portUpdates[i] = &pb.PortUpdate{
+		portUpdates[i] = &pbdc.PortUpdate{
 			PortNumber: update.PortNumber,
 			Status:     update.Status,
 		}
 	}
 
-	return r.clients.DController.Update(&pb.UpdateMetricsRequest{
+	return r.clients.DController.Update(&pbdc.UpdateMetricsRequest{
 		SiteId:      req.SiteId,
-		Profile:     pb.Profile(profileValue),
-		Scenario:    pb.Scenario(scenarioValue),
+		Profile:     pbdc.Profile(profileValue),
+		Scenario:    pbdc.Scenario(scenarioValue),
 		PortUpdates: portUpdates,
 	})
 }
 
-func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pb.StartMetricsResponse, error) {
-	return r.clients.DController.Start(&pb.StartMetricsRequest{
+func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pbdc.StartMetricsResponse, error) {
+	return r.clients.DController.Start(&pbdc.StartMetricsRequest{
 		SiteId: req.SiteId,
-		Profile: pb.Profile(pb.Profile_value[req.Profile]),
-		Scenario: pb.Scenario(pb.Scenario_value[req.Scenario]),
+		Profile: pbdc.Profile(pbdc.Profile_value[req.Profile]),
+		Scenario: pbdc.Scenario(pbdc.Scenario_value[req.Scenario]),
 	})
 }

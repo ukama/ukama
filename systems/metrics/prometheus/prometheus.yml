@@ -41,6 +41,17 @@ scrape_configs:
         labels:
           env: dev
 
+  - job_name: 'dcontroller'
+    static_configs:
+      - targets: ['dcontroller:2112']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    metric_relabel_configs:
+      - source_labels: [site]
+        target_label: site
+        regex: (.*)
+        replacement: "$1"
+
   - job_name: ukama-nodes
     scrape_interval: "10s"
     static_configs:

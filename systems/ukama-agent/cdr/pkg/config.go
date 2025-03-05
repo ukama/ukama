@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package pkg
 
 import (
@@ -23,9 +23,9 @@ type Config struct {
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	AsrHost           string            `default:"asr:9090"`
-	OrgName           string            `default:"ukama"`
-	OrgId             string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
 	IsMsgBus          bool              `default:"true"`
+	OrgName           string
+	OrgId             string
 }
 
 type SimManager struct {
@@ -54,6 +54,5 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.update",
 			},
 		},
-		AsrHost: "asr:9090",
 	}
 }
