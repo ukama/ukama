@@ -20,6 +20,7 @@ services:
       - AUTH_APP_URL=http://localhost:4455
       - PLAYGROUND_URL=http://localhost:8080
       - CONSOLE_APP_URL=http://localhost:3000
+      - SIM_TYPE=ukama_data
     networks:
       - ukama-net
 

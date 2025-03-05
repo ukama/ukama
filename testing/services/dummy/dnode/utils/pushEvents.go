@@ -36,6 +36,8 @@ func Run(amqpConf conf.Queue, route string, payload *anypb.Any, out io.Writer) e
 
 	aClient := amqp.NewAmqpClient(amqpConf, defaultDuration)
 
+	logrus.Infof("Publishing event to %s with payload %v", route, payload)
+
 	respData, err := aClient.PublishMessage(amqpConf.Vhost, amqpConf.Exchange, route, payload)
 	if err != nil {
 		return fmt.Errorf("failled to publish event: %w", err)

@@ -29,6 +29,7 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/cmd/version"
 	generated "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg/providers"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg/server"
 )
 
@@ -78,7 +79,7 @@ func runGrpcServer() {
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
-	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.RoutineConfig, nodeClient, cdrC)
+	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.RoutineConfig, nodeClient, cdrC, providers.NewDsimfactoryProvider(serviceConfig.DsimfactoryHost))
 	nSrv := server.NewDsubEventServer(serviceConfig.OrgName, dsubServer)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)

@@ -24,7 +24,7 @@ services:
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - NETWORKHOST=http://api-gateway-registry:8080
    - DATAPLANHOST=http://api-gateway-dataplan:8080
-   - FACTORYHOST=http://stub:8085
+   - FACTORYHOST=http://api-gateway-dummy:8080
    - ASR_SERVICE_HOST=asr
    - ASR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}

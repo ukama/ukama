@@ -26,10 +26,11 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 	profile := initial.Profile
 	expiry := initial.Expiry
 	status := initial.Status
+	imsi := initial.Imsi
 
 	fmt.Printf("Coroutine %s started with: %d, %s\n", iccid, profile, expiry)
 
-	runLogic(iccid, nodeId, profile, cdrClient, count, interval, rc)
+	runLogic(iccid, nodeId, imsi, profile, cdrClient, count, interval, rc)
 
 	ticker := time.NewTicker(time.Duration(rc.Interval) * time.Minute)
 	defer ticker.Stop()
@@ -47,10 +48,11 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 			profile = msg.Profile
 			expiry = msg.Expiry
 			status = msg.Status
+			imsi = msg.Imsi
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", iccid, profile, expiry)
 		case <-ticker.C:
 			if status {
-				runLogic(iccid, nodeId, profile, cdrClient, count, interval, rc)
+				runLogic(iccid, nodeId, imsi, profile, cdrClient, count, interval, rc)
 				count += 1
 				interval += rc.Interval
 			}
@@ -65,7 +67,7 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 	}
 }
 
-func runLogic(iccid, nodeId string, profile cenums.Profile, cdrClient clients.CDRClient, count int, interval uint64, rc pkg.RoutineConfig) {
+func runLogic(iccid, nodeId, imsi string, profile cenums.Profile, cdrClient clients.CDRClient, count int, interval uint64, rc pkg.RoutineConfig) {
 	usage := 0.0
 	if profile == cenums.PROFILE_MIN {
 		usage = rc.Min + rand.Float64()*(rc.Normal-rc.Min)*0.1
@@ -75,30 +77,26 @@ func runLogic(iccid, nodeId string, profile cenums.Profile, cdrClient clients.CD
 		usage = rc.Max + rand.Float64()*(rc.Max-rc.Normal)*0.1
 	}
 
-	if len(iccid) > 4 {
-		iccidInImsi := iccid[4:] //TODO: TEMP logic
-		start := time.Now()
-		end := start.Add(time.Duration(rc.Interval*60) * time.Second)
-		fmt.Printf("Coroutine PostCDR for %s , %d, %d\n", iccid, start.Unix(), end.Unix())
-		err := cdrClient.AddCDR(clients.AddCDRRequest{
-			Session:       uint64(count),
-			Imsi:          iccidInImsi,
-			NodeId:        nodeId,
-			Policy:        "policy",
-			ApnName:       "apn",
-			Ip:            "ip",
-			StartTime:     uint64(start.Unix()),
-			EndTime:       uint64(end.Unix()),
-			LastUpdatedAt: uint64(start.Unix()),
-			TxBytes:       uint64(usage * 1024 * 1024),
-			RxBytes:       uint64(usage * 1024 * 1024),
-			TotalBytes:    uint64(usage * 1024 * 1024),
-		})
+	start := time.Now()
+	end := start.Add(time.Duration(rc.Interval*60) * time.Second)
+	fmt.Printf("Coroutine PostCDR for IMSI: %s , Start: %d, End: %d\n", imsi, start.Unix(), end.Unix())
+	err := cdrClient.AddCDR(clients.AddCDRRequest{
+		Session:       uint64(count),
+		Imsi:          imsi,
+		NodeId:        nodeId,
+		Policy:        "policy",
+		ApnName:       "apn",
+		Ip:            "ip",
+		StartTime:     uint64(start.Unix()),
+		EndTime:       uint64(end.Unix()),
+		LastUpdatedAt: uint64(start.Unix()),
+		TxBytes:       uint64(usage * 1024 * 1024),
+		RxBytes:       uint64(usage * 1024 * 1024),
+		TotalBytes:    uint64(usage * 1024 * 1024),
+	})
 
-		if err != nil {
-			fmt.Printf("Coroutine PostCDR for %s error: %v\n", iccid, err)
-		}
-	} else {
-		fmt.Println("String is too short to remove 4 characters")
+	if err != nil {
+		fmt.Printf("Coroutine PostCDR for IMSI: %s error: %v\n", imsi, err)
 	}
+
 }

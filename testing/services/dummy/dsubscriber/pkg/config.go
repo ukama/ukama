@@ -22,6 +22,7 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	Timeout          time.Duration    `default:"3s"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
+	DsimfactoryHost  string           `default:"dsimfactory:9090"`
 	Service          *uconf.Service
 	OrgName          string
 	Http             HttpServices
@@ -42,6 +43,7 @@ type HttpServices struct {
 
 type WMessage struct {
 	Iccid     string         `json:"iccid"`
+	Imsi      string         `json:"imsi"`
 	Expiry    string         `json:"expiry"`
 	Status    bool           `json:"status"`
 	Profile   cenums.Profile `json:"profile"`

@@ -40,7 +40,24 @@ services:
   networks:
    - ukama-net
 
- api-gateway:
+ dsimfactory:
+  build: ./dsimfactory
+  environment:
+   - DB_HOST=postgresd-dummy
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - DSIMFACTORY_SERVICE_PORT=9090
+   - DSIMFACTORY_SERVICE_HOST=dsimfactory
+   - MSGCLIENT_HOST=msgclient-dummy:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  restart: always
+  networks:
+   - ukama-net
+
+ api-gateway-dummy:
   build: ./api-gateway
   ports:
    - 8083:8080
