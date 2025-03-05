@@ -51,7 +51,7 @@ type dcontroller interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	dcontroller, err := client.NewController(endpoints.Controller, endpoints.Timeout)
+	dcontroller, err := client.NewDController(endpoints.Controller, endpoints.Timeout)
 	if err != nil {
 		log.Fatalf("Failed to create controller client: %v", err)
 	}

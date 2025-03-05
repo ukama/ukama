@@ -26,7 +26,7 @@ import (
 	 host    string
  }
    
- func NewController(controllerHost string, timeout time.Duration) (*DController, error) {
+ func NewDController(controllerHost string, timeout time.Duration) (*DController, error) {
 	 // Use grpc.NewClient with context-based options if needed
 	 opts := []grpc.DialOption{
 		 grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -46,7 +46,7 @@ import (
 	 }, nil
  }
    
- func NewControllerFromClient(mClient pb.MetricsControllerClient) *DController {
+ func NewDControllerFromClient(mClient pb.MetricsControllerClient) *DController {
 	 return &DController{
 		 host:    "localhost",
 		 timeout: 1 * time.Second,
