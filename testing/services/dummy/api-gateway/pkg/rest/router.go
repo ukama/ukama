@@ -19,7 +19,6 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg/client"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
 
-
 	"github.com/gin-gonic/gin"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
@@ -61,14 +60,6 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 }
 
 
-type Clients struct {
-}
-
-func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
-	c := &Clients{}
-
-	return c
-}
 
 func NewRouter(clients *Clients, config *RouterConfig) *Router {
 	r := &Router{
