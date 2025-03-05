@@ -41,7 +41,7 @@ import (
 	 }, nil
  }
  
- func NewHealthFromClient(mClient pb.MetricsControllerClient) *Controller {
+ func NewControllerFromClient(mClient pb.MetricsControllerClient) *Controller {
 	 return &Controller{
 		 host:    "localhost",
 		 timeout: 1 * time.Second,
