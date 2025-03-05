@@ -103,10 +103,10 @@ func (r *Router) init() {
 	dsub := endpoint.Group("/dsubscriber", "Dsubscriber", "Dummy subscriber service")
 	dsub.PUT("/update", formatDoc("Update dsubscriber coroutine", "Update dsubscriber coroutine for specific subscriber."), tonic.Handler(r.updateHandler, http.StatusCreated))
 
-	dsim := endpoint.Group("/dsimfactory", "Dsimfactory", "Dummy sim factory")
-	dsim.GET("/sims", formatDoc("Get SIMs", ""), tonic.Handler(r.getSims, http.StatusOK))
-	dsim.GET("/sims/:iccid", formatDoc("Get SIM by ICCID", ""), tonic.Handler(r.getSim, http.StatusOK))
-	dsim.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
+	dsim := endpoint.Group("/factory", "Dsimfactory", "Dummy sim factory")
+	dsim.GET("/simcards", formatDoc("Get SIMs", ""), tonic.Handler(r.getSims, http.StatusOK))
+	dsim.GET("/simcards/:iccid", formatDoc("Get SIM by ICCID", ""), tonic.Handler(r.getSim, http.StatusOK))
+	dsim.PUT("/simcards/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
 
 }
 

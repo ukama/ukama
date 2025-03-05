@@ -21,7 +21,7 @@ require (
 	github.com/ukama/ukama/testing/services/dummy/dsimfactory v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/testing/services/dummy/dsubscriber v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
-	google.golang.org/grpc v1.70.0
+	google.golang.org/grpc v1.71.0
 )
 
 require (
