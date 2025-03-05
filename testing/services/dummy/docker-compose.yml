@@ -43,6 +43,9 @@ services:
  dsimfactory:
   build: ./dsimfactory
   environment:
+   - DB_HOST=postgresd-dummy
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
    - DEBUGMODE=true
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
