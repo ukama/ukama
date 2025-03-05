@@ -29,9 +29,7 @@ var routerConfig = &RouterConfig{
 	serverConf: &rest.HttpConfig{
 		Cors: defaultCors,
 	},
-	httpEndpoints: &pkg.HttpEndpoints{
-		NodeMetrics: "localhost:8080",
-	},
+	httpEndpoints: &pkg.HttpEndpoints{},
 	// auth: &cconfig.Auth{
 	// 	AuthAppUrl:    "http://localhost:4455",
 	// 	AuthServerUrl: "http://localhost:4434",

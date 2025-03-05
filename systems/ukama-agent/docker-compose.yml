@@ -1,0 +1,156 @@
+version: '3.9'
+services:
+ postgresd-ukama-agent:
+  image: postgres:13.3
+  ports:
+   - 5411:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.101
+  volumes:
+   - postgress-data:/var/lib/postgresql
+
+ asr:
+  build: ./asr
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-ukama-agent
+   - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - NETWORKHOST=http://api-gateway-registry:8080
+   - DATAPLANHOST=http://api-gateway-dataplan:8080
+   - FACTORYHOST=http://stub:8085
+   - ASR_SERVICE_HOST=asr
+   - ASR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-ukama-agent
+   - postgresd-ukama-agent
+
+ stub:
+  build: ./asr
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-ukama-agent
+   - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - ASR_SERVICE_HOST=asr
+   - ASR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-ukama-agent
+   - postgresd-ukama-agent
+
+ cdr:
+  build: ./cdr
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-ukama-agent
+   - MSGCLIENT_HOST=msgclient-ukama-agent:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - CDR_SERVICE_HOST=cdr
+   - CDR_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - msgclient-ukama-agent
+   - postgresd-ukama-agent
+
+ node-gateway-ukama-agent:
+  build: ./node-gateway
+  ports:
+   - 8072:8080
+  restart: always
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.103
+  environment:
+   - DEBUGMODE=true
+   - AUTH_BYPASSAUTHMODE=true
+   - SERVICES_ASR=asr:9090
+  depends_on:
+   - asr
+
+ api-gateway-ukama-agent:
+  build: ./api-gateway
+  restart: always
+  ports:
+   - 8073:8080
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.102
+  environment:
+   - DEBUGMODE=true
+   - AUTH_BYPASSAUTHMODE=true
+  depends_on:
+   - asr
+
+ msgclient-ukama-agent:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_USER=postgres
+   - DB_PASSWORD=Pass2020!
+   - DB_HOST=postgresd-ukama-agent
+   - QUEUE_URI=amqp://guest:guest@$${LOCAL_HOST_IP}:5672
+   - SYSTEM=ukamaagent
+   - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
+   - SHOVEL_SRCURI=amqp://guest:guest@$10.1.0.11:5672
+   - SHOVEL_DESTURI=amqp://user:password@10.1.0.11:5672
+   - ORGNAME=${ORGNAME}
+   - MASTERORGNAME=ukama
+   - MSGBUS_MANAGEMENTURI=http://10.1.0.11:15672
+   - MSGBUS_USER=guest
+   - MSGBUS_PASSWORD=guest
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-ukama-agent
+
+ initclient-ukama-agent:
+  build: ../services/initClient
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_NAME=ukamaagent
+   - ENV_SYSTEM_DNS=api-gateway-ukama-agent
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-ukama-agent
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
+
+networks:
+ ukama-net:
+  external: true
+  name: services_ukama-net
+
+volumes:
+ postgress-data:

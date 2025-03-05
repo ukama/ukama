@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package pkg
 
 import (
@@ -23,17 +23,17 @@ type Config struct {
 	Queue                *config.Queue     `default:"{}"`
 	Service              *config.Service   `default:"{}"`
 	AsrHost              string            `default:"localhost"`
-	DataplanHost         string            `default:"http://localhost:8085"`
-	NetworkHost          string            `default:"http://localhost:8085"`
+	DataplanHost         string            `defaut:"http://api-gateway-dataplan:8080"`
+	NetworkHost          string            `defaut:"http://api-gateway-registry:8080"`
 	FactoryHost          string            `default:"http://localhost:8085"`
 	Reroute              string            `default:"http://localhost:8085"`
-	CDRHost              string            `default:"http://localhost:8085"`
-	OrgName              string            `default:"ukama"`
-	OrgId                string            `default:"40987edb-ebb6-4f84-a27c-99db7c136100"`
+	CDRHost              string            `default:"cdr:9090"`
 	IsMsgBus             bool              `default:"true"`
 	Period               time.Duration     `default:"3s"`
 	Monitor              bool              `default:"true"`
 	AllowedTimeOfService int64             `default:"259200"` // 72 hours = 86400 *3 seconds
+	OrgName              string
+	OrgId                string
 }
 
 type SimManager struct {
@@ -58,9 +58,5 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.*.ukamaagent.cdr.cdr.create",
 			},
 		},
-		DataplanHost: "http://192.168.0.14:8085",
-		NetworkHost:  "http://192.168.0.14:8085",
-		FactoryHost:  "http://192.168.0.14:8085",
-		CDRHost:      "http://192.168.0.14:8085",
 	}
 }

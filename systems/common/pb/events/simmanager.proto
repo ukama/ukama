@@ -43,6 +43,7 @@ message EventSimAllocation {
     bool isPhysical = 11 [json_name = "is_physical"];
     string packageId = 12 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     uint32 trafficPolicy = 13 [json_name = "traffic_policy"];
+    google.protobuf.Timestamp packageEndDate = 14 [json_name = "end_date"];
 }
 
 
@@ -52,9 +53,10 @@ message EventSimActivePackage{
     string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     string planId = 4 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
     google.protobuf.Timestamp packageStartDate = 5 [json_name = "start_date"];
-    string iccid =6;
-    string imsi = 7;
-    string networkId = 8;
+    google.protobuf.Timestamp packageEndDate = 6 [json_name = "end_date"];
+    string iccid =7;
+    string imsi = 8;
+    string networkId = 9;
 }
 
 message EventSimTermination {

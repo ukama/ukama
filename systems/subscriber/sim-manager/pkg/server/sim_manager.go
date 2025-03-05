@@ -281,19 +281,20 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	evt := &epb.EventSimAllocation{
-		Id:            sim.Id.String(),
-		SubscriberId:  sim.SubscriberId.String(),
-		NetworkId:     sim.NetworkId.String(),
-		OrgId:         orgId.String(),
-		DataPlanId:    sim.Package.PackageId.String(),
-		Iccid:         sim.Iccid,
-		Msisdn:        sim.Msisdn,
-		Imsi:          sim.Imsi,
-		Type:          sim.Type.String(),
-		Status:        sim.Status.String(),
-		IsPhysical:    sim.IsPhysical,
-		PackageId:     sim.Package.Id.String(),
-		TrafficPolicy: sim.TrafficPolicy,
+		Id:             sim.Id.String(),
+		SubscriberId:   sim.SubscriberId.String(),
+		NetworkId:      sim.NetworkId.String(),
+		OrgId:          orgId.String(),
+		DataPlanId:     sim.Package.PackageId.String(),
+		Iccid:          sim.Iccid,
+		Msisdn:         sim.Msisdn,
+		Imsi:           sim.Imsi,
+		Type:           sim.Type.String(),
+		Status:         sim.Status.String(),
+		IsPhysical:     sim.IsPhysical,
+		PackageId:      sim.Package.Id.String(),
+		TrafficPolicy:  sim.TrafficPolicy,
+		PackageEndDate: timestamppb.New(sim.Package.EndDate),
 	}
 
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
@@ -938,6 +939,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		PackageId:        pkg.Id.String(),
 		PlanId:           pkg.PackageId.String(),
 		PackageStartDate: timestamppb.New(pkg.StartDate),
+		PackageEndDate:   timestamppb.New(pkg.EndDate),
 	}
 
 	err = s.PublishEventMessage(route, evtMsg)

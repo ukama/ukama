@@ -7,3 +7,8 @@
  */
 
 package rest
+
+type UpdateReq struct {
+	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
+	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
+}

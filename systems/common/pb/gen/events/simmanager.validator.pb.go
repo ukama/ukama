@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -106,6 +106,11 @@ func (this *EventSimAllocation) Validate() error {
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
+	if this.PackageEndDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PackageEndDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("PackageEndDate", err)
+		}
+	}
 	return nil
 }
 
@@ -142,6 +147,11 @@ func (this *EventSimActivePackage) Validate() error {
 	if this.PackageStartDate != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PackageStartDate); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("PackageStartDate", err)
+		}
+	}
+	if this.PackageEndDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PackageEndDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("PackageEndDate", err)
 		}
 	}
 	return nil
