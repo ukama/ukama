@@ -27,11 +27,11 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
-	"github.com/ukama/ukama/testing/services/dummy/controller/cmd/version"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/cmd/version"
 
-	generated "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy/controller/pkg"
-	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/server"
+	generated "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/server"
 )
  
  var serviceConfig *pkg.Config

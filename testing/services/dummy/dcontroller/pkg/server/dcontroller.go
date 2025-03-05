@@ -18,10 +18,10 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
-	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
-	"github.com/ukama/ukama/testing/services/dummy/controller/pkg"
+	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg"
 
-	"github.com/ukama/ukama/testing/services/dummy/controller/pkg/metrics"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/metrics"
 )
  
  type SiteMetricsConfig struct {
@@ -33,7 +33,7 @@ import (
 	 CancelFunc   context.CancelFunc
  }
  
- type ControllerServer struct {
+ type DControllerServer struct {
 	 pb.UnimplementedMetricsControllerServer
 	 orgName          string
 	 metricsProviders map[string]*metrics.MetricsProvider
@@ -43,8 +43,8 @@ import (
 	 baseRoutingKey   msgbus.RoutingKeyBuilder
  }
  
- func NewControllerServer(orgName string, msgBus mb.MsgBusServiceClient) *ControllerServer {
-	 return &ControllerServer{
+ func NewControllerServer(orgName string, msgBus mb.MsgBusServiceClient) *DControllerServer {
+	 return &DControllerServer{
 		 orgName:          orgName,
 		 metricsProviders: make(map[string]*metrics.MetricsProvider),
 		 siteConfigs:      make(map[string]*SiteMetricsConfig),
@@ -54,7 +54,7 @@ import (
 	 }
  }
  
- func (s *ControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
+ func (s *DControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
 	 siteId := req.SiteId
 	 if siteId == "" {
 		 return nil, fmt.Errorf("site ID is required")
@@ -103,7 +103,7 @@ import (
 	 }, nil
  }
  
- func (s *ControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
+ func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
 	 siteId := req.SiteId
 	 
 	 log.Infof("Starting metrics for site ID: %s", siteId)
@@ -163,7 +163,7 @@ import (
 	 }, nil
  }
  
- func (s *ControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
+ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	 siteId := req.SiteId
  
 	 log.Infof("Updating metrics for site ID: %s", siteId)
@@ -244,7 +244,7 @@ import (
 	 }, nil
  }
  
- func (s *ControllerServer) StopMetricsCollection(siteId string) bool {
+ func (s *DControllerServer) StopMetricsCollection(siteId string) bool {
 	 s.mutex.Lock()
 	 defer s.mutex.Unlock()
 	 
@@ -260,7 +260,7 @@ import (
 	 return true
  }
  
- func (s *ControllerServer) Cleanup() {
+ func (s *DControllerServer) Cleanup() {
 	 s.mutex.Lock()
 	 defer s.mutex.Unlock()
 	 

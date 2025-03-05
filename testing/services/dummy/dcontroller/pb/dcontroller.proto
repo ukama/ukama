@@ -8,9 +8,9 @@
 
  syntax = "proto3";
 
- option go_package = "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen";
+ option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
   
- package ukama.dummy.controller.v1;
+ package ukama.dummy.dcontroller.v1;
 
 // Solar metrics data
 message GetSiteMetricsRequest {

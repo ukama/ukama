@@ -1,4 +1,4 @@
-module github.com/ukama/ukama/testing/services/dummy/controller
+module github.com/ukama/ukama/testing/services/dummy/dcontroller
 
 go 1.23.2
 

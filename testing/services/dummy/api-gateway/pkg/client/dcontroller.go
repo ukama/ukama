@@ -15,18 +15,18 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
+	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	"google.golang.org/grpc"
 )
    
- type Controller struct {
+ type DController struct {
 	 conn    *grpc.ClientConn
 	 client  pb.MetricsControllerClient
 	 timeout time.Duration
 	 host    string
  }
    
- func NewController(controllerHost string, timeout time.Duration) (*Controller, error) {
+ func NewController(controllerHost string, timeout time.Duration) (*DController, error) {
 	 // Use grpc.NewClient with context-based options if needed
 	 opts := []grpc.DialOption{
 		 grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -38,7 +38,7 @@ import (
 	 }
 	 client := pb.NewMetricsControllerClient(conn)
    
-	 return &Controller{
+	 return &DController{
 		 conn:    conn,
 		 client:  client,
 		 timeout: timeout,
@@ -46,8 +46,8 @@ import (
 	 }, nil
  }
    
- func NewControllerFromClient(mClient pb.MetricsControllerClient) *Controller {
-	 return &Controller{
+ func NewControllerFromClient(mClient pb.MetricsControllerClient) *DController {
+	 return &DController{
 		 host:    "localhost",
 		 timeout: 1 * time.Second,
 		 conn:    nil,
@@ -55,11 +55,11 @@ import (
 	 }
  }
    
- func (r *Controller) Close() {
+ func (r *DController) Close() {
 	 r.conn.Close()
  }
    
- func (h *Controller) Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
+ func (h *DController) Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	 ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	 defer cancel()
    
@@ -71,7 +71,7 @@ import (
 	 return resp, nil
  }
   
- func (h *Controller) Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
+ func (h *DController) Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
 	 ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	 defer cancel()
   

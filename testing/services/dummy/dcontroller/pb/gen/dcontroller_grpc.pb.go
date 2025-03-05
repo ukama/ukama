@@ -9,7 +9,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.2
-// source: controller.proto
+// source: dcontroller.proto
 
 package gen
 
@@ -26,9 +26,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MetricsController_GetSiteMetrics_FullMethodName = "/ukama.dummy.controller.v1.MetricsController/GetSiteMetrics"
-	MetricsController_StartMetrics_FullMethodName   = "/ukama.dummy.controller.v1.MetricsController/StartMetrics"
-	MetricsController_UpdateMetrics_FullMethodName  = "/ukama.dummy.controller.v1.MetricsController/UpdateMetrics"
+	MetricsController_GetSiteMetrics_FullMethodName = "/ukama.dummy.dcontroller.v1.MetricsController/GetSiteMetrics"
+	MetricsController_StartMetrics_FullMethodName   = "/ukama.dummy.dcontroller.v1.MetricsController/StartMetrics"
+	MetricsController_UpdateMetrics_FullMethodName  = "/ukama.dummy.dcontroller.v1.MetricsController/UpdateMetrics"
 )
 
 // MetricsControllerClient is the client API for MetricsController service.
@@ -189,7 +189,7 @@ func _MetricsController_UpdateMetrics_Handler(srv interface{}, ctx context.Conte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MetricsController_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "ukama.dummy.controller.v1.MetricsController",
+	ServiceName: "ukama.dummy.dcontroller.v1.MetricsController",
 	HandlerType: (*MetricsControllerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -206,5 +206,5 @@ var MetricsController_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "controller.proto",
+	Metadata: "dcontroller.proto",
 }

@@ -1,4 +1,17 @@
 services:
+
+ postgresd-dummy:
+  image: postgres:13.3
+  ports:
+   - 5463:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
+
  dnode:
   build: ./dnode
   ports:
@@ -14,26 +27,22 @@ services:
   networks:
    - ukama-net
 
- controller:
-  build: ./controller
+ dcontroller:
+  build: ./dcontroller
   ports:
    - 2112:2112  
-   - 9090:9090
   environment:
    - DEBUGMODE=true
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
    - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-   - CONTROLLER_SERVICE_HOST=controller
-   - CONTROLLER_SERVICE_PORT=9090
+   - DCONTROLLER_SERVICE_HOST=dcontroller
+   - DCONTROLLER_SERVICE_PORT=9090
    - MSGCLIENT_HOST=msgclient-dummy:9095
-   - PORT=2112
-   - DNODEHOST=dnode:8085
-   - REGISTRYCLIENT=api-gateway-registry:8080
   restart: always
   networks:
    - ukama-net
- 
+
  msgclient-dummy:
   build: ../../../systems/services/msgClient
   environment:
@@ -49,8 +58,15 @@ services:
    - ukama-net
   depends_on:
    - postgresd-dummy
+   
 
 networks:
  ukama-net:
   external: true
   name: services_ukama-net
+
+volumes:
+ postgress-data:
+
+
+

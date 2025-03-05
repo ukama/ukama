@@ -15,19 +15,19 @@ import (
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
+	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
  
  type DControllerEventServer struct {
 	 orgName        string
-	 server  *ControllerServer
+	 server  *DControllerServer
 	 controllerClient pb.MetricsControllerClient 
 	 epb.UnimplementedEventNotificationServiceServer
  }
  
- func NewEventServer(orgName string, server *ControllerServer) *DControllerEventServer {
+ func NewEventServer(orgName string, server *DControllerServer) *DControllerEventServer {
 	 return &DControllerEventServer{
 		 orgName:        orgName,
 		 server:  server,

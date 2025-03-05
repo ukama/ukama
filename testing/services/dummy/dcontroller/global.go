@@ -8,7 +8,7 @@
 
 package pkg
 
-const ServiceName = "controller"
+const ServiceName = "dcontroller"
 const SystemName = "dummy"
 
 var IsDebugMode = false

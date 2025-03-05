@@ -17,7 +17,7 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/cmd/version"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg/client"
-	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
+	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wI2L/fizz"
@@ -40,9 +40,9 @@ type RouterConfig struct {
 
 
 type Clients struct {
-	Controller controller
+	DController dcontroller
 }
-type controller interface {
+type dcontroller interface {
 	Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error)
 	Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error)
 }
@@ -51,11 +51,11 @@ type controller interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	controller, err := client.NewController(endpoints.Controller, endpoints.Timeout)
+	dcontroller, err := client.NewController(endpoints.Controller, endpoints.Timeout)
 	if err != nil {
 		log.Fatalf("Failed to create controller client: %v", err)
 	}
-	c.Controller = controller
+	c.DController = dcontroller
 	return c
 }
 
@@ -132,7 +132,7 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetric
 		}
 	}
 
-	return r.clients.Controller.Update(&pb.UpdateMetricsRequest{
+	return r.clients.DController.Update(&pb.UpdateMetricsRequest{
 		SiteId:      req.SiteId,
 		Profile:     pb.Profile(profileValue),
 		Scenario:    pb.Scenario(scenarioValue),
@@ -141,7 +141,7 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetric
 }
 
 func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pb.StartMetricsResponse, error) {
-	return r.clients.Controller.Start(&pb.StartMetricsRequest{
+	return r.clients.DController.Start(&pb.StartMetricsRequest{
 		SiteId: req.SiteId,
 		Profile: pb.Profile(pb.Profile_value[req.Profile]),
 		Scenario: pb.Scenario(pb.Scenario_value[req.Scenario]),

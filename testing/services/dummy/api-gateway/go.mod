@@ -8,7 +8,7 @@ replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
 replace github.com/ukama/ukama/testing/services/dummy/api-gateway => ./
 
-replace github.com/ukama/ukama/testing/services/dummy/controller => ../controller
+replace github.com/ukama/ukama/testing/services/dummy/dcontroller => ../dcontroller
 
 require (
 	github.com/gin-contrib/cors v1.7.3
@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/testing/services/dummy/controller v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/testing/services/dummy/dcontroller v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.71.0
 )
