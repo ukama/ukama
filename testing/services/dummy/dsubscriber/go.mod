@@ -4,7 +4,7 @@ go 1.24.0
 
 replace github.com/ukama/ukama/testing/services/dummy/dsubscriber => ./
 
-replace github.com/ukama/ukama/testing/services/dummy/dsimfactory => ./
+replace github.com/ukama/ukama/testing/services/dummy/dsimfactory => ../dsimfactory
 
 replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
@@ -17,10 +17,10 @@ require (
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.9.3
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/testing/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/testing/services/dummy/dsimfactory v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.70.0
+	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -44,7 +44,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0 // indirect
 	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
-	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect

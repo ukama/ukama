@@ -19,11 +19,11 @@ import (
 )
 
 type DsimfactoryProvider interface {
-	GetClient() (pb.DsubscriberServiceClient, error)
+	GetClient() (pb.DsimfactoryServiceClient, error)
 }
 
 type dsimfactoryProvider struct {
-	siteService pb.DsubscriberServiceClient
+	siteService pb.DsimfactoryServiceClient
 	host        string
 }
 
@@ -31,7 +31,7 @@ func NewDsimfactoryProvider(host string) DsimfactoryProvider {
 	return &dsimfactoryProvider{host: host}
 }
 
-func (o *dsimfactoryProvider) GetClient() (pb.DsubscriberServiceClient, error) {
+func (o *dsimfactoryProvider) GetClient() (pb.DsimfactoryServiceClient, error) {
 	if o.siteService == nil {
 		var conn *grpc.ClientConn
 
@@ -45,7 +45,7 @@ func (o *dsimfactoryProvider) GetClient() (pb.DsubscriberServiceClient, error) {
 			return nil, fmt.Errorf("failed to connect to remote site service: %w", err)
 		}
 
-		o.siteService = pb.NewDsubscriberServiceClient(conn)
+		o.siteService = pb.NewDsimfactoryServiceClient(conn)
 	}
 
 	return o.siteService, nil
