@@ -6,12 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-<<<<<<<< HEAD:testing/services/dummy/dsubscriber/cmd/version/version.go
 package version
 
 // Minor version is autoupdated by the build system
 // NOTE: use go build -ldflags "-X github.com/ukama/ukama/systems/registry/site/cmd/version.Version==$(git describe)".
 var Version = "v0.0.debug"
-========
-package rest
->>>>>>>> main:testing/services/dummy/api-gateway/pkg/rest/api.go
