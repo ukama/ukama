@@ -7,3 +7,21 @@
  */
 
 package rest
+
+ type UpdateReq struct {
+	 SiteId  string `form:"siteId" json:"siteId,omitempty"`
+	 Profile string `form:"profile" json:"profile,omitempty" validate:"required"`
+	 Scenario string `form:"scenario" json:"scenario,omitempty" validate:"required"`
+	 PortUpdates []PortUpdate `form:"portUpdates" json:"portUpdates,omitempty" validate:"required"`
+ }
+ 
+ type PortUpdate struct {
+	 PortNumber int32 `form:"portNumber" json:"portNumber" validate:"required"`
+	 Status bool `form:"status" json:"status" validate:"required"`
+ }
+
+ type StartReq struct {
+	 SiteId  string `form:"siteId" json:"siteId,omitempty" validate:"required"`
+	 Profile string `form:"profile" json:"profile,omitempty"`
+	 Scenario string `form:"scenario" json:"scenario,omitempty"`
+	 }

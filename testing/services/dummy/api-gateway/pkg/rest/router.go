@@ -12,9 +12,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/cmd/version"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/cmd/version"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg/client"
+	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wI2L/fizz"
@@ -35,14 +38,27 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 }
 
+
 type Clients struct {
+	Controller controller
 }
+type controller interface {
+	Update(req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error)
+	Start(req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error)
+}
+
+
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-
+	controller, err := client.NewController(endpoints.Controller, endpoints.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to create controller client: %v", err)
+	}
+	c.Controller = controller
 	return c
 }
+
 
 func NewRouter(clients *Clients, config *RouterConfig) *Router {
 	r := &Router{
@@ -79,6 +95,10 @@ func (r *Router) init() {
 	group := r.f.Group("/v1", "API gateway", "Dummy node system version v1")
 
 	group.GET("/ping", formatDoc("Ping API", "Ping to get status"), r.ping)
+	dcontroller := group.Group("/controller", "Dummy controller service", "Dummy controller service")
+	dcontroller.PUT("/update", formatDoc("Update metrics", "Update metrics"),tonic.Handler(r.updateHandler, http.StatusCreated))
+	dcontroller.POST("/start", formatDoc("Start controller", "Start controller"), tonic.Handler(r.startHandler, http.StatusCreated))
+
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -90,4 +110,39 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func (r *Router) ping(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "pong"})
+}
+
+func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateMetricsResponse, error) {
+	profileValue, ok := pb.Profile_value[req.Profile]
+	if !ok {
+		return nil, fmt.Errorf("invalid profile: %s", req.Profile)
+	}
+
+	scenarioValue, ok := pb.Scenario_value[req.Scenario]
+	if !ok {
+		return nil, fmt.Errorf("invalid scenario: %s", req.Scenario)
+	}
+
+	portUpdates := make([]*pb.PortUpdate, len(req.PortUpdates))
+	for i, update := range req.PortUpdates {
+		portUpdates[i] = &pb.PortUpdate{
+			PortNumber: update.PortNumber,
+			Status:     update.Status,
+		}
+	}
+
+	return r.clients.Controller.Update(&pb.UpdateMetricsRequest{
+		SiteId:      req.SiteId,
+		Profile:     pb.Profile(profileValue),
+		Scenario:    pb.Scenario(scenarioValue),
+		PortUpdates: portUpdates,
+	})
+}
+
+func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pb.StartMetricsResponse, error) {
+	return r.clients.Controller.Start(&pb.StartMetricsRequest{
+		SiteId: req.SiteId,
+		Profile: pb.Profile(pb.Profile_value[req.Profile]),
+		Scenario: pb.Scenario(pb.Scenario_value[req.Scenario]),
+	})
 }
