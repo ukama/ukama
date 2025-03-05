@@ -26,7 +26,7 @@ type Config struct {
 
 type GrpcEndpoints struct {
 	Timeout time.Duration
-	Controller string
+	Dcontroller string
 	Dsubscriber string
 }
 
@@ -44,7 +44,7 @@ func NewConfig() *Config {
 			DebugMode: false,
 		},
 		Services: GrpcEndpoints{
-			Controller: "Controller:9090",
+			Dcontroller: "Dcontroller:9090",
 			Timeout:     3 * time.Second,
 			Dsubscriber: "Dsubscriber:9090",
 		},
