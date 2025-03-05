@@ -61,6 +61,15 @@ func (sp *Dsimfactory) GetSims() (*pb.GetSimsResponse, error) {
 	return sp.client.GetSims(ctx, &pb.GetSimsRequest{})
 }
 
+func (sp *Dsimfactory) GetSim(iccid string) (*pb.GetByIccidResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+	defer cancel()
+
+	return sp.client.GetByIccid(ctx, &pb.GetByIccidRequest{
+		Iccid: iccid,
+	})
+}
+
 func (sp *Dsimfactory) UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()

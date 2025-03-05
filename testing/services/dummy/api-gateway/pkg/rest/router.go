@@ -53,6 +53,7 @@ type dsubscriber interface {
 
 type dsimfactory interface {
 	GetSims() (*spb.GetSimsResponse, error)
+	GetSim(iccid string) (*spb.GetByIccidResponse, error)
 	UploadSimsToSimPool(req *spb.UploadRequest) (*spb.UploadResponse, error)
 }
 
@@ -104,6 +105,7 @@ func (r *Router) init() {
 
 	dsim := endpoint.Group("/dsimfactory", "Dsimfactory", "Dummy sim factory")
 	dsim.GET("/sims", formatDoc("Get SIMs", ""), tonic.Handler(r.getSims, http.StatusOK))
+	dsim.GET("/sims/:iccid", formatDoc("Get SIM by ICCID", ""), tonic.Handler(r.getSim, http.StatusOK))
 	dsim.PUT("/upload", formatDoc("Upload CSV file to add new sim to SIM Pool", ""), tonic.Handler(r.uploadSimsToSimPool, http.StatusCreated))
 
 }
@@ -134,6 +136,15 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateRespon
 
 func (r *Router) getSims(c *gin.Context, req *GetSims) (*spb.GetSimsResponse, error) {
 	resp, err := r.clients.Dsimfactory.GetSims()
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (r *Router) getSim(c *gin.Context, req *GetSimByIccid) (*spb.GetByIccidResponse, error) {
+	resp, err := r.clients.Dsimfactory.GetSim(req.Iccid)
 	if err != nil {
 		return nil, err
 	}

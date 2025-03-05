@@ -19,3 +19,7 @@ type SimPoolUploadSimReq struct {
 
 type GetSims struct {
 }
+
+type GetSimByIccid struct {
+	Iccid string `json:"iccid" path:"iccid" validate:"required"`
+}
