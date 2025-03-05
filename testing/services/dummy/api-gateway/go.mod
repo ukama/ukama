@@ -1,10 +1,10 @@
-module github.com/ukama/ukama/testing/services/dummy-node/api-gateway
+module github.com/ukama/ukama/testing/services/dummy/api-gateway
 
 go 1.23.0
 
 replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
-replace github.com/ukama/ukama/testing/services/dummy-node/api-gateway => ./
+replace github.com/ukama/ukama/testing/services/dummy/api-gateway => ./
 
 require (
 	github.com/gin-contrib/cors v1.7.3

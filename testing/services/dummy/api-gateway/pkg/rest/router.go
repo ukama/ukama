@@ -13,8 +13,8 @@ import (
 	"net/http"
 
 	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/cmd/version"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/cmd/version"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wI2L/fizz"

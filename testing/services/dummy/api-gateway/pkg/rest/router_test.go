@@ -18,7 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/testing/services/dummy-node/api-gateway/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/api-gateway/pkg"
 )
 
 var defaultCors = cors.Config{
