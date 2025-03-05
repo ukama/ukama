@@ -17,7 +17,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/controller/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/controller/pkg"
@@ -40,7 +39,6 @@ import (
 	 metricsProviders map[string]*metrics.MetricsProvider
 	 siteConfigs      map[string]*SiteMetricsConfig
 	 mutex            sync.RWMutex
-	 nodeClient       creg.NodeClient
 	 msgbus           mb.MsgBusServiceClient
 	 baseRoutingKey   msgbus.RoutingKeyBuilder
  }
@@ -209,9 +207,8 @@ import (
 		 }
 	 }
  
-	 // Track port updates and backhaul ports set to down
+	 // Track port updates
 	 var portUpdatesApplied bool
-	 var backhaulPortsDown []int
 	 if req.PortUpdates != nil {
 		 for _, portUpdate := range req.PortUpdates {
 			 portNumber := int(portUpdate.PortNumber)
@@ -223,19 +220,19 @@ import (
 			 } else {
 				 portUpdatesApplied = true
 				 log.Infof("Updated port %d status to %v for site %s", portNumber, portStatus, siteId)
- 
-				 // Track backhaul ports set to down
-				 if !portStatus && isBackhaulPort(portNumber) {
-					 backhaulPortsDown = append(backhaulPortsDown, portNumber)
-				 }
 			 }
 		 }
 	 }
- 
+	 profileNames := map[cenums.Profile]string{
+		cenums.PROFILE_MIN:    "Minimum",
+		cenums.PROFILE_NORMAL: "Normal",
+		cenums.PROFILE_MAX:    "Maximum",
+	}
 	 // Build response message
 	 statusMessage := "Updated metrics configuration"
 	 if profileChanged {
-		 statusMessage += fmt.Sprintf(" - Profile set to %s", config.Profile)
+		 statusMessage += fmt.Sprintf(" - Profile set to %s", profileNames[config.Profile])
+
 	 }
 	 if portUpdatesApplied {
 		 statusMessage += " - Port updates applied"
@@ -274,13 +271,4 @@ import (
 			 config.Active = false
 		 }
 	 }
- }
- 
- func isBackhaulPort(portNumber int) bool {
-	 backhaulPorts := map[int]bool{
-		 1: true, 
-		 2: true, 
-	 }
-	 
-	 return backhaulPorts[portNumber]
  }
