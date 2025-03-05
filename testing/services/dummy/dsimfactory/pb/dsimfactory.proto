@@ -19,7 +19,6 @@ service DsimfactoryService {
     rpc GetSims(GetSimsRequest) returns (GetSimsResponse){}
 }
 message GetSimsRequest{
-    string simType = 1 [json_name = "sim_type"];
 }
 message GetSimsResponse {
     repeated Sim sims = 1;
@@ -32,7 +31,6 @@ message GetByIccidResponse {
 }
 message UploadRequest{
     bytes simData = 1;
-    string simType = 2 [json_name = "sim_type"];
 }
 message UploadResponse {
     repeated string iccid = 1;

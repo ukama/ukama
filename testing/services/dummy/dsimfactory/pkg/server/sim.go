@@ -51,7 +51,7 @@ func (p *DsimfactoryServer) GetByIccid(ctx context.Context, req *pb.GetByIccidRe
 }
 
 func (p *DsimfactoryServer) GetSims(ctx context.Context, req *pb.GetSimsRequest) (*pb.GetSimsResponse, error) {
-	log.Infof("GetSims : %v ", req.GetSimType())
+	log.Info("GetSims")
 
 	sims, err := p.simRepo.GetSims()
 	if err != nil {
@@ -69,7 +69,7 @@ func (p *DsimfactoryServer) GetSims(ctx context.Context, req *pb.GetSimsRequest)
 func (p *DsimfactoryServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
 	log.Infof("Upload Sims to factory")
 	a, _ := utils.ParseBytesToRawSim(req.SimData)
-	s := utils.RawSimToPb(a, req.GetSimType())
+	s := utils.RawSimToPb(a)
 	err := p.simRepo.Add(s)
 	log.Info("ADDING SIMS: ", s, err)
 	if err != nil {

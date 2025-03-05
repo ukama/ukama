@@ -52,7 +52,7 @@ type dsubscriber interface {
 }
 
 type dsimfactory interface {
-	GetSims(simType string) (*spb.GetSimsResponse, error)
+	GetSims() (*spb.GetSimsResponse, error)
 	UploadSimsToSimPool(req *spb.UploadRequest) (*spb.UploadResponse, error)
 }
 
@@ -132,8 +132,8 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateRespon
 		}})
 }
 
-func (r *Router) getSims(c *gin.Context, req *SimPoolStatReq) (*spb.GetSimsResponse, error) {
-	resp, err := r.clients.Dsimfactory.GetSims(req.SimType)
+func (r *Router) getSims(c *gin.Context, req *GetSims) (*spb.GetSimsResponse, error) {
+	resp, err := r.clients.Dsimfactory.GetSims()
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,6 @@ func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (
 
 	pbResp, err := r.clients.Dsimfactory.UploadSimsToSimPool(&spb.UploadRequest{
 		SimData: data,
-		SimType: req.SimType,
 	})
 
 	if err != nil {

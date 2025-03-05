@@ -54,11 +54,11 @@ func (r *Dsimfactory) Close() {
 	r.conn.Close()
 }
 
-func (sp *Dsimfactory) GetSims(simType string) (*pb.GetSimsResponse, error) {
+func (sp *Dsimfactory) GetSims() (*pb.GetSimsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
 	defer cancel()
 
-	return sp.client.GetSims(ctx, &pb.GetSimsRequest{SimType: simType})
+	return sp.client.GetSims(ctx, &pb.GetSimsRequest{})
 }
 
 func (sp *Dsimfactory) UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error) {

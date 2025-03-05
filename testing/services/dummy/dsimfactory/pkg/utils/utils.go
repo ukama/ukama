@@ -32,7 +32,7 @@ func ParseBytesToRawSim(b []byte) ([]RawSim, error) {
 	return r, nil
 }
 
-func RawSimToPb(r []RawSim, simType string) []db.Sim {
+func RawSimToPb(r []RawSim) []db.Sim {
 	var s []db.Sim
 	for _, value := range r {
 		s = append(s, db.Sim{
