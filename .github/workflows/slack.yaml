@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: MIT-0
+
+name: slack notify
+on:
+  workflow_run:
+    workflows: [daily*]
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify slack's github channel for failing or timed out workflows
+        if: github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'timed_out'
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          status: ${{ github.event.workflow_run.conclusion }}
+          notification_title: >
+            ${{github.event.workflow_run.name}} failed on ${{github.event.workflow_run.head_branch}} -
+            <${{github.server_url}}/${{github.repository}}/actions/runs/${{github.event.workflow_run.id}}|View Failure>
+          message_format: |
+            Result: ${{github.event.workflow_run.conclusion}}
+            Run: ${{github.event.workflow_run.run_number}}
+            Branch: <${{github.server_url}}/${{github.repository}}/tree/${{github.event.workflow_run.head_branch}}|${{github.repository}}/${{github.event.workflow_run.head_branch}}>
+          footer: "Repository: <${{github.server_url}}/${{github.repository}}|${{github.repository}}>"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
