@@ -105,9 +105,9 @@ func (r *Router) init() {
 	endpoint := r.f.Group("/v1", "API gateway", "Dummy system version v1")
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 
-	dcontroller := endpoint.Group("/controller", "Dummy controller service", "Dummy controller service")
-	dcontroller.PUT("/update", formatDoc("Update site metrics", "Update metrics"),tonic.Handler(r.updateSiteMetricsHandler, http.StatusCreated))
-	dcontroller.POST("/start", formatDoc("Start dcontroller metrics", "Start controller"), tonic.Handler(r.startHandler, http.StatusCreated))
+	dcontroller := endpoint.Group("/dcontroller", "Dummy dcontroller service", "Dummy dcontroller service")
+	dcontroller.PUT("/update", formatDoc("Update dcontroller courutine metrics", "Updatec site courutine  metrics"),tonic.Handler(r.updateSiteMetricsHandler, http.StatusCreated))
+	dcontroller.POST("/start", formatDoc("Start dcontroller courutine metrics", "Start courutine dcontroller"), tonic.Handler(r.startHandler, http.StatusCreated))
 
 	health := endpoint.Group("/dsubscriber", "Dsubscriber", "Dummy subscriber service")
 	health.PUT("/update", formatDoc("Update dsubscriber coroutine", "Update dsubscriber coroutine for specific subscriber."), tonic.Handler(r.updateHandler, http.StatusCreated))
@@ -138,14 +138,14 @@ func (r *Router) updateHandler(c *gin.Context, req *UpdateReq) (*pb.UpdateRespon
 }
 
 func (r *Router) updateSiteMetricsHandler(c *gin.Context, req *UpdateSiteMetricsReq) (*pbdc.UpdateMetricsResponse, error) {
-	profileValue, ok := pbdc.Profile_value[req.Profile]
-	if !ok {
-		return nil, fmt.Errorf("invalid profile: %s", req.Profile)
-	}
-
-	scenarioValue, ok := pbdc.Scenario_value[req.Scenario]
-	if !ok {
-		return nil, fmt.Errorf("invalid scenario: %s", req.Scenario)
+	var profile pbdc.Profile
+	
+	if req.Profile != "" {
+		profileValue, ok := pbdc.Profile_value[req.Profile]
+		if !ok {
+			return nil, fmt.Errorf("invalid profile: %s", req.Profile)
+		}
+		profile = pbdc.Profile(profileValue)
 	}
 
 	portUpdates := make([]*pbdc.PortUpdate, len(req.PortUpdates))
@@ -156,18 +156,32 @@ func (r *Router) updateSiteMetricsHandler(c *gin.Context, req *UpdateSiteMetrics
 		}
 	}
 
-	return r.clients.DController.Update(&pbdc.UpdateMetricsRequest{
+	updateReq := &pbdc.UpdateMetricsRequest{
 		SiteId:      req.SiteId,
-		Profile:     pbdc.Profile(profileValue),
-		Scenario:    pbdc.Scenario(scenarioValue),
 		PortUpdates: portUpdates,
-	})
-}
+	}
+	
+	if req.Profile != "" {
+		updateReq.Profile = profile
+	}
 
+	return r.clients.DController.Update(updateReq)
+}
 func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pbdc.StartMetricsResponse, error) {
+	var profile pbdc.Profile
+	
+	if req.Profile == "" {
+		profile = pbdc.Profile_PROFILE_NORMAL
+	} else {
+		profileValue, ok := pbdc.Profile_value[req.Profile]
+		if !ok {
+			return nil, fmt.Errorf("invalid profile: %s", req.Profile)
+		}
+		profile = pbdc.Profile(profileValue)
+	}
+	
 	return r.clients.DController.Start(&pbdc.StartMetricsRequest{
 		SiteId: req.SiteId,
-		Profile: pbdc.Profile(pbdc.Profile_value[req.Profile]),
-		Scenario: pbdc.Scenario(pbdc.Scenario_value[req.Scenario]),
+		Profile: profile,
 	})
 }

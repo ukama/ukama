@@ -9,10 +9,9 @@
 package rest
 
  type UpdateSiteMetricsReq struct {
-	 SiteId  string `form:"siteId" json:"siteId,omitempty"`
-	 Profile string `form:"profile" json:"profile,omitempty" validate:"required"`
-	 Scenario string `form:"scenario" json:"scenario,omitempty" validate:"required"`
-	 PortUpdates []PortUpdate `form:"portUpdates" json:"portUpdates,omitempty" validate:"required"`
+	 SiteId  string `form:"siteId" json:"siteId,omitempty" validate:"required"`
+	 Profile string `form:"profile" json:"profile,omitempty" `
+	 PortUpdates []PortUpdate `form:"portUpdates" json:"portUpdates,omitempty" `
  }
  
  type PortUpdate struct {
@@ -23,7 +22,6 @@ package rest
  type StartReq struct {
 	 SiteId  string `form:"siteId" json:"siteId,omitempty" validate:"required"`
 	 Profile string `form:"profile" json:"profile,omitempty"`
-	 Scenario string `form:"scenario" json:"scenario,omitempty"`
 	 }
 type UpdateReq struct {
 	Iccid   string `form:"iccid" json:"iccid" validate:"required"`

@@ -62,7 +62,6 @@ import (
     req := &pb.StartMetricsRequest{
         SiteId:   msg.SiteId,
         Profile:  pb.Profile_PROFILE_NORMAL, 
-        Scenario: pb.Scenario_SCENARIO_DEFAULT, 
     }
     
   

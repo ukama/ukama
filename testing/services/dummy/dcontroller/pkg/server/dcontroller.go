@@ -157,7 +157,6 @@ import (
 		Message: "Started metrics collection",
 	}, nil
 }
-
 func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	siteId := req.SiteId
 
@@ -188,13 +187,15 @@ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMet
 		}, nil
 	}
 
-	if req.Profile != pb.Profile_PROFILE_NORMAL {
+	
+	if req.Profile > 0 {
 		profile := cenums.Profile(req.Profile)
 		config.Profile = profile
 		provider.SetProfile(profile)
+		log.Infof("Updated profile to %v for site %s", profile, siteId)
 	}
 
-	if req.PortUpdates != nil {
+	if req.PortUpdates != nil && len(req.PortUpdates) > 0 {
 		for _, portUpdate := range req.PortUpdates {
 			portNumber := int(portUpdate.PortNumber)
 			portStatus := portUpdate.Status
@@ -210,7 +211,7 @@ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMet
 
 	return &pb.UpdateMetricsResponse{
 		Success: true,
-		Message:  "metrics updated",
+		Message: "metrics updated",
 	}, nil
 }
  func (s *DControllerServer) StopMetricsCollection(siteId string) bool {

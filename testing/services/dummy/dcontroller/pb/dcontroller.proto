@@ -69,7 +69,6 @@ enum Scenario {
 message StartMetricsRequest {
   string siteId = 1;
   Profile profile = 2;
-  Scenario scenario = 3;
 }
 
 message StartMetricsResponse {
@@ -80,7 +79,6 @@ message StartMetricsResponse {
 message UpdateMetricsRequest {
   string siteId = 1;
   Profile profile = 2;
-  Scenario scenario = 3;
   repeated PortUpdate portUpdates = 4; 
 }
 

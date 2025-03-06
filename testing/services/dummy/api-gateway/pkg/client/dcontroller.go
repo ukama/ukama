@@ -26,13 +26,13 @@ import (
 	 host    string
  }
    
- func NewDController(controllerHost string, timeout time.Duration) (*DController, error) {
+ func NewDController(dcontrollerHost string, timeout time.Duration) (*DController, error) {
 	 // Use grpc.NewClient with context-based options if needed
 	 opts := []grpc.DialOption{
 		 grpc.WithTransportCredentials(insecure.NewCredentials()),
 	 }
 	 
-	 conn, err := grpc.NewClient(controllerHost, opts...)
+	 conn, err := grpc.NewClient(dcontrollerHost, opts...)
 	 if err != nil {
 		 return nil, fmt.Errorf("failed to connect to controller: %w", err)
 	 }
@@ -42,7 +42,7 @@ import (
 		 conn:    conn,
 		 client:  client,
 		 timeout: timeout,
-		 host:    controllerHost,
+		 host:    dcontrollerHost,
 	 }, nil
  }
    
