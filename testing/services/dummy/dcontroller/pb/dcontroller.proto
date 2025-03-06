@@ -1,99 +1,81 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
+syntax = "proto3";
 
- syntax = "proto3";
+option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
+ 
+package ukama.dummy.dcontroller.v1;
 
- option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
-  
- package ukama.dummy.dcontroller.v1;
-
-// Solar metrics data
 message GetSiteMetricsRequest {
     string siteId = 1;
-  }
-  
-  message GetSiteMetricsResponse {
-    // Solar metrics
-    SolarMetrics solar = 1;
-    // Battery metrics
-    BatteryMetrics battery = 2;
-    // Network metrics
-    NetworkMetrics network = 3;
-  }
-  
-  message SolarMetrics {
-    double power_generation = 1;
-    double energy_total = 2;
-    double panel_power = 3;
-    double panel_current = 4;
-    double panel_voltage = 5;
-    double inverter_status = 6;
-  }
-  
-  message BatteryMetrics {
-    double charge_status = 1;
-    double voltage = 2;
-    double health = 3;
-    double current = 4;
-    double temperature = 5;
-  }
-  
-  message NetworkMetrics {
-    double switch_port_status = 1;
-    double switch_port_bandwidth = 2;
-    double backhaul_latency = 3;
-    double backhaul_status = 4;
-    double backhaul_speed = 5;
-  }
+}
+ 
+message GetSiteMetricsResponse {
+    BackhaulMetrics backhaul = 1;
+    EthernetMetrics ethernet = 2;
+    PowerMetrics power = 3;
+}
+ 
+message BackhaulMetrics {
+    double latency = 1;
+    double status = 2;
+    double speed = 3;
+}
+
+message EthernetMetrics {
+    double portStatus = 1;
+    double portSpeed = 2;
+}
+
+message PowerMetrics {
+    double batteryPower = 1;
+    double solarPanelVoltage = 2;
+    double solarPanelCurrent = 3;
+    double solarPanelPower = 4;
+    double chargeControllerStatus = 5;
+    double chargeControllerMode = 6;
+    double chargeControllerCurrent = 7;
+    double chargeControllerVoltage = 8;
+}
 
 // Profile types
 enum Profile {
-  PROFILE_NORMAL = 0;
-  PROFILE_MIN = 1;
-  PROFILE_MAX = 2;
+    PROFILE_NORMAL = 0;
+    PROFILE_MIN = 1;
+    PROFILE_MAX = 2;
 }
 
 // Scenario types
 enum Scenario {
-  SCENARIO_DEFAULT = 0;
-  SCENARIO_POWER_DOWN = 1;
-  SCENARIO_SWITCH_OFF = 3;
-  SCENARIO_BACKHAUL_DOWN = 4;
+    SCENARIO_DEFAULT = 0;
+    SCENARIO_POWER_DOWN = 1;
+    SCENARIO_SWITCH_OFF = 3;
+    SCENARIO_BACKHAUL_DOWN = 4;
 }
 
 message StartMetricsRequest {
-  string siteId = 1;
-  Profile profile = 2;
+    string siteId = 1;
+    Profile profile = 2;
 }
 
 message StartMetricsResponse {
-  bool success = 1;
-  string message = 2;
+    bool success = 1;
+    string message = 2;
 }
 
 message UpdateMetricsRequest {
-  string siteId = 1;
-  Profile profile = 2;
-  repeated PortUpdate portUpdates = 4; 
+    string siteId = 1;
+    Profile profile = 2;
+    repeated PortUpdate portUpdates = 4; 
 }
 
-
 message UpdateMetricsResponse {
-  bool success = 1;
-  string message = 2;
+    bool success = 1;
+    string message = 2;
 }
 
 message PortUpdate {
-  int32 portNumber = 1;  
-  bool status = 2;      
+    int32 portNumber = 1;  
+    bool status = 2;      
 }
-
-
 
 // Service definition
 service MetricsController {
@@ -101,6 +83,4 @@ service MetricsController {
     rpc GetSiteMetrics(GetSiteMetricsRequest) returns (GetSiteMetricsResponse) {}
     rpc StartMetrics(StartMetricsRequest) returns (StartMetricsResponse) {}
     rpc UpdateMetrics(UpdateMetricsRequest) returns (UpdateMetricsResponse) {}
-    
 }
-
