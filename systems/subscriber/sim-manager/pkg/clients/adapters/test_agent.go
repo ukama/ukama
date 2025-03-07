@@ -12,10 +12,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
-	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"github.com/ukama/ukama/systems/common/rest/client"
+
+	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
 type TestAgentAdapter struct {
@@ -38,8 +40,8 @@ func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgen
 		client: pb.NewTestAgentServiceClient(testAgentConn)}, nil
 }
 
-func (t *TestAgentAdapter) BindSim(ctx context.Context, iccid string) (any, error) {
-	return t.client.BindSim(ctx, &pb.BindSimRequest{Iccid: iccid})
+func (t *TestAgentAdapter) BindSim(ctx context.Context, req client.AgentRequestData) (any, error) {
+	return t.client.BindSim(ctx, &pb.BindSimRequest{Iccid: req.Iccid})
 }
 
 func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error) {

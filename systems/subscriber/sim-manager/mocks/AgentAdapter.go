@@ -34,7 +34,7 @@ func (_m *AgentAdapter) ActivateSim(_a0 context.Context, _a1 client.AgentRequest
 }
 
 // BindSim provides a mock function with given fields: _a0, _a1
-func (_m *AgentAdapter) BindSim(_a0 context.Context, _a1 string) (interface{}, error) {
+func (_m *AgentAdapter) BindSim(_a0 context.Context, _a1 client.AgentRequestData) (interface{}, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -43,10 +43,10 @@ func (_m *AgentAdapter) BindSim(_a0 context.Context, _a1 string) (interface{}, e
 
 	var r0 interface{}
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (interface{}, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) (interface{}, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) interface{}); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) interface{}); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -54,7 +54,7 @@ func (_m *AgentAdapter) BindSim(_a0 context.Context, _a1 string) (interface{}, e
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, client.AgentRequestData) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

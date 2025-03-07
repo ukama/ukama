@@ -23,7 +23,7 @@ const (
 )
 
 type UkamaAgentClient interface {
-	BindSim(iccid string) (*UkamaSimInfo, error)
+	BindSim(req client.AgentRequestData) (*UkamaSimInfo, error)
 	GetSimInfo(iccid string) (*UkamaSimInfo, error)
 	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
 	ActivateSim(req client.AgentRequestData) error
@@ -50,9 +50,9 @@ func NewUkamaAgentClient(h string) *ukamaAgentClient {
 	}
 }
 
-// Bind sim is a no-op for ukama sims for now
-func (o *ukamaAgentClient) BindSim(iccid string) (*UkamaSimInfo, error) {
-	return &UkamaSimInfo{}, nil
+// Bind sim calls asr activate in order to add the ukama sims into ukama agent asr.
+func (o *ukamaAgentClient) BindSim(req client.AgentRequestData) (*UkamaSimInfo, error) {
+	return &UkamaSimInfo{}, o.ActivateSim(req)
 }
 
 func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
