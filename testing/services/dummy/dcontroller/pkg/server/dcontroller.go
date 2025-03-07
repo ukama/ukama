@@ -195,7 +195,7 @@ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMet
 		log.Infof("Updated profile to %v for site %s", profile, siteId)
 	}
 
-	if req.PortUpdates != nil && len(req.PortUpdates) > 0 {
+	if len(req.PortUpdates) > 0 {
 		for _, portUpdate := range req.PortUpdates {
 			portNumber := int(portUpdate.PortNumber)
 			portStatus := portUpdate.Status
