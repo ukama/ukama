@@ -34,9 +34,9 @@ func NewUkamaAgentAdapter(ukamaAgentHost string, debug bool) (*UkamaAgentAdaper,
 	}, nil
 }
 
-func (u *UkamaAgentAdaper) BindSim(ctx context.Context, iccid string) (any, error) {
+func (u *UkamaAgentAdaper) BindSim(ctx context.Context, req client.AgentRequestData) (any, error) {
 	// think of how to use ctx with restclient
-	return u.client.BindSim(iccid)
+	return u.client.BindSim(req)
 }
 
 func (u *UkamaAgentAdaper) GetSim(ctx context.Context, iccid string) (any, error) {

@@ -211,17 +211,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"invalid format of subscriber's org uuid. Error %s", err.Error())
 	}
 
-	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim with lCCID: %q", simType, poolSim.Iccid)
-	}
-
-	_, err = simAgent.BindSim(ctx, poolSim.Iccid)
-	if err != nil {
-		return nil, err
-	}
-
 	var trafficPolicy uint32
 
 	// zero value traffic policy means pick the traffic policy of the upper layer
@@ -277,7 +266,28 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	sim.Package = *firstPackage
-	resp := &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}
+
+	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim with lCCID: %q", simType, poolSim.Iccid)
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.PackageId.String(),
+		SimId:     sim.Id.String(),
+	}
+
+	_, err = simAgent.BindSim(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the DB transaction on sim manager
+		// if agent operation fails.
+
+		return nil, err
+	}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	evt := &epb.EventSimAllocation{
@@ -353,7 +363,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	log.Infof("Allocating sim to subscriber success: %v", req.GetSubscriberId())
 
-	return resp, nil
+	return &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
@@ -897,6 +907,8 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		return &pb.SetActivePackageResponse{}, nil
 	}
 
+	// Update package on sim manager
+
 	newPackageToActivate := &sims.Package{
 		Id:       pkg.Id,
 		IsActive: true,
@@ -929,6 +941,30 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
+	// Update package on remote agent
+	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.Id.String(),
+		SimId:     sim.Id.String(),
+	}
+
+	err = simAgent.UpdatePackage(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the package update DB transaction on sim manager
+		// if agent package update fails.
+
+		return nil, err
+	}
+
+	// Publish the event only when both updates are successfull
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimActivePackage{
 		Id:               sim.Id.String(),
@@ -945,26 +981,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	/* Update package for opertaor */
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
-	}
-
-	opReq := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
-		SimId:     sim.Id.String(),
-	}
-
-	err = simAgent.UpdatePackage(ctx, opReq)
-	if err != nil {
-		return nil, err
 	}
 
 	return &pb.SetActivePackageResponse{}, nil
@@ -1036,19 +1052,6 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
 	}
 
-	req := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
-		SimId:     sim.Id.String(),
-	}
-
-	err = simAgent.ActivateSim(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
 	simUpdates := &sims.Sim{
 		Id:               sim.Id,
 		Status:           ukama.SimStatusActive,
@@ -1063,6 +1066,22 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 	err = s.simRepo.Update(simUpdates, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.Id.String(),
+		SimId:     sim.Id.String(),
+	}
+
+	err = simAgent.ActivateSim(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the DB transaction on sim manager
+		// if agent operation fails.
+
+		return nil, err
 	}
 
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
@@ -1113,17 +1132,6 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
 	}
 
-	req := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		SimId:     sim.Id.String(),
-	}
-	err = simAgent.DeactivateSim(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
 	simUpdates := &sims.Sim{
 		Id:                 sim.Id,
 		Status:             ukama.SimStatusInactive,
@@ -1132,6 +1140,20 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 	err = s.simRepo.Update(simUpdates, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:     sim.Iccid,
+		Imsi:      sim.Imsi,
+		NetworkId: sim.NetworkId.String(),
+		SimId:     sim.Id.String(),
+	}
+	err = simAgent.DeactivateSim(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the DB transaction on sim manager
+		// if agent operation fails.
+
+		return nil, err
 	}
 
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
