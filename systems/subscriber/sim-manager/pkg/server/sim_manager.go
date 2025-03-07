@@ -952,7 +952,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
+		PackageId: sim.Package.PackageId.String(),
 		SimId:     sim.Id.String(),
 	}
 
@@ -1072,7 +1072,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.Id.String(),
+		PackageId: sim.Package.PackageId.String(),
 		SimId:     sim.Id.String(),
 	}
 
@@ -1146,6 +1146,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		Iccid:     sim.Iccid,
 		Imsi:      sim.Imsi,
 		NetworkId: sim.NetworkId.String(),
+		PackageId: sim.Package.PackageId.String(),
 		SimId:     sim.Id.String(),
 	}
 	err = simAgent.DeactivateSim(ctx, agentRequest)
