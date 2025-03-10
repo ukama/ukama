@@ -1,6 +1,7 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+import { METRICS_INTERVAL } from "../../common/configs";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
@@ -142,7 +143,7 @@ class SubscriptionsResolvers {
           userId,
           type: key,
           timestamp: from,
-          url: `${wsUrl}/v1/live/metrics?interval=1&metric=${key}&node=${nodeId}`,
+          url: `${wsUrl}/v1/live/metrics?interval=${METRICS_INTERVAL}&metric=${key}&node=${nodeId}`,
         };
         const worker = new Worker(WS_THREAD, {
           workerData,

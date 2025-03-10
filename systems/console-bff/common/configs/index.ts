@@ -9,6 +9,8 @@ import "dotenv/config";
 
 export const VERSION = process.env.VERSION ?? "v1";
 
+export const METRICS_INTERVAL = 10;
+
 // API GWs
 export const PLANNING_API_URL = process.env.PLANNING_API_URL;
 export const NUCLEUS_API_GW = process.env.NUCLEUS_API_GW ?? "";

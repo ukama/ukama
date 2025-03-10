@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { METRICS_INTERVAL } from "../../common/configs";
 import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
@@ -66,7 +67,7 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(result[0].values),
+        values: fixTimestampInMetricData(result[0].values, METRICS_INTERVAL),
       }
     : getEmptyMetric({
         nodeId: result[0].metric.nodeid,
@@ -79,6 +80,7 @@ export const parseMetricRes = (
         withSubscription: false,
       });
 };
+
 export const parseNodeMetricRes = (
   { code, data }: { code: number; data: any },
   args: GetMetricRangeInput
@@ -93,27 +95,40 @@ export const parseNodeMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(result[0].values),
+        values: fixTimestampInMetricData(
+          result[0].values,
+          args.step || METRICS_INTERVAL
+        ),
       }
     : getEmptyMetric(args);
 };
 
-const fixTimestampInMetricData = (
-  values: [[number, string]]
-): [number, number][] => {
-  if (values.length > 0) {
-    const fixedValues: [number, number][] = values.map(
-      (value: [number, string]) => {
-        return [
-          Math.floor(value[0]) * 1000,
-          parseFloat(Number(value[1]).toFixed(2)),
-        ];
+function fixTimestampInMetricData(
+  data: [number, string | null][],
+  step: number
+): [number, number][] {
+  if (!Array.isArray(data) || data.length === 0) return [];
+
+  const result: [number, number][] = [];
+  let prevTimestamp: number = data[0][0];
+
+  for (let i = 0; i < data.length; i++) {
+    const currentTimestamp = data[i][0];
+    const value = data[i][1] ? parseFloat(Number(data[i][1]).toFixed(2)) : 0;
+
+    while (prevTimestamp < currentTimestamp) {
+      if (prevTimestamp !== data[0][0]) {
+        result.push([prevTimestamp, 0]);
       }
-    );
-    return fixedValues;
+      prevTimestamp += step;
+    }
+
+    result.push([currentTimestamp, value]);
+    prevTimestamp = currentTimestamp + step;
   }
-  return [];
-};
+
+  return result;
+}
 
 export const parsePromethRes = (
   res: any,
@@ -129,7 +144,7 @@ export const parsePromethRes = (
       success: true,
       msg: "success",
       nodeId: metric.metric.nodeid,
-      values: fixTimestampInMetricData(metric.values),
+      values: fixTimestampInMetricData(metric.values, METRICS_INTERVAL),
     };
   } else return getEmptyMetric(args);
 };
