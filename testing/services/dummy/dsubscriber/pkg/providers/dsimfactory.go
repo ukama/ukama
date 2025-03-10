@@ -40,7 +40,7 @@ func (o *dsimfactoryProvider) GetClient() (pb.DsimfactoryServiceClient, error) {
 		conn, err := grpc.NewClient(o.host,
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Errorf("Failed to connect to Site service %s. Error: %v", o.host, err)
+			log.Errorf("Failed to connect to Dsimfactory service %s. Error: %v", o.host, err)
 
 			return nil, fmt.Errorf("failed to connect to remote site service: %w", err)
 		}

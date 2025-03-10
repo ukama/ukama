@@ -57,7 +57,7 @@ func (this *Sim) Validate() error {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`must be a valid ICCID format`))
 	}
 	if !_regex_Sim_Imsi.MatchString(this.Imsi) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`must be a valid ICCID format`))
+		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`must be a valid IMSI format`))
 	}
 	if !_regex_Sim_Msisdn.MatchString(this.Msisdn) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Msisdn", fmt.Errorf(`must be a phone number format`))
