@@ -27,7 +27,7 @@ services:
  dcontroller:
   build: ./dcontroller
   ports:
-   - 2112:2112  
+   - 2112:2112
    - 9090:9090
   environment:
    - DEBUGMODE=true
@@ -42,6 +42,22 @@ services:
   networks:
    - ukama-net
 
+ dsimfactory:
+  build: ./dsimfactory
+  environment:
+   - DB_HOST=postgresd-dummy
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - DEBUGMODE=true
+   - ORGID=${ORGID}
+   - ORGNAME=${ORGNAME}
+   - DSIMFACTORY_SERVICE_PORT=9090
+   - DSIMFACTORY_SERVICE_HOST=dsimfactory
+   - MSGCLIENT_HOST=msgclient-dummy:9095
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+  restart: always
+  networks:
+   - ukama-net
 
  dsubscriber:
   build: ./dsubscriber
@@ -84,7 +100,6 @@ services:
    - ukama-net
   depends_on:
    - postgresd-dummy
-   
 
 networks:
  ukama-net:
@@ -93,6 +108,3 @@ networks:
 
 volumes:
  postgress-data:
-
-
-

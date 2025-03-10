@@ -76,7 +76,7 @@
  },
  "dummy": {
   "key": "dummy",
-  "name": "Dummy node system",
+  "name": "Dummy system",
   "path": "../testing/services/dummy"
  },
  "auth": {

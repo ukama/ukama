@@ -1,0 +1,47 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+option go_package = "github.com/ukama/ukama/testing/services/dummy/dsimfactory/pb/gen";
+
+import "validator.proto";
+
+package ukama.dummy.dsimfactory.v1;
+
+service DsimfactoryService {
+    rpc GetByIccid (GetByIccidRequest) returns (GetByIccidResponse) {}
+    rpc Upload(UploadRequest) returns (UploadResponse){}
+    rpc GetSims(GetSimsRequest) returns (GetSimsResponse){}
+}
+message GetSimsRequest{
+}
+message GetSimsResponse {
+    repeated Sim sims = 1;
+}
+message GetByIccidRequest{
+    string iccid = 1;
+}
+message GetByIccidResponse {
+    Sim sim = 1;
+}
+message UploadRequest{
+    bytes simData = 1;
+}
+message UploadResponse {
+    repeated string iccid = 1;
+}
+message Sim{
+    uint64 id = 1;
+    string iccid = 2 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{19}$"}];
+    string imsi = 3 [(validator.field) = { human_error:"must be a valid ICCID format", regex: "^[0-9]{13,15}$"}];
+    string msisdn = 4 [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}]; 
+    string smDpAddress = 5 [json_name = "sm_ap_address"];
+    string activationCode = 6 [json_name = "activation_code"];
+    bool isPhysical = 7 [json_name = "is_physical"];
+    string qrCode = 8 [json_name = "qr_code"];
+}

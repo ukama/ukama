@@ -6,6 +6,8 @@ replace github.com/ukama/ukama/testing/services/dummy/api-gateway => ./
 
 replace github.com/ukama/ukama/testing/services/dummy/dsubscriber => ../dsubscriber
 
+replace github.com/ukama/ukama/testing/services/dummy/dsimfactory => ../dsimfactory
+
 replace github.com/ukama/ukama/systems/common => ../../../../systems/common
 
 replace github.com/ukama/ukama/testing/common => ../../../common
@@ -17,9 +19,9 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/loopfz/gadgeto v0.11.4
 	github.com/sirupsen/logrus v1.9.3
-	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/testing/services/dummy/dcontroller v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/testing/services/dummy/dsimfactory v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/testing/services/dummy/dsubscriber v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.71.0
@@ -33,7 +35,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.7 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -42,7 +43,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0 // indirect
 	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
-	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -75,7 +76,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/penglongli/gin-metrics v0.1.13 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.21.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
@@ -88,7 +88,6 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/spf13/viper v1.19.0 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
