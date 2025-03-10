@@ -1,19 +1,19 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-systems-dummy-dnode
+name: build-systems-dummy-dsimfactory
 on:
  push:
   paths:
-   - 'testing/services/dummy/dnode/**'
-   - '.github/workflows/testing-services-dummy-dnode.yaml'
+   - 'testing/services/dummy/dsimfactory/**'
+   - '.github/workflows/testing-services-dummy-dsimfactory.yaml'
 
  workflow_dispatch:
 
 jobs:
  build:
   env:
-   working-directory: testing/services/dummy/dnode
+   working-directory: testing/services/dummy/dsimfactory
 
   name: build and test
   runs-on: ubuntu-latest
@@ -23,20 +23,20 @@ jobs:
    - name: build app
      uses: ./.github/actions/build-go
      with:
-      registry-name: dummy/dnode
+      registry-name: dummy/dsimfactory
       working-directory: ${{ env.working-directory }}
       github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
       aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
       build-listener: false
-      project-key: ukama_systems_dummy_dnode
+      project-key: ukama_systems_dummy_dsimfactory
 
  sonar-scan:
   name: sonar-scan
   needs: build
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy/dnode
+   working-directory: testing/services/dummy/dsimfactory
   steps:
    - uses: actions/checkout@v3
    - name: scan
@@ -45,13 +45,13 @@ jobs:
       working-directory: ${{ env.working-directory }}
       github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       sonar-token: ${{ secrets.SONAR_TOKEN }}
-      project-key: ukama_systems_dummy_dnode
+      project-key: ukama_systems_dummy_dsimfactory
 
  lint:
   name: lint
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy/dnode
+   working-directory: testing/services/dummy/dsimfactory
   steps:
    - uses: actions/checkout@v3
    - name: lint
@@ -66,7 +66,7 @@ jobs:
   if: github.ref == 'refs/heads/main'
   runs-on: ubuntu-latest
   env:
-   working-directory: testing/services/dummy/dnode
+   working-directory: testing/services/dummy/dsimfactory
   steps:
    - uses: actions/checkout@v3
 
@@ -78,7 +78,7 @@ jobs:
      uses: denispalnitsky/gitops-release@v9
      with:
       filename: 'releases/dummy-helmfile.yaml'
-      key: 'dnodeImageTag'
+      key: 'dsimfactoryImageTag'
       value: ${{ steps.vars_step.outputs.sha-short }}
       github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       github-org-and-repo: 'ukama/infra-as-code'
