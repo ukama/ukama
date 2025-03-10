@@ -9,7 +9,7 @@ import { GraphQLError } from "graphql";
 import https from "https";
 
 import { asyncRestCall } from "../../common/axiosClient";
-import { METRICS_INTERVAL, VERSION } from "../../common/configs";
+import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
@@ -74,7 +74,7 @@ const getNodeRangeMetric = async (
   baseUrl: string,
   args: GetMetricRangeInput
 ): Promise<MetricRes> => {
-  const { from, to = 0, step = METRICS_INTERVAL } = args;
+  const { from, to = 0, step } = args;
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,

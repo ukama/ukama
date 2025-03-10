@@ -7,6 +7,7 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
+import { METRICS_INTERVAL } from "../../common/configs";
 import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
@@ -97,7 +98,7 @@ export class GetMetricRangeInput {
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true, defaultValue: METRICS_INTERVAL })
   step?: number;
 
   @Field({ nullable: true })
