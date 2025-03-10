@@ -55,7 +55,7 @@ export type LatestMetricSubRes = {
   nodeId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
-  value: Array<Array<Scalars['Float']['output']>>;
+  value: Array<Scalars['Float']['output']>;
 };
 
 export type MetricRes = {
@@ -242,7 +242,7 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<Array<number>> } };
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;

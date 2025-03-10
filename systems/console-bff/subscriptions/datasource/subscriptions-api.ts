@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { GraphQLError } from "graphql";
-import https from "https";
 
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
@@ -22,27 +21,7 @@ import {
   parseMetricRes,
   parseNodeMetricRes,
   parseNotificationsRes,
-  parsePromethRes,
 } from "./mapper";
-
-const directCall = async (
-  baseUrl: string,
-  args: GetMetricRangeInput
-): Promise<MetricRes> => {
-  const { from, to, step = 1 } = args;
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-  return await asyncRestCall({
-    method: API_METHOD_TYPE.GET,
-    httpsAgent: agent,
-    url: `${baseUrl}?query=${args.type}&start=${from}&end=${to}&step=${step}`,
-  })
-    .then(res => parsePromethRes(res.data, args))
-    .catch(err => {
-      throw new GraphQLError(err);
-    });
-};
 
 const getMetricRange = async (
   baseUrl: string,
@@ -116,4 +95,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };
+export { getMetricRange, getNodeRangeMetric, getNotifications };

@@ -148,35 +148,21 @@ class SubscriptionsResolvers {
           workerData,
         });
 
-        let count = 0;
-        const mvalues: [[number, number]] = [[0, 0]];
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              if (count === 0) {
-                mvalues.length = 1;
-                mvalues.pop();
-              }
-
-              count++;
-              mvalues.push([
-                Math.floor(result.value[0]) * 1000,
-                parseFloat(Number(result.value[1]).toFixed(2)),
-              ]);
-
-              if (count === 30) {
-                count = 0;
-
-                pubSub.publish(`${userId}/${type}/${from}`, {
-                  type: key,
-                  success: true,
-                  msg: "success",
-                  nodeId: nodeId,
-                  value: mvalues,
-                });
-              }
+              pubSub.publish(`${userId}/${type}/${from}`, {
+                type: key,
+                success: true,
+                msg: "success",
+                nodeId: nodeId,
+                value: [
+                  Math.floor(result.value[0]) * 1000,
+                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
+                ],
+              });
             }
           }
         });

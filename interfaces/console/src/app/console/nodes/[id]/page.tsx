@@ -32,6 +32,7 @@ import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import {
+  METRIC_RANGE_10800,
   METRIC_RANGE_3600,
   NODE_ACTIONS_BUTTONS,
   NodePageTabs,
@@ -213,13 +214,14 @@ const Page: React.FC<INodePage> = ({ params }) => {
       getNodeMetricByTab({
         variables: {
           data: {
+            step: 30,
             nodeId: id,
             userId: user.id,
             type: graphType,
             from: metricFrom,
-            to: metricFrom + METRIC_RANGE_3600,
             orgName: user.orgName,
             withSubscription: true,
+            to: metricFrom + METRIC_RANGE_10800,
           },
         },
       }).then(() => {
@@ -242,7 +244,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     nodeMetricsVariables?.data?.from,
     getNodeMetricByTab,
     graphType,
-  ]); // Added all missing dependencies
+  ]);
 
   const handleNotification = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
@@ -250,9 +252,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
       parsedData.data.getMetricByTabSub;
     if (success) {
       if (type === NODE_UPTIME_KEY) {
-        setNodeUptime(value[value.length - 1][1]);
+        setNodeUptime(value[1]);
       }
-      PubSub.publish(type, value.slice(0, 30));
+      PubSub.publish(type, value);
     }
   };
 
@@ -275,18 +277,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleOverviewSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const handleNetworkSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
     setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const handleNodeActionClick = (action: string) => {

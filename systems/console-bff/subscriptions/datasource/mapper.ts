@@ -67,7 +67,12 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(result[0].values, METRICS_INTERVAL),
+        values: fixTimestampInMetricData(
+          result[0].values,
+          METRICS_INTERVAL,
+          args.to || Date.now(),
+          args.from
+        ),
       }
     : getEmptyMetric({
         nodeId: result[0].metric.nodeid,
@@ -97,7 +102,9 @@ export const parseNodeMetricRes = (
         nodeId: result[0].metric.nodeid,
         values: fixTimestampInMetricData(
           result[0].values,
-          args.step || METRICS_INTERVAL
+          args.step || METRICS_INTERVAL,
+          args.to || Date.now(),
+          args.from
         ),
       }
     : getEmptyMetric(args);
@@ -105,49 +112,31 @@ export const parseNodeMetricRes = (
 
 function fixTimestampInMetricData(
   data: [number, string | null][],
-  step: number
+  step: number,
+  to: number,
+  from: number
 ): [number, number][] {
   if (!Array.isArray(data) || data.length === 0) return [];
 
   const result: [number, number][] = [];
-  let prevTimestamp: number = data[0][0];
+  let prevTimestamp: number = from;
+  let dataIndex = 0;
 
-  for (let i = 0; i < data.length; i++) {
-    const currentTimestamp = data[i][0];
-    const value = data[i][1] ? parseFloat(Number(data[i][1]).toFixed(2)) : 0;
-
-    while (prevTimestamp < currentTimestamp) {
-      if (prevTimestamp !== data[0][0]) {
-        result.push([prevTimestamp, 0]);
-      }
-      prevTimestamp += step;
+  while (prevTimestamp <= to) {
+    if (dataIndex < data.length && data[dataIndex][0] === prevTimestamp) {
+      result.push([
+        data[dataIndex][0] * 1000,
+        parseFloat(Number(data[dataIndex][1]).toFixed(2)),
+      ]);
+      dataIndex++;
+    } else {
+      result.push([prevTimestamp * 1000, 0]);
     }
-
-    result.push([currentTimestamp, value]);
-    prevTimestamp = currentTimestamp + step;
+    prevTimestamp += step;
   }
 
   return result;
 }
-
-export const parsePromethRes = (
-  res: any,
-  args: GetMetricRangeInput
-): MetricRes => {
-  const metric = res.data.result.filter(
-    (item: any) => item.metric.nodeid === args.nodeId
-  )[0];
-
-  if (metric?.values?.length > 0) {
-    return {
-      type: args.type,
-      success: true,
-      msg: "success",
-      nodeId: metric.metric.nodeid,
-      values: fixTimestampInMetricData(metric.values, METRICS_INTERVAL),
-    };
-  } else return getEmptyMetric(args);
-};
 
 export const parseNotification = (
   notification: NotificationsAPIResDto

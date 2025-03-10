@@ -74,8 +74,8 @@ export class LatestMetricSubRes {
   @Field()
   type: string;
 
-  @Field(() => [[Number, Number]])
-  value: [number, number][];
+  @Field(() => [Number, Number])
+  value: [number, number];
 }
 
 @InputType()

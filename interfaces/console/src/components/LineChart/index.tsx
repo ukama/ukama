@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { METRIC_RANGE_3600 } from '@/constants';
+import { METRIC_RANGE_10800 } from '@/constants';
 import { Box } from '@mui/material';
 import { HighchartsReact } from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -31,6 +31,17 @@ const LineChart = ({
   from: metricFrom,
 }: ILineChart) => {
   const getOptions = (topic: string, title: string, initData: any) => {
+    const data: any = [];
+    if (Array.isArray(initData)) {
+      initData = initData.forEach((point: any) => {
+        let y = point[1];
+        if (point.length > 0 && y === 0) {
+          y = null;
+        }
+        data.push([point[0], y]);
+      });
+    }
+
     return {
       title: {
         text: topic,
@@ -40,32 +51,23 @@ const LineChart = ({
         type: 'areaspline',
         events: {
           load: function () {
-            const chart: any =
-              Highcharts.charts.length > 0
-                ? Highcharts.charts.find(
-                    (c: any) => c?.title?.textStr === topic,
-                  )
-                : null;
-
-            if (chart) {
-              PubSub.subscribe(topic, (_, data) => {
-                if (
-                  Array.isArray(data) &&
-                  data.length > 0 &&
-                  chart?.series?.[0]
-                ) {
-                  const series = chart.series[0];
-                  data.forEach((point, index) =>
-                    series.addPoint(
-                      point,
-                      data.length - 1 === index,
-                      series.data.length > METRIC_RANGE_3600,
-                      true,
-                    ),
-                  );
-                }
-              });
-            }
+            PubSub.subscribe(topic, (_, data) => {
+              const chart: any =
+                Highcharts.charts.length > 0
+                  ? Highcharts.charts.find(
+                      (c: any) => c?.title?.textStr === topic,
+                    )
+                  : null;
+              if (chart && data.length > 0) {
+                const series = chart.series[0];
+                series.addPoint(
+                  data,
+                  true,
+                  series.data.length > METRIC_RANGE_10800,
+                  true,
+                );
+              }
+            });
           },
         },
       },
@@ -121,7 +123,6 @@ const LineChart = ({
         {
           name: title,
           data: (function () {
-            const data = [...initData];
             return data;
           })(),
         },
