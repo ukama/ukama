@@ -18,13 +18,13 @@ import (
 	"github.com/tj/assert"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/common/rest/client"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -510,7 +510,13 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
 		agentAdapter.On("BindSim", mock.Anything,
-			sim.Iccid).Return(nil, nil).Once()
+			client.AgentRequestData{
+				Iccid:     testIccid,
+				Imsi:      sim.Imsi,
+				SimId:     sim.Id.String(),
+				PackageId: packageID.String(),
+				NetworkId: sim.NetworkId.String(),
+			}).Return(nil, nil).Once()
 
 		simRepo.On("Add", sim,
 			mock.Anything).Return(nil).Once()
