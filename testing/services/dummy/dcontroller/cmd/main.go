@@ -75,7 +75,6 @@ import (
 	 
 	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient)
 	 
-	 // Initialize DNode client with URL from config
 	 if serviceConfig.DNodeURL != "" {
 		 log.Infof("Initializing DNode client with URL: %s", serviceConfig.DNodeURL)
 		 controllerServer.AddScenarioMonitoring(serviceConfig.DNodeURL)
@@ -91,15 +90,12 @@ import (
 		 generated.RegisterMetricsControllerServer(s, controllerServer)
 	 })
 	  
-	 // Start servers in separate goroutines
 	 go grpcServer.StartServer()
 	 go startMetricsServer()
 	 go msgBusListener(mbClient)
  
-	 // Wait for termination signal
 	 waitForExit()
 	 
-	 // Cleanup resources
 	 log.Info("Cleaning up resources...")
 	 controllerServer.Cleanup()
 	 
