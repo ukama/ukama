@@ -25,7 +25,11 @@ import (
 	 MsgClient        *uconf.MsgClient `default:"{}"` 
 	 Port             string           `default:"2112"`
 	 DNodeURL         string           `default:"http://localhost:8085"` 
+	 RegistryHost string `default:"api-gateway-registry:8080"`
+
  }
+
+
  
  func NewConfig(name string) *Config {
 	 return &Config{

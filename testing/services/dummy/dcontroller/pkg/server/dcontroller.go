@@ -17,18 +17,19 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/client"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/metrics"
 )
- 
+  
  const (
 	 defaultScanInterval = 3
 	 monitorInterval     = 5 * time.Second
  )
- 
+  
  type SiteMetricsConfig struct {
 	 Profile    cenums.Profile
 	 Active     bool
@@ -36,7 +37,7 @@ import (
 	 Context    context.Context
 	 CancelFunc context.CancelFunc
  }
- 
+  
  type MonitoringConfig struct {
 	 NodeId     string
 	 Active     bool
@@ -44,7 +45,7 @@ import (
 	 CancelFunc context.CancelFunc
 	 LastStatus cenums.SCENARIOS
  }
- 
+  
  type DControllerServer struct {
 	 pb.UnimplementedMetricsControllerServer
 	 orgName          string
@@ -55,9 +56,10 @@ import (
 	 msgbus           mb.MsgBusServiceClient
 	 baseRoutingKey   msgbus.RoutingKeyBuilder
 	 dnodeClient      *client.DNodeClient
+	 nodeClient       creg.NodeClient
  }
- 
- func NewControllerServer(orgName string, msgBus mb.MsgBusServiceClient) *DControllerServer {
+  
+ func NewControllerServer(orgName string, msgBus mb.MsgBusServiceClient, nodeClient creg.NodeClient) *DControllerServer {
 	 return &DControllerServer{
 		 orgName:          orgName,
 		 metricsProviders: make(map[string]*metrics.MetricsProvider),
@@ -66,14 +68,15 @@ import (
 		 mutex:            sync.RWMutex{},
 		 baseRoutingKey:   msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		 msgbus:           msgBus,
+		 nodeClient:       nodeClient,
 	 }
  }
- 
+  
  func (s *DControllerServer) AddScenarioMonitoring(dnodeBaseURL string) {
 	 s.dnodeClient = client.NewDNodeClient(dnodeBaseURL, 10*time.Second)
 	 log.Infof("DNode client initialized with base URL: %s", dnodeBaseURL)
  }
- 
+  
  func (s *DControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
 	 siteId := req.SiteId
 	 if siteId == "" {
@@ -115,7 +118,7 @@ import (
 		 },
 	 }, nil
  }
- 
+  
  func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
 	 siteId := req.SiteId
 	 profile := cenums.Profile(req.Profile)
@@ -156,7 +159,7 @@ import (
 		 Message: "Started metrics collection",
 	 }, nil
  }
- 
+  
  func (s *DControllerServer) collectMetrics(siteId string, exporter *metrics.PrometheusExporter, ctx context.Context) {
 	 interval := time.Duration(defaultScanInterval) * time.Second
 	 log.Infof("Starting metrics collection for site %s with interval %v", siteId, interval)
@@ -166,7 +169,7 @@ import (
 		 log.Errorf("ERROR collecting metrics for site %s: %v", siteId, err)
 	 }
  }
- 
+  
  func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	 siteId := req.SiteId
 	 if siteId == "" {
@@ -216,14 +219,14 @@ import (
 		 Message: "Metrics updated",
 	 }, nil
  }
- 
+  
  func (s *DControllerServer) MonitorSiteStatus(ctx context.Context, req *pb.MonitorSiteRequest) (*pb.MonitorSiteResponse, error) {
-	 siteId, nodeId := req.SiteId, req.NodeId
+	 siteId := req.SiteId
 	 
-	 if siteId == "" || nodeId == "" {
+	 if siteId == "" {
 		 return &pb.MonitorSiteResponse{
 			 Success: false,
-			 Message: "Site ID and Node ID are required",
+			 Message: "Site ID is required",
 		 }, nil
 	 }
 	 
@@ -244,25 +247,42 @@ import (
 		 }, nil
 	 }
 	 
+	 // Validate that the site has nodes
+	 nodes, err := s.nodeClient.GetNodesBySite(siteId)
+	 if err != nil {
+		 log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+		 return &pb.MonitorSiteResponse{
+			 Success: false,
+			 Message: fmt.Sprintf("Failed to validate site nodes: %v", err),
+		 }, nil
+	 }
+	 
+	 if len(nodes.Nodes) == 0 {
+		 return &pb.MonitorSiteResponse{
+			 Success: false,
+			 Message: "Site has no associated nodes",
+		 }, nil
+	 }
+	 
 	 monitorCtx, cancelFunc := context.WithCancel(context.Background())
 	 s.monitoringStatus[siteId] = &MonitoringConfig{
-		 NodeId:     nodeId,
+		 NodeId:     "",  
 		 Active:     true,
 		 Context:    monitorCtx,
 		 CancelFunc: cancelFunc,
 		 LastStatus: cenums.SCENARIO_DEFAULT,
 	 }
 	 
-	 go s.monitorSiteStatusWorker(siteId, nodeId)
+	 go s.monitorSiteStatusWorker(siteId, "")
 	 
 	 return &pb.MonitorSiteResponse{
 		 Success: true,
-		 Message: "Started site status monitoring",
+		 Message: fmt.Sprintf("Started status monitoring for site %s with %d nodes", siteId, len(nodes.Nodes)),
 	 }, nil
  }
- 
- func (s *DControllerServer) monitorSiteStatusWorker(siteId, nodeId string) {
-	 log.Infof("Starting status monitoring for site %s with node %s", siteId, nodeId)
+  
+ func (s *DControllerServer) monitorSiteStatusWorker(siteId, _ string) {
+	 log.Infof("Starting status monitoring for site %s", siteId)
 	 
 	 ticker := time.NewTicker(monitorInterval)
 	 defer ticker.Stop()
@@ -283,12 +303,12 @@ import (
 			 log.Infof("Monitoring context for site %s has been cancelled", siteId)
 			 return
 		 case <-ticker.C:
-			 s.checkAndUpdateStatus(siteId, nodeId)
+			 s.checkAndUpdateStatus(siteId, "")
 		 }
 	 }
  }
- 
- func (s *DControllerServer) checkAndUpdateStatus(siteId, nodeId string) {
+  
+ func (s *DControllerServer) checkAndUpdateStatus(siteId, _ string) {
 	 s.mutex.RLock()
 	 provider, providerExists := s.metricsProviders[siteId]
 	 monConfig, monExists := s.monitoringStatus[siteId]
@@ -325,9 +345,20 @@ import (
 	 if currentScenario != lastStatus && s.dnodeClient != nil {
 		 log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
 		 
-		 if err := s.dnodeClient.UpdateNodeScenario(nodeId, currentScenario, profile); err != nil {
-			 log.Errorf("Failed to update node scenario: %v", err)
+		 // Get all nodes for this site using nodeClient
+		 nodes, err := s.nodeClient.GetNodesBySite(siteId)
+		 if err != nil {
+			 log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
 			 return
+		 }
+		 
+		 // Update scenario for all nodes in the site
+		 for _, node := range nodes.Nodes {
+			 if err := s.dnodeClient.UpdateNodeScenario(node.Id, currentScenario, profile); err != nil {
+				 log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+			 } else {
+				 log.Infof("Updated scenario for node %s to %s", node.Id, currentScenario)
+			 }
 		 }
 		 
 		 s.mutex.Lock()
@@ -337,7 +368,7 @@ import (
 		 s.mutex.Unlock()
 	 }
  }
- 
+  
  func (s *DControllerServer) StopMonitoring(ctx context.Context, req *pb.StopMonitoringRequest) (*pb.StopMonitoringResponse, error) {
 	 siteId := req.SiteId
 	 
@@ -361,8 +392,17 @@ import (
 			 profile = siteConfig.Profile
 		 }
 		 
-		 if err := s.dnodeClient.SetDefault(config.NodeId, profile); err != nil {
-			 log.Warnf("Failed to reset node status to default: %v", err)
+		 nodes, err := s.nodeClient.GetNodesBySite(siteId)
+		 if err != nil {
+			 log.Warnf("Failed to get nodes for site %s: %v", siteId, err)
+		 } else {
+			 for _, node := range nodes.Nodes {
+				 if err := s.dnodeClient.SetDefault(node.Id, profile); err != nil {
+					 log.Warnf("Failed to reset node %s status to default: %v", node.Id, err)
+				 } else {
+					 log.Infof("Reset node %s to default status", node.Id)
+				 }
+			 }
 		 }
 	 }
 	 
@@ -373,7 +413,7 @@ import (
 		 Message: "Stopped site status monitoring",
 	 }, nil
  }
- 
+  
  func (s *DControllerServer) StopMetricsCollection(siteId string) bool {
 	 s.mutex.Lock()
 	 defer s.mutex.Unlock()
@@ -389,7 +429,7 @@ import (
 	 
 	 return true
  }
- 
+  
  func (s *DControllerServer) Cleanup() {
 	 s.mutex.Lock()
 	 

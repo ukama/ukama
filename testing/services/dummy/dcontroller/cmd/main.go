@@ -18,9 +18,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events" // Add this line
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
+
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
@@ -72,8 +74,9 @@ import (
 		 serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		 serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		 serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	 
-	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient)
+		 nodeClient := creg.NewNodeClient(serviceConfig.RegistryHost)
+
+	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient,nodeClient)
 	 
 	 if serviceConfig.DNodeURL != "" {
 		 log.Infof("Initializing DNode client with URL: %s", serviceConfig.DNodeURL)
