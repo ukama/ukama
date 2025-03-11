@@ -57,7 +57,7 @@ filter_make_sys() {
                 PATHS+=("services/msgClient")
                 ;;
             "dummy")
-                PATHS+=("dummy/dnode" "dummy/dsubscriber" "dummy/api-gateway" "dummy/dcontroller")
+                PATHS+=("dummy/dnode" "dummy/dsubscriber" "dummy/api-gateway" "dummy/dcontroller" "dummy/dsimfactory")
                 ;;
             "ukamaagent")
                 PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr")
