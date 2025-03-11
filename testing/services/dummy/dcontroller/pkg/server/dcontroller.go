@@ -23,7 +23,7 @@ import (
 
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/metrics"
 )
- 
+  
  type SiteMetricsConfig struct {
 	 ScanInterval int
 	 Profile      cenums.Profile
@@ -32,7 +32,7 @@ import (
 	 Context      context.Context
 	 CancelFunc   context.CancelFunc
  }
- 
+  
  type DControllerServer struct {
 	 pb.UnimplementedMetricsControllerServer
 	 orgName          string
@@ -42,7 +42,7 @@ import (
 	 msgbus           mb.MsgBusServiceClient
 	 baseRoutingKey   msgbus.RoutingKeyBuilder
  }
- 
+  
  func NewControllerServer(orgName string, msgBus mb.MsgBusServiceClient) *DControllerServer {
 	 return &DControllerServer{
 		 orgName:          orgName,
@@ -53,7 +53,7 @@ import (
 		 msgbus:           msgBus,
 	 }
  }
- 
+  
  func (s *DControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteMetricsRequest) (*pb.GetSiteMetricsResponse, error) {
 	 siteId := req.SiteId
 	 if siteId == "" {
@@ -74,90 +74,84 @@ import (
 	 }
  
 	 return &pb.GetSiteMetricsResponse{
-		 Solar: &pb.SolarMetrics{
-			 PowerGeneration: systemMetrics.Solar.PowerGeneration,
-			 EnergyTotal:    systemMetrics.Solar.EnergyTotal,
-			 PanelPower:     systemMetrics.Solar.PanelPower,
-			 PanelCurrent:   systemMetrics.Solar.PanelCurrent,
-			 PanelVoltage:   systemMetrics.Solar.PanelVoltage,
-			 InverterStatus: systemMetrics.Solar.InverterStatus,
+		 Backhaul: &pb.BackhaulMetrics{
+			 Latency: systemMetrics.Backhaul.Latency,
+			 Status:  systemMetrics.Backhaul.Status,
+			 Speed:   systemMetrics.Backhaul.Speed,
 		 },
-		 Battery: &pb.BatteryMetrics{
-			 ChargeStatus: systemMetrics.Battery.Capacity,
-			 Voltage:      systemMetrics.Battery.Voltage,
-			 Health:       map[string]float64{
-				 "Good": 1.0,
-				 "Fair": 0.5,
-				 "Poor": 0.0,
-			 }[systemMetrics.Battery.Health],
-			 Current:      systemMetrics.Battery.Current,
-			 Temperature:  systemMetrics.Battery.Temperature,
+		 Ethernet: &pb.EthernetMetrics{
+			 PortStatus:   systemMetrics.Backhaul.SwitchStatus,
+			 PortSpeed:    systemMetrics.Backhaul.SwitchBandwidth,
 		 },
-		 Network: &pb.NetworkMetrics{
-			 BackhaulLatency:      systemMetrics.Backhaul.Latency,
-			 BackhaulStatus:       systemMetrics.Backhaul.Status,
-			 BackhaulSpeed:        systemMetrics.Backhaul.Speed,
-			 SwitchPortStatus:     systemMetrics.Backhaul.SwitchStatus,
-			 SwitchPortBandwidth:  systemMetrics.Backhaul.SwitchBandwidth,
+		 Power: &pb.PowerMetrics{
+			 BatteryPower:       systemMetrics.Battery.Voltage * systemMetrics.Battery.Current,
+			 SolarPanelVoltage:  systemMetrics.Solar.PanelVoltage,
+			 SolarPanelCurrent:  systemMetrics.Solar.PanelCurrent,
+			 SolarPanelPower:    systemMetrics.Solar.PanelPower,
+			 ChargeControllerStatus:  systemMetrics.Solar.ControllerStatus,
+			 ChargeControllerMode:    float64(systemMetrics.Solar.ControllerModeValue),
+			 ChargeControllerCurrent: systemMetrics.Solar.ControllerCurrent,
+			 ChargeControllerVoltage: systemMetrics.Solar.ControllerVoltage,
 		 },
 	 }, nil
  }
- 
+  
  func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
-	siteId := req.SiteId
-	
-	log.Infof("Starting metrics for site ID: %s", siteId)
-	
-	scanInterval := 3
-	log.Infof("Starting metrics collection goroutine for site %s with scan interval %d seconds", 
-	siteId, scanInterval)
-	
-	profile := cenums.Profile(req.Profile)
-	
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	
-	if config, exists := s.siteConfigs[siteId]; exists && config.Active {
-		return &pb.StartMetricsResponse{
-			Success: false,
-			Message: "Site metrics already active",
-		}, nil
-	}
-	
-	if _, exists := s.metricsProviders[siteId]; !exists {
-		s.metricsProviders[siteId] = metrics.NewMetricsProvider()
-	}
-	
-	s.metricsProviders[siteId].SetProfile(profile)
-	
-	siteCtx, cancelFunc := context.WithCancel(context.Background())
-	
-	exporter := metrics.NewPrometheusExporter(s.metricsProviders[siteId], siteId)
-	
-	s.siteConfigs[siteId] = &SiteMetricsConfig{
-		ScanInterval: scanInterval,
-		Profile:      profile,
-		Active:       true,
-		Exporter:     exporter,
-		Context:      siteCtx,
-		CancelFunc:   cancelFunc,
-	}
-	
-	go func() {
-		scanIntervalDuration := time.Duration(scanInterval) * time.Second
-		log.Infof("Inside goroutine: Starting metrics collection for site %s", siteId)
-		err := exporter.StartMetricsCollection(siteCtx, scanIntervalDuration)
-		if err != nil && err != context.Canceled {
-			log.Infof("ERROR collecting metrics for site %s: %v\n", siteId, err)
-		}
-	}()
-	
-	return &pb.StartMetricsResponse{
-		Success: true,
-		Message: "Started metrics collection",
-	}, nil
-}
-func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
+	 siteId := req.SiteId
+	 
+	 log.Infof("Starting metrics for site ID: %s", siteId)
+	 
+	 scanInterval := 3
+	 log.Infof("Starting metrics collection goroutine for site %s with scan interval %d seconds", 
+	 siteId, scanInterval)
+	 
+	 profile := cenums.Profile(req.Profile)
+	 
+	 s.mutex.Lock()
+	 defer s.mutex.Unlock()
+	 
+	 if config, exists := s.siteConfigs[siteId]; exists && config.Active {
+		 return &pb.StartMetricsResponse{
+			 Success: false,
+			 Message: "Site metrics already active",
+		 }, nil
+	 }
+	 
+	 if _, exists := s.metricsProviders[siteId]; !exists {
+		 s.metricsProviders[siteId] = metrics.NewMetricsProvider()
+	 }
+	 
+	 s.metricsProviders[siteId].SetProfile(profile)
+	 
+	 siteCtx, cancelFunc := context.WithCancel(context.Background())
+	 
+	 exporter := metrics.NewPrometheusExporter(s.metricsProviders[siteId], siteId)
+	 
+	 s.siteConfigs[siteId] = &SiteMetricsConfig{
+		 ScanInterval: scanInterval,
+		 Profile:      profile,
+		 Active:       true,
+		 Exporter:     exporter,
+		 Context:      siteCtx,
+		 CancelFunc:   cancelFunc,
+	 }
+	 
+	 go func() {
+		 scanIntervalDuration := time.Duration(scanInterval) * time.Second
+		 log.Infof("Inside goroutine: Starting metrics collection for site %s", siteId)
+		 err := exporter.StartMetricsCollection(siteCtx, scanIntervalDuration)
+		 if err != nil && err != context.Canceled {
+			 log.Infof("ERROR collecting metrics for site %s: %v\n", siteId, err)
+		 }
+	 }()
+	 
+	 return &pb.StartMetricsResponse{
+		 Success: true,
+		 Message: "Started metrics collection",
+	 }, nil
+ }
+ 
+ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
 	siteId := req.SiteId
 
 	log.Infof("Updating metrics for site ID: %s", siteId)
@@ -195,7 +189,7 @@ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMet
 		log.Infof("Updated profile to %v for site %s", profile, siteId)
 	}
 
-	if req.PortUpdates != nil && len(req.PortUpdates) > 0 {
+	if len(req.PortUpdates) > 0 {
 		for _, portUpdate := range req.PortUpdates {
 			portNumber := int(portUpdate.PortNumber)
 			portStatus := portUpdate.Status
@@ -214,6 +208,7 @@ func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMet
 		Message: "metrics updated",
 	}, nil
 }
+ 
  func (s *DControllerServer) StopMetricsCollection(siteId string) bool {
 	 s.mutex.Lock()
 	 defer s.mutex.Unlock()

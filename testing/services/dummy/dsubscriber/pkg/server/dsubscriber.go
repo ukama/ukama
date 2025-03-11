@@ -20,37 +20,43 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	cenums "github.com/ukama/ukama/testing/common/enums"
+	dspb "github.com/ukama/ukama/testing/services/dummy/dsimfactory/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/pkg/providers"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/utils"
 )
 
 type DsubscriberServer struct {
 	pb.UnimplementedDsubscriberServiceServer
-	orgName         string
-	mu              sync.Mutex
-	cdrcClient      clients.CDRClient
-	routineConfig   pkg.RoutineConfig
-	msgbus          mb.MsgBusServiceClient
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	coroutines      map[string]chan pkg.WMessage
-	iccidWithNode   map[string]string
-	iccidWithStatus map[string]bool
-	nodeClient      creg.NodeClient
+	orgName            string
+	mu                 sync.Mutex
+	cdrcClient         clients.CDRClient
+	routineConfig      pkg.RoutineConfig
+	msgbus             mb.MsgBusServiceClient
+	baseRoutingKey     msgbus.RoutingKeyBuilder
+	coroutines         map[string]chan pkg.WMessage
+	iccidWithNode      map[string]string
+	iccidWithStatus    map[string]bool
+	iccidWithIMSI      map[string]string
+	nodeClient         creg.NodeClient
+	dsimfactoryService providers.DsimfactoryProvider
 }
 
-func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, rc pkg.RoutineConfig, nodeC creg.NodeClient, cdrC clients.CDRClient) *DsubscriberServer {
+func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, rc pkg.RoutineConfig, nodeC creg.NodeClient, cdrC clients.CDRClient, dsimfactoryService providers.DsimfactoryProvider) *DsubscriberServer {
 	return &DsubscriberServer{
-		routineConfig:   rc,
-		cdrcClient:      cdrC,
-		nodeClient:      nodeC,
-		msgbus:          msgBus,
-		orgName:         orgName,
-		iccidWithStatus: make(map[string]bool),
-		iccidWithNode:   make(map[string]string),
-		coroutines:      make(map[string]chan pkg.WMessage),
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		routineConfig:      rc,
+		cdrcClient:         cdrC,
+		nodeClient:         nodeC,
+		msgbus:             msgBus,
+		orgName:            orgName,
+		dsimfactoryService: dsimfactoryService,
+		iccidWithStatus:    make(map[string]bool),
+		iccidWithIMSI:      make(map[string]string),
+		iccidWithNode:      make(map[string]string),
+		coroutines:         make(map[string]chan pkg.WMessage),
+		baseRoutingKey:     msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
 
@@ -88,6 +94,17 @@ func (s *DsubscriberServer) startHandler(iccid string, expiry string) {
 
 	nodeId := nodes.Nodes[randomIndex].Id
 
+	svc, err := s.dsimfactoryService.GetClient()
+	if err != nil {
+		return
+	}
+
+	sim, err := svc.GetByIccid(context.Background(), &dspb.GetByIccidRequest{Iccid: iccid})
+	if err != nil {
+
+		return
+	}
+
 	_, exists := s.coroutines[iccid]
 	if !exists {
 		updateChan := make(chan pkg.WMessage, 10)
@@ -96,7 +113,8 @@ func (s *DsubscriberServer) startHandler(iccid string, expiry string) {
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", iccid, cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
 		s.iccidWithNode[iccid] = nodeId
 		s.iccidWithStatus[iccid] = true
-		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: s.cdrcClient, NodeId: nodeId, Status: true}, s.routineConfig)
+		s.iccidWithIMSI[iccid] = sim.Sim.Imsi
+		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, Imsi: sim.Sim.Imsi, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: s.cdrcClient, NodeId: nodeId, Status: true}, s.routineConfig)
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", iccid)
 	}
@@ -107,6 +125,7 @@ func (s *DsubscriberServer) updateHandler(iccid string, expiry string) {
 
 	updateChan, exists := s.coroutines[iccid]
 	status := s.iccidWithStatus[iccid]
+	imsi := s.iccidWithIMSI[iccid]
 	if !exists {
 		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
 		s.startHandler(iccid, expiry)
@@ -116,6 +135,7 @@ func (s *DsubscriberServer) updateHandler(iccid string, expiry string) {
 			Iccid:  iccid,
 			Expiry: expiry,
 			Status: status,
+			Imsi:   imsi,
 		}
 	}
 }
@@ -132,11 +152,12 @@ func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile
 		return
 	}
 	status := s.iccidWithStatus[iccid]
-
+	imsi := s.iccidWithIMSI[iccid]
 	msg := pkg.WMessage{
 		Iccid:   iccid,
 		Profile: profile,
 		Status:  status,
+		Imsi:    imsi,
 	}
 
 	select {
@@ -161,10 +182,13 @@ func (s *DsubscriberServer) toggleUsageGenerationByNodeId(nodeId string, isOnlin
 				return
 			}
 
+			imsi := s.iccidWithIMSI[iccid]
 			updateChan <- pkg.WMessage{
 				Iccid:  iccid,
 				Status: isOnline,
+				Imsi:   imsi,
 			}
+			break
 		}
 	}
 }
@@ -180,9 +204,10 @@ func (s *DsubscriberServer) toggleUsageGenerationByIccid(iccid string, isActive 
 		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
 		return
 	}
-
+	imsi := s.iccidWithIMSI[iccid]
 	updateChan <- pkg.WMessage{
 		Iccid:  iccid,
 		Status: isActive,
+		Imsi:   imsi,
 	}
 }

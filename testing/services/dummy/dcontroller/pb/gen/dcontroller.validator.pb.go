@@ -19,30 +19,30 @@ func (this *GetSiteMetricsRequest) Validate() error {
 	return nil
 }
 func (this *GetSiteMetricsResponse) Validate() error {
-	if this.Solar != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Solar); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Solar", err)
+	if this.Backhaul != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Backhaul); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Backhaul", err)
 		}
 	}
-	if this.Battery != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Battery); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Battery", err)
+	if this.Ethernet != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Ethernet); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Ethernet", err)
 		}
 	}
-	if this.Network != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+	if this.Power != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Power); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Power", err)
 		}
 	}
 	return nil
 }
-func (this *SolarMetrics) Validate() error {
+func (this *BackhaulMetrics) Validate() error {
 	return nil
 }
-func (this *BatteryMetrics) Validate() error {
+func (this *EthernetMetrics) Validate() error {
 	return nil
 }
-func (this *NetworkMetrics) Validate() error {
+func (this *PowerMetrics) Validate() error {
 	return nil
 }
 func (this *StartMetricsRequest) Validate() error {

@@ -30,6 +30,3 @@ gen:
 
 clean:
 	rm -rf bin
-
-server:
-	go run server/main.go

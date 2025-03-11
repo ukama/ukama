@@ -34,9 +34,9 @@ func NewOperatorAgentAdapter(operatorAgentHost string, debug bool) (*OperatorAge
 	}, nil
 }
 
-func (o *OperatorAgentAdaper) BindSim(ctx context.Context, iccid string) (any, error) {
+func (o *OperatorAgentAdaper) BindSim(ctx context.Context, req client.AgentRequestData) (any, error) {
 	// think of how to use ctx with restclient
-	return o.client.BindSim(iccid)
+	return o.client.BindSim(req.Iccid)
 }
 
 func (o *OperatorAgentAdaper) GetSim(ctx context.Context, iccid string) (any, error) {
