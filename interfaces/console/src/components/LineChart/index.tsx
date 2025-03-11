@@ -51,6 +51,7 @@ const LineChart = ({
         type: 'areaspline',
         events: {
           load: function () {
+            console.log(topic);
             PubSub.subscribe(topic, (_, data) => {
               const chart: any =
                 Highcharts.charts.length > 0
