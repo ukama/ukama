@@ -108,16 +108,14 @@ const NodeStatItem = ({
 
   useEffect(() => {
     if (id) {
-      const token = PubSub.subscribe(id, (_, data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const sum = data.reduce((acc, val) => acc + val[1], 0);
-          const avg = sum / data.length;
-          setV(`${parseFloat(Number(avg).toFixed(2))}`);
+      PubSub.subscribe(id, (_, data) => {
+        if (data.length > 0) {
+          setV(`${parseFloat(Number(data[1]).toFixed(2))}`);
         }
       });
-      return () => {
-        PubSub.unsubscribe(token);
-      };
+      // return () => {
+      //   PubSub.unsubscribe(token);
+      // };
     }
   }, [id, unit]);
 
