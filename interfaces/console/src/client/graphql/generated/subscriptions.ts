@@ -47,6 +47,7 @@ export type GetMetricsStatInput = {
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Stats_Type;
   userId?: InputMaybe<Scalars['String']['input']>;
+  withSubscription?: Scalars['Boolean']['input'];
 };
 
 export type LatestMetricSubRes = {
@@ -167,6 +168,7 @@ export type QueryGetNotificationsArgs = {
 };
 
 export enum Stats_Type {
+  AllNode = 'ALL_NODE',
   Home = 'HOME',
   Network = 'NETWORK',
   Overview = 'OVERVIEW',
@@ -182,15 +184,29 @@ export type SubMetricByTabInput = {
   userId: Scalars['String']['input'];
 };
 
+export type SubMetricsStatInput = {
+  from: Scalars['Float']['input'];
+  nodeId: Scalars['String']['input'];
+  orgName: Scalars['String']['input'];
+  type: Stats_Type;
+  userId: Scalars['String']['input'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   getMetricByTabSub: LatestMetricSubRes;
+  getMetricStatSub: LatestMetricSubRes;
   notificationSubscription: NotificationsResDto;
 };
 
 
 export type SubscriptionGetMetricByTabSubArgs = {
   data: SubMetricByTabInput;
+};
+
+
+export type SubscriptionGetMetricStatSubArgs = {
+  data: SubMetricsStatInput;
 };
 
 
@@ -244,12 +260,19 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
 
 export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
-export type GetMetricsStatQueryVariables = Exact<{
+export type GetMetricsStatQueryQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', msg: string, nodeId: string, success: boolean, type: string, value: number }> } };
+export type GetMetricsStatQueryQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
+
+export type MySubscriptionSubscriptionVariables = Exact<{
+  data: SubMetricsStatInput;
+}>;
+
+
+export type MySubscriptionSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -456,13 +479,13 @@ export function useGetMetricByTabSubSubscription(baseOptions: Apollo.Subscriptio
       }
 export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
 export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
-export const GetMetricsStatDocument = gql`
-    query GetMetricsStat($data: GetMetricsStatInput!) {
+export const GetMetricsStatQueryDocument = gql`
+    query getMetricsStatQuery($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
     metrics {
+      success
       msg
       nodeId
-      success
       type
       value
     }
@@ -471,34 +494,68 @@ export const GetMetricsStatDocument = gql`
     `;
 
 /**
- * __useGetMetricsStatQuery__
+ * __useGetMetricsStatQueryQuery__
  *
- * To run a query within a React component, call `useGetMetricsStatQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricsStatQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetMetricsStatQueryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsStatQueryQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetMetricsStatQuery({
+ * const { data, loading, error } = useGetMetricsStatQueryQuery({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetMetricsStatQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables> & ({ variables: GetMetricsStatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetMetricsStatQueryQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables> & ({ variables: GetMetricsStatQueryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+        return Apollo.useQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
       }
-export function useGetMetricsStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
+export function useGetMetricsStatQueryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+          return Apollo.useLazyQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
         }
-export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
+export function useGetMetricsStatQuerySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+          return Apollo.useSuspenseQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
         }
-export type GetMetricsStatQueryHookResult = ReturnType<typeof useGetMetricsStatQuery>;
-export type GetMetricsStatLazyQueryHookResult = ReturnType<typeof useGetMetricsStatLazyQuery>;
-export type GetMetricsStatSuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatSuspenseQuery>;
-export type GetMetricsStatQueryResult = Apollo.QueryResult<GetMetricsStatQuery, GetMetricsStatQueryVariables>;
+export type GetMetricsStatQueryQueryHookResult = ReturnType<typeof useGetMetricsStatQueryQuery>;
+export type GetMetricsStatQueryLazyQueryHookResult = ReturnType<typeof useGetMetricsStatQueryLazyQuery>;
+export type GetMetricsStatQuerySuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatQuerySuspenseQuery>;
+export type GetMetricsStatQueryQueryResult = Apollo.QueryResult<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>;
+export const MySubscriptionDocument = gql`
+    subscription MySubscription($data: SubMetricsStatInput!) {
+  getMetricStatSub(data: $data) {
+    msg
+    nodeId
+    success
+    type
+    value
+  }
+}
+    `;
+
+/**
+ * __useMySubscriptionSubscription__
+ *
+ * To run a query within a React component, call `useMySubscriptionSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useMySubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMySubscriptionSubscription({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useMySubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<MySubscriptionSubscription, MySubscriptionSubscriptionVariables> & ({ variables: MySubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<MySubscriptionSubscription, MySubscriptionSubscriptionVariables>(MySubscriptionDocument, options);
+      }
+export type MySubscriptionSubscriptionHookResult = ReturnType<typeof useMySubscriptionSubscription>;
+export type MySubscriptionSubscriptionResult = Apollo.SubscriptionResult<MySubscriptionSubscription>;

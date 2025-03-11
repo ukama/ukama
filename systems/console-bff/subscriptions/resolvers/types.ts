@@ -128,8 +128,29 @@ export class GetMetricsStatInput {
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ defaultValue: 1 })
+  @Field({ defaultValue: 30 })
   step: number;
+
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
+}
+
+@InputType()
+export class SubMetricsStatInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
 }
 
 @InputType()
