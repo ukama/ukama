@@ -67,3 +67,15 @@ func (this *UpdateMetricsResponse) Validate() error {
 func (this *PortUpdate) Validate() error {
 	return nil
 }
+func (this *MonitorSiteRequest) Validate() error {
+	return nil
+}
+func (this *MonitorSiteResponse) Validate() error {
+	return nil
+}
+func (this *StopMonitoringRequest) Validate() error {
+	return nil
+}
+func (this *StopMonitoringResponse) Validate() error {
+	return nil
+}
