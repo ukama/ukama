@@ -33,7 +33,7 @@ const LineChart = ({
   const getOptions = (topic: string, title: string, initData: any) => {
     const data: any = [];
     if (Array.isArray(initData)) {
-      initData = initData.forEach((point: any) => {
+      initData.forEach((point: any) => {
         let y = point[1];
         if (point.length > 0 && y === 0) {
           y = null;
