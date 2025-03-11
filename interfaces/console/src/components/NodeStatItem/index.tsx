@@ -112,9 +112,9 @@ const NodeStatItem = ({
           setV(data[1]);
         }
       });
-      // return () => {
-      //   PubSub.unsubscribe(token);
-      // };
+      return () => {
+        PubSub.unsubscribe(token);
+      };
     }
   }, [id, unit]);
 
