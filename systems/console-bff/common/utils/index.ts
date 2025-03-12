@@ -335,10 +335,12 @@ const eventKeyToAction = (
 };
 
 export const wsUrlResolver = (url: string): string => {
-  if (url?.includes("https://")) {
-    url = url.replace("https://", "wss://");
+  if (url?.startsWith("wss://") || url?.startsWith("ws://")) {
+    return url;
+  } else if (url?.includes("https://")) {
+    return url.replace("https://", "wss://");
   } else if (url?.startsWith("http://")) {
-    url = url.replace("http://", "ws://");
+    return url.replace("http://", "ws://");
   }
   return url;
 };

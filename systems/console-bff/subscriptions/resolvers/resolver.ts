@@ -117,11 +117,10 @@ class SubscriptionsResolvers {
 
         worker.on("message", (_data: any) => {
           if (!_data.isError) {
-            const res = JSON.parse(_data.data);
-            const result = res.data.result[0];
-            if (result && result.metric && result.value.length > 0) {
-              try {
-                const res = JSON.parse(_data.data);
+            try {
+              const res = JSON.parse(_data.data);
+              const result = res.data.result[0];
+              if (result && result.metric && result.value.length > 0) {
                 const result = res.data.result[0];
                 if (result && result.metric && result.value.length > 0) {
                   pubSub.publish(workerData.topic, {
@@ -135,9 +134,9 @@ class SubscriptionsResolvers {
                     ],
                   });
                 }
-              } catch (error) {
-                logger.error(`Failed to parse WebSocket message: ${error}`);
               }
+            } catch (error) {
+              logger.error(`Failed to parse WebSocket message: ${error}`);
             }
           }
         });
