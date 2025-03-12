@@ -169,58 +169,68 @@ import (
 		 log.Errorf("ERROR collecting metrics for site %s: %v", siteId, err)
 	 }
  }
-  
  func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
-	 siteId := req.SiteId
-	 if siteId == "" {
-		 return &pb.UpdateMetricsResponse{
-			 Success: false,
-			 Message: "Site ID is required",
-		 }, nil
-	 }
- 
-	 s.mutex.Lock()
-	 defer s.mutex.Unlock()
- 
-	 config, exists := s.siteConfigs[siteId]
-	 if !exists || !config.Active {
-		 return &pb.UpdateMetricsResponse{
-			 Success: false,
-			 Message: "Site metrics not active",
-		 }, nil
-	 }
- 
-	 provider, exists := s.metricsProviders[siteId]
-	 if !exists {
-		 return &pb.UpdateMetricsResponse{
-			 Success: false,
-			 Message: "Metrics provider not found",
-		 }, nil
-	 }
- 
-	 if req.Profile > 0 {
-		 profile := cenums.Profile(req.Profile)
-		 config.Profile = profile
-		 provider.SetProfile(profile)
-		 log.Infof("Updated profile to %v for site %s", profile, siteId)
-	 }
- 
-	 for _, portUpdate := range req.PortUpdates {
-		 portNumber := int(portUpdate.PortNumber)
-		 if err := provider.SetPortStatus(portNumber, portUpdate.Status); err != nil {
-			 log.Warnf("Error updating port %d status: %v", portNumber, err)
-		 } else {
-			 log.Infof("Updated port %d status to %v for site %s", portNumber, portUpdate.Status, siteId)
-		 }
-	 }
- 
-	 return &pb.UpdateMetricsResponse{
-		 Success: true,
-		 Message: "Metrics updated",
-	 }, nil
- }
+	siteId := req.SiteId
+	if siteId == "" {
+		return &pb.UpdateMetricsResponse{
+			Success: false,
+			Message: "Site ID is required",
+		}, nil
+	}
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	config, exists := s.siteConfigs[siteId]
+	if !exists || !config.Active {
+		return &pb.UpdateMetricsResponse{
+			Success: false,
+			Message: "Site metrics not active",
+		}, nil
+	}
+
+	provider, exists := s.metricsProviders[siteId]
+	if !exists {
+		return &pb.UpdateMetricsResponse{
+			Success: false,
+			Message: "Metrics provider not found",
+		}, nil
+	}
+
+	if req.Profile > 0 {
+		profile := cenums.Profile(req.Profile)
+		config.Profile = profile
+		provider.SetProfile(profile)
+		log.Infof("Updated profile to %v for site %s", profile, siteId)
+	}
+
+	shouldCheckStatus := false
+	
+	for _, portUpdate := range req.PortUpdates {
+		portNumber := int(portUpdate.PortNumber)
+		if err := provider.SetPortStatus(portNumber, portUpdate.Status); err != nil {
+			log.Warnf("Error updating port %d status: %v", portNumber, err)
+		} else {
+			log.Infof("Updated port %d status to %v for site %s", portNumber, portUpdate.Status, siteId)
+			shouldCheckStatus = true
+		}
+	}
+	if shouldCheckStatus {
+		monConfig, monExists := s.monitoringStatus[siteId]
+		if monExists && monConfig.Active {
+			s.mutex.Unlock()
+			s.checkAndUpdateStatus(siteId, "")
+			s.mutex.Lock()
+		}
+	}
+
+	return &pb.UpdateMetricsResponse{
+		Success: true,
+		Message: "Metrics updated",
+	}, nil
+}
   
- func (s *DControllerServer) MonitorSiteStatus(ctx context.Context, req *pb.MonitorSiteRequest) (*pb.MonitorSiteResponse, error) {
+ func (s *DControllerServer) MonitorSite(ctx context.Context, req *pb.MonitorSiteRequest) (*pb.MonitorSiteResponse, error) {
 	 siteId := req.SiteId
 	 
 	 if siteId == "" {
@@ -270,7 +280,7 @@ import (
 		 Active:     true,
 		 Context:    monitorCtx,
 		 CancelFunc: cancelFunc,
-		 LastStatus: cenums.SCENARIO_DEFAULT,
+		 LastStatus: cenums.SCENARIO_BACKHAUL_DOWN,
 	 }
 	 
 	 go s.monitorSiteStatusWorker(siteId, "")
@@ -309,66 +319,69 @@ import (
  }
   
  func (s *DControllerServer) checkAndUpdateStatus(siteId, _ string) {
-	 s.mutex.RLock()
-	 provider, providerExists := s.metricsProviders[siteId]
-	 monConfig, monExists := s.monitoringStatus[siteId]
-	 siteConfig, siteExists := s.siteConfigs[siteId]
-	 
-	 if !providerExists || !monExists || !siteExists {
-		 s.mutex.RUnlock()
-		 log.Warnf("Missing configuration for site %s", siteId)
-		 return
-	 }
-	 
-	 profile := siteConfig.Profile
-	 lastStatus := monConfig.LastStatus
-	 s.mutex.RUnlock()
-	 
-	 metrics, err := provider.GetMetrics(siteId)
-	 if err != nil {
-		 log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
-		 return
-	 }
-	 
-	 var currentScenario cenums.SCENARIOS
-	 
-	 powerStatus, err := provider.GetPowerStatus()
-	 switch {
-	 case err != nil || !powerStatus:
-		 currentScenario = cenums.SCENARIO_NODE_OFF
-	 case metrics.Backhaul.Status < 0.5:
-		 currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
-	 default:
-		 currentScenario = cenums.SCENARIO_DEFAULT
-	 }
-	 
-	 if currentScenario != lastStatus && s.dnodeClient != nil {
-		 log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
-		 
-		 // Get all nodes for this site using nodeClient
-		 nodes, err := s.nodeClient.GetNodesBySite(siteId)
-		 if err != nil {
-			 log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
-			 return
-		 }
-		 
-		 // Update scenario for all nodes in the site
-		 for _, node := range nodes.Nodes {
-			 if err := s.dnodeClient.UpdateNodeScenario(node.Id, currentScenario, profile); err != nil {
-				 log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
-			 } else {
-				 log.Infof("Updated scenario for node %s to %s", node.Id, currentScenario)
-			 }
-		 }
-		 
-		 s.mutex.Lock()
-		 if config, exists := s.monitoringStatus[siteId]; exists {
-			 config.LastStatus = currentScenario
-		 }
-		 s.mutex.Unlock()
-	 }
- }
-  
+	s.mutex.RLock()
+	provider, providerExists := s.metricsProviders[siteId]
+	monConfig, monExists := s.monitoringStatus[siteId]
+	_, siteExists := s.siteConfigs[siteId]
+	
+	if !providerExists || !monExists || !siteExists {
+		s.mutex.RUnlock()
+		log.Warnf("Missing configuration for site %s", siteId)
+		return
+	}
+	
+	lastStatus := monConfig.LastStatus
+	s.mutex.RUnlock()
+	
+	metrics, err := provider.GetMetrics(siteId)
+	if err != nil {
+		log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
+		return
+	}
+	
+	var currentScenario cenums.SCENARIOS
+	
+	powerStatus, err := provider.GetPowerStatus()
+	switch {
+	case err != nil || !powerStatus:
+		currentScenario = cenums.SCENARIO_NODE_OFF
+	case metrics.Backhaul.Status < 0.5 || metrics.Backhaul.Speed <= 0:
+		currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
+		log.Infof("Backhaul down detected for site %s: status=%.1f, speed=%.1f", 
+			siteId, metrics.Backhaul.Status, metrics.Backhaul.Speed)
+
+	case metrics.Battery.Power <= 0:
+		currentScenario = cenums.SCENARIO_NODE_OFF
+		log.Infof("Battery down detected for site %s: voltage=%.1f, current=%.1f",
+			siteId, metrics.Battery.Voltage, metrics.Battery.Current)
+	default:
+		currentScenario = cenums.SCENARIO_DEFAULT
+	}
+	
+	if currentScenario != lastStatus && s.dnodeClient != nil {
+		log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
+		
+		nodes, err := s.nodeClient.GetNodesBySite(siteId)
+		if err != nil {
+			log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+			return
+		}
+		
+		for _, node := range nodes.Nodes {
+			if err := s.dnodeClient.UpdateNodeScenario(node.Id, currentScenario); err != nil {
+				log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+			} else {
+				log.Infof("Updated scenario for node %s to %s", node.Id, currentScenario)
+			}
+		}
+		
+		s.mutex.Lock()
+		if config, exists := s.monitoringStatus[siteId]; exists {
+			config.LastStatus = currentScenario
+		}
+		s.mutex.Unlock()
+	}
+}
  func (s *DControllerServer) StopMonitoring(ctx context.Context, req *pb.StopMonitoringRequest) (*pb.StopMonitoringResponse, error) {
 	 siteId := req.SiteId
 	 
@@ -386,18 +399,13 @@ import (
 	 config.CancelFunc()
 	 config.Active = false
 	 
-	 if s.dnodeClient != nil {
-		 profile := cenums.PROFILE_NORMAL
-		 if siteConfig, exists := s.siteConfigs[siteId]; exists {
-			 profile = siteConfig.Profile
-		 }
-		 
+	 if s.dnodeClient != nil{
 		 nodes, err := s.nodeClient.GetNodesBySite(siteId)
 		 if err != nil {
 			 log.Warnf("Failed to get nodes for site %s: %v", siteId, err)
 		 } else {
 			 for _, node := range nodes.Nodes {
-				 if err := s.dnodeClient.SetDefault(node.Id, profile); err != nil {
+				 if err := s.dnodeClient.SetDefault(node.Id); err != nil {
 					 log.Warnf("Failed to reset node %s status to default: %v", node.Id, err)
 				 } else {
 					 log.Infof("Reset node %s to default status", node.Id)
@@ -414,21 +422,7 @@ import (
 	 }, nil
  }
   
- func (s *DControllerServer) StopMetricsCollection(siteId string) bool {
-	 s.mutex.Lock()
-	 defer s.mutex.Unlock()
-	 
-	 config, exists := s.siteConfigs[siteId]
-	 if !exists || !config.Active {
-		 return false
-	 }
-	 
-	 config.CancelFunc()
-	 config.Exporter.Shutdown()
-	 config.Active = false
-	 
-	 return true
- }
+
   
  func (s *DControllerServer) Cleanup() {
 	 s.mutex.Lock()

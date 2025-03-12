@@ -36,13 +36,12 @@ import (
 	 }
  }
  
- func (c *DNodeClient) UpdateNodeScenario(nodeId string, scenario cenums.SCENARIOS, profile cenums.Profile) error {
+ func (c *DNodeClient) UpdateNodeScenario(nodeId string, scenario cenums.SCENARIOS) error {
 	 updateURL := fmt.Sprintf("%s/update", c.baseURL)
  
 	 params := url.Values{}
 	 params.Add("nodeid", nodeId)
 	 params.Add("scenario", string(scenario))
-	 params.Add("profile", string(profile))
  
 	 requestURL := fmt.Sprintf("%s?%s", updateURL, params.Encode())
  
@@ -63,20 +62,20 @@ import (
 		 return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	 }
  
-	 log.Infof("Successfully updated node %s scenario to %s with profile %s", nodeId, scenario, string(profile))
+	 log.Infof("Successfully updated node %s scenario to %s with profile %s", nodeId, scenario)
 	 return nil
  }
  
- func (c *DNodeClient) SetBackhaulDown(nodeId string, profile cenums.Profile) error {
-	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_BACKHAUL_DOWN, profile)
+ func (c *DNodeClient) SetBackhaulDown(nodeId string) error {
+	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_BACKHAUL_DOWN)
  }
  
  // SetNodeOff notifies the DNode that the node is off
  func (c *DNodeClient) SetNodeOff(nodeId string, profile cenums.Profile) error {
-	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_NODE_OFF, profile)
+	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_NODE_OFF)
  }
  
  // SetDefault sets the node back to the default scenario
- func (c *DNodeClient) SetDefault(nodeId string, profile cenums.Profile) error {
-	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_DEFAULT, profile)
+ func (c *DNodeClient) SetDefault(nodeId string) error {
+	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_DEFAULT)
  }

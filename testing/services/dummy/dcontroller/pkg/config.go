@@ -24,7 +24,7 @@ import (
 	 OrgName          string
 	 MsgClient        *uconf.MsgClient `default:"{}"` 
 	 Port             string           `default:"2112"`
-	 DNodeURL         string           `default:"http://localhost:8085"` 
+	 DNodeURL         string           `default:"http://dnode:8085"` 
 	 RegistryHost string `default:"api-gateway-registry:8080"`
 
  }
@@ -39,6 +39,7 @@ import (
 			 ListenerRoutes: []string{
 				 evt.EventRoutingKey[evt.EventSiteCreate],
 				 "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish",
+				 evt.EventRoutingKey[evt.EventNodeAssign],
 			 },
 		 },
 	 }

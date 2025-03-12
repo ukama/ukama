@@ -30,14 +30,13 @@ import (
  type DControllerEventServer struct {
 	 orgName          string
 	 server           *DControllerServer
-	 controllerClient pb.MetricsControllerClient 
 	 epb.UnimplementedEventNotificationServiceServer
  }
   
  func NewEventServer(orgName string, server *DControllerServer) *DControllerEventServer {
 	 return &DControllerEventServer{
 		 orgName:        orgName,
-		 server:         server,
+		 server:         server,		 
 	 }
  }
   
@@ -69,6 +68,18 @@ import (
 			 log.Errorf("Error handling toggle switch event: %v", err)
 			 return nil, err
 		 }
+
+	 case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
+		c := evt.EventToEventConfig[evt.EventNodeAssign]
+		msg ,err :=epb.UnmarshalEventRegistryNodeAssign(e.Msg,c.Name)
+		if err != nil {
+			return nil, err
+		}
+		 err = n.handleSiteMonitoring(msg)
+		 if err != nil {
+			 log.Errorf("Error handling toggle switch event: %v", err)
+			 return nil, err
+		 }	
 		 
 	 default:
 		 log.Errorf("No handler routing key %s", e.RoutingKey)
@@ -77,31 +88,44 @@ import (
 	 return &epb.EventResponse{}, nil
  }
   
- func (n *DControllerEventServer) handleSiteCreateEvent(msg *epb.EventAddSite, name string) error {
-	 log.Infof("Handling site create event for site ID: %s", msg.SiteId)
- 
-	 req := &pb.StartMetricsRequest{
-		 SiteId:  msg.SiteId,
-		 Profile: pb.Profile_PROFILE_NORMAL, 
-	 }
-	 
-	 ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	 defer cancel()
-	 
-	 resp, err := n.controllerClient.StartMetrics(ctx, req)
-	 if err != nil {
-		 log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
-		 return err
-	 }
-	 
-	 if !resp.Success {
-		 log.Warnf("StartMetrics returned unsuccessful for site %s", msg.SiteId)
-	 } else {
-		 log.Infof("Successfully started metrics for site %s", msg.SiteId)
-	 }
-	 
-	 return nil
+ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventRegistryNodeAssign) error {
+	 log.Infof("Handling site monitoring event")
+	 go func() {
+		req := &pb.MonitorSiteRequest{SiteId: msg.Site}
+		if resp, err := n.server.MonitorSite(context.Background(), req); err == nil {
+			log.Infof("Automatically started monitoring: %s", resp.Message)
+		} else {
+			log.Warnf("Failed to start automatic monitoring: %v", err)
+		}
+	}()
+	return nil
  }
+ func (n *DControllerEventServer) handleSiteCreateEvent(msg *epb.EventAddSite, name string) error {
+    log.Infof("Handling site create event for site ID: %s", msg.SiteId)
+
+    req := &pb.StartMetricsRequest{
+        SiteId:  msg.SiteId,
+        Profile: pb.Profile_PROFILE_NORMAL,
+    }
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    resp, err := n.server.StartMetrics(ctx, req)
+    if err != nil {
+        log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
+        return err
+    }
+
+    if !resp.Success {
+        log.Warnf("StartMetrics returned unsuccessful for site %s", msg.SiteId)
+    } else {
+        log.Infof("Successfully started metrics for site %s", msg.SiteId)
+	
+    }
+
+    return nil
+}
  
  func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeederMessage) error {
 	 log.Infof("Handling toggle switch event: target=%s, path=%s", msg.Target, msg.Path)
