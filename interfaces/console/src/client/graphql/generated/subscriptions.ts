@@ -40,7 +40,6 @@ export type GetMetricByTabInput = {
 
 export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
-  networkId?: InputMaybe<Scalars['String']['input']>;
   nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
   step?: Scalars['Float']['input'];

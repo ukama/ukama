@@ -11,7 +11,7 @@ import { open } from "lmdb";
 import { isMainThread, parentPort, workerData } from "worker_threads";
 import WebSocket from "ws";
 
-const MAX_OCCURRENCE = 40;
+const MAX_OCCURRENCE = 60;
 
 const openStore = () => {
   const path = process.env.STORAGE_KEY;

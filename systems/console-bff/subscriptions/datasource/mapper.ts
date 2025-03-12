@@ -57,7 +57,7 @@ export const parseLatestMetricRes = (
 export const parseMetricRes = (
   res: any,
   type: string,
-  args: GetMetricsStatInput
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   const { result } = res.data.data;
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;

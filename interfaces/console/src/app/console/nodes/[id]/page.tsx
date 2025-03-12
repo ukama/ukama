@@ -200,7 +200,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
             userId: user.id,
             step: STAT_STEP_29,
             orgName: user.orgName,
-            networkId: network.id,
             withSubscription: true,
             type: Stats_Type.AllNode,
           },

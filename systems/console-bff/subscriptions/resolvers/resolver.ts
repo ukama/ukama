@@ -16,7 +16,6 @@ import {
 } from "../../common/utils";
 import {
   getMetricRange,
-  getNodeRangeMetric,
   getNotifications,
 } from "../datasource/subscriptions-api";
 import { pubSub } from "./pubsub";
@@ -25,7 +24,6 @@ import {
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
-  MetricStateRes,
   MetricsRes,
   MetricsStateRes,
   NotificationsRes,
@@ -66,7 +64,7 @@ class SubscriptionsResolvers {
 
     const wsUrl = wsUrlResolver(baseURL);
 
-    const { type, from, userId, withSubscription } = data;
+    const { type, from, userId, withSubscription, nodeId } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
     const metricsKey = getGraphsKeyByType(type);
@@ -105,47 +103,42 @@ class SubscriptionsResolvers {
     }
 
     if (withSubscription && metrics.metrics.length > 0) {
-      metrics.metrics.forEach((metric: MetricStateRes) => {
-        const workerData = {
-          topic: `stat-sub-${userId}/${type}/${from}`,
-          url: `${wsUrl}/v1/live/metrics?interval=${data.step}&metric=${metric.type}&node=${metric.nodeId}`,
-        };
-
-        const worker = new Worker(WS_THREAD, {
-          workerData,
-        });
-
-        worker.on("message", (_data: any) => {
-          if (!_data.isError) {
-            try {
-              const res = JSON.parse(_data.data);
-              const result = res.data.result[0];
-              if (result && result.metric && result.value.length > 0) {
-                const result = res.data.result[0];
-                if (result && result.metric && result.value.length > 0) {
-                  pubSub.publish(workerData.topic, {
-                    success: true,
-                    msg: "success",
-                    type: metric.type,
-                    nodeId: metric.nodeId,
-                    value: [
-                      Math.floor(result.value[0]) * 1000,
-                      parseFloat(Number(result.value[1] || 0).toFixed(2)),
-                    ],
-                  });
-                }
-              }
-            } catch (error) {
-              logger.error(`Failed to parse WebSocket message: ${error}`);
+      const workerData = {
+        topic: `${userId}-${type}-${from}`,
+        url: `${wsUrl}/v1/live/metrics?interval=${
+          data.step
+        }&metric=${metricsKey.join(",")}&node=${nodeId}`,
+      };
+      const worker = new Worker(WS_THREAD, {
+        workerData,
+      });
+      worker.on("message", (_data: any) => {
+        if (!_data.isError) {
+          try {
+            const res = JSON.parse(_data.data);
+            const result = res.data.result[0];
+            if (result && result.metric && result.value.length > 0) {
+              pubSub.publish(workerData.topic, {
+                success: true,
+                msg: "success",
+                type: res.Name,
+                nodeId: data.nodeId,
+                value: [
+                  Math.floor(result.value[0]) * 1000,
+                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
+                ],
+              });
             }
+          } catch (error) {
+            logger.error(`Failed to parse WebSocket message: ${error}`);
           }
-        });
-        worker.on("exit", async (code: any) => {
-          await store.close();
-          logger.info(
-            `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
-          );
-        });
+        }
+      });
+      worker.on("exit", async (code: any) => {
+        await store.close();
+        logger.info(
+          `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
+        );
       });
     }
 
@@ -154,7 +147,7 @@ class SubscriptionsResolvers {
 
   @Subscription(() => LatestMetricSubRes, {
     topics: ({ args }) => {
-      return `stat-sub-${args.data.userId}/${args.data.type}/${args.data.from}`;
+      return `${args.data.userId}-${args.data.type}-${args.data.from}`;
     },
   })
   async getMetricStatSub(
@@ -162,11 +155,7 @@ class SubscriptionsResolvers {
     @Arg("data") data: SubMetricsStatInput
   ): Promise<LatestMetricSubRes> {
     const store = openStore();
-    await addInStore(
-      store,
-      `stat-sub-${data.userId}/${payload.type}/${data.from}`,
-      0
-    );
+    await addInStore(store, `${data.userId}-${payload.type}-${data.from}`, 0);
     await store.close();
     return payload;
   }
@@ -180,47 +169,46 @@ class SubscriptionsResolvers {
       store
     );
     if (status !== 200) {
-      logger.error(`Error getting base URL for notification: ${baseURL}`);
-      return { notifications: [] };
+      logger.error(`Error getting base URL for metrics stat: ${baseURL}`);
+      return { metrics: [] };
     }
 
     const wsUrl = wsUrlResolver(baseURL);
 
-    const { type, from, nodeId, userId, withSubscription } = data;
+    const { type, from, userId, withSubscription, nodeId } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
-    const metricsKey: string[] = getGraphsKeyByType(type);
-    const metrics: MetricsRes = { metrics: [] };
-    if (metricsKey.length > 0) {
-      for (let i = 0; i < metricsKey.length; i++) {
-        const res = await getNodeRangeMetric(baseURL, {
-          ...data,
-          type: metricsKey[i],
-        });
-        metrics.metrics.push(res);
-      }
-    }
-    if (withSubscription && metrics.metrics.length > 0) {
-      let subKey = "";
-      metrics.metrics.forEach((metric: MetricRes) => {
-        if (metric.values.length > 2) subKey = subKey + metric.type + ",";
-      });
-      subKey.split(",").forEach((key: string) => {
-        if (key === "") return;
-        const workerData = {
-          topic: `${userId}/${key}/${from}`,
-          url: `${wsUrl}/v1/live/metrics?interval=${data.step}&metric=${key}&node=${nodeId}`,
-        };
-        const worker = new Worker(WS_THREAD, {
-          workerData,
-        });
 
-        worker.on("message", (_data: any) => {
-          if (!_data.isError) {
+    const metricsKey = getGraphsKeyByType(type);
+    const metrics: MetricsRes = { metrics: [] };
+
+    if (metricsKey.length > 0) {
+      const metricPromises = metricsKey.map(
+        async key => await getMetricRange(baseURL, key, { ...data })
+      );
+
+      metrics.metrics = await Promise.all(metricPromises);
+    }
+
+    if (withSubscription && metrics.metrics.length > 0) {
+      const workerData = {
+        topic: `${userId}/${type}/${from}`,
+        url: `${wsUrl}/v1/live/metrics?interval=${
+          data.step
+        }&metric=${metricsKey.join(",")}&node=${nodeId}`,
+      };
+
+      const worker = new Worker(WS_THREAD, {
+        workerData,
+      });
+
+      worker.on("message", (_data: any) => {
+        if (!_data.isError) {
+          try {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
               pubSub.publish(workerData.topic, {
-                type: key,
+                type: res.Name,
                 success: true,
                 msg: "success",
                 nodeId: nodeId,
@@ -230,16 +218,19 @@ class SubscriptionsResolvers {
                 ],
               });
             }
+          } catch (error) {
+            logger.error(`Failed to parse WebSocket message: ${error}`);
           }
-        });
-        worker.on("exit", async (code: any) => {
-          await store.close();
-          logger.info(
-            `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
-          );
-        });
+        }
+      });
+      worker.on("exit", async (code: any) => {
+        await store.close();
+        logger.info(
+          `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
+        );
       });
     }
+
     return metrics;
   }
 
