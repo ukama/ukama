@@ -12,6 +12,7 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
+  wsUrlResolver,
 } from "../../common/utils";
 import {
   getMetricRange,
@@ -63,12 +64,7 @@ class SubscriptionsResolvers {
       return { metrics: [] };
     }
 
-    let wsUrl = baseURL;
-    if (wsUrl?.includes("https://")) {
-      wsUrl = wsUrl.replace("https://", "wss://");
-    } else if (wsUrl?.startsWith("http://")) {
-      wsUrl = wsUrl.replace("http://", "ws://");
-    }
+    const wsUrl = wsUrlResolver(baseURL);
 
     const { type, from, userId, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
@@ -81,11 +77,7 @@ class SubscriptionsResolvers {
         const res = await getMetricRange(baseURL, key, { ...data });
         let avg = 0;
 
-        for (let i = 0; i < res.values.length; i++) {
-          if (res.values[i][1] === 0) {
-            res.values.splice(i, 1);
-          }
-        }
+        res.values = res.values.filter(value => value[1] !== 0);
 
         if (Array.isArray(res.values) && res.values.length > 0) {
           if (
@@ -128,16 +120,24 @@ class SubscriptionsResolvers {
             const res = JSON.parse(_data.data);
             const result = res.data.result[0];
             if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(workerData.topic, {
-                success: true,
-                msg: "success",
-                type: metric.type,
-                nodeId: metric.nodeId,
-                value: [
-                  Math.floor(result.value[0]) * 1000,
-                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
-                ],
-              });
+              try {
+                const res = JSON.parse(_data.data);
+                const result = res.data.result[0];
+                if (result && result.metric && result.value.length > 0) {
+                  pubSub.publish(workerData.topic, {
+                    success: true,
+                    msg: "success",
+                    type: metric.type,
+                    nodeId: metric.nodeId,
+                    value: [
+                      Math.floor(result.value[0]) * 1000,
+                      parseFloat(Number(result.value[1] || 0).toFixed(2)),
+                    ],
+                  });
+                }
+              } catch (error) {
+                logger.error(`Failed to parse WebSocket message: ${error}`);
+              }
             }
           }
         });
@@ -185,12 +185,7 @@ class SubscriptionsResolvers {
       return { notifications: [] };
     }
 
-    let wsUrl = baseURL;
-    if (wsUrl?.includes("https://")) {
-      wsUrl = wsUrl.replace("https://", "wss://");
-    } else if (wsUrl?.startsWith("http://")) {
-      wsUrl = wsUrl.replace("http://", "ws://");
-    }
+    const wsUrl = wsUrlResolver(baseURL);
 
     const { type, from, nodeId, userId, withSubscription } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
@@ -270,12 +265,7 @@ class SubscriptionsResolvers {
       return { notifications: [] };
     }
 
-    let wsUrl = baseURL;
-    if (wsUrl?.includes("https://")) {
-      wsUrl = wsUrl.replace("https://", "wss://");
-    } else if (wsUrl?.startsWith("http://")) {
-      wsUrl = wsUrl.replace("http://", "ws://");
-    }
+    const wsUrl = wsUrlResolver(baseURL);
 
     const notifications = getNotifications(
       baseURL,

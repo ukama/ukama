@@ -334,6 +334,15 @@ const eventKeyToAction = (
   }
 };
 
+export const wsUrlResolver = (url: string): string => {
+  if (url?.includes("https://")) {
+    url = url.replace("https://", "wss://");
+  } else if (url?.startsWith("http://")) {
+    url = url.replace("http://", "ws://");
+  }
+  return url;
+};
+
 export {
   csvToBase64,
   eventKeyToAction,

@@ -104,7 +104,7 @@ query getMetricsStatQuery($data: GetMetricsStatInput!) {
   }
 }
 
-subscription MySubscription($data: SubMetricsStatInput!) {
+subscription MetricsStatSubscription($data: SubMetricsStatInput!) {
   getMetricStatSub(data: $data) {
     msg
     nodeId

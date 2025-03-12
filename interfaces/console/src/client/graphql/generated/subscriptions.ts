@@ -267,12 +267,12 @@ export type GetMetricsStatQueryQueryVariables = Exact<{
 
 export type GetMetricsStatQueryQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
 
-export type MySubscriptionSubscriptionVariables = Exact<{
+export type MetricsStatSubscriptionSubscriptionVariables = Exact<{
   data: SubMetricsStatInput;
 }>;
 
 
-export type MySubscriptionSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type MetricsStatSubscriptionSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -525,8 +525,8 @@ export type GetMetricsStatQueryQueryHookResult = ReturnType<typeof useGetMetrics
 export type GetMetricsStatQueryLazyQueryHookResult = ReturnType<typeof useGetMetricsStatQueryLazyQuery>;
 export type GetMetricsStatQuerySuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatQuerySuspenseQuery>;
 export type GetMetricsStatQueryQueryResult = Apollo.QueryResult<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>;
-export const MySubscriptionDocument = gql`
-    subscription MySubscription($data: SubMetricsStatInput!) {
+export const MetricsStatSubscriptionDocument = gql`
+    subscription MetricsStatSubscription($data: SubMetricsStatInput!) {
   getMetricStatSub(data: $data) {
     msg
     nodeId
@@ -538,24 +538,24 @@ export const MySubscriptionDocument = gql`
     `;
 
 /**
- * __useMySubscriptionSubscription__
+ * __useMetricsStatSubscriptionSubscription__
  *
- * To run a query within a React component, call `useMySubscriptionSubscription` and pass it any options that fit your needs.
- * When your component renders, `useMySubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useMetricsStatSubscriptionSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useMetricsStatSubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useMySubscriptionSubscription({
+ * const { data, loading, error } = useMetricsStatSubscriptionSubscription({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useMySubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<MySubscriptionSubscription, MySubscriptionSubscriptionVariables> & ({ variables: MySubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useMetricsStatSubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<MetricsStatSubscriptionSubscription, MetricsStatSubscriptionSubscriptionVariables> & ({ variables: MetricsStatSubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<MySubscriptionSubscription, MySubscriptionSubscriptionVariables>(MySubscriptionDocument, options);
+        return Apollo.useSubscription<MetricsStatSubscriptionSubscription, MetricsStatSubscriptionSubscriptionVariables>(MetricsStatSubscriptionDocument, options);
       }
-export type MySubscriptionSubscriptionHookResult = ReturnType<typeof useMySubscriptionSubscription>;
-export type MySubscriptionSubscriptionResult = Apollo.SubscriptionResult<MySubscriptionSubscription>;
+export type MetricsStatSubscriptionSubscriptionHookResult = ReturnType<typeof useMetricsStatSubscriptionSubscription>;
+export type MetricsStatSubscriptionSubscriptionResult = Apollo.SubscriptionResult<MetricsStatSubscriptionSubscription>;

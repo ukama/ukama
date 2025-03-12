@@ -95,6 +95,10 @@ const LineChart = ({
         },
       },
 
+      time: {
+        useUTC: false,
+      },
+
       series: [
         {
           name: title,
