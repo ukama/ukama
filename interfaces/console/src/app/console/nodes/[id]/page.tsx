@@ -35,6 +35,7 @@ import {
   METRIC_RANGE_10800,
   NODE_ACTIONS_BUTTONS,
   NodePageTabs,
+  STAT_STEP_29,
 } from '@/constants';
 import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
@@ -177,6 +178,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
   });
 
   useEffect(() => {
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
     if (!id) {
       setSnackbarMessage({
         id: 'node-not-found-msg',
@@ -187,15 +190,15 @@ const Page: React.FC<INodePage> = ({ params }) => {
       router.back();
     } else if (id) {
       const to = getUnixTime();
-      const from = to - 29;
+      const from = to - STAT_STEP_29;
       getMetricStat({
         variables: {
           data: {
             to: to,
-            step: 29,
             nodeId: id,
             from: from,
             userId: user.id,
+            step: STAT_STEP_29,
             orgName: user.orgName,
             networkId: network.id,
             withSubscription: true,
@@ -204,6 +207,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
         },
       });
     }
+    return () => {
+      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
+      PubSub.unsubscribe(sKey);
+    };
   }, []);
 
   useEffect(() => {
@@ -258,7 +265,6 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const handleMetricSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
     const { type, value, success } = parsedData.data.getMetricByTabSub;
-    console.log(type, value, success);
     if (success) {
       PubSub.publish(type, value);
     }

@@ -7,10 +7,11 @@
  */
 
 import { METRIC_RANGE_10800 } from '@/constants';
+import { colors } from '@/theme';
+import { findNullZones } from '@/utils';
 import { Box } from '@mui/material';
-import { HighchartsReact } from 'highcharts-react-official';
+import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
-import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
@@ -48,10 +49,9 @@ const LineChart = ({
       },
 
       chart: {
-        type: 'areaspline',
+        type: 'spline',
         events: {
           load: function () {
-            console.log(topic);
             PubSub.subscribe(topic, (_, data) => {
               const chart: any =
                 Highcharts.charts.length > 0
@@ -74,30 +74,9 @@ const LineChart = ({
       },
 
       plotOptions: {
-        areaspline: {
-          color: '#218FF6A2',
-          fillColor: {
-            linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
-            stops: [
-              [0, '#218FF66F'],
-              [1, '#218FF61B'],
-            ],
-          },
-          threshold: null,
-          marker: {
-            lineWidth: 1,
-            lineColor: null,
-            fillColor: 'white',
-          },
+        series: {
+          color: colors.primaryMain,
         },
-      },
-
-      time: {
-        useUTC: false,
-      },
-
-      exporting: {
-        enabled: false,
       },
 
       navigator: {
@@ -116,23 +95,22 @@ const LineChart = ({
         },
       },
 
-      accessibility: {
-        enabled: false,
-      },
-
       series: [
         {
           name: title,
           data: (function () {
             return data;
           })(),
+          connectNulls: true,
+          zoneAxis: 'x',
+          zones: findNullZones(data),
         },
       ],
 
       xAxis: {
         type: 'datetime',
         title: false,
-        tickAmount: 6,
+        tickInterval: 1000 * 60 * 30,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
@@ -141,7 +119,6 @@ const LineChart = ({
 
       yAxis: {
         title: false,
-        minRange: 8,
       },
     };
   };

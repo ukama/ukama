@@ -12,6 +12,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 
+export const STAT_STEP_29 = 29
 export const METRIC_RANGE_3600 = 3600;
 export const METRIC_RANGE_10800 = 10800;
 export const NETWORK_FLOW = 'net';

@@ -415,10 +415,49 @@ const base64ToBlob = (base64: string, contentType = ''): Blob => {
 export const duration = (s: number) =>
   formatDistance(0, s * 1000, { includeSeconds: true });
 
+const findNullZones = (data: any) => {
+  let zones = [];
+  let inNullZone = false;
+  let start = null;
+
+  for (let i = 0; i < data.length; i++) {
+    let [x, y] = data[i];
+
+    if (y === null) {
+      if (!inNullZone) {
+        start = x;
+        inNullZone = true;
+      }
+    } else {
+      if (inNullZone) {
+        zones.push({ value: start });
+        zones.push({
+          value: data[i - 1][0],
+          color: colors.redMatt,
+          dashStyle: 'dash',
+        });
+        inNullZone = false;
+      }
+    }
+  }
+
+  if (inNullZone) {
+    zones.push({ value: start });
+    zones.push({
+      value: data[data.length - 1][0],
+      color: colors.redMatt,
+      dashStyle: 'dash',
+    });
+  }
+
+  return zones;
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
   fileToBase64,
+  findNullZones,
   formatBytes,
   formatBytesToMB,
   formatTime,
