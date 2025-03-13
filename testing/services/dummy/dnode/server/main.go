@@ -132,7 +132,6 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 	if cenums.ParseScenarioType(scenario) == cenums.SCENARIO_BACKHAUL_DOWN ||
 		cenums.ParseScenarioType(scenario) == cenums.SCENARIO_NODE_OFF {
 		log.Printf("Scenario is: %s, which leads to coroutine shutdown.", scenario)
-		updateChan, exists := s.coroutines[nodeID.String()]
 		if exists {
 			close(updateChan)
 			delete(s.coroutines, nodeID.String())
