@@ -5,31 +5,49 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { GetNodeLatestMetricInput, NodeLatestMetric } from "../resolver/types";
+import { GetNodeLatestMetricInput, GetSiteLatestMetricInput, NodeLatestMetric, SiteLatestMetric } from "../resolver/types";
 
-const ERROR_RESPONSE = {
-  success: true,
-  msg: "success",
-  orgId: "",
-  nodeId: "",
-  type: "",
+const parseLatestMetricRes = (
+  res: any,
+  args: { type: string; [key: string]: any },
+  entityType: "node" | "site"
+) => {
+  const data = res.data.result[0];
+  const idKey = `${entityType}Id`; 
+  const metricResponse = {
+    success: true,
+    msg: "success",
+  };
+
+  if (data?.value?.length > 0) {
+    return {
+      ...metricResponse,
+      orgId: data.metric.org,
+      [idKey]: args[idKey], 
+      type: args.type,
+      value: data.value,
+    };
+  } else {
+    return {
+      ...metricResponse,
+      orgId: "",
+      [idKey]: "", 
+      type: "",
+      value: [0, 0],
+    };
+  }
 };
 
 export const parseNodeLatestMetricRes = (
   res: any,
   args: GetNodeLatestMetricInput
 ): NodeLatestMetric => {
-  const data = res.data.result[0];
-  if (data?.value?.length > 0) {
-    return {
-      success: true,
-      msg: "success",
-      orgId: data.metric.org,
-      nodeId: args.nodeId,
-      type: args.type,
-      value: data.value,
-    };
-  } else {
-    return { ...ERROR_RESPONSE, value: [0, 0] } as NodeLatestMetric;
-  }
+  return parseLatestMetricRes(res, args, "node") as NodeLatestMetric;
+};
+
+export const parseSiteLatestMetricRes = (
+  res: any,
+  args: GetSiteLatestMetricInput
+): SiteLatestMetric => {
+  return parseLatestMetricRes(res, args, "site") as SiteLatestMetric;
 };
