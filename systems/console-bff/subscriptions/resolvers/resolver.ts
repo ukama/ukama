@@ -156,7 +156,7 @@ class SubscriptionsResolvers {
     @Arg("data") data: SubMetricsStatInput
   ): Promise<LatestMetricSubRes> {
     const store = openStore();
-    await addInStore(store, `${data.userId}-${payload.type}-${data.from}`, 0);
+    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
     await store.close();
     return payload;
   }

@@ -19,31 +19,21 @@ import (
 )
 
 func Worker(id string, updateChan chan config.WMessage, initial config.WMessage) {
-	count := 1.0
 	kpis := initial.Kpis
 	profile := initial.Profile
 	scenario := initial.Scenario
 
 	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
 
-	// cleanup := func() {
-    //     fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
-    //     for _, kpi := range kpis.KPIs {
-    //         prometheus.Unregister(kpi.KPI).
-    //     }
-    // }
-
 	cleanup := func() {
 		fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
 		labels := prometheus.Labels{"nodeid": id}
 		for _, kpi := range kpis.KPIs {
-			// Delete removes the metric for this specific label combination.
 			kpi.KPI.Delete(labels)
 		}
 	}
 
 	for {
-		count += 0.1
 		time.Sleep(1 * time.Second)
 		select {
 
@@ -71,8 +61,9 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		for _, kpi := range kpis.KPIs {
 			switch kpi.Key {
 			case "unit_uptime":
-				values[kpi.Key] = count
-			// TODO: Can handle different scenario cases here
+				kpi.KPI.With(labels).Inc()
+				continue
+			// TODO: Can handle different scenario cases here for different KPIs
 			default:
 				switch profile {
 				case cenums.PROFILE_MIN:
