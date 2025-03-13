@@ -26,10 +26,27 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
 
+	// cleanup := func() {
+    //     fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
+    //     for _, kpi := range kpis.KPIs {
+    //         prometheus.Unregister(kpi.KPI).
+    //     }
+    // }
+
+	cleanup := func() {
+		fmt.Printf("Shutting down coroutine %s with scenario: %s\n", id, scenario)
+		labels := prometheus.Labels{"nodeid": id}
+		for _, kpi := range kpis.KPIs {
+			// Delete removes the metric for this specific label combination.
+			kpi.KPI.Delete(labels)
+		}
+	}
+
 	for {
 		count += 0.1
 		time.Sleep(1 * time.Second)
 		select {
+
 		case msg, ok := <-updateChan:
 			if !ok {
 				fmt.Printf("Coroutine %s with Scenario is: %s, which leads to coroutine shutdown.", id, scenario)
@@ -37,6 +54,11 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 			}
 			profile = msg.Profile
 			scenario = msg.Scenario
+			if scenario == cenums.SCENARIO_BACKHAUL_DOWN || scenario == cenums.SCENARIO_NODE_OFF {
+				cleanup()
+				fmt.Printf("Coroutine %s with Scenario is: %s, which leads to coroutine shutdown.", id, scenario)
+				return
+			}
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", id, profile, scenario)
 		default:
 		}
@@ -54,11 +76,11 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 			default:
 				switch profile {
 				case cenums.PROFILE_MIN:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
 				case cenums.PROFILE_MAX:
-					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.1
+					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.3
 				default:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.1
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
 				}
 			}
 
