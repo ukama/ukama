@@ -31,7 +31,7 @@ interface INodeOverviewTab {
   nodeId: string;
   metricFrom: number;
   metrics: MetricsRes;
-  loading: boolean;
+  statLoading: boolean;
   metricsLoading: boolean;
   onNodeSelected: Function;
   isUpdateAvailable: boolean;
@@ -44,14 +44,11 @@ interface INodeOverviewTab {
 }
 
 const NodeOverviewTab = ({
-  nodeId,
   metrics,
-  loading,
   metricFrom,
+  statLoading,
   selectedNode,
   metricsLoading,
-  connectedUsers = '0',
-  onNodeSelected,
   handleUpdateNode,
   isUpdateAvailable,
   nodeMetricsStatData,
@@ -79,9 +76,9 @@ const NodeOverviewTab = ({
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
-            loading={loading}
             isClickable={true}
             selected={selected}
+            loading={statLoading}
             title={'Node Information'}
             handleAction={handleOnSelected}
           >
@@ -106,10 +103,10 @@ const NodeOverviewTab = ({
           </NodeStatsContainer>
           <NodeStatsContainer
             index={1}
-            loading={loading}
+            title={'Health'}
             isClickable={true}
             selected={selected}
-            title={'Health'}
+            loading={statLoading}
             handleAction={handleOnSelected}
           >
             {healthConfig.map((config, i) => (
@@ -122,7 +119,7 @@ const NodeOverviewTab = ({
                 nameInfo={config.description}
                 value={getKPIStatValue(
                   config.id,
-                  metricsLoading,
+                  statLoading,
                   nodeMetricsStatData,
                 )}
               />
@@ -131,7 +128,7 @@ const NodeOverviewTab = ({
           {selectedNode?.type !== NodeTypeEnum.Anode && (
             <NodeStatsContainer
               index={2}
-              loading={loading}
+              loading={statLoading}
               isClickable={true}
               selected={selected}
               title={'Subscribers'}
@@ -147,7 +144,7 @@ const NodeOverviewTab = ({
                   nameInfo={config.description}
                   value={getKPIStatValue(
                     config.id,
-                    metricsLoading,
+                    statLoading,
                     nodeMetricsStatData,
                   )}
                 />
@@ -161,7 +158,7 @@ const NodeOverviewTab = ({
           <NodeDetailsCard
             nodeType={selectedNode?.type ?? undefined}
             getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
-            loading={loading}
+            loading={statLoading}
             nodeTitle={selectedNode?.name ?? 'HOME'}
             handleUpdateNode={handleUpdateNode}
             isUpdateAvailable={isUpdateAvailable}

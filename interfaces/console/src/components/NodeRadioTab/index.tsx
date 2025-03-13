@@ -21,6 +21,7 @@ interface INodeRadioTab {
   metrics: any;
   loading: boolean;
   metricFrom: number;
+  statLoading: boolean;
   selectedNode: Node | undefined;
   nodeMetricsStatData: MetricsStateRes;
 }
@@ -28,7 +29,7 @@ const NodeRadioTab = ({
   loading,
   metrics,
   metricFrom,
-  selectedNode,
+  statLoading,
   nodeMetricsStatData,
 }: INodeRadioTab) => {
   const radioConfig = NODE_KPIS.RADIO[NodeTypeEnum.Tnode];
@@ -39,7 +40,7 @@ const NodeRadioTab = ({
           index={0}
           selected={0}
           title={'Radio'}
-          loading={loading}
+          loading={statLoading}
           isCollapsable={false}
         >
           {radioConfig.map((config, i) => (
@@ -50,7 +51,11 @@ const NodeRadioTab = ({
               key={`${config.id}-${i}`}
               threshold={config.threshold}
               nameInfo={config.description}
-              value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
+              value={getKPIStatValue(
+                config.id,
+                statLoading,
+                nodeMetricsStatData,
+              )}
             />
           ))}
         </NodeStatsContainer>

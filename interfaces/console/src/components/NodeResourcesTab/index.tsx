@@ -21,6 +21,7 @@ interface INodeResourcesTab {
   metrics: any;
   loading: boolean;
   metricFrom: number;
+  statLoading: boolean;
   selectedNode: Node | undefined;
   nodeMetricsStatData: MetricsStateRes;
 }
@@ -28,7 +29,7 @@ const NodeResourcesTab = ({
   metrics,
   loading,
   metricFrom,
-  selectedNode,
+  statLoading,
   nodeMetricsStatData,
 }: INodeResourcesTab) => {
   const resourcesConfig = NODE_KPIS.RESOURCES[NodeTypeEnum.Tnode];
@@ -39,7 +40,7 @@ const NodeResourcesTab = ({
         <NodeStatsContainer
           index={0}
           selected={0}
-          loading={loading}
+          loading={statLoading}
           title={'Resources'}
           isCollapsable={false}
         >
@@ -51,7 +52,11 @@ const NodeResourcesTab = ({
               key={`${config.id}-${i}`}
               threshold={config.threshold}
               nameInfo={config.description}
-              value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
+              value={getKPIStatValue(
+                config.id,
+                statLoading,
+                nodeMetricsStatData,
+              )}
             />
           ))}
         </NodeStatsContainer>

@@ -57,7 +57,7 @@ const LineChart = ({
         type: 'spline',
         events: {
           load: function () {
-            PubSub.subscribe(topic, (_, data) => {
+            PubSub.subscribe(`stat-${topic}`, (_, data) => {
               const chart: any =
                 Highcharts.charts.length > 0
                   ? Highcharts.charts.find(
