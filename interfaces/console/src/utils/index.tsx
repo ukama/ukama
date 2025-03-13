@@ -458,7 +458,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     return [];
   }
   if (values.length < 3 || values.length > 5) {
-    throw new Error('length no valid');
+    throw new Error('invalid length');
   }
 
   return values.slice(1).map((value, index, arr) => ({
