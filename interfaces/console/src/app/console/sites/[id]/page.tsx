@@ -20,6 +20,7 @@ import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
+import SiteOverview from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
@@ -344,30 +345,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
       />
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
+      <Grid container spacing={2} sx={{ mt: 1, height: 'calc(60vh - 100px)' }}>
+        <Grid item xs={3} sx={{ height: '100%' }}>
           <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
         </Grid>
-        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
+        <Grid item xs={6} sx={{ height: '100%' }}>
+          <SiteOverview uptimePercentage={98.5} daysRange={60} />
+        </Grid>
+        <Grid item xs={3} sx={{ height: '100%' }}>
           <SiteMapComponent
             posix={[activeSite.latitude, activeSite.longitude]}
             address={CurrentSiteaddress}
-            height={'100%'}
           />
         </Grid>
       </Grid>
-
-      <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-        <SiteOverallHealth
-          batteryInfo={[]}
-          solarHealth={'good'}
-          nodeHealth={'good'}
-          switchHealth={'good'}
-          controllerHealth={'good'}
-          batteryHealth={'good'}
-          backhaulHealth={'good'}
-        />
-      </Paper>
 
       <ConfigureSiteDialog
         site={site}
