@@ -6,8 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PersonIcon from '@mui/icons-material/Person';
+import RouterIcon from '@mui/icons-material/Router';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import {
   Box,
   Card,
@@ -26,7 +29,10 @@ interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
-  siteStatus: boolean;
+  userCount?: number; 
+  connectionStatus?: string; 
+  batteryStatus?: string; 
+  signalStrength?: string; 
   onClickMenu?: (siteId: string) => void;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
@@ -36,7 +42,10 @@ const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  siteStatus,
+  userCount = 2,
+  connectionStatus = 'Online',
+  batteryStatus = 'Charged',
+  signalStrength = 'Strong',
   onClickMenu,
   handleSiteNameUpdate,
   loading = false,
@@ -64,14 +73,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
     router.push(`/console/sites/${siteId}`);
   };
 
-  const truncateAddress = (address: string, limit: number) => {
-    const segments = address.split(',');
-    return (
-      segments.slice(0, limit).join(', ') +
-      (segments.length > limit ? '...' : '')
-    );
-  };
-
   return (
     <Card
       sx={{
@@ -82,6 +83,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
           border: `1px solid ${colors.primaryDark}`,
           cursor: 'pointer',
         },
+        backgroundColor: colors.lightGray,
       }}
       onClick={navigateToDetails}
     >
@@ -89,26 +91,31 @@ const SiteCard: React.FC<SiteCardProps> = ({
         <Box
           display="flex"
           justifyContent="space-between"
-          flexDirection={isSmallScreen ? 'column' : 'row'}
+          alignItems="flex-start"
         >
-          <Box mb={isSmallScreen ? 2 : 0}>
-            <Typography variant="h6">
+          <Box>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                borderBottom: '1px solid', 
+                display: 'inline-block',
+                mb: 1,
+                fontWeight: 'bold'
+              }}
+            >
               {loading ? (
                 <Skeleton width={150} />
               ) : (
-                <a
-                  href={`/console/sites/${siteId}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </a>
+                name
               )}
             </Typography>
-            <Typography color="textSecondary" variant="body2">
-              {loading ? <Skeleton width={200} /> : truncateAddress(address, 3)}
+            
+            <Typography color="textSecondary" variant="body1">
+              {loading ? <Skeleton width={200} /> : address}
             </Typography>
           </Box>
-          <IconButton onClick={handleClick}>
+          
+          <IconButton onClick={handleClick} sx={{ mt: -1 }}>
             <MoreVertIcon />
           </IconButton>
 
@@ -123,31 +130,45 @@ const SiteCard: React.FC<SiteCardProps> = ({
             </MenuItem>
           </Menu>
         </Box>
+        
+        {/* Status indicators row */}
         <Box
           display="flex"
           justifyContent="flex-start"
           alignItems="center"
-          mt={2}
+          mt={3}
+          gap={4}
         >
-          <Box display="flex" alignItems="center">
-            <CheckCircleIcon
-              fontSize="large"
-              sx={{
-                color: loading ? 'gray' : siteStatus ? 'green' : 'red',
-                fontSize: 30,
-              }}
-            />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                {loading ? (
-                  <Skeleton width={100} />
-                ) : siteStatus ? (
-                  'Site is set up'
-                ) : (
-                  'Site is deactivated'
-                )}
-              </Typography>
-            )}
+          {/* User count */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <PersonIcon color="action" />
+            <Typography variant="body2">
+              {loading ? <Skeleton width={20} /> : userCount}
+            </Typography>
+          </Box>
+          
+          {/* Connection status */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <RouterIcon sx={{ color: connectionStatus === 'Online' ? 'green' : 'gray' }} />
+            <Typography variant="body2" color={connectionStatus === 'Online' ? 'green' : 'textSecondary'}>
+              {loading ? <Skeleton width={60} /> : connectionStatus}
+            </Typography>
+          </Box>
+          
+          {/* Battery status */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <BatteryChargingFullIcon sx={{ color: '#d32f2f' }} />
+            <Typography variant="body2" color="#d32f2f">
+              {loading ? <Skeleton width={70} /> : batteryStatus}
+            </Typography>
+          </Box>
+          
+          {/* Signal strength */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <SignalCellularAltIcon sx={{ color: 'green' }} />
+            <Typography variant="body2" color="green">
+              {loading ? <Skeleton width={60} /> : signalStrength}
+            </Typography>
           </Box>
         </Box>
       </CardContent>

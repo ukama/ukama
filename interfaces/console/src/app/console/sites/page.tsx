@@ -214,15 +214,18 @@ const Sites = () => {
     <Box mt={2}>
       <Paper
         sx={{
-          p: 4,
           overflow: 'auto',
-          padding: '24px 32px',
+          padding: '20px',
           borderRadius: '10px',
           height: 'calc(100vh - 212px)',
         }}
       >
         <Stack spacing={2} direction={'column'} height="100%">
-          <Typography variant="h6" color="initial">
+          <Typography 
+            variant="h6" 
+            color="initial"
+            sx={{ paddingLeft: '12px' }}
+          >
             My sites
           </Typography>
           <SitesWrapper
