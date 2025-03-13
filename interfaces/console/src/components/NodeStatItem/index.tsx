@@ -98,7 +98,6 @@ const NodeStatItem = ({
   nameInfo = '',
   valueInfo = '',
   variant = 'medium',
-  showAlertInfo = false,
 }: INodeStatItem) => {
   const [v, setV] = useState<string>('');
 
@@ -108,11 +107,9 @@ const NodeStatItem = ({
 
   useEffect(() => {
     if (id) {
-      const token = PubSub.subscribe(id, (_, data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const sum = data.reduce((acc, val) => acc + val[1], 0);
-          const avg = sum / data.length;
-          setV(`${parseFloat(Number(avg).toFixed(2))}`);
+      const token = PubSub.subscribe(`stat-${id}`, (_, data) => {
+        if (data.length > 0) {
+          setV(data[1]);
         }
       });
       return () => {

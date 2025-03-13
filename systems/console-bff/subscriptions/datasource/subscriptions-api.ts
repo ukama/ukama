@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { GraphQLError } from "graphql";
-import https from "https";
 
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
@@ -22,40 +21,17 @@ import {
   parseMetricRes,
   parseNodeMetricRes,
   parseNotificationsRes,
-  parsePromethRes,
 } from "./mapper";
-
-const directCall = async (
-  baseUrl: string,
-  args: GetMetricRangeInput
-): Promise<MetricRes> => {
-  const { from, to, step = 1 } = args;
-  const agent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-  return await asyncRestCall({
-    method: API_METHOD_TYPE.GET,
-    httpsAgent: agent,
-    url: `${baseUrl}?query=${args.type}&start=${from}&end=${to}&step=${step}`,
-  })
-    .then(res => parsePromethRes(res.data, args))
-    .catch(err => {
-      throw new GraphQLError(err);
-    });
-};
 
 const getMetricRange = async (
   baseUrl: string,
   type: string,
-  args: GetMetricsStatInput
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): Promise<MetricRes> => {
-  const { from, step = 1, nodeId, userId, networkId } = args;
+  const { from, step = 1, nodeId, userId } = args;
   let params = `from=${from}&step=${step}`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
-  }
-  if (networkId) {
-    params = params + `&network=${networkId}`;
   }
   if (userId) {
     params = params + `&user=${userId}`;
@@ -74,7 +50,7 @@ const getNodeRangeMetric = async (
   baseUrl: string,
   args: GetMetricRangeInput
 ): Promise<MetricRes> => {
-  const { from, to = 0, step = 1 } = args;
+  const { from, to = 0, step } = args;
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
@@ -116,4 +92,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { directCall, getMetricRange, getNodeRangeMetric, getNotifications };
+export { getMetricRange, getNodeRangeMetric, getNotifications };

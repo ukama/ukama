@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { METRICS_INTERVAL } from "../../common/configs";
 import { eventKeyToAction } from "../../common/utils";
 import {
   GetLatestMetricInput,
@@ -56,7 +57,7 @@ export const parseLatestMetricRes = (
 export const parseMetricRes = (
   res: any,
   type: string,
-  args: GetMetricsStatInput
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   const { result } = res.data.data;
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;
@@ -66,7 +67,12 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(result[0].values),
+        values: fixTimestampInMetricData(
+          result[0].values,
+          METRICS_INTERVAL,
+          args.to || Date.now(),
+          args.from
+        ),
       }
     : getEmptyMetric({
         nodeId: result[0].metric.nodeid,
@@ -79,6 +85,7 @@ export const parseMetricRes = (
         withSubscription: false,
       });
 };
+
 export const parseNodeMetricRes = (
   { code, data }: { code: number; data: any },
   args: GetMetricRangeInput
@@ -93,46 +100,43 @@ export const parseNodeMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(result[0].values),
+        values: fixTimestampInMetricData(
+          result[0].values,
+          args.step || METRICS_INTERVAL,
+          args.to || Date.now(),
+          args.from
+        ),
       }
     : getEmptyMetric(args);
 };
 
-const fixTimestampInMetricData = (
-  values: [[number, string]]
-): [number, number][] => {
-  if (values.length > 0) {
-    const fixedValues: [number, number][] = values.map(
-      (value: [number, string]) => {
-        return [
-          Math.floor(value[0]) * 1000,
-          parseFloat(Number(value[1]).toFixed(2)),
-        ];
-      }
-    );
-    return fixedValues;
+function fixTimestampInMetricData(
+  data: [number, string | null][],
+  step: number,
+  to: number,
+  from: number
+): [number, number][] {
+  if (!Array.isArray(data) || data.length === 0) return [];
+
+  const result: [number, number][] = [];
+  let prevTimestamp: number = from;
+  let dataIndex = 0;
+
+  while (prevTimestamp <= to) {
+    if (dataIndex < data.length && data[dataIndex][0] === prevTimestamp) {
+      result.push([
+        data[dataIndex][0] * 1000,
+        parseFloat(Number(data[dataIndex][1]).toFixed(2)),
+      ]);
+      dataIndex++;
+    } else {
+      result.push([prevTimestamp * 1000, 0]);
+    }
+    prevTimestamp += step;
   }
-  return [];
-};
 
-export const parsePromethRes = (
-  res: any,
-  args: GetMetricRangeInput
-): MetricRes => {
-  const metric = res.data.result.filter(
-    (item: any) => item.metric.nodeid === args.nodeId
-  )[0];
-
-  if (metric?.values?.length > 0) {
-    return {
-      type: args.type,
-      success: true,
-      msg: "success",
-      nodeId: metric.metric.nodeid,
-      values: fixTimestampInMetricData(metric.values),
-    };
-  } else return getEmptyMetric(args);
-};
+  return result;
+}
 
 export const parseNotification = (
   notification: NotificationsAPIResDto

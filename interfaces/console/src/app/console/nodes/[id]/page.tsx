@@ -21,7 +21,7 @@ import {
   MetricsRes,
   Stats_Type,
   useGetMetricByTabLazyQuery,
-  useGetMetricsStatLazyQuery,
+  useGetMetricsStatQueryLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
@@ -32,11 +32,13 @@ import NodeResourcesTab from '@/components/NodeResourcesTab';
 import NodeStatus from '@/components/NodeStatus';
 import TabPanel from '@/components/TabPanel';
 import {
-  METRIC_RANGE_3600,
+  METRIC_RANGE_10800,
   NODE_ACTIONS_BUTTONS,
   NodePageTabs,
+  STAT_STEP_29,
 } from '@/constants';
 import { useAppContext } from '@/context';
+import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import MetricSubscription from '@/lib/MetricSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
@@ -63,7 +65,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [nodeUptime, setNodeUptime] = useState<number>(0);
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [selectedTab, setSelectedTab] = useState<number>(0);
-  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
+  const { user, setSnackbarMessage, env, subscriptionClient, network } =
+    useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
@@ -146,21 +149,37 @@ const Page: React.FC<INodePage> = ({ params }) => {
   });
 
   const [
-    getMetricsStat,
-    { loading: nodeMetricsStatLoading, data: nodeMetricsStatData },
-  ] = useGetMetricsStatLazyQuery({
+    getMetricStat,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetMetricsStatQueryLazyQuery({
     client: subscriptionClient,
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
-      if (data.getMetricsStat.metrics?.length > 0) {
-        const uptimeStat = data?.getMetricsStat.metrics.find(
-          (m) => m.type === NODE_UPTIME_KEY,
-        );
-        setNodeUptime(uptimeStat?.value ?? 0);
+      if (data.getMetricsStat.metrics.length > 0) {
+        data.getMetricsStat.metrics.forEach((m) => {
+          if (m.type === NODE_UPTIME_KEY) {
+            setNodeUptime(m.value);
+          }
+        });
+
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
+        MetricStatSubscription({
+          key: sKey,
+          nodeId: id,
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.AllNode,
+          from: statVar?.data.from ?? 0,
+        });
+        PubSub.subscribe(sKey, handleStatSubscription);
       }
     },
   });
 
   useEffect(() => {
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
     if (!id) {
       setSnackbarMessage({
         id: 'node-not-found-msg',
@@ -169,57 +188,44 @@ const Page: React.FC<INodePage> = ({ params }) => {
         show: true,
       });
       router.back();
-    } else {
-      const now = getUnixTime();
-      getMetricsStat({
+    } else if (id) {
+      const to = getUnixTime();
+      const from = to - STAT_STEP_29;
+      getMetricStat({
         variables: {
           data: {
-            to: now,
+            to: to,
             nodeId: id,
+            from: from,
             userId: user.id,
+            step: STAT_STEP_29,
             orgName: user.orgName,
-            type: Stats_Type.Overview,
-            from: now - METRIC_RANGE_3600,
+            withSubscription: true,
+            type: Stats_Type.AllNode,
           },
         },
       });
     }
-  }, [id]);
+    return () => {
+      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
+      PubSub.unsubscribe(sKey);
+    };
+  }, []);
 
   useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
-      getMetricsStat({
-        variables: {
-          data: {
-            nodeId: id,
-            userId: user.id,
-            from: metricFrom,
-            orgName: user.orgName,
-            type:
-              graphType === Graphs_Type.NodeHealth ||
-              graphType === Graphs_Type.Subscribers
-                ? Stats_Type.Overview
-                : graphType === Graphs_Type.NetworkBackhaul ||
-                    graphType === Graphs_Type.NetworkCellular
-                  ? Stats_Type.Network
-                  : graphType === Graphs_Type.Resources
-                    ? Stats_Type.Resources
-                    : Stats_Type.Radio,
-            to: metricFrom + METRIC_RANGE_3600,
-          },
-        },
-      });
       const psKey = `metric-${user.orgName}-${user.id}-${graphType}-${metricFrom}`;
       getNodeMetricByTab({
         variables: {
           data: {
+            step: 30,
             nodeId: id,
             userId: user.id,
             type: graphType,
             from: metricFrom,
-            to: metricFrom + METRIC_RANGE_3600,
             orgName: user.orgName,
             withSubscription: true,
+            to: metricFrom + METRIC_RANGE_10800,
           },
         },
       }).then(() => {
@@ -234,7 +240,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
       });
 
-      PubSub.subscribe(psKey, handleNotification);
+      PubSub.subscribe(psKey, handleMetricSubscription);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -242,17 +248,24 @@ const Page: React.FC<INodePage> = ({ params }) => {
     nodeMetricsVariables?.data?.from,
     getNodeMetricByTab,
     graphType,
-  ]); // Added all missing dependencies
+  ]);
 
-  const handleNotification = (_: any, data: string) => {
+  const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, type, value, nodeId, success } =
-      parsedData.data.getMetricByTabSub;
+    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
     if (success) {
       if (type === NODE_UPTIME_KEY) {
-        setNodeUptime(value[value.length - 1][1]);
+        setNodeUptime(Math.floor(value[1]));
       }
-      PubSub.publish(type, value.slice(0, 30));
+      PubSub.publish(`stat-${type}`, value);
+    }
+  };
+
+  const handleMetricSubscription = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { type, value, success } = parsedData.data.getMetricByTabSub;
+    if (success) {
+      PubSub.publish(type, value);
     }
   };
 
@@ -275,18 +288,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleOverviewSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const handleNetworkSectionChange = (type: Graphs_Type) => {
     setGraphType(type);
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const onTabSelected = (_: any, value: number) => {
     setSelectedTab(value);
     setGraphType(getNodeTabTypeByIndex(value));
-    setMetricFrom(() => getUnixTime() - METRIC_RANGE_3600);
+    setMetricFrom(() => getUnixTime() - METRIC_RANGE_10800);
   };
 
   const handleNodeActionClick = (action: string) => {
@@ -310,7 +323,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       <NodeStatus
         uptime={nodeUptime}
         onAddNode={() => {}}
-        loading={nodesLoading || updateNodeLoading}
+        loading={nodesLoading || updateNodeLoading || statLoading}
         selectedNode={selectedNode}
         handleEditNodeClick={() => {
           setIsEditNode(true);
@@ -358,12 +371,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
             onNodeSelected={() => {}}
             handleUpdateNode={() => {}}
             selectedNode={selectedNode}
+            metricsLoading={nodeMetricsLoading || statLoading}
             getNodeSoftwareUpdateInfos={() => {}}
             handleOverviewSectionChange={handleOverviewSectionChange}
-            metricsLoading={nodeMetricsLoading || nodeMetricsStatLoading}
-            nodeMetricsStatData={
-              nodeMetricsStatData?.getMetricsStat ?? { metrics: [] }
-            }
+            nodeMetricsStatData={statData?.getMetricsStat ?? { metrics: [] }}
           />
         </TabPanel>
         <TabPanel id={'node-network-tab'} value={selectedTab} index={1}>
@@ -371,11 +382,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
-            nodeMetricsStatData={
-              nodeMetricsStatData?.getMetricsStat ?? { metrics: [] }
-            }
+            loading={nodeMetricsLoading || statLoading}
             handleSectionChange={handleNetworkSectionChange}
-            loading={nodeMetricsLoading || nodeMetricsStatLoading}
+            nodeMetricsStatData={statData?.getMetricsStat ?? { metrics: [] }}
           />
         </TabPanel>
         <TabPanel id={'node-resources-tab'} value={selectedTab} index={2}>
@@ -383,10 +392,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
-            nodeMetricsStatData={
-              nodeMetricsStatData?.getMetricsStat ?? { metrics: [] }
-            }
-            loading={nodeMetricsLoading || nodeMetricsStatLoading}
+            loading={nodeMetricsLoading || statLoading}
+            nodeMetricsStatData={statData?.getMetricsStat ?? { metrics: [] }}
           />
         </TabPanel>
         <TabPanel id={'node-radio-tab'} value={selectedTab} index={3}>
@@ -394,10 +401,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
             metrics={metrics}
             metricFrom={metricFrom}
             selectedNode={selectedNode}
-            nodeMetricsStatData={
-              nodeMetricsStatData?.getMetricsStat ?? { metrics: [] }
-            }
-            loading={nodeMetricsLoading || nodeMetricsStatLoading}
+            loading={nodeMetricsLoading || statLoading}
+            nodeMetricsStatData={statData?.getMetricsStat ?? { metrics: [] }}
           />
         </TabPanel>
         {/* <TabPanel id={'node-software-tab'} value={selectedTab} index={4}>

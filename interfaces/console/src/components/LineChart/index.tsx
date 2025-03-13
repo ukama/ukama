@@ -6,11 +6,12 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { METRIC_RANGE_3600 } from '@/constants';
+import { METRIC_RANGE_10800 } from '@/constants';
+import { colors } from '@/theme';
+import { findNullZones } from '@/utils';
 import { Box } from '@mui/material';
-import { HighchartsReact } from 'highcharts-react-official';
+import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
-import PubSub from 'pubsub-js';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 
 interface ILineChart {
@@ -31,70 +32,51 @@ const LineChart = ({
   from: metricFrom,
 }: ILineChart) => {
   const getOptions = (topic: string, title: string, initData: any) => {
+    const data: any = [];
+    if (Array.isArray(initData)) {
+      initData.forEach((point: any) => {
+        let y = point[1];
+        if (point.length > 0 && y === 0) {
+          y = null;
+        }
+        data.push([point[0], y]);
+      });
+    }
+
     return {
       title: {
         text: topic,
       },
 
       chart: {
-        type: 'areaspline',
+        type: 'spline',
         events: {
           load: function () {
-            const chart: any =
-              Highcharts.charts.length > 0
-                ? Highcharts.charts.find(
-                    (c: any) => c?.title?.textStr === topic,
-                  )
-                : null;
-
-            if (chart) {
-              PubSub.subscribe(topic, (_, data) => {
-                if (
-                  Array.isArray(data) &&
-                  data.length > 0 &&
-                  chart?.series?.[0]
-                ) {
-                  const series = chart.series[0];
-                  data.forEach((point, index) =>
-                    series.addPoint(
-                      point,
-                      data.length - 1 === index,
-                      series.data.length > METRIC_RANGE_3600,
-                      true,
-                    ),
-                  );
-                }
-              });
-            }
+            PubSub.subscribe(topic, (_, data) => {
+              const chart: any =
+                Highcharts.charts.length > 0
+                  ? Highcharts.charts.find(
+                      (c: any) => c?.title?.textStr === topic,
+                    )
+                  : null;
+              if (chart && data.length > 0) {
+                const series = chart.series[0];
+                series.addPoint(
+                  data,
+                  true,
+                  series.data.length > METRIC_RANGE_10800,
+                  true,
+                );
+              }
+            });
           },
         },
       },
 
       plotOptions: {
-        areaspline: {
-          color: '#218FF6A2',
-          fillColor: {
-            linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
-            stops: [
-              [0, '#218FF66F'],
-              [1, '#218FF61B'],
-            ],
-          },
-          threshold: null,
-          marker: {
-            lineWidth: 1,
-            lineColor: null,
-            fillColor: 'white',
-          },
+        series: {
+          color: colors.primaryMain,
         },
-      },
-
-      time: {
-        useUTC: false,
-      },
-
-      exporting: {
-        enabled: false,
       },
 
       navigator: {
@@ -113,24 +95,26 @@ const LineChart = ({
         },
       },
 
-      accessibility: {
-        enabled: false,
+      time: {
+        useUTC: false,
       },
 
       series: [
         {
           name: title,
           data: (function () {
-            const data = [...initData];
             return data;
           })(),
+          connectNulls: true,
+          zoneAxis: 'x',
+          zones: findNullZones(data),
         },
       ],
 
       xAxis: {
         type: 'datetime',
         title: false,
-        tickAmount: 6,
+        tickInterval: 1000 * 60 * 30,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
@@ -139,7 +123,6 @@ const LineChart = ({
 
       yAxis: {
         title: false,
-        minRange: 8,
       },
     };
   };

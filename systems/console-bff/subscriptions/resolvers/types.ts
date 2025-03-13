@@ -7,6 +7,7 @@
  */
 import { Field, InputType, ObjectType } from "type-graphql";
 
+import { METRICS_INTERVAL } from "../../common/configs";
 import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
@@ -73,8 +74,8 @@ export class LatestMetricSubRes {
   @Field()
   type: string;
 
-  @Field(() => [[Number, Number]])
-  value: [number, number][];
+  @Field(() => [Number, Number])
+  value: [number, number];
 }
 
 @InputType()
@@ -97,7 +98,7 @@ export class GetMetricRangeInput {
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ nullable: true })
+  @Field({ nullable: true, defaultValue: METRICS_INTERVAL })
   step?: number;
 
   @Field({ nullable: true })
@@ -108,9 +109,6 @@ export class GetMetricRangeInput {
 export class GetMetricsStatInput {
   @Field({ nullable: true })
   nodeId?: string;
-
-  @Field({ nullable: true })
-  networkId?: string;
 
   @Field()
   orgName: string;
@@ -127,8 +125,29 @@ export class GetMetricsStatInput {
   @Field({ nullable: true })
   to?: number;
 
-  @Field({ defaultValue: 1 })
+  @Field({ defaultValue: 30 })
   step: number;
+
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
+}
+
+@InputType()
+export class SubMetricsStatInput {
+  @Field()
+  nodeId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
 }
 
 @InputType()

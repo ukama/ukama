@@ -150,13 +150,29 @@ const getGraphsKeyByType = (type: string): string[] => {
         "backhaul_downlink",
         "backhaul_latency",
       ];
-
     case STATS_TYPE.RESOURCES:
     case GRAPHS_TYPE.RESOURCES:
       return ["hwd_load", "memory_usage", "cpu_usage", "disk_usage"];
     case STATS_TYPE.RADIO:
     case GRAPHS_TYPE.RADIO:
       return ["txpower"];
+    case STATS_TYPE.ALL_NODE:
+      return [
+        "unit_uptime",
+        "unit_health",
+        "node_load",
+        "subscribers_active",
+        "cellular_uplink",
+        "cellular_downlink",
+        "backhaul_uplink",
+        "backhaul_downlink",
+        "backhaul_latency",
+        "hwd_load",
+        "memory_usage",
+        "cpu_usage",
+        "disk_usage",
+        "txpower",
+      ];
     default:
       return [];
   }
@@ -316,6 +332,17 @@ const eventKeyToAction = (
     default:
       return { title: "Network Updated", action: "updated" };
   }
+};
+
+export const wsUrlResolver = (url: string): string => {
+  if (url?.startsWith("wss://") || url?.startsWith("ws://")) {
+    return url;
+  } else if (url?.includes("https://")) {
+    return url.replace("https://", "wss://");
+  } else if (url?.startsWith("http://")) {
+    return url.replace("http://", "ws://");
+  }
+  return url;
 };
 
 export {

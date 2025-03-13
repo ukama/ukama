@@ -112,6 +112,7 @@ registerEnumType(GRAPHS_TYPE, {
 });
 
 export enum STATS_TYPE {
+  ALL_NODE = "ALL_NODE",
   HOME = "HOME",
   OVERVIEW = "OVERVIEW",
   NETWORK = "NETWORK",

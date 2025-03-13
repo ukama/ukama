@@ -247,6 +247,7 @@ export interface TNotificationResDto {
 
 interface MetricsSubData {
   getMetricByTabSub: LatestMetricSubRes;
+  getMetricStatSub: LatestMetricSubRes;
 }
 
 export interface TMetricResDto {
