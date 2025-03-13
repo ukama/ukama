@@ -45,7 +45,7 @@ type RestartNodesRequest struct {
 }
 type ToggleInternetSwitchRequest struct {
 	SiteId string `json:"site_id" example:"{{SiteId}}" validate:"required" path:"site_id"`
-	Status bool   `json:"status" example:"{{Status}}" validate:"required"`
+	Status bool   `json:"status" example:"{{Status}}"`
 	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
 }
 
