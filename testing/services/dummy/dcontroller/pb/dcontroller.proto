@@ -6,89 +6,111 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-syntax = "proto3";
+ syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
- 
-package ukama.dummy.dcontroller.v1;
-
-message GetSiteMetricsRequest {
-    string siteId = 1;
-}
- 
-message GetSiteMetricsResponse {
-    BackhaulMetrics backhaul = 1;
-    EthernetMetrics ethernet = 2;
-    PowerMetrics power = 3;
-}
- 
-message BackhaulMetrics {
-    double latency = 1;
-    double status = 2;
-    double speed = 3;
-}
-
-message EthernetMetrics {
-    double portStatus = 1;
-    double portSpeed = 2;
-}
-
-message PowerMetrics {
-    double batteryPower = 1;
-    double solarPanelVoltage = 2;
-    double solarPanelCurrent = 3;
-    double solarPanelPower = 4;
-    double chargeControllerStatus = 5;
-    double chargeControllerMode = 6;
-    double chargeControllerCurrent = 7;
-    double chargeControllerVoltage = 8;
-}
-
-// Profile types
-enum Profile {
-    PROFILE_NORMAL = 0;
-    PROFILE_MIN = 1;
-    PROFILE_MAX = 2;
-}
-
-// Scenario types
-enum Scenario {
-    SCENARIO_DEFAULT = 0;
-    SCENARIO_POWER_DOWN = 1;
-    SCENARIO_SWITCH_OFF = 3;
-    SCENARIO_BACKHAUL_DOWN = 4;
-}
-
-message StartMetricsRequest {
-    string siteId = 1;
-    Profile profile = 2;
-}
-
-message StartMetricsResponse {
-    bool success = 1;
-    string message = 2;
-}
-
-message UpdateMetricsRequest {
-    string siteId = 1;
-    Profile profile = 2;
-    repeated PortUpdate portUpdates = 4; 
-}
-
-message UpdateMetricsResponse {
-    bool success = 1;
-    string message = 2;
-}
-
-message PortUpdate {
-    int32 portNumber = 1;  
-    bool status = 2;      
-}
-
-// Service definition
-service MetricsController {
+ option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
+  
+ package ukama.dummy.dcontroller.v1;
+ service MetricsController {
     // Get current metrics
     rpc GetSiteMetrics(GetSiteMetricsRequest) returns (GetSiteMetricsResponse) {}
     rpc StartMetrics(StartMetricsRequest) returns (StartMetricsResponse) {}
     rpc UpdateMetrics(UpdateMetricsRequest) returns (UpdateMetricsResponse) {}
+    
+    // New monitoring services
+    rpc MonitorSite(MonitorSiteRequest) returns (MonitorSiteResponse) {}
+    rpc StopMonitoring(StopMonitoringRequest) returns (StopMonitoringResponse) {}
 }
+ message GetSiteMetricsRequest {
+     string siteId = 1;
+ }
+  
+ message GetSiteMetricsResponse {
+     BackhaulMetrics backhaul = 1;
+     EthernetMetrics ethernet = 2;
+     PowerMetrics power = 3;
+ }
+  
+ message BackhaulMetrics {
+     double latency = 1;
+     double status = 2;
+     double speed = 3;
+ }
+ 
+ message EthernetMetrics {
+     double portStatus = 1;
+     double portSpeed = 2;
+ }
+ 
+ message PowerMetrics {
+     double batteryPower = 1;
+     double solarPanelVoltage = 2;
+     double solarPanelCurrent = 3;
+     double solarPanelPower = 4;
+     double chargeControllerStatus = 5;
+     double chargeControllerMode = 6;
+     double chargeControllerCurrent = 7;
+     double chargeControllerVoltage = 8;
+ }
+ 
+ // Profile types
+ enum Profile {
+     PROFILE_NORMAL = 0;
+     PROFILE_MIN = 1;
+     PROFILE_MAX = 2;
+ }
+ 
+ // Scenario types
+ enum Scenario {
+     SCENARIO_DEFAULT = 0;
+     SCENARIO_POWER_DOWN = 1;
+     SCENARIO_SWITCH_OFF = 3;
+     SCENARIO_BACKHAUL_DOWN = 4;
+ }
+ 
+ message StartMetricsRequest {
+     string siteId = 1;
+     Profile profile = 2;
+ }
+ 
+ message StartMetricsResponse {
+     bool success = 1;
+     string message = 2;
+ }
+ 
+ message UpdateMetricsRequest {
+     string siteId = 1;
+     Profile profile = 2;
+     repeated PortUpdate portUpdates = 4; 
+ }
+ 
+ message UpdateMetricsResponse {
+     bool success = 1;
+     string message = 2;
+ }
+ 
+ message PortUpdate {
+     int32 portNumber = 1;  
+     bool status = 2;      
+ }
+ 
+ message MonitorSiteRequest {
+     string siteId = 1;
+     string nodeId = 2;
+ }
+ 
+ message MonitorSiteResponse {
+     bool success = 1;
+     string message = 2;
+ }
+ 
+ message StopMonitoringRequest {
+     string siteId = 1;
+ }
+ 
+ message StopMonitoringResponse {
+     bool success = 1;
+     string message = 2;
+ }
+ 
+ 

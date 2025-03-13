@@ -19,8 +19,10 @@ import (
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/grpc"
+
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
@@ -33,22 +35,22 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/server"
 )
- 
+  
  var serviceConfig *pkg.Config
- 
+  
  func main() {
 	 ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	 initConfig()
 	 runGrpcServer()
  }
- 
+  
  func initConfig() {
 	 serviceConfig = pkg.NewConfig(pkg.ServiceName)
 	 err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	 if err != nil {
 		 log.Fatalf("Error reading config: %v", err)
 	 }
-	 
+	  
 	 if serviceConfig.DebugMode {
 		 b, err := yaml.Marshal(serviceConfig)
 		 if err != nil {
@@ -59,47 +61,50 @@ import (
 	 }
 	 pkg.IsDebugMode = serviceConfig.DebugMode
  }
- 
+  
  func runGrpcServer() {
-	instanceId := os.Getenv("POD_NAME")
-	if instanceId == "" {
-		inst := uuid.NewV4()
-		instanceId = inst.String()
-	}
+	 instanceId := os.Getenv("POD_NAME")
+	 if instanceId == "" {
+		 inst := uuid.NewV4()
+		 instanceId = inst.String()
+	 }
+	 
+	 mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+		 serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		 serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		 serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		 serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+		 nodeClient := creg.NewNodeClient(serviceConfig.RegistryHost)
+
+	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient,nodeClient)
+	 
+	 if serviceConfig.DNodeURL != "" {
+		 log.Infof("Initializing DNode client with URL: %s", serviceConfig.DNodeURL)
+		 controllerServer.AddScenarioMonitoring(serviceConfig.DNodeURL)
+	 } else {
+		 log.Warnf("DNode URL not configured, node scenario updates will be disabled")
+	 }
+	 
+	 nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
 	
-		mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-			serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-			serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-	
-		controllerServer := server.NewControllerServer(serviceConfig.OrgName,mbClient)
-		nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
-   
-	log.Debugf("MessageBus Client is %+v", mbClient)
+	 log.Debugf("MessageBus Client is %+v", mbClient)
 	 grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
+		 egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 		 generated.RegisterMetricsControllerServer(s, controllerServer)
 	 })
- 	
+	  
 	 go grpcServer.StartServer()
 	 go startMetricsServer()
-
-	go msgBusListener(mbClient)
-
-	waitForExit()
+	 go msgBusListener(mbClient)
+ 
+	 waitForExit()
 	 
-	 sigs := make(chan os.Signal, 1)
-	 signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	 
-	 sig := <-sigs
-	 log.Infof("Received signal %v, shutting down...", sig)
-	 
+	 log.Info("Cleaning up resources...")
 	 controllerServer.Cleanup()
 	 
 	 log.Infof("Exiting service %s", pkg.ServiceName)
  }
- 
+  
  func startMetricsServer() {
 	 mux := http.NewServeMux()
 	 
@@ -126,27 +131,21 @@ import (
 		 }
 	 }
  }
+ 
  func msgBusListener(m mb.MsgBusServiceClient) {
-	if err := m.Register(); err != nil {
-		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
-	}
-
-	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
-	}
-}
-
-func waitForExit() {
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	go func() {
-
-		sig := <-sigs
-		log.Info(sig)
-		done <- true
-	}()
-
-	log.Debug("awaiting terminate/interrupt signal")
-	<-done
-	log.Infof("exiting service %s", pkg.ServiceName)
-}
+	 if err := m.Register(); err != nil {
+		 log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+	 }
+ 
+	 if err := m.Start(); err != nil {
+		 log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+	 }
+ }
+ 
+ func waitForExit() {
+	 sigs := make(chan os.Signal, 1)
+	 signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	 
+	 sig := <-sigs
+	 log.Infof("Received signal %v, shutting down...", sig)
+ }
