@@ -92,7 +92,7 @@ subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
   }
 }
 
-query getMetricsStat($data: GetMetricsStatInput!) {
+query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
     metrics {
       success
@@ -104,7 +104,7 @@ query getMetricsStat($data: GetMetricsStatInput!) {
   }
 }
 
-subscription GetMetricStatSub($data: SubMetricsStatInput!) {
+subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
   getMetricStatSub(data: $data) {
     msg
     nodeId

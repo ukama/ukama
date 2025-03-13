@@ -21,7 +21,7 @@ import {
   MetricsRes,
   Stats_Type,
   useGetMetricByTabLazyQuery,
-  useGetMetricsStatQueryLazyQuery,
+  useGetMetricsStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
@@ -150,7 +150,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [
     getMetricStat,
     { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetMetricsStatQueryLazyQuery({
+  ] = useGetMetricsStatLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
