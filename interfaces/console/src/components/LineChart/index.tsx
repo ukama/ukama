@@ -8,7 +8,7 @@
 
 import { METRIC_RANGE_10800 } from '@/constants';
 import { colors } from '@/theme';
-import { findNullZones } from '@/utils';
+import { findNullZones, generatePlotLines } from '@/utils';
 import { Box } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -21,15 +21,20 @@ interface ILineChart {
   from: number;
   hasData?: boolean;
   loading?: boolean;
+  yunit?: string;
+  tickInterval?: number;
+  tickPositions?: number[];
 }
 
 const LineChart = ({
   topic,
+  yunit,
   hasData,
   initData,
   title = '',
   loading = false,
-  from: metricFrom,
+  tickInterval = undefined,
+  tickPositions = undefined,
 }: ILineChart) => {
   const getOptions = (topic: string, title: string, initData: any) => {
     const data: any = [];
@@ -123,6 +128,18 @@ const LineChart = ({
 
       yAxis: {
         title: false,
+        tickAmount: 4,
+        gridLineDashStyle: 'Dash',
+        tickInterval: tickInterval,
+        tickPositions: tickPositions,
+        gridLineWidth: tickPositions ? 0 : 2,
+        labels: {
+          formatter: function (v: any) {
+            return `${v.value}${yunit}`;
+          },
+        },
+
+        plotLines: [...generatePlotLines(tickPositions)],
       },
     };
   };

@@ -88,9 +88,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_uplink",
-			Min:    1024,
-			Normal: 5120,
-			Max:    10240,
+			Min:    2048,
+			Normal: 4096,
+			Max:    8192,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_uplink",
@@ -101,9 +101,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_downlink",
-			Min:    1024,
-			Normal: 8192,
-			Max:    10240,
+			Min:    20480,
+			Normal: 40960,
+			Max:    81920,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_downlink",
@@ -114,8 +114,8 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_uplink",
-			Min:    1024,
-			Normal: 5120,
+			Min:    2048,
+			Normal: 8192,
 			Max:    10240,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
@@ -127,9 +127,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_downlink",
-			Min:    1024,
-			Normal: 8192,
-			Max:    10240,
+			Min:    20480,
+			Normal: 81920,
+			Max:    102400,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_downlink",
@@ -140,9 +140,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_latency",
-			Min:    30,
-			Normal: 50,
-			Max:    80,
+			Min:    100,
+			Normal: 150,
+			Max:    200,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_latency",

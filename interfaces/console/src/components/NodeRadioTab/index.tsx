@@ -71,6 +71,9 @@ const NodeRadioTab = ({
                 topic={config.id}
                 loading={loading}
                 title={config.name}
+                yunit={config.unit}
+                tickInterval={config.tickInterval}
+                tickPositions={config.tickPositions}
                 hasData={isMetricValue(config.id, metrics)}
                 initData={getMetricValue(config.id, metrics)}
               />

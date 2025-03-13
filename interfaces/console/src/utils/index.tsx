@@ -453,6 +453,28 @@ const findNullZones = (data: any) => {
   return zones;
 };
 
+export const generatePlotLines = (values: number[] | undefined): any[] => {
+  if (!values) {
+    return [];
+  }
+  if (values.length < 3 || values.length > 5) {
+    throw new Error('length no valid');
+  }
+
+  return values.slice(1).map((value, index, arr) => ({
+    value,
+    color:
+      index === 0
+        ? colors.dullGrey
+        : index === arr.length - 1
+          ? colors.dullRed
+          : colors.dullGreen,
+    width: 2,
+    zIndex: 4,
+    dashStyle: 'Dash',
+  }));
+};
+
 export {
   base64ToBlob,
   ConfigureStep,

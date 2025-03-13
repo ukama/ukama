@@ -345,6 +345,17 @@ export const wsUrlResolver = (url: string): string => {
   return url;
 };
 
+export const formatKPIValue = (type: string, value: any) => {
+  switch (type) {
+    case "backhaul_latency":
+      return Math.floor(Number(value || 0));
+    case "subscribers_active":
+      return Math.floor(Number(value || 0));
+    default:
+      return parseFloat(Number(value || 0).toFixed(2));
+  }
+};
+
 export {
   csvToBase64,
   eventKeyToAction,

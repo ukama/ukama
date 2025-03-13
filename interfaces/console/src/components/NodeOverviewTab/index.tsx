@@ -181,8 +181,11 @@ const NodeOverviewTab = ({
                   from={metricFrom}
                   topic={config.id}
                   title={config.name}
+                  yunit={config.unit}
                   loading={metricsLoading}
                   key={`${config.id}-${i}`}
+                  tickInterval={config.tickInterval}
+                  tickPositions={config.tickPositions}
                   hasData={isMetricValue(config.id, metrics)}
                   initData={getMetricValue(config.id, metrics)}
                 />
@@ -196,8 +199,11 @@ const NodeOverviewTab = ({
                   from={metricFrom}
                   topic={config.id}
                   title={config.name}
+                  yunit={config.unit}
                   loading={metricsLoading}
                   key={`${config.id}-${i}`}
+                  tickInterval={config.tickInterval}
+                  tickPositions={config.tickPositions}
                   hasData={isMetricValue(config.id, metrics)}
                   initData={getMetricValue(config.id, metrics)}
                 />
