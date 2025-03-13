@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { METRICS_INTERVAL } from "../../common/configs";
-import { eventKeyToAction } from "../../common/utils";
+import { eventKeyToAction, formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
@@ -71,7 +71,8 @@ export const parseMetricRes = (
           result[0].values,
           METRICS_INTERVAL,
           args.to || Date.now(),
-          args.from
+          args.from,
+          type
         ),
       }
     : getEmptyMetric({
@@ -104,7 +105,8 @@ export const parseNodeMetricRes = (
           result[0].values,
           args.step || METRICS_INTERVAL,
           args.to || Date.now(),
-          args.from
+          args.from,
+          args.type
         ),
       }
     : getEmptyMetric(args);
@@ -114,7 +116,8 @@ function fixTimestampInMetricData(
   data: [number, string | null][],
   step: number,
   to: number,
-  from: number
+  from: number,
+  type: string
 ): [number, number][] {
   if (!Array.isArray(data) || data.length === 0) return [];
 
@@ -126,7 +129,7 @@ function fixTimestampInMetricData(
     if (dataIndex < data.length && data[dataIndex][0] === prevTimestamp) {
       result.push([
         data[dataIndex][0] * 1000,
-        parseFloat(Number(data[dataIndex][1]).toFixed(2)),
+        formatKPIValue(type, data[dataIndex][1]),
       ]);
       dataIndex++;
     } else {

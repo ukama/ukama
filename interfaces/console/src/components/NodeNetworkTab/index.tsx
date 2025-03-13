@@ -26,6 +26,7 @@ interface INodeOverviewTab {
   loading: boolean;
   metricFrom: number;
   metrics: MetricsRes;
+  statLoading: boolean;
   selectedNode: Node | undefined;
   handleSectionChange: Function;
   nodeMetricsStatData: MetricsStateRes;
@@ -34,7 +35,7 @@ const NodeNetworkTab = ({
   loading,
   metrics,
   metricFrom,
-  selectedNode,
+  statLoading,
   handleSectionChange,
   nodeMetricsStatData,
 }: INodeOverviewTab) => {
@@ -55,7 +56,7 @@ const NodeNetworkTab = ({
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
-            loading={loading}
+            loading={statLoading}
             title={'Cellular'}
             selected={selected}
             isCollapsable={false}
@@ -69,13 +70,17 @@ const NodeNetworkTab = ({
                 key={`${config.id}-${i}`}
                 threshold={config.threshold}
                 nameInfo={config.description}
-                value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
+                value={getKPIStatValue(
+                  config.id,
+                  statLoading,
+                  nodeMetricsStatData,
+                )}
               />
             ))}
           </NodeStatsContainer>
           <NodeStatsContainer
             index={1}
-            loading={loading}
+            loading={statLoading}
             isClickable={true}
             selected={selected}
             title={'Backhaul'}
@@ -89,7 +94,11 @@ const NodeNetworkTab = ({
                 key={`${config.id}-${i}`}
                 threshold={config.threshold}
                 nameInfo={config.description}
-                value={getKPIStatValue(config.id, loading, nodeMetricsStatData)}
+                value={getKPIStatValue(
+                  config.id,
+                  statLoading,
+                  nodeMetricsStatData,
+                )}
               />
             ))}
           </NodeStatsContainer>
@@ -110,8 +119,11 @@ const NodeNetworkTab = ({
                     from={metricFrom}
                     topic={config.id}
                     loading={loading}
+                    yunit={config.unit}
                     title={config.name}
                     key={`${config.id}-${i}`}
+                    tickInterval={config.tickInterval}
+                    tickPositions={config.tickPositions}
                     hasData={isMetricValue(config.id, metrics)}
                     initData={getMetricValue(config.id, metrics)}
                   />
@@ -122,7 +134,10 @@ const NodeNetworkTab = ({
                     topic={config.id}
                     loading={loading}
                     title={config.name}
+                    yunit={config.unit}
                     key={`${config.id}-${i}`}
+                    tickInterval={config.tickInterval}
+                    tickPositions={config.tickPositions}
                     hasData={isMetricValue(config.id, metrics)}
                     initData={getMetricValue(config.id, metrics)}
                   />

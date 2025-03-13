@@ -259,19 +259,19 @@ export type GetMetricByTabSubSubscriptionVariables = Exact<{
 
 export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
-export type GetMetricsStatQueryQueryVariables = Exact<{
+export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatQueryQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
 
-export type MetricsStatSubscriptionSubscriptionVariables = Exact<{
+export type GetMetricsStatSubSubscriptionVariables = Exact<{
   data: SubMetricsStatInput;
 }>;
 
 
-export type MetricsStatSubscriptionSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type GetMetricsStatSubSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -478,8 +478,8 @@ export function useGetMetricByTabSubSubscription(baseOptions: Apollo.Subscriptio
       }
 export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
 export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
-export const GetMetricsStatQueryDocument = gql`
-    query getMetricsStatQuery($data: GetMetricsStatInput!) {
+export const GetMetricsStatDocument = gql`
+    query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
     metrics {
       success
@@ -493,39 +493,39 @@ export const GetMetricsStatQueryDocument = gql`
     `;
 
 /**
- * __useGetMetricsStatQueryQuery__
+ * __useGetMetricsStatQuery__
  *
- * To run a query within a React component, call `useGetMetricsStatQueryQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricsStatQueryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetMetricsStatQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsStatQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetMetricsStatQueryQuery({
+ * const { data, loading, error } = useGetMetricsStatQuery({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetMetricsStatQueryQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables> & ({ variables: GetMetricsStatQueryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetMetricsStatQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables> & ({ variables: GetMetricsStatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
+        return Apollo.useQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
       }
-export function useGetMetricsStatQueryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>) {
+export function useGetMetricsStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
+          return Apollo.useLazyQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
         }
-export function useGetMetricsStatQuerySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>) {
+export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>(GetMetricsStatQueryDocument, options);
+          return Apollo.useSuspenseQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
         }
-export type GetMetricsStatQueryQueryHookResult = ReturnType<typeof useGetMetricsStatQueryQuery>;
-export type GetMetricsStatQueryLazyQueryHookResult = ReturnType<typeof useGetMetricsStatQueryLazyQuery>;
-export type GetMetricsStatQuerySuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatQuerySuspenseQuery>;
-export type GetMetricsStatQueryQueryResult = Apollo.QueryResult<GetMetricsStatQueryQuery, GetMetricsStatQueryQueryVariables>;
-export const MetricsStatSubscriptionDocument = gql`
-    subscription MetricsStatSubscription($data: SubMetricsStatInput!) {
+export type GetMetricsStatQueryHookResult = ReturnType<typeof useGetMetricsStatQuery>;
+export type GetMetricsStatLazyQueryHookResult = ReturnType<typeof useGetMetricsStatLazyQuery>;
+export type GetMetricsStatSuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatSuspenseQuery>;
+export type GetMetricsStatQueryResult = Apollo.QueryResult<GetMetricsStatQuery, GetMetricsStatQueryVariables>;
+export const GetMetricsStatSubDocument = gql`
+    subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
   getMetricStatSub(data: $data) {
     msg
     nodeId
@@ -537,24 +537,24 @@ export const MetricsStatSubscriptionDocument = gql`
     `;
 
 /**
- * __useMetricsStatSubscriptionSubscription__
+ * __useGetMetricsStatSubSubscription__
  *
- * To run a query within a React component, call `useMetricsStatSubscriptionSubscription` and pass it any options that fit your needs.
- * When your component renders, `useMetricsStatSubscriptionSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetMetricsStatSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsStatSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useMetricsStatSubscriptionSubscription({
+ * const { data, loading, error } = useGetMetricsStatSubSubscription({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useMetricsStatSubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<MetricsStatSubscriptionSubscription, MetricsStatSubscriptionSubscriptionVariables> & ({ variables: MetricsStatSubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetMetricsStatSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricsStatSubSubscription, GetMetricsStatSubSubscriptionVariables> & ({ variables: GetMetricsStatSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<MetricsStatSubscriptionSubscription, MetricsStatSubscriptionSubscriptionVariables>(MetricsStatSubscriptionDocument, options);
+        return Apollo.useSubscription<GetMetricsStatSubSubscription, GetMetricsStatSubSubscriptionVariables>(GetMetricsStatSubDocument, options);
       }
-export type MetricsStatSubscriptionSubscriptionHookResult = ReturnType<typeof useMetricsStatSubscriptionSubscription>;
-export type MetricsStatSubscriptionSubscriptionResult = Apollo.SubscriptionResult<MetricsStatSubscriptionSubscription>;
+export type GetMetricsStatSubSubscriptionHookResult = ReturnType<typeof useGetMetricsStatSubSubscription>;
+export type GetMetricsStatSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricsStatSubSubscription>;

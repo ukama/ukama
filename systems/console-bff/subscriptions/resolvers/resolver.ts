@@ -9,6 +9,7 @@ import { logger } from "../../common/logger";
 import { addInStore, openStore } from "../../common/storage";
 import {
   eventKeyToAction,
+  formatKPIValue,
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
@@ -95,7 +96,7 @@ class SubscriptionsResolvers {
           type: res.type,
           nodeId: res.nodeId,
           success: res.success,
-          value: parseFloat(Number(avg).toFixed(2)),
+          value: formatKPIValue(res.type, avg),
         };
       });
 
@@ -125,7 +126,7 @@ class SubscriptionsResolvers {
                 nodeId: data.nodeId,
                 value: [
                   Math.floor(result.value[0]) * 1000,
-                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
+                  formatKPIValue(res.Name, result.value[1]),
                 ],
               });
             }
