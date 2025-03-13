@@ -41,52 +41,52 @@ import (
  }
   
  func (n *DControllerEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
-	 switch e.RoutingKey {
- 
-	 case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
-		 c := evt.EventToEventConfig[evt.EventSiteCreate]
-		 msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
-		 if err != nil {
-			 return nil, err
-		 }
- 
-		 err = n.handleSiteCreateEvent(msg, c.Title)
-		 if err != nil {
-			 return nil, err
-		 }
- 
-	 case "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish":
-		 nodeMsg := &cpb.NodeFeederMessage{}
-		 if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
-			 log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
-			 return nil, err
-		 }
-		 
-		 err := n.handleToggleSwitchEventDirect(nodeMsg)
-		 if err != nil {
-			 log.Errorf("Error handling toggle switch event: %v", err)
-			 return nil, err
-		 }
+	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+	switch e.RoutingKey {
 
-	 case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
-		c := evt.EventToEventConfig[evt.EventNodeAssign]
-		msg ,err :=epb.UnmarshalEventRegistryNodeAssign(e.Msg,c.Name)
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
+		c := evt.EventToEventConfig[evt.EventSiteCreate]
+		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
-		 err = n.handleSiteMonitoring(msg)
-		 if err != nil {
-			 log.Errorf("Error handling toggle switch event: %v", err)
-			 return nil, err
-		 }	
-		 
-	 default:
-		 log.Errorf("No handler routing key %s", e.RoutingKey)
-	 }
- 
-	 return &epb.EventResponse{}, nil
- }
+
+		err = n.handleSiteCreateEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+
+	case "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish":
+		nodeMsg := &cpb.NodeFeederMessage{}
+		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
+			log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
+			return nil, err
+		}
+		
+		err := n.handleToggleSwitchEventDirect(nodeMsg)
+		if err != nil {
+			log.Errorf("Error handling toggle switch event: %v", err)
+			return nil, err
+		}
+
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
+		c := evt.EventToEventConfig[evt.EventNodeAssign]
+		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleSiteMonitoring(msg)
+		if err != nil {
+			log.Errorf("Error handling site monitoring event: %v", err)
+			return nil, err
+		}	
+		
+	default:
+		log.Errorf("No handler routing key %s", e.RoutingKey)
+	}
+
+	return &epb.EventResponse{}, nil
+}
   
  func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventRegistryNodeAssign) error {
 	 log.Infof("Handling site monitoring event")

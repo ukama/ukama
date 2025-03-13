@@ -62,7 +62,7 @@ import (
 		 return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	 }
  
-	 log.Infof("Successfully updated node %s scenario to %s with profile %s", nodeId, scenario)
+	 log.Infof("Successfully updated node %s scenario to %s", nodeId, scenario)
 	 return nil
  }
  
@@ -71,7 +71,7 @@ import (
  }
  
  // SetNodeOff notifies the DNode that the node is off
- func (c *DNodeClient) SetNodeOff(nodeId string, profile cenums.Profile) error {
+ func (c *DNodeClient) SetNodeOff(nodeId string) error {
 	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_NODE_OFF)
  }
  

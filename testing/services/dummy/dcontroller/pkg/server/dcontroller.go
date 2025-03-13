@@ -215,19 +215,30 @@ import (
 			shouldCheckStatus = true
 		}
 	}
+
+	var needToCheckStatus bool
+	var siteToCheck string
+	
 	if shouldCheckStatus {
 		monConfig, monExists := s.monitoringStatus[siteId]
 		if monExists && monConfig.Active {
-			s.mutex.Unlock()
-			s.checkAndUpdateStatus(siteId, "")
-			s.mutex.Lock()
+			needToCheckStatus = true
+			siteToCheck = siteId
 		}
 	}
 
-	return &pb.UpdateMetricsResponse{
+	resp := &pb.UpdateMetricsResponse{
 		Success: true,
 		Message: "Metrics updated",
-	}, nil
+	}
+	
+	if needToCheckStatus {
+			defer func(site string) {
+			s.checkAndUpdateStatus(site, "")
+		}(siteToCheck)
+	}
+	
+	return resp, nil
 }
   
  func (s *DControllerServer) MonitorSite(ctx context.Context, req *pb.MonitorSiteRequest) (*pb.MonitorSiteResponse, error) {
@@ -319,68 +330,74 @@ import (
  }
   
  func (s *DControllerServer) checkAndUpdateStatus(siteId, _ string) {
-	s.mutex.RLock()
-	provider, providerExists := s.metricsProviders[siteId]
-	monConfig, monExists := s.monitoringStatus[siteId]
-	_, siteExists := s.siteConfigs[siteId]
-	
-	if !providerExists || !monExists || !siteExists {
-		s.mutex.RUnlock()
-		log.Warnf("Missing configuration for site %s", siteId)
-		return
-	}
-	
-	lastStatus := monConfig.LastStatus
-	s.mutex.RUnlock()
-	
-	metrics, err := provider.GetMetrics(siteId)
-	if err != nil {
-		log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
-		return
-	}
-	
-	var currentScenario cenums.SCENARIOS
-	
-	powerStatus, err := provider.GetPowerStatus()
-	switch {
-	case err != nil || !powerStatus:
-		currentScenario = cenums.SCENARIO_NODE_OFF
-	case metrics.Backhaul.Status < 0.5 || metrics.Backhaul.Speed <= 0:
-		currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
-		log.Infof("Backhaul down detected for site %s: status=%.1f, speed=%.1f", 
-			siteId, metrics.Backhaul.Status, metrics.Backhaul.Speed)
-
-	case metrics.Battery.Power <= 0:
-		currentScenario = cenums.SCENARIO_NODE_OFF
-		log.Infof("Battery down detected for site %s: voltage=%.1f, current=%.1f",
-			siteId, metrics.Battery.Voltage, metrics.Battery.Current)
-	default:
-		currentScenario = cenums.SCENARIO_DEFAULT
-	}
-	
-	if currentScenario != lastStatus && s.dnodeClient != nil {
-		log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
-		
-		nodes, err := s.nodeClient.GetNodesBySite(siteId)
-		if err != nil {
-			log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
-			return
-		}
-		
-		for _, node := range nodes.Nodes {
-			if err := s.dnodeClient.UpdateNodeScenario(node.Id, currentScenario); err != nil {
-				log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
-			} else {
-				log.Infof("Updated scenario for node %s to %s", node.Id, currentScenario)
-			}
-		}
-		
-		s.mutex.Lock()
-		if config, exists := s.monitoringStatus[siteId]; exists {
-			config.LastStatus = currentScenario
-		}
-		s.mutex.Unlock()
-	}
+    s.mutex.RLock()
+    provider, providerExists := s.metricsProviders[siteId]
+    monConfig, monExists := s.monitoringStatus[siteId]
+    _, siteExists := s.siteConfigs[siteId]
+    
+    if !providerExists || !monExists || !siteExists {
+        s.mutex.RUnlock()
+        log.Warnf("Missing configuration for site %s", siteId)
+        return
+    }
+    
+    lastStatus := monConfig.LastStatus
+    s.mutex.RUnlock()
+    
+    metrics, err := provider.GetMetrics(siteId)
+    if err != nil {
+        log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
+        return
+    }
+    
+    voltage := metrics.Battery.Voltage
+    var percentage float64
+    if voltage <= 10.5 {
+        percentage = 0
+    } else if voltage >= 12.7 {
+        percentage = 100
+    } else {
+        percentage = (voltage - 10.5) / (12.7 - 10.5) * 100
+    }
+    
+    var currentScenario cenums.SCENARIOS
+    
+    if percentage < 50 {
+        currentScenario = cenums.SCENARIO_NODE_OFF
+        log.Infof("Battery low for site %s: percentage=%.1f%%, voltage=%.1fV, setting scenario to %s", 
+            siteId, percentage, voltage, currentScenario)
+    } else if metrics.Backhaul.Status < 0.5 || metrics.Backhaul.Speed <= 0 {
+        currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
+        log.Infof("Backhaul down detected for site %s: status=%.1f, speed=%.1f, setting scenario to %s", 
+            siteId, metrics.Backhaul.Status, metrics.Backhaul.Speed, currentScenario)
+    } else {
+        currentScenario = cenums.SCENARIO_DEFAULT
+        log.Infof("Setting scenario to default for site %s", siteId)
+    }
+    
+    if currentScenario != lastStatus && s.dnodeClient != nil {
+        log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
+        
+        nodes, err := s.nodeClient.GetNodesBySite(siteId)
+        if err != nil {
+            log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+            return
+        }
+        
+        for _, node := range nodes.Nodes {
+            if err := s.dnodeClient.UpdateNodeScenario(node.Id, currentScenario); err != nil {
+                log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+            } else {
+                log.Infof("Updated scenario for node %s to %s", node.Id, currentScenario)
+            }
+        }
+        
+        s.mutex.Lock()
+        if config, exists := s.monitoringStatus[siteId]; exists {
+            config.LastStatus = currentScenario
+        }
+        s.mutex.Unlock()
+    }
 }
  func (s *DControllerServer) StopMonitoring(ctx context.Context, req *pb.StopMonitoringRequest) (*pb.StopMonitoringResponse, error) {
 	 siteId := req.SiteId
