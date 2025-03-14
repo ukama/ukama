@@ -94,7 +94,8 @@ class SubscriptionsResolvers {
         return {
           msg: res.msg,
           type: res.type,
-          nodeId: res.nodeId,
+          nodeId: res.nodeId || "",
+          siteId: res.siteId || "",
           success: res.success,
           value: formatKPIValue(res.type, avg),
         };

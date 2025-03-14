@@ -24,8 +24,11 @@ export class MetricRes {
   @Field()
   msg: string;
 
-  @Field()
-  nodeId: string;
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   type: string;
@@ -85,6 +88,9 @@ export class GetMetricRangeInput {
 
   @Field()
   orgId?: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   type: string;
