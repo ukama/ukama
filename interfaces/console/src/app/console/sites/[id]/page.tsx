@@ -13,22 +13,24 @@ import {
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
+  useGetNodesByNetworkLazyQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
 } from '@/client/graphql/generated';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import SiteComponents from '@/components/SiteComponents';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
-import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
+import { AlertColor, Box, Card, Grid, Paper, Skeleton } from '@mui/material';
 import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { SiteFlowDiagram } from '../../../../../public/svg';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -81,6 +83,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
+  const [nodeIds, setNodeIds] = useState<string[]>([]);
   const { setSnackbarMessage, network, setSelectedDefaultSite } =
     useAppContext();
   const {
@@ -92,6 +95,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [isDataReady, setIsDataReady] = useState(false);
 
   const router = useRouter();
+  const [selectedComponent, setSelectedComponent] = useState<any>('backhaul');
+
+  const handleComponentSelect = (component: any) => {
+    setSelectedComponent(component);
+    console.log(`Selected component: ${component}`);
+  };
 
   const handleSiteConfigOpen = () => {
     setOpenSiteConfig(true);
@@ -231,6 +240,23 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+  const [fetchNode] = useGetNodesByNetworkLazyQuery({
+    onCompleted: (res) => {
+      if (res.getNodesByNetwork?.nodes) {
+        const ids = res.getNodesByNetwork.nodes.map((node) => node.id);
+        setNodeIds(ids);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'nodes-msg',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
+
   useEffect(() => {
     getComponents({
       variables: {
@@ -312,6 +338,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     getSiteLoading,
     CurrentSiteAddressLoading,
   ]);
+  useEffect(() => {
+    if (activeSite?.networkId) {
+      fetchNode({ variables: { networkId: activeSite.networkId } });
+    }
+  }, [activeSite, fetchNode]);
 
   if (!isDataReady) {
     return (
@@ -335,7 +366,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       sx={{
         overflow: 'auto',
         borderRadius: '10px',
-        height: 'calc(100vh - 228px)',
       }}
     >
       <SiteDetailsHeader
@@ -345,11 +375,23 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
       />
-      <Grid container spacing={2} sx={{ mt: 1, height: 'calc(60vh - 100px)' }}>
-        <Grid item xs={3} sx={{ height: '100%' }}>
-          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          mt: 1,
+          height: 'calc(50vh - 50px)',
+        }}
+      >
+        <Grid item xs={4} sx={{ height: '100%' }}>
+          <SiteInfo
+            selectedSite={activeSite}
+            address={CurrentSiteaddress}
+            nodeIds={nodeIds}
+          />
         </Grid>
-        <Grid item xs={6} sx={{ height: '100%' }}>
+        <Grid item xs={5} sx={{ height: '100%' }}>
           <SiteOverview uptimePercentage={98.5} daysRange={60} />
         </Grid>
         <Grid item xs={3} sx={{ height: '100%' }}>
@@ -359,6 +401,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           />
         </Grid>
       </Grid>
+
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <SiteComponents />
+      </Box>
 
       <ConfigureSiteDialog
         site={site}
