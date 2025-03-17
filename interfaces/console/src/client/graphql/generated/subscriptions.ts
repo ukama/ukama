@@ -18,19 +18,25 @@ export type Scalars = {
 };
 
 export enum Graphs_Type {
+  Battery = 'BATTERY',
+  Controller = 'CONTROLLER',
   Home = 'HOME',
+  MainBackhaul = 'MAIN_BACKHAUL',
   NetworkBackhaul = 'NETWORK_BACKHAUL',
   NetworkCellular = 'NETWORK_CELLULAR',
   NodeHealth = 'NODE_HEALTH',
   Radio = 'RADIO',
   Resources = 'RESOURCES',
-  Subscribers = 'SUBSCRIBERS'
+  Solar = 'SOLAR',
+  Subscribers = 'SUBSCRIBERS',
+  Switch = 'SWITCH'
 }
 
 export type GetMetricByTabInput = {
   from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
   step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Graphs_Type;
@@ -42,6 +48,7 @@ export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
   nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
+  siteId?: InputMaybe<Scalars['String']['input']>;
   step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Stats_Type;
@@ -53,6 +60,7 @@ export type LatestMetricSubRes = {
   __typename?: 'LatestMetricSubRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Array<Scalars['Float']['output']>;
@@ -61,7 +69,8 @@ export type LatestMetricSubRes = {
 export type MetricRes = {
   __typename?: 'MetricRes';
   msg: Scalars['String']['output'];
-  nodeId: Scalars['String']['output'];
+  nodeId?: Maybe<Scalars['String']['output']>;
+  siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   values: Array<Array<Scalars['Float']['output']>>;
@@ -179,6 +188,7 @@ export type SubMetricByTabInput = {
   from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
   type: Graphs_Type;
   userId: Scalars['String']['input'];
 };
@@ -250,14 +260,14 @@ export type GetMetricByTabQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId: string, success: boolean, type: string, values: Array<Array<number>> }> } };
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId?: string | null, siteId?: string | null, success: boolean, type: string, values: Array<Array<number>> }> } };
 
 export type GetMetricByTabSubSubscriptionVariables = Exact<{
   data: SubMetricByTabInput;
 }>;
 
 
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, siteId: string, success: boolean, type: string, value: Array<number> } };
 
 export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
@@ -404,6 +414,7 @@ export const GetMetricByTabDocument = gql`
     metrics {
       msg
       nodeId
+      siteId
       success
       type
       values
@@ -449,6 +460,7 @@ export const GetMetricByTabSubDocument = gql`
   getMetricByTabSub(data: $data) {
     msg
     nodeId
+    siteId
     success
     type
     value

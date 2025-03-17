@@ -219,6 +219,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
             step: 30,
             nodeId: id,
             userId: user.id,
+            siteId: '',
             type: graphType,
             from: metricFrom,
             orgName: user.orgName,

@@ -17,20 +17,30 @@ import {
   useGetSiteLazyQuery,
   useGetSitesQuery,
 } from '@/client/graphql/generated';
+import {
+  Graphs_Type,
+  MetricsRes,
+  useGetMetricByTabLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
-import SiteComponents from '@/components/SiteComponents';
+import SiteComponents, {
+  KPI_TO_SECTION_MAP,
+  SectionData,
+} from '@/components/SiteComponents';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
+import { SITE_KPIS } from '@/constants';
+import { METRIC_RANGE_10800 } from '@/constants';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Card, Grid, Paper, Skeleton } from '@mui/material';
+import { getUnixTime } from '@/utils';
+import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
 import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { SiteFlowDiagram } from '../../../../../public/svg';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -84,8 +94,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
-  const { setSnackbarMessage, network, setSelectedDefaultSite } =
-    useAppContext();
+  const {
+    setSnackbarMessage,
+    network,
+    setSelectedDefaultSite,
+    user,
+    subscriptionClient,
+  } = useAppContext();
   const {
     address: CurrentSiteaddress,
     isLoading: CurrentSiteAddressLoading,
@@ -93,6 +108,21 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     fetchAddress,
   } = useFetchAddress();
   const [isDataReady, setIsDataReady] = useState(false);
+
+  // Site Components state
+  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.Solar);
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [activeSection, setActiveSection] = useState<string>('SOLAR');
+  const [activeKPI, setActiveKPI] = useState<string>('solar');
+
+  const sections: SectionData = {
+    SOLAR: SITE_KPIS.SOLAR.metrics,
+    BATTERY: SITE_KPIS.BATTERY.metrics,
+    CONTROLLER: SITE_KPIS.CONTROLLER.metrics,
+    MAIN_BACKHAUL: SITE_KPIS.MAIN_BACKHAUL.metrics,
+    SWITCH: SITE_KPIS.SWITCH.metrics,
+  };
 
   const router = useRouter();
   const [selectedComponent, setSelectedComponent] = useState<any>('backhaul');
@@ -109,6 +139,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const handleCloseSiteConfig = () => {
     setOpenSiteConfig(false);
   };
+
+  // Metrics query
+  const [
+    getMetricByTab,
+    { loading: metricsLoading, variables: metricsVariables },
+  ] = useGetMetricByTabLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricByTab);
+      console.log('METRICS :', data.getMetricByTab);
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'site-metrics-err-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
 
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: (res) => {
@@ -234,7 +285,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       setSnackbarMessage({
         id: 'sites-msg',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
@@ -251,11 +302,83 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       setSnackbarMessage({
         id: 'nodes-msg',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
   });
+
+  // Metrics-related effects
+  useEffect(() => {
+    if (selectedSiteId) {
+      setMetricFrom(getUnixTime() - METRIC_RANGE_10800);
+    }
+  }, [selectedSiteId]);
+
+  useEffect(() => {
+    if (
+      metricFrom > 0 &&
+      selectedSiteId &&
+      metricsVariables?.data?.from !== metricFrom
+    ) {
+      getMetricByTab({
+        variables: {
+          data: {
+            step: 30,
+            siteId: selectedSiteId,
+            userId: user.id,
+            nodeId: '',
+            type: graphType,
+            from: metricFrom,
+            orgName: user.orgName,
+            withSubscription: false,
+            to: metricFrom + METRIC_RANGE_10800,
+          },
+        },
+      });
+    }
+  }, [
+    metricFrom,
+    graphType,
+    metricsVariables?.data?.from,
+    selectedSiteId,
+    user.id,
+    user.orgName,
+    getMetricByTab,
+  ]);
+
+  const handleSectionChange = (section: string): void => {
+    setActiveSection(section);
+
+    if (section !== 'NODE') {
+      let newGraphType: Graphs_Type;
+      switch (section) {
+        case 'SOLAR':
+          newGraphType = Graphs_Type.Solar;
+          break;
+        case 'BATTERY':
+          newGraphType = Graphs_Type.Battery;
+          break;
+        case 'CONTROLLER':
+          newGraphType = Graphs_Type.Controller;
+          break;
+        case 'MAIN_BACKHAUL':
+          newGraphType = Graphs_Type.MainBackhaul;
+          break;
+        default:
+          newGraphType = Graphs_Type.Solar;
+      }
+
+      setGraphType(newGraphType);
+      setMetricFrom(getUnixTime() - METRIC_RANGE_10800);
+    }
+  };
+
+  const handleNodeClick = (kpiType: string) => {
+    setActiveKPI(kpiType);
+    const sectionName = KPI_TO_SECTION_MAP[kpiType] || 'SOLAR';
+    handleSectionChange(sectionName);
+  };
 
   useEffect(() => {
     getComponents({
@@ -338,6 +461,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     getSiteLoading,
     CurrentSiteAddressLoading,
   ]);
+
   useEffect(() => {
     if (activeSite?.networkId) {
       fetchNode({ variables: { networkId: activeSite.networkId } });
@@ -403,7 +527,17 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       </Grid>
 
       <Box sx={{ mt: 4, mb: 4 }}>
-        <SiteComponents />
+        <SiteComponents
+          siteId={selectedSiteId || ''}
+          metrics={metrics}
+          sections={sections}
+          nodeIds={nodeIds}
+          activeKPI={activeKPI}
+          activeSection={activeSection}
+          metricFrom={metricFrom}
+          metricsLoading={metricsLoading}
+          onNodeClick={handleNodeClick}
+        />
       </Box>
 
       <ConfigureSiteDialog

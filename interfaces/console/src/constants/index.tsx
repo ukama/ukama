@@ -255,6 +255,117 @@ export { NodeApps } from './stubData';
 
 export const KPI_PLACEHOLDER_VALUE = '-';
 
+export const SITE_KPIS = {
+  SOLAR: {
+    metrics: [
+      {
+        unit: 'kW',
+        show: true,
+        name: 'Solar power',
+        id: 'solar_panel_power',
+        description: 'Solar power',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar voltage',
+        id: 'solar_panel_voltage',
+        description: 'Solar voltage',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar current',
+        id: 'solar_panel_current',
+        description: 'Solar current',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+    ],
+  },
+  BATTERY: {
+    metrics: [
+      {
+        unit: '%',
+        show: true,
+        name: 'Battery charge',
+        id: 'battery_charge_percentage',
+        description: 'Battery charge',
+        threshold: { min: 0, normal: 100, max: 100 },
+      },
+    ],
+  },
+  CONTROLLER: {
+    metrics: [
+      {
+        unit: '',
+        show: true,
+        name: 'Charge controller status',
+        id: 'charge_controller_status',
+        description: 'Charge controller status',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+    ],
+  },
+  MAIN_BACKHAUL: {
+    metrics: [
+      {
+        unit: 'ms',
+        show: true,
+        name: 'Main backhaul latency',
+        id: 'main_backhaul_latency',
+        description: 'Main backhaul latency',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Backhaul status',
+        id: 'backhaul_status',
+        description: 'Backhaul status',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: 'Mbps',
+        show: true,
+        name: 'Backhaul speed',
+        id: 'backhaul_speed',
+        description: 'Backhaul speed',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+    ],
+  },
+  SWITCH: {
+    metrics: [
+      {
+        unit: '',
+        show: true,
+        name: 'Switch status',
+        id: 'switch_status',
+        description: 'Switch status',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Switch speed',
+        id: 'switch_speed',
+        description: 'Switch health',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+      {
+        unit: '',
+        show: true,
+        name: 'Switch power',
+        id: 'switch_power',
+        description: 'Switch power',
+        threshold: { min: 0, normal: 1, max: 100 },
+      },
+    ],
+  },
+};
+
 export const NODE_KPIS = {
   HOME: {
     stats: [
