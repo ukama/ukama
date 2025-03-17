@@ -64,6 +64,8 @@ const LineChart = ({
   const [navigatorEnabled, setNavigatorEnabled] = useState<boolean>(false);
   const chartRef = useRef<HighchartsReact.RefObject>(null);
 
+  const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
+
   const chartOptions = useMemo<Highcharts.Options>(
     () => ({
       title: {
@@ -159,15 +161,15 @@ const LineChart = ({
           zoneAxis: 'x',
           type: 'spline',
           connectNulls: true,
-          data: initDataFixes(initData),
-          zones: findNullZones(initDataFixes(initData)),
+          data: fixedInitData,
+          zones: findNullZones(fixedInitData),
           tooltip: {
             valueDecimals: 2,
           },
         },
       ],
     }),
-    [initData, tickInterval, tickPositions, title, topic, yunit],
+    [fixedInitData, tickInterval, tickPositions, title, topic, yunit],
   );
 
   return (
