@@ -7,12 +7,7 @@ body {
 a {
   color: #2190f6;
 }
-*.highcharts-credits {
-  display: none;
-}
-*.highcharts-title {
-  display: none;
-}
-*.highcharts-legend {
-  display: none;
+
+.highcharts-range-selector-group {
+  display: none !important;
 }
