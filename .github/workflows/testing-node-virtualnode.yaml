@@ -55,7 +55,16 @@ jobs:
           debootstrap \
           kpartx \
           fdisk \
-          util-linux
+          util-linux \
+          protobuf-compiler \
+          iproute2 \
+          libcap-dev \
+          libidn2-0-dev \
+          libmicrohttpd-dev \
+          gnutls-dev \
+          linux-headers-$(uname -r) \
+          sqlite3 \
+          libsqlite3-dev
 
     - name: Init vars
       id: vars_step
