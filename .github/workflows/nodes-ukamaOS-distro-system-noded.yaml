@@ -66,9 +66,22 @@ jobs:
           libidn2-0-dev \
           libmicrohttpd-dev \
           gnutls-dev \
-          linux-headers-$(uname -r) \
+          linux-headers-generic \
           sqlite3 \
-          libsqlite3-dev
+          libsqlite3-dev \
+          dhcpcd5 \
+          gmp \
+          gnutls-bin \
+          iptables \
+          libjansson-dev \
+          libunistring-dev \
+          libmbedtls-dev \
+          libnettle-dev \
+          openssl \
+          p11-kit \
+          libprotobuf-c-dev \
+          libpsl-dev \
+          procps
 
     - name: installing gettext
       run: |
