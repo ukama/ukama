@@ -70,13 +70,13 @@ jobs:
           sqlite3 \
           libsqlite3-dev \
           dhcpcd5 \
-          gmp \
+          libgmp-dev \
           gnutls-bin \
           iptables \
           libjansson-dev \
           libunistring-dev \
           libmbedtls-dev \
-          libnettle-dev \
+          nettle-dev \
           openssl \
           p11-kit \
           libprotobuf-c-dev \
