@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { METRICS_INTERVAL } from "../../common/configs";
+import { logger } from "../../common/logger";
 import { eventKeyToAction, formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
@@ -46,6 +47,7 @@ export const parseLatestMetricRes = (
       success: true,
       msg: "success",
       nodeId: args.nodeId,
+      siteId: data.siteid,
       type: args.type,
       value: data.value,
     };
@@ -60,6 +62,8 @@ export const parseMetricRes = (
   args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   const { result } = res.data.data;
+  logger.info(`Parsing metric response for type ${type}:`, res);
+
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;
   return hasValues
     ? {
@@ -67,6 +71,7 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
+        siteId: result[0].metric.siteid,
         values: fixTimestampInMetricData(
           result[0].values,
           METRICS_INTERVAL,
@@ -80,40 +85,16 @@ export const parseMetricRes = (
         orgId: "",
         to: args.to,
         type: args.type,
+        siteId: result[0].metric.siteid,
         from: args.from,
         step: args.step,
         userId: args.userId,
         withSubscription: false,
       });
 };
-
-export const parseNodeMetricRes = (
-  { code, data }: { code: number; data: any },
-  args: GetMetricRangeInput
-): MetricRes => {
-  if (code === 404) return getEmptyMetric(args);
-  const { result } = data.data;
-  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
-
-  return hasValues
-    ? {
-        type: args.type,
-        success: true,
-        msg: "success",
-        nodeId: result[0].metric.nodeid,
-        values: fixTimestampInMetricData(
-          result[0].values,
-          args.step || METRICS_INTERVAL,
-          args.to || Date.now(),
-          args.from,
-          args.type
-        ),
-      }
-    : getEmptyMetric(args);
-};
 export const parseSiteMetricRes = (
   { code, data }: { code: number; data: any },
-  args: GetMetricRangeInput
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   if (code === 404 || !data?.data?.result) {
     return getEmptyMetric(args);
@@ -150,14 +131,9 @@ export const parseSiteMetricRes = (
       type: args.type,
       success: true,
       msg: "success",
+      nodeId: metricResult.metric?.nodeId || metricResult.metric?.nodeid || "",
       siteId: metricResult.metric?.site || args.siteId || "",
-      values: fixTimestampInMetricData(
-        values,
-        args.step || METRICS_INTERVAL,
-        args.to || Date.now(),
-        args.from,
-        args.type
-      ),
+      values: values,
     };
 
     return metrics;

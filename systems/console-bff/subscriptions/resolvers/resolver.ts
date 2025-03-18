@@ -16,11 +16,13 @@ import {
   wsUrlResolver,
 } from "../../common/utils";
 import {
-  getMetricRange,
+  getNodeMetricRange,
   getNotifications,
+  getSiteMetricRange,
 } from "../datasource/subscriptions-api";
 import { pubSub } from "./pubsub";
 import {
+  GetMetricBySiteInput,
   GetMetricByTabInput,
   GetMetricsStatInput,
   LatestMetricSubRes,
@@ -73,7 +75,7 @@ class SubscriptionsResolvers {
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(async key => {
-        const res = await getMetricRange(baseURL, key, { ...data });
+        const res = await getNodeMetricRange(baseURL, key, { ...data });
         let avg = 0;
 
         res.values = res.values.filter(value => value[1] !== 0);
@@ -95,7 +97,6 @@ class SubscriptionsResolvers {
           msg: res.msg,
           type: res.type,
           nodeId: res.nodeId || "",
-          siteId: res.siteId || "",
           success: res.success,
           value: formatKPIValue(res.type, avg),
         };
@@ -157,7 +158,7 @@ class SubscriptionsResolvers {
     @Arg("data") data: SubMetricsStatInput
   ): Promise<LatestMetricSubRes> {
     const store = openStore();
-    await addInStore(store, `${data.userId}-${payload.type}-${data.from}`, 0);
+    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
     await store.close();
     return payload;
   }
@@ -185,7 +186,7 @@ class SubscriptionsResolvers {
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(
-        async key => await getMetricRange(baseURL, key, { ...data })
+        async key => await getNodeMetricRange(baseURL, key, { ...data })
       );
 
       metrics.metrics = await Promise.all(metricPromises);
@@ -235,7 +236,85 @@ class SubscriptionsResolvers {
 
     return metrics;
   }
+  @Query(() => MetricsRes)
+  async getMetricBySite(@Arg("data") data: GetMetricBySiteInput) {
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      data.orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for site metrics: ${baseURL}`);
+      return { metrics: [] };
+    }
+    logger.info(`Using metrics base URL for site: ${baseURL}`);
 
+    const wsUrl = wsUrlResolver(baseURL);
+
+    const { type, from, userId, withSubscription, siteId } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+
+    const metricsKey = getGraphsKeyByType(type);
+    const metrics: MetricsRes = { metrics: [] };
+
+    if (metricsKey.length > 0) {
+      const metricPromises = metricsKey.map(async key => {
+        logger.info(`Fetching site metric for key: ${key}`);
+        const result = await getSiteMetricRange(baseURL, key, { ...data });
+        logger.info(`Got site metric result for ${key}:`, result);
+        return result;
+      });
+      metrics.metrics = await Promise.all(metricPromises);
+    }
+
+    if (withSubscription && metrics.metrics.length > 0) {
+      const workerData = {
+        topic: `${userId}/${type}/${from}`,
+        url: `${wsUrl}/v1/live/metrics?interval=${
+          data.step
+        }&metric=${metricsKey.join(",")}&site=${siteId}`,
+      };
+
+      const worker = new Worker(WS_THREAD, {
+        workerData,
+      });
+
+      worker.on("message", (_data: any) => {
+        if (!_data.isError) {
+          try {
+            const res = JSON.parse(_data.data);
+            const result = res.data.result[0];
+            if (result && result.metric && result.value.length > 0) {
+              pubSub.publish(workerData.topic, {
+                type: res.Name,
+                success: true,
+                msg: "success",
+                siteId: siteId,
+                value: [
+                  Math.floor(result.value[0]) * 1000,
+                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
+                ],
+              });
+            }
+          } catch (error) {
+            logger.error(
+              `Failed to parse WebSocket message for site: ${error}`
+            );
+          }
+        }
+      });
+
+      worker.on("exit", async (code: any) => {
+        await store.close();
+        logger.info(
+          `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
+        );
+      });
+    }
+
+    return metrics;
+  }
   @Query(() => NotificationsRes)
   async getNotifications(
     @Arg("orgId") orgId: string,

@@ -178,6 +178,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"battery_current":        Metric{false, "battery_current", ""},
 	"battery_temperature":    Metric{false, "battery_temperature", ""},
 	"solar_inverter_status":  Metric{false, "solar_inverter_status", ""},
+	"battery_charge_percentage": Metric{false, "battery_charge_percentage", ""},
 
 	// Switch Metrics
 	"switch_port_status":    Metric{false, "switch_port_status", ""},
