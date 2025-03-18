@@ -77,7 +77,8 @@ jobs:
           p11-kit \
           libprotobuf-c-dev \
           libpsl-dev \
-          procps
+          procps \
+          libcurl4-openssl-dev
 
     - name: Init vars
       id: vars_step

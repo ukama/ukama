@@ -79,7 +79,8 @@ jobs:
           p11-kit \
           libprotobuf-c-dev \
           libpsl-dev \
-          procps
+          procps \
+          libcurl4-openssl-dev
 
         # Install gettext from source
         wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
