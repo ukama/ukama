@@ -20,13 +20,11 @@ import {
 import {
   Graphs_Type,
   MetricsRes,
-  useGetMetricByTabLazyQuery,
+  useGetMetricBySiteLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
-import SiteComponents, {
-  KPI_TO_SECTION_MAP,
-  SectionData,
-} from '@/components/SiteComponents';
+import SiteComponents from '@/components/SiteComponents';
+import { SectionData } from '@/constants/index';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
@@ -36,7 +34,7 @@ import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { getUnixTime } from '@/utils';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
+import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
 import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -142,14 +140,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   // Metrics query
   const [
-    getMetricByTab,
+    getMetricBySite,
     { loading: metricsLoading, variables: metricsVariables },
-  ] = useGetMetricByTabLazyQuery({
+  ] = useGetMetricBySiteLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
-      setMetrics(data.getMetricByTab);
-      console.log('METRICS :', data.getMetricByTab);
+      setMetrics(data.getMetricBySite);
+      console.log('METRICS :', data.getMetricBySite);
     },
     onError: (err) => {
       setSnackbarMessage({
@@ -321,13 +319,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       selectedSiteId &&
       metricsVariables?.data?.from !== metricFrom
     ) {
-      getMetricByTab({
+      getMetricBySite({
         variables: {
           data: {
             step: 30,
             siteId: selectedSiteId,
             userId: user.id,
-            nodeId: '',
             type: graphType,
             from: metricFrom,
             orgName: user.orgName,
@@ -344,7 +341,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     selectedSiteId,
     user.id,
     user.orgName,
-    getMetricByTab,
+    getMetricBySite,
   ]);
 
   const handleSectionChange = (section: string): void => {
@@ -365,6 +362,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         case 'MAIN_BACKHAUL':
           newGraphType = Graphs_Type.MainBackhaul;
           break;
+        case 'SWITCH':
+          newGraphType = Graphs_Type.Switch;
+          break;
         default:
           newGraphType = Graphs_Type.Solar;
       }
@@ -376,7 +376,31 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const handleNodeClick = (kpiType: string) => {
     setActiveKPI(kpiType);
-    const sectionName = KPI_TO_SECTION_MAP[kpiType] || 'SOLAR';
+    let sectionName = 'SOLAR';
+
+    switch (kpiType) {
+      case 'solar':
+        sectionName = 'SOLAR';
+        break;
+      case 'battery':
+        sectionName = 'BATTERY';
+        break;
+      case 'controller':
+        sectionName = 'CONTROLLER';
+        break;
+      case 'backhaul':
+        sectionName = 'MAIN_BACKHAUL';
+        break;
+      case 'switch':
+        sectionName = 'SWITCH';
+        break;
+      case 'node':
+        sectionName = 'NODE';
+        break;
+      default:
+        sectionName = 'SOLAR';
+    }
+
     handleSectionChange(sectionName);
   };
 

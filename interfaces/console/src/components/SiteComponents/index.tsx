@@ -13,34 +13,7 @@ import { getMetricValue, isMetricValue } from '@/utils';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import NodeStatusDisplay from '@/components/NodeStatusDisplay';
-
-export interface SiteKpiConfig {
-  id: string;
-  name: string;
-  unit: string;
-  description: string;
-  tickInterval?: number;
-  tickPositions?: number[];
-  threshold?: {
-    min: number;
-    normal: number;
-    max: number;
-  } | null;
-  show?: boolean;
-}
-
-export interface SectionData {
-  [key: string]: SiteKpiConfig[];
-}
-
-export const KPI_TO_SECTION_MAP: Record<string, string> = {
-  solar: 'SOLAR',
-  battery: 'BATTERY',
-  controller: 'CONTROLLER',
-  backhaul: 'MAIN_BACKHAUL',
-  switch: 'SWITCH',
-  node: 'NODE',
-};
+import { SectionData } from '@/constants';
 
 interface SiteComponentsProps {
   siteId: string;
@@ -77,7 +50,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         <Grid container spacing={3}>
           <Grid item xs={12} md={3}>
             <Stack spacing={2}>
-              <SiteFlowDiagram onNodeClick={onNodeClick} />
+              <SiteFlowDiagram defaultOpacity={0.1} onNodeClick={onNodeClick} />
             </Stack>
           </Grid>
 

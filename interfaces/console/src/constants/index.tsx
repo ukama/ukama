@@ -255,32 +255,57 @@ export { NodeApps } from './stubData';
 
 export const KPI_PLACEHOLDER_VALUE = '-';
 
+export interface SiteKpiConfig {
+  id: string;
+  name: string;
+  unit: string;
+  description: string;
+  tickInterval?: number;
+  tickPositions?: number[];
+  threshold?: {
+    min: number;
+    normal: number;
+    max: number;
+  } | null;
+  show?: boolean;
+}
+
+export interface SectionData {
+  [key: string]: SiteKpiConfig[];
+}
+
 export const SITE_KPIS = {
   SOLAR: {
     metrics: [
       {
         unit: 'kW',
         show: true,
-        name: 'Solar power',
+        name: 'Solar panel power(W)',
         id: 'solar_panel_power',
         description: 'Solar power',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: 'V',
         show: true,
-        name: 'Solar voltage',
+        name: 'Solar panel voltage(V)',
         id: 'solar_panel_voltage',
         description: 'Solar voltage',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: 'A',
         show: true,
-        name: 'Solar current',
+        name: 'Solar panel current(A)',
         id: 'solar_panel_current',
         description: 'Solar current',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
     ],
   },
@@ -289,22 +314,56 @@ export const SITE_KPIS = {
       {
         unit: '%',
         show: true,
-        name: 'Battery charge',
+        name: 'Battery available power',
         id: 'battery_charge_percentage',
         description: 'Battery charge',
-        threshold: { min: 0, normal: 100, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
     ],
   },
   CONTROLLER: {
     metrics: [
       {
-        unit: '',
+        unit: 'kW',
         show: true,
-        name: 'Charge controller status',
-        id: 'charge_controller_status',
-        description: 'Charge controller status',
-        threshold: { min: 0, normal: 1, max: 100 },
+        name: 'Solar panel power(W)',
+        id: 'solar_panel_power',
+        description: 'Solar power',
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar panel voltage(V)',
+        id: 'solar_panel_voltage',
+        description: 'Solar voltage',
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar panel current(A)',
+        id: 'solar_panel_current',
+        description: 'Solar current',
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
+      },
+      {
+        unit: '%',
+        show: true,
+        name: 'Battery available power',
+        id: 'battery_charge_percentage',
+        description: 'Battery charge',
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
     ],
   },
@@ -316,7 +375,9 @@ export const SITE_KPIS = {
         name: 'Main backhaul latency',
         id: 'main_backhaul_latency',
         description: 'Main backhaul latency',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: '',
@@ -324,7 +385,9 @@ export const SITE_KPIS = {
         name: 'Backhaul status',
         id: 'backhaul_status',
         description: 'Backhaul status',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: 'Mbps',
@@ -332,7 +395,9 @@ export const SITE_KPIS = {
         name: 'Backhaul speed',
         id: 'backhaul_speed',
         description: 'Backhaul speed',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
     ],
   },
@@ -344,7 +409,9 @@ export const SITE_KPIS = {
         name: 'Switch status',
         id: 'switch_status',
         description: 'Switch status',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: '',
@@ -352,7 +419,9 @@ export const SITE_KPIS = {
         name: 'Switch speed',
         id: 'switch_speed',
         description: 'Switch health',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
       {
         unit: '',
@@ -360,7 +429,9 @@ export const SITE_KPIS = {
         name: 'Switch power',
         id: 'switch_power',
         description: 'Switch power',
-        threshold: { min: 0, normal: 1, max: 100 },
+        threshold: { min: 50, normal: 75, max: 90 },
+        tickInterval: 20,
+        tickPositions: [0, 20, 40, 60, 80],
       },
     ],
   },

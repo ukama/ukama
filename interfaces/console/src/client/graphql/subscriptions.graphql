@@ -75,7 +75,6 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
     metrics {
       msg
       nodeId
-      siteId
       success
       type
       values
@@ -102,6 +101,18 @@ query GetMetricsStat($data: GetMetricsStatInput!) {
       nodeId
       type
       value
+    }
+  }
+}
+
+query GetMetricBySite($data: GetMetricBySiteInput!) {
+  getMetricBySite(data: $data) {
+    metrics {
+      msg
+      nodeId
+      success
+      type
+      values
     }
   }
 }
