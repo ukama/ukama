@@ -434,7 +434,7 @@ const findNullZones = (data: any) => {
         zones.push({ value: start });
         zones.push({
           value: data[i - 1][0],
-          color: colors.redMatt,
+          color: colors.black38,
           dashStyle: 'dash' as DashStyleValue,
         });
         inNullZone = false;
@@ -446,7 +446,7 @@ const findNullZones = (data: any) => {
     zones.push({ value: start });
     zones.push({
       value: data[data.length - 1][0],
-      color: colors.redMatt,
+      color: colors.black38,
       dashStyle: 'dash' as DashStyleValue,
     });
   }
@@ -467,7 +467,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 1
+        : index === arr.length - 1 || index === arr.length - 2
           ? colors.dullRed
           : colors.dullGreen,
     width: 2,

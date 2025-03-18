@@ -139,14 +139,14 @@ const LineChart = ({
           ? tickPositions[tickPositions.length - 1]
           : undefined,
         min: tickPositions ? tickPositions[0] : undefined,
-        endOnTick: false,
         opposite: false,
         gridLineDashStyle: 'Dash',
         tickPositions: tickPositions,
         gridLineWidth: tickPositions ? 0 : 2,
-        tickAmount: tickPositions?.length ?? 4,
+        tickAmount: tickPositions?.length ?? 5,
         tickInterval: tickPositions ? tickInterval : undefined,
         labels: {
+          y: 5,
           formatter: function (v: any) {
             return `${v.value}${yunit}`;
           },
