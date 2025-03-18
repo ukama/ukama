@@ -25,9 +25,7 @@ VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target
-VENDOR_PKG=orcania
-VENDOR_PKG+=yder
-VENDOR_PKG+=libmicrohttpd
+VENDOR_PKG=yder
 VENDOR_PKG+=ulfius
 VENDOR_PKG+=tomlc
 VENDOR_PKG+=jansson
