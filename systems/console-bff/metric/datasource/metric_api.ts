@@ -7,7 +7,12 @@
  */
 import { RESTDataSource } from "@apollo/datasource-rest";
 
-import { GetNodeLatestMetricInput, GetSiteLatestMetricInput, NodeLatestMetric, SiteLatestMetric } from "../resolver/types";
+import {
+  GetNodeLatestMetricInput,
+  GetSiteLatestMetricInput,
+  NodeLatestMetric,
+  SiteLatestMetric,
+} from "../resolver/types";
 import { parseNodeLatestMetricRes, parseSiteLatestMetricRes } from "./mapper";
 
 const VERSION = "v1";
@@ -38,7 +43,7 @@ class MetricAPI extends RESTDataSource {
     return this.get(`/${VERSION}/${METRICS}/${args.type}`).then(res =>
       parseSiteLatestMetricRes(res, args)
     );
-  }
+  };
 }
 
 export default MetricAPI;

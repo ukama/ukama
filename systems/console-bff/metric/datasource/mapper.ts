@@ -5,7 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { GetNodeLatestMetricInput, GetSiteLatestMetricInput, NodeLatestMetric, SiteLatestMetric } from "../resolver/types";
+import {
+  GetNodeLatestMetricInput,
+  GetSiteLatestMetricInput,
+  NodeLatestMetric,
+  SiteLatestMetric,
+} from "../resolver/types";
 
 const parseLatestMetricRes = (
   res: any,
@@ -13,7 +18,7 @@ const parseLatestMetricRes = (
   entityType: "node" | "site"
 ) => {
   const data = res.data.result[0];
-  const idKey = `${entityType}Id`; 
+  const idKey = `${entityType}Id`;
   const metricResponse = {
     success: true,
     msg: "success",
@@ -23,7 +28,7 @@ const parseLatestMetricRes = (
     return {
       ...metricResponse,
       orgId: data.metric.org,
-      [idKey]: args[idKey], 
+      [idKey]: args[idKey],
       type: args.type,
       value: data.value,
     };
@@ -31,7 +36,7 @@ const parseLatestMetricRes = (
     return {
       ...metricResponse,
       orgId: "",
-      [idKey]: "", 
+      [idKey]: "",
       type: "",
       value: [0, 0],
     };
