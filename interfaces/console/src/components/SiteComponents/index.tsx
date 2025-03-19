@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Box, Card, Grid, Stack, Paper } from '@mui/material';
+import { Box, Card, Grid, Stack, Paper, Skeleton } from '@mui/material';
 import LineChart from '../LineChart';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { getMetricValue, isMetricValue } from '@/utils';
@@ -37,6 +37,41 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   metricsLoading,
   onNodeClick,
 }) => {
+  // Check if metrics data is available
+  const hasMetricsData =
+    metrics && metrics.metrics && metrics.metrics.length > 0;
+
+  const renderSkeletonLoading = () => {
+    return (
+      <Paper
+        sx={{
+          p: 3,
+          overflow: 'auto',
+          height: {
+            xs: 'calc(100vh - 480px)',
+            md: 'calc(100vh - 328px)',
+          },
+        }}
+      >
+        <Stack spacing={4}>
+          {Array.from({ length: sections[activeSection]?.length || 3 }).map(
+            (_, index) => (
+              <Box key={`skeleton-${index}`}>
+                <Skeleton
+                  variant="text"
+                  width="40%"
+                  height={30}
+                  sx={{ mb: 1 }}
+                />
+                <Skeleton variant="rectangular" width="100%" height={200} />
+              </Box>
+            ),
+          )}
+        </Stack>
+      </Paper>
+    );
+  };
+
   return (
     <Box>
       <Card
@@ -62,6 +97,8 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             >
               {activeKPI === 'node' ? (
                 <NodeStatusDisplay nodeIds={nodeIds} />
+              ) : !hasMetricsData && !metricsLoading ? (
+                renderSkeletonLoading()
               ) : (
                 <Paper
                   sx={{

@@ -168,34 +168,20 @@ var defaultPrometheusMetric = map[string]Metric{
 	"network_throughput_down": Metric{false, "trx_lte_stack_throughput_downlink", ""},
 
 	// Solar Power Metrics
-	"solar_power_generation": Metric{false, "solar_power_generation", ""},
-	"solar_energy_total":     Metric{false, "solar_energy_total", ""},
 	"solar_panel_power":      Metric{false, "solar_panel_power", ""},
+	"solar_panel_voltage":    Metric{false, "solar_panel_voltage", ""},
 	"solar_panel_current":    Metric{false, "solar_panel_current", ""},
-	"battery_charge_status":  Metric{false, "battery_charge_status", ""},
-	"battery_voltage":        Metric{false, "battery_voltage", ""},
-	"battery_health":         Metric{false, "battery_health", ""},
-	"battery_current":        Metric{false, "battery_current", ""},
-	"battery_temperature":    Metric{false, "battery_temperature", ""},
-	"solar_inverter_status":  Metric{false, "solar_inverter_status", ""},
 	"battery_charge_percentage": Metric{false, "battery_charge_percentage", ""},
-
-	// Switch Metrics
+	
+	// Internet Switch Metrics
 	"switch_port_status":    Metric{false, "switch_port_status", ""},
-	"switch_port_bandwidth": Metric{false, "switch_port_bandwidth_usage", ""},
+	"switch_port_speed": Metric{false, "switch_port_speed", ""},
+	"switch_port_power":     Metric{false, "switch_port_power", ""},
 
-	// Charge Controller Metrics
-	"charge_controller_status":      Metric{false, "charge_controller_status", ""},
-	"charge_controller_mode":        Metric{false, "charge_controller_mode", ""},
-	"charge_controller_current":     Metric{false, "charge_controller_current", ""},
-	"charge_controller_voltage":     Metric{false, "charge_controller_voltage", ""},
-	"charge_controller_temperature": Metric{false, "charge_controller_temperature", ""},
-	"charge_controller_efficiency":  Metric{false, "charge_controller_efficiency", ""},
-	"charge_controller_power":       Metric{false, "charge_controller_power", ""},
-
-	// Backhaul Metrics
-	"backhaul_status":         Metric{false, "backhaul_status", ""},
-	"backhaul_speed":          Metric{false, "backhaul_speed", ""},
+	//main backhaul
+	"backhaul_speed": Metric{false, "backhaul_speed", ""},
+	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
+	"site_up": Metric{false, "site_up", ""},
 }
 
 type GrpcEndpoints struct {

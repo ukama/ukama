@@ -99,7 +99,6 @@ import (
 	 return &pb.GetSiteMetricsResponse{
 		 Backhaul: &pb.BackhaulMetrics{
 			 Latency: metrics.Backhaul.Latency,
-			 Status:  metrics.Backhaul.Status,
 			 Speed:   metrics.Backhaul.Speed,
 		 },
 		 Ethernet: &pb.EthernetMetrics{
@@ -170,75 +169,143 @@ import (
 	 }
  }
  func (s *DControllerServer) UpdateMetrics(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
-	siteId := req.SiteId
-	if siteId == "" {
-		return &pb.UpdateMetricsResponse{
-			Success: false,
-			Message: "Site ID is required",
-		}, nil
-	}
+    siteId := req.SiteId
+    if siteId == "" {
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: "Site ID is required",
+        }, nil
+    }
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
+    s.mutex.Lock()
+    defer s.mutex.Unlock()
 
-	config, exists := s.siteConfigs[siteId]
-	if !exists || !config.Active {
-		return &pb.UpdateMetricsResponse{
-			Success: false,
-			Message: "Site metrics not active",
-		}, nil
-	}
+    config, exists := s.siteConfigs[siteId]
+    if !exists || !config.Active {
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: "Site metrics not active",
+        }, nil
+    }
 
-	provider, exists := s.metricsProviders[siteId]
-	if !exists {
-		return &pb.UpdateMetricsResponse{
-			Success: false,
-			Message: "Metrics provider not found",
-		}, nil
-	}
+    provider, exists := s.metricsProviders[siteId]
+    if !exists {
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: "Metrics provider not found",
+        }, nil
+    }
 
-	if req.Profile > 0 {
-		profile := cenums.Profile(req.Profile)
-		config.Profile = profile
-		provider.SetProfile(profile)
-		log.Infof("Updated profile to %v for site %s", profile, siteId)
-	}
+    if req.Profile > 0 {
+        profile := cenums.Profile(req.Profile)
+        config.Profile = profile
+        provider.SetProfile(profile)
+        log.Infof("Updated profile to %v for site %s", profile, siteId)
+    } else if config.Profile == 0 { 
+        config.Profile = cenums.PROFILE_NORMAL
+        provider.SetProfile(cenums.PROFILE_NORMAL)
+        log.Infof("Set default profile to PROFILE_NORMAL for site %s", siteId)
+    }
 
-	shouldCheckStatus := false
-	
-	for _, portUpdate := range req.PortUpdates {
-		portNumber := int(portUpdate.PortNumber)
-		if err := provider.SetPortStatus(portNumber, portUpdate.Status); err != nil {
-			log.Warnf("Error updating port %d status: %v", portNumber, err)
-		} else {
-			log.Infof("Updated port %d status to %v for site %s", portNumber, portUpdate.Status, siteId)
-			shouldCheckStatus = true
-		}
-	}
+    shouldCheckStatus := false
 
-	var needToCheckStatus bool
-	var siteToCheck string
-	
-	if shouldCheckStatus {
-		monConfig, monExists := s.monitoringStatus[siteId]
-		if monExists && monConfig.Active {
-			needToCheckStatus = true
-			siteToCheck = siteId
-		}
-	}
+    for _, portUpdate := range req.PortUpdates {
+        portNumber := int(portUpdate.PortNumber)
+        if err := provider.SetPortStatus(portNumber, portUpdate.Status); err != nil {
+            log.Warnf("Error updating port %d status for site %s: %v", portNumber, siteId, err)
+        } else {
+            log.Infof("Updated port %d status to %v for site %s", portNumber, portUpdate.Status, siteId)
+            shouldCheckStatus = true
+        }
+    }
 
-	resp := &pb.UpdateMetricsResponse{
-		Success: true,
-		Message: "Metrics updated",
-	}
-	
-	if needToCheckStatus {
-			defer func(site string) {
-			s.checkAndUpdateStatus(site, "")
-		}(siteToCheck)
-	}
-	
-	return resp, nil
+    backhaulUpdated := false
+    for _, pu := range req.PortUpdates {
+        if pu.PortNumber == int32(metrics.PORT_BACKHAUL) {
+            backhaulUpdated = true
+            break
+        }
+    }
+    if !backhaulUpdated {
+        if err := provider.SetPortStatus(metrics.PORT_BACKHAUL, true); err != nil {
+            log.Warnf("Failed to ensure backhaul port enabled for site %s: %v", siteId, err)
+        } else {
+            log.Infof("Ensured backhaul port enabled for site %s", siteId)
+        }
+    }
+
+    metrics, err := provider.GetMetrics(siteId)
+    if err != nil {
+        log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: fmt.Sprintf("Failed to retrieve metrics: %v", err),
+        }, nil
+    }
+
+    voltage := metrics.Battery.Voltage
+    var percentage float64
+    switch config.Profile {
+    case cenums.PROFILE_MIN:
+        if voltage <= 10.5 {
+            percentage = 0
+        } else if voltage >= 12.0 {
+            percentage = 100
+        } else {
+            percentage = (voltage - 10.5) / (12.0 - 10.5) * 100
+        }
+    case cenums.PROFILE_NORMAL:
+        if voltage <= 10.5 {
+            percentage = 0
+        } else if voltage >= 12.7 {
+            percentage = 100
+        } else {
+            percentage = (voltage - 10.5) / (12.7 - 10.5) * 100
+        }
+    case cenums.PROFILE_MAX:
+        if voltage <= 11.0 {
+            percentage = 0
+        } else if voltage >= 13.5 {
+            percentage = 100
+        } else {
+            percentage = (voltage - 11.0) / (13.5 - 11.0) * 100
+        }
+    default:
+        percentage = (voltage - 10.5) / (12.7 - 10.5) * 100
+    }
+
+    isUp := percentage >= 50 && metrics.Backhaul.Speed > 0
+    uptimeValue := 0.0
+    if isUp {
+        uptimeValue = 1.0
+    }
+
+    log.Debugf("Site %s - Profile: %v, Voltage: %.2fV, Battery percentage: %.2f%%, Backhaul speed: %.2f, Switch port power: %.2fW, Site up: %.0f",
+        siteId, config.Profile, voltage, percentage, metrics.Backhaul.Speed, metrics.Backhaul.SwitchPortPower, uptimeValue)
+
+    var needToCheckStatus bool
+    var siteToCheck string
+
+    if shouldCheckStatus {
+        monConfig, monExists := s.monitoringStatus[siteId]
+        if monExists && monConfig.Active {
+            needToCheckStatus = true
+            siteToCheck = siteId
+        }
+    }
+
+    resp := &pb.UpdateMetricsResponse{
+        Success: true,
+        Message: "Metrics updated",
+    }
+
+    if needToCheckStatus {
+        defer func(site string) {
+            s.checkAndUpdateStatus(site, "")
+        }(siteToCheck)
+    }
+
+    return resp, nil
 }
   
  func (s *DControllerServer) MonitorSite(ctx context.Context, req *pb.MonitorSiteRequest) (*pb.MonitorSiteResponse, error) {
@@ -268,7 +335,6 @@ import (
 		 }, nil
 	 }
 	 
-	 // Validate that the site has nodes
 	 nodes, err := s.nodeClient.GetNodesBySite(siteId)
 	 if err != nil {
 		 log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
@@ -329,6 +395,7 @@ import (
 	 }
  }
   
+ 
  func (s *DControllerServer) checkAndUpdateStatus(siteId, _ string) {
     s.mutex.RLock()
     provider, providerExists := s.metricsProviders[siteId]
@@ -366,10 +433,10 @@ import (
         currentScenario = cenums.SCENARIO_NODE_OFF
         log.Infof("Battery low for site %s: percentage=%.1f%%, voltage=%.1fV, setting scenario to %s", 
             siteId, percentage, voltage, currentScenario)
-    } else if metrics.Backhaul.Status < 0.5 || metrics.Backhaul.Speed <= 0 {
+    } else if metrics.Backhaul.Speed <= 0 {
         currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
-        log.Infof("Backhaul down detected for site %s: status=%.1f, speed=%.1f, setting scenario to %s", 
-            siteId, metrics.Backhaul.Status, metrics.Backhaul.Speed, currentScenario)
+        log.Infof("Backhaul down detected for site %s: speed=%.1f, setting scenario to %s", 
+            siteId, metrics.Backhaul.Speed, currentScenario)
     } else {
         currentScenario = cenums.SCENARIO_DEFAULT
         log.Infof("Setting scenario to default for site %s", siteId)
@@ -399,6 +466,7 @@ import (
         s.mutex.Unlock()
     }
 }
+
  func (s *DControllerServer) StopMonitoring(ctx context.Context, req *pb.StopMonitoringRequest) (*pb.StopMonitoringResponse, error) {
 	 siteId := req.SiteId
 	 

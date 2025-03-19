@@ -182,11 +182,18 @@ const getGraphsKeyByType = (type: string): string[] => {
         "solar_panel_power",
       ];
     case GRAPHS_TYPE.CONTROLLER:
-      return ["charge_controller_status"];
+      return [
+        "solar_panel_voltage",
+        "solar_panel_current",
+        "solar_panel_power",
+        "battery_charge_percentage",
+      ];
     case GRAPHS_TYPE.MAIN_BACKHAUL:
-      return ["main_backhaul_latency", "backhaul_status", "backhaul_speed"];
+      return ["main_backhaul_latency", "backhaul_speed"];
     case GRAPHS_TYPE.SWITCH:
       return ["switch_port_status", "switch_port_speed", "switch_port_power"];
+    case GRAPHS_TYPE.SITE:
+      return ["site_up"];
     default:
       return [];
   }

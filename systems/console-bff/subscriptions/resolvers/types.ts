@@ -210,7 +210,10 @@ export class MetricStateRes {
   msg: string;
 
   @Field()
-  nodeId: string;
+  nodeId?: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   type: string;

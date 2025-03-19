@@ -71,7 +71,7 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
-        siteId: result[0].metric.siteid,
+        siteId: result[0].metric.siteid || "",
         values: fixTimestampInMetricData(
           result[0].values,
           METRICS_INTERVAL,
@@ -93,55 +93,63 @@ export const parseMetricRes = (
       });
 };
 export const parseSiteMetricRes = (
-  { code, data }: { code: number; data: any },
+  res: any,
+  type: string,
   args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
-  if (code === 404 || !data?.data?.result) {
-    return getEmptyMetric(args);
+  // Log the structure to help debug
+  logger.info(`Parsing metric response for type ${type}:`, res);
+
+  // Handle different possible response structures
+  let result: any[] = [];
+  if (res.data?.data?.result) {
+    // Original structure: res.data.data.result
+    result = res.data.data.result;
+  } else if (res.data?.result) {
+    result = res.data.result;
+  } else if (res.data) {
+    result = Array.isArray(res.data) ? res.data : [res.data];
+  } else {
+    result = res.result || (Array.isArray(res) ? res : [res]);
   }
 
-  const results = data.data.result;
-  if (!Array.isArray(results) || results.length === 0) {
-    return getEmptyMetric(args);
+  if (!Array.isArray(result)) {
+    logger.error(`Unexpected result structure:`, result);
+    result = [];
   }
 
-  const metricResult =
-    results.find(r => {
-      const metricName =
-        r.metric?.type || r.metric?.name || r.metric?.__name__ || "";
-      return metricName.includes(args.type);
-    }) || results[0];
+  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
 
-  if (!metricResult?.values) {
-    return getEmptyMetric(args);
+  let siteId = "";
+  if (result.length > 0 && result[0]?.metric) {
+    siteId = result[0].metric.site || result[0].metric.siteid || "";
   }
 
-  try {
-    const values = metricResult.values.map(
-      (pair: [number | string, string | number]) => {
-        const timestamp =
-          typeof pair[0] === "string" ? parseInt(pair[0], 10) : pair[0];
-        const value =
-          typeof pair[1] === "string" ? parseFloat(pair[1]) : pair[1];
-        return [timestamp * 1000, value] as [number, number];
+  return hasValues
+    ? {
+        type: type,
+        success: true,
+        msg: "success",
+        siteId: siteId,
+        values: fixTimestampInMetricData(
+          result[0].values,
+          METRICS_INTERVAL,
+          args.to || Date.now(),
+          args.from,
+          type
+        ),
       }
-    );
-
-    const metrics: MetricRes = {
-      type: args.type,
-      success: true,
-      msg: "success",
-      nodeId: metricResult.metric?.nodeId || metricResult.metric?.nodeid || "",
-      siteId: metricResult.metric?.site || args.siteId || "",
-      values: values,
-    };
-
-    return metrics;
-  } catch (error) {
-    return getEmptyMetric(args);
-  }
+    : getEmptyMetric({
+        orgId: "",
+        to: args.to,
+        type: args.type,
+        siteId: siteId || args.siteId || "",
+        from: args.from,
+        step: args.step,
+        userId: args.userId,
+        withSubscription: false,
+      });
 };
-
 function fixTimestampInMetricData(
   data: [number, string | null][],
   step: number,

@@ -70,7 +70,7 @@ const getSiteMetricRange = async (
     url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
     .then(res => {
-      return parseSiteMetricRes(res, args);
+      return parseSiteMetricRes(res, type, args);
     })
     .catch(err => {
       logger.error(

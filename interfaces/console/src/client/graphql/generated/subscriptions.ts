@@ -27,6 +27,7 @@ export enum Graphs_Type {
   NodeHealth = 'NODE_HEALTH',
   Radio = 'RADIO',
   Resources = 'RESOURCES',
+  Site = 'SITE',
   Solar = 'SOLAR',
   Subscribers = 'SUBSCRIBERS',
   Switch = 'SWITCH'
@@ -90,6 +91,7 @@ export type MetricStateRes = {
   __typename?: 'MetricStateRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Scalars['Float']['output'];
@@ -163,6 +165,7 @@ export type Query = {
   getMetricByTab: MetricsRes;
   getMetricsStat: MetricsStateRes;
   getNotifications: NotificationsRes;
+  getSiteStat: MetricsStateRes;
 };
 
 
@@ -191,13 +194,19 @@ export type QueryGetNotificationsArgs = {
   userId: Scalars['String']['input'];
 };
 
+
+export type QueryGetSiteStatArgs = {
+  data: GetMetricsStatInput;
+};
+
 export enum Stats_Type {
   AllNode = 'ALL_NODE',
   Home = 'HOME',
   Network = 'NETWORK',
   Overview = 'OVERVIEW',
   Radio = 'RADIO',
-  Resources = 'RESOURCES'
+  Resources = 'RESOURCES',
+  Site = 'SITE'
 }
 
 export type SubMetricByTabInput = {
@@ -290,7 +299,14 @@ export type GetMetricsStatQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, siteId: string, type: string, value: number }> } };
+
+export type GetSiteStatQueryVariables = Exact<{
+  data: GetMetricsStatInput;
+}>;
+
+
+export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, siteId: string, type: string, value: number }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;
@@ -519,6 +535,7 @@ export const GetMetricsStatDocument = gql`
       success
       msg
       nodeId
+      siteId
       type
       value
     }
@@ -558,6 +575,52 @@ export type GetMetricsStatQueryHookResult = ReturnType<typeof useGetMetricsStatQ
 export type GetMetricsStatLazyQueryHookResult = ReturnType<typeof useGetMetricsStatLazyQuery>;
 export type GetMetricsStatSuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatSuspenseQuery>;
 export type GetMetricsStatQueryResult = Apollo.QueryResult<GetMetricsStatQuery, GetMetricsStatQueryVariables>;
+export const GetSiteStatDocument = gql`
+    query GetSiteStat($data: GetMetricsStatInput!) {
+  getSiteStat(data: $data) {
+    metrics {
+      success
+      msg
+      siteId
+      type
+      value
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSiteStatQuery__
+ *
+ * To run a query within a React component, call `useGetSiteStatQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSiteStatQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSiteStatQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetSiteStatQuery(baseOptions: Apollo.QueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables> & ({ variables: GetSiteStatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+      }
+export function useGetSiteStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+        }
+export function useGetSiteStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+        }
+export type GetSiteStatQueryHookResult = ReturnType<typeof useGetSiteStatQuery>;
+export type GetSiteStatLazyQueryHookResult = ReturnType<typeof useGetSiteStatLazyQuery>;
+export type GetSiteStatSuspenseQueryHookResult = ReturnType<typeof useGetSiteStatSuspenseQuery>;
+export type GetSiteStatQueryResult = Apollo.QueryResult<GetSiteStatQuery, GetSiteStatQueryVariables>;
 export const GetMetricBySiteDocument = gql`
     query GetMetricBySite($data: GetMetricBySiteInput!) {
   getMetricBySite(data: $data) {

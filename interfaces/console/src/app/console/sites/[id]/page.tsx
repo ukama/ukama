@@ -20,7 +20,9 @@ import {
 import {
   Graphs_Type,
   MetricsRes,
+  Stats_Type,
   useGetMetricBySiteLazyQuery,
+  useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteComponents from '@/components/SiteComponents';
@@ -113,7 +115,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [activeSection, setActiveSection] = useState<string>('SOLAR');
   const [activeKPI, setActiveKPI] = useState<string>('solar');
-
+  const [uptimeFrom, setUptimeFrom] = useState<number>(0);
+  const [uptimeTo, setUptimeTo] = useState<number>(0);
   const sections: SectionData = {
     SOLAR: SITE_KPIS.SOLAR.metrics,
     BATTERY: SITE_KPIS.BATTERY.metrics,
@@ -123,12 +126,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   };
 
   const router = useRouter();
-  const [selectedComponent, setSelectedComponent] = useState<any>('backhaul');
 
-  const handleComponentSelect = (component: any) => {
-    setSelectedComponent(component);
-    console.log(`Selected component: ${component}`);
-  };
+  useEffect(() => {
+    const days = 60;
+    setUptimeFrom(getUnixTime() - days * 24 * 60 * 60);
+    setUptimeTo(getUnixTime());
+  }, []);
 
   const handleSiteConfigOpen = () => {
     setOpenSiteConfig(true);
@@ -491,6 +494,33 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       fetchNode({ variables: { networkId: activeSite.networkId } });
     }
   }, [activeSite, fetchNode]);
+  const [getSiteStat, { data: siteStatData }] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+  });
+  useEffect(() => {
+    if (selectedSiteId && uptimeFrom > 0) {
+      getSiteStat({
+        variables: {
+          data: {
+            step: 3600,
+            siteId: selectedSiteId,
+            type: Stats_Type.Site,
+            from: uptimeFrom,
+            to: uptimeTo,
+            orgName: user.orgName,
+            withSubscription: false,
+          },
+        },
+      });
+    }
+  }, [
+    selectedSiteId,
+    uptimeFrom,
+    uptimeTo,
+    getSiteStat,
+    user.id,
+    user.orgName,
+  ]);
 
   if (!isDataReady) {
     return (
@@ -540,7 +570,23 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           />
         </Grid>
         <Grid item xs={5} sx={{ height: '100%' }}>
-          <SiteOverview uptimePercentage={98.5} daysRange={60} />
+          {siteStatData?.getSiteStat?.metrics ? (
+            <SiteOverview
+              uptimePercentage={
+                siteStatData?.getSiteStat?.metrics[0]?.value || 0
+              }
+              daysRange={60}
+            />
+          ) : (
+            <Box sx={{ height: '100%' }}>
+              <Skeleton
+                variant="rectangular"
+                height={'100%'}
+                width={'100%'}
+                sx={{ borderRadius: '5px' }}
+              />
+            </Box>
+          )}
         </Grid>
         <Grid item xs={3} sx={{ height: '100%' }}>
           <SiteMapComponent

@@ -111,6 +111,7 @@ export enum GRAPHS_TYPE {
   CONTROLLER = "CONTROLLER",
   MAIN_BACKHAUL = "MAIN_BACKHAUL",
   SWITCH = "SWITCH",
+  SITE = "SITE",
 }
 registerEnumType(GRAPHS_TYPE, {
   name: "GRAPHS_TYPE",
@@ -123,6 +124,7 @@ export enum STATS_TYPE {
   NETWORK = "NETWORK",
   RESOURCES = "RESOURCES",
   RADIO = "RADIO",
+  SITE = "SITE",
 }
 registerEnumType(STATS_TYPE, {
   name: "STATS_TYPE",
