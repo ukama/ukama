@@ -29,7 +29,13 @@ type Config struct {
 	MetricsServer     config.Metrics `mapstructure:"metrics"`
 	MetricsStore      string         `default:"http://localhost:8080"`
 	Auth              *config.Auth   `mapstructure:"auth"`
+	OrgName           string
 	MetricsConfig     *MetricsConfig
+	Http              HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `defaut:"api-gateway-init:8080"`
 }
 
 type Metric struct {
@@ -45,9 +51,17 @@ type Metric struct {
 
 type MetricsConfig struct {
 	Metrics             map[string]Metric `json:"metrics"`
+	LocalMetrics        map[string]Metric `json:"localMetrics"`
 	MetricsServer       string            `default:"http://localhost:9090"`
 	Timeout             time.Duration
 	DefaultRateInterval string
+}
+
+var dataKPIMetrics = map[string]Metric{
+	"network_sales":       Metric{false, "network_sales", ""},
+	"network_uptime":      Metric{false, "network_uptime", ""},
+	"network_subscriber":  Metric{false, "network_subscriber", ""},
+	"network_data_volume": Metric{false, "network_data_volume", ""},
 }
 
 var defaultPrometheusMetric = map[string]Metric{
@@ -193,8 +207,8 @@ var defaultPrometheusMetric = map[string]Metric{
 	"charge_controller_power":       Metric{false, "charge_controller_power", ""},
 
 	// Backhaul Metrics
-	"backhaul_status":         Metric{false, "backhaul_status", ""},
-	"backhaul_speed":          Metric{false, "backhaul_speed", ""},
+	"backhaul_status": Metric{false, "backhaul_status", ""},
+	"backhaul_speed":  Metric{false, "backhaul_speed", ""},
 }
 
 type GrpcEndpoints struct {
@@ -234,6 +248,7 @@ func NewConfig() *Config {
 
 		MetricsConfig: &MetricsConfig{
 			Metrics:             defaultPrometheusMetric,
+			LocalMetrics:        dataKPIMetrics,
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},

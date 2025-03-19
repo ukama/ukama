@@ -46,6 +46,8 @@ services:
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
    - BYPASS_AUTH_MODE=true
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - ORGNAME=${ORGNAME}
   restart: always
   depends_on:
    - exporter
@@ -69,7 +71,8 @@ services:
    - ukama-net
 
  initclient-node:
-  build: ../services/initClient
+  # build: ../services/initClient
+  image: main-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30

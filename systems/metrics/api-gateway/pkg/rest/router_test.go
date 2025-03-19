@@ -49,7 +49,7 @@ func Test_RouterPing(t *testing.T) {
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
 	arc := &providers.AuthRestClient{}
-	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser, nil, nil, nil, nil, nil).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -81,7 +81,7 @@ func Test_GetMetrics(t *testing.T) {
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
 	arc := &providers.AuthRestClient{}
-	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser, nil, nil, nil, nil, nil).f.Engine()
 
 	t.Run("NodeMetrics", func(t *testing.T) {
 		w := httptest.NewRecorder()

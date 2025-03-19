@@ -25,6 +25,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/ukama/ukama/systems/common/rest"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/client"
@@ -32,10 +34,15 @@ import (
 )
 
 type Router struct {
-	f       *fizz.Fizz
-	clients *Clients
-	config  *RouterConfig
-	m       *pkg.Metrics
+	f             *fizz.Fizz
+	clients       *Clients
+	config        *RouterConfig
+	m             *pkg.Metrics
+	networkClient creg.NetworkClient
+	nodeClient    creg.NodeClient
+	siteClient    creg.SiteClient
+	subClient     csub.SubscriberClient
+	simClient     csub.SimClient
 }
 
 type RouterConfig struct {
@@ -82,12 +89,21 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) 
 	return c
 }
 
-func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc func(*gin.Context, string) error) *Router {
+func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc func(*gin.Context, string) error, networkClient creg.NetworkClient,
+	siteClient creg.SiteClient,
+	nodeClient creg.NodeClient,
+	subClient csub.SubscriberClient,
+	simClient csub.SimClient) *Router {
 
 	r := &Router{
-		clients: clients,
-		config:  config,
-		m:       m,
+		clients:       clients,
+		config:        config,
+		m:             m,
+		networkClient: networkClient,
+		nodeClient:    nodeClient,
+		siteClient:    siteClient,
+		subClient:     subClient,
+		simClient:     simClient,
 	}
 
 	if !config.debugMode {
@@ -183,6 +199,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics range for a time period. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.metricRangeHandler, http.StatusOK))
 
+		auth.GET("/data/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Local data metrics"
+			}}, tonic.Handler(r.metricDataHandler, http.StatusOK))
+
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 	}
@@ -276,6 +297,14 @@ func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
 	return r.m.List(), nil
 }
 
+func (r *Router) metricDataHandler(c *gin.Context, in *GetMetricDataIntput) error {
+	key := in.Metric
+	networkId := in.Network
+	err := r.parseLocalMetricInput(c.Writer, key, networkId)
+	// httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
+	return err
+}
+
 func httpErrorOrNil(httpCode int, err error) error {
 	if err != nil {
 		return rest.HttpError{
@@ -340,4 +369,26 @@ func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *
 
 func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pb.DummyParameter, error) {
 	return r.clients.e.Dummy(&pb.DummyParameter{})
+}
+
+func (r *Router) parseLocalMetricInput(writer io.Writer, metric string, networkId string) error {
+	switch metric {
+	case r.config.metricsConf.LocalMetrics["network_uptime"].Metric:
+		nodes, err := r.nodeClient.GetAll()
+		if err != nil {
+			return err
+		}
+		logrus.Infof("Requesting network uptime data for network %s, node: %+v", networkId, nodes)
+	case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
+		logrus.Infof("Requesting network sales data for network %s", networkId)
+	case r.config.metricsConf.LocalMetrics["network_subscriber"].Metric:
+		logrus.Infof("Requesting network subscriber data for network %s", networkId)
+	case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
+		logrus.Infof("Requesting network data volume for network %s", networkId)
+	default:
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+	return nil
 }

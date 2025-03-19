@@ -74,5 +74,10 @@ type GetWsMetricIntput struct {
 	NodeID     string `query:"node"`
 }
 
+type GetMetricDataIntput struct {
+	Metric  string `path:"metric" validate:"required"`
+	Network string `query:"network" validate:"required"`
+}
+
 type DummyParameters struct {
 }
