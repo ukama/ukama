@@ -255,6 +255,154 @@ export { NodeApps } from './stubData';
 
 export const KPI_PLACEHOLDER_VALUE = '-';
 
+export interface SiteKpiConfig {
+  id: string;
+  name: string;
+  unit: string;
+  description: string;
+  tickInterval?: number;
+  tickPositions?: number[];
+  threshold?: {
+    min: number;
+    normal: number;
+    max: number;
+  } | null;
+  show?: boolean;
+}
+
+export interface SectionData {
+  [key: string]: SiteKpiConfig[];
+}
+
+export const SITE_KPIS = {
+  SOLAR: {
+    metrics: [
+      {
+        unit: 'W',
+        show: true,
+        name: 'Solar panel power',
+        id: 'solar_panel_power',
+        description: 'Solar power',
+        tickInterval: 100,
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar panel voltage',
+        id: 'solar_panel_voltage',
+        description: 'Solar voltage',
+        tickInterval: 10,
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar panel current',
+        id: 'solar_panel_current',
+        description: 'Solar current',
+        tickInterval: 2,
+      },
+    ],
+  },
+  BATTERY: {
+    metrics: [
+      {
+        unit: '%',
+        show: true,
+        name: 'Battery charge',
+        id: 'battery_charge_percentage',
+        description: 'Battery charge percentage',
+        tickInterval: 20,
+      },
+    ],
+  },
+  CONTROLLER: {
+    metrics: [
+      {
+        unit: 'W',
+        show: true,
+        name: 'Solar panel power',
+        id: 'solar_panel_power',
+        description: 'Solar power',
+        tickInterval: 100,
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar panel voltage',
+        id: 'solar_panel_voltage',
+        description: 'Solar voltage',
+        tickInterval: 10,
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar panel current',
+        id: 'solar_panel_current',
+        description: 'Solar current',
+        tickInterval: 2,
+      },
+    ],
+  },
+  MAIN_BACKHAUL: {
+    metrics: [
+      {
+        unit: 'ms',
+        show: true,
+        name: 'Backhaul latency',
+        id: 'main_backhaul_latency',
+        description: 'Main backhaul latency',
+        tickInterval: 5,
+      },
+      {
+        unit: 'Mbps',
+        show: true,
+        name: 'Backhaul speed',
+        id: 'backhaul_speed',
+        description: 'Backhaul speed',
+        tickInterval: 30,
+      },
+    ],
+  },
+  SWITCH: {
+    metrics: [
+      {
+        unit: '',
+        show: true,
+        name: 'Switch port status',
+        id: 'switch_port_status',
+        description: 'Switch port status',
+        tickInterval: 20,
+      },
+      {
+        unit: 'Mbps',
+        show: true,
+        name: 'Switch port speed',
+        id: 'switch_port_speed',
+        description: 'Switch port speed',
+        tickInterval: 20,
+      },
+      {
+        unit: 'W',
+        show: true,
+        name: 'Switch port power',
+        id: 'switch_port_power',
+        description: 'Switch port power',
+        tickInterval: 20,
+      },
+    ],
+    SITE_UPTIME: {
+      stats: [
+        {
+          unit: '',
+          show: true,
+          name: 'Site uptime',
+          id: 'site_up',
+          description: 'Site operational status',
+        },
+      ],
+    },
+  },
+};
 export const NODE_KPIS = {
   HOME: {
     stats: [

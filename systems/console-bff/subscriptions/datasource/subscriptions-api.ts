@@ -19,11 +19,11 @@ import {
 } from "../resolvers/types";
 import {
   parseMetricRes,
-  parseNodeMetricRes,
   parseNotificationsRes,
+  parseSiteMetricRes,
 } from "./mapper";
 
-const getMetricRange = async (
+const getNodeMetricRange = async (
   baseUrl: string,
   type: string,
   args: GetMetricsStatInput | GetMetricRangeInput
@@ -46,17 +46,36 @@ const getMetricRange = async (
     });
 };
 
-const getNodeRangeMetric = async (
+const getSiteMetricRange = async (
   baseUrl: string,
-  args: GetMetricRangeInput
+  type: string,
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): Promise<MetricRes> => {
-  const { from, to = 0, step } = args;
+  const { from, step = 1, userId, siteId } = args;
+
+  let params = `from=${from}&step=${step}`;
+  if (siteId) {
+    params = params + `&site=${siteId}`;
+  }
+  if (userId) {
+    params = params + `&user=${userId}`;
+  }
+
+  logger.info(
+    `[getMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
+  );
+
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
-    url: `${baseUrl}/${VERSION}/nodes/${args.nodeId}/metrics/${args.type}?from=${from}&to=${to}&step=${step}`,
+    url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res => parseNodeMetricRes(res, args))
+    .then(res => {
+      return parseSiteMetricRes(res, type, args);
+    })
     .catch(err => {
+      logger.error(
+        `[getMetricRange] Error fetching metrics for ${type}: ${err}`
+      );
       throw new GraphQLError(err);
     });
 };
@@ -92,4 +111,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { getMetricRange, getNodeRangeMetric, getNotifications };
+export { getNodeMetricRange, getSiteMetricRange, getNotifications };

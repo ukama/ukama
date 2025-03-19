@@ -105,7 +105,7 @@ import (
 
     req := &pb.StartMetricsRequest{
         SiteId:  msg.SiteId,
-        Profile: pb.Profile_PROFILE_NORMAL,
+        Profile: pb.Profile_PROFILE_MAX,
     }
 
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -26,6 +26,14 @@ export class GetNodeLatestMetricInput {
   @Field()
   type: string;
 }
+@InputType()
+export class GetSiteLatestMetricInput {
+  @Field()
+  siteId: string;
+
+  @Field()
+  type: string;
+}
 
 @ObjectType()
 export class NodeLatestMetric {
@@ -40,6 +48,27 @@ export class NodeLatestMetric {
 
   @Field()
   nodeId: string;
+
+  @Field()
+  type: string;
+
+  @Field(() => [Number, Number])
+  value: [number, number];
+}
+
+@ObjectType()
+export class SiteLatestMetric {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  orgId: string;
+
+  @Field()
+  siteId: string;
 
   @Field()
   type: string;

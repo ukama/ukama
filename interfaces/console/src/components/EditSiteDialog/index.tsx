@@ -5,16 +5,18 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Dialog,
-  DialogActions,
   DialogContent,
   DialogTitle,
   TextField,
   Button,
   CircularProgress,
+  Box,
+  IconButton,
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { globalUseStyles } from '@/styles/global';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { UpdateSiteSchema } from '@/helpers/formValidators';
@@ -54,15 +56,29 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
         },
       }}
     >
-      <DialogTitle>Edit Site Name</DialogTitle>
-      <DialogContent>
-        <Formik
-          initialValues={{ siteName: currentSiteName }}
-          validationSchema={UpdateSiteSchema}
-          onSubmit={handleSubmit}
+      <DialogTitle sx={{ m: 0, p: 2, position: 'relative' }}>
+        Edit Site Name
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
         >
-          {({ touched, errors }) => (
-            <Form>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <Formik
+        initialValues={{ siteName: currentSiteName }}
+        validationSchema={UpdateSiteSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ touched, errors }) => (
+          <Form>
+            <DialogContent>
               <Field name="siteName">
                 {({ field }: { field: any }) => (
                   <TextField
@@ -84,23 +100,36 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
                   />
                 )}
               </Field>
-              <DialogActions>
-                <Button type="button" onClick={onClose} color="secondary">
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  color="primary"
-                  variant="contained"
-                  disabled={updateSiteLoading}
-                >
-                  {updateSiteLoading ? <CircularProgress size={24} /> : 'Save'}
-                </Button>
-              </DialogActions>
-            </Form>
-          )}
-        </Formik>
-      </DialogContent>
+            </DialogContent>
+            
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                p: 3, 
+                pt: 0 
+              }}
+            >
+              <Button 
+                type="button" 
+                onClick={onClose} 
+                color="secondary"
+                sx={{ mr: 1 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                color="primary"
+                variant="contained"
+                disabled={updateSiteLoading}
+              >
+                {updateSiteLoading ? <CircularProgress size={24} /> : 'Save'}
+              </Button>
+            </Box>
+          </Form>
+        )}
+      </Formik>
     </Dialog>
   );
 };

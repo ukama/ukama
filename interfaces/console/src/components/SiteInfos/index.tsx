@@ -6,44 +6,108 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import React from 'react';
-import { Paper, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
 import { SiteDto } from '@/client/graphql/generated';
+import { format } from 'date-fns';
 
 interface SiteInfoProps {
   selectedSite: SiteDto;
-  address: string | null;
+  address?: string | null;
+  nodeIds?: string[];
+  createdDate?: string;
 }
 
-const SiteInfo: React.FC<SiteInfoProps> = ({ selectedSite, address }) => {
+const SiteInfo: React.FC<SiteInfoProps> = ({
+  selectedSite,
+  address,
+  nodeIds = [],
+  createdDate,
+}) => {
+  const formattedDate = createdDate
+    ? format(new Date(createdDate), 'MMMM d, yyyy')
+    : selectedSite.installDate
+      ? format(new Date(selectedSite.installDate), 'MMMM d, yyyy')
+      : 'Not available';
+
+  const formattedCoordinates =
+    selectedSite.latitude && selectedSite.longitude
+      ? `(${selectedSite.latitude}° N, ${selectedSite.longitude}° W)`
+      : '';
+
   return (
-    <Paper
-      elevation={3}
+    <Card
       sx={{
-        p: 2,
-        flex: 1,
+        borderRadius: 2,
+        boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
         height: '100%',
-        borderRadius: '5px',
-        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      <Stack direction="column" spacing={2}>
-        <Typography variant="h6">Site Information</Typography>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Location:</Typography>
-          <Typography variant="subtitle1">{selectedSite.location}</Typography>
-        </Stack>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Coordinates:</Typography>
-          <Typography variant="subtitle1">
-            ( {selectedSite.latitude}, {selectedSite.longitude} )
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={4} justifyItems={'center'}>
-          <Typography variant="subtitle1">Address:</Typography>
-          <Typography variant="subtitle1">{address}</Typography>
-        </Stack>
-      </Stack>
-    </Paper>
+      <CardContent sx={{ padding: 4, flexGrow: 1 }}>
+        <Typography variant="h6" sx={{ mb: 4 }}>
+          Site information
+        </Typography>
+
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              Node:
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={8}>
+            {nodeIds && nodeIds.length > 0 ? (
+              <Box>
+                {nodeIds.map((nodeId, index) => (
+                  <Typography key={index} variant="body1" sx={{ mb: 1 }}>
+                    {nodeId}
+                  </Typography>
+                ))}
+              </Box>
+            ) : (
+              <Typography variant="body2">Not available</Typography>
+            )}
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              Date created:
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <Typography variant="body2">{formattedDate}</Typography>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              Location:
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={8}>
+            <Typography variant="body2">
+              {address || selectedSite.location || 'Not available'}
+            </Typography>
+            {formattedCoordinates && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {formattedCoordinates}
+              </Typography>
+            )}
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
   );
 };
 

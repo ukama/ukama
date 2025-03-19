@@ -22,6 +22,7 @@ const colors = {
   secondaryMain: '#6974F8',
   secondaryLight: '#A0A4FF',
   secondaryDark: '#284AC4',
+  lightGray:"#F5F6F8" ,
 
   primaryMain02: 'rgba(33, 144, 246, 0.2)',
 

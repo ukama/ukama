@@ -63,7 +63,6 @@ const SitesWrapper = ({
             name={site.name}
             loading={loading}
             address={site.location}
-            siteStatus={site.isDeactivated}
             handleSiteNameUpdate={handleSiteNameUpdate}
           />
         </Grid>

@@ -24,8 +24,11 @@ export class MetricRes {
   @Field()
   msg: string;
 
-  @Field()
-  nodeId: string;
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   type: string;
@@ -40,6 +43,9 @@ export class GetLatestMetricInput {
 
   @Field()
   type: string;
+
+  @Field()
+  siteId?: string;
 }
 
 @ObjectType()
@@ -52,6 +58,9 @@ export class LatestMetricRes {
 
   @Field()
   nodeId: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   type: string;
@@ -72,6 +81,9 @@ export class LatestMetricSubRes {
   nodeId: string;
 
   @Field()
+  siteId?: string;
+
+  @Field()
   type: string;
 
   @Field(() => [Number, Number])
@@ -81,10 +93,13 @@ export class LatestMetricSubRes {
 @InputType()
 export class GetMetricRangeInput {
   @Field()
-  nodeId: string;
+  nodeId?: string;
 
   @Field()
   orgId?: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   type: string;
@@ -118,6 +133,9 @@ export class GetMetricsStatInput {
 
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   from: number;
@@ -192,13 +210,43 @@ export class MetricStateRes {
   msg: string;
 
   @Field()
-  nodeId: string;
+  nodeId?: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   type: string;
 
   @Field()
   value: number;
+}
+
+@InputType()
+export class GetMetricBySiteInput {
+  @Field()
+  orgName: string;
+
+  @Field()
+  userId: string;
+
+  @Field(() => GRAPHS_TYPE)
+  type: GRAPHS_TYPE;
+
+  @Field()
+  from: number;
+
+  @Field()
+  siteId?: string;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ defaultValue: 1 })
+  step: number;
+
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
 }
 
 @ObjectType()
@@ -229,6 +277,9 @@ export class SubMetricRangeInput {
 export class SubMetricByTabInput {
   @Field()
   nodeId: string;
+
+  @Field()
+  siteId?: string;
 
   @Field()
   orgName: string;
