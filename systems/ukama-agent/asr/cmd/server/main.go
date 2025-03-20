@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/cmd/version"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
@@ -28,6 +29,7 @@ import (
 	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	pkg "github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
@@ -122,10 +124,7 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}
 
-	networkClient, err := client.NewNetworkClient(networkServiceUrl.String(), pkg.IsDebugMode)
-	if err != nil {
-		log.Fatalf("Network Client initilization failed. Error: %v", err)
-	}
+	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug())
 
 	// Looking up data plan system's host from initClient
 	dataPlanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem),

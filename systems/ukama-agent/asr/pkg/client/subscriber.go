@@ -39,15 +39,15 @@ func NewSubscriberClient(url string, debug bool) (*subscriber, error) {
 	return S, nil
 }
 
-func (N *network) GetSimDetails(iccid string, orgId string) error {
+func (s *subscriber) GetSimDetails(iccid string, orgId string) error {
 
 	errStatus := &ErrorMessage{}
 
 	network := NetworkInfo{}
 
-	resp, err := N.R.C.R().
+	resp, err := s.R.C.R().
 		SetError(errStatus).
-		Get(N.R.URL.String() + "/v1/sim/" + iccid)
+		Get(s.R.URL.String() + "/v1/sim/" + iccid)
 
 	if err != nil {
 		logrus.Errorf("Failed to send api request to susbcriber system. Error %s", err.Error())

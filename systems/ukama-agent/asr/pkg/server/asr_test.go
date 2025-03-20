@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package server
 
 import (
@@ -15,14 +15,17 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
-	dp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
-	mocks "github.com/ukama/ukama/systems/ukama-agent/asr/mocks"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	dp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	mocks "github.com/ukama/ukama/systems/ukama-agent/asr/mocks"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
@@ -122,10 +125,10 @@ var atos int64 = 7200
 func TestAsr_Read(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
@@ -181,10 +184,10 @@ func TestAsr_Read(t *testing.T) {
 func TestAsr_UpdatePackage(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
@@ -231,10 +234,10 @@ func TestAsr_UpdatePackage(t *testing.T) {
 func TestAsr_Activate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
@@ -281,7 +284,7 @@ func TestAsr_Activate(t *testing.T) {
 			LastStatusChangeReasons: db.ACTIVATION,
 		}
 
-		network.On("ValidateNetwork", reqPb.NetworkId, OrgId).Return(nil).Once()
+		network.On("Get", reqPb.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
 		factory.On("ReadSimCardInfo", reqPb.Iccid).Return(&sim, nil).Once()
 		ctrl.On("NewPolicy", pId).Return(&policy, nil).Once()
 		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
@@ -309,10 +312,10 @@ func TestAsr_Activate(t *testing.T) {
 func TestAsr_Inactivate(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
@@ -352,10 +355,10 @@ func TestAsr_Inactivate(t *testing.T) {
 func TestAsr_UpdateGuti(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
@@ -392,10 +395,10 @@ func TestAsr_UpdateGuti(t *testing.T) {
 func TestAsr_UpdateTai(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
-	
+
 	factory := &mocks.Factory{}
 	ctrl := &mocks.Controller{}
-	network := &mocks.Network{}
+	network := &cmocks.NetworkClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 

@@ -12,16 +12,18 @@ import (
 	"encoding/json"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	"google.golang.org/protobuf/reflect/protoreflect"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 type policyController struct {
@@ -149,6 +151,7 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	pack, err := p.dp.Get(packageId.String())
 	if err != nil {
 		log.Errorf("Failed to get package %s.Error: %v", packageId.String(), err)
+
 		return nil, err
 	}
 
