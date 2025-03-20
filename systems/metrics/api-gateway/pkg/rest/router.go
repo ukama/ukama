@@ -28,6 +28,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/ukama/ukama/systems/common/rest"
+	cdp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
@@ -46,6 +47,7 @@ type Router struct {
 	siteClient    creg.SiteClient
 	subClient     csub.SubscriberClient
 	simClient     csub.SimClient
+	packageClient cdp.PackageClient
 }
 
 type RouterConfig struct {
@@ -96,17 +98,19 @@ func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc 
 	siteClient creg.SiteClient,
 	nodeClient creg.NodeClient,
 	subClient csub.SubscriberClient,
-	simClient csub.SimClient) *Router {
+	simClient csub.SimClient,
+	packageClient cdp.PackageClient) *Router {
 
 	r := &Router{
 		clients:       clients,
 		config:        config,
 		m:             m,
-		networkClient: networkClient,
 		nodeClient:    nodeClient,
 		siteClient:    siteClient,
 		subClient:     subClient,
 		simClient:     simClient,
+		packageClient: packageClient,
+		networkClient: networkClient,
 	}
 
 	if !config.debugMode {
@@ -373,16 +377,15 @@ func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pb.Dumm
 }
 
 type LocalDataResponse struct {
-	Metrc     string  `json:"metrc"`
-	Value     float64 `json:"value"`
-	NetworkId string  `json:"networkId"`
+	Metrc     string `json:"metrc"`
+	Value     uint64 `json:"value"`
+	NetworkId string `json:"networkId"`
 }
 
-func (r *Router) localMetricHandler(metric string, networkId string, w io.Writer) error {
-	type NodeStatus struct {
-		total      int
-		configured int
-		offline    int
+func (r *Router) localMetricHandler(metric, networkId string, w io.Writer) error {
+	resp := LocalDataResponse{
+		Metrc:     metric,
+		NetworkId: networkId,
 	}
 
 	switch metric {
@@ -395,35 +398,21 @@ func (r *Router) localMetricHandler(metric string, networkId string, w io.Writer
 			}
 		}
 
-		var status NodeStatus
-		status.total = len(nodes.Nodes)
-		for _, node := range nodes.Nodes {
-			if node.Status.Connectivity == ukama.NodeConnectivity_Online.String() {
-				if node.Status.State == ukama.NodeState_Configured.String() {
-					status.configured++
+		totalNodes := len(nodes.Nodes)
+		if totalNodes > 0 {
+			var configured int
+			for _, node := range nodes.Nodes {
+				if node.Status.Connectivity == ukama.NodeConnectivity_Online.String() &&
+					node.Status.State == ukama.NodeState_Configured.String() {
+					configured++
 				}
-			} else {
-				status.offline++
 			}
+			resp.Value = uint64(configured * 100 / totalNodes)
 		}
 
-		resp := LocalDataResponse{
-			Metrc:     metric,
-			NetworkId: networkId,
-		}
-		if status.total > 0 {
-			resp.Value = (float64(status.configured) * 100) / float64(status.total)
-		}
+		logrus.Infof("Network uptime data for %s: %+v", networkId, resp)
 
-		logrus.Infof("Requesting network uptime data for network %s, response: %+v", networkId, resp)
-
-		if err = FormatMetricsResponse(metric, w, resp); err != nil {
-			return rest.HttpError{
-				HttpCode: http.StatusInternalServerError,
-				Message:  err.Error(),
-			}
-		}
-	case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
+	case r.config.metricsConf.LocalMetrics["network_subscriber"].Metric:
 		sims, err := r.simClient.List(csub.ListSimRequest{
 			NetworkId: networkId,
 			SimStatus: cukama.SimStatusActive.String(),
@@ -434,34 +423,92 @@ func (r *Router) localMetricHandler(metric string, networkId string, w io.Writer
 				Message:  err.Error(),
 			}
 		}
-		logrus.Infof("Requesting network sales data for network %s, sims: %+v", networkId, sims)
+
+		subscriberSet := make(map[string]struct{})
+		for _, sim := range sims.Sims {
+			subscriberSet[sim.SubscriberId] = struct{}{}
+		}
+		resp.Value = uint64(len(subscriberSet))
+
+		logrus.Infof("Network subscribers data for %s: %+v", networkId, resp)
+
+	case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
+		sims, err := r.simClient.List(csub.ListSimRequest{
+			NetworkId: networkId,
+			SimStatus: cukama.SimStatusActive.String(),
+		})
+		if err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  err.Error(),
+			}
+		}
+
+		var totalDataVolume uint64
+		for _, sim := range sims.Sims {
+			if sim.Package == nil {
+				continue
+			}
+
+			pkg, err := r.packageClient.Get(sim.Package.PackageId)
+			if err != nil {
+				return rest.HttpError{
+					HttpCode: http.StatusInternalServerError,
+					Message:  err.Error(),
+				}
+			}
+
+			totalDataVolume += parseDataVolume(pkg.DataVolume, pkg.DataUnit)
+		}
+		resp.Value = totalDataVolume
+
 	default:
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
 			Message:  "Metric not found",
 		}
 	}
+
+	if err := FormatMetricsResponse(metric, w, resp); err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
 	return nil
 }
 
 func FormatMetricsResponse(metric string, w io.Writer, resp LocalDataResponse) error {
-	rb, err := json.Marshal(resp)
+	data, err := json.Marshal(resp)
 	if err != nil {
-		logrus.Errorf("Failed to marshal Prometheus response for %s: %v", metric, err)
+		logrus.Errorf("Failed to marshal response for %s: %v", metric, err)
 		return err
 	}
-	n, err := w.Write(rb)
+
+	n, err := w.Write(data)
 	if err != nil {
 		logrus.Errorf("Failed to write response for %s: %v", metric, err)
 		return err
 	}
-	logrus.Infof("Updated %d bytes of response: %s", n, string(rb))
+
+	logrus.Infof("Wrote %d bytes for metric %s: %s", n, metric, string(data))
 	return nil
+}
+
+func parseDataVolume(dataVolume uint64, unit string) uint64 {
+	switch unit {
+	case cukama.DataUnitTypeGB.String():
+		return dataVolume * 1_000_000_000
+	case cukama.DataUnitTypeMB.String():
+		return dataVolume * 1_000_000
+	case cukama.DataUnitTypeKB.String():
+		return dataVolume * 1_000
+	default:
+		return dataVolume
+	}
 }
 
 // case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
 // 	logrus.Infof("Requesting network sales data for network %s", networkId)
-// case r.config.metricsConf.LocalMetrics["network_subscriber"].Metric:
-// 	logrus.Infof("Requesting network subscriber data for network %s", networkId)
 // case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
 // 	logrus.Infof("Requesting network data volume for network %s", networkId)
