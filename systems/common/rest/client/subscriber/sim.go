@@ -29,11 +29,27 @@ type SimInfo struct {
 	Msisdn        string    `json:"msisdn,omitempty"`
 	Imsi          string    `json:"imsi,omitempty"`
 	Status        string    `json:"status,omitempty"`
-	SimType       string    `json:"sim_type,omitempty"`
+	Type          string    `json:"type,omitempty"`
 	IsPhysical    bool      `json:"is_physical,omitempty"`
 	TrafficPolicy uint32    `json:"traffic_policy"`
 	SyncStatus    string    `json:"sync_status,omitempty"`
 	AllocatedAt   time.Time `json:"allocated_at,omitempty"`
+	Package       *Pacakge  `json:"package,omitempty"`
+}
+
+type Pacakge struct {
+	Id        string `json:"id,omitempty"`
+	PackageId string `json:"package_id,omitempty"`
+	StartDate string `json:"start_date,omitempty"`
+	EndDate   string `json:"end_date,omitempty"`
+	IsActive  bool   `json:"is_active,omitempty"`
+	AsExpired bool   `json:"as_expired,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+}
+
+type SimList struct {
+	Sims []*SimInfo `json:"sims"`
 }
 
 type Sim struct {
@@ -48,8 +64,21 @@ type AddSimRequest struct {
 	SimToken      string `json:"sim_token"`
 	TrafficPolicy uint32 `json:"traffic_policy"`
 }
+type ListSimRequest struct {
+	ICCID         string `json:"iccid,omitempty"`
+	Imsi          string `json:"imsi,omitempty"`
+	SubscriberId  string `json:"subscriber_id,omitempty"`
+	NetworkId     string `json:"network_id,omitempty"`
+	SimType       string `json:"sim_type,omitempty"`
+	SimStatus     string `json:"sim_status,omitempty"`
+	TrafficPolicy uint32 `json:"traffic_policy,omitempty"`
+	IsPhysical    bool   `json:"is_physical,omitempty"`
+	Count         uint32 `json:"count,omitempty"`
+	Sort          bool   `json:"sort,omitempty"`
+}
 
 type SimClient interface {
+	List(req ListSimRequest) (SimList, error)
 	Get(Id string) (*SimInfo, error)
 	Add(req AddSimRequest) (*SimInfo, error)
 }
@@ -124,4 +153,62 @@ func (s *simClient) Get(id string) (*SimInfo, error) {
 	log.Infof("Sim Info: %+v", sim.SimInfo)
 
 	return sim.SimInfo, nil
+}
+
+func (s *simClient) List(req ListSimRequest) (SimList, error) {
+	log.Debugf("Listing sims: %v", req)
+
+	simList := SimList{}
+
+	q := s.u.Query()
+	if req.ICCID != "" {
+		q.Set("iccid", req.ICCID)
+	}
+	if req.Imsi != "" {
+		q.Set("imsi", req.Imsi)
+	}
+	if req.SubscriberId != "" {
+		q.Set("subscriber_id", req.SubscriberId)
+	}
+	if req.NetworkId != "" {
+		q.Set("network_id", req.NetworkId)
+	}
+	if req.SimType != "" {
+		q.Set("sim_type", req.SimType)
+	}
+	if req.SimStatus != "" {
+		q.Set("sim_status", req.SimStatus)
+	}
+	if req.TrafficPolicy != 0 {
+		q.Set("traffic_policy", fmt.Sprintf("%d", req.TrafficPolicy))
+	}
+	if req.IsPhysical {
+		q.Set("is_physical", fmt.Sprintf("%t", req.IsPhysical))
+	}
+	if req.Count != 0 {
+		q.Set("count", fmt.Sprintf("%d", req.Count))
+	}
+	if req.Sort {
+		q.Set("sort", fmt.Sprintf("%t", req.Sort))
+	}
+
+	fullURL := s.u.String() + "/v1/sim" + "?" + q.Encode()
+
+	resp, err := s.R.Get(fullURL)
+	if err != nil {
+		log.Errorf("ListSim failure. error: %s", err.Error())
+
+		return simList, fmt.Errorf("ListSim failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &simList)
+	if err != nil {
+		log.Tracef("Failed to deserialize sim list. Error message is: %s", err.Error())
+
+		return simList, fmt.Errorf("sim list deserailization failure: %w", err)
+	}
+
+	log.Infof("Sim List: %+v", simList)
+
+	return simList, nil
 }

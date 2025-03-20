@@ -187,7 +187,6 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 }
 
 func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) error {
-
 	bytes, err := io.ReadAll(b)
 	if err != nil {
 		logrus.Errorf("Failed to read promtheus response for %s Error: %v", metricName, err)

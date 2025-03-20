@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,6 +21,8 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cukama "github.com/ukama/ukama/systems/common/ukama"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
@@ -300,9 +303,7 @@ func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
 func (r *Router) metricDataHandler(c *gin.Context, in *GetMetricDataIntput) error {
 	key := in.Metric
 	networkId := in.Network
-	err := r.parseLocalMetricInput(c.Writer, key, networkId)
-	// httpCode, err := r.m.GetAggregateMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNetwork(in.Network), c.Writer)
-	return err
+	return r.localMetricHandler(key, networkId, c.Writer)
 }
 
 func httpErrorOrNil(httpCode int, err error) error {
@@ -371,24 +372,96 @@ func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pb.Dumm
 	return r.clients.e.Dummy(&pb.DummyParameter{})
 }
 
-func (r *Router) parseLocalMetricInput(writer io.Writer, metric string, networkId string) error {
+type LocalDataResponse struct {
+	Metrc     string  `json:"metrc"`
+	Value     float64 `json:"value"`
+	NetworkId string  `json:"networkId"`
+}
+
+func (r *Router) localMetricHandler(metric string, networkId string, w io.Writer) error {
+	type NodeStatus struct {
+		total      int
+		configured int
+		offline    int
+	}
+
 	switch metric {
 	case r.config.metricsConf.LocalMetrics["network_uptime"].Metric:
 		nodes, err := r.nodeClient.GetAll()
 		if err != nil {
-			return err
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  err.Error(),
+			}
 		}
-		logrus.Infof("Requesting network uptime data for network %s, node: %+v", networkId, nodes)
+
+		var status NodeStatus
+		status.total = len(nodes.Nodes)
+		for _, node := range nodes.Nodes {
+			if node.Status.Connectivity == ukama.NodeConnectivity_Online.String() {
+				if node.Status.State == ukama.NodeState_Configured.String() {
+					status.configured++
+				}
+			} else {
+				status.offline++
+			}
+		}
+
+		resp := LocalDataResponse{
+			Metrc:     metric,
+			NetworkId: networkId,
+		}
+		if status.total > 0 {
+			resp.Value = (float64(status.configured) * 100) / float64(status.total)
+		}
+
+		logrus.Infof("Requesting network uptime data for network %s, response: %+v", networkId, resp)
+
+		if err = FormatMetricsResponse(metric, w, resp); err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  err.Error(),
+			}
+		}
 	case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
-		logrus.Infof("Requesting network sales data for network %s", networkId)
-	case r.config.metricsConf.LocalMetrics["network_subscriber"].Metric:
-		logrus.Infof("Requesting network subscriber data for network %s", networkId)
-	case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
-		logrus.Infof("Requesting network data volume for network %s", networkId)
+		sims, err := r.simClient.List(csub.ListSimRequest{
+			NetworkId: networkId,
+			SimStatus: cukama.SimStatusActive.String(),
+		})
+		if err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  err.Error(),
+			}
+		}
+		logrus.Infof("Requesting network sales data for network %s, sims: %+v", networkId, sims)
 	default:
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
-			Message:  "Metric not found"}
+			Message:  "Metric not found",
+		}
 	}
 	return nil
 }
+
+func FormatMetricsResponse(metric string, w io.Writer, resp LocalDataResponse) error {
+	rb, err := json.Marshal(resp)
+	if err != nil {
+		logrus.Errorf("Failed to marshal Prometheus response for %s: %v", metric, err)
+		return err
+	}
+	n, err := w.Write(rb)
+	if err != nil {
+		logrus.Errorf("Failed to write response for %s: %v", metric, err)
+		return err
+	}
+	logrus.Infof("Updated %d bytes of response: %s", n, string(rb))
+	return nil
+}
+
+// case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
+// 	logrus.Infof("Requesting network sales data for network %s", networkId)
+// case r.config.metricsConf.LocalMetrics["network_subscriber"].Metric:
+// 	logrus.Infof("Requesting network subscriber data for network %s", networkId)
+// case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
+// 	logrus.Infof("Requesting network data volume for network %s", networkId)
