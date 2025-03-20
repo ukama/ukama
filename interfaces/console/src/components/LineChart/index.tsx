@@ -6,14 +6,39 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { METRIC_RANGE_10800 } from '@/constants';
 import { colors } from '@/theme';
 import { findNullZones, generatePlotLines } from '@/utils';
 import { Box } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
+import { forwardRef, useMemo, useRef, useState } from 'react';
 import GraphTitleWrapper from '../GraphTitleWrapper';
+import './linechart.css';
 
+const initDataFixes = (data: any) => {
+  return data.map((point: any) => {
+    let y = point[1];
+    if (point.length > 0 && y === 0) {
+      y = null;
+    }
+    return [point[0], y];
+  });
+};
+interface ChartProps {
+  options: Highcharts.Options;
+}
+
+const Chart = forwardRef<HighchartsReact.RefObject, ChartProps>(
+  ({ options }, ref) => (
+    <HighchartsReact
+      highcharts={Highcharts}
+      constructorType="stockChart"
+      options={options}
+      ref={ref}
+    />
+  ),
+);
+Chart.displayName = 'Chart';
 interface ILineChart {
   topic: string;
   initData: any;
@@ -36,25 +61,23 @@ const LineChart = ({
   tickInterval = undefined,
   tickPositions = undefined,
 }: ILineChart) => {
-  const getOptions = (topic: string, title: string, initData: any) => {
-    const data: any = [];
-    if (Array.isArray(initData)) {
-      initData.forEach((point: any) => {
-        let y = point[1];
-        if (point.length > 0 && y === 0) {
-          y = null;
-        }
-        data.push([point[0], y]);
-      });
-    }
+  const [navigatorEnabled, setNavigatorEnabled] = useState<boolean>(false);
+  const chartRef = useRef<HighchartsReact.RefObject>(null);
 
-    return {
+  const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
+
+  const chartOptions = useMemo<Highcharts.Options>(
+    () => ({
       title: {
         text: topic,
       },
 
       chart: {
         type: 'spline',
+        zooming: {
+          mouseWheel: false,
+        },
+
         events: {
           load: function () {
             PubSub.subscribe(`stat-${topic}`, (_, data) => {
@@ -66,16 +89,15 @@ const LineChart = ({
                   : null;
               if (chart && data.length > 0) {
                 const series = chart.series[0];
-                series.addPoint(
-                  data,
-                  true,
-                  series.data.length > METRIC_RANGE_10800,
-                  true,
-                );
+                series.addPoint(data, true, true, true);
               }
             });
           },
         },
+      },
+
+      time: {
+        timezone: undefined,
       },
 
       plotOptions: {
@@ -85,7 +107,7 @@ const LineChart = ({
       },
 
       navigator: {
-        enabled: false,
+        enabled: true,
         maskFill: 'rgba(33, 144, 246, 0.15)',
         handles: {
           symbols: ['doublearrow', 'doublearrow'],
@@ -100,40 +122,31 @@ const LineChart = ({
         },
       },
 
-      time: {
-        useUTC: false,
+      scrollbar: {
+        enabled: false,
       },
-
-      series: [
-        {
-          name: title,
-          data: (function () {
-            return data;
-          })(),
-          connectNulls: true,
-          zoneAxis: 'x',
-          zones: findNullZones(data),
-        },
-      ],
 
       xAxis: {
         type: 'datetime',
-        title: false,
         tickInterval: 1000 * 60 * 30,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
         },
       },
-
       yAxis: {
-        title: false,
-        tickAmount: 4,
+        max: tickPositions
+          ? tickPositions[tickPositions.length - 1]
+          : undefined,
+        min: tickPositions ? tickPositions[0] : undefined,
+        opposite: false,
         gridLineDashStyle: 'Dash',
-        tickInterval: tickInterval,
         tickPositions: tickPositions,
         gridLineWidth: tickPositions ? 0 : 2,
+        tickAmount: tickPositions?.length ?? 5,
+        tickInterval: tickPositions ? tickInterval : undefined,
         labels: {
+          y: 5,
           formatter: function (v: any) {
             return `${v.value}${yunit}`;
           },
@@ -141,8 +154,23 @@ const LineChart = ({
 
         plotLines: [...generatePlotLines(tickPositions)],
       },
-    };
-  };
+
+      series: [
+        {
+          name: title,
+          zoneAxis: 'x',
+          type: 'spline',
+          connectNulls: true,
+          data: fixedInitData,
+          zones: findNullZones(fixedInitData),
+          tooltip: {
+            valueDecimals: 2,
+          },
+        },
+      ],
+    }),
+    [fixedInitData, tickInterval, tickPositions, title, topic, yunit],
+  );
 
   return (
     <GraphTitleWrapper
@@ -150,34 +178,11 @@ const LineChart = ({
       hasData={hasData}
       variant="subtitle1"
       handleFilterChange={(f: string) => {
-        const chart: any =
-          Highcharts.charts.length > 0
-            ? Highcharts.charts.find((c: any) => c?.title?.textStr === topic)
-            : null;
-
-        if (chart) {
-          const series = chart.series[0].data.map((point: any) => {
-            return [point.x, point.y];
-          });
-          if (f === 'LIVE') {
-            chart.xAxis[0].setExtremes(null, null);
-          }
-          chart.update(
-            {
-              navigator: {
-                enabled: f === 'ZOOM',
-              },
-
-              series: [
-                {
-                  name: title,
-                  data: (function () {
-                    const data = [...series];
-                    return data;
-                  })(),
-                },
-              ],
-            },
+        setNavigatorEnabled(f !== 'LIVE');
+        if (f === 'LIVE' && chartRef.current && chartRef.current.chart) {
+          chartRef.current.chart.xAxis[0].setExtremes(
+            undefined,
+            undefined,
             true,
           );
         }
@@ -185,11 +190,11 @@ const LineChart = ({
       loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
-        <HighchartsReact
-          key={topic}
-          highcharts={Highcharts}
-          options={getOptions(topic, title, initData)}
-        />
+        <div
+          className={`chart-container ${navigatorEnabled ? '' : 'hide-navigator'}`}
+        >
+          <Chart options={chartOptions} ref={chartRef} />
+        </div>
       </Box>
     </GraphTitleWrapper>
   );

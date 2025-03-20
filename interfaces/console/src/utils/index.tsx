@@ -30,6 +30,7 @@ import { TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
+import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
 
 type TConfigureStep = {
@@ -433,8 +434,8 @@ const findNullZones = (data: any) => {
         zones.push({ value: start });
         zones.push({
           value: data[i - 1][0],
-          color: colors.redMatt,
-          dashStyle: 'dash',
+          color: colors.black38,
+          dashStyle: 'dash' as DashStyleValue,
         });
         inNullZone = false;
       }
@@ -445,8 +446,8 @@ const findNullZones = (data: any) => {
     zones.push({ value: start });
     zones.push({
       value: data[data.length - 1][0],
-      color: colors.redMatt,
-      dashStyle: 'dash',
+      color: colors.black38,
+      dashStyle: 'dash' as DashStyleValue,
     });
   }
 
@@ -457,7 +458,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
   }
-  if (values.length < 3 || values.length > 5) {
+  if (values.length < 3 || values.length > 6) {
     throw new Error('invalid length');
   }
 
@@ -466,7 +467,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 1
+        : index === arr.length - 1 || index === arr.length - 2
           ? colors.dullRed
           : colors.dullGreen,
     width: 2,
