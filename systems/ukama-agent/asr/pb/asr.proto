@@ -77,7 +77,7 @@ message UsageForPeriodReq {
 message Record {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
     string SimId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="simId"];
-    string Iccid = 3 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 16}, json_name="iccid"];
+    string Iccid = 3 [(validator.field) = {string_not_empty: true,  length_gt: 18, length_lt: 22}, json_name="iccid"];
     bytes Key = 4[json_name="k"];
     bytes Op = 5[json_name="op"];
     bytes Amf = 6[json_name="amf"];

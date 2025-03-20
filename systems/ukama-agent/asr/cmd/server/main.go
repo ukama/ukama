@@ -5,33 +5,36 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package main
 
 import (
 	"os"
 
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
-	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/server"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	pkg "github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
-
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/cmd/version"
-
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pkg "github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
+)
 
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+const (
+	registrySystem = "registry"
+	dataPlanSystem = "dataplan"
 )
 
 var serviceConfig *pkg.Config
@@ -79,7 +82,6 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
 	var mbClient mb.MsgBusServiceClient
 	var instanceId string
 
@@ -107,14 +109,29 @@ func runGrpcServer(gormdb sql.Db) {
 	gutiRepo := db.NewGutiRepo(gormdb)
 	//policyRepo := db.NewPolicyRepo(gormdb)
 
+	// For now, we either assuming factory is global and/or currently using a dummy stub unter ukama/testing
 	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Fcatory Client initilization failed. Error: %v", err)
 	}
 
-	network, err := client.NewNetworkClient(serviceConfig.NetworkHost, pkg.IsDebugMode)
+	// Looking up registry system's host from initClient
+	networkServiceUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
+	}
+
+	networkClient, err := client.NewNetworkClient(networkServiceUrl.String(), pkg.IsDebugMode)
 	if err != nil {
 		log.Fatalf("Network Client initilization failed. Error: %v", err)
+	}
+
+	// Looking up data plan system's host from initClient
+	dataPlanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", dataPlanSystem, err)
 	}
 
 	cdr, err := client.NewCDR(serviceConfig.CDRHost, serviceConfig.Timeout)
@@ -124,14 +141,17 @@ func runGrpcServer(gormdb sql.Db) {
 
 	//pcrf := pcrf.NewPCRFController(policyRepo, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
 
-	controller := pm.NewPolicyController(asrRepo, mbClient, serviceConfig.DataplanHost, serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
+	controller := pm.NewPolicyController(asrRepo, mbClient, dataPlanUrl.String(),
+		serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
 
 	// asr service
 	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo,
-		factory, network, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName, mbClient, serviceConfig.AllowedTimeOfService) //
+		factory, networkClient, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName,
+		mbClient, serviceConfig.AllowedTimeOfService) //
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}
+
 	nSrv := server.NewAsrEventServer(asrRepo, asrServer, gutiRepo, serviceConfig.OrgName)
 
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
@@ -150,12 +170,12 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
+			pkg.ServiceName, err.Error())
 	}
 }

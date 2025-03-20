@@ -13,19 +13,20 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
 
 type AsrRecordServer struct {
@@ -96,7 +97,6 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 
 	switch req.Id.(type) {
 	case *pb.ReadReq_Imsi:
-
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
