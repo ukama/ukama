@@ -5,11 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-
+import React, { useState } from 'react';
 import { METRIC_RANGE_10800 } from '@/constants';
 import { colors } from '@/theme';
 import { findNullZones, generatePlotLines } from '@/utils';
-import { Box } from '@mui/material';
+import { Box, Switch, FormControlLabel } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import GraphTitleWrapper from '../GraphTitleWrapper';
@@ -24,6 +24,9 @@ interface ILineChart {
   yunit?: string;
   tickInterval?: number;
   tickPositions?: number[];
+  switchLabel?: string;
+  onSwitchChange?: (checked: boolean) => void;
+  initialSwitchState?: boolean;
 }
 
 const LineChart = ({
@@ -35,7 +38,21 @@ const LineChart = ({
   loading = false,
   tickInterval = undefined,
   tickPositions = undefined,
+  switchLabel = 'Backhaul',
+  onSwitchChange,
+  initialSwitchState = true,
 }: ILineChart) => {
+  const [isChecked, setIsChecked] = useState(initialSwitchState);
+
+  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newCheckedState = event.target.checked;
+    setIsChecked(newCheckedState);
+
+    if (onSwitchChange) {
+      onSwitchChange(newCheckedState);
+    }
+  };
+
   const getOptions = (topic: string, title: string, initData: any) => {
     const data: any = [];
     if (Array.isArray(initData)) {
@@ -144,6 +161,8 @@ const LineChart = ({
     };
   };
 
+  const shouldShowSwitch = topic === 'switch_port_status';
+
   return (
     <GraphTitleWrapper
       title={title}
@@ -184,7 +203,40 @@ const LineChart = ({
       }}
       loading={loading ?? !initData}
     >
-      <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          mb: 2,
+          minHeight: shouldShowSwitch ? '350px' : '300px',
+        }}
+      >
+        {shouldShowSwitch && (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              mb: 1,
+              height: '36px',
+              position: 'relative',
+              zIndex: 1,
+            }}
+          >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isChecked}
+                  onChange={handleSwitchChange}
+                  color="primary"
+                />
+              }
+              label={switchLabel}
+            />
+          </Box>
+        )}
+
         <HighchartsReact
           key={topic}
           highcharts={Highcharts}

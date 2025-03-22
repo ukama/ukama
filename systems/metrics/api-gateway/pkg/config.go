@@ -181,7 +181,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	//main backhaul
 	"backhaul_speed": Metric{false, "backhaul_speed", ""},
 	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
-	"site_up": Metric{false, "site_up", ""},
+	"site_uptime_seconds": Metric{false, "site_uptime_seconds", ""},
 }
 
 type GrpcEndpoints struct {

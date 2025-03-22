@@ -193,7 +193,7 @@ const getGraphsKeyByType = (type: string): string[] => {
     case GRAPHS_TYPE.SWITCH:
       return ["switch_port_status", "switch_port_speed", "switch_port_power"];
     case GRAPHS_TYPE.SITE:
-      return ["site_up"];
+      return ["site_uptime_seconds"];
     default:
       return [];
   }
@@ -272,6 +272,7 @@ const getSystemNameByService = (service: string): string => {
     case "planning-tool":
       return "planning";
     case "nodeState":
+    case "controller":
       return "node";
     default:
       return "";

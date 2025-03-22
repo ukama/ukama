@@ -5,69 +5,86 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import React from 'react';
+import { Box, Grid, Typography } from '@mui/material';
+import SiteCard from '@/components/SiteCard';
 import { SiteDto } from '@/client/graphql/generated';
-import CellTowerIcon from '@mui/icons-material/CellTower';
-import { Grid, Skeleton, Stack, Typography } from '@mui/material';
-import SiteCard from '../SiteCard';
+import LoadingWrapper from '@/components/LoadingWrapper';
 
-interface ISitesWrapper {
+interface SitesWrapperProps {
   sites: SiteDto[];
   loading: boolean;
-  handleSiteNameUpdate: any;
+  sitesStatus?: Record<
+    string,
+    {
+      status: string;
+      batteryStatus: string;
+      signalStrength: string;
+    }
+  >;
+  handleAddSite?: () => void;
+  handleSiteNameUpdate: (siteId: string, siteName: string) => void;
 }
 
-const SiteCardSkelton = (
-  <Skeleton
-    variant="rectangular"
-    height={158}
-    width={'100%'}
-    sx={{ borderRadius: '4px' }}
-  />
-);
-
-const SitesWrapper = ({
-  loading,
+const SitesWrapper: React.FC<SitesWrapperProps> = ({
   sites,
+  loading,
+  sitesStatus = {},
   handleSiteNameUpdate,
-}: ISitesWrapper) => {
-  if (loading)
+}) => {
+  if (sites?.length === 0 && !loading) {
     return (
-      <Grid container columnSpacing={2}>
-        {[1, 2, 3].map((item) => (
-          <Grid item xs={12} md={4} key={item}>
-            {SiteCardSkelton}
-          </Grid>
-        ))}
-      </Grid>
-    );
-
-  if (sites.length === 0)
-    return (
-      <Stack
-        spacing={1}
-        height="100%"
-        direction={'column'}
-        alignItems={'center'}
+      <Box
+        sx={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 2,
+        }}
       >
-        <CellTowerIcon htmlColor="#9E9E9E" />
-        <Typography variant="body2">No sites available.</Typography>
-      </Stack>
+        <Typography variant="h6" color="textSecondary">
+          No sites found
+        </Typography>
+      </Box>
     );
+  }
 
   return (
-    <Grid container rowSpacing={2} columnSpacing={2}>
-      {sites.map((site) => (
-        <Grid item xs={12} md={4} lg={4} key={site.id}>
-          <SiteCard
-            siteId={site.id}
-            name={site.name}
-            loading={loading}
-            address={site.location}
-            handleSiteNameUpdate={handleSiteNameUpdate}
-          />
+    <LoadingWrapper isLoading={loading} height="100%">
+      <Box
+        sx={{
+          height: '100%',
+          overflowY: 'auto',
+          padding: '10px',
+        }}
+      >
+        <Grid container spacing={2}>
+          {sites?.map((site) => {
+            const siteStatus = sitesStatus[site.id] || {
+              status: 'Online',
+              batteryStatus: 'Charged',
+              signalStrength: 'Strong',
+            };
+
+            return (
+              <Grid item xs={12} md={4} lg={4} key={site.id}>
+                <SiteCard
+                  siteId={site.id}
+                  name={site.name}
+                  address={site.location}
+                  connectionStatus={siteStatus.status}
+                  batteryStatus={siteStatus.batteryStatus}
+                  signalStrength={siteStatus.signalStrength}
+                  handleSiteNameUpdate={handleSiteNameUpdate}
+                />
+              </Grid>
+            );
+          })}
         </Grid>
-      ))}
-    </Grid>
+      </Box>
+    </LoadingWrapper>
   );
 };
 

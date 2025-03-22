@@ -4,6 +4,7 @@ import { Worker } from "worker_threads";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
+  STATS_TYPE,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, openStore } from "../../common/storage";
@@ -179,39 +180,62 @@ class SubscriptionsResolvers {
     }
 
     const wsUrl = wsUrlResolver(baseURL);
-    const { from, userId, withSubscription, siteId } = data;
+    const { from, userId, withSubscription, siteId, type } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
     const metrics: MetricsStateRes = { metrics: [] };
-    const metricKey = "site_up";
-    const res = await getSiteMetricRange(baseURL, metricKey, { ...data });
-    let avg = 0;
 
-    res.values = res.values.filter(value => value[1] !== 0);
+    let metricKeys: string[] = [];
 
-    if (Array.isArray(res.values) && res.values.length > 0) {
-      if (res.values.length === 1) {
-        avg = res.values[res.values.length - 1][1];
-      } else {
-        const sum = res.values.reduce((acc, val) => acc + val[1], 0);
-        avg = sum / res.values.length;
-      }
+    switch (type) {
+      case STATS_TYPE.SITE:
+        metricKeys = ["site_uptime_seconds"];
+        break;
+      case STATS_TYPE.BATTERY:
+        metricKeys = ["battery_charge_percentage"];
+        break;
+      case STATS_TYPE.MAIN_BACKHAUL:
+        metricKeys = ["backhaul_speed"];
+        break;
+      default:
+        metricKeys = ["site_uptime_seconds"];
     }
 
-    metrics.metrics = [
-      {
+    const metricPromises = metricKeys.map(async key => {
+      const res = await getSiteMetricRange(baseURL, key, { ...data });
+      let avg = 0;
+
+      res.values = res.values.filter(value => value[1] !== 0);
+
+      if (Array.isArray(res.values) && res.values.length > 0) {
+        if (res.values.length === 1 || key === "site_uptime_seconds") {
+          avg = res.values[res.values.length - 1][1];
+        } else {
+          const sum = res.values.reduce((acc, val) => acc + val[1], 0);
+          avg = sum / res.values.length;
+        }
+      }
+
+      return {
         msg: res.msg,
         type: res.type,
-        siteId: res.siteId || "",
+        siteId: res.siteId || data.siteId || "",
         success: res.success,
         value: formatKPIValue(res.type, avg),
-      },
-    ];
+      };
+    });
+
+    metrics.metrics = await Promise.all(metricPromises);
 
     if (withSubscription && metrics.metrics.length > 0) {
+      const topic = `${userId}-${type}-${from}`;
+      const url = `${wsUrl}/v1/live/metrics?interval=${
+        data.step
+      }&metric=${metricKeys.join(",")}&site=${siteId}`;
+
       const workerData = {
-        topic: `${userId}-site_up-${from}`,
-        url: `${wsUrl}/v1/live/metrics?interval=${data.step}&metric=${metricKey}&site=${siteId}`,
+        topic,
+        url,
       };
 
       const worker = new Worker(WS_THREAD, {
@@ -243,9 +267,7 @@ class SubscriptionsResolvers {
 
       worker.on("exit", async (code: any) => {
         await store.close();
-        logger.info(
-          `WS_THREAD exited with code [${code}] for ${userId}/site_up/${from}`
-        );
+        logger.info(`WS_THREAD exited with code [${code}] for ${topic}`);
       });
     }
 

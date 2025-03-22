@@ -201,7 +201,9 @@ export type QueryGetSiteStatArgs = {
 
 export enum Stats_Type {
   AllNode = 'ALL_NODE',
+  Battery = 'BATTERY',
   Home = 'HOME',
+  MainBackhaul = 'MAIN_BACKHAUL',
   Network = 'NETWORK',
   Overview = 'OVERVIEW',
   Radio = 'RADIO',

@@ -1,62 +1,76 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
 import React from 'react';
-import { Box, Card, CardContent, Typography, Stack } from '@mui/material';
-
-interface UptimeData {
-  value: number;
-  status: 'up' | 'down' | 'unknown';
-}
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import colors from '@/theme/colors';
 
 interface SiteOverviewProps {
-  uptimePercentage?: number;
+  uptimeSeconds?: number;
   daysRange?: number;
-  recentUptimeData?: UptimeData[];
-  pastUptimeData?: UptimeData[];
   loading?: boolean;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
-  uptimePercentage = 99,
+  uptimeSeconds = 0,
   daysRange = 90,
-  recentUptimeData,
-  pastUptimeData,
   loading = false,
 }) => {
-  const generateMockData = (count: number): UptimeData[] => {
-    return Array(count)
-      .fill(0)
-      .map(() => ({
-        value: Math.random() * 100,
-        status: Math.random() > 0.01 ? 'up' : 'down',
-      }));
+  const calculateUptimePercentage = (
+    uptimeSeconds: number,
+    days: number,
+  ): number => {
+    const totalSeconds = days * 24 * 60 * 60;
+    const percentage = (uptimeSeconds / totalSeconds) * 100;
+    return Math.min(Math.max(0, percentage), 100);
   };
 
-  const recent = recentUptimeData || generateMockData(30);
-  const past = pastUptimeData || generateMockData(30);
-
-  const renderUptimeBar = (data: UptimeData, index: number) => (
-    <Box
-      key={index}
-      sx={{
-        height: 75,
-        width: 8,
-        backgroundColor:
-          data.status === 'up'
-            ? '#E5E5E5'
-            : data.status === 'down'
-              ? '#FF6B6B'
-              : '#ADADAD',
-        borderRadius: 1,
-        mx: 0.25,
-      }}
-    />
+  const actualUptimePercentage = calculateUptimePercentage(
+    uptimeSeconds,
+    daysRange,
   );
+
+  const recentPeriodBars = Array(30).fill(actualUptimePercentage);
+  const pastPeriodBars = Array(30).fill(actualUptimePercentage);
+
+  const renderBar = (value: number, index: number) => {
+    const heightPercentage = value;
+    const barHeight = (heightPercentage / 100) * 75;
+
+    return (
+      <Box
+        key={index}
+        sx={{
+          height: 75,
+          width: 8,
+          mx: 0.25,
+          position: 'relative',
+          borderRadius: 1,
+          bgcolor: colors.gray,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            height: `${barHeight}px`,
+            bgcolor: colors.green,
+            borderRadius: 1,
+          }}
+        />
+      </Box>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
+          height: '100%',
+        }}
+      ></Card>
+    );
+  }
 
   return (
     <Card
@@ -80,7 +94,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
             mb: 4,
           }}
         >
-          {uptimePercentage}% uptime over {daysRange} days
+          {actualUptimePercentage.toFixed(0)}% uptime over {daysRange} days
         </Typography>
 
         <Box sx={{ position: 'relative', mb: 3 }}>
@@ -93,7 +107,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
               mb: 1,
             }}
           >
-            {recent.map(renderUptimeBar)}
+            {recentPeriodBars.map(renderBar)}
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
@@ -116,15 +130,15 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
               mb: 1,
             }}
           >
-            {past.map(renderUptimeBar)}
+            {pastPeriodBars.map(renderBar)}
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              90 days ago
+              {daysRange} days ago
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              60 days ago
+              {Math.floor(daysRange / 3)} days ago
             </Typography>
           </Box>
         </Box>

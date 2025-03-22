@@ -125,6 +125,8 @@ export enum STATS_TYPE {
   RESOURCES = "RESOURCES",
   RADIO = "RADIO",
   SITE = "SITE",
+  BATTERY = "BATTERY",
+  MAIN_BACKHAUL = "MAIN_BACKHAUL",
 }
 registerEnumType(STATS_TYPE, {
   name: "STATS_TYPE",

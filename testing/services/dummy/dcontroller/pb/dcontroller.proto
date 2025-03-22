@@ -47,10 +47,6 @@
      double solarPanelVoltage = 2;
      double solarPanelCurrent = 3;
      double solarPanelPower = 4;
-     double chargeControllerStatus = 5;
-     double chargeControllerMode = 6;
-     double chargeControllerCurrent = 7;
-     double chargeControllerVoltage = 8;
  }
  
  // Profile types

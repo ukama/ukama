@@ -7,10 +7,13 @@
  */
 import colors from '@/theme/colors';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PersonIcon from '@mui/icons-material/Person';
 import RouterIcon from '@mui/icons-material/Router';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import Battery50Icon from '@mui/icons-material/Battery50';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import {
   Box,
   Card,
@@ -29,10 +32,10 @@ interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
-  userCount?: number; 
-  connectionStatus?: string; 
-  batteryStatus?: string; 
-  signalStrength?: string; 
+  userCount?: number;
+  connectionStatus?: string;
+  batteryStatus?: string;
+  signalStrength?: string;
   onClickMenu?: (siteId: string) => void;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
@@ -42,7 +45,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  userCount = 2,
   connectionStatus = 'Online',
   batteryStatus = 'Charged',
   signalStrength = 'Strong',
@@ -50,9 +52,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
   handleSiteNameUpdate,
   loading = false,
 }) => {
-  const isSmallScreen = useMediaQuery((theme: any) =>
-    theme.breakpoints.down('sm'),
-  );
   const router = useRouter();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -73,16 +72,91 @@ const SiteCard: React.FC<SiteCardProps> = ({
     router.push(`/console/sites/${siteId}`);
   };
 
+  const getConnectionStyles = () => {
+    switch (connectionStatus) {
+      case 'Online':
+        return {
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
+      case 'Offline':
+        return {
+          color: colors.red,
+          icon: <RouterIcon sx={{ color: colors.red }} />,
+        };
+      case 'Warning':
+        return {
+          color: colors.orange,
+          icon: <RouterIcon sx={{ color: colors.orange }} />,
+        };
+      default:
+        return {
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
+    }
+  };
+
+  const getBatteryStyles = () => {
+    switch (batteryStatus) {
+      case 'Charged':
+        return {
+          color: colors.green,
+          icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+        };
+      case 'Medium':
+        return {
+          color: colors.orange,
+          icon: <Battery50Icon sx={{ color: colors.orange }} />,
+        };
+      case 'Low':
+        return {
+          color: colors.red,
+          icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+        };
+      default:
+        return {
+          color: colors.green,
+          icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+        };
+    }
+  };
+
+  const getSignalStyles = () => {
+    switch (signalStrength) {
+      case 'Strong':
+        return {
+          color: colors.green,
+          icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+        };
+      case 'Medium':
+        return {
+          color: colors.orange,
+          icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
+        };
+      case 'Weak':
+        return {
+          color: colors.red,
+          icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
+        };
+      default:
+        return {
+          color: colors.green,
+          icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+        };
+    }
+  };
+
+  const connectionStyles = getConnectionStyles();
+  const batteryStyles = getBatteryStyles();
+  const signalStyles = getSignalStyles();
+
   return (
     <Card
       sx={{
         border: `1px solid ${colors.darkGradient}`,
         borderRadius: 2,
         marginBottom: 2,
-        '&:hover': {
-          border: `1px solid ${colors.primaryDark}`,
-          cursor: 'pointer',
-        },
         backgroundColor: colors.lightGray,
       }}
       onClick={navigateToDetails}
@@ -94,27 +168,24 @@ const SiteCard: React.FC<SiteCardProps> = ({
           alignItems="flex-start"
         >
           <Box>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                borderBottom: '1px solid', 
+            <Typography
+              variant="h6"
+              sx={{
+                borderBottom: '1px solid',
                 display: 'inline-block',
                 mb: 1,
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                cursor: 'pointer',
               }}
             >
-              {loading ? (
-                <Skeleton width={150} />
-              ) : (
-                name
-              )}
+              {loading ? <Skeleton width={150} /> : name}
             </Typography>
-            
+
             <Typography color="textSecondary" variant="body1">
               {loading ? <Skeleton width={200} /> : address}
             </Typography>
           </Box>
-          
+
           <IconButton onClick={handleClick} sx={{ mt: -1 }}>
             <MoreVertIcon />
           </IconButton>
@@ -130,8 +201,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
             </MenuItem>
           </Menu>
         </Box>
-        
-        {/* Status indicators row */}
+
         <Box
           display="flex"
           justifyContent="flex-start"
@@ -139,34 +209,27 @@ const SiteCard: React.FC<SiteCardProps> = ({
           mt={3}
           gap={4}
         >
-          {/* User count */}
           <Box display="flex" alignItems="center" gap={1}>
-            <PersonIcon color="action" />
-            <Typography variant="body2">
-              {loading ? <Skeleton width={20} /> : userCount}
-            </Typography>
-          </Box>
-          
-          {/* Connection status */}
-          <Box display="flex" alignItems="center" gap={1}>
-            <RouterIcon sx={{ color: connectionStatus === 'Online' ? 'green' : 'gray' }} />
-            <Typography variant="body2" color={connectionStatus === 'Online' ? 'green' : 'textSecondary'}>
+            {loading ? (
+              <Skeleton width={24} height={24} />
+            ) : (
+              connectionStyles.icon
+            )}
+            <Typography variant="body2" sx={{ color: connectionStyles.color }}>
               {loading ? <Skeleton width={60} /> : connectionStatus}
             </Typography>
           </Box>
-          
-          {/* Battery status */}
+
           <Box display="flex" alignItems="center" gap={1}>
-            <BatteryChargingFullIcon sx={{ color: '#d32f2f' }} />
-            <Typography variant="body2" color="#d32f2f">
+            {loading ? <Skeleton width={24} height={24} /> : batteryStyles.icon}
+            <Typography variant="body2" sx={{ color: batteryStyles.color }}>
               {loading ? <Skeleton width={70} /> : batteryStatus}
             </Typography>
           </Box>
-          
-          {/* Signal strength */}
+
           <Box display="flex" alignItems="center" gap={1}>
-            <SignalCellularAltIcon sx={{ color: 'green' }} />
-            <Typography variant="body2" color="green">
+            {loading ? <Skeleton width={24} height={24} /> : signalStyles.icon}
+            <Typography variant="body2" sx={{ color: signalStyles.color }}>
               {loading ? <Skeleton width={60} /> : signalStrength}
             </Typography>
           </Box>

@@ -97,13 +97,8 @@ export const parseSiteMetricRes = (
   type: string,
   args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
-  // Log the structure to help debug
-  logger.info(`Parsing metric response for type ${type}:`, res);
-
-  // Handle different possible response structures
   let result: any[] = [];
   if (res.data?.data?.result) {
-    // Original structure: res.data.data.result
     result = res.data.data.result;
   } else if (res.data?.result) {
     result = res.data.result;

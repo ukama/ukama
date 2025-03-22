@@ -9,14 +9,20 @@ import React from 'react';
 import { Box, Paper, Stack, Typography, Button } from '@mui/material';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { colors } from '@/theme';
+import { duration } from '@/utils';
+import { useRouter } from 'next/navigation';
 
 interface NodeStatusDisplayProps {
   nodeIds: string[];
+  nodeUpTime?: number;
 }
 
 const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
   nodeIds = [],
+  nodeUpTime = 0,
 }) => {
+  const router = useRouter();
+
   return (
     <Paper
       sx={{
@@ -56,7 +62,7 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
             </Box>
 
             <Typography variant="body1" sx={{ ml: 4, mb: 3 }}>
-              Node health has been normal the past 7 days
+              Node health has been up for {duration(nodeUpTime)}
             </Typography>
 
             <Button
@@ -66,6 +72,9 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
                 fontWeight: 'bold',
                 fontSize: '14px',
                 color: colors.primaryMain,
+              }}
+              onClick={() => {
+                router.push(`/console/nodes/${nodeId}`);
               }}
             >
               VIEW NODE

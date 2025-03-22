@@ -21,10 +21,12 @@ interface SiteComponentsProps {
   sections: SectionData;
   nodeIds: string[];
   activeKPI: string;
+  nodeUpTime?: number;
   activeSection: string;
   metricFrom: number;
   metricsLoading: boolean;
-  onNodeClick: (kpiType: string) => void;
+  onComponentClick: (kpiType: string) => void;
+  onSwitchChange?: () => void;
 }
 
 const SiteComponents: React.FC<SiteComponentsProps> = ({
@@ -35,9 +37,10 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   activeSection,
   metricFrom,
   metricsLoading,
-  onNodeClick,
+  onComponentClick,
+  nodeUpTime,
+  onSwitchChange,
 }) => {
-  // Check if metrics data is available
   const hasMetricsData =
     metrics && metrics.metrics && metrics.metrics.length > 0;
 
@@ -85,7 +88,10 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         <Grid container spacing={3}>
           <Grid item xs={12} md={3}>
             <Stack spacing={2}>
-              <SiteFlowDiagram defaultOpacity={0.1} onNodeClick={onNodeClick} />
+              <SiteFlowDiagram
+                defaultOpacity={0.1}
+                onNodeClick={onComponentClick}
+              />
             </Stack>
           </Grid>
 
@@ -96,7 +102,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
               isLoading={metricsLoading && activeKPI !== 'node'}
             >
               {activeKPI === 'node' ? (
-                <NodeStatusDisplay nodeIds={nodeIds} />
+                <NodeStatusDisplay nodeIds={nodeIds} nodeUpTime={nodeUpTime} />
               ) : !hasMetricsData && !metricsLoading ? (
                 renderSkeletonLoading()
               ) : (
@@ -123,6 +129,15 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                         tickPositions={config.tickPositions}
                         hasData={isMetricValue(config.id, metrics)}
                         initData={getMetricValue(config.id, metrics)}
+                        switchLabel={
+                          config.id === 'switch_port_status'
+                            ? 'Backhaul'
+                            : undefined
+                        }
+                        initialSwitchState={
+                          config.id === 'switch_port_status' ? true : undefined
+                        }
+                        onSwitchChange={onSwitchChange}
                       />
                     ))}
                   </Stack>

@@ -51,12 +51,12 @@ import (
 			return nil, err
 		}
 
-		err = n.handleSiteCreateEvent(msg, c.Title)
+		err = n.handleSiteMonitoring(msg)
 		if err != nil {
 			return nil, err
 		}
 
-	case "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish":
+	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
 		nodeMsg := &cpb.NodeFeederMessage{}
 		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
 			log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
@@ -69,18 +69,6 @@ import (
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
-		c := evt.EventToEventConfig[evt.EventNodeAssign]
-		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
-		if err != nil {
-			return nil, err
-		}
-		err = n.handleSiteMonitoring(msg)
-		if err != nil {
-			log.Errorf("Error handling site monitoring event: %v", err)
-			return nil, err
-		}	
-		
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -88,42 +76,38 @@ import (
 	return &epb.EventResponse{}, nil
 }
   
- func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventRegistryNodeAssign) error {
-	 log.Infof("Handling site monitoring event")
-	 go func() {
-		req := &pb.MonitorSiteRequest{SiteId: msg.Site}
-		if resp, err := n.server.MonitorSite(context.Background(), req); err == nil {
-			log.Infof("Automatically started monitoring: %s", resp.Message)
-		} else {
-			log.Warnf("Failed to start automatic monitoring: %v", err)
-		}
-	}()
-	return nil
- }
- func (n *DControllerEventServer) handleSiteCreateEvent(msg *epb.EventAddSite, name string) error {
-    log.Infof("Handling site create event for site ID: %s", msg.SiteId)
-
-    req := &pb.StartMetricsRequest{
+func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) error {
+    log.Infof("Handling node assignment event for site: %s", msg.SiteId)
+    
+    metricsReq := &pb.StartMetricsRequest{
         SiteId:  msg.SiteId,
         Profile: pb.Profile_PROFILE_MAX,
     }
-
+    
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
-
-    resp, err := n.server.StartMetrics(ctx, req)
+    
+    resp, err := n.server.StartMetrics(ctx, metricsReq)
     if err != nil {
         log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
         return err
     }
-
+    
     if !resp.Success {
         log.Warnf("StartMetrics returned unsuccessful for site %s", msg.SiteId)
-    } else {
-        log.Infof("Successfully started metrics for site %s", msg.SiteId)
-	
+        return fmt.Errorf("failed to start metrics for site %s", msg.SiteId)
     }
-
+    
+    log.Infof("Successfully started metrics for site %s", msg.SiteId)
+    
+    monitorReq := &pb.MonitorSiteRequest{SiteId: msg.SiteId}
+    monitorResp, err := n.server.MonitorSite(context.Background(), monitorReq)
+    if err != nil {
+        log.Warnf("Failed to start monitoring for site %s: %v", msg.SiteId, err)
+        return err
+    }
+    
+    log.Infof("Successfully started monitoring: %s", monitorResp.Message)
     return nil
 }
  
