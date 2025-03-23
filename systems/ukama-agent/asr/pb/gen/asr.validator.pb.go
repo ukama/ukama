@@ -48,11 +48,11 @@ func (this *Record) Validate() error {
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
 	}
-	if !(len(this.Iccid) > 18) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, this.Iccid))
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
 	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	if this.Apn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Apn); err != nil {
@@ -84,11 +84,11 @@ func (this *ActivateReq) Validate() error {
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
 	}
-	if !(len(this.Iccid) > 18) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, this.Iccid))
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
 	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
@@ -99,11 +99,11 @@ func (this *InactivateReq) Validate() error {
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
 	}
-	if !(len(this.Iccid) > 18) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, this.Iccid))
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
 	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }
@@ -114,11 +114,11 @@ func (this *UpdatePackageReq) Validate() error {
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
 	}
-	if !(len(this.Iccid) > 18) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '18'`, this.Iccid))
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
 	}
-	if !(len(this.Iccid) < 22) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '22'`, this.Iccid))
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
 	}
 	return nil
 }

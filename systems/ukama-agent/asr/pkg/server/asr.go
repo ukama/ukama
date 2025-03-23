@@ -172,8 +172,8 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, fmt.Errorf("error while fetching network %s info: %w", req.NetworkId, err)
 	}
 
-	// network org validation is no longer need since we are using initClient to fetch the correct
-	// registry system that matches with the current running org.
+	// network org validation is no longer need since we are using initClient to fetch
+	// the correct registry system that matches with the current running org.
 
 	/* Send Request to SIM Factory */
 	sim, err := s.factory.ReadSimCardInfo(req.Iccid)
