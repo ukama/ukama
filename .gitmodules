@@ -39,3 +39,6 @@
 	path = nodes/ukamaOS/kernel
 	url = https://github.com/ukama/kernel.git
 	branch = ukama-anode-latest
+[submodule "nodes/ukamaOS/distro/vendor/protobuf-c"]
+	path = nodes/ukamaOS/distro/vendor/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c.git

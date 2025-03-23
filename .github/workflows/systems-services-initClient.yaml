@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Dependencies
+    - name: Installing Ubuntu packages
       run: |
         sudo apt-get update
         sudo add-apt-repository universe
@@ -58,7 +58,30 @@ jobs:
           debootstrap \
           kpartx \
           fdisk \
-          util-linux
+          util-linux \
+          protobuf-compiler \
+          iproute2 \
+          libcap-dev \
+          libidn2-0-dev \
+          libmicrohttpd-dev \
+          gnutls-dev \
+          linux-headers-generic \
+          sqlite3 \
+          libsqlite3-dev \
+          dhcpcd5 \
+          libgmp-dev \
+          gnutls-bin \
+          iptables \
+          libjansson-dev \
+          libunistring-dev \
+          libmbedtls-dev \
+          nettle-dev \
+          openssl \
+          p11-kit \
+          libprotobuf-c-dev \
+          libpsl-dev \
+          procps \
+          libcurl4-openssl-dev
 
         # Install gettext from source
         wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \

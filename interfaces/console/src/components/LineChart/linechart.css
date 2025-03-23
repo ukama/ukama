@@ -1,0 +1,5 @@
+.hide-navigator .highcharts-navigator,
+.hide-navigator .highcharts-navigator-xaxis,
+.hide-navigator .highcharts-navigator-series {
+  display: none !important;
+}
