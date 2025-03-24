@@ -36,7 +36,7 @@ type Config struct {
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"api-gateway-init:8080"`
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type SimManager struct {

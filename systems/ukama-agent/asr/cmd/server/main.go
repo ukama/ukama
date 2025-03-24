@@ -114,7 +114,7 @@ func runGrpcServer(gormdb sql.Db) {
 	// For now, we either assuming factory is global and/or currently using a dummy stub unter ukama/testing
 	factory, err := client.NewFactoryClient(serviceConfig.FactoryHost, pkg.IsDebugMode)
 	if err != nil {
-		log.Fatalf("Fcatory Client initilization failed. Error: %v", err)
+		log.Fatalf("Factory Client initialization failed. Error: %v", err)
 	}
 
 	// Looking up registry system's host from initClient
