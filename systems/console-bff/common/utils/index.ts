@@ -198,6 +198,18 @@ const getGraphsKeyByType = (type: string): string[] => {
       return [];
   }
 };
+const getSiteMetricStatByKeysByType = (type: STATS_TYPE): string[] => {
+  switch (type) {
+    case STATS_TYPE.SITE:
+      return ["site_uptime_seconds"];
+    case STATS_TYPE.BATTERY:
+      return ["battery_charge_percentage"];
+    case STATS_TYPE.MAIN_BACKHAUL:
+      return ["backhaul_speed"];
+    default:
+      return ["site_uptime_seconds"];
+  }
+};
 
 const findProcessNKill = (port: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
@@ -393,4 +405,5 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
+  getSiteMetricStatByKeysByType,
 };

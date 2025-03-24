@@ -14,6 +14,7 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
+  getSiteMetricStatByKeysByType,
   wsUrlResolver,
 } from "../../common/utils";
 import {
@@ -185,21 +186,7 @@ class SubscriptionsResolvers {
 
     const metrics: MetricsStateRes = { metrics: [] };
 
-    let metricKeys: string[] = [];
-
-    switch (type) {
-      case STATS_TYPE.SITE:
-        metricKeys = ["site_uptime_seconds"];
-        break;
-      case STATS_TYPE.BATTERY:
-        metricKeys = ["battery_charge_percentage"];
-        break;
-      case STATS_TYPE.MAIN_BACKHAUL:
-        metricKeys = ["backhaul_speed"];
-        break;
-      default:
-        metricKeys = ["site_uptime_seconds"];
-    }
+    const metricKeys = getSiteMetricStatByKeysByType(type);
 
     const metricPromises = metricKeys.map(async key => {
       const res = await getSiteMetricRange(baseURL, key, { ...data });

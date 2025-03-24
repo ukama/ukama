@@ -6,14 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
+import {
+  getBatteryStyles,
+  getConnectionStyles,
+  getSignalStyles,
+} from '@/utils';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RouterIcon from '@mui/icons-material/Router';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
-import Battery50Icon from '@mui/icons-material/Battery50';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
+
 import {
   Box,
   Card,
@@ -23,7 +22,6 @@ import {
   MenuItem,
   Skeleton,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -36,7 +34,6 @@ interface SiteCardProps {
   connectionStatus?: string;
   batteryStatus?: string;
   signalStrength?: string;
-  onClickMenu?: (siteId: string) => void;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
 }
@@ -48,7 +45,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
   connectionStatus = 'Online',
   batteryStatus = 'Charged',
   signalStrength = 'Strong',
-  onClickMenu,
   handleSiteNameUpdate,
   loading = false,
 }) => {
@@ -72,84 +68,9 @@ const SiteCard: React.FC<SiteCardProps> = ({
     router.push(`/console/sites/${siteId}`);
   };
 
-  const getConnectionStyles = () => {
-    switch (connectionStatus) {
-      case 'Online':
-        return {
-          color: colors.green,
-          icon: <RouterIcon sx={{ color: colors.green }} />,
-        };
-      case 'Offline':
-        return {
-          color: colors.red,
-          icon: <RouterIcon sx={{ color: colors.red }} />,
-        };
-      case 'Warning':
-        return {
-          color: colors.orange,
-          icon: <RouterIcon sx={{ color: colors.orange }} />,
-        };
-      default:
-        return {
-          color: colors.green,
-          icon: <RouterIcon sx={{ color: colors.green }} />,
-        };
-    }
-  };
-
-  const getBatteryStyles = () => {
-    switch (batteryStatus) {
-      case 'Charged':
-        return {
-          color: colors.green,
-          icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
-        };
-      case 'Medium':
-        return {
-          color: colors.orange,
-          icon: <Battery50Icon sx={{ color: colors.orange }} />,
-        };
-      case 'Low':
-        return {
-          color: colors.red,
-          icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
-        };
-      default:
-        return {
-          color: colors.green,
-          icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
-        };
-    }
-  };
-
-  const getSignalStyles = () => {
-    switch (signalStrength) {
-      case 'Strong':
-        return {
-          color: colors.green,
-          icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
-        };
-      case 'Medium':
-        return {
-          color: colors.orange,
-          icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
-        };
-      case 'Weak':
-        return {
-          color: colors.red,
-          icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
-        };
-      default:
-        return {
-          color: colors.green,
-          icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
-        };
-    }
-  };
-
-  const connectionStyles = getConnectionStyles();
-  const batteryStyles = getBatteryStyles();
-  const signalStyles = getSignalStyles();
+  const connectionStyles = getConnectionStyles(connectionStatus);
+  const batteryStyles = getBatteryStyles(batteryStatus);
+  const signalStyles = getSignalStyles(signalStrength);
 
   return (
     <Card
