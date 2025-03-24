@@ -99,20 +99,20 @@ const NodeStatItem = ({
   threshold,
   nameInfo = '',
   valueInfo = '',
-  format = 'number',
+  format = undefined,
   variant = 'medium',
 }: INodeStatItem) => {
   const [v, setV] = useState<string>('');
 
   useEffect(() => {
-    setV(formatKPIValue(value, format));
-  }, [value]);
+    setV(format ? formatKPIValue(value, format) : value);
+  }, [value, format]);
 
   useEffect(() => {
     if (id) {
       const token = PubSub.subscribe(`stat-${id}`, (_, data) => {
         if (data.length > 0) {
-          setV(formatKPIValue(data[1], format));
+          setV(format ? formatKPIValue(data[1], format) : data[1]);
         }
       });
       return () => {

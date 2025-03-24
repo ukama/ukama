@@ -49,7 +49,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "unit_health",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -75,7 +75,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "node_load",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -88,7 +88,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_uplink",
-			Min:    0,
+			Min:    2,
 			Normal: 5,
 			Max:    30,
 			KPI: prometheus.NewGaugeVec(
@@ -101,7 +101,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_downlink",
-			Min:    0,
+			Min:    8,
 			Normal: 60,
 			Max:    160,
 			KPI: prometheus.NewGaugeVec(
@@ -114,7 +114,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_uplink",
-			Min:    0,
+			Min:    1,
 			Normal: 10,
 			Max:    200,
 			KPI: prometheus.NewGaugeVec(
@@ -127,7 +127,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_downlink",
-			Min:    0,
+			Min:    2,
 			Normal: 10,
 			Max:    200,
 			KPI: prometheus.NewGaugeVec(
@@ -140,7 +140,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_latency",
-			Min:    0,
+			Min:    10,
 			Normal: 800,
 			Max:    1000,
 			KPI: prometheus.NewGaugeVec(
@@ -153,7 +153,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "hwd_load",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -166,7 +166,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "memory_usage",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -179,7 +179,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cpu_usage",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -192,7 +192,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "disk_usage",
-			Min:    0,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -205,7 +205,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "txpower",
-			Min:    0,
+			Min:    25,
 			Normal: 31,
 			Max:    34,
 			KPI: prometheus.NewGaugeVec(

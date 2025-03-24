@@ -68,7 +68,7 @@ const colors = {
   darkBlueGradiant:
     'linear-gradient(0deg, rgba(33, 144, 246, 0.2), rgba(33, 144, 246, 0.2)), #000000;',
   dullRed: 'rgba(255, 164, 164, 0.3)',
-  dullGreen: 'rgba(177, 219, 204, 0.3)',
+  dullGreen: 'rgba(177, 219, 204, 0.4)',
   dullGrey: 'rgba(59, 62, 65, 0.1)',
 };
 export default colors;

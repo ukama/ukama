@@ -135,7 +135,8 @@ const LineChart = ({
 
       xAxis: {
         type: 'datetime',
-        tickInterval: 1000 * 60 * 30,
+        tickAmount: 6,
+        tickInterval: 1000 * 60 * 31,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
@@ -151,7 +152,7 @@ const LineChart = ({
         tickPositions: tickPositions,
         gridLineWidth: tickPositions ? 0 : 2,
         tickAmount: tickPositions?.length ?? 5,
-        tickInterval: tickPositions ? tickInterval : undefined,
+        tickInterval: tickInterval,
         labels: {
           y: 5,
           formatter: function (v: any) {
