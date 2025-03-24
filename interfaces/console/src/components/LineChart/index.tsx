@@ -7,7 +7,7 @@
  */
 
 import { colors } from '@/theme';
-import { findNullZones, generatePlotLines } from '@/utils';
+import { findNullZones, formatKPIValue, generatePlotLines } from '@/utils';
 import { Box } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
@@ -47,6 +47,7 @@ interface ILineChart {
   hasData?: boolean;
   loading?: boolean;
   yunit?: string;
+  format: string;
   tickInterval?: number;
   tickPositions?: number[];
 }
@@ -54,6 +55,7 @@ interface ILineChart {
 const LineChart = ({
   topic,
   yunit,
+  format,
   hasData,
   initData,
   title = '',
@@ -89,7 +91,12 @@ const LineChart = ({
                   : null;
               if (chart && data.length > 0) {
                 const series = chart.series[0];
-                series.addPoint(data, true, true, true);
+                series.addPoint(
+                  [data[0], formatKPIValue(data[1], format)],
+                  true,
+                  true,
+                  true,
+                );
               }
             });
           },
@@ -164,7 +171,7 @@ const LineChart = ({
           data: fixedInitData,
           zones: findNullZones(fixedInitData),
           tooltip: {
-            valueDecimals: 2,
+            valueDecimals: format === 'number' ? 0 : 2,
           },
         },
       ],

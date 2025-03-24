@@ -476,6 +476,17 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   }));
 };
 
+export const formatKPIValue = (value: string, type: string): any => {
+  switch (type) {
+    case 'number':
+      return Math.floor(parseFloat(value));
+    case 'decimal':
+      return parseFloat(value).toFixed(2);
+    default:
+      return value.toString();
+  }
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
