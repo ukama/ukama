@@ -1529,7 +1529,9 @@ export type TimezoneRes = {
 };
 
 export type ToggleInternetSwitchInputDto = {
+  port: Scalars['Float']['input'];
   siteId: Scalars['String']['input'];
+  status: Scalars['Boolean']['input'];
 };
 
 export type ToggleSimStatusInputDto = {
@@ -1750,12 +1752,12 @@ export type RestartNodeMutationVariables = Exact<{
 
 export type RestartNodeMutation = { __typename?: 'Mutation', restartNode: { __typename?: 'CBooleanResponse', success: boolean } };
 
-export type ToggleRfMutationVariables = Exact<{
+export type ToggleInternetSwitchMutationVariables = Exact<{
   data: ToggleInternetSwitchInputDto;
 }>;
 
 
-export type ToggleRfMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
+export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -3175,39 +3177,39 @@ export function useRestartNodeMutation(baseOptions?: Apollo.MutationHookOptions<
 export type RestartNodeMutationHookResult = ReturnType<typeof useRestartNodeMutation>;
 export type RestartNodeMutationResult = Apollo.MutationResult<RestartNodeMutation>;
 export type RestartNodeMutationOptions = Apollo.BaseMutationOptions<RestartNodeMutation, RestartNodeMutationVariables>;
-export const ToggleRfDocument = gql`
-    mutation ToggleRF($data: ToggleInternetSwitchInputDto!) {
+export const ToggleInternetSwitchDocument = gql`
+    mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
   toggleInternetSwitch(data: $data) {
     success
   }
 }
     `;
-export type ToggleRfMutationFn = Apollo.MutationFunction<ToggleRfMutation, ToggleRfMutationVariables>;
+export type ToggleInternetSwitchMutationFn = Apollo.MutationFunction<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
 
 /**
- * __useToggleRfMutation__
+ * __useToggleInternetSwitchMutation__
  *
- * To run a mutation, you first call `useToggleRfMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useToggleRfMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useToggleInternetSwitchMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleInternetSwitchMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [toggleRfMutation, { data, loading, error }] = useToggleRfMutation({
+ * const [toggleInternetSwitchMutation, { data, loading, error }] = useToggleInternetSwitchMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useToggleRfMutation(baseOptions?: Apollo.MutationHookOptions<ToggleRfMutation, ToggleRfMutationVariables>) {
+export function useToggleInternetSwitchMutation(baseOptions?: Apollo.MutationHookOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ToggleRfMutation, ToggleRfMutationVariables>(ToggleRfDocument, options);
+        return Apollo.useMutation<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>(ToggleInternetSwitchDocument, options);
       }
-export type ToggleRfMutationHookResult = ReturnType<typeof useToggleRfMutation>;
-export type ToggleRfMutationResult = Apollo.MutationResult<ToggleRfMutation>;
-export type ToggleRfMutationOptions = Apollo.BaseMutationOptions<ToggleRfMutation, ToggleRfMutationVariables>;
+export type ToggleInternetSwitchMutationHookResult = ReturnType<typeof useToggleInternetSwitchMutation>;
+export type ToggleInternetSwitchMutationResult = Apollo.MutationResult<ToggleInternetSwitchMutation>;
+export type ToggleInternetSwitchMutationOptions = Apollo.BaseMutationOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {

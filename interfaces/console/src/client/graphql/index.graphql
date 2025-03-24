@@ -152,7 +152,7 @@ mutation RestartNode($data: RestartNodeInputDto!) {
   }
 }
 
-mutation ToggleRF($data: ToggleInternetSwitchInputDto!) {
+mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
   toggleInternetSwitch(data: $data) {
     success
   }

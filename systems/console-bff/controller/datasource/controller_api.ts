@@ -16,6 +16,8 @@ import {
   ToggleInternetSwitchInputDto,
 } from "../resolvers/types";
 
+const CONTROLLER = "controller";
+
 class ControllerApi extends RESTDataSource {
   restartNode = async (
     baseURL: string,
@@ -25,7 +27,7 @@ class ControllerApi extends RESTDataSource {
       `RestartNode [POST]: ${baseURL}/${VERSION}/nodes/${req.nodeId}/restart`
     );
     this.baseURL = baseURL;
-    return this.post(`/${VERSION}/nodes/${req.nodeId}/restart`)
+    return this.post(`/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/restart`)
       .then(() => {
         return { success: true };
       })
@@ -77,10 +79,19 @@ class ControllerApi extends RESTDataSource {
     req: ToggleInternetSwitchInputDto
   ): Promise<TBooleanResponse> => {
     this.logger.info(
-      `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/toggle-internet-switch`
+      `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-switch`
     );
+
     this.baseURL = baseURL;
-    return this.post(`/${VERSION}/sites/${req.siteId}/toggle-internet-switch`)
+    return this.post(
+      `/${VERSION}/${CONTROLLER}/sites/${req.siteId}/toggle-internet-port`,
+      {
+        body: {
+          port: req.port,
+          status: req.status,
+        },
+      }
+    )
       .then(() => {
         return { success: true };
       })

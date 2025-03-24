@@ -70,12 +70,10 @@ import (
 	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_BACKHAUL_DOWN)
  }
  
- // SetNodeOff notifies the DNode that the node is off
  func (c *DNodeClient) SetNodeOff(nodeId string) error {
 	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_NODE_OFF)
  }
  
- // SetDefault sets the node back to the default scenario
  func (c *DNodeClient) SetDefault(nodeId string) error {
 	 return c.UpdateNodeScenario(nodeId, cenums.SCENARIO_DEFAULT)
  }

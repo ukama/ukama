@@ -1,110 +1,112 @@
 services:
- postgresd-dummy:
-  image: postgres:13.3
-  ports:
-   - 5421:5432
-  environment:
-   - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=Pass2020!
-  networks:
-   - ukama-net
+  postgresd-dummy:
+    image: postgres:13.3
+    ports:
+      - 5421:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
 
- dnode:
-  build: ./dnode
-  ports:
-   - 8085:8085
-  environment:
-   - DEBUGMODE=true
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
-   - AMQPCONFIG_URI=http://rabbitmq:15672
-   - AMQPCONFIG_USERNAME=guest
-   - AMQPCONFIG_PASSWORD=guest
-  restart: always
-  networks:
-   - ukama-net
+  dnode:
+    build: ./dnode
+    ports:
+      - 8085:8085
+    environment:
+      - DEBUGMODE=true
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - AMQPCONFIG_URI=http://rabbitmq:15672
+      - AMQPCONFIG_USERNAME=guest
+      - AMQPCONFIG_PASSWORD=guest
+    restart: always
+    networks:
+      - ukama-net
 
- dcontroller:
-  build: ./dcontroller
-  ports:
-   - 2112:2112
-   - 9090:9090
-  environment:
-   - DEBUGMODE=true
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - DCONTROLLER_SERVICE_HOST=dcontroller
-   - DCONTROLLER_SERVICE_PORT=9090
-   - MSGCLIENT_HOST=msgclient-dummy:9095
-   - PORT=2112
-  restart: always
-  networks:
-   - ukama-net
+  dcontroller:
+    build: ./dcontroller
+    ports:
+      - 2112:2112
+      - 9090:9090
+    environment:
+      - DEBUGMODE=true
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - DCONTROLLER_SERVICE_HOST=dcontroller
+      - DCONTROLLER_SERVICE_PORT=9090
+      - MSGCLIENT_HOST=msgclient-dummy:9095
+      - PORT=2112
+      - DNODEURL=http://dnode:8085
+      - REGISTRYHOST=http://api-gateway-registry:8080
+    restart: always
+    networks:
+      - ukama-net
 
- dsimfactory:
-  build: ./dsimfactory
-  environment:
-   - DB_HOST=postgresd-dummy
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - DEBUGMODE=true
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
-   - DSIMFACTORY_SERVICE_PORT=9090
-   - DSIMFACTORY_SERVICE_HOST=dsimfactory
-   - MSGCLIENT_HOST=msgclient-dummy:9095
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-  restart: always
-  networks:
-   - ukama-net
+  dsimfactory:
+    build: ./dsimfactory
+    environment:
+      - DB_HOST=postgresd-dummy
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - DEBUGMODE=true
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - DSIMFACTORY_SERVICE_PORT=9090
+      - DSIMFACTORY_SERVICE_HOST=dsimfactory
+      - MSGCLIENT_HOST=msgclient-dummy:9095
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+    restart: always
+    networks:
+      - ukama-net
 
- dsubscriber:
-  build: ./dsubscriber
-  environment:
-   - DEBUGMODE=true
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
-   - DSUBSCRIBER_SERVICE_PORT=9090
-   - DSUBSCRIBER_SERVICE_HOST=dsubscriber
-   - MSGCLIENT_HOST=msgclient-dummy:9095
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - HTTP_INITCLIENT=http://api-gateway-init:8080
-   - HTTP_AGENTNODEGATEWAY=http://node-gateway-ukama-agent:8080
-  restart: always
-  networks:
-   - ukama-net
+  dsubscriber:
+    build: ./dsubscriber
+    environment:
+      - DEBUGMODE=true
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - DSUBSCRIBER_SERVICE_PORT=9090
+      - DSUBSCRIBER_SERVICE_HOST=dsubscriber
+      - MSGCLIENT_HOST=msgclient-dummy:9095
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - HTTP_INITCLIENT=http://api-gateway-init:8080
+      - HTTP_AGENTNODEGATEWAY=http://node-gateway-ukama-agent:8080
+    restart: always
+    networks:
+      - ukama-net
 
- api-gateway:
-  build: ./api-gateway
-  ports:
-   - 8083:8080
-  networks:
-   - ukama-net
-  environment:
-   - DEBUGMODE=true
-   - BYPASS_AUTH_MODE=true
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - 8083:8080
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
 
- msgclient-dummy:
-  build: ../../../systems/services/msgClient
-  environment:
-   - SYSTEM=dummy
-   - GRPC_PORT=9095
-   - DEBUGMODE=true
-   - DB_USER=postgres
-   - DB_PASSWORD=Pass2020!
-   - DB_HOST=postgresd-dummy
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-dummy
+  msgclient-dummy:
+    build: ../../../systems/services/msgClient
+    environment:
+      - SYSTEM=dummy
+      - GRPC_PORT=9095
+      - DEBUGMODE=true
+      - DB_USER=postgres
+      - DB_PASSWORD=Pass2020!
+      - DB_HOST=postgresd-dummy
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-dummy
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    external: true
+    name: services_ukama-net
 
 volumes:
- postgress-data:
+  postgress-data:

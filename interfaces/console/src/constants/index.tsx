@@ -24,6 +24,7 @@ export const APP_VERSION = 'v0.0.1';
 export const COPY_RIGHTS = 'Copyright © Ukama Inc.';
 export const IPFY_URL = 'https://api.ipify.org/?format=json';
 export const IP_API_BASE_URL = 'https://ipapi.co';
+export const REFRESH_INTERVAL = 30000;
 
 export const SETTING_MENU = [
   { id: 'personal-settings', name: 'My Account' },
@@ -163,6 +164,11 @@ export const NODE_TABLE_MENU: MenuItemType[] = [
     color: colors.redMatt,
   },
 ];
+export const SITE_STATUS = {
+  ONLINE: 'Online',
+  OFFLINE: 'Offline',
+  WARNING: 'Warning',
+};
 
 export const INVITATION_TABLE_COLUMN: ColumnsWithOptions[] = [
   { id: 'name', label: 'Name', minWidth: 120 },
@@ -255,6 +261,254 @@ export { NodeApps } from './stubData';
 
 export const KPI_PLACEHOLDER_VALUE = '-';
 
+export interface SiteKpiConfig {
+  id: string;
+  name: string;
+  unit: string;
+  description: string;
+  tickInterval?: number;
+  tickPositions?: number[];
+  threshold?: {
+    min: number;
+    normal: number;
+    max: number;
+  } | null;
+  show?: boolean;
+}
+
+export interface SectionData {
+  [key: string]: SiteKpiConfig[];
+}
+
+export const SITE_KPIS = {
+  SOLAR: {
+    metrics: [
+      {
+        unit: 'W',
+        show: true,
+        name: 'Solar panel power',
+        id: 'solar_panel_power',
+        description: 'Solar power generation',
+        tickInterval: 200,
+        min: 0,
+        max: 1000,
+        threshold: {
+          min: 100,
+          normal: 500,
+          max: 1000,
+        },
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar panel voltage',
+        id: 'solar_panel_voltage',
+        description: 'Solar panel voltage',
+        tickInterval: 5,
+        min: 0,
+        max: 40,
+        threshold: {
+          min: 16,
+          normal: 25,
+          max: 40,
+        },
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar panel current',
+        id: 'solar_panel_current',
+        description: 'Solar panel current',
+        tickInterval: 1,
+        min: 0,
+        max: 10,
+        threshold: {
+          min: 2,
+          normal: 5,
+          max: 10,
+        },
+      },
+    ],
+  },
+  BATTERY: {
+    metrics: [
+      {
+        unit: '%',
+        show: true,
+        name: 'Battery charge',
+        id: 'battery_charge_percentage',
+        description: 'Battery charge percentage',
+        tickInterval: 10,
+        min: 0,
+        max: 110,
+        threshold: {
+          min: 20,
+          normal: 70,
+          max: 100,
+        },
+      },
+    ],
+  },
+  CONTROLLER: {
+    metrics: [
+      {
+        unit: 'W',
+        show: true,
+        name: 'Solar panel power',
+        id: 'solar_panel_power',
+        description: 'Solar power generation',
+        tickInterval: 200,
+        min: 0,
+        max: 1000,
+        threshold: {
+          min: 100,
+          normal: 500,
+          max: 1000,
+        },
+      },
+      {
+        unit: 'V',
+        show: true,
+        name: 'Solar panel voltage',
+        id: 'solar_panel_voltage',
+        description: 'Solar panel voltage',
+        tickInterval: 5,
+        min: 0,
+        max: 40,
+        threshold: {
+          min: 16,
+          normal: 25,
+          max: 40,
+        },
+      },
+      {
+        unit: 'A',
+        show: true,
+        name: 'Solar panel current',
+        id: 'solar_panel_current',
+        description: 'Solar panel current',
+        tickInterval: 5,
+        min: 0,
+        max: 35,
+        threshold: {
+          min: 2,
+          normal: 10,
+          max: 33,
+        },
+      },
+      {
+        unit: '%',
+        show: true,
+        name: 'Battery charge',
+        id: 'battery_charge_percentage',
+        description: 'Battery charge percentage',
+        tickInterval: 10,
+        min: 0,
+        max: 110,
+        threshold: {
+          min: 20,
+          normal: 70,
+          max: 100,
+        },
+      },
+    ],
+  },
+  MAIN_BACKHAUL: {
+    metrics: [
+      {
+        unit: 'ms',
+        show: true,
+        name: 'Backhaul latency',
+        id: 'main_backhaul_latency',
+        description: 'Main backhaul latency',
+        tickInterval: 50,
+        min: 0,
+        max: 250,
+        threshold: {
+          min: 50,
+          normal: 20,
+          max: 5,
+        },
+        lowerIsBetter: true,
+      },
+      {
+        unit: 'Mbps',
+        show: true,
+        name: 'Backhaul speed',
+        id: 'backhaul_speed',
+        description: 'Backhaul network speed',
+        tickInterval: 25,
+        min: 0,
+        max: 200,
+        threshold: {
+          min: 2.5,
+          normal: 50,
+          max: 200,
+        },
+      },
+    ],
+  },
+  SWITCH: {
+    metrics: [
+      {
+        unit: '',
+        show: true,
+        name: 'Switch port status',
+        id: 'switch_port_status',
+        description: 'Switch port operational status',
+        tickInterval: 1,
+        min: 0,
+        max: 1,
+        threshold: {
+          min: 0,
+          normal: 1,
+          max: 1,
+        },
+      },
+      {
+        unit: 'Mbps',
+        show: true,
+        name: 'Switch port speed',
+        id: 'switch_port_speed',
+        description: 'Switch port network speed',
+        tickInterval: 100,
+        min: 0,
+        max: 1000,
+        threshold: {
+          min: 50,
+          normal: 200,
+          max: 1000,
+        },
+      },
+      {
+        unit: 'W',
+        show: true,
+        name: 'Switch port power',
+        id: 'switch_port_power',
+        description: 'Switch port power consumption',
+        tickInterval: 0.5,
+        min: 0,
+        max: 7,
+        threshold: {
+          min: 5,
+          normal: 6,
+          max: 7,
+        },
+      },
+    ],
+  },
+  SITE: {
+    stats: [
+      {
+        unit: 's',
+        show: true,
+        name: 'Site uptime',
+        id: 'site_uptime_seconds',
+        description: 'Cumulative site operational time',
+      },
+    ],
+  },
+};
 export const NODE_KPIS = {
   HOME: {
     stats: [

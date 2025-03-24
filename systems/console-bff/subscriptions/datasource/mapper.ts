@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { METRICS_INTERVAL } from "../../common/configs";
+import { logger } from "../../common/logger";
 import { eventKeyToAction, formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
@@ -46,6 +47,7 @@ export const parseLatestMetricRes = (
       success: true,
       msg: "success",
       nodeId: args.nodeId,
+      siteId: data.siteid,
       type: args.type,
       value: data.value,
     };
@@ -60,6 +62,8 @@ export const parseMetricRes = (
   args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   const { result } = res.data.data;
+  logger.info(`Parsing metric response for type ${type}:`, res);
+
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;
   return hasValues
     ? {
@@ -67,6 +71,7 @@ export const parseMetricRes = (
         success: true,
         msg: "success",
         nodeId: result[0].metric.nodeid,
+        siteId: result[0].metric.siteid || "",
         values: fixTimestampInMetricData(
           result[0].values,
           METRICS_INTERVAL,
@@ -80,38 +85,66 @@ export const parseMetricRes = (
         orgId: "",
         to: args.to,
         type: args.type,
+        siteId: result[0].metric.siteid,
         from: args.from,
         step: args.step,
         userId: args.userId,
         withSubscription: false,
       });
 };
-
-export const parseNodeMetricRes = (
-  { code, data }: { code: number; data: any },
-  args: GetMetricRangeInput
+export const parseSiteMetricRes = (
+  res: any,
+  type: string,
+  args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
-  if (code === 404) return getEmptyMetric(args);
-  const { result } = data.data;
+  let result: any[] = [];
+  if (res.data?.data?.result) {
+    result = res.data.data.result;
+  } else if (res.data?.result) {
+    result = res.data.result;
+  } else if (res.data) {
+    result = Array.isArray(res.data) ? res.data : [res.data];
+  } else {
+    result = res.result || (Array.isArray(res) ? res : [res]);
+  }
+
+  if (!Array.isArray(result)) {
+    logger.error(`Unexpected result structure:`, result);
+    result = [];
+  }
+
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;
+
+  let siteId = "";
+  if (result.length > 0 && result[0]?.metric) {
+    siteId = result[0].metric.site || result[0].metric.siteid || "";
+  }
 
   return hasValues
     ? {
-        type: args.type,
+        type: type,
         success: true,
         msg: "success",
-        nodeId: result[0].metric.nodeid,
+        siteId: siteId,
         values: fixTimestampInMetricData(
           result[0].values,
-          args.step || METRICS_INTERVAL,
+          METRICS_INTERVAL,
           args.to || Date.now(),
           args.from,
-          args.type
+          type
         ),
       }
-    : getEmptyMetric(args);
+    : getEmptyMetric({
+        orgId: "",
+        to: args.to,
+        type: args.type,
+        siteId: siteId || args.siteId || "",
+        from: args.from,
+        step: args.step,
+        userId: args.userId,
+        withSubscription: false,
+      });
 };
-
 function fixTimestampInMetricData(
   data: [number, string | null][],
   step: number,

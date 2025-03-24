@@ -12,9 +12,10 @@ interface IMetricStatSubscription {
   url: string;
   key: string;
   from: number;
-  nodeId: string;
+  nodeId?: string;
   userId: string;
   orgName: string;
+  siteId?: string;
   type: Stats_Type;
 }
 
@@ -41,6 +42,7 @@ export default async function MetricStatSubscription({
   from,
   type,
   userId,
+  siteId,
   nodeId,
   orgName,
 }: IMetricStatSubscription) {
@@ -62,7 +64,7 @@ export default async function MetricStatSubscription({
   const signal = controller.signal;
 
   const res = await fetch(
-    `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`,
+    `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22siteId%22%3A%22${siteId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`,
     { ...requestOptions, signal },
   ).catch((error) => {
     if (error.name === 'AbortError') {

@@ -35,4 +35,10 @@ export class RestartSiteInputDto {
 export class ToggleInternetSwitchInputDto {
   @Field()
   siteId: string;
+
+  @Field()
+  port: number;
+
+  @Field()
+  status: boolean;
 }

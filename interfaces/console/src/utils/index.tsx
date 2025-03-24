@@ -27,7 +27,14 @@ import {
 } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import RouterIcon from '@mui/icons-material/Router';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
@@ -489,6 +496,81 @@ export const formatKPIValue = (value: string, type: string): any => {
   }
 };
 
+const getConnectionStyles = (connectionStatus: string) => {
+  switch (connectionStatus) {
+    case 'Online':
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+    case 'Offline':
+      return {
+        color: colors.red,
+        icon: <RouterIcon sx={{ color: colors.red }} />,
+      };
+    case 'Warning':
+      return {
+        color: colors.orange,
+        icon: <RouterIcon sx={{ color: colors.orange }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getBatteryStyles = (batteryStatus: string) => {
+  switch (batteryStatus) {
+    case 'Charged':
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    case 'Low':
+      return {
+        color: colors.red,
+        icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getSignalStyles = (signalStrength: string) => {
+  switch (signalStrength) {
+    case 'Strong':
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
+      };
+    case 'Weak':
+      return {
+        color: colors.red,
+        icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -497,11 +579,14 @@ export {
   formatBytes,
   formatBytesToMB,
   formatTime,
+  getBatteryStyles,
+  getConnectionStyles,
   getDataPlanUsage,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
+  getSignalStyles,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,
