@@ -4,7 +4,6 @@ import { Worker } from "worker_threads";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
-  STATS_TYPE,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { addInStore, openStore } from "../../common/storage";
