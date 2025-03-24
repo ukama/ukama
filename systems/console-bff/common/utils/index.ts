@@ -173,8 +173,41 @@ const getGraphsKeyByType = (type: string): string[] => {
         "disk_usage",
         "txpower",
       ];
+    case GRAPHS_TYPE.BATTERY:
+      return ["battery_charge_percentage"];
+    case GRAPHS_TYPE.SOLAR:
+      return [
+        "solar_panel_voltage",
+        "solar_panel_current",
+        "solar_panel_power",
+      ];
+    case GRAPHS_TYPE.CONTROLLER:
+      return [
+        "solar_panel_voltage",
+        "solar_panel_current",
+        "solar_panel_power",
+        "battery_charge_percentage",
+      ];
+    case GRAPHS_TYPE.MAIN_BACKHAUL:
+      return ["main_backhaul_latency", "backhaul_speed"];
+    case GRAPHS_TYPE.SWITCH:
+      return ["switch_port_status", "switch_port_speed", "switch_port_power"];
+    case GRAPHS_TYPE.SITE:
+      return ["site_uptime_seconds"];
     default:
       return [];
+  }
+};
+const getSiteMetricStatByKeysByType = (type: STATS_TYPE): string[] => {
+  switch (type) {
+    case STATS_TYPE.SITE:
+      return ["site_uptime_seconds"];
+    case STATS_TYPE.BATTERY:
+      return ["battery_charge_percentage"];
+    case STATS_TYPE.MAIN_BACKHAUL:
+      return ["backhaul_speed"];
+    default:
+      return ["site_uptime_seconds"];
   }
 };
 
@@ -251,6 +284,7 @@ const getSystemNameByService = (service: string): string => {
     case "planning-tool":
       return "planning";
     case "nodeState":
+    case "controller":
       return "node";
     default:
       return "";
@@ -371,4 +405,5 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
+  getSiteMetricStatByKeysByType,
 };

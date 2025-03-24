@@ -13,21 +13,37 @@ import {
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
+  useGetNodesByNetworkLazyQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
+  useToggleInternetSwitchMutation,
 } from '@/client/graphql/generated';
+import {
+  Graphs_Type,
+  MetricsRes,
+  Stats_Type,
+  useGetMetricBySiteLazyQuery,
+  useGetSiteStatLazyQuery,
+  useGetMetricsStatLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
+import SiteComponents from '@/components/SiteComponents';
+import { SectionData, STAT_STEP_29 } from '@/constants/index';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
-import SiteOverallHealth from '@/components/SiteHealth';
 import SiteInfo from '@/components/SiteInfos';
+import SiteOverview from '@/components/SiteOverView';
+import { SITE_KPIS } from '@/constants';
+import { METRIC_RANGE_10800 } from '@/constants';
 import { useAppContext } from '@/context';
-import { TSiteForm } from '@/types';
+import { TMetricResDto, TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { AlertColor, Box, Grid, Paper, Skeleton } from '@mui/material';
-import { formatISO } from 'date-fns';
+import { getUnixTime } from '@/utils';
+import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
+import { formatISO, set } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import MetricStatSubscription from '@/lib/MetricStatSubscription';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -80,8 +96,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const { setSnackbarMessage, network, setSelectedDefaultSite } =
-    useAppContext();
+  const [nodeIds, setNodeIds] = useState<string[]>([]);
+  const [siteUptime, setSiteUptime] = useState<number>(0);
+  const [nodeUptime, setNodeUptime] = useState<number>(0);
+  const [switchPortStatus, setSwitchPortStatus] = useState(false);
+  const {
+    setSnackbarMessage,
+    network,
+    setSelectedDefaultSite,
+    user,
+    env,
+    subscriptionClient,
+  } = useAppContext();
   const {
     address: CurrentSiteaddress,
     isLoading: CurrentSiteAddressLoading,
@@ -89,6 +115,19 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     fetchAddress,
   } = useFetchAddress();
   const [isDataReady, setIsDataReady] = useState(false);
+
+  const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.Solar);
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [activeSection, setActiveSection] = useState<string>('SOLAR');
+  const [activeKPI, setActiveKPI] = useState<string>('solar');
+  const sections: SectionData = {
+    SOLAR: SITE_KPIS.SOLAR.metrics,
+    BATTERY: SITE_KPIS.BATTERY.metrics,
+    CONTROLLER: SITE_KPIS.CONTROLLER.metrics,
+    MAIN_BACKHAUL: SITE_KPIS.MAIN_BACKHAUL.metrics,
+    SWITCH: SITE_KPIS.SWITCH.metrics,
+  };
 
   const router = useRouter();
 
@@ -98,6 +137,82 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const handleCloseSiteConfig = () => {
     setOpenSiteConfig(false);
+  };
+
+  const [
+    getMetricBySite,
+    { loading: metricsLoading, variables: metricsVariables },
+  ] = useGetMetricBySiteLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      setMetrics(data.getMetricBySite);
+      console.log('METRICS :', data.getMetricBySite);
+    },
+    onError: (err) => {
+      setSnackbarMessage({
+        id: 'site-metrics-err-msg',
+        message: err.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  const [updateSwitchPort, { loading: updatePortLoading }] =
+    useToggleInternetSwitchMutation({
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'update-node-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+      onCompleted: () => {
+        setSwitchPortStatus(!switchPortStatus);
+        setSnackbarMessage({
+          id: 'update-site-success',
+          message: `Switch port status updated successfully to ${!switchPortStatus ? 'enabled' : 'disabled'}`,
+          type: 'success',
+          show: true,
+        });
+      },
+    });
+
+  const handleSwitchChange = async () => {
+    try {
+      const newStatus = !switchPortStatus;
+
+      await updateSwitchPort({
+        variables: {
+          data: {
+            port: 4,
+            siteId: id,
+            status: newStatus,
+          },
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unknown error occurred';
+      setSnackbarMessage({
+        id: 'update-site-error',
+        message: errorMessage,
+        type: 'error',
+        show: true,
+      });
+    }
+  };
+  const handleStatSubscription = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    if (success) {
+      if (type === 'unit_uptime') {
+        setNodeUptime(Math.floor(value[1]));
+      }
+      PubSub.publish(`stat-${type}`, value);
+    }
   };
 
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
@@ -188,6 +303,66 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+  const [getMetricStat] = useGetMetricsStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getMetricsStat.metrics.length > 0) {
+        data.getMetricsStat.metrics.forEach((m) => {
+          if (m.type === 'unit_uptime') {
+            setNodeUptime(m.value);
+          }
+        });
+
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
+        MetricStatSubscription({
+          key: sKey,
+          nodeId: id,
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.AllNode,
+          from: statVar?.data.from ?? 0,
+        });
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
+    },
+  });
+
+  useEffect(() => {
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
+    if (!id) {
+      setSnackbarMessage({
+        id: 'node-not-found-msg',
+        message: 'Node not found.',
+        type: 'error',
+        show: true,
+      });
+      router.back();
+    } else if (id) {
+      const to = getUnixTime();
+      const from = to - STAT_STEP_29;
+      getMetricStat({
+        variables: {
+          data: {
+            to: to,
+            nodeId: id,
+            from: from,
+            userId: user.id,
+            step: STAT_STEP_29,
+            orgName: user.orgName,
+            withSubscription: true,
+            type: Stats_Type.AllNode,
+          },
+        },
+      });
+    }
+    return () => {
+      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
+      PubSub.unsubscribe(sKey);
+    };
+  }, []);
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
       setSite({
@@ -224,11 +399,125 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       setSnackbarMessage({
         id: 'sites-msg',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
   });
+
+  const [fetchNode] = useGetNodesByNetworkLazyQuery({
+    onCompleted: (res) => {
+      if (res.getNodesByNetwork?.nodes) {
+        const ids = res.getNodesByNetwork.nodes.map((node) => node.id);
+        setNodeIds(ids);
+      }
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'nodes-msg',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (selectedSiteId) {
+      setMetricFrom(getUnixTime() - METRIC_RANGE_10800);
+    }
+  }, [selectedSiteId]);
+
+  useEffect(() => {
+    if (
+      metricFrom > 0 &&
+      selectedSiteId &&
+      metricsVariables?.data?.from !== metricFrom
+    ) {
+      getMetricBySite({
+        variables: {
+          data: {
+            step: 30,
+            siteId: selectedSiteId,
+            userId: user.id,
+            type: graphType,
+            from: metricFrom,
+            orgName: user.orgName,
+            withSubscription: false,
+            to: metricFrom + METRIC_RANGE_10800,
+          },
+        },
+      });
+    }
+  }, [
+    metricFrom,
+    graphType,
+    metricsVariables?.data?.from,
+    selectedSiteId,
+    user.id,
+    user.orgName,
+    getMetricBySite,
+  ]);
+
+  const handleSectionChange = (section: string): void => {
+    setActiveSection(section);
+
+    if (section !== 'NODE') {
+      let newGraphType: Graphs_Type;
+      switch (section) {
+        case 'SOLAR':
+          newGraphType = Graphs_Type.Solar;
+          break;
+        case 'BATTERY':
+          newGraphType = Graphs_Type.Battery;
+          break;
+        case 'CONTROLLER':
+          newGraphType = Graphs_Type.Controller;
+          break;
+        case 'MAIN_BACKHAUL':
+          newGraphType = Graphs_Type.MainBackhaul;
+          break;
+        case 'SWITCH':
+          newGraphType = Graphs_Type.Switch;
+          break;
+        default:
+          newGraphType = Graphs_Type.Solar;
+      }
+
+      setGraphType(newGraphType);
+      setMetricFrom(getUnixTime() - METRIC_RANGE_10800);
+    }
+  };
+
+  const handleComponentClick = (kpiType: string) => {
+    setActiveKPI(kpiType);
+    let sectionName = 'SOLAR';
+
+    switch (kpiType) {
+      case 'solar':
+        sectionName = 'SOLAR';
+        break;
+      case 'battery':
+        sectionName = 'BATTERY';
+        break;
+      case 'controller':
+        sectionName = 'CONTROLLER';
+        break;
+      case 'backhaul':
+        sectionName = 'MAIN_BACKHAUL';
+        break;
+      case 'switch':
+        sectionName = 'SWITCH';
+        break;
+      case 'node':
+        sectionName = 'NODE';
+        break;
+      default:
+        sectionName = 'SOLAR';
+    }
+
+    handleSectionChange(sectionName);
+  };
 
   useEffect(() => {
     getComponents({
@@ -312,6 +601,85 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     CurrentSiteAddressLoading,
   ]);
 
+  useEffect(() => {
+    if (activeSite?.networkId) {
+      fetchNode({ variables: { networkId: activeSite.networkId } });
+    }
+  }, [activeSite, fetchNode]);
+  const [
+    getSiteMetricStat,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getSiteStat.metrics.length > 0) {
+        data.getSiteStat.metrics.forEach((m) => {
+          if (m.type === 'site_uptime_seconds') {
+            setSiteUptime(m.value);
+          }
+        });
+
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+        MetricStatSubscription({
+          key: sKey,
+          siteId: id,
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.Site,
+          from: statVar?.data.from ?? 0,
+        });
+        PubSub.subscribe(sKey, handleSiteStatSubscription);
+      }
+    },
+  });
+
+  const handleSiteStatSubscription = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    if (success) {
+      if (type === 'site_uptime_seconds') {
+        setSiteUptime(Math.floor(value[1]));
+      }
+      PubSub.publish(`stat-${type}`, value);
+    }
+  };
+  useEffect(() => {
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
+    if (!id) {
+      setSnackbarMessage({
+        id: 'site-not-found-msg',
+        message: 'Site not found.',
+        type: 'error',
+        show: true,
+      });
+      router.back();
+    } else if (id) {
+      const to = getUnixTime();
+      const from = to - STAT_STEP_29;
+      getSiteMetricStat({
+        variables: {
+          data: {
+            to: to,
+            siteId: id,
+            from: from,
+            userId: user.id,
+            step: STAT_STEP_29,
+            orgName: user.orgName,
+            withSubscription: true,
+            type: Stats_Type.Site,
+          },
+        },
+      });
+    }
+    return () => {
+      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
+      PubSub.unsubscribe(sKey);
+    };
+  }, []);
+
   if (!isDataReady) {
     return (
       <Grid container columnSpacing={2}>
@@ -332,9 +700,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   return (
     <Box
       sx={{
-        overflow: 'auto',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         borderRadius: '10px',
-        height: 'calc(100vh - 228px)',
+        width: '100%',
       }}
     >
       <SiteDetailsHeader
@@ -343,31 +712,63 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading}
+        siteUpTime={siteUptime}
       />
-      <Grid container spacing={2} sx={{ mt: 1 }}>
-        <Grid item xs={4} style={{ display: 'flex', flexDirection: 'column' }}>
-          <SiteInfo selectedSite={activeSite} address={CurrentSiteaddress} />
+
+      <Grid
+        container
+        spacing={2}
+        sx={{
+          mt: 1,
+          height: 'calc(50vh - 50px)',
+        }}
+      >
+        <Grid item xs={4} sx={{ height: '100%' }}>
+          <SiteInfo
+            selectedSite={activeSite}
+            address={CurrentSiteaddress}
+            nodeIds={nodeIds}
+          />
         </Grid>
-        <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column' }}>
+        <Grid item xs={5} sx={{ height: '100%' }}>
+          {siteUptime <= 0 ? (
+            <Box sx={{ height: '100%' }}>
+              <Skeleton
+                variant="rectangular"
+                height={'100%'}
+                width={'100%'}
+                sx={{ borderRadius: '5px' }}
+              />
+            </Box>
+          ) : (
+            <SiteOverview uptimeSeconds={siteUptime} daysRange={60} />
+          )}
+        </Grid>
+        <Grid item xs={3} sx={{ height: '100%' }}>
           <SiteMapComponent
             posix={[activeSite.latitude, activeSite.longitude]}
             address={CurrentSiteaddress}
             height={'100%'}
+            mapStyle="satellite"
           />
         </Grid>
       </Grid>
 
-      <Paper elevation={3} sx={{ p: 4, mt: 2 }}>
-        <SiteOverallHealth
-          batteryInfo={[]}
-          solarHealth={'good'}
-          nodeHealth={'good'}
-          switchHealth={'good'}
-          controllerHealth={'good'}
-          batteryHealth={'good'}
-          backhaulHealth={'good'}
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <SiteComponents
+          siteId={selectedSiteId || ''}
+          metrics={metrics}
+          sections={sections}
+          nodeIds={nodeIds}
+          activeKPI={activeKPI}
+          activeSection={activeSection}
+          metricFrom={metricFrom}
+          metricsLoading={metricsLoading}
+          onComponentClick={handleComponentClick}
+          nodeUpTime={nodeUptime}
+          onSwitchChange={handleSwitchChange}
         />
-      </Paper>
+      </Box>
 
       <ConfigureSiteDialog
         site={site}

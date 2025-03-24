@@ -32,6 +32,13 @@ import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
+import RouterIcon from '@mui/icons-material/Router';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 
 type TConfigureStep = {
   totalStep: number;
@@ -476,6 +483,81 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   }));
 };
 
+const getConnectionStyles = (connectionStatus: string) => {
+  switch (connectionStatus) {
+    case 'Online':
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+    case 'Offline':
+      return {
+        color: colors.red,
+        icon: <RouterIcon sx={{ color: colors.red }} />,
+      };
+    case 'Warning':
+      return {
+        color: colors.orange,
+        icon: <RouterIcon sx={{ color: colors.orange }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getBatteryStyles = (batteryStatus: string) => {
+  switch (batteryStatus) {
+    case 'Charged':
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    case 'Low':
+      return {
+        color: colors.red,
+        icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getSignalStyles = (signalStrength: string) => {
+  switch (signalStrength) {
+    case 'Strong':
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
+      };
+    case 'Weak':
+      return {
+        color: colors.red,
+        icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -499,4 +581,7 @@ export {
   provideStatusColor,
   roleEnumToString,
   structureNodeSiteDate,
+  getConnectionStyles,
+  getBatteryStyles,
+  getSignalStyles,
 };

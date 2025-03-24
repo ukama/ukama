@@ -15,13 +15,13 @@ import {
   MenuItem,
   Typography,
   Skeleton,
-  Divider,
-  Button,
+  Stack,
 } from '@mui/material';
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
 import AddIcon from '@mui/icons-material/Add';
+import { duration } from '@/utils';
 
 interface SiteDetailsHeaderProps {
   addSite: () => void;
@@ -29,14 +29,15 @@ interface SiteDetailsHeaderProps {
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
   isLoading: boolean;
+  siteUpTime: number;
 }
 
 const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
-  addSite,
   siteList,
   selectedSiteId,
   onSiteChange,
   isLoading,
+  siteUpTime,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -79,46 +80,38 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
             </IconButton>
           </>
         )}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          {isLoading
-            ? [
-                <MenuItem key="loading-1">
-                  <Skeleton variant="rectangular" height={30} width={200} />
-                </MenuItem>,
-                <MenuItem key="loading-2">
-                  <Skeleton variant="rectangular" height={30} width={200} />
-                </MenuItem>,
-                <MenuItem key="loading-3">
-                  <Skeleton variant="rectangular" height={30} width={200} />
-                </MenuItem>,
-              ]
-            : [
-                ...siteList.map((site) => (
-                  <MenuItem
-                    key={site.id}
-                    onClick={() => handleSiteSelect(site.id)}
-                    selected={selectedSiteId === site.id}
-                  >
-                    {site.name}
-                  </MenuItem>
-                )),
-                <>
-                  <Divider />
-                  <MenuItem key="add-site" onClick={addSite}>
-                    <Button
-                      startIcon={<AddIcon />}
-                      sx={{ display: 'flex', alignItems: 'center' }}
+        <Stack direction="row" spacing={1}>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            {isLoading
+              ? [
+                  <MenuItem key="loading-1">
+                    <Skeleton variant="rectangular" height={30} width={200} />
+                  </MenuItem>,
+                  <MenuItem key="loading-2">
+                    <Skeleton variant="rectangular" height={30} width={200} />
+                  </MenuItem>,
+                  <MenuItem key="loading-3">
+                    <Skeleton variant="rectangular" height={30} width={200} />
+                  </MenuItem>,
+                ]
+              : [
+                  ...siteList.map((site) => (
+                    <MenuItem
+                      key={site.id}
+                      onClick={() => handleSiteSelect(site.id)}
+                      selected={selectedSiteId === site.id}
                     >
-                      Add site
-                    </Button>
-                  </MenuItem>
-                </>,
-              ]}
-        </Menu>
+                      {site.name}
+                    </MenuItem>
+                  )),
+                ]}
+          </Menu>
+        </Stack>
+        Site is up for <b>{duration(siteUpTime)}</b>
       </Box>
     </Grid>
   );

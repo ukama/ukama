@@ -6,8 +6,13 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import {
+  getBatteryStyles,
+  getConnectionStyles,
+  getSignalStyles,
+} from '@/utils';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+
 import {
   Box,
   Card,
@@ -17,7 +22,6 @@ import {
   MenuItem,
   Skeleton,
   Typography,
-  useMediaQuery,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -26,8 +30,10 @@ interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
-  siteStatus: boolean;
-  onClickMenu?: (siteId: string) => void;
+  userCount?: number;
+  connectionStatus?: string;
+  batteryStatus?: string;
+  signalStrength?: string;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
 }
@@ -36,14 +42,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  siteStatus,
-  onClickMenu,
+  connectionStatus = 'Online',
+  batteryStatus = 'Charged',
+  signalStrength = 'Strong',
   handleSiteNameUpdate,
   loading = false,
 }) => {
-  const isSmallScreen = useMediaQuery((theme: any) =>
-    theme.breakpoints.down('sm'),
-  );
   const router = useRouter();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -64,13 +68,9 @@ const SiteCard: React.FC<SiteCardProps> = ({
     router.push(`/console/sites/${siteId}`);
   };
 
-  const truncateAddress = (address: string, limit: number) => {
-    const segments = address.split(',');
-    return (
-      segments.slice(0, limit).join(', ') +
-      (segments.length > limit ? '...' : '')
-    );
-  };
+  const connectionStyles = getConnectionStyles(connectionStatus);
+  const batteryStyles = getBatteryStyles(batteryStatus);
+  const signalStyles = getSignalStyles(signalStrength);
 
   return (
     <Card
@@ -78,10 +78,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
         border: `1px solid ${colors.darkGradient}`,
         borderRadius: 2,
         marginBottom: 2,
-        '&:hover': {
-          border: `1px solid ${colors.primaryDark}`,
-          cursor: 'pointer',
-        },
+        backgroundColor: colors.lightGray,
       }}
       onClick={navigateToDetails}
     >
@@ -89,26 +86,28 @@ const SiteCard: React.FC<SiteCardProps> = ({
         <Box
           display="flex"
           justifyContent="space-between"
-          flexDirection={isSmallScreen ? 'column' : 'row'}
+          alignItems="flex-start"
         >
-          <Box mb={isSmallScreen ? 2 : 0}>
-            <Typography variant="h6">
-              {loading ? (
-                <Skeleton width={150} />
-              ) : (
-                <a
-                  href={`/console/sites/${siteId}`}
-                  style={{ textDecoration: 'none', color: 'inherit' }}
-                >
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </a>
-              )}
+          <Box>
+            <Typography
+              variant="h6"
+              sx={{
+                borderBottom: '1px solid',
+                display: 'inline-block',
+                mb: 1,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              {loading ? <Skeleton width={150} /> : name}
             </Typography>
-            <Typography color="textSecondary" variant="body2">
-              {loading ? <Skeleton width={200} /> : truncateAddress(address, 3)}
+
+            <Typography color="textSecondary" variant="body1">
+              {loading ? <Skeleton width={200} /> : address}
             </Typography>
           </Box>
-          <IconButton onClick={handleClick}>
+
+          <IconButton onClick={handleClick} sx={{ mt: -1 }}>
             <MoreVertIcon />
           </IconButton>
 
@@ -123,31 +122,37 @@ const SiteCard: React.FC<SiteCardProps> = ({
             </MenuItem>
           </Menu>
         </Box>
+
         <Box
           display="flex"
           justifyContent="flex-start"
           alignItems="center"
-          mt={2}
+          mt={3}
+          gap={4}
         >
-          <Box display="flex" alignItems="center">
-            <CheckCircleIcon
-              fontSize="large"
-              sx={{
-                color: loading ? 'gray' : siteStatus ? 'green' : 'red',
-                fontSize: 30,
-              }}
-            />
-            {!isSmallScreen && (
-              <Typography variant="body2" ml={0.5}>
-                {loading ? (
-                  <Skeleton width={100} />
-                ) : siteStatus ? (
-                  'Site is set up'
-                ) : (
-                  'Site is deactivated'
-                )}
-              </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            {loading ? (
+              <Skeleton width={24} height={24} />
+            ) : (
+              connectionStyles.icon
             )}
+            <Typography variant="body2" sx={{ color: connectionStyles.color }}>
+              {loading ? <Skeleton width={60} /> : connectionStatus}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            {loading ? <Skeleton width={24} height={24} /> : batteryStyles.icon}
+            <Typography variant="body2" sx={{ color: batteryStyles.color }}>
+              {loading ? <Skeleton width={70} /> : batteryStatus}
+            </Typography>
+          </Box>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            {loading ? <Skeleton width={24} height={24} /> : signalStyles.icon}
+            <Typography variant="body2" sx={{ color: signalStyles.color }}>
+              {loading ? <Skeleton width={60} /> : signalStrength}
+            </Typography>
           </Box>
         </Box>
       </CardContent>
