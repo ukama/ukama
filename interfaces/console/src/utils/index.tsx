@@ -458,7 +458,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
   }
-  if (values.length < 3 || values.length > 6) {
+  if (values.length < 3 || values.length > 7) {
     throw new Error('invalid length');
   }
 
@@ -467,9 +467,11 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 1 || index === arr.length - 2
+        : index === arr.length - 2
           ? colors.dullRed
-          : colors.dullGreen,
+          : index === arr.length - 1
+            ? colors.white
+            : colors.dullGreen,
     width: 2,
     zIndex: 4,
     dashStyle: 'Dash',

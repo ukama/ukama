@@ -143,6 +143,7 @@ const LineChart = ({
         },
       },
       yAxis: {
+        endOnTick: true,
         max: tickPositions
           ? tickPositions[tickPositions.length - 1]
           : undefined,
