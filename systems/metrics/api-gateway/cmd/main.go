@@ -23,6 +23,7 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 	ic "github.com/ukama/ukama/systems/common/initclient"
 	cdp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
@@ -63,14 +64,20 @@ func main() {
 		log.Errorf("Failed to resolve subscriber address: %v", err)
 	}
 
+	paymentUrl, err := ic.GetHostUrl(ic.CreateHostString(svcConf.OrgName, "payments"), svcConf.Http.InitClient, &svcConf.OrgName, svcConf.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve payment address: %v", err)
+	}
+
 	nodeClient := creg.NewNodeClient(regUrl.String())
 	networkClient := creg.NewNetworkClient(regUrl.String())
 	siteClient := creg.NewSiteClient(regUrl.String())
 	subClient := csub.NewSubscriberClient(subUrl.String())
 	simClient := csub.NewSimClient(subUrl.String())
 	packageClient := cdp.NewPackageClient(dataplanUrl.String())
+	paymentClient := cpay.NewPaymentClient(paymentUrl.String())
 
-	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), m, ac.AuthenticateUser, networkClient, siteClient, nodeClient, subClient, simClient, packageClient)
+	r := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), m, ac.AuthenticateUser, networkClient, siteClient, nodeClient, subClient, simClient, packageClient, paymentClient)
 	r.Run()
 }
 

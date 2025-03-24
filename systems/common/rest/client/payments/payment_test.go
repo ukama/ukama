@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package notification_test
+package payments_test
 
 import (
 	"encoding/json"
@@ -50,7 +50,7 @@ func TestListReq(t *testing.T) {
 
 	pc := p.NewPaymentClient(ts.URL)
 
-	req := p.ListReq{
+	req := p.PaymentListReq{
 		ItemId:        "item1",
 		ItemType:      "type1",
 		PaymentMethod: "card",
@@ -59,7 +59,7 @@ func TestListReq(t *testing.T) {
 		Sort:          true,
 	}
 
-	res, err := pc.ListReq(req)
+	res, err := pc.List(req)
 	assert.NoError(t, err, "ListReq should not return an error")
 	assert.NotNil(t, res, "Response should not be nil")
 	assert.Equal(t, 1, len(res.Payments), "Expected one payment in the response")

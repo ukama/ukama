@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ukama/ukama/systems/common/rest"
 	cdp "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
@@ -48,6 +50,7 @@ type Router struct {
 	subClient     csub.SubscriberClient
 	simClient     csub.SimClient
 	packageClient cdp.PackageClient
+	paymentClient cpay.PaymentClient
 }
 
 type RouterConfig struct {
@@ -99,7 +102,8 @@ func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc 
 	nodeClient creg.NodeClient,
 	subClient csub.SubscriberClient,
 	simClient csub.SimClient,
-	packageClient cdp.PackageClient) *Router {
+	packageClient cdp.PackageClient,
+	paymentClient cpay.PaymentClient) *Router {
 
 	r := &Router{
 		clients:       clients,
@@ -111,6 +115,7 @@ func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc 
 		simClient:     simClient,
 		packageClient: packageClient,
 		networkClient: networkClient,
+		paymentClient: paymentClient,
 	}
 
 	if !config.debugMode {
@@ -462,6 +467,32 @@ func (r *Router) localMetricHandler(metric, networkId string, w io.Writer) error
 		}
 		resp.Value = totalDataVolume
 
+	case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
+		payments, err := r.paymentClient.List(cpay.PaymentListReq{
+			Status: cukama.StatusTypeCompleted.String(),
+		})
+		if err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  err.Error(),
+			}
+		}
+
+		var totalSales uint64
+		for _, payment := range payments.Payments {
+			amount, err := strconv.ParseUint(payment.Amount, 10, 64)
+			if err != nil {
+				return rest.HttpError{
+					HttpCode: http.StatusInternalServerError,
+					Message:  err.Error(),
+				}
+			}
+			totalSales += amount
+		}
+		resp.Value = totalSales
+
+		logrus.Infof("Network sales data for %s: %+v", networkId, resp)
+
 	default:
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -507,8 +538,3 @@ func parseDataVolume(dataVolume uint64, unit string) uint64 {
 		return dataVolume
 	}
 }
-
-// case r.config.metricsConf.LocalMetrics["network_sales"].Metric:
-// 	logrus.Infof("Requesting network sales data for network %s", networkId)
-// case r.config.metricsConf.LocalMetrics["network_data_volume"].Metric:
-// 	logrus.Infof("Requesting network data volume for network %s", networkId)

@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package notification
+package payments
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 
 const PaymentEndpoint = "/v1/payments"
 
-type ListReq struct {
+type PaymentListReq struct {
 	PaymentMethod string `json:"payment_method,omitempty"`
 	ItemType      string `json:"item_type,omitempty"`
 	Status        string `json:"status,omitempty"`
@@ -59,7 +59,7 @@ type Payment struct {
 }
 
 type PaymentClient interface {
-	List(req ListReq) (PaymentsRes, error)
+	List(req PaymentListReq) (PaymentsRes, error)
 }
 
 type paymentClient struct {
@@ -80,7 +80,7 @@ func NewPaymentClient(h string, options ...client.Option) *paymentClient {
 	}
 }
 
-func (p *paymentClient) ListReq(req ListReq) (PaymentsRes, error) {
+func (p *paymentClient) List(req PaymentListReq) (PaymentsRes, error) {
 	log.Debugf("Listing payments: %v", req)
 
 	paymentRes := PaymentsRes{}
