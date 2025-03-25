@@ -14,6 +14,29 @@ import (
 
 const PORT = 8085
 
+type Ranges struct {
+	Min    float64 `json:"min"`
+	Normal float64 `json:"normal"`
+	Max    float64 `json:"max"`
+}
+
+type Config struct {
+	UnitUptime         Ranges `json:"{min:0,normal:2678400,max:2678400}"`
+	UnitHealth         Ranges `json:"{min:10,normal:80,max:100}"`
+	TrxLteCoreActiveUE Ranges `json:"{min:80,normal:95,max:100}"`
+	NodeLoad           Ranges `json:"{min:10,normal:80,max:100}"`
+	CellularUplink     Ranges `json:"{min:2,normal:5,max:30}"`
+	CellularDownlink   Ranges `json:"{min:8,normal:60,max:160}"`
+	BackhaulUplink     Ranges `json:"{min:1,normal:10,max:200}"`
+	BackhaulDownlink   Ranges `json:"{min:1,normal:10,max:200}"`
+	BackhaulLatency    Ranges `json:"{min:10,normal:800,max:1000}"`
+	HwdLoad            Ranges `json:"{min:10,normal:80,max:100}"`
+	MemoryUsage        Ranges `json:"{min:10,normal:80,max:100}"`
+	CpuUsage           Ranges `json:"{min:10,normal:80,max:100}"`
+	DiskUsage          Ranges `json:"{min:10,normal:80,max:100}"`
+	TxPower            Ranges `json:"{min:25,normal:31,max:34}"`
+}
+
 type WMessage struct {
 	Kpis     NodeKPIs         `json:"kpis"`
 	NodeId   string           `json:"nodeId"`
@@ -22,6 +45,7 @@ type WMessage struct {
 }
 
 type NodeKPI struct {
+	Id     string
 	Key    string
 	Min    float64
 	Normal float64
@@ -36,9 +60,8 @@ type NodeKPIs struct {
 var KPI_CONFIG = NodeKPIs{
 	KPIs: []NodeKPI{
 		{
+			Id:  "UnitUptime",
 			Key: "unit_uptime",
-			Min: 0,
-			Max: 2678400,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "unit_uptime",
@@ -48,10 +71,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "unit_health",
-			Min:    50,
-			Normal: 80,
-			Max:    100,
+			Id:  "UnitHealth",
+			Key: "unit_health",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "unit_health",
@@ -61,10 +82,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "trx_lte_core_active_ue",
-			Min:    80,
-			Normal: 95,
-			Max:    100,
+			Id:  "TrxLteCoreActiveUE",
+			Key: "trx_lte_core_active_ue",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "trx_lte_core_active_ue",
@@ -74,10 +93,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "node_load",
-			Min:    50,
-			Normal: 75,
-			Max:    90,
+			Id:  "NodeLoad",
+			Key: "node_load",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "node_load",
@@ -87,10 +104,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "cellular_uplink",
-			Min:    2048,
-			Normal: 4096,
-			Max:    8192,
+			Id:  "CellularUplink",
+			Key: "cellular_uplink",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_uplink",
@@ -100,10 +115,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "cellular_downlink",
-			Min:    20480,
-			Normal: 40960,
-			Max:    81920,
+			Id:  "CellularDownlink",
+			Key: "cellular_downlink",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_downlink",
@@ -113,10 +126,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "backhaul_uplink",
-			Min:    2048,
-			Normal: 8192,
-			Max:    10240,
+			Id:  "BackhaulUplink",
+			Key: "backhaul_uplink",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_uplink",
@@ -126,10 +137,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "backhaul_downlink",
-			Min:    20480,
-			Normal: 81920,
-			Max:    102400,
+			Id:  "BackhaulDownlink",
+			Key: "backhaul_downlink",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_downlink",
@@ -139,10 +148,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "backhaul_latency",
-			Min:    100,
-			Normal: 150,
-			Max:    200,
+			Id:  "BackhaulLatency",
+			Key: "backhaul_latency",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_latency",
@@ -152,10 +159,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "hwd_load",
-			Min:    50,
-			Normal: 70,
-			Max:    80,
+			Id:  "HwdLoad",
+			Key: "hwd_load",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "hwd_load",
@@ -165,10 +170,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "memory_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Id:  "MemoryUsage",
+			Key: "memory_usage",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "memory_usage",
@@ -178,10 +181,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "cpu_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Id:  "CpuUsage",
+			Key: "cpu_usage",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cpu_usage",
@@ -191,10 +192,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "disk_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Id:  "DiskUsage",
+			Key: "disk_usage",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "disk_usage",
@@ -204,10 +203,8 @@ var KPI_CONFIG = NodeKPIs{
 			),
 		},
 		{
-			Key:    "txpower",
-			Min:    30,
-			Normal: 60,
-			Max:    95,
+			Id:  "TxPower",
+			Key: "txpower",
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "txpower",
