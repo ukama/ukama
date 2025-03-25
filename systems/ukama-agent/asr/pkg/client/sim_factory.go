@@ -12,8 +12,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Factory interface {
@@ -31,7 +32,7 @@ type ErrorMessage struct {
 func NewFactoryClient(url string, debug bool) (*factory, error) {
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
-		logrus.Errorf("Can't conncet to %s url.Error %s", url, err.Error())
+		log.Errorf("Can't conncet to %s url.Error %s", url, err.Error())
 		return nil, err
 	}
 
@@ -43,8 +44,7 @@ func NewFactoryClient(url string, debug bool) (*factory, error) {
 }
 
 func (f *factory) ReadSimCardInfo(Iccid string) (*SimCardInfo, error) {
-
-	card := SimCardInfo{}
+	card := Sim{}
 	errStatus := &ErrorMessage{}
 
 	resp, err := f.R.C.R().
@@ -52,20 +52,22 @@ func (f *factory) ReadSimCardInfo(Iccid string) (*SimCardInfo, error) {
 		Get(f.R.URL.String() + "/v1/factory/simcards/" + Iccid)
 
 	if err != nil {
-		logrus.Errorf("Failed to send api request to Factory. Error %s", err.Error())
+		log.Errorf("Failed to send api request to Factory. Error %s", err.Error())
 		return nil, err
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to fetch sim card info.HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
+		log.Tracef("Failed to fetch sim card info.HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
 		return nil, fmt.Errorf("simcard request failure: %s", errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), &card)
 	if err != nil {
-		logrus.Tracef("Failed to desrialize sim card info. Error message is %s", err.Error())
+		log.Tracef("Failed to desrialize sim card info. Error message is %s", err.Error())
 		return nil, fmt.Errorf("simcard info deserailization failure: %s", err)
 	}
 
-	return &card, nil
+	log.Infof("Sim card info: %+v", card.SimCardInfo)
+
+	return card.SimCardInfo, nil
 }
