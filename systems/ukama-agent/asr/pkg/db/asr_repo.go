@@ -12,11 +12,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const TaiNotUpdatedErr = "more recent tai for imsi exist"
@@ -31,7 +33,7 @@ type AsrRecordRepo interface {
 	Update(imsi string, record *Asr) error
 	UpdatePackage(imsi string, packageId uuid.UUID, policy *Policy) error
 	DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
-	Delete(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
+	Delete(imsi string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
 }
 

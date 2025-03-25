@@ -34,13 +34,14 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // ASR aka Active Subscriber Registry
-// ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
-// Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+// ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
+// Subscriber is added to ASr as soon as it is activated and removed from ASR as soon as its deactivated.
 //
-// ASR has REST ineterfaces to the servics like
+// ASR has REST interfaces to services like
 // -  Factory, for reading sim data
 // -  PCRF, for setting policies for subscriber
 // -  Organization registry for validating network.enum
+// -  Organization dataplan for getting packages inforamtion
 //
 // For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 //
@@ -163,13 +164,14 @@ func (c *asrRecordServiceClient) GetUsageForPeriod(ctx context.Context, in *Usag
 // for forward compatibility.
 //
 // ASR aka Active Subscriber Registry
-// ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
-// Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+// ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
+// Subscriber is added to ASr as soon as it is activated and removed from ASR as soon as its deactivated.
 //
-// ASR has REST ineterfaces to the servics like
+// ASR has REST interfaces to services like
 // -  Factory, for reading sim data
 // -  PCRF, for setting policies for subscriber
 // -  Organization registry for validating network.enum
+// -  Organization dataplan for getting packages inforamtion
 //
 // For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 //
