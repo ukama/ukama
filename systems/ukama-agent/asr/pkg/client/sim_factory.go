@@ -29,7 +29,6 @@ type ErrorMessage struct {
 }
 
 func NewFactoryClient(url string, debug bool) (*factory, error) {
-
 	f, err := rest.NewRestClient(url, debug)
 	if err != nil {
 		logrus.Errorf("Can't conncet to %s url.Error %s", url, err.Error())
