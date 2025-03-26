@@ -49,7 +49,7 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "unit_health",
-			Min:    50,
+			Min:    10,
 			Normal: 80,
 			Max:    100,
 			KPI: prometheus.NewGaugeVec(
@@ -75,9 +75,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "node_load",
-			Min:    50,
-			Normal: 75,
-			Max:    90,
+			Min:    10,
+			Normal: 80,
+			Max:    100,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "node_load",
@@ -88,9 +88,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_uplink",
-			Min:    2048,
-			Normal: 4096,
-			Max:    8192,
+			Min:    2,
+			Normal: 5,
+			Max:    30,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_uplink",
@@ -101,9 +101,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cellular_downlink",
-			Min:    20480,
-			Normal: 40960,
-			Max:    81920,
+			Min:    8,
+			Normal: 60,
+			Max:    160,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cellular_downlink",
@@ -114,9 +114,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_uplink",
-			Min:    2048,
-			Normal: 8192,
-			Max:    10240,
+			Min:    1,
+			Normal: 10,
+			Max:    200,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_uplink",
@@ -127,9 +127,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_downlink",
-			Min:    20480,
-			Normal: 81920,
-			Max:    102400,
+			Min:    2,
+			Normal: 10,
+			Max:    200,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_downlink",
@@ -140,9 +140,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "backhaul_latency",
-			Min:    100,
-			Normal: 150,
-			Max:    200,
+			Min:    10,
+			Normal: 800,
+			Max:    1000,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "backhaul_latency",
@@ -153,9 +153,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "hwd_load",
-			Min:    50,
-			Normal: 70,
-			Max:    80,
+			Min:    10,
+			Normal: 80,
+			Max:    100,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "hwd_load",
@@ -166,9 +166,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "memory_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Min:    10,
+			Normal: 80,
+			Max:    100,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "memory_usage",
@@ -179,9 +179,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "cpu_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Min:    10,
+			Normal: 80,
+			Max:    100,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "cpu_usage",
@@ -192,9 +192,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "disk_usage",
-			Min:    40,
-			Normal: 70,
-			Max:    80,
+			Min:    10,
+			Normal: 80,
+			Max:    100,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "disk_usage",
@@ -205,9 +205,9 @@ var KPI_CONFIG = NodeKPIs{
 		},
 		{
 			Key:    "txpower",
-			Min:    30,
-			Normal: 60,
-			Max:    95,
+			Min:    25,
+			Normal: 31,
+			Max:    34,
 			KPI: prometheus.NewGaugeVec(
 				prometheus.GaugeOpts{
 					Name: "txpower",

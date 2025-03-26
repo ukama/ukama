@@ -5,15 +5,15 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
-import { Box, Card, Grid, Stack, Paper, Skeleton } from '@mui/material';
-import LineChart from '../LineChart';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
-import { getMetricValue, isMetricValue } from '@/utils';
 import LoadingWrapper from '@/components/LoadingWrapper';
-import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import NodeStatusDisplay from '@/components/NodeStatusDisplay';
 import { SectionData } from '@/constants';
+import { getMetricValue, isMetricValue } from '@/utils';
+import { Box, Card, Grid, Paper, Skeleton, Stack } from '@mui/material';
+import React from 'react';
+import SiteFlowDiagram from '../../../public/svg/sitecomps';
+import LineChart from '../LineChart';
 
 interface SiteComponentsProps {
   siteId: string;
@@ -119,6 +119,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                   <Stack spacing={4}>
                     {sections[activeSection]?.map((config, i) => (
                       <LineChart
+                        format="number"
                         from={metricFrom}
                         topic={config.id}
                         title={config.name}
