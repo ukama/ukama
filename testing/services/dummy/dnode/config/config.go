@@ -52,19 +52,18 @@ type Ranges struct {
 }
 
 type KPIRanges struct {
-	UnitUptime         Ranges `json:"{min:0,normal:2678400,max:2678400}"`
-	UnitHealth         Ranges `json:"{min:10,normal:80,max:100}"`
-	TrxLteCoreActiveUE Ranges `json:"{min:80,normal:95,max:100}"`
-	NodeLoad           Ranges `json:"{min:10,normal:80,max:100}"`
-	CellularUplink     Ranges `json:"{min:2,normal:5,max:30}"`
-	CellularDownlink   Ranges `json:"{min:8,normal:60,max:160}"`
-	BackhaulUplink     Ranges `json:"{min:1,normal:10,max:200}"`
-	BackhaulDownlink   Ranges `json:"{min:1,normal:10,max:200}"`
-	BackhaulLatency    Ranges `json:"{min:10,normal:800,max:1000}"`
-	HwdLoad            Ranges `json:"{min:10,normal:80,max:100}"`
-	MemoryUsage        Ranges `json:"{min:10,normal:80,max:100}"`
-	CpuUsage           Ranges `json:"{min:10,normal:80,max:100}"`
-	DiskUsage          Ranges `json:"{min:10,normal:80,max:100}"`
+	UnitUptime         Ranges
+	UnitHealth         Ranges
+	TrxLteCoreActiveUE Ranges
+	NodeLoad           Ranges
+	CellularUplink     Ranges
+	BackhaulUplink     Ranges
+	BackhaulDownlink   Ranges
+	BackhaulLatency    Ranges
+	HwdLoad            Ranges
+	MemoryUsage        Ranges
+	CpuUsage           Ranges
+	DiskUsage          Ranges
 	TxPower            Ranges
 }
 
