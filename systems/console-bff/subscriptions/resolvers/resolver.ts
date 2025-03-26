@@ -25,6 +25,7 @@ import { pubSub } from "./pubsub";
 import {
   GetMetricBySiteInput,
   GetMetricByTabInput,
+  GetMetricsSiteStatInput,
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
@@ -166,7 +167,7 @@ class SubscriptionsResolvers {
 
   @Query(() => MetricsStateRes)
   async getSiteStat(
-    @Arg("data") data: GetMetricsStatInput
+    @Arg("data") data: GetMetricsSiteStatInput
   ): Promise<MetricsStateRes> {
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(

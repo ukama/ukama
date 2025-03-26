@@ -32,6 +32,12 @@ class NodeAPI extends RESTDataSource {
       parseNodeRes(res.node)
     );
   }
+  async getNodesForSite(baseURL: string, siteId: string): Promise<Nodes> {
+    this.baseURL = baseURL;
+    return this.get(`/${VERSION}/${NODES}/sites/${siteId}`).then(res =>
+      parseNodesRes(res)
+    );
+  }
   async getNodes(baseURL: string): Promise<Nodes> {
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${NODES}`).then(res => parseNodesRes(res));

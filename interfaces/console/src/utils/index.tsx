@@ -26,19 +26,19 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import colors from '@/theme/colors';
-import { TNodeSiteTree } from '@/types';
-import Battery50Icon from '@mui/icons-material/Battery50';
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import RouterIcon from '@mui/icons-material/Router';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
+import RouterIcon from '@mui/icons-material/Router';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
+import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
 
 type TConfigureStep = {
   totalStep: number;
@@ -341,6 +341,17 @@ function isValidLongitude(longitude: number) {
   return true;
 }
 
+export const formatKPIValue = (value: string, type: string): any => {
+  switch (type) {
+    case 'number':
+      return Math.floor(parseFloat(value));
+    case 'decimal':
+      return parseFloat(value).toFixed(2);
+    default:
+      return value.toString();
+  }
+};
+
 const isValidLatLng = (position: LatLngTuple): boolean => {
   const [latitude, longitude] = position || [0, 0];
   return (
@@ -467,7 +478,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
   }
-  if (values.length < 3 || values.length > 7) {
+  if (values.length < 3 || values.length > 6) {
     throw new Error('invalid length');
   }
 
@@ -476,101 +487,75 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 2
+        : index === arr.length - 1 || index === arr.length - 2
           ? colors.dullRed
-          : index === arr.length - 1
-            ? colors.white
-            : colors.dullGreen,
+          : colors.dullGreen,
     width: 2,
     zIndex: 4,
     dashStyle: 'Dash',
   }));
 };
-
-export const formatKPIValue = (value: string, type: string): any => {
-  switch (type) {
-    case 'number':
-      return Math.floor(parseFloat(value));
-    case 'decimal':
-      return parseFloat(value).toFixed(2);
-    default:
-      return value.toString();
-  }
+const getPortInfo: Record<string, { number: number; desc: string }> = {
+  solar: { number: 3, desc: 'solar Controller' },
+  backhaul: { number: 4, desc: 'backhaul' },
+  node: { number: 1, desc: 'node' },
 };
-
-const getConnectionStyles = (connectionStatus: string) => {
-  switch (connectionStatus) {
-    case 'Online':
-      return {
-        color: colors.green,
-        icon: <RouterIcon sx={{ color: colors.green }} />,
-      };
-    case 'Offline':
-      return {
-        color: colors.red,
-        icon: <RouterIcon sx={{ color: colors.red }} />,
-      };
-    case 'Warning':
-      return {
-        color: colors.orange,
-        icon: <RouterIcon sx={{ color: colors.orange }} />,
-      };
-    default:
-      return {
-        color: colors.green,
-        icon: <RouterIcon sx={{ color: colors.green }} />,
-      };
+const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
+  if (type === 'uptime') {
+    return value <= 0
+      ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }
+      : {
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
   }
-};
 
-const getBatteryStyles = (batteryStatus: string) => {
-  switch (batteryStatus) {
-    case 'Charged':
-      return {
-        color: colors.green,
-        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
-      };
-    case 'Medium':
-      return {
-        color: colors.orange,
-        icon: <Battery50Icon sx={{ color: colors.orange }} />,
-      };
-    case 'Low':
+  if (type === 'battery') {
+    if (value < 20) {
       return {
         color: colors.red,
         icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
       };
-    default:
+    } else if (value < 50) {
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    } else {
       return {
         color: colors.green,
         icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
       };
+    }
   }
-};
 
-const getSignalStyles = (signalStrength: string) => {
-  switch (signalStrength) {
-    case 'Strong':
-      return {
-        color: colors.green,
-        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
-      };
-    case 'Medium':
-      return {
-        color: colors.orange,
-        icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
-      };
-    case 'Weak':
+  if (type === 'signal') {
+    if (value < 30) {
       return {
         color: colors.red,
-        icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
+        icon: <SignalCellularOffIcon sx={{ color: colors.red }} />,
       };
-    default:
+    } else if (value < 70) {
+      return {
+        color: colors.orange,
+        icon: (
+          <SignalCellularConnectedNoInternet4BarIcon
+            sx={{ color: colors.orange }}
+          />
+        ),
+      };
+    } else {
       return {
         color: colors.green,
         icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
       };
+    }
   }
+
+  return {
+    color: colors.green,
+    icon: <RouterIcon sx={{ color: colors.green }} />,
+  };
 };
 
 const setQueryParam = (
@@ -593,14 +578,12 @@ export {
   formatBytes,
   formatBytesToMB,
   formatTime,
-  getBatteryStyles,
-  getConnectionStyles,
   getDataPlanUsage,
   getDuration,
+  getPortInfo,
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
-  getSignalStyles,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,
@@ -612,4 +595,5 @@ export {
   roleEnumToString,
   setQueryParam,
   structureNodeSiteDate,
+  getStatusStyles,
 };

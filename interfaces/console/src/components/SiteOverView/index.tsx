@@ -1,34 +1,65 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography, Tooltip } from '@mui/material';
 import colors from '@/theme/colors';
 
+interface NodeUptime {
+  id: string;
+  uptimeSeconds: number;
+}
+
 interface SiteOverviewProps {
-  uptimeSeconds?: number;
+  siteUptimeSeconds?: number;
+  nodeUptimes?: NodeUptime[];
   daysRange?: number;
   loading?: boolean;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
-  uptimeSeconds = 0,
+  siteUptimeSeconds = 0,
+  nodeUptimes = [],
   daysRange = 90,
   loading = false,
 }) => {
-  const calculateUptimePercentage = (
-    uptimeSeconds: number,
-    days: number,
-  ): number => {
-    const totalSeconds = days * 24 * 60 * 60;
-    const percentage = (uptimeSeconds / totalSeconds) * 100;
-    return Math.min(Math.max(0, percentage), 100);
-  };
+  const totalPossibleSeconds = daysRange * 24 * 60 * 60;
 
-  const actualUptimePercentage = calculateUptimePercentage(
-    uptimeSeconds,
-    daysRange,
-  );
+  const siteUptimePercentage = (siteUptimeSeconds / totalPossibleSeconds) * 100;
 
-  const recentPeriodBars = Array(30).fill(actualUptimePercentage);
-  const pastPeriodBars = Array(30).fill(actualUptimePercentage);
+  let averageNodeUptimePercentage = 0;
+  if (nodeUptimes.length > 0) {
+    const totalNodeUptimeSeconds = nodeUptimes.reduce(
+      (sum, node) => sum + node.uptimeSeconds,
+      0,
+    );
+
+    const averageNodeUptimeSeconds =
+      totalNodeUptimeSeconds / nodeUptimes.length;
+
+    averageNodeUptimePercentage =
+      (averageNodeUptimeSeconds / totalPossibleSeconds) * 100;
+  }
+
+  let overallUptimePercentage = siteUptimePercentage;
+  if (nodeUptimes.length > 0) {
+    overallUptimePercentage =
+      (siteUptimePercentage + averageNodeUptimePercentage) / 2;
+  }
+
+  overallUptimePercentage = Math.min(Math.max(0, overallUptimePercentage), 100);
+
+  const nodePercentages = nodeUptimes.map((node) => ({
+    id: node.id,
+    percentage: (node.uptimeSeconds / totalPossibleSeconds) * 100,
+  }));
+
+  const recentPeriodBars = Array(30).fill(overallUptimePercentage);
+  const pastPeriodBars = Array(30).fill(overallUptimePercentage);
 
   const renderBar = (value: number, index: number) => {
     const heightPercentage = value;
@@ -60,6 +91,21 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
     );
   };
 
+  const createTooltipText = () => {
+    let text = `Site Uptime: ${siteUptimePercentage.toFixed(1)}%`;
+
+    if (nodeUptimes.length > 0) {
+      text += `\nAverage Node Uptime: ${averageNodeUptimePercentage.toFixed(1)}%`;
+      text += '\n';
+
+      nodePercentages.forEach((node) => {
+        text += `\nNode ${node.id}: ${node.percentage.toFixed(1)}%`;
+      });
+    }
+
+    return text;
+  };
+
   if (loading) {
     return (
       <Card
@@ -87,15 +133,28 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
           Site overview
         </Typography>
 
-        <Typography
-          variant="body2"
-          sx={{
-            mt: 2,
-            mb: 4,
+        <Tooltip
+          title={createTooltipText()}
+          placement="top"
+          componentsProps={{
+            tooltip: {
+              sx: {
+                whiteSpace: 'pre-line',
+                maxWidth: 'none',
+              },
+            },
           }}
         >
-          {actualUptimePercentage.toFixed(0)}% uptime over {daysRange} days
-        </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 2,
+              mb: 4,
+            }}
+          >
+            {overallUptimePercentage.toFixed(1)}% uptime over {daysRange} days
+          </Typography>
+        </Tooltip>
 
         <Box sx={{ position: 'relative', mb: 3 }}>
           <Box

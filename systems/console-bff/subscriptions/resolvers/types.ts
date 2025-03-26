@@ -134,6 +134,30 @@ export class GetMetricsStatInput {
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
 
+  @Field()
+  from: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ defaultValue: 30 })
+  step: number;
+
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
+}
+
+@InputType()
+export class GetMetricsSiteStatInput {
+  @Field()
+  orgName: string;
+
+  @Field({ nullable: true })
+  userId?: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
   @Field({ nullable: true })
   siteId?: string;
 

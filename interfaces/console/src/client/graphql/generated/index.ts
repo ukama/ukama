@@ -1004,6 +1004,7 @@ export type Query = {
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
   getNodesByState: Nodes;
+  getNodesForsite: Nodes;
   getNodesLocation: Nodes;
   getNotification: NotificationResDto;
   getNotifications: NotificationsResDto;
@@ -1122,6 +1123,11 @@ export type QueryGetNodesByNetworkArgs = {
 
 export type QueryGetNodesByStateArgs = {
   data: GetNodesByStateInput;
+};
+
+
+export type QueryGetNodesForsiteArgs = {
+  siteId: Scalars['String']['input'];
 };
 
 
@@ -1722,6 +1728,13 @@ export type UpdateNodeStateMutationVariables = Exact<{
 
 
 export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+
+export type GetNodesForsiteQueryVariables = Exact<{
+  siteId: Scalars['String']['input'];
+}>;
+
+
+export type GetNodesForsiteQuery = { __typename?: 'Query', getNodesForsite: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
@@ -2981,6 +2994,48 @@ export function useUpdateNodeStateMutation(baseOptions?: Apollo.MutationHookOpti
 export type UpdateNodeStateMutationHookResult = ReturnType<typeof useUpdateNodeStateMutation>;
 export type UpdateNodeStateMutationResult = Apollo.MutationResult<UpdateNodeStateMutation>;
 export type UpdateNodeStateMutationOptions = Apollo.BaseMutationOptions<UpdateNodeStateMutation, UpdateNodeStateMutationVariables>;
+export const GetNodesForsiteDocument = gql`
+    query getNodesForsite($siteId: String!) {
+  getNodesForsite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodesForsiteQuery__
+ *
+ * To run a query within a React component, call `useGetNodesForsiteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesForsiteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesForsiteQuery({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *   },
+ * });
+ */
+export function useGetNodesForsiteQuery(baseOptions: Apollo.QueryHookOptions<GetNodesForsiteQuery, GetNodesForsiteQueryVariables> & ({ variables: GetNodesForsiteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>(GetNodesForsiteDocument, options);
+      }
+export function useGetNodesForsiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>(GetNodesForsiteDocument, options);
+        }
+export function useGetNodesForsiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>(GetNodesForsiteDocument, options);
+        }
+export type GetNodesForsiteQueryHookResult = ReturnType<typeof useGetNodesForsiteQuery>;
+export type GetNodesForsiteLazyQueryHookResult = ReturnType<typeof useGetNodesForsiteLazyQuery>;
+export type GetNodesForsiteSuspenseQueryHookResult = ReturnType<typeof useGetNodesForsiteSuspenseQuery>;
+export type GetNodesForsiteQueryResult = Apollo.QueryResult<GetNodesForsiteQuery, GetNodesForsiteQueryVariables>;
 export const UpdateNodeDocument = gql`
     mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
