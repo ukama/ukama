@@ -157,7 +157,9 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	}
 
 	st := uint64(time.Now().Unix())
-	et := uint64(st) + pack.Duration
+
+	// st is in seconds and pack.Duration is in days
+	et := uint64(st) + (pack.Duration * 24 * 3600)
 
 	policy := db.Policy{
 		Id:           uuid.NewV4(),
