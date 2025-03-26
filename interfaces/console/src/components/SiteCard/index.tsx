@@ -6,13 +6,9 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import colors from '@/theme/colors';
-import {
-  getBatteryStyles,
-  getConnectionStyles,
-  getSignalStyles,
-} from '@/utils';
+import { getStatusStyles } from '@/utils';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-
+import PeopleIcon from '@mui/icons-material/People';
 import {
   Box,
   Card,
@@ -31,9 +27,9 @@ interface SiteCardProps {
   name: string;
   address: string;
   userCount?: number;
-  connectionStatus?: string;
-  batteryStatus?: string;
-  signalStrength?: string;
+  siteUptimeSeconds?: number | null;
+  batteryPercentage?: number | null;
+  backhaulSpeed?: number | null;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
 }
@@ -42,35 +38,37 @@ const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
   name,
   address,
-  connectionStatus = 'Online',
-  batteryStatus = 'Charged',
-  signalStrength = 'Strong',
+  userCount = 0,
+  siteUptimeSeconds,
+  batteryPercentage,
+  backhaulSpeed,
   handleSiteNameUpdate,
   loading = false,
 }) => {
   const router = useRouter();
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClick = (action: string) => {
-    if (handleSiteNameUpdate) {
-      handleSiteNameUpdate(siteId, name);
-    }
   };
 
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleMenuClick = () => {
+    handleSiteNameUpdate(siteId, name);
+    handleClose();
+  };
+
   const navigateToDetails = () => {
     router.push(`/console/sites/${siteId}`);
   };
 
-  const connectionStyles = getConnectionStyles(connectionStatus);
-  const batteryStyles = getBatteryStyles(batteryStatus);
-  const signalStyles = getSignalStyles(signalStrength);
+  const connectionStyles = getStatusStyles('uptime', siteUptimeSeconds ?? 0);
+  const batteryStyles = getStatusStyles('battery', batteryPercentage ?? 0);
+  const signalStyles = getStatusStyles('signal', backhaulSpeed ?? 0);
 
   return (
     <Card
@@ -79,15 +77,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
         borderRadius: 2,
         marginBottom: 2,
         backgroundColor: colors.lightGray,
+        cursor: 'pointer',
       }}
       onClick={navigateToDetails}
     >
       <CardContent>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="flex-start"
-        >
+        <Box display="flex" justifyContent="space-between">
           <Box>
             <Typography
               variant="h6"
@@ -96,12 +91,10 @@ const SiteCard: React.FC<SiteCardProps> = ({
                 display: 'inline-block',
                 mb: 1,
                 fontWeight: 'bold',
-                cursor: 'pointer',
               }}
             >
               {loading ? <Skeleton width={150} /> : name}
             </Typography>
-
             <Typography color="textSecondary" variant="body1">
               {loading ? <Skeleton width={200} /> : address}
             </Typography>
@@ -117,19 +110,22 @@ const SiteCard: React.FC<SiteCardProps> = ({
             onClose={handleClose}
             onClick={(e) => e.stopPropagation()}
           >
-            <MenuItem onClick={() => handleMenuClick('edit')}>
-              Edit Name
-            </MenuItem>
+            <MenuItem onClick={handleMenuClick}>Edit Name</MenuItem>
           </Menu>
         </Box>
 
-        <Box
-          display="flex"
-          justifyContent="flex-start"
-          alignItems="center"
-          mt={3}
-          gap={4}
-        >
+        <Box display="flex" mt={3} gap={4}>
+          <Box display="flex" alignItems="center" gap={1}>
+            {loading ? (
+              <Skeleton width={24} height={24} />
+            ) : (
+              <PeopleIcon sx={{ color: colors.darkGray }} />
+            )}
+            <Typography variant="body2" sx={{ color: colors.darkGray }}>
+              {loading ? <Skeleton width={30} /> : userCount}
+            </Typography>
+          </Box>
+
           <Box display="flex" alignItems="center" gap={1}>
             {loading ? (
               <Skeleton width={24} height={24} />
@@ -137,21 +133,43 @@ const SiteCard: React.FC<SiteCardProps> = ({
               connectionStyles.icon
             )}
             <Typography variant="body2" sx={{ color: connectionStyles.color }}>
-              {loading ? <Skeleton width={60} /> : connectionStatus}
+              {loading ? (
+                <Skeleton width={60} />
+              ) : (siteUptimeSeconds ?? 0) <= 0 ? (
+                'Offline'
+              ) : (
+                'Online'
+              )}
             </Typography>
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
             {loading ? <Skeleton width={24} height={24} /> : batteryStyles.icon}
             <Typography variant="body2" sx={{ color: batteryStyles.color }}>
-              {loading ? <Skeleton width={70} /> : batteryStatus}
+              {loading ? (
+                <Skeleton width={70} />
+              ) : (batteryPercentage ?? 0) < 20 ? (
+                'Low'
+              ) : (batteryPercentage ?? 0) < 50 ? (
+                'Medium'
+              ) : (
+                'Charged'
+              )}
             </Typography>
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
             {loading ? <Skeleton width={24} height={24} /> : signalStyles.icon}
             <Typography variant="body2" sx={{ color: signalStyles.color }}>
-              {loading ? <Skeleton width={60} /> : signalStrength}
+              {loading ? (
+                <Skeleton width={60} />
+              ) : (backhaulSpeed ?? 0) < 30 ? (
+                'Weak'
+              ) : (backhaulSpeed ?? 0) < 70 ? (
+                'Medium'
+              ) : (
+                'Strong'
+              )}
             </Typography>
           </Box>
         </Box>

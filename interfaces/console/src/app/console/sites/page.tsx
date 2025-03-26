@@ -31,7 +31,6 @@ import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
-import { SITE_STATUS } from '@/constants';
 
 const SITE_INIT = {
   switch: '',
@@ -46,6 +45,13 @@ const SITE_INIT = {
   network: '',
 };
 
+// Define the site metrics interface
+interface SiteMetrics {
+  siteUptimeSeconds: number;
+  batteryPercentage: number;
+  backhaulSpeed: number;
+}
+
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
@@ -58,15 +64,10 @@ export default function Page() {
     siteName: '',
     siteId: '',
   });
-  const [sitesStatus, setSitesStatus] = useState<
-    Record<
-      string,
-      {
-        status: string;
-        batteryStatus: string;
-        signalStrength: string;
-      }
-    >
+
+  // Store actual numerical values directly from the API
+  const [siteMetrics, setSiteMetrics] = useState<
+    Record<string, Partial<SiteMetrics>>
   >({});
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
@@ -102,21 +103,15 @@ export default function Page() {
 
         metrics.forEach((metric) => {
           if (metric.type === 'site_uptime_seconds') {
-            setSitesStatus((prev) => {
-              const currentStatus = prev[siteId] || {
-                status: SITE_STATUS.ONLINE,
-                batteryStatus: 'Charged',
-                signalStrength: 'Strong',
-              };
+            // Store the actual uptime value directly from the API
+            setSiteMetrics((prev) => {
+              const currentMetrics = prev[siteId] || {};
 
               return {
                 ...prev,
                 [siteId]: {
-                  ...currentStatus,
-                  status:
-                    metric.value <= 0
-                      ? SITE_STATUS.OFFLINE
-                      : currentStatus.status,
+                  ...currentMetrics,
+                  siteUptimeSeconds: metric.value, // Use the value directly from the API
                 },
               };
             });
@@ -152,36 +147,17 @@ export default function Page() {
         const siteId = data.getSiteStat.metrics[0].siteId;
         const metrics = data.getSiteStat.metrics;
 
-        // Process battery metrics
+        // Store the actual battery percentage
         metrics.forEach((metric) => {
           if (metric.type === 'battery_charge_percentage') {
-            const batteryLevel = metric.value;
-
-            setSitesStatus((prev) => {
-              const currentStatus = prev[siteId] || {
-                status: SITE_STATUS.ONLINE,
-                batteryStatus: 'Charged',
-                signalStrength: 'Strong',
-              };
-
-              let batteryStatus = 'Charged';
-              let newStatus = currentStatus.status;
-
-              if (batteryLevel < 20) {
-                batteryStatus = 'Low';
-                if (newStatus !== SITE_STATUS.OFFLINE) {
-                  newStatus = SITE_STATUS.WARNING;
-                }
-              } else if (batteryLevel < 50) {
-                batteryStatus = 'Medium';
-              }
+            setSiteMetrics((prev) => {
+              const currentMetrics = prev[siteId] || {};
 
               return {
                 ...prev,
                 [siteId]: {
-                  ...currentStatus,
-                  batteryStatus,
-                  status: newStatus,
+                  ...currentMetrics,
+                  batteryPercentage: metric.value, // Use the value directly from the API
                 },
               };
             });
@@ -215,35 +191,17 @@ export default function Page() {
         const siteId = data.getSiteStat.metrics[0].siteId;
         const metrics = data.getSiteStat.metrics;
 
+        // Store the actual backhaul speed
         metrics.forEach((metric) => {
           if (metric.type === 'backhaul_speed') {
-            const speed = metric.value;
-
-            setSitesStatus((prev) => {
-              const currentStatus = prev[siteId] || {
-                status: SITE_STATUS.ONLINE,
-                batteryStatus: 'Charged',
-                signalStrength: 'Strong',
-              };
-
-              let signalStrength = 'Strong';
-              let newStatus = currentStatus.status;
-
-              if (speed < 30) {
-                signalStrength = 'Weak';
-                if (newStatus !== SITE_STATUS.OFFLINE) {
-                  newStatus = SITE_STATUS.WARNING;
-                }
-              } else if (speed < 70) {
-                signalStrength = 'Medium';
-              }
+            setSiteMetrics((prev) => {
+              const currentMetrics = prev[siteId] || {};
 
               return {
                 ...prev,
                 [siteId]: {
-                  ...currentStatus,
-                  signalStrength,
-                  status: newStatus,
+                  ...currentMetrics,
+                  backhaulSpeed: metric.value, // Use the value directly from the API
                 },
               };
             });
@@ -275,19 +233,16 @@ export default function Page() {
       const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
 
       if (success && type === 'site_uptime_seconds') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
-
+        setSiteMetrics((prev) => {
+          const currentMetrics = prev[siteId] || {};
+          console.log('SITE METRICS STATS: ', currentMetrics);
+          console.log('SITE METRICS STATS: ', value);
+          console.log('SITE METRICS STATS: ', parsedData.data.getMetricStatSub);
           return {
             ...prev,
             [siteId]: {
-              ...currentStatus,
-              status:
-                value[1] <= 0 ? SITE_STATUS.OFFLINE : currentStatus.status,
+              ...currentMetrics,
+              siteUptimeSeconds: value, // Use the API value directly
             },
           };
         });
@@ -303,31 +258,14 @@ export default function Page() {
       const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
 
       if (success && type === 'battery_charge_percentage') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
-
-          let batteryStatus = 'Charged';
-          let newStatus = currentStatus.status;
-
-          if (value[1] < 20) {
-            batteryStatus = 'Low';
-            if (newStatus !== SITE_STATUS.OFFLINE) {
-              newStatus = SITE_STATUS.WARNING;
-            }
-          } else if (value[1] < 50) {
-            batteryStatus = 'Medium';
-          }
+        setSiteMetrics((prev) => {
+          const currentMetrics = prev[siteId] || {};
 
           return {
             ...prev,
             [siteId]: {
-              ...currentStatus,
-              batteryStatus,
-              status: newStatus,
+              ...currentMetrics,
+              batteryPercentage: value, // Use the API value directly
             },
           };
         });
@@ -343,31 +281,14 @@ export default function Page() {
       const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
 
       if (success && type === 'backhaul_speed') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
-
-          let signalStrength = 'Strong';
-          let newStatus = currentStatus.status;
-
-          if (value[1] < 30) {
-            signalStrength = 'Weak';
-            if (newStatus !== SITE_STATUS.OFFLINE) {
-              newStatus = SITE_STATUS.WARNING;
-            }
-          } else if (value[1] < 70) {
-            signalStrength = 'Medium';
-          }
+        setSiteMetrics((prev) => {
+          const currentMetrics = prev[siteId] || {};
 
           return {
             ...prev,
             [siteId]: {
-              ...currentStatus,
-              signalStrength,
-              status: newStatus,
+              ...currentMetrics,
+              backhaulSpeed: value,
             },
           };
         });
@@ -607,7 +528,7 @@ export default function Page() {
           <SitesWrapper
             loading={sitesLoading || networksLoading}
             sites={sitesList}
-            sitesStatus={sitesStatus}
+            siteMetrics={siteMetrics}
             handleSiteNameUpdate={handleSiteNameUpdate}
           />
         </Stack>
