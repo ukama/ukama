@@ -24,7 +24,7 @@ import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
-import { TSiteForm } from '@/types';
+import { SiteMetrics, TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
@@ -45,13 +45,6 @@ const SITE_INIT = {
   network: '',
 };
 
-// Define the site metrics interface
-interface SiteMetrics {
-  siteUptimeSeconds: number;
-  batteryPercentage: number;
-  backhaulSpeed: number;
-}
-
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
@@ -65,7 +58,6 @@ export default function Page() {
     siteId: '',
   });
 
-  // Store actual numerical values directly from the API
   const [siteMetrics, setSiteMetrics] = useState<
     Record<string, Partial<SiteMetrics>>
   >({});
@@ -111,14 +103,13 @@ export default function Page() {
                 ...prev,
                 [siteId]: {
                   ...currentMetrics,
-                  siteUptimeSeconds: metric.value, // Use the value directly from the API
+                  siteUptimeSeconds: metric.value,
                 },
               };
             });
           }
         });
 
-        // Set up subscription for real-time updates
         const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
         MetricStatSubscription({
           key: sKey,
@@ -127,7 +118,7 @@ export default function Page() {
           url: env.METRIC_URL,
           orgName: user.orgName,
           type: Stats_Type.Site,
-          from: getUnixTime() - 40, // 24 hours
+          from: getUnixTime() - 40,
         });
 
         PubSub.subscribe(sKey, handleSiteStatSubscription);
@@ -138,7 +129,6 @@ export default function Page() {
     },
   });
 
-  // Query to get battery metrics
   const [getBatteryMetrics] = useGetSiteStatLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
@@ -147,7 +137,6 @@ export default function Page() {
         const siteId = data.getSiteStat.metrics[0].siteId;
         const metrics = data.getSiteStat.metrics;
 
-        // Store the actual battery percentage
         metrics.forEach((metric) => {
           if (metric.type === 'battery_charge_percentage') {
             setSiteMetrics((prev) => {
@@ -157,7 +146,7 @@ export default function Page() {
                 ...prev,
                 [siteId]: {
                   ...currentMetrics,
-                  batteryPercentage: metric.value, // Use the value directly from the API
+                  batteryPercentage: metric.value,
                 },
               };
             });
@@ -191,7 +180,6 @@ export default function Page() {
         const siteId = data.getSiteStat.metrics[0].siteId;
         const metrics = data.getSiteStat.metrics;
 
-        // Store the actual backhaul speed
         metrics.forEach((metric) => {
           if (metric.type === 'backhaul_speed') {
             setSiteMetrics((prev) => {
@@ -201,7 +189,7 @@ export default function Page() {
                 ...prev,
                 [siteId]: {
                   ...currentMetrics,
-                  backhaulSpeed: metric.value, // Use the value directly from the API
+                  backhaulSpeed: metric.value,
                 },
               };
             });
@@ -235,14 +223,12 @@ export default function Page() {
       if (success && type === 'site_uptime_seconds') {
         setSiteMetrics((prev) => {
           const currentMetrics = prev[siteId] || {};
-          console.log('SITE METRICS STATS: ', currentMetrics);
-          console.log('SITE METRICS STATS: ', value);
-          console.log('SITE METRICS STATS: ', parsedData.data.getMetricStatSub);
+
           return {
             ...prev,
             [siteId]: {
               ...currentMetrics,
-              siteUptimeSeconds: value, // Use the API value directly
+              siteUptimeSeconds: value,
             },
           };
         });

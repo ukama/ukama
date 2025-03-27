@@ -26,6 +26,11 @@ export interface SiteMetrics {
   batteryPercentage: number;
   backhaulSpeed: number;
 }
+export interface SiteMetrics {
+  siteUptimeSeconds: number;
+  batteryPercentage: number;
+  backhaulSpeed: number;
+}
 
 export type UserSettingsMenuType = {
   id: number;
