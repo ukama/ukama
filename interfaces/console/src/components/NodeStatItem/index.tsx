@@ -8,6 +8,7 @@
 
 import { HorizontalContainer } from '@/styles/global';
 import { TVariant } from '@/types';
+import { formatKPIValue } from '@/utils';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { IconButton, Tooltip, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
@@ -25,6 +26,7 @@ interface INodeStatItem {
   unit?: string;
   name: string;
   value: string;
+  format?: string;
   variant?: TVariant;
   threshold?: IThreshold | null;
   nameInfo?: string; //Tooltip info about stat
@@ -97,19 +99,20 @@ const NodeStatItem = ({
   threshold,
   nameInfo = '',
   valueInfo = '',
+  format = undefined,
   variant = 'medium',
 }: INodeStatItem) => {
   const [v, setV] = useState<string>('');
 
   useEffect(() => {
-    setV(value);
-  }, [value]);
+    setV(format ? formatKPIValue(value, format) : value);
+  }, [value, format]);
 
   useEffect(() => {
     if (id) {
       const token = PubSub.subscribe(`stat-${id}`, (_, data) => {
         if (data.length > 0) {
-          setV(data[1]);
+          setV(format ? formatKPIValue(data[1], format) : data[1]);
         }
       });
       return () => {

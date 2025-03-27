@@ -7,11 +7,11 @@
  */
 
 import { colors } from '@/theme';
-import { findNullZones, generatePlotLines } from '@/utils';
+import { findNullZones, formatKPIValue, generatePlotLines } from '@/utils';
+import { Box, FormControlLabel, Switch } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import { forwardRef, useMemo, useRef, useState } from 'react';
-import { Box, Switch, FormControlLabel } from '@mui/material';
 import GraphTitleWrapper from '../GraphTitleWrapper';
 import './linechart.css';
 
@@ -47,6 +47,7 @@ interface ILineChart {
   hasData?: boolean;
   loading?: boolean;
   yunit?: string;
+  format: string;
   tickInterval?: number;
   tickPositions?: number[];
   switchLabel?: string;
@@ -57,6 +58,7 @@ interface ILineChart {
 const LineChart = ({
   topic,
   yunit,
+  format,
   hasData,
   initData,
   title = '',
@@ -105,7 +107,12 @@ const LineChart = ({
                   : null;
               if (chart && data.length > 0) {
                 const series = chart.series[0];
-                series.addPoint(data, true, true, true);
+                series.addPoint(
+                  [data[0], formatKPIValue(data[1], format)],
+                  true,
+                  true,
+                  true,
+                );
               }
             });
           },
@@ -144,13 +151,15 @@ const LineChart = ({
 
       xAxis: {
         type: 'datetime',
-        tickInterval: 1000 * 60 * 30,
+        tickAmount: 6,
+        tickInterval: 1000 * 60 * 31,
         labels: {
           enabled: true,
           format: '{value:%H:%M}',
         },
       },
       yAxis: {
+        endOnTick: true,
         max: tickPositions
           ? tickPositions[tickPositions.length - 1]
           : undefined,
@@ -160,7 +169,7 @@ const LineChart = ({
         tickPositions: tickPositions,
         gridLineWidth: tickPositions ? 0 : 2,
         tickAmount: tickPositions?.length ?? 5,
-        tickInterval: tickPositions ? tickInterval : undefined,
+        tickInterval: tickInterval,
         labels: {
           y: 5,
           formatter: function (v: any) {
@@ -180,7 +189,7 @@ const LineChart = ({
           data: fixedInitData,
           zones: findNullZones(fixedInitData),
           tooltip: {
-            valueDecimals: 2,
+            valueDecimals: format === 'number' ? 0 : 2,
           },
         },
       ],

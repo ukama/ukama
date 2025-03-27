@@ -27,18 +27,18 @@ import {
 } from '@/constants';
 import colors from '@/theme/colors';
 import { TNodeSiteTree } from '@/types';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import RouterIcon from '@mui/icons-material/Router';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
-import RouterIcon from '@mui/icons-material/Router';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
-import Battery50Icon from '@mui/icons-material/Battery50';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 
 type TConfigureStep = {
   totalStep: number;
@@ -465,7 +465,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
   }
-  if (values.length < 3 || values.length > 6) {
+  if (values.length < 3 || values.length > 7) {
     throw new Error('invalid length');
   }
 
@@ -474,13 +474,26 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 1 || index === arr.length - 2
+        : index === arr.length - 2
           ? colors.dullRed
-          : colors.dullGreen,
+          : index === arr.length - 1
+            ? colors.white
+            : colors.dullGreen,
     width: 2,
     zIndex: 4,
     dashStyle: 'Dash',
   }));
+};
+
+export const formatKPIValue = (value: string, type: string): any => {
+  switch (type) {
+    case 'number':
+      return Math.floor(parseFloat(value));
+    case 'decimal':
+      return parseFloat(value).toFixed(2);
+    default:
+      return value.toString();
+  }
 };
 
 const getConnectionStyles = (connectionStatus: string) => {
@@ -566,11 +579,14 @@ export {
   formatBytes,
   formatBytesToMB,
   formatTime,
+  getBatteryStyles,
+  getConnectionStyles,
   getDataPlanUsage,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
+  getSignalStyles,
   getSimValuefromSimType,
   getTitleFromPath,
   getUnixTime,
@@ -581,7 +597,4 @@ export {
   provideStatusColor,
   roleEnumToString,
   structureNodeSiteDate,
-  getConnectionStyles,
-  getBatteryStyles,
-  getSignalStyles,
 };
