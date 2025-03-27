@@ -24,6 +24,8 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/dnode/utils"
 )
 
+var serviceConfig = config.NewConfig()
+
 type Server struct {
 	orgName    string
 	mu         sync.Mutex
@@ -36,6 +38,7 @@ func NewServer() *Server {
 	amqp := os.Getenv("AMQPCONFIG_URI")
 	amqpUsername := os.Getenv("AMQPCONFIG_USERNAME")
 	amqpPassword := os.Getenv("AMQPCONFIG_PASSWORD")
+
 	return &Server{
 		orgName: orgname,
 		amqpConfig: cconfig.Queue{
@@ -50,7 +53,7 @@ func NewServer() *Server {
 }
 
 func init() {
-	for _, kpi := range config.KPI_CONFIG.KPIs {
+	for _, kpi := range serviceConfig.KpiConfig.KPIs {
 		prometheus.MustRegister(kpi.KPI)
 	}
 }
@@ -89,7 +92,7 @@ func (s *Server) onlineHandler(w http.ResponseWriter, r *http.Request) {
 		s.coroutines[nodeID.String()] = updateChan
 
 		log.Printf("Starting coroutine, NodeId: %s, Profile: %d, Scenario: %s", nodeID.String(), cenums.PROFILE_NORMAL, cenums.SCENARIO_DEFAULT)
-		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: cenums.PROFILE_NORMAL, Scenario: cenums.SCENARIO_DEFAULT, Kpis: config.KPI_CONFIG})
+		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: cenums.PROFILE_NORMAL, Scenario: cenums.SCENARIO_DEFAULT, Kpis: serviceConfig.KpiConfig})
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", nodeID.String())
 	}
@@ -124,7 +127,7 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 
 	updateChan <- config.WMessage{
 		NodeId:   nodeID.String(),
-		Kpis:     config.KPI_CONFIG,
+		Kpis:     serviceConfig.KpiConfig,
 		Profile:  cenums.ParseProfileType(profile),
 		Scenario: cenums.ParseScenarioType(scenario),
 	}
