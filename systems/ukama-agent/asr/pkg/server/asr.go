@@ -446,7 +446,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "error getting asr reocord by imsi")
+		return grpc.SqlErrorToGrpc(err, "error getting asr record by imsi")
 	}
 
 	r, err := s.cdr.GetUsage(imsi)
