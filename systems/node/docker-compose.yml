@@ -70,7 +70,7 @@ services:
    - ukama-net
   depends_on:
    - msgclient-node
-  
+
  state:
   build: ./state
   environment:
@@ -87,9 +87,9 @@ services:
    - CONFIGPATH=/app/pkg/nodeState.json
   restart: always
   networks:
-  - ukama-net
+   - ukama-net
   depends_on:
-  - msgclient-node
+   - msgclient-node
 
  notify:
   build: ./notify
@@ -183,7 +183,7 @@ services:
    - MSGCLIENT_HOST=msgclient-node:9095
    - CONFIGURATOR_SERVICE_HOST=configurator
    - CONFIGURATOR_SERVICE_PORT=9090
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9099
+   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
    - ORGNAME=${ORGNAME}
    - LATESTCONFIGHASH=${LATESTCONFIGHASH}
    - STOREURL=${STOREURL}
