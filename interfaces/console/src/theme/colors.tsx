@@ -15,14 +15,14 @@ const colors = {
   silver: '#C4C4C4',
   hoverColor: '#009DF5',
   hoverColor08: '#EBF5FF',
-
+  lightGreen: '#b2dbcc',
   primaryMain: '#2190F6',
   primaryLight: '#8FCDF9',
   primaryDark: '#006AC3',
   secondaryMain: '#6974F8',
   secondaryLight: '#A0A4FF',
   secondaryDark: '#284AC4',
-  lightGray:"#F5F6F8" ,
+  lightGray: '#F5F6F8',
 
   primaryMain02: 'rgba(33, 144, 246, 0.2)',
 

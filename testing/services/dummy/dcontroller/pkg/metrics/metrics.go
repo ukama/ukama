@@ -21,22 +21,18 @@ import (
 )
 
 type PrometheusExporter struct {
-	// Backhaul metrics
 	backhaulSwitchPortStatus *prometheus.GaugeVec
 	backhaulSwitchPortSpeed  *prometheus.GaugeVec
 	backhaulSwitchPortPower  *prometheus.GaugeVec
 
-	// Solar controller metrics
 	solarSwitchPortStatus *prometheus.GaugeVec
 	solarSwitchPortSpeed  *prometheus.GaugeVec
 	solarSwitchPortPower  *prometheus.GaugeVec
 
-	// Node metrics
 	nodeSwitchPortStatus *prometheus.GaugeVec
 	nodeSwitchPortSpeed  *prometheus.GaugeVec
 	nodeSwitchPortPower  *prometheus.GaugeVec
 
-	// Other existing metrics
 	backhaulLatency         *prometheus.GaugeVec
 	backhaulSpeed           *prometheus.GaugeVec
 	switchPortStatus        *prometheus.GaugeVec
@@ -81,7 +77,6 @@ func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *Pro
 			Help: "Backhaul switch port power in watts",
 		}, []string{"unit", "site"}),
 
-		// Solar controller metrics
 		solarSwitchPortStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "solar_switch_port_status",
 			Help: "Solar controller switch port status (1 = up, 0 = down)",
@@ -95,7 +90,6 @@ func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *Pro
 			Help: "Solar controller switch port power in watts",
 		}, []string{"unit", "site"}),
 
-		// Node metrics
 		nodeSwitchPortStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "node_switch_port_status",
 			Help: "Node switch port status (1 = up, 0 = down)",
@@ -449,7 +443,6 @@ func (e *PrometheusExporter) CollectMetrics() error {
 		e.switchPortPower.WithLabelValues("watts", e.siteId).Set(0)
 	}
 
-	// Update backhaul metrics
 	if e.metricsProvider.GetPortStatus(PORT_BACKHAUL) {
 		e.backhaulSwitchPortStatus.WithLabelValues("status", e.siteId).Set(1)
 		e.backhaulSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
@@ -458,22 +451,27 @@ func (e *PrometheusExporter) CollectMetrics() error {
 		e.backhaulSwitchPortStatus.WithLabelValues("status", e.siteId).Set(0)
 		e.backhaulSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(0)
 		e.backhaulSwitchPortPower.WithLabelValues("watts", e.siteId).Set(0)
+
 	}
 
-	// Update solar controller metrics
 	if e.metricsProvider.GetPortStatus(PORT_SOLAR_CONTROLLER) {
 		e.solarSwitchPortStatus.WithLabelValues("status", e.siteId).Set(1)
-		// Add logic for solar controller metrics if needed
+		solarSpeed := 60 + rand.Float64()*(120-60)  
+		solarPower := 10 + rand.Float64()*(30-10)  
+		e.solarSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(solarSpeed)
+		e.solarSwitchPortPower.WithLabelValues("watts", e.siteId).Set(solarPower)
 	} else {
 		e.solarSwitchPortStatus.WithLabelValues("status", e.siteId).Set(0)
 		e.solarSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(0)
 		e.solarSwitchPortPower.WithLabelValues("watts", e.siteId).Set(0)
 	}
 
-	// Update node metrics
 	if e.metricsProvider.GetPortStatus(PORT_NODE) {
 		e.nodeSwitchPortStatus.WithLabelValues("status", e.siteId).Set(1)
-		// Add logic for node metrics if needed
+		nodeSpeed := 10 + rand.Float64()*(50-10)   
+		nodePower := 5 + rand.Float64()*(10-5)    
+		e.nodeSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(nodeSpeed)
+		e.nodeSwitchPortPower.WithLabelValues("watts", e.siteId).Set(nodePower)
 	} else {
 		e.nodeSwitchPortStatus.WithLabelValues("status", e.siteId).Set(0)
 		e.nodeSwitchPortSpeed.WithLabelValues("mbps", e.siteId).Set(0)

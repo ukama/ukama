@@ -178,7 +178,7 @@ import (
     defer s.mutex.Unlock()
 
     config, exists := s.siteConfigs[siteId]
-    if !exists || !config.Active {
+    if (!exists || !config.Active) {
         return &pb.UpdateMetricsResponse{
             Success: false,
             Message: "Site metrics not active",
@@ -186,7 +186,7 @@ import (
     }
 
     provider, exists := s.metricsProviders[siteId]
-    if !exists {
+    if (!exists) {
         return &pb.UpdateMetricsResponse{
             Success: false,
             Message: "Metrics provider not found",
@@ -202,7 +202,6 @@ import (
         }
     }
 
-    // Trigger metrics collection to ensure Prometheus metrics are updated
     if config.Exporter != nil {
         log.Infof("Triggering metrics collection for site %s after port update", siteId)
         if err := config.Exporter.CollectMetrics(); err != nil {
@@ -329,15 +328,28 @@ func (s *DControllerServer) incrementUptimeIfUp(siteId string) {
         return
     }
 
-    backhaulPortOn := provider.GetPortStatus(4) 
-    log.Debugf("Checking uptime for site %s: backhaul port status = %v", siteId, backhaulPortOn)
+    backhaulPortOn := provider.GetPortStatus(metrics.PORT_BACKHAUL) 
+    nodePortOn := provider.GetPortStatus(metrics.PORT_NODE)         
+    
+    log.Debugf("Checking uptime for site %s: backhaul port status = %v, node port status = %v", 
+               siteId, backhaulPortOn, nodePortOn)
 
-    if backhaulPortOn {
-		siteConfig.Exporter.IncrementUptimeCounter(1.0)
-		log.Debugf("Incremented uptime counter for site %s", siteId)
+    if backhaulPortOn && nodePortOn {
+        siteConfig.Exporter.IncrementUptimeCounter(1.0)
+        log.Debugf("Incremented uptime counter for site %s", siteId)
     } else {
-        log.Infof("Site %s is down due to backhaul port being off. Resetting uptime counter", siteId)
+        var reason string
+        if (!backhaulPortOn && !nodePortOn) {
+            reason = "both backhaul and node ports being off"
+        } else if (!backhaulPortOn) {
+            reason = "backhaul port being off"
+        } else {
+            reason = "node port being off"
+        }
+        
+        log.Infof("Site %s is down due to %s. Resetting uptime counter", siteId, reason)
         siteConfig.Exporter.ResetUptimeCounter()
+       
     }
 }
  func (s *DControllerServer) resetUptimeCounter(siteId string) {
@@ -368,11 +380,60 @@ func (s *DControllerServer) incrementUptimeIfUp(siteId string) {
     currentProfile := siteConfig.Profile 
     s.mutex.RUnlock()
     
-	metricsData, err := provider.GetMetrics(siteId)
+    metricsData, err := provider.GetMetrics(siteId)
 
     if err != nil {
         log.Errorf("Failed to get metrics for site %s: %v", siteId, err)
         return
+    }
+
+    if lastStatus == cenums.SCENARIO_NODE_OFF && provider.GetPortStatus(metrics.PORT_NODE) {
+        log.Infof("Node port is back ON for site %s, setting scenario to %s", siteId, cenums.SCENARIO_DEFAULT)
+        
+        if s.dnodeClient != nil {
+            nodes, err := s.nodeClient.GetNodesBySite(siteId)
+            if err != nil {
+                log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+                return
+            }
+            for _, node := range nodes.Nodes {
+                if err := s.dnodeClient.UpdateNodeScenario(node.Id, cenums.SCENARIO_DEFAULT); err != nil {
+                    log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+                } else {
+                    log.Infof("Updated scenario for node %s to %s", node.Id, cenums.SCENARIO_DEFAULT)
+                }
+            }
+            s.mutex.Lock()
+            if config, exists := s.monitoringStatus[siteId]; exists {
+                config.LastStatus = cenums.SCENARIO_DEFAULT
+            }
+            s.mutex.Unlock()
+            return 
+        }
+    }
+
+    if lastStatus == cenums.SCENARIO_DEFAULT && provider.GetPortStatus(metrics.PORT_SOLAR_CONTROLLER) {
+        log.Infof("Solar Controller port is back ON for site %s, setting scenario to %s", siteId, cenums.SCENARIO_DEFAULT)
+        if s.dnodeClient != nil {
+            nodes, err := s.nodeClient.GetNodesBySite(siteId)
+            if err != nil {
+                log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+                return
+            }
+            for _, node := range nodes.Nodes {
+                if err := s.dnodeClient.UpdateNodeScenario(node.Id, cenums.SCENARIO_DEFAULT); err != nil {
+                    log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+                } else {
+                    log.Infof("Updated scenario for node %s to %s", node.Id, cenums.SCENARIO_DEFAULT)
+                }
+            }
+            s.mutex.Lock()
+            if config, exists := s.monitoringStatus[siteId]; exists {
+                config.LastStatus = cenums.SCENARIO_DEFAULT
+            }
+            s.mutex.Unlock()
+            return 
+        }
     }
     
     voltage := metricsData.Battery.Voltage
@@ -407,9 +468,15 @@ func (s *DControllerServer) incrementUptimeIfUp(siteId string) {
     
     var currentScenario cenums.SCENARIOS
     
-    if !provider.GetPortStatus(metrics.PORT_NODE) { // Correct usage of metrics.PORT_NODE
+    if !provider.GetPortStatus(metrics.PORT_NODE) { 
         currentScenario = cenums.SCENARIO_NODE_OFF
         log.Infof("Node port is OFF for site %s, setting scenario to %s", siteId, currentScenario)
+    } else if !provider.GetPortStatus(metrics.PORT_BACKHAUL) {  
+        currentScenario = cenums.SCENARIO_BACKHAUL_DOWN
+        log.Infof("Backhaul port is OFF for site %s, setting scenario to %s", siteId, currentScenario)
+    } else if !provider.GetPortStatus(metrics.PORT_SOLAR_CONTROLLER) {
+        currentScenario = cenums.SCENARIO_DEFAULT 
+        log.Infof("Solar Controller port is OFF for site %s, skipping solar and battery metrics", siteId)
     } else if percentage < 50 {
         currentScenario = cenums.SCENARIO_NODE_OFF
         log.Infof("Battery low for site %s: percentage=%.1f%%, voltage=%.1fV, setting scenario to %s",
@@ -425,7 +492,8 @@ func (s *DControllerServer) incrementUptimeIfUp(siteId string) {
     }
     
     if currentScenario != lastStatus && s.dnodeClient != nil {
-        log.Infof("Status changed for site %s from %s to %s", siteId, lastStatus, currentScenario)
+        log.Infof("Status changed for site %s from %s to %s, dnodeClient initialized: %v", 
+                  siteId, lastStatus, currentScenario, s.dnodeClient != nil)
         
         nodes, err := s.nodeClient.GetNodesBySite(siteId)
         if err != nil {

@@ -83,7 +83,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
             bottom: 0,
             width: '100%',
             height: `${barHeight}px`,
-            bgcolor: colors.green,
+            bgcolor: colors.lightGreen,
             borderRadius: 1,
           }}
         />

@@ -22,6 +22,7 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
   nodeUpTime = 0,
 }) => {
   const router = useRouter();
+  const isNodeDown = nodeUpTime <= 0;
 
   return (
     <Paper
@@ -51,18 +52,20 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <FiberManualRecordIcon
                 sx={{
-                  color: colors.green,
+                  color: isNodeDown ? 'red' : colors.green,
                   mr: 2,
                   fontSize: 24,
                 }}
               />
               <Typography variant="h6" fontWeight="500">
-                {nodeId} is online and well
+                {nodeId} is {isNodeDown ? 'currently down' : 'online and well'}
               </Typography>
             </Box>
 
             <Typography variant="body1" sx={{ ml: 4, mb: 3 }}>
-              Node health has been up for {duration(nodeUpTime)}
+              {isNodeDown
+                ? 'Node is offline'
+                : `Node health has been up for ${duration(nodeUpTime)}`}
             </Typography>
 
             <Button
