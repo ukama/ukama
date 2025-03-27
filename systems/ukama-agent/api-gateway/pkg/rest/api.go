@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package rest
 
 type ReqData struct {
@@ -13,7 +13,7 @@ type ReqData struct {
 	Imsi      string `json:"imsi,omitempty"`
 	SimId     string `json:"sim_id,omitempty"`
 	PackageId string `json:"package_id,omitempty"`
-	NetworkId string `json:"netwrok_id,omitempty"`
+	NetworkId string `json:"network_id,omitempty"`
 }
 
 type UsageForPeriodRequest struct {
