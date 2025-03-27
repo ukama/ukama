@@ -33,6 +33,7 @@ import {
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
+  SiteMetricsStateRes,
   SubMetricByTabInput,
   SubMetricsStatInput,
 } from "./types";
@@ -165,10 +166,10 @@ class SubscriptionsResolvers {
     return payload;
   }
 
-  @Query(() => MetricsStateRes)
+  @Query(() => SiteMetricsStateRes)
   async getSiteStat(
     @Arg("data") data: GetMetricsSiteStatInput
-  ): Promise<MetricsStateRes> {
+  ): Promise<SiteMetricsStateRes> {
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
@@ -184,7 +185,7 @@ class SubscriptionsResolvers {
     const { from, userId, withSubscription, siteId, type } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metrics: MetricsStateRes = { metrics: [] };
+    const metrics: SiteMetricsStateRes = { metrics: [] };
 
     const metricKeys = getSiteMetricStatByKeysByType(type);
 

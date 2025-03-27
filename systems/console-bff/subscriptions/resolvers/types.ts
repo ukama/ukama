@@ -237,9 +237,6 @@ export class MetricStateRes {
   nodeId?: string;
 
   @Field()
-  siteId?: string;
-
-  @Field()
   type: string;
 
   @Field()
@@ -277,6 +274,30 @@ export class GetMetricBySiteInput {
 export class MetricsStateRes {
   @Field(() => [MetricStateRes])
   metrics: MetricStateRes[];
+}
+
+@ObjectType()
+export class SiteMetricsStateRes {
+  @Field(() => [SiteMetricStateRes])
+  metrics: SiteMetricStateRes[];
+}
+
+@ObjectType()
+export class SiteMetricStateRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  siteId?: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  value: number;
 }
 
 @InputType()

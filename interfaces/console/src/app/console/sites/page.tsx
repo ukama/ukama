@@ -306,7 +306,6 @@ export default function Page() {
       variables: {
         data: {
           to,
-          nodeId: '',
           siteId,
           from,
           userId: user.id,
@@ -322,7 +321,6 @@ export default function Page() {
       variables: {
         data: {
           to,
-          nodeId: '',
           siteId,
           from,
           userId: user.id,
@@ -338,7 +336,6 @@ export default function Page() {
       variables: {
         data: {
           to,
-          nodeId: '',
           siteId,
           from,
           userId: user.id,
