@@ -24,6 +24,7 @@ import (
 	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -36,7 +37,6 @@ import (
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/rest/client"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
@@ -281,12 +281,14 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		SimId:     sim.Id.String(),
 	}
 
+	log.Infof("Activating sim on remote agent with request: %v", agentRequest)
 	_, err = simAgent.BindSim(ctx, agentRequest)
 	if err != nil {
 		// TODO: think of rolling back the DB transaction on sim manager
 		// if agent operation fails.
 
-		return nil, err
+		return nil, status.Errorf(codes.Internal,
+			"error while activating sim type %s on remote agent with request: %v", simType, agentRequest)
 	}
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
@@ -352,7 +354,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
-		log.Errorf("failed to get Sims counts: %s", err.Error())
+		log.Errorf("Failed to get Sims counts: %s", err.Error())
 	}
 
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers,
@@ -380,9 +382,11 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 			"invalid sim type: %q for sim Id: %q", sim.Type, req.SimId)
 	}
 
+	log.Infof("Getting sim %s active record info from remote agent, if any...", sim.Iccid)
 	_, err = simAgent.GetSim(ctx, sim.Iccid)
 	if err != nil {
-		return nil, err
+		log.Warnf("Failed to get active record info for sim %s. Error: %v", sim.Iccid, err)
+		log.Warnf("Please make sure sim %s is properly configured and allocated", sim.Iccid)
 	}
 
 	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
@@ -500,7 +504,7 @@ func (s *SimManagerServer) ListSims(ctx context.Context, req *pb.ListSimsRequest
 	sims, err := s.simRepo.List(req.Iccid, req.Imsi, req.SubscriberId, req.NetworkId,
 		simType, simStatus, req.TrafficPolicy, req.IsPhysical, req.Count, req.Sort)
 	if err != nil {
-		log.Errorf("error while getting list of sims matching the given filters: %v",
+		log.Errorf("Error while getting list of sims matching the given filters: %v",
 			err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "sims")
@@ -791,7 +795,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 }
 
 func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
-	log.Infof("Getting sims matching: %v", req)
+	log.Infof("Getting packages  matching: %v", req)
 
 	simId, err := uuid.FromString(req.GetSimId())
 	if err != nil {
@@ -811,30 +815,46 @@ func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListP
 		req.DataPlanId = dataPlanId.String()
 	}
 
-	fromStartDate, err := validation.ValidateDate(req.GetFromStartDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if req.FromStartDate != "" {
+		fromStartDate, err := validation.ValidateDate(req.GetFromStartDate())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		req.FromStartDate = fromStartDate
 	}
 
-	toStartDate, err := validation.ValidateDate(req.GetToStartDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if req.ToStartDate != "" {
+		toStartDate, err := validation.ValidateDate(req.GetToStartDate())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		req.ToStartDate = toStartDate
 	}
 
-	fromEndDate, err := validation.ValidateDate(req.GetFromEndDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if req.FromEndDate != "" {
+		fromEndDate, err := validation.ValidateDate(req.GetFromEndDate())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		req.FromEndDate = fromEndDate
 	}
 
-	toEndDate, err := validation.ValidateDate(req.GetToEndDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+	if req.ToEndDate != "" {
+		toEndDate, err := validation.ValidateDate(req.GetToEndDate())
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		req.ToEndDate = toEndDate
 	}
 
-	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, fromStartDate, toStartDate,
-		fromEndDate, toEndDate, req.IsActive, req.AsExpired, req.Count, req.Sort)
+	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate,
+		req.FromEndDate, req.ToEndDate, req.IsActive, req.AsExpired, req.Count, req.Sort)
 	if err != nil {
-		log.Errorf("error while getting list of packages present on sim (%s) matching the given filters: %v",
+		log.Errorf("Error while getting list of packages present on sim (%s) matching the given filters: %v",
 			req.SimId, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -855,7 +875,7 @@ func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPac
 
 	packages, err := s.packageRepo.GetBySim(simId)
 	if err != nil {
-		log.Errorf("failed to get the list of packages present on sim (%s): %v",
+		log.Errorf("Failed to get the list of packages present on sim (%s): %v",
 			req.SimId, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
@@ -1174,7 +1194,7 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 
 	_, _, inactiveCount, _, err := s.simRepo.GetSimMetrics()
 	if err != nil {
-		log.Errorf("failed to get inactive Sim counts: %s", err.Error())
+		log.Errorf("Failed to get inactive Sim counts: %s", err.Error())
 	}
 
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,

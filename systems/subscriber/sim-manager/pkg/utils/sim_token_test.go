@@ -12,9 +12,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	log "github.com/sirupsen/logrus"
 )
 
-const textToEncode = "{ 'iccid': '8910300000003540855' }"
+const textToEncode = `{"iccid": "8910300000003540815"}`
 const testKey = "the-key-has-to-be-32-bytes-long!"
 
 func Test_encrypt(t *testing.T) {
@@ -23,6 +25,9 @@ func Test_encrypt(t *testing.T) {
 	if !assert.NoError(t, err) {
 		assert.FailNow(t, "encrypt failed")
 	}
+
+	log.Infof("encrypted sim: %s", r)
+
 	res, err := decrypt(r, testKey)
 	assert.NoError(t, err)
 	assert.Equal(t, textToEncode, res)
