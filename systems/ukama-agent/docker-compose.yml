@@ -22,13 +22,12 @@ services:
    - DB_HOST=postgresd-ukama-agent
    - MSGCLIENT_HOST=msgclient-ukama-agent:9095
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - NETWORKHOST=http://api-gateway-registry:8080
-   - DATAPLANHOST=http://api-gateway-dataplan:8080
    - FACTORYHOST=http://api-gateway-dummy:8080
    - ASR_SERVICE_HOST=asr
    - ASR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    - ukama-net
@@ -49,6 +48,7 @@ services:
    - ASR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    - ukama-net
@@ -112,14 +112,14 @@ services:
    - DB_USER=postgres
    - DB_PASSWORD=Pass2020!
    - DB_HOST=postgresd-ukama-agent
-   - QUEUE_URI=amqp://guest:guest@$${LOCAL_HOST_IP}:5672
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - SYSTEM=ukamaagent
    - SHOVEL_SRCEXCHANGEKEY=event.cloud.*.*.*
-   - SHOVEL_SRCURI=amqp://guest:guest@$10.1.0.11:5672
+   - SHOVEL_SRCURI=amqp://guest:guest@10.1.0.11:5672
    - SHOVEL_DESTURI=amqp://user:password@10.1.0.11:5672
    - ORGNAME=${ORGNAME}
    - MASTERORGNAME=ukama
-   - MSGBUS_MANAGEMENTURI=http://10.1.0.11:15672
+   - MSGBUS_MANAGEMENTURI=http://${LOCAL_HOST_IP}:15672
    - MSGBUS_USER=guest
    - MSGBUS_PASSWORD=guest
   restart: always

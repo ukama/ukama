@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -13,14 +13,17 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/tj/assert"
+
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 )
 
 var simFactoryBaseUrl = "http://localhost:8080"
+var networkBaseUrl = "http://localhost:8080"
 
 func TestSimFactory_ReadSim(t *testing.T) {
 	Iccid := "0123456789012345678912"
-	sim := SimCardInfo{
+
+	simInfo := SimCardInfo{
 		Iccid:          Iccid,
 		Imsi:           "012345678912345",
 		Op:             []byte("0123456789012345"),
@@ -35,8 +38,11 @@ func TestSimFactory_ReadSim(t *testing.T) {
 		DefaultApnName: "ukama",
 	}
 
-	t.Run("ReadSimCardInfo_Success", func(t *testing.T) {
+	sim := Sim{
+		SimCardInfo: &simInfo,
+	}
 
+	t.Run("ReadSimCardInfo_Success", func(t *testing.T) {
 		p, err := NewFactoryClient(simFactoryBaseUrl, pkg.IsDebugMode)
 		assert.NoError(t, err)
 
@@ -56,11 +62,9 @@ func TestSimFactory_ReadSim(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 		assert.Equal(t, s.Iccid, Iccid)
-
 	})
 
 	t.Run("ReadSimCardInfo_Failure", func(t *testing.T) {
-
 		p, err := NewFactoryClient(simFactoryBaseUrl, pkg.IsDebugMode)
 		assert.NoError(t, err)
 
@@ -80,7 +84,5 @@ func TestSimFactory_ReadSim(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, sim)
 		assert.Contains(t, err.Error(), "simcard request failure:")
-
 	})
-
 }

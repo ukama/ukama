@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -13,18 +13,22 @@ import (
 )
 
 type SimCardInfo struct {
-	Imsi           string
-	Iccid          string
-	Op             []byte
-	Amf            []byte
-	Key            []byte
-	AlgoType       uint32
-	UeDlAmbrBps    uint32
-	UeUlAmbrBps    uint32
-	Sqn            uint64
-	CsgIdPrsent    bool
-	CsgId          uint32
-	DefaultApnName string
+	Imsi           string `json:"imsi,omitempty"`
+	Iccid          string `json:"iccid,omitempty"`
+	Op             []byte `json:"op,omitempty"`
+	Amf            []byte `json:"amf"`
+	Key            []byte `json:"key,omitempty"`
+	AlgoType       uint32 `json:"algo_type,omitempty"`
+	UeDlAmbrBps    uint32 `json:"ue_dl_ambr_bps,omitempty"`
+	UeUlAmbrBps    uint32 `json:"ue_ul_ambr_bps,omitempty"`
+	Sqn            uint64 `json:"sqn,omitempty"`
+	CsgIdPrsent    bool   `json:"c_sg_id_prsent,omitempty"`
+	CsgId          uint32 `json:"csg_id,omitempty"`
+	DefaultApnName string `json:"default_apn_name,omitempty"`
+}
+
+type Sim struct {
+	SimCardInfo *SimCardInfo `json:"sim"`
 }
 
 type NetworkInfo struct {

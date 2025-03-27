@@ -12,16 +12,18 @@ import (
 	"encoding/json"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	"google.golang.org/protobuf/reflect/protoreflect"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 type policyController struct {
@@ -105,7 +107,6 @@ func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, 
 }
 
 func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
-
 	return &MsgSubscriber{
 		Policy: MsgPolicy{
 			Uuid:         p.Id.String(),
@@ -122,7 +123,7 @@ func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
 }
 
 func (p *policyController) InitPolicyController() {
-	// This could be populated as apart of config
+	// This could be populated as a part of config
 	p.Rules = []Rule{
 		{
 			Name:   "DataCap",
@@ -146,14 +147,19 @@ func (p *policyController) InitPolicyController() {
 }
 
 func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
+	log.Infof("Creating new policy based on package %s", packageId.String())
+
 	pack, err := p.dp.Get(packageId.String())
 	if err != nil {
 		log.Errorf("Failed to get package %s.Error: %v", packageId.String(), err)
+
 		return nil, err
 	}
 
 	st := uint64(time.Now().Unix())
-	et := uint64(st) + pack.Duration
+
+	// st is in seconds and pack.Duration is in days
+	et := uint64(st) + (pack.Duration * 24 * 3600)
 
 	policy := db.Policy{
 		Id:           uuid.NewV4(),
@@ -170,8 +176,10 @@ func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 }
 
 func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error {
+	log.Infof("Syncing profile for subscriber %s based on action %s", as.Imsi, action)
 
 	var httpMethod string
+
 	subscriber := &epb.Subscriber{
 		Imsi:    as.Imsi,
 		Iccid:   as.Iccid,
@@ -226,6 +234,8 @@ There might be more policies which are applicable for certain profiles
 that can be easily managed by adding policy db and adding applicable policy id for each susbcriber.
 */
 func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
+	log.Infof("Running policy control for subscriber %s", imsi)
+
 	removed := false
 	pf, err := p.asrRepo.GetByImsi(imsi)
 	if err != nil {
@@ -245,7 +255,9 @@ func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
 			if pt.Action != nil {
 				err, removed := pt.Action(p, *pf)
 				if err != nil {
-					log.Errorf("Error while checking policies: %s", err.Error())
+					log.Errorf("Error while applying action for failing policy compliance (%s, %s). Error: %v",
+						pf.Imsi, pt.Name, err)
+
 					return err, removed
 				}
 
@@ -253,14 +265,15 @@ func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
 				if removed {
 					break
 				}
-
 			}
 		}
 	}
+
 	return nil, removed
 }
 
 func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
+	log.Infof("Syncing policy for subscriber %s", imsi)
 
 	route := p.NodeFeederRoutingKey.SetObject("nodefeeder").SetAction("publish").MustBuild()
 	pMsg := createMessage(policy, p.reroute)
@@ -344,5 +357,4 @@ func (p *policyController) monitor() {
 			}
 		}
 	}()
-
 }

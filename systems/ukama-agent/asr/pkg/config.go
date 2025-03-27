@@ -23,8 +23,6 @@ type Config struct {
 	Queue                *config.Queue     `default:"{}"`
 	Service              *config.Service   `default:"{}"`
 	AsrHost              string            `default:"localhost"`
-	DataplanHost         string            `defaut:"http://api-gateway-dataplan:8080"`
-	NetworkHost          string            `defaut:"http://api-gateway-registry:8080"`
 	FactoryHost          string            `default:"http://localhost:8085"`
 	Reroute              string            `default:"http://localhost:8085"`
 	CDRHost              string            `default:"cdr:9090"`
@@ -34,6 +32,11 @@ type Config struct {
 	AllowedTimeOfService int64             `default:"259200"` // 72 hours = 86400 *3 seconds
 	OrgName              string
 	OrgId                string
+	Http                 HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type SimManager struct {

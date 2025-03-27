@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package policy
 
 import (
@@ -13,8 +13,10 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type Rule struct {
@@ -40,6 +42,8 @@ func ValidityCheck(pf db.Asr) bool {
 }
 
 func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
+	log.Infof("Removing profile for subscriber %s due to policy failure", pf.Imsi)
+
 	err := p.asrRepo.Delete(pf.Imsi, db.POLICY_FAILURE)
 	if err != nil {
 		return err, false

@@ -13,26 +13,28 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
 
 type AsrRecordServer struct {
 	pb.UnimplementedAsrRecordServiceServer
 	asrRepo        db.AsrRecordRepo
 	gutiRepo       db.GutiRepo
-	network        client.Network
+	network        registry.NetworkClient
 	factory        client.Factory
 	cdr            client.CDRService
 	msgbus         mb.MsgBusServiceClient
@@ -43,8 +45,8 @@ type AsrRecordServer struct {
 	allowedToS     int64
 }
 
-func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network client.Network, pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
-
+func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory client.Factory, network registry.NetworkClient,
+	pc pm.Controller, cdr client.CDRService, orgId, orgName string, msgBus mb.MsgBusServiceClient, aToS int64) (*AsrRecordServer, error) {
 	asr := AsrRecordServer{
 		asrRepo:    asrRepo,
 		gutiRepo:   gutiRepo,
@@ -59,7 +61,8 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory 
 	}
 
 	if msgBus != nil {
-		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
+		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().
+			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
 
 	log.Infof("Asr is %+v", asr)
@@ -71,7 +74,7 @@ func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("Error getting ASR profile for ismi %s.Error: %v", imsi, err)
-		return grpc.SqlErrorToGrpc(err, "error getting imsi")
+		return grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
 	}
 
 	r, err := s.cdr.GetUsage(imsi)
@@ -81,7 +84,9 @@ func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session 
 	}
 
 	if r.Policy != sub.Policy.Id.String() {
-		log.Errorf("Looks like sync failure for the subcriber %s. Policy expected %s is not matching CDR session %d", imsi, sub.Policy.Id.String(), session)
+		log.Errorf("Looks like sync failure for the subcriber %s. Policy expected %s is not matching CDR session %d",
+			imsi, sub.Policy.Id.String(), session)
+
 		return fmt.Errorf("policy mismatch")
 	}
 
@@ -96,16 +101,15 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 
 	switch req.Id.(type) {
 	case *pb.ReadReq_Imsi:
-
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
 		}
 
 	case *pb.ReadReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 		}
 	}
 
@@ -148,29 +152,33 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 }
 
 func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
+	/* PackageId */
+	pId, err := uuid.FromString(req.PackageId)
+	if err != nil {
+		log.Errorf("PackageId not valid: %s", req.PackageId)
+		return nil, err
+	}
+
+	/* NetworkId */
+	nId, err := uuid.FromString(req.NetworkId)
+	if err != nil {
+		log.Errorf("NetworkId not valid: %s", req.NetworkId)
+		return nil, err
+	}
+
+	// Fetch network details from registry
+	_, err = s.network.Get(req.NetworkId)
+	if err != nil {
+		return nil, fmt.Errorf("error while fetching network %s info: %w", req.NetworkId, err)
+	}
+
+	// network org validation is no longer needed since we are using initClient to fetch
+	// the correct registry system that matches with the current running org.
 
 	/* Send Request to SIM Factory */
 	sim, err := s.factory.ReadSimCardInfo(req.Iccid)
 	if err != nil {
 		return nil, fmt.Errorf("error reading iccid from factory")
-	}
-
-	/* Validate network in Org */
-	err = s.network.ValidateNetwork(req.NetworkId, s.OrgId)
-	if err != nil {
-		return nil, fmt.Errorf("error validating network")
-	}
-
-	nId, err := uuid.FromString(req.NetworkId)
-	if err != nil {
-		log.Errorf("NetworkId not valid.")
-		return nil, err
-	}
-
-	/* PackageId */
-	pId, err := uuid.FromString(req.PackageId)
-	if err != nil {
-		log.Errorf("PackageId not valid.")
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -237,7 +245,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
 	asrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 	}
 
 	/* We assum that packageId is validated by subscriber. */
@@ -280,7 +288,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	/* read the updated profile */
 	nRec, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 	}
 
 	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true)
@@ -297,7 +305,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 
 	delAsrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -333,13 +341,13 @@ func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.Usa
 
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
 		}
 
 	case *pb.UsageReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 		}
 	}
 
@@ -365,13 +373,13 @@ func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForP
 
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
 		}
 
 	case *pb.UsageForPeriodReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
 		}
 	}
 
@@ -438,7 +446,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "error getting imsi")
+		return grpc.SqlErrorToGrpc(err, "error getting asr record by imsi")
 	}
 
 	r, err := s.cdr.GetUsage(imsi)
