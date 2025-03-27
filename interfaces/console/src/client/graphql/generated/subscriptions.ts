@@ -55,11 +55,21 @@ export type GetMetricByTabInput = {
   withSubscription?: Scalars['Boolean']['input'];
 };
 
+export type GetMetricsSiteStatInput = {
+  from: Scalars['Float']['input'];
+  orgName: Scalars['String']['input'];
+  siteId?: InputMaybe<Scalars['String']['input']>;
+  step?: Scalars['Float']['input'];
+  to?: InputMaybe<Scalars['Float']['input']>;
+  type: Stats_Type;
+  userId?: InputMaybe<Scalars['String']['input']>;
+  withSubscription?: Scalars['Boolean']['input'];
+};
+
 export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
   nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
-  siteId?: InputMaybe<Scalars['String']['input']>;
   step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Stats_Type;
@@ -91,7 +101,6 @@ export type MetricStateRes = {
   __typename?: 'MetricStateRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Scalars['Float']['output'];
@@ -165,7 +174,7 @@ export type Query = {
   getMetricByTab: MetricsRes;
   getMetricsStat: MetricsStateRes;
   getNotifications: NotificationsRes;
-  getSiteStat: MetricsStateRes;
+  getSiteStat: SiteMetricsStateRes;
 };
 
 
@@ -196,7 +205,7 @@ export type QueryGetNotificationsArgs = {
 
 
 export type QueryGetSiteStatArgs = {
-  data: GetMetricsStatInput;
+  data: GetMetricsSiteStatInput;
 };
 
 export enum Stats_Type {
@@ -210,6 +219,20 @@ export enum Stats_Type {
   Resources = 'RESOURCES',
   Site = 'SITE'
 }
+
+export type SiteMetricStateRes = {
+  __typename?: 'SiteMetricStateRes';
+  msg: Scalars['String']['output'];
+  siteId: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+  type: Scalars['String']['output'];
+  value: Scalars['Float']['output'];
+};
+
+export type SiteMetricsStateRes = {
+  __typename?: 'SiteMetricsStateRes';
+  metrics: Array<SiteMetricStateRes>;
+};
 
 export type SubMetricByTabInput = {
   from: Scalars['Float']['input'];
@@ -301,14 +324,14 @@ export type GetMetricsStatQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, siteId?: string | null, type: string, value: number }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
 
 export type GetSiteStatQueryVariables = Exact<{
-  data: GetMetricsStatInput;
+  data: GetMetricsSiteStatInput;
 }>;
 
 
-export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, siteId?: string | null, type: string, value: number }> } };
+export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'SiteMetricsStateRes', metrics: Array<{ __typename?: 'SiteMetricStateRes', success: boolean, msg: string, siteId: string, type: string, value: number }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;
@@ -537,7 +560,6 @@ export const GetMetricsStatDocument = gql`
       success
       msg
       nodeId
-      siteId
       type
       value
     }
@@ -578,7 +600,7 @@ export type GetMetricsStatLazyQueryHookResult = ReturnType<typeof useGetMetricsS
 export type GetMetricsStatSuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatSuspenseQuery>;
 export type GetMetricsStatQueryResult = Apollo.QueryResult<GetMetricsStatQuery, GetMetricsStatQueryVariables>;
 export const GetSiteStatDocument = gql`
-    query GetSiteStat($data: GetMetricsStatInput!) {
+    query GetSiteStat($data: GetMetricsSiteStatInput!) {
   getSiteStat(data: $data) {
     metrics {
       success

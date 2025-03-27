@@ -11,6 +11,7 @@ import { eventKeyToAction, formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
+  GetMetricsSiteStatInput,
   GetMetricsStatInput,
   LatestMetricRes,
   MetricRes,
@@ -95,7 +96,7 @@ export const parseMetricRes = (
 export const parseSiteMetricRes = (
   res: any,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
+  args: GetMetricsSiteStatInput | GetMetricRangeInput
 ): MetricRes => {
   let result: any[] = [];
   if (res.data?.data?.result) {

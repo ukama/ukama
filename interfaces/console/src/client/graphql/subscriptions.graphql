@@ -99,13 +99,12 @@ query GetMetricsStat($data: GetMetricsStatInput!) {
       success
       msg
       nodeId
-      siteId
       type
       value
     }
   }
 }
-query GetSiteStat($data: GetMetricsStatInput!) {
+query GetSiteStat($data: GetMetricsSiteStatInput!) {
   getSiteStat(data: $data) {
     metrics {
       success
