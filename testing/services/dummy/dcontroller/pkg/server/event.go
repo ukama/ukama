@@ -88,7 +88,7 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
     defer cancel()
     
     resp, err := n.server.StartMetrics(ctx, metricsReq)
-    if err != nil {
+    if (err != nil) {
         log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
         return err
     }
@@ -134,14 +134,14 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
 		 return fmt.Errorf("invalid status value: %w", err)
 	 }
 	 
+	 log.Infof("Received toggle event for port %d with status %v for site %s", port, status, siteId)
+	 
 	 var component string
 	 switch port {
-	 case metrics.PORT_AMPLIFIER:
-		component = "Amplifier"
-	 case metrics.PORT_TOWER:
-		component = "Tower"
-	 case metrics.PORT_SOLAR:
-		component = "Solar"
+	 case metrics.PORT_NODE:
+		component = "Node"
+	 case metrics.PORT_SOLAR_CONTROLLER:
+		component = "SolarController"
 	 case metrics.PORT_BACKHAUL:
 		component = "Backhaul"
 	 default:
