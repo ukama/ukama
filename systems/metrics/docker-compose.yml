@@ -87,14 +87,6 @@ services:
   networks:
    - ukama-net
 
- pushgateway:
-  image: prom/pushgateway
-  restart: unless-stopped
-  ports:
-   - 9063:9091
-  networks:
-   - ukama-net
-
 volumes:
  postgress-data:
  prometheus-data:
