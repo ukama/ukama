@@ -27,18 +27,18 @@ import {
 } from '@/constants';
 import colors from '@/theme/colors';
 import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import RouterIcon from '@mui/icons-material/Router';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
+import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
 import { LatLngTuple } from 'leaflet';
-import RouterIcon from '@mui/icons-material/Router';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
-import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
-import Battery50Icon from '@mui/icons-material/Battery50';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
-import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
-import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
 
 type TConfigureStep = {
   totalStep: number;
@@ -478,7 +478,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
   }
-  if (values.length < 3 || values.length > 6) {
+  if (values.length < 3 || values.length > 7) {
     throw new Error('invalid length');
   }
 
@@ -487,14 +487,17 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 1 || index === arr.length - 2
+        : index === arr.length - 2 || index === arr.length - 3
           ? colors.dullRed
-          : colors.dullGreen,
+          : index === arr.length - 1
+            ? colors.white
+            : colors.dullGreen,
     width: 2,
     zIndex: 4,
     dashStyle: 'Dash',
   }));
 };
+
 const getPortInfo: Record<string, { number: number; desc: string }> = {
   solar: { number: 3, desc: 'solar Controller' },
   backhaul: { number: 4, desc: 'backhaul' },
@@ -580,11 +583,12 @@ export {
   formatTime,
   getDataPlanUsage,
   getDuration,
-  getPortInfo,
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
+  getPortInfo,
   getSimValuefromSimType,
+  getStatusStyles,
   getTitleFromPath,
   getUnixTime,
   hexToRGB,
@@ -595,5 +599,4 @@ export {
   roleEnumToString,
   setQueryParam,
   structureNodeSiteDate,
-  getStatusStyles,
 };
