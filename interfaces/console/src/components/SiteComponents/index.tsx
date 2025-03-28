@@ -32,26 +32,24 @@ interface SiteComponentsProps {
   siteId: string;
   metrics: MetricsRes;
   sections: SectionData;
-  nodeIds: string[];
   activeKPI: string;
-  nodeUpTime?: number;
   activeSection: string;
   metricFrom: number;
   metricsLoading: boolean;
   onComponentClick: (kpiType: string) => void;
   onSwitchChange?: (portNumber: number, currentStatus: boolean) => void;
+  nodeUptimes: Record<string, number>;
 }
 
 const SiteComponents: React.FC<SiteComponentsProps> = ({
   metrics,
   sections,
-  nodeIds,
   activeKPI,
   activeSection,
   metricFrom,
   metricsLoading,
   onComponentClick,
-  nodeUpTime,
+  nodeUptimes,
   onSwitchChange,
 }) => {
   const hasMetricsData =
@@ -288,7 +286,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
               isLoading={metricsLoading && activeKPI !== 'node'}
             >
               {activeKPI === 'node' ? (
-                <NodeStatusDisplay nodeIds={nodeIds} nodeUpTime={nodeUpTime} />
+                <NodeStatusDisplay nodeUptimes={nodeUptimes} />
               ) : !hasMetricsData && !metricsLoading ? (
                 renderSkeletonLoading()
               ) : (
