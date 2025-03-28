@@ -244,14 +244,13 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                     <LineChart
                       from={metricFrom}
                       topic={metric.id}
-                      title=""
                       yunit={metric.unit}
                       loading={metricsLoading}
                       tickInterval={metric.tickInterval}
                       tickPositions={metric.tickPositions}
                       hasData={isMetricValue(metric.id, metrics)}
                       initData={getMetricValue(metric.id, metrics)}
-                      format={''}
+                      format={metric.format}
                     />
                   </Box>
                 ))}
@@ -346,7 +345,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                           tickPositions={config.tickPositions}
                           hasData={isMetricValue(config.id, metrics)}
                           initData={getMetricValue(config.id, metrics)}
-                          format={''}
+                          format={config.format}
                         />
                       ))}
                     </Stack>
