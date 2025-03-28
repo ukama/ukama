@@ -13,7 +13,7 @@ import { Nodes } from "./types";
 @Resolver()
 export class GetNodesForSiteResolver {
   @Query(() => Nodes)
-  async getNodesForsite(
+  async getNodesForSite(
     @Arg("siteId") siteId: string,
     @Ctx() context: Context
   ) {

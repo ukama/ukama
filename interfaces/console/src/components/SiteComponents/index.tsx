@@ -251,6 +251,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                       tickPositions={metric.tickPositions}
                       hasData={isMetricValue(metric.id, metrics)}
                       initData={getMetricValue(metric.id, metrics)}
+                      format={''}
                     />
                   </Box>
                 ))}
@@ -345,6 +346,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                           tickPositions={config.tickPositions}
                           hasData={isMetricValue(config.id, metrics)}
                           initData={getMetricValue(config.id, metrics)}
+                          format={''}
                         />
                       ))}
                     </Stack>

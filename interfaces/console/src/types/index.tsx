@@ -21,11 +21,7 @@ export type MenuItemType = {
   route: string;
   color?: string;
 };
-export interface SiteMetrics {
-  siteUptimeSeconds: number;
-  batteryPercentage: number;
-  backhaulSpeed: number;
-}
+
 export interface SiteMetrics {
   siteUptimeSeconds: number;
   batteryPercentage: number;

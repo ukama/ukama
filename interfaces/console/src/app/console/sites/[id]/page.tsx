@@ -13,7 +13,7 @@ import {
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetNodesForsiteLazyQuery,
+  useGetNodesForSiteLazyQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
@@ -431,10 +431,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNodesForSite] = useGetNodesForsiteLazyQuery({
+  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     onCompleted: (res) => {
-      if (res.getNodesForsite?.nodes) {
-        const ids = res.getNodesForsite.nodes.map((node) => node.id);
+      if (res.getNodesForSite?.nodes) {
+        const ids = res.getNodesForSite.nodes.map((node) => node.id);
         setNodeIds(ids);
       }
     },
