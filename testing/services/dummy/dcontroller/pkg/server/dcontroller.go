@@ -396,35 +396,35 @@ import (
  }
  
  func (s *DControllerServer) incrementUptimeIfUp(siteId string) {
-     s.mutex.RLock()
-     provider, providerExists := s.metricsProviders[siteId]
-     siteConfig, siteExists := s.siteConfigs[siteId]
-     s.mutex.RUnlock()
- 
-     if !providerExists {
-         log.Warnf("Metrics provider not found for site %s, skipping uptime update", siteId)
-         return
-     }
-     if !siteExists {
-         log.Warnf("Site configuration not found for site %s, skipping uptime update", siteId)
-         return
-     }
-     if siteConfig.Exporter == nil {
-         log.Warnf("Exporter is nil for site %s, skipping uptime update", siteId)
-         return
-     }
- 
-     backhaulPortOn := provider.GetPortStatus(4)
-     log.Debugf("Checking uptime for site %s: backhaul port status = %v", siteId, backhaulPortOn)
- 
-     if backhaulPortOn {
-         siteConfig.Exporter.IncrementUptimeCounter(1.0)
-         log.Debugf("Incremented uptime counter for site %s", siteId)
-     } else {
-         log.Infof("Site %s is down due to backhaul port being off. Resetting uptime counter", siteId)
-         siteConfig.Exporter.ResetUptimeCounter()
-     }
- }
+    s.mutex.RLock()
+    provider, providerExists := s.metricsProviders[siteId]
+    siteConfig, siteExists := s.siteConfigs[siteId]
+    s.mutex.RUnlock()
+
+    if !providerExists {
+        log.Warnf("Metrics provider not found for site %s, skipping uptime update", siteId)
+        return
+    }
+    if !siteExists {
+        log.Warnf("Site configuration not found for site %s, skipping uptime update", siteId)
+        return
+    }
+    if siteConfig.Exporter == nil {
+        log.Warnf("Exporter is nil for site %s, skipping uptime update", siteId)
+        return
+    }
+
+    backhaulPortOn := provider.GetPortStatus(metrics.PORT_BACKHAUL)
+    log.Debugf("Checking uptime for site %s: backhaul port status = %v", siteId, backhaulPortOn)
+
+    if backhaulPortOn {
+        siteConfig.Exporter.IncrementUptimeCounter(1.0)
+        log.Debugf("Incremented uptime counter for site %s", siteId)
+    } else {
+        log.Infof("Site %s is down due to backhaul port being off. Resetting uptime counter", siteId)
+        siteConfig.Exporter.ResetUptimeCounter()
+    }
+}
  
  func (s *DControllerServer) resetUptimeCounter(siteId string) {
      s.mutex.RLock()
