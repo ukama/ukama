@@ -274,6 +274,7 @@ export interface SiteKpiConfig {
     max: number;
   } | null;
   show?: boolean;
+  format: string;
 }
 
 export interface SectionData {
@@ -297,6 +298,7 @@ export const SITE_KPIS = {
           normal: 500,
           max: 1000,
         },
+        format: 'number',
       },
       {
         unit: 'V',
@@ -312,6 +314,7 @@ export const SITE_KPIS = {
           normal: 25,
           max: 40,
         },
+        format: 'number',
       },
       {
         unit: 'A',
@@ -327,6 +330,7 @@ export const SITE_KPIS = {
           normal: 5,
           max: 10,
         },
+        format: 'number',
       },
     ],
   },
@@ -346,6 +350,7 @@ export const SITE_KPIS = {
           normal: 70,
           max: 100,
         },
+        format: 'number',
       },
     ],
   },
@@ -365,6 +370,7 @@ export const SITE_KPIS = {
           normal: 500,
           max: 1000,
         },
+        format: 'number',
       },
       {
         unit: 'V',
@@ -380,6 +386,7 @@ export const SITE_KPIS = {
           normal: 25,
           max: 40,
         },
+        format: 'number',
       },
       {
         unit: 'A',
@@ -395,6 +402,7 @@ export const SITE_KPIS = {
           normal: 10,
           max: 33,
         },
+        format: 'number',
       },
       {
         unit: '%',
@@ -410,6 +418,7 @@ export const SITE_KPIS = {
           normal: 70,
           max: 100,
         },
+        format: 'number',
       },
     ],
   },
@@ -429,6 +438,7 @@ export const SITE_KPIS = {
           normal: 20,
           max: 5,
         },
+        format: 'number',
         lowerIsBetter: true,
       },
       {
@@ -445,6 +455,7 @@ export const SITE_KPIS = {
           normal: 50,
           max: 200,
         },
+        format: 'number',
       },
     ],
   },
@@ -464,6 +475,7 @@ export const SITE_KPIS = {
           normal: 200,
           max: 1000,
         },
+        format: 'number',
       },
       {
         unit: '',
@@ -479,6 +491,7 @@ export const SITE_KPIS = {
           normal: 1,
           max: 1,
         },
+        format: 'number',
       },
       {
         unit: '',
@@ -494,6 +507,7 @@ export const SITE_KPIS = {
           normal: 1,
           max: 1,
         },
+        format: 'number',
       },
       {
         unit: '',
@@ -509,6 +523,7 @@ export const SITE_KPIS = {
           normal: 1,
           max: 1,
         },
+        format: 'number',
       },
       {
         unit: 'W',
@@ -524,6 +539,7 @@ export const SITE_KPIS = {
           normal: 6,
           max: 7,
         },
+        format: 'number',
       },
 
       {
@@ -540,6 +556,7 @@ export const SITE_KPIS = {
           normal: 200,
           max: 1000,
         },
+        format: 'number',
       },
       {
         unit: 'W',
@@ -555,6 +572,7 @@ export const SITE_KPIS = {
           normal: 6,
           max: 7,
         },
+        format: 'number',
       },
 
       {
@@ -571,6 +589,7 @@ export const SITE_KPIS = {
           normal: 200,
           max: 1000,
         },
+        format: 'number',
       },
       {
         unit: 'W',
@@ -586,6 +605,7 @@ export const SITE_KPIS = {
           normal: 6,
           max: 7,
         },
+        format: 'number',
       },
     ],
   },
@@ -597,6 +617,7 @@ export const SITE_KPIS = {
         name: 'Site uptime',
         id: 'site_uptime_seconds',
         description: 'Cumulative site operational time',
+        format: 'number',
       },
     ],
   },

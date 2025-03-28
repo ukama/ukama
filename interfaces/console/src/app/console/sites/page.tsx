@@ -251,7 +251,7 @@ export default function Page() {
             ...prev,
             [siteId]: {
               ...currentMetrics,
-              batteryPercentage: value, // Use the API value directly
+              batteryPercentage: value,
             },
           };
         });
