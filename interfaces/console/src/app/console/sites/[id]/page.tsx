@@ -207,6 +207,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     }
   };
+
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: (res) => {
       setSnackbarMessage({
@@ -301,28 +302,30 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       fetchPolicy: 'network-only',
       onCompleted: (data) => {
         if (data.getMetricsStat.metrics.length > 0) {
-          const uptimes: Record<string, number> = {};
-
-          data.getMetricsStat.metrics.forEach((m) => {
-            if (m.type === NODE_UPTIME_KEY && m.nodeId) {
-              uptimes[m.nodeId] = Math.floor(m.value);
-            }
+          setNodeUptimes((prev) => {
+            const newUptimes = { ...prev };
+            data.getMetricsStat.metrics.forEach((m) => {
+              if (m.type === NODE_UPTIME_KEY) {
+                newUptimes[m.nodeId] = m.value;
+              }
+            });
+            return newUptimes;
           });
 
-          setNodeUptimes(uptimes);
-
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-          MetricStatSubscription({
-            key: sKey,
-            nodeId: id,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.AllNode,
-            from: statVar?.data.from ?? 0,
-          });
-
-          PubSub.subscribe(sKey, handleStatSubscription);
+          if (statVar && statVar.data && statVar.data.from) {
+            const from = statVar.data.from;
+            const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${data.getMetricsStat.metrics[0].nodeId}-${from}`;
+            MetricStatSubscription({
+              key: sKey,
+              nodeId: data.getMetricsStat.metrics[0].nodeId,
+              userId: user.id,
+              url: env.METRIC_URL,
+              orgName: user.orgName,
+              type: Stats_Type.AllNode,
+              from: from,
+            });
+            PubSub.subscribe(sKey, handleStatSubscription);
+          }
         }
       },
       onError: (err) => {
@@ -339,9 +342,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const handleStatSubscription = (_: any, data: string) => {
     try {
       const parsedData: TMetricResDto = JSON.parse(data);
-      const { value, type, success, nodeId } = parsedData.data.getMetricStatSub;
+      const { value, type, nodeId } = parsedData.data.getMetricStatSub;
 
-      if (success && type === NODE_UPTIME_KEY && nodeId) {
+      if (type === NODE_UPTIME_KEY) {
         setNodeUptimes((prev) => ({
           ...prev,
           [nodeId]: Math.floor(value[1]),
@@ -355,39 +358,35 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   };
 
   useEffect(() => {
-    const to = getUnixTime();
-    const from = to - STAT_STEP_29;
+    if (nodeIds.length > 0) {
+      const to = getUnixTime();
+      const from = to - STAT_STEP_29;
 
-    if (!id) {
-      setSnackbarMessage({
-        id: 'node-not-found-msg',
-        message: 'Node not found.',
-        type: 'error',
-        show: true,
-      });
-      router.back();
-    } else if (id) {
-      getMetricStat({
-        variables: {
-          data: {
-            to: to,
-            nodeId: id,
-            from: from,
-            userId: user.id,
-            step: STAT_STEP_29,
-            orgName: user.orgName,
-            withSubscription: true,
-            type: Stats_Type.AllNode,
+      nodeIds.forEach((nodeId) => {
+        getMetricStat({
+          variables: {
+            data: {
+              to: to,
+              nodeId: nodeId,
+              from: from,
+              userId: user.id,
+              step: STAT_STEP_29,
+              orgName: user.orgName,
+              withSubscription: true,
+              type: Stats_Type.AllNode,
+            },
           },
-        },
+        });
       });
-    }
 
-    return () => {
-      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
-      PubSub.unsubscribe(sKey);
-    };
-  }, [id, user, env, router, setSnackbarMessage, getMetricStat]);
+      return () => {
+        nodeIds.forEach((nodeId) => {
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${nodeId}-${from}`;
+          PubSub.unsubscribe(sKey);
+        });
+      };
+    }
+  }, [nodeIds, getMetricStat, user, env]);
 
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
@@ -793,13 +792,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           siteId={selectedSiteId || ''}
           metrics={metrics}
           sections={sections}
-          nodeIds={nodeIds}
           activeKPI={activeKPI}
           activeSection={activeSection}
           metricFrom={metricFrom}
           metricsLoading={metricsLoading}
           onComponentClick={handleComponentClick}
           onSwitchChange={handleSwitchChange}
+          nodeUptimes={nodeUptimes}
         />
       </Box>
 
