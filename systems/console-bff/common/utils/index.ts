@@ -191,7 +191,17 @@ const getGraphsKeyByType = (type: string): string[] => {
     case GRAPHS_TYPE.MAIN_BACKHAUL:
       return ["main_backhaul_latency", "backhaul_speed"];
     case GRAPHS_TYPE.SWITCH:
-      return ["switch_port_status", "switch_port_speed", "switch_port_power"];
+      return [
+        "backhaul_switch_port_status",
+        "backhaul_switch_port_speed",
+        "backhaul_switch_port_power",
+        "solar_switch_port_status",
+        "solar_switch_port_speed",
+        "solar_switch_port_power",
+        "node_switch_port_status",
+        "node_switch_port_speed",
+        "node_switch_port_power",
+      ];
     case GRAPHS_TYPE.SITE:
       return ["site_uptime_seconds"];
     default:

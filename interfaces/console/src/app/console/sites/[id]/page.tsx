@@ -13,7 +13,7 @@ import {
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetNodesByNetworkLazyQuery,
+  useGetNodesForSiteLazyQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
@@ -39,7 +39,7 @@ import { TMetricResDto, TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
-import { formatISO, set } from 'date-fns';
+import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -51,6 +51,9 @@ const SiteMapComponent = dynamic(
     ssr: false,
   },
 );
+
+// Constants
+const NODE_UPTIME_KEY = 'unit_uptime';
 
 const SITE_INIT = {
   switch: '',
@@ -98,7 +101,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
   const [siteUptime, setSiteUptime] = useState<number>(0);
-  const [nodeUptime, setNodeUptime] = useState<number>(0);
+  const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
   const [switchPortStatus, setSwitchPortStatus] = useState(false);
   const {
     setSnackbarMessage,
@@ -147,7 +150,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       setMetrics(data.getMetricBySite);
-      console.log('METRICS :', data.getMetricBySite);
     },
     onError: (err) => {
       setSnackbarMessage({
@@ -169,29 +171,31 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           show: true,
         });
       },
-      onCompleted: () => {
-        setSwitchPortStatus(!switchPortStatus);
-        setSnackbarMessage({
-          id: 'update-site-success',
-          message: `Switch port status updated successfully to ${!switchPortStatus ? 'enabled' : 'disabled'}`,
-          type: 'success',
-          show: true,
-        });
-      },
     });
 
-  const handleSwitchChange = async () => {
+  const handleSwitchChange = async (
+    portNumber: number,
+    currentStatus: boolean,
+  ) => {
+    const newStatus = !currentStatus;
     try {
-      const newStatus = !switchPortStatus;
-
       await updateSwitchPort({
         variables: {
           data: {
-            port: 4,
+            port: portNumber,
             siteId: id,
             status: newStatus,
           },
         },
+      });
+
+      setSwitchPortStatus(newStatus);
+
+      setSnackbarMessage({
+        id: 'update-switch-success',
+        message: `Port ${portNumber} status updated successfully`,
+        type: 'success',
+        show: true,
       });
     } catch (error) {
       const errorMessage =
@@ -202,16 +206,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         type: 'error',
         show: true,
       });
-    }
-  };
-  const handleStatSubscription = (_: any, data: string) => {
-    const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
-    if (success) {
-      if (type === 'unit_uptime') {
-        setNodeUptime(Math.floor(value[1]));
-      }
-      PubSub.publish(`stat-${type}`, value);
     }
   };
 
@@ -303,66 +297,98 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [getMetricStat] = useGetMetricsStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getMetricsStat.metrics.length > 0) {
-        data.getMetricsStat.metrics.forEach((m) => {
-          if (m.type === 'unit_uptime') {
-            setNodeUptime(m.value);
-          }
-        });
+  const [getMetricStat, { loading: statLoading, variables: statVar }] =
+    useGetMetricsStatLazyQuery({
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getMetricsStat.metrics.length > 0) {
+          setNodeUptimes((prev) => {
+            const newUptimes = { ...prev };
+            data.getMetricsStat.metrics.forEach((m) => {
+              if (m.type === NODE_UPTIME_KEY) {
+                newUptimes[m.nodeId] = m.value;
+              }
+            });
+            return newUptimes;
+          });
 
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-        MetricStatSubscription({
-          key: sKey,
-          nodeId: id,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.AllNode,
-          from: statVar?.data.from ?? 0,
+          if (statVar && statVar.data && statVar.data.from) {
+            const from = statVar.data.from;
+            const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${data.getMetricsStat.metrics[0].nodeId}-${from}`;
+            MetricStatSubscription({
+              key: sKey,
+              nodeId: data.getMetricsStat.metrics[0].nodeId,
+              userId: user.id,
+              url: env.METRIC_URL,
+              orgName: user.orgName,
+              type: Stats_Type.AllNode,
+              from: from,
+            });
+            PubSub.subscribe(sKey, handleStatSubscription);
+          }
+        }
+      },
+      onError: (err) => {
+        console.error('Error fetching node metrics:', err);
+        setSnackbarMessage({
+          id: 'node-metrics-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
         });
-        PubSub.subscribe(sKey, handleStatSubscription);
+      },
+    });
+
+  const handleStatSubscription = (_: any, data: string) => {
+    try {
+      const parsedData: TMetricResDto = JSON.parse(data);
+      const { value, type, nodeId } = parsedData.data.getMetricStatSub;
+
+      if (type === NODE_UPTIME_KEY) {
+        setNodeUptimes((prev) => ({
+          ...prev,
+          [nodeId]: Math.floor(value[1]),
+        }));
+
+        PubSub.publish(`stat-${type}-${nodeId}`, value);
       }
-    },
-  });
+    } catch (error) {
+      console.error('Error parsing subscription data:', error);
+    }
+  };
 
   useEffect(() => {
-    const to = getUnixTime();
-    const from = to - STAT_STEP_29;
-    if (!id) {
-      setSnackbarMessage({
-        id: 'node-not-found-msg',
-        message: 'Node not found.',
-        type: 'error',
-        show: true,
-      });
-      router.back();
-    } else if (id) {
+    if (nodeIds.length > 0) {
       const to = getUnixTime();
       const from = to - STAT_STEP_29;
-      getMetricStat({
-        variables: {
-          data: {
-            to: to,
-            nodeId: id,
-            from: from,
-            userId: user.id,
-            step: STAT_STEP_29,
-            orgName: user.orgName,
-            withSubscription: true,
-            type: Stats_Type.AllNode,
+
+      nodeIds.forEach((nodeId) => {
+        getMetricStat({
+          variables: {
+            data: {
+              to: to,
+              nodeId: nodeId,
+              from: from,
+              userId: user.id,
+              step: STAT_STEP_29,
+              orgName: user.orgName,
+              withSubscription: true,
+              type: Stats_Type.AllNode,
+            },
           },
-        },
+        });
       });
+
+      return () => {
+        nodeIds.forEach((nodeId) => {
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${nodeId}-${from}`;
+          PubSub.unsubscribe(sKey);
+        });
+      };
     }
-    return () => {
-      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
-      PubSub.unsubscribe(sKey);
-    };
-  }, []);
+  }, [nodeIds, getMetricStat, user, env]);
+
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
       setSite({
@@ -405,10 +431,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNode] = useGetNodesByNetworkLazyQuery({
+  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     onCompleted: (res) => {
-      if (res.getNodesByNetwork?.nodes) {
-        const ids = res.getNodesByNetwork.nodes.map((node) => node.id);
+      if (res.getNodesForSite?.nodes) {
+        const ids = res.getNodesForSite.nodes.map((node) => node.id);
         setNodeIds(ids);
       }
     },
@@ -527,11 +553,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         },
       },
     });
-  }, []);
+  }, [getComponents]);
 
   useEffect(() => {
     getSite({ variables: { siteId: id } });
-  }, []);
+  }, [id, getSite]);
 
   useEffect(() => {
     if (id) {
@@ -550,7 +576,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     if (selectedSiteId) {
       getSite({ variables: { siteId: selectedSiteId } });
     }
-  }, [selectedSiteId]);
+  }, [selectedSiteId, getSite]);
 
   useEffect(() => {
     const handleFetchAddress = async () => {
@@ -603,41 +629,39 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   useEffect(() => {
     if (activeSite?.networkId) {
-      fetchNode({ variables: { networkId: activeSite.networkId } });
+      fetchNodesForSite({ variables: { siteId: id } });
     }
-  }, [activeSite, fetchNode]);
-  const [
-    getSiteMetricStat,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        data.getSiteStat.metrics.forEach((m) => {
-          if (m.type === 'site_uptime_seconds') {
-            setSiteUptime(m.value);
-          }
-        });
+  }, [activeSite, fetchNodesForSite, id]);
 
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
-        MetricStatSubscription({
-          key: sKey,
-          siteId: id,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Site,
-          from: statVar?.data.from ?? 0,
-        });
-        PubSub.subscribe(sKey, handleSiteStatSubscription);
-      }
-    },
-  });
+  const [getSiteMetricStat, { data: statData, variables: statSiteVar }] =
+    useGetSiteStatLazyQuery({
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getSiteStat.metrics.length > 0) {
+          data.getSiteStat.metrics.forEach((m) => {
+            if (m.type === 'site_uptime_seconds') {
+              setSiteUptime(m.value);
+            }
+          });
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statSiteVar?.data.from ?? 0}`;
+          MetricStatSubscription({
+            key: sKey,
+            siteId: id,
+            userId: user.id,
+            url: env.METRIC_URL,
+            orgName: user.orgName,
+            type: Stats_Type.Site,
+            from: statSiteVar?.data.from ?? 0,
+          });
+          PubSub.subscribe(sKey, handleSiteStatSubscription);
+        }
+      },
+    });
 
   const handleSiteStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    const { value, type, success } = parsedData.data.getMetricStatSub;
     if (success) {
       if (type === 'site_uptime_seconds') {
         setSiteUptime(Math.floor(value[1]));
@@ -645,6 +669,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       PubSub.publish(`stat-${type}`, value);
     }
   };
+
   useEffect(() => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
@@ -657,8 +682,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
       router.back();
     } else if (id) {
-      const to = getUnixTime();
-      const from = to - STAT_STEP_29;
       getSiteMetricStat({
         variables: {
           data: {
@@ -678,7 +701,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
       PubSub.unsubscribe(sKey);
     };
-  }, []);
+  }, [id, user, env, router, setSnackbarMessage]);
 
   if (!isDataReady) {
     return (
@@ -723,14 +746,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           height: 'calc(50vh - 50px)',
         }}
       >
-        <Grid item xs={4} sx={{ height: '100%' }}>
+        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={4}>
           <SiteInfo
             selectedSite={activeSite}
             address={CurrentSiteaddress}
             nodeIds={nodeIds}
           />
         </Grid>
-        <Grid item xs={5} sx={{ height: '100%' }}>
+        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={5}>
           {siteUptime <= 0 ? (
             <Box sx={{ height: '100%' }}>
               <Skeleton
@@ -741,15 +764,26 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
               />
             </Box>
           ) : (
-            <SiteOverview uptimeSeconds={siteUptime} daysRange={60} />
+            <SiteOverview
+              siteUptimeSeconds={siteUptime}
+              daysRange={60}
+              nodeUptimes={Object.entries(nodeUptimes).map(
+                ([id, uptimeSeconds]) => ({
+                  id,
+                  uptimeSeconds,
+                }),
+              )}
+            />
           )}
         </Grid>
-        <Grid item xs={3} sx={{ height: '100%' }}>
+        <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
           <SiteMapComponent
             posix={[activeSite.latitude, activeSite.longitude]}
             address={CurrentSiteaddress}
             height={'100%'}
             mapStyle="satellite"
+            showUserCount={true}
+            userCount={0}
           />
         </Grid>
       </Grid>
@@ -759,14 +793,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           siteId={selectedSiteId || ''}
           metrics={metrics}
           sections={sections}
-          nodeIds={nodeIds}
           activeKPI={activeKPI}
           activeSection={activeSection}
           metricFrom={metricFrom}
           metricsLoading={metricsLoading}
           onComponentClick={handleComponentClick}
-          nodeUpTime={nodeUptime}
           onSwitchChange={handleSwitchChange}
+          nodeUptimes={nodeUptimes}
         />
       </Box>
 

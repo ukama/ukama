@@ -25,6 +25,7 @@ import { pubSub } from "./pubsub";
 import {
   GetMetricBySiteInput,
   GetMetricByTabInput,
+  GetMetricsSiteStatInput,
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
@@ -32,6 +33,7 @@ import {
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
+  SiteMetricsStateRes,
   SubMetricByTabInput,
   SubMetricsStatInput,
 } from "./types";
@@ -164,10 +166,10 @@ class SubscriptionsResolvers {
     return payload;
   }
 
-  @Query(() => MetricsStateRes)
+  @Query(() => SiteMetricsStateRes)
   async getSiteStat(
-    @Arg("data") data: GetMetricsStatInput
-  ): Promise<MetricsStateRes> {
+    @Arg("data") data: GetMetricsSiteStatInput
+  ): Promise<SiteMetricsStateRes> {
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
@@ -183,7 +185,7 @@ class SubscriptionsResolvers {
     const { from, userId, withSubscription, siteId, type } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metrics: MetricsStateRes = { metrics: [] };
+    const metrics: SiteMetricsStateRes = { metrics: [] };
 
     const metricKeys = getSiteMetricStatByKeysByType(type);
 

@@ -111,7 +111,14 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
                 ]}
           </Menu>
         </Stack>
-        Site is up for <b>{duration(siteUpTime)}</b>
+
+        {siteUpTime === 0 ? (
+          <Typography variant="body1">Site is currently down</Typography>
+        ) : (
+          <>
+            Site is up for <b>{duration(siteUpTime)}</b>
+          </>
+        )}
       </Box>
     </Grid>
   );
