@@ -107,8 +107,8 @@ mutation updateNodeState($data: UpdateNodeStateInput!) {
   }
 }
 
-query getNodesForsite($siteId: String!) {
-  getNodesForsite(siteId: $siteId) {
+query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
     nodes {
       ...node
     }
