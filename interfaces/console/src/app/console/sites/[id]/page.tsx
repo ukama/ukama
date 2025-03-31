@@ -44,6 +44,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
+import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -464,12 +465,12 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         variables: {
           data: {
             step: 30,
-            siteId: selectedSiteId,
+            siteId: id,
             userId: user.id,
             type: graphType,
             from: metricFrom,
             orgName: user.orgName,
-            withSubscription: false,
+            withSubscription: true,
             to: metricFrom + METRIC_RANGE_10800,
           },
         },
@@ -517,32 +518,35 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const handleComponentClick = (kpiType: string) => {
     setActiveKPI(kpiType);
-    let sectionName = 'SOLAR';
 
-    switch (kpiType) {
-      case 'solar':
-        sectionName = 'SOLAR';
-        break;
-      case 'battery':
-        sectionName = 'BATTERY';
-        break;
-      case 'controller':
-        sectionName = 'CONTROLLER';
-        break;
-      case 'backhaul':
-        sectionName = 'MAIN_BACKHAUL';
-        break;
-      case 'switch':
-        sectionName = 'SWITCH';
-        break;
-      case 'node':
-        sectionName = 'NODE';
-        break;
-      default:
-        sectionName = 'SOLAR';
-    }
+    setTimeout(() => {
+      let sectionName = 'SOLAR';
 
-    handleSectionChange(sectionName);
+      switch (kpiType) {
+        case 'solar':
+          sectionName = 'SOLAR';
+          break;
+        case 'battery':
+          sectionName = 'BATTERY';
+          break;
+        case 'controller':
+          sectionName = 'CONTROLLER';
+          break;
+        case 'backhaul':
+          sectionName = 'MAIN_BACKHAUL';
+          break;
+        case 'switch':
+          sectionName = 'SWITCH';
+          break;
+        case 'node':
+          sectionName = 'NODE';
+          break;
+        default:
+          sectionName = 'SOLAR';
+      }
+
+      handleSectionChange(sectionName);
+    }, 50);
   };
 
   useEffect(() => {
@@ -645,7 +649,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             }
           });
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statSiteVar?.data.from ?? 0}`;
-          MetricStatSubscription({
+          MetricStatBySiteSubscription({
             key: sKey,
             siteId: id,
             userId: user.id,
@@ -658,13 +662,43 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         }
       },
     });
+  const handleMetricSubscription = (_: any, data: string) => {
+    try {
+      const parsedData: TMetricResDto = JSON.parse(data);
+      const { value, type, success } = parsedData.data.getSiteMetricStatSub;
+      if (success) {
+        setMetrics((prevMetrics) => {
+          const updatedMetrics = { ...prevMetrics };
+          const metricIndex = updatedMetrics.metrics.findIndex(
+            (m) => m.type === type,
+          );
+          if (metricIndex > -1) {
+            updatedMetrics.metrics[metricIndex].values.push(value);
+          }
+          return updatedMetrics;
+        });
+      }
+    } catch (error) {
+      console.error('Error parsing subscription data:', error);
+    }
+  };
 
+  useEffect(() => {
+    if (metrics.metrics.length > 0 && selectedSiteId) {
+      const sKey = `${user.id}/${graphType}/${metricFrom}`;
+      PubSub.subscribe(sKey, handleMetricSubscription);
+
+      return () => {
+        PubSub.unsubscribe(sKey);
+      };
+    }
+  }, [metrics, selectedSiteId, graphType, metricFrom]);
   const handleSiteStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { value, type, success } = parsedData.data.getMetricStatSub;
+    const { value, type, success } = parsedData.data.getSiteMetricStatSub;
     if (success) {
       if (type === 'site_uptime_seconds') {
-        setSiteUptime(Math.floor(value[1]));
+        setSiteUptime(value[1]);
       }
       PubSub.publish(`stat-${type}`, value);
     }

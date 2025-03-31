@@ -238,7 +238,6 @@ export type SubMetricByTabInput = {
   from: Scalars['Float']['input'];
   nodeId: Scalars['String']['input'];
   orgName: Scalars['String']['input'];
-  siteId: Scalars['String']['input'];
   type: Graphs_Type;
   userId: Scalars['String']['input'];
 };
@@ -251,10 +250,28 @@ export type SubMetricsStatInput = {
   userId: Scalars['String']['input'];
 };
 
+export type SubSiteMetricByTabInput = {
+  from: Scalars['Float']['input'];
+  orgName: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
+  type: Graphs_Type;
+  userId: Scalars['String']['input'];
+};
+
+export type SubSiteMetricsStatInput = {
+  from: Scalars['Float']['input'];
+  orgName: Scalars['String']['input'];
+  siteId: Scalars['String']['input'];
+  type: Stats_Type;
+  userId: Scalars['String']['input'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   getMetricByTabSub: LatestMetricSubRes;
   getMetricStatSub: LatestMetricSubRes;
+  getSiteMetricByTabSub: LatestMetricSubRes;
+  getSiteMetricStatSub: LatestMetricSubRes;
   notificationSubscription: NotificationsResDto;
 };
 
@@ -266,6 +283,16 @@ export type SubscriptionGetMetricByTabSubArgs = {
 
 export type SubscriptionGetMetricStatSubArgs = {
   data: SubMetricsStatInput;
+};
+
+
+export type SubscriptionGetSiteMetricByTabSubArgs = {
+  data: SubSiteMetricByTabInput;
+};
+
+
+export type SubscriptionGetSiteMetricStatSubArgs = {
+  data: SubSiteMetricsStatInput;
 };
 
 
@@ -346,6 +373,13 @@ export type GetMetricsStatSubSubscriptionVariables = Exact<{
 
 
 export type GetMetricsStatSubSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+
+export type GetSiteMetricStatSubSubscriptionVariables = Exact<{
+  data: SubSiteMetricsStatInput;
+}>;
+
+
+export type GetSiteMetricStatSubSubscription = { __typename?: 'Subscription', getSiteMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, siteId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -725,3 +759,37 @@ export function useGetMetricsStatSubSubscription(baseOptions: Apollo.Subscriptio
       }
 export type GetMetricsStatSubSubscriptionHookResult = ReturnType<typeof useGetMetricsStatSubSubscription>;
 export type GetMetricsStatSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricsStatSubSubscription>;
+export const GetSiteMetricStatSubDocument = gql`
+    subscription GetSiteMetricStatSub($data: SubSiteMetricsStatInput!) {
+  getSiteMetricStatSub(data: $data) {
+    msg
+    siteId
+    success
+    type
+    value
+  }
+}
+    `;
+
+/**
+ * __useGetSiteMetricStatSubSubscription__
+ *
+ * To run a query within a React component, call `useGetSiteMetricStatSubSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetSiteMetricStatSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSiteMetricStatSubSubscription({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetSiteMetricStatSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetSiteMetricStatSubSubscription, GetSiteMetricStatSubSubscriptionVariables> & ({ variables: GetSiteMetricStatSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useSubscription<GetSiteMetricStatSubSubscription, GetSiteMetricStatSubSubscriptionVariables>(GetSiteMetricStatSubDocument, options);
+      }
+export type GetSiteMetricStatSubSubscriptionHookResult = ReturnType<typeof useGetSiteMetricStatSubSubscription>;
+export type GetSiteMetricStatSubSubscriptionResult = Apollo.SubscriptionResult<GetSiteMetricStatSubSubscription>;

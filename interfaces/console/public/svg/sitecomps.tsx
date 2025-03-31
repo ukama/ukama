@@ -7,6 +7,7 @@ interface SiteFlowDiagramProps {
   defaultColor?: string;
   defaultOpacity?: number;
   onNodeClick?: (nodeId: string) => void;
+  activeKPI?: string;
 }
 
 type KPIType =
@@ -21,11 +22,9 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
   defaultColor = colors.primaryDark,
   defaultOpacity = 0.07,
   onNodeClick,
+  activeKPI = 'solar',
 }) => {
-  const [selectedNode, setSelectedNode] = useState<KPIType | null>('solar');
-
   const handleNodeClick = (kpiType: KPIType) => {
-    setSelectedNode(kpiType);
     if (onNodeClick) {
       onNodeClick(kpiType);
     }
@@ -36,7 +35,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
     opacity: number = defaultOpacity,
   ): string => {
     const baseColor = color[kpiType] || defaultColor;
-    const selectedOpacity = kpiType === selectedNode ? opacity * 2 : opacity;
+    const selectedOpacity = kpiType === activeKPI ? opacity * 2 : opacity;
 
     if (baseColor.startsWith('#')) {
       return `${baseColor}${Math.round(selectedOpacity * 255)
@@ -57,7 +56,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
   };
 
   const getStrokeColor = (kpiType: KPIType): string => {
-    return kpiType === selectedNode ? '#2190f6' : '#DCDDDD';
+    return kpiType === activeKPI ? '#2190f6' : '#DCDDDD';
   };
   return (
     <svg
@@ -124,7 +123,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor="pointer"
         onClick={() => handleNodeClick('node')}
         fill={getFillColor('node')}
-        fillOpacity={selectedNode === 'node' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'node' ? 0.6 : defaultOpacity}
       />
       <rect
         x="121.041"
@@ -134,7 +133,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         rx="12"
         onClick={() => handleNodeClick('node')}
         stroke={getStrokeColor('node')}
-        strokeWidth={selectedNode === 'node' ? 2 : 1}
+        strokeWidth={activeKPI === 'node' ? 2 : 1}
       />
       <path
         d="M157.241 22.9L158.041 22.1C156.641 20.7 154.841 20 153.041 20C151.241 20 149.441 20.7 148.041 22.1L148.841 22.9C150.041 21.8 151.541 21.2 153.041 21.2C154.541 21.2 156.041 21.8 157.241 22.9ZM156.341 23.7C155.441 22.8 154.241 22.3 153.041 22.3C151.841 22.3 150.641 22.8 149.741 23.7L150.541 24.5C151.241 23.8 152.141 23.5 153.041 23.5C153.941 23.5 154.841 23.8 155.541 24.5L156.341 23.7ZM156.041 30H154.041V26H152.041V30H142.041C140.941 30 140.041 30.9 140.041 32V36C140.041 37.1 140.941 38 142.041 38H156.041C157.141 38 158.041 37.1 158.041 36V32C158.041 30.9 157.141 30 156.041 30ZM145.041 35H143.041V33H145.041V35ZM148.541 35H146.541V33H148.541V35ZM152.041 35H150.041V33H152.041V35Z"
@@ -155,7 +154,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor={'pointer'}
         fill={getFillColor('solar')}
         onClick={() => handleNodeClick('solar')}
-        fillOpacity={selectedNode === 'solar' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'solar' ? 0.6 : defaultOpacity}
       />
       <rect
         x="36.9835"
@@ -164,7 +163,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         stroke={getStrokeColor('solar')}
-        strokeWidth={selectedNode === 'solar' ? 2 : 1}
+        strokeWidth={activeKPI === 'solar' ? 2 : 1}
         onClick={() => handleNodeClick('solar')}
       />
       <path
@@ -186,7 +185,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor={'pointer'}
         onClick={() => handleNodeClick('switch')}
         fill={getFillColor('switch')}
-        fillOpacity={selectedNode === 'switch' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'switch' ? 0.6 : defaultOpacity}
       />
       <rect
         x="121.041"
@@ -195,7 +194,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         stroke={getStrokeColor('switch')}
-        strokeWidth={selectedNode === 'switch' ? 2 : 1}
+        strokeWidth={activeKPI === 'switch' ? 2 : 1}
         onClick={() => handleNodeClick('switch')}
       />
       <path
@@ -217,7 +216,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor={'pointer'}
         onClick={() => handleNodeClick('battery')}
         fill={getFillColor('battery')}
-        fillOpacity={selectedNode === 'battery' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'battery' ? 0.6 : defaultOpacity}
       />
       <rect
         x="205.619"
@@ -226,7 +225,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         stroke={getStrokeColor('battery')}
-        strokeWidth={selectedNode === 'battery' ? 2 : 1}
+        strokeWidth={activeKPI === 'battery' ? 2 : 1}
         onClick={() => handleNodeClick('battery')}
       />
       <path
@@ -249,7 +248,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor={'pointer'}
         onClick={() => handleNodeClick('backhaul')}
         fill={getFillColor('backhaul')}
-        fillOpacity={selectedNode === 'backhaul' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'backhaul' ? 0.6 : defaultOpacity}
       />
       <rect
         x="204.62"
@@ -258,7 +257,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         stroke={getStrokeColor('backhaul')}
-        strokeWidth={selectedNode === 'backhaul' ? 2 : 1}
+        strokeWidth={activeKPI === 'backhaul' ? 2 : 1}
         onClick={() => handleNodeClick('backhaul')}
       />
       <path
@@ -289,7 +288,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         cursor={'pointer'}
         onClick={() => handleNodeClick('controller')}
         fill={getFillColor('controller')}
-        fillOpacity={selectedNode === 'controller' ? 0.6 : defaultOpacity}
+        fillOpacity={activeKPI === 'controller' ? 0.6 : defaultOpacity}
       />
       <rect
         x="37.5"
@@ -298,7 +297,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         stroke={getStrokeColor('controller')}
-        strokeWidth={selectedNode === 'controller' ? 2 : 1}
+        strokeWidth={activeKPI === 'controller' ? 2 : 1}
         onClick={() => handleNodeClick('controller')}
       />
       <path

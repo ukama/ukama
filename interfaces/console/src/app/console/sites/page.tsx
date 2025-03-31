@@ -6,7 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-
 import {
   Component_Type,
   SiteDto,
@@ -24,13 +23,13 @@ import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
-import { SiteMetrics, TSiteForm } from '@/types';
+import { SiteMetrics, TMetricResDto, TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import PubSub from 'pubsub-js';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
+import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 
 const SITE_INIT = {
   switch: '',
@@ -70,10 +69,6 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
-
-      sites.forEach((site) => {
-        fetchSiteMetrics(site.id);
-      });
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -85,151 +80,37 @@ export default function Page() {
     },
   });
 
-  const [getSiteMetrics] = useGetSiteStatLazyQuery({
+  const [getSiteStatsMetrics] = useGetSiteStatLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        const siteId = data.getSiteStat.metrics[0].siteId;
-        const metrics = data.getSiteStat.metrics;
-
-        metrics.forEach((metric) => {
-          if (metric.type === 'site_uptime_seconds') {
-            // Store the actual uptime value directly from the API
-            setSiteMetrics((prev) => {
-              const currentMetrics = prev[siteId] || {};
-
-              return {
-                ...prev,
-                [siteId]: {
-                  ...currentMetrics,
-                  siteUptimeSeconds: metric.value,
-                },
-              };
-            });
-          }
-        });
-
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
-        MetricStatSubscription({
-          key: sKey,
-          siteId: siteId,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Site,
-          from: getUnixTime() - 40,
-        });
-
-        PubSub.subscribe(sKey, handleSiteStatSubscription);
-      }
-    },
     onError: (error) => {
       console.error('Error fetching site metrics:', error);
     },
   });
 
-  const [getBatteryMetrics] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        const siteId = data.getSiteStat.metrics[0].siteId;
-        const metrics = data.getSiteStat.metrics;
-
-        metrics.forEach((metric) => {
-          if (metric.type === 'battery_charge_percentage') {
-            setSiteMetrics((prev) => {
-              const currentMetrics = prev[siteId] || {};
-
-              return {
-                ...prev,
-                [siteId]: {
-                  ...currentMetrics,
-                  batteryPercentage: metric.value,
-                },
-              };
-            });
-          }
-        });
-
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Battery}-${siteId}`;
-        MetricStatSubscription({
-          key: sKey,
-          siteId: siteId,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Battery,
-          from: getUnixTime() - 40,
-        });
-
-        PubSub.subscribe(sKey, handleBatteryStatSubscription);
-      }
-    },
-    onError: (error) => {
-      console.error('Error fetching battery metrics:', error);
-    },
-  });
-
-  const [getBackhaulMetrics] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        const siteId = data.getSiteStat.metrics[0].siteId;
-        const metrics = data.getSiteStat.metrics;
-
-        metrics.forEach((metric) => {
-          if (metric.type === 'backhaul_speed') {
-            setSiteMetrics((prev) => {
-              const currentMetrics = prev[siteId] || {};
-
-              return {
-                ...prev,
-                [siteId]: {
-                  ...currentMetrics,
-                  backhaulSpeed: metric.value,
-                },
-              };
-            });
-          }
-        });
-
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.MainBackhaul}-${siteId}`;
-        MetricStatSubscription({
-          key: sKey,
-          siteId: siteId,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.MainBackhaul,
-          from: getUnixTime() - 40,
-        });
-
-        PubSub.subscribe(sKey, handleBackhaulStatSubscription);
-      }
-    },
-    onError: (error) => {
-      console.error('Error fetching backhaul metrics:', error);
-    },
-  });
-
   const handleSiteStatSubscription = (_: any, data: string) => {
     try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
+      const parsedData: TMetricResDto = JSON.parse(data);
+      const { value, type, success, siteId } =
+        parsedData.data.getSiteMetricStatSub;
 
-      if (success && type === 'site_uptime_seconds') {
+      if (success && siteId) {
         setSiteMetrics((prev) => {
-          const currentMetrics = prev[siteId] || {};
-
+          const currentMetrics = prev[siteId] ? { ...prev[siteId] } : {};
+          switch (type) {
+            case 'site_uptime_seconds':
+              currentMetrics.siteUptimeSeconds = value[1];
+              break;
+            case 'battery_charge_percentage':
+              currentMetrics.batteryPercentage = value[1];
+              break;
+            case 'backhaul_speed':
+              currentMetrics.backhaulSpeed = value[1];
+              break;
+          }
           return {
             ...prev,
-            [siteId]: {
-              ...currentMetrics,
-              siteUptimeSeconds: value,
-            },
+            [siteId]: currentMetrics,
           };
         });
       }
@@ -238,100 +119,72 @@ export default function Page() {
     }
   };
 
-  const handleBatteryStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
-
-      if (success && type === 'battery_charge_percentage') {
-        setSiteMetrics((prev) => {
-          const currentMetrics = prev[siteId] || {};
-
-          return {
-            ...prev,
-            [siteId]: {
-              ...currentMetrics,
-              batteryPercentage: value,
-            },
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error handling battery stat subscription:', error);
-    }
-  };
-
-  const handleBackhaulStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
-
-      if (success && type === 'backhaul_speed') {
-        setSiteMetrics((prev) => {
-          const currentMetrics = prev[siteId] || {};
-
-          return {
-            ...prev,
-            [siteId]: {
-              ...currentMetrics,
-              backhaulSpeed: value,
-            },
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error handling backhaul stat subscription:', error);
-    }
-  };
-
-  const fetchSiteMetrics = (siteId: string) => {
+  const fetchSiteMetrics = async () => {
     const to = getUnixTime();
-    const from = to - 40;
+    const from = to - 40; // Example time range: last 40 seconds
 
-    getSiteMetrics({
-      variables: {
-        data: {
-          to,
-          siteId,
-          from,
-          userId: user.id,
-          step: 300,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.Site,
-        },
-      },
-    });
+    for (const site of sitesList) {
+      try {
+        const res = await getSiteStatsMetrics({
+          variables: {
+            data: {
+              siteId: site.id,
+              type: Stats_Type.Site,
+              from,
+              to,
+              step: 30,
+              userId: user.id,
+              orgName: user.orgName,
+              withSubscription: true,
+            },
+          },
+        });
 
-    getBatteryMetrics({
-      variables: {
-        data: {
-          to,
-          siteId,
-          from,
-          userId: user.id,
-          step: 300,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.Battery,
-        },
-      },
-    });
+        if (
+          res.data?.getSiteStat?.metrics &&
+          res.data.getSiteStat.metrics.length > 0
+        ) {
+          const siteId = res.data.getSiteStat.metrics[0].siteId;
+          const metrics = res.data.getSiteStat.metrics;
 
-    getBackhaulMetrics({
-      variables: {
-        data: {
-          to,
-          siteId,
-          from,
-          userId: user.id,
-          step: 300,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.MainBackhaul,
-        },
-      },
-    });
+          setSiteMetrics((prev) => {
+            const currentMetrics = prev[siteId] || {};
+            metrics.forEach((metric) => {
+              switch (metric.type) {
+                case 'site_uptime_seconds':
+                  currentMetrics.siteUptimeSeconds = metric.value;
+                  break;
+                case 'battery_charge_percentage':
+                  currentMetrics.batteryPercentage = metric.value;
+                  break;
+                case 'backhaul_speed':
+                  currentMetrics.backhaulSpeed = metric.value;
+                  break;
+              }
+            });
+            return {
+              ...prev,
+              [siteId]: currentMetrics,
+            };
+          });
+
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
+          MetricStatBySiteSubscription({
+            key: sKey,
+            siteId: siteId,
+            userId: user.id,
+            url: env.METRIC_URL,
+            orgName: user.orgName,
+            type: Stats_Type.Site,
+            from: getUnixTime() - 40,
+          });
+
+          PubSub.subscribe(sKey, handleSiteStatSubscription);
+        }
+      } catch (error) {
+        console.error(`Error fetching metrics for site ${site.id}:`, error);
+      }
+    }
   };
 
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
@@ -400,7 +253,7 @@ export default function Page() {
       if (res.getNetworks.networks.length === 0) {
         setSnackbarMessage({
           id: 'no-network-msg',
-          message: 'Please create a network first.',
+          message: ' CASA create a network first.',
           type: 'warning' as AlertColor,
           show: true,
         });
@@ -430,18 +283,80 @@ export default function Page() {
       },
     });
 
+    if (sitesList.length > 0) {
+      fetchSiteMetrics();
+    }
+
     return () => {
       sitesList.forEach((site) => {
-        const siteKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        const batteryKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Battery}-${site.id}`;
-        const backhaulKey = `stat-${user.orgName}-${user.id}-${Stats_Type.MainBackhaul}-${site.id}`;
-
-        PubSub.unsubscribe(siteKey);
-        PubSub.unsubscribe(batteryKey);
-        PubSub.unsubscribe(backhaulKey);
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+        PubSub.unsubscribe(sKey);
       });
     };
   }, [sitesList]);
+
+  useEffect(() => {
+    const setupSubscriptions = async () => {
+      const to = getUnixTime();
+      const from = to - 30; // Last 30 seconds
+
+      // Clear existing subscriptions
+      sitesList.forEach((site) => {
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+        PubSub.unsubscribe(sKey);
+      });
+
+      // Set up new subscriptions for each site
+      sitesList.forEach((site) => {
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+
+        // Initial subscription
+        MetricStatBySiteSubscription({
+          key: sKey,
+          siteId: site.id,
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.Site,
+          from,
+        });
+
+        // Subscribe to updates
+        PubSub.subscribe(sKey, handleSiteStatSubscription);
+
+        // Set up interval for periodic updates
+        const interval = setInterval(() => {
+          MetricStatBySiteSubscription({
+            key: sKey,
+            siteId: site.id,
+            userId: user.id,
+            url: env.METRIC_URL,
+            orgName: user.orgName,
+            type: Stats_Type.Site,
+            from: getUnixTime() - 30,
+          });
+        }, 30000); // Update every 30 seconds
+
+        // Store interval ID for cleanup
+        return () => {
+          clearInterval(interval);
+          PubSub.unsubscribe(sKey);
+        };
+      });
+    };
+
+    if (sitesList.length > 0) {
+      setupSubscriptions();
+    }
+
+    // Cleanup function
+    return () => {
+      sitesList.forEach((site) => {
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+        PubSub.unsubscribe(sKey);
+      });
+    };
+  }, [sitesList, user.id, user.orgName, env.METRIC_URL]);
 
   const handleCloseSiteConfig = () => {
     setSite(SITE_INIT);

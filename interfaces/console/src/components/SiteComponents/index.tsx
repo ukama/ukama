@@ -80,6 +80,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             xs: 'calc(100vh - 480px)',
             md: 'calc(100vh - 328px)',
           },
+          elevation: 0,
         }}
       >
         <Stack spacing={4}>
@@ -197,12 +198,6 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             >
               {portTitle}
             </Typography>
-            <Typography
-              component="span"
-              sx={{ cursor: 'pointer', fontWeight: 'bold', fontSize: '20px' }}
-            >
-              ⋮
-            </Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ mt: 2, ml: 2, p: 0 }}>
             {statusMetric && (
@@ -265,7 +260,6 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
         sx={{
           p: 3,
           borderRadius: 2,
-          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
           width: '100%',
         }}
       >
@@ -273,8 +267,10 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
           <Grid item xs={12} md={3}>
             <Stack spacing={2}>
               <SiteFlowDiagram
+                key={`flow-diagram-${activeKPI}`}
                 defaultOpacity={0.1}
                 onNodeClick={onComponentClick}
+                activeKPI={activeKPI}
               />
             </Stack>
           </Grid>
@@ -305,9 +301,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                       <Box
                         sx={{
                           p: 2,
-                          bgcolor: 'background.paper',
                           borderRadius: 1,
-                          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
                         }}
                       >
                         <Typography
