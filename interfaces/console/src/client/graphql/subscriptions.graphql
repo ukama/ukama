@@ -136,3 +136,13 @@ subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
     value
   }
 }
+
+subscription GetSiteMetricStatSub($data: SubSiteMetricsStatInput!) {
+  getSiteMetricStatSub(data: $data) {
+    msg
+    siteId
+    success
+    type
+    value
+  }
+}

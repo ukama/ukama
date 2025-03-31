@@ -5,17 +5,17 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { Stats_Type } from '@/client/graphql/generated/subscriptions';
+import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import PubSub from 'pubsub-js';
 
-interface IMetricStatSubscription {
+interface IMetricSubscription {
   url: string;
   key: string;
   from: number;
-  nodeId?: string;
+  siteId: string;
   userId: string;
   orgName: string;
-  type: Stats_Type;
+  type: Graphs_Type;
 }
 
 function parseEvent(eventStr: any) {
@@ -35,16 +35,15 @@ function parseEvent(eventStr: any) {
   return event;
 }
 
-export default async function MetricStatSubscription({
+export default async function MetricBySiteSubscription({
   url,
   key,
   from,
   type,
   userId,
-  nodeId,
+  siteId,
   orgName,
-  siteId = undefined,
-}: IMetricStatSubscription) {
+}: IMetricSubscription) {
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
   myHeaders.append('Connection', 'keep-alive');
@@ -59,25 +58,10 @@ export default async function MetricStatSubscription({
     headers: myHeaders,
   };
 
-  const controller = new AbortController();
-  const signal = controller.signal;
-
-  let fullUrl = `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`;
-
-  const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
-    (error) => {
-      if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
-      } else {
-        console.error('Fetch error:', error);
-      }
-    },
+  const res = await fetch(
+    `${url}/graphql?query=subscription+GetSiteMetricByTabSub%28%24data%3ASubSiteMetricByTabInput%21%29%7BgetSiteMetricByTabSub%28data%3A%24data%29%7Bmsg+siteId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteId%22%3A%22${siteId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=GetSiteMetricByTabSub&extensions=%7B%7D`,
+    requestOptions,
   );
-
-  if (!res || !res.ok) {
-    console.error('Network response was not ok');
-    return;
-  }
 
   const reader = res?.body?.getReader();
   const decoder = new TextDecoder('utf-8');

@@ -499,9 +499,9 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
 };
 
 const getPortInfo: Record<string, { number: number; desc: string }> = {
-  solar: { number: 3, desc: 'solar Controller' },
-  backhaul: { number: 4, desc: 'backhaul' },
-  node: { number: 1, desc: 'node' },
+  solar: { number: 3, desc: 'Solar Controller' },
+  backhaul: { number: 4, desc: 'Backhaul' },
+  node: { number: 1, desc: 'Node' },
 };
 const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
   if (type === 'uptime') {

@@ -203,21 +203,26 @@ const getGraphsKeyByType = (type: string): string[] => {
         "node_switch_port_power",
       ];
     case GRAPHS_TYPE.SITE:
-      return ["site_uptime_seconds"];
+      return [
+        "site_uptime_seconds",
+        "solar_panel_voltage",
+        "solar_panel_current",
+        "solar_panel_power",
+        "battery_charge_percentage",
+        "main_backhaul_latency",
+        "backhaul_speed",
+        "backhaul_switch_port_status",
+        "backhaul_switch_port_speed",
+        "backhaul_switch_port_power",
+        "solar_switch_port_status",
+        "solar_switch_port_speed",
+        "solar_switch_port_power",
+        "node_switch_port_status",
+        "node_switch_port_speed",
+        "node_switch_port_power",
+      ];
     default:
       return [];
-  }
-};
-const getSiteMetricStatByKeysByType = (type: STATS_TYPE): string[] => {
-  switch (type) {
-    case STATS_TYPE.SITE:
-      return ["site_uptime_seconds"];
-    case STATS_TYPE.BATTERY:
-      return ["battery_charge_percentage"];
-    case STATS_TYPE.MAIN_BACKHAUL:
-      return ["backhaul_speed"];
-    default:
-      return ["site_uptime_seconds"];
   }
 };
 
@@ -415,5 +420,4 @@ export {
   parseGatewayHeaders,
   parseHeaders,
   parseToken,
-  getSiteMetricStatByKeysByType,
 };

@@ -193,6 +193,24 @@ export class SubMetricsStatInput {
 }
 
 @InputType()
+export class SubSiteMetricsStatInput {
+  @Field()
+  siteId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
+}
+
+@InputType()
 export class GetMetricByTabInput {
   @Field()
   nodeId: string;
@@ -324,7 +342,21 @@ export class SubMetricByTabInput {
   nodeId: string;
 
   @Field()
-  siteId?: string;
+  orgName: string;
+
+  @Field(() => GRAPHS_TYPE)
+  type: GRAPHS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
+}
+@InputType()
+export class SubSiteMetricByTabInput {
+  @Field()
+  siteId: string;
 
   @Field()
   orgName: string;
