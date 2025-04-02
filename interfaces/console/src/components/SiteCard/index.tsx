@@ -63,7 +63,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
   };
 
   const navigateToDetails = () => {
-    router.push(`/console/sites/${siteId}`);
+    window.location.href = `/console/sites/${siteId}`;
   };
 
   const connectionStyles = getStatusStyles('uptime', siteUptimeSeconds ?? 0);

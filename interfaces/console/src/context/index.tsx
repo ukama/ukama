@@ -8,7 +8,7 @@
 'use client';
 
 import { getMetricsClient } from '@/client/client';
-import { TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
+import { SiteMetrics, TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
 const AppContext = createContext({
@@ -30,6 +30,11 @@ const AppContext = createContext({
     type: 'info',
     show: false,
   },
+
+  siteMetrics: {} as Record<string, Partial<SiteMetrics>>,
+  setSiteMetrics: (
+    fn: React.SetStateAction<Record<string, Partial<SiteMetrics>>>,
+  ) => {},
   setSnackbarMessage: (s: TSnackbarMessage) => {},
   network: {
     id: '',
@@ -116,6 +121,9 @@ const AppContextWrapper = ({
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [selectedDefaultSite, setSelectedDefaultSite] = useState('');
+  const [siteMetrics, setSiteMetrics] = useState<
+    Record<string, Partial<SiteMetrics>>
+  >({});
   const [snackbarMessage, setSnackbarMessage] = useState<TSnackbarMessage>({
     id: 'message-id',
     message: '',
@@ -138,6 +146,8 @@ const AppContextWrapper = ({
       setUser,
       token,
       setToken,
+      siteMetrics,
+      setSiteMetrics,
       network,
       setNetwork,
       pageName,
@@ -180,6 +190,7 @@ const AppContextWrapper = ({
       setSubscriptionClient,
       metaInfo,
       setMetaInfo,
+      siteMetrics,
     ],
   );
 

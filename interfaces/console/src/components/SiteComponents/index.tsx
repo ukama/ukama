@@ -143,7 +143,6 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     const statusMetric = portGroup.metrics.find((m: any) =>
       m.id.includes('switch_port_status'),
     );
-
     let isOn = false;
     if (statusMetric) {
       const metricValues = getMetricValue(statusMetric.id, metrics);
@@ -267,7 +266,6 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
           <Grid item xs={12} md={3}>
             <Stack spacing={2}>
               <SiteFlowDiagram
-                key={`flow-diagram-${activeKPI}`}
                 defaultOpacity={0.1}
                 onNodeClick={onComponentClick}
                 activeKPI={activeKPI}

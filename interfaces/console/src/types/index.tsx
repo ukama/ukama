@@ -23,9 +23,9 @@ export type MenuItemType = {
 };
 
 export interface SiteMetrics {
-  siteUptimeSeconds: number;
-  batteryPercentage: number;
-  backhaulSpeed: number;
+  siteUptimeSeconds?: number;
+  batteryPercentage?: number;
+  backhaulSpeed?: number;
 }
 
 export type UserSettingsMenuType = {
