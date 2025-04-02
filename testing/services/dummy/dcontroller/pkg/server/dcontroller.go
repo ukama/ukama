@@ -343,15 +343,33 @@ import (
      }
  
      monitorCtx, cancelFunc := context.WithCancel(context.Background())
-     s.monitoringStatus[siteId] = &MonitoringConfig{
+     monConfig := &MonitoringConfig{
          NodeId:     "",
          Active:     true,
          Context:    monitorCtx,
          CancelFunc: cancelFunc,
-         LastStatus: cenums.SCENARIO_BACKHAUL_DOWN,
+         LastStatus: cenums.SCENARIO_DEFAULT, 
+     }
+     s.monitoringStatus[siteId] = monConfig
+     s.mutex.RLock()
+     provider, exists := s.metricsProviders[siteId]
+     siteConfig, siteExists := s.siteConfigs[siteId]
+     s.mutex.RUnlock()
+ 
+     if exists && siteExists {
+         metrics, err := provider.GetMetrics(siteId)
+         if err == nil {
+             percentage := s.calculateBatteryPercentage(siteConfig.Profile, metrics.Battery.Voltage)
+             currentScenario := s.determineScenario(percentage, metrics.Backhaul.Speed)
+             monConfig.LastStatus = currentScenario
+             log.Infof("Initialized LastStatus to %s for site %s", currentScenario, siteId)
+         } else {
+             log.Warnf("Failed to get initial metrics for site %s: %v", siteId, err)
+         }
      }
  
      go s.monitorSiteStatusWorker(siteId, "")
+ 
  
      return &pb.MonitorSiteResponse{
          Success: true,

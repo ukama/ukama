@@ -47,8 +47,15 @@ const SITE_INIT = {
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const { setSnackbarMessage, network, user, env, subscriptionClient } =
-    useAppContext();
+  const {
+    setSnackbarMessage,
+    network,
+    user,
+    env,
+    subscriptionClient,
+    siteMetrics,
+    setSiteMetrics,
+  } = useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
@@ -56,10 +63,6 @@ export default function Page() {
     siteName: '',
     siteId: '',
   });
-
-  const [siteMetrics, setSiteMetrics] = useState<
-    Record<string, Partial<SiteMetrics>>
-  >({});
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -95,8 +98,11 @@ export default function Page() {
         parsedData.data.getSiteMetricStatSub;
 
       if (success && siteId) {
-        setSiteMetrics((prev) => {
-          const currentMetrics = prev[siteId] ? { ...prev[siteId] } : {};
+        setSiteMetrics((prev: Record<string, Partial<SiteMetrics>>) => {
+          const currentMetrics: Partial<SiteMetrics> = prev[siteId]
+            ? { ...prev[siteId] }
+            : {};
+
           switch (type) {
             case 'site_uptime_seconds':
               currentMetrics.siteUptimeSeconds = value[1];
@@ -108,6 +114,7 @@ export default function Page() {
               currentMetrics.backhaulSpeed = value[1];
               break;
           }
+
           return {
             ...prev,
             [siteId]: currentMetrics,
@@ -121,7 +128,7 @@ export default function Page() {
 
   const fetchSiteMetrics = async () => {
     const to = getUnixTime();
-    const from = to - 40; // Example time range: last 40 seconds
+    const from = to - 30;
 
     for (const site of sitesList) {
       try {
@@ -140,46 +147,30 @@ export default function Page() {
           },
         });
 
-        if (
-          res.data?.getSiteStat?.metrics &&
-          res.data.getSiteStat.metrics.length > 0
-        ) {
-          const siteId = res.data.getSiteStat.metrics[0].siteId;
-          const metrics = res.data.getSiteStat.metrics;
+        if (res.data?.getSiteStat?.metrics) {
+          setSiteMetrics((prev: Record<string, Partial<SiteMetrics>>) => {
+            const newMetrics = { ...prev };
+            const siteId = site.id;
+            res?.data?.getSiteStat.metrics.forEach((metric) => {
+              if (!newMetrics[siteId]) {
+                newMetrics[siteId] = {};
+              }
 
-          setSiteMetrics((prev) => {
-            const currentMetrics = prev[siteId] || {};
-            metrics.forEach((metric) => {
               switch (metric.type) {
                 case 'site_uptime_seconds':
-                  currentMetrics.siteUptimeSeconds = metric.value;
+                  newMetrics[siteId].siteUptimeSeconds = metric.value;
                   break;
                 case 'battery_charge_percentage':
-                  currentMetrics.batteryPercentage = metric.value;
+                  newMetrics[siteId].batteryPercentage = metric.value;
                   break;
                 case 'backhaul_speed':
-                  currentMetrics.backhaulSpeed = metric.value;
+                  newMetrics[siteId].backhaulSpeed = metric.value;
                   break;
               }
             });
-            return {
-              ...prev,
-              [siteId]: currentMetrics,
-            };
-          });
 
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
-          MetricStatBySiteSubscription({
-            key: sKey,
-            siteId: siteId,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Site,
-            from: getUnixTime() - 40,
+            return newMetrics;
           });
-
-          PubSub.subscribe(sKey, handleSiteStatSubscription);
         }
       } catch (error) {
         console.error(`Error fetching metrics for site ${site.id}:`, error);
