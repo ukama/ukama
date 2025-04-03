@@ -244,7 +244,7 @@ export default function Page() {
       if (res.getNetworks.networks.length === 0) {
         setSnackbarMessage({
           id: 'no-network-msg',
-          message: ' CASA create a network first.',
+          message: 'Create a network first.',
           type: 'warning' as AlertColor,
           show: true,
         });

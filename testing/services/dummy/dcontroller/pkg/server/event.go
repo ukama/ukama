@@ -159,7 +159,7 @@ func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeed
 	}
 	
 	if !resp.Success {
-		log.Warnf("UpdateMetrics returned unsuccessful for site %s: %s", siteId, resp.Message)
+		log.Warnf("UpdatePortStatus returned unsuccessful for site %s: %s", siteId, resp.Message)
 		return fmt.Errorf("failed to update port status: %s", resp.Message)
 	}
 	
@@ -170,7 +170,6 @@ func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeed
 			scenario = cenums.SCENARIO_NODE_OFF
 		case metrics.PORT_BACKHAUL:
 			scenario = cenums.SCENARIO_BACKHAUL_DOWN
-			scenario = cenums.SCENARIO_BACKHAUL_DOWNLINK_DOWN
 		case metrics.PORT_SOLAR:
 			scenario = cenums.SCENARIO_DEFAULT
 		default:
