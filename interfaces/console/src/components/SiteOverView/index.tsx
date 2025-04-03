@@ -27,13 +27,6 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   daysRange = 90,
   loading = false,
 }) => {
-  console.log('SITE OVERVIEW :', {
-    siteUptimeSeconds,
-    nodeUptimes,
-    daysRange,
-    loading,
-  });
-
   const totalPossibleSeconds = daysRange * 24 * 60 * 60;
 
   const siteUptimePercentage = (siteUptimeSeconds / totalPossibleSeconds) * 100;
