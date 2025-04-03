@@ -26,24 +26,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MetricsController_GetSiteMetrics_FullMethodName = "/ukama.dummy.dcontroller.v1.MetricsController/GetSiteMetrics"
-	MetricsController_StartMetrics_FullMethodName   = "/ukama.dummy.dcontroller.v1.MetricsController/StartMetrics"
-	MetricsController_UpdateMetrics_FullMethodName  = "/ukama.dummy.dcontroller.v1.MetricsController/UpdateMetrics"
-	MetricsController_MonitorSite_FullMethodName    = "/ukama.dummy.dcontroller.v1.MetricsController/MonitorSite"
-	MetricsController_StopMonitoring_FullMethodName = "/ukama.dummy.dcontroller.v1.MetricsController/StopMonitoring"
+	MetricsController_GetSiteMetrics_FullMethodName   = "/ukama.dummy.dcontroller.v1.MetricsController/GetSiteMetrics"
+	MetricsController_StartMetrics_FullMethodName     = "/ukama.dummy.dcontroller.v1.MetricsController/StartMetrics"
+	MetricsController_StopMetrics_FullMethodName      = "/ukama.dummy.dcontroller.v1.MetricsController/StopMetrics"
+	MetricsController_GetMetrics_FullMethodName       = "/ukama.dummy.dcontroller.v1.MetricsController/GetMetrics"
+	MetricsController_UpdatePortStatus_FullMethodName = "/ukama.dummy.dcontroller.v1.MetricsController/UpdatePortStatus"
 )
 
 // MetricsControllerClient is the client API for MetricsController service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetricsControllerClient interface {
-	// Get current metrics
 	GetSiteMetrics(ctx context.Context, in *GetSiteMetricsRequest, opts ...grpc.CallOption) (*GetSiteMetricsResponse, error)
 	StartMetrics(ctx context.Context, in *StartMetricsRequest, opts ...grpc.CallOption) (*StartMetricsResponse, error)
-	UpdateMetrics(ctx context.Context, in *UpdateMetricsRequest, opts ...grpc.CallOption) (*UpdateMetricsResponse, error)
-	// New monitoring services
-	MonitorSite(ctx context.Context, in *MonitorSiteRequest, opts ...grpc.CallOption) (*MonitorSiteResponse, error)
-	StopMonitoring(ctx context.Context, in *StopMonitoringRequest, opts ...grpc.CallOption) (*StopMonitoringResponse, error)
+	StopMetrics(ctx context.Context, in *StopMetricsRequest, opts ...grpc.CallOption) (*StopMetricsResponse, error)
+	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	UpdatePortStatus(ctx context.Context, in *UpdatePortStatusRequest, opts ...grpc.CallOption) (*UpdatePortStatusResponse, error)
 }
 
 type metricsControllerClient struct {
@@ -74,30 +72,30 @@ func (c *metricsControllerClient) StartMetrics(ctx context.Context, in *StartMet
 	return out, nil
 }
 
-func (c *metricsControllerClient) UpdateMetrics(ctx context.Context, in *UpdateMetricsRequest, opts ...grpc.CallOption) (*UpdateMetricsResponse, error) {
+func (c *metricsControllerClient) StopMetrics(ctx context.Context, in *StopMetricsRequest, opts ...grpc.CallOption) (*StopMetricsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateMetricsResponse)
-	err := c.cc.Invoke(ctx, MetricsController_UpdateMetrics_FullMethodName, in, out, cOpts...)
+	out := new(StopMetricsResponse)
+	err := c.cc.Invoke(ctx, MetricsController_StopMetrics_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *metricsControllerClient) MonitorSite(ctx context.Context, in *MonitorSiteRequest, opts ...grpc.CallOption) (*MonitorSiteResponse, error) {
+func (c *metricsControllerClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(MonitorSiteResponse)
-	err := c.cc.Invoke(ctx, MetricsController_MonitorSite_FullMethodName, in, out, cOpts...)
+	out := new(GetMetricsResponse)
+	err := c.cc.Invoke(ctx, MetricsController_GetMetrics_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *metricsControllerClient) StopMonitoring(ctx context.Context, in *StopMonitoringRequest, opts ...grpc.CallOption) (*StopMonitoringResponse, error) {
+func (c *metricsControllerClient) UpdatePortStatus(ctx context.Context, in *UpdatePortStatusRequest, opts ...grpc.CallOption) (*UpdatePortStatusResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StopMonitoringResponse)
-	err := c.cc.Invoke(ctx, MetricsController_StopMonitoring_FullMethodName, in, out, cOpts...)
+	out := new(UpdatePortStatusResponse)
+	err := c.cc.Invoke(ctx, MetricsController_UpdatePortStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +106,11 @@ func (c *metricsControllerClient) StopMonitoring(ctx context.Context, in *StopMo
 // All implementations must embed UnimplementedMetricsControllerServer
 // for forward compatibility.
 type MetricsControllerServer interface {
-	// Get current metrics
 	GetSiteMetrics(context.Context, *GetSiteMetricsRequest) (*GetSiteMetricsResponse, error)
 	StartMetrics(context.Context, *StartMetricsRequest) (*StartMetricsResponse, error)
-	UpdateMetrics(context.Context, *UpdateMetricsRequest) (*UpdateMetricsResponse, error)
-	// New monitoring services
-	MonitorSite(context.Context, *MonitorSiteRequest) (*MonitorSiteResponse, error)
-	StopMonitoring(context.Context, *StopMonitoringRequest) (*StopMonitoringResponse, error)
+	StopMetrics(context.Context, *StopMetricsRequest) (*StopMetricsResponse, error)
+	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	UpdatePortStatus(context.Context, *UpdatePortStatusRequest) (*UpdatePortStatusResponse, error)
 	mustEmbedUnimplementedMetricsControllerServer()
 }
 
@@ -131,14 +127,14 @@ func (UnimplementedMetricsControllerServer) GetSiteMetrics(context.Context, *Get
 func (UnimplementedMetricsControllerServer) StartMetrics(context.Context, *StartMetricsRequest) (*StartMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartMetrics not implemented")
 }
-func (UnimplementedMetricsControllerServer) UpdateMetrics(context.Context, *UpdateMetricsRequest) (*UpdateMetricsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateMetrics not implemented")
+func (UnimplementedMetricsControllerServer) StopMetrics(context.Context, *StopMetricsRequest) (*StopMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopMetrics not implemented")
 }
-func (UnimplementedMetricsControllerServer) MonitorSite(context.Context, *MonitorSiteRequest) (*MonitorSiteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MonitorSite not implemented")
+func (UnimplementedMetricsControllerServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
 }
-func (UnimplementedMetricsControllerServer) StopMonitoring(context.Context, *StopMonitoringRequest) (*StopMonitoringResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StopMonitoring not implemented")
+func (UnimplementedMetricsControllerServer) UpdatePortStatus(context.Context, *UpdatePortStatusRequest) (*UpdatePortStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdatePortStatus not implemented")
 }
 func (UnimplementedMetricsControllerServer) mustEmbedUnimplementedMetricsControllerServer() {}
 func (UnimplementedMetricsControllerServer) testEmbeddedByValue()                           {}
@@ -197,56 +193,56 @@ func _MetricsController_StartMetrics_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MetricsController_UpdateMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateMetricsRequest)
+func _MetricsController_StopMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopMetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MetricsControllerServer).UpdateMetrics(ctx, in)
+		return srv.(MetricsControllerServer).StopMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MetricsController_UpdateMetrics_FullMethodName,
+		FullMethod: MetricsController_StopMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetricsControllerServer).UpdateMetrics(ctx, req.(*UpdateMetricsRequest))
+		return srv.(MetricsControllerServer).StopMetrics(ctx, req.(*StopMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MetricsController_MonitorSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MonitorSiteRequest)
+func _MetricsController_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MetricsControllerServer).MonitorSite(ctx, in)
+		return srv.(MetricsControllerServer).GetMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MetricsController_MonitorSite_FullMethodName,
+		FullMethod: MetricsController_GetMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetricsControllerServer).MonitorSite(ctx, req.(*MonitorSiteRequest))
+		return srv.(MetricsControllerServer).GetMetrics(ctx, req.(*GetMetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MetricsController_StopMonitoring_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StopMonitoringRequest)
+func _MetricsController_UpdatePortStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatePortStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MetricsControllerServer).StopMonitoring(ctx, in)
+		return srv.(MetricsControllerServer).UpdatePortStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MetricsController_StopMonitoring_FullMethodName,
+		FullMethod: MetricsController_UpdatePortStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetricsControllerServer).StopMonitoring(ctx, req.(*StopMonitoringRequest))
+		return srv.(MetricsControllerServer).UpdatePortStatus(ctx, req.(*UpdatePortStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -267,16 +263,16 @@ var MetricsController_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MetricsController_StartMetrics_Handler,
 		},
 		{
-			MethodName: "UpdateMetrics",
-			Handler:    _MetricsController_UpdateMetrics_Handler,
+			MethodName: "StopMetrics",
+			Handler:    _MetricsController_StopMetrics_Handler,
 		},
 		{
-			MethodName: "MonitorSite",
-			Handler:    _MetricsController_MonitorSite_Handler,
+			MethodName: "GetMetrics",
+			Handler:    _MetricsController_GetMetrics_Handler,
 		},
 		{
-			MethodName: "StopMonitoring",
-			Handler:    _MetricsController_StopMonitoring_Handler,
+			MethodName: "UpdatePortStatus",
+			Handler:    _MetricsController_UpdatePortStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

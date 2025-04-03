@@ -171,14 +171,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         });
       },
     });
-
   const handleSwitchChange = async (
     portNumber: number,
     currentStatus: boolean,
   ) => {
     const newStatus = !currentStatus;
     try {
-      await updateSwitchPort({
+      const result = await updateSwitchPort({
         variables: {
           data: {
             port: portNumber,
@@ -188,12 +187,38 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         },
       });
 
-      setSnackbarMessage({
-        id: 'update-switch-success',
-        message: `Port ${portNumber} status updated successfully`,
-        type: 'success',
-        show: true,
-      });
+      if (result.data?.toggleInternetSwitch?.success) {
+        setSnackbarMessage({
+          id: 'update-switch-success',
+          message: `Port ${portNumber} status updated successfully to ${newStatus ? 'On' : 'Off'}`,
+          type: 'success',
+          show: true,
+        });
+
+        if (metricFrom > 0) {
+          getMetricBySite({
+            variables: {
+              data: {
+                step: 30,
+                siteId: id,
+                userId: user.id,
+                type: graphType,
+                from: metricFrom,
+                orgName: user.orgName,
+                withSubscription: false,
+                to: metricFrom + METRIC_RANGE_10800,
+              },
+            },
+          });
+        }
+      } else {
+        setSnackbarMessage({
+          id: 'update-switch-error',
+          message: `Failed to update Port ${portNumber} status. Please try again.`,
+          type: 'error',
+          show: true,
+        });
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'An unknown error occurred';

@@ -45,7 +45,6 @@ const SiteCard: React.FC<SiteCardProps> = ({
   handleSiteNameUpdate,
   loading = false,
 }) => {
-  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
