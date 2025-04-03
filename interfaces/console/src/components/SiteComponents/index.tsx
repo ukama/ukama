@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -55,13 +55,54 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   const hasMetricsData =
     metrics && metrics.metrics && metrics.metrics.length > 0;
 
-  const [expandedPorts, setExpandedPorts] = React.useState<
+  const [expandedPorts, setExpandedPorts] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  const [disabledSwitches, setDisabledSwitches] = useState<
     Record<string, boolean>
   >({});
 
-  const [disabledSwitches, setDisabledSwitches] = React.useState<
+  const [localSwitchStatus, setLocalSwitchStatus] = useState<
     Record<string, boolean>
   >({});
+
+  useEffect(() => {
+    if (hasMetricsData && activeSection === 'SWITCH') {
+      const portGroups = getPortMetrics();
+
+      const newSwitchStatus: Record<string, boolean> = {};
+
+      portGroups.forEach((portGroup) => {
+        const statusMetric = portGroup.metrics.find((m: any) =>
+          m.id.includes('switch_port_status'),
+        );
+
+        if (statusMetric) {
+          const metricValues = getMetricValue(statusMetric.id, metrics);
+          if (metricValues && metricValues.length > 0) {
+            const latestValue = metricValues[metricValues.length - 1];
+            let isOn = false;
+
+            if (Array.isArray(latestValue)) {
+              isOn = latestValue[1] === 1;
+            } else {
+              isOn = latestValue === 1;
+            }
+
+            newSwitchStatus[portGroup.id] = isOn;
+          }
+        }
+      });
+
+      if (Object.keys(newSwitchStatus).length > 0) {
+        setLocalSwitchStatus((prev) => ({
+          ...prev,
+          ...newSwitchStatus,
+        }));
+      }
+    }
+  }, [metrics, activeSection, hasMetricsData]);
 
   const togglePortExpand = (portId: string) => {
     setExpandedPorts((prev) => ({
@@ -143,23 +184,17 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     const statusMetric = portGroup.metrics.find((m: any) =>
       m.id.includes('switch_port_status'),
     );
-    let isOn = false;
-    if (statusMetric) {
-      const metricValues = getMetricValue(statusMetric.id, metrics);
-      if (metricValues && metricValues.length > 0) {
-        const latestValue = metricValues[metricValues.length - 1];
-        if (Array.isArray(latestValue)) {
-          isOn = latestValue[1] === 1;
-        } else {
-          isOn = latestValue === 1;
-        }
-      }
-    }
 
+    const isOn = localSwitchStatus[portGroup.id] ?? false;
     const isDisabled = disabledSwitches[portGroup.id] || false;
 
     const handleToggle = () => {
       if (onSwitchChange) {
+        setLocalSwitchStatus((prev) => ({
+          ...prev,
+          [portGroup.id]: !isOn,
+        }));
+
         setDisabledSwitches((prev) => ({
           ...prev,
           [portGroup.id]: true,
