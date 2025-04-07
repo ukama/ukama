@@ -101,15 +101,6 @@ const Page = () => {
   });
 
   useEffect(() => {
-    if (query.size > 0) {
-      const iccid = query.get('iccid');
-      setTimeout(() => {
-        setSearch(iccid ?? '');
-      }, 1000);
-    }
-  }, []);
-
-  useEffect(() => {
     if (search.length > 3) {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
@@ -166,6 +157,10 @@ const Page = () => {
       setSubscriber({
         subscribers: [...data.getSubscribersByNetwork.subscribers],
       });
+      if (query.size > 0) {
+        const iccid = query.get('iccid');
+        setSearch(iccid ?? '');
+      }
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -272,23 +267,22 @@ const Page = () => {
       },
     });
 
-  const { data: simStatData, refetch: refetchSimPoolStats } =
-    useGetSimPoolStatsQuery({
-      variables: {
-        data: {
-          type: env.SIM_TYPE as Sim_Types,
-        },
+  useGetSimPoolStatsQuery({
+    variables: {
+      data: {
+        type: env.SIM_TYPE as Sim_Types,
       },
-      fetchPolicy: 'cache-and-network',
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'sim-stats-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+    },
+    fetchPolicy: 'cache-and-network',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-stats-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
