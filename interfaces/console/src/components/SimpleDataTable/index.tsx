@@ -99,7 +99,18 @@ const renderCellContent = ({
   switch (column.id) {
     case 'id':
       return isIdHyperlink ? (
-        <Link href={`${hyperlinkPrefix}/${row[column.id]}`} unselectable="on">
+        <Link href={`${hyperlinkPrefix}${row[column.id]}`} unselectable="on">
+          {row[column.id]}
+        </Link>
+      ) : (
+        <Typography variant="body2">{row[column.id]}</Typography>
+      );
+    case 'iccid':
+      return isIdHyperlink && row['isAllocated'] ? (
+        <Link
+          href={`${hyperlinkPrefix}iccid=${row[column.id]}`}
+          unselectable="on"
+        >
           {row[column.id]}
         </Link>
       ) : (

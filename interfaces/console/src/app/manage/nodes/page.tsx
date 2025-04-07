@@ -129,7 +129,7 @@ const Page = () => {
               dataset={data}
               isIdHyperlink={true}
               columns={MANAGE_NODE_POOL_COLUMN}
-              hyperlinkPrefix={'/console/nodes'}
+              hyperlinkPrefix={'/console/nodes/'}
             />
           )}
         </Box>
