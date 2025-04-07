@@ -39,11 +39,23 @@ interface SimpleDataTableInterface {
   dataKey?: string;
   dataset: any;
   height?: string;
+  isIdHyperlink?: boolean;
   columns: ColumnsWithOptions[];
   networkList?: any;
   handleCreateNetwork?: any;
   handleDeleteElement?: any;
   showActionButton?: boolean;
+  hyperlinkPrefix?: string;
+}
+
+interface TableCellProps {
+  row: any;
+  isIdHyperlink?: boolean;
+  handleCreateNetwork: any;
+  hyperlinkPrefix?: string;
+  column: ColumnsWithOptions;
+  networkList: string[] | [] | undefined;
+  handleDeleteElement: (id: string) => void;
 }
 
 const MemoizedTableHeader = React.memo(
@@ -72,30 +84,29 @@ const MemoizedTableHeader = React.memo(
 );
 MemoizedTableHeader.displayName = 'MemoizedTableHeader';
 
-const SimpleTableCell = ({
+const renderCellContent = ({
   column,
   row,
+  hyperlinkPrefix,
+  isIdHyperlink,
   handleCreateNetwork,
   handleDeleteElement,
   networkList,
-}: {
-  column: ColumnsWithOptions;
-  row: any;
-  handleCreateNetwork: any;
-  handleDeleteElement: (id: string) => void;
-  networkList: string[] | [] | undefined;
-}) => {
+}: TableCellProps) => {
   const handleDeleteRow = () => {
     handleDeleteElement(row.id);
   };
-  return (
-    <TableCell
-      sx={{
-        padding: 1,
-        fontSize: '0.875rem',
-      }}
-    >
-      {column.id === 'role' ? (
+  switch (column.id) {
+    case 'id':
+      return isIdHyperlink ? (
+        <Link href={`${hyperlinkPrefix}/${row[column.id]}`} unselectable="on">
+          {row[column.id]}
+        </Link>
+      ) : (
+        <Typography variant="body2">{row[column.id]}</Typography>
+      );
+    case 'role':
+      return (
         <div>
           <Chip
             color="info"
@@ -103,11 +114,15 @@ const SimpleTableCell = ({
             label={roleEnumToString(row[column.id])}
           />
         </div>
-      ) : column.id === 'pdf' ? (
+      );
+    case 'pdf':
+      return (
         <Link target="_blank" underline="hover" href={row[column.id]}>
           View as PDF
         </Link>
-      ) : column.id === 'network' ? (
+      );
+    case 'network':
+      return (
         <ChipDropdown
           onCreateNetwork={handleCreateNetwork}
           menu={
@@ -115,15 +130,21 @@ const SimpleTableCell = ({
             []
           }
         />
-      ) : column.id === 'edit' ? (
+      );
+    case 'edit':
+      return (
         <IconButton onClick={() => {}}>
           <EditIcon />
         </IconButton>
-      ) : column.id === 'delete' ? (
+      );
+    case 'delete':
+      return (
         <IconButton onClick={handleDeleteRow}>
           <DeleteIcon />
         </IconButton>
-      ) : column.id === 'status' ? (
+      );
+    case 'status':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -132,17 +153,23 @@ const SimpleTableCell = ({
           }}
           label={inviteStatusEnumToString(row[column.id])}
         />
-      ) : column.id === 'simType' ? (
+      );
+    case 'simType':
+      return (
         <Chip
           label={getSimValuefromSimType(row[column.id])}
           sx={{ color: 'white' }}
-          color={'info'}
+          color="info"
         />
-      ) : column.id === 'isPhysical' ? (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    case 'isPhysical':
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id] === 'true' ? 'pSIM' : 'eSIM'}
         </Typography>
-      ) : column.id === 'connectivity' ? (
+      );
+    case 'connectivity':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -151,7 +178,9 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
-      ) : column.id === 'state' ? (
+      );
+    case 'state':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -160,18 +189,32 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
-      ) : column.id === 'isAllocated' ? (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    case 'isAllocated':
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id] === true ? 'Assigned' : 'Unassigned'}
         </Typography>
-      ) : (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    default:
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id]}
         </Typography>
-      )}
-    </TableCell>
-  );
+      );
+  }
 };
+
+const SimpleTableCell = (tprops: TableCellProps) => (
+  <TableCell
+    sx={{
+      padding: 1,
+      fontSize: '0.875rem',
+    }}
+  >
+    {renderCellContent(tprops)}
+  </TableCell>
+);
 
 const SimpleDataTable = React.memo(
   ({
@@ -179,6 +222,8 @@ const SimpleDataTable = React.memo(
     columns,
     dataset,
     height,
+    hyperlinkPrefix = '/',
+    isIdHyperlink = false,
     showActionButton = false,
     networkList,
     handleCreateNetwork,
@@ -206,12 +251,14 @@ const SimpleDataTable = React.memo(
               <TableRow key={row[dataKey]} sx={{}}>
                 {columns?.map((column: ColumnsWithOptions, index: number) => (
                   <SimpleTableCell
-                    key={`$cell-${index}-${column.id}`}
-                    column={column}
                     row={row}
+                    column={column}
+                    networkList={networkList}
+                    isIdHyperlink={isIdHyperlink}
+                    hyperlinkPrefix={hyperlinkPrefix}
+                    key={`$cell-${index}-${column.id}`}
                     handleCreateNetwork={handleCreateNetwork}
                     handleDeleteElement={handleDeleteElement}
-                    networkList={networkList}
                   />
                 ))}
               </TableRow>
