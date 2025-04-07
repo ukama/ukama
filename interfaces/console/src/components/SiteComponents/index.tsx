@@ -23,7 +23,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LineChart from '../LineChart';
 import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
-import LoadingWrapper from '@/components/LoadingWrapper';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import NodeStatusDisplay from '@/components/NodeStatusDisplay';
 import { SectionData } from '@/constants';
@@ -116,6 +115,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       <Paper
         sx={{
           p: 3,
+          pr: 5, // Added more padding on the right
           overflow: 'auto',
           height: {
             xs: 'calc(100vh - 480px)',
@@ -309,75 +309,68 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
           </Grid>
 
           <Grid item xs={12} md={9}>
-            <LoadingWrapper
-              radius="small"
-              width="100%"
-              isLoading={metricsLoading && activeKPI !== 'node'}
-            >
-              {activeKPI === 'node' ? (
-                <NodeStatusDisplay nodeUptimes={nodeUptimes} />
-              ) : !hasMetricsData && !metricsLoading ? (
-                renderSkeletonLoading()
-              ) : (
-                <Paper
-                  sx={{
-                    p: 3,
-                    overflow: 'auto',
-                    height: {
-                      xs: 'calc(100vh - 480px)',
-                      md: 'calc(100vh - 328px)',
-                    },
-                  }}
-                >
-                  {activeSection === 'SWITCH' && (
-                    <Box sx={{ mb: 4 }}>
-                      <Box
+            {activeKPI === 'node' ? (
+              <NodeStatusDisplay nodeUptimes={nodeUptimes} />
+            ) : (
+              <Paper
+                sx={{
+                  p: 3,
+                  pr: 5, // Added more padding on the right
+                  overflow: 'auto',
+                  height: {
+                    xs: 'calc(100vh - 480px)',
+                    md: 'calc(100vh - 328px)',
+                  },
+                }}
+              >
+                {activeSection === 'SWITCH' && (
+                  <Box sx={{ mb: 4 }}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        fontWeight="medium"
                         sx={{
-                          p: 2,
-                          borderRadius: 1,
+                          mb: 2,
+                          pb: 1,
+                          borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
                         }}
                       >
-                        <Typography
-                          variant="h6"
-                          fontWeight="medium"
-                          sx={{
-                            mb: 2,
-                            pb: 1,
-                            borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-                          }}
-                        >
-                          Switch ports ({getPortMetrics().length})
-                        </Typography>
+                        Switch ports ({getPortMetrics().length})
+                      </Typography>
 
-                        {getPortMetrics().map((portGroup) =>
-                          renderPortItem(portGroup),
-                        )}
-                      </Box>
+                      {getPortMetrics().map((portGroup) =>
+                        renderPortItem(portGroup),
+                      )}
                     </Box>
-                  )}
+                  </Box>
+                )}
 
-                  {activeSection !== 'SWITCH' && (
-                    <Stack spacing={4}>
-                      {sections[activeSection]?.map((config) => (
-                        <LineChart
-                          from={metricFrom}
-                          topic={config.id}
-                          title={config.name}
-                          yunit={config.unit}
-                          loading={metricsLoading}
-                          key={config.id}
-                          tickInterval={config.tickInterval}
-                          tickPositions={config.tickPositions}
-                          hasData={isMetricValue(config.id, metrics)}
-                          initData={getMetricValue(config.id, metrics)}
-                          format={config.format}
-                        />
-                      ))}
-                    </Stack>
-                  )}
-                </Paper>
-              )}
-            </LoadingWrapper>
+                {activeSection !== 'SWITCH' && (
+                  <Stack spacing={4}>
+                    {sections[activeSection]?.map((config) => (
+                      <LineChart
+                        from={metricFrom}
+                        topic={config.id}
+                        title={config.name}
+                        yunit={config.unit}
+                        loading={metricsLoading}
+                        key={config.id}
+                        tickInterval={config.tickInterval}
+                        tickPositions={config.tickPositions}
+                        hasData={isMetricValue(config.id, metrics)}
+                        initData={getMetricValue(config.id, metrics)}
+                        format={config.format}
+                      />
+                    ))}
+                  </Stack>
+                )}
+              </Paper>
+            )}
           </Grid>
         </Grid>
       </Card>

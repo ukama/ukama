@@ -19,6 +19,7 @@ interface SiteOverviewProps {
   nodeUptimes?: NodeUptime[];
   daysRange?: number;
   loading?: boolean;
+  installationDate?: Date;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
@@ -26,10 +27,19 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   nodeUptimes = [],
   daysRange = 90,
   loading = false,
+  installationDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
 }) => {
-  const totalPossibleSeconds = daysRange * 24 * 60 * 60;
+  const secondsSinceInstallation = Math.min(
+    daysRange * 24 * 60 * 60,
+    (Date.now() - installationDate.getTime()) / 1000,
+  );
 
-  const siteUptimePercentage = (siteUptimeSeconds / totalPossibleSeconds) * 100;
+  const daysSinceInstallation = Math.ceil(
+    secondsSinceInstallation / (24 * 60 * 60),
+  );
+
+  const siteUptimePercentage =
+    (siteUptimeSeconds / secondsSinceInstallation) * 100;
 
   let averageNodeUptimePercentage = 0;
   if (nodeUptimes.length > 0) {
@@ -42,9 +52,10 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
       totalNodeUptimeSeconds / nodeUptimes.length;
 
     averageNodeUptimePercentage =
-      (averageNodeUptimeSeconds / totalPossibleSeconds) * 100;
+      (averageNodeUptimeSeconds / secondsSinceInstallation) * 100;
   }
 
+  // Calculate overall uptime percentage
   let overallUptimePercentage = siteUptimePercentage;
   if (nodeUptimes.length > 0) {
     overallUptimePercentage =
@@ -53,17 +64,49 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
 
   overallUptimePercentage = Math.min(Math.max(0, overallUptimePercentage), 100);
 
+  // Calculate individual node percentages
   const nodePercentages = nodeUptimes.map((node) => ({
     id: node.id,
-    percentage: (node.uptimeSeconds / totalPossibleSeconds) * 100,
+    percentage: (node.uptimeSeconds / secondsSinceInstallation) * 100,
   }));
 
-  const recentPeriodBars = Array(30).fill(overallUptimePercentage);
-  const pastPeriodBars = Array(30).fill(overallUptimePercentage);
+  // Generate data for the bars
+  const generateBarData = (startDay: number, count: number) => {
+    const now = Date.now();
+    const bars = [];
 
-  const renderBar = (value: number, index: number) => {
-    const heightPercentage = value;
+    for (let i = 0; i < count; i++) {
+      const daysSinceStart = startDay - i;
+      const date = new Date(now - daysSinceStart * 24 * 60 * 60 * 1000);
+      const isAfterInstallation = date >= installationDate;
+      const isInstallationDay =
+        date.getDate() === installationDate.getDate() &&
+        date.getMonth() === installationDate.getMonth() &&
+        date.getFullYear() === installationDate.getFullYear();
+
+      const value = isAfterInstallation ? overallUptimePercentage : 0;
+
+      bars.push({
+        value,
+        isAfterInstallation,
+        isInstallationDay,
+        daysSinceStart,
+      });
+    }
+
+    return bars;
+  };
+
+  const recentPeriodBars = generateBarData(30, 30);
+  const pastPeriodBars = generateBarData(daysRange, 30);
+
+  const renderBar = (barData: any, index: number) => {
+    const { value, isAfterInstallation, isInstallationDay } = barData;
+
+    const heightPercentage = isAfterInstallation ? value : 0;
     const barHeight = (heightPercentage / 100) * 75;
+
+    const barColor = heightPercentage >= 90 ? colors.lightGreen : colors.red;
 
     return (
       <Box
@@ -83,16 +126,31 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
             bottom: 0,
             width: '100%',
             height: `${barHeight}px`,
-            bgcolor: colors.lightGreen,
+            bgcolor: isAfterInstallation ? barColor : 'transparent',
             borderRadius: 1,
           }}
         />
+
+        {isInstallationDay && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
+              height: '100%',
+              bgcolor: 'rgba(0, 0, 0, 0.3)',
+              borderRadius: 1,
+              zIndex: 1,
+            }}
+          />
+        )}
       </Box>
     );
   };
 
   const createTooltipText = () => {
-    let text = `Site Uptime: ${siteUptimePercentage.toFixed(1)}%`;
+    let text = `Site Uptime: ${siteUptimePercentage.toFixed(1)}%\n`;
+    text += `Calculated over ${daysSinceInstallation} days since installation\n`;
 
     if (nodeUptimes.length > 0) {
       text += `\nAverage Node Uptime: ${averageNodeUptimePercentage.toFixed(1)}%`;
@@ -152,7 +210,8 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
               mb: 4,
             }}
           >
-            {overallUptimePercentage.toFixed(1)}% uptime over {daysRange} days
+            {overallUptimePercentage.toFixed(1)}% uptime over{' '}
+            {daysSinceInstallation} days
           </Typography>
         </Tooltip>
 
@@ -197,7 +256,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
               {daysRange} days ago
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {Math.floor(daysRange / 3)} days ago
+              31 days ago
             </Typography>
           </Box>
         </Box>

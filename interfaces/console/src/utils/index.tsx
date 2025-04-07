@@ -27,6 +27,8 @@ import {
 } from '@/constants';
 import colors from '@/theme/colors';
 import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import Battery50Icon from '@mui/icons-material/Battery50';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
@@ -169,6 +171,11 @@ const getDataUsageSymbol = (dataUnit: string): string => {
   }
 };
 
+const getPortInfo: Record<string, { number: number; desc: string }> = {
+  solar: { number: 2, desc: 'Solar Controller' },
+  backhaul: { number: 3, desc: 'Backhaul' },
+  node: { number: 1, desc: 'Node' },
+};
 const getDataPlanUsage = (
   duration: string,
   currency: string,
@@ -341,17 +348,6 @@ function isValidLongitude(longitude: number) {
   return true;
 }
 
-export const formatKPIValue = (value: string, type: string): any => {
-  switch (type) {
-    case 'number':
-      return Math.floor(parseFloat(value));
-    case 'decimal':
-      return parseFloat(value).toFixed(2);
-    default:
-      return value.toString();
-  }
-};
-
 const isValidLatLng = (position: LatLngTuple): boolean => {
   const [latitude, longitude] = position || [0, 0];
   return (
@@ -487,7 +483,7 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
     color:
       index === 0
         ? colors.dullGrey
-        : index === arr.length - 2 || index === arr.length - 3
+        : index === arr.length - 2
           ? colors.dullRed
           : index === arr.length - 1
             ? colors.white
@@ -498,11 +494,92 @@ export const generatePlotLines = (values: number[] | undefined): any[] => {
   }));
 };
 
-const getPortInfo: Record<string, { number: number; desc: string }> = {
-  solar: { number: 2, desc: 'Solar Controller' },
-  backhaul: { number: 3, desc: 'Backhaul' },
-  node: { number: 1, desc: 'Node' },
+export const formatKPIValue = (value: string, type: string): any => {
+  switch (type) {
+    case 'number':
+      return Math.floor(parseFloat(value));
+    case 'decimal':
+      return parseFloat(value).toFixed(2);
+    default:
+      return value.toString();
+  }
 };
+
+const getConnectionStyles = (connectionStatus: string) => {
+  switch (connectionStatus) {
+    case 'Online':
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+    case 'Offline':
+      return {
+        color: colors.red,
+        icon: <RouterIcon sx={{ color: colors.red }} />,
+      };
+    case 'Warning':
+      return {
+        color: colors.orange,
+        icon: <RouterIcon sx={{ color: colors.orange }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getBatteryStyles = (batteryStatus: string) => {
+  switch (batteryStatus) {
+    case 'Charged':
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    case 'Low':
+      return {
+        color: colors.red,
+        icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
+const getSignalStyles = (signalStrength: string) => {
+  switch (signalStrength) {
+    case 'Strong':
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+    case 'Medium':
+      return {
+        color: colors.orange,
+        icon: <SignalCellular2BarIcon sx={{ color: colors.orange }} />,
+      };
+    case 'Weak':
+      return {
+        color: colors.red,
+        icon: <SignalCellular1BarIcon sx={{ color: colors.red }} />,
+      };
+    default:
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+  }
+};
+
 const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
   if (type === 'uptime') {
     return value <= 0
@@ -581,13 +658,16 @@ export {
   formatBytes,
   formatBytesToMB,
   formatTime,
+  getBatteryStyles,
+  getConnectionStyles,
   getDataPlanUsage,
   getDuration,
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
-  getPortInfo,
+  getSignalStyles,
   getSimValuefromSimType,
+  getPortInfo,
   getStatusStyles,
   getTitleFromPath,
   getUnixTime,
