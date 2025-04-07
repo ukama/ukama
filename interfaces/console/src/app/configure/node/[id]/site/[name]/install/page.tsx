@@ -220,7 +220,7 @@ const SiteConfigure = ({ params }: IPage) => {
     if (!accessId || !spectrumId) {
       setSnackbarMessage({
         id: 'add-site-error',
-        message: 'Access or Spectrum components not found',
+        message: 'Node or Spectrum components not found',
         type: 'error' as AlertColor,
         show: true,
       });

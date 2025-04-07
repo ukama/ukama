@@ -23,27 +23,26 @@ import {
   MetricsRes,
   Stats_Type,
   useGetMetricBySiteLazyQuery,
-  useGetSiteStatLazyQuery,
   useGetMetricsStatLazyQuery,
+  useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteComponents from '@/components/SiteComponents';
-import { SectionData, STAT_STEP_29 } from '@/constants/index';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
-import { SITE_KPIS } from '@/constants';
-import { METRIC_RANGE_10800 } from '@/constants';
+import { METRIC_RANGE_10800, SITE_KPIS } from '@/constants';
+import { SectionData, STAT_STEP_29 } from '@/constants/index';
 import { useAppContext } from '@/context';
+import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { TMetricResDto, TSiteForm } from '@/types';
-import { useFetchAddress } from '@/utils/useFetchAddress';
 import { getUnixTime } from '@/utils';
+import { useFetchAddress } from '@/utils/useFetchAddress';
 import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
-import { formatISO, set } from 'date-fns';
+import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),

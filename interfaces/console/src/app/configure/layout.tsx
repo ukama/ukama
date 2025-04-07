@@ -95,12 +95,11 @@ const ConfigureLayout = ({
       if (!component?.id && flow !== ONBOARDING_FLOW) {
         setSnackbarMessage({
           id: 'components-msg',
-          message: 'Access point not found in inventory.',
+          message: 'Node not found in inventory.',
           type: 'warning',
           show: true,
         });
         router.push('/console/home');
-        return;
       }
 
       mapComponents(data.getComponentsByUserId);
