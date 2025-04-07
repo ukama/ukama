@@ -67,12 +67,6 @@ const PlanCard = ({
                 cid={'data-table-action-popover'}
                 menuOptions={[
                   { id: 0, title: 'Edit', route: 'edit', Icon: null },
-                  {
-                    id: 1,
-                    title: 'Delete',
-                    route: 'delete',
-                    Icon: null,
-                  },
                 ]}
                 handleItemClick={(type: string) =>
                   handleOptionMenuItemAction &&
