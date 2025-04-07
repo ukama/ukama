@@ -57,7 +57,7 @@ const Page = () => {
   const [search, setSearch] = useState<string>('');
   const { setSnackbarMessage, network, env } = useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
-  const [isToPupData, setIsToPupData] = useState<boolean>(false);
+  const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
@@ -349,7 +349,7 @@ const Page = () => {
       (subscriber) => subscriber.uuid === id,
     );
 
-    setIsToPupData(true);
+    setIsTopupData(true);
 
     getSubscriber({
       variables: {
@@ -452,14 +452,14 @@ const Page = () => {
         });
         break;
       case 'topUp':
-        setIsToPupData(true);
+        setIsTopupData(true);
         break;
       default:
         break;
     }
   };
   const handleCloseTopUp = () => {
-    setIsToPupData(false);
+    setIsTopupData(false);
   };
 
   const handleTopUp = async (simId: string, planIds: string[]) => {
@@ -478,10 +478,10 @@ const Page = () => {
         },
       });
 
-      setIsToPupData(false);
+      setIsTopupData(false);
     } catch (error) {
       console.error('Error handling top up:', error);
-      setIsToPupData(false);
+      setIsTopupData(false);
       throw error;
     }
   };
@@ -732,7 +732,7 @@ const Page = () => {
         currentSite={'-'}
       />
       <TopUpData
-        isToPup={isToPupData}
+        isToPup={isTopupData}
         onCancel={handleCloseTopUp}
         handleTopUp={handleTopUp}
         loadingTopUp={packagesLoading || addPackagesToSimLoading}
