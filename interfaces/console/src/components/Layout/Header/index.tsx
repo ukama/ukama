@@ -130,7 +130,6 @@ const Header = ({
                 <ManageAccountsIcon />
               </IconButton>
             )}
-            {/* <NotificationSubscription /> */}
             <Alert notifications={notifications} handleAction={handleAction} />
             <AccountPopover />
           </Stack>
