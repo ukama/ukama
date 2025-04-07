@@ -20,6 +20,7 @@ interface IOnBoardingDynamic {
   isShowComponents?: boolean;
   textColor: string;
   selectedColor: string;
+  simPoolIconColor?: string;
 }
 const textStyle = {
   fontSize: '14px',
@@ -41,6 +42,7 @@ const OnBoardingDynamic = ({
   isShowComponents = false,
   textColor = '#304445',
   selectedColor = '#304445',
+  simPoolIconColor = '#6F7979',
 }: IOnBoardingDynamic) => {
   const orgIconColor = orgName === 'Organization' ? '#6F7979' : selectedColor;
   const networkIconColor =
@@ -51,8 +53,6 @@ const OnBoardingDynamic = ({
   const powerIconColor = powerName === 'Power' ? '#6F7979' : selectedColor;
   const backhaulIconColor =
     backhaulName === 'Backhaul' ? '#6F7979' : selectedColor;
-  const simPoolIconColor =
-    simPoolName === 'Sim Pool' ? '#6F7979' : selectedColor;
 
   return (
     <svg
