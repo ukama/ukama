@@ -19,7 +19,6 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material';
-import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 interface SiteCardProps {
@@ -148,9 +147,9 @@ const SiteCard: React.FC<SiteCardProps> = ({
               {loading ? (
                 <Skeleton width={70} />
               ) : (batteryPercentage ?? 0) < 20 ? (
-                'Low'
+                'Critical'
               ) : (batteryPercentage ?? 0) < 50 ? (
-                'Medium'
+                'Low'
               ) : (
                 'Charged'
               )}
@@ -163,9 +162,9 @@ const SiteCard: React.FC<SiteCardProps> = ({
               {loading ? (
                 <Skeleton width={60} />
               ) : (backhaulSpeed ?? 0) < 30 ? (
-                'Weak'
+                'No signal'
               ) : (backhaulSpeed ?? 0) < 70 ? (
-                'Medium'
+                'Low signal'
               ) : (
                 'Strong'
               )}

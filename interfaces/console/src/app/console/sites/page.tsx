@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+
 import {
   Component_Type,
   SiteDto,
@@ -23,13 +24,14 @@ import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
-import { SiteMetrics, TMetricResDto, TSiteForm } from '@/types';
+import { TSiteForm, SiteMetrics } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import { STAT_STEP_29 } from '@/constants';
 
 const SITE_INIT = {
   switch: '',
@@ -47,15 +49,8 @@ const SITE_INIT = {
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const {
-    setSnackbarMessage,
-    network,
-    user,
-    env,
-    subscriptionClient,
-    siteMetrics,
-    setSiteMetrics,
-  } = useAppContext();
+  const { setSnackbarMessage, network, user, env, subscriptionClient } =
+    useAppContext();
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
@@ -63,6 +58,9 @@ export default function Page() {
     siteName: '',
     siteId: '',
   });
+  const [siteMetrics, setSiteMetrics] = useState<Record<string, SiteMetrics>>(
+    {},
+  );
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -72,6 +70,9 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
+      sites.forEach((site) => {
+        fetchSiteMetrics(site.id);
+      });
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -83,99 +84,138 @@ export default function Page() {
     },
   });
 
-  const [getSiteStatsMetrics] = useGetSiteStatLazyQuery({
+  const [getSiteMetrics] = useGetSiteStatLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      console.log('Initial site metrics received:', data);
+      if (data.getSiteStat.metrics.length > 0) {
+        const siteId = data.getSiteStat.metrics[0].siteId;
+        const metrics = data.getSiteStat.metrics;
+
+        // Create a new metrics object for this site
+        let updatedSiteMetrics: Partial<SiteMetrics> = {};
+
+        // Process all metrics from the response
+        metrics.forEach((metric) => {
+          switch (metric.type) {
+            case 'site_uptime_seconds':
+              updatedSiteMetrics.siteUptimeSeconds = metric.value;
+              break;
+            case 'battery_charge_percentage':
+              updatedSiteMetrics.batteryPercentage = metric.value;
+              break;
+            case 'backhaul_speed':
+              updatedSiteMetrics.backhaulSpeed = metric.value;
+              break;
+            // Add other metrics as needed
+          }
+        });
+
+        // Update state with all metrics at once
+        setSiteMetrics((prev) => ({
+          ...prev,
+          [siteId]: {
+            ...prev[siteId],
+            ...updatedSiteMetrics,
+          },
+        }));
+      }
+    },
     onError: (error) => {
       console.error('Error fetching site metrics:', error);
     },
   });
 
-  const handleSiteStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData: TMetricResDto = JSON.parse(data);
-      const { value, type, success, siteId } =
-        parsedData.data.getSiteMetricStatSub;
+  const handleMetricUpdate = (
+    siteId: string,
+    metricType: string,
+    value: number,
+  ) => {
+    console.log('Handling metric update:', siteId, metricType, value);
 
-      if (success && siteId) {
-        setSiteMetrics((prev: Record<string, Partial<SiteMetrics>>) => {
-          const currentMetrics: Partial<SiteMetrics> = prev[siteId]
-            ? { ...prev[siteId] }
-            : {};
+    setSiteMetrics((prev) => {
+      const currentMetrics = prev[siteId] || {};
+      const updatedMetrics = { ...currentMetrics };
 
-          switch (type) {
-            case 'site_uptime_seconds':
-              currentMetrics.siteUptimeSeconds = value[1];
-              break;
-            case 'battery_charge_percentage':
-              currentMetrics.batteryPercentage = value[1];
-              break;
-            case 'backhaul_speed':
-              currentMetrics.backhaulSpeed = value[1];
-              break;
-          }
-
-          return {
-            ...prev,
-            [siteId]: currentMetrics,
-          };
-        });
+      // Update the specific metric based on type
+      switch (metricType) {
+        case 'site_uptime_seconds':
+          updatedMetrics.siteUptimeSeconds = value;
+          break;
+        case 'battery_charge_percentage':
+          updatedMetrics.batteryPercentage = value;
+          break;
+        case 'backhaul_speed':
+          updatedMetrics.backhaulSpeed = value;
+          break;
+        // Add other cases for metrics you care about
       }
-    } catch (error) {
-      console.error('Error handling site stat subscription:', error);
-    }
+
+      return {
+        ...prev,
+        [siteId]: updatedMetrics,
+      };
+    });
   };
 
-  const fetchSiteMetrics = async () => {
-    const to = getUnixTime();
-    const from = to - 30;
+  const setupSubscriptions = (siteId: string) => {
+    // We only need one subscription with the SITE type since it includes all metrics
+    const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
 
-    for (const site of sitesList) {
+    // Unsubscribe first to prevent duplicate subscriptions
+    PubSub.unsubscribe(key);
+
+    // Create new subscription
+    MetricStatBySiteSubscription({
+      url: env.METRIC_URL,
+      key,
+      from: getUnixTime() - 40,
+      siteId,
+      userId: user.id,
+      orgName: user.orgName,
+      type: Stats_Type.Site,
+    });
+
+    // Subscribe to updates
+    PubSub.subscribe(key, (msg, data) => {
+      console.log('Received PubSub message:', key);
       try {
-        const res = await getSiteStatsMetrics({
-          variables: {
-            data: {
-              siteId: site.id,
-              type: Stats_Type.Site,
-              from,
-              to,
-              step: 30,
-              userId: user.id,
-              orgName: user.orgName,
-              withSubscription: true,
-            },
-          },
-        });
+        const parsedData = JSON.parse(data);
+        const { value, type, success, siteId } =
+          parsedData.data.getSiteMetricStatSub;
 
-        if (res.data?.getSiteStat?.metrics) {
-          setSiteMetrics((prev: Record<string, Partial<SiteMetrics>>) => {
-            const newMetrics = { ...prev };
-            const siteId = site.id;
-            res?.data?.getSiteStat.metrics.forEach((metric) => {
-              if (!newMetrics[siteId]) {
-                newMetrics[siteId] = {};
-              }
-
-              switch (metric.type) {
-                case 'site_uptime_seconds':
-                  newMetrics[siteId].siteUptimeSeconds = metric.value;
-                  break;
-                case 'battery_charge_percentage':
-                  newMetrics[siteId].batteryPercentage = metric.value;
-                  break;
-                case 'backhaul_speed':
-                  newMetrics[siteId].backhaulSpeed = metric.value;
-                  break;
-              }
-            });
-
-            return newMetrics;
-          });
+        if (success) {
+          console.log('Updating metric:', siteId, type, value);
+          handleMetricUpdate(siteId, type, value[1]);
         }
       } catch (error) {
-        console.error(`Error fetching metrics for site ${site.id}:`, error);
+        console.error('Error handling metric update:', error);
       }
-    }
+    });
+  };
+
+  const fetchSiteMetrics = (siteId: string) => {
+    const to = getUnixTime();
+    const from = to - 40;
+
+    // Use a single query to get all site metrics
+    getSiteMetrics({
+      variables: {
+        data: {
+          to,
+          siteId,
+          from,
+          userId: user.id,
+          step: STAT_STEP_29,
+          orgName: user.orgName,
+          withSubscription: true, // Enable subscriptions
+          type: Stats_Type.Site, // This includes all metrics
+        },
+      },
+    });
+
+    setupSubscriptions(siteId);
   };
 
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
@@ -244,7 +284,7 @@ export default function Page() {
       if (res.getNetworks.networks.length === 0) {
         setSnackbarMessage({
           id: 'no-network-msg',
-          message: 'Create a network first.',
+          message: 'Please create a network first.',
           type: 'warning' as AlertColor,
           show: true,
         });
@@ -261,11 +301,16 @@ export default function Page() {
   });
 
   useEffect(() => {
-    if (!network.id)
-      setSite({
-        ...site,
-        network: network.id,
+    if (!network.id) return;
+
+    refetchSites().then((res) => {
+      const sites = res.data.getSites.sites;
+      setSitesList(sites);
+      sites.forEach((site) => {
+        fetchSiteMetrics(site.id);
       });
+    });
+
     getComponents({
       variables: {
         data: {
@@ -274,80 +319,13 @@ export default function Page() {
       },
     });
 
-    if (sitesList.length > 0) {
-      fetchSiteMetrics();
-    }
-
     return () => {
       sitesList.forEach((site) => {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        PubSub.unsubscribe(sKey);
+        const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+        PubSub.unsubscribe(key);
       });
     };
-  }, [sitesList]);
-
-  useEffect(() => {
-    const setupSubscriptions = async () => {
-      const to = getUnixTime();
-      const from = to - 30; // Last 30 seconds
-
-      // Clear existing subscriptions
-      sitesList.forEach((site) => {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        PubSub.unsubscribe(sKey);
-      });
-
-      // Set up new subscriptions for each site
-      sitesList.forEach((site) => {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-
-        // Initial subscription
-        MetricStatBySiteSubscription({
-          key: sKey,
-          siteId: site.id,
-          userId: user.id,
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Site,
-          from,
-        });
-
-        // Subscribe to updates
-        PubSub.subscribe(sKey, handleSiteStatSubscription);
-
-        // Set up interval for periodic updates
-        const interval = setInterval(() => {
-          MetricStatBySiteSubscription({
-            key: sKey,
-            siteId: site.id,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Site,
-            from: getUnixTime() - 30,
-          });
-        }, 30000); // Update every 30 seconds
-
-        // Store interval ID for cleanup
-        return () => {
-          clearInterval(interval);
-          PubSub.unsubscribe(sKey);
-        };
-      });
-    };
-
-    if (sitesList.length > 0) {
-      setupSubscriptions();
-    }
-
-    // Cleanup function
-    return () => {
-      sitesList.forEach((site) => {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        PubSub.unsubscribe(sKey);
-      });
-    };
-  }, [sitesList, user.id, user.orgName, env.METRIC_URL]);
+  }, [network.id]);
 
   const handleCloseSiteConfig = () => {
     setSite(SITE_INIT);

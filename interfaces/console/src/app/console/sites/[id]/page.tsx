@@ -351,15 +351,15 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           }
         }
       },
-      onError: (err) => {
-        console.error('Error fetching node metrics:', err);
-        setSnackbarMessage({
-          id: 'node-metrics-err-msg',
-          message: err.message,
-          type: 'error',
-          show: true,
-        });
-      },
+      // onError: (err) => {
+      //   console.error('Error fetching node metrics:', err);
+      //   setSnackbarMessage({
+      //     id: 'node-metrics-err-msg',
+      //     message: err.message,
+      //     type: 'error',
+      //     show: true,
+      //   });
+      // },
     });
 
   useEffect(() => {
@@ -839,6 +839,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
                   uptimeSeconds,
                 }),
               )}
+              installationDate={new Date(activeSite.installDate)}
             />
           )}
         </Grid>
