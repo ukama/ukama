@@ -13,7 +13,6 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
-  getSiteMetricStatByKeysByType,
   wsUrlResolver,
 } from "../../common/utils";
 import {
@@ -25,6 +24,7 @@ import { pubSub } from "./pubsub";
 import {
   GetMetricBySiteInput,
   GetMetricByTabInput,
+  GetMetricsSiteStatInput,
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
@@ -32,8 +32,11 @@ import {
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
+  SiteMetricsStateRes,
   SubMetricByTabInput,
   SubMetricsStatInput,
+  SubSiteMetricByTabInput,
+  SubSiteMetricsStatInput,
 } from "./types";
 
 const WS_THREAD = "./threads/MetricsWSThread.mjs";
@@ -163,11 +166,25 @@ class SubscriptionsResolvers {
     await store.close();
     return payload;
   }
+  @Subscription(() => LatestMetricSubRes, {
+    topics: ({ args }) => {
+      return `${args.data.userId}-${args.data.type}-${args.data.from}`;
+    },
+  })
+  async getSiteMetricStatSub(
+    @Root() payload: LatestMetricSubRes,
+    @Arg("data") data: SubSiteMetricsStatInput
+  ): Promise<LatestMetricSubRes> {
+    const store = openStore();
+    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
+    await store.close();
+    return payload;
+  }
 
-  @Query(() => MetricsStateRes)
+  @Query(() => SiteMetricsStateRes)
   async getSiteStat(
-    @Arg("data") data: GetMetricsStatInput
-  ): Promise<MetricsStateRes> {
+    @Arg("data") data: GetMetricsSiteStatInput
+  ): Promise<SiteMetricsStateRes> {
     const store = openStore();
     const { message: baseURL, status } = await getBaseURL(
       "metrics",
@@ -183,9 +200,9 @@ class SubscriptionsResolvers {
     const { from, userId, withSubscription, siteId, type } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
-    const metrics: MetricsStateRes = { metrics: [] };
+    const metrics: SiteMetricsStateRes = { metrics: [] };
 
-    const metricKeys = getSiteMetricStatByKeysByType(type);
+    const metricKeys = getGraphsKeyByType(type);
 
     const metricPromises = metricKeys.map(async key => {
       const res = await getSiteMetricRange(baseURL, key, { ...data });
@@ -506,6 +523,20 @@ class SubscriptionsResolvers {
   async getMetricByTabSub(
     @Root() payload: LatestMetricSubRes,
     @Arg("data") data: SubMetricByTabInput
+  ): Promise<LatestMetricSubRes> {
+    const store = openStore();
+    await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
+    await store.close();
+    return payload;
+  }
+  @Subscription(() => LatestMetricSubRes, {
+    topics: ({ args }) => {
+      return `${args.data.userId}/${args.data.type}/${args.data.from}`;
+    },
+  })
+  async getSiteMetricByTabSub(
+    @Root() payload: LatestMetricSubRes,
+    @Arg("data") data: SubSiteMetricByTabInput
   ): Promise<LatestMetricSubRes> {
     const store = openStore();
     await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);

@@ -49,7 +49,7 @@ const getNodeMetricRange = async (
 const getSiteMetricRange = async (
   baseUrl: string,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
+  args: GetMetricRangeInput
 ): Promise<MetricRes> => {
   const { from, step = 1, userId, siteId } = args;
 

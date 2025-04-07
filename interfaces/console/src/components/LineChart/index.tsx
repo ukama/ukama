@@ -8,7 +8,7 @@
 
 import { colors } from '@/theme';
 import { findNullZones, formatKPIValue, generatePlotLines } from '@/utils';
-import { Box, FormControlLabel, Switch } from '@mui/material';
+import { Box } from '@mui/material';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts/highstock';
 import { forwardRef, useMemo, useRef, useState } from 'react';
@@ -50,9 +50,6 @@ interface ILineChart {
   format: string;
   tickInterval?: number;
   tickPositions?: number[];
-  switchLabel?: string;
-  onSwitchChange?: (checked: boolean) => void;
-  initialSwitchState?: boolean;
 }
 
 const LineChart = ({
@@ -65,22 +62,9 @@ const LineChart = ({
   loading = false,
   tickInterval = undefined,
   tickPositions = undefined,
-  switchLabel = 'Backhaul',
-  onSwitchChange,
-  initialSwitchState = true,
 }: ILineChart) => {
   const [navigatorEnabled, setNavigatorEnabled] = useState<boolean>(false);
   const chartRef = useRef<HighchartsReact.RefObject>(null);
-  const [isChecked, setIsChecked] = useState(initialSwitchState);
-
-  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newCheckedState = event.target.checked;
-    setIsChecked(newCheckedState);
-
-    if (onSwitchChange) {
-      onSwitchChange(newCheckedState);
-    }
-  };
 
   const fixedInitData = useMemo(() => initDataFixes(initData), [initData]);
 
@@ -216,30 +200,6 @@ const LineChart = ({
       loading={loading ?? !initData}
     >
       <Box sx={{ width: '100%' }}>
-        {shouldShowSwitch && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              mb: 1,
-              height: '24px',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isChecked}
-                  onChange={handleSwitchChange}
-                  color="primary"
-                />
-              }
-              label={switchLabel}
-            />
-          </Box>
-        )}
         <div
           className={`chart-container ${navigatorEnabled ? '' : 'hide-navigator'}`}
         >

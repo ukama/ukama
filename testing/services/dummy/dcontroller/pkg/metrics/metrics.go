@@ -1,431 +1,455 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 package metrics
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
+	dto "github.com/prometheus/client_model/go"
 	log "github.com/sirupsen/logrus"
-	cenums "github.com/ukama/ukama/testing/common/enums"
 )
-   
- type PrometheusExporter struct {
-	 backhaulLatency         *prometheus.GaugeVec
-	 backhaulSpeed           *prometheus.GaugeVec
-	 switchPortStatus        *prometheus.GaugeVec
-	 switchPortSpeed         *prometheus.GaugeVec
-	 switchPortPower         *prometheus.GaugeVec
-	 batteryChargePercentage *prometheus.GaugeVec
-	 solarPanelVoltage       *prometheus.GaugeVec
-	 solarPanelCurrent       *prometheus.GaugeVec
-	 solarPanelPower         *prometheus.GaugeVec
-	 siteUp *prometheus.GaugeVec 
 
-	 metricsProvider *MetricsProvider
-	 siteId          string
-	 shutdown        chan struct{}
- }
-   
- func (e *PrometheusExporter) IncrementUptimeCounter(seconds float64) {
-    e.siteUp.WithLabelValues(e.siteId).Add(seconds)
+const (
+    PORT_NODE     = 1
+    PORT_SOLAR    = 2
+    PORT_BACKHAUL = 3
+)
+
+type Metrics struct {
+    backhaulLatency          *prometheus.GaugeVec
+    backhaulSpeed            *prometheus.GaugeVec
+    batteryChargePercentage  *prometheus.GaugeVec
+    solarPanelVoltage        *prometheus.GaugeVec
+    solarPanelCurrent        *prometheus.GaugeVec
+    solarPanelPower          *prometheus.GaugeVec
+    siteUptimeSeconds        *prometheus.GaugeVec
+    switchPortStatus         *prometheus.GaugeVec
+    switchPortSpeed          *prometheus.GaugeVec
+    switchPortPower          *prometheus.GaugeVec
+    mu                       sync.Mutex
+    siteUptimeCounters       map[string]int
+
+    backhaulSwitchPortStatus *prometheus.GaugeVec
+    backhaulSwitchPortSpeed  *prometheus.GaugeVec
+    backhaulSwitchPortPower  *prometheus.GaugeVec
+
+    solarSwitchPortStatus *prometheus.GaugeVec
+    solarSwitchPortSpeed  *prometheus.GaugeVec
+    solarSwitchPortPower  *prometheus.GaugeVec
+
+    nodeSwitchPortPowerVec  *prometheus.GaugeVec
+    nodeSwitchPortSpeedVec  *prometheus.GaugeVec
+    nodeSwitchPortStatusVec *prometheus.GaugeVec
+
+    portStatus map[string]map[int]bool
 }
-   
- func (e *PrometheusExporter) ResetUptimeCounter() {
-    e.siteUp.WithLabelValues(e.siteId).Set(0)
-    log.Infof("Reset uptime counter for site %s", e.siteId)
+
+func New() *Metrics {
+    log.Println("DEBUG: Initializing Metrics struct")
+    m := &Metrics{
+        backhaulLatency: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "main_backhaul_latency",
+            Help: "Backhaul latency in milliseconds",
+        }, []string{"site"}),
+
+        backhaulSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "backhaul_speed",
+            Help: "Backhaul speed in Mbps",
+        }, []string{"site"}),
+
+        batteryChargePercentage: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "battery_charge_percentage",
+            Help: "Battery charge percentage",
+        }, []string{"site"}),
+
+        solarPanelVoltage: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_panel_voltage",
+            Help: "Solar panel voltage in volts",
+        }, []string{"site"}),
+
+        solarPanelCurrent: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_panel_current",
+            Help: "Solar panel current in amperes",
+        }, []string{"site"}),
+
+        solarPanelPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_panel_power",
+            Help: "Solar panel power in watts",
+        }, []string{"site"}),
+
+        siteUptimeSeconds: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "site_uptime_seconds",
+            Help: "Site uptime in seconds",
+        }, []string{"site"}),
+
+        siteUptimeCounters: make(map[string]int),
+
+        backhaulSwitchPortStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "backhaul_switch_port_status",
+            Help: "Backhaul switch port status (1 = up, 0 = down)",
+        }, []string{"site"}),
+
+        backhaulSwitchPortSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "backhaul_switch_port_speed",
+            Help: "Backhaul switch port speed in Mbps",
+        }, []string{"site"}),
+
+        backhaulSwitchPortPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "backhaul_switch_port_power",
+            Help: "Backhaul switch port power in watts",
+        }, []string{"site"}),
+
+        solarSwitchPortStatus: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_switch_port_status",
+            Help: "Solar switch port status (1 = up, 0 = down)",
+        }, []string{"site"}),
+
+        solarSwitchPortSpeed: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_switch_port_speed",
+            Help: "Solar switch port speed in Mbps",
+        }, []string{"site"}),
+
+        solarSwitchPortPower: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "solar_switch_port_power",
+            Help: "Solar switch port power in watts",
+        }, []string{"site"}),
+
+        nodeSwitchPortPowerVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "node_switch_port_power",
+            Help: "Node switch port power in watts",
+        }, []string{"site"}),
+
+        nodeSwitchPortSpeedVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "node_switch_port_speed",
+            Help: "Node switch port speed in Mbps",
+        }, []string{"site"}),
+
+        nodeSwitchPortStatusVec: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+            Name: "node_switch_port_status",
+            Help: "Node switch port status (1 = up, 0 = down)",
+        }, []string{"site"}),
+
+        portStatus: make(map[string]map[int]bool),
+    }
+
+    log.Println("DEBUG: Registering metrics with Prometheus")
+    prometheus.MustRegister(m.backhaulLatency)
+    prometheus.MustRegister(m.backhaulSpeed)
+    prometheus.MustRegister(m.batteryChargePercentage)
+    prometheus.MustRegister(m.solarPanelVoltage)
+    prometheus.MustRegister(m.solarPanelCurrent)
+    prometheus.MustRegister(m.solarPanelPower)
+    prometheus.MustRegister(m.siteUptimeSeconds)
+    prometheus.MustRegister(m.backhaulSwitchPortStatus)
+    prometheus.MustRegister(m.backhaulSwitchPortSpeed)
+    prometheus.MustRegister(m.backhaulSwitchPortPower)
+    prometheus.MustRegister(m.solarSwitchPortStatus)
+    prometheus.MustRegister(m.solarSwitchPortSpeed)
+    prometheus.MustRegister(m.solarSwitchPortPower)
+    prometheus.MustRegister(m.nodeSwitchPortPowerVec)
+    prometheus.MustRegister(m.nodeSwitchPortSpeedVec)
+    prometheus.MustRegister(m.nodeSwitchPortStatusVec)
+
+    return m
 }
- func NewPrometheusExporter(metricsProvider *MetricsProvider, siteId string) *PrometheusExporter {
-	 exporter := &PrometheusExporter{
-		 metricsProvider: metricsProvider,
-		 siteId:          siteId,
-		 shutdown:        make(chan struct{}),
- 
-		 backhaulLatency: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "main_backhaul_latency",
-			 Help: "Backhaul latency in milliseconds",
-		 }, []string{"unit", "site"}),
-		 backhaulSpeed: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "backhaul_speed",
-			 Help: "Backhaul speed in Mbps",
-		 }, []string{"unit", "site"}),
-		 switchPortStatus: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "switch_port_status",
-			 Help: "Switch port status (1 = up, 0 = down)",
-		 }, []string{"unit", "site"}),
-		 switchPortSpeed: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "switch_port_speed",
-			 Help: "Switch port speed in Mbps",
-		 }, []string{"unit", "site"}),
-		 switchPortPower: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "switch_port_power",
-			 Help: "Switch port power in watts",
-		 }, []string{"unit", "site"}),
-		 batteryChargePercentage: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "battery_charge_percentage",
-			 Help: "Battery charge percentage",
-		 }, []string{"unit", "site"}),
-		 solarPanelVoltage: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "solar_panel_voltage",
-			 Help: "Solar panel voltage in volts",
-		 }, []string{"unit", "site"}),
-		 solarPanelCurrent: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "solar_panel_current",
-			 Help: "Solar panel current in amperes",
-		 }, []string{"unit", "site"}),
-		 solarPanelPower: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			 Name: "solar_panel_power",
-			 Help: "Solar panel power in watts",
-		 }, []string{"unit", "site"}),
-		 siteUp: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "site_uptime_seconds",
-			Help: "Site uptime in seconds since last outage",
-		}, []string{"site"}),
-	 }
-	 return exporter
- }
-   
- type BackhaulMetrics struct {
-	 Latency         float64
-	 Speed           float64
-	 SwitchStatus    float64
-	 SwitchBandwidth float64
-	 SwitchPortPower float64
- }
-   
- type BatteryMetrics struct {
-	 Voltage float64
-	 Current float64
-	 Power   float64
- }
-   
- type SolarMetrics struct {
-	 PanelPower   float64
-	 PanelVoltage float64
-	 PanelCurrent float64
- }
-   
- type ControllerMetrics struct {
-	 Backhaul *BackhaulMetrics
-	 Battery  *BatteryMetrics
-	 Solar    *SolarMetrics
-	 Time     time.Time
- }
-   
- type BackhaulProvider struct {
-	 metricsProvider *MetricsProvider
- }
-   
- type BatteryProvider struct {
-	 metricsProvider *MetricsProvider
- }
-   
- type SolarProvider struct {
-	 metricsProvider *MetricsProvider
- }
-   
- type MetricsProvider struct {
-	 backhaul        *BackhaulProvider
-	 battery         *BatteryProvider
-	 solar           *SolarProvider
-	 portStatus      map[int]bool
-	 currentProfile  cenums.Profile
- }
-   
- const (
-	 PORT_AMPLIFIER = 1
-	 PORT_TOWER     = 2
-	 PORT_SOLAR     = 3
-	 PORT_BACKHAUL  = 4
- )
-   
- func (b *BackhaulProvider) UpdateMetricsProvider(provider *MetricsProvider) {
-	 b.metricsProvider = provider
- }
-   
- func (b *BatteryProvider) UpdateMetricsProvider(provider *MetricsProvider) {
-	 b.metricsProvider = provider
- }
-   
- func (s *SolarProvider) UpdateMetricsProvider(provider *MetricsProvider) {
-	 s.metricsProvider = provider
- }
-   
- func NewMetricsProvider() *MetricsProvider {
-	 mp := &MetricsProvider{
-		 backhaul:  &BackhaulProvider{},
-		 battery:   &BatteryProvider{},
-		 solar:     &SolarProvider{},
-		 portStatus: map[int]bool{
-			 PORT_AMPLIFIER: true,
-			 PORT_TOWER:     true,
-			 PORT_SOLAR:     true,
-			 PORT_BACKHAUL:  true,
-		 },
-		 currentProfile: cenums.PROFILE_NORMAL,
-	 }
-	 mp.backhaul.UpdateMetricsProvider(mp)
-	 mp.battery.UpdateMetricsProvider(mp)
-	 mp.solar.UpdateMetricsProvider(mp)
-	 return mp
- }
-   
- func (m *MetricsProvider) SetProfile(profile cenums.Profile) {
-	 m.currentProfile = profile
- }
- 
- func (m *MetricsProvider) GetPortStatus(port int) bool {
-	 status, exists := m.portStatus[port]
-	 if !exists {
-		 return false
-	 }
-	 return status
- }
-   
- func (m *MetricsProvider) GetMetrics(siteId string) (*ControllerMetrics, error) {
-	 backhaulMetrics := m.backhaul.GetMetrics()
-	 batteryMetrics := m.battery.GetMetrics()
-	 solarMetrics := m.solar.GetMetrics()
-   
-	 if !m.portStatus[PORT_BACKHAUL] {
-		 backhaulMetrics.Latency = 0
-		 backhaulMetrics.Speed = 0
-		 backhaulMetrics.SwitchStatus = 0
-		 backhaulMetrics.SwitchBandwidth = 0
-		 backhaulMetrics.SwitchPortPower = 0
-	 }
-   
-	 if !m.portStatus[PORT_SOLAR] {
-		 solarMetrics.PanelPower = 0
-		 solarMetrics.PanelVoltage = 0
-		 solarMetrics.PanelCurrent = 0
-	 }
-   
-	 return &ControllerMetrics{
-		 Backhaul: backhaulMetrics,
-		 Battery:  batteryMetrics,
-		 Solar:    solarMetrics,
-		 Time:     time.Now(),
-	 }, nil
- }
-   
- func (b *BackhaulProvider) GetMetrics() *BackhaulMetrics {
-	 if !b.metricsProvider.portStatus[PORT_BACKHAUL] {
-		 return &BackhaulMetrics{
-			 Latency:         0,
-			 Speed:           0,
-			 SwitchStatus:    0,
-			 SwitchBandwidth: 0,
-			 SwitchPortPower: 0,
-		 }
-	 }
-   
-	 var latency, speed, switchBandwidth, switchPortPower float64
-	 profile := b.metricsProvider.currentProfile
-   
-	 switch profile {
-	 case cenums.PROFILE_MIN:
-		 latency = 150 + rand.Float64()*(250-150)
-		 speed = 0.5 + rand.Float64()*(2.5-0.5)
-		 switchBandwidth = 10 + rand.Float64()*(50-10)
-	 case cenums.PROFILE_NORMAL:
-		 latency = 30 + rand.Float64()*(50-30)
-		 speed = 20 + rand.Float64()*(50-20)
-		 switchBandwidth = 100 + rand.Float64()*(200-100)
-	 case cenums.PROFILE_MAX:
-		 latency = 5 + rand.Float64()*(15)   
-		 speed = 100 + rand.Float64()*(100)  
-		 switchBandwidth = 500 + rand.Float64()*(500) 
-	 }
-	   
-	 if profile == cenums.PROFILE_MAX {
-		 switchPortPower = 6 + rand.Float64() 
-	 } else {
-		 switchPortPower = 5 + rand.Float64()*(7-5) 
-	 }
-   
-	 return &BackhaulMetrics{
-		 Latency:         latency,
-		 Speed:           speed,
-		 SwitchStatus:    1.0,
-		 SwitchBandwidth: switchBandwidth,
-		 SwitchPortPower: switchPortPower,
-	 }
- }
-   
- func (b *BatteryProvider) GetMetrics() *BatteryMetrics {
-	 var voltage, current float64
-	 profile := b.metricsProvider.currentProfile
-   
-	 switch profile {
-	 case cenums.PROFILE_MIN:
-		 voltage = 10.5 + rand.Float64()*(12.0-10.5)
-		 current = -2.0 + rand.Float64()*(0-(-2.0)) 
-	 case cenums.PROFILE_NORMAL:
-		 voltage = 12.0 + rand.Float64()*(12.5-12.0)
-		 current = -1.4 + rand.Float64()*(2.8-(-1.4)) 
-	 case cenums.PROFILE_MAX:
-		 voltage = 12.0 + rand.Float64() 
-		 current = 0.5 + rand.Float64()*(4.0) 
-	 }
-   
-	 power := voltage * current
-	 if current < 0 {
-		 power = 0 
-	 }
-   
-	 return &BatteryMetrics{
-		 Voltage: voltage,
-		 Current: current,
-		 Power:   power,
-	 }
- }
-   
- func (s *SolarProvider) GetMetrics() *SolarMetrics {
-	 var panelPower, panelVoltage, panelCurrent float64
-	 profile := s.metricsProvider.currentProfile
-   
-	 switch profile {
-	 case cenums.PROFILE_MIN:
-		 panelPower = 100 + rand.Float64()*(500-100)
-		 panelVoltage = 16 + rand.Float64()*(20-16)
-	 case cenums.PROFILE_NORMAL:
-		 panelPower = 100 + rand.Float64()*(800-100)
-		 panelVoltage = 21 + rand.Float64()*(27-21)
-	 case cenums.PROFILE_MAX:
-		 panelPower = 500 + rand.Float64()*(500) 
-		 panelVoltage = 30 + rand.Float64()*(10) 
-	 }
-   
-	 if profile == cenums.PROFILE_MAX {
-		 panelCurrent = panelPower / panelVoltage
-		 if panelCurrent < 5 {
-			 panelCurrent = 5 + rand.Float64()*(5) 
-		 }
-	 } else {
-		 panelCurrent = 2 + rand.Float64()*(10-2)
-		 if panelVoltage > 0 {
-			 panelCurrent = panelPower / panelVoltage
-			 if panelCurrent < 2 {
-				 panelCurrent = 2
-			 } else if panelCurrent > 10 {
-				 panelCurrent = 10
-			 }
-		 } else {
-			 panelCurrent = 0
-		 }
-	 }
-   
-	 return &SolarMetrics{
-		 PanelPower:   panelPower,
-		 PanelVoltage: panelVoltage,
-		 PanelCurrent: panelCurrent,
-	 }
- }
-   
- func (e *PrometheusExporter) StartMetricsCollection(ctx context.Context, interval time.Duration) error {
-	 ticker := time.NewTicker(1 * time.Second)
-	 defer ticker.Stop()
-   
-	 if err := e.collectMetrics(); err != nil {
-		 log.Warnf("Initial metrics collection failed: %v", err)
-	 }
-   
-	 for {
-		 select {
-		 case <-ctx.Done():
-			 log.Infof("Stopping metrics collection due to context cancellation")
-			 return ctx.Err()
-		 case <-e.shutdown:
-			 log.Infof("Stopping metrics collection due to shutdown signal")
-			 return nil
-		 case <-ticker.C:
-			 if err := e.collectMetrics(); err != nil {
-				 log.Errorf("Error collecting metrics: %v", err)
-			 }
-		 }
-	 }
- }
-   
- func (e *PrometheusExporter) Shutdown() {
-	 close(e.shutdown)
- }
-   
- func (e *PrometheusExporter) collectMetrics() error {
-	metrics, err := e.metricsProvider.GetMetrics(e.siteId)
-	if err != nil {
-		return fmt.Errorf("failed to get metrics: %w", err)
-	}
 
-	log.Debugf("Collecting metrics for site %s: Solar power: %f, Battery power: %f",
-		e.siteId, metrics.Solar.PanelPower, metrics.Battery.Power)
+func getSingleMetricValue(gauge *prometheus.GaugeVec, siteID string) float64 {
+    metric, err := gauge.GetMetricWithLabelValues(siteID)
+    if err != nil {
+        log.Printf("DEBUG: Error getting metric: %v", err)
+        return -999
+    }
 
-	// Set backhaul metrics
-	e.backhaulLatency.WithLabelValues("ms", e.siteId).Set(metrics.Backhaul.Latency)
-	e.backhaulSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.Speed)
-	e.switchPortStatus.WithLabelValues("status", e.siteId).Set(metrics.Backhaul.SwitchStatus)
-	e.switchPortSpeed.WithLabelValues("mbps", e.siteId).Set(metrics.Backhaul.SwitchBandwidth)
-	e.switchPortPower.WithLabelValues("watts", e.siteId).Set(metrics.Backhaul.SwitchPortPower)
+    ch := make(chan prometheus.Metric, 1)
+    metric.Collect(ch)
+    m := <-ch
 
-	var percentage float64
-	voltage := metrics.Battery.Voltage
-	switch e.metricsProvider.currentProfile {
-	case cenums.PROFILE_MIN:
-		if voltage <= 10.0 {
-			percentage = 0
-		} else if voltage >= 12.0 {
-			percentage = 100
-		} else {
-			percentage = (voltage - 10.0) / (12.0 - 10.0) * 100
-		}
-	case cenums.PROFILE_MAX:
-		if voltage <= 12.0 {
-			percentage = 70
-		} else if voltage >= 13.0 {
-			percentage = 100
-		} else {
-			percentage = 70 + (voltage - 12.0) / (13.0 - 12.0) * 30
-		}
-	default: 
-		if voltage <= 10.5 {
-			percentage = 0
-		} else if voltage >= 12.7 {
-			percentage = 100
-		} else {
-			percentage = (voltage - 10.5) / (12.7 - 10.5) * 100
-		}
-	}
-	e.batteryChargePercentage.WithLabelValues("percent", e.siteId).Set(percentage)
-
-	e.solarPanelVoltage.WithLabelValues("volts", e.siteId).Set(metrics.Solar.PanelVoltage)
-	e.solarPanelCurrent.WithLabelValues("amps", e.siteId).Set(metrics.Solar.PanelCurrent)
-	e.solarPanelPower.WithLabelValues("watts", e.siteId).Set(metrics.Solar.PanelPower)
-
-
-	log.Debugf("Site %s - Voltage: %f, Battery percentage: %f, Backhaul speed: %f, Switch port power: %f",
-		e.siteId, voltage, percentage, metrics.Backhaul.Speed, metrics.Backhaul.SwitchPortPower)
-
-	return nil
+    var metricOut dto.Metric
+    m.Write(&metricOut)
+    return *metricOut.Gauge.Value
 }
-   
- func (m *MetricsProvider) SetPortStatus(port int, status bool) error {
-	 if port < 1 || port > 4 {
-		 return fmt.Errorf("invalid port number: %d", port)
-	 }
-	 m.portStatus[port] = status
-	 return nil
- }
-   
- func (m *MetricsProvider) GetPowerStatus() (bool, error) {
-	 return true, nil
- }
+
+func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) error {
+    m.mu.Lock()
+    defer m.mu.Unlock()
+
+    if _, exists := m.portStatus[siteID]; !exists {
+        m.portStatus[siteID] = make(map[int]bool)
+    }
+
+    m.portStatus[siteID][portNumber] = enabled
+
+    nodeEnabled := m.portStatus[siteID][PORT_NODE]
+    backhaulEnabled := m.portStatus[siteID][PORT_BACKHAUL]
+    bothEnabled := nodeEnabled && backhaulEnabled
+
+    if (portNumber == PORT_NODE || portNumber == PORT_BACKHAUL) && !enabled {
+        m.siteUptimeCounters[siteID] = 0
+        log.Printf("DEBUG: Resetting uptime counter to 0 for site %s", siteID)
+    }
+
+    status := 0.0
+    if enabled {
+        status = 1.0
+    }
+
+    switch portNumber {
+    case PORT_NODE:
+        m.nodeSwitchPortStatusVec.WithLabelValues(siteID).Set(status)
+        if !enabled {
+            log.Printf("DEBUG: Setting node metrics to zero for site %s", siteID)
+            m.nodeSwitchPortSpeedVec.WithLabelValues(siteID).Set(0)
+            m.nodeSwitchPortPowerVec.WithLabelValues(siteID).Set(0)
+            m.siteUptimeSeconds.WithLabelValues(siteID).Set(0)
+        } else {
+            log.Printf("DEBUG: Setting node metrics to default values for site %s", siteID)
+            m.nodeSwitchPortSpeedVec.WithLabelValues(siteID).Set(100)
+            m.nodeSwitchPortPowerVec.WithLabelValues(siteID).Set(50)
+            if bothEnabled {
+                log.Printf("DEBUG: Both node and backhaul ports enabled for site %s, uptime will resume", siteID)
+            }
+        }
+
+    case PORT_SOLAR:
+        m.solarSwitchPortStatus.WithLabelValues(siteID).Set(status)
+        if !enabled {
+            m.solarSwitchPortSpeed.WithLabelValues(siteID).Set(0)
+            m.solarSwitchPortPower.WithLabelValues(siteID).Set(0)
+            m.batteryChargePercentage.WithLabelValues(siteID).Set(0)
+            m.solarPanelPower.WithLabelValues(siteID).Set(0)
+            m.solarPanelCurrent.WithLabelValues(siteID).Set(0)
+            m.solarPanelVoltage.WithLabelValues(siteID).Set(0)
+        } else {
+            m.solarSwitchPortSpeed.WithLabelValues(siteID).Set(100)
+            m.solarSwitchPortPower.WithLabelValues(siteID).Set(50)
+        }
+
+    case PORT_BACKHAUL:
+        m.backhaulSwitchPortStatus.WithLabelValues(siteID).Set(status)
+        if !enabled {
+            log.Printf("DEBUG: Setting backhaul metrics to zero/high for site %s", siteID)
+            m.backhaulSwitchPortSpeed.WithLabelValues(siteID).Set(0)
+            m.backhaulSwitchPortPower.WithLabelValues(siteID).Set(0)
+            m.backhaulSpeed.WithLabelValues(siteID).Set(0)
+            m.backhaulLatency.WithLabelValues(siteID).Set(9999)
+            m.siteUptimeSeconds.WithLabelValues(siteID).Set(0)
+        } else {
+            log.Printf("DEBUG: Setting backhaul metrics to default values for site %s", siteID)
+            m.backhaulSwitchPortSpeed.WithLabelValues(siteID).Set(100)
+            m.backhaulSwitchPortPower.WithLabelValues(siteID).Set(50)
+            if bothEnabled {
+                log.Printf("DEBUG: Both node and backhaul ports enabled for site %s, uptime will resume", siteID)
+            }
+        }
+
+    default:
+        return fmt.Errorf("unknown port number: %d", portNumber)
+    }
+
+    return nil
+}
+
+func (m *Metrics) StartMetricsGenerator(siteID string) {
+    log.Printf("DEBUG: Starting metrics generator for site %s", siteID)
+
+    // Create a new random source for this site to ensure unique random values
+    r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+    m.mu.Lock()
+    m.siteUptimeCounters[siteID] = r.Intn(6) + 5
+    m.portStatus[siteID] = map[int]bool{
+        PORT_NODE:     true,
+        PORT_SOLAR:    true,
+        PORT_BACKHAUL: true,
+    }
+    log.Printf("DEBUG: Initialized port status for site %s: %v", siteID, m.portStatus[siteID])
+    m.mu.Unlock()
+
+    m.backhaulSwitchPortStatus.WithLabelValues(siteID).Set(1)
+    m.solarSwitchPortStatus.WithLabelValues(siteID).Set(1)
+    m.nodeSwitchPortStatusVec.WithLabelValues(siteID).Set(1)
+
+    m.backhaulSwitchPortSpeed.WithLabelValues(siteID).Set(100)
+    m.backhaulSwitchPortPower.WithLabelValues(siteID).Set(50)
+    m.solarSwitchPortSpeed.WithLabelValues(siteID).Set(100)
+    m.solarSwitchPortPower.WithLabelValues(siteID).Set(50)
+    m.nodeSwitchPortSpeedVec.WithLabelValues(siteID).Set(100)
+    m.nodeSwitchPortPowerVec.WithLabelValues(siteID).Set(50)
+
+    go func() {
+        tickCount := 0
+        for {
+            tickCount++
+            debugLog := tickCount%10 == 0
+
+            m.mu.Lock()
+            sitePortStatus, exists := m.portStatus[siteID]
+            if debugLog {
+                log.Infof(" [%s]: Port status check (tick %d): %v", siteID, tickCount, sitePortStatus)
+            }
+            m.mu.Unlock()
+
+            if !exists {
+                log.Printf("DEBUG: Site %s no longer exists, stopping metrics generator", siteID)
+                return
+            }
+
+            nodeEnabled, nodeOk := sitePortStatus[PORT_NODE]
+            backhaulEnabled, backhaulOk := sitePortStatus[PORT_BACKHAUL]
+            if nodeOk && backhaulOk && nodeEnabled && backhaulEnabled {
+                m.mu.Lock()
+                currentUptime := m.siteUptimeCounters[siteID]
+                m.siteUptimeSeconds.WithLabelValues(siteID).Set(float64(currentUptime))
+                m.siteUptimeCounters[siteID]++
+                if debugLog {
+                    log.Infof(" [%s]: Incrementing uptime to %d seconds", siteID, m.siteUptimeCounters[siteID])
+                }
+                m.mu.Unlock()
+            } else if debugLog {
+                log.Infof(" [%s]: Not incrementing uptime due to disabled node or backhaul port", siteID)
+            }
+
+            if portEnabled, ok := sitePortStatus[PORT_BACKHAUL]; ok && portEnabled {
+                if debugLog {
+                    log.Infof(" [%s]: Updating backhaul metrics (enabled)", siteID)
+                }
+                m.backhaulSpeed.WithLabelValues(siteID).Set(float64(r.Intn(100) + 30))           // 30-130 Mbps
+                m.backhaulLatency.WithLabelValues(siteID).Set(float64(r.Intn(100) + 20))         // 20-120 ms
+                m.backhaulSwitchPortSpeed.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10)) // 10-110 Mbps
+                m.backhaulSwitchPortPower.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10)) // 10-110 watts
+            }
+
+            if portEnabled, ok := sitePortStatus[PORT_SOLAR]; ok && portEnabled {
+                if debugLog {
+                    log.Infof(" [%s]: Updating solar metrics (enabled)", siteID)
+                }
+                m.batteryChargePercentage.WithLabelValues(siteID).Set(float64(r.Intn(30) + 50)) // 50-80%
+                m.solarPanelPower.WithLabelValues(siteID).Set(float64(r.Intn(300) + 200))       // 200-500 watts
+                m.solarPanelCurrent.WithLabelValues(siteID).Set(float64(r.Intn(13) + 2))        // 2-15 amps
+                m.solarPanelVoltage.WithLabelValues(siteID).Set(float64(r.Intn(50) + 50))       // 50-100 volts
+                m.solarSwitchPortSpeed.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10))   // 10-110 Mbps
+                m.solarSwitchPortPower.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10))   // 10-110 watts
+            }
+
+            if portEnabled, ok := sitePortStatus[PORT_NODE]; ok && portEnabled {
+                if debugLog {
+                    log.Infof(" [%s]: Updating node metrics (enabled)", siteID)
+                }
+                m.nodeSwitchPortPowerVec.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10)) // 10-110 watts
+                m.nodeSwitchPortSpeedVec.WithLabelValues(siteID).Set(float64(r.Intn(100) + 10)) // 10-110 Mbps
+            }
+
+            time.Sleep(1 * time.Second)
+        }
+    }()
+}
+
+type MetricsManager struct {
+    Metrics     *Metrics
+    mu          sync.Mutex
+    ActiveSites map[string]bool
+}
+
+func NewMetricsManager() *MetricsManager {
+    log.Println("DEBUG: Creating new MetricsManager")
+    return &MetricsManager{
+        Metrics:     New(),
+        ActiveSites: make(map[string]bool),
+    }
+}
+
+func (mm *MetricsManager) StartSiteMetrics(siteID string) error {
+    log.Infof("DEBUG: StartSiteMetrics called for site %s", siteID)
+    mm.mu.Lock()
+    defer mm.mu.Unlock()
+
+    if mm.ActiveSites[siteID] {
+        return fmt.Errorf("metrics already running for site: %s", siteID)
+    }
+
+    mm.ActiveSites[siteID] = true
+    mm.Metrics.StartMetricsGenerator(siteID)
+    log.Printf("DEBUG: Started metrics for site %s, active sites: %v", siteID, mm.ActiveSites)
+    return nil
+}
+
+func (mm *MetricsManager) StopSiteMetrics(siteID string) {
+    log.Infof("DEBUG: StopSiteMetrics called for site %s", siteID)
+    mm.mu.Lock()
+    delete(mm.ActiveSites, siteID)
+    mm.mu.Unlock()
+
+    mm.Metrics.mu.Lock()
+    delete(mm.Metrics.siteUptimeCounters, siteID)
+    delete(mm.Metrics.portStatus, siteID)
+    mm.Metrics.mu.Unlock()
+    log.Printf("DEBUG: Stopped metrics for site %s", siteID)
+}
+
+func (mm *MetricsManager) UpdatePortStatus(siteID string, portNumber int, enabled bool) error {
+    mm.mu.Lock()
+    isRunning := mm.ActiveSites[siteID]
+    mm.mu.Unlock()
+
+    if !isRunning {
+        return fmt.Errorf("no metrics running for site: %s", siteID)
+    }
+
+    return mm.Metrics.UpdatePortStatus(siteID, portNumber, enabled)
+}
+
+func (mm *MetricsManager) IsMetricsRunning(siteID string) bool {
+    mm.mu.Lock()
+    defer mm.mu.Unlock()
+    return mm.ActiveSites[siteID]
+}
+
+func (mm *MetricsManager) GetSiteMetrics(siteID string) (map[string]float64, error) {
+    mm.mu.Lock()
+    isRunning := mm.ActiveSites[siteID]
+    mm.mu.Unlock()
+
+    if !isRunning {
+        return nil, fmt.Errorf("no metrics running for site: %s", siteID)
+    }
+
+    metrics := make(map[string]float64)
+
+    mm.Metrics.mu.Lock()
+    portStatus, exists := mm.Metrics.portStatus[siteID]
+    mm.Metrics.mu.Unlock()
+
+    if !exists {
+        return nil, fmt.Errorf("port status not found for site: %s", siteID)
+    }
+
+    gathered, err := prometheus.DefaultGatherer.Gather()
+    if err != nil {
+        return nil, fmt.Errorf("failed to gather metrics: %v", err)
+    }
+
+    for _, mf := range gathered {
+        for _, m := range mf.GetMetric() {
+            siteValue := ""
+            for _, label := range m.GetLabel() {
+                if label.GetName() == "site" {
+                    siteValue = label.GetValue()
+                    break
+                }
+            }
+            if siteValue == siteID {
+                metricName := *mf.Name
+                metricValue := m.GetGauge().GetValue()
+                metrics[metricName] = metricValue
+                if metricName == "backhaul_speed" || metricName == "main_backhaul_latency" {
+                    log.Infof("DEBUG: Retrieved metric %s = %v for site %s", metricName, metricValue, siteID)
+                }
+            }
+        }
+    }
+
+    log.Infof("DEBUG: Port status for site %s: %v", siteID, portStatus)
+    return metrics, nil
+}

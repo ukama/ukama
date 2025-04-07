@@ -56,7 +56,7 @@ const SiteInfo: React.FC<SiteInfoProps> = ({
               color="text.secondary"
               fontWeight="medium"
             >
-              Node:
+              Nodes:
             </Typography>
           </Grid>
           <Grid item xs={12} md={8}>

@@ -134,6 +134,30 @@ export class GetMetricsStatInput {
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
 
+  @Field()
+  from: number;
+
+  @Field({ nullable: true })
+  to?: number;
+
+  @Field({ defaultValue: 30 })
+  step: number;
+
+  @Field({ defaultValue: false })
+  withSubscription: boolean;
+}
+
+@InputType()
+export class GetMetricsSiteStatInput {
+  @Field()
+  orgName: string;
+
+  @Field({ nullable: true })
+  userId?: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
   @Field({ nullable: true })
   siteId?: string;
 
@@ -154,6 +178,24 @@ export class GetMetricsStatInput {
 export class SubMetricsStatInput {
   @Field()
   nodeId: string;
+
+  @Field()
+  orgName: string;
+
+  @Field(() => STATS_TYPE)
+  type: STATS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
+}
+
+@InputType()
+export class SubSiteMetricsStatInput {
+  @Field()
+  siteId: string;
 
   @Field()
   orgName: string;
@@ -213,9 +255,6 @@ export class MetricStateRes {
   nodeId?: string;
 
   @Field()
-  siteId?: string;
-
-  @Field()
   type: string;
 
   @Field()
@@ -255,6 +294,30 @@ export class MetricsStateRes {
   metrics: MetricStateRes[];
 }
 
+@ObjectType()
+export class SiteMetricsStateRes {
+  @Field(() => [SiteMetricStateRes])
+  metrics: SiteMetricStateRes[];
+}
+
+@ObjectType()
+export class SiteMetricStateRes {
+  @Field()
+  success: boolean;
+
+  @Field()
+  msg: string;
+
+  @Field()
+  siteId?: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  value: number;
+}
+
 @InputType()
 export class SubMetricRangeInput {
   @Field()
@@ -279,7 +342,21 @@ export class SubMetricByTabInput {
   nodeId: string;
 
   @Field()
-  siteId?: string;
+  orgName: string;
+
+  @Field(() => GRAPHS_TYPE)
+  type: GRAPHS_TYPE;
+
+  @Field()
+  userId: string;
+
+  @Field()
+  from: number;
+}
+@InputType()
+export class SubSiteMetricByTabInput {
+  @Field()
+  siteId: string;
 
   @Field()
   orgName: string;

@@ -26,15 +26,17 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import colors from '@/theme/colors';
-import { TNodeSiteTree } from '@/types';
+import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import Battery50Icon from '@mui/icons-material/Battery50';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import RouterIcon from '@mui/icons-material/Router';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
+import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
@@ -169,6 +171,11 @@ const getDataUsageSymbol = (dataUnit: string): string => {
   }
 };
 
+const getPortInfo: Record<string, { number: number; desc: string }> = {
+  solar: { number: 2, desc: 'Solar Controller' },
+  backhaul: { number: 3, desc: 'Backhaul' },
+  node: { number: 1, desc: 'Node' },
+};
 const getDataPlanUsage = (
   duration: string,
   currency: string,
@@ -571,6 +578,63 @@ const getSignalStyles = (signalStrength: string) => {
   }
 };
 
+const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
+  if (type === 'uptime') {
+    return value <= 0
+      ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }
+      : {
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
+  }
+
+  if (type === 'battery') {
+    if (value < 20) {
+      return {
+        color: colors.red,
+        icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+      };
+    } else if (value < 50) {
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    } else {
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+    }
+  }
+
+  if (type === 'signal') {
+    if (value < 30) {
+      return {
+        color: colors.red,
+        icon: <SignalCellularOffIcon sx={{ color: colors.red }} />,
+      };
+    } else if (value < 70) {
+      return {
+        color: colors.orange,
+        icon: (
+          <SignalCellularConnectedNoInternet4BarIcon
+            sx={{ color: colors.orange }}
+          />
+        ),
+      };
+    } else {
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+    }
+  }
+
+  return {
+    color: colors.green,
+    icon: <RouterIcon sx={{ color: colors.green }} />,
+  };
+};
 export {
   base64ToBlob,
   ConfigureStep,
@@ -588,6 +652,8 @@ export {
   getKPIStatValue,
   getSignalStyles,
   getSimValuefromSimType,
+  getPortInfo,
+  getStatusStyles,
   getTitleFromPath,
   getUnixTime,
   hexToRGB,
