@@ -100,6 +100,7 @@ const ConfigureLayout = ({
           show: true,
         });
         router.push('/console/home');
+        return;
       }
 
       mapComponents(data.getComponentsByUserId);
