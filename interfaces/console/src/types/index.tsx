@@ -23,6 +23,7 @@ export type MenuItemType = {
 };
 
 export interface SiteMetrics {
+  siteId: string;
   siteUptimeSeconds?: number;
   batteryPercentage?: number;
   backhaulSpeed?: number;

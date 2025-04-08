@@ -28,7 +28,7 @@ import { TSiteForm, SiteMetrics } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { STAT_STEP_29 } from '@/constants';
@@ -46,6 +46,8 @@ const SITE_INIT = {
   network: '',
 };
 
+let persistedSiteMetrics: Record<string, SiteMetrics> = {};
+
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
@@ -58,9 +60,10 @@ export default function Page() {
     siteName: '',
     siteId: '',
   });
-  const [siteMetrics, setSiteMetrics] = useState<Record<string, SiteMetrics>>(
-    {},
-  );
+  const [siteMetrics, setSiteMetrics] =
+    useState<Record<string, SiteMetrics>>(persistedSiteMetrics);
+
+  const subscriptionsInitialized = useRef<Record<string, boolean>>({});
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -70,8 +73,12 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
+
       sites.forEach((site) => {
-        fetchSiteMetrics(site.id);
+        if (!subscriptionsInitialized.current[site.id]) {
+          fetchSiteMetrics(site.id);
+          subscriptionsInitialized.current[site.id] = true;
+        }
       });
     },
     onError: (error) => {
@@ -93,10 +100,8 @@ export default function Page() {
         const siteId = data.getSiteStat.metrics[0].siteId;
         const metrics = data.getSiteStat.metrics;
 
-        // Create a new metrics object for this site
         let updatedSiteMetrics: Partial<SiteMetrics> = {};
 
-        // Process all metrics from the response
         metrics.forEach((metric) => {
           switch (metric.type) {
             case 'site_uptime_seconds':
@@ -108,18 +113,20 @@ export default function Page() {
             case 'backhaul_speed':
               updatedSiteMetrics.backhaulSpeed = metric.value;
               break;
-            // Add other metrics as needed
           }
         });
 
-        // Update state with all metrics at once
-        setSiteMetrics((prev) => ({
-          ...prev,
-          [siteId]: {
-            ...prev[siteId],
-            ...updatedSiteMetrics,
-          },
-        }));
+        setSiteMetrics((prev) => {
+          const updated = {
+            ...prev,
+            [siteId]: {
+              ...prev[siteId],
+              ...updatedSiteMetrics,
+            },
+          };
+          persistedSiteMetrics = updated;
+          return updated;
+        });
       }
     },
     onError: (error) => {
@@ -138,7 +145,6 @@ export default function Page() {
       const currentMetrics = prev[siteId] || {};
       const updatedMetrics = { ...currentMetrics };
 
-      // Update the specific metric based on type
       switch (metricType) {
         case 'site_uptime_seconds':
           updatedMetrics.siteUptimeSeconds = value;
@@ -149,44 +155,40 @@ export default function Page() {
         case 'backhaul_speed':
           updatedMetrics.backhaulSpeed = value;
           break;
-        // Add other cases for metrics you care about
       }
 
-      return {
+      const updated = {
         ...prev,
         [siteId]: updatedMetrics,
       };
+
+      persistedSiteMetrics = updated;
+      return updated;
     });
   };
 
   const setupSubscriptions = (siteId: string) => {
-    // We only need one subscription with the SITE type since it includes all metrics
     const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
 
-    // Unsubscribe first to prevent duplicate subscriptions
     PubSub.unsubscribe(key);
 
-    // Create new subscription
     MetricStatBySiteSubscription({
       url: env.METRIC_URL,
       key,
-      from: getUnixTime() - 40,
+      from: getUnixTime() - STAT_STEP_29,
       siteId,
       userId: user.id,
       orgName: user.orgName,
       type: Stats_Type.Site,
     });
 
-    // Subscribe to updates
     PubSub.subscribe(key, (msg, data) => {
-      console.log('Received PubSub message:', key);
       try {
         const parsedData = JSON.parse(data);
         const { value, type, success, siteId } =
           parsedData.data.getSiteMetricStatSub;
 
         if (success) {
-          console.log('Updating metric:', siteId, type, value);
           handleMetricUpdate(siteId, type, value[1]);
         }
       } catch (error) {
@@ -197,9 +199,8 @@ export default function Page() {
 
   const fetchSiteMetrics = (siteId: string) => {
     const to = getUnixTime();
-    const from = to - 40;
+    const from = to - STAT_STEP_29;
 
-    // Use a single query to get all site metrics
     getSiteMetrics({
       variables: {
         data: {
@@ -209,8 +210,8 @@ export default function Page() {
           userId: user.id,
           step: STAT_STEP_29,
           orgName: user.orgName,
-          withSubscription: true, // Enable subscriptions
-          type: Stats_Type.Site, // This includes all metrics
+          withSubscription: true,
+          type: Stats_Type.Site,
         },
       },
     });
@@ -306,9 +307,6 @@ export default function Page() {
     refetchSites().then((res) => {
       const sites = res.data.getSites.sites;
       setSitesList(sites);
-      sites.forEach((site) => {
-        fetchSiteMetrics(site.id);
-      });
     });
 
     getComponents({

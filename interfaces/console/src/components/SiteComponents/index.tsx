@@ -12,7 +12,6 @@ import {
   Grid,
   Stack,
   Paper,
-  Skeleton,
   Typography,
   Switch,
   Accordion,
@@ -108,39 +107,6 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       ...prev,
       [portId]: !prev[portId],
     }));
-  };
-
-  const renderSkeletonLoading = () => {
-    return (
-      <Paper
-        sx={{
-          p: 3,
-          pr: 5, // Added more padding on the right
-          overflow: 'auto',
-          height: {
-            xs: 'calc(100vh - 480px)',
-            md: 'calc(100vh - 328px)',
-          },
-          elevation: 0,
-        }}
-      >
-        <Stack spacing={4}>
-          {Array.from({ length: sections[activeSection]?.length || 3 }).map(
-            (_, index) => (
-              <Box key={`skeleton-${index}`}>
-                <Skeleton
-                  variant="text"
-                  width="40%"
-                  height={30}
-                  sx={{ mb: 1 }}
-                />
-                <Skeleton variant="rectangular" width="100%" height={200} />
-              </Box>
-            ),
-          )}
-        </Stack>
-      </Paper>
-    );
   };
 
   const getPortMetrics = () => {
@@ -310,12 +276,12 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
 
           <Grid item xs={12} md={9}>
             {activeKPI === 'node' ? (
-              <NodeStatusDisplay nodeUptimes={nodeUptimes} />
+              <NodeStatusDisplay nodeUptimes={nodeUptimes || 0} />
             ) : (
               <Paper
                 sx={{
                   p: 3,
-                  pr: 5, // Added more padding on the right
+                  pr: 5,
                   overflow: 'auto',
                   height: {
                     xs: 'calc(100vh - 480px)',

@@ -97,7 +97,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [componentsList, setComponentsList] = useState<any[]>([]);
-  const [isNodesFetched, setIsNodesFetched] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
@@ -110,7 +109,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     user,
     env,
     subscriptionClient,
-    siteMetrics,
   } = useAppContext();
   const {
     address: CurrentSiteaddress,
@@ -351,15 +349,15 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           }
         }
       },
-      // onError: (err) => {
-      //   console.error('Error fetching node metrics:', err);
-      //   setSnackbarMessage({
-      //     id: 'node-metrics-err-msg',
-      //     message: err.message,
-      //     type: 'error',
-      //     show: true,
-      //   });
-      // },
+      onError: (err) => {
+        console.error('Error fetching node metrics:', err);
+        setSnackbarMessage({
+          id: 'node-metrics-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
     });
 
   useEffect(() => {
@@ -467,7 +465,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       } else {
         setNodeIds([]);
       }
-      setIsNodesFetched(true);
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -476,7 +473,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         type: 'error',
         show: true,
       });
-      setIsNodesFetched(true);
     },
   });
 

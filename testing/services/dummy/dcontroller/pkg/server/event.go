@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"time"
@@ -75,19 +76,25 @@ import (
 
 	return &epb.EventResponse{}, nil
 }
-  
 func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) error {
     log.Infof("Handling node assignment event for site: %s", msg.SiteId)
     
+    randomConfig := &pb.SiteConfig{
+        AvgBackhaulSpeed: 30 + rand.Float64()*70,    
+        AvgLatency:       10 + rand.Float64()*40,    
+        SolarEfficiency:  0.7 + rand.Float64()*0.2,  
+    }
+    
     metricsReq := &pb.StartMetricsRequest{
-        SiteId:  msg.SiteId,
+        SiteId:     msg.SiteId,
+        SiteConfig: randomConfig,
     }
     
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer cancel()
     
     resp, err := n.server.StartMetrics(ctx, metricsReq)
-    if (err != nil) {
+    if err != nil {
         log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
         return err
     }
@@ -97,13 +104,10 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
         return fmt.Errorf("failed to start metrics for site %s", msg.SiteId)
     }
     
-    log.Infof("Successfully started metrics for site %s", msg.SiteId)
-    
-
+    log.Infof("Successfully started metrics for site %s with config: %+v", msg.SiteId, randomConfig)
     
     return nil
 }
- 
 func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeederMessage) error {
 	log.Infof("Handling toggle switch event: target=%s, path=%s", msg.Target, msg.Path)
 	
