@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package server
 
 import (
@@ -18,13 +18,13 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/uuid"
 	mocks "github.com/ukama/ukama/systems/ukama-agent/cdr/mocks"
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
-	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
 )
 
 var cdr = db.CDR{
