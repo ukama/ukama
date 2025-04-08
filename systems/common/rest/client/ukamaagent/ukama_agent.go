@@ -84,8 +84,8 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 
 	usage := UkamaSimUsage{}
 
-	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint + "/usage/" +
-		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))
+	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint +
+		fmt.Sprintf("/%s/period?start_time=%s&end_time=%s", iccid, from, to))
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %s", err.Error())
 
