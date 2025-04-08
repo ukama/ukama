@@ -55,7 +55,6 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
       (averageNodeUptimeSeconds / secondsSinceInstallation) * 100;
   }
 
-  // Calculate overall uptime percentage
   let overallUptimePercentage = siteUptimePercentage;
   if (nodeUptimes.length > 0) {
     overallUptimePercentage =
@@ -64,13 +63,11 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
 
   overallUptimePercentage = Math.min(Math.max(0, overallUptimePercentage), 100);
 
-  // Calculate individual node percentages
   const nodePercentages = nodeUptimes.map((node) => ({
     id: node.id,
     percentage: (node.uptimeSeconds / secondsSinceInstallation) * 100,
   }));
 
-  // Generate data for the bars
   const generateBarData = (startDay: number, count: number) => {
     const now = Date.now();
     const bars = [];
@@ -138,7 +135,8 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
               bottom: 0,
               width: '100%',
               height: '100%',
-              bgcolor: 'rgba(0, 0, 0, 0.3)',
+              bgcolor: 'rgba(0, 0, 0, 0.8)',
+              border: `2px solid ${colors.black}`,
               borderRadius: 1,
               zIndex: 1,
             }}
@@ -211,7 +209,8 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
             }}
           >
             {overallUptimePercentage.toFixed(1)}% uptime over{' '}
-            {daysSinceInstallation} days
+            {daysSinceInstallation}
+            {daysSinceInstallation === 1 ? 'day' : 'days'}
           </Typography>
         </Tooltip>
 

@@ -50,7 +50,12 @@ func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetri
 		}, nil
 	}
 
-	err := s.metricsManager.StartSiteMetrics(siteId)
+	config := metrics.SiteConfig{
+		AvgBackhaulSpeed: req.SiteConfig.AvgBackhaulSpeed,
+		AvgLatency: req.SiteConfig.AvgLatency,
+		SolarEfficiency: req.SiteConfig.SolarEfficiency,
+	}
+	err := s.metricsManager.StartSiteMetrics(siteId, config)
 	if err != nil {
 		return &pb.StartMetricsResponse{
 			Success: false,

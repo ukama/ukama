@@ -15,6 +15,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *SiteConfig) Validate() error {
+	return nil
+}
 func (this *UpdatePortStatusRequest) Validate() error {
 	return nil
 }
@@ -85,6 +88,11 @@ func (this *PowerMetrics) Validate() error {
 	return nil
 }
 func (this *StartMetricsRequest) Validate() error {
+	if this.SiteConfig != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SiteConfig); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("SiteConfig", err)
+		}
+	}
 	return nil
 }
 func (this *StartMetricsResponse) Validate() error {

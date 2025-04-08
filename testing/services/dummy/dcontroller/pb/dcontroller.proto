@@ -27,7 +27,12 @@
      PORT_BACKHAUL = 3;
  }
  
- // New message definitions for updating port status
+ message SiteConfig {
+     double avgBackhaulSpeed = 1; 
+     double avgLatency = 2; 
+     double solarEfficiency = 3; 
+ }
+ 
  message UpdatePortStatusRequest {
      string siteId = 1;
      int32 portNumber = 2;
@@ -85,9 +90,9 @@
      double solarPanelPower = 4;
  }
  
-
  message StartMetricsRequest {
      string siteId = 1;
+     SiteConfig siteConfig = 2;
  }
  
  message StartMetricsResponse {
