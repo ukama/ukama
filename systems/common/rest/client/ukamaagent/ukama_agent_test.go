@@ -146,7 +146,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
 
 			// fake usage usage
-			usage := `{"usage":28901234567}`
+			usage := `{"usage":"28901234567"}`
 
 			// Send mock response
 			return &http.Response{
