@@ -7,7 +7,6 @@
  */
 
 import ChipDropdown from '@/components/ChipDropDown';
-import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
 import { ColumnsWithOptions } from '@/types';
 import {
@@ -31,9 +30,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
@@ -58,8 +58,15 @@ interface TableCellProps {
   handleDeleteElement: (id: string) => void;
 }
 
+interface TableHeaderProps {
+  columns: ColumnsWithOptions[];
+  order: 'asc' | 'desc';
+  sortedColumn: string;
+  onSort: (column: ColumnsWithOptions) => void;
+}
+
 const MemoizedTableHeader = React.memo(
-  ({ columns }: { columns: ColumnsWithOptions[] }) => {
+  ({ columns, order, sortedColumn, onSort }: TableHeaderProps) => {
     return (
       <TableHead>
         <TableRow>
@@ -74,7 +81,17 @@ const MemoizedTableHeader = React.memo(
                 minWidth: column.minWidth,
               }}
             >
-              {column.label}
+              {column?.options?.isSortable ? (
+                <TableSortLabel
+                  active={sortedColumn === column.id}
+                  direction={order}
+                  onClick={() => onSort(column)}
+                >
+                  {column.label}
+                </TableSortLabel>
+              ) : (
+                column.label
+              )}
             </TableCell>
           ))}
         </TableRow>
@@ -240,9 +257,34 @@ const SimpleDataTable = React.memo(
     handleCreateNetwork,
     handleDeleteElement,
   }: SimpleDataTableInterface) => {
-    const { isDarkMode } = useAppContext();
-    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortedColumn, setSortedColumn] = useState<string>('');
 
+    const handleSort = (column: ColumnsWithOptions) => {
+      const isSameColumn = sortedColumn === column.id;
+      const nextOrder = isSameColumn && order === 'asc' ? 'desc' : 'asc';
+      setOrder(nextOrder);
+      setSortedColumn(column.id);
+    };
+
+    const sortedData = useMemo(() => {
+      if (!sortedColumn) return dataset;
+      return [...dataset].sort((a, b) => {
+        const aVal = a[sortedColumn];
+        const bVal = b[sortedColumn];
+        if (aVal == null || bVal == null) return 0;
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return order === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        const aString = String(aVal);
+        const bString = String(bVal);
+        return order === 'asc'
+          ? aString.localeCompare(bString)
+          : bString.localeCompare(aString);
+      });
+    }, [dataset, sortedColumn, order]);
+
+    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
       setMenuAnchorEl(event.currentTarget);
     };
@@ -255,11 +297,15 @@ const SimpleDataTable = React.memo(
         }}
       >
         <Table stickyHeader>
-          <MemoizedTableHeader columns={columns} />
-
+          <MemoizedTableHeader
+            columns={columns}
+            order={order}
+            sortedColumn={sortedColumn}
+            onSort={handleSort}
+          />
           <TableBody>
-            {dataset?.map((row: any) => (
-              <TableRow key={row[dataKey]} sx={{}}>
+            {sortedData?.map((row: any) => (
+              <TableRow key={row[dataKey]}>
                 {columns?.map((column: ColumnsWithOptions, index: number) => (
                   <SimpleTableCell
                     row={row}
@@ -274,7 +320,6 @@ const SimpleDataTable = React.memo(
                 ))}
               </TableRow>
             ))}
-
             {showActionButton && (
               <TableRow>
                 <TableCell colSpan={columns.length}>

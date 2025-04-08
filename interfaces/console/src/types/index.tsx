@@ -108,6 +108,9 @@ export type ColumnsWithOptions = {
   label: string;
   minWidth?: number;
   align?: 'right';
+  options?: {
+    isSortable?: boolean;
+  };
 };
 export type UserSearchFormType = {
   text: string;
