@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package rest
 
 import (
@@ -15,16 +15,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg/client"
+
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
-	"github.com/wI2L/fizz/openapi"
 )
 
 const ORG_URL_PARAMETER = "org"

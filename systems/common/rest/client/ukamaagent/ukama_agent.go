@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/validation"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -84,8 +85,22 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 
 	usage := UkamaSimUsage{}
 
-	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint + "/usage/" +
-		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))
+	frm, err := validation.FromString(from)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+	}
+
+	startTime := frm.Unix()
+
+	t, err := validation.FromString(to)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+	}
+
+	endTime := t.Unix()
+
+	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint +
+		fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", iccid, startTime, endTime))
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %s", err.Error())
 
@@ -100,9 +115,8 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	}
 
 	log.Infof("ukama data usage (of type %T): %+v", usage.Usage, usage.Usage)
-	log.Infof("ukama data cost (of type %T): %+v", usage.Cost, usage.Cost)
 
-	return usage.Usage, usage.Cost, nil
+	return map[string]any{iccid: usage.Usage}, nil, nil
 }
 
 func (o *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
@@ -155,8 +169,7 @@ type UkamaSim struct {
 }
 
 type UkamaSimUsage struct {
-	Usage map[string]any `json:"usage"`
-	Cost  map[string]any `json:"cost"`
+	Usage uint64 `json:"usage,string"`
 }
 
 type UkamaSimInfo struct {

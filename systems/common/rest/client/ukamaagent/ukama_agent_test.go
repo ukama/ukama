@@ -31,12 +31,17 @@ const (
 	cost      = 100.99
 )
 
-var req = client.AgentRequestData{
-	Iccid:     testIccid,
-	Imsi:      testImsi,
-	NetworkId: "5248eefa-23a0-4222-b80b-e1af5047eaf8",
-	SimId:     "0ba2f8d9-e888-4071-aa09-7300daa986aa",
-}
+var (
+	req = client.AgentRequestData{
+		Iccid:     testIccid,
+		Imsi:      testImsi,
+		NetworkId: "5248eefa-23a0-4222-b80b-e1af5047eaf8",
+		SimId:     "0ba2f8d9-e888-4071-aa09-7300daa986aa",
+	}
+
+	startTime = 1669852800
+	endTime   = 1701388800
+)
 
 func TestUkamaClient_GetSimInfo(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
@@ -137,11 +142,11 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 	t.Run("UsageFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				ukamaagent.UkamaSimsEndpoint+"/usage/", testIccid, cdrType, from, to, region))
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
+				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
 
 			// fake usage usage
-			usage := `{"usage":{"890000000000000001234": 28901234567}, "cost":{"890000000000000001234":100.99}}`
+			usage := `{"usage":"28901234567"}`
 
 			// Send mock response
 			return &http.Response{
@@ -160,18 +165,16 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		// so that the test stays a unit test e.g no server/network call.
 		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
-		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
+		u, _, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u[testIccid])
-		assert.NotNil(tt, c[testIccid])
-		assert.Equal(tt, 100.99, c[testIccid])
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				ukamaagent.UkamaSimsEndpoint+"/usage/", testIccid, cdrType, from, to, region))
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
+				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
 
 			return &http.Response{
 				StatusCode: 200,
@@ -193,8 +196,8 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
-				ukamaagent.UkamaSimsEndpoint+"/usage/", testIccid, cdrType, from, to, region))
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
+				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
 
 			return nil
 		}

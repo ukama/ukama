@@ -12,15 +12,16 @@ import (
 	"sort"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
-	dsql "github.com/ukama/ukama/systems/common/sql"
-	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	dsql "github.com/ukama/ukama/systems/common/sql"
+	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
 
 type CDRServer struct {
