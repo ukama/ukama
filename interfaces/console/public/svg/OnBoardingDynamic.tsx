@@ -6,6 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import colors from '@/theme/colors';
+
 interface IOnBoardingDynamic {
   orgName: string;
   networkName: string;
@@ -20,6 +22,7 @@ interface IOnBoardingDynamic {
   isShowComponents?: boolean;
   textColor: string;
   selectedColor: string;
+  simPoolIconColor?: string;
 }
 const textStyle = {
   fontSize: '14px',
@@ -41,18 +44,20 @@ const OnBoardingDynamic = ({
   isShowComponents = false,
   textColor = '#304445',
   selectedColor = '#304445',
+  simPoolIconColor = colors.tertiary,
 }: IOnBoardingDynamic) => {
-  const orgIconColor = orgName === 'Organization' ? '#6F7979' : selectedColor;
+  const orgIconColor =
+    orgName === 'Organization' ? colors.tertiary : selectedColor;
   const networkIconColor =
-    networkName === 'Network' ? '#6F7979' : selectedColor;
+    networkName === 'Network' ? colors.tertiary : selectedColor;
   const siteIconColor = selectedColor;
-  const nodeIconColor = nodeName === 'Node' ? '#6F7979' : selectedColor;
-  const switchIconColor = switchName === 'Switch' ? '#6F7979' : selectedColor;
-  const powerIconColor = powerName === 'Power' ? '#6F7979' : selectedColor;
+  const nodeIconColor = nodeName === 'Node' ? colors.tertiary : selectedColor;
+  const switchIconColor =
+    switchName === 'Switch' ? colors.tertiary : selectedColor;
+  const powerIconColor =
+    powerName === 'Power' ? colors.tertiary : selectedColor;
   const backhaulIconColor =
-    backhaulName === 'Backhaul' ? '#6F7979' : selectedColor;
-  const simPoolIconColor =
-    simPoolName === 'Sim Pool' ? '#6F7979' : selectedColor;
+    backhaulName === 'Backhaul' ? colors.tertiary : selectedColor;
 
   return (
     <svg

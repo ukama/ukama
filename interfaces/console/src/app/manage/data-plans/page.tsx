@@ -9,7 +9,6 @@
 import {
   PackageDto,
   useAddPackageMutation,
-  useDeletePackageMutation,
   useGetCurrencySymbolLazyQuery,
   useGetNetworkQuery,
   useGetPackagesQuery,
@@ -111,29 +110,6 @@ const Page = () => {
     },
   });
 
-  const [deletePackage, { loading: deletePkgLoading }] =
-    useDeletePackageMutation({
-      onCompleted: () => {
-        getDataPlans().then((res) => {
-          setData(res?.data?.getPackages.packages ?? []);
-        });
-        setSnackbarMessage({
-          id: 'delete-data-plan',
-          message: 'Data plan deleted successfully',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'data-plan-delete-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-
   const [updatePackage, { loading: updatePkgLoading }] =
     useUpdatePacakgeMutation({
       onCompleted: () => {
@@ -199,13 +175,7 @@ const Page = () => {
   };
 
   const handleOptionMenuItemAction = (id: string, action: string) => {
-    if (action === 'delete') {
-      deletePackage({
-        variables: {
-          packageId: id,
-        },
-      });
-    } else if (action === 'edit') {
+    if (action === 'edit') {
       const d: PackageDto | undefined = packagesData?.getPackages.packages.find(
         (pkg: PackageDto) => pkg.uuid === id,
       );
@@ -226,12 +196,7 @@ const Page = () => {
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={
-        packagesLoading ??
-        dataPlanLoading ??
-        updatePkgLoading ??
-        deletePkgLoading
-      }
+      isLoading={packagesLoading ?? dataPlanLoading ?? updatePkgLoading}
       height={'calc(100vh - 244px)'}
     >
       <Paper

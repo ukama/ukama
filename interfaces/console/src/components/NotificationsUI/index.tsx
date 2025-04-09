@@ -173,7 +173,7 @@ export const Notification = ({
 
         <Stack direction={'column'} spacing={0.5} alignItems={'flex-end'}>
           <Typography fontSize="12px" fontWeight="400">
-            {format(new Date(createdAt), 'MM/dd hha')}
+            {format(new Date(createdAt), 'MM/dd hh:mm a')}
           </Typography>
 
           <IconButton onClick={handleMenuClick} sx={{ p: 0 }}>

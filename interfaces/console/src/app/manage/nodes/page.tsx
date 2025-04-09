@@ -125,7 +125,12 @@ const Page = () => {
           {data.length === 0 ? (
             <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
           ) : (
-            <SimpleDataTable dataset={data} columns={MANAGE_NODE_POOL_COLUMN} />
+            <SimpleDataTable
+              dataset={data}
+              isIdHyperlink={true}
+              columns={MANAGE_NODE_POOL_COLUMN}
+              hyperlinkPrefix={'/console/nodes/'}
+            />
           )}
         </Box>
       </Paper>

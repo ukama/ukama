@@ -34,10 +34,10 @@ const parseSite = (res: any): NodeSite => {
         networkId: res.site.network_id,
       }
     : {
-        nodeId: null,
-        siteId: null,
-        addedAt: null,
-        networkId: null,
+        nodeId: "",
+        siteId: "",
+        addedAt: "",
+        networkId: "",
       };
 };
 
