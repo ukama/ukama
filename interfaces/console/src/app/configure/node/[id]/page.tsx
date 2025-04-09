@@ -6,15 +6,23 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
+import { useGetNetworksQuery } from '@/client/graphql/generated';
 import SiteMapComponent from '@/components/SiteMapComponent';
 import { LField } from '@/components/Welcome';
-import { ONBOARDING_FLOW } from '@/constants';
+import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
+import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { Button, Stack, Typography } from '@mui/material';
+import { Button, Skeleton, Stack, Typography } from '@mui/material';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import LoadingSkelton from './skelton';
+
+const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" width={'100%'} height={29} />,
+});
 
 interface INodeConfigure {
   params: {
@@ -29,8 +37,11 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
+  const networkId = searchParams.get('networkid') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
+  const [networkSelected, setNetworkSelected] = useState<string>(networkId);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { setSnackbarMessage, setNetwork } = useAppContext();
   const [latlng] = useState<[number, number]>([
     parseFloat(qpLat),
     parseFloat(qpLng),
@@ -57,6 +68,17 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
     }
   }, [address]);
 
+  const { data: networksData } = useGetNetworksQuery({
+    fetchPolicy: 'cache-and-network',
+  });
+
+  const getDropDownData = () =>
+    networksData?.getNetworks.networks.map((network) => ({
+      id: network.id,
+      label: network.name,
+      value: network.id,
+    }));
+
   const handleFetchAddress = async () => {
     await fetchAddress(latlng[0], latlng[1]);
   };
@@ -73,8 +95,36 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   };
 
   const handleNext = () => {
-    if (address) {
+    const n = searchParams.get('networkid') ?? '';
+    if (!n || !networkSelected) {
+      setSnackbarMessage({
+        id: 'network-msg',
+        message: 'Please select network',
+        type: 'error',
+        show: true,
+      });
+      return;
+    }
+
+    if (address && networkSelected === n) {
+      setNetwork({
+        id: networkSelected,
+        name:
+          networksData?.getNetworks.networks.find(
+            (n) => n.id === networkSelected,
+          )?.name ?? '',
+      });
       router.push(`/configure/node/${id}/site/name?${searchParams.toString()}`);
+    }
+  };
+
+  const handleNetworkChange = (id: string) => {
+    if (id) {
+      const filterNetwork = networksData?.getNetworks.networks.find(
+        (n) => n.id === id,
+      );
+      setNetworkSelected(id);
+      setQueryParam('networkid', filterNetwork?.id ?? '');
     }
   };
 
@@ -101,6 +151,22 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
           address={address}
           height={'128px'}
         />
+
+        <Stack
+          width={'fit-content'}
+          direction={'column'}
+          display={flow === INSTALLATION_FLOW || !networkId ? 'flex' : 'none'}
+        >
+          <LField label="Network" value={''} />
+          <BasicDropdown
+            value={networkSelected}
+            isShowAddOption={false}
+            placeholder={'Select Network'}
+            list={getDropDownData() || []}
+            handleOnChange={handleNetworkChange}
+            handleAddNetwork={() => {}}
+          />
+        </Stack>
 
         <LField label="Node Id" value={id} />
         <LField

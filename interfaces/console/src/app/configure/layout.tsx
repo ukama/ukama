@@ -44,35 +44,36 @@ const ConfigureLayout = ({
   const qpLng = searchParams.get('lng') ?? '';
   const pool = searchParams.get('pool') ?? 'false';
   const nid = searchParams.get('nid') ?? '';
-  const accessId = searchParams.get('access') ?? '';
   const siteName = searchParams.get('name') ?? '';
+  const accessId = searchParams.get('access') ?? '';
+  const networkId = searchParams.get('networkid') ?? '';
   const flow = searchParams.get('flow') ?? ONBOARDING_FLOW;
   const { currentStep, totalStep } = ConfigureStep(path, flow);
-  const { user, network, setNetwork, setSnackbarMessage } = useAppContext();
+  const [network, setNetwork] = useState({
+    id: '',
+    name: '',
+  });
+  const { user, setSnackbarMessage } = useAppContext();
   const [parts, setParts] = useState({
     switchId: '',
     powerName: '',
     backhaulName: '',
   });
 
-  useGetNetworksQuery({
-    skip: path.includes('/configure/network'),
-    fetchPolicy: 'cache-and-network',
+  const { data: networksData } = useGetNetworksQuery({
+    fetchPolicy: 'cache-first',
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0) {
-        setNetwork({
-          id: data.getNetworks.networks[0].id,
-          name: data.getNetworks.networks[0].name,
-        });
+        const network = data.getNetworks.networks.find(
+          (n) => n.id === networkId,
+        );
+        if (network) {
+          setNetwork({
+            id: network.id,
+            name: network.name,
+          });
+        }
       }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error',
-        show: true,
-      });
     },
   });
 
@@ -116,6 +117,15 @@ const ConfigureLayout = ({
   });
 
   useEffect(() => {
+    const p = searchParams.get('networkid') ?? '';
+    if (p) {
+      setNetwork({
+        id: p,
+        name:
+          networksData?.getNetworks.networks.find((n) => n.id === networkId)
+            ?.name ?? '',
+      });
+    }
     if (components && components?.getComponentsByUserId.components.length > 0) {
       mapComponents(components.getComponentsByUserId);
     }
@@ -190,7 +200,7 @@ const ConfigureLayout = ({
                     params.name || siteName
                       ? (params.name ?? siteName)
                       : 'Site Name',
-                  networkName: network.name ? network.name : 'Network',
+                  networkName: network.name || 'Network Name',
                   orgName: user.orgName ? user.orgName : 'Organization',
                   backhaulName: parts.backhaulName
                     ? parts.backhaulName
