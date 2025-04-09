@@ -42,6 +42,7 @@ const ConfigureLayout = ({
   const isSimsPath = path.includes('sims');
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';
+  const pool = searchParams.get('pool') ?? 'false';
   const nid = searchParams.get('nid') ?? '';
   const accessId = searchParams.get('access') ?? '';
   const siteName = searchParams.get('name') ?? '';
@@ -94,7 +95,7 @@ const ConfigureLayout = ({
       if (!component?.id && flow !== ONBOARDING_FLOW) {
         setSnackbarMessage({
           id: 'components-msg',
-          message: 'Access point not found in inventory.',
+          message: 'Node not found in inventory.',
           type: 'warning',
           show: true,
         });
@@ -181,14 +182,14 @@ const ConfigureLayout = ({
               <Box py={20} px={6} height={'100%'}>
                 {OnBoardingDynamic({
                   textColor: colors.black,
-                  isShowSimpool: isSimsPath,
                   selectedColor: colors.primaryMain,
+                  isShowSimpool: isSimsPath || pool === 'true',
                   isShowSite: params.id ? true : accessId ? true : false,
                   isShowComponents: params.name || siteName ? true : false,
                   siteName:
                     params.name || siteName
                       ? (params.name ?? siteName)
-                      : 'Site 1',
+                      : 'Site Name',
                   networkName: network.name ? network.name : 'Network',
                   orgName: user.orgName ? user.orgName : 'Organization',
                   backhaulName: parts.backhaulName
@@ -197,6 +198,8 @@ const ConfigureLayout = ({
                   powerName: parts.powerName ? parts.powerName : 'Power',
                   switchName: parts.switchId ? parts.switchId : 'Switch',
                   nodeName: params.id ?? accessId,
+                  simPoolIconColor:
+                    pool === 'true' ? colors.primaryMain : undefined,
                 })}
               </Box>
             </CenterContainer>

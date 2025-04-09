@@ -36,7 +36,6 @@ import (
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -73,7 +72,8 @@ func initConfig() {
 		}
 	}
 
-	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v", pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
+	log.Debugf("\nService: %s DB Config: %+v Service: %+v MsgClient Config %+v",
+		pkg.ServiceName, serviceConfig.DB, serviceConfig.Service, serviceConfig.MsgClient)
 
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
@@ -108,19 +108,28 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
-	dataplanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "dataplan"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	dataplanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "dataplan"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to resolve dataplan address: %v", err)
 	}
 
-	notificationUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	notificationUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to resolve notification address: %v", err)
+	}
+
+	ukamaAgentUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve ukama agent address: %v", err)
 	}
 
 	netClient := creg.NewNetworkClient(regUrl.String())
@@ -134,7 +143,7 @@ func runGrpcServer(gormDB sql.Db) {
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
 		adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent,
-			serviceConfig.UkamaAgent, serviceConfig.Timeout, pkg.IsDebugMode),
+			ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode),
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),

@@ -203,14 +203,28 @@ export const MEMBER_TABLE_MENU: MenuItemType[] = [
 export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'iccid', label: 'ICCID', minWidth: 160 },
   { id: 'isPhysical', label: 'Type', minWidth: 180 },
-  { id: 'isAllocated', label: 'Status', minWidth: 140 },
+  {
+    id: 'isAllocated',
+    label: 'Status',
+    minWidth: 140,
+    options: {
+      isSortable: true,
+    },
+  },
 ];
 
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
   { id: 'type', label: 'Type', minWidth: 180 },
   { id: 'connectivity', label: 'Connectivity', minWidth: 120 },
-  { id: 'state', label: 'State', minWidth: 120 },
+  {
+    id: 'state',
+    label: 'State',
+    minWidth: 120,
+    options: {
+      isSortable: true,
+    },
+  },
   { id: 'site', label: 'Site', minWidth: 180 },
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];

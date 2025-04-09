@@ -37,7 +37,6 @@ type Config struct {
 	Registry          string            `default:"registry:9090"`
 	TestAgent         string            `default:"testagent:9090"`
 	OperatorAgent     string            `default:"http://operator-agent:8080"`
-	UkamaAgent        string            `default:"http://ukama-agent:8080"`
 	Service           *config.Service
 	Key               string
 	OrgId             string

@@ -122,7 +122,12 @@ const Page = () => {
           {data.length === 0 ? (
             <EmptyView icon={SimCardIcon} title="No sims in sim pool!" />
           ) : (
-            <SimpleDataTable dataset={data} columns={MANAGE_SIM_POOL_COLUMN} />
+            <SimpleDataTable
+              dataset={data}
+              isIdHyperlink={true}
+              columns={MANAGE_SIM_POOL_COLUMN}
+              hyperlinkPrefix="/console/subscribers?"
+            />
           )}
         </Box>
         {isUploadSims && (

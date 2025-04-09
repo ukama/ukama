@@ -7,7 +7,6 @@
  */
 
 import ChipDropdown from '@/components/ChipDropDown';
-import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
 import { ColumnsWithOptions } from '@/types';
 import {
@@ -31,23 +30,43 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface SimpleDataTableInterface {
   dataKey?: string;
   dataset: any;
   height?: string;
+  isIdHyperlink?: boolean;
   columns: ColumnsWithOptions[];
   networkList?: any;
   handleCreateNetwork?: any;
   handleDeleteElement?: any;
   showActionButton?: boolean;
+  hyperlinkPrefix?: string;
+}
+
+interface TableCellProps {
+  row: any;
+  isIdHyperlink?: boolean;
+  handleCreateNetwork: any;
+  hyperlinkPrefix?: string;
+  column: ColumnsWithOptions;
+  networkList: string[] | [] | undefined;
+  handleDeleteElement: (id: string) => void;
+}
+
+interface TableHeaderProps {
+  columns: ColumnsWithOptions[];
+  order: 'asc' | 'desc';
+  sortedColumn: string;
+  onSort: (column: ColumnsWithOptions) => void;
 }
 
 const MemoizedTableHeader = React.memo(
-  ({ columns }: { columns: ColumnsWithOptions[] }) => {
+  ({ columns, order, sortedColumn, onSort }: TableHeaderProps) => {
     return (
       <TableHead>
         <TableRow>
@@ -62,7 +81,17 @@ const MemoizedTableHeader = React.memo(
                 minWidth: column.minWidth,
               }}
             >
-              {column.label}
+              {column?.options?.isSortable ? (
+                <TableSortLabel
+                  active={sortedColumn === column.id}
+                  direction={order}
+                  onClick={() => onSort(column)}
+                >
+                  {column.label}
+                </TableSortLabel>
+              ) : (
+                column.label
+              )}
             </TableCell>
           ))}
         </TableRow>
@@ -72,30 +101,40 @@ const MemoizedTableHeader = React.memo(
 );
 MemoizedTableHeader.displayName = 'MemoizedTableHeader';
 
-const SimpleTableCell = ({
+const renderCellContent = ({
   column,
   row,
+  hyperlinkPrefix,
+  isIdHyperlink,
   handleCreateNetwork,
   handleDeleteElement,
   networkList,
-}: {
-  column: ColumnsWithOptions;
-  row: any;
-  handleCreateNetwork: any;
-  handleDeleteElement: (id: string) => void;
-  networkList: string[] | [] | undefined;
-}) => {
+}: TableCellProps) => {
   const handleDeleteRow = () => {
     handleDeleteElement(row.id);
   };
-  return (
-    <TableCell
-      sx={{
-        padding: 1,
-        fontSize: '0.875rem',
-      }}
-    >
-      {column.id === 'role' ? (
+  switch (column.id) {
+    case 'id':
+      return isIdHyperlink ? (
+        <Link href={`${hyperlinkPrefix}${row[column.id]}`} unselectable="on">
+          {row[column.id]}
+        </Link>
+      ) : (
+        <Typography variant="body2">{row[column.id]}</Typography>
+      );
+    case 'iccid':
+      return isIdHyperlink && row['isAllocated'] ? (
+        <Link
+          href={`${hyperlinkPrefix}iccid=${row[column.id]}`}
+          unselectable="on"
+        >
+          {row[column.id]}
+        </Link>
+      ) : (
+        <Typography variant="body2">{row[column.id]}</Typography>
+      );
+    case 'role':
+      return (
         <div>
           <Chip
             color="info"
@@ -103,11 +142,15 @@ const SimpleTableCell = ({
             label={roleEnumToString(row[column.id])}
           />
         </div>
-      ) : column.id === 'pdf' ? (
+      );
+    case 'pdf':
+      return (
         <Link target="_blank" underline="hover" href={row[column.id]}>
           View as PDF
         </Link>
-      ) : column.id === 'network' ? (
+      );
+    case 'network':
+      return (
         <ChipDropdown
           onCreateNetwork={handleCreateNetwork}
           menu={
@@ -115,15 +158,21 @@ const SimpleTableCell = ({
             []
           }
         />
-      ) : column.id === 'edit' ? (
+      );
+    case 'edit':
+      return (
         <IconButton onClick={() => {}}>
           <EditIcon />
         </IconButton>
-      ) : column.id === 'delete' ? (
+      );
+    case 'delete':
+      return (
         <IconButton onClick={handleDeleteRow}>
           <DeleteIcon />
         </IconButton>
-      ) : column.id === 'status' ? (
+      );
+    case 'status':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -132,17 +181,23 @@ const SimpleTableCell = ({
           }}
           label={inviteStatusEnumToString(row[column.id])}
         />
-      ) : column.id === 'simType' ? (
+      );
+    case 'simType':
+      return (
         <Chip
           label={getSimValuefromSimType(row[column.id])}
           sx={{ color: 'white' }}
-          color={'info'}
+          color="info"
         />
-      ) : column.id === 'isPhysical' ? (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    case 'isPhysical':
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id] === 'true' ? 'pSIM' : 'eSIM'}
         </Typography>
-      ) : column.id === 'connectivity' ? (
+      );
+    case 'connectivity':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -151,7 +206,9 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
-      ) : column.id === 'state' ? (
+      );
+    case 'state':
+      return (
         <Chip
           sx={{
             p: 1,
@@ -160,18 +217,32 @@ const SimpleTableCell = ({
           }}
           label={row[column.id]}
         />
-      ) : column.id === 'isAllocated' ? (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    case 'isAllocated':
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id] === true ? 'Assigned' : 'Unassigned'}
         </Typography>
-      ) : (
-        <Typography variant={'body2'} sx={{ padding: '8px' }}>
+      );
+    default:
+      return (
+        <Typography variant="body2" sx={{ padding: '8px' }}>
           {row[column.id]}
         </Typography>
-      )}
-    </TableCell>
-  );
+      );
+  }
 };
+
+const SimpleTableCell = (tprops: TableCellProps) => (
+  <TableCell
+    sx={{
+      padding: 1,
+      fontSize: '0.875rem',
+    }}
+  >
+    {renderCellContent(tprops)}
+  </TableCell>
+);
 
 const SimpleDataTable = React.memo(
   ({
@@ -179,14 +250,41 @@ const SimpleDataTable = React.memo(
     columns,
     dataset,
     height,
+    hyperlinkPrefix = '/',
+    isIdHyperlink = false,
     showActionButton = false,
     networkList,
     handleCreateNetwork,
     handleDeleteElement,
   }: SimpleDataTableInterface) => {
-    const { isDarkMode } = useAppContext();
-    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+    const [sortedColumn, setSortedColumn] = useState<string>('');
 
+    const handleSort = (column: ColumnsWithOptions) => {
+      const isSameColumn = sortedColumn === column.id;
+      const nextOrder = isSameColumn && order === 'asc' ? 'desc' : 'asc';
+      setOrder(nextOrder);
+      setSortedColumn(column.id);
+    };
+
+    const sortedData = useMemo(() => {
+      if (!sortedColumn) return dataset;
+      return [...dataset].sort((a, b) => {
+        const aVal = a[sortedColumn];
+        const bVal = b[sortedColumn];
+        if (aVal == null || bVal == null) return 0;
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return order === 'asc' ? aVal - bVal : bVal - aVal;
+        }
+        const aString = String(aVal);
+        const bString = String(bVal);
+        return order === 'asc'
+          ? aString.localeCompare(bString)
+          : bString.localeCompare(aString);
+      });
+    }, [dataset, sortedColumn, order]);
+
+    const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
     const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
       setMenuAnchorEl(event.currentTarget);
     };
@@ -199,24 +297,29 @@ const SimpleDataTable = React.memo(
         }}
       >
         <Table stickyHeader>
-          <MemoizedTableHeader columns={columns} />
-
+          <MemoizedTableHeader
+            columns={columns}
+            order={order}
+            sortedColumn={sortedColumn}
+            onSort={handleSort}
+          />
           <TableBody>
-            {dataset?.map((row: any) => (
-              <TableRow key={row[dataKey]} sx={{}}>
+            {sortedData?.map((row: any) => (
+              <TableRow key={row[dataKey]}>
                 {columns?.map((column: ColumnsWithOptions, index: number) => (
                   <SimpleTableCell
-                    key={`$cell-${index}-${column.id}`}
-                    column={column}
                     row={row}
+                    column={column}
+                    networkList={networkList}
+                    isIdHyperlink={isIdHyperlink}
+                    hyperlinkPrefix={hyperlinkPrefix}
+                    key={`$cell-${index}-${column.id}`}
                     handleCreateNetwork={handleCreateNetwork}
                     handleDeleteElement={handleDeleteElement}
-                    networkList={networkList}
                   />
                 ))}
               </TableRow>
             ))}
-
             {showActionButton && (
               <TableRow>
                 <TableCell colSpan={columns.length}>

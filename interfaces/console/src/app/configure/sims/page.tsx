@@ -20,13 +20,14 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import LoadingSkeleton from './skelton';
 
 const Sims = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
@@ -48,7 +49,8 @@ const Sims = () => {
           type: 'success' as AlertColor,
           show: true,
         });
-        router.push(`/configure/complete?${searchParams.toString()}`);
+        const p = setQueryParam('pool', 'true');
+        router.push(`/configure/complete?${p.toString()}`);
       },
       onError: (error) => {
         setLoading(false);
@@ -74,8 +76,16 @@ const Sims = () => {
     }
   }, [acceptedFiles]);
 
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
   const handleSkip = () => {
-    router.push(`/configure/complete?${searchParams.toString()}`);
+    const p = setQueryParam('pool', 'false');
+    router.push(`/configure/complete?${p.toString()}`);
   };
 
   const handleNext = () => {

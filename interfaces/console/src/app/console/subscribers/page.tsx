@@ -49,13 +49,15 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Page = () => {
+  const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
   const { setSnackbarMessage, network, env } = useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
-  const [isToPupData, setIsToPupData] = useState<boolean>(false);
+  const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
   const [isSubscriberDetailsOpen, setIsSubscriberDetailsOpen] =
     useState<boolean>(false);
@@ -103,7 +105,13 @@ const Page = () => {
       const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
         (subscriber) => {
           const s = search.toLowerCase();
-          if (subscriber.name.toLowerCase().includes(s)) return subscriber;
+          if (
+            subscriber &&
+            subscriber.sim &&
+            (subscriber.name.toLowerCase().includes(s) ||
+              subscriber?.sim[0].iccid.includes(s))
+          )
+            return subscriber;
         },
       );
       setSubscriber(() => ({ subscribers: subscribers ?? [] }));
@@ -125,19 +133,6 @@ const Page = () => {
     onCompleted: (res) => {},
   });
 
-  const fetchPackagesForSim = useCallback(
-    (simId: string) => {
-      getPackagesForSim({
-        variables: {
-          data: {
-            sim_id: simId,
-          },
-        },
-      });
-    },
-    [getPackagesForSim],
-  );
-
   const [getSubscriber] = useGetSubscriberLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (res) => {
@@ -146,48 +141,6 @@ const Page = () => {
       }
     },
   });
-  const handleTopUpDataPreparation = (id: string) => {
-    const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
-      (subscriber) => subscriber.uuid === id,
-    );
-
-    setIsToPupData(true);
-
-    getSubscriber({
-      variables: {
-        subscriberId: id,
-      },
-    });
-
-    getSimBySubscriber({
-      variables: {
-        data: {
-          subscriberId: id,
-        },
-      },
-    });
-
-    if (subscriberInfo) {
-      setTopUpSubscriberName(subscriberInfo.name);
-    }
-  };
-
-  const onTableMenuItem = async (id: string, type: string) => {
-    switch (type) {
-      case 'delete-sub':
-        setIsConfirmationOpen(true);
-        setDeletedSubscriber(id);
-        break;
-
-      case 'top-up-data':
-        handleTopUpDataPreparation(id);
-        break;
-
-      case 'edit-sub':
-        handleOpenSubscriberDetails(id);
-        break;
-    }
-  };
 
   const {
     data,
@@ -204,6 +157,10 @@ const Page = () => {
       setSubscriber({
         subscribers: [...data.getSubscribersByNetwork.subscribers],
       });
+      if (query.size > 0) {
+        const iccid = query.get('iccid');
+        setSearch(iccid ?? '');
+      }
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -214,59 +171,6 @@ const Page = () => {
       });
     },
   });
-
-  // const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
-  //   variables: {
-  //     networkId: network.id,
-  //   },
-  //   fetchPolicy: 'cache-and-network',
-
-  //   onError: (error) => {
-  //     setSnackbarMessage({
-  //       id: 'sites-msg',
-  //       message: error.message,
-  //       type: 'error' as AlertColor,
-  //       show: true,
-  //     });
-  //   },
-  // });
-
-  const structureData = useCallback(
-    (data: SubscribersResDto) => {
-      if ((packagesData?.getPackages.packages?.length ?? 0) > 0 && network) {
-        return data.subscribers.map((subscriber) => {
-          const sim =
-            subscriber?.sim && subscriber.sim?.length > 0
-              ? subscriber?.sim[0]
-              : null;
-          const pkg = packagesData?.getPackages.packages.find(
-            (pkg) => pkg.uuid === sim?.package?.package_id,
-          );
-          return {
-            id: subscriber.uuid,
-            name: subscriber.name,
-            dataPlan: pkg?.name ?? 'No active plan',
-            email: subscriber.email,
-            dataUsage: '',
-            actions: '',
-          };
-        });
-      }
-    },
-    [packagesData?.getPackages.packages],
-  );
-  const handleOpenSubscriberDetails = useCallback(
-    (id: string) => {
-      const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
-        (subscriber) => subscriber.uuid === id,
-      );
-      setIsSubscriberDetailsOpen(true);
-      if (subscriberInfo) {
-        setSubscriberDetails(subscriberInfo);
-      }
-    },
-    [data?.getSubscribersByNetwork.subscribers],
-  );
 
   const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
     useToggleSimStatusMutation({
@@ -363,23 +267,22 @@ const Page = () => {
       },
     });
 
-  const { data: simStatData, refetch: refetchSimPoolStats } =
-    useGetSimPoolStatsQuery({
-      variables: {
-        data: {
-          type: env.SIM_TYPE as Sim_Types,
-        },
+  useGetSimPoolStatsQuery({
+    variables: {
+      data: {
+        type: env.SIM_TYPE as Sim_Types,
       },
-      fetchPolicy: 'cache-and-network',
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'sim-stats-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+    },
+    fetchPolicy: 'cache-and-network',
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-stats-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
@@ -428,6 +331,100 @@ const Page = () => {
       },
     });
 
+  const fetchPackagesForSim = useCallback(
+    (simId: string) => {
+      getPackagesForSim({
+        variables: {
+          data: {
+            sim_id: simId,
+          },
+        },
+      });
+    },
+    [getPackagesForSim],
+  );
+
+  const handleTopUpDataPreparation = (id: string) => {
+    const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
+      (subscriber) => subscriber.uuid === id,
+    );
+
+    setIsTopupData(true);
+
+    getSubscriber({
+      variables: {
+        subscriberId: id,
+      },
+    });
+
+    getSimBySubscriber({
+      variables: {
+        data: {
+          subscriberId: id,
+        },
+      },
+    });
+
+    if (subscriberInfo) {
+      setTopUpSubscriberName(subscriberInfo.name);
+    }
+  };
+
+  const onTableMenuItem = async (id: string, type: string) => {
+    switch (type) {
+      case 'delete-sub':
+        setIsConfirmationOpen(true);
+        setDeletedSubscriber(id);
+        break;
+
+      case 'top-up-data':
+        handleTopUpDataPreparation(id);
+        break;
+
+      case 'edit-sub':
+        handleOpenSubscriberDetails(id);
+        break;
+    }
+  };
+
+  const structureData = useCallback(
+    (data: SubscribersResDto) => {
+      if ((packagesData?.getPackages.packages?.length ?? 0) > 0 && network) {
+        return data.subscribers.map((subscriber) => {
+          const sim =
+            subscriber?.sim && subscriber.sim?.length > 0
+              ? subscriber?.sim[0]
+              : null;
+          const pkg = packagesData?.getPackages.packages.find(
+            (pkg) => pkg.uuid === sim?.package?.package_id,
+          );
+          return {
+            id: subscriber.uuid,
+            name: subscriber.name,
+            dataPlan: pkg?.name ?? 'No active plan',
+            email: subscriber.email,
+            dataUsage: '',
+            actions: '',
+          };
+        });
+      }
+    },
+    [packagesData?.getPackages.packages],
+  );
+
+  const handleOpenSubscriberDetails = useCallback(
+    (id: string) => {
+      const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
+        (subscriber) => subscriber.uuid === id,
+      );
+      setIsSubscriberDetailsOpen(true);
+      if (subscriberInfo) {
+        setSubscriberDetails(subscriberInfo);
+      }
+    },
+    [data?.getSubscribersByNetwork.subscribers],
+  );
+
   const handleAddSubscriberModal = () => {
     setOpenAddSubscriber(true);
     refetchSims();
@@ -455,14 +452,14 @@ const Page = () => {
         });
         break;
       case 'topUp':
-        setIsToPupData(true);
+        setIsTopupData(true);
         break;
       default:
         break;
     }
   };
   const handleCloseTopUp = () => {
-    setIsToPupData(false);
+    setIsTopupData(false);
   };
 
   const handleTopUp = async (simId: string, planIds: string[]) => {
@@ -481,10 +478,10 @@ const Page = () => {
         },
       });
 
-      setIsToPupData(false);
+      setIsTopupData(false);
     } catch (error) {
       console.error('Error handling top up:', error);
-      setIsToPupData(false);
+      setIsTopupData(false);
       throw error;
     }
   };
@@ -687,12 +684,12 @@ const Page = () => {
           }}
         >
           <PageContainerHeader
+            search={search}
             title={'My subscribers'}
-            subtitle={`${subscriber.subscribers.length}`}
             buttonTitle={'Add Subscriber'}
             handleButtonAction={handleAddSubscriberModal}
             onSearchChange={(e: string) => setSearch(e)}
-            search={search}
+            subtitle={`${data?.getSubscribersByNetwork.subscribers.length}`}
           />
           <br />
 
@@ -735,7 +732,7 @@ const Page = () => {
         currentSite={'-'}
       />
       <TopUpData
-        isToPup={isToPupData}
+        isToPup={isTopupData}
         onCancel={handleCloseTopUp}
         handleTopUp={handleTopUp}
         loadingTopUp={packagesLoading || addPackagesToSimLoading}
