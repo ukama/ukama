@@ -1,4 +1,4 @@
-ervices:
+services:
  postgresd-dummy:
   image: postgres:13.3
   ports:
