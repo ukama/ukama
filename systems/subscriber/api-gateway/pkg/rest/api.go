@@ -46,9 +46,10 @@ type SIM struct {
 }
 
 type Package struct {
-	PackageId string    `json:"package_id" validate:"required"`
-	StartDate time.Time `json:"start_date" validate:"required"`
-	EndDate   time.Time `json:"end_date" validate:"required"`
+	PackageId       string    `json:"package_id" validate:"required"`
+	StartDate       time.Time `json:"start_date" validate:"required"`
+	EndDate         time.Time `json:"end_date" validate:"required"`
+	DefaultDuration uint64    `json:"default_duration" validate:"required"`
 }
 
 type Subscriber struct {

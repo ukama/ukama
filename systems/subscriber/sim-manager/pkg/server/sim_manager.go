@@ -246,8 +246,9 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	firstPackage := &sims.Package{
-		PackageId: packageId,
-		IsActive:  true,
+		PackageId:       packageId,
+		IsActive:        true,
+		DefaultDuration: packageInfo.Duration,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -681,9 +682,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	}
 
 	pkg := &sims.Package{
-		SimId:     sim.Id,
-		PackageId: packageId,
-		IsActive:  false,
+		SimId:           sim.Id,
+		PackageId:       packageId,
+		IsActive:        false,
+		DefaultDuration: pkgInfo.Duration,
 	}
 
 	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, false, 0, true)
@@ -918,7 +920,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
 	}
 
-	if pkg.IsExpired() {
+	if pkg.AsExpired {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot set expired package as active: package end date is %s", pkg.EndDate)
 	}
@@ -1278,12 +1280,13 @@ func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
-		Id:        pkg.Id.String(),
-		PackageId: pkg.PackageId.String(),
-		IsActive:  pkg.IsActive,
-		AsExpired: pkg.AsExpired,
-		CreatedAt: pkg.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: pkg.UpdatedAt.Format(time.RFC3339),
+		Id:              pkg.Id.String(),
+		PackageId:       pkg.PackageId.String(),
+		IsActive:        pkg.IsActive,
+		DefaultDuration: pkg.DefaultDuration,
+		AsExpired:       pkg.AsExpired,
+		CreatedAt:       pkg.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       pkg.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if !pkg.EndDate.IsZero() {

@@ -198,10 +198,11 @@ message Package {
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     string startDate = 3 [json_name = "start_date"];
     string endDate = 4 [json_name = "end_date"];
-    bool isActive = 5  [json_name = "is_active"];
-    bool asExpired = 6  [json_name = "as_expired"];
-    string createdAt = 7 [json_name = "created_at"];
-    string updatedAt = 8 [json_name = "updated_at"];
+    uint64 defaultDuration = 5 [json_name = "default_duration"];
+    bool isActive = 6  [json_name = "is_active"];
+    bool asExpired = 7  [json_name = "as_expired"];
+    string createdAt = 8 [json_name = "created_at"];
+    string updatedAt = 9 [json_name = "updated_at"];
 }
 
 

@@ -522,9 +522,10 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		pkg := &db.Package{
-			SimId:     sim.Id,
-			PackageId: packageID,
-			IsActive:  true,
+			SimId:           sim.Id,
+			PackageId:       packageID,
+			IsActive:        true,
+			DefaultDuration: 3600,
 		}
 
 		packageRepo.On("Add", pkg,
@@ -855,9 +856,10 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageID).Return(
 			&db.Package{Id: packageID,
-				SimId:    simID,
-				EndDate:  time.Now().UTC().AddDate(0, -1, 0), // one month ago
-				IsActive: false,
+				SimId:     simID,
+				EndDate:   time.Now().UTC().AddDate(0, -1, 0), // one month ago
+				IsActive:  false,
+				AsExpired: true,
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -1042,12 +1044,13 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			return p.SimId == sim.Id
 		})).Return([]db.Package{
 			{
-				Id:        uuid.UUID{},
-				SimId:     simID,
-				StartDate: time.Now().UTC(),
-				EndDate:   time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
-				PackageId: packageID,
-				IsActive:  true,
+				Id:              uuid.UUID{},
+				SimId:           simID,
+				StartDate:       time.Now().UTC(),
+				EndDate:         time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
+				PackageId:       packageID,
+				IsActive:        true,
+				DefaultDuration: 1,
 			},
 		}, nil).Once()
 
