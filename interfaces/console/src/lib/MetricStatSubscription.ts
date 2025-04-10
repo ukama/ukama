@@ -15,6 +15,7 @@ interface IMetricStatSubscription {
   nodeId?: string;
   userId: string;
   orgName: string;
+  siteId?: string;
   type: Stats_Type;
 }
 
@@ -43,6 +44,7 @@ export default async function MetricStatSubscription({
   userId,
   nodeId,
   orgName,
+  siteId = undefined,
 }: IMetricStatSubscription) {
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
@@ -61,16 +63,21 @@ export default async function MetricStatSubscription({
   const controller = new AbortController();
   const signal = controller.signal;
 
-  const res = await fetch(
-    `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`,
-    { ...requestOptions, signal },
-  ).catch((error) => {
-    if (error.name === 'AbortError') {
-      console.log('Fetch aborted');
-    } else {
-      console.error('Fetch error:', error);
-    }
-  });
+  let fullUrl = '';
+  if (siteId) {
+    fullUrl = `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22siteId%22%3A%22${siteId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`;
+  } else {
+    fullUrl = `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`;
+  }
+  const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
+    (error) => {
+      if (error.name === 'AbortError') {
+        console.log('Fetch aborted');
+      } else {
+        console.error('Fetch error:', error);
+      }
+    },
+  );
 
   if (!res || !res.ok) {
     console.error('Network response was not ok');
