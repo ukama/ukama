@@ -13,6 +13,7 @@ import {
 } from '@/client/graphql/generated';
 import { CHECK_SITE_FLOW, NETWORK_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
+import { setQueryParam } from '@/utils';
 import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -75,13 +76,6 @@ const Network = () => {
     },
   });
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const [addNetwork] = useAddNetworkMutation({
     onCompleted: (data) => {
       if (data.addNetwork.id) {
@@ -89,7 +83,12 @@ const Network = () => {
           id: data.addNetwork.id,
           name: data.addNetwork.name,
         });
-        const p = setQueryParam('networkid', data.addNetwork.id);
+        const p = setQueryParam(
+          'networkid',
+          data.addNetwork.id,
+          searchParams.toString(),
+          pathname,
+        );
         p.set('flow', NETWORK_FLOW);
         router.push(`/configure/check?${p.toString()}`);
       }

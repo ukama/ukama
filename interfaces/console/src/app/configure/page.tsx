@@ -8,6 +8,7 @@
 'use client';
 import { INSTALLATION_FLOW } from '@/constants';
 import colors from '@/theme/colors';
+import { setQueryParam } from '@/utils';
 import {
   Button,
   Checkbox,
@@ -25,21 +26,15 @@ const Page = () => {
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [isChecked, setIsChecked] = useState(false);
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const handleNext = () => {
     if (isChecked) {
-      const p = setQueryParam('flow', flow);
+      const p = setQueryParam('flow', flow, searchParams.toString(), pathname);
       router.push(`/configure/check?${p}`);
     }
   };
+
   const handleSkip = () => {
-    const p = setQueryParam('flow', flow);
+    const p = setQueryParam('flow', flow, searchParams.toString(), pathname);
     router.push(`/configure/sims?flow=${p}`);
   };
 

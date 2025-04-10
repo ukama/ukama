@@ -573,6 +573,18 @@ const getSignalStyles = (signalStrength: string) => {
   }
 };
 
+const setQueryParam = (
+  key: string,
+  value: string,
+  params: string,
+  pathname: string,
+): URLSearchParams => {
+  const p = new URLSearchParams(params);
+  p.set(key, value);
+  window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+  return p;
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -598,5 +610,6 @@ export {
   NodeEnumToString,
   provideStatusColor,
   roleEnumToString,
+  setQueryParam,
   structureNodeSiteDate,
 };

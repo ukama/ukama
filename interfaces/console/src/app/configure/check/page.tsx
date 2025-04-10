@@ -24,6 +24,7 @@ import {
 } from '@/constants';
 import { useAppContext } from '@/context';
 import { HorizontalContainerJustify } from '@/styles/global';
+import { setQueryParam } from '@/utils';
 import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,13 +51,6 @@ const Check = () => {
   const [description, setDescription] = useState('');
   const { setSnackbarMessage } = useAppContext();
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const [getNodesByState] = useGetNodesByStateLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
@@ -75,6 +69,7 @@ const Check = () => {
         filterNodes[0].status.state === NodeStateEnum.Unknown
       ) {
         setNode(filterNodes[0]);
+        console.log('NODE ID', filterNodes[0]);
       }
     },
   });
@@ -105,7 +100,12 @@ const Check = () => {
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (node && data.getNodeState.currentState === NodeStateEnum.Unknown) {
-        let p = setQueryParam('lat', node.latitude.toString());
+        let p = setQueryParam(
+          'lat',
+          node.latitude.toString(),
+          searchParams.toString(),
+          pathname,
+        );
         p.set('lng', node.longitude.toString());
         p.set(
           'flow',
@@ -159,7 +159,12 @@ const Check = () => {
         'It is taking longer than usual to load up your site. Please check on your site to make sure that all parts are installed correctly.',
       );
     } else {
-      const p = setQueryParam('flow', ONBOARDING_FLOW);
+      const p = setQueryParam(
+        'flow',
+        ONBOARDING_FLOW,
+        searchParams.toString(),
+        pathname,
+      );
       router.push(`/configure?step=2&${p}`);
     }
   };
@@ -171,11 +176,20 @@ const Check = () => {
   };
 
   const handleRetry = () => {
+    setSubtitle(flow === NETWORK_FLOW ? 'Loading up your network...' : '');
+    setDescription('');
+    setDuration((prev) => prev + 2);
+    setShowReturn(false);
+    getNodesByState({
+      variables: {
+        data: {
+          state: NodeStateEnum.Unknown,
+          connectivity: NodeConnectivityEnum.Online,
+        },
+      },
+    });
+
     if (nodeId) {
-      setSubtitle(flow === NETWORK_FLOW ? 'Loading up your network...' : '');
-      setDescription('');
-      setDuration((prev) => prev + 2);
-      setShowReturn(false);
       getNode({
         variables: {
           data: {
@@ -183,14 +197,7 @@ const Check = () => {
           },
         },
       });
-      getNodesByState({
-        variables: {
-          data: {
-            state: NodeStateEnum.Unknown,
-            connectivity: NodeConnectivityEnum.Online,
-          },
-        },
-      });
+
       getNodeState({
         variables: {
           getNodeStateId: nodeId,

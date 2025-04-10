@@ -10,7 +10,7 @@ import { Sim_Types, useUploadSimsMutation } from '@/client/graphql/generated';
 import { INSTALLATION_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
-import { fileToBase64 } from '@/utils';
+import { fileToBase64, setQueryParam } from '@/utils';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import {
   AlertColor,
@@ -49,7 +49,12 @@ const Sims = () => {
           type: 'success' as AlertColor,
           show: true,
         });
-        const p = setQueryParam('pool', 'true');
+        const p = setQueryParam(
+          'pool',
+          'true',
+          searchParams.toString(),
+          pathname,
+        );
         router.push(`/configure/complete?${p.toString()}`);
       },
       onError: (error) => {
@@ -76,15 +81,8 @@ const Sims = () => {
     }
   }, [acceptedFiles]);
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
   const handleSkip = () => {
-    const p = setQueryParam('pool', 'false');
+    const p = setQueryParam('pool', 'false', searchParams.toString(), pathname);
     router.push(`/configure/complete?${p.toString()}`);
   };
 

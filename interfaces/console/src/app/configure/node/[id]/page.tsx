@@ -12,6 +12,7 @@ import { LField } from '@/components/Welcome';
 import { INSTALLATION_FLOW, ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
+import { setQueryParam } from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { Button, Skeleton, Stack, Typography } from '@mui/material';
 import dynamic from 'next/dynamic';
@@ -63,7 +64,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
 
   useEffect(() => {
     if (address) {
-      setQueryParam('address', address);
+      setQueryParam('address', address, searchParams.toString(), pathname);
       setIsLoading(false);
     }
   }, [address]);
@@ -81,13 +82,6 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
 
   const handleFetchAddress = async () => {
     await fetchAddress(latlng[0], latlng[1]);
-  };
-
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
   };
 
   const handleBack = () => {
@@ -124,7 +118,12 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         (n) => n.id === id,
       );
       setNetworkSelected(id);
-      setQueryParam('networkid', filterNetwork?.id ?? '');
+      setQueryParam(
+        'networkid',
+        filterNetwork?.id ?? '',
+        searchParams.toString(),
+        pathname,
+      );
     }
   };
 
