@@ -15,22 +15,32 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 const Page = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [isChecked, setIsChecked] = useState(false);
 
+  const setQueryParam = (key: string, value: string) => {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set(key, value);
+    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+    return p;
+  };
+
   const handleNext = () => {
     if (isChecked) {
-      router.push(`/configure/check?flow=${flow}`);
+      const p = setQueryParam('flow', flow);
+      router.push(`/configure/check?${p}`);
     }
   };
   const handleSkip = () => {
-    router.push(`/configure/sims?flow=${flow}`);
+    const p = setQueryParam('flow', flow);
+    router.push(`/configure/sims?flow=${p}`);
   };
 
   const handleOnInstalled = (isChecked: boolean) => {

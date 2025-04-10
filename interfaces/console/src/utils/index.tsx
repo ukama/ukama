@@ -205,16 +205,18 @@ const getDuration = (number: number): string => {
 const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
   const t: TNodeSiteTree[] = [];
 
-  nodes.nodes.forEach((node: Node) => {
-    if (node.type === NodeTypeEnum.Tnode) {
-      t.push({
-        id: node.site.siteId ?? '',
-        name: `${sites.sites.find((site) => site.id === node.site.siteId)?.name} (Site)`,
-        nodeId: node.id,
-        nodeType: node.type,
-        nodeName: `${node.name} (Node)`,
-      });
-    }
+  sites.sites.forEach((site) => {
+    nodes.nodes.forEach((node: Node) => {
+      if (node.site.siteId === site.id && node.type === NodeTypeEnum.Tnode) {
+        t.push({
+          id: site.id,
+          name: `${site.name} (Site)`,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeName: `${node.name} (Node)`,
+        });
+      }
+    });
   });
 
   return t;

@@ -11,8 +11,8 @@ import {
   Node,
   NodeConnectivityEnum,
   NodeStateEnum,
-  useGetNodeQuery,
-  useGetNodesByStateQuery,
+  useGetNodeLazyQuery,
+  useGetNodesByStateLazyQuery,
   useGetNodeStateLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
@@ -23,6 +23,7 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import { useAppContext } from '@/context';
+import { HorizontalContainerJustify } from '@/styles/global';
 import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ const Check = () => {
   const searchParams = useSearchParams();
   const [node, setNode] = useState<Node | undefined>(undefined);
   const nodeId = searchParams.get('nid') ?? '';
+  const [duration, setDuration] = useState(5);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [showReturn, setShowReturn] = useState(false);
   const [title] = useState(
@@ -55,14 +57,8 @@ const Check = () => {
     return p;
   };
 
-  useGetNodesByStateQuery({
-    skip: !!nodeId,
-    variables: {
-      data: {
-        state: NodeStateEnum.Unknown,
-        connectivity: NodeConnectivityEnum.Online,
-      },
-    },
+  const [getNodesByState] = useGetNodesByStateLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       const filterNodes = data.getNodesByState.nodes.filter(
         (node) =>
@@ -83,13 +79,8 @@ const Check = () => {
     },
   });
 
-  useGetNodeQuery({
-    skip: !nodeId,
-    variables: {
-      data: {
-        id: nodeId,
-      },
-    },
+  const [getNode] = useGetNodeLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: async (data) => {
       if (data.getNode.latitude && data.getNode.longitude && nodeId) {
         if (
@@ -131,6 +122,26 @@ const Check = () => {
   });
 
   useEffect(() => {
+    if (nodeId) {
+      getNode({
+        variables: {
+          data: {
+            id: nodeId,
+          },
+        },
+      });
+      getNodesByState({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
+    }
+  }, [nodeId]);
+
+  useEffect(() => {
     if (node?.id) {
       getNodeState({
         variables: {
@@ -147,7 +158,10 @@ const Check = () => {
       setDescription(
         'It is taking longer than usual to load up your site. Please check on your site to make sure that all parts are installed correctly.',
       );
-    } else router.push(`/configure?step=2&flow=${ONBOARDING_FLOW}`);
+    } else {
+      const p = setQueryParam('flow', ONBOARDING_FLOW);
+      router.push(`/configure?step=2&${p}`);
+    }
   };
 
   const handleBack = () => {
@@ -156,10 +170,39 @@ const Check = () => {
     );
   };
 
+  const handleRetry = () => {
+    if (nodeId) {
+      setSubtitle(flow === NETWORK_FLOW ? 'Loading up your network...' : '');
+      setDescription('');
+      setDuration((prev) => prev + 2);
+      setShowReturn(false);
+      getNode({
+        variables: {
+          data: {
+            id: nodeId,
+          },
+        },
+      });
+      getNodesByState({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
+      getNodeState({
+        variables: {
+          getNodeStateId: nodeId,
+        },
+      });
+    }
+  };
+
   return (
     <Stack spacing={{ xs: 4, md: 6 }}>
       <InstallSiteLoading
-        duration={10}
+        duration={duration}
         title={title}
         subtitle={subtitle}
         handleBack={handleBack}
@@ -167,19 +210,24 @@ const Check = () => {
         onCompleted={onInstallProgressComplete}
       />
       {showReturn && (
-        <Button
-          variant="contained"
-          sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
-          onClick={() => {
-            flow === INSTALLATION_FLOW
-              ? router.push('/console/home')
-              : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
-          }}
-        >
-          {flow === INSTALLATION_FLOW
-            ? 'Return to home'
-            : 'Skip site configuration'}
-        </Button>
+        <HorizontalContainerJustify>
+          <Button variant="text" sx={{ p: 0 }} onClick={handleRetry}>
+            Retry
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
+            onClick={() => {
+              flow === INSTALLATION_FLOW
+                ? router.push('/console/home')
+                : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
+            }}
+          >
+            {flow === INSTALLATION_FLOW
+              ? 'Return to home'
+              : 'Skip site configuration'}
+          </Button>
+        </HorizontalContainerJustify>
       )}
     </Stack>
   );

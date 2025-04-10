@@ -48,8 +48,9 @@ const SiteConfigure = ({ params }: IPage) => {
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
+  const networkId = searchParams.get('networkid') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-  const { setSnackbarMessage, network } = useAppContext();
+  const { setSnackbarMessage } = useAppContext();
 
   const formik = useFormik({
     initialValues: {
@@ -214,6 +215,7 @@ const SiteConfigure = ({ params }: IPage) => {
         (component) => component.partNumber === id,
       )?.id;
 
+    // TODO: Choosing first spectrum component. Need to revisit if spectrum have multiple components
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 
@@ -227,8 +229,8 @@ const SiteConfigure = ({ params }: IPage) => {
       return;
     }
 
-    if (formik.isValid && network.id) {
-      addSiteCall(accessId, spectrumId, network.id);
+    if (formik.isValid && networkId) {
+      addSiteCall(accessId, spectrumId, networkId);
     }
   };
 
@@ -309,6 +311,7 @@ const SiteConfigure = ({ params }: IPage) => {
                 <TextField
                   {...params}
                   label="SWITCH"
+                  placeholder="Select a switch"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={formik.touched.switch && Boolean(formik.errors.switch)}
@@ -341,6 +344,7 @@ const SiteConfigure = ({ params }: IPage) => {
                 <TextField
                   {...params}
                   label="POWER"
+                  placeholder="Select a power (Solar / Battery / Charge controller)"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={formik.touched.power && Boolean(formik.errors.power)}
@@ -373,6 +377,7 @@ const SiteConfigure = ({ params }: IPage) => {
                 <TextField
                   {...params}
                   label="BACKHAUL"
+                  placeholder="Select a backhaul"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={

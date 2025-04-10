@@ -88,7 +88,7 @@ export const SitesTree = ({ sites }: ISitesTree) => {
                 <TreeItem
                   itemId={site.nodeId}
                   label={site.nodeName}
-                  onClick={() => router.push(`/console/nodes/${site.nodeId}`)}
+                  // onClick={() => router.push(`/console/nodes/${site.nodeId}`)}
                 />
               </TreeItem>
             );

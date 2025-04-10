@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { LinearProgress, Stack, Typography } from '@mui/material';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface IInstallSiteLoading {
   title: string;
@@ -27,6 +27,13 @@ const InstallSiteLoading = ({
 }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);
+
+  useEffect(() => {
+    if (duration !== remainingTime) {
+      setProgress(0);
+      setRemainingTime(duration);
+    }
+  }, [duration]);
 
   React.useEffect(() => {
     const startTime = Date.now();

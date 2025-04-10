@@ -69,7 +69,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
   }, [address]);
 
   const { data: networksData } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
+    fetchPolicy: 'cache-first',
   });
 
   const getDropDownData = () =>

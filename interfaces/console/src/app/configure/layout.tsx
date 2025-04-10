@@ -61,7 +61,8 @@ const ConfigureLayout = ({
   });
 
   const { data: networksData } = useGetNetworksQuery({
-    fetchPolicy: 'cache-first',
+    skip: path.includes('/configure/network'),
+    fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0) {
         const network = data.getNetworks.networks.find(
