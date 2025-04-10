@@ -212,7 +212,7 @@ export class MetricStateRes {
   @Field()
   nodeId?: string;
 
-  @Field()
+  @Field({ nullable: true })
   siteId?: string;
 
   @Field()

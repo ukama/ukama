@@ -69,7 +69,6 @@ const Check = () => {
         filterNodes[0].status.state === NodeStateEnum.Unknown
       ) {
         setNode(filterNodes[0]);
-        console.log('NODE ID', filterNodes[0]);
       }
     },
   });
