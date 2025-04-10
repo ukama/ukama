@@ -374,6 +374,36 @@ func (_m *SimManagerServiceServer) SetActivePackageForSim(_a0 context.Context, _
 	return r0, r1
 }
 
+// TerminatePackageForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) TerminatePackageForSim(_a0 context.Context, _a1 *gen.TerminatePackageRequest) (*gen.TerminatePackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TerminatePackageForSim")
+	}
+
+	var r0 *gen.TerminatePackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminatePackageRequest) (*gen.TerminatePackageResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminatePackageRequest) *gen.TerminatePackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.TerminatePackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.TerminatePackageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ToggleSimStatus provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) ToggleSimStatus(_a0 context.Context, _a1 *gen.ToggleSimStatusRequest) (*gen.ToggleSimStatusResponse, error) {
 	ret := _m.Called(_a0, _a1)

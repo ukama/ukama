@@ -36,6 +36,7 @@ service SimManagerService {
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
     rpc GetPackagesForSim(GetPackagesForSimRequest) returns (GetPackagesForSimResponse);
     rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
+    rpc TerminatePackageForSim(TerminatePackageRequest) returns (TerminatePackageResponse);
     rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
 
     // Usage
@@ -164,6 +165,15 @@ message SetActivePackageRequest {
 }
 
 message SetActivePackageResponse{
+}
+
+
+message TerminatePackageRequest {
+    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
+    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+}
+
+message TerminatePackageResponse{
 }
 
 
