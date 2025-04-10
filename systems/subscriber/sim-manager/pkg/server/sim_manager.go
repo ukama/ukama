@@ -937,6 +937,13 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	}
 
 	err = s.packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+		// update startDate and endDate
+		newPackageToActivate.StartDate = time.Now().UTC().
+			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+
+		newPackageToActivate.EndDate = newPackageToActivate.StartDate.
+			Add(time.Hour * 24 * time.Duration(pkg.DefaultDuration))
+
 		// if there is already an active package
 		if sim.Package.Id != uuid.Nil {
 			// get it
@@ -996,8 +1003,8 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		NetworkId:        sim.NetworkId.String(),
 		PackageId:        pkg.Id.String(),
 		PlanId:           pkg.PackageId.String(),
-		PackageStartDate: timestamppb.New(pkg.StartDate),
-		PackageEndDate:   timestamppb.New(pkg.EndDate),
+		PackageStartDate: timestamppb.New(newPackageToActivate.StartDate),
+		PackageEndDate:   timestamppb.New(newPackageToActivate.EndDate),
 	}
 
 	err = s.PublishEventMessage(route, evtMsg)
