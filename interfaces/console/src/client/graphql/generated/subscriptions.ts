@@ -91,7 +91,7 @@ export type MetricStateRes = {
   __typename?: 'MetricStateRes';
   msg: Scalars['String']['output'];
   nodeId: Scalars['String']['output'];
-  siteId: Scalars['String']['output'];
+  siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Scalars['Float']['output'];
@@ -301,14 +301,14 @@ export type GetMetricsStatQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, siteId: string, type: string, value: number }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, siteId?: string | null, type: string, value: number }> } };
 
 export type GetSiteStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, siteId: string, type: string, value: number }> } };
+export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, siteId?: string | null, type: string, value: number }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;

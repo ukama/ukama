@@ -15,6 +15,7 @@ import { ONBOARDING_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import { SiteConfigureSchema } from '@/helpers/formValidators';
 import colors from '@/theme/colors';
+import { setQueryParam } from '@/utils';
 import {
   AlertColor,
   Autocomplete,
@@ -48,8 +49,9 @@ const SiteConfigure = ({ params }: IPage) => {
   const qpPower = searchParams.get('power') ?? '';
   const qpSwitch = searchParams.get('switch') ?? '';
   const qpAddress = searchParams.get('address') ?? '';
+  const networkId = searchParams.get('networkid') ?? '';
   const qpbackhaul = searchParams.get('backhaul') ?? '';
-  const { setSnackbarMessage, network } = useAppContext();
+  const { setSnackbarMessage } = useAppContext();
 
   const formik = useFormik({
     initialValues: {
@@ -63,13 +65,6 @@ const SiteConfigure = ({ params }: IPage) => {
     },
     validationSchema: SiteConfigureSchema,
   });
-
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
 
   const { data: accessComponentsData } = useGetComponentsByUserIdQuery({
     fetchPolicy: 'cache-and-network',
@@ -113,7 +108,7 @@ const SiteConfigure = ({ params }: IPage) => {
         type: 'success' as AlertColor,
         show: true,
       });
-      const p = setQueryParam('access', id);
+      const p = setQueryParam('access', id, searchParams.toString(), pathname);
       p.set('name', name);
       if (flow === ONBOARDING_FLOW) {
         router.push(`/configure/sims?${p.toString()}`);
@@ -177,15 +172,30 @@ const SiteConfigure = ({ params }: IPage) => {
 
   useEffect(() => {
     if (formik.values.switch !== '') {
-      setQueryParam('switch', formik.values.switch);
+      setQueryParam(
+        'switch',
+        formik.values.switch,
+        searchParams.toString(),
+        pathname,
+      );
     }
 
     if (formik.values.power !== '') {
-      setQueryParam('power', formik.values.power);
+      setQueryParam(
+        'power',
+        formik.values.power,
+        searchParams.toString(),
+        pathname,
+      );
     }
 
     if (formik.values.backhaul !== '') {
-      setQueryParam('backhaul', formik.values.backhaul);
+      setQueryParam(
+        'backhaul',
+        formik.values.backhaul,
+        searchParams.toString(),
+        pathname,
+      );
     }
   }, [formik.values]);
 
@@ -214,6 +224,7 @@ const SiteConfigure = ({ params }: IPage) => {
         (component) => component.partNumber === id,
       )?.id;
 
+    // TODO: Choosing first spectrum component. Need to revisit if spectrum have multiple components
     const spectrumId =
       spectrumComponentsData?.getComponentsByUserId.components[0].id;
 
@@ -227,8 +238,8 @@ const SiteConfigure = ({ params }: IPage) => {
       return;
     }
 
-    if (formik.isValid && network.id) {
-      addSiteCall(accessId, spectrumId, network.id);
+    if (formik.isValid && networkId) {
+      addSiteCall(accessId, spectrumId, networkId);
     }
   };
 
@@ -302,13 +313,19 @@ const SiteConfigure = ({ params }: IPage) => {
                 ) || null
               }
               onChange={(_, v: any) => {
-                setQueryParam('switch', v?.id || '');
+                setQueryParam(
+                  'switch',
+                  v?.id || '',
+                  searchParams.toString(),
+                  pathname,
+                );
                 formik.setFieldValue('switch', v?.id || '');
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="SWITCH"
+                  placeholder="Select a switch"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={formik.touched.switch && Boolean(formik.errors.switch)}
@@ -334,13 +351,19 @@ const SiteConfigure = ({ params }: IPage) => {
                 ) || null
               }
               onChange={(_, v: any) => {
-                setQueryParam('power', v?.id || '');
+                setQueryParam(
+                  'power',
+                  v?.id || '',
+                  searchParams.toString(),
+                  pathname,
+                );
                 formik.setFieldValue('power', v?.id || '');
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="POWER"
+                  placeholder="Select a power (Solar / Battery / Charge controller)"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={formik.touched.power && Boolean(formik.errors.power)}
@@ -366,13 +389,19 @@ const SiteConfigure = ({ params }: IPage) => {
                 ) || null
               }
               onChange={(_, v: any) => {
-                setQueryParam('backhaul', v?.id || '');
+                setQueryParam(
+                  'backhaul',
+                  v?.id || '',
+                  searchParams.toString(),
+                  pathname,
+                );
                 formik.setFieldValue('backhaul', v?.id || '');
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="BACKHAUL"
+                  placeholder="Select a backhaul"
                   value={formik.values.switch}
                   slotProps={{ inputLabel: { shrink: true } }}
                   error={

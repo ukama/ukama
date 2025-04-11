@@ -62,7 +62,7 @@ export const parseMetricRes = (
   args: GetMetricsStatInput | GetMetricRangeInput
 ): MetricRes => {
   const { result } = res.data.data;
-  logger.info(`Parsing metric response for type ${type}:`, res);
+  logger.info(`Parsing metric response for type ${type}:`, result);
 
   const hasValues = result.length > 0 && result[0]?.values?.length > 0;
   return hasValues
@@ -70,8 +70,8 @@ export const parseMetricRes = (
         type: type,
         success: true,
         msg: "success",
-        nodeId: result[0].metric.nodeid,
-        siteId: result[0].metric.siteid || "",
+        nodeId: result[0].metric?.nodeid ?? "",
+        siteId: result[0].metric?.siteid ?? "",
         values: fixTimestampInMetricData(
           result[0].values,
           METRICS_INTERVAL,

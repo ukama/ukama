@@ -13,9 +13,10 @@ import {
 } from '@/client/graphql/generated';
 import { CHECK_SITE_FLOW, NETWORK_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
+import { setQueryParam } from '@/utils';
 import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Formik } from 'formik';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import * as Yup from 'yup';
 import NetworkSkelton from './skelton';
@@ -51,6 +52,8 @@ const initialValues: AddNetworkForm = {
 
 const Network = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const { setSnackbarMessage, network, setNetwork } = useAppContext();
 
@@ -80,7 +83,14 @@ const Network = () => {
           id: data.addNetwork.id,
           name: data.addNetwork.name,
         });
-        router.push(`/configure/check?flow=${NETWORK_FLOW}`);
+        const p = setQueryParam(
+          'networkid',
+          data.addNetwork.id,
+          searchParams.toString(),
+          pathname,
+        );
+        p.set('flow', NETWORK_FLOW);
+        router.push(`/configure/check?${p.toString()}`);
       }
     },
     onError: (error) => {

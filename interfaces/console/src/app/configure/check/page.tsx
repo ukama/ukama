@@ -11,8 +11,8 @@ import {
   Node,
   NodeConnectivityEnum,
   NodeStateEnum,
-  useGetNodeQuery,
-  useGetNodesByStateQuery,
+  useGetNodeLazyQuery,
+  useGetNodesByStateLazyQuery,
   useGetNodeStateLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
@@ -23,6 +23,8 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import { useAppContext } from '@/context';
+import { HorizontalContainerJustify } from '@/styles/global';
+import { setQueryParam } from '@/utils';
 import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,6 +35,7 @@ const Check = () => {
   const searchParams = useSearchParams();
   const [node, setNode] = useState<Node | undefined>(undefined);
   const nodeId = searchParams.get('nid') ?? '';
+  const [duration, setDuration] = useState(5);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [showReturn, setShowReturn] = useState(false);
   const [title] = useState(
@@ -48,21 +51,8 @@ const Check = () => {
   const [description, setDescription] = useState('');
   const { setSnackbarMessage } = useAppContext();
 
-  const setQueryParam = (key: string, value: string) => {
-    const p = new URLSearchParams(searchParams.toString());
-    p.set(key, value);
-    window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
-    return p;
-  };
-
-  useGetNodesByStateQuery({
-    skip: !!nodeId,
-    variables: {
-      data: {
-        state: NodeStateEnum.Unknown,
-        connectivity: NodeConnectivityEnum.Online,
-      },
-    },
+  const [getNodesByState] = useGetNodesByStateLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (data) => {
       const filterNodes = data.getNodesByState.nodes.filter(
         (node) =>
@@ -83,13 +73,8 @@ const Check = () => {
     },
   });
 
-  useGetNodeQuery({
-    skip: !nodeId,
-    variables: {
-      data: {
-        id: nodeId,
-      },
-    },
+  const [getNode] = useGetNodeLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: async (data) => {
       if (data.getNode.latitude && data.getNode.longitude && nodeId) {
         if (
@@ -114,7 +99,12 @@ const Check = () => {
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (node && data.getNodeState.currentState === NodeStateEnum.Unknown) {
-        let p = setQueryParam('lat', node.latitude.toString());
+        let p = setQueryParam(
+          'lat',
+          node.latitude.toString(),
+          searchParams.toString(),
+          pathname,
+        );
         p.set('lng', node.longitude.toString());
         p.set(
           'flow',
@@ -129,6 +119,26 @@ const Check = () => {
       }
     },
   });
+
+  useEffect(() => {
+    if (nodeId) {
+      getNode({
+        variables: {
+          data: {
+            id: nodeId,
+          },
+        },
+      });
+      getNodesByState({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
+    }
+  }, [nodeId]);
 
   useEffect(() => {
     if (node?.id) {
@@ -147,7 +157,15 @@ const Check = () => {
       setDescription(
         'It is taking longer than usual to load up your site. Please check on your site to make sure that all parts are installed correctly.',
       );
-    } else router.push(`/configure?step=2&flow=${ONBOARDING_FLOW}`);
+    } else {
+      const p = setQueryParam(
+        'flow',
+        ONBOARDING_FLOW,
+        searchParams.toString(),
+        pathname,
+      );
+      router.push(`/configure?step=2&${p}`);
+    }
   };
 
   const handleBack = () => {
@@ -156,10 +174,41 @@ const Check = () => {
     );
   };
 
+  const handleRetry = () => {
+    setSubtitle(flow === NETWORK_FLOW ? 'Loading up your network...' : '');
+    setDescription('');
+    setDuration((prev) => prev + 2);
+    setShowReturn(false);
+    getNodesByState({
+      variables: {
+        data: {
+          state: NodeStateEnum.Unknown,
+          connectivity: NodeConnectivityEnum.Online,
+        },
+      },
+    });
+
+    if (nodeId) {
+      getNode({
+        variables: {
+          data: {
+            id: nodeId,
+          },
+        },
+      });
+
+      getNodeState({
+        variables: {
+          getNodeStateId: nodeId,
+        },
+      });
+    }
+  };
+
   return (
     <Stack spacing={{ xs: 4, md: 6 }}>
       <InstallSiteLoading
-        duration={10}
+        duration={duration}
         title={title}
         subtitle={subtitle}
         handleBack={handleBack}
@@ -167,19 +216,24 @@ const Check = () => {
         onCompleted={onInstallProgressComplete}
       />
       {showReturn && (
-        <Button
-          variant="contained"
-          sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
-          onClick={() => {
-            flow === INSTALLATION_FLOW
-              ? router.push('/console/home')
-              : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
-          }}
-        >
-          {flow === INSTALLATION_FLOW
-            ? 'Return to home'
-            : 'Skip site configuration'}
-        </Button>
+        <HorizontalContainerJustify>
+          <Button variant="text" sx={{ p: 0 }} onClick={handleRetry}>
+            Retry
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
+            onClick={() => {
+              flow === INSTALLATION_FLOW
+                ? router.push('/console/home')
+                : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
+            }}
+          >
+            {flow === INSTALLATION_FLOW
+              ? 'Return to home'
+              : 'Skip site configuration'}
+          </Button>
+        </HorizontalContainerJustify>
       )}
     </Stack>
   );

@@ -62,12 +62,14 @@ const Sidebar = ({
     >
       <Stack direction={'column'}>
         <Box mx={2} my={2}>
-          <Typography
-            variant="body1"
-            color={network.name ? colors.primaryMain : colors.silver}
-          >
-            {network.name ? network.name : 'No network'}
-          </Typography>
+          <BasicDropdown
+            value={network.id}
+            list={getDropDownData()}
+            isShowAddOption={isOwner}
+            placeholder={placeholder}
+            handleOnChange={handleNetworkChange}
+            handleAddNetwork={handleAddNetwork}
+          />
         </Box>
         <Divider sx={{ mx: 2, my: 0 }} />
         <Stack direction="column" spacing={1.5} px={2} py={2}>

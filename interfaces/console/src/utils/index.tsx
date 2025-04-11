@@ -205,16 +205,18 @@ const getDuration = (number: number): string => {
 const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
   const t: TNodeSiteTree[] = [];
 
-  nodes.nodes.forEach((node: Node) => {
-    if (node.type === NodeTypeEnum.Tnode) {
-      t.push({
-        id: node.site.siteId ?? '',
-        name: `${sites.sites.find((site) => site.id === node.site.siteId)?.name} (Site)`,
-        nodeId: node.id,
-        nodeType: node.type,
-        nodeName: `${node.name} (Node)`,
-      });
-    }
+  sites.sites.forEach((site) => {
+    nodes.nodes.forEach((node: Node) => {
+      if (node.site.siteId === site.id && node.type === NodeTypeEnum.Tnode) {
+        t.push({
+          id: site.id,
+          name: `${site.name} (Site)`,
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeName: `${node.name} (Node)`,
+        });
+      }
+    });
   });
 
   return t;
@@ -571,6 +573,18 @@ const getSignalStyles = (signalStrength: string) => {
   }
 };
 
+const setQueryParam = (
+  key: string,
+  value: string,
+  params: string,
+  pathname: string,
+): URLSearchParams => {
+  const p = new URLSearchParams(params);
+  p.set(key, value);
+  window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
+  return p;
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -596,5 +610,6 @@ export {
   NodeEnumToString,
   provideStatusColor,
   roleEnumToString,
+  setQueryParam,
   structureNodeSiteDate,
 };
