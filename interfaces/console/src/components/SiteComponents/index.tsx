@@ -306,7 +306,14 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                           borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
                         }}
                       >
-                        Switch ports ({getPortMetrics().length})
+                        {(() => {
+                          const portMetrics = getPortMetrics();
+                          const totalPorts = portMetrics.length;
+                          const activePorts = Object.values(
+                            localSwitchStatus,
+                          ).filter((status) => status === true).length;
+                          return `Switch ports (${activePorts} active / ${totalPorts} total)`;
+                        })()}
                       </Typography>
 
                       {getPortMetrics().map((portGroup) =>

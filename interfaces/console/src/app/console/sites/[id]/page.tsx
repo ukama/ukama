@@ -101,6 +101,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
   const [siteUptime, setSiteUptime] = useState<number>(0);
+  const [siteUptimePercentage, setSiteUptimePercentage] = useState<number>(0);
   const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
   const {
     setSnackbarMessage,
@@ -635,6 +636,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             if (m.type === 'site_uptime_seconds') {
               setSiteUptime(m.value);
             }
+            if (m.type === 'site_uptime_percentage') {
+              setSiteUptimePercentage(m.value);
+            }
           });
 
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${
@@ -705,6 +709,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       if (success) {
         if (type === 'site_uptime_seconds') {
           setSiteUptime(() => Math.floor(value[1]));
+        }
+        if (type === 'site_uptime_percentage') {
+          setSiteUptimePercentage(() => Math.floor(value[1]));
         }
         PubSub.publish(`stat-${type}`, value);
       }
@@ -816,28 +823,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           />
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={5}>
-          {siteUptime <= 0 ? (
-            <Box sx={{ height: '100%' }}>
-              <Skeleton
-                variant="rectangular"
-                height={'100%'}
-                width={'100%'}
-                sx={{ borderRadius: '5px' }}
-              />
-            </Box>
-          ) : (
-            <SiteOverview
-              siteUptimeSeconds={siteUptime}
-              daysRange={60}
-              nodeUptimes={Object.entries(nodeUptimes).map(
-                ([id, uptimeSeconds]) => ({
-                  id,
-                  uptimeSeconds,
-                }),
-              )}
-              installationDate={new Date(activeSite.installDate)}
-            />
-          )}
+          <SiteOverview
+            siteUptimeSeconds={siteUptime}
+            uptimePercentage={siteUptimePercentage}
+            installationDate={activeSite.installDate}
+          />
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
           <SiteMapComponent

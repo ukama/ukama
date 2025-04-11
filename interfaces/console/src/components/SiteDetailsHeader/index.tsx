@@ -20,9 +20,8 @@ import {
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
-import AddIcon from '@mui/icons-material/Add';
 import { duration } from '@/utils';
-
+import CancelIcon from '@mui/icons-material/Cancel';
 interface SiteDetailsHeaderProps {
   addSite: () => void;
   siteList: SiteDto[];
@@ -69,7 +68,11 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
           <>
             {selectedSite ? (
               <>
-                <CheckCircle color="success" />
+                {siteUpTime > 0 ? (
+                  <CheckCircle color="success" />
+                ) : (
+                  <CancelIcon color="error" />
+                )}
                 <Typography variant="body1">{selectedSite.name}</Typography>
               </>
             ) : (
