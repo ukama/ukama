@@ -207,6 +207,7 @@ const getGraphsKeyByType = (type: string): string[] => {
         "site_uptime_seconds",
         "solar_panel_voltage",
         "solar_panel_current",
+        "site_uptime_percentage",
         "solar_panel_power",
         "battery_charge_percentage",
         "main_backhaul_latency",

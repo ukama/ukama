@@ -5,175 +5,152 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
-import { Box, Card, CardContent, Typography, Tooltip } from '@mui/material';
 import colors from '@/theme/colors';
-
-interface NodeUptime {
-  id: string;
-  uptimeSeconds: number;
-}
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Tooltip,
+  Stack,
+} from '@mui/material';
+import React, { useEffect } from 'react';
+import { useMemo } from 'react';
+import { formatISO } from 'date-fns';
 
 interface SiteOverviewProps {
   siteUptimeSeconds?: number;
-  nodeUptimes?: NodeUptime[];
-  daysRange?: number;
-  loading?: boolean;
-  installationDate?: Date;
+  uptimePercentage?: number;
+  installationDate?: string;
 }
-
+interface DayData {
+  date: Date;
+  displayDate: string;
+  percentage: number;
+}
 const SiteOverview: React.FC<SiteOverviewProps> = ({
-  siteUptimeSeconds = 0,
-  nodeUptimes = [],
-  daysRange = 90,
-  loading = false,
-  installationDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+  siteUptimeSeconds = 86400 * 90,
+  uptimePercentage = 99,
+  installationDate,
 }) => {
-  const secondsSinceInstallation = Math.min(
-    daysRange * 24 * 60 * 60,
-    (Date.now() - installationDate.getTime()) / 1000,
+  const [inputSiteUptimeSeconds, setInputSiteUptimeSeconds] =
+    React.useState<number>(siteUptimeSeconds);
+  const [inputUptimePercentage, setInputUptimePercentage] =
+    React.useState<number>(uptimePercentage);
+  const [inputInstallDate, setInputInstallDate] = React.useState<string>(
+    installationDate || '',
   );
-
-  const daysSinceInstallation = Math.ceil(
-    secondsSinceInstallation / (24 * 60 * 60),
-  );
-
-  const siteUptimePercentage =
-    (siteUptimeSeconds / secondsSinceInstallation) * 100;
-
-  let averageNodeUptimePercentage = 0;
-  if (nodeUptimes.length > 0) {
-    const totalNodeUptimeSeconds = nodeUptimes.reduce(
-      (sum, node) => sum + node.uptimeSeconds,
-      0,
-    );
-
-    const averageNodeUptimeSeconds =
-      totalNodeUptimeSeconds / nodeUptimes.length;
-
-    averageNodeUptimePercentage =
-      (averageNodeUptimeSeconds / secondsSinceInstallation) * 100;
-  }
-
-  let overallUptimePercentage = siteUptimePercentage;
-  if (nodeUptimes.length > 0) {
-    overallUptimePercentage =
-      (siteUptimePercentage + averageNodeUptimePercentage) / 2;
-  }
-
-  overallUptimePercentage = Math.min(Math.max(0, overallUptimePercentage), 100);
-
-  const nodePercentages = nodeUptimes.map((node) => ({
-    id: node.id,
-    percentage: (node.uptimeSeconds / secondsSinceInstallation) * 100,
-  }));
-
-  const generateBarData = (startDay: number, count: number) => {
-    const now = Date.now();
-    const bars = [];
-
-    for (let i = 0; i < count; i++) {
-      const daysSinceStart = startDay - i;
-      const date = new Date(now - daysSinceStart * 24 * 60 * 60 * 1000);
-      const isAfterInstallation = date >= installationDate;
-      const isInstallationDay =
-        date.getDate() === installationDate.getDate() &&
-        date.getMonth() === installationDate.getMonth() &&
-        date.getFullYear() === installationDate.getFullYear();
-
-      const value = isAfterInstallation ? overallUptimePercentage : 0;
-
-      bars.push({
-        value,
-        isAfterInstallation,
-        isInstallationDay,
-        daysSinceStart,
-      });
-    }
-
-    return bars;
+  const installDate = useMemo(() => {
+    if (!inputInstallDate) return new Date();
+    const date = new Date(inputInstallDate);
+    if (isNaN(date.getTime())) return new Date();
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  }, [inputInstallDate]);
+  const formatDate = (date: Date): string => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+    }).format(date);
   };
 
-  const recentPeriodBars = generateBarData(30, 30);
-  const pastPeriodBars = generateBarData(daysRange, 30);
+  const formatFullDate = (date: Date): string => {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
+  };
 
-  const renderBar = (barData: any, index: number) => {
-    const { value, isAfterInstallation, isInstallationDay } = barData;
+  const formatUptime = (seconds: number): string => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${days}d ${hours}h ${minutes}m ${remainingSeconds}s`;
+  };
+  useEffect(() => {
+    setInputSiteUptimeSeconds(siteUptimeSeconds);
+    setInputUptimePercentage(uptimePercentage);
+    setInputInstallDate(formatISO(installDate));
+  }, [siteUptimeSeconds, uptimePercentage, installDate]);
+  const generateDaysData = (
+    daysCount: number,
+    startFromDay: number = 0,
+  ): DayData[] => {
+    const result: DayData[] = [];
+    const startDate = installDate;
+    const uptimeDays = Math.ceil(inputSiteUptimeSeconds / 86400);
 
-    const heightPercentage = isAfterInstallation ? value : 0;
-    const barHeight = (heightPercentage / 100) * 75;
+    for (let i = startFromDay; i < startFromDay + daysCount; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
 
-    const barColor = heightPercentage >= 90 ? colors.lightGreen : colors.red;
+      let dayPercentage = 0;
+      if (inputSiteUptimeSeconds > 0 && i < uptimeDays) {
+        dayPercentage = inputUptimePercentage;
+      }
+
+      result.push({
+        date,
+        displayDate: formatDate(date),
+        percentage: dayPercentage,
+      });
+    }
+    return result;
+  };
+  const firstThirtyDays = useMemo(() => {
+    return generateDaysData(30, 0);
+  }, [inputUptimePercentage, inputSiteUptimeSeconds, installDate]);
+  const nextThirtyDays = useMemo(() => {
+    return generateDaysData(30, 30);
+  }, [inputUptimePercentage, inputSiteUptimeSeconds, installDate]);
+  const renderBar = (day: DayData, index: number) => {
+    const { percentage, displayDate } = day;
+    const hasData = percentage > 0;
+    const uptimeHeight = (percentage / 100) * 70;
+    const isInstallDate = day.date.getTime() === installDate.getTime();
+
+    let tooltipText = `${displayDate}`;
+
+    if (isInstallDate) {
+      tooltipText += `\nInstallation Date: ${formatFullDate(installDate)}`;
+    }
+
+    if (hasData) {
+      tooltipText += `\nUptime: ${percentage.toFixed(1)}%`;
+    } else {
+      tooltipText += `\nNo uptime data`;
+    }
 
     return (
-      <Box
-        key={index}
-        sx={{
-          height: 75,
-          width: 8,
-          mx: 0.25,
-          position: 'relative',
-          borderRadius: 1,
-          bgcolor: colors.gray,
-        }}
-      >
+      <Tooltip key={index} title={tooltipText} placement="top">
         <Box
           sx={{
-            position: 'absolute',
-            bottom: 0,
-            width: '100%',
-            height: `${barHeight}px`,
-            bgcolor: isAfterInstallation ? barColor : 'transparent',
-            borderRadius: 1,
+            height: 70,
+            width: 10,
+            mx: 0.25,
+            borderRadius: 10,
+            position: 'relative',
+            bgcolor: hasData ? colors.redLight : colors.gray,
+            overflow: 'hidden',
+            border: isInstallDate ? '2px solid black' : 'none',
           }}
-        />
-
-        {isInstallationDay && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              width: '100%',
-              height: '100%',
-              bgcolor: 'rgba(0, 0, 0, 0.8)',
-              border: `2px solid ${colors.black}`,
-              borderRadius: 1,
-              zIndex: 1,
-            }}
-          />
-        )}
-      </Box>
+        >
+          {hasData && (
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                width: '100%',
+                height: `${uptimeHeight}px`,
+                bgcolor: colors.lightGreen,
+              }}
+            />
+          )}
+        </Box>
+      </Tooltip>
     );
   };
-
-  const createTooltipText = () => {
-    let text = `Site Uptime: ${siteUptimePercentage.toFixed(1)}%\n`;
-    text += `Calculated over ${daysSinceInstallation} days since installation\n`;
-
-    if (nodeUptimes.length > 0) {
-      text += `\nAverage Node Uptime: ${averageNodeUptimePercentage.toFixed(1)}%`;
-      text += '\n';
-
-      nodePercentages.forEach((node) => {
-        text += `\nNode ${node.id}: ${node.percentage.toFixed(1)}%`;
-      });
-    }
-
-    return text;
-  };
-
-  if (loading) {
-    return (
-      <Card
-        sx={{
-          borderRadius: 2,
-          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
-          height: '100%',
-        }}
-      ></Card>
-    );
-  }
-
   return (
     <Card
       sx={{
@@ -189,79 +166,107 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
           Site overview
         </Typography>
 
-        <Tooltip
-          title={createTooltipText()}
-          placement="top"
-          componentsProps={{
-            tooltip: {
-              sx: {
-                whiteSpace: 'pre-line',
-                maxWidth: 'none',
-              },
-            },
+        <Typography
+          variant="subtitle2"
+          sx={{
+            mb: 4,
+            color: uptimePercentage > 98 ? colors.gray : colors.redLight,
           }}
         >
-          <Typography
-            variant="body2"
-            sx={{
-              mt: 2,
-              mb: 4,
-            }}
-          >
-            {overallUptimePercentage.toFixed(1)}% uptime over{' '}
-            {daysSinceInstallation}
-            {daysSinceInstallation === 1 ? 'day' : 'days'}
-          </Typography>
-        </Tooltip>
+          {uptimePercentage}% uptime over {formatUptime(siteUptimeSeconds)}
+        </Typography>
 
-        <Box sx={{ position: 'relative', mb: 3 }}>
+        <Box sx={{ mb: 5 }}>
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-end',
-              height: 75,
+              height: 70,
               mb: 1,
+              flexDirection: 'row-reverse',
             }}
           >
-            {recentPeriodBars.map(renderBar)}
+            {firstThirtyDays.map((day, index) => renderBar(day, index))}
           </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              30 days ago
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              mt: 1,
+              flexDirection: 'row-reverse',
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
               Today
             </Typography>
+            <Typography variant="caption" color="text.secondary">
+              30 days
+            </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ position: 'relative', mt: 4 }}>
+        <Box>
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-end',
-              height: 75,
+              height: 70,
               mb: 1,
+              flexDirection: 'row-reverse',
             }}
           >
-            {pastPeriodBars.map(renderBar)}
+            {nextThirtyDays.map((day, index) => renderBar(day, index))}
           </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {daysRange} days ago
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              mt: 1,
+              flexDirection: 'row-reverse',
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              31 days
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              31 days ago
+            <Typography variant="caption" color="text.secondary">
+              60 days
             </Typography>
           </Box>
         </Box>
+
+        <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{ width: 10, height: 10, bgcolor: colors.lightGreen, mr: 1 }}
+            />
+            <Typography variant="caption">Uptime</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{ width: 10, height: 10, bgcolor: colors.redLight, mr: 1 }}
+            />
+            <Typography variant="caption">Downtime</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: 10, height: 10, bgcolor: colors.gray, mr: 1 }} />
+            <Typography variant="caption">No data</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: 10,
+                height: 10,
+                border: '2px solid black',
+                mr: 1,
+              }}
+            />
+            <Typography variant="caption">Installation Date</Typography>
+          </Box>
+        </Stack>
       </CardContent>
     </Card>
   );
 };
-
 export default SiteOverview;

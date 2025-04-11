@@ -596,12 +596,12 @@ const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
         color: colors.red,
         icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
       };
-    } else if (value < 50) {
+    } else if (value < 60) {
       return {
         color: colors.orange,
         icon: <Battery50Icon sx={{ color: colors.orange }} />,
       };
-    } else {
+    } else if (value > 60) {
       return {
         color: colors.green,
         icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
@@ -610,7 +610,7 @@ const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
   }
 
   if (type === 'signal') {
-    if (value < 30) {
+    if (value < 10) {
       return {
         color: colors.red,
         icon: <SignalCellularOffIcon sx={{ color: colors.red }} />,

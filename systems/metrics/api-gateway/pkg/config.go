@@ -182,6 +182,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"backhaul_speed": Metric{false, "backhaul_speed", ""},
 	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
 	"site_uptime_seconds": Metric{false, "site_uptime_seconds", ""},
+	"site_uptime_percentage": Metric{false, "site_uptime_percentage", ""},
 
 	"backhaul_switch_port_status": Metric{false, "backhaul_switch_port_status", ""},
 	"backhaul_switch_port_speed":  Metric{false, "backhaul_switch_port_speed", ""},

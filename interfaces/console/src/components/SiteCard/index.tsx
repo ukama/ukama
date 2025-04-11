@@ -148,7 +148,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
                 <Skeleton width={70} />
               ) : (batteryPercentage ?? 0) < 20 ? (
                 'Critical'
-              ) : (batteryPercentage ?? 0) < 50 ? (
+              ) : (batteryPercentage ?? 0) < 60 ? (
                 'Low'
               ) : (
                 'Charged'
@@ -161,7 +161,7 @@ const SiteCard: React.FC<SiteCardProps> = ({
             <Typography variant="body2" sx={{ color: signalStyles.color }}>
               {loading ? (
                 <Skeleton width={60} />
-              ) : (backhaulSpeed ?? 0) < 30 ? (
+              ) : (backhaulSpeed ?? 0) < 10 ? (
                 'No signal'
               ) : (backhaulSpeed ?? 0) < 70 ? (
                 'Low signal'

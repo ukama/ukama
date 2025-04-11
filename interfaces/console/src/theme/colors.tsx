@@ -8,8 +8,10 @@
 
 const colors = {
   red: '#cf121b',
+  redLight: '#F75A5A',
   redMatt: '#D83C3E',
   green: '#03744B',
+  ligthGreen: '#1DCD9F',
   yellow: '#FBC34D',
   orange: '#E27429',
   silver: '#C4C4C4',

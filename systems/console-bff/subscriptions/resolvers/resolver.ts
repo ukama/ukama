@@ -209,9 +209,12 @@ class SubscriptionsResolvers {
       let avg = 0;
 
       res.values = res.values.filter(value => value[1] !== 0);
-
       if (Array.isArray(res.values) && res.values.length > 0) {
-        if (res.values.length === 1 || key === "site_uptime_seconds") {
+        if (
+          res.values.length === 1 ||
+          key === "site_uptime_seconds" ||
+          key === "site_uptime_percentage"
+        ) {
           avg = res.values[res.values.length - 1][1];
         } else {
           const sum = res.values.reduce((acc, val) => acc + val[1], 0);
