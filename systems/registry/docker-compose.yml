@@ -160,7 +160,8 @@ services:
    - postgresd-registry
 
  initclient-registry:
-  build: ../services/initClient
+  # build: ../services/initClient
+  image: main-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30

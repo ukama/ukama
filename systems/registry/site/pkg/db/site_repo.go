@@ -15,14 +15,16 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type SiteRepo interface {
 	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
 	Get(siteId uuid.UUID) (*Site, error)
-	GetSites(networkId uuid.UUID) ([]Site, error) 
+	GetSites(networkId uuid.UUID) ([]Site, error)
 	Update(site *Site) error
 	GetSiteCount(networkId uuid.UUID) (int64, error)
+	List(networkId string, isDeactivated bool) ([]Site, error)
 }
 
 type siteRepo struct {
@@ -35,8 +37,6 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 	}
 }
 
-
-
 func (s *siteRepo) Get(siteId uuid.UUID) (*Site, error) {
 	var site Site
 	err := s.Db.GetGormDb().First(&site, siteId).Error
@@ -45,7 +45,6 @@ func (s *siteRepo) Get(siteId uuid.UUID) (*Site, error) {
 	}
 	return &site, nil
 }
-
 
 func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error) error {
 	if !validation.IsValidDnsLabelName(site.Name) {
@@ -73,24 +72,43 @@ func (s siteRepo) Add(site *Site, nestedFunc func(site *Site, tx *gorm.DB) error
 }
 
 func (s siteRepo) GetSites(networkId uuid.UUID) ([]Site, error) {
-    var sites []Site
+	var sites []Site
 
 	err := s.Db.GetGormDb().Where("network_id = ?", networkId).Find(&sites).Error
 	if err != nil {
 		return nil, err
 	}
 	return sites, nil
-
 }
 
+func (s siteRepo) List(networkId string, isDeactivated bool) ([]Site, error) {
+	sites := []Site{}
+
+	tx := s.Db.GetGormDb().Preload(clause.Associations)
+
+	if networkId != "" {
+		tx = tx.Where("network_id = ?", networkId)
+	}
+
+	if isDeactivated {
+		tx = tx.Where("is_deactivated = ?", true)
+	}
+
+	result := tx.Find(&sites)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return sites, nil
+}
 
 func (s *siteRepo) Update(site *Site) error {
-    result := s.Db.GetGormDb().Model(site).Updates(site)
-    if result.Error != nil {
-        return result.Error
-    }
+	result := s.Db.GetGormDb().Model(site).Updates(site)
+	if result.Error != nil {
+		return result.Error
+	}
 
-    return nil
+	return nil
 }
 
 func (s siteRepo) GetSiteCount(networkId uuid.UUID) (int64, error) {

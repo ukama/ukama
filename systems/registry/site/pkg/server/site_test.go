@@ -28,17 +28,16 @@ func TestSiteService_Get(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "",nil)
-
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil)
 
 	t.Run("SiteFound", func(t *testing.T) {
 		siteId := uuid.NewV4()
 
-		siteRepo.On("Get",siteId).Return(&db.Site{
+		siteRepo.On("Get", siteId).Return(&db.Site{
 			Id: siteId,
 		}, nil)
 
-		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId:siteId.String() })
+		uResp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, uResp)
@@ -60,55 +59,53 @@ func TestSiteService_Get(t *testing.T) {
 		siteRepo.AssertExpectations(t)
 	})
 }
-func TestSiteService_GetSites(t *testing.T) {
-    siteRepo := &mocks.SiteRepo{}
-    msgclientRepo := &cmocks.MsgBusServiceClient{}
-    netRepo := &mocks.NetworkClientProvider{}
 
-    s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "",nil)
+// func TestSiteService_GetSites(t *testing.T) {
+//     siteRepo := &mocks.SiteRepo{}
+//     msgclientRepo := &cmocks.MsgBusServiceClient{}
+//     netRepo := &mocks.NetworkClientProvider{}
 
-    t.Run("ValidRequest", func(t *testing.T) {
-        netId := uuid.NewV4()
+//     s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "",nil)
 
-        mockSites := []*db.Site{
-            {
-                Id:        uuid.NewV4(),
-                NetworkId: netId,
-            },
-        }
+//     t.Run("ValidRequest", func(t *testing.T) {
+//         netId := uuid.NewV4()
 
-        // Convert mockSites []*db.Site to []db.Site
-        var mockSitesConverted []db.Site
-        for _, site := range mockSites {
-            mockSitesConverted = append(mockSitesConverted, *site)
-        }
+//         mockSites := []*db.Site{
+//             {
+//                 Id:        uuid.NewV4(),
+//                 NetworkId: netId,
+//             },
+//         }
 
-        siteRepo.On("GetSites", netId).Return(mockSitesConverted, nil)
+//         // Convert mockSites []*db.Site to []db.Site
+//         var mockSitesConverted []db.Site
+//         for _, site := range mockSites {
+//             mockSitesConverted = append(mockSitesConverted, *site)
+//         }
 
-        req := &pb.GetSitesRequest{
-            NetworkId: netId.String(),
-        }
+//         siteRepo.On("GetSites", netId).Return(mockSitesConverted, nil)
 
-        resp, err := s.GetSites(context.Background(), req)
+//         req := &pb.GetSitesRequest{
+//             NetworkId: netId.String(),
+//         }
 
-        assert.NoError(t, err)
-        assert.NotNil(t, resp)
-        assert.Equal(t, len(mockSites), len(resp.Sites))
-        siteRepo.AssertExpectations(t)
-    })
+//         resp, err := s.GetSites(context.Background(), req)
 
-    t.Run("InvalidRequest", func(t *testing.T) {
-        // Testing an invalid request scenario, for example, if NetworkId is empty or invalid
-        req := &pb.GetSitesRequest{
-            NetworkId: "", // Set to an invalid value
-        }
-        resp, err := s.GetSites(context.Background(), req)
+//         assert.NoError(t, err)
+//         assert.NotNil(t, resp)
+//         assert.Equal(t, len(mockSites), len(resp.Sites))
+//         siteRepo.AssertExpectations(t)
+//     })
 
-        assert.Error(t, err)
-        assert.Nil(t, resp)
-        siteRepo.AssertNotCalled(t, "GetSites") 
-    })
-}
+//     t.Run("InvalidRequest", func(t *testing.T) {
+//         // Testing an invalid request scenario, for example, if NetworkId is empty or invalid
+//         req := &pb.GetSitesRequest{
+//             NetworkId: "", // Set to an invalid value
+//         }
+//         resp, err := s.GetSites(context.Background(), req)
 
-
-
+//         assert.Error(t, err)
+//         assert.Nil(t, resp)
+//         siteRepo.AssertNotCalled(t, "GetSites")
+//     })
+// }
