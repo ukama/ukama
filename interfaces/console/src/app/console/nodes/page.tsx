@@ -34,7 +34,7 @@ export default function Page() {
   const [getSites] = useGetSitesLazyQuery({
     fetchPolicy: 'cache-first',
     variables: {
-      networkId: network.id,
+      data: { networkId: network.id },
     },
   });
 
@@ -50,7 +50,7 @@ export default function Page() {
       if (data?.getNodesByState.nodes.length > 0) {
         const sites = await getSites({
           variables: {
-            networkId: network.id,
+            data: { networkId: network.id },
           },
         });
 

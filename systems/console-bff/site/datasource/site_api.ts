@@ -11,6 +11,7 @@ import { VERSION } from "../../common/configs";
 import {
   AddSiteInputDto,
   SiteDto,
+  SitesInputDto,
   SitesResDto,
   UpdateSiteInputDto,
 } from "../resolvers/types";
@@ -21,17 +22,20 @@ const SITES = "sites";
 class SiteApi extends RESTDataSource {
   getSites = async (
     baseURL: string,
-    networkId: string
+    args: SitesInputDto
   ): Promise<SitesResDto> => {
+    let params = "";
+    if (args.networkId) {
+      params = params.concat(`network_id=${args.networkId}`);
+    }
     this.logger.info(
-      `GetSites [GET]: ${baseURL}/${VERSION}/${SITES}?network=${networkId}`
+      `GetSites [GET]: ${baseURL}/${VERSION}/${SITES}?${params}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SITES}`, {
-      params: {
-        network: networkId,
-      },
-    }).then(res => dtoToSitesDto(res));
+
+    return this.get(`/${VERSION}/${SITES}?${params}`).then(res =>
+      dtoToSitesDto(res)
+    );
   };
 
   getSite = async (baseURL: string, siteId: string): Promise<SiteDto> => {

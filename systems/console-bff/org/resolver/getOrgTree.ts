@@ -149,10 +149,9 @@ export class GetOrgTreeResolver {
       nr.elementType = "NETWORK";
       res.networks = [nr];
 
-      const siteRes = await siteAPI.getSites(
-        registryUrl.message,
-        networksRes.networks[0].id
-      );
+      const siteRes = await siteAPI.getSites(registryUrl.message, {
+        networkId: networksRes.networks[0].id,
+      });
       const sr: Site[] = [];
       if (siteRes.sites.length > 0) {
         const compRes = await componentAPI.getComponentsByUserId(

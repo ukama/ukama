@@ -865,8 +865,8 @@ mutation addSite($data: AddSiteInputDto!) {
   }
 }
 
-query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
+query GetSites($data: SitesInputDto!) {
+  getSites(data: $data) {
     sites {
       ...USite
     }
