@@ -57,7 +57,7 @@ type GetSiteRequest struct {
 
 type GetSitesListRequest struct {
 	NetworkId     string `example:"{{NetworkUUID}}" json:"network_id" query:"network_id" binding:"required"`
-	IsDeactivated bool   `json:"is_deactivated" query:"is_deactivated" binding:"required"`
+	IsDeactivated bool   `json:"is_deactivated" query:"is_deactivated" binding:"required" default:"false"`
 }
 type UpdateSiteRequest struct {
 	SiteId string `example:"{{SiteUUID}}" path:"site_id" validate:"required"`

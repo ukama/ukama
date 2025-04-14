@@ -90,11 +90,7 @@ func (s siteRepo) List(networkId string, isDeactivated bool) ([]Site, error) {
 		tx = tx.Where("network_id = ?", networkId)
 	}
 
-	if isDeactivated {
-		tx = tx.Where("is_deactivated = ?", true)
-	}
-
-	result := tx.Find(&sites)
+	result := tx.Where("is_deactivated = ?", isDeactivated).Find(&sites)
 	if result.Error != nil {
 		return nil, result.Error
 	}

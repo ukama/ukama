@@ -40,7 +40,7 @@ const Page = () => {
   });
 
   const { data: sites } = useGetSitesQuery({
-    skip: !!network?.id,
+    skip: !network?.id,
     variables: {
       data: { networkId: network?.id },
     },
