@@ -59,23 +59,19 @@ const Page = () => {
     if (nodes && nodes?.getNodes.nodes.length > 0 && sites) {
       const np: TNodePoolData[] = [];
       nodes.getNodes.nodes.filter((node) => {
-        const s =
-          node.site.siteId &&
-          sites.getSites.sites.find((site) => site.id === node.site.siteId)
-            ?.name;
         const net =
           node.site.networkId &&
           sites.getSites.sites.find((site) => site.id === node.site.networkId)
             ?.name;
         np.push({
           id: node.id,
-          site: s ?? '-',
           network: net ?? '-',
           state: node.status.state,
+          site: node.site.siteId ?? '-',
           type: NodeEnumToString(node.type),
           connectivity: node.status.connectivity,
           createdAt: node.site.addedAt
-            ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+            ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hh:mm a')
             : '-',
         });
         if (sites.getSites.sites.find((site) => site.id === node.site.siteId))
@@ -85,6 +81,12 @@ const Page = () => {
       setPool(np);
     }
   }, [sites, nodes]);
+
+  const getSiteName = (siteId: string | undefined | null) => {
+    if (siteId === undefined || siteId === null) return '-';
+    const site = sites?.getSites.sites.find((site) => site.id === siteId);
+    return site ? site.name : '-';
+  };
 
   useEffect(() => {
     if (search.length > 3) {
