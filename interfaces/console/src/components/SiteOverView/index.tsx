@@ -5,125 +5,150 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import colors from '@/theme/colors';
+import React, { useMemo } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Tooltip,
+  Card,
+  CardContent,
   Stack,
 } from '@mui/material';
-import React, { useEffect } from 'react';
-import { useMemo } from 'react';
-import { formatISO } from 'date-fns';
+import { subDays, addDays, format } from 'date-fns';
+import colors from '@/theme/colors';
+import { duration } from '@/utils';
 
-interface SiteOverviewProps {
-  siteUptimeSeconds?: number;
-  uptimePercentage?: number;
-  installationDate?: string;
-}
 interface DayData {
   date: Date;
   displayDate: string;
   percentage: number;
+  daysAgo: number;
+  isInstallDay: boolean;
 }
+
+interface SiteOverviewProps {
+  installationDate: Date;
+  uptimePercentage: number;
+  siteUptimeSeconds: number;
+  includeFutureDays?: boolean;
+}
+
 const SiteOverview: React.FC<SiteOverviewProps> = ({
-  siteUptimeSeconds = 86400 * 90,
-  uptimePercentage = 99,
   installationDate,
+  uptimePercentage,
+  siteUptimeSeconds,
+  includeFutureDays = true,
 }) => {
-  const [inputSiteUptimeSeconds, setInputSiteUptimeSeconds] =
-    React.useState<number>(siteUptimeSeconds);
-  const [inputUptimePercentage, setInputUptimePercentage] =
-    React.useState<number>(uptimePercentage);
-  const [inputInstallDate, setInputInstallDate] = React.useState<string>(
-    installationDate || '',
-  );
+  const isSameDay = (dateA: Date, dateB: Date) => {
+    return (
+      dateA.getFullYear() === dateB.getFullYear() &&
+      dateA.getMonth() === dateB.getMonth() &&
+      dateA.getDate() === dateB.getDate()
+    );
+  };
+
+  const today = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
   const installDate = useMemo(() => {
-    if (!inputInstallDate) return new Date();
-    const date = new Date(inputInstallDate);
-    if (isNaN(date.getTime())) return new Date();
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  }, [inputInstallDate]);
-  const formatDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
+    return new Date(
+      installationDate.getFullYear(),
+      installationDate.getMonth(),
+      installationDate.getDate(),
+    );
+  }, [installationDate]);
 
-  const formatFullDate = (date: Date): string => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
-  };
+  const isInstallationToday = useMemo(
+    () => isSameDay(today, installDate),
+    [today, installDate],
+  );
+  const isFutureInstall = useMemo(
+    () => installDate.getTime() > today.getTime(),
+    [today, installDate],
+  );
 
-  const formatUptime = (seconds: number): string => {
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${days}d ${hours}h ${minutes}m ${remainingSeconds}s`;
-  };
-  useEffect(() => {
-    setInputSiteUptimeSeconds(siteUptimeSeconds);
-    setInputUptimePercentage(uptimePercentage);
-    setInputInstallDate(formatISO(installDate));
-  }, [siteUptimeSeconds, uptimePercentage, installDate]);
-  const generateDaysData = (
-    daysCount: number,
-    startFromDay: number = 0,
-  ): DayData[] => {
+  const uptimeDays = useMemo(() => {
+    return siteUptimeSeconds / 86400;
+  }, [siteUptimeSeconds]);
+
+  const generateDaysData = useMemo(() => {
     const result: DayData[] = [];
-    const startDate = installDate;
-    const uptimeDays = Math.ceil(inputSiteUptimeSeconds / 86400);
 
-    for (let i = startFromDay; i < startFromDay + daysCount; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+    for (let i = 0; i < 60; i++) {
+      const date = subDays(today, i);
+      const displayDate = format(date, 'MMM d');
+      const daysAgo = i;
+      const isInstallDay = isSameDay(date, installDate);
 
-      let dayPercentage = 0;
-      if (inputSiteUptimeSeconds > 0 && i < uptimeDays) {
-        dayPercentage = inputUptimePercentage;
+      let percentage = 0;
+
+      if (isFutureInstall) {
+        percentage = 0;
+      } else if (isInstallationToday) {
+        percentage = i === 0 ? uptimePercentage : 0;
+      } else {
+        const isPastOrEqualToInstall =
+          date.getTime() >= installDate.getTime() ||
+          isSameDay(date, installDate);
+        percentage = isPastOrEqualToInstall ? uptimePercentage : 0;
       }
 
       result.push({
         date,
-        displayDate: formatDate(date),
-        percentage: dayPercentage,
+        displayDate,
+        percentage,
+        daysAgo,
+        isInstallDay,
       });
     }
+
+    if (includeFutureDays && isInstallationToday && uptimeDays > 1) {
+      const futureDaysToShow = uptimeDays - 1;
+      result.splice(60 - futureDaysToShow, futureDaysToShow);
+
+      for (let i = 1; i <= futureDaysToShow; i++) {
+        const date = addDays(today, i);
+        const displayDate = format(date, 'MMM d');
+        const daysAgo = -i;
+
+        result.unshift({
+          date,
+          displayDate,
+          percentage: uptimePercentage,
+          daysAgo,
+          isInstallDay: false,
+        });
+      }
+    }
+
     return result;
-  };
-  const firstThirtyDays = useMemo(() => {
-    return generateDaysData(30, 0);
-  }, [inputUptimePercentage, inputSiteUptimeSeconds, installDate]);
-  const nextThirtyDays = useMemo(() => {
-    return generateDaysData(30, 30);
-  }, [inputUptimePercentage, inputSiteUptimeSeconds, installDate]);
+  }, [
+    today,
+    installDate,
+    uptimePercentage,
+    isInstallationToday,
+    isFutureInstall,
+    uptimeDays,
+    includeFutureDays,
+  ]);
+
+  const firstThirtyDays = generateDaysData.slice(0, 30);
+  const nextThirtyDays = generateDaysData.slice(30, 60);
+
   const renderBar = (day: DayData, index: number) => {
-    const { percentage, displayDate } = day;
-    const hasData = percentage > 0;
-    const uptimeHeight = (percentage / 100) * 70;
-    const isInstallDate = day.date.getTime() === installDate.getTime();
-
-    let tooltipText = `${displayDate}`;
-
-    if (isInstallDate) {
-      tooltipText += `\nInstallation Date: ${formatFullDate(installDate)}`;
+    const isFutureDay = day.daysAgo < 0;
+    let tooltipContent = `${day.displayDate}: ${day.percentage}% uptime`;
+    if (day.isInstallDay) {
+      tooltipContent += ' (Installation day)';
+    } else if (isFutureDay) {
+      tooltipContent += ' (Projected)';
     }
-
-    if (hasData) {
-      tooltipText += `\nUptime: ${percentage.toFixed(1)}%`;
-    } else {
-      tooltipText += `\nNo uptime data`;
-    }
+    const uptimeHeight = (day.percentage / 100) * 70;
 
     return (
-      <Tooltip key={index} title={tooltipText} placement="top">
+      <Tooltip key={index} title={tooltipContent} placement="top">
         <Box
           sx={{
             height: 70,
@@ -131,19 +156,19 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
             mx: 0.25,
             borderRadius: 10,
             position: 'relative',
-            bgcolor: hasData ? colors.redLight : colors.gray,
+            bgcolor: day.percentage > 0 ? colors.redLight : colors.gray,
             overflow: 'hidden',
-            border: isInstallDate ? '2px solid black' : 'none',
+            border: day.isInstallDay ? `2px solid ${colors.black70}` : 'none',
           }}
         >
-          {hasData && (
+          {day.percentage > 0 && (
             <Box
               sx={{
                 position: 'absolute',
                 bottom: 0,
                 width: '100%',
                 height: `${uptimeHeight}px`,
-                bgcolor: colors.lightGreen,
+                bgcolor: colors.ligthGreen,
               }}
             />
           )}
@@ -151,6 +176,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
       </Tooltip>
     );
   };
+
   return (
     <Card
       sx={{
@@ -165,108 +191,116 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         <Typography variant="h6" sx={{ mb: 3 }}>
           Site overview
         </Typography>
-
         <Typography
           variant="subtitle2"
           sx={{
             mb: 4,
-            color: uptimePercentage > 98 ? colors.gray : colors.redLight,
+            color: uptimePercentage >= 99 ? colors.black70 : colors.redLight,
           }}
         >
-          {uptimePercentage}% uptime over {formatUptime(siteUptimeSeconds)}
+          {uptimePercentage}% uptime over {duration(siteUptimeSeconds)}
         </Typography>
-
-        <Box sx={{ mb: 5 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              height: 70,
-              mb: 1,
-              flexDirection: 'row-reverse',
-            }}
-          >
-            {firstThirtyDays.map((day, index) => renderBar(day, index))}
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              mt: 1,
-              flexDirection: 'row-reverse',
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              Today
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              30 days
-            </Typography>
-          </Box>
-        </Box>
-
-        <Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              height: 70,
-              mb: 1,
-              flexDirection: 'row-reverse',
-            }}
-          >
-            {nextThirtyDays.map((day, index) => renderBar(day, index))}
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              mt: 1,
-              flexDirection: 'row-reverse',
-            }}
-          >
-            <Typography variant="caption" color="text.secondary">
-              31 days
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              60 days
-            </Typography>
-          </Box>
-        </Box>
-
-        <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box
-              sx={{ width: 10, height: 10, bgcolor: colors.lightGreen, mr: 1 }}
-            />
-            <Typography variant="caption">Uptime</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box
-              sx={{ width: 10, height: 10, bgcolor: colors.redLight, mr: 1 }}
-            />
-            <Typography variant="caption">Downtime</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ width: 10, height: 10, bgcolor: colors.gray, mr: 1 }} />
-            <Typography variant="caption">No data</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Stack direction="row" spacing={2} alignItems={'center'} sx={{ mb: 2 }}>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
             <Box
               sx={{
-                width: 10,
-                height: 10,
-                border: '2px solid black',
-                mr: 1,
+                width: 14,
+                height: 14,
+                bgcolor: colors.ligthGreen,
               }}
             />
-            <Typography variant="caption">Installation Date</Typography>
-          </Box>
+            <Typography variant="caption">Good Uptime</Typography>
+          </Stack>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: colors.gray,
+              }}
+            />
+            <Typography variant="caption">No Uptime</Typography>
+          </Stack>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: colors.redLight,
+              }}
+            />
+            <Typography variant="caption">Low Uptime</Typography>
+          </Stack>
+
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              bgcolor: colors.gray,
+              border: `2px solid ${colors.black70}`,
+              mr: 1,
+            }}
+          />
+          <Typography variant="caption">Installation Day</Typography>
         </Stack>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            height: 70,
+            mb: 2,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          {firstThirtyDays.map((day, index) => renderBar(day, index))}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Today
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            30 days ago
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            height: 70,
+            mb: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          {nextThirtyDays.map((day, index) => renderBar(day, index))}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            31 days ago
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            60 days ago
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );
 };
+
 export default SiteOverview;

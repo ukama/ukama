@@ -302,10 +302,10 @@ func (m *Metrics) StartMetricsGenerator(siteID string, config SiteConfig) {
 
 		tickCount := 0                            
 		const logIntervalSeconds = 60            
-		const testUptimeMultiplier = 3600 
+		const testUptimeMultiplier = 1 
 
 		if testUptimeMultiplier > 1 {
-			log.Warnf("[%s] TEST MODE ACTIVE: Uptime streak accumulating %d times faster!", siteID, testUptimeMultiplier)
+			log.Infof("[%s] TEST MODE ACTIVE: Uptime streak accumulating %d times faster!", siteID, testUptimeMultiplier)
 		}
 
 		for range ticker.C {
@@ -317,7 +317,7 @@ func (m *Metrics) StartMetricsGenerator(siteID string, config SiteConfig) {
 			sitePortStatus, exists := m.portStatus[siteID]
 			if !exists {
 				m.mu.Unlock()
-				log.Printf("INFO: [%s] Site no longer active, stopping metrics generator.", siteID)
+				log.Infof("INFO: [%s] Site no longer active, stopping metrics generator.", siteID)
 				return 
 			}
 			config, configExists := m.siteConfigs[siteID]
@@ -472,7 +472,7 @@ func NewMetricsManager() *MetricsManager {
 }
 
 func (mm *MetricsManager) StartSiteMetrics(siteID string, config SiteConfig) error {
-	log.Infof("DEBUG: StartSiteMetrics called for site %s", siteID)
+	log.Infof("StartSiteMetrics called for site %s", siteID)
 	mm.mu.Lock()
 	defer mm.mu.Unlock()
 
@@ -482,11 +482,11 @@ func (mm *MetricsManager) StartSiteMetrics(siteID string, config SiteConfig) err
 	}
 
 	mm.ActiveSites[siteID] = true
-	log.Printf("DEBUG: Marked site %s as active in manager.", siteID)
+	log.Infof("Marked site %s as active in manager.", siteID)
 
 	
 	mm.Metrics.StartMetricsGenerator(siteID, config)
-	log.Printf("INFO: Started metrics generator for site %s.", siteID)
+	log.Infof("INFO: Started metrics generator for site %s.", siteID)
 	return nil
 }
 
@@ -497,7 +497,7 @@ func (mm *MetricsManager) StopSiteMetrics(siteID string) {
 	isActive := mm.ActiveSites[siteID]
 	if isActive {
 		delete(mm.ActiveSites, siteID)
-		log.Printf("DEBUG: Marked site %s as inactive in manager.", siteID)
+		log.Infof("INFO: Marked site %s as inactive in manager.", siteID)
 	} else {
 		log.Warnf("Attempted to stop metrics for already inactive site: %s. Proceeding with cleanup.", siteID)
 	}
@@ -531,7 +531,7 @@ func (mm *MetricsManager) StopSiteMetrics(siteID string) {
 	mm.Metrics.nodeSwitchPortSpeedVec.DeleteLabelValues(siteID)
 	mm.Metrics.nodeSwitchPortStatusVec.DeleteLabelValues(siteID)
 
-	log.Printf("INFO: Cleaned up internal state and Prometheus labels for site %s.", siteID)
+	log.Infof("INFO: Cleaned up internal state and Prometheus labels for site %s.", siteID)
 }
 
 
@@ -541,7 +541,7 @@ func (mm *MetricsManager) UpdatePortStatus(siteID string, portNumber int, enable
 	mm.mu.Unlock()
 
 	if !isActive {
-		log.Warnf("UpdatePortStatus called for site %s which is not actively managed.", siteID)
+		log.Infof("UpdatePortStatus called for site %s which is not actively managed.", siteID)
 	
 	}
 
@@ -605,7 +605,7 @@ func (mm *MetricsManager) GetSiteMetrics(siteID string) (map[string]float64, err
 
 	if !foundSiteMetrics {
 
-		log.Warnf("[%s] No Prometheus metrics found with the site label.", siteID)
+		log.Infof("[%s] No Prometheus metrics found with the site label.", siteID)
 	}
 
 	return metrics, nil

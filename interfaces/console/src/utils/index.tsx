@@ -596,7 +596,7 @@ const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
         color: colors.red,
         icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
       };
-    } else if (value < 60) {
+    } else if (value < 40) {
       return {
         color: colors.orange,
         icon: <Battery50Icon sx={{ color: colors.orange }} />,

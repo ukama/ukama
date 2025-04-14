@@ -17,7 +17,9 @@ import {
   Menu,
   MenuItem,
   Skeleton,
+  Tooltip,
   Typography,
+  useTheme,
 } from '@mui/material';
 import React, { useState } from 'react';
 
@@ -31,7 +33,13 @@ interface SiteCardProps {
   backhaulSpeed?: number | null;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
+  maxAddressLength?: number;
 }
+
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) return text;
+  return `${text.substring(0, maxLength)}...`;
+};
 
 const SiteCard: React.FC<SiteCardProps> = ({
   siteId,
@@ -42,9 +50,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
   batteryPercentage,
   backhaulSpeed,
   handleSiteNameUpdate,
-  loading = false,
+  loading,
+  maxAddressLength = 49,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const displayAddress = loading ? '' : truncateText(address, maxAddressLength);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -93,9 +104,26 @@ const SiteCard: React.FC<SiteCardProps> = ({
             >
               {loading ? <Skeleton width={150} /> : name}
             </Typography>
-            <Typography color="textSecondary" variant="body1">
-              {loading ? <Skeleton width={200} /> : address}
-            </Typography>
+            {loading ? (
+              <Typography color="textSecondary" variant="body1">
+                <Skeleton width={200} />
+              </Typography>
+            ) : (
+              <Tooltip title={address} placement="top-start">
+                <Typography
+                  color="textSecondary"
+                  variant="body1"
+                  sx={{
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {displayAddress}
+                </Typography>
+              </Tooltip>
+            )}
           </Box>
 
           <IconButton onClick={handleClick} sx={{ mt: -1 }}>
@@ -114,26 +142,40 @@ const SiteCard: React.FC<SiteCardProps> = ({
 
         <Box display="flex" mt={3} gap={4}>
           <Box display="flex" alignItems="center" gap={1}>
-            {loading ? (
+            {loading || userCount === undefined || userCount === null ? (
               <Skeleton width={24} height={24} />
             ) : (
               <PeopleIcon sx={{ color: colors.darkGray }} />
             )}
             <Typography variant="body2" sx={{ color: colors.darkGray }}>
-              {loading ? <Skeleton width={30} /> : userCount}
+              {loading || userCount === undefined || userCount === null ? (
+                <Skeleton width={30} />
+              ) : (
+                userCount
+              )}
             </Typography>
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
-            {loading ? (
+            {loading ||
+            siteUptimeSeconds == null ||
+            siteUptimeSeconds === undefined ? (
               <Skeleton width={24} height={24} />
             ) : (
               connectionStyles.icon
             )}
-            <Typography variant="body2" sx={{ color: connectionStyles.color }}>
-              {loading ? (
+            <Typography
+              variant="body2"
+              sx={{
+                color: connectionStyles.color,
+                display: { xs: 'none', sm: 'block' },
+              }}
+            >
+              {loading ||
+              siteUptimeSeconds == null ||
+              siteUptimeSeconds === undefined ? (
                 <Skeleton width={60} />
-              ) : (siteUptimeSeconds ?? 0) <= 0 ? (
+              ) : siteUptimeSeconds <= 0 ? (
                 'Offline'
               ) : (
                 'Online'
@@ -142,13 +184,27 @@ const SiteCard: React.FC<SiteCardProps> = ({
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
-            {loading ? <Skeleton width={24} height={24} /> : batteryStyles.icon}
-            <Typography variant="body2" sx={{ color: batteryStyles.color }}>
-              {loading ? (
+            {loading ||
+            batteryPercentage == null ||
+            batteryPercentage === undefined ? (
+              <Skeleton width={24} height={24} />
+            ) : (
+              batteryStyles.icon
+            )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: batteryStyles.color,
+                display: { xs: 'none', sm: 'block' },
+              }}
+            >
+              {loading ||
+              batteryPercentage == null ||
+              batteryPercentage === undefined ? (
                 <Skeleton width={70} />
-              ) : (batteryPercentage ?? 0) < 20 ? (
+              ) : batteryPercentage < 20 ? (
                 'Critical'
-              ) : (batteryPercentage ?? 0) < 60 ? (
+              ) : batteryPercentage < 40 ? (
                 'Low'
               ) : (
                 'Charged'
@@ -157,13 +213,25 @@ const SiteCard: React.FC<SiteCardProps> = ({
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
-            {loading ? <Skeleton width={24} height={24} /> : signalStyles.icon}
-            <Typography variant="body2" sx={{ color: signalStyles.color }}>
-              {loading ? (
+            {loading || backhaulSpeed == null || backhaulSpeed === undefined ? (
+              <Skeleton width={24} height={24} />
+            ) : (
+              signalStyles.icon
+            )}
+            <Typography
+              variant="body2"
+              sx={{
+                color: signalStyles.color,
+                display: { xs: 'none', sm: 'block' },
+              }}
+            >
+              {loading ||
+              backhaulSpeed == null ||
+              backhaulSpeed === undefined ? (
                 <Skeleton width={60} />
-              ) : (backhaulSpeed ?? 0) < 10 ? (
+              ) : backhaulSpeed < 10 ? (
                 'No signal'
-              ) : (backhaulSpeed ?? 0) < 70 ? (
+              ) : backhaulSpeed < 70 ? (
                 'Low signal'
               ) : (
                 'Strong'

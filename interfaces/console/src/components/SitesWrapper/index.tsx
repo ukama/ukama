@@ -75,6 +75,7 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
                   siteId={site.id}
                   name={site.name}
                   address={site.location}
+                  loading={loading}
                   siteUptimeSeconds={metrics.siteUptimeSeconds}
                   batteryPercentage={metrics.batteryPercentage}
                   backhaulSpeed={metrics.backhaulSpeed}
