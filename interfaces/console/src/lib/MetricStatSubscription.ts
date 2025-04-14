@@ -43,7 +43,6 @@ export default async function MetricStatSubscription({
   userId,
   nodeId,
   orgName,
-  siteId = undefined,
 }: IMetricStatSubscription) {
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
