@@ -152,3 +152,9 @@ export class UpdateSiteInputDto {
   @Field()
   name: string;
 }
+
+@InputType()
+export class SitesInputDto {
+  @Field({ nullable: true })
+  networkId?: string;
+}

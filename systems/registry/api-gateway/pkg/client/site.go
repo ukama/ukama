@@ -67,11 +67,11 @@ func (r *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
 	return res, nil
 }
 
-func (r *SiteRegistry) GetSites(networkId string) (*pb.GetSitesResponse, error) {
+func (r *SiteRegistry) List(networkId string, isDeactivate bool) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetSites(ctx, &pb.GetSitesRequest{NetworkId: networkId})
+	res, err := r.client.List(ctx, &pb.ListRequest{NetworkId: networkId, IsDeactivated: isDeactivate})
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +103,13 @@ func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, s
 	return res, nil
 }
 
-func (r *SiteRegistry) UpdateSite(siteId, name string ) (*pb.UpdateResponse, error) {
+func (r *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	req := &pb.UpdateRequest{
-		SiteId:        siteId,
-		Name:          name,
+		SiteId: siteId,
+		Name:   name,
 	}
 
 	res, err := r.client.Update(ctx, req)

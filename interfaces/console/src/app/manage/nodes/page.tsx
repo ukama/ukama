@@ -42,7 +42,7 @@ const Page = () => {
   const { data: sites } = useGetSitesQuery({
     skip: !network?.id,
     variables: {
-      networkId: network?.id,
+      data: { networkId: network?.id },
     },
     fetchPolicy: 'cache-and-network',
     onError: (err) => {

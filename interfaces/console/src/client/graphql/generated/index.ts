@@ -1196,7 +1196,7 @@ export type QueryGetSiteArgs = {
 
 
 export type QueryGetSitesArgs = {
-  networkId: Scalars['String']['input'];
+  data: SitesInputDto;
 };
 
 
@@ -1408,6 +1408,10 @@ export type SiteDto = {
   powerId: Scalars['String']['output'];
   spectrumId: Scalars['String']['output'];
   switchId: Scalars['String']['output'];
+};
+
+export type SitesInputDto = {
+  networkId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SitesResDto = {
@@ -2106,7 +2110,7 @@ export type AddSiteMutationVariables = Exact<{
 export type AddSiteMutation = { __typename?: 'Mutation', addSite: { __typename?: 'SiteDto', id: string, name: string, networkId: string, backhaulId: string, powerId: string, accessId: string, spectrumId: string, switchId: string, isDeactivated: boolean, latitude: number, longitude: number, installDate: string, createdAt: string, location: string } };
 
 export type GetSitesQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
+  data: SitesInputDto;
 }>;
 
 
@@ -4976,8 +4980,8 @@ export type AddSiteMutationHookResult = ReturnType<typeof useAddSiteMutation>;
 export type AddSiteMutationResult = Apollo.MutationResult<AddSiteMutation>;
 export type AddSiteMutationOptions = Apollo.BaseMutationOptions<AddSiteMutation, AddSiteMutationVariables>;
 export const GetSitesDocument = gql`
-    query getSites($networkId: String!) {
-  getSites(networkId: $networkId) {
+    query GetSites($data: SitesInputDto!) {
+  getSites(data: $data) {
     sites {
       ...USite
     }
@@ -4997,7 +5001,7 @@ export const GetSitesDocument = gql`
  * @example
  * const { data, loading, error } = useGetSitesQuery({
  *   variables: {
- *      networkId: // value for 'networkId'
+ *      data: // value for 'data'
  *   },
  * });
  */

@@ -61,10 +61,14 @@ export default function Page() {
   });
   const { user, network, setSnackbarMessage, subscriptionClient } =
     useAppContext();
+
   const { data: sitesRes, loading: sitesLoading } = useGetSitesQuery({
+    skip: !network?.id,
     fetchPolicy: 'no-cache',
     variables: {
-      networkId: network.id,
+      data: {
+        networkId: network.id,
+      },
     },
     onError: (error) => {
       setSnackbarMessage({

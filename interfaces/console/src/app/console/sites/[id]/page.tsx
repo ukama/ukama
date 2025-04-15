@@ -236,7 +236,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     variables: {
-      networkId: network.id,
+      data: { networkId: network.id },
     },
     onCompleted: (res) => {
       setSitesList(res.getSites.sites);

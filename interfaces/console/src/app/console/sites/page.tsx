@@ -72,7 +72,7 @@ export default function Page() {
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     variables: {
-      networkId: network.id,
+      data: { networkId: network.id },
     },
     onCompleted: (res) => {
       const sites = res.getSites.sites;
