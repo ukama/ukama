@@ -69,7 +69,7 @@ const Sidebar = ({
             placeholder={placeholder}
             handleOnChange={handleNetworkChange}
             handleAddNetwork={handleAddNetwork}
-            isDisableAddOption={getDropDownData()?.length >= 3}
+            isDisableAddOption={networks.length >= 3}
           />
         </Box>
         <Divider sx={{ mx: 2, my: 0 }} />
