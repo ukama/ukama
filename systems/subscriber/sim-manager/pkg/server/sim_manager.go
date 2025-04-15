@@ -970,7 +970,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"failed to set package as active. Error %s", err.Error())
 	}
 
-	// Update package on remote agent
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -985,12 +984,19 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		SimId:     sim.Id.String(),
 	}
 
+	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
+		sim.Type.String(), sim.Iccid)
+
 	err = simAgent.UpdatePackage(ctx, agentRequest)
 	if err != nil {
+		log.Infof("Fail to update package on remote agent for %s sim type with iccid %s. Error: %v",
+			sim.Type.String(), sim.Iccid, err)
+
 		// TODO: think of rolling back the package update DB transaction on sim manager
 		// if agent package update fails.
 
-		return nil, err
+		return nil, fmt.Errorf("fail to update package on remote agent for %s sim type with iccid %s. Error: %w",
+			sim.Type.String(), sim.Iccid, err)
 	}
 
 	// Publish the event only when both updates are successfull
