@@ -189,16 +189,18 @@ func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 }
 
 func (s *SiteServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-
 	log.Infof("List sites %s, %t", req.NetworkId, req.IsDeactivated)
+	var networkId uuid.UUID
 
-	networkId, err := uuid.FromString(req.NetworkId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	if req.NetworkId != "" {
+		var err error
+		networkId, err = uuid.FromString(req.NetworkId)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+		}
 	}
 
-	sites, err := s.siteRepo.List(networkId, req.IsDeactivated)
+	sites, err := s.siteRepo.List(&networkId, req.IsDeactivated)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")

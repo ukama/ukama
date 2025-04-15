@@ -77,14 +77,12 @@ func TestSiteService_List(t *testing.T) {
 			},
 		}
 
-		// Convert mockSites []*db.Site to []db.Site
 		var mockSitesConverted []db.Site
 		for _, site := range mockSites {
 			mockSitesConverted = append(mockSitesConverted, *site)
 		}
 
-		// Update mock expectation to match the interface
-		siteRepo.On("List", netId, false).Return(mockSitesConverted, nil)
+		siteRepo.On("List", &netId, false).Return(mockSitesConverted, nil)
 
 		req := &pb.ListRequest{
 			NetworkId:     netId.String(),
