@@ -41,10 +41,10 @@ const Page = () => {
 
   const { data: sites } = useGetSitesQuery({
     skip: !network?.id,
-    variables: {
-      data: { networkId: network?.id },
-    },
     fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {},
+    },
     onError: (err) => {
       setSnackbarMessage({
         id: 'sites-msg',
@@ -67,7 +67,7 @@ const Page = () => {
           id: node.id,
           network: net ?? '-',
           state: node.status.state,
-          site: node.site.siteId ?? '-',
+          site: getSiteName(node.site.siteId),
           type: NodeEnumToString(node.type),
           connectivity: node.status.connectivity,
           createdAt: node.site.addedAt
