@@ -19,18 +19,15 @@ import {
   Skeleton,
   Tooltip,
   Typography,
-  useTheme,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface SiteCardProps {
   siteId: string;
   name: string;
   address: string;
   userCount?: number;
-  siteUptimeSeconds?: number | null;
-  batteryPercentage?: number | null;
-  backhaulSpeed?: number | null;
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
   maxAddressLength?: number;
@@ -46,14 +43,17 @@ const SiteCard: React.FC<SiteCardProps> = ({
   name,
   address,
   userCount = 0,
-  siteUptimeSeconds,
-  batteryPercentage,
-  backhaulSpeed,
   handleSiteNameUpdate,
   loading,
   maxAddressLength = 49,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const router = useRouter();
+  const [metrics, setMetrics] = useState({
+    site_uptime_seconds: 0,
+    battery_charge_percentage: 0,
+    backhaul_speed: 0,
+  });
 
   const displayAddress = loading ? '' : truncateText(address, maxAddressLength);
 
@@ -72,12 +72,35 @@ const SiteCard: React.FC<SiteCardProps> = ({
   };
 
   const navigateToDetails = () => {
-    window.location.href = `/console/sites/${siteId}`;
+    router.push(`/console/sites/${siteId}`);
   };
 
-  const connectionStyles = getStatusStyles('uptime', siteUptimeSeconds ?? 0);
-  const batteryStyles = getStatusStyles('battery', batteryPercentage ?? 0);
-  const signalStyles = getStatusStyles('signal', backhaulSpeed ?? 0);
+  useEffect(() => {
+    const token = PubSub.subscribe(
+      `site-metrics-${siteId}`,
+      (msg, { type, value }) => {
+        setMetrics((prev) => ({
+          ...prev,
+          [type]: value,
+        }));
+      },
+    );
+
+    PubSub.publish(`request-metrics-${siteId}`, {});
+
+    return () => {
+      PubSub.unsubscribe(token);
+    };
+  }, [siteId]);
+  const connectionStyles = getStatusStyles(
+    'uptime',
+    metrics.site_uptime_seconds ?? 0,
+  );
+  const batteryStyles = getStatusStyles(
+    'battery',
+    metrics.battery_charge_percentage ?? 0,
+  );
+  const signalStyles = getStatusStyles('signal', metrics.backhaul_speed ?? 0);
 
   return (
     <Card
@@ -158,8 +181,8 @@ const SiteCard: React.FC<SiteCardProps> = ({
 
           <Box display="flex" alignItems="center" gap={1}>
             {loading ||
-            siteUptimeSeconds == null ||
-            siteUptimeSeconds === undefined ? (
+            metrics.site_uptime_seconds == null ||
+            metrics.site_uptime_seconds === undefined ? (
               <Skeleton width={24} height={24} />
             ) : (
               connectionStyles.icon
@@ -172,10 +195,10 @@ const SiteCard: React.FC<SiteCardProps> = ({
               }}
             >
               {loading ||
-              siteUptimeSeconds == null ||
-              siteUptimeSeconds === undefined ? (
+              metrics.site_uptime_seconds == null ||
+              metrics.site_uptime_seconds === undefined ? (
                 <Skeleton width={60} />
-              ) : siteUptimeSeconds <= 0 ? (
+              ) : metrics.site_uptime_seconds <= 0 ? (
                 'Offline'
               ) : (
                 'Online'
@@ -185,8 +208,8 @@ const SiteCard: React.FC<SiteCardProps> = ({
 
           <Box display="flex" alignItems="center" gap={1}>
             {loading ||
-            batteryPercentage == null ||
-            batteryPercentage === undefined ? (
+            metrics.battery_charge_percentage == null ||
+            metrics.battery_charge_percentage === undefined ? (
               <Skeleton width={24} height={24} />
             ) : (
               batteryStyles.icon
@@ -199,12 +222,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
               }}
             >
               {loading ||
-              batteryPercentage == null ||
-              batteryPercentage === undefined ? (
+              metrics.battery_charge_percentage == null ||
+              metrics.battery_charge_percentage === undefined ? (
                 <Skeleton width={70} />
-              ) : batteryPercentage < 20 ? (
+              ) : metrics.battery_charge_percentage < 20 ? (
                 'Critical'
-              ) : batteryPercentage < 40 ? (
+              ) : metrics.battery_charge_percentage < 40 ? (
                 'Low'
               ) : (
                 'Charged'
@@ -213,7 +236,9 @@ const SiteCard: React.FC<SiteCardProps> = ({
           </Box>
 
           <Box display="flex" alignItems="center" gap={1}>
-            {loading || backhaulSpeed == null || backhaulSpeed === undefined ? (
+            {loading ||
+            metrics.backhaul_speed == null ||
+            metrics.backhaul_speed === undefined ? (
               <Skeleton width={24} height={24} />
             ) : (
               signalStyles.icon
@@ -226,12 +251,12 @@ const SiteCard: React.FC<SiteCardProps> = ({
               }}
             >
               {loading ||
-              backhaulSpeed == null ||
-              backhaulSpeed === undefined ? (
+              metrics.backhaul_speed == null ||
+              metrics.backhaul_speed === undefined ? (
                 <Skeleton width={60} />
-              ) : backhaulSpeed < 10 ? (
+              ) : metrics.backhaul_speed < 10 ? (
                 'No signal'
-              ) : backhaulSpeed < 70 ? (
+              ) : metrics.backhaul_speed < 70 ? (
                 'Low signal'
               ) : (
                 'Strong'

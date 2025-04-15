@@ -649,6 +649,24 @@ const setQueryParam = (
   window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
   return p;
 };
+const getSectionFromKPI = (kpi: string) => {
+  switch (kpi) {
+    case 'solar':
+      return 'SOLAR';
+    case 'battery':
+      return 'BATTERY';
+    case 'controller':
+      return 'CONTROLLER';
+    case 'backhaul':
+      return 'MAIN_BACKHAUL';
+    case 'switch':
+      return 'SWITCH';
+    case 'node':
+      return 'NODE';
+    default:
+      return 'SOLAR';
+  }
+};
 
 export {
   base64ToBlob,
@@ -675,6 +693,7 @@ export {
   inviteStatusEnumToString,
   isValidLatLng,
   NodeEnumToString,
+  getSectionFromKPI,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,

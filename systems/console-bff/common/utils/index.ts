@@ -205,6 +205,7 @@ const getGraphsKeyByType = (type: string): string[] => {
     case GRAPHS_TYPE.SITE:
       return [
         "site_uptime_seconds",
+        "unit_uptime",
         "solar_panel_voltage",
         "solar_panel_current",
         "site_uptime_percentage",

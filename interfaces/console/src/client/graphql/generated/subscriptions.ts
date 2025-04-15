@@ -57,6 +57,7 @@ export type GetMetricByTabInput = {
 
 export type GetMetricsSiteStatInput = {
   from: Scalars['Float']['input'];
+  nodeIds?: InputMaybe<Array<Scalars['String']['input']>>;
   orgName: Scalars['String']['input'];
   siteId?: InputMaybe<Scalars['String']['input']>;
   step?: Scalars['Float']['input'];
@@ -223,6 +224,7 @@ export enum Stats_Type {
 export type SiteMetricStateRes = {
   __typename?: 'SiteMetricStateRes';
   msg: Scalars['String']['output'];
+  nodeId: Scalars['String']['output'];
   siteId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
@@ -260,6 +262,7 @@ export type SubSiteMetricByTabInput = {
 
 export type SubSiteMetricsStatInput = {
   from: Scalars['Float']['input'];
+  nodeIds?: InputMaybe<Array<Scalars['String']['input']>>;
   orgName: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
   type: Stats_Type;
@@ -358,14 +361,14 @@ export type GetSiteStatQueryVariables = Exact<{
 }>;
 
 
-export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'SiteMetricsStateRes', metrics: Array<{ __typename?: 'SiteMetricStateRes', success: boolean, msg: string, siteId: string, type: string, value: number }> } };
+export type GetSiteStatQuery = { __typename?: 'Query', getSiteStat: { __typename?: 'SiteMetricsStateRes', metrics: Array<{ __typename?: 'SiteMetricStateRes', success: boolean, msg: string, siteId: string, nodeId: string, type: string, value: number }> } };
 
 export type GetMetricBySiteQueryVariables = Exact<{
   data: GetMetricBySiteInput;
 }>;
 
 
-export type GetMetricBySiteQuery = { __typename?: 'Query', getMetricBySite: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId?: string | null, success: boolean, type: string, values: Array<Array<number>> }> } };
+export type GetMetricBySiteQuery = { __typename?: 'Query', getMetricBySite: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, success: boolean, type: string, values: Array<Array<number>> }> } };
 
 export type GetMetricsStatSubSubscriptionVariables = Exact<{
   data: SubMetricsStatInput;
@@ -379,7 +382,7 @@ export type GetSiteMetricStatSubSubscriptionVariables = Exact<{
 }>;
 
 
-export type GetSiteMetricStatSubSubscription = { __typename?: 'Subscription', getSiteMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, siteId: string, success: boolean, type: string, value: Array<number> } };
+export type GetSiteMetricStatSubSubscription = { __typename?: 'Subscription', getSiteMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, siteId: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
 
 
 export const GetNotificationsDocument = gql`
@@ -640,6 +643,7 @@ export const GetSiteStatDocument = gql`
       success
       msg
       siteId
+      nodeId
       type
       value
     }
@@ -684,7 +688,6 @@ export const GetMetricBySiteDocument = gql`
   getMetricBySite(data: $data) {
     metrics {
       msg
-      nodeId
       success
       type
       values
@@ -764,6 +767,7 @@ export const GetSiteMetricStatSubDocument = gql`
   getSiteMetricStatSub(data: $data) {
     msg
     siteId
+    nodeId
     success
     type
     value

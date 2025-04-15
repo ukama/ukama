@@ -161,6 +161,9 @@ export class GetMetricsSiteStatInput {
   @Field({ nullable: true })
   siteId?: string;
 
+  @Field(() => [String], { nullable: true })
+  nodeIds?: string[];
+
   @Field()
   from: number;
 
@@ -202,6 +205,9 @@ export class SubSiteMetricsStatInput {
 
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
+
+  @Field(() => [String], { nullable: true })
+  nodeIds?: string[];
 
   @Field()
   userId: string;
@@ -310,6 +316,9 @@ export class SiteMetricStateRes {
 
   @Field()
   siteId?: string;
+
+  @Field({ nullable: true })
+  nodeId?: string;
 
   @Field()
   type: string;

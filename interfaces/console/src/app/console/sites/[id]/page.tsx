@@ -24,7 +24,6 @@ import {
   Stats_Type,
   useGetMetricBySiteLazyQuery,
   useGetSiteStatLazyQuery,
-  useGetMetricsStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
 import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import SiteComponents from '@/components/SiteComponents';
@@ -37,13 +36,13 @@ import { METRIC_RANGE_10800 } from '@/constants';
 import { useAppContext } from '@/context';
 import { TMetricResDto, TSiteForm } from '@/types';
 import { useFetchAddress } from '@/utils/useFetchAddress';
-import { getUnixTime } from '@/utils';
+import { getSectionFromKPI, getUnixTime } from '@/utils';
 import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
 import { formatISO } from 'date-fns';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import { useRouter } from 'next/navigation';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -52,7 +51,6 @@ const SiteMapComponent = dynamic(
   },
 );
 
-// Constants
 const NODE_UPTIME_KEY = 'unit_uptime';
 
 const SITE_INIT = {
@@ -103,6 +101,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [siteUptime, setSiteUptime] = useState<number>(0);
   const [siteUptimePercentage, setSiteUptimePercentage] = useState<number>(0);
   const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
+  const [nodesFetched, setNodesFetched] = useState(false);
+  const router = useRouter();
   const {
     setSnackbarMessage,
     network,
@@ -170,6 +170,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         });
       },
     });
+
   const handleSwitchChange = async (
     portNumber: number,
     currentStatus: boolean,
@@ -318,105 +319,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [getMetricStat, { loading: statLoading, variables: statVar }] =
-    useGetMetricsStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getMetricsStat.metrics.length > 0) {
-          setNodeUptimes((prev) => {
-            const newUptimes = { ...prev };
-            data.getMetricsStat.metrics.forEach((m) => {
-              if (m.type === NODE_UPTIME_KEY) {
-                newUptimes[m.nodeId] = m.value;
-              }
-            });
-            return newUptimes;
-          });
-
-          if (statVar && statVar.data && statVar.data.from) {
-            const from = statVar.data.from;
-            const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${data.getMetricsStat.metrics[0].nodeId}-${from}`;
-            MetricStatSubscription({
-              key: sKey,
-              nodeId: data.getMetricsStat.metrics[0].nodeId,
-              userId: user.id,
-              url: env.METRIC_URL,
-              orgName: user.orgName,
-              type: Stats_Type.AllNode,
-              from: from,
-            });
-            PubSub.subscribe(sKey, handleStatSubscription);
-          }
-        }
-      },
-      onError: (err) => {
-        console.error('Error fetching node metrics:', err);
-        setSnackbarMessage({
-          id: 'node-metrics-err-msg',
-          message: err.message,
-          type: 'error',
-          show: true,
-        });
-      },
-    });
-
-  useEffect(() => {
-    const to = getUnixTime();
-    const from = to - STAT_STEP_29;
-
-    if (nodeIds.length > 0) {
-      nodeIds.forEach((nodeId) => {
-        getMetricStat({
-          variables: {
-            data: {
-              to: to,
-              nodeId: nodeId,
-              from: from,
-              userId: user.id,
-              step: STAT_STEP_29,
-              orgName: user.orgName,
-              withSubscription: true,
-              type: Stats_Type.AllNode,
-            },
-          },
-        });
-      });
-    }
-
-    return () => {
-      if (nodeIds && nodeIds.length > 0) {
-        nodeIds.forEach((nodeId) => {
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${nodeId}-${from}`;
-          PubSub.unsubscribe(sKey);
-        });
-      } else {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${
-          from ?? 0
-        }`;
-        PubSub.unsubscribe(sKey);
-      }
-    };
-  }, [nodeIds, getMetricStat, user.id, user.orgName]);
-
-  const handleStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData: TMetricResDto = JSON.parse(data);
-      const { value, type, nodeId } = parsedData.data.getMetricStatSub;
-
-      if (type === NODE_UPTIME_KEY) {
-        setNodeUptimes((prev) => ({
-          ...prev,
-          [nodeId]: Math.floor(value[1]),
-        }));
-
-        PubSub.publish(`stat-${type}-${nodeId}`, value);
-      }
-    } catch (error) {
-      console.error('Error parsing subscription data:', error);
-    }
-  };
-
   const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
     onCompleted: (res) => {
       setSite({
@@ -458,14 +360,17 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     onCompleted: (res) => {
       if (res.getNodesForSite?.nodes) {
         const ids = res.getNodesForSite.nodes.map((node) => node.id);
         setNodeIds(ids);
+        console.log('Node IDs:', ids);
       } else {
         setNodeIds([]);
       }
+      setNodesFetched(true);
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -474,6 +379,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         type: 'error',
         show: true,
       });
+      setNodesFetched(true);
     },
   });
 
@@ -501,6 +407,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     }
   }, [metricFrom, graphType, getMetricBySite, id, user.id, user.orgName]);
+
   const handleSectionChange = (section: string): void => {
     setActiveSection(section);
     setMetrics({ metrics: [] });
@@ -563,7 +470,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const handleSiteChange = (newSiteId: string) => {
     setSelectedSiteId(newSiteId);
-    window.location.href = `/console/sites/${newSiteId}`;
+    router.push('/console/sites/' + newSiteId);
   };
 
   useEffect(() => {
@@ -588,7 +495,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     if (id && activeSite.latitude && activeSite.longitude) {
       handleFetchAddress();
     }
-  }, [activeSite, setSnackbarMessage, fetchAddress, setSelectedDefaultSite]);
+  }, [
+    activeSite,
+    setSnackbarMessage,
+    fetchAddress,
+    setSelectedDefaultSite,
+    id,
+  ]);
 
   useEffect(() => {
     if (error) {
@@ -620,8 +533,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     getSiteLoading,
     CurrentSiteAddressLoading,
   ]);
+
   useEffect(() => {
     if (activeSite) {
+      setNodesFetched(false);
       fetchNodesForSite({ variables: { siteId: id } });
     }
   }, [activeSite, fetchNodesForSite, id]);
@@ -633,11 +548,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       onCompleted: (data) => {
         if (data.getSiteStat.metrics.length > 0) {
           data.getSiteStat.metrics.forEach((m) => {
-            if (m.type === 'site_uptime_seconds') {
+            if (m.type === SITE_KPIS.SITE.stats[0].id) {
               setSiteUptime(m.value);
             }
-            if (m.type === 'site_uptime_percentage') {
+            if (m.type === SITE_KPIS.SITE.stats[1].id) {
               setSiteUptimePercentage(m.value);
+            }
+
+            if (m.nodeId && m.type === NODE_UPTIME_KEY) {
+              setNodeUptimes((prev) => ({
+                ...prev,
+                [m.nodeId]: m.value,
+              }));
             }
           });
 
@@ -653,10 +575,20 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             orgName: user.orgName,
             type: Stats_Type.Site,
             from: statSiteVar?.data.from ?? 0,
+            nodeIds: nodeIds,
           });
 
           PubSub.subscribe(sKey, handleSiteStatSubscription);
         }
+      },
+      onError: (err) => {
+        console.error('Error fetching site/node metrics:', err);
+        setSnackbarMessage({
+          id: 'site-metrics-err-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
       },
     });
 
@@ -696,6 +628,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       PubSub.unsubscribe(subscriptionKey);
     };
   }, [id, user.id, graphType, metricFrom]);
+
   const handleSiteStatSubscription = (_: any, data: string) => {
     try {
       const parsedData: TMetricResDto = JSON.parse(data);
@@ -705,40 +638,39 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         return;
       }
 
-      const { value, type, success } = parsedData.data.getSiteMetricStatSub;
+      const { value, type, success, nodeId } =
+        parsedData.data.getSiteMetricStatSub;
       if (success) {
-        if (type === 'site_uptime_seconds') {
+        if (type === SITE_KPIS.SITE.stats[0].id) {
           setSiteUptime(() => Math.floor(value[1]));
         }
-        if (type === 'site_uptime_percentage') {
+        if (type === SITE_KPIS.SITE.stats[1].id) {
           setSiteUptimePercentage(() => Math.floor(value[1]));
         }
-        PubSub.publish(`stat-${type}`, value);
+
+        if (nodeId && type === NODE_UPTIME_KEY) {
+          setNodeUptimes((prev) => ({
+            ...prev,
+            [nodeId]: Math.floor(value[1]),
+          }));
+        }
+
+        if (nodeId) {
+          PubSub.publish(`stat-${type}-${nodeId}`, value);
+        } else {
+          PubSub.publish(`stat-${type}`, value);
+        }
       }
     } catch (error) {
       console.error('Error handling site subscription data:', error);
     }
   };
-  const getSectionFromKPI = (kpi: string) => {
-    switch (kpi) {
-      case 'solar':
-        return 'SOLAR';
-      case 'battery':
-        return 'BATTERY';
-      case 'controller':
-        return 'CONTROLLER';
-      case 'backhaul':
-        return 'MAIN_BACKHAUL';
-      case 'switch':
-        return 'SWITCH';
-      case 'node':
-        return 'NODE';
-      default:
-        return 'SOLAR';
-    }
-  };
 
   useEffect(() => {
+    if (!nodesFetched) {
+      return;
+    }
+
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
     if (!id) {
@@ -760,17 +692,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             orgName: user.orgName,
             withSubscription: true,
             type: Stats_Type.Site,
+            nodeIds: nodeIds,
           },
         },
       });
     }
+
     return () => {
       const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${
         from ?? 0
       }`;
       PubSub.unsubscribe(sKey);
     };
-  }, [id, user.id, user.orgName, getSiteMetricStat, setSnackbarMessage]);
+  }, [
+    id,
+    user.id,
+    user.orgName,
+    getSiteMetricStat,
+    setSnackbarMessage,
+    nodeIds,
+    nodesFetched,
+  ]);
 
   if (!isDataReady) {
     return (

@@ -56,9 +56,9 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
                     fontSize: 24,
                   }}
                 />
-                <Typography variant="h6" fontWeight="500">
-                  {nodeId} is{' '}
-                  {isNodeDown ? 'currently down' : 'online and well'}
+
+                <Typography variant="h6" fontWeight={500}>
+                  {`${nodeId} is ${isNodeDown ? 'currently down' : 'online and well'}`}
                 </Typography>
               </Box>
 

@@ -110,6 +110,7 @@ query GetSiteStat($data: GetMetricsSiteStatInput!) {
       success
       msg
       siteId
+      nodeId
       type
       value
     }
@@ -119,7 +120,6 @@ query GetMetricBySite($data: GetMetricBySiteInput!) {
   getMetricBySite(data: $data) {
     metrics {
       msg
-      nodeId
       success
       type
       values
@@ -141,6 +141,7 @@ subscription GetSiteMetricStatSub($data: SubSiteMetricsStatInput!) {
   getSiteMetricStatSub(data: $data) {
     msg
     siteId
+    nodeId
     success
     type
     value
