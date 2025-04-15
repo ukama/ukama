@@ -188,22 +188,16 @@ func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 		Site: dbSiteToPbSite(site)}, nil
 }
 
-func (s *SiteServer) GetSites(ctx context.Context, req *pb.GetSitesRequest) (*pb.GetSitesResponse, error) {
+func (s *SiteServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 
-	log.Infof("Getting sites %s", req.NetworkId)
+	log.Infof("List sites %s, %t", req.NetworkId, req.IsDeactivated)
 
-	networkId, err := uuid.FromString(req.NetworkId)
-
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	sites, err := s.siteRepo.GetSites(networkId)
+	sites, err := s.siteRepo.List(req.NetworkId, req.IsDeactivated)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
-	resp := &pb.GetSitesResponse{
+	resp := &pb.ListResponse{
 		Sites: dbSitesToPbSites(sites),
 	}
 

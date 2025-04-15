@@ -85,7 +85,7 @@ export default function Page() {
     if (network.id) {
       getSites({
         variables: {
-          networkId: network.id,
+          data: { networkId: network.id },
         },
       });
       getNodesByState({

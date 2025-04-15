@@ -65,7 +65,7 @@ type network interface {
 type site interface {
 	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
-	GetSites(networkId string) (*sitepb.GetSitesResponse, error)
+	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
 	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
 }
 
@@ -333,14 +333,8 @@ func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.Ge
 	return r.clients.Site.GetSite(req.SiteId)
 }
 
-func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesRequest) (*sitepb.GetSitesResponse, error) {
-	network, ok := c.GetQuery("network")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "networkId is a mandatory query parameter"}
-	}
-
-	return r.clients.Site.GetSites(network)
+func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesListRequest) (*sitepb.ListResponse, error) {
+	return r.clients.Site.List(req.NetworkId, req.IsDeactivated)
 
 }
 
