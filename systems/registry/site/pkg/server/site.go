@@ -189,27 +189,28 @@ func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespon
 }
 
 func (s *SiteServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	log.Infof("List sites %s, %t", req.NetworkId, req.IsDeactivated)
-	var networkId uuid.UUID
+	log.WithFields(log.Fields{
+		"network_id":     req.NetworkId,
+		"is_deactivated": req.IsDeactivated,
+	}).Info("Listing sites")
 
+	var networkIdPtr *uuid.UUID
 	if req.NetworkId != "" {
-		var err error
-		networkId, err = uuid.FromString(req.NetworkId)
+		networkId, err := uuid.FromString(req.NetworkId)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+			return nil, status.Errorf(codes.InvalidArgument, "invalid network ID: %v", err)
 		}
+		networkIdPtr = &networkId
 	}
 
-	sites, err := s.siteRepo.List(&networkId, req.IsDeactivated)
-
+	sites, err := s.siteRepo.List(networkIdPtr, req.IsDeactivated)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
 	}
-	resp := &pb.ListResponse{
-		Sites: dbSitesToPbSites(sites),
-	}
 
-	return resp, nil
+	return &pb.ListResponse{
+		Sites: dbSitesToPbSites(sites),
+	}, nil
 }
 
 func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
