@@ -24,7 +24,7 @@ type SiteRepo interface {
 	GetSites(networkId uuid.UUID) ([]Site, error)
 	Update(site *Site) error
 	GetSiteCount(networkId uuid.UUID) (int64, error)
-	List(networkId string, isDeactivated bool) ([]Site, error)
+	List(networkId *uuid.UUID, isDeactivated bool) ([]Site, error)
 }
 
 type siteRepo struct {
@@ -81,12 +81,12 @@ func (s siteRepo) GetSites(networkId uuid.UUID) ([]Site, error) {
 	return sites, nil
 }
 
-func (s siteRepo) List(networkId string, isDeactivated bool) ([]Site, error) {
+func (s siteRepo) List(networkId *uuid.UUID, isDeactivated bool) ([]Site, error) {
 	sites := []Site{}
 
 	tx := s.Db.GetGormDb().Preload(clause.Associations)
 
-	if networkId != "" {
+	if networkId != nil {
 		tx = tx.Where("network_id = ?", networkId)
 	}
 
