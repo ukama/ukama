@@ -123,7 +123,7 @@ func (_m *SiteRepo) GetSites(networkId uuid.UUID) ([]db.Site, error) {
 }
 
 // List provides a mock function with given fields: networkId, isDeactivated
-func (_m *SiteRepo) List(networkId uuid.UUID, isDeactivated bool) ([]db.Site, error) {
+func (_m *SiteRepo) List(networkId string, isDeactivated bool) ([]db.Site, error) {
 	ret := _m.Called(networkId, isDeactivated)
 
 	if len(ret) == 0 {
@@ -132,10 +132,10 @@ func (_m *SiteRepo) List(networkId uuid.UUID, isDeactivated bool) ([]db.Site, er
 
 	var r0 []db.Site
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) ([]db.Site, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, bool) ([]db.Site, error)); ok {
 		return rf(networkId, isDeactivated)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, bool) []db.Site); ok {
+	if rf, ok := ret.Get(0).(func(string, bool) []db.Site); ok {
 		r0 = rf(networkId, isDeactivated)
 	} else {
 		if ret.Get(0) != nil {
@@ -143,7 +143,7 @@ func (_m *SiteRepo) List(networkId uuid.UUID, isDeactivated bool) ([]db.Site, er
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(string, bool) error); ok {
 		r1 = rf(networkId, isDeactivated)
 	} else {
 		r1 = ret.Error(1)

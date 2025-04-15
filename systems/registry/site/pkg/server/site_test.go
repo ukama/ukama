@@ -84,7 +84,7 @@ func TestSiteService_List(t *testing.T) {
 		}
 
 		// Update mock expectation to match the interface
-		siteRepo.On("List", netId, false).Return(mockSitesConverted, nil)
+		siteRepo.On("List", netId.String(), false).Return(mockSitesConverted, nil)
 
 		req := &pb.ListRequest{
 			NetworkId:     netId.String(),

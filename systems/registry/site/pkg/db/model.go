@@ -13,7 +13,7 @@ type Site struct {
 	Id            uuid.UUID `gorm:"primaryKey;type:uuid"`
 	Name          string
 	Location      string
-	NetworkId     uuid.UUID `gorm:"type:uuid;index"`
+	NetworkId             uuid.UUID `gorm:"type:uuid;index"`
 	BackhaulId    uuid.UUID `gorm:"type:uuid"`
 	SpectrumId    uuid.UUID `gorm:"type:uuid"`
 	PowerId       uuid.UUID `gorm:"type:uuid"`
