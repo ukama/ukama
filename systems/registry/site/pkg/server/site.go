@@ -192,7 +192,13 @@ func (s *SiteServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRes
 
 	log.Infof("List sites %s, %t", req.NetworkId, req.IsDeactivated)
 
-	sites, err := s.siteRepo.List(req.NetworkId, req.IsDeactivated)
+	networkId, err := uuid.FromString(req.NetworkId)
+
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	sites, err := s.siteRepo.List(networkId, req.IsDeactivated)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "site")
