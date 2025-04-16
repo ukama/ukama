@@ -137,11 +137,11 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateResp, error) {
 	log.Infof("Received a add subscriber request: %v", req)
 	return r.clients.a.Activate(&pb.ActivateReq{
-		Iccid:     req.Iccid,
-		Imsi:      req.Imsi,
-		SimId:     req.SimId,
-		PackageId: req.PackageId,
-		NetworkId: req.NetworkId,
+		Iccid:        req.Iccid,
+		Imsi:         req.Imsi,
+		SimPackageId: req.SimPackageId,
+		PackageId:    req.PackageId,
+		NetworkId:    req.NetworkId,
 	})
 }
 
@@ -150,7 +150,6 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.Inact
 	return r.clients.a.Inactivate(&pb.InactivateReq{
 		Iccid:     req.Iccid,
 		Imsi:      req.Imsi,
-		SimId:     req.SimId,
 		PackageId: req.PackageId,
 		NetworkId: req.NetworkId,
 	})
@@ -159,11 +158,11 @@ func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.Inact
 func (r *Router) patchPackageUpdate(c *gin.Context, req *UpdatePackageReq) (*pb.UpdatePackageResp, error) {
 	log.Infof("Received a delete subscriber request: %v", req)
 	return r.clients.a.UpdatePackage(&pb.UpdatePackageReq{
-		Iccid:     req.Iccid,
-		Imsi:      req.Imsi,
-		SimId:     req.SimId,
-		PackageId: req.PackageId,
-		NetworkId: req.NetworkId,
+		Iccid:        req.Iccid,
+		Imsi:         req.Imsi,
+		SimPackageId: req.SimPackageId,
+		PackageId:    req.PackageId,
+		NetworkId:    req.NetworkId,
 	})
 }
 
