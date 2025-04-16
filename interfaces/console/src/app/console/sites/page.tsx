@@ -28,9 +28,11 @@ import { TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import PubSub from 'pubsub-js';
-import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import MetricStatBySiteSubscription, {
+  cancelSubscription,
+} from '@/lib/MetricStatBySiteSubscription';
 import { STAT_STEP_29 } from '@/constants';
 
 const SITE_INIT = {
@@ -46,6 +48,8 @@ const SITE_INIT = {
   network: '',
 };
 
+const initializedSites = new Set();
+
 export default function Page() {
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
@@ -59,13 +63,12 @@ export default function Page() {
     siteId: '',
   });
 
-  const subscriptionsInitialized = useRef<Record<string, boolean>>({});
+  const pubSubTokens = useRef<Record<string, string>>({});
 
-  const {
-    refetch: refetchSites,
-    loading: sitesLoading,
-    data: sitesData,
-  } = useGetSitesQuery({
+  const [isInitializingSubscriptions, setIsInitializingSubscriptions] =
+    useState(false);
+
+  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
@@ -73,31 +76,25 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
-
-      if (Object.keys(subscriptionsInitialized.current).length === 0) {
-        sites.forEach((site) => {
-          fetchSiteMetrics(site.id);
-          subscriptionsInitialized.current[site.id] = true;
-        });
-      }
     },
   });
+
   const [getSiteMetrics, { loading: metricsLoading }] = useGetSiteStatLazyQuery(
     {
       client: subscriptionClient,
       fetchPolicy: 'network-only',
       onCompleted: (data) => {
-        console.log('Initial site metrics received:', data);
-
-        if (data.getSiteStat.metrics.length === 0) return;
+        if (!data?.getSiteStat?.metrics?.length) return;
 
         const siteId = data.getSiteStat.metrics[0].siteId;
 
         data.getSiteStat.metrics.forEach((metric) => {
-          PubSub.publish(`site-metrics-${siteId}`, {
-            type: metric.type,
-            value: metric.value,
-          });
+          if (metric && metric.type && metric.value !== undefined) {
+            PubSub.publish(`site-metrics-${siteId}`, {
+              type: metric.type,
+              value: metric.value,
+            });
+          }
         });
       },
       onError: (error) => {
@@ -105,59 +102,15 @@ export default function Page() {
       },
     },
   );
-  const setupSubscriptions = (siteId: string) => {
-    const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
-    PubSub.unsubscribe(key);
 
-    MetricStatBySiteSubscription({
-      url: env.METRIC_URL,
-      key,
-      from: getUnixTime() - STAT_STEP_29,
-      siteId,
-      userId: user.id,
-      orgName: user.orgName,
-      type: Stats_Type.Site,
-    });
-
-    PubSub.subscribe(key, (msg, data) => {
-      try {
-        const parsedData = JSON.parse(data);
-        const { value, type, success, siteId } =
-          parsedData.data.getSiteMetricStatSub;
-        if (success) {
-          PubSub.publish(`site-metrics-${siteId}`, { type, value: value[1] });
-        }
-      } catch (error) {
-        console.error('Error handling metric update:', error);
-      }
-    });
-  };
-  useEffect(() => {
-    if (network.id) {
-      subscriptionsInitialized.current = {};
-
-      if (sitesList.length > 0) {
-        sitesList.forEach((site) => {
-          const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-          PubSub.unsubscribe(key);
-        });
-      }
-
-      refetchSites().then((res) => {
-        const sites = res.data.getSites.sites;
-        setSitesList(sites);
-
-        sites.forEach((site) => {
-          fetchSiteMetrics(site.id);
-          subscriptionsInitialized.current[site.id] = true;
-        });
-      });
+  const initializeSiteMetrics = (siteId: string) => {
+    if (initializedSites.has(siteId)) {
+      return;
     }
-  }, [network.id]);
 
-  const fetchSiteMetrics = (siteId: string) => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
+
     getSiteMetrics({
       variables: {
         data: {
@@ -172,8 +125,104 @@ export default function Page() {
         },
       },
     });
-    setupSubscriptions(siteId);
+
+    setupSiteSubscription(siteId, from);
+
+    initializedSites.add(siteId);
   };
+
+  const setupSiteSubscription = (siteId: string, from: number) => {
+    const subscriptionKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
+
+    cancelSubscription(subscriptionKey);
+    PubSub.unsubscribe(subscriptionKey);
+
+    MetricStatBySiteSubscription({
+      url: env.METRIC_URL,
+      key: subscriptionKey,
+      from,
+      siteId,
+      userId: user.id,
+      orgName: user.orgName,
+      type: Stats_Type.Site,
+    });
+
+    const token = PubSub.subscribe(subscriptionKey, (msg, data) => {
+      try {
+        const parsedData = JSON.parse(data);
+        const { value, type, success, siteId } =
+          parsedData.data.getSiteMetricStatSub;
+        if (success) {
+          PubSub.publish(`site-metrics-${siteId}`, { type, value: value[1] });
+        }
+      } catch (error) {
+        console.error('Error handling metric update:', error);
+      }
+    });
+
+    pubSubTokens.current[subscriptionKey] = token;
+  };
+
+  const initializeAllSiteMetrics = () => {
+    if (!sitesList.length || !network.id || isInitializingSubscriptions) return;
+
+    setIsInitializingSubscriptions(true);
+
+    const batchSize = 3;
+    const processBatch = (startIndex: number) => {
+      const endIndex = Math.min(startIndex + batchSize, sitesList.length);
+
+      for (let i = startIndex; i < endIndex; i++) {
+        initializeSiteMetrics(sitesList[i].id);
+      }
+
+      if (endIndex < sitesList.length) {
+        setTimeout(() => processBatch(endIndex), 500);
+      } else {
+        setIsInitializingSubscriptions(false);
+      }
+    };
+
+    processBatch(0);
+  };
+
+  const cleanupAllSubscriptions = () => {
+    Object.keys(pubSubTokens.current).forEach((key) => {
+      const token = pubSubTokens.current[key];
+      if (token) {
+        PubSub.unsubscribe(token);
+      }
+      cancelSubscription(key);
+    });
+
+    pubSubTokens.current = {};
+  };
+
+  useEffect(() => {
+    if (!network.id) return;
+
+    cleanupAllSubscriptions();
+    initializedSites.clear();
+
+    refetchSites().then(() => {});
+
+    getComponents({
+      variables: {
+        data: {
+          category: Component_Type.All,
+        },
+      },
+    });
+
+    return cleanupAllSubscriptions;
+  }, [network.id]);
+
+  useEffect(() => {
+    if (sitesList.length && network.id) {
+      initializeAllSiteMetrics();
+    }
+  }, [sitesList]);
+
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: () => {
       refetchSites().then((res) => {
@@ -256,30 +305,6 @@ export default function Page() {
     },
   });
 
-  useEffect(() => {
-    if (!network.id) return;
-
-    refetchSites().then((res) => {
-      const sites = res.data.getSites.sites;
-      setSitesList(sites);
-    });
-
-    getComponents({
-      variables: {
-        data: {
-          category: Component_Type.All,
-        },
-      },
-    });
-
-    return () => {
-      sitesList.forEach((site) => {
-        const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        PubSub.unsubscribe(key);
-      });
-    };
-  }, [network.id]);
-
   const handleCloseSiteConfig = () => {
     setSite(SITE_INIT);
     setOpenSiteConfig(false);
@@ -331,6 +356,20 @@ export default function Page() {
     setEditSitedialogOpen(false);
   };
 
+  const isLoading = useMemo(() => {
+    return (
+      sitesLoading ||
+      networksLoading ||
+      metricsLoading ||
+      isInitializingSubscriptions
+    );
+  }, [
+    sitesLoading,
+    networksLoading,
+    metricsLoading,
+    isInitializingSubscriptions,
+  ]);
+
   return (
     <Box mt={2}>
       <Paper
@@ -346,7 +385,7 @@ export default function Page() {
             My sites
           </Typography>
           <SitesWrapper
-            loading={sitesLoading || networksLoading || metricsLoading}
+            loading={isLoading}
             sites={sitesList}
             handleSiteNameUpdate={handleSiteNameUpdate}
           />

@@ -1,4 +1,4 @@
-/**
+/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -7,6 +7,7 @@
  */
 import { Stats_Type } from '@/client/graphql/generated/subscriptions';
 import PubSub from 'pubsub-js';
+
 interface IMetricBySiteStatSubscription {
   url: string;
   key: string;
@@ -17,6 +18,8 @@ interface IMetricBySiteStatSubscription {
   type: Stats_Type;
   nodeIds?: string[];
 }
+
+const activeSubscriptions = new Map();
 
 function parseEvent(eventStr: any) {
   const event: any = {};
@@ -35,6 +38,17 @@ function parseEvent(eventStr: any) {
   return event;
 }
 
+export function cancelSubscription(key: string) {
+  const controller = activeSubscriptions.get(key);
+  if (controller) {
+    controller.abort();
+    activeSubscriptions.delete(key);
+    console.log(`Cancelled subscription for key: ${key}`);
+    return true;
+  }
+  return false;
+}
+
 export default async function MetricStatBySiteSubscription({
   url,
   key,
@@ -45,6 +59,8 @@ export default async function MetricStatBySiteSubscription({
   nodeIds,
   orgName,
 }: IMetricBySiteStatSubscription) {
+  cancelSubscription(key);
+
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
   myHeaders.append('Connection', 'keep-alive');
@@ -61,6 +77,8 @@ export default async function MetricStatBySiteSubscription({
 
   const controller = new AbortController();
   const signal = controller.signal;
+
+  activeSubscriptions.set(key, controller);
 
   type SubSiteMetricsStatInput = {
     siteId: string;
@@ -90,40 +108,64 @@ export default async function MetricStatBySiteSubscription({
 
   const fullUrl = `${url}/graphql?query=${query}&variables=${variables}&operationName=SiteMetricStatSub&extensions=%7B%7D`;
 
-  const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
-    (error) => {
-      if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
-      } else {
-        console.error('Fetch error:', error);
-      }
-    },
-  );
+  try {
+    const res = await fetch(fullUrl, { ...requestOptions, signal });
 
-  const reader = res?.body?.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let buffer = '';
-
-  while (true) {
-    const { value, done } = (await reader?.read()) || {};
-
-    if (done) {
-      console.log('Stream complete');
-      break;
+    if (!res || !res.body) {
+      console.error('Error: No response or response body');
+      activeSubscriptions.delete(key);
+      return;
     }
 
-    buffer += decoder.decode(value, { stream: true });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
 
-    let eventBoundary = buffer.indexOf('\n\n');
+    while (true) {
+      try {
+        const { value, done } = await reader.read();
 
-    while (eventBoundary !== -1) {
-      const eventStr = buffer.slice(0, eventBoundary).trim();
-      buffer = buffer.slice(eventBoundary + 2);
-      const pevent = parseEvent(eventStr);
-      if (pevent.data) {
-        PubSub.publish(key, pevent.data);
+        if (done) {
+          console.log(`Stream complete for key: ${key}`);
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let eventBoundary = buffer.indexOf('\n\n');
+
+        while (eventBoundary !== -1) {
+          const eventStr = buffer.slice(0, eventBoundary).trim();
+          buffer = buffer.slice(eventBoundary + 2);
+          const pevent = parseEvent(eventStr);
+          if (pevent.data) {
+            PubSub.publish(key, pevent.data);
+          }
+          eventBoundary = buffer.indexOf('\n\n');
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log(`Subscription for ${key} was aborted`);
+        } else {
+          console.error(`Error in subscription for ${key}:`, error);
+        }
+        break;
       }
-      eventBoundary = buffer.indexOf('\n\n');
+    }
+  } catch (error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'name' in error &&
+      error.name === 'AbortError'
+    ) {
+      console.log(`Fetch for ${key} was aborted`);
+    } else {
+      console.error(`Fetch error for ${key}:`, error);
+    }
+  } finally {
+    if (activeSubscriptions.get(key) === controller) {
+      activeSubscriptions.delete(key);
     }
   }
 }
