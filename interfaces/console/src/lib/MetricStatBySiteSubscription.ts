@@ -62,7 +62,7 @@ export default async function MetricStatBySiteSubscription({
   const controller = new AbortController();
   const signal = controller.signal;
 
-  let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteId%22%3A%22${siteId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}${nodeIds && nodeIds.length > 0 ? `%2C%22nodeIds%22%3A${JSON.stringify(nodeIds).replace(/"/g, '%22')}` : ''}%7D%7D&operationName=SiteMetricStatSub&extensions=%7B%7D`;
+  let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeIds+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteId%22%3A%22${siteId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}${nodeIds && nodeIds.length > 0 ? `%2C%22nodeIds%22%3A${JSON.stringify(nodeIds).replace(/"/g, '%22')}` : ''}%7D%7D&operationName=SiteMetricStatSub&extensions=%7B%7D`;
 
   const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
     (error) => {
