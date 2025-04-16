@@ -56,6 +56,7 @@ func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
 			Iccid:                pf.Iccid,
 			Network:              pf.NetworkId.String(),
 			Package:              pf.PackageId.String(),
+			SimPackage:           pf.SimPackageId.String(),
 			Org:                  p.OrgName,
 			AllowedTimeOfService: pf.AllowedTimeOfService,
 			TotalDataBytes:       pf.Policy.ConsumedData,

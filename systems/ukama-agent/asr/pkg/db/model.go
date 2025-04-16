@@ -56,6 +56,7 @@ type Asr struct {
 	NetworkId               uuid.UUID `gorm:"not null;type:uuid"`
 	Tai                     Tai
 	PackageId               uuid.UUID `gorm:"not null;type uuid"`
+	SimPackageId            uuid.UUID `gorm:"not null;type uuid"`
 	Policy                  Policy
 	LastStatusChangeAt      time.Time
 	AllowedTimeOfService    int64

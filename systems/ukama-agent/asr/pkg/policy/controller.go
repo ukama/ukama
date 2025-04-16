@@ -181,12 +181,13 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	var httpMethod string
 
 	subscriber := &epb.Subscriber{
-		Imsi:    as.Imsi,
-		Iccid:   as.Iccid,
-		Network: as.NetworkId.String(),
-		Package: as.PackageId.String(),
-		Org:     p.OrgId,
-		Policy:  as.Policy.Id.String(),
+		Imsi:       as.Imsi,
+		Iccid:      as.Iccid,
+		Network:    as.NetworkId.String(),
+		Package:    as.PackageId.String(),
+		SimPackage: as.SimPackageId.String(),
+		Org:        p.OrgId,
+		Policy:     as.Policy.Id.String(),
 	}
 
 	var msg protoreflect.ProtoMessage

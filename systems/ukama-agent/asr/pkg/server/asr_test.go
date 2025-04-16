@@ -244,12 +244,16 @@ func TestAsr_Activate(t *testing.T) {
 	t.Run("ActivateByICCID", func(t *testing.T) {
 
 		reqPb := pb.ActivateReq{
-			NetworkId: networkId.String(),
-			Iccid:     "0123456789012345678912",
-			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			NetworkId:    networkId.String(),
+			Iccid:        "0123456789012345678912",
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
+			SimPackageId: "107f7b15-a8c5-4711-b1e0-f2329bffaba1",
 		}
 
 		pId, err := uuid.FromString(reqPb.PackageId)
+		assert.NoError(t, err)
+
+		spId, err := uuid.FromString(reqPb.SimPackageId)
 		assert.NoError(t, err)
 
 		nId, err := uuid.FromString(reqPb.NetworkId)
@@ -277,6 +281,7 @@ func TestAsr_Activate(t *testing.T) {
 			CsgId:                   sim.CsgId,
 			DefaultApnName:          sim.DefaultApnName,
 			PackageId:               pId,
+			SimPackageId:            spId,
 			NetworkId:               nId,
 			Policy:                  policy,
 			LastStatusChangeAt:      time.Now(),
