@@ -15,6 +15,48 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *SiteConfig) Validate() error {
+	return nil
+}
+func (this *UpdatePortStatusRequest) Validate() error {
+	return nil
+}
+func (this *UpdatePortStatusResponse) Validate() error {
+	return nil
+}
+func (this *GetMetricsRequest) Validate() error {
+	return nil
+}
+func (this *GetMetricsResponse) Validate() error {
+	for _, item := range this.Backhaul {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Backhaul", err)
+			}
+		}
+	}
+	for _, item := range this.Ethernet {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Ethernet", err)
+			}
+		}
+	}
+	for _, item := range this.Power {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Power", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *StopMetricsRequest) Validate() error {
+	return nil
+}
+func (this *StopMetricsResponse) Validate() error {
+	return nil
+}
 func (this *GetSiteMetricsRequest) Validate() error {
 	return nil
 }
@@ -46,36 +88,13 @@ func (this *PowerMetrics) Validate() error {
 	return nil
 }
 func (this *StartMetricsRequest) Validate() error {
-	return nil
-}
-func (this *StartMetricsResponse) Validate() error {
-	return nil
-}
-func (this *UpdateMetricsRequest) Validate() error {
-	for _, item := range this.PortUpdates {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("PortUpdates", err)
-			}
+	if this.SiteConfig != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SiteConfig); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("SiteConfig", err)
 		}
 	}
 	return nil
 }
-func (this *UpdateMetricsResponse) Validate() error {
-	return nil
-}
-func (this *PortUpdate) Validate() error {
-	return nil
-}
-func (this *MonitorSiteRequest) Validate() error {
-	return nil
-}
-func (this *MonitorSiteResponse) Validate() error {
-	return nil
-}
-func (this *StopMonitoringRequest) Validate() error {
-	return nil
-}
-func (this *StopMonitoringResponse) Validate() error {
+func (this *StartMetricsResponse) Validate() error {
 	return nil
 }

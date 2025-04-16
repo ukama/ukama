@@ -21,6 +21,7 @@ export type MenuItemType = {
   route: string;
   color?: string;
 };
+
 export type UserSettingsMenuType = {
   id: number;
   label: string;
@@ -89,6 +90,12 @@ export type CurrentBillType = {
   subTotal: number;
   dataUsage: string;
 };
+export type StatusType = 'uptime' | 'battery' | 'signal';
+
+export interface StyleOutput {
+  color: string;
+  icon: JSX.Element;
+}
 export type PaymentMethodType = {
   id?: number;
   card_experintionDetails: string;
@@ -251,6 +258,9 @@ export interface TNotificationResDto {
 interface MetricsSubData {
   getMetricByTabSub: LatestMetricSubRes;
   getMetricStatSub: LatestMetricSubRes;
+  getSiteMetricByTabSub: LatestMetricSubRes;
+  getSiteMetricStatSub: LatestMetricSubRes;
+  getMetricBySiteSub: LatestMetricSubRes;
 }
 
 export interface TMetricResDto {

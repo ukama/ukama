@@ -14,14 +14,6 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 interface SitesWrapperProps {
   sites: SiteDto[];
   loading: boolean;
-  sitesStatus?: Record<
-    string,
-    {
-      status: string;
-      batteryStatus: string;
-      signalStrength: string;
-    }
-  >;
   handleAddSite?: () => void;
   handleSiteNameUpdate: (siteId: string, siteName: string) => void;
 }
@@ -29,7 +21,6 @@ interface SitesWrapperProps {
 const SitesWrapper: React.FC<SitesWrapperProps> = ({
   sites,
   loading,
-  sitesStatus = {},
   handleSiteNameUpdate,
 }) => {
   if (sites?.length === 0 && !loading) {
@@ -42,10 +33,21 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
           justifyContent: 'center',
           flexDirection: 'column',
           gap: 2,
+          padding: '0 20px',
+          textAlign: 'center',
         }}
       >
         <Typography variant="h6" color="textSecondary">
-          No sites found
+          No sites yet!
+        </Typography>
+        <Typography
+          variant="body1"
+          color="textSecondary"
+          sx={{ maxWidth: '450px' }}
+        >
+          A site is a complete connection point to the network, made up of your
+          Ukama node, and the power and backhaul components. Install a site to
+          get started.
         </Typography>
       </Box>
     );
@@ -62,21 +64,13 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
       >
         <Grid container spacing={2}>
           {sites?.map((site) => {
-            const siteStatus = sitesStatus[site.id] || {
-              status: 'Online',
-              batteryStatus: 'Charged',
-              signalStrength: 'Strong',
-            };
-
             return (
               <Grid item xs={12} md={4} lg={4} key={site.id}>
                 <SiteCard
                   siteId={site.id}
                   name={site.name}
                   address={site.location}
-                  connectionStatus={siteStatus.status}
-                  batteryStatus={siteStatus.batteryStatus}
-                  signalStrength={siteStatus.signalStrength}
+                  loading={loading}
                   handleSiteNameUpdate={handleSiteNameUpdate}
                 />
               </Grid>

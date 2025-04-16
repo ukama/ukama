@@ -1,76 +1,181 @@
-import React from 'react';
-import { Box, Card, CardContent, Typography } from '@mui/material';
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+import React, { useMemo } from 'react';
+import {
+  Box,
+  Typography,
+  Tooltip,
+  Card,
+  CardContent,
+  Stack,
+} from '@mui/material';
+import { subDays, addDays, format } from 'date-fns';
 import colors from '@/theme/colors';
+import { duration } from '@/utils';
+
+interface DayData {
+  date: Date;
+  displayDate: string;
+  percentage: number;
+  daysAgo: number;
+  isInstallDay: boolean;
+}
 
 interface SiteOverviewProps {
-  uptimeSeconds?: number;
-  daysRange?: number;
-  loading?: boolean;
+  installationDate: Date;
+  uptimePercentage: number;
+  siteUptimeSeconds: number;
+  includeFutureDays?: boolean;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
-  uptimeSeconds = 0,
-  daysRange = 90,
-  loading = false,
+  installationDate,
+  uptimePercentage,
+  siteUptimeSeconds,
+  includeFutureDays = true,
 }) => {
-  const calculateUptimePercentage = (
-    uptimeSeconds: number,
-    days: number,
-  ): number => {
-    const totalSeconds = days * 24 * 60 * 60;
-    const percentage = (uptimeSeconds / totalSeconds) * 100;
-    return Math.min(Math.max(0, percentage), 100);
+  const isSameDay = (dateA: Date, dateB: Date) => {
+    return (
+      dateA.getFullYear() === dateB.getFullYear() &&
+      dateA.getMonth() === dateB.getMonth() &&
+      dateA.getDate() === dateB.getDate()
+    );
   };
 
-  const actualUptimePercentage = calculateUptimePercentage(
-    uptimeSeconds,
-    daysRange,
+  const today = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
+
+  const installDate = useMemo(() => {
+    return new Date(
+      installationDate.getFullYear(),
+      installationDate.getMonth(),
+      installationDate.getDate(),
+    );
+  }, [installationDate]);
+
+  const isInstallationToday = useMemo(
+    () => isSameDay(today, installDate),
+    [today, installDate],
+  );
+  const isFutureInstall = useMemo(
+    () => installDate.getTime() > today.getTime(),
+    [today, installDate],
   );
 
-  const recentPeriodBars = Array(30).fill(actualUptimePercentage);
-  const pastPeriodBars = Array(30).fill(actualUptimePercentage);
+  const uptimeDays = useMemo(() => {
+    return siteUptimeSeconds / 86400;
+  }, [siteUptimeSeconds]);
 
-  const renderBar = (value: number, index: number) => {
-    const heightPercentage = value;
-    const barHeight = (heightPercentage / 100) * 75;
+  const generateDaysData = useMemo(() => {
+    const result: DayData[] = [];
+
+    for (let i = 0; i < 60; i++) {
+      const date = subDays(today, i);
+      const displayDate = format(date, 'MMM d');
+      const daysAgo = i;
+      const isInstallDay = isSameDay(date, installDate);
+
+      let percentage = 0;
+
+      if (isFutureInstall) {
+        percentage = 0;
+      } else if (isInstallationToday) {
+        percentage = i === 0 ? uptimePercentage : 0;
+      } else {
+        const isPastOrEqualToInstall =
+          date.getTime() >= installDate.getTime() ||
+          isSameDay(date, installDate);
+        percentage = isPastOrEqualToInstall ? uptimePercentage : 0;
+      }
+
+      result.push({
+        date,
+        displayDate,
+        percentage,
+        daysAgo,
+        isInstallDay,
+      });
+    }
+
+    if (includeFutureDays && isInstallationToday && uptimeDays > 1) {
+      const futureDaysToShow = uptimeDays - 1;
+      result.splice(60 - futureDaysToShow, futureDaysToShow);
+
+      for (let i = 1; i <= futureDaysToShow; i++) {
+        const date = addDays(today, i);
+        const displayDate = format(date, 'MMM d');
+        const daysAgo = -i;
+
+        result.unshift({
+          date,
+          displayDate,
+          percentage: uptimePercentage,
+          daysAgo,
+          isInstallDay: false,
+        });
+      }
+    }
+
+    return result;
+  }, [
+    today,
+    installDate,
+    uptimePercentage,
+    isInstallationToday,
+    isFutureInstall,
+    uptimeDays,
+    includeFutureDays,
+  ]);
+
+  const firstThirtyDays = generateDaysData.slice(0, 30);
+  const nextThirtyDays = generateDaysData.slice(30, 60);
+
+  const renderBar = (day: DayData, index: number) => {
+    const isFutureDay = day.daysAgo < 0;
+    let tooltipContent = `${day.displayDate}: ${day.percentage}% uptime`;
+    if (day.isInstallDay) {
+      tooltipContent += ' (Installation day)';
+    } else if (isFutureDay) {
+      tooltipContent += ' (Projected)';
+    }
+    const uptimeHeight = (day.percentage / 100) * 70;
 
     return (
-      <Box
-        key={index}
-        sx={{
-          height: 75,
-          width: 8,
-          mx: 0.25,
-          position: 'relative',
-          borderRadius: 1,
-          bgcolor: colors.gray,
-        }}
-      >
+      <Tooltip key={index} title={tooltipContent} placement="top">
         <Box
           sx={{
-            position: 'absolute',
-            bottom: 0,
-            width: '100%',
-            height: `${barHeight}px`,
-            bgcolor: colors.green,
-            borderRadius: 1,
+            height: 70,
+            width: 10,
+            mx: 0.25,
+            borderRadius: 10,
+            position: 'relative',
+            bgcolor: day.percentage > 0 ? colors.redLight : colors.gray,
+            overflow: 'hidden',
+            border: day.isInstallDay ? `2px solid ${colors.black70}` : 'none',
           }}
-        />
-      </Box>
+        >
+          {day.percentage > 0 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                width: '100%',
+                height: `${uptimeHeight}px`,
+                bgcolor: colors.ligthGreen,
+              }}
+            />
+          )}
+        </Box>
+      </Tooltip>
     );
   };
-
-  if (loading) {
-    return (
-      <Card
-        sx={{
-          borderRadius: 2,
-          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.05)',
-          height: '100%',
-        }}
-      ></Card>
-    );
-  }
 
   return (
     <Card
@@ -86,61 +191,112 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         <Typography variant="h6" sx={{ mb: 3 }}>
           Site overview
         </Typography>
-
         <Typography
-          variant="body2"
+          variant="subtitle2"
           sx={{
-            mt: 2,
             mb: 4,
+            color: uptimePercentage >= 99 ? colors.black70 : colors.redLight,
           }}
         >
-          {actualUptimePercentage.toFixed(0)}% uptime over {daysRange} days
+          {uptimePercentage}% uptime over {duration(siteUptimeSeconds)}
         </Typography>
+        <Stack direction="row" spacing={2} alignItems={'center'} sx={{ mb: 2 }}>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: colors.ligthGreen,
+              }}
+            />
+            <Typography variant="caption">Good Uptime</Typography>
+          </Stack>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: colors.gray,
+              }}
+            />
+            <Typography variant="caption">No Uptime</Typography>
+          </Stack>
+          <Stack direction={'row'} alignItems={'center'} spacing={1}>
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                bgcolor: colors.redLight,
+              }}
+            />
+            <Typography variant="caption">Low Uptime</Typography>
+          </Stack>
 
-        <Box sx={{ position: 'relative', mb: 3 }}>
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              height: 75,
-              mb: 1,
+              width: 10,
+              height: 10,
+              bgcolor: colors.gray,
+              border: `2px solid ${colors.black70}`,
+              mr: 1,
             }}
-          >
-            {recentPeriodBars.map(renderBar)}
-          </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              30 days ago
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Today
-            </Typography>
-          </Box>
+          />
+          <Typography variant="caption">Installation Day</Typography>
+        </Stack>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            height: 70,
+            mb: 2,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          {firstThirtyDays.map((day, index) => renderBar(day, index))}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Today
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            30 days ago
+          </Typography>
         </Box>
 
-        <Box sx={{ position: 'relative', mt: 4 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'flex-end',
-              height: 75,
-              mb: 1,
-            }}
-          >
-            {pastPeriodBars.map(renderBar)}
-          </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {daysRange} days ago
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {Math.floor(daysRange / 3)} days ago
-            </Typography>
-          </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            height: 70,
+            mb: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          {nextThirtyDays.map((day, index) => renderBar(day, index))}
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mt: 1,
+            flexDirection: 'row-reverse',
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            31 days ago
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            60 days ago
+          </Typography>
         </Box>
       </CardContent>
     </Card>

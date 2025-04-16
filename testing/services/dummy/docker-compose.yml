@@ -77,10 +77,10 @@ services:
   networks:
    - ukama-net
 
- api-gateway-dummy:
+ api-gateway:
   build: ./api-gateway
   ports:
-   - 8083:8080
+   - 8086:8080
   networks:
    - ukama-net
   environment:

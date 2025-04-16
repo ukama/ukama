@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	cenums "github.com/ukama/ukama/testing/common/enums"
 	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/metrics"
 	"google.golang.org/protobuf/proto"
@@ -55,7 +57,6 @@ import (
 		if err != nil {
 			return nil, err
 		}
-
 	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
 		nodeMsg := &cpb.NodeFeederMessage{}
 		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
@@ -75,13 +76,18 @@ import (
 
 	return &epb.EventResponse{}, nil
 }
-  
 func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) error {
     log.Infof("Handling node assignment event for site: %s", msg.SiteId)
     
+    randomConfig := &pb.SiteConfig{
+        AvgBackhaulSpeed: 30 + rand.Float64()*70,    
+        AvgLatency:       10 + rand.Float64()*40,    
+        SolarEfficiency:  0.7 + rand.Float64()*0.2,  
+    }
+    
     metricsReq := &pb.StartMetricsRequest{
-        SiteId:  msg.SiteId,
-        Profile: pb.Profile_PROFILE_MAX,
+        SiteId:     msg.SiteId,
+        SiteConfig: randomConfig,
     }
     
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -98,91 +104,99 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
         return fmt.Errorf("failed to start metrics for site %s", msg.SiteId)
     }
     
-    log.Infof("Successfully started metrics for site %s", msg.SiteId)
+    log.Infof("Successfully started metrics for site %s with config: %+v", msg.SiteId, randomConfig)
     
-    monitorReq := &pb.MonitorSiteRequest{SiteId: msg.SiteId}
-    monitorResp, err := n.server.MonitorSite(context.Background(), monitorReq)
-    if err != nil {
-        log.Warnf("Failed to start monitoring for site %s: %v", msg.SiteId, err)
-        return err
-    }
-    
-    log.Infof("Successfully started monitoring: %s", monitorResp.Message)
     return nil
 }
- 
- func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeederMessage) error {
-	 log.Infof("Handling toggle switch event: target=%s, path=%s", msg.Target, msg.Path)
-	 
-	 targetParts := strings.Split(msg.Target, ".")
-	 siteId := targetParts[len(targetParts)-1]
-	 
-	 path := strings.TrimPrefix(msg.Path, "/v1/switch/")
-	 pathParts := strings.Split(path, "/")
-	 
-	 if len(pathParts) != 2 {
-		 return fmt.Errorf("invalid path format: %s", msg.Path)
-	 }
-	 
-	 port, err := strconv.Atoi(pathParts[0])
-	 if err != nil {
-		 return fmt.Errorf("invalid port number: %w", err)
-	 }
-	 
-	 status, err := strconv.ParseBool(pathParts[1])
-	 if err != nil {
-		 return fmt.Errorf("invalid status value: %w", err)
-	 }
-	 
-	 var component string
-	 switch port {
-	 case metrics.PORT_AMPLIFIER:
-		component = "Amplifier"
-	 case metrics.PORT_TOWER:
-		component = "Tower"
-	 case metrics.PORT_SOLAR:
-		component = "Solar"
-	 case metrics.PORT_BACKHAUL:
-		component = "Backhaul"
-	 default:
-		component = fmt.Sprintf("Unknown(%d)", port)
-	 }
-	 
-	 log.Infof("Toggling %s port for site %s to %v", component, siteId, status)
-	 
-	 req := &pb.UpdateMetricsRequest{
-		 SiteId: siteId,
-		 PortUpdates: []*pb.PortUpdate{
-			 {
-				 PortNumber: int32(port),
-				 Status:     status,
-			 },
-		 },
-	 }
-	 
-	 ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	 defer cancel()
-	 
-	 resp, err := n.server.UpdateMetrics(ctx, req)
-	 if err != nil {
-		 log.Errorf("Failed to update port %d status for site %s: %v", port, siteId, err)
-		 return err
-	 }
-	 
-	 if !resp.Success {
-		 log.Warnf("UpdateMetrics returned unsuccessful for site %s: %s", siteId, resp.Message)
-		 return fmt.Errorf("failed to update port status: %s", resp.Message)
-	 }
-	 
-	 log.Infof("Successfully updated %s port status to %v for site %s", component, status, siteId)
-	 return nil
- }
- 
- func (n *DControllerEventServer) handleToggleSwitchEvent(eventMsg []byte) error {
-	 msg := &cpb.NodeFeederMessage{}
-	 if err := proto.Unmarshal(eventMsg, msg); err != nil {
-		 return fmt.Errorf("failed to unmarshal NodeFeederMessage: %w", err)
-	 }
-	 
-	 return n.handleToggleSwitchEventDirect(msg)
- }
+func (n *DControllerEventServer) handleToggleSwitchEventDirect(msg *cpb.NodeFeederMessage) error {
+	log.Infof("Handling toggle switch event: target=%s, path=%s", msg.Target, msg.Path)
+	
+	targetParts := strings.Split(msg.Target, ".")
+	siteId := targetParts[len(targetParts)-1]
+	
+	path := strings.TrimPrefix(msg.Path, "/v1/switch/")
+	pathParts := strings.Split(path, "/")
+	
+	if len(pathParts) != 2 {
+		return fmt.Errorf("invalid path format: %s", msg.Path)
+	}
+	
+	port, err := strconv.Atoi(pathParts[0])
+	if err != nil {
+		return fmt.Errorf("invalid port number: %w", err)
+	}
+	
+	status, err := strconv.ParseBool(pathParts[1])
+	if err != nil {
+		return fmt.Errorf("invalid status value: %w", err)
+	}
+	
+	log.Infof("Received toggle event for port %d with status %v for site %s", port, status, siteId)
+	
+	var component string
+	switch port {
+	case metrics.PORT_NODE: 
+	   component = "Node"
+	case metrics.PORT_SOLAR:  
+	   component = "Solar Controller"
+	case metrics.PORT_BACKHAUL:
+	   component = "Backhaul"
+	default:
+	   component = fmt.Sprintf("Unknown(%d)", port)
+	}
+	
+	log.Infof("Toggling %s port for site %s to %v", component, siteId, status)
+	
+	req := &pb.UpdatePortStatusRequest{
+		SiteId:    siteId,
+		PortNumber: int32(port),  
+		Enabled:   status,        
+	}
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	resp, err := n.server.UpdatePortStatus(ctx, req)
+	if err != nil {
+		log.Errorf("Failed to update port %d status for site %s: %v", port, siteId, err)
+		return err
+	}
+	
+	if !resp.Success {
+		log.Warnf("UpdatePortStatus returned unsuccessful for site %s: %s", siteId, resp.Message)
+		return fmt.Errorf("failed to update port status: %s", resp.Message)
+	}
+	
+	var scenario cenums.SCENARIOS
+	if !status { 
+		switch port {
+		case metrics.PORT_NODE:
+			scenario = cenums.SCENARIO_NODE_OFF
+		case metrics.PORT_BACKHAUL:
+			scenario = cenums.SCENARIO_BACKHAUL_DOWN
+		case metrics.PORT_SOLAR:
+			scenario = cenums.SCENARIO_DEFAULT
+		default:
+			scenario = cenums.SCENARIO_DEFAULT
+		}
+	} else {
+		scenario = cenums.SCENARIO_DEFAULT
+	}
+	
+	nodes, err := n.server.nodeClient.GetNodesBySite(siteId)
+	if err != nil {
+		log.Errorf("Failed to get nodes for site %s: %v", siteId, err)
+		return err
+	}
+	
+	for _, node := range nodes.Nodes {
+		if err := n.server.dnodeClient.UpdateNodeScenario(node.Id, scenario); err != nil {
+			log.Errorf("Failed to update node %s scenario: %v", node.Id, err)
+		} else {
+			log.Infof("Updated scenario for node %s to %s", node.Id, scenario)
+		}
+	}
+
+	log.Infof("Successfully updated %s port status to %v for site %s", component, status, siteId)
+	return nil
+}
