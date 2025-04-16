@@ -18,6 +18,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+var (
+	nullUUID = "00000000-0000-0000-0000-000000000000"
+)
+
 type SiteRepo interface {
 	Add(site *Site, nestedFunc func(*Site, *gorm.DB) error) error
 	Get(siteId uuid.UUID) (*Site, error)
@@ -86,7 +90,7 @@ func (s siteRepo) List(networkId *uuid.UUID, isDeactivated bool) ([]Site, error)
 
 	tx := s.Db.GetGormDb().Preload(clause.Associations)
 
-	if networkId != nil {
+	if networkId != nil && networkId.String() != nullUUID {
 		tx = tx.Where("network_id = ?", networkId)
 	}
 

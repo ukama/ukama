@@ -14,6 +14,7 @@ import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
 interface IBasicDropdown {
   value: string;
   placeholder: string;
+  isDisableAddOption?: boolean;
   isShowAddOption: boolean;
   handleOnChange: Function;
   handleAddNetwork: Function;
@@ -26,6 +27,7 @@ const BasicDropdown = ({
   handleOnChange,
   isShowAddOption,
   handleAddNetwork,
+  isDisableAddOption = false,
 }: IBasicDropdown) => (
   <FormControl sx={{ width: '100%' }} size="small">
     <Select
@@ -65,7 +67,14 @@ const BasicDropdown = ({
         <>
           <Divider sx={{ width: '100%', height: '1px' }} />
           <Button
-            startIcon={<Add sx={{ color: colors.black70 }} />}
+            disabled={isDisableAddOption}
+            startIcon={
+              <Add
+                sx={{
+                  color: isDisableAddOption ? colors.silver : colors.black70,
+                }}
+              />
+            }
             sx={{
               px: 2,
               py: 1,
