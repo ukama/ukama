@@ -425,6 +425,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var subscriberID = uuid.NewV4()
 		var networkID = uuid.NewV4()
 		var packageID = uuid.NewV4()
+		var simPackageIDString = "00000000-0000-0000-0000-000000000000"
 		var OrgId = uuid.NewV4()
 
 		simRepo := &mocks.SimRepo{}
@@ -511,11 +512,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		agentAdapter.On("BindSim", mock.Anything,
 			client.AgentRequestData{
-				Iccid:     testIccid,
-				Imsi:      sim.Imsi,
-				SimId:     sim.Id.String(),
-				PackageId: packageID.String(),
-				NetworkId: sim.NetworkId.String(),
+				Iccid:        testIccid,
+				Imsi:         sim.Imsi,
+				SimPackageId: simPackageIDString,
+				PackageId:    packageID.String(),
+				NetworkId:    sim.NetworkId.String(),
 			}).Return(nil, nil).Once()
 
 		simRepo.On("Add", sim,

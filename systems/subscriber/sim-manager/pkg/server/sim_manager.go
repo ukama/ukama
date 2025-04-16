@@ -275,11 +275,11 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.PackageId.String(),
-		SimId:     sim.Id.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
 	}
 
 	log.Infof("Activating sim on remote agent with request: %v", agentRequest)
@@ -904,6 +904,12 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"cannot set active package on non active sim: sim's status is is %s", sim.Status)
 	}
 
+	if sim.Package.Id != uuid.Nil {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"sim currently have package %v as active. This package needs to expire first",
+			sim.Package.Id)
+	}
+
 	packageId, err := uuid.FromString(req.GetPackageId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -917,7 +923,8 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 
 	if pkg.SimId.String() != req.GetSimId() {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
+			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			req.GetPackageId(), req.GetSimId())
 	}
 
 	if pkg.AsExpired {
@@ -930,7 +937,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	}
 
 	// Update package on sim manager
-
 	newPackageToActivate := &sims.Package{
 		Id:       pkg.Id,
 		IsActive: true,
@@ -943,24 +949,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 
 		newPackageToActivate.EndDate = newPackageToActivate.StartDate.
 			Add(time.Hour * 24 * time.Duration(pkg.DefaultDuration))
-
-		// if there is already an active package
-		if sim.Package.Id != uuid.Nil {
-			// get it
-			currentActivePackage := &sims.Package{
-				Id: sim.Package.Id,
-			}
-
-			// then deactivate it
-			result := tx.Model(currentActivePackage).Update("is_active", false)
-			if result.RowsAffected == 0 {
-				return gorm.ErrRecordNotFound
-			}
-
-			if result.Error != nil {
-				return result.Error
-			}
-		}
 
 		return nil
 	})
@@ -977,11 +965,11 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.PackageId.String(),
-		SimId:     sim.Id.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
 	}
 
 	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
@@ -1035,6 +1023,12 @@ func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.T
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
+	if pckg.SimId.String() != req.GetSimId() {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			req.GetPackageId(), req.GetSimId())
+	}
+
 	if !pckg.IsActive {
 		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 
@@ -1046,14 +1040,14 @@ func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.T
 			"package (%s) has already been marked as terminated", pckg.Id)
 	}
 
-	if pckg.SimId.String() != req.GetSimId() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
-	}
-
 	sim, err := s.getSim(req.SimId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != ukama.SimStatusActive {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
 	}
 
 	packageToTerminate := &sims.Package{
@@ -1108,7 +1102,9 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 
 	if pckg.SimId.String() != req.GetSimId() {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid simID: packageID does not belong to the provided simID: %s", req.GetSimId())
+			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			req.GetPackageId(), req.GetSimId())
+
 	}
 
 	if pckg.IsActive {
@@ -1180,11 +1176,11 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.PackageId.String(),
-		SimId:     sim.Id.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
 	}
 
 	err = simAgent.ActivateSim(ctx, agentRequest)
@@ -1254,11 +1250,11 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:     sim.Iccid,
-		Imsi:      sim.Imsi,
-		NetworkId: sim.NetworkId.String(),
-		PackageId: sim.Package.PackageId.String(),
-		SimId:     sim.Id.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
 	}
 	err = simAgent.DeactivateSim(ctx, agentRequest)
 	if err != nil {
