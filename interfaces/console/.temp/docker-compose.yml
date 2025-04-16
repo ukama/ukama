@@ -1,0 +1,27 @@
+version: '3.9'
+services:
+  console:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      args:
+        - NEXT_PUBLIC_NODE_ENV=production
+        - NEXT_PUBLIC_APP_URL=http://localhost:3000
+        - NEXT_PUBLIC_AUTH_APP_URL=http://localhost:4455
+        - NEXT_PUBLIC_API_GW=http://localhost:8080
+        - NEXT_PUBLIC_METRIC_URL=http://localhost:8081
+        - NEXT_PUBLIC_METRIC_WEBSOCKET_URL=ws://localhost:8081
+        - NEXT_PUBLIC_MAP_BOX_TOKEN=${MAP_BOX_TOKEN}
+        - NEXT_PUBLIC_API_GW_4SS=http://bff:8080
+        - NEXT_PUBLIC_APP_DOMAIN=localhost
+        - NEXT_PUBLIC_SIM_TYPE=ukama_data
+        - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=test
+    ports:
+      - '3000:8080'
+    networks:
+      - ukama-net
+
+networks:
+  ukama-net:
+    external: true
+    name: services_ukama-net

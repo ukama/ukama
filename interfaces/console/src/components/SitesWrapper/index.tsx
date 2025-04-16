@@ -10,12 +10,10 @@ import { Box, Grid, Typography } from '@mui/material';
 import SiteCard from '@/components/SiteCard';
 import { SiteDto } from '@/client/graphql/generated';
 import LoadingWrapper from '@/components/LoadingWrapper';
-import { SiteMetrics } from '@/types';
 
 interface SitesWrapperProps {
   sites: SiteDto[];
   loading: boolean;
-  siteMetrics?: Record<string, Partial<SiteMetrics>>;
   handleAddSite?: () => void;
   handleSiteNameUpdate: (siteId: string, siteName: string) => void;
 }
@@ -23,7 +21,6 @@ interface SitesWrapperProps {
 const SitesWrapper: React.FC<SitesWrapperProps> = ({
   sites,
   loading,
-  siteMetrics = {},
   handleSiteNameUpdate,
 }) => {
   if (sites?.length === 0 && !loading) {
@@ -67,8 +64,6 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
       >
         <Grid container spacing={2}>
           {sites?.map((site) => {
-            const metrics = siteMetrics[site.id] || {};
-
             return (
               <Grid item xs={12} md={4} lg={4} key={site.id}>
                 <SiteCard

@@ -548,10 +548,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       onCompleted: (data) => {
         if (data.getSiteStat.metrics.length > 0) {
           data.getSiteStat.metrics.forEach((m) => {
-            if (m.type === SITE_KPIS.SITE.stats[0].id) {
+            if (m.type === 'site_uptime_seconds') {
               setSiteUptime(m.value);
             }
-            if (m.type === SITE_KPIS.SITE.stats[1].id) {
+            if (m.type === 'site_uptime_percentage') {
               setSiteUptimePercentage(m.value);
             }
 
@@ -641,10 +641,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       const { value, type, success, nodeId } =
         parsedData.data.getSiteMetricStatSub;
       if (success) {
-        if (type === SITE_KPIS.SITE.stats[0].id) {
+        if (type === 'site_uptime_seconds') {
           setSiteUptime(() => Math.floor(value[1]));
         }
-        if (type === SITE_KPIS.SITE.stats[1].id) {
+        if (type === 'site_uptime_percentage') {
           setSiteUptimePercentage(() => Math.floor(value[1]));
         }
 
