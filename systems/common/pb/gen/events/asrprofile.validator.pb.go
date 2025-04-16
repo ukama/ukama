@@ -20,6 +20,7 @@ var _ = math.Inf
 var _regex_Profile_Network = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Profile_Package = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 var _regex_Profile_Org = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_Profile_SimPackage = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *Profile) Validate() error {
 	if this.Imsi == "" {
@@ -63,6 +64,12 @@ func (this *Profile) Validate() error {
 	}
 	if !(this.TotalDataBytes > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("TotalDataBytes", fmt.Errorf(`value '%v' must be greater than '0'`, this.TotalDataBytes))
+	}
+	if !_regex_Profile_SimPackage.MatchString(this.SimPackage) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimPackage", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimPackage))
+	}
+	if this.SimPackage == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SimPackage", fmt.Errorf(`value '%v' must not be an empty string`, this.SimPackage))
 	}
 	return nil
 }
