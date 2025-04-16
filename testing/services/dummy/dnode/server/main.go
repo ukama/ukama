@@ -132,14 +132,23 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 		Scenario: cenums.ParseScenarioType(scenario),
 	}
 
-	if cenums.ParseScenarioType(scenario) == cenums.SCENARIO_BACKHAUL_DOWN ||
-		cenums.ParseScenarioType(scenario) == cenums.SCENARIO_NODE_OFF {
+	switch cenums.ParseScenarioType(scenario) {
+	case cenums.SCENARIO_BACKHAUL_DOWN:
+	case cenums.SCENARIO_NODE_OFF:
 		log.Printf("Scenario is: %s, which leads to coroutine shutdown.", scenario)
 		if exists {
 			close(updateChan)
 			delete(s.coroutines, nodeID.String())
 		}
+	case cenums.SCENARIO_NODE_ON:
+		log.Printf("Scenario is: %s, turning node on %s.", scenario, nodeID.String())
+		updateChan := make(chan config.WMessage, 10)
+		s.coroutines[nodeID.String()] = updateChan
+		go utils.Worker(nodeID.String(), updateChan, config.WMessage{NodeId: nodeID.String(), Profile: cenums.ParseProfileType(profile), Scenario: cenums.SCENARIO_NODE_ON, Kpis: serviceConfig.KpiConfig})
+	case cenums.SCENARIO_NODE_RESTART:
+		log.Printf("Scenario is: %s, restarting node %s.", scenario, nodeID.String())
 	}
+
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte("NodeId: " + nodeID.String()))
 	if err != nil {
