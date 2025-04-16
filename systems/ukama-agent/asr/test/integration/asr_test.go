@@ -160,19 +160,19 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("UpdatePackage", func(t *testing.T) {
 		_, err := c.UpdatePackage(ctx, &pb.UpdatePackageReq{
-			Iccid:     sim.Iccid,
-			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:        sim.Iccid,
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Inactivate", func(t *testing.T) {
 		_, err := c.Inactivate(ctx, &pb.InactivateReq{
-			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
-			Iccid:        sim.Iccid,
-			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
-			Imsi:         "0123456789",
-			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:     sim.Iccid,
+			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
 		})
 		assert.NoError(t, err)
 	})
@@ -201,11 +201,10 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("InactivateByImsi", func(t *testing.T) {
 		_, err := c.Inactivate(ctx, &pb.InactivateReq{
-			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
-			Iccid:        sim.Iccid,
-			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
-			Imsi:         "0123456789",
-			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:     sim.Iccid,
+			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:      "0123456789",
 		})
 		assert.NoError(t, err)
 	})
