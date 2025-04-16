@@ -61,13 +61,9 @@ export default function Page() {
 
   const subscriptionsInitialized = useRef<Record<string, boolean>>({});
 
-  const {
-    refetch: refetchSites,
-    loading: sitesLoading,
-    data: sitesData,
-  } = useGetSitesQuery({
+  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
-    variables: { networkId: network.id },
+    variables: { data: { networkId: network.id } },
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       sites.forEach((site) => {
@@ -78,6 +74,7 @@ export default function Page() {
       });
     },
   });
+
   const [getSiteMetrics, { loading: metricsLoading }] = useGetSiteStatLazyQuery(
     {
       client: subscriptionClient,
