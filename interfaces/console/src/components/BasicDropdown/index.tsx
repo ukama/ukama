@@ -14,7 +14,7 @@ import { Button, Divider, FormControl, MenuItem, Select } from '@mui/material';
 interface IBasicDropdown {
   value: string;
   placeholder: string;
-  isDisableAddOption: boolean;
+  isDisableAddOption?: boolean;
   isShowAddOption: boolean;
   handleOnChange: Function;
   handleAddNetwork: Function;
