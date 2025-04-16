@@ -1,4 +1,4 @@
-/*
+/**
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -62,7 +62,33 @@ export default async function MetricStatBySiteSubscription({
   const controller = new AbortController();
   const signal = controller.signal;
 
-  let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeIds+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteId%22%3A%22${siteId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}${nodeIds && nodeIds.length > 0 ? `%2C%22nodeIds%22%3A${JSON.stringify(nodeIds).replace(/"/g, '%22')}` : ''}%7D%7D&operationName=SiteMetricStatSub&extensions=%7B%7D`;
+  type SubSiteMetricsStatInput = {
+    siteId: string;
+    orgName: string;
+    type: Stats_Type;
+    userId: string;
+    from: number;
+    nodeIds?: string[];
+  };
+
+  const data: SubSiteMetricsStatInput = {
+    siteId,
+    orgName,
+    type,
+    userId,
+    from,
+  };
+
+  if (nodeIds && nodeIds.length > 0) {
+    data.nodeIds = nodeIds;
+  }
+
+  const query =
+    'subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D';
+
+  const variables = encodeURIComponent(JSON.stringify({ data }));
+
+  const fullUrl = `${url}/graphql?query=${query}&variables=${variables}&operationName=SiteMetricStatSub&extensions=%7B%7D`;
 
   const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
     (error) => {
@@ -73,11 +99,6 @@ export default async function MetricStatBySiteSubscription({
       }
     },
   );
-
-  if (!res || !res.ok) {
-    console.error('Network response was not ok');
-    return;
-  }
 
   const reader = res?.body?.getReader();
   const decoder = new TextDecoder('utf-8');

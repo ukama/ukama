@@ -61,34 +61,50 @@ export default function Page() {
 
   const subscriptionsInitialized = useRef<Record<string, boolean>>({});
 
-  const { refetch: refetchSites } = useGetSitesQuery({
+  const {
+    refetch: refetchSites,
+    loading: sitesLoading,
+    data: sitesData,
+  } = useGetSitesQuery({
     skip: !network.id,
-    variables: { data: { networkId: network.id } },
+    variables: {
+      data: { networkId: network.id },
+    },
     onCompleted: (res) => {
       const sites = res.getSites.sites;
-      sites.forEach((site) => {
-        if (!subscriptionsInitialized.current[site.id]) {
+      setSitesList(sites);
+
+      if (Object.keys(subscriptionsInitialized.current).length === 0) {
+        sites.forEach((site) => {
           fetchSiteMetrics(site.id);
           subscriptionsInitialized.current[site.id] = true;
-        }
-      });
-    },
-  });
-
-  const [getSiteMetrics] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length === 0) return;
-      const siteId = data.getSiteStat.metrics[0].siteId;
-      data.getSiteStat.metrics.forEach((metric) => {
-        PubSub.publish(`site-metrics-${siteId}`, {
-          type: metric.type,
-          value: metric.value,
         });
-      });
+      }
     },
   });
+  const [getSiteMetrics, { loading: metricsLoading }] = useGetSiteStatLazyQuery(
+    {
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        console.log('Initial site metrics received:', data);
+
+        if (data.getSiteStat.metrics.length === 0) return;
+
+        const siteId = data.getSiteStat.metrics[0].siteId;
+
+        data.getSiteStat.metrics.forEach((metric) => {
+          PubSub.publish(`site-metrics-${siteId}`, {
+            type: metric.type,
+            value: metric.value,
+          });
+        });
+      },
+      onError: (error) => {
+        console.error('Error fetching site metrics:', error);
+      },
+    },
+  );
   const setupSubscriptions = (siteId: string) => {
     const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
     PubSub.unsubscribe(key);
@@ -116,6 +132,29 @@ export default function Page() {
       }
     });
   };
+  useEffect(() => {
+    if (network.id) {
+      subscriptionsInitialized.current = {};
+
+      if (sitesList.length > 0) {
+        sitesList.forEach((site) => {
+          const key = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
+          PubSub.unsubscribe(key);
+        });
+      }
+
+      refetchSites().then((res) => {
+        const sites = res.data.getSites.sites;
+        setSitesList(sites);
+
+        sites.forEach((site) => {
+          fetchSiteMetrics(site.id);
+          subscriptionsInitialized.current[site.id] = true;
+        });
+      });
+    }
+  }, [network.id]);
+
   const fetchSiteMetrics = (siteId: string) => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
@@ -135,21 +174,6 @@ export default function Page() {
     });
     setupSubscriptions(siteId);
   };
-
-  useEffect(() => {
-    const metricRequestToken = PubSub.subscribe('request-metrics-*', (msg) => {
-      const siteId = msg.split('-').pop() || '';
-      if (!subscriptionsInitialized.current[siteId]) {
-        fetchSiteMetrics(siteId);
-        subscriptionsInitialized.current[siteId] = true;
-      }
-    });
-
-    return () => {
-      PubSub.unsubscribe(metricRequestToken);
-    };
-  }, []);
-
   const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
     onCompleted: () => {
       refetchSites().then((res) => {
@@ -256,24 +280,6 @@ export default function Page() {
     };
   }, [network.id]);
 
-  useEffect(() => {
-    sitesList.forEach((site) => {
-      if (!subscriptionsInitialized.current[site.id]) {
-        fetchSiteMetrics(site.id);
-        subscriptionsInitialized.current[site.id] = true;
-      }
-    });
-  }, [sitesList]);
-  useEffect(() => {
-    return () => {
-      Object.keys(subscriptionsInitialized.current).forEach((siteId) => {
-        PubSub.unsubscribe(
-          `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`,
-        );
-      });
-    };
-  }, []);
-
   const handleCloseSiteConfig = () => {
     setSite(SITE_INIT);
     setOpenSiteConfig(false);
@@ -340,7 +346,7 @@ export default function Page() {
             My sites
           </Typography>
           <SitesWrapper
-            loading={networksLoading}
+            loading={sitesLoading || networksLoading || metricsLoading}
             sites={sitesList}
             handleSiteNameUpdate={handleSiteNameUpdate}
           />
