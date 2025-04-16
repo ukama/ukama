@@ -167,7 +167,8 @@ type PostPkgToSimReq struct {
 }
 
 type AddPkgToSimReq struct {
-	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	// SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
 	StartDate string `example:"" json:"start_date" validate:"required"`
 }
