@@ -203,6 +203,7 @@ func (s *Server) handleNodeOn(nodeID ukama.NodeID, profile string) error {
 		s.coroutines[nodeID.String()] = updateChan
 
 		logger.Infof("Starting new coroutine for node %s", nodeID.String())
+		utils.PushNodeOnlineViaREST(s.amqpConfig, s.orgName, nodeID.String(), nil)
 		go utils.Worker(nodeID.String(), updateChan, config.WMessage{
 			NodeId:   nodeID.String(),
 			Profile:  cenums.ParseProfileType(profile),
@@ -217,6 +218,7 @@ func (s *Server) handleNodeOn(nodeID ukama.NodeID, profile string) error {
 
 func (s *Server) handleNodeOff(nodeID ukama.NodeID, profile string, scenarioType cenums.SCENARIOS) error {
 	logger.Infof("Shutting down coroutine for node %s", nodeID.String())
+	utils.PushNodeOffViaREST(s.amqpConfig, s.orgName, nodeID.String(), nil)
 	updateChan, exists := s.coroutines[nodeID.String()]
 	if !exists {
 		return fmt.Errorf("coroutine not found for node %s", nodeID.String())

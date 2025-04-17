@@ -205,17 +205,16 @@ func PushNodeRFOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusSe
 }
 
 func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
-	route := getRoutingKey(orgName).SetAction("off").SetObject("node").MustBuild()
+	route := getRoutingKey(orgName).SetAction("offline").SetObject("node").MustBuild()
 	evt := &epb.NodeOfflineEvent{
 		NodeId: nodeId,
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
-		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
 func PushNodeOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
-	route := getRoutingKey(org).SetAction("off").SetObject("node").MustBuild()
+	route := getRoutingKey(org).SetAction("offline").SetObject("node").MustBuild()
 
 	msg := epb.NodeOfflineEvent{
 		NodeId: nodeId,
