@@ -542,7 +542,10 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Once()
+
 		mailerClient.On("SendEmail", mock.MatchedBy(func(req cnotif.SendEmailReq) bool {
 			return req.To[0] == "test@example.com"
 		})).Return(nil).Once()
@@ -1102,7 +1105,9 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			},
 			mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)

@@ -352,12 +352,16 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		log.Errorf(eventPublishErrorMsg, evt, route, err)
 	}
 
-	simsCount, _, _, _, err := s.simRepo.GetSimMetrics()
+	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
-		log.Errorf("Failed to get Sims counts: %s", err.Error())
+		log.Errorf("Error while collecting total sims count metric: %v", err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSubscribers,
+	simsCount := len(sims)
+
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
 		float64(simsCount), map[string]string{"network": req.NetworkId, "org": s.orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
@@ -628,10 +632,14 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	_, _, _, terminatedCount, err := s.simRepo.GetSimMetrics()
+	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
 	if err != nil {
-		log.Errorf("Failed to get terminated sim counts: %s", err.Error())
+		log.Errorf("Error while collecting terminated sims count metric: %v", err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
+
+	terminatedCount := len(sims)
 
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
 		float64(terminatedCount), map[string]string{"org": s.orgId}, pkg.SystemName)
@@ -1119,10 +1127,14 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	_, activeCount, _, _, err := s.simRepo.GetSimMetrics()
+	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
-		log.Errorf("Failed to get activated Sims counts: %s", err.Error())
+		log.Errorf("Error while collecting active sims count metric: %v", err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
+
+	activeCount := len(sims)
 
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
 		float64(activeCount), map[string]string{"org": s.orgId}, pkg.SystemName)
@@ -1192,10 +1204,14 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	_, _, inactiveCount, _, err := s.simRepo.GetSimMetrics()
+	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
-		log.Errorf("Failed to get inactive Sim counts: %s", err.Error())
+		log.Errorf("Error while collecting inactive sims count metric: %v", err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
 	}
+
+	inactiveCount := len(sims)
 
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
 		float64(inactiveCount), map[string]string{"org": s.orgId}, pkg.SystemName)
