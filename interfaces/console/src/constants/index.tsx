@@ -39,8 +39,8 @@ export const NODE_ACTIONS_BUTTONS = [
     name: 'Restart',
     consent: 'Are you sure you want to restart node?',
   },
+  { id: 'node-rf-off', name: 'Turn RF Off' },
   // { id: 'node-on-off', name: 'Turn Node Off' },
-  // { id: 'node-rf-off', name: 'Turn RF Off' },
 ];
 
 export const SITE_CONFIG_STEPS = [

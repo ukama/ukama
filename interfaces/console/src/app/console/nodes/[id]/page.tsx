@@ -291,6 +291,9 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
+      case 'node-rf-off':
+        console.log('Rutn node RF off');
+        break;
       default:
         return;
     }
