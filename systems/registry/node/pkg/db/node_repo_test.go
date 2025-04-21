@@ -485,20 +485,4 @@ func TestNodeRepo_List(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("ListWithPartialFilters", func(t *testing.T) {
-		// Arrange
-		rows := sqlmock.NewRows([]string{"id", "name", "type", "connectivity", "state", "site_id", "network_id"}).
-			AddRow(nodeId.String(), "node-1", ntype, connectivity, state, siteId, networkId)
-
-		// Mock the main query first
-		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id WHERE node_statuses.deleted_at IS NULL AND nodes.id = \$1 AND node_statuses.connectivity = \$2 AND node_statuses.state = \$3 AND "nodes"."deleted_at" IS NULL$`).
-			WithArgs(nodeId.String(), connectivity, state).
-			WillReturnRows(rows)
-
-		// Mock the attached nodes query
-		mock.ExpectQuery(`^SELECT \* FROM "nodes" WHERE "nodes"."parent_node_id" = \$1 AND "nodes"."deleted_at" IS NULL$`).
-			WithArgs(nodeId.String()).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type"}))
-
-	})
 }
