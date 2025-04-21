@@ -17,12 +17,17 @@ import "google/protobuf/timestamp.proto";
 package ukama.registry.node.v1;
 
 service NodeService {
+    /** Deprecated */
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc GetNodesForSite(GetBySiteRequest) returns (GetBySiteResponse);
     rpc GetNodesForNetwork(GetByNetworkRequest) returns (GetByNetworkResponse);
     rpc GetNodesByState(GetNodesByStateRequest) returns (GetNodesResponse);
+    /** End of Deprecated */
+    
+    // List API is used for getting nodes by nodeId, siteId, networkId, connectivity, state, type
+    rpc List(ListRequest) returns (ListResponse);
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
@@ -43,6 +48,18 @@ message AddNodeResponse{
     Node node = 1;
 }
 
+message ListRequest{
+    string nodeId = 1 [json_name = "node_id"]; 
+    string siteId = 2 [json_name = "site_id"];
+    string networkId = 3 [json_name = "network_id"];
+    ukama.common.v1.NodeConnectivity connectivity = 4;
+    ukama.common.v1.NodeState state = 5; 
+    string type = 6;
+}
+
+message ListResponse{
+   repeated Node nodes = 1;
+}
 
 message GetNodeRequest{
     string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
