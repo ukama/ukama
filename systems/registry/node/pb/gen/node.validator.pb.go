@@ -7,9 +7,9 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	_ "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -29,6 +29,19 @@ func (this *AddNodeResponse) Validate() error {
 	if this.Node != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+		}
+	}
+	return nil
+}
+func (this *ListRequest) Validate() error {
+	return nil
+}
+func (this *ListResponse) Validate() error {
+	for _, item := range this.Nodes {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Nodes", err)
+			}
 		}
 	}
 	return nil

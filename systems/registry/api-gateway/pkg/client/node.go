@@ -130,6 +130,18 @@ func (n *Node) GetNodes() (*pb.GetNodesResponse, error) {
 	return res, nil
 }
 
+func (n *Node) List(req *pb.ListRequest) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+	log.Infof("State: %v, Connectivity: %v", req.State, req.Connectivity)
+	res, err := n.client.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 func (n *Node) GetNodesByState(connectivity, state string) (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
