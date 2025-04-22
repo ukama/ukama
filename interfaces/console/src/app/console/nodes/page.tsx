@@ -7,9 +7,8 @@
  */
 'use client';
 import {
-  NodeConnectivityEnum,
   NodeStateEnum,
-  useGetNodesByStateLazyQuery,
+  useGetNodesLazyQuery,
   useGetSitesLazyQuery,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
@@ -36,19 +35,13 @@ export default function Page() {
       fetchPolicy: 'cache-first',
     });
 
-  const [getNodesByState, { data: nodesData, loading: nodesLoading }] =
-    useGetNodesByStateLazyQuery({
+  const [getNodes, { data: nodesData, loading: nodesLoading }] =
+    useGetNodesLazyQuery({
       fetchPolicy: 'cache-and-network',
-      variables: {
-        data: {
-          connectivity: NodeConnectivityEnum.Online,
-          state: NodeStateEnum.Configured,
-        },
-      },
       onCompleted: async (data) => {
-        if (data?.getNodesByState.nodes.length > 0) {
+        if (data?.getNodes.nodes.length > 0) {
           const np: TNodePoolData[] = [];
-          const nodes = data.getNodesByState.nodes.filter(
+          const nodes = data.getNodes.nodes.filter(
             (node) => node.site.networkId === network.id,
           );
           if (nodes.length === 0) return;
@@ -88,10 +81,9 @@ export default function Page() {
           data: { networkId: network.id },
         },
       });
-      getNodesByState({
+      getNodes({
         variables: {
           data: {
-            connectivity: NodeConnectivityEnum.Online,
             state: NodeStateEnum.Configured,
           },
         },
@@ -116,7 +108,7 @@ export default function Page() {
     } else if (search.length === 0) {
       setNodes(pool);
     }
-  }, [search, nodesData?.getNodesByState.nodes]);
+  }, [search, nodesData?.getNodes.nodes]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);

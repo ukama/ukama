@@ -92,6 +92,28 @@ export class Nodes {
 
 @ArgsType()
 @InputType()
+export class NodesFilterInput {
+  @Field({ nullable: true })
+  id?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
+
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  type?: NODE_TYPE;
+
+  @Field({ nullable: true })
+  state?: NODE_STATE;
+
+  @Field({ nullable: true })
+  connectivity?: NODE_CONNECTIVITY;
+}
+
+@ArgsType()
+@InputType()
 export class NodeInput {
   @Field()
   id: string;

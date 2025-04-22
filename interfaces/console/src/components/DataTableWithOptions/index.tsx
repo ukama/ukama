@@ -91,7 +91,8 @@ const CellValueByType = ({
         <Chip
           sx={{
             p: 1,
-            backgroundColor: colors.primaryLight,
+            backgroundColor:
+              row[type] === 'Online' ? colors.primaryLight : colors.dullRed,
             color: (theme) => theme.palette.text.primary,
           }}
           label={row[type]}

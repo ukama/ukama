@@ -41,8 +41,8 @@ query GetNode($data: NodeInput!) {
   }
 }
 
-query GetNodes {
-  getNodes {
+query GetNodes($data: NodesFilterInput!) {
+  getNodes(data: $data) {
     nodes {
       ...node
     }
