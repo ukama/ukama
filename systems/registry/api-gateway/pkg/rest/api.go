@@ -91,8 +91,8 @@ type DetachNodeRequest struct {
 type ListNodesRequest struct {
 	NetworkId    string `json:"network_id" query:"network_id"`
 	SiteId       string `json:"site_id" query:"site_id"`
-	Connectivity string `default:"none" json:"connectivity,omitempty" validate:"eq=none|eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" enums:"none,unknown,online,high,offline"`
-	State        string `default:"none" json:"state,omitempty" validate:"eq=none|eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" enums:"none,unknown,configured,operational,faulty"`
+	Connectivity string `json:"connectivity,omitempty" validate:"omitempty,eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" enums:"unknown,online,high,offline"`
+	State        string `json:"state,omitempty" validate:"omitempty,eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" enums:"unknown,configured,operational,faulty"`
 	NodeId       string `json:"node_id" query:"node_id"`
 	Type         string `json:"type" query:"type"`
 }
