@@ -16,7 +16,7 @@ import { useAppContext } from '@/context';
 import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
-import { Box, Paper } from '@mui/material';
+import { Paper, Stack } from '@mui/material';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
@@ -118,15 +118,14 @@ const Page = () => {
           height: '100%',
         }}
       >
-        <Box sx={{ width: '100%', height: '100%' }}>
+        <Stack sx={{ width: '100%', height: '100%' }} spacing={4}>
           <PageContainerHeader
             search={search}
             title={'My node pool'}
             handleButtonAction={() => {}}
-            subtitle={'0'}
+            subtitle={data.length.toString()}
             onSearchChange={(e: string) => setSearch(e)}
           />
-          <br />
           {data.length === 0 ? (
             <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
           ) : (
@@ -137,7 +136,7 @@ const Page = () => {
               hyperlinkPrefix={'/console/nodes/'}
             />
           )}
-        </Box>
+        </Stack>
       </Paper>
     </LoadingWrapper>
   );

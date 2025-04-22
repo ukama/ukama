@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import React from 'react';
+import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/BackButton';
 import { useAppContext } from '@/context';
@@ -23,10 +23,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { OverridableComponent } from '@mui/material/OverridableComponent';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { OverridableComponent } from '@mui/material/OverridableComponent';
-import { useGetNetworksQuery } from '@/client/graphql/generated';
+import React from 'react';
 
 interface MenuItemProps {
   id: string;
@@ -158,7 +158,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   return (
     <Container maxWidth={'xl'} sx={{ my: { xs: 2, md: 8 } }}>
       <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>
-        <Stack direction="row" spacing={10} alignItems="center">
+        <Stack direction="row" spacing={14} alignItems="center">
           <BackButton title="BACK TO CONSOLE" />
           <Typography
             sx={{

@@ -215,7 +215,7 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
 
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
-  { id: 'type', label: 'Type', minWidth: 180 },
+  { id: 'type', label: 'Type', minWidth: 120 },
   { id: 'connectivity', label: 'Connectivity', minWidth: 120 },
   {
     id: 'state',
@@ -225,7 +225,7 @@ export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
       isSortable: true,
     },
   },
-  { id: 'site', label: 'Site', minWidth: 180 },
+  { id: 'site', label: 'Site', minWidth: 120 },
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
 
