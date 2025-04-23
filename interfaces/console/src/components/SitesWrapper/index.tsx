@@ -50,8 +50,7 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
   handleConfigureNode,
 }) => {
   const showEmptyState =
-    sites?.length === 0 || (unassignedNodes?.length === 0 && !loading);
-
+    sites?.length === 0 && unassignedNodes?.length === 0 && !loading;
   if (showEmptyState) {
     return (
       <Box
@@ -92,13 +91,6 @@ const SitesWrapper: React.FC<SitesWrapperProps> = ({
       {sites && sites.length > 0 && (
         <LoadingWrapper isLoading={loading} height="auto">
           <Box sx={{ padding: '10px' }}>
-            <Typography
-              variant="subtitle1"
-              color="initial"
-              sx={{ paddingLeft: '12px', mb: 2, fontWeight: 'bold' }}
-            >
-              My Sites
-            </Typography>
             <Grid container spacing={2}>
               {sites.map((site) => (
                 <Grid item xs={12} md={4} lg={4} key={site.id}>

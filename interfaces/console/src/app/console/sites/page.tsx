@@ -20,15 +20,13 @@ import {
   Stats_Type,
   useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
-import { formatISO } from 'date-fns';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -58,13 +56,9 @@ const SITE_INIT = {
 export default function Page() {
   const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const [componentsList, setComponentsList] = useState<any[]>([]);
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
     useAppContext();
-  const [openSiteConfig, setOpenSiteConfig] = useState(false);
-  const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
@@ -85,7 +79,8 @@ export default function Page() {
       setSitesList(sites);
     },
   });
-  const { loading: nodesLoading } = useGetNodesQuery({
+
+  const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
     onCompleted: async (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = [];
@@ -117,6 +112,12 @@ export default function Page() {
       });
     },
   });
+  useEffect(() => {
+    if (network.id) {
+      refetchSites();
+      refetchNodes();
+    }
+  }, [network.id, refetchSites, refetchNodes]);
   const [
     getSiteStatMetrics,
     { data: statData, loading: statLoading, variables: statVar },
@@ -211,16 +212,6 @@ export default function Page() {
       });
     },
   });
-
-  const handleCloseSiteConfig = () => {
-    setSite(SITE_INIT);
-    setOpenSiteConfig(false);
-  };
-
-  const handleSiteConfiguration = (values: TSiteForm) => {
-    setSite(values);
-    setOpenSiteConfig(false);
-  };
 
   const handleSiteNameUpdate = (siteId: string, siteName: string) => {
     setCurrentSite((prevState) => ({
@@ -344,7 +335,7 @@ export default function Page() {
             My sites
           </Typography>
           <SitesWrapper
-            loading={statLoading}
+            loading={statLoading || nodesLoading}
             sites={sitesList}
             siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
             handleSiteNameUpdate={handleSiteNameUpdate}
@@ -353,15 +344,6 @@ export default function Page() {
           />
         </Stack>
       </Paper>
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={false}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
       <EditSiteDialog
         open={editSitedialogOpen}
         siteId={currentSite.siteId}
