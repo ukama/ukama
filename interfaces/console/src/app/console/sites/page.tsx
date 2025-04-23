@@ -8,8 +8,6 @@
 'use client';
 
 import {
-  SiteDto,
-  useGetNetworksQuery,
   useGetSitesQuery,
   useUpdateSiteMutation,
   useGetNodeStateLazyQuery,
@@ -23,14 +21,12 @@ import {
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
-import { TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-
 import {
   CHECK_SITE_FLOW,
   INSTALLATION_FLOW,
@@ -39,23 +35,11 @@ import {
   STAT_STEP_29,
 } from '@/constants';
 import { setQueryParam } from '@/utils';
-
-const SITE_INIT = {
-  switch: '',
-  power: '',
-  access: '',
-  backhaul: '',
-  address: '',
-  spectrum: '',
-  siteName: '',
-  latitude: NaN,
-  longitude: NaN,
-  network: '',
-};
+import LoadingWrapper from '@/components/LoadingWrapper';
+import colors from '@/theme/colors';
 
 export default function Page() {
   const router = useRouter();
-  const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
     useAppContext();
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
@@ -69,18 +53,23 @@ export default function Page() {
     siteId: '',
   });
 
-  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
+  const {
+    data: sitesData,
+    refetch: refetchSites,
+    loading: sitesLoading,
+  } = useGetSitesQuery({
+    fetchPolicy: 'no-cache',
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
     },
     onCompleted: (res) => {
-      const sites = res.getSites.sites;
-      setSitesList(sites);
+      refetchNodes();
     },
   });
 
   const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
+    fetchPolicy: 'no-cache',
     onCompleted: async (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = [];
@@ -112,41 +101,35 @@ export default function Page() {
       });
     },
   });
-  useEffect(() => {
-    if (network.id) {
-      refetchSites();
-      refetchNodes();
-    }
-  }, [network.id, refetchSites, refetchNodes]);
-  const [
-    getSiteStatMetrics,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        data.getSiteStat.metrics.forEach((m) => {
-          console.log(m.type);
-          console.log(m.value);
-        });
 
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+  const [getSiteStatMetrics, { data: statData, variables: statVar }] =
+    useGetSiteStatLazyQuery({
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getSiteStat.metrics.length > 0) {
+          // data.getSiteStat.metrics.forEach((m) => {
+          //   console.log(m.type);
+          //   console.log(m.value);
+          // });
 
-        MetricStatBySiteSubscription({
-          key: sKey,
-          nodeIds: [],
-          userId: user.id,
-          siteIds: sitesList.map((site) => site.id),
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Site,
-          from: statVar?.data.from ?? 0,
-        });
-        PubSub.subscribe(sKey, handleStatSubscription);
-      }
-    },
-  });
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+
+          MetricStatBySiteSubscription({
+            key: sKey,
+            nodeIds: [],
+            userId: user.id,
+            siteIds: sitesData?.getSites?.sites?.map((site) => site.id) ?? [],
+            url: env.METRIC_URL,
+            orgName: user.orgName,
+            type: Stats_Type.Site,
+            from: statVar?.data.from ?? 0,
+          });
+          PubSub.subscribe(sKey, handleStatSubscription);
+        }
+      },
+    });
+
   const handleStatSubscription = (_: any, data: string) => {
     try {
       const parsedData = JSON.parse(data);
@@ -154,16 +137,18 @@ export default function Page() {
       const { msg, value, type, success, siteId } =
         parsedData.data.getSiteMetricStatSub;
 
-      if (success) {
-        PubSub.publish(`stat-${type}`, { value, siteId });
+      const allowedMetricTypes = [
+        'site_uptime_seconds',
+        'battery_percentage',
+        'battery_charge_percentage',
+        'backhaul_speed',
+      ];
 
-        if (siteId) {
-          const siteTopic = `site-metrics-${siteId}`;
-          console.log(`Publishing to site topic ${siteTopic}`);
-          PubSub.publish(siteTopic, {
-            metrics: [{ type, value }],
-          });
-        }
+      if (success && siteId && allowedMetricTypes.includes(type)) {
+        const siteTopic = `site-metrics-${siteId}`;
+        PubSub.publish(siteTopic, {
+          metrics: [{ type, value }],
+        });
       }
     } catch (error) {
       console.error('Error handling subscription data:', error);
@@ -171,9 +156,7 @@ export default function Page() {
   };
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
-      refetchSites().then((res) => {
-        setSitesList(res.data.getSites.sites);
-      });
+      refetchSites();
       setSnackbarMessage({
         id: 'update-site-success',
         message: 'Site updated successfully!',
@@ -184,28 +167,6 @@ export default function Page() {
     onError: (error) => {
       setSnackbarMessage({
         id: 'update-site-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
-  const { data: networks, loading: networksLoading } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (res) => {
-      if (res.getNetworks.networks.length === 0) {
-        setSnackbarMessage({
-          id: 'no-network-msg',
-          message: 'Please create a network first.',
-          type: 'warning' as AlertColor,
-          show: true,
-        });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -238,20 +199,22 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (sitesList.length === 0) return;
+    if (sitesData?.getSites.sites?.length === 0) return;
 
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
-    const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
+    const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
+
+    PubSub.unsubscribe(sKey);
 
     getSiteStatMetrics({
       variables: {
         data: {
-          to: to,
-          from: from,
+          to,
+          from,
           userId: user.id,
           nodeIds: [],
-          siteIds: sitesList.map((site) => site.id),
+          siteIds: sitesData?.getSites?.sites.map((site) => site.id),
           step: STAT_STEP_29,
           orgName: user.orgName,
           withSubscription: true,
@@ -260,17 +223,14 @@ export default function Page() {
       },
     });
 
-    const currentSKey = sKey;
-
     return () => {
-      console.log('Unsubscribing from:', currentSKey);
-      PubSub.unsubscribe(currentSKey);
+      PubSub.unsubscribe(sKey);
     };
-  }, [sitesList, user.id, user.orgName]);
+  }, [sitesData]);
   const [getNodeState] = useGetNodeStateLazyQuery({
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {},
+    fetchPolicy: 'no-cache',
   });
+
   const handleConfigureNode = async (nodeId: string) => {
     const node = unassignedNodes.find((n) => n.id === nodeId);
 
@@ -330,19 +290,32 @@ export default function Page() {
           height: 'calc(100vh - 212px)',
         }}
       >
-        <Stack spacing={2} direction={'column'} height="100%">
-          <Typography variant="h6" color="initial" sx={{ paddingLeft: '12px' }}>
-            My sites
-          </Typography>
-          <SitesWrapper
-            loading={statLoading || nodesLoading}
-            sites={sitesList}
-            siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
-            handleSiteNameUpdate={handleSiteNameUpdate}
-            handleConfigureNode={handleConfigureNode}
-            unassignedNodes={unassignedNodes}
-          />
-        </Stack>
+        <LoadingWrapper
+          radius="small"
+          width={'100%'}
+          isLoading={nodesLoading || sitesLoading}
+          cstyle={{
+            backgroundColor: false ? colors.white : 'transparent',
+          }}
+        >
+          <Stack spacing={2} direction={'column'} height="100%">
+            <Typography
+              variant="h6"
+              color="initial"
+              sx={{ paddingLeft: '12px' }}
+            >
+              My sites
+            </Typography>
+            <SitesWrapper
+              loading={nodesLoading || sitesLoading}
+              sites={sitesData?.getSites.sites ?? []}
+              siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
+              handleSiteNameUpdate={handleSiteNameUpdate}
+              handleConfigureNode={handleConfigureNode}
+              unassignedNodes={unassignedNodes}
+            />
+          </Stack>
+        </LoadingWrapper>
       </Paper>
       <EditSiteDialog
         open={editSitedialogOpen}

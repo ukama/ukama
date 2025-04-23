@@ -46,7 +46,6 @@ export default async function MetricStatBySiteSubscription({
   nodeIds,
   orgName,
 }: IMetricStatBySiteSubscription) {
-  // Set up headers
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
   myHeaders.append('Connection', 'keep-alive');
@@ -64,10 +63,8 @@ export default async function MetricStatBySiteSubscription({
   const controller = new AbortController();
   const signal = controller.signal;
 
-  // Create a properly encoded JSON array of siteIds
   const siteIdsParam = encodeURIComponent(JSON.stringify(siteIds));
 
-  // Construct URL with nodeIds if present
   let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteIds%22%3A${siteIdsParam}%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}`;
 
   if (nodeIds && nodeIds.length > 0) {
@@ -113,23 +110,19 @@ export default async function MetricStatBySiteSubscription({
 
       buffer += decoder.decode(value, { stream: true });
 
-      // Process buffer for complete SSE events (separated by \n\n)
       let eventBoundary = buffer.indexOf('\n\n');
       while (eventBoundary !== -1) {
         const eventStr = buffer.slice(0, eventBoundary).trim();
-        buffer = buffer.slice(eventBoundary + 2); // Move past this event
+        buffer = buffer.slice(eventBoundary + 2);
 
-        // Skip heartbeat events
         if (eventStr !== ':') {
           const pevent = parseEvent(eventStr);
 
           if (pevent.data) {
-            // Simply publish the data to the subscription key
             PubSub.publish(key, pevent.data);
           }
         }
 
-        // Look for next event boundary
         eventBoundary = buffer.indexOf('\n\n');
       }
     }

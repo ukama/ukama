@@ -156,6 +156,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
               'value' in data &&
               data.value !== undefined
             ) {
+              // Handle single metric
               const metricType = data.type;
               const metricValue = extractMetricValue(data.value);
               setMetrics((prev) => {
@@ -170,35 +171,8 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         },
       );
 
-      const statTopics = [
-        'site_uptime_seconds',
-        'battery_charge_percentage',
-        'backhaul_speed',
-      ];
-      const statTokens = statTopics.map((metricType) => {
-        const topic = `stat-${metricType}`;
-        return PubSub.subscribe(topic, (_, data) => {
-          if (!data || typeof data !== 'object') return;
-          if ('siteId' in data && data.siteId && data.siteId !== siteId) return;
-          let metricValue;
-          if ('value' in data) {
-            metricValue = extractMetricValue(data.value);
-          } else {
-            metricValue = extractMetricValue(data);
-          }
-          setMetrics((prev) => {
-            const newState = { ...prev };
-            newState[metricType] = metricValue;
-            hasLiveData.current[metricType] = true;
-            updateCount.current += 1;
-            return newState;
-          });
-        });
-      });
-
       return () => {
         PubSub.unsubscribe(token);
-        statTokens.forEach((token) => PubSub.unsubscribe(token));
         hasLiveData.current = {};
       };
     }, [siteId]);
@@ -336,7 +310,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           </Box>
 
           <Box display="flex" mt={3} gap={4}>
-            {/* User Count */}
             <Box display="flex" alignItems="center" gap={1}>
               {loading || userCount === undefined || userCount === null ? (
                 <Skeleton width={24} height={24} variant="rectangular" />
@@ -352,7 +325,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
               </Typography>
             </Box>
 
-            {/* Connection Status */}
             <Box display="flex" alignItems="center" gap={1}>
               {loading || connectionValue === null ? (
                 <>
@@ -375,7 +347,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
               )}
             </Box>
 
-            {/* Battery Status */}
             <Box display="flex" alignItems="center" gap={1}>
               {loading || batteryLevel === null ? (
                 <>
@@ -402,7 +373,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
               )}
             </Box>
 
-            {/* Signal Status */}
             <Box display="flex" alignItems="center" gap={1}>
               {loading || signalLevel === null ? (
                 <>
