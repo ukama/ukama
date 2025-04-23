@@ -12,7 +12,7 @@ import {
   NodeConnectivityEnum,
   NodeStateEnum,
   NodeTypeEnum,
-  useGetNodesByStateQuery,
+  useGetNodesQuery,
   useRestartNodeMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
@@ -85,7 +85,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
 
-  const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
+  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
     skip: !id,
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -95,9 +95,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
       },
     },
     onCompleted: (data) => {
-      if (data.getNodesByState.nodes.length > 0) {
-        const node =
-          data.getNodesByState.nodes.find((n) => n.id === id) ?? undefined;
+      if (data.getNodes.nodes.length > 0) {
+        const node = data.getNodes.nodes.find((n) => n.id === id) ?? undefined;
         setSelectedNode(node);
       }
     },
@@ -341,7 +340,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         handleNodeSelected={handleNodeSelected}
         nodeActionOptions={NODE_ACTIONS_BUTTONS}
         handleNodeActionClick={handleNodeActionClick}
-        nodes={nodesData?.getNodesByState.nodes ?? []}
+        nodes={nodesData?.getNodes.nodes ?? []}
       />
 
       <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>

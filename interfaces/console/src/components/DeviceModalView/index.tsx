@@ -10,7 +10,7 @@ import { Box } from '@mui/material';
 import Image from 'next/image';
 
 interface IDeviceModalView {
-  size: number;
+  size?: number;
   image: string;
   nodeType: string | undefined;
 }

@@ -49,22 +49,6 @@ query GetNodes($data: NodesFilterInput!) {
   }
 }
 
-query GetNodesByState($data: GetNodesByStateInput!) {
-  getNodesByState(data: $data) {
-    nodes {
-      ...node
-    }
-  }
-}
-
-query getNodesByNetwork($networkId: String!) {
-  getNodesByNetwork(networkId: $networkId) {
-    nodes {
-      ...node
-    }
-  }
-}
-
 mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {
     id
@@ -124,14 +108,6 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
       notes
     }
     type
-  }
-}
-
-query GetNodesLocation {
-  getNodesLocation {
-    nodes {
-      ...node
-    }
   }
 }
 
