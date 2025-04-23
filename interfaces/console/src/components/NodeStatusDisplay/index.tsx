@@ -62,7 +62,14 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
                 </Typography>
               </Box>
 
-              <Typography variant="body1" sx={{ ml: 4, mb: 3 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  ml: 4,
+                  mb: 3,
+                  color: isNodeDown ? colors.red : colors.black70,
+                }}
+              >
                 {isNodeDown
                   ? 'Node is offline'
                   : `Node health has been up for ${duration(uptime)}`}

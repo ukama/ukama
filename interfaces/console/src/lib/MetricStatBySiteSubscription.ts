@@ -8,20 +8,18 @@
 import { Stats_Type } from '@/client/graphql/generated/subscriptions';
 import PubSub from 'pubsub-js';
 
-interface IMetricBySiteStatSubscription {
+interface IMetricStatBySiteSubscription {
   url: string;
   key: string;
   from: number;
-  siteId: string;
+  siteIds: string[];
   userId: string;
   orgName: string;
   type: Stats_Type;
   nodeIds?: string[];
 }
 
-const activeSubscriptions = new Map();
-
-function parseEvent(eventStr: any) {
+function parseEvent(eventStr: string) {
   const event: any = {};
   const lines = eventStr.split('\n');
 
@@ -38,29 +36,17 @@ function parseEvent(eventStr: any) {
   return event;
 }
 
-export function cancelSubscription(key: string) {
-  const controller = activeSubscriptions.get(key);
-  if (controller) {
-    controller.abort();
-    activeSubscriptions.delete(key);
-    console.log(`Cancelled subscription for key: ${key}`);
-    return true;
-  }
-  return false;
-}
-
 export default async function MetricStatBySiteSubscription({
   url,
   key,
   from,
   type,
   userId,
-  siteId,
+  siteIds,
   nodeIds,
   orgName,
-}: IMetricBySiteStatSubscription) {
-  cancelSubscription(key);
-
+}: IMetricStatBySiteSubscription) {
+  // Set up headers
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
   myHeaders.append('Connection', 'keep-alive');
@@ -78,94 +64,79 @@ export default async function MetricStatBySiteSubscription({
   const controller = new AbortController();
   const signal = controller.signal;
 
-  activeSubscriptions.set(key, controller);
+  // Create a properly encoded JSON array of siteIds
+  const siteIdsParam = encodeURIComponent(JSON.stringify(siteIds));
 
-  type SubSiteMetricsStatInput = {
-    siteId: string;
-    orgName: string;
-    type: Stats_Type;
-    userId: string;
-    from: number;
-    nodeIds?: string[];
-  };
-
-  const data: SubSiteMetricsStatInput = {
-    siteId,
-    orgName,
-    type,
-    userId,
-    from,
-  };
+  // Construct URL with nodeIds if present
+  let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteIds%22%3A${siteIdsParam}%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}`;
 
   if (nodeIds && nodeIds.length > 0) {
-    data.nodeIds = nodeIds;
+    const nodeIdsParam = encodeURIComponent(JSON.stringify(nodeIds));
+    fullUrl += `%2C%22nodeIds%22%3A${nodeIdsParam}`;
   }
 
-  const query =
-    'subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D';
-
-  const variables = encodeURIComponent(JSON.stringify({ data }));
-
-  const fullUrl = `${url}/graphql?query=${query}&variables=${variables}&operationName=SiteMetricStatSub&extensions=%7B%7D`;
+  fullUrl += `%7D%7D&operationName=SiteMetricStatSub&extensions=%7B%7D`;
 
   try {
-    const res = await fetch(fullUrl, { ...requestOptions, signal });
+    const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
+      (error) => {
+        if (error.name === 'AbortError') {
+          console.log('Fetch aborted');
+        } else {
+          console.error('Fetch error:', error);
+        }
+        return null;
+      },
+    );
 
-    if (!res || !res.body) {
-      console.error('Error: No response or response body');
-      activeSubscriptions.delete(key);
+    if (!res || !res.ok) {
+      console.error('Network response was not ok');
       return;
     }
 
-    const reader = res.body.getReader();
+    const reader = res.body?.getReader();
+    if (!reader) {
+      console.error('Could not get reader from response body');
+      return;
+    }
+
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
 
     while (true) {
-      try {
-        const { value, done } = await reader.read();
+      const { value, done } = await reader.read();
 
-        if (done) {
-          console.log(`Stream complete for key: ${key}`);
-          break;
-        }
+      if (done) {
+        console.log('Stream complete');
+        break;
+      }
 
-        buffer += decoder.decode(value, { stream: true });
+      buffer += decoder.decode(value, { stream: true });
 
-        let eventBoundary = buffer.indexOf('\n\n');
+      // Process buffer for complete SSE events (separated by \n\n)
+      let eventBoundary = buffer.indexOf('\n\n');
+      while (eventBoundary !== -1) {
+        const eventStr = buffer.slice(0, eventBoundary).trim();
+        buffer = buffer.slice(eventBoundary + 2); // Move past this event
 
-        while (eventBoundary !== -1) {
-          const eventStr = buffer.slice(0, eventBoundary).trim();
-          buffer = buffer.slice(eventBoundary + 2);
+        // Skip heartbeat events
+        if (eventStr !== ':') {
           const pevent = parseEvent(eventStr);
+
           if (pevent.data) {
+            // Simply publish the data to the subscription key
             PubSub.publish(key, pevent.data);
           }
-          eventBoundary = buffer.indexOf('\n\n');
         }
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.log(`Subscription for ${key} was aborted`);
-        } else {
-          console.error(`Error in subscription for ${key}:`, error);
-        }
-        break;
+
+        // Look for next event boundary
+        eventBoundary = buffer.indexOf('\n\n');
       }
     }
   } catch (error) {
-    if (
-      error &&
-      typeof error === 'object' &&
-      'name' in error &&
-      error.name === 'AbortError'
-    ) {
-      console.log(`Fetch for ${key} was aborted`);
-    } else {
-      console.error(`Fetch error for ${key}:`, error);
-    }
+    console.error('Error in subscription:', error);
   } finally {
-    if (activeSubscriptions.get(key) === controller) {
-      activeSubscriptions.delete(key);
-    }
+    // Clean up
+    controller.abort();
   }
 }

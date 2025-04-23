@@ -92,6 +92,15 @@ subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
     value
   }
 }
+subscription getSiteMetricByTabSub($data: SubSiteMetricByTabInput!) {
+  getSiteMetricByTabSub(data: $data) {
+    type
+    success
+    msg
+    siteId
+    value
+  }
+}
 
 query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {

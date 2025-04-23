@@ -13,6 +13,7 @@ import {
   Card,
   CardContent,
   Stack,
+  Skeleton,
 } from '@mui/material';
 import { subDays, addDays, format } from 'date-fns';
 import colors from '@/theme/colors';
@@ -22,15 +23,16 @@ interface DayData {
   date: Date;
   displayDate: string;
   percentage: number;
-  daysAgo: number;
+  daysAgo: number | null;
   isInstallDay: boolean;
 }
 
 interface SiteOverviewProps {
   installationDate: Date;
-  uptimePercentage: number;
-  siteUptimeSeconds: number;
+  uptimePercentage: number | null;
+  siteUptimeSeconds: number | null;
   includeFutureDays?: boolean;
+  isLoading: boolean;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
@@ -38,6 +40,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   uptimePercentage,
   siteUptimeSeconds,
   includeFutureDays = true,
+  isLoading,
 }) => {
   const isSameDay = (dateA: Date, dateB: Date) => {
     return (
@@ -70,7 +73,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   );
 
   const uptimeDays = useMemo(() => {
-    return siteUptimeSeconds / 86400;
+    return siteUptimeSeconds ? siteUptimeSeconds / 86400 : null;
   }, [siteUptimeSeconds]);
 
   const generateDaysData = useMemo(() => {
@@ -87,12 +90,12 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
       if (isFutureInstall) {
         percentage = 0;
       } else if (isInstallationToday) {
-        percentage = i === 0 ? uptimePercentage : 0;
+        percentage = i === 0 ? (uptimePercentage ?? 0) : 0;
       } else {
         const isPastOrEqualToInstall =
           date.getTime() >= installDate.getTime() ||
           isSameDay(date, installDate);
-        percentage = isPastOrEqualToInstall ? uptimePercentage : 0;
+        percentage = isPastOrEqualToInstall ? (uptimePercentage ?? 0) : 0;
       }
 
       result.push({
@@ -104,7 +107,12 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
       });
     }
 
-    if (includeFutureDays && isInstallationToday && uptimeDays > 1) {
+    if (
+      includeFutureDays &&
+      isInstallationToday &&
+      uptimeDays &&
+      uptimeDays > 1
+    ) {
       const futureDaysToShow = uptimeDays - 1;
       result.splice(60 - futureDaysToShow, futureDaysToShow);
 
@@ -116,7 +124,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         result.unshift({
           date,
           displayDate,
-          percentage: uptimePercentage,
+          percentage: uptimePercentage ?? 0,
           daysAgo,
           isInstallDay: false,
         });
@@ -138,7 +146,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   const nextThirtyDays = generateDaysData.slice(30, 60);
 
   const renderBar = (day: DayData, index: number) => {
-    const isFutureDay = day.daysAgo < 0;
+    const isFutureDay = (day.daysAgo ?? 0) < 0;
     let tooltipContent = `${day.displayDate}: ${day.percentage}% uptime`;
     if (day.isInstallDay) {
       tooltipContent += ' (Installation day)';
@@ -191,15 +199,23 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         <Typography variant="h6" sx={{ mb: 3 }}>
           Site overview
         </Typography>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            mb: 4,
-            color: uptimePercentage >= 99 ? colors.black70 : colors.redLight,
-          }}
-        >
-          {uptimePercentage}% uptime over {duration(siteUptimeSeconds)}
-        </Typography>
+
+        {isLoading || uptimePercentage == null ? (
+          <Skeleton variant="text" width="60" height={20} sx={{ mb: 2 }} />
+        ) : (
+          <Typography
+            variant="subtitle2"
+            sx={{
+              mb: 4,
+              color:
+                (uptimePercentage ?? 0) >= 99
+                  ? colors.black70
+                  : colors.redLight,
+            }}
+          >
+            {uptimePercentage}% uptime over {duration(siteUptimeSeconds ?? 0)}
+          </Typography>
+        )}
         <Stack direction="row" spacing={2} alignItems={'center'} sx={{ mb: 2 }}>
           <Stack direction={'row'} alignItems={'center'} spacing={1}>
             <Box

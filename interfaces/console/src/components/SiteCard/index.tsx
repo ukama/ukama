@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState, useRef, memo } from 'react';
 import PubSub from 'pubsub-js';
+import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
 
 interface SiteCardProps {
   siteId: string;
@@ -31,12 +32,54 @@ interface SiteCardProps {
   loading?: boolean;
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
   maxAddressLength?: number;
+  metricsData?: SiteMetricsStateRes;
+}
+
+interface SiteMetric {
+  type: string;
+  value: number | [number, number];
+}
+
+interface SiteMetricsState {
+  site_uptime_seconds: number | null;
+  battery_charge_percentage: number | null;
+  backhaul_speed: number | null;
+  [key: string]: number | null;
+}
+
+interface MetricsUpdateData {
+  metrics?: SiteMetric[] | null;
+  type?: string;
+  value?: number | [number, number];
+  siteId?: string;
+  nodeId?: string;
 }
 
 const truncateText = (text: string, maxLength: number): string => {
   if (!text || typeof text !== 'string') return '';
   if (text.length <= maxLength) return text;
   return `${text.substring(0, maxLength)}...`;
+};
+
+const getSiteMetricValue = (
+  metricId: string,
+  metricsData?: SiteMetricsStateRes,
+  siteId?: string,
+): number | null => {
+  if (!metricsData || !metricsData.metrics || !siteId) return null;
+
+  const metric = metricsData.metrics.find(
+    (m) => m.type === metricId && m.siteId === siteId,
+  );
+
+  return metric ? extractMetricValue(metric.value) : null;
+};
+
+const extractMetricValue = (value: any): number | null => {
+  if (Array.isArray(value) && value.length > 1) {
+    return typeof value[1] === 'number' ? value[1] : null;
+  }
+  return typeof value === 'number' ? value : null;
 };
 
 const SiteCard: React.FC<SiteCardProps> = memo(
@@ -48,15 +91,117 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     handleSiteNameUpdate,
     loading,
     maxAddressLength = 49,
+    metricsData,
   }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [metrics, setMetrics] = useState({
+    const [metrics, setMetrics] = useState<SiteMetricsState>({
       site_uptime_seconds: null,
       battery_charge_percentage: null,
       backhaul_speed: null,
     });
+    const updateCount = useRef(0);
+    const hasLiveData = useRef<Record<string, boolean>>({});
 
-    const subscriptionToken = useRef<string | null>(null);
+    useEffect(() => {
+      if (
+        metricsData &&
+        metricsData.metrics &&
+        metricsData.metrics.length > 0
+      ) {
+        const siteMetrics = metricsData.metrics.filter(
+          (metric) => metric.siteId === siteId,
+        );
+        if (siteMetrics.length > 0) {
+          setMetrics((prev) => {
+            const newMetrics = { ...prev };
+            siteMetrics.forEach((metric) => {
+              const metricType = metric.type;
+              const metricValue = extractMetricValue(metric.value);
+              if (!hasLiveData.current[metricType] && metricValue !== null) {
+                newMetrics[metricType] = metricValue;
+              }
+            });
+            updateCount.current += 1;
+            return newMetrics;
+          });
+        }
+      }
+    }, [metricsData, siteId]);
+
+    useEffect(() => {
+      const siteMetricsTopic = `site-metrics-${siteId}`;
+      const token = PubSub.subscribe(
+        siteMetricsTopic,
+        (_, data: MetricsUpdateData) => {
+          if (data && typeof data === 'object') {
+            if (
+              'metrics' in data &&
+              data.metrics &&
+              Array.isArray(data.metrics) &&
+              data.metrics.length > 0
+            ) {
+              setMetrics((prev) => {
+                const newMetrics = { ...prev };
+                data.metrics!.forEach((metric) => {
+                  const metricValue = extractMetricValue(metric.value);
+                  newMetrics[metric.type] = metricValue;
+                  hasLiveData.current[metric.type] = true;
+                });
+                updateCount.current += 1;
+                return newMetrics;
+              });
+            } else if (
+              'type' in data &&
+              data.type &&
+              'value' in data &&
+              data.value !== undefined
+            ) {
+              const metricType = data.type;
+              const metricValue = extractMetricValue(data.value);
+              setMetrics((prev) => {
+                const newState = { ...prev };
+                newState[metricType] = metricValue;
+                hasLiveData.current[metricType] = true;
+                updateCount.current += 1;
+                return newState;
+              });
+            }
+          }
+        },
+      );
+
+      const statTopics = [
+        'site_uptime_seconds',
+        'battery_charge_percentage',
+        'backhaul_speed',
+      ];
+      const statTokens = statTopics.map((metricType) => {
+        const topic = `stat-${metricType}`;
+        return PubSub.subscribe(topic, (_, data) => {
+          if (!data || typeof data !== 'object') return;
+          if ('siteId' in data && data.siteId && data.siteId !== siteId) return;
+          let metricValue;
+          if ('value' in data) {
+            metricValue = extractMetricValue(data.value);
+          } else {
+            metricValue = extractMetricValue(data);
+          }
+          setMetrics((prev) => {
+            const newState = { ...prev };
+            newState[metricType] = metricValue;
+            hasLiveData.current[metricType] = true;
+            updateCount.current += 1;
+            return newState;
+          });
+        });
+      });
+
+      return () => {
+        PubSub.unsubscribe(token);
+        statTokens.forEach((token) => PubSub.unsubscribe(token));
+        hasLiveData.current = {};
+      };
+    }, [siteId]);
 
     const displayAddress = loading
       ? ''
@@ -80,49 +225,49 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       window.location.href = `/console/sites/${siteId}`;
     };
 
-    useEffect(() => {
-      if (!siteId || loading) return;
+    const uptimeValue = getSiteMetricValue(
+      'site_uptime_seconds',
+      metricsData,
+      siteId,
+    );
+    const batteryValue = getSiteMetricValue(
+      'battery_charge_percentage',
+      metricsData,
+      siteId,
+    );
+    const backhaulValue = getSiteMetricValue(
+      'backhaul_speed',
+      metricsData,
+      siteId,
+    );
 
-      const token = PubSub.subscribe(
-        `site-metrics-${siteId}`,
-        (msg, { type, value }) => {
-          setMetrics((prev) => ({
-            ...prev,
-            [type]: value,
-          }));
-        },
-      );
+    const connectionValue =
+      metrics.site_uptime_seconds !== null
+        ? metrics.site_uptime_seconds
+        : uptimeValue;
 
-      subscriptionToken.current = token;
+    const batteryLevel =
+      metrics.battery_charge_percentage !== null
+        ? metrics.battery_charge_percentage
+        : batteryValue;
 
-      PubSub.publish(`request-metrics-${siteId}`, {});
-
-      return () => {
-        if (subscriptionToken.current) {
-          PubSub.unsubscribe(subscriptionToken.current);
-          subscriptionToken.current = null;
-        }
-      };
-    }, [siteId, loading]);
+    const signalLevel =
+      metrics.backhaul_speed !== null ? metrics.backhaul_speed : backhaulValue;
 
     const connectionStyles =
-      metrics.site_uptime_seconds !== null
-        ? getStatusStyles('uptime', metrics.site_uptime_seconds)
+      connectionValue !== null
+        ? getStatusStyles('uptime', connectionValue)
         : { icon: null, color: colors.darkGray };
 
     const batteryStyles =
-      metrics.battery_charge_percentage !== null
-        ? getStatusStyles('battery', metrics.battery_charge_percentage)
+      batteryLevel !== null
+        ? getStatusStyles('battery', batteryLevel)
         : { icon: null, color: colors.darkGray };
 
     const signalStyles =
-      metrics.backhaul_speed !== null
-        ? getStatusStyles('signal', metrics.backhaul_speed)
+      signalLevel !== null
+        ? getStatusStyles('signal', signalLevel)
         : { icon: null, color: colors.darkGray };
-
-    const isMetricAvailable = (metric: any) => {
-      return !loading && metric !== null;
-    };
 
     return (
       <Card
@@ -191,6 +336,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           </Box>
 
           <Box display="flex" mt={3} gap={4}>
+            {/* User Count */}
             <Box display="flex" alignItems="center" gap={1}>
               {loading || userCount === undefined || userCount === null ? (
                 <Skeleton width={24} height={24} variant="rectangular" />
@@ -206,82 +352,81 @@ const SiteCard: React.FC<SiteCardProps> = memo(
               </Typography>
             </Box>
 
+            {/* Connection Status */}
             <Box display="flex" alignItems="center" gap={1}>
-              {!isMetricAvailable(metrics.site_uptime_seconds) ? (
-                <Skeleton width={24} height={24} variant="circular" />
-              ) : (
-                connectionStyles.icon
-              )}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: connectionStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {!isMetricAvailable(metrics.site_uptime_seconds) ? (
+              {loading || connectionValue === null ? (
+                <>
+                  <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={60} />
-                ) : metrics.site_uptime_seconds !== null &&
-                  metrics.site_uptime_seconds <= 0 ? (
-                  'Offline'
-                ) : (
-                  'Online'
-                )}
-              </Typography>
+                </>
+              ) : (
+                <>
+                  {connectionStyles.icon}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: connectionStyles.color,
+                      display: { xs: 'none', sm: 'block' },
+                    }}
+                  >
+                    {connectionValue <= 0 ? 'Offline' : 'Online'}
+                  </Typography>
+                </>
+              )}
             </Box>
 
+            {/* Battery Status */}
             <Box display="flex" alignItems="center" gap={1}>
-              {!isMetricAvailable(metrics.battery_charge_percentage) ? (
-                <Skeleton width={24} height={24} variant="circular" />
-              ) : (
-                batteryStyles.icon
-              )}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: batteryStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {!isMetricAvailable(metrics.battery_charge_percentage) ? (
+              {loading || batteryLevel === null ? (
+                <>
+                  <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={70} />
-                ) : metrics.battery_charge_percentage !== null &&
-                  metrics.battery_charge_percentage < 20 ? (
-                  'Critical'
-                ) : metrics.battery_charge_percentage !== null &&
-                  metrics.battery_charge_percentage < 40 ? (
-                  'Low'
-                ) : (
-                  'Charged'
-                )}
-              </Typography>
+                </>
+              ) : (
+                <>
+                  {batteryStyles.icon}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: batteryStyles.color,
+                      display: { xs: 'none', sm: 'block' },
+                    }}
+                  >
+                    {batteryLevel < 20
+                      ? 'Critical'
+                      : batteryLevel < 40
+                        ? 'Low'
+                        : 'Charged'}
+                  </Typography>
+                </>
+              )}
             </Box>
 
+            {/* Signal Status */}
             <Box display="flex" alignItems="center" gap={1}>
-              {!isMetricAvailable(metrics.backhaul_speed) ? (
-                <Skeleton width={24} height={24} variant="circular" />
-              ) : (
-                signalStyles.icon
-              )}
-              <Typography
-                variant="body2"
-                sx={{
-                  color: signalStyles.color,
-                  display: { xs: 'none', sm: 'block' },
-                }}
-              >
-                {!isMetricAvailable(metrics.backhaul_speed) ? (
+              {loading || signalLevel === null ? (
+                <>
+                  <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={60} />
-                ) : metrics.backhaul_speed !== null &&
-                  metrics.backhaul_speed < 10 ? (
-                  'No signal'
-                ) : metrics.backhaul_speed !== null &&
-                  metrics.backhaul_speed < 70 ? (
-                  'Low signal'
-                ) : (
-                  'Strong'
-                )}
-              </Typography>
+                </>
+              ) : (
+                <>
+                  {signalStyles.icon}
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: signalStyles.color,
+                      display: { xs: 'none', sm: 'block' },
+                    }}
+                  >
+                    {signalLevel < 10
+                      ? 'No signal'
+                      : signalLevel < 70
+                        ? 'Low signal'
+                        : 'Strong'}
+                  </Typography>
+                </>
+              )}
             </Box>
           </Box>
         </CardContent>

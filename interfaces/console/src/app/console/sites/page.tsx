@@ -8,13 +8,13 @@
 'use client';
 
 import {
-  Component_Type,
   SiteDto,
-  useAddSiteMutation,
-  useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
   useGetSitesQuery,
   useUpdateSiteMutation,
+  useGetNodeStateLazyQuery,
+  useGetNodesQuery,
+  NodeStateEnum,
 } from '@/client/graphql/generated';
 import {
   Stats_Type,
@@ -30,10 +30,17 @@ import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { formatISO } from 'date-fns';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import PubSub from 'pubsub-js';
-import MetricStatBySiteSubscription, {
-  cancelSubscription,
-} from '@/lib/MetricStatBySiteSubscription';
-import { STAT_STEP_29 } from '@/constants';
+import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
+import {
+  CHECK_SITE_FLOW,
+  INSTALLATION_FLOW,
+  NETWORK_FLOW,
+  ONBOARDING_FLOW,
+  STAT_STEP_29,
+} from '@/constants';
+import { setQueryParam } from '@/utils';
 
 const SITE_INIT = {
   switch: '',
@@ -48,9 +55,8 @@ const SITE_INIT = {
   network: '',
 };
 
-const initializedSites = new Set();
-
 export default function Page() {
+  const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [componentsList, setComponentsList] = useState<any[]>([]);
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
@@ -58,15 +64,16 @@ export default function Page() {
   const [openSiteConfig, setOpenSiteConfig] = useState(false);
   const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
+  const pathname = usePathname();
+
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
     siteId: '',
   });
-
-  const pubSubTokens = useRef<Record<string, string>>({});
-
-  const [isInitializingSubscriptions, setIsInitializingSubscriptions] =
-    useState(false);
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
@@ -78,173 +85,89 @@ export default function Page() {
       setSitesList(sites);
     },
   });
+  const { loading: nodesLoading } = useGetNodesQuery({
+    onCompleted: async (res) => {
+      const allNodes = res.getNodes.nodes;
+      const unknownNodes = [];
 
-  const [getSiteMetrics, { loading: metricsLoading }] = useGetSiteStatLazyQuery(
-    {
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (!data?.getSiteStat?.metrics?.length) return;
-
-        const siteId = data.getSiteStat.metrics[0].siteId;
-
-        data.getSiteStat.metrics.forEach((metric) => {
-          if (metric && metric.type && metric.value !== undefined) {
-            PubSub.publish(`site-metrics-${siteId}`, {
-              type: metric.type,
-              value: metric.value,
-            });
-          }
+      for (const node of allNodes) {
+        const { data } = await getNodeState({
+          variables: { getNodeStateId: node.id },
         });
-      },
-      onError: (error) => {
-        console.error('Error fetching site metrics:', error);
-      },
-    },
-  );
 
-  const initializeSiteMetrics = (siteId: string) => {
-    if (initializedSites.has(siteId)) {
-      return;
-    }
+        const hasLocation = node.latitude !== 0 && node.longitude !== 0;
 
-    const to = getUnixTime();
-    const from = to - STAT_STEP_29;
-
-    getSiteMetrics({
-      variables: {
-        data: {
-          to,
-          siteId,
-          from,
-          userId: user.id,
-          step: STAT_STEP_29,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.Site,
-        },
-      },
-    });
-
-    setupSiteSubscription(siteId, from);
-
-    initializedSites.add(siteId);
-  };
-
-  const setupSiteSubscription = (siteId: string, from: number) => {
-    const subscriptionKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
-
-    cancelSubscription(subscriptionKey);
-    PubSub.unsubscribe(subscriptionKey);
-
-    MetricStatBySiteSubscription({
-      url: env.METRIC_URL,
-      key: subscriptionKey,
-      from,
-      siteId,
-      userId: user.id,
-      orgName: user.orgName,
-      type: Stats_Type.Site,
-    });
-
-    const token = PubSub.subscribe(subscriptionKey, (msg, data) => {
-      try {
-        const parsedData = JSON.parse(data);
-        const { value, type, success, siteId } =
-          parsedData.data.getSiteMetricStatSub;
-        if (success) {
-          PubSub.publish(`site-metrics-${siteId}`, { type, value: value[1] });
+        if (
+          (data?.getNodeState.currentState === NodeStateEnum.Unknown &&
+            (node.site.siteId === '' || node.site.siteId == null)) ||
+          !hasLocation
+        ) {
+          unknownNodes.push(node);
         }
-      } catch (error) {
-        console.error('Error handling metric update:', error);
-      }
-    });
-
-    pubSubTokens.current[subscriptionKey] = token;
-  };
-
-  const initializeAllSiteMetrics = () => {
-    if (!sitesList.length || !network.id || isInitializingSubscriptions) return;
-
-    setIsInitializingSubscriptions(true);
-
-    const batchSize = 3;
-    const processBatch = (startIndex: number) => {
-      const endIndex = Math.min(startIndex + batchSize, sitesList.length);
-
-      for (let i = startIndex; i < endIndex; i++) {
-        initializeSiteMetrics(sitesList[i].id);
       }
 
-      if (endIndex < sitesList.length) {
-        setTimeout(() => processBatch(endIndex), 500);
-      } else {
-        setIsInitializingSubscriptions(false);
-      }
-    };
-
-    processBatch(0);
-  };
-
-  const cleanupAllSubscriptions = () => {
-    Object.keys(pubSubTokens.current).forEach((key) => {
-      const token = pubSubTokens.current[key];
-      if (token) {
-        PubSub.unsubscribe(token);
-      }
-      cancelSubscription(key);
-    });
-
-    pubSubTokens.current = {};
-  };
-
-  useEffect(() => {
-    if (!network.id) return;
-
-    cleanupAllSubscriptions();
-    initializedSites.clear();
-
-    refetchSites().then(() => {});
-
-    getComponents({
-      variables: {
-        data: {
-          category: Component_Type.All,
-        },
-      },
-    });
-
-    return cleanupAllSubscriptions;
-  }, [network.id]);
-
-  useEffect(() => {
-    if (sitesList.length && network.id) {
-      initializeAllSiteMetrics();
-    }
-  }, [sitesList]);
-
-  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
-    onCompleted: () => {
-      refetchSites().then((res) => {
-        setSitesList(res.data.getSites.sites);
-      });
-      setSnackbarMessage({
-        id: 'add-site-success',
-        message: 'Site added successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
+      setUnassignedNodes(unknownNodes);
     },
     onError: (error) => {
       setSnackbarMessage({
-        id: 'add-site-error',
+        id: 'unassigned-nodes-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
       });
     },
   });
+  const [
+    getSiteStatMetrics,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getSiteStat.metrics.length > 0) {
+        data.getSiteStat.metrics.forEach((m) => {
+          console.log(m.type);
+          console.log(m.value);
+        });
 
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+
+        MetricStatBySiteSubscription({
+          key: sKey,
+          nodeIds: [],
+          userId: user.id,
+          siteIds: sitesList.map((site) => site.id),
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.Site,
+          from: statVar?.data.from ?? 0,
+        });
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
+    },
+  });
+  const handleStatSubscription = (_: any, data: string) => {
+    try {
+      const parsedData = JSON.parse(data);
+
+      const { msg, value, type, success, siteId } =
+        parsedData.data.getSiteMetricStatSub;
+
+      if (success) {
+        PubSub.publish(`stat-${type}`, { value, siteId });
+
+        if (siteId) {
+          const siteTopic = `site-metrics-${siteId}`;
+          console.log(`Publishing to site topic ${siteTopic}`);
+          PubSub.publish(siteTopic, {
+            metrics: [{ type, value }],
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error handling subscription data:', error);
+    }
+  };
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
       refetchSites().then((res) => {
@@ -260,22 +183,6 @@ export default function Page() {
     onError: (error) => {
       setSnackbarMessage({
         id: 'update-site-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
-  const [getComponents] = useGetComponentsByUserIdLazyQuery({
-    onCompleted: (res) => {
-      if (res.getComponentsByUserId) {
-        setComponentsList(res.getComponentsByUserId.components);
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'components-msg',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -313,23 +220,6 @@ export default function Page() {
   const handleSiteConfiguration = (values: TSiteForm) => {
     setSite(values);
     setOpenSiteConfig(false);
-    addSite({
-      variables: {
-        data: {
-          name: values.siteName,
-          power_id: values.power,
-          location: values.address,
-          access_id: values.access,
-          switch_id: values.switch,
-          latitude: values.latitude,
-          network_id: values.network,
-          longitude: values.longitude,
-          backhaul_id: values.backhaul,
-          spectrum_id: values.spectrum,
-          install_date: formatISO(new Date()),
-        },
-      },
-    });
   };
 
   const handleSiteNameUpdate = (siteId: string, siteName: string) => {
@@ -356,20 +246,89 @@ export default function Page() {
     setEditSitedialogOpen(false);
   };
 
-  const isLoading = useMemo(() => {
-    return (
-      sitesLoading ||
-      networksLoading ||
-      metricsLoading ||
-      isInitializingSubscriptions
-    );
-  }, [
-    sitesLoading,
-    networksLoading,
-    metricsLoading,
-    isInitializingSubscriptions,
-  ]);
+  useEffect(() => {
+    if (sitesList.length === 0) return;
 
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
+    const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
+
+    getSiteStatMetrics({
+      variables: {
+        data: {
+          to: to,
+          from: from,
+          userId: user.id,
+          nodeIds: [],
+          siteIds: sitesList.map((site) => site.id),
+          step: STAT_STEP_29,
+          orgName: user.orgName,
+          withSubscription: true,
+          type: Stats_Type.Site,
+        },
+      },
+    });
+
+    const currentSKey = sKey;
+
+    return () => {
+      console.log('Unsubscribing from:', currentSKey);
+      PubSub.unsubscribe(currentSKey);
+    };
+  }, [sitesList, user.id, user.orgName]);
+  const [getNodeState] = useGetNodeStateLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {},
+  });
+  const handleConfigureNode = async (nodeId: string) => {
+    const node = unassignedNodes.find((n) => n.id === nodeId);
+
+    if (!node) {
+      setSnackbarMessage({
+        id: 'node-not-found',
+        message: 'Node not found',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+      return;
+    }
+
+    try {
+      const result = await getNodeState({
+        variables: {
+          getNodeStateId: nodeId,
+        },
+      });
+
+      if (result.data?.getNodeState.currentState === NodeStateEnum.Unknown) {
+        let p = setQueryParam(
+          'lat',
+          node.latitude?.toString() || '0',
+          searchParams.toString(),
+          pathname,
+        );
+        p.set('lng', node.longitude?.toString() || '0');
+        p.set(
+          'flow',
+          flow === NETWORK_FLOW
+            ? ONBOARDING_FLOW
+            : flow === CHECK_SITE_FLOW
+              ? INSTALLATION_FLOW
+              : flow,
+        );
+        p.delete('nid');
+        router.push(`/configure/node/${node.id}?${p.toString()}`);
+      }
+    } catch (error) {
+      console.error('Error checking node state:', error);
+      setSnackbarMessage({
+        id: 'node-state-error',
+        message: 'Error checking node state',
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    }
+  };
   return (
     <Box mt={2}>
       <Paper
@@ -385,16 +344,19 @@ export default function Page() {
             My sites
           </Typography>
           <SitesWrapper
-            loading={isLoading}
+            loading={statLoading}
             sites={sitesList}
+            siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
             handleSiteNameUpdate={handleSiteNameUpdate}
+            handleConfigureNode={handleConfigureNode}
+            unassignedNodes={unassignedNodes}
           />
         </Stack>
       </Paper>
       <ConfigureSiteDialog
         site={site}
         open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
+        addSiteLoading={false}
         onClose={handleCloseSiteConfig}
         components={componentsList || []}
         networks={networks?.getNetworks?.networks || []}

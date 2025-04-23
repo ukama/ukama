@@ -96,7 +96,7 @@ export const parseMetricRes = (
 export const parseSiteMetricRes = (
   res: any,
   type: string,
-  args: GetMetricsSiteStatInput | GetMetricRangeInput
+  args: GetMetricRangeInput
 ): MetricRes => {
   let result: any[] = [];
   if (res.data?.data?.result) {

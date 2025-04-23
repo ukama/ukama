@@ -23,7 +23,6 @@ import { SiteDto } from '@/client/graphql/generated';
 import { duration } from '@/utils';
 import CancelIcon from '@mui/icons-material/Cancel';
 interface SiteDetailsHeaderProps {
-  addSite: () => void;
   siteList: SiteDto[];
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
@@ -114,13 +113,14 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
                 ]}
           </Menu>
         </Stack>
-
-        {siteUpTime === 0 ? (
+        {isLoading || siteUpTime == null ? (
+          <Skeleton variant="text" width="60" height={20} sx={{ mb: 2 }} />
+        ) : siteUpTime === 0 ? (
           <Typography variant="body1">Site is currently down</Typography>
         ) : (
-          <>
+          <Typography variant="body1">
             Site is up for <b>{duration(siteUpTime)}</b>
-          </>
+          </Typography>
         )}
       </Box>
     </Grid>

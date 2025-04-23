@@ -126,6 +126,7 @@ class SubscriptionsResolvers {
       const worker = new Worker(WS_THREAD, {
         workerData,
       });
+
       worker.on("message", (_data: any) => {
         if (!_data.isError) {
           try {
@@ -155,37 +156,9 @@ class SubscriptionsResolvers {
         );
       });
     }
+    metrics.metrics = metrics.metrics.filter(metric => metric.success === true);
 
     return metrics;
-  }
-
-  @Subscription(() => LatestMetricSubRes, {
-    topics: ({ args }) => {
-      return `${args.data.userId}-${args.data.type}-${args.data.from}`;
-    },
-  })
-  async getMetricStatSub(
-    @Root() payload: LatestMetricSubRes,
-    @Arg("data") data: SubMetricsStatInput
-  ): Promise<LatestMetricSubRes> {
-    const store = openStore();
-    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
-    await store.close();
-    return payload;
-  }
-  @Subscription(() => LatestMetricSubRes, {
-    topics: ({ args }) => {
-      return `${args.data.userId}-${args.data.type}-${args.data.from}`;
-    },
-  })
-  async getSiteMetricStatSub(
-    @Root() payload: LatestMetricSubRes,
-    @Arg("data") data: SubSiteMetricsStatInput
-  ): Promise<LatestMetricSubRes> {
-    const store = openStore();
-    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
-    await store.close();
-    return payload;
   }
 
   @Query(() => SiteMetricsStateRes)
@@ -204,64 +177,109 @@ class SubscriptionsResolvers {
     }
 
     const wsUrl = wsUrlResolver(baseURL);
-    const { from, userId, withSubscription, siteId, type, nodeIds } = data;
+    const { from, userId, withSubscription, siteIds, type, nodeIds } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
+    if (!siteIds || siteIds.length === 0) {
+      throw new Error("At least one siteId must be provided");
+    }
 
     const metrics: SiteMetricsStateRes = { metrics: [] };
     const metricKeys = getGraphsKeyByType(type);
 
-    const siteMetricsPromises = metricKeys.map(async key => {
+    for (const siteId of siteIds) {
       try {
-        const res = await getSiteMetricRange(baseURL, key, { ...data });
-        let avg = 0;
+        const combinedResult = await Promise.all(
+          metricKeys.map(async key => {
+            try {
+              return await getSiteMetricRange(baseURL, key, {
+                ...data,
+                siteId,
+              });
+            } catch (error) {
+              logger.error(
+                `Error processing site metric ${key} for site ${siteId}: ${error}`
+              );
+              return {
+                msg: "Error",
+                type: key,
+                siteId: siteId || "",
+                nodeId: "",
+                success: false,
+                values: [],
+              };
+            }
+          })
+        );
 
-        if (Array.isArray(res.values)) {
-          res.values = res.values.filter(value => value[1] !== 0);
-          if (res.values.length > 0) {
-            if (
-              res.values.length === 1 ||
-              key === "site_uptime_seconds" ||
-              key === "site_uptime_percentage"
-            ) {
+        for (const res of combinedResult) {
+          let avg = 0;
+
+          if (Array.isArray(res.values)) {
+            res.values = res.values.filter(value => value[1] !== 0);
+            if (res.values.length === 1 || res.type === "site_uptime_seconds") {
               avg = res.values[res.values.length - 1][1];
+            } else if (res.type === "site_uptime_percentage") {
+              const sum = res.values.reduce((acc, val) => acc + val[1], 0);
+              avg = sum / res.values.length;
             } else {
               const sum = res.values.reduce((acc, val) => acc + val[1], 0);
               avg = sum / res.values.length;
             }
           }
+
+          metrics.metrics.push({
+            msg: res.msg,
+            type: res.type,
+            siteId: res.siteId || siteId || "",
+            nodeId: "",
+            success: res.success,
+            value: formatKPIValue(res.type, avg),
+          });
         }
-
-        return {
-          msg: res.msg,
-          type: res.type,
-          siteId: res.siteId || data.siteId || "",
-          nodeId: "",
-          success: res.success,
-          value: formatKPIValue(res.type, avg),
-        };
       } catch (error) {
-        logger.error(`Error processing site metric ${key}: ${error}`);
-        return {
-          msg: "Error",
-          type: key,
-          siteId: data.siteId || "",
-          nodeId: "",
-          success: false,
-          value: 0,
-        };
-      }
-    });
-
-    const nodeMetricsPromises = [];
-    if (Array.isArray(nodeIds) && nodeIds.length > 0) {
-      for (const nodeId of nodeIds) {
+        logger.error(
+          `Error processing site metrics for site ${siteId}: ${error}`
+        );
         for (const key of metricKeys) {
-          nodeMetricsPromises.push(async () => {
-            try {
-              const res = await getNodeMetricRange(baseURL, key, {
-                ...data,
-                nodeId,
-              });
+          metrics.metrics.push({
+            msg: "Error",
+            type: key,
+            siteId: siteId || "",
+            nodeId: "",
+            success: false,
+            value: 0,
+          });
+        }
+      }
+
+      if (Array.isArray(nodeIds) && nodeIds.length > 0) {
+        for (const nodeId of nodeIds) {
+          try {
+            const nodeResults = await Promise.all(
+              metricKeys.map(async key => {
+                try {
+                  return await getNodeMetricRange(baseURL, key, {
+                    ...data,
+                    siteId,
+                    nodeId,
+                  });
+                } catch (error) {
+                  logger.error(
+                    `Error processing node metric ${key} for node ${nodeId} in site ${siteId}: ${error}`
+                  );
+                  return {
+                    msg: "Error",
+                    type: key,
+                    siteId: siteId || "",
+                    nodeId: nodeId || "",
+                    success: false,
+                    values: [],
+                  };
+                }
+              })
+            );
+
+            for (const res of nodeResults) {
               let avg = 0;
 
               if (Array.isArray(res.values)) {
@@ -269,8 +287,8 @@ class SubscriptionsResolvers {
                 if (res.values.length > 0) {
                   if (
                     res.values.length === 1 ||
-                    key === "unit_uptime" ||
-                    key === "network_uptime"
+                    res.type === "unit_uptime" ||
+                    res.type === "network_uptime"
                   ) {
                     avg = res.values[res.values.length - 1][1];
                   } else {
@@ -283,146 +301,193 @@ class SubscriptionsResolvers {
                 }
               }
 
-              return {
+              metrics.metrics.push({
                 msg: res.msg,
                 type: res.type,
-                siteId: data.siteId || "",
+                siteId: siteId || "",
                 nodeId: nodeId || "",
                 success: res.success,
                 value: formatKPIValue(res.type, avg),
-                __typename: "SiteMetricStateRes",
-              };
-            } catch (error) {
-              logger.error(
-                `Error processing node metric ${key} for node ${nodeId}: ${error}`
-              );
-              return {
+              });
+            }
+          } catch (error) {
+            logger.error(
+              `Error processing node metrics for node ${nodeId} in site ${siteId}: ${error}`
+            );
+
+            for (const key of metricKeys) {
+              metrics.metrics.push({
                 msg: "Error",
                 type: key,
-                siteId: data.siteId || "",
+                siteId: siteId || "",
                 nodeId: nodeId || "",
                 success: false,
                 value: 0,
-                __typename: "SiteMetricStateRes",
-              };
+              });
             }
-          });
+          }
         }
       }
     }
 
-    const allPromises = [...siteMetricsPromises];
-    for (const nodePromise of nodeMetricsPromises) {
-      allPromises.push(nodePromise());
-    }
-
-    metrics.metrics = await Promise.all(allPromises);
-
     if (withSubscription && metrics.metrics.length > 0) {
-      const topic = `${userId}-${type}-${from}`;
+      const baseTopic = `stat-${data.orgName}-${userId}-${type}-${from}`;
 
-      const siteUrl = `${wsUrl}/v1/live/metrics?interval=${
-        data.step
-      }&metric=${metricKeys.join(",")}&site=${siteId}`;
+      for (const siteId of siteIds) {
+        for (const metricKey of metricKeys) {
+          const siteUrlParams = new URLSearchParams();
+          siteUrlParams.append("interval", data.step.toString());
+          siteUrlParams.append("metric", metricKey);
+          siteUrlParams.append("site", siteId);
 
-      const siteWorker = new Worker(WS_THREAD, {
-        workerData: { topic, url: siteUrl },
-      });
+          const siteMetricUrl = `${wsUrl}/v1/live/metrics?${siteUrlParams.toString()}`;
 
-      siteWorker.on("message", (_data: any) => {
-        if (!_data.isError) {
-          try {
-            const res = JSON.parse(_data.data);
-            if (res?.data?.result && res.data.result.length > 0) {
-              const result = res.data.result[0];
-              if (
-                result &&
-                result.metric &&
-                result.value &&
-                result.value.length > 0
-              ) {
-                pubSub.publish(topic, {
-                  success: true,
-                  msg: "success",
-                  type: res.Name,
-                  siteId: data.siteId,
-                  nodeId: "",
-                  value: [
-                    Math.floor(result.value[0]) * 1000,
-                    formatKPIValue(res.Name, result.value[1]),
-                  ],
-                });
-              }
-            }
-          } catch (error) {
-            logger.error(`Failed to parse WebSocket message: ${error}`);
-          }
-        }
-      });
-
-      siteWorker.on("exit", async (code: any) => {
-        logger.info(`Site WS_THREAD exited with code [${code}] for ${topic}`);
-      });
-
-      if (Array.isArray(nodeIds) && nodeIds.length > 0) {
-        nodeIds.forEach(nodeId => {
-          const nodeUrl = `${wsUrl}/v1/live/metrics?interval=${
-            data.step
-          }&metric=${metricKeys.join(",")}&node=${nodeId}`;
-
-          const nodeWorker = new Worker(WS_THREAD, {
-            workerData: { topic, url: nodeUrl },
+          const siteWorker = new Worker(WS_THREAD, {
+            workerData: { topic: baseTopic, url: siteMetricUrl },
           });
 
-          nodeWorker.on("message", (_data: any) => {
+          siteWorker.on("message", (_data: any) => {
             if (!_data.isError) {
               try {
                 const res = JSON.parse(_data.data);
+
                 if (res?.data?.result && res.data.result.length > 0) {
-                  const result = res.data.result[0];
-                  if (
-                    result &&
-                    result.metric &&
-                    result.value &&
-                    result.value.length > 0
-                  ) {
-                    pubSub.publish(topic, {
-                      success: true,
-                      msg: "success",
-                      type: res.Name,
-                      siteId: data.siteId,
-                      nodeId: nodeId,
-                      value: [
-                        Math.floor(result.value[0]) * 1000,
-                        formatKPIValue(res.Name, result.value[1]),
-                      ],
-                    });
-                  }
+                  res.data.result.forEach((result: any) => {
+                    if (
+                      result &&
+                      result.metric &&
+                      result.value &&
+                      result.value.length > 0
+                    ) {
+                      const resultSiteId =
+                        result.metric.site || result.metric.instance || siteId;
+
+                      pubSub.publish(baseTopic, {
+                        success: true,
+                        msg: "success",
+                        type: res.Name,
+                        siteId: resultSiteId,
+                        nodeId: "",
+                        value: [
+                          Math.floor(result.value[0]) * 1000,
+                          formatKPIValue(res.Name, result.value[1]),
+                        ],
+                      });
+                    }
+                  });
                 }
               } catch (error) {
                 logger.error(
-                  `Failed to parse node WebSocket message: ${error}`
+                  `Failed to parse WebSocket message for ${siteId}/${metricKey}: ${error}`
                 );
               }
             }
           });
 
-          nodeWorker.on("exit", async (code: any) => {
+          siteWorker.on("exit", async (code: any) => {
             logger.info(
-              `Node WS_THREAD exited with code [${code}] for ${nodeId} in ${topic}`
+              `WS_THREAD for site ${siteId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
             );
           });
-        });
-      }
 
-      process.on("exit", async () => {
-        await store.close();
-      });
+          if (Array.isArray(nodeIds) && nodeIds.length > 0) {
+            for (const nodeId of nodeIds) {
+              const nodeUrlParams = new URLSearchParams();
+              nodeUrlParams.append("interval", data.step.toString());
+              nodeUrlParams.append("metric", metricKey);
+              nodeUrlParams.append("node", nodeId);
+
+              const nodeMetricUrl = `${wsUrl}/v1/live/metrics?${nodeUrlParams.toString()}`;
+
+              const nodeWorker = new Worker(WS_THREAD, {
+                workerData: { topic: baseTopic, url: nodeMetricUrl },
+              });
+
+              nodeWorker.on("message", (_data: any) => {
+                if (!_data.isError) {
+                  try {
+                    const res = JSON.parse(_data.data);
+
+                    if (res?.data?.result && res.data.result.length > 0) {
+                      res.data.result.forEach((result: any) => {
+                        if (
+                          result &&
+                          result.metric &&
+                          result.value &&
+                          result.value.length > 0
+                        ) {
+                          const resultNodeId =
+                            result.metric.node ||
+                            result.metric.nodeid ||
+                            nodeId;
+
+                          pubSub.publish(baseTopic, {
+                            success: true,
+                            msg: "success",
+                            type: res.Name,
+                            siteId: siteId,
+                            nodeId: resultNodeId,
+                            value: [
+                              Math.floor(result.value[0]) * 1000,
+                              formatKPIValue(res.Name, result.value[1]),
+                            ],
+                          });
+                        }
+                      });
+                    }
+                  } catch (error) {
+                    logger.error(
+                      `Failed to parse WebSocket message for node ${nodeId}/${metricKey}: ${error}`
+                    );
+                  }
+                }
+              });
+
+              nodeWorker.on("exit", async (code: any) => {
+                logger.info(
+                  `WS_THREAD for node ${nodeId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
+                );
+              });
+            }
+          }
+        }
+      }
     }
 
     return metrics;
   }
-
+  @Subscription(() => LatestMetricSubRes, {
+    topics: ({ args }) => {
+      return `${args.data.userId}-${args.data.type}-${args.data.from}`;
+    },
+  })
+  async getMetricStatSub(
+    @Root() payload: LatestMetricSubRes,
+    @Arg("data") data: SubMetricsStatInput
+  ): Promise<LatestMetricSubRes> {
+    const store = openStore();
+    await addInStore(store, `${data.userId}-${data.type}-${data.from}`, 0);
+    await store.close();
+    return payload;
+  }
+  @Subscription(() => LatestMetricSubRes, {
+    topics: ({ args }) => {
+      return `stat-${args.data.orgName}-${args.data.userId}-${args.data.type}-${args.data.from}`;
+    },
+  })
+  async getSiteMetricStatSub(
+    @Root() payload: LatestMetricSubRes,
+    @Arg("data") data: SubSiteMetricsStatInput
+  ): Promise<LatestMetricSubRes> {
+    const store = openStore();
+    await addInStore(
+      store,
+      `stat-${data.orgName}-${data.userId}-${data.type}-${data.from}`,
+      0
+    );
+    await store.close();
+    return payload;
+  }
   @Query(() => MetricsRes)
   async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
     const store = openStore();
@@ -520,9 +585,7 @@ class SubscriptionsResolvers {
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(async key => {
-        logger.info(`Fetching site metric for key: ${key}`);
         const result = await getSiteMetricRange(baseURL, key, { ...data });
-        logger.info(`Got site metric result for ${key}:`, result);
         return result;
       });
       metrics.metrics = await Promise.all(metricPromises);
