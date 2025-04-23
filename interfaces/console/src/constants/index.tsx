@@ -33,13 +33,19 @@ export const SETTING_MENU = [
   { id: 'appearance', name: 'Appearance' },
 ];
 
+export const NODE_ACTIONS_ENUM = {
+  NODE_RESTART: 'node-restart',
+  NODE_RF_OFF: 'node-rf-off',
+  NODE_OFF: 'node-off',
+};
+
 export const NODE_ACTIONS_BUTTONS = [
   {
-    id: 'node-restart',
+    id: NODE_ACTIONS_ENUM.NODE_RESTART,
     name: 'Restart',
     consent: 'Are you sure you want to restart node?',
   },
-  { id: 'node-rf-off', name: 'Turn RF Off' },
+  { id: NODE_ACTIONS_ENUM.NODE_RF_OFF, name: 'Turn RF Off' },
   // { id: 'node-on-off', name: 'Turn Node Off' },
 ];
 

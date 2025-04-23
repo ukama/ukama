@@ -9,7 +9,7 @@
 import {
   NodeStateEnum,
   useGetNodesLazyQuery,
-  useGetSitesLazyQuery,
+  useGetSitesQuery,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import LoadingWrapper from '@/components/LoadingWrapper';
@@ -30,10 +30,15 @@ export default function Page() {
   const [nodes, setNodes] = useState<TNodePoolData[]>([]);
   const { setSnackbarMessage, network } = useAppContext();
 
-  const [getSites, { data: sitesData, loading: sitesLoading }] =
-    useGetSitesLazyQuery({
-      fetchPolicy: 'cache-first',
-    });
+  const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
+    skip: !network.id,
+    fetchPolicy: 'cache-first',
+    variables: {
+      data: {
+        networkId: network.id,
+      },
+    },
+  });
 
   const [getNodes, { data: nodesData, loading: nodesLoading }] =
     useGetNodesLazyQuery({
@@ -75,12 +80,8 @@ export default function Page() {
     });
 
   useEffect(() => {
-    if (network.id) {
-      getSites({
-        variables: {
-          data: { networkId: network.id },
-        },
-      });
+    if (sitesData?.getSites?.sites) {
+      console.log('sitesData', sitesData);
       getNodes({
         variables: {
           data: {
@@ -89,9 +90,10 @@ export default function Page() {
         },
       });
     }
-  }, [network]);
+  }, [sitesData, getNodes]);
 
   const getSiteName = (siteId: string | undefined | null) => {
+    console.log(sitesData, siteId);
     if (siteId === undefined || siteId === null) return '-';
     const site = sitesData?.getSites.sites.find((site) => site.id === siteId);
     return site ? site.name : '-';

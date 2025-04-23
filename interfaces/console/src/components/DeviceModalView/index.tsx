@@ -10,11 +10,16 @@ import { Box } from '@mui/material';
 import Image from 'next/image';
 
 interface IDeviceModalView {
+  size: number;
   image: string;
   nodeType: string | undefined;
 }
 
-const DeviceModalView = ({ image, nodeType = 'hnode' }: IDeviceModalView) => {
+const DeviceModalView = ({
+  image,
+  nodeType = 'hnode',
+  size = 300,
+}: IDeviceModalView) => {
   return (
     <Box
       component={'div'}
@@ -34,8 +39,8 @@ const DeviceModalView = ({ image, nodeType = 'hnode' }: IDeviceModalView) => {
           objectFit: 'contain',
         }}
         src={image}
-        width={300}
-        height={300}
+        width={size}
+        height={size}
         alt={nodeType}
       />
     </Box>

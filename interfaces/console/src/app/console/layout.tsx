@@ -103,18 +103,16 @@ export default function ConosleLayout({
     },
   });
 
-  const [
-    getNotifications,
-    { refetch: refetchNotifications, loading: notificationsLoading },
-  ] = useGetNotificationsLazyQuery({
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getNotifications.notifications.length > 0) {
-        setNotifications(data.getNotifications);
-      }
-    },
-    onError: () => {},
-  });
+  const [getNotifications, { refetch: refetchNotifications }] =
+    useGetNotificationsLazyQuery({
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getNotifications.notifications.length > 0) {
+          setNotifications(data.getNotifications);
+        }
+      },
+      onError: () => {},
+    });
 
   useEffect(() => {
     if (user.role === Role_Type.RoleInvalid) {

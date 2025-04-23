@@ -239,7 +239,10 @@ func (s *Server) handleNodeOff(nodeID ukama.NodeID, profile string, scenarioType
 func (s *Server) handleNodeRestart(nodeID ukama.NodeID, profile string, scenarioType cenums.SCENARIOS) error {
 	logger.Infof("Restarting node %s", nodeID.String())
 
-	s.handleNodeOff(nodeID, profile, scenarioType)
+	err := s.handleNodeOff(nodeID, profile, scenarioType)
+	if err != nil {
+		return err
+	}
 	time.Sleep(30 * time.Second)
 	return s.handleNodeOn(nodeID, profile)
 }

@@ -25,6 +25,7 @@ import {
 } from '@/client/graphql/generated/subscriptions';
 import EditNode from '@/components/EditNode';
 import LoadingWrapper from '@/components/LoadingWrapper';
+import { NodeActionUI } from '@/components/NodeActionUI';
 import NodeNetworkTab from '@/components/NodeNetworkTab';
 import NodeOverviewTab from '@/components/NodeOverviewTab';
 import NodeRadioTab from '@/components/NodeRadioTab';
@@ -34,6 +35,7 @@ import TabPanel from '@/components/TabPanel';
 import {
   METRIC_RANGE_10800,
   NODE_ACTIONS_BUTTONS,
+  NODE_ACTIONS_ENUM,
   NodePageTabs,
   STAT_STEP_29,
 } from '@/constants';
@@ -47,6 +49,19 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const NODE_UPTIME_KEY = 'unit_uptime';
+
+const getProgress = (state: NodeConnectivityEnum, action: string): number => {
+  switch (state) {
+    case NodeConnectivityEnum.Offline:
+      if (action === NODE_ACTIONS_ENUM.NODE_RESTART) return 50;
+    case NodeConnectivityEnum.Online:
+      if (action === NODE_ACTIONS_ENUM.NODE_RESTART) return 75;
+    case NodeConnectivityEnum.Unknown:
+      if (action === NODE_ACTIONS_ENUM.NODE_RESTART) return 100;
+    default:
+      return 0;
+  }
+};
 interface INodePage {
   params: {
     id: string;
@@ -62,10 +77,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
     Graphs_Type.NodeHealth,
   );
   const [nodeUptime, setNodeUptime] = useState<number>(0);
-  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const [nodeAction, setNodeAction] = useState<string>(
+    NODE_ACTIONS_ENUM.NODE_RESTART,
+  );
   const [selectedTab, setSelectedTab] = useState<number>(0);
-  const { user, setSnackbarMessage, env, subscriptionClient, network } =
-    useAppContext();
+  const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
+  const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
   const [selectedNode, setSelectedNode] = useState<Node | undefined>(undefined);
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
@@ -118,6 +135,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     {
       fetchPolicy: 'network-only',
       onCompleted: () => {
+        setNodeAction('node-restart');
         setSnackbarMessage({
           id: 'restart-node-success-msg',
           message: 'Node restart initiated.',
@@ -282,7 +300,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleNodeActionClick = (action: string) => {
     switch (action) {
-      case 'node-restart':
+      case NODE_ACTIONS_ENUM.NODE_RESTART:
         restartNode({
           variables: {
             data: {
@@ -291,13 +309,24 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
-      case 'node-rf-off':
+      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
         console.log('Rutn node RF off');
         break;
       default:
         return;
     }
   };
+
+  if (nodeAction)
+    return (
+      <NodeActionUI
+        value={0}
+        action={nodeAction}
+        description={nodeAction}
+        nodeType={NodeTypeEnum.Tnode}
+        connectivity={NodeConnectivityEnum.Offline}
+      />
+    );
 
   return (
     <Stack width={'100%'} mt={1} spacing={1}>
