@@ -15,9 +15,11 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	dsql "github.com/ukama/ukama/systems/common/sql"
@@ -26,22 +28,26 @@ import (
 
 type CDRServer struct {
 	pb.UnimplementedCDRServiceServer
-	cdrRepo        db.CDRRepo
-	usageRepo      db.UsageRepo
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	OrgName        string
-	OrgId          string
+	cdrRepo         db.CDRRepo
+	usageRepo       db.UsageRepo
+	asrClient       client.AsrService
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	OrgName         string
+	OrgId           string
+	pushGatewayHost string
 }
 
-func NewCDRServer(cdrRepo db.CDRRepo, usageRepo db.UsageRepo, orgId, orgName string, msgBus mb.MsgBusServiceClient) (*CDRServer, error) {
+func NewCDRServer(cdrRepo db.CDRRepo, usageRepo db.UsageRepo, orgId, orgName, pushGatewayHost string, asrClient client.AsrService, msgBus mb.MsgBusServiceClient) (*CDRServer, error) {
 
 	cdr := CDRServer{
-		cdrRepo:   cdrRepo,
-		usageRepo: usageRepo,
-		OrgName:   orgName,
-		OrgId:     orgId,
-		msgbus:    msgBus,
+		cdrRepo:         cdrRepo,
+		usageRepo:       usageRepo,
+		asrClient:       asrClient,
+		OrgName:         orgName,
+		OrgId:           orgId,
+		pushGatewayHost: pushGatewayHost,
+		msgbus:          msgBus,
 	}
 
 	if msgBus != nil {
@@ -75,8 +81,24 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 	err = s.usageRepo.Add(&u)
 	if err != nil {
 		log.Errorf("Error initalizing usage for imsi %s. Error %+v", imsi, err)
+
 		return err
 	}
+
+	asr, err := s.asrClient.GetAsr(imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
+		labels := map[string]string{
+			// "package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			// "network":  asr.Record.Network,
+		}
+
+		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+			policy)
+	}
+
 	log.Infof("Initilaize package usage for imsi %s to %+v", u.Imsi, u)
 
 	return nil
@@ -183,6 +205,21 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
 	}
+
+	asr, err := s.asrClient.GetAsr(imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
+		labels := map[string]string{
+			// "package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			// "network":  asr.Record.Network,
+		}
+
+		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+			policy)
+	}
+
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
 
 	return nil
@@ -475,9 +512,32 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
 	}
+
+	asr, err := s.asrClient.GetAsr(imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == u.Policy {
+		labels := map[string]string{
+			// "package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			// "network":  asr.Record.Network,
+		}
+
+		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+			u.Policy)
+	}
+
 	log.Infof("Updated usage for imsi %s to %+v", u.Imsi, u)
 
 	return nil
+}
+
+func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHost string) {
+	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
+		pkg.DataUsage, float64(value), labels, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing data usage  metric to pushgaway %s", err.Error())
+	}
 }
 
 func dbCDRToRecordResp(cdrs *[]db.CDR) *pb.RecordResp {
