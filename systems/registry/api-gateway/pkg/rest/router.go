@@ -34,6 +34,10 @@ import (
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
+const (
+	Undefined = -1
+)
+
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
@@ -250,16 +254,16 @@ func (r *Router) list(c *gin.Context, req *ListNodesRequest) (*nodepb.ListRespon
 		SiteId:       req.SiteId,
 		NodeId:       req.NodeId,
 		NetworkId:    req.NetworkId,
-		State:        -1,
-		Connectivity: -1,
+		State:        Undefined,
+		Connectivity: Undefined,
 	}
 
-	if req.State != "none" {
+	if req.State != "" {
 		nodeState := ukama.ParseNodeState(req.State)
 		listReq.State = cpb.NodeState(nodeState)
 	}
 
-	if req.Connectivity != "none" {
+	if req.Connectivity != "" {
 		listReq.Connectivity = cpb.NodeConnectivity(ukama.ParseNodeConnectivity(req.Connectivity))
 	}
 	return r.clients.Node.List(listReq)
