@@ -1277,7 +1277,7 @@ func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
 }
 
 func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
-	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
+	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
 			networkId, err)
