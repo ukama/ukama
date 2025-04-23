@@ -291,24 +291,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"error while activating sim type %s on remote agent with request: %v", simType, agentRequest)
 	}
 
-	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
-	evt := &epb.EventSimAllocation{
-		Id:             sim.Id.String(),
-		SubscriberId:   sim.SubscriberId.String(),
-		NetworkId:      sim.NetworkId.String(),
-		OrgId:          orgId.String(),
-		DataPlanId:     sim.Package.PackageId.String(),
-		Iccid:          sim.Iccid,
-		Msisdn:         sim.Msisdn,
-		Imsi:           sim.Imsi,
-		Type:           sim.Type.String(),
-		Status:         sim.Status.String(),
-		IsPhysical:     sim.IsPhysical,
-		PackageId:      sim.Package.Id.String(),
-		TrafficPolicy:  sim.TrafficPolicy,
-		PackageEndDate: timestamppb.New(sim.Package.EndDate),
-	}
-
 	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
 	if err != nil {
 		return nil, err
@@ -347,41 +329,37 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		}
 	}
 
+	err = s.pushTotalSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim allocation operation: %s", err.Error())
+	}
+
+	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim allocation operation: %s", err.Error())
+	}
+
+	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
+	evt := &epb.EventSimAllocation{
+		Id:             sim.Id.String(),
+		SubscriberId:   sim.SubscriberId.String(),
+		NetworkId:      sim.NetworkId.String(),
+		OrgId:          orgId.String(),
+		DataPlanId:     sim.Package.PackageId.String(),
+		Iccid:          sim.Iccid,
+		Msisdn:         sim.Msisdn,
+		Imsi:           sim.Imsi,
+		Type:           sim.Type.String(),
+		Status:         sim.Status.String(),
+		IsPhysical:     sim.IsPhysical,
+		PackageId:      sim.Package.Id.String(),
+		TrafficPolicy:  sim.TrafficPolicy,
+		PackageEndDate: timestamppb.New(sim.Package.EndDate),
+	}
+
 	err = s.PublishEventMessage(route, evt)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evt, route, err)
-	}
-
-	sims, err := s.simRepo.List("", "", "", networkId.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
-			networkId.String(), err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	simsCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
-		float64(simsCount), map[string]string{"network": networkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
-
-	sims, err = s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	inactiveCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
-		float64(inactiveCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
 	}
 
 	log.Infof("Allocating sim to subscriber success: %v", req.GetSubscriberId())
@@ -631,9 +609,18 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	err = s.pushTerminatedSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim delete operation: %s", err.Error())
+	}
+
+	err = s.pushTotalSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim delete operation: %s", err.Error())
 	}
 
 	evtMsg := &epb.EventSimTermination{
@@ -643,43 +630,15 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		Imsi:         sim.Imsi,
 		NetworkId:    sim.NetworkId.String(),
 	}
+
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
+
 	err = s.PublishEventMessage(route, evtMsg)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	sims, err := s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting terminated sims count metric for network: %s. Error:  %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	terminatedCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
-		float64(terminatedCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing terminateSimCount metric to pushgateway %s", err.Error())
-	}
-
-	sims, err = s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
-			sim.NetworkId.String(), err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	simsCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
-		float64(simsCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
-	}
+	log.Infof("Sim %s deleted successfully", req.GetSimId())
 
 	return &pb.DeleteSimResponse{}, nil
 }
@@ -1170,7 +1129,18 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		return nil, err
 	}
 
+	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+	}
+
+	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+	}
+
 	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
+
 	evtMsg := &epb.EventSimActivation{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
@@ -1185,37 +1155,7 @@ func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*p
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	sims, err := s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	activeCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
-		float64(activeCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing activateCount metric to pushgateway %s", err.Error())
-	}
-
-	sims, err = s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	inactiveCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
-		float64(inactiveCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
-	}
+	log.Infof("Sim %s activated successfully", reqSimId)
 
 	return &pb.ToggleSimStatusResponse{}, nil
 }
@@ -1264,6 +1204,16 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		return nil, err
 	}
 
+	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+	}
+
+	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+	}
+
 	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimDeactivation{
 		Id:           sim.Id.String(),
@@ -1279,39 +1229,93 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	sims, err := s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	inactiveCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
-		float64(inactiveCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while push inactive metrics to pushgateway: %s", err.Error())
-	}
-
-	sims, err = s.simRepo.List("", "", "", sim.NetworkId.String(), ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
-	if err != nil {
-		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
-			sim.NetworkId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "sims")
-	}
-
-	activeCount := len(sims)
-
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
-		float64(activeCount), map[string]string{"network": sim.NetworkId.String(), "org": s.orgId}, pkg.SystemName)
-	if err != nil {
-		log.Errorf("Error while pushing activateCount metric to pushgateway %s", err.Error())
-	}
+	log.Infof("Sim %s deactivated successfully", reqSimId)
 
 	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
+	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
+			networkId, err)
+
+		return fmt.Errorf("Error while collecting total sims count metric for network: %s. Error: %w",
+			networkId, grpc.SqlErrorToGrpc(err, "sims"))
+	}
+
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
+		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing total sims count metric to pushgaway: %s", err.Error())
+
+		return fmt.Errorf("error while pushing total sims count metric to pushgaway: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
+	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
+			networkId, err)
+
+		return fmt.Errorf("Error while collecting active sims count metric for network: %s. Error: %w",
+			networkId, grpc.SqlErrorToGrpc(err, "sims"))
+	}
+
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while active sims count metric to pushgaway: %s", err.Error())
+
+		return fmt.Errorf("error while pushing active sims count metric to pushgaway: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
+	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
+			networkId, err)
+
+		return fmt.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %w",
+			networkId, grpc.SqlErrorToGrpc(err, "sims"))
+	}
+
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing inactive sims count metric to pushgaway: %s", err.Error())
+
+		return fmt.Errorf("error while pushing inactive sims count metric to pushgaway: %w", err)
+	}
+
+	return nil
+}
+
+func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error {
+	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %v",
+			networkId, err)
+
+		return fmt.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %w",
+			networkId, grpc.SqlErrorToGrpc(err, "sims"))
+	}
+
+	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while pushing terminated sims count metric to pushgaway: %s", err.Error())
+
+		return fmt.Errorf("error while pushing terminated sims count metric to pushgaway: %w", err)
+	}
+
+	return nil
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
