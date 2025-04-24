@@ -88,6 +88,14 @@ type AttachNodesRequest struct {
 type DetachNodeRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
+type ListNodesRequest struct {
+	NetworkId    string `json:"network_id" query:"network_id"`
+	SiteId       string `json:"site_id" query:"site_id"`
+	Connectivity string `json:"connectivity,omitempty" validate:"omitempty,eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" enums:"unknown,online,high,offline"`
+	State        string `json:"state,omitempty" validate:"omitempty,eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" enums:"unknown,configured,operational,faulty"`
+	NodeId       string `json:"node_id" query:"node_id"`
+	Type         string `json:"type" query:"type"`
+}
 
 type UpdateNodeStateRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`

@@ -14,7 +14,9 @@ import (
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/config"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/registry/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
@@ -30,6 +32,10 @@ import (
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+)
+
+const (
+	Undefined = -1
 )
 
 type Router struct {
@@ -91,6 +97,7 @@ type node interface {
 	AddNode(nodeId, name, state string, latitude, longitude float64) (*nodepb.AddNodeResponse, error)
 	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
 	GetNodes() (*nodepb.GetNodesResponse, error)
+	List(req *nodepb.ListRequest) (*nodepb.ListResponse, error)
 	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
 	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
 	GetNodesByState(connectivity, state string) (*nodepb.GetNodesResponse, error)
@@ -211,11 +218,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Node routes
 		const node = "/nodes"
 		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
+		/** Deprecated: Use List API instead */
 		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getNodes, http.StatusOK))
 		nodes.GET("/state", formatDoc("Get Nodes by state", "Get all nodes by state"), tonic.Handler(r.getNodesByState, http.StatusOK))
 		nodes.GET("/:node_id", formatDoc("Get Node", "Get a specific node"), tonic.Handler(r.getNodeHandler, http.StatusOK))
 		nodes.GET("sites/:site_id", formatDoc("Get Nodes For Site", "Get all nodes of a site"), tonic.Handler(r.getSiteNodesHandler, http.StatusOK))
 		nodes.GET("networks/:net_id", formatDoc("Get Nodes For Network", "Get all nodes of a network"), tonic.Handler(r.getNetworkNodesHandler, http.StatusOK))
+		//
+		nodes.GET("/list", formatDoc("List Nodes", "List all by filters"), tonic.Handler(r.list, http.StatusOK))
 		nodes.POST("", formatDoc("Add Node", "Add a new Node to an organization"), tonic.Handler(r.postAddNodeHandler, http.StatusCreated))
 		nodes.PUT("/:node_id", formatDoc("Update Node", "Update node name or state"), tonic.Handler(r.putUpdateNodeHandler, http.StatusOK))
 		nodes.PATCH("/:node_id", formatDoc("Update Node State", "Update node state"), tonic.Handler(r.patchUpdateNodeStateHandler, http.StatusOK))
@@ -237,6 +247,26 @@ func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (
 
 func (r *Router) getNodes(c *gin.Context) (*nodepb.GetNodesResponse, error) {
 	return r.clients.Node.GetNodes()
+}
+func (r *Router) list(c *gin.Context, req *ListNodesRequest) (*nodepb.ListResponse, error) {
+	listReq := &nodepb.ListRequest{
+		Type:         req.Type,
+		SiteId:       req.SiteId,
+		NodeId:       req.NodeId,
+		NetworkId:    req.NetworkId,
+		State:        Undefined,
+		Connectivity: Undefined,
+	}
+
+	if req.State != "" {
+		nodeState := ukama.ParseNodeState(req.State)
+		listReq.State = cpb.NodeState(nodeState)
+	}
+
+	if req.Connectivity != "" {
+		listReq.Connectivity = cpb.NodeConnectivity(ukama.ParseNodeConnectivity(req.Connectivity))
+	}
+	return r.clients.Node.List(listReq)
 }
 
 func (r *Router) getNodesByState(c *gin.Context, req *GetNodesByStateRequest) (*nodepb.GetNodesResponse, error) {
