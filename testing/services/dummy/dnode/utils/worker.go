@@ -63,6 +63,13 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 			case "unit_uptime":
 				kpi.KPI.With(labels).Inc()
 				continue
+			case "trx_lte_core_active_ue":
+				if scenario == cenums.SCENARIO_NODE_RF_OFF {
+					values[kpi.Key] = 0
+				} else {
+					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
+				}
+				continue
 			// TODO: Can handle different scenario cases here for different KPIs
 			default:
 				switch profile {
