@@ -89,7 +89,9 @@ message Record {
     bool CsgIdPrsent = 11 [json_name="csg_id_prsent"];
     uint32 CsgId = 12 [json_name="csg_id"];
     string PackageId = 13 [json_name="package_id"];
-    Policy Policy = 14 [json_name="policy"];
+    string SimPackageId = 14 [json_name="sim_package_id"];
+    string NetworkId = 15 [json_name="network_id"];
+    Policy Policy = 16 [json_name="policy"];
 }
 
 message Apn {
