@@ -210,6 +210,7 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 		NodeId: nodeId,
 	}
 	if err := m.PublishRequest(route, evt); err != nil {
+		logrus.Errorf("Failed to publish %s event. Error %s", route, err.Error())
 	}
 }
 
