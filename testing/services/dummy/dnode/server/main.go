@@ -243,7 +243,7 @@ func (s *Server) handleNodeRestart(nodeID ukama.NodeID, profile string, scenario
 	if err != nil {
 		return err
 	}
-	time.Sleep(30 * time.Second)
+	time.Sleep(15 * time.Second)
 	return s.handleNodeOn(nodeID, profile)
 }
 
