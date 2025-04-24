@@ -95,7 +95,7 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 
 		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
 	} else {
-		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
 			policy)
 	}
 
@@ -216,7 +216,7 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 
 		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
 	} else {
-		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
 			policy)
 	}
 
@@ -523,7 +523,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
 	} else {
-		log.Errorf("Faillure while processing  ASR for policy %s : Skipping data usage metric push.",
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
 			u.Policy)
 	}
 
@@ -536,7 +536,7 @@ func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHo
 	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
 		pkg.DataUsage, float64(value), labels, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing data usage  metric to pushgaway %s", err.Error())
+		log.Errorf("Error while pushing data usage  metric to push gateway %s", err.Error())
 	}
 }
 
