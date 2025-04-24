@@ -6,6 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NodeConnectivityEnum } from '@/client/graphql/generated';
 import ChipDropdown from '@/components/ChipDropDown';
 import colors from '@/theme/colors';
 import { ColumnsWithOptions } from '@/types';
@@ -202,7 +203,10 @@ const renderCellContent = ({
           sx={{
             p: 1,
             color: (theme) => theme.palette.text.primary,
-            backgroundColor: colors.primaryLight,
+            backgroundColor:
+              row[column.id] === NodeConnectivityEnum.Online
+                ? colors.primaryLight
+                : colors.dullRed,
           }}
           label={row[column.id]}
         />

@@ -10,8 +10,6 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
-import { NotificationsResDto } from "../../subscriptions/resolvers/types";
-import { CONSOLE_APP_URL } from "../configs";
 import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
@@ -311,10 +309,10 @@ const getSystemNameByService = (service: string): string => {
 const getBaseURL = async (
   serviceName: string,
   orgName: string,
-  store: RootDatabase
+  store?: RootDatabase
 ): Promise<ResponseObj> => {
   const sysName = getSystemNameByService(serviceName);
-  logger.info(`${store.get("org")}`);
+  logger.info(`${store?.get("org")}`);
 
   const initAPI = new InitAPI();
   if (orgName && sysName) {
@@ -358,33 +356,6 @@ const getScopesByRole = (userRole: string): Array<NOTIFICATION_SCOPE> => {
   return RoleToNotificationScopes[roleType] ?? [];
 };
 
-type TEventKeyToAction = {
-  title: string;
-  action: string;
-};
-
-const eventKeyToAction = (
-  key: string,
-  data: NotificationsResDto
-): TEventKeyToAction => {
-  switch (key) {
-    case "EventNodeOnline":
-      return {
-        title: "Configure node",
-        action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
-      };
-
-    case "EventInvoiceGenerate":
-      return {
-        title: "Ukama bill ready. View now.",
-        action: `${CONSOLE_APP_URL}/manage/billing`,
-      };
-
-    default:
-      return { title: "Network Updated", action: "updated" };
-  }
-};
-
 export const wsUrlResolver = (url: string): string => {
   if (url?.startsWith("wss://") || url?.startsWith("ws://")) {
     return url;
@@ -409,12 +380,12 @@ export const formatKPIValue = (type: string, value: any) => {
 
 export {
   csvToBase64,
-  eventKeyToAction,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
   getScopesByRole,
+  getSiteMetricStatByKeysByType,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,

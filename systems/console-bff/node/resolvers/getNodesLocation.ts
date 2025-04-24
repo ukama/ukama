@@ -15,7 +15,7 @@ export class GetNodesLocationResolver {
   @Query(() => Nodes)
   async getNodesLocation(@Ctx() context: Context) {
     const { dataSources, baseURL } = context;
-    const res = await dataSources.dataSource.getNodes(baseURL);
+    const res = await dataSources.dataSource.getNodes(baseURL, {});
     const nodes: Nodes = { nodes: [] };
 
     for (const node of res.nodes) {

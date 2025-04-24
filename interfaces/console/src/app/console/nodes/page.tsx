@@ -7,109 +7,94 @@
  */
 'use client';
 import {
-  NodeConnectivityEnum,
   NodeStateEnum,
-  useGetNodesByStateQuery,
-  useGetSitesLazyQuery,
+  useGetNodesLazyQuery,
+  useGetSitesQuery,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
-import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
+import {
+  NODE_ACTIONS_ENUM,
+  NODE_TABLE_COLUMNS,
+  NODE_TABLE_MENU,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import { PageContainer } from '@/styles/global';
-import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [pool, setPool] = useState<TNodePoolData[]>([]);
-  const [nodes, setNodes] = useState<TNodePoolData[]>([]);
   const { setSnackbarMessage, network } = useAppContext();
 
-  const [getSites] = useGetSitesLazyQuery({
+  const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
+    skip: !network.id,
     fetchPolicy: 'cache-first',
     variables: {
-      data: { networkId: network.id },
-    },
-  });
-
-  const { data: nodesData, loading: nodesLoading } = useGetNodesByStateQuery({
-    fetchPolicy: 'cache-and-network',
-    variables: {
       data: {
-        connectivity: NodeConnectivityEnum.Online,
-        state: NodeStateEnum.Configured,
+        networkId: network.id,
       },
     },
-    onCompleted: async (data) => {
-      if (data?.getNodesByState.nodes.length > 0) {
-        const sites = await getSites({
-          variables: {
-            data: { networkId: network.id },
-          },
-        });
-
-        const np: TNodePoolData[] = [];
-        data.getNodesByState.nodes.filter((node) => {
-          const s =
-            node.site.siteId &&
-            sites.data?.getSites.sites.find(
-              (site) => site.id === node.site.siteId,
-            )?.name;
-          const net =
-            node.site.networkId &&
-            sites.data?.getSites.sites.find(
-              (site) => site.id === node.site.networkId,
-            )?.name;
-          np.push({
-            id: node.id,
-            site: s ?? '-',
-            network: net ?? '-',
-            state: node.status.state,
-            type: NodeEnumToString(node.type),
-            connectivity: node.status.connectivity,
-            createdAt: node.site.addedAt
-              ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
-              : '-',
-          });
-          if (
-            sites.data?.getSites.sites.find(
-              (site) => site.id === node.site.siteId,
-            )
-          )
-            return node;
-        });
-        setNodes(np);
-        setPool(np);
-      }
-    },
-    onError: (err) => {
-      setSnackbarMessage({
-        id: 'nodes-msg',
-        message: err.message,
-        type: 'error',
-        show: true,
-      });
-    },
   });
 
+  const [getNodes, { data: nodesData, loading: nodesLoading }] =
+    useGetNodesLazyQuery({
+      fetchPolicy: 'cache-and-network',
+      onError: (err) => {
+        setSnackbarMessage({
+          id: 'nodes-msg',
+          message: err.message,
+          type: 'error',
+          show: true,
+        });
+      },
+    });
+
   useEffect(() => {
-    if (search.length > 3) {
-      const _nodes: TNodePoolData[] =
-        pool.filter((node) => {
-          const s = search.toLowerCase();
-          if (node.id.toLowerCase().includes(s)) return node;
-        }) ?? [];
-      setNodes(_nodes);
-    } else if (search.length === 0) {
-      setNodes(pool);
+    if (sitesData?.getSites?.sites) {
+      getNodes({
+        variables: {
+          data: {
+            state: NodeStateEnum.Configured,
+          },
+        },
+      });
     }
-  }, [search, nodesData?.getNodesByState.nodes]);
+  }, [sitesData, getNodes]);
+
+  const getSiteName = (siteId: string | undefined | null) => {
+    if (siteId === undefined || siteId === null) return '-';
+    const site = sitesData?.getSites.sites.find((site) => site.id === siteId);
+    return site ? site.name : '-';
+  };
+
+  const nodes = useMemo(() => {
+    if (!nodesData?.getNodes.nodes) return [];
+    return nodesData.getNodes.nodes
+      .filter((node) => node.site.networkId === network.id)
+      .map((node) => ({
+        id: node.id,
+        site: getSiteName(node?.site?.siteId),
+        network: network.id ?? '-',
+        state: node.status.state,
+        type: NodeEnumToString(node.type),
+        connectivity: node.status.connectivity,
+        createdAt: node.site.addedAt
+          ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+          : '-',
+      }));
+  }, [nodesData?.getNodes.nodes, network.id, sitesData?.getSites.sites]);
+
+  const filteredNodes = useMemo(() => {
+    if (search.length <= 3) return nodes;
+    return nodes.filter((node) =>
+      node.id.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [nodes, search]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);
@@ -119,11 +104,11 @@ export default function Page() {
     switch (action) {
       case 'edit-node':
         break;
-      case 'node-off':
+      case NODE_ACTIONS_ENUM.NODE_OFF:
         break;
-      case 'restart-node':
+      case NODE_ACTIONS_ENUM.NODE_RESTART:
         break;
-      case 'restart-rf':
+      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
         break;
     }
   };
@@ -132,9 +117,9 @@ export default function Page() {
     <LoadingWrapper
       radius="small"
       width={'100%'}
-      isLoading={nodesLoading}
       height={'calc(100vh - 212px)'}
-      cstyle={{ marginTop: nodesLoading ? '18px' : '0px' }}
+      isLoading={nodesLoading || sitesLoading}
+      cstyle={{ marginTop: nodesLoading || sitesLoading ? '18px' : '0px' }}
     >
       <PageContainer>
         <Stack
@@ -149,10 +134,10 @@ export default function Page() {
             title={'My Nodes'}
             showSearch={true}
             onSearchChange={handleSearchChange}
-            subtitle={`${nodes.length}`}
+            subtitle={`${filteredNodes.length}`}
           />
           <DataTableWithOptions
-            dataset={nodes}
+            dataset={filteredNodes}
             icon={RouterIcon}
             columns={NODE_TABLE_COLUMNS}
             menuOptions={NODE_TABLE_MENU}

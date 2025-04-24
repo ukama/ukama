@@ -24,6 +24,7 @@ interface INodeStatus {
   uptime: number;
   loading: boolean;
   onAddNode: Function;
+  isShowNodeAction?: boolean;
   nodeActionOptions: any[];
   handleNodeSelected: Function;
   handleEditNodeClick: Function;
@@ -41,6 +42,7 @@ const NodeStatus = ({
   handleNodeSelected,
   handleEditNodeClick,
   handleNodeActionClick,
+  isShowNodeAction = true,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
     handleEditNodeClick(nodes.find((item: any) => item.id === selectedNode));
@@ -54,6 +56,7 @@ const NodeStatus = ({
           loading={loading}
           onAddNode={onAddNode}
           selectedNode={selectedNode}
+          isNodeReady={isShowNodeAction}
           onNodeSelected={handleNodeSelected}
         />
       </Grid>
@@ -62,6 +65,7 @@ const NodeStatus = ({
         columnSpacing={2}
         size={{ xs: 12, md: 3 }}
         justifyContent="flex-end"
+        visibility={isShowNodeAction ? 'visible' : 'hidden'}
       >
         <Grid>
           <LoadingWrapper isLoading={loading} height={40}>

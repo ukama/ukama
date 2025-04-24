@@ -6,32 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { ApolloClient, HttpLink, InMemoryCache, split } from '@apollo/client';
-import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
-import { getMainDefinition } from '@apollo/client/utilities';
-import { createClient } from 'graphql-ws';
-
-const MetricLink = (baseUrl: string, websocketBaseUrl: string) => {
-  return split(
-    ({ query }) => {
-      const definition = getMainDefinition(query);
-      return (
-        definition.kind === 'OperationDefinition' &&
-        definition.operation === 'subscription'
-      );
-    },
-
-    new GraphQLWsLink(
-      createClient({
-        url: `${websocketBaseUrl}/graphql`,
-      }),
-    ),
-    new HttpLink({
-      uri: `${baseUrl}/graphql`,
-      credentials: 'include',
-    }),
-  );
-};
+import { ApolloClient, InMemoryCache } from '@apollo/client';
 
 export const getMetricsClient = (baseUrl: string) => {
   return new ApolloClient({

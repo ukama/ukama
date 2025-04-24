@@ -21,8 +21,49 @@ function makeClient(baseUrl: string) {
     credentials: 'include',
   });
 
+  const cache = new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          getSites: {
+            merge(existing, incoming) {
+              return incoming;
+            },
+          },
+          getNodes: {
+            merge(existing, incoming, { args, readField }) {
+              return incoming;
+            },
+            read(existing, { args, readField }) {
+              return existing;
+            },
+          },
+        },
+      },
+      Site: {
+        keyFields: ['id'],
+        fields: {
+          nodes: {
+            merge: true,
+          },
+        },
+      },
+      Node: {
+        keyFields: ['id'],
+        fields: {
+          status: {
+            merge: true,
+          },
+          site: {
+            merge: true,
+          },
+        },
+      },
+    },
+  });
+
   return new ApolloClient({
-    cache: new InMemoryCache(),
+    cache,
     link:
       typeof window === 'undefined'
         ? ApolloLink.from([
@@ -32,6 +73,17 @@ function makeClient(baseUrl: string) {
             httpLink,
           ])
         : httpLink,
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: 'cache-and-network',
+        nextFetchPolicy: 'cache-first',
+        refetchWritePolicy: 'merge',
+      },
+      query: {
+        fetchPolicy: 'network-only',
+        errorPolicy: 'all',
+      },
+    },
   });
 }
 

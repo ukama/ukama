@@ -13,9 +13,9 @@ import {
   NotificationTypeEnumValue,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
+import { eventKeyToAction } from "../../common/notification";
 import { addInStore, openStore } from "../../common/storage";
 import {
-  eventKeyToAction,
   formatKPIValue,
   getBaseURL,
   getGraphsKeyByType,

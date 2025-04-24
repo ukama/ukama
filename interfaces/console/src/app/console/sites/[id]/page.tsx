@@ -8,8 +8,11 @@
 'use client';
 
 import {
-  SiteDto,
-  useGetNodesForSiteLazyQuery,
+SiteDto,
+useGetNodesForSiteLazyQuery,
+useAddSiteMutation,
+useGetComponentsByUserIdLazyQuery,
+useGetNetworksQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
@@ -302,26 +305,26 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
-    onCompleted: (res) => {
-      if (res.getNodesForSite?.nodes) {
-        const ids = res.getNodesForSite.nodes.map((node) => node.id);
-        setNodeIds(ids);
-      } else {
-        setNodeIds([]);
-      }
-      setNodesFetched(true);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'nodes-msg',
-        message: error.message,
-        type: 'error',
-        show: true,
-      });
-      setNodesFetched(true);
-    },
-  });
+const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
+  onCompleted: (res) => {
+    if (res.getNodesForSite?.nodes) {
+      const ids = res.getNodesForSite.nodes.map((node) => node.id);
+      setNodeIds(ids);
+    } else {
+      setNodeIds([]);
+    }
+    setNodesFetched(true);
+  },
+  onError: (error) => {
+    setSnackbarMessage({
+      id: 'nodes-msg',
+      message: error.message,
+      type: 'error',
+      show: true,
+    });
+    setNodesFetched(true);
+  },
+});
 
   const handleSectionChange = useCallback((section: string): void => {
     setActiveSection(section);
@@ -463,7 +466,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   ]);
 
   useEffect(() => {
-    if (activeSite) {
+if (activeSite) {
       setNodesFetched(false);
       fetchNodesForSite({ variables: { siteId: id } });
     }

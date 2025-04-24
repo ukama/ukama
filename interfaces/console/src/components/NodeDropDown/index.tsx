@@ -61,8 +61,9 @@ const getStatusIcon = (status: NodeConnectivityEnum) => {
 };
 
 interface INodeDropDown {
-  loading: boolean;
   uptime: number;
+  loading: boolean;
+  isNodeReady?: boolean;
   onAddNode: Function;
   nodes: Node[] | [];
   onNodeSelected: Function;
@@ -76,6 +77,7 @@ const NodeDropDown = ({
   selectedNode,
   loading = true,
   onNodeSelected,
+  isNodeReady = true,
 }: INodeDropDown) => {
   const classes = useStyles();
   const handleChange = (e: SelectChangeEvent<string>) => {
@@ -144,7 +146,13 @@ const NodeDropDown = ({
 
       {selectedNode && (
         <Typography variant={'subtitle1'}>
-          Node is up for <b>{duration(uptime)}</b>
+          {isNodeReady && (
+            <>
+              Node is up for <b>{duration(uptime)}</b>
+            </>
+          )}
+          {selectedNode.status.connectivity === NodeConnectivityEnum.Offline &&
+            'Node is offline'}
         </Typography>
       )}
     </Stack>

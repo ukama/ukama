@@ -28,6 +28,7 @@ type NodeRepo interface {
 	Get(ukama.NodeID) (*Node, error)
 	GetAll() ([]Node, error)
 	GetNodesByState(connectivity, status uint8) ([]Node, error)
+	List(nodeId, siteId, networkId, ntype string, connectivity, state *uint8) ([]Node, error)
 	Delete(ukama.NodeID, func(ukama.NodeID, *gorm.DB) error) error
 	Update(*Node, func(*Node, *gorm.DB) error) error
 	AttachNodes(nodeId ukama.NodeID, attachedNodeId []string) error
@@ -143,6 +144,50 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 	})
 
 	return err
+}
+
+func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity, state *uint8) ([]Node, error) {
+	var nodes []Node
+
+	query := n.Db.GetGormDb().
+		Preload(clause.Associations).
+		Preload("Attached.Site").
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
+		Joins("LEFT JOIN sites ON nodes.id = sites.node_id").
+		Where("node_statuses.deleted_at IS NULL")
+
+	if nodeId != "" {
+		query = query.Where("nodes.id = ?", nodeId)
+	}
+
+	if siteId != "" {
+		query = query.Where("sites.site_id = ?", siteId)
+	}
+
+	if networkId != "" {
+		query = query.Where("sites.network_id = ?", networkId)
+	}
+
+	if connectivity != nil {
+		query = query.Where("node_statuses.connectivity = ?", connectivity)
+	}
+
+	if state != nil {
+		query = query.Where("node_statuses.state = ?", state)
+	}
+
+	if ntype != "" {
+		query = query.Where("nodes.type = ?", ntype)
+	}
+
+	result := query.Find(&nodes)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return nodes, nil
 }
 
 // Update updated node with `id`. Only fields that are not nil are updated, eg name and state.

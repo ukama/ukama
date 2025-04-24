@@ -18,6 +18,7 @@ import {
   NodeInput,
   NodeStateRes,
   Nodes,
+  NodesFilterInput,
   UpdateNodeInput,
   UpdateNodeStateInput,
 } from "../resolvers/types";
@@ -32,16 +33,22 @@ class NodeAPI extends RESTDataSource {
       parseNodeRes(res.node)
     );
   }
-  async getNodesForSite(baseURL: string, siteId: string): Promise<Nodes> {
+  async getNodes(baseURL: string, args: NodesFilterInput): Promise<Nodes> {
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${NODES}/sites/${siteId}`).then(res =>
+    this.logger.info(`Getting nodes with args: ${JSON.stringify(args)}`);
+    const query = new URLSearchParams();
+    if (args.id) query.set("id", args.id);
+    if (args.siteId) query.set("siteId", args.siteId);
+    if (args.networkId) query.set("networkId", args.networkId);
+    if (args.type) query.set("type", args.type.toLowerCase());
+    if (args.state) query.set("state", args.state.toLowerCase());
+    if (args.connectivity)
+      query.set("connectivity", args.connectivity.toLowerCase());
+    return this.get(`/${VERSION}/${NODES}/list?${query.toString()}`).then(res =>
       parseNodesRes(res)
     );
   }
-  async getNodes(baseURL: string): Promise<Nodes> {
-    this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${NODES}`).then(res => parseNodesRes(res));
-  }
+
   async getNodeState(baseURL: string, id: string): Promise<NodeStateRes> {
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/state/${id}/history`).then(res =>
