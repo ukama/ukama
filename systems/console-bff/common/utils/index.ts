@@ -385,7 +385,6 @@ export {
   getGraphsKeyByType,
   getPaginatedOutput,
   getScopesByRole,
-  getSiteMetricStatByKeysByType,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,

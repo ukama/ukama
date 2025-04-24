@@ -92,6 +92,10 @@ export default function Page() {
   });
 
   const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
+    variables: {
+      data: {},
+    },
+    fetchPolicy: 'network-only',
     onCompleted: async (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = [];

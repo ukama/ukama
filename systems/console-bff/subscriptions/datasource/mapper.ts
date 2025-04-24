@@ -11,7 +11,6 @@ import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
-  GetMetricsSiteStatInput,
   GetMetricsStatInput,
   LatestMetricRes,
   MetricRes,
