@@ -8,6 +8,7 @@
 
 import { NodeConnectivityEnum, NodeTypeEnum } from '@/client/graphql/generated';
 import { NODE_IMAGES } from '@/constants';
+import { colors } from '@/theme';
 import { CircularProgress, Stack, Typography } from '@mui/material';
 import DeviceModalView from '../DeviceModalView';
 
@@ -15,16 +16,16 @@ interface NodeActionUI {
   value: number;
   action: string;
   description: string;
-  nodeType: NodeTypeEnum;
-  connectivity: NodeConnectivityEnum;
+  nodeType: NodeTypeEnum | undefined;
+  connectivity: NodeConnectivityEnum | undefined;
 }
 
 export const NodeActionUI = ({
   value,
   action,
-  nodeType,
   description,
-  connectivity,
+  nodeType = NodeTypeEnum.Tnode,
+  connectivity = NodeConnectivityEnum.Online,
 }: NodeActionUI) => {
   return (
     <Stack
@@ -45,7 +46,10 @@ export const NodeActionUI = ({
               width: 300,
               height: 300,
               borderRadius: '50%',
-              bgcolor: 'background.paper',
+              bgcolor:
+                connectivity === NodeConnectivityEnum.Online
+                  ? 'background.paper'
+                  : colors.dullGrey,
             }}
           >
             <CircularProgress
@@ -61,10 +65,15 @@ export const NodeActionUI = ({
             <DeviceModalView
               size={200}
               nodeType={nodeType}
+              connectivity={connectivity}
               image={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
             />
           </Stack>
-          <Typography variant="subtitle1" color="text.secondary">
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            fontWeight={500}
+          >
             {description}
           </Typography>
         </Stack>

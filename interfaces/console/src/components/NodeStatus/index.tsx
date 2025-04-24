@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node } from '@/client/graphql/generated';
+import { Node, NodeConnectivityEnum } from '@/client/graphql/generated';
 import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/styles';
@@ -62,6 +62,11 @@ const NodeStatus = ({
         columnSpacing={2}
         size={{ xs: 12, md: 3 }}
         justifyContent="flex-end"
+        visibility={
+          selectedNode?.status.connectivity === NodeConnectivityEnum.Offline
+            ? 'hidden'
+            : 'visible'
+        }
       >
         <Grid>
           <LoadingWrapper isLoading={loading} height={40}>

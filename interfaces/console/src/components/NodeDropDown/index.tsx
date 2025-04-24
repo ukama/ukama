@@ -144,7 +144,13 @@ const NodeDropDown = ({
 
       {selectedNode && (
         <Typography variant={'subtitle1'}>
-          Node is up for <b>{duration(uptime)}</b>
+          {selectedNode.status.connectivity === NodeConnectivityEnum.Online ? (
+            <>
+              Node is up for <b>{duration(uptime)}</b>
+            </>
+          ) : (
+            'Node is offline'
+          )}
         </Typography>
       )}
     </Stack>

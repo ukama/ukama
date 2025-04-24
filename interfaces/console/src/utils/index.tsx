@@ -9,6 +9,7 @@
 import {
   Invitation_Status,
   Node,
+  NodeConnectivityEnum,
   Nodes,
   NodeTypeEnum,
   Role_Type,
@@ -585,6 +586,21 @@ const setQueryParam = (
   return p;
 };
 
+const getNodeDescriptionByConnectivity = (
+  connectivity: NodeConnectivityEnum,
+) => {
+  switch (connectivity) {
+    case NodeConnectivityEnum.Online:
+      return 'Node is online';
+    case NodeConnectivityEnum.Offline:
+      return 'Node is offline';
+    case NodeConnectivityEnum.Unknown:
+      return 'Node is not connected to the network';
+    default:
+      return 'Loading...';
+  }
+};
+
 export {
   base64ToBlob,
   ConfigureStep,
@@ -600,6 +616,7 @@ export {
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
+  getNodeDescriptionByConnectivity,
   getSignalStyles,
   getSimValuefromSimType,
   getTitleFromPath,

@@ -14,7 +14,11 @@ import {
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
-import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
+import {
+  NODE_ACTIONS_ENUM,
+  NODE_TABLE_COLUMNS,
+  NODE_TABLE_MENU,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import { PageContainer } from '@/styles/global';
 import { NodeEnumToString } from '@/utils';
@@ -100,11 +104,11 @@ export default function Page() {
     switch (action) {
       case 'edit-node':
         break;
-      case 'node-off':
+      case NODE_ACTIONS_ENUM.NODE_OFF:
         break;
-      case 'restart-node':
+      case NODE_ACTIONS_ENUM.NODE_RESTART:
         break;
-      case 'restart-rf':
+      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
         break;
     }
   };
