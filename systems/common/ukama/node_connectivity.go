@@ -17,11 +17,11 @@ import (
 type NodeConnectivity uint8
 
 const (
+	// TODO: (Issue: #983) Need to add a sentinel value. And update the logic in registry/node/api-gateway where we defined hardcode value.
 	Undefined NodeConnectivity = iota
 	Online
 	Offline
 )
-
 
 func (s *NodeConnectivity) Scan(value interface{}) error {
 	*s = NodeConnectivity(uint8(value.(int64)))
