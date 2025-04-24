@@ -37,11 +37,6 @@ type Config struct {
 	OrgId             string
 }
 
-type SimManager struct {
-	Host string
-	Name string
-}
-
 type GrpcEndPoints struct {
 }
 
