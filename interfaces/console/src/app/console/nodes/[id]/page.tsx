@@ -48,7 +48,7 @@ import {
   getNodeTabTypeByIndex,
   getUnixTime,
 } from '@/utils';
-import { Box, Stack, Tab, Tabs } from '@mui/material';
+import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -223,6 +223,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
   }, []);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
     if (
       nodesData &&
       nodesData?.getNodes.nodes.length > 0 &&
@@ -247,13 +249,11 @@ const Page: React.FC<INodePage> = ({ params }) => {
               }));
               break;
           }
-          const intervalId = setInterval(() => {
+
+          intervalId = setInterval(() => {
             setNodeAction((prev) => {
               const newProgress =
                 prev.progress === 100 ? 0 : prev.progress + 25;
-              if (newProgress === 0) {
-                clearInterval(intervalId);
-              }
               return {
                 ...prev,
                 progress: newProgress,
@@ -266,6 +266,12 @@ const Page: React.FC<INodePage> = ({ params }) => {
         }
       }
     }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [nodesData]);
 
   useEffect(() => {
@@ -376,7 +382,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
       />
       {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
       !nodeAction.actionInitiated ? (
-        <Box>
+        <div>
           <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
             {NodePageTabs.map(({ id, label, value }) => (
               <Tab
@@ -474,7 +480,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
           />
         </TabPanel> */}
           </LoadingWrapper>
-        </Box>
+        </div>
       ) : (
         <NodeActionUI
           value={nodeAction.progress}
