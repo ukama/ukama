@@ -80,6 +80,15 @@ export default function Page() {
       setSitesList(sites);
       refetchNodes();
     },
+    onError: (error) => {
+      setSitesList([]);
+      setSnackbarMessage({
+        id: 'sites-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
   });
 
   const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
