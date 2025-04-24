@@ -8,6 +8,7 @@
 'use client';
 
 import {
+  SiteDto,
   useGetSitesQuery,
   useUpdateSiteMutation,
   useGetNodeStateLazyQuery,
@@ -23,7 +24,7 @@ import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -40,6 +41,7 @@ import colors from '@/theme/colors';
 
 export default function Page() {
   const router = useRouter();
+  const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
     useAppContext();
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
@@ -47,29 +49,27 @@ export default function Page() {
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const pathname = usePathname();
+  const subscriptionKeyRef = useRef<string | null>(null);
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
     siteId: '',
   });
 
-  const {
-    data: sitesData,
-    refetch: refetchSites,
-    loading: sitesLoading,
-  } = useGetSitesQuery({
-    fetchPolicy: 'no-cache',
+  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
+    fetchPolicy: 'network-only',
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
     },
     onCompleted: (res) => {
+      const sites = res.getSites.sites;
+      setSitesList(sites);
       refetchNodes();
     },
   });
 
   const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
-    fetchPolicy: 'no-cache',
     onCompleted: async (res) => {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = [];
@@ -101,62 +101,73 @@ export default function Page() {
       });
     },
   });
+  useEffect(() => {
+    setSitesList([]);
+    setUnassignedNodes([]);
 
-  const [getSiteStatMetrics, { data: statData, variables: statVar }] =
-    useGetSiteStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getSiteStat.metrics.length > 0) {
-          // data.getSiteStat.metrics.forEach((m) => {
-          //   console.log(m.type);
-          //   console.log(m.value);
-          // });
+    if (network.id) {
+      refetchSites();
+      refetchNodes();
+    }
+  }, [network.id, refetchSites, refetchNodes]);
+  const [
+    getSiteStatMetrics,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getSiteStat.metrics.length > 0) {
+        data.getSiteStat.metrics.forEach((m) => {
+          console.log(m.type);
+          console.log(m.value);
+        });
 
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
 
-          MetricStatBySiteSubscription({
-            key: sKey,
-            nodeIds: [],
-            userId: user.id,
-            siteIds: sitesData?.getSites?.sites?.map((site) => site.id) ?? [],
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Site,
-            from: statVar?.data.from ?? 0,
-          });
-          PubSub.subscribe(sKey, handleStatSubscription);
-        }
-      },
-    });
+        MetricStatBySiteSubscription({
+          key: sKey,
+          nodeIds: [],
+          userId: user.id,
+          siteIds: sitesList.map((site) => site.id),
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.Site,
+          from: statVar?.data.from ?? 0,
+        });
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
+    },
+  });
 
   const handleStatSubscription = (_: any, data: string) => {
     try {
       const parsedData = JSON.parse(data);
-
       const { msg, value, type, success, siteId } =
         parsedData.data.getSiteMetricStatSub;
 
       const allowedMetricTypes = [
-        'site_uptime_seconds',
+        'site_uptime',
         'battery_percentage',
         'battery_charge_percentage',
         'backhaul_speed',
       ];
 
       if (success && siteId && allowedMetricTypes.includes(type)) {
-        const siteTopic = `site-metrics-${siteId}`;
-        PubSub.publish(siteTopic, {
-          metrics: [{ type, value }],
-        });
+        const metricTopic = `stat-${type}-${siteId}`;
+
+        PubSub.publish(metricTopic, [type, value]);
       }
     } catch (error) {
       console.error('Error handling subscription data:', error);
     }
   };
+
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
-      refetchSites();
+      refetchSites().then((res) => {
+        setSitesList(res.data.getSites.sites);
+      });
       setSnackbarMessage({
         id: 'update-site-success',
         message: 'Site updated successfully!',
@@ -199,22 +210,24 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (sitesData?.getSites.sites?.length === 0) return;
+    if (sitesList.length === 0) return;
 
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
-    const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
+    const newSKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
 
-    PubSub.unsubscribe(sKey);
+    if (subscriptionKeyRef.current) {
+      PubSub.unsubscribe(subscriptionKeyRef.current);
+    }
 
     getSiteStatMetrics({
       variables: {
         data: {
-          to,
-          from,
+          to: to,
+          from: from,
           userId: user.id,
           nodeIds: [],
-          siteIds: sitesData?.getSites?.sites.map((site) => site.id),
+          siteIds: sitesList.map((site) => site.id),
           step: STAT_STEP_29,
           orgName: user.orgName,
           withSubscription: true,
@@ -223,12 +236,17 @@ export default function Page() {
       },
     });
 
+    subscriptionKeyRef.current = newSKey;
+
     return () => {
-      PubSub.unsubscribe(sKey);
+      if (subscriptionKeyRef.current) {
+        PubSub.unsubscribe(subscriptionKeyRef.current);
+      }
     };
-  }, [sitesData]);
+  }, [sitesList]);
+
   const [getNodeState] = useGetNodeStateLazyQuery({
-    fetchPolicy: 'no-cache',
+    fetchPolicy: 'network-only',
   });
 
   const handleConfigureNode = async (nodeId: string) => {
@@ -280,6 +298,7 @@ export default function Page() {
       });
     }
   };
+
   return (
     <Box mt={2}>
       <Paper
@@ -293,7 +312,7 @@ export default function Page() {
         <LoadingWrapper
           radius="small"
           width={'100%'}
-          isLoading={nodesLoading || sitesLoading}
+          isLoading={nodesLoading || sitesLoading || statLoading}
           cstyle={{
             backgroundColor: false ? colors.white : 'transparent',
           }}
@@ -308,7 +327,7 @@ export default function Page() {
             </Typography>
             <SitesWrapper
               loading={nodesLoading || sitesLoading}
-              sites={sitesData?.getSites.sites ?? []}
+              sites={sitesList}
               siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
               handleSiteNameUpdate={handleSiteNameUpdate}
               handleConfigureNode={handleConfigureNode}

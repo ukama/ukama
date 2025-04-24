@@ -40,13 +40,6 @@ interface SiteMetric {
   value: number | [number, number];
 }
 
-interface SiteMetricsState {
-  site_uptime_seconds: number | null;
-  battery_charge_percentage: number | null;
-  backhaul_speed: number | null;
-  [key: string]: number | null;
-}
-
 interface MetricsUpdateData {
   metrics?: SiteMetric[] | null;
   type?: string;
@@ -94,13 +87,10 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     metricsData,
   }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [metrics, setMetrics] = useState<SiteMetricsState>({
-      site_uptime_seconds: null,
-      battery_charge_percentage: null,
-      backhaul_speed: null,
-    });
-    const updateCount = useRef(0);
-    const hasLiveData = useRef<Record<string, boolean>>({});
+
+    const [uptimeValue, setUptimeValue] = useState<number | null>(null);
+    const [batteryValue, setBatteryValue] = useState<number | null>(null);
+    const [backhaulValue, setBackhaulValue] = useState<number | null>(null);
 
     useEffect(() => {
       if (
@@ -108,74 +98,65 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         metricsData.metrics &&
         metricsData.metrics.length > 0
       ) {
-        const siteMetrics = metricsData.metrics.filter(
-          (metric) => metric.siteId === siteId,
+        const uptime = getSiteMetricValue(
+          'site_uptime_seconds',
+          metricsData,
+          siteId,
         );
-        if (siteMetrics.length > 0) {
-          setMetrics((prev) => {
-            const newMetrics = { ...prev };
-            siteMetrics.forEach((metric) => {
-              const metricType = metric.type;
-              const metricValue = extractMetricValue(metric.value);
-              if (!hasLiveData.current[metricType] && metricValue !== null) {
-                newMetrics[metricType] = metricValue;
-              }
-            });
-            updateCount.current += 1;
-            return newMetrics;
-          });
-        }
+        if (uptime !== null) setUptimeValue(uptime);
+
+        const batteryCharge = getSiteMetricValue(
+          'battery_charge_percentage',
+          metricsData,
+          siteId,
+        );
+
+        const backhaul = getSiteMetricValue(
+          'backhaul_speed',
+          metricsData,
+          siteId,
+        );
+        if (backhaul !== null) setBackhaulValue(backhaul);
       }
     }, [metricsData, siteId]);
 
     useEffect(() => {
-      const siteMetricsTopic = `site-metrics-${siteId}`;
-      const token = PubSub.subscribe(
-        siteMetricsTopic,
-        (_, data: MetricsUpdateData) => {
-          if (data && typeof data === 'object') {
-            if (
-              'metrics' in data &&
-              data.metrics &&
-              Array.isArray(data.metrics) &&
-              data.metrics.length > 0
-            ) {
-              setMetrics((prev) => {
-                const newMetrics = { ...prev };
-                data.metrics!.forEach((metric) => {
-                  const metricValue = extractMetricValue(metric.value);
-                  newMetrics[metric.type] = metricValue;
-                  hasLiveData.current[metric.type] = true;
-                });
-                updateCount.current += 1;
-                return newMetrics;
-              });
-            } else if (
-              'type' in data &&
-              data.type &&
-              'value' in data &&
-              data.value !== undefined
-            ) {
-              // Handle single metric
-              const metricType = data.type;
-              const metricValue = extractMetricValue(data.value);
-              setMetrics((prev) => {
-                const newState = { ...prev };
-                newState[metricType] = metricValue;
-                hasLiveData.current[metricType] = true;
-                updateCount.current += 1;
-                return newState;
-              });
-            }
+      const uptimeToken = PubSub.subscribe(
+        `stat-site_uptime_seconds-${siteId}`,
+        (_, data) => {
+          if (data && data.length > 1) {
+            const value = extractMetricValue(data[1]);
+            if (value !== null) setUptimeValue(value);
+          }
+        },
+      );
+
+      const batteryChargeToken = PubSub.subscribe(
+        `stat-battery_charge_percentage-${siteId}`,
+        (_, data) => {
+          if (data && data.length > 1) {
+            const value = extractMetricValue(data[1]);
+            if (value !== null) setBatteryValue(value);
+          }
+        },
+      );
+
+      const backhaulToken = PubSub.subscribe(
+        `stat-backhaul_speed-${siteId}`,
+        (_, data) => {
+          if (data && data.length > 1) {
+            const value = extractMetricValue(data[1]);
+            if (value !== null) setBackhaulValue(value);
           }
         },
       );
 
       return () => {
-        PubSub.unsubscribe(token);
-        hasLiveData.current = {};
+        PubSub.unsubscribe(uptimeToken);
+        PubSub.unsubscribe(batteryChargeToken);
+        PubSub.unsubscribe(backhaulToken);
       };
-    }, [siteId]);
+    }, [siteId, batteryValue]);
 
     const displayAddress = loading
       ? ''
@@ -199,48 +180,19 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       window.location.href = `/console/sites/${siteId}`;
     };
 
-    const uptimeValue = getSiteMetricValue(
-      'site_uptime_seconds',
-      metricsData,
-      siteId,
-    );
-    const batteryValue = getSiteMetricValue(
-      'battery_charge_percentage',
-      metricsData,
-      siteId,
-    );
-    const backhaulValue = getSiteMetricValue(
-      'backhaul_speed',
-      metricsData,
-      siteId,
-    );
-
-    const connectionValue =
-      metrics.site_uptime_seconds !== null
-        ? metrics.site_uptime_seconds
-        : uptimeValue;
-
-    const batteryLevel =
-      metrics.battery_charge_percentage !== null
-        ? metrics.battery_charge_percentage
-        : batteryValue;
-
-    const signalLevel =
-      metrics.backhaul_speed !== null ? metrics.backhaul_speed : backhaulValue;
-
     const connectionStyles =
-      connectionValue !== null
-        ? getStatusStyles('uptime', connectionValue)
+      uptimeValue !== null
+        ? getStatusStyles('uptime', uptimeValue)
         : { icon: null, color: colors.darkGray };
 
     const batteryStyles =
-      batteryLevel !== null
-        ? getStatusStyles('battery', batteryLevel)
+      batteryValue !== null
+        ? getStatusStyles('battery', batteryValue)
         : { icon: null, color: colors.darkGray };
 
     const signalStyles =
-      signalLevel !== null
-        ? getStatusStyles('signal', signalLevel)
+      backhaulValue !== null
+        ? getStatusStyles('signal', backhaulValue)
         : { icon: null, color: colors.darkGray };
 
     return (
@@ -326,7 +278,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || connectionValue === null ? (
+              {loading || uptimeValue === null ? (
                 <>
                   <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={60} />
@@ -341,14 +293,14 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                       display: { xs: 'none', sm: 'block' },
                     }}
                   >
-                    {connectionValue <= 0 ? 'Offline' : 'Online'}
+                    {uptimeValue <= 0 ? 'Offline' : 'Online'}
                   </Typography>
                 </>
               )}
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || batteryLevel === null ? (
+              {loading || batteryValue === null ? (
                 <>
                   <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={70} />
@@ -363,9 +315,9 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                       display: { xs: 'none', sm: 'block' },
                     }}
                   >
-                    {batteryLevel < 20
+                    {batteryValue < 20
                       ? 'Critical'
-                      : batteryLevel < 40
+                      : batteryValue < 40
                         ? 'Low'
                         : 'Charged'}
                   </Typography>
@@ -374,7 +326,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || signalLevel === null ? (
+              {loading || backhaulValue === null ? (
                 <>
                   <Skeleton width={24} height={24} variant="circular" />
                   <Skeleton width={60} />
@@ -389,9 +341,9 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                       display: { xs: 'none', sm: 'block' },
                     }}
                   >
-                    {signalLevel < 10
+                    {backhaulValue < 10
                       ? 'No signal'
-                      : signalLevel < 70
+                      : backhaulValue < 70
                         ? 'Low signal'
                         : 'Strong'}
                   </Typography>
