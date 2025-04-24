@@ -214,7 +214,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	asrRepo.On("GetByIccid", reqPb.GetIccid()).Return(&sub, nil)
 	ctrl.On("NewPolicy", pId).Return(&policy, nil).Once()
 	asrRepo.On("UpdatePackage", sub.Imsi, pId, &policy).Return(nil).Once()
-	ctrl.On("RunPolicyControl", sub.Imsi).Return(nil, false).Once()
+	ctrl.On("RunPolicyControl", sub.Imsi, false).Return(nil, false).Once()
 	ctrl.On("SyncProfile", pcrfData, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).Return(nil, false).Once()
 
 	s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, atos)
@@ -295,7 +295,7 @@ func TestAsr_Activate(t *testing.T) {
 		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
 			return a1.Iccid == asr.Iccid
 		})).Return(nil).Once()
-		ctrl.On("RunPolicyControl", sub.Imsi).Return(nil, false).Once()
+		ctrl.On("RunPolicyControl", sub.Imsi, false).Return(nil, false).Once()
 		ctrl.On("SyncProfile", pcrfData, mock.MatchedBy(func(a1 *db.Asr) bool {
 			return a1.Iccid == asr.Iccid
 		}), msgbus.ACTION_CRUD_CREATE, "activesubscriber", true).Return(nil, false).Once()

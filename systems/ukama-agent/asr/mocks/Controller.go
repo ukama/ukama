@@ -51,9 +51,9 @@ func (_m *Controller) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
 	return r0, r1
 }
 
-// RunPolicyControl provides a mock function with given fields: imsi
-func (_m *Controller) RunPolicyControl(imsi string) (error, bool) {
-	ret := _m.Called(imsi)
+// RunPolicyControl provides a mock function with given fields: imsi, event
+func (_m *Controller) RunPolicyControl(imsi string, event bool) (error, bool) {
+	ret := _m.Called(imsi, event)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RunPolicyControl")
@@ -61,17 +61,17 @@ func (_m *Controller) RunPolicyControl(imsi string) (error, bool) {
 
 	var r0 error
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(string) (error, bool)); ok {
-		return rf(imsi)
+	if rf, ok := ret.Get(0).(func(string, bool) (error, bool)); ok {
+		return rf(imsi, event)
 	}
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(imsi)
+	if rf, ok := ret.Get(0).(func(string, bool) error); ok {
+		r0 = rf(imsi, event)
 	} else {
 		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) bool); ok {
-		r1 = rf(imsi)
+	if rf, ok := ret.Get(1).(func(string, bool) bool); ok {
+		r1 = rf(imsi, event)
 	} else {
 		r1 = ret.Get(1).(bool)
 	}

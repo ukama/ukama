@@ -80,7 +80,7 @@ type Controller interface {
 	InitPolicyController()
 	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
 	SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error
-	RunPolicyControl(imsi string) (error, bool)
+	RunPolicyControl(imsi string, event bool) (error, bool)
 }
 
 func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
@@ -234,7 +234,7 @@ For now all the policies are by default applicable for the profiles.
 There might be more policies which are applicable for certain profiles
 that can be easily managed by adding policy db and adding applicable policy id for each susbcriber.
 */
-func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
+func (p *policyController) RunPolicyControl(imsi string, event bool) (error, bool) {
 	log.Infof("Running policy control for subscriber %s", imsi)
 
 	removed := false
@@ -254,7 +254,7 @@ func (p *policyController) RunPolicyControl(imsi string) (error, bool) {
 			log.Infof("Policy Controller found profile %s has failed to comply policy type %s", pf.Imsi, pt.Name)
 			/* if policy check failed, try the action */
 			if pt.Action != nil {
-				err, removed := pt.Action(p, *pf)
+				err, removed := pt.Action(p, *pf, event)
 				if err != nil {
 					log.Errorf("Error while applying action for failing policy compliance (%s, %s). Error: %v",
 						pf.Imsi, pt.Name, err)
@@ -337,7 +337,7 @@ func (p *policyController) doPolicyCheck() error {
 	}
 
 	for _, profile := range pf {
-		_, _ = p.RunPolicyControl(profile.Imsi)
+		_, _ = p.RunPolicyControl(profile.Imsi, true)
 	}
 	log.Infof("Policy check routine ended at %s.", time.Now().String())
 	return nil

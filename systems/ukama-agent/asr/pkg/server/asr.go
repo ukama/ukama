@@ -232,7 +232,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err, removed := s.pc.RunPolicyControl(asr.Imsi)
+	err, removed := s.pc.RunPolicyControl(asr.Imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", asr.Imsi, err.Error())
 		return nil, err
@@ -284,7 +284,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi)
+	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", asrRecord.Imsi, err.Error())
 		return nil, err
@@ -473,7 +473,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 		return err
 	}
 
-	err, removed := s.pc.RunPolicyControl(imsi)
+	err, removed := s.pc.RunPolicyControl(imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", sub.Imsi, err.Error())
 		return err

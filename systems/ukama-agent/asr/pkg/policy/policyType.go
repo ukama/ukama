@@ -23,7 +23,7 @@ type Rule struct {
 	Name   string `json:"name"`
 	ID     uint32 `json:"id"`
 	Check  func(pf db.Asr) bool
-	Action func(pc *policyController, pf db.Asr) (error, bool)
+	Action func(pc *policyController, pf db.Asr, event bool) (error, bool)
 }
 
 /* Data Bytes available Policy */
@@ -41,7 +41,7 @@ func ValidityCheck(pf db.Asr) bool {
 	return ((time.Now().Unix() >= (int64)(pf.Policy.StartTime)) && (time.Now().Unix() < (int64)(pf.Policy.EndTime)))
 }
 
-func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
+func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 	log.Infof("Removing profile for subscriber %s due to policy failure", pf.Imsi)
 
 	err := p.asrRepo.Delete(pf.Imsi, db.POLICY_FAILURE)
@@ -65,7 +65,9 @@ func RemoveProfile(p *policyController, pf db.Asr) (error, bool) {
 
 	_ = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
 
-	_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+	if event {
+		_ = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+	}
 
 	return nil, true
 }
