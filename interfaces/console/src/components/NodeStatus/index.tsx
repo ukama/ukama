@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { Node, NodeConnectivityEnum } from '@/client/graphql/generated';
+import { Node } from '@/client/graphql/generated';
 import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { styled } from '@mui/styles';
@@ -24,6 +24,7 @@ interface INodeStatus {
   uptime: number;
   loading: boolean;
   onAddNode: Function;
+  isShowNodeAction?: boolean;
   nodeActionOptions: any[];
   handleNodeSelected: Function;
   handleEditNodeClick: Function;
@@ -41,6 +42,7 @@ const NodeStatus = ({
   handleNodeSelected,
   handleEditNodeClick,
   handleNodeActionClick,
+  isShowNodeAction = true,
 }: INodeStatus) => {
   const handleUpdateNode = () =>
     handleEditNodeClick(nodes.find((item: any) => item.id === selectedNode));
@@ -54,6 +56,7 @@ const NodeStatus = ({
           loading={loading}
           onAddNode={onAddNode}
           selectedNode={selectedNode}
+          isNodeReady={isShowNodeAction}
           onNodeSelected={handleNodeSelected}
         />
       </Grid>
@@ -62,11 +65,7 @@ const NodeStatus = ({
         columnSpacing={2}
         size={{ xs: 12, md: 3 }}
         justifyContent="flex-end"
-        visibility={
-          selectedNode?.status.connectivity === NodeConnectivityEnum.Offline
-            ? 'hidden'
-            : 'visible'
-        }
+        visibility={isShowNodeAction ? 'visible' : 'hidden'}
       >
         <Grid>
           <LoadingWrapper isLoading={loading} height={40}>

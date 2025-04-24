@@ -228,7 +228,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
     if (
       nodesData &&
       nodesData?.getNodes.nodes.length > 0 &&
-      nodeAction.actionInitiated
+      nodeAction.actionInitiated !== ''
     ) {
       const s = nodesData?.getNodes.nodes.find((n) => n.id === id);
       if (s && s?.status.connectivity !== nodeAction.currentAction) {
@@ -262,13 +262,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
                 actionInitiated: newProgress === 0 ? '' : prev.actionInitiated,
               };
             });
-          }, 3000);
+          }, 5000);
         }
       }
     }
 
     return () => {
       if (intervalId) {
+        setNodeAction({
+          progress: 0,
+          currentAction: '',
+          actionInitiated: '',
+        });
         clearInterval(intervalId);
       }
     };
@@ -378,6 +383,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
         nodes={nodesData?.getNodes.nodes ?? []}
         nodeActionOptions={NODE_ACTIONS_BUTTONS}
         handleNodeActionClick={handleNodeActionClick}
+        isShowNodeAction={
+          currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
+          !nodeAction.actionInitiated
+        }
         loading={nodesLoading || updateNodeLoading || statLoading}
       />
       {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
@@ -485,7 +494,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         <NodeActionUI
           value={nodeAction.progress}
           nodeType={currentNode?.type}
-          action={NODE_ACTIONS_ENUM.NODE_OFF}
+          action={nodeAction.actionInitiated || NODE_ACTIONS_ENUM.NODE_OFF}
           connectivity={
             (currentNode?.status?.connectivity as NodeConnectivityEnum) ||
             undefined

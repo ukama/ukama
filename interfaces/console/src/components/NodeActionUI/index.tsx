@@ -7,7 +7,7 @@
  */
 
 import { NodeConnectivityEnum, NodeTypeEnum } from '@/client/graphql/generated';
-import { NODE_IMAGES } from '@/constants';
+import { NODE_ACTIONS_ENUM, NODE_IMAGES } from '@/constants';
 import { colors } from '@/theme';
 import { CircularProgress, Stack, Typography } from '@mui/material';
 import DeviceModalView from '../DeviceModalView';
@@ -37,7 +37,12 @@ export const NodeActionUI = ({
       justifyContent={'center'}
     >
       {NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode'] && (
-        <Stack direction={'column'} spacing={2} alignItems={'center'}>
+        <Stack direction={'column'} spacing={3} alignItems={'center'}>
+          {action && (
+            <Typography variant="h6" color="text.secondary">
+              {action === NODE_ACTIONS_ENUM.NODE_RESTART && 'Restarting node'}
+            </Typography>
+          )}
           <Stack
             position={'relative'}
             alignItems={'center'}
