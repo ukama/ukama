@@ -170,6 +170,7 @@ const NodeOverviewTab = ({
           sx={{
             p: 3,
             overflow: 'auto',
+            display: selected === 0 ? 'none' : 'block',
             height: { xs: 'calc(100vh - 480px)', md: 'calc(100vh - 328px)' },
           }}
         >

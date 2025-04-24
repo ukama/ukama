@@ -36,48 +36,48 @@ const NodeDetailsCard = ({
       isLoading={loading}
       height="fit-content"
     >
-      <Paper sx={{ p: 3, gap: 1 }}>
-        <Stack spacing={3}>
-          <Grid container>
-            <Grid size={{ xs: 5 }}>
-              <Typography variant="h6">{nodeTitle}</Typography>
+      <Paper sx={{ p: 2, gap: 1 }}>
+        <Grid container>
+          <Grid size={{ xs: 5 }}>
+            <Typography variant="h6">{nodeTitle}</Typography>
+          </Grid>
+          {isUpdateAvailable && (
+            <Grid container size={{ xs: 7 }} justifyContent="flex-end">
+              <Chip
+                variant="outlined"
+                sx={{
+                  color: colors.primaryMain,
+                  border: `1px solid ${colors.primaryMain}`,
+                }}
+                label={
+                  <Stack spacing={'4px'} direction="row" alignItems="center">
+                    <Typography variant="body2">
+                      Software update available — view
+                    </Typography>
+                    <Link
+                      onClick={() => getNodeUpdateInfos()}
+                      sx={{
+                        cursor: 'pointer',
+                        typography: 'body2',
+                        color: colors.primaryDark,
+                      }}
+                    >
+                      notes
+                    </Link>
+                  </Stack>
+                }
+              />
             </Grid>
-            {isUpdateAvailable && (
-              <Grid container size={{ xs: 7 }} justifyContent="flex-end">
-                <Chip
-                  variant="outlined"
-                  sx={{
-                    color: colors.primaryMain,
-                    border: `1px solid ${colors.primaryMain}`,
-                  }}
-                  label={
-                    <Stack spacing={'4px'} direction="row" alignItems="center">
-                      <Typography variant="body2">
-                        Software update available — view
-                      </Typography>
-                      <Link
-                        onClick={() => getNodeUpdateInfos()}
-                        sx={{
-                          cursor: 'pointer',
-                          typography: 'body2',
-                          color: colors.primaryDark,
-                        }}
-                      >
-                        notes
-                      </Link>
-                    </Stack>
-                  }
-                />
-              </Grid>
+          )}
+          <Grid size={{ xs: 12 }} height={'fit-content'} my={4}>
+            {NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode'] && (
+              <DeviceModalView
+                nodeType={nodeType}
+                image={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
+              />
             )}
           </Grid>
-          {NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode'] && (
-            <DeviceModalView
-              nodeType={nodeType}
-              image={NODE_IMAGES[nodeType as 'hnode' | 'anode' | 'tnode']}
-            />
-          )}
-        </Stack>
+        </Grid>
       </Paper>
     </LoadingWrapper>
   );

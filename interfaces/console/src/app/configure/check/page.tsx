@@ -12,7 +12,7 @@ import {
   NodeConnectivityEnum,
   NodeStateEnum,
   useGetNodeLazyQuery,
-  useGetNodesByStateLazyQuery,
+  useGetNodesLazyQuery,
   useGetNodeStateLazyQuery,
 } from '@/client/graphql/generated';
 import InstallSiteLoading from '@/components/InstallSiteLoading';
@@ -51,10 +51,10 @@ const Check = () => {
   const [description, setDescription] = useState('');
   const { setSnackbarMessage } = useAppContext();
 
-  const [getNodesByState] = useGetNodesByStateLazyQuery({
+  const [getNodesByState] = useGetNodesLazyQuery({
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
-      const filterNodes = data.getNodesByState.nodes.filter(
+      const filterNodes = data.getNodes.nodes.filter(
         (node) =>
           node.latitude !== 0 &&
           node.longitude !== 0 &&

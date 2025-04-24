@@ -7,7 +7,7 @@
  */
 import { METRICS_INTERVAL } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { eventKeyToAction, formatKPIValue } from "../../common/utils";
+import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricRangeInput,
@@ -19,6 +19,7 @@ import {
   NotificationsRes,
   NotificationsResDto,
 } from "../resolvers/types";
+import { eventKeyToAction } from "./../../common/notification/index";
 
 const ERROR_RESPONSE = {
   success: true,

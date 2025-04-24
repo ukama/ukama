@@ -62,7 +62,7 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
         aria-label="split button"
         sx={{
           whiteSpace: 'nowrap',
-          width: isHaveOptions ? '208px' : 'fit-content',
+          width: isHaveOptions ? '180px' : 'fit-content',
         }}
       >
         <Button fullWidth onClick={() => setConsentDialog(true)}>

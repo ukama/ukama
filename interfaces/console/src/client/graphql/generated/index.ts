@@ -811,6 +811,15 @@ export type Nodes = {
   nodes: Array<Node>;
 };
 
+export type NodesFilterInput = {
+  connectivity?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['String']['input']>;
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  siteId?: InputMaybe<Scalars['String']['input']>;
+  state?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type NotificationResDto = {
   __typename?: 'NotificationResDto';
   createdAt: Scalars['String']['output'];
@@ -1112,6 +1121,11 @@ export type QueryGetNodeLatestMetricArgs = {
 
 export type QueryGetNodeStateArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryGetNodesArgs = {
+  data: NodesFilterInput;
 };
 
 
@@ -1655,24 +1669,12 @@ export type GetNodeQueryVariables = Exact<{
 
 export type GetNodeQuery = { __typename?: 'Query', getNode: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
 
-export type GetNodesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetNodesQueryVariables = Exact<{
+  data: NodesFilterInput;
+}>;
 
 
 export type GetNodesQuery = { __typename?: 'Query', getNodes: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
-
-export type GetNodesByStateQueryVariables = Exact<{
-  data: GetNodesByStateInput;
-}>;
-
-
-export type GetNodesByStateQuery = { __typename?: 'Query', getNodesByState: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
-
-export type GetNodesByNetworkQueryVariables = Exact<{
-  networkId: Scalars['String']['input'];
-}>;
-
-
-export type GetNodesByNetworkQuery = { __typename?: 'Query', getNodesByNetwork: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type DeleteNodeMutationVariables = Exact<{
   data: NodeInput;
@@ -1736,11 +1738,6 @@ export type GetNodeAppsQueryVariables = Exact<{
 
 
 export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: { __typename?: 'NodeApps', type: NodeTypeEnum, apps: Array<{ __typename?: 'NodeApp', name: string, date: number, version: string, cpu: string, memory: string, notes: string }> } };
-
-export type GetNodesLocationQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetNodesLocationQuery = { __typename?: 'Query', getNodesLocation: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type GetNodeStateQueryVariables = Exact<{
   getNodeStateId: Scalars['String']['input'];
@@ -2626,8 +2623,8 @@ export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
 export type GetNodeSuspenseQueryHookResult = ReturnType<typeof useGetNodeSuspenseQuery>;
 export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
 export const GetNodesDocument = gql`
-    query GetNodes {
-  getNodes {
+    query GetNodes($data: NodesFilterInput!) {
+  getNodes(data: $data) {
     nodes {
       ...node
     }
@@ -2647,10 +2644,11 @@ export const GetNodesDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesQuery({
  *   variables: {
+ *      data: // value for 'data'
  *   },
  * });
  */
-export function useGetNodesQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>) {
+export function useGetNodesQuery(baseOptions: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables> & ({ variables: GetNodesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(GetNodesDocument, options);
       }
@@ -2666,90 +2664,6 @@ export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
 export type GetNodesLazyQueryHookResult = ReturnType<typeof useGetNodesLazyQuery>;
 export type GetNodesSuspenseQueryHookResult = ReturnType<typeof useGetNodesSuspenseQuery>;
 export type GetNodesQueryResult = Apollo.QueryResult<GetNodesQuery, GetNodesQueryVariables>;
-export const GetNodesByStateDocument = gql`
-    query GetNodesByState($data: GetNodesByStateInput!) {
-  getNodesByState(data: $data) {
-    nodes {
-      ...node
-    }
-  }
-}
-    ${NodeFragmentDoc}`;
-
-/**
- * __useGetNodesByStateQuery__
- *
- * To run a query within a React component, call `useGetNodesByStateQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodesByStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodesByStateQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetNodesByStateQuery(baseOptions: Apollo.QueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables> & ({ variables: GetNodesByStateQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
-      }
-export function useGetNodesByStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
-        }
-export function useGetNodesByStateSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesByStateQuery, GetNodesByStateQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNodesByStateQuery, GetNodesByStateQueryVariables>(GetNodesByStateDocument, options);
-        }
-export type GetNodesByStateQueryHookResult = ReturnType<typeof useGetNodesByStateQuery>;
-export type GetNodesByStateLazyQueryHookResult = ReturnType<typeof useGetNodesByStateLazyQuery>;
-export type GetNodesByStateSuspenseQueryHookResult = ReturnType<typeof useGetNodesByStateSuspenseQuery>;
-export type GetNodesByStateQueryResult = Apollo.QueryResult<GetNodesByStateQuery, GetNodesByStateQueryVariables>;
-export const GetNodesByNetworkDocument = gql`
-    query getNodesByNetwork($networkId: String!) {
-  getNodesByNetwork(networkId: $networkId) {
-    nodes {
-      ...node
-    }
-  }
-}
-    ${NodeFragmentDoc}`;
-
-/**
- * __useGetNodesByNetworkQuery__
- *
- * To run a query within a React component, call `useGetNodesByNetworkQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodesByNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodesByNetworkQuery({
- *   variables: {
- *      networkId: // value for 'networkId'
- *   },
- * });
- */
-export function useGetNodesByNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables> & ({ variables: GetNodesByNetworkQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
-      }
-export function useGetNodesByNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
-        }
-export function useGetNodesByNetworkSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>(GetNodesByNetworkDocument, options);
-        }
-export type GetNodesByNetworkQueryHookResult = ReturnType<typeof useGetNodesByNetworkQuery>;
-export type GetNodesByNetworkLazyQueryHookResult = ReturnType<typeof useGetNodesByNetworkLazyQuery>;
-export type GetNodesByNetworkSuspenseQueryHookResult = ReturnType<typeof useGetNodesByNetworkSuspenseQuery>;
-export type GetNodesByNetworkQueryResult = Apollo.QueryResult<GetNodesByNetworkQuery, GetNodesByNetworkQueryVariables>;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($data: NodeInput!) {
   deleteNodeFromOrg(data: $data) {
@@ -3062,47 +2976,6 @@ export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
 export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
 export type GetNodeAppsSuspenseQueryHookResult = ReturnType<typeof useGetNodeAppsSuspenseQuery>;
 export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
-export const GetNodesLocationDocument = gql`
-    query GetNodesLocation {
-  getNodesLocation {
-    nodes {
-      ...node
-    }
-  }
-}
-    ${NodeFragmentDoc}`;
-
-/**
- * __useGetNodesLocationQuery__
- *
- * To run a query within a React component, call `useGetNodesLocationQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodesLocationQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodesLocationQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetNodesLocationQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
-      }
-export function useGetNodesLocationLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
-        }
-export function useGetNodesLocationSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesLocationQuery, GetNodesLocationQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNodesLocationQuery, GetNodesLocationQueryVariables>(GetNodesLocationDocument, options);
-        }
-export type GetNodesLocationQueryHookResult = ReturnType<typeof useGetNodesLocationQuery>;
-export type GetNodesLocationLazyQueryHookResult = ReturnType<typeof useGetNodesLocationLazyQuery>;
-export type GetNodesLocationSuspenseQueryHookResult = ReturnType<typeof useGetNodesLocationSuspenseQuery>;
-export type GetNodesLocationQueryResult = Apollo.QueryResult<GetNodesLocationQuery, GetNodesLocationQueryVariables>;
 export const GetNodeStateDocument = gql`
     query GetNodeState($getNodeStateId: String!) {
   getNodeState(id: $getNodeStateId) {
