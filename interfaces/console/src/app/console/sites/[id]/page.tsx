@@ -38,6 +38,7 @@ import React, { useEffect, useState } from 'react';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
+import { SITE_KPI_TYPES } from '@/constants';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -435,7 +436,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         if (data.getSiteStat.metrics.length > 0) {
           data.getSiteStat.metrics.forEach((m) => {
             if (
-              m.type === 'site_uptime_seconds' &&
+              m.type === SITE_KPI_TYPES.SITE_UPTIME &&
               m.siteId &&
               m.success &&
               !m.nodeId
@@ -443,14 +444,18 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
               setSiteUptime(m.value);
             }
             if (
-              m.type === 'site_uptime_percentage' &&
+              m.type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE &&
               m.siteId &&
               m.success &&
               !m.nodeId
             ) {
               setSiteUptimePercentage(m.value);
             }
-            if (m.type === 'unit_uptime' && m.nodeId && m.success) {
+            if (
+              m.type === SITE_KPI_TYPES.NODE_UPTIME &&
+              m.nodeId &&
+              m.success
+            ) {
               setNodeUptimes((prev) => {
                 const updatedUptimes = {
                   ...prev,
@@ -547,9 +552,9 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
         const { type, success, siteId, nodeId, value } = metric;
 
         if (success && siteId === id && !nodeId) {
-          if (type === 'site_uptime_seconds') {
+          if (type === SITE_KPI_TYPES.SITE_UPTIME) {
             setSiteUptime(Math.floor(value[1]));
-          } else if (type === 'site_uptime_percentage') {
+          } else if (type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE) {
             setSiteUptimePercentage(Math.floor(value[1]));
           }
         }

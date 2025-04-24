@@ -38,6 +38,7 @@ import {
 import { setQueryParam } from '@/utils';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
+import { SITE_KPI_TYPES } from '@/constants';
 
 export default function Page() {
   const router = useRouter();
@@ -147,10 +148,9 @@ export default function Page() {
         parsedData.data.getSiteMetricStatSub;
 
       const allowedMetricTypes = [
-        'site_uptime',
-        'battery_percentage',
-        'battery_charge_percentage',
-        'backhaul_speed',
+        SITE_KPI_TYPES.SITE_UPTIME,
+        SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE,
+        SITE_KPI_TYPES.BACKHAUL_SPEED,
       ];
 
       if (success && siteId && allowedMetricTypes.includes(type)) {

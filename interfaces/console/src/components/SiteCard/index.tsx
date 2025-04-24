@@ -20,9 +20,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState, useRef, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import PubSub from 'pubsub-js';
 import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { SITE_KPI_TYPES } from '@/constants';
 
 interface SiteCardProps {
   siteId: string;
@@ -33,19 +34,6 @@ interface SiteCardProps {
   handleSiteNameUpdate: (siteId: string, newSiteName: string) => void;
   maxAddressLength?: number;
   metricsData?: SiteMetricsStateRes;
-}
-
-interface SiteMetric {
-  type: string;
-  value: number | [number, number];
-}
-
-interface MetricsUpdateData {
-  metrics?: SiteMetric[] | null;
-  type?: string;
-  value?: number | [number, number];
-  siteId?: string;
-  nodeId?: string;
 }
 
 const truncateText = (text: string, maxLength: number): string => {
@@ -99,20 +87,21 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         metricsData.metrics.length > 0
       ) {
         const uptime = getSiteMetricValue(
-          'site_uptime_seconds',
+          SITE_KPI_TYPES.SITE_UPTIME,
           metricsData,
           siteId,
         );
         if (uptime !== null) setUptimeValue(uptime);
 
         const batteryCharge = getSiteMetricValue(
-          'battery_charge_percentage',
+          SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE,
           metricsData,
           siteId,
         );
+        if (batteryCharge !== null) setBatteryValue(batteryCharge);
 
         const backhaul = getSiteMetricValue(
-          'backhaul_speed',
+          SITE_KPI_TYPES.BACKHAUL_SPEED,
           metricsData,
           siteId,
         );
@@ -122,7 +111,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
 
     useEffect(() => {
       const uptimeToken = PubSub.subscribe(
-        `stat-site_uptime_seconds-${siteId}`,
+        `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`,
         (_, data) => {
           if (data && data.length > 1) {
             const value = extractMetricValue(data[1]);
@@ -132,7 +121,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       );
 
       const batteryChargeToken = PubSub.subscribe(
-        `stat-battery_charge_percentage-${siteId}`,
+        `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`,
         (_, data) => {
           if (data && data.length > 1) {
             const value = extractMetricValue(data[1]);
@@ -142,7 +131,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       );
 
       const backhaulToken = PubSub.subscribe(
-        `stat-backhaul_speed-${siteId}`,
+        `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`,
         (_, data) => {
           if (data && data.length > 1) {
             const value = extractMetricValue(data[1]);
