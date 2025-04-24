@@ -17,17 +17,14 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
 import { PageContainer } from '@/styles/global';
-import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [pool, setPool] = useState<TNodePoolData[]>([]);
-  const [nodes, setNodes] = useState<TNodePoolData[]>([]);
   const { setSnackbarMessage, network } = useAppContext();
 
   const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
@@ -43,32 +40,6 @@ export default function Page() {
   const [getNodes, { data: nodesData, loading: nodesLoading }] =
     useGetNodesLazyQuery({
       fetchPolicy: 'cache-and-network',
-      onCompleted: async (data) => {
-        if (data?.getNodes.nodes.length > 0) {
-          const np: TNodePoolData[] = [];
-          const nodes = data.getNodes.nodes.filter(
-            (node) => node.site.networkId === network.id,
-          );
-          if (nodes.length === 0) return;
-          nodes.forEach((node) => {
-            if (node.site.siteId && node.site.networkId === network.id) {
-              np.push({
-                id: node.id,
-                site: getSiteName(node?.site?.siteId),
-                network: network.id ?? '-',
-                state: node.status.state,
-                type: NodeEnumToString(node.type),
-                connectivity: node.status.connectivity,
-                createdAt: node.site.addedAt
-                  ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
-                  : '-',
-              });
-            }
-          });
-          setNodes(np);
-          setPool(np);
-        }
-      },
       onError: (err) => {
         setSnackbarMessage({
           id: 'nodes-msg',
@@ -81,7 +52,6 @@ export default function Page() {
 
   useEffect(() => {
     if (sitesData?.getSites?.sites) {
-      console.log('sitesData', sitesData);
       getNodes({
         variables: {
           data: {
@@ -93,24 +63,34 @@ export default function Page() {
   }, [sitesData, getNodes]);
 
   const getSiteName = (siteId: string | undefined | null) => {
-    console.log(sitesData, siteId);
     if (siteId === undefined || siteId === null) return '-';
     const site = sitesData?.getSites.sites.find((site) => site.id === siteId);
     return site ? site.name : '-';
   };
 
-  useEffect(() => {
-    if (search.length > 3) {
-      const _nodes: TNodePoolData[] =
-        pool.filter((node) => {
-          const s = search.toLowerCase();
-          if (node.id.toLowerCase().includes(s)) return node;
-        }) ?? [];
-      setNodes(_nodes);
-    } else if (search.length === 0) {
-      setNodes(pool);
-    }
-  }, [search, nodesData?.getNodes.nodes]);
+  const nodes = useMemo(() => {
+    if (!nodesData?.getNodes.nodes) return [];
+    return nodesData.getNodes.nodes
+      .filter((node) => node.site.networkId === network.id)
+      .map((node) => ({
+        id: node.id,
+        site: getSiteName(node?.site?.siteId),
+        network: network.id ?? '-',
+        state: node.status.state,
+        type: NodeEnumToString(node.type),
+        connectivity: node.status.connectivity,
+        createdAt: node.site.addedAt
+          ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+          : '-',
+      }));
+  }, [nodesData?.getNodes.nodes, network.id, sitesData?.getSites.sites]);
+
+  const filteredNodes = useMemo(() => {
+    if (search.length <= 3) return nodes;
+    return nodes.filter((node) =>
+      node.id.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [nodes, search]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);
@@ -150,10 +130,10 @@ export default function Page() {
             title={'My Nodes'}
             showSearch={true}
             onSearchChange={handleSearchChange}
-            subtitle={`${nodes.length}`}
+            subtitle={`${filteredNodes.length}`}
           />
           <DataTableWithOptions
-            dataset={nodes}
+            dataset={filteredNodes}
             icon={RouterIcon}
             columns={NODE_TABLE_COLUMNS}
             menuOptions={NODE_TABLE_MENU}
