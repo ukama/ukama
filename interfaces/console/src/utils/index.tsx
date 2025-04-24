@@ -24,6 +24,7 @@ import {
 import {
   INSTALLATION_FLOW,
   KPI_PLACEHOLDER_VALUE,
+  NODE_ACTIONS_ENUM,
   ONBOARDING_FLOW,
 } from '@/constants';
 import colors from '@/theme/colors';
@@ -586,19 +587,31 @@ const setQueryParam = (
   return p;
 };
 
-const getNodeDescriptionByConnectivity = (
-  connectivity: NodeConnectivityEnum,
+const getNodeActionDescriptionByProgress = (
+  progress: number,
+  action: string,
 ) => {
-  switch (connectivity) {
-    case NodeConnectivityEnum.Online:
-      return 'Node is online';
-    case NodeConnectivityEnum.Offline:
-      return 'Node is offline';
-    case NodeConnectivityEnum.Unknown:
-      return 'Node is not connected to the network';
-    default:
-      return 'Loading...';
+  if (action === NODE_ACTIONS_ENUM.NODE_RESTART) {
+    switch (progress) {
+      case 25:
+        return 'Node restart initiated...';
+      case 50:
+        return 'Node is offline...';
+      case 75:
+        return 'Node is back online...';
+      case 100:
+        return 'Node is ready to use.';
+      default:
+        return '';
+    }
   }
+  if (action === NodeConnectivityEnum.Online) {
+    return 'Node is online...';
+  }
+  if (action === NodeConnectivityEnum.Offline) {
+    return 'Node is offline...';
+  }
+  return '';
 };
 
 export {
@@ -616,7 +629,7 @@ export {
   getGraphFilterByType,
   getInvitationStatusColor,
   getKPIStatValue,
-  getNodeDescriptionByConnectivity,
+  getNodeActionDescriptionByProgress,
   getSignalStyles,
   getSimValuefromSimType,
   getTitleFromPath,

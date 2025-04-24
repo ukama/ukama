@@ -44,7 +44,7 @@ import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
 import {
-  getNodeDescriptionByConnectivity,
+  getNodeActionDescriptionByProgress,
   getNodeTabTypeByIndex,
   getUnixTime,
 } from '@/utils';
@@ -62,8 +62,13 @@ interface INodePage {
 const Page: React.FC<INodePage> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
-  const [isEditNode, setIsEditNode] = useState<boolean>(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
+  const [isEditNode, setIsEditNode] = useState<boolean>(false);
+  const [nodeAction, setNodeAction] = useState({
+    progress: 0,
+    currentAction: '',
+    actionInitiated: '',
+  });
   const [graphType, setGraphType] = useState<Graphs_Type>(
     Graphs_Type.NodeHealth,
   );
@@ -112,27 +117,35 @@ const Page: React.FC<INodePage> = ({ params }) => {
     refetchQueries: ['GetNodes'],
   });
 
-  const [restartNode, { loading: restartNodeLoading }] = useRestartNodeMutation(
-    {
-      fetchPolicy: 'network-only',
-      onCompleted: () => {
-        setSnackbarMessage({
-          id: 'restart-node-success-msg',
-          message: 'Node restart initiated.',
-          type: 'success',
-          show: true,
-        });
-      },
-      onError: (err) => {
-        setSnackbarMessage({
-          id: 'restart-node-err-msg',
-          message: "Couldn't restart node.",
-          type: 'error',
-          show: true,
-        });
-      },
+  const [restartNode] = useRestartNodeMutation({
+    fetchPolicy: 'network-only',
+    onCompleted: () => {
+      setNodeAction((prev) => ({
+        ...prev,
+        progress: prev.progress + 25,
+        currentAction: 'loading',
+      }));
+      setSnackbarMessage({
+        id: 'restart-node-success-msg',
+        message: 'Node restart initiated.',
+        type: 'success',
+        show: true,
+      });
     },
-  );
+    onError: () => {
+      setNodeAction({
+        progress: 0,
+        currentAction: '',
+        actionInitiated: '',
+      });
+      setSnackbarMessage({
+        id: 'restart-node-err-msg',
+        message: "Couldn't restart node.",
+        type: 'error',
+        show: true,
+      });
+    },
+  });
 
   const [
     getNodeMetricByTab,
@@ -210,6 +223,52 @@ const Page: React.FC<INodePage> = ({ params }) => {
   }, []);
 
   useEffect(() => {
+    if (
+      nodesData &&
+      nodesData?.getNodes.nodes.length > 0 &&
+      nodeAction.actionInitiated
+    ) {
+      const s = nodesData?.getNodes.nodes.find((n) => n.id === id);
+      if (s && s?.status.connectivity !== nodeAction.currentAction) {
+        if (nodeAction.actionInitiated === NODE_ACTIONS_ENUM.NODE_RESTART) {
+          switch (s.status.connectivity) {
+            case NodeConnectivityEnum.Offline:
+              setNodeAction((prev) => ({
+                ...prev,
+                progress: prev.progress + 25,
+                currentAction: s?.status.connectivity.toString() || '',
+              }));
+              return;
+            case NodeConnectivityEnum.Online:
+              setNodeAction((prev) => ({
+                ...prev,
+                progress: prev.progress + 25,
+                currentAction: s?.status.connectivity.toString() || '',
+              }));
+              break;
+          }
+          const intervalId = setInterval(() => {
+            setNodeAction((prev) => {
+              const newProgress =
+                prev.progress === 100 ? 0 : prev.progress + 25;
+              if (newProgress === 0) {
+                clearInterval(intervalId);
+              }
+              return {
+                ...prev,
+                progress: newProgress,
+                currentAction:
+                  newProgress === 0 ? '' : s.status.connectivity.toString(),
+                actionInitiated: newProgress === 0 ? '' : prev.actionInitiated,
+              };
+            });
+          }, 3000);
+        }
+      }
+    }
+  }, [nodesData]);
+
+  useEffect(() => {
     if (metricFrom > 0 && nodeMetricsVariables?.data?.from !== metricFrom) {
       getNodeMetricByTab({
         variables: {
@@ -280,6 +339,11 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const handleNodeActionClick = (action: string) => {
     switch (action) {
       case NODE_ACTIONS_ENUM.NODE_RESTART:
+        setNodeAction({
+          progress: 0,
+          currentAction: NODE_ACTIONS_ENUM.NODE_RESTART,
+          actionInitiated: NODE_ACTIONS_ENUM.NODE_RESTART,
+        });
         restartNode({
           variables: {
             data: {
@@ -310,7 +374,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
         handleNodeActionClick={handleNodeActionClick}
         loading={nodesLoading || updateNodeLoading || statLoading}
       />
-      {currentNode?.status.connectivity === NodeConnectivityEnum.Online ? (
+      {currentNode?.status.connectivity === NodeConnectivityEnum.Online &&
+      !nodeAction.actionInitiated ? (
         <Box>
           <Tabs value={selectedTab} onChange={onTabSelected} sx={{ pb: 2 }}>
             {NodePageTabs.map(({ id, label, value }) => (
@@ -412,14 +477,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
         </Box>
       ) : (
         <NodeActionUI
-          value={0}
+          value={nodeAction.progress}
           nodeType={currentNode?.type}
           action={NODE_ACTIONS_ENUM.NODE_OFF}
           connectivity={
-            currentNode?.status.connectivity as NodeConnectivityEnum | undefined
+            (currentNode?.status?.connectivity as NodeConnectivityEnum) ||
+            undefined
           }
-          description={getNodeDescriptionByConnectivity(
-            currentNode?.status.connectivity as NodeConnectivityEnum,
+          description={getNodeActionDescriptionByProgress(
+            nodeAction.progress,
+            nodeAction.actionInitiated ||
+              currentNode?.status?.connectivity?.toString() ||
+              '',
           )}
         />
       )}
