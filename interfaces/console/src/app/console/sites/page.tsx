@@ -24,7 +24,7 @@ import SitesWrapper from '@/components/SitesWrapper';
 import { useAppContext } from '@/context';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -40,6 +40,8 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
 import { SITE_KPI_TYPES } from '@/constants';
 
+const MAX_SUBSCRIPTION_UPDATES = 100;
+
 export default function Page() {
   const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
@@ -50,12 +52,22 @@ export default function Page() {
   const searchParams = useSearchParams();
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const pathname = usePathname();
-  const subscriptionKeyRef = useRef<string | null>(null);
+
+  const subscriptionsRef = useRef<Record<string, boolean>>({});
+  const updateCountRef = useRef<Record<string, number>>({});
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
     siteId: '',
   });
+
+  const cleanupSubscriptions = useCallback(() => {
+    Object.keys(subscriptionsRef.current).forEach((topic) => {
+      PubSub.unsubscribe(topic);
+      delete subscriptionsRef.current[topic];
+    });
+    updateCountRef.current = {};
+  }, []);
 
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     fetchPolicy: 'network-only',
@@ -102,15 +114,19 @@ export default function Page() {
       });
     },
   });
+
   useEffect(() => {
     setSitesList([]);
     setUnassignedNodes([]);
+
+    cleanupSubscriptions();
 
     if (network.id) {
       refetchSites();
       refetchNodes();
     }
-  }, [network.id, refetchSites, refetchNodes]);
+  }, [network.id, refetchSites, refetchNodes, cleanupSubscriptions]);
+
   const [
     getSiteStatMetrics,
     { data: statData, loading: statLoading, variables: statVar },
@@ -119,12 +135,9 @@ export default function Page() {
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (data.getSiteStat.metrics.length > 0) {
-        data.getSiteStat.metrics.forEach((m) => {
-          console.log(m.type);
-          console.log(m.value);
-        });
-
         const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+
+        subscriptionsRef.current[sKey] = true;
 
         MetricStatBySiteSubscription({
           key: sKey,
@@ -136,16 +149,19 @@ export default function Page() {
           type: Stats_Type.Site,
           from: statVar?.data.from ?? 0,
         });
+
         PubSub.subscribe(sKey, handleStatSubscription);
       }
     },
   });
 
-  const handleStatSubscription = (_: any, data: string) => {
+  const handleStatSubscription = useCallback((_: any, data: string) => {
     try {
       const parsedData = JSON.parse(data);
-      const { msg, value, type, success, siteId } =
-        parsedData.data.getSiteMetricStatSub;
+      const { value, type, success, siteId } =
+        parsedData?.data?.getSiteMetricStatSub;
+
+      if (!success || !siteId || !type) return;
 
       const allowedMetricTypes = [
         SITE_KPI_TYPES.SITE_UPTIME,
@@ -153,15 +169,21 @@ export default function Page() {
         SITE_KPI_TYPES.BACKHAUL_SPEED,
       ];
 
-      if (success && siteId && allowedMetricTypes.includes(type)) {
+      if (allowedMetricTypes.includes(type)) {
         const metricTopic = `stat-${type}-${siteId}`;
 
-        PubSub.publish(metricTopic, [type, value]);
+        const updateKey = `${type}-${siteId}`;
+        updateCountRef.current[updateKey] =
+          (updateCountRef.current[updateKey] || 0) + 1;
+
+        if (updateCountRef.current[updateKey] <= MAX_SUBSCRIPTION_UPDATES) {
+          PubSub.publish(metricTopic, [type, value]);
+        }
       }
     } catch (error) {
       console.error('Error handling subscription data:', error);
     }
-  };
+  }, []);
 
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
@@ -185,46 +207,52 @@ export default function Page() {
     },
   });
 
-  const handleSiteNameUpdate = (siteId: string, siteName: string) => {
-    setCurrentSite((prevState) => ({
-      ...prevState,
-      siteId,
-      siteName: siteName,
-    }));
-    setEditSitedialogOpen(true);
-  };
+  const handleSiteNameUpdate = useCallback(
+    (siteId: string, siteName: string) => {
+      setCurrentSite((prevState) => ({
+        ...prevState,
+        siteId,
+        siteName: siteName,
+      }));
+      setEditSitedialogOpen(true);
+    },
+    [],
+  );
 
-  const handleSaveSiteName = (siteId: string, siteName: string) => {
-    updateSite({
-      variables: {
-        siteId: siteId,
-        data: {
-          name: siteName,
+  const handleSaveSiteName = useCallback(
+    (siteId: string, siteName: string) => {
+      updateSite({
+        variables: {
+          siteId: siteId,
+          data: {
+            name: siteName,
+          },
         },
-      },
-    });
-  };
+      });
+    },
+    [updateSite],
+  );
 
-  const closeEditSiteDialog = () => {
+  const closeEditSiteDialog = useCallback(() => {
     setEditSitedialogOpen(false);
-  };
+  }, []);
 
   useEffect(() => {
     if (sitesList.length === 0) return;
 
+    cleanupSubscriptions();
+
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
-    const newSKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from ?? 0}`;
+    const newSKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
 
-    if (subscriptionKeyRef.current) {
-      PubSub.unsubscribe(subscriptionKeyRef.current);
-    }
+    subscriptionsRef.current[newSKey] = true;
 
     getSiteStatMetrics({
       variables: {
         data: {
-          to: to,
-          from: from,
+          to,
+          from,
           userId: user.id,
           nodeIds: [],
           siteIds: sitesList.map((site) => site.id),
@@ -236,68 +264,93 @@ export default function Page() {
       },
     });
 
-    subscriptionKeyRef.current = newSKey;
-
     return () => {
-      if (subscriptionKeyRef.current) {
-        PubSub.unsubscribe(subscriptionKeyRef.current);
-      }
+      cleanupSubscriptions();
     };
-  }, [sitesList]);
+  }, [
+    sitesList,
+    user.id,
+    user.orgName,
+    getSiteStatMetrics,
+    env.METRIC_URL,
+    cleanupSubscriptions,
+  ]);
 
   const [getNodeState] = useGetNodeStateLazyQuery({
     fetchPolicy: 'network-only',
   });
 
-  const handleConfigureNode = async (nodeId: string) => {
-    const node = unassignedNodes.find((n) => n.id === nodeId);
+  const handleConfigureNode = useCallback(
+    async (nodeId: string) => {
+      const node = unassignedNodes.find((n) => n.id === nodeId);
 
-    if (!node) {
-      setSnackbarMessage({
-        id: 'node-not-found',
-        message: 'Node not found',
-        type: 'error' as AlertColor,
-        show: true,
-      });
-      return;
-    }
-
-    try {
-      const result = await getNodeState({
-        variables: {
-          getNodeStateId: nodeId,
-        },
-      });
-
-      if (result.data?.getNodeState.currentState === NodeStateEnum.Unknown) {
-        let p = setQueryParam(
-          'lat',
-          node.latitude?.toString() || '0',
-          searchParams.toString(),
-          pathname,
-        );
-        p.set('lng', node.longitude?.toString() || '0');
-        p.set(
-          'flow',
-          flow === NETWORK_FLOW
-            ? ONBOARDING_FLOW
-            : flow === CHECK_SITE_FLOW
-              ? INSTALLATION_FLOW
-              : flow,
-        );
-        p.delete('nid');
-        router.push(`/configure/node/${node.id}?${p.toString()}`);
+      if (!node) {
+        setSnackbarMessage({
+          id: 'node-not-found',
+          message: 'Node not found',
+          type: 'error' as AlertColor,
+          show: true,
+        });
+        return;
       }
-    } catch (error) {
-      console.error('Error checking node state:', error);
-      setSnackbarMessage({
-        id: 'node-state-error',
-        message: 'Error checking node state',
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    }
-  };
+
+      try {
+        const result = await getNodeState({
+          variables: {
+            getNodeStateId: nodeId,
+          },
+        });
+
+        if (result.data?.getNodeState.currentState === NodeStateEnum.Unknown) {
+          let p = setQueryParam(
+            'lat',
+            node.latitude?.toString() || '0',
+            searchParams.toString(),
+            pathname,
+          );
+          p.set('lng', node.longitude?.toString() || '0');
+          p.set(
+            'flow',
+            flow === NETWORK_FLOW
+              ? ONBOARDING_FLOW
+              : flow === CHECK_SITE_FLOW
+                ? INSTALLATION_FLOW
+                : flow,
+          );
+          p.delete('nid');
+          router.push(`/configure/node/${node.id}?${p.toString()}`);
+        }
+      } catch (error) {
+        console.error('Error checking node state:', error);
+        setSnackbarMessage({
+          id: 'node-state-error',
+          message: 'Error checking node state',
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      }
+    },
+    [
+      unassignedNodes,
+      getNodeState,
+      setSnackbarMessage,
+      router,
+      searchParams,
+      pathname,
+      flow,
+    ],
+  );
+
+  useEffect(() => {
+    return () => {
+      cleanupSubscriptions();
+    };
+  }, [cleanupSubscriptions]);
+
+  const memoizedStatData = useMemo(
+    () => statData?.getSiteStat ?? { metrics: [] },
+    [statData],
+  );
 
   return (
     <Box mt={2}>
@@ -328,7 +381,7 @@ export default function Page() {
             <SitesWrapper
               loading={nodesLoading || sitesLoading}
               sites={sitesList}
-              siteMetricsStatData={statData?.getSiteStat ?? { metrics: [] }}
+              siteMetricsStatData={memoizedStatData}
               handleSiteNameUpdate={handleSiteNameUpdate}
               handleConfigureNode={handleConfigureNode}
               unassignedNodes={unassignedNodes}

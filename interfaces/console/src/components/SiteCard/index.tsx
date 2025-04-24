@@ -20,10 +20,17 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import PubSub from 'pubsub-js';
 import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
 import { SITE_KPI_TYPES } from '@/constants';
+
+const extractMetricValue = (value: any): number | null => {
+  if (Array.isArray(value) && value.length > 1) {
+    return typeof value[1] === 'number' ? value[1] : null;
+  }
+  return typeof value === 'number' ? value : null;
+};
 
 interface SiteCardProps {
   siteId: string;
@@ -56,13 +63,6 @@ const getSiteMetricValue = (
   return metric ? extractMetricValue(metric.value) : null;
 };
 
-const extractMetricValue = (value: any): number | null => {
-  if (Array.isArray(value) && value.length > 1) {
-    return typeof value[1] === 'number' ? value[1] : null;
-  }
-  return typeof value === 'number' ? value : null;
-};
-
 const SiteCard: React.FC<SiteCardProps> = memo(
   ({
     siteId,
@@ -79,6 +79,8 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     const [uptimeValue, setUptimeValue] = useState<number | null>(null);
     const [batteryValue, setBatteryValue] = useState<number | null>(null);
     const [backhaulValue, setBackhaulValue] = useState<number | null>(null);
+
+    const subscriptionsRef = useRef<Record<string, string>>({});
 
     useEffect(() => {
       if (
@@ -110,18 +112,24 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     }, [metricsData, siteId]);
 
     useEffect(() => {
-      const uptimeToken = PubSub.subscribe(
-        `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`,
-        (_, data) => {
-          if (data && data.length > 1) {
-            const value = extractMetricValue(data[1]);
-            if (value !== null) setUptimeValue(value);
-          }
-        },
-      );
+      Object.values(subscriptionsRef.current).forEach((token) => {
+        PubSub.unsubscribe(token);
+      });
+      subscriptionsRef.current = {};
+
+      const uptimeTopic = `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`;
+      const batteryChargeTopic = `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`;
+      const backhaulTopic = `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`;
+
+      const uptimeToken = PubSub.subscribe(uptimeTopic, (_, data) => {
+        if (data && data.length > 1) {
+          const value = extractMetricValue(data[1]);
+          if (value !== null) setUptimeValue(value);
+        }
+      });
 
       const batteryChargeToken = PubSub.subscribe(
-        `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`,
+        batteryChargeTopic,
         (_, data) => {
           if (data && data.length > 1) {
             const value = extractMetricValue(data[1]);
@@ -130,44 +138,51 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         },
       );
 
-      const backhaulToken = PubSub.subscribe(
-        `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`,
-        (_, data) => {
-          if (data && data.length > 1) {
-            const value = extractMetricValue(data[1]);
-            if (value !== null) setBackhaulValue(value);
-          }
-        },
-      );
+      const backhaulToken = PubSub.subscribe(backhaulTopic, (_, data) => {
+        if (data && data.length > 1) {
+          const value = extractMetricValue(data[1]);
+          if (value !== null) setBackhaulValue(value);
+        }
+      });
+
+      subscriptionsRef.current = {
+        uptime: uptimeToken,
+        battery: batteryChargeToken,
+        backhaul: backhaulToken,
+      };
 
       return () => {
-        PubSub.unsubscribe(uptimeToken);
-        PubSub.unsubscribe(batteryChargeToken);
-        PubSub.unsubscribe(backhaulToken);
+        Object.values(subscriptionsRef.current).forEach((token) => {
+          PubSub.unsubscribe(token);
+        });
+        subscriptionsRef.current = {};
       };
-    }, [siteId, batteryValue]);
+    }, [siteId]);
 
     const displayAddress = loading
       ? ''
       : truncateText(address || '', maxAddressLength);
 
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-      event.stopPropagation();
-      setAnchorEl(event.currentTarget);
-    };
+    const handleClick = useCallback(
+      (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        setAnchorEl(event.currentTarget);
+      },
+      [],
+    );
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
       setAnchorEl(null);
-    };
+    }, []);
 
-    const handleMenuClick = () => {
+    const handleMenuClick = useCallback(() => {
       handleSiteNameUpdate(siteId, name);
       handleClose();
-    };
+    }, [handleSiteNameUpdate, siteId, name, handleClose]);
 
-    const navigateToDetails = () => {
+    const navigateToDetails = useCallback(() => {
       window.location.href = `/console/sites/${siteId}`;
-    };
+    }, [siteId]);
 
     const connectionStyles =
       uptimeValue !== null
