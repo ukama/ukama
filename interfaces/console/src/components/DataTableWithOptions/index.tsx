@@ -97,8 +97,8 @@ const CellValueByType = ({
             p: 1,
             backgroundColor:
               row[type] === NodeConnectivityEnum.Online
-                ? colors.dullRed
-                : colors.primaryLight,
+                ? colors.primaryLight
+                : colors.dullRed,
             color: (theme) => theme.palette.text.primary,
           }}
           label={row[type]}
