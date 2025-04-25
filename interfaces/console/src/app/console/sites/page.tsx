@@ -13,6 +13,7 @@ import {
   useUpdateSiteMutation,
   NodeStateEnum,
   useGetNodesLazyQuery,
+  NodeConnectivityEnum,
 } from '@/client/graphql/generated';
 import {
   Stats_Type,
@@ -85,10 +86,9 @@ export default function Page() {
       const allNodes = res.getNodes.nodes;
       const unknownNodes = allNodes.filter((node) => {
         const hasLocation = node.latitude !== 0 && node.longitude !== 0;
-
         return (
           (node.status.state === NodeStateEnum.Unknown &&
-            (node.site.siteId === '' || node.site.siteId == null)) ||
+            node.status.connectivity == NodeConnectivityEnum.Online) ||
           !hasLocation
         );
       });

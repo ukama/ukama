@@ -302,8 +302,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       if (foundSite) {
         setActiveSite(foundSite);
         checkDataReadiness();
-      } else {
-        router.back();
       }
     },
     [siteData, checkDataReadiness, setSnackbarMessage],
