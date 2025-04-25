@@ -290,7 +290,7 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 
 	_, err = s.TerminatePackageForSim(ctx, termReq)
 	if err != nil {
-		return fmt.Errorf("failed to terminacte active package %s on sim %s. Error: %w",
+		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
 			termReq.PackageId, termReq.SimId, err)
 	}
 
