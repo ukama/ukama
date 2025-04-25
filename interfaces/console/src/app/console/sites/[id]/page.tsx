@@ -8,12 +8,8 @@
 'use client';
 
 import {
-SiteDto,
-useGetNodesForSiteLazyQuery,
-useAddSiteMutation,
-useGetComponentsByUserIdLazyQuery,
-useGetNetworksQuery,
-  useGetSiteLazyQuery,
+  SiteDto,
+  useGetNodesForSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
 } from '@/client/graphql/generated';
@@ -73,8 +69,6 @@ const defaultSite: SiteDto = {
   switchId: '',
 };
 
-const MAX_METRIC_VALUES = 180;
-
 interface SiteDetailsProps {
   params: {
     id: string;
@@ -90,13 +84,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
-  const [siteUptime, setSiteUptime] = useState<number>(0);
-  const [siteUptimePercentage, setSiteUptimePercentage] = useState<number>(0);
-  const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
   const [metricFrom, setMetricFrom] = useState<number>(0);
   const [graphType, setGraphType] = useState<Graphs_Type>(Graphs_Type.Solar);
+
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const [activeSection, setActiveSection] = useState<string>('SOLAR');
   const [activeKPI, setActiveKPI] = useState<string>('solar');
@@ -161,62 +153,27 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     if (!metricFrom || !id) return;
 
     const topic = `${user.id}/${graphType}/${metricFrom}`;
-
     subscriptionsRef.current[topic] = true;
 
-    const token = PubSub.subscribe(topic, (_, data) => {
-      try {
-        const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-
-        if (parsedData && parsedData.type) {
-          setMetrics((prevMetrics) => {
-            const existingMetric = prevMetrics.metrics.find(
-              (m) => m.type === parsedData.type,
-            );
-
-            if (existingMetric) {
-              return {
-                ...prevMetrics,
-                metrics: prevMetrics.metrics.map((metric) => {
-                  if (metric.type === parsedData.type) {
-                    const newValues = [...metric.values, parsedData.value];
-                    return {
-                      ...metric,
-                      values: newValues.slice(-MAX_METRIC_VALUES),
-                    };
-                  }
-                  return metric;
-                }),
-              };
-            } else {
-              return {
-                ...prevMetrics,
-                metrics: [
-                  ...prevMetrics.metrics,
-                  {
-                    type: parsedData.type,
-                    values: [parsedData.value],
-                    msg: '',
-                    success: true,
-                    nodeId: null,
-                    siteId: null,
-                  },
-                ],
-              };
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing subscription data:', error, data);
-      }
+    getMetricBySite({
+      variables: {
+        data: {
+          step: 30,
+          siteId: id,
+          userId: user.id,
+          type: graphType,
+          from: metricFrom,
+          orgName: user.orgName,
+          withSubscription: true,
+          to: metricFrom + METRIC_RANGE_10800,
+        },
+      },
     });
 
     return () => {
-      PubSub.unsubscribe(token);
       delete subscriptionsRef.current[topic];
     };
   }, [user.id, graphType, metricFrom, id]);
-
   const handleSwitchChange = useCallback(
     async (portNumber: number, currentStatus: boolean) => {
       const newStatus = !currentStatus;
@@ -275,56 +232,26 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [getSite, { loading: getSiteLoading }] = useGetSiteLazyQuery({
+  const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     onCompleted: (res) => {
-      setActiveSite({
-        id: res.getSite.id,
-        accessId: res.getSite.accessId,
-        backhaulId: res.getSite.backhaulId,
-        createdAt: res.getSite.createdAt,
-        installDate: res.getSite.installDate,
-        isDeactivated: res.getSite.isDeactivated,
-        latitude: res.getSite.latitude,
-        location: res.getSite.location,
-        longitude: res.getSite.longitude,
-        name: res.getSite.name,
-        networkId: res.getSite.networkId,
-        powerId: res.getSite.powerId,
-        spectrumId: res.getSite.spectrumId,
-        switchId: res.getSite.switchId,
-      });
-      checkDataReadiness();
+      if (res.getNodesForSite?.nodes) {
+        const ids = res.getNodesForSite.nodes.map((node) => node.id);
+        setNodeIds(ids);
+      } else {
+        setNodeIds([]);
+      }
+      setNodesFetched(true);
     },
     onError: (error) => {
       setSnackbarMessage({
-        id: 'sites-msg',
+        id: 'nodes-msg',
         message: error.message,
         type: 'error',
         show: true,
       });
+      setNodesFetched(true);
     },
   });
-
-const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
-  onCompleted: (res) => {
-    if (res.getNodesForSite?.nodes) {
-      const ids = res.getNodesForSite.nodes.map((node) => node.id);
-      setNodeIds(ids);
-    } else {
-      setNodeIds([]);
-    }
-    setNodesFetched(true);
-  },
-  onError: (error) => {
-    setSnackbarMessage({
-      id: 'nodes-msg',
-      message: error.message,
-      type: 'error',
-      show: true,
-    });
-    setNodesFetched(true);
-  },
-});
 
   const handleSectionChange = useCallback((section: string): void => {
     setActiveSection(section);
@@ -365,10 +292,31 @@ const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     },
     [handleSectionChange],
   );
-
+  const checkDataReadiness = useCallback(() => {
+    if (activeSite.id && CurrentSiteaddress && !CurrentSiteAddressLoading) {
+      setIsDataReady(true);
+    }
+  }, [activeSite.id, CurrentSiteaddress, CurrentSiteAddressLoading]);
+  const filterActiveSite = useCallback(
+    (siteId: string) => {
+      const foundSite = sitesList.find((site) => site.id === siteId);
+      if (foundSite) {
+        setActiveSite(foundSite);
+        checkDataReadiness();
+      } else {
+        setSnackbarMessage({
+          id: 'site-not-found',
+          message: 'Site not found in available sites',
+          type: 'error',
+          show: true,
+        });
+      }
+    },
+    [sitesList, checkDataReadiness, setSnackbarMessage],
+  );
   useEffect(() => {
     cleanupSubscriptions();
-    getSite({ variables: { siteId: id } });
+    filterActiveSite(id);
     setMetrics({ metrics: [] });
     if (id) {
       setMetricFrom(getUnixTime() - METRIC_RANGE_10800);
@@ -380,7 +328,7 @@ const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     return () => {
       cleanupSubscriptions();
     };
-  }, [id, getSite, cleanupSubscriptions]);
+  }, [id, filterActiveSite, cleanupSubscriptions]);
 
   useEffect(() => {
     if (id) {
@@ -400,9 +348,9 @@ const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
 
   useEffect(() => {
     if (selectedSiteId) {
-      getSite({ variables: { siteId: selectedSiteId } });
+      filterActiveSite(selectedSiteId);
     }
-  }, [selectedSiteId, getSite]);
+  }, [selectedSiteId, filterActiveSite]);
 
   useEffect(() => {
     const handleFetchAddress = async () => {
@@ -439,34 +387,8 @@ const [fetchNodesForSite] = useGetNodesForSiteLazyQuery({
     }
   }, [error, setSnackbarMessage]);
 
-  const checkDataReadiness = useCallback(() => {
-    if (
-      activeSite.id &&
-      CurrentSiteaddress &&
-      !getSiteLoading &&
-      !CurrentSiteAddressLoading
-    ) {
-      setIsDataReady(true);
-    }
-  }, [
-    activeSite.id,
-    CurrentSiteaddress,
-    getSiteLoading,
-    CurrentSiteAddressLoading,
-  ]);
-
   useEffect(() => {
-    checkDataReadiness();
-  }, [
-    activeSite,
-    CurrentSiteaddress,
-    getSiteLoading,
-    CurrentSiteAddressLoading,
-    checkDataReadiness,
-  ]);
-
-  useEffect(() => {
-if (activeSite) {
+    if (activeSite) {
       setNodesFetched(false);
       fetchNodesForSite({ variables: { siteId: id } });
     }
@@ -482,37 +404,6 @@ if (activeSite) {
         }`;
 
         if (data.getSiteStat.metrics.length > 0) {
-          data.getSiteStat.metrics.forEach((m) => {
-            if (
-              m.type === SITE_KPI_TYPES.SITE_UPTIME &&
-              m.siteId &&
-              m.success &&
-              !m.nodeId
-            ) {
-              setSiteUptime(m.value);
-            }
-            if (
-              m.type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE &&
-              m.siteId &&
-              m.success &&
-              !m.nodeId
-            ) {
-              setSiteUptimePercentage(m.value);
-            }
-            if (
-              m.type === SITE_KPI_TYPES.NODE_UPTIME &&
-              m.nodeId &&
-              m.success
-            ) {
-              setNodeUptimes((prev) => {
-                return {
-                  ...prev,
-                  [m.nodeId as string]: Math.floor(m.value),
-                };
-              });
-            }
-          });
-
           subscriptionsRef.current[sKey] = true;
 
           MetricStatBySiteSubscription({
@@ -619,21 +510,24 @@ if (activeSite) {
           const metric = parsedData.data.getSiteMetricStatSub;
           const { type, success, siteId, nodeId, value } = metric;
 
-          if (success && siteId === id && !nodeId) {
-            if (type === SITE_KPI_TYPES.SITE_UPTIME) {
-              setSiteUptime(Math.floor(value[1]));
-            } else if (type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE) {
-              setSiteUptimePercentage(Math.floor(value[1]));
+          if (success && siteId === id) {
+            if (!nodeId) {
+              if (type === SITE_KPI_TYPES.SITE_UPTIME) {
+                PubSub.publish(`stat-site-uptime`, Math.floor(value[1]));
+              } else if (type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE) {
+                PubSub.publish(
+                  `stat-site-uptime-percentage`,
+                  Math.floor(value[1]),
+                );
+              }
             }
-          }
 
-          if (success && nodeId && type === 'unit_uptime') {
-            setNodeUptimes((prev) => {
-              return {
-                ...prev,
-                [nodeId]: Math.floor(value[1] || 1),
-              };
-            });
+            if (nodeId && type === 'unit_uptime') {
+              PubSub.publish(
+                `stat-node-uptime-${nodeId}`,
+                Math.floor(value[1] || 1),
+              );
+            }
           }
 
           if (type && type !== 'unit_uptime') {
@@ -684,7 +578,6 @@ if (activeSite) {
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading || statLoading}
-        siteUpTime={siteUptime}
       />
 
       <Grid
@@ -704,10 +597,9 @@ if (activeSite) {
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={5}>
           <SiteOverview
-            siteUptimeSeconds={siteUptime}
-            uptimePercentage={siteUptimePercentage}
             installationDate={new Date(activeSite.installDate)}
-            isLoading={getSiteLoading || statLoading}
+            isLoading={statLoading}
+            siteId={activeSite.id}
           />
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
@@ -734,7 +626,6 @@ if (activeSite) {
           metricsLoading={metricsLoading}
           onComponentClick={handleComponentClick}
           onSwitchChange={handleSwitchChange}
-          nodeUptimes={nodeUptimes}
         />
       </Box>
     </Box>

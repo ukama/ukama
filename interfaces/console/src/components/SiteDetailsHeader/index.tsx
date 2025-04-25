@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -27,7 +27,6 @@ interface SiteDetailsHeaderProps {
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
   isLoading: boolean;
-  siteUpTime: number;
 }
 
 const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
@@ -35,9 +34,24 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
   selectedSiteId,
   onSiteChange,
   isLoading,
-  siteUpTime,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [siteUpTime, setSiteUpTime] = useState<number>(0);
+
+  // Subscribe to site uptime updates
+  useEffect(() => {
+    if (!selectedSiteId) return;
+
+    // Subscribe to site uptime in seconds
+    const uptimeToken = PubSub.subscribe(`stat-site-uptime`, (_, value) => {
+      setSiteUpTime(value);
+    });
+
+    // Cleanup subscription on unmount or when selectedSiteId changes
+    return () => {
+      PubSub.unsubscribe(uptimeToken);
+    };
+  }, [selectedSiteId]);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);

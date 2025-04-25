@@ -36,7 +36,7 @@ interface SiteComponentsProps {
   metricsLoading: boolean;
   onComponentClick: (kpiType: string) => void;
   onSwitchChange?: (portNumber: number, currentStatus: boolean) => void;
-  nodeUptimes: Record<string, number>;
+  nodeIds?: string[];
 }
 
 const SiteComponents: React.FC<SiteComponentsProps> = ({
@@ -44,10 +44,11 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   sections,
   activeKPI,
   activeSection,
+  siteId,
   metricFrom,
   metricsLoading,
+  nodeIds,
   onComponentClick,
-  nodeUptimes,
   onSwitchChange,
 }) => {
   const hasMetricsData =
@@ -64,6 +65,39 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   const [localSwitchStatus, setLocalSwitchStatus] = useState<
     Record<string, boolean>
   >({});
+
+  const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!siteId) return;
+
+    const subscriptionTokens: string[] = [];
+
+    const subscribeToNodeUptime = (nodeId: string) => {
+      const token = PubSub.subscribe(
+        `stat-node-uptime-${nodeId}`,
+        (_, value) => {
+          console.log(`Received uptime for node ${nodeId}:`, value);
+          setNodeUptimes((prev) => ({
+            ...prev,
+            [nodeId]: value,
+          }));
+        },
+      );
+      return token;
+    };
+
+    if (nodeIds && nodeIds.length > 0) {
+      nodeIds.forEach((nodeId) => {
+        const token = subscribeToNodeUptime(nodeId);
+        subscriptionTokens.push(token);
+      });
+    }
+
+    return () => {
+      subscriptionTokens.forEach((token) => PubSub.unsubscribe(token));
+    };
+  }, [siteId, nodeIds]);
 
   useEffect(() => {
     if (hasMetricsData && activeSection === 'SWITCH') {

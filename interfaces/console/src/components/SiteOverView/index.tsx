@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -29,19 +29,41 @@ interface DayData {
 
 interface SiteOverviewProps {
   installationDate: Date;
-  uptimePercentage: number | null;
-  siteUptimeSeconds: number | null;
   includeFutureDays?: boolean;
   isLoading: boolean;
+  siteId: string;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
   installationDate,
-  uptimePercentage,
-  siteUptimeSeconds,
   includeFutureDays = true,
   isLoading,
+  siteId,
 }) => {
+  const [uptimePercentage, setUptimePercentage] = useState<number | null>(null);
+  const [siteUptimeSeconds, setSiteUptimeSeconds] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!siteId) return;
+
+    const percentageToken = PubSub.subscribe(
+      `stat-site-uptime-percentage`,
+      (_, value) => {
+        setUptimePercentage(value);
+      },
+    );
+
+    const uptimeToken = PubSub.subscribe(`stat-site-uptime`, (_, value) => {
+      setSiteUptimeSeconds(value);
+    });
+
+    return () => {
+      PubSub.unsubscribe(percentageToken);
+      PubSub.unsubscribe(uptimeToken);
+    };
+  }, [siteId]);
   const isSameDay = (dateA: Date, dateB: Date) => {
     return (
       dateA.getFullYear() === dateB.getFullYear() &&

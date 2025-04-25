@@ -11,9 +11,8 @@ import {
   SiteDto,
   useGetSitesQuery,
   useUpdateSiteMutation,
-  useGetNodeStateLazyQuery,
-  useGetNodesQuery,
   NodeStateEnum,
+  useGetNodesLazyQuery,
 } from '@/client/graphql/generated';
 import {
   Stats_Type,
@@ -40,8 +39,6 @@ import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
 import { SITE_KPI_TYPES } from '@/constants';
 
-const MAX_SUBSCRIPTION_UPDATES = 100;
-
 export default function Page() {
   const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
@@ -54,7 +51,6 @@ export default function Page() {
   const pathname = usePathname();
 
   const subscriptionsRef = useRef<Record<string, boolean>>({});
-  const updateCountRef = useRef<Record<string, number>>({});
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
@@ -66,9 +62,7 @@ export default function Page() {
       PubSub.unsubscribe(topic);
       delete subscriptionsRef.current[topic];
     });
-    updateCountRef.current = {};
   }, []);
-
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
     fetchPolicy: 'network-only',
     skip: !network.id,
@@ -78,7 +72,7 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
-      refetchNodes();
+      getNodes();
     },
     onError: (error) => {
       setSitesList([]);
@@ -91,30 +85,22 @@ export default function Page() {
     },
   });
 
-  const { loading: nodesLoading, refetch: refetchNodes } = useGetNodesQuery({
+  const [getNodes, { loading: nodesLoading }] = useGetNodesLazyQuery({
     variables: {
       data: {},
     },
     fetchPolicy: 'network-only',
-    onCompleted: async (res) => {
+    onCompleted: (res) => {
       const allNodes = res.getNodes.nodes;
-      const unknownNodes = [];
-
-      for (const node of allNodes) {
-        const { data } = await getNodeState({
-          variables: { getNodeStateId: node.id },
-        });
-
+      const unknownNodes = allNodes.filter((node) => {
         const hasLocation = node.latitude !== 0 && node.longitude !== 0;
 
-        if (
-          (data?.getNodeState.currentState === NodeStateEnum.Unknown &&
+        return (
+          (node.status.state === NodeStateEnum.Unknown &&
             (node.site.siteId === '' || node.site.siteId == null)) ||
           !hasLocation
-        ) {
-          unknownNodes.push(node);
-        }
-      }
+        );
+      });
 
       setUnassignedNodes(unknownNodes);
     },
@@ -136,9 +122,9 @@ export default function Page() {
 
     if (network.id) {
       refetchSites();
-      refetchNodes();
+      getNodes();
     }
-  }, [network.id, refetchSites, refetchNodes, cleanupSubscriptions]);
+  }, [network.id, refetchSites, getNodes, cleanupSubscriptions]);
 
   const [
     getSiteStatMetrics,
@@ -184,14 +170,8 @@ export default function Page() {
 
       if (allowedMetricTypes.includes(type)) {
         const metricTopic = `stat-${type}-${siteId}`;
-
-        const updateKey = `${type}-${siteId}`;
-        updateCountRef.current[updateKey] =
-          (updateCountRef.current[updateKey] || 0) + 1;
-
-        if (updateCountRef.current[updateKey] <= MAX_SUBSCRIPTION_UPDATES) {
-          PubSub.publish(metricTopic, [type, value]);
-        }
+        // Simply publish without checking the count
+        PubSub.publish(metricTopic, [type, value]);
       }
     } catch (error) {
       console.error('Error handling subscription data:', error);
@@ -289,12 +269,8 @@ export default function Page() {
     cleanupSubscriptions,
   ]);
 
-  const [getNodeState] = useGetNodeStateLazyQuery({
-    fetchPolicy: 'network-only',
-  });
-
   const handleConfigureNode = useCallback(
-    async (nodeId: string) => {
+    (nodeId: string) => {
       const node = unassignedNodes.find((n) => n.id === nodeId);
 
       if (!node) {
@@ -307,53 +283,15 @@ export default function Page() {
         return;
       }
 
-      try {
-        const result = await getNodeState({
-          variables: {
-            getNodeStateId: nodeId,
-          },
-        });
+      let p = new URLSearchParams();
+      p.set('step', 'location');
+      p.set('flow', 'ins');
+      p.set('nid', nodeId);
 
-        if (result.data?.getNodeState.currentState === NodeStateEnum.Unknown) {
-          let p = setQueryParam(
-            'lat',
-            node.latitude?.toString() || '0',
-            searchParams.toString(),
-            pathname,
-          );
-          p.set('lng', node.longitude?.toString() || '0');
-          p.set(
-            'flow',
-            flow === NETWORK_FLOW
-              ? ONBOARDING_FLOW
-              : flow === CHECK_SITE_FLOW
-                ? INSTALLATION_FLOW
-                : flow,
-          );
-          p.delete('nid');
-          router.push(`/configure/node/${node.id}?${p.toString()}`);
-        }
-      } catch (error) {
-        console.error('Error checking node state:', error);
-        setSnackbarMessage({
-          id: 'node-state-error',
-          message: 'Error checking node state',
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      }
+      router.push(`/configure/check?${p.toString()}`);
     },
-    [
-      unassignedNodes,
-      getNodeState,
-      setSnackbarMessage,
-      router,
-      searchParams,
-      pathname,
-      flow,
-    ],
+    [unassignedNodes, setSnackbarMessage, router],
   );
-
   useEffect(() => {
     return () => {
       cleanupSubscriptions();
