@@ -759,7 +759,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("UpdatePackage", mock.Anything,
+		agentAdapter.On("ActivateSim", mock.Anything,
 			mock.MatchedBy(func(a client.AgentRequestData) bool {
 				return a.Iccid == simd.Iccid
 			})).Return(nil).Once()

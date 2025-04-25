@@ -60,6 +60,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 				"event.cloud.local.{{ .Org}}.payments.processor.payment.success",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
 				"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create",
 				"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create",
 			},

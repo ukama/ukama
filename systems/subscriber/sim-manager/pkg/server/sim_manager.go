@@ -933,7 +933,8 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	}
 
 	if pkg.IsActive {
-		return &pb.SetActivePackageResponse{}, nil
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot set already active package (%s) as active", pkg.Id)
 	}
 
 	// Update package on sim manager
@@ -975,7 +976,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
 		sim.Type.String(), sim.Iccid)
 
-	err = simAgent.UpdatePackage(ctx, agentRequest)
+	err = simAgent.ActivateSim(ctx, agentRequest)
 	if err != nil {
 		log.Infof("Fail to update package on remote agent for %s sim type with iccid %s. Error: %v",
 			sim.Type.String(), sim.Iccid, err)
