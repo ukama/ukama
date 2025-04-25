@@ -57,7 +57,7 @@ const getSiteMetricValue = (
   if (!metricsData || !metricsData.metrics || !siteId) return null;
 
   const metric = metricsData.metrics.find(
-    (m) => m.type === metricId && m.siteId === siteId,
+    (m) => m.type === metricId && m.success == true && m.siteId === siteId,
   );
 
   return metric ? extractMetricValue(metric.value) : null;

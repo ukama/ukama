@@ -26,15 +26,8 @@ import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import {
-  CHECK_SITE_FLOW,
-  INSTALLATION_FLOW,
-  NETWORK_FLOW,
-  ONBOARDING_FLOW,
-  STAT_STEP_29,
-} from '@/constants';
-import { setQueryParam } from '@/utils';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { STAT_STEP_29 } from '@/constants';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
 import { SITE_KPI_TYPES } from '@/constants';
@@ -47,8 +40,6 @@ export default function Page() {
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
   const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
   const searchParams = useSearchParams();
-  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
-  const pathname = usePathname();
 
   const subscriptionsRef = useRef<Record<string, boolean>>({});
 
@@ -170,7 +161,6 @@ export default function Page() {
 
       if (allowedMetricTypes.includes(type)) {
         const metricTopic = `stat-${type}-${siteId}`;
-        // Simply publish without checking the count
         PubSub.publish(metricTopic, [type, value]);
       }
     } catch (error) {

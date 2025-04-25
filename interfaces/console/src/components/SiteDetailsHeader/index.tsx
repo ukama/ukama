@@ -22,11 +22,15 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
 import { duration } from '@/utils';
 import CancelIcon from '@mui/icons-material/Cancel';
+import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { SITE_KPI_TYPES, TOPIC_PREFIXES } from '@/constants';
+
 interface SiteDetailsHeaderProps {
   siteList: SiteDto[];
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
   isLoading: boolean;
+  siteStatMetrics: SiteMetricsStateRes;
 }
 
 const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
@@ -34,22 +38,44 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
   selectedSiteId,
   onSiteChange,
   isLoading,
+  siteStatMetrics,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [siteUpTime, setSiteUpTime] = useState<number>(0);
 
-  // Subscribe to site uptime updates
+  useEffect(() => {
+    if (!selectedSiteId || !siteStatMetrics?.metrics?.length) return;
+
+    const siteMetrics = siteStatMetrics.metrics.filter(
+      (metric) => metric.siteId === selectedSiteId && metric.success,
+    );
+
+    const uptimeSecondsMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME,
+    );
+
+    if (uptimeSecondsMetric?.value !== undefined) {
+      const value = uptimeSecondsMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      setSiteUpTime(Math.floor(numValue));
+    }
+  }, [selectedSiteId, siteStatMetrics]);
+
   useEffect(() => {
     if (!selectedSiteId) return;
 
-    // Subscribe to site uptime in seconds
-    const uptimeToken = PubSub.subscribe(`stat-site-uptime`, (_, value) => {
-      setSiteUpTime(value);
-    });
+    const topics = [`${TOPIC_PREFIXES.SITE_UPTIME_STAT}-${selectedSiteId}`];
 
-    // Cleanup subscription on unmount or when selectedSiteId changes
+    const tokens = topics.map((topic) =>
+      PubSub.subscribe(topic, (_, value) => {
+        if (value !== undefined) {
+          setSiteUpTime(Math.floor(value));
+        }
+      }),
+    );
+
     return () => {
-      PubSub.unsubscribe(uptimeToken);
+      tokens.forEach((token) => PubSub.unsubscribe(token));
     };
   }, [selectedSiteId]);
 

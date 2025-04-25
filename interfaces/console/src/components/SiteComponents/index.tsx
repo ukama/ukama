@@ -25,6 +25,7 @@ import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import NodeStatusDisplay from '@/components/NodeStatusDisplay';
 import { SectionData } from '@/constants';
+import { TOPIC_PREFIXES } from '@/constants';
 
 interface SiteComponentsProps {
   siteId: string;
@@ -47,9 +48,9 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   siteId,
   metricFrom,
   metricsLoading,
-  nodeIds,
   onComponentClick,
   onSwitchChange,
+  nodeIds,
 }) => {
   const hasMetricsData =
     metrics && metrics.metrics && metrics.metrics.length > 0;
@@ -69,33 +70,20 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (!siteId) return;
+    if (!siteId || !nodeIds || nodeIds.length === 0) return;
 
-    const subscriptionTokens: string[] = [];
-
-    const subscribeToNodeUptime = (nodeId: string) => {
-      const token = PubSub.subscribe(
-        `stat-node-uptime-${nodeId}`,
-        (_, value) => {
-          console.log(`Received uptime for node ${nodeId}:`, value);
-          setNodeUptimes((prev) => ({
-            ...prev,
-            [nodeId]: value,
-          }));
-        },
-      );
-      return token;
-    };
-
-    if (nodeIds && nodeIds.length > 0) {
-      nodeIds.forEach((nodeId) => {
-        const token = subscribeToNodeUptime(nodeId);
-        subscriptionTokens.push(token);
+    const tokens = nodeIds.map((nodeId) => {
+      const topic = `${TOPIC_PREFIXES.NODE_UPTIME_STAT}-${nodeId}-${siteId}`;
+      return PubSub.subscribe(topic, (_, uptimeValue) => {
+        setNodeUptimes((prev) => ({
+          ...prev,
+          [nodeId]: uptimeValue,
+        }));
       });
-    }
+    });
 
     return () => {
-      subscriptionTokens.forEach((token) => PubSub.unsubscribe(token));
+      [...tokens].forEach((token) => PubSub.unsubscribe(token));
     };
   }, [siteId, nodeIds]);
 
@@ -310,7 +298,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
 
           <Grid item xs={12} md={9}>
             {activeKPI === 'node' ? (
-              <NodeStatusDisplay nodeUptimes={nodeUptimes || 0} />
+              <NodeStatusDisplay nodeUptimes={nodeUptimes} />
             ) : (
               <Paper
                 sx={{

@@ -43,7 +43,7 @@ import React, {
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { useRouter } from 'next/navigation';
 import PubSub from 'pubsub-js';
-import { SITE_KPI_TYPES } from '@/constants';
+import { SITE_KPI_TYPES, TOPIC_PREFIXES } from '@/constants';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -82,7 +82,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const [activeSite, setActiveSite] = useState<SiteDto>(defaultSite);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [sitesList, setSitesList] = useState<SiteDto[]>([]);
   const [nodeIds, setNodeIds] = useState<string[]>([]);
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
@@ -212,16 +211,14 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     [id, updateSwitchPort, setSnackbarMessage],
   );
 
-  const { loading: sitesLoading } = useGetSitesQuery({
+  const { data: siteData, loading: sitesLoading } = useGetSitesQuery({
     skip: !network.id,
     nextFetchPolicy: 'network-only',
     fetchPolicy: 'network-only',
     variables: {
       data: { networkId: network.id },
     },
-    onCompleted: (res) => {
-      setSitesList(res.getSites.sites);
-    },
+
     onError: (error) => {
       setSnackbarMessage({
         id: 'fetching-sites-msg',
@@ -299,20 +296,17 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   }, [activeSite.id, CurrentSiteaddress, CurrentSiteAddressLoading]);
   const filterActiveSite = useCallback(
     (siteId: string) => {
-      const foundSite = sitesList.find((site) => site.id === siteId);
+      const foundSite = siteData?.getSites.sites.find(
+        (site) => site.id === siteId,
+      );
       if (foundSite) {
         setActiveSite(foundSite);
         checkDataReadiness();
       } else {
-        setSnackbarMessage({
-          id: 'site-not-found',
-          message: 'Site not found in available sites',
-          type: 'error',
-          show: true,
-        });
+        router.back();
       }
     },
-    [sitesList, checkDataReadiness, setSnackbarMessage],
+    [siteData, checkDataReadiness, setSnackbarMessage],
   );
   useEffect(() => {
     cleanupSubscriptions();
@@ -333,10 +327,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   useEffect(() => {
     if (id) {
       setSelectedSiteId(id);
-    } else if (sitesList.length > 0) {
-      setSelectedSiteId(sitesList[0].id);
+    } else if (siteData && siteData?.getSites?.sites.length > 0) {
+      setSelectedSiteId(siteData.getSites.sites[0].id);
     }
-  }, [id, sitesList]);
+  }, [id, siteData]);
 
   const handleSiteChange = useCallback(
     (newSiteId: string) => {
@@ -394,33 +388,35 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     }
   }, [activeSite, fetchNodesForSite, id]);
 
-  const [getSiteMetricStat, { loading: statLoading, variables: statVar }] =
-    useGetSiteStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${
-          statVar?.data.from ?? 0
-        }`;
+  const [
+    getSiteMetricStat,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${
+        statVar?.data.from ?? 0
+      }`;
 
-        if (data.getSiteStat.metrics.length > 0) {
-          subscriptionsRef.current[sKey] = true;
+      if (data.getSiteStat.metrics.length > 0) {
+        subscriptionsRef.current[sKey] = true;
 
-          MetricStatBySiteSubscription({
-            key: sKey,
-            nodeIds: nodeIds,
-            siteIds: [id],
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Site,
-            from: statVar?.data.from ?? 0,
-          });
+        MetricStatBySiteSubscription({
+          key: sKey,
+          nodeIds: nodeIds,
+          siteIds: [id],
+          userId: user.id,
+          url: env.METRIC_URL,
+          orgName: user.orgName,
+          type: Stats_Type.Site,
+          from: statVar?.data.from ?? 0,
+        });
 
-          PubSub.subscribe(sKey, handleSiteStatSubscription);
-        }
-      },
-    });
+        PubSub.subscribe(sKey, handleSiteStatSubscription);
+      }
+    },
+  });
 
   useEffect(() => {
     if (!nodesFetched) return;
@@ -513,25 +509,29 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           if (success && siteId === id) {
             if (!nodeId) {
               if (type === SITE_KPI_TYPES.SITE_UPTIME) {
-                PubSub.publish(`stat-site-uptime`, Math.floor(value[1]));
+                PubSub.publish(
+                  `${TOPIC_PREFIXES.SITE_UPTIME_STAT}-${siteId}`,
+                  Math.floor(value[1]),
+                );
               } else if (type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE) {
                 PubSub.publish(
-                  `stat-site-uptime-percentage`,
+                  `${TOPIC_PREFIXES.SITE_UPTIME_PERCENTAGE_STAT}-${siteId}`,
                   Math.floor(value[1]),
                 );
               }
             }
+            PubSub.publish(`stat-${type}`, value);
 
-            if (nodeId && type === 'unit_uptime') {
+            if (nodeId && type === SITE_KPI_TYPES.NODE_UPTIME) {
               PubSub.publish(
-                `stat-node-uptime-${nodeId}`,
+                `${TOPIC_PREFIXES.NODE_UPTIME_STAT}-${nodeId}-${siteId}`,
                 Math.floor(value[1] || 1),
               );
             }
           }
 
-          if (type && type !== 'unit_uptime') {
-            PubSub.publish(`stat-${type}`, value);
+          if (type && type !== SITE_KPI_TYPES.NODE_UPTIME) {
+            PubSub.publish(`stat-${type}-${siteId}`, value);
           }
         }
       } catch (error) {
@@ -574,10 +574,11 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       }}
     >
       <SiteDetailsHeader
-        siteList={sitesList || []}
+        siteList={siteData?.getSites.sites || []}
         selectedSiteId={selectedSiteId}
         onSiteChange={handleSiteChange}
         isLoading={sitesLoading || statLoading}
+        siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
       />
 
       <Grid
@@ -600,6 +601,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             installationDate={new Date(activeSite.installDate)}
             isLoading={statLoading}
             siteId={activeSite.id}
+            siteStatMetrics={statData?.getSiteStat ?? { metrics: [] }}
           />
         </Grid>
         <Grid item sx={{ height: '100%' }} xs={12} sm={6} md={3}>
@@ -626,6 +628,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           metricsLoading={metricsLoading}
           onComponentClick={handleComponentClick}
           onSwitchChange={handleSwitchChange}
+          nodeIds={nodeIds}
         />
       </Box>
     </Box>

@@ -880,9 +880,16 @@ export const TIME_FILTER_OPTIONS = [
 ];
 
 export const SITE_KPI_TYPES = {
-  SITE_UPTIME: 'site_uptime_seconds',
-  BATTERY_CHARGE_PERCENTAGE: 'battery_charge_percentage',
-  BACKHAUL_SPEED: 'backhaul_speed',
-  SITE_UPTIME_PERCENTAGE: 'site_uptime_percentage',
-  NODE_UPTIME: 'unit_uptime',
+  SITE_UPTIME: `site_uptime_seconds`,
+  BATTERY_CHARGE_PERCENTAGE: `battery_charge_percentage`,
+  BACKHAUL_SPEED: `backhaul_speed`,
+  SITE_UPTIME_PERCENTAGE: `site_uptime_percentage`,
+  NODE_UPTIME: `unit_uptime`,
+};
+
+export const TOPIC_PREFIXES = {
+  STAT: `stat`,
+  SITE_UPTIME_STAT: `stat-site-uptime`,
+  SITE_UPTIME_PERCENTAGE_STAT: `stat-site-uptime-percentage`,
+  NODE_UPTIME_STAT: `stat-node-uptime`,
 };

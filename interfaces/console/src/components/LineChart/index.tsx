@@ -180,7 +180,6 @@ const LineChart = ({
     }),
     [fixedInitData, tickInterval, tickPositions, title, topic, yunit],
   );
-  const shouldShowSwitch = topic === 'switch_port_status';
 
   return (
     <GraphTitleWrapper

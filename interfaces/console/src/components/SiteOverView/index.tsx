@@ -18,6 +18,8 @@ import {
 import { subDays, addDays, format } from 'date-fns';
 import colors from '@/theme/colors';
 import { duration } from '@/utils';
+import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { SITE_KPI_TYPES, TOPIC_PREFIXES } from '@/constants';
 
 interface DayData {
   date: Date;
@@ -32,6 +34,7 @@ interface SiteOverviewProps {
   includeFutureDays?: boolean;
   isLoading: boolean;
   siteId: string;
+  siteStatMetrics: SiteMetricsStateRes;
 }
 
 const SiteOverview: React.FC<SiteOverviewProps> = ({
@@ -39,6 +42,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   includeFutureDays = true,
   isLoading,
   siteId,
+  siteStatMetrics,
 }) => {
   const [uptimePercentage, setUptimePercentage] = useState<number | null>(null);
   const [siteUptimeSeconds, setSiteUptimeSeconds] = useState<number | null>(
@@ -46,22 +50,51 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   );
 
   useEffect(() => {
-    if (!siteId) return;
-
-    const percentageToken = PubSub.subscribe(
-      `stat-site-uptime-percentage`,
-      (_, value) => {
-        setUptimePercentage(value);
-      },
+    if (!siteId || !siteStatMetrics?.metrics?.length) return;
+    const siteMetrics = siteStatMetrics.metrics.filter(
+      (metric) => metric.siteId === siteId && metric.success,
     );
 
-    const uptimeToken = PubSub.subscribe(`stat-site-uptime`, (_, value) => {
-      setSiteUptimeSeconds(value);
-    });
+    const uptimePercentageMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE,
+    );
+
+    const uptimeSecondsMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME,
+    );
+    if (uptimePercentageMetric?.value !== undefined) {
+      const value = uptimePercentageMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      setUptimePercentage(Math.floor(numValue));
+    }
+
+    if (uptimeSecondsMetric?.value !== undefined) {
+      const value = uptimeSecondsMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      setSiteUptimeSeconds(Math.floor(numValue));
+    }
+  }, [siteId, siteStatMetrics]);
+
+  useEffect(() => {
+    if (!siteId) return;
+
+    const topics = [
+      `${TOPIC_PREFIXES.SITE_UPTIME_PERCENTAGE_STAT}-${siteId}`,
+      `${TOPIC_PREFIXES.SITE_UPTIME_STAT}-${siteId}`,
+    ];
+
+    const tokens = topics.map((topic) =>
+      PubSub.subscribe(topic, (_, value) => {
+        if (topic.includes('percentage')) {
+          setUptimePercentage(Math.floor(value));
+        } else {
+          setSiteUptimeSeconds(Math.floor(value));
+        }
+      }),
+    );
 
     return () => {
-      PubSub.unsubscribe(percentageToken);
-      PubSub.unsubscribe(uptimeToken);
+      tokens.forEach((token) => PubSub.unsubscribe(token));
     };
   }, [siteId]);
   const isSameDay = (dateA: Date, dateB: Date) => {
