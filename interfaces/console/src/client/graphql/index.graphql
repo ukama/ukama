@@ -1114,3 +1114,15 @@ mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
 }
 
 ### End Notifications ###
+
+# Sims usage
+query GetDataUsages($data: SimUsagesInputDto!) {
+  getDataUsages(data: $data) {
+    usages {
+      usage
+      simId
+    }
+  }
+}
+
+##

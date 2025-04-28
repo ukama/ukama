@@ -19,11 +19,13 @@ export class GetDataUsagesResolver {
   ): Promise<SimDataUsages> {
     const { dataSources, baseURL } = ctx;
     const usages: SimDataUsage[] = [];
+    const to = Math.floor(new Date().getTime() / 1000);
+    const from = to - 180000;
     for (const item of data.for) {
       usages.push(
         await dataSources.dataSource.getDataUsage(baseURL, {
-          to: data.to,
-          from: data.from,
+          to: to,
+          from: from,
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,
