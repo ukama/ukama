@@ -81,12 +81,6 @@ export class SimUsagesInputDto {
 
   @Field()
   type: string;
-
-  @Field()
-  to: number;
-
-  @Field()
-  from: number;
 }
 
 @ObjectType()

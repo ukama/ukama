@@ -155,7 +155,7 @@ const formatBytes = (bytes = 0): string => {
 
 const formatBytesToMB = (bytes = 0): string => {
   if (bytes === 0) return '0';
-  return (bytes / (1024 * 1024)).toFixed(2);
+  return Math.floor(bytes / (1024 * 1024)).toString();
 };
 
 const getDataUsageSymbol = (dataUnit: string): string => {

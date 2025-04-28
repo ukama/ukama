@@ -26,9 +26,9 @@ const DataPlanComponent: React.FC<Props> = ({
     <Stack direction="column" spacing={2}>
       <Stack direction="row" spacing={2}>
         <Typography variant="body1" sx={{ color: colors.black }}>
-          Data plan
+          Data plan:
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: colors.black }}>
+        <Typography variant="subtitle1" fontWeight={600} color="text.primary">
           {packageName && packageName.length ? (
             packageName
           ) : (
@@ -43,7 +43,7 @@ const DataPlanComponent: React.FC<Props> = ({
       </Stack>
       <Stack direction="row" spacing={2}>
         <Typography variant="body1" sx={{ color: colors.black }}>
-          Current site
+          Current site:
         </Typography>
         <Typography variant="subtitle1" sx={{ color: colors.black }}>
           {currentSite ?? ''}
@@ -51,7 +51,7 @@ const DataPlanComponent: React.FC<Props> = ({
       </Stack>
       <Stack direction="row" spacing={2}>
         <Typography variant="body1" sx={{ color: colors.black }}>
-          Month usage
+          Month usage:
         </Typography>
         <Typography variant="subtitle1" sx={{ color: colors.black }}>
           {bundle && bundle.length ? (
