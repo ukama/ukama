@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	DataUsage = "data usage"
+	DataUsage = "data_usage"
 	CountType = "count"
 )
 
