@@ -361,8 +361,14 @@ export const formatKPIValue = (type: string, value: any) => {
   }
 };
 
+const epochToISOString = (epoch: number): string => {
+  const date = new Date(epoch * 1000);
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+};
+
 export {
   csvToBase64,
+  epochToISOString,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
