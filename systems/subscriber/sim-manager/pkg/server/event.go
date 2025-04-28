@@ -23,7 +23,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	ue "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -49,7 +48,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
-		msg, err := ue.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
+		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +181,7 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 	}
 
 	if len(sims) > 1 {
-		return fmt.Errorf("inconsistant state: multiple sim found for given iccid %q",
+		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
@@ -227,7 +226,7 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 	}
 
 	if len(sims) > 1 {
-		return fmt.Errorf("inconsistant state: multiple sim found for given imsi %q",
+		return fmt.Errorf("inconsistent state: multiple sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
@@ -272,7 +271,7 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 	}
 
 	if len(sims) > 1 {
-		return fmt.Errorf("inconsistant state: multiple sim found for given iccid %q",
+		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			asrProfile.Iccid)
 	}
 
@@ -295,15 +294,13 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 	}
 
 	// Get next package to activate if any
-
 	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
 			termReq.SimId, err)
 
-		fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
+		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
 			termReq.SimId, err)
-
 	}
 
 	if len(packages) > 1 {

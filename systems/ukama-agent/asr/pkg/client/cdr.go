@@ -47,7 +47,7 @@ func NewCDR(cdr string, timeout time.Duration) (*CDR, error) {
 }
 
 func (c *CDR) Close() {
-	c.conn.Close()
+	_ = c.conn.Close()
 }
 
 func (c *CDR) GetUsage(imsi string) (*pb.UsageResp, error) {

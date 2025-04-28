@@ -172,7 +172,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		iccid, err := utils.GetIccidFromToken(req.SimToken, s.key)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal,
-				"an unknown error occured while getting iccid from sim token. Error %s", err.Error())
+				"an unknown error occurred while getting iccid from sim token. Error %s", err.Error())
 		}
 
 		remoteSimPoolResp, err := simPoolSvc.GetByIccid(ctx,
@@ -434,13 +434,13 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	usage, ok := u.(map[string]any)
 	if !ok {
 		return nil, status.Error(codes.Internal,
-			"an unexpected error has occured while unpacking usage response. Type is not map[string]any")
+			"an unexpected error has occurred while unpacking usage response. Type is not map[string]any")
 	}
 
 	cost, ok := c.(map[string]any)
 	if !ok {
 		return nil, status.Error(codes.Internal,
-			"an unexpected error has occured while unpacking cost response. Type is not map[string]any")
+			"an unexpected error has occurred while unpacking cost response. Type is not map[string]any")
 	}
 
 	usageProtoMsg, err := structpb.NewStruct(usage)
@@ -677,7 +677,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	if sim.Type != pkgInfoSimType {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and packge (%s)'s sim types mismatch",
+			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
 			sim.Type, pkgInfoSimType.String())
 	}
 
@@ -988,7 +988,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			sim.Type.String(), sim.Iccid, err)
 	}
 
-	// Publish the event only when both updates are successfull
+	// Publish the event only when both updates are successful
 	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimActivePackage{
 		Id:               sim.Id.String(),

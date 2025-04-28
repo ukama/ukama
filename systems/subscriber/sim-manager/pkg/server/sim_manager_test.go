@@ -268,7 +268,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		simRepo.On("GetBySubscriber", subscriberID).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -323,13 +323,13 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SomeUnexpectedErrorAsOccured", func(t *testing.T) {
+	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
 		var networkID = uuid.Nil
 
 		simRepo := &mocks.SimRepo{}
 
 		simRepo.On("GetByNetwork", networkID).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -384,13 +384,13 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 		packageRepo.AssertExpectations(t)
 	})
 
-	t.Run("SomeUnexpectedErrorAsOccured", func(t *testing.T) {
+	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
 		var simId = uuid.Nil
 
 		packageRepo := &mocks.PackageRepo{}
 
 		packageRepo.On("GetBySim", simId).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)

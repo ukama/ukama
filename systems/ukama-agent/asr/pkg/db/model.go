@@ -33,12 +33,12 @@ const (
 type Asr struct {
 	gorm.Model
 
-	//(TODO: will fix these check constaints later) Iccid string `gorm:"index:asr_iccid_idx,unique,where:deleted_at is null;not null;size:22;check:iccid_checker,iccid ~ $$^\\d+$$"`
+	//(TODO: will fix these check constraints later) Iccid string `gorm:"index:asr_iccid_idx,unique,where:deleted_at is null;not null;size:22;check:iccid_checker,iccid ~ $$^\\d+$$"`
 	Iccid string `gorm:"index:asr_iccid_idx,unique,where:deleted_at is null;not null;size:22"`
 	//IMSI might not be unique as same IMSI might be authorized to use multiple network of Org which means multiple enetry for the IMSI in HLR or may be use many to many relattion here.
 	// For Now we are considering that use case where each imsi could only belong to one network.
 	// IMSI Sim ID  (International mobile subscriber identity) https://www.netmanias.com/en/post/blog/5929/lte/lte-user-identifiers-imsi-and-guti
-	//(TODO: will fix these check constaints later) Imsi string `gorm:"index:asr_imsi_idx,unique,where:deleted_at is null;not null;size:15;check:asr_checker,imsi ~ $$^\\d+$$"`
+	//(TODO: will fix these check constraints later) Imsi string `gorm:"index:asr_imsi_idx,unique,where:deleted_at is null;not null;size:15;check:asr_checker,imsi ~ $$^\\d+$$"`
 	Imsi string `gorm:"index:asr_imsi_idx,unique,where:deleted_at is null;not null;size:15"`
 	// Pre Shared Key. This is optional and configured in operator’s DB in Authentication center and USIM. https://www.3glteinfo.com/lte-security-architecture/
 	Op []byte `gorm:"size:16;"`
@@ -76,7 +76,7 @@ type Tai struct {
 type Guti struct {
 	CreatedAt       time.Time // do not set it directly, it will be overridden
 	DeviceUpdatedAt time.Time // time when it was updated on the device
-	//(TODO: will fix these check constaints later) Imsi            string    `gorm:"primarykey;uniqueIndex:guti_asr_unique_idx;not null;size:15;check:imsi_checker,imsi ~ $$^\\d+$$"`
+	//(TODO: will fix these check constraints later) Imsi            string    `gorm:"primarykey;uniqueIndex:guti_asr_unique_idx;not null;size:15;check:imsi_checker,imsi ~ $$^\\d+$$"`
 	Imsi   string `gorm:"primarykey;uniqueIndex:guti_asr_unique_idx;not null;size:15"`
 	PlmnId string `gorm:"uniqueIndex:guti_asr_unique_idx;not null;size:6"`
 	Mmegi  uint32 `gorm:"uniqueIndex:guti_asr_unique_idx;not null"`

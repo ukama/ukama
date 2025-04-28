@@ -20,7 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	dsql "github.com/ukama/ukama/systems/common/sql"
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
 
@@ -74,7 +73,7 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 
 	err = s.usageRepo.Add(&u)
 	if err != nil {
-		log.Errorf("Error initalizing usage for imsi %s. Error %+v", imsi, err)
+		log.Errorf("Error initialization usage for imsi %s. Error %+v", imsi, err)
 		return err
 	}
 	log.Infof("Initilaize package usage for imsi %s to %+v", u.Imsi, u)
@@ -270,7 +269,7 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
-		if !dsql.IsNotFoundError(err) {
+		if !sql.IsNotFoundError(err) {
 			log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
 			return err
 		} else {
@@ -314,7 +313,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	tempUsage := db.Usage{}
 	lastCDRNodeId := ou.LastNodeId
 	var nodeChangedFlag bool
-	var newSessionFlag bool = false
+	var newSessionFlag = false
 
 	//var policy string
 	if len(cdrs) > 0 {
@@ -378,7 +377,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 			} else {
 				/* New session
 				Assumption: We only allow the CDR which are generated(updated) after the last updated cdr in backend db
-				We mugth ahve to check it in future if we miss any CDR
+				We mugth have to check it in future if we miss any CDR
 				We can still compile the report from CDR table as it contain all received CDR
 				*/
 				log.Infof("End session %d and create new session %d for imsi %s", ou.LastSessionId, sessionId, cdr.Imsi)

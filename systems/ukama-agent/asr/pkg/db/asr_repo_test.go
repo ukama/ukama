@@ -285,7 +285,7 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 			AddRow(sub.ID, tai.PlmnId, tai.Tac, tai.DeviceUpdatedAt)
 
 		prow := sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "id", "burst", "total_data", "consumed_data", "dlbr", "ulbr", "start_time", "end_time", "asr_id"}).
-			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID)
+			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.ID)
 
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
 			WithArgs(sub.ID, 1).

@@ -103,7 +103,7 @@ func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simID string) (a
 		}}, nil
 	}
 
-	return nil, status.Errorf(codes.Internal, "an unexpected error has occured. Error")
+	return nil, status.Errorf(codes.Internal, "an unexpected error has occurred. Error")
 }
 
 func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simID, simStatus string) (any, error) {
