@@ -8,16 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SimDataUsage } from "./types";
+import { SimDataUsage, SimUsageInputDto } from "./types";
 
 @Resolver()
 export class GetDataUsageResolver {
   @Query(() => SimDataUsage)
   async getDataUsage(
-    @Arg("simId") simId: string,
+    @Arg("data") data: SimUsageInputDto,
     @Ctx() ctx: Context
   ): Promise<SimDataUsage> {
     const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getDataUsage(baseURL, simId);
+    return await dataSources.dataSource.getDataUsage(baseURL, data);
   }
 }

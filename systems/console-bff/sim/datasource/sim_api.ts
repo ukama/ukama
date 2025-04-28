@@ -9,6 +9,7 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { ENCRYPTION_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
+import { epochToISOString } from "../../common/utils";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AllocateSimAPIDto,
@@ -27,6 +28,7 @@ import {
   SimDto,
   SimPoolStatsDto,
   SimStatusResDto,
+  SimUsageInputDto,
   SimsResDto,
   SubscriberToSimsDto,
   ToggleSimStatusInputDto,
@@ -38,6 +40,7 @@ import {
   dtoToSimDetailsDto,
   dtoToSimResDto,
   dtoToSimsDto,
+  dtoToUsageDto,
   mapSubscriberToSimsResDto,
 } from "./mapper";
 
@@ -136,13 +139,23 @@ class SimApi extends RESTDataSource {
 
   getDataUsage = async (
     baseURL: string,
-    simId: string
+    data: SimUsageInputDto
   ): Promise<SimDataUsage> => {
     this.baseURL = baseURL;
-    //TODO: GET SIM DATA USAGE METRIC HERE
-    return {
-      usage: `1240-${simId}`,
-    };
+    let params = `cdr_type=${data.type}&sim_type=${data.type}`;
+    if (data.from) {
+      params += `&from=${epochToISOString(data.from)}`;
+    }
+    if (data.to) {
+      params += `&to=${epochToISOString(data.to)}`;
+    }
+    if (data.simId) {
+      params += `&sim_id=${data.simId}`;
+    }
+    this.logger.info(`GetSims [GET]: ${baseURL}/${VERSION}/usages?${params}`);
+    return this.get(`/${VERSION}/usages?${params}`).then(res =>
+      dtoToUsageDto(res, data)
+    );
   };
 
   getSimByNetworkId = async (

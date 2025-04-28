@@ -11,10 +11,12 @@ import {
   GetSimPackagesDtoAPI,
   SimAPIResDto,
   SimAllResDto,
+  SimDataUsage,
   SimDetailsDto,
   SimDto,
   SimPackagesResDto,
   SimToPackagesResDto,
+  SimUsageInputDto,
   SimsAPIResDto,
   SimsAlloAPIResDto,
   SimsResDto,
@@ -181,5 +183,16 @@ export const dtoToSimPackagesDto = (
   return {
     simId: res.sim_id,
     packages: packages,
+  };
+};
+
+export const dtoToUsageDto = (
+  res: any,
+  args: SimUsageInputDto
+): SimDataUsage => {
+  const data = res.usage;
+  return {
+    simId: args.simId,
+    usage: data[args.iccid],
   };
 };
