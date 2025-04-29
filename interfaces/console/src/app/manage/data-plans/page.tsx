@@ -48,7 +48,7 @@ const useDataPlans = () => {
 
   const [getCurrencySymbol, { data: currencyData }] =
     useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'cache-first',
+      fetchPolicy: 'network-only',
       onError: (error) => {
         setSnackbarMessage({
           id: 'currency-info-error',
@@ -61,7 +61,7 @@ const useDataPlans = () => {
 
   useGetNetworkQuery({
     fetchPolicy: 'cache-first',
-    skip: !!network.id,
+    skip: !network.id,
     variables: { networkId: network.id },
     onCompleted: () => {
       getCurrencySymbol({ variables: { code: user.currency } });
