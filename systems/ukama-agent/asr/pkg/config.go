@@ -39,11 +39,6 @@ type HttpServices struct {
 	InitClient string `default:"api-gateway-init:8080"`
 }
 
-type SimManager struct {
-	Host string
-	Name string
-}
-
 func NewConfig(name string) *Config {
 	return &Config{
 		DB: &config.Database{

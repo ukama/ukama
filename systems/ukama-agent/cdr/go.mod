@@ -16,7 +16,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	google.golang.org/grpc v1.65.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.34.2
 	gorm.io/gorm v1.25.11
 )
@@ -58,7 +58,10 @@ require (
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
-require github.com/num30/config v0.1.2
+require (
+	github.com/num30/config v0.1.2
+	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20250429122633-4c606513ba27
+)
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
