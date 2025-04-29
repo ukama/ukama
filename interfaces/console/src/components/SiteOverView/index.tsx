@@ -80,7 +80,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
 
     const topics = [
       `stat-${SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE}-${siteId}`,
-      `stat-${SITE_KPI_TYPES.SITE_UPTIME}}-${siteId}`,
+      `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`,
     ];
 
     const tokens = topics.map((topic) =>

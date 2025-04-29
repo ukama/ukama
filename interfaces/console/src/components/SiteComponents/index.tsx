@@ -76,7 +76,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       return PubSub.subscribe(topic, (_, uptimeValue) => {
         setNodeUptimes((prev) => ({
           ...prev,
-          [nodeId]: uptimeValue,
+          [nodeId]: Math.floor(uptimeValue[1]),
         }));
       });
     });

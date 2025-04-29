@@ -62,7 +62,14 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
-      getNodes();
+      getNodes({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
     },
     onError: (error) => {
       setSitesList([]);
