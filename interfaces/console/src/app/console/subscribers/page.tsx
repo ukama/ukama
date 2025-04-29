@@ -86,9 +86,6 @@ const Page = () => {
     useGetDataUsagesLazyQuery({
       pollInterval: 180000,
       fetchPolicy: 'network-only',
-      onCompleted: (res) => {
-        console.log(res);
-      },
     });
 
   const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
@@ -297,14 +294,6 @@ const Page = () => {
         });
       },
     });
-
-  useEffect(() => {
-    if (data?.getSubscribersByNetwork.subscribers) {
-      setSubscriber({
-        subscribers: [...data.getSubscribersByNetwork.subscribers],
-      });
-    }
-  }, [data?.getSubscribersByNetwork.subscribers]);
 
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
