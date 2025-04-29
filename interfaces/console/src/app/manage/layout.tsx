@@ -6,10 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import {
-  useGetCurrencySymbolLazyQuery,
-  useGetNetworkQuery,
-} from '@/client/graphql/generated';
+import { useGetNetworksQuery } from '@/client/graphql/generated';
 import AppSnackbar from '@/components/AppSnackbar/page';
 import BackButton from '@/components/BackButton';
 import { useAppContext } from '@/context';
@@ -17,7 +14,6 @@ import { MANAGE_MENU_LIST } from '@/routes';
 import '@/styles/console.css';
 import colors from '@/theme/colors';
 import {
-  AlertColor,
   Container,
   Divider,
   Paper,
@@ -146,33 +142,17 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const pathname = usePathname();
   const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
-  const { isDarkMode, user, network, setSnackbarMessage } = useAppContext();
+  const { isDarkMode, user, network, setNetwork } = useAppContext();
 
-  const [getCurrencySymbol, { data: currencyData }] =
-    useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'network-only',
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'currency-info-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
-
-  useGetNetworkQuery({
+  useGetNetworksQuery({
     fetchPolicy: 'network-only',
     skip: !!network.id,
-    variables: {
-      networkId: network.id,
-    },
-    onCompleted: () => {
-      getCurrencySymbol({
-        variables: {
-          code: user.currency,
-        },
-      });
+    onCompleted: (data) => {
+      if (data.getNetworks.networks.length > 0)
+        setNetwork({
+          id: data.getNetworks.networks[0].id,
+          name: data.getNetworks.networks[0].name,
+        });
     },
   });
 

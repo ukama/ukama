@@ -3,6 +3,8 @@
   "name": "Admin",
   "org-name": "ukama",
   "password": "@Pass2025.",
+  "country": "cod",
+  "currency": "cdf",
   "email": "admin@ukama.com",
   "org-id": "fbc2a80d-339e-4d3c-acaa-329dd3d1b221"
  },

@@ -30,6 +30,8 @@ services:
    - OWNERID=${OWNERID}
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
+   - CURRENCY=${CURRENCY}
+   - COUNTRY=${COUNTRY}
   restart: always
   networks:
    - ukama-net
