@@ -40,9 +40,6 @@ interface SubscriberProps {
     simId: string,
     subscriberId: string,
   ) => void;
-  packageName?: string;
-  bundle?: string;
-  currentSite?: string;
   handleUpdateSubscriber: (
     subscriberId: string,
     updates: { name?: string; email?: string },
@@ -59,9 +56,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
   handleClose,
   handleDeleteSubscriber,
   handleSimActionOption,
-  packageName = '',
-  bundle = '',
-  currentSite = '',
   simStatusLoading = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -265,9 +259,9 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
           {selectedsTab === 1 && (
             <Box>
               <DataPlanComponent
-                packageName={packageName ?? ''}
-                currentSite={currentSite ?? ''}
-                bundle={bundle ?? ''}
+                packageName={subscriberInfo?.dataPlan ?? ''}
+                currentSite={'-'}
+                bundle={subscriberInfo?.dataUsage}
               />
             </Box>
           )}

@@ -10,17 +10,16 @@ import {
   AllocateSimApiDto,
   Sim_Status,
   Sim_Types,
+  SimsUsageInputDto,
   SubscribersResDto,
   useAddPackagesToSimMutation,
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
-  useGetPackagesForSimLazyQuery,
+  useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
-  useGetSimPoolStatsQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
-  useGetSubscriberLazyQuery,
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
@@ -44,6 +43,7 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
+import { formatBytesToMB } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -82,6 +82,12 @@ const Page = () => {
     },
   });
 
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+    useGetDataUsagesLazyQuery({
+      pollInterval: 180000,
+      fetchPolicy: 'network-only',
+    });
+
   const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
     variables: {
       data: {
@@ -100,44 +106,10 @@ const Page = () => {
     },
   });
 
-  useEffect(() => {
-    if (search.length > 3) {
-      const subscribers = data?.getSubscribersByNetwork.subscribers.filter(
-        (subscriber) => {
-          const s = search.toLowerCase();
-          if (
-            subscriber &&
-            subscriber.sim &&
-            (subscriber.name.toLowerCase().includes(s) ||
-              subscriber?.sim[0].iccid.includes(s))
-          )
-            return subscriber;
-        },
-      );
-      setSubscriber(() => ({ subscribers: subscribers ?? [] }));
-    } else if (search.length === 0) {
-      setSubscriber(() => ({
-        subscribers: data?.getSubscribersByNetwork.subscribers ?? [],
-      }));
-    }
-  }, [search]);
-
   const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
     onCompleted: (res) => {
       if (res.getSimsBySubscriber) {
         setSubscriberSimList(res.getSimsBySubscriber.sims);
-      }
-    },
-  });
-  const [getPackagesForSim] = useGetPackagesForSimLazyQuery({
-    onCompleted: (res) => {},
-  });
-
-  const [getSubscriber] = useGetSubscriberLazyQuery({
-    fetchPolicy: 'network-only',
-    onCompleted: (res) => {
-      if (res?.getSubscriber?.sim && res.getSubscriber?.sim.length > 0) {
-        fetchPackagesForSim(res.getSubscriber.sim[0].id);
       }
     },
   });
@@ -152,7 +124,6 @@ const Page = () => {
       networkId: network.id,
     },
     fetchPolicy: 'network-only',
-    nextFetchPolicy: 'network-only',
     onCompleted: (data) => {
       setSubscriber({
         subscribers: [...data.getSubscribersByNetwork.subscribers],
@@ -161,6 +132,24 @@ const Page = () => {
         const iccid = query.get('iccid');
         setSearch(iccid ?? '');
       }
+      const simUsageData: SimsUsageInputDto[] = [];
+      data.getSubscribersByNetwork.subscribers.map((s) => {
+        if (s && s.sim && s.sim[0]) {
+          simUsageData.push({
+            simId: s.sim[0].id,
+            iccid: s.sim[0].iccid,
+          });
+        }
+      });
+
+      getDataUsages({
+        variables: {
+          data: {
+            for: simUsageData,
+            type: Sim_Types.UkamaData,
+          },
+        },
+      });
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -193,17 +182,9 @@ const Page = () => {
       },
     });
 
-  const handleDeleteSubscriber = () => {
-    deleteSubscriber({
-      variables: {
-        subscriberId: deletedSubscriber,
-      },
-    });
-  };
-
   const [addPackagesToSim, { loading: addPackagesToSimLoading }] =
     useAddPackagesToSimMutation({
-      onCompleted: (data) => {
+      onCompleted: () => {
         setSnackbarMessage({
           id: 'packages-added-success',
           message: 'Packages added successfully!',
@@ -267,23 +248,6 @@ const Page = () => {
       },
     });
 
-  useGetSimPoolStatsQuery({
-    variables: {
-      data: {
-        type: env.SIM_TYPE as Sim_Types,
-      },
-    },
-    fetchPolicy: 'cache-and-network',
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sim-stats-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
-
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
       onCompleted: () => {
@@ -331,18 +295,13 @@ const Page = () => {
       },
     });
 
-  const fetchPackagesForSim = useCallback(
-    (simId: string) => {
-      getPackagesForSim({
-        variables: {
-          data: {
-            sim_id: simId,
-          },
-        },
-      });
-    },
-    [getPackagesForSim],
-  );
+  const handleDeleteSubscriber = () => {
+    deleteSubscriber({
+      variables: {
+        subscriberId: deletedSubscriber,
+      },
+    });
+  };
 
   const handleTopUpDataPreparation = (id: string) => {
     const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
@@ -350,12 +309,6 @@ const Page = () => {
     );
 
     setIsTopupData(true);
-
-    getSubscriber({
-      variables: {
-        subscriberId: id,
-      },
-    });
 
     getSimBySubscriber({
       variables: {
@@ -398,18 +351,25 @@ const Page = () => {
           const pkg = packagesData?.getPackages.packages.find(
             (pkg) => pkg.uuid === sim?.package?.package_id,
           );
+          const dataUsage = dataUsageData?.getDataUsages.usages.find(
+            (usage) => usage.simId === sim?.id,
+          );
           return {
             id: subscriber.uuid,
             name: subscriber.name,
             dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
-            dataUsage: '',
+            dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
             actions: '',
           };
         });
       }
     },
-    [packagesData?.getPackages.packages],
+    [
+      packagesData?.getPackages.packages,
+      dataUsageData?.getDataUsages.usages,
+      network,
+    ],
   );
 
   const handleOpenSubscriberDetails = useCallback(
@@ -419,10 +379,24 @@ const Page = () => {
       );
       setIsSubscriberDetailsOpen(true);
       if (subscriberInfo) {
-        setSubscriberDetails(subscriberInfo);
+        const usageData = dataUsageData?.getDataUsages.usages.find(
+          (usage) => usage.simId === subscriberInfo.sim?.[0]?.id,
+        );
+        const plan = packagesData?.getPackages.packages.find(
+          (pkg) => pkg.uuid === subscriberInfo.sim?.[0]?.package?.package_id,
+        );
+        setSubscriberDetails({
+          ...subscriberInfo,
+          dataUsage: `${formatBytesToMB(Number(usageData?.usage)) || 0} MB`,
+          dataPlan: plan?.name ?? 'No active plan',
+        });
       }
     },
-    [data?.getSubscribersByNetwork.subscribers],
+    [
+      data?.getSubscribersByNetwork.subscribers,
+      dataUsageData?.getDataUsages.usages,
+      packagesData?.getPackages.packages,
+    ],
   );
 
   const handleAddSubscriberModal = () => {
@@ -493,11 +467,6 @@ const Page = () => {
       variables: {
         subscriberId: subscriberId,
         data: updates,
-      },
-    });
-    getSubscriber({
-      variables: {
-        subscriberId: subscriberId,
       },
     });
     refetchSubscribers();
@@ -574,7 +543,7 @@ const Page = () => {
       direction={'column'}
       sx={{ height: { xs: 'calc(100vh - 158px)', md: 'calc(100vh - 172px)' } }}
     >
-      {getSubscriberByNetworkLoading ? (
+      {getSubscriberByNetworkLoading || dataUsageLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
@@ -662,7 +631,7 @@ const Page = () => {
           </Stack>
         </Paper>
       )}
-      {getSubscriberByNetworkLoading ? (
+      {getSubscriberByNetworkLoading || dataUsageLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
@@ -729,7 +698,6 @@ const Page = () => {
         loading={updateSubscriberLoading}
         handleDeleteSubscriber={handleSubscriberMenuAction}
         simStatusLoading={toggleSimStatusLoading}
-        currentSite={'-'}
       />
       <TopUpData
         isToPup={isTopupData}

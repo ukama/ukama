@@ -48,6 +48,41 @@ export class SimPackageDto {
   updatedAt: string;
 }
 
+@InputType()
+export class SimUsageInputDto {
+  @Field()
+  iccid: string;
+
+  @Field()
+  simId: string;
+
+  @Field()
+  type: string;
+
+  @Field()
+  to: number;
+
+  @Field()
+  from: number;
+}
+
+@InputType()
+export class SimsUsageInputDto {
+  @Field(() => String)
+  iccid: string;
+
+  @Field(() => String)
+  simId: string;
+}
+@InputType()
+export class SimUsagesInputDto {
+  @Field(() => [SimsUsageInputDto])
+  for: SimsUsageInputDto[];
+
+  @Field()
+  type: string;
+}
+
 @ObjectType()
 export class SimDetailsDto {
   @Field()
@@ -481,6 +516,15 @@ export class SimsResDto {
 export class SimDataUsage {
   @Field()
   usage: string;
+
+  @Field()
+  simId: string;
+}
+
+@ObjectType()
+export class SimDataUsages {
+  @Field(() => [SimDataUsage])
+  usages: SimDataUsage[];
 }
 
 @ObjectType()
