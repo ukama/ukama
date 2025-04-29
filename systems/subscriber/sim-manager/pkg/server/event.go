@@ -53,13 +53,9 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		simType := ukama.ParseSimType(msg.Type)
-
-		if simType == ukama.SimTypeOperatorData {
-			err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
-			if err != nil {
-				return nil, err
-			}
+		err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
+		if err != nil {
+			return nil, err
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):

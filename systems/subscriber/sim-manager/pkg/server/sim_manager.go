@@ -1328,7 +1328,7 @@ func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
 		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
 			networkId, err)
 
-		return fmt.Errorf("Error while collecting total sims count metric for network: %s. Error: %w",
+		return fmt.Errorf("error while collecting total sims count metric for network: %s. Error: %w",
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
@@ -1349,7 +1349,7 @@ func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
 		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
 			networkId, err)
 
-		return fmt.Errorf("Error while collecting active sims count metric for network: %s. Error: %w",
+		return fmt.Errorf("error while collecting active sims count metric for network: %s. Error: %w",
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
@@ -1370,7 +1370,7 @@ func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
 		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
 			networkId, err)
 
-		return fmt.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %w",
+		return fmt.Errorf("error while collecting inactive sims count metric for network: %s. Error: %w",
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
@@ -1391,7 +1391,7 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 		log.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %v",
 			networkId, err)
 
-		return fmt.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %w",
+		return fmt.Errorf("error while collecting terminated sims count metric for network: %s. Error: %w",
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
