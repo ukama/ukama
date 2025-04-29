@@ -77,20 +77,21 @@ message UsageForPeriodReq {
 
 message Record {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
-    string SimId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}, json_name="simId"];
-    string Iccid = 3 [(validator.field) = {string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
-    bytes Key = 4[json_name="k"];
-    bytes Op = 5[json_name="op"];
-    bytes Amf = 6[json_name="amf"];
-    Apn Apn = 7 [json_name="apn"];
-    uint32 AlgoType = 8 [json_name="algo_type"];
-    uint32 UeDlAmbrBps = 9 [json_name="ue_dl_ambr_bps"];
-    uint32 UeUlAmbrBps = 10 [json_name="ue_ul_ambr_bps"];
-    uint64 Sqn  = 11 [json_name="sqn"];
-    bool CsgIdPrsent = 12 [json_name="csg_id_prsent"];
-    uint32 CsgId = 13 [json_name="csg_id"];
-    string PackageId = 14 [json_name="package_id"];
-    Policy Policy = 15 [json_name="policy"];
+    string Iccid = 2 [(validator.field) = {string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
+    bytes Key = 3 [json_name="k"];
+    bytes Op = 4 [json_name="op"];
+    bytes Amf = 5 [json_name="amf"];
+    Apn Apn = 6 [json_name="apn"];
+    uint32 AlgoType = 7 [json_name="algo_type"];
+    uint32 UeDlAmbrBps = 8 [json_name="ue_dl_ambr_bps"];
+    uint32 UeUlAmbrBps = 9 [json_name="ue_ul_ambr_bps"];
+    uint64 Sqn  = 10 [json_name="sqn"];
+    bool CsgIdPrsent = 11 [json_name="csg_id_prsent"];
+    uint32 CsgId = 12 [json_name="csg_id"];
+    string PackageId = 13 [json_name="package_id"];
+    string SimPackageId = 14 [json_name="sim_package_id"];
+    string NetworkId = 15 [json_name="network_id"];
+    Policy Policy = 16 [json_name="policy"];
 }
 
 message Apn {
@@ -111,7 +112,7 @@ message ReadResp {
 message ActivateReq {
     string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
     string Imsi = 2;
-    string SimId = 3;
+    string SimPackageId = 3;
     string PackageId = 4;
     string NetworkId = 5;
 }
@@ -124,9 +125,8 @@ message ActivateResp {
 message InactivateReq {
     string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
     string Imsi = 2;
-    string SimId = 3;
-    string PackageId = 4;
-    string NetworkId = 5;
+    string PackageId = 3;
+    string NetworkId = 4;
 }
 
 message InactivateResp {
@@ -136,7 +136,7 @@ message InactivateResp {
 message UpdatePackageReq {
     string Iccid = 1 [(validator.field) = { string_not_empty: true,  length_gt: 17, length_lt: 23}, json_name="iccid"];
     string Imsi = 2;
-    string SimId = 3;
+    string SimPackageId = 3;
     string PackageId = 4;
     string NetworkId = 5;
 }
@@ -174,7 +174,7 @@ message UpdateTaiResp{
 }
 
 message Policy {
-string Uuid = 1 [(validator.field) = { string_not_empty: true}, json_name="uuid"];
+   string Uuid = 1 [(validator.field) = { string_not_empty: true}, json_name="uuid"];
    uint64 Burst = 2 [json_name="burst"];
    uint64 TotalData = 3 [json_name="total_data"];
    uint64 ConsumedData = 4 [json_name="consumed_data"];

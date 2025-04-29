@@ -50,7 +50,7 @@ import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
@@ -86,9 +86,6 @@ const Page = () => {
     useGetDataUsagesLazyQuery({
       pollInterval: 180000,
       fetchPolicy: 'network-only',
-      onCompleted: (res) => {
-        console.log(res);
-      },
     });
 
   const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
@@ -297,14 +294,6 @@ const Page = () => {
         });
       },
     });
-
-  useEffect(() => {
-    if (data?.getSubscribersByNetwork.subscribers) {
-      setSubscriber({
-        subscribers: [...data.getSubscribersByNetwork.subscribers],
-      });
-    }
-  }, [data?.getSubscribersByNetwork.subscribers]);
 
   const handleDeleteSubscriber = () => {
     deleteSubscriber({

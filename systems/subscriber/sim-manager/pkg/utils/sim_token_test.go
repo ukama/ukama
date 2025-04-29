@@ -16,7 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const textToEncode = `{"iccid": "8910300000003540815"}`
+const textToEncode = `{"iccid": "8910300000003540792"}`
 const testKey = "the-key-has-to-be-32-bytes-long!"
 
 func Test_encrypt(t *testing.T) {

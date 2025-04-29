@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package main
 
 import (
@@ -13,6 +13,7 @@ import (
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -105,7 +106,13 @@ func runGrpcServer(gormdb sql.Db) {
 	usage := db.NewUsageRepo(gormdb)
 
 	// asr service
-	cdrServer, err := server.NewCDRServer(cdr, usage, serviceConfig.OrgId, serviceConfig.OrgName, mbClient)
+	asrClient, err := client.NewAsrClient(serviceConfig.AsrHost, serviceConfig.Timeout)
+	if err != nil {
+		log.Fatalf("ASR Client initilization failed. Error: %v", err)
+	}
+
+	cdrServer, err := server.NewCDRServer(cdr, usage, serviceConfig.OrgId, serviceConfig.OrgName,
+		serviceConfig.PushGatewayHost, asrClient, mbClient)
 	if err != nil {
 		log.Fatalf("asr server initialization failed. Error: %v", err)
 	}

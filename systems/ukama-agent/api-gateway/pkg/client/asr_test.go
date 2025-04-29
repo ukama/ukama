@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -78,7 +78,6 @@ func TestAsrClient_Read(t *testing.T) {
 	pResp := &pb.ReadResp{
 		Record: &pb.Record{
 			Iccid:       iccid,
-			SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
 			Imsi:        "012345678912345",
 			Op:          []byte("0123456789012345"),
 			Key:         []byte("0123456789012345"),

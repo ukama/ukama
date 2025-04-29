@@ -19,10 +19,10 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	ue "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -48,7 +48,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
-		msg, err := ue.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
+		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, "EventSimAllocate")
 		if err != nil {
 			return nil, err
 		}
@@ -99,6 +99,17 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		if err != nil {
 			return nil, err
 		}
+
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
+		msg, err := unmarshalUkamaAgentAsrProfileDelete(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = handleEventCloudUkamaAgentAsrProfileDelete(e.RoutingKey, msg, es.s)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -113,7 +124,7 @@ func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocati
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	_, err := s.activateSim(ctx, msg.Iccid)
+	_, err := s.activateSim(ctx, msg.Id)
 
 	return err
 }
@@ -142,7 +153,7 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 		StartDate: time.Now().UTC().Format(time.RFC3339),
 	}
 
-	log.Infof("Adding package %v", addReq)
+	log.Infof("Adding package %s to sim %s", addReq.PackageId, addReq.SimId)
 
 	_, err = s.AddPackageForSim(ctx, addReq)
 
@@ -158,19 +169,19 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 		return nil
 	}
 
-	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
 	if len(sims) == 0 {
-		return fmt.Errorf("no corresponding sim found for given iccid %q",
+		return fmt.Errorf("no corresponding active sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
 	if len(sims) > 1 {
-		return fmt.Errorf("inconsistant state: multiple sim found for given iccid %q",
+		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
@@ -203,7 +214,7 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
@@ -215,7 +226,7 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 	}
 
 	if len(sims) > 1 {
-		return fmt.Errorf("inconsistant state: multiple sim found for given imsi %q",
+		return fmt.Errorf("inconsistent state: multiple sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
@@ -243,6 +254,87 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 	}
 
 	return err
+}
+
+func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
+
+	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	if err != nil {
+		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
+			asrProfile.Iccid, err)
+	}
+
+	if len(sims) == 0 {
+		return fmt.Errorf("no corresponding sim found for given iccid %q",
+			asrProfile.Iccid)
+	}
+
+	if len(sims) > 1 {
+		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
+			asrProfile.Iccid)
+	}
+
+	sim := sims[0]
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+	defer cancel()
+
+	termReq := &pb.TerminatePackageRequest{
+		SimId:     sim.Id.String(),
+		PackageId: asrProfile.SimPackage,
+	}
+
+	log.Infof("terminating package %s on sim %s", termReq.PackageId, termReq.SimId)
+
+	_, err = s.TerminatePackageForSim(ctx, termReq)
+	if err != nil {
+		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
+			termReq.PackageId, termReq.SimId, err)
+	}
+
+	// Get next package to activate if any
+	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
+	if err != nil {
+		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+			termReq.SimId, err)
+
+		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
+			termReq.SimId, err)
+	}
+
+	if len(packages) > 1 {
+		var p db.Package
+
+		var i int
+		for i, p = range packages {
+			if p.Id.String() == termReq.PackageId {
+				break
+			}
+		}
+
+		if i <= len(packages)-2 {
+			nextPackage := packages[i+1]
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+			defer cancel()
+
+			activeReq := &pb.SetActivePackageRequest{
+				SimId:     sim.Id.String(),
+				PackageId: nextPackage.Id.String(),
+			}
+
+			log.Infof("activating package %s on sim %s", activeReq.PackageId, activeReq.SimId)
+
+			_, err = s.SetActivePackageForSim(ctx, activeReq)
+			if err != nil {
+				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
+					activeReq.PackageId, activeReq.SimId, err)
+			}
+		}
+	}
+
+	return nil
 }
 
 func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
@@ -277,6 +369,19 @@ func unmarshalUkamaAgentCdrCreate(msg *anypb.Any) (*epb.CDRReported, error) {
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal UkamaAgent CDRReprted message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func unmarshalUkamaAgentAsrProfileDelete(msg *anypb.Any) (*epb.Profile, error) {
+	p := &epb.Profile{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal UkamaAgent ASR profile message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

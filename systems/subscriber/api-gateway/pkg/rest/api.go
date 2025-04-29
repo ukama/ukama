@@ -46,9 +46,10 @@ type SIM struct {
 }
 
 type Package struct {
-	PackageId string    `json:"package_id" validate:"required"`
-	StartDate time.Time `json:"start_date" validate:"required"`
-	EndDate   time.Time `json:"end_date" validate:"required"`
+	PackageId       string    `json:"package_id" validate:"required"`
+	StartDate       time.Time `json:"start_date" validate:"required"`
+	EndDate         time.Time `json:"end_date" validate:"required"`
+	DefaultDuration uint64    `json:"default_duration" validate:"required"`
 }
 
 type Subscriber struct {
@@ -166,7 +167,8 @@ type PostPkgToSimReq struct {
 }
 
 type AddPkgToSimReq struct {
-	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	// SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
 	StartDate string `example:"" json:"start_date" validate:"required"`
 }

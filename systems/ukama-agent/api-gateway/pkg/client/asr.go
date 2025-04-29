@@ -51,7 +51,7 @@ func NewAsrFromClient(asrClient pb.AsrRecordServiceClient) *Asr {
 }
 
 func (r *Asr) Close() {
-	r.conn.Close()
+	_ = r.conn.Close()
 }
 
 func (a *Asr) Activate(req *pb.ActivateReq) (*pb.ActivateResp, error) {

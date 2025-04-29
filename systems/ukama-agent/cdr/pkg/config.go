@@ -12,25 +12,29 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
+
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
+)
+
+const (
+	DataUsage = "data_usage"
+	CountType = "count"
 )
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                *config.Database  `default:"{}"`
 	Grpc              *config.Grpc      `default:"{}"`
+	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
+	PushGatewayHost   string            `default:"http://localhost:9091"`
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	AsrHost           string            `default:"asr:9090"`
 	IsMsgBus          bool              `default:"true"`
 	OrgName           string
 	OrgId             string
-}
-
-type SimManager struct {
-	Host string
-	Name string
 }
 
 type GrpcEndPoints struct {
@@ -55,4 +59,13 @@ func NewConfig(name string) *Config {
 			},
 		},
 	}
+}
+
+var UsageMetrics = []pmetric.MetricConfig{
+	{
+		Name:   DataUsage,
+		Type:   CountType,
+		Labels: map[string]string{"package": "", "dataplan": "", "network": ""},
+		Value:  0,
+	},
 }

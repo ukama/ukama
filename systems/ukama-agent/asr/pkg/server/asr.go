@@ -128,13 +128,15 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 		Apn: &pb.Apn{
 			Name: sub.DefaultApnName,
 		},
-		AlgoType:    sub.AlgoType,
-		CsgId:       sub.CsgId,
-		CsgIdPrsent: sub.CsgIdPrsent,
-		Sqn:         sub.Sqn,
-		UeDlAmbrBps: sub.UeDlAmbrBps,
-		UeUlAmbrBps: sub.UeDlAmbrBps,
-		PackageId:   sub.PackageId.String(),
+		AlgoType:     sub.AlgoType,
+		CsgId:        sub.CsgId,
+		CsgIdPrsent:  sub.CsgIdPrsent,
+		Sqn:          sub.Sqn,
+		UeDlAmbrBps:  sub.UeDlAmbrBps,
+		UeUlAmbrBps:  sub.UeDlAmbrBps,
+		NetworkId:    sub.NetworkId.String(),
+		PackageId:    sub.PackageId.String(),
+		SimPackageId: sub.SimPackageId.String(),
 		Policy: &pb.Policy{
 			Uuid:         sub.Policy.Id.String(),
 			Burst:        sub.Policy.Burst,
@@ -152,10 +154,17 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 }
 
 func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	/* PackageId */
+	/* Package DataPlan Id */
 	pId, err := uuid.FromString(req.PackageId)
 	if err != nil {
 		log.Errorf("PackageId not valid: %s", req.PackageId)
+		return nil, err
+	}
+
+	/* Sim Package Id */
+	spId, err := uuid.FromString(req.SimPackageId)
+	if err != nil {
+		log.Errorf("SimPackageId not valid: %s", req.SimPackageId)
 		return nil, err
 	}
 
@@ -172,7 +181,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, fmt.Errorf("error while fetching network %s info: %w", req.NetworkId, err)
 	}
 
-	// network org validation is no longer needed since we are using initClient to fetch
+	// network-org validation is no longer needed since we are using initClient to fetch
 	// the correct registry system that matches with the current running org.
 
 	/* Send Request to SIM Factory */
@@ -210,6 +219,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		CsgId:                   sim.CsgId,
 		DefaultApnName:          sim.DefaultApnName,
 		PackageId:               pId,
+		SimPackageId:            spId,
 		NetworkId:               nId,
 		Policy:                  *policy,
 		LastStatusChangeAt:      time.Now(),
@@ -222,7 +232,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err, removed := s.pc.RunPolicyControl(asr.Imsi)
+	err, removed := s.pc.RunPolicyControl(asr.Imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", asr.Imsi, err.Error())
 		return nil, err
@@ -274,7 +284,7 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
 	}
 
-	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi)
+	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", asrRecord.Imsi, err.Error())
 		return nil, err
@@ -463,7 +473,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 		return err
 	}
 
-	err, removed := s.pc.RunPolicyControl(imsi)
+	err, removed := s.pc.RunPolicyControl(imsi, false)
 	if err != nil {
 		log.Errorf("error running policy control for imsi %s. Error %s", sub.Imsi, err.Error())
 		return err
