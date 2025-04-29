@@ -23,7 +23,7 @@ import { SiteDto } from '@/client/graphql/generated';
 import { duration } from '@/utils';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
-import { SITE_KPI_TYPES, TOPIC_PREFIXES } from '@/constants';
+import { SITE_KPI_TYPES } from '@/constants';
 
 interface SiteDetailsHeaderProps {
   siteList: SiteDto[];
@@ -64,7 +64,7 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
   useEffect(() => {
     if (!selectedSiteId) return;
 
-    const topics = [`${TOPIC_PREFIXES.SITE_UPTIME_STAT}-${selectedSiteId}`];
+    const topics = [`stat-${SITE_KPI_TYPES.SITE_UPTIME}-${selectedSiteId}`];
 
     const tokens = topics.map((topic) =>
       PubSub.subscribe(topic, (_, value) => {

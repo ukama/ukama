@@ -473,6 +473,24 @@ const findNullZones = (data: any) => {
   return zones;
 };
 
+const kpiToGraphType: Record<string, Graphs_Type> = {
+  solar: Graphs_Type.Solar,
+  battery: Graphs_Type.Battery,
+  controller: Graphs_Type.Controller,
+  main_backhaul: Graphs_Type.MainBackhaul,
+  backhaul: Graphs_Type.MainBackhaul,
+  switch: Graphs_Type.Switch,
+  node: Graphs_Type.Solar,
+};
+const graphTypeToSection: Record<Graphs_Type | string, string> = {
+  [Graphs_Type.Solar]: 'SOLAR',
+  [Graphs_Type.Battery]: 'BATTERY',
+  [Graphs_Type.Controller]: 'CONTROLLER',
+  [Graphs_Type.MainBackhaul]: 'MAIN_BACKHAUL',
+  [Graphs_Type.Switch]: 'SWITCH',
+  [Graphs_Type.Site]: 'SITE',
+};
+
 export const generatePlotLines = (values: number[] | undefined): any[] => {
   if (!values) {
     return [];
@@ -729,4 +747,6 @@ export {
   roleEnumToString,
   setQueryParam,
   structureNodeSiteDate,
+  kpiToGraphType,
+  graphTypeToSection,
 };

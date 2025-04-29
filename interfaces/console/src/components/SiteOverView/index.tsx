@@ -19,7 +19,7 @@ import { subDays, addDays, format } from 'date-fns';
 import colors from '@/theme/colors';
 import { duration } from '@/utils';
 import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
-import { SITE_KPI_TYPES, TOPIC_PREFIXES } from '@/constants';
+import { SITE_KPI_TYPES } from '@/constants';
 
 interface DayData {
   date: Date;
@@ -79,8 +79,8 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
     if (!siteId) return;
 
     const topics = [
-      `${TOPIC_PREFIXES.SITE_UPTIME_PERCENTAGE_STAT}-${siteId}`,
-      `${TOPIC_PREFIXES.SITE_UPTIME_STAT}-${siteId}`,
+      `stat-${SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE}-${siteId}`,
+      `stat-${SITE_KPI_TYPES.SITE_UPTIME}}-${siteId}`,
     ];
 
     const tokens = topics.map((topic) =>

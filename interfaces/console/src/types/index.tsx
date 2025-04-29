@@ -10,7 +10,10 @@ import {
   Notification_Scope,
   Notification_Type,
 } from '@/client/graphql/generated';
-import { LatestMetricSubRes } from '@/client/graphql/generated/subscriptions';
+import {
+  Graphs_Type,
+  LatestMetricSubRes,
+} from '@/client/graphql/generated/subscriptions';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
@@ -262,10 +265,21 @@ interface MetricsSubData {
   getSiteMetricStatSub: LatestMetricSubRes;
   getMetricBySiteSub: LatestMetricSubRes;
 }
+export interface ActiveView {
+  graphType: Graphs_Type;
+  kpi: KPIType;
+}
 
 export interface TMetricResDto {
   data: MetricsSubData;
 }
+export type KPIType =
+  | 'node'
+  | 'solar'
+  | 'controller'
+  | 'battery'
+  | 'backhaul'
+  | 'switch';
 
 export type TNodePoolData = {
   id: string;

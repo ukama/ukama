@@ -27,11 +27,10 @@ import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import PubSub from 'pubsub-js';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { STAT_STEP_29 } from '@/constants';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import colors from '@/theme/colors';
-import { SITE_KPI_TYPES } from '@/constants';
 
 export default function Page() {
   const router = useRouter();
@@ -40,7 +39,6 @@ export default function Page() {
     useAppContext();
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
   const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
-  const searchParams = useSearchParams();
 
   const subscriptionsRef = useRef<Record<string, boolean>>({});
 
@@ -78,9 +76,6 @@ export default function Page() {
   });
 
   const [getNodes, { loading: nodesLoading }] = useGetNodesLazyQuery({
-    variables: {
-      data: {},
-    },
     fetchPolicy: 'network-only',
     onCompleted: (res) => {
       const allNodes = res.getNodes.nodes;
@@ -113,7 +108,14 @@ export default function Page() {
 
     if (network.id) {
       refetchSites();
-      getNodes();
+      getNodes({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
     }
   }, [network.id, refetchSites, getNodes, cleanupSubscriptions]);
 
@@ -153,16 +155,7 @@ export default function Page() {
 
       if (!success || !siteId || !type) return;
 
-      const allowedMetricTypes = [
-        SITE_KPI_TYPES.SITE_UPTIME,
-        SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE,
-        SITE_KPI_TYPES.BACKHAUL_SPEED,
-      ];
-
-      if (allowedMetricTypes.includes(type)) {
-        const metricTopic = `stat-${type}-${siteId}`;
-        PubSub.publish(metricTopic, [type, value]);
-      }
+      PubSub.publish(`stat-${type}-${siteId}`, value);
     } catch (error) {
       console.error('Error handling subscription data:', error);
     }

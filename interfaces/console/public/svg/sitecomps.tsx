@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { colors } from '@/theme';
+import { KPIType } from '@/types';
 interface SiteFlowDiagramProps {
   color?: {
     [key: string]: string;
@@ -10,13 +10,6 @@ interface SiteFlowDiagramProps {
   activeKPI?: string;
 }
 
-type KPIType =
-  | 'node'
-  | 'solar'
-  | 'controller'
-  | 'battery'
-  | 'backhaul'
-  | 'switch';
 const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
   color = {},
   defaultColor = colors.primaryDark,

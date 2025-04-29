@@ -24,8 +24,7 @@ import { MetricsRes } from '@/client/graphql/generated/subscriptions';
 import { getMetricValue, getPortInfo, isMetricValue } from '@/utils';
 import SiteFlowDiagram from '../../../public/svg/sitecomps';
 import NodeStatusDisplay from '@/components/NodeStatusDisplay';
-import { SectionData } from '@/constants';
-import { TOPIC_PREFIXES } from '@/constants';
+import { SectionData, SITE_KPI_TYPES } from '@/constants';
 
 interface SiteComponentsProps {
   siteId: string;
@@ -73,7 +72,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     if (!siteId || !nodeIds || nodeIds.length === 0) return;
 
     const tokens = nodeIds.map((nodeId) => {
-      const topic = `${TOPIC_PREFIXES.NODE_UPTIME_STAT}-${nodeId}-${siteId}`;
+      const topic = `stat-${SITE_KPI_TYPES.NODE_UPTIME}-${siteId}-${nodeId}`;
       return PubSub.subscribe(topic, (_, uptimeValue) => {
         setNodeUptimes((prev) => ({
           ...prev,
