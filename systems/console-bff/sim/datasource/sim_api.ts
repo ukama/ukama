@@ -142,17 +142,16 @@ class SimApi extends RESTDataSource {
     data: SimUsageInputDto
   ): Promise<SimDataUsage> => {
     this.baseURL = baseURL;
-    let params = `cdr_type=${data.type}&sim_type=${data.type}`;
-    if (data.from) {
-      params += `&from=${epochToISOString(data.from)}`;
-    }
-    if (data.to) {
-      params += `&to=${epochToISOString(data.to)}`;
-    }
-    if (data.simId) {
-      params += `&sim_id=${data.simId}`;
-    }
-    this.logger.info(`GetSims [GET]: ${baseURL}/${VERSION}/usages?${params}`);
+    const params = new URLSearchParams({
+      cdr_type: data.type,
+      sim_type: data.type,
+      ...(data.from && { from: epochToISOString(data.from) }),
+      ...(data.to && { to: epochToISOString(data.to) }),
+      ...(data.simId && { sim_id: data.simId }),
+    }).toString();
+    this.logger.info(
+      `GetDataUsage [GET]: ${baseURL}/${VERSION}/usages?${params}`
+    );
     return this.get(`/${VERSION}/usages?${params}`).then(res =>
       dtoToUsageDto(res, data)
     );

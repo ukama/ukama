@@ -8,7 +8,7 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SimDataUsage, SimDataUsages, SimUsagesInputDto } from "./types";
+import { SimDataUsages, SimUsagesInputDto } from "./types";
 
 @Resolver()
 export class GetDataUsagesResolver {
@@ -18,22 +18,23 @@ export class GetDataUsagesResolver {
     @Ctx() ctx: Context
   ): Promise<SimDataUsages> {
     const { dataSources, baseURL } = ctx;
-    const usages: SimDataUsage[] = [];
     const to = Math.floor(new Date().getTime() / 1000);
     const from = to - 180000;
-    for (const item of data.for) {
-      usages.push(
-        await dataSources.dataSource.getDataUsage(baseURL, {
-          to: to,
-          from: from,
+
+    const usages = await Promise.all(
+      data.for.map(item =>
+        dataSources.dataSource.getDataUsage(baseURL, {
+          to,
+          from,
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,
         })
-      );
-    }
+      )
+    );
+
     return {
-      usages: usages,
+      usages,
     };
   }
 }
