@@ -605,7 +605,11 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 		Status: ukama.SimStatusTerminated,
 	}
 
-	err = s.simRepo.Update(simUpdates, nil)
+	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
+		pckg.TerminatedAt = time.Now().UTC()
+
+		return nil
+	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
