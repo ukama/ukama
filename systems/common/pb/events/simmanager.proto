@@ -106,6 +106,9 @@ message EventSimRemovePackage {
 
 message EventSimPackageExpire{
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
-    string dataPlanId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
-    string packageId = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
+    string startDate = 2 [json_name = "start_date"];
+    string endDate = 3 [json_name = "end_date"];
+    uint64 defaultDuration = 4 [json_name = "default_duration"];
+    string dataPlanId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
+    string packageId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }

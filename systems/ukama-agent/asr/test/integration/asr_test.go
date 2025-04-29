@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package integration
 
 import (
@@ -17,16 +17,17 @@ import (
 	"testing"
 	"time"
 
-	confr "github.com/num30/config"
-	"github.com/ukama/ukama/systems/common/config"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
-	"google.golang.org/grpc"
+
+	confr "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 )
 
 type TestConfig struct {
@@ -103,11 +104,11 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("Activate", func(t *testing.T) {
 		_, err := c.Activate(ctx, &pb.ActivateReq{
-			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
-			Iccid:     sim.Iccid,
-			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
-			Imsi:      "0123456789",
-			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
+			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:        sim.Iccid,
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:         "0123456789",
+			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
@@ -159,8 +160,9 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("UpdatePackage", func(t *testing.T) {
 		_, err := c.UpdatePackage(ctx, &pb.UpdatePackageReq{
-			Iccid:     sim.Iccid,
-			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:        sim.Iccid,
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
@@ -171,18 +173,17 @@ func Test_FullFlow(t *testing.T) {
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 			Imsi:      "0123456789",
-			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
 
 	t.Run("Activate", func(t *testing.T) {
 		_, err := c.Activate(ctx, &pb.ActivateReq{
-			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
-			Iccid:     sim.Iccid,
-			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
-			Imsi:      "0123456789",
-			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
+			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+			Iccid:        sim.Iccid,
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
+			Imsi:         "0123456789",
+			SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})
@@ -204,7 +205,6 @@ func Test_FullFlow(t *testing.T) {
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
 			Imsi:      "0123456789",
-			SimId:     "40987edb-ebb6-4f84-a27c-99db7c136300",
 		})
 		assert.NoError(t, err)
 	})

@@ -14,15 +14,15 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/mocks"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 	"gorm.io/gorm"
-
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
@@ -130,6 +130,213 @@ func TestNodeServer_Get(t *testing.T) {
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
 
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+}
+
+func TestNodeServer_List(t *testing.T) {
+	t.Run("ListWithAllFilters", func(t *testing.T) {
+		// Arrange
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		siteId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		ntype := ukama.NODE_ID_TYPE_HOMENODE
+		connectivity := ukama.Online
+		state := ukama.Unknown
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodes := []db.Node{
+			{
+				Id:   nodeId.StringLowercase(),
+				Name: "node-1",
+				Type: ntype,
+				Status: db.NodeStatus{
+					NodeId:       nodeId.StringLowercase(),
+					Connectivity: connectivity,
+					State:        state,
+				},
+				Site: db.Site{
+					NodeId:    nodeId.StringLowercase(),
+					SiteId:    siteId,
+					NetworkId: networkId,
+				},
+			},
+		}
+
+		connectivityVal := uint8(connectivity)
+		stateVal := uint8(state)
+		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
+			Return(nodes, nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+
+		// Act
+		resp, err := s.List(context.TODO(), &pb.ListRequest{
+			NodeId:       nodeId.StringLowercase(),
+			SiteId:       siteId.String(),
+			NetworkId:    networkId.String(),
+			Type:         ntype,
+			Connectivity: cpb.NodeConnectivity(connectivity),
+			State:        cpb.NodeState(state),
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Nodes, 1)
+		assert.Equal(t, nodeId.String(), resp.Nodes[0].Id)
+		assert.Equal(t, "node-1", resp.Nodes[0].Name)
+		assert.Equal(t, ntype, resp.Nodes[0].Type)
+		assert.Equal(t, cpb.NodeConnectivity(connectivity), resp.Nodes[0].Status.Connectivity)
+		assert.Equal(t, cpb.NodeState(state), resp.Nodes[0].Status.State)
+		assert.Equal(t, siteId.String(), resp.Nodes[0].Site.SiteId)
+		assert.Equal(t, networkId.String(), resp.Nodes[0].Site.NetworkId)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("ListWithNoFilters", func(t *testing.T) {
+		// Arrange
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		siteId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		ntype := ukama.NODE_ID_TYPE_HOMENODE
+		connectivity := cpb.NodeConnectivity_Online
+		state := cpb.NodeState_Unknown
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodes := []db.Node{
+			{
+				Id:   nodeId.StringLowercase(),
+				Name: "node-1",
+				Type: ntype,
+				Status: db.NodeStatus{
+					NodeId:       nodeId.StringLowercase(),
+					Connectivity: ukama.Online,
+					State:        ukama.Unknown,
+				},
+				Site: db.Site{
+					NodeId:    nodeId.StringLowercase(),
+					SiteId:    siteId,
+					NetworkId: networkId,
+				},
+			},
+		}
+
+		connectivityVal := uint8(ukama.Online)
+		stateVal := uint8(ukama.Unknown)
+		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
+			Return(nodes, nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+
+		// Act
+		resp, err := s.List(context.TODO(), &pb.ListRequest{
+			NodeId:       nodeId.StringLowercase(),
+			SiteId:       siteId.String(),
+			NetworkId:    networkId.String(),
+			Type:         ntype,
+			Connectivity: connectivity,
+			State:        state,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Nodes, 1)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("ListWithPartialFilters", func(t *testing.T) {
+		// Arrange
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		connectivity := cpb.NodeConnectivity_Online
+		state := cpb.NodeState_Unknown
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodes := []db.Node{
+			{
+				Id:   nodeId.StringLowercase(),
+				Name: "node-1",
+				Type: ukama.NODE_ID_TYPE_HOMENODE,
+				Status: db.NodeStatus{
+					NodeId:       nodeId.StringLowercase(),
+					Connectivity: ukama.Online,
+					State:        ukama.Unknown,
+				},
+			},
+		}
+
+		connectivityVal := uint8(ukama.Online)
+		stateVal := uint8(ukama.Unknown)
+		nodeRepo.On("List", nodeId.StringLowercase(), "", "", "", &connectivityVal, &stateVal).
+			Return(nodes, nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+
+		// Act
+		resp, err := s.List(context.TODO(), &pb.ListRequest{
+			NodeId:       nodeId.StringLowercase(),
+			Connectivity: connectivity,
+			State:        state,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Nodes, 1)
+		assert.Equal(t, nodeId.String(), resp.Nodes[0].Id)
+		assert.Equal(t, connectivity, resp.Nodes[0].Status.Connectivity)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("ListWithNoResults", func(t *testing.T) {
+		// Arrange
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		// Create pointers to uint8 values to match the actual behavior
+		connectivityVal := uint8(0)
+		stateVal := uint8(0)
+		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
+			Return([]db.Node{}, nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+
+		// Act
+		resp, err := s.List(context.TODO(), &pb.ListRequest{})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Nodes, 0)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("ListWithError", func(t *testing.T) {
+		// Arrange
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		// Create pointers to uint8 values to match the actual behavior
+		connectivityVal := uint8(0)
+		stateVal := uint8(0)
+		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
+			Return(nil, gorm.ErrInvalidDB).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil)
+
+		// Act
+		resp, err := s.List(context.TODO(), &pb.ListRequest{})
+
+		// Assert
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		nodeRepo.AssertExpectations(t)

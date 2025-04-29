@@ -60,7 +60,7 @@ require (
 
 require (
 	github.com/num30/config v0.1.2
-	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20250416114158-d5a0ea03cdb0
+	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20250429122633-4c606513ba27
 )
 
 require (

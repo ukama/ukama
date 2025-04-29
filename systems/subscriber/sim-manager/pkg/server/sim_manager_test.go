@@ -268,7 +268,7 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 
 		simRepo.On("GetBySubscriber", subscriberID).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -323,13 +323,13 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SomeUnexpectedErrorAsOccured", func(t *testing.T) {
+	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
 		var networkID = uuid.Nil
 
 		simRepo := &mocks.SimRepo{}
 
 		simRepo.On("GetByNetwork", networkID).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -384,13 +384,13 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 		packageRepo.AssertExpectations(t)
 	})
 
-	t.Run("SomeUnexpectedErrorAsOccured", func(t *testing.T) {
+	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
 		var simId = uuid.Nil
 
 		packageRepo := &mocks.PackageRepo{}
 
 		packageRepo.On("GetBySim", simId).Return(
-			nil, errors.New("some unexpected error has occured")).Once()
+			nil, errors.New("some unexpected error has occurred")).Once()
 
 		s := NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -425,6 +425,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		var subscriberID = uuid.NewV4()
 		var networkID = uuid.NewV4()
 		var packageID = uuid.NewV4()
+		var simPackageIDString = "00000000-0000-0000-0000-000000000000"
 		var OrgId = uuid.NewV4()
 
 		simRepo := &mocks.SimRepo{}
@@ -511,20 +512,21 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 		agentAdapter.On("BindSim", mock.Anything,
 			client.AgentRequestData{
-				Iccid:     testIccid,
-				Imsi:      sim.Imsi,
-				SimId:     sim.Id.String(),
-				PackageId: packageID.String(),
-				NetworkId: sim.NetworkId.String(),
+				Iccid:        testIccid,
+				Imsi:         sim.Imsi,
+				SimPackageId: simPackageIDString,
+				PackageId:    packageID.String(),
+				NetworkId:    sim.NetworkId.String(),
 			}).Return(nil, nil).Once()
 
 		simRepo.On("Add", sim,
 			mock.Anything).Return(nil).Once()
 
 		pkg := &db.Package{
-			SimId:     sim.Id,
-			PackageId: packageID,
-			IsActive:  true,
+			SimId:           sim.Id,
+			PackageId:       packageID,
+			IsActive:        true,
+			DefaultDuration: 3600,
 		}
 
 		packageRepo.On("Add", pkg,
@@ -542,7 +544,10 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Twice()
+
 		mailerClient.On("SendEmail", mock.MatchedBy(func(req cnotif.SendEmailReq) bool {
 			return req.To[0] == "test@example.com"
 		})).Return(nil).Once()
@@ -757,7 +762,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("UpdatePackage", mock.Anything,
+		agentAdapter.On("ActivateSim", mock.Anything,
 			mock.MatchedBy(func(a client.AgentRequestData) bool {
 				return a.Iccid == simd.Iccid
 			})).Return(nil).Once()
@@ -855,9 +860,10 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageID).Return(
 			&db.Package{Id: packageID,
-				SimId:    simID,
-				EndDate:  time.Now().UTC().AddDate(0, -1, 0), // one month ago
-				IsActive: false,
+				SimId:     simID,
+				EndDate:   time.Now().UTC().AddDate(0, -1, 0), // one month ago
+				IsActive:  false,
+				AsExpired: true,
 			}, nil).Once()
 
 		s := NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -1042,12 +1048,13 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 			return p.SimId == sim.Id
 		})).Return([]db.Package{
 			{
-				Id:        uuid.UUID{},
-				SimId:     simID,
-				StartDate: time.Now().UTC(),
-				EndDate:   time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
-				PackageId: packageID,
-				IsActive:  true,
+				Id:              uuid.UUID{},
+				SimId:           simID,
+				StartDate:       time.Now().UTC(),
+				EndDate:         time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
+				PackageId:       packageID,
+				IsActive:        true,
+				DefaultDuration: 1,
 			},
 		}, nil).Once()
 
@@ -1102,7 +1109,9 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 			},
 			mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-		simRepo.On("GetSimMetrics").Return(int64(0), int64(0), int64(0), int64(0), nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Twice()
 
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)

@@ -46,7 +46,7 @@ func NewAsrClient(asrHost string, timeout time.Duration) (AsrService, error) {
 }
 
 func (c *asrClient) Close() {
-	c.conn.Close()
+	_ = c.conn.Close()
 }
 
 func (c *asrClient) GetAsr(imsi string) (*pb.ReadResp, error) {

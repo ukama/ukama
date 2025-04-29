@@ -7,70 +7,43 @@
  */
 'use client';
 import {
-  NodeConnectivityEnum,
   NodeStateEnum,
-  useGetNodesByStateLazyQuery,
-  useGetSitesLazyQuery,
+  useGetNodesLazyQuery,
+  useGetSitesQuery,
 } from '@/client/graphql/generated';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
-import { NODE_TABLE_COLUMNS, NODE_TABLE_MENU } from '@/constants';
+import {
+  NODE_ACTIONS_ENUM,
+  NODE_TABLE_COLUMNS,
+  NODE_TABLE_MENU,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import { PageContainer } from '@/styles/global';
-import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
 import { Stack } from '@mui/material';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Page() {
   const [search, setSearch] = useState<string>('');
-  const [pool, setPool] = useState<TNodePoolData[]>([]);
-  const [nodes, setNodes] = useState<TNodePoolData[]>([]);
   const { setSnackbarMessage, network } = useAppContext();
 
-  const [getSites, { data: sitesData, loading: sitesLoading }] =
-    useGetSitesLazyQuery({
-      fetchPolicy: 'cache-first',
-    });
+  const { data: sitesData, loading: sitesLoading } = useGetSitesQuery({
+    skip: !network.id,
+    fetchPolicy: 'cache-first',
+    variables: {
+      data: {
+        networkId: network.id,
+      },
+    },
+  });
 
-  const [getNodesByState, { data: nodesData, loading: nodesLoading }] =
-    useGetNodesByStateLazyQuery({
+  const [getNodes, { data: nodesData, loading: nodesLoading }] =
+    useGetNodesLazyQuery({
       fetchPolicy: 'cache-and-network',
-      variables: {
-        data: {
-          connectivity: NodeConnectivityEnum.Online,
-          state: NodeStateEnum.Configured,
-        },
-      },
-      onCompleted: async (data) => {
-        if (data?.getNodesByState.nodes.length > 0) {
-          const np: TNodePoolData[] = [];
-          const nodes = data.getNodesByState.nodes.filter(
-            (node) => node.site.networkId === network.id,
-          );
-          if (nodes.length === 0) return;
-          nodes.forEach((node) => {
-            if (node.site.siteId && node.site.networkId === network.id) {
-              np.push({
-                id: node.id,
-                site: getSiteName(node?.site?.siteId),
-                network: network.id ?? '-',
-                state: node.status.state,
-                type: NodeEnumToString(node.type),
-                connectivity: node.status.connectivity,
-                createdAt: node.site.addedAt
-                  ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
-                  : '-',
-              });
-            }
-          });
-          setNodes(np);
-          setPool(np);
-        }
-      },
       onError: (err) => {
         setSnackbarMessage({
           id: 'nodes-msg',
@@ -82,22 +55,16 @@ export default function Page() {
     });
 
   useEffect(() => {
-    if (network.id) {
-      getSites({
-        variables: {
-          data: { networkId: network.id },
-        },
-      });
-      getNodesByState({
+    if (sitesData?.getSites?.sites) {
+      getNodes({
         variables: {
           data: {
-            connectivity: NodeConnectivityEnum.Online,
             state: NodeStateEnum.Configured,
           },
         },
       });
     }
-  }, [network]);
+  }, [sitesData, getNodes]);
 
   const getSiteName = (siteId: string | undefined | null) => {
     if (siteId === undefined || siteId === null) return '-';
@@ -105,18 +72,29 @@ export default function Page() {
     return site ? site.name : '-';
   };
 
-  useEffect(() => {
-    if (search.length > 3) {
-      const _nodes: TNodePoolData[] =
-        pool.filter((node) => {
-          const s = search.toLowerCase();
-          if (node.id.toLowerCase().includes(s)) return node;
-        }) ?? [];
-      setNodes(_nodes);
-    } else if (search.length === 0) {
-      setNodes(pool);
-    }
-  }, [search, nodesData?.getNodesByState.nodes]);
+  const nodes = useMemo(() => {
+    if (!nodesData?.getNodes.nodes) return [];
+    return nodesData.getNodes.nodes
+      .filter((node) => node.site.networkId === network.id)
+      .map((node) => ({
+        id: node.id,
+        site: getSiteName(node?.site?.siteId),
+        network: network.id ?? '-',
+        state: node.status.state,
+        type: NodeEnumToString(node.type),
+        connectivity: node.status.connectivity,
+        createdAt: node.site.addedAt
+          ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hha')
+          : '-',
+      }));
+  }, [nodesData?.getNodes.nodes, network.id, sitesData?.getSites.sites]);
+
+  const filteredNodes = useMemo(() => {
+    if (search.length <= 3) return nodes;
+    return nodes.filter((node) =>
+      node.id.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [nodes, search]);
 
   const handleSearchChange = (str: string) => {
     setSearch(str);
@@ -126,11 +104,11 @@ export default function Page() {
     switch (action) {
       case 'edit-node':
         break;
-      case 'node-off':
+      case NODE_ACTIONS_ENUM.NODE_OFF:
         break;
-      case 'restart-node':
+      case NODE_ACTIONS_ENUM.NODE_RESTART:
         break;
-      case 'restart-rf':
+      case NODE_ACTIONS_ENUM.NODE_RF_OFF:
         break;
     }
   };
@@ -156,10 +134,10 @@ export default function Page() {
             title={'My Nodes'}
             showSearch={true}
             onSearchChange={handleSearchChange}
-            subtitle={`${nodes.length}`}
+            subtitle={`${filteredNodes.length}`}
           />
           <DataTableWithOptions
-            dataset={nodes}
+            dataset={filteredNodes}
             icon={RouterIcon}
             columns={NODE_TABLE_COLUMNS}
             menuOptions={NODE_TABLE_MENU}

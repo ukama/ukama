@@ -7,6 +7,9 @@
  */
 'use client';
 import {
+  GetNodesDocument,
+  GetNodesQuery,
+  NodeConnectivityEnum,
   Role_Type,
   useAddNetworkMutation,
   useGetNetworksQuery,
@@ -25,6 +28,7 @@ import ServerNotificationSubscription from '@/lib/NotificationSubscription';
 import '@/styles/console.css';
 import { TNotificationResDto } from '@/types';
 import ErrorBoundary from '@/wrappers/errorBoundary';
+import { ApolloClient, useApolloClient } from '@apollo/client';
 import { Box } from '@mui/material';
 import PubSub from 'pubsub-js';
 import { useEffect, useState } from 'react';
@@ -43,6 +47,7 @@ export default function ConosleLayout({
     setSnackbarMessage,
     subscriptionClient,
   } = useAppContext();
+  const client = useApolloClient();
   const [notifications, setNotifications] = useState<NotificationsRes>({
     notifications: [],
   });
@@ -103,18 +108,16 @@ export default function ConosleLayout({
     },
   });
 
-  const [
-    getNotifications,
-    { refetch: refetchNotifications, loading: notificationsLoading },
-  ] = useGetNotificationsLazyQuery({
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getNotifications.notifications.length > 0) {
-        setNotifications(data.getNotifications);
-      }
-    },
-    onError: () => {},
-  });
+  const [getNotifications, { refetch: refetchNotifications }] =
+    useGetNotificationsLazyQuery({
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getNotifications.notifications.length > 0) {
+          setNotifications(data.getNotifications);
+        }
+      },
+      onError: () => {},
+    });
 
   useEffect(() => {
     if (user.role === Role_Type.RoleInvalid) {
@@ -194,6 +197,41 @@ export default function ConosleLayout({
         ),
       };
     });
+
+    if (eventKey === 'EventNodeOnline' || eventKey === 'EventNodeOffline') {
+      (client as ApolloClient<any>).cache.updateQuery<GetNodesQuery>(
+        { query: GetNodesDocument },
+        (data: GetNodesQuery | null) => {
+          if (!data?.getNodes?.nodes) return data;
+
+          const updatedNodes = data.getNodes.nodes.map(
+            (node: GetNodesQuery['getNodes']['nodes'][0]) => {
+              if (node.id === resourceId) {
+                return {
+                  ...node,
+                  status: {
+                    ...node.status,
+                    connectivity:
+                      eventKey === 'EventNodeOnline'
+                        ? NodeConnectivityEnum.Online
+                        : NodeConnectivityEnum.Offline,
+                  },
+                };
+              }
+              return node;
+            },
+          );
+
+          return {
+            ...data,
+            getNodes: {
+              ...data.getNodes,
+              nodes: updatedNodes,
+            },
+          };
+        },
+      );
+    }
   };
 
   const handleNotificationAction = (action: string, id: string) => {

@@ -13,7 +13,7 @@ import {
   useAddSiteMutation,
   useGetComponentsByUserIdLazyQuery,
   useGetNetworksQuery,
-  useGetNodesByNetworkLazyQuery,
+  useGetNodesLazyQuery,
   useGetSiteLazyQuery,
   useGetSitesQuery,
   useToggleInternetSwitchMutation,
@@ -404,10 +404,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
-  const [fetchNode] = useGetNodesByNetworkLazyQuery({
+  const [fetchNode] = useGetNodesLazyQuery({
     onCompleted: (res) => {
-      if (res.getNodesByNetwork?.nodes) {
-        const ids = res.getNodesByNetwork.nodes.map((node) => node.id);
+      if (res.getNodes?.nodes) {
+        const ids = res.getNodes.nodes.map((node) => node.id);
         setNodeIds(ids);
       }
     },
@@ -602,7 +602,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   useEffect(() => {
     if (activeSite?.networkId) {
-      fetchNode({ variables: { networkId: activeSite.networkId } });
+      fetchNode({ variables: { data: { networkId: activeSite.networkId } } });
     }
   }, [activeSite, fetchNode]);
   const [

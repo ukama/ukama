@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package rest
 
 import (
@@ -57,7 +57,6 @@ var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
 var sub = pb.ReadResp{
 	Record: &pb.Record{
 		Iccid:       iccid,
-		SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
 		Imsi:        "012345678912345",
 		Op:          []byte("0123456789012345"),
 		Key:         []byte("0123456789012345"),

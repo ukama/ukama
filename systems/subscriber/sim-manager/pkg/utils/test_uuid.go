@@ -86,7 +86,7 @@ func GetIccidFromTestUUID(s string) (string, error) {
 		return "", err
 	}
 
-	iccid := strings.Replace(strings.TrimPrefix(s, testUUUIDPrefix), "-", "", -1)
+	iccid := strings.ReplaceAll(strings.TrimPrefix(s, testUUUIDPrefix), "-", "")
 
 	return iccid, nil
 }

@@ -8,7 +8,6 @@ import (
 	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -26,9 +25,6 @@ func (this *UsageReq) Validate() error {
 func (this *UsageForPeriodReq) Validate() error {
 	return nil
 }
-
-var _regex_Record_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
 func (this *Record) Validate() error {
 	if this.Imsi == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
@@ -38,12 +34,6 @@ func (this *Record) Validate() error {
 	}
 	if !(len(this.Imsi) < 16) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
-	}
-	if !_regex_Record_SimId.MatchString(this.SimId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
-	}
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
 	if this.Iccid == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))

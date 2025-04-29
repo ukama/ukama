@@ -13,22 +13,21 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import SimpleDataTable from '@/components/SimpleDataTable';
 import { MANAGE_NODE_POOL_COLUMN } from '@/constants';
 import { useAppContext } from '@/context';
-import { TNodePoolData } from '@/types';
 import { NodeEnumToString } from '@/utils';
 import RouterIcon from '@mui/icons-material/Router';
-import { Box, Paper } from '@mui/material';
+import { Paper, Stack } from '@mui/material';
 import { format } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 const Page = () => {
-  const { network } = useAppContext();
-  const [pool, setPool] = useState<TNodePoolData[]>([]);
-  const [data, setData] = useState<TNodePoolData[]>([]);
+  const { network, setSnackbarMessage } = useAppContext();
   const [search, setSearch] = useState('');
-  const { setSnackbarMessage } = useAppContext();
 
   const { data: nodes, loading } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
+    variables: {
+      data: {},
+    },
     onError: (err) => {
       setSnackbarMessage({
         id: 'available-nodes-msg',
@@ -55,49 +54,42 @@ const Page = () => {
     },
   });
 
-  useEffect(() => {
-    if (nodes && nodes?.getNodes.nodes.length > 0 && sites) {
-      const np: TNodePoolData[] = [];
-      nodes.getNodes.nodes.filter((node) => {
-        const net =
-          node.site.networkId &&
-          sites.getSites.sites.find((site) => site.id === node.site.networkId)
-            ?.name;
-        np.push({
-          id: node.id,
-          network: net ?? '-',
-          state: node.status.state,
-          site: getSiteName(node.site.siteId),
-          type: NodeEnumToString(node.type),
-          connectivity: node.status.connectivity,
-          createdAt: node.site.addedAt
-            ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hh:mm a')
-            : '-',
-        });
-        if (sites.getSites.sites.find((site) => site.id === node.site.siteId))
-          return node;
-      });
-      setData(np);
-      setPool(np);
+  const getSiteName = useCallback(
+    (siteId: string | undefined | null) => {
+      if (!siteId || !sites?.getSites.sites) return '-';
+      const site = sites.getSites.sites.find((site) => site.id === siteId);
+      return site ? site.name : '-';
+    },
+    [sites],
+  );
+
+  const transformedData = useMemo(() => {
+    if (!nodes?.getNodes.nodes || !sites?.getSites.sites) {
+      return [];
     }
-  }, [sites, nodes]);
 
-  const getSiteName = (siteId: string | undefined | null) => {
-    if (siteId === undefined || siteId === null) return '-';
-    const site = sites?.getSites.sites.find((site) => site.id === siteId);
-    return site ? site.name : '-';
-  };
+    return nodes.getNodes.nodes.map((node) => ({
+      id: node.id,
+      network: node.site.networkId
+        ? (sites.getSites.sites.find((site) => site.id === node.site.networkId)
+            ?.name ?? '-')
+        : '-',
+      state: node.status.state,
+      site: getSiteName(node.site.siteId),
+      type: NodeEnumToString(node.type),
+      connectivity: node.status.connectivity,
+      createdAt: node.site.addedAt
+        ? format(new Date(node.site.addedAt), 'MM/dd/yyyy hh:mm a')
+        : '-',
+    }));
+  }, [nodes?.getNodes.nodes, sites?.getSites.sites, getSiteName]);
 
-  useEffect(() => {
+  const filteredData = useMemo(() => {
     if (search.length > 3) {
-      const nodes = pool.filter((node: any) => {
-        if (node.id.includes(search)) return node;
-      });
-      setData(nodes ?? []);
-    } else if (search.length === 0) {
-      setData(pool);
+      return transformedData.filter((node) => node.id.includes(search));
     }
-  }, [search]);
+    return transformedData;
+  }, [transformedData, search]);
 
   return (
     <LoadingWrapper
@@ -115,26 +107,25 @@ const Page = () => {
           height: '100%',
         }}
       >
-        <Box sx={{ width: '100%', height: '100%' }}>
+        <Stack sx={{ width: '100%', height: '100%' }} spacing={4}>
           <PageContainerHeader
             search={search}
             title={'My node pool'}
             handleButtonAction={() => {}}
-            subtitle={'0'}
+            subtitle={filteredData.length.toString()}
             onSearchChange={(e: string) => setSearch(e)}
           />
-          <br />
-          {data.length === 0 ? (
+          {filteredData.length === 0 ? (
             <EmptyView icon={RouterIcon} title="No node in nodes pool!" />
           ) : (
             <SimpleDataTable
-              dataset={data}
+              dataset={filteredData}
               isIdHyperlink={true}
               columns={MANAGE_NODE_POOL_COLUMN}
               hyperlinkPrefix={'/console/nodes/'}
             />
           )}
-        </Box>
+        </Stack>
       </Paper>
     </LoadingWrapper>
   );

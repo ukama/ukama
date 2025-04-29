@@ -174,7 +174,6 @@ type UkamaSimUsage struct {
 
 type UkamaSimInfo struct {
 	Imsi        string `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
-	SimId       string `protobuf:"bytes,2,opt,name=SimId,json=simId,proto3" json:"SimId,omitempty"`
 	Iccid       string `protobuf:"bytes,3,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
 	Key         []byte `protobuf:"bytes,4,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
 	Op          []byte `protobuf:"bytes,5,opt,name=Op,json=op,proto3" json:"Op,omitempty"`

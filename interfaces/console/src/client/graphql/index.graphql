@@ -41,24 +41,8 @@ query GetNode($data: NodeInput!) {
   }
 }
 
-query GetNodes {
-  getNodes {
-    nodes {
-      ...node
-    }
-  }
-}
-
-query GetNodesByState($data: GetNodesByStateInput!) {
-  getNodesByState(data: $data) {
-    nodes {
-      ...node
-    }
-  }
-}
-
-query getNodesByNetwork($networkId: String!) {
-  getNodesByNetwork(networkId: $networkId) {
+query GetNodes($data: NodesFilterInput!) {
+  getNodes(data: $data) {
     nodes {
       ...node
     }
@@ -124,14 +108,6 @@ query getNodeApps($data: NodeAppsChangeLogInput!) {
       notes
     }
     type
-  }
-}
-
-query GetNodesLocation {
-  getNodesLocation {
-    nodes {
-      ...node
-    }
   }
 }
 

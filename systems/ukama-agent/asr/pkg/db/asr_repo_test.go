@@ -110,12 +110,16 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent, sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.LastStatusChangeAt, sub.AllowedTimeOfService, sub.LastStatusChangeReasons).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op,
+				sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent,
+				sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.SimPackageId, sub.LastStatusChangeAt,
+				sub.AllowedTimeOfService, sub.LastStatusChangeReasons).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst,
+				sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime,
+				sub.Policy.EndTime, subID).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
@@ -281,7 +285,7 @@ func TestAsrRecordRepo_Get(t *testing.T) {
 			AddRow(sub.ID, tai.PlmnId, tai.Tac, tai.DeviceUpdatedAt)
 
 		prow := sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at", "id", "burst", "total_data", "consumed_data", "dlbr", "ulbr", "start_time", "end_time", "asr_id"}).
-			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.Model.ID)
+			AddRow(sub.Policy.CreatedAt, sub.Policy.UpdatedAt, sub.Policy.DeletedAt, sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, sub.ID)
 
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
 			WithArgs(sub.ID, 1).

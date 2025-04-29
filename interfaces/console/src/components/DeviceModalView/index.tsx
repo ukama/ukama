@@ -6,15 +6,23 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+import { NodeConnectivityEnum } from '@/client/graphql/generated';
 import { Box } from '@mui/material';
 import Image from 'next/image';
 
 interface IDeviceModalView {
+  size?: number;
   image: string;
-  nodeType: string | undefined;
+  nodeType?: string;
+  connectivity?: NodeConnectivityEnum;
 }
 
-const DeviceModalView = ({ image, nodeType = 'hnode' }: IDeviceModalView) => {
+const DeviceModalView = ({
+  image,
+  nodeType = 'hnode',
+  size = 300,
+  connectivity = NodeConnectivityEnum.Online,
+}: IDeviceModalView) => {
   return (
     <Box
       component={'div'}
@@ -32,10 +40,15 @@ const DeviceModalView = ({ image, nodeType = 'hnode' }: IDeviceModalView) => {
         placeholder="empty"
         style={{
           objectFit: 'contain',
+          filter:
+            connectivity === NodeConnectivityEnum.Offline
+              ? 'grayscale(100%) opacity(70%)'
+              : 'none',
+          transition: 'filter 0.3s ease',
         }}
         src={image}
-        width={300}
-        height={300}
+        width={size}
+        height={size}
         alt={nodeType}
       />
     </Box>

@@ -105,7 +105,7 @@ const Page = () => {
         sx={{
           py: { xs: 1.5, md: 3 },
           px: { xs: 2, md: 4 },
-          overflow: 'scroll',
+          overflow: 'hidden',
           borderRadius: '10px',
           height: '100%',
         }}

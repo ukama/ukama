@@ -18,12 +18,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
+	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
+
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
-
-	"github.com/wI2L/fizz"
-	"github.com/wI2L/fizz/openapi"
 )
 
 type SimCardInfoReq struct {
@@ -191,7 +191,7 @@ func (r *Router) getSimCard(c *gin.Context, req *SimCardInfoReq) (*client.SimCar
 }
 
 func (r *Router) getValidateNetwork(c *gin.Context, req *NetworkValidationReq) (*client.NetworkInfo, error) {
-	/* No implementaion always return success.*/
+	/* No implementation always return success.*/
 	if req.Network == "40987edb-ebb6-4f84-a27c-99db7c136127" {
 		return &client.NetworkInfo{
 			NetworkId:     "40987edb-ebb6-4f84-a27c-99db7c136127",
@@ -205,8 +205,9 @@ func (r *Router) getValidateNetwork(c *gin.Context, req *NetworkValidationReq) (
 }
 
 func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, error) {
-	/* No implementaion always return success.*/
-	if req.Package == "40987edb-ebb6-4f84-a27c-99db7c136127" {
+	/* No implementation always return success.*/
+	switch req.Package {
+	case "40987edb-ebb6-4f84-a27c-99db7c136127":
 		return &Package{
 			PackageInfo: &PackageInfo{
 				Name:        "Monthly Data",
@@ -234,7 +235,8 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Duration: 2592000, //30 days
 			},
 		}, nil
-	} else if req.Package == "40987edb-ebb6-4f84-a27c-99db7c136128" {
+
+	case "40987edb-ebb6-4f84-a27c-99db7c136128":
 		return &Package{
 			PackageInfo: &PackageInfo{
 				Name:        "HalfMonthData",
@@ -262,11 +264,14 @@ func (r *Router) getPackage(c *gin.Context, req *GetPackageRequest) (*Package, e
 				Duration: 1296000, //15 days
 			},
 		}, nil
+
+	default:
+		return nil, fmt.Errorf("package %s not found", req.Package)
 	}
-	return nil, fmt.Errorf("package %s not found", req.Package)
 }
 
 func main() {
 	r := NewRouter(NewRouterConfig())
+
 	r.Run()
 }

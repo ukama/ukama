@@ -27,7 +27,11 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { Invitation_Status, NetworkDto } from '@/client/graphql/generated';
+import {
+  Invitation_Status,
+  NetworkDto,
+  NodeConnectivityEnum,
+} from '@/client/graphql/generated';
 import colors from '@/theme/colors';
 import { getInvitationStatusColor, roleEnumToString } from '@/utils';
 import EmptyView from '../EmptyView';
@@ -91,7 +95,10 @@ const CellValueByType = ({
         <Chip
           sx={{
             p: 1,
-            backgroundColor: colors.primaryLight,
+            backgroundColor:
+              row[type] === NodeConnectivityEnum.Online
+                ? colors.primaryLight
+                : colors.dullRed,
             color: (theme) => theme.palette.text.primary,
           }}
           label={row[type]}

@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	NumberOfSubscribers = "number_of_subscribers"
-	ActiveCount         = "active_sim_count"
-	InactiveCount       = "inactive_sim_count"
-	TerminatedCount     = "terminated_sim_count"
-	GaugeType           = "gauge"
+	NumberOfSims    = "number_of_sims"
+	ActiveCount     = "active_sim_count"
+	InactiveCount   = "inactive_sim_count"
+	TerminatedCount = "terminated_sim_count"
+	GaugeType       = "gauge"
 )
 
 type Config struct {
@@ -60,6 +60,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 				"event.cloud.local.{{ .Org}}.payments.processor.payment.success",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
 				"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create",
 				"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create",
 			},
@@ -67,12 +68,13 @@ func NewConfig(name string) *Config {
 	}
 }
 
-var SimMetric = []pmetric.MetricConfig{{
-	Name:   NumberOfSubscribers,
-	Type:   GaugeType,
-	Labels: map[string]string{"network": "", "org": ""},
-	Value:  0,
-},
+var SimMetric = []pmetric.MetricConfig{
+	{
+		Name:   NumberOfSims,
+		Type:   GaugeType,
+		Labels: map[string]string{"network": "", "org": ""},
+		Value:  0,
+	},
 	{
 		Name:   ActiveCount,
 		Type:   GaugeType,

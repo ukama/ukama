@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package policy_test
 
 import (
@@ -83,7 +83,7 @@ func TestPolicy_RemoveProfile(t *testing.T) {
 		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)
 		assert.NotNil(t, pc)
 
-		err, state := ip.RemoveProfile(pc, sub)
+		err, state := ip.RemoveProfile(pc, sub, false)
 		assert.NoError(t, err)
 		assert.Equal(t, true, state)
 

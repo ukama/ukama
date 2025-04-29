@@ -205,7 +205,7 @@ func PushNodeRFOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusSe
 }
 
 func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
-	route := getRoutingKey(orgName).SetAction("off").SetObject("node").MustBuild()
+	route := getRoutingKey(orgName).SetAction("offline").SetObject("node").MustBuild()
 	evt := &epb.NodeOfflineEvent{
 		NodeId: nodeId,
 	}
@@ -215,7 +215,7 @@ func PushNodeOff(orgName, nodeId string, m mb.MsgBusServiceClient) {
 }
 
 func PushNodeOffViaREST(amqpConf conf.Queue, org, nodeId string, m mb.MsgBusServiceClient) {
-	route := getRoutingKey(org).SetAction("off").SetObject("node").MustBuild()
+	route := getRoutingKey(org).SetAction("offline").SetObject("node").MustBuild()
 
 	msg := epb.NodeOfflineEvent{
 		NodeId: nodeId,

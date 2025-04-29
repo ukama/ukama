@@ -33,14 +33,20 @@ export const SETTING_MENU = [
   { id: 'appearance', name: 'Appearance' },
 ];
 
+export const NODE_ACTIONS_ENUM = {
+  NODE_RESTART: 'node-restart',
+  NODE_RF_OFF: 'node-rf-off',
+  NODE_OFF: 'node-off',
+};
+
 export const NODE_ACTIONS_BUTTONS = [
   {
-    id: 'node-restart',
+    id: NODE_ACTIONS_ENUM.NODE_RESTART,
     name: 'Restart',
     consent: 'Are you sure you want to restart node?',
   },
+  { id: NODE_ACTIONS_ENUM.NODE_RF_OFF, name: 'Turn RF Off' },
   // { id: 'node-on-off', name: 'Turn Node Off' },
-  // { id: 'node-rf-off', name: 'Turn RF Off' },
 ];
 
 export const SITE_CONFIG_STEPS = [
@@ -215,7 +221,7 @@ export const MANAGE_SIM_POOL_COLUMN: ColumnsWithOptions[] = [
 
 export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
   { id: 'id', label: 'Node #', minWidth: 160 },
-  { id: 'type', label: 'Type', minWidth: 180 },
+  { id: 'type', label: 'Type', minWidth: 120 },
   { id: 'connectivity', label: 'Connectivity', minWidth: 120 },
   {
     id: 'state',
@@ -225,7 +231,7 @@ export const MANAGE_NODE_POOL_COLUMN: ColumnsWithOptions[] = [
       isSortable: true,
     },
   },
-  { id: 'site', label: 'Site', minWidth: 180 },
+  { id: 'site', label: 'Site', minWidth: 120 },
   { id: 'createdAt', label: 'Date installed', minWidth: 140 },
 ];
 

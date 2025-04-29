@@ -6,10 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import {
-  useGetNodesLocationQuery,
-  useGetSitesQuery,
-} from '@/client/graphql/generated';
+import { useGetNodesQuery, useGetSitesQuery } from '@/client/graphql/generated';
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { SitesTree } from '@/components/NetworkMap/OverlayUI';
@@ -80,8 +77,9 @@ export default function Page() {
     },
   });
 
-  const { data: nodesData, loading: nodesLoading } = useGetNodesLocationQuery({
+  const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
     fetchPolicy: 'cache-and-network',
+    variables: { data: {} },
     onError: (error) => {
       setSnackbarMessage({
         id: 'home-nodes-err-msg',
@@ -165,7 +163,7 @@ export default function Page() {
                 markersData={{
                   nodes:
                     sitesRes && sitesRes?.getSites.sites.length > 0
-                      ? nodesData?.getNodesLocation.nodes || []
+                      ? nodesData?.getNodes.nodes || []
                       : [],
                 }}
               >
@@ -176,7 +174,7 @@ export default function Page() {
                         {
                           nodes:
                             sitesRes && sitesRes?.getSites.sites.length > 0
-                              ? nodesData?.getNodesLocation.nodes || []
+                              ? nodesData?.getNodes.nodes || []
                               : [],
                         },
                         { sites: sitesRes?.getSites.sites || [] },
