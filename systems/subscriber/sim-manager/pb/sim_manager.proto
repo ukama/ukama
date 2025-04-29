@@ -28,7 +28,7 @@ service SimManagerService {
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
-    rpc DeleteSim(DeleteSimRequest) returns (DeleteSimResponse);
+    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 
     // Sim pacakge
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
@@ -113,11 +113,11 @@ message ToggleSimStatusRequest {
 message ToggleSimStatusResponse{}
 
 
-message DeleteSimRequest {
+message TerminateSimRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
 }
 
-message DeleteSimResponse{
+message TerminateSimResponse{
 }
 
 

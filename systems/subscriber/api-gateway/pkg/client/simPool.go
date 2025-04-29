@@ -51,7 +51,7 @@ func NewSimPoolFromClient(SimPoolClient pb.SimServiceClient) *SimPool {
 }
 
 func (sp *SimPool) Close() {
-	sp.conn.Close()
+	_ = sp.conn.Close()
 }
 
 func (sp *SimPool) Get(iccid string) (*pb.GetByIccidResponse, error) {

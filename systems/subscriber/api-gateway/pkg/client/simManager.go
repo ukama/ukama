@@ -52,7 +52,7 @@ func NewSimManagerFromClient(SimManagerClient pb.SimManagerServiceClient) *SimMa
 }
 
 func (sm *SimManager) Close() {
-	sm.conn.Close()
+	_ = sm.conn.Close()
 }
 
 func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
@@ -125,11 +125,11 @@ func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.Rem
 	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) DeleteSim(simId string) (*pb.DeleteSimResponse, error) {
+func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.DeleteSim(ctx, &pb.DeleteSimRequest{SimId: simId})
+	return sm.client.TerminateSim(ctx, &pb.TerminateSimRequest{SimId: simId})
 }
 
 func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,

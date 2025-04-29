@@ -187,8 +187,8 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("DeleteSim", func(t *testing.T) {
-		_, err := c.DeleteSim(ctx, &pb.DeleteSimRequest{
+	t.Run("TerminateSim", func(t *testing.T) {
+		_, err := c.TerminateSim(ctx, &pb.TerminateSimRequest{
 			SimId: simResp.Sim.Id,
 		})
 

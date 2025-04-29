@@ -133,13 +133,13 @@ func (this *ToggleSimStatusRequest) Validate() error {
 func (this *ToggleSimStatusResponse) Validate() error {
 	return nil
 }
-func (this *DeleteSimRequest) Validate() error {
+func (this *TerminateSimRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
 	return nil
 }
-func (this *DeleteSimResponse) Validate() error {
+func (this *TerminateSimResponse) Validate() error {
 	return nil
 }
 

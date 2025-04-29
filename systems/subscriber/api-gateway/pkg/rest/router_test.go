@@ -604,11 +604,11 @@ func TestRouter_SimManager(t *testing.T) {
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.DeleteSimRequest{
+		preq := &smPb.TerminateSimRequest{
 			SimId: sim.Id,
 		}
 
-		csm.On("DeleteSim", mock.Anything, preq).Return(&smPb.DeleteSimResponse{}, nil)
+		csm.On("TerminateSim", mock.Anything, preq).Return(&smPb.TerminateSimResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 

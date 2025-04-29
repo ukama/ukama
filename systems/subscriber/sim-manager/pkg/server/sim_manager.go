@@ -576,7 +576,7 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	}
 }
 
-func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimRequest) (*pb.DeleteSimResponse, error) {
+func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
 	log.Infof("Deleting sim: %v", req.GetSimId())
 
 	sim, err := s.getSim(req.SimId)
@@ -605,23 +605,19 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		Status: ukama.SimStatusTerminated,
 	}
 
-	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
-		pckg.TerminatedAt = gorm.DeletedAt{Time: time.Now().UTC(), Valid: true}
-
-		return nil
-	})
+	err = s.simRepo.Update(simUpdates, nil)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	err = s.pushTerminatedSimsCountMetric(sim.NetworkId.String())
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim delete operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
 
-	err = s.pushTotalSimsCountMetric(sim.NetworkId.String())
+	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim delete operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
 
 	evtMsg := &epb.EventSimTermination{
@@ -639,9 +635,9 @@ func (s *SimManagerServer) DeleteSim(ctx context.Context, req *pb.DeleteSimReque
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	log.Infof("Sim %s deleted successfully", req.GetSimId())
+	log.Infof("Sim %s terminate successfully", req.GetSimId())
 
-	return &pb.DeleteSimResponse{}, nil
+	return &pb.TerminateSimResponse{}, nil
 }
 
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
