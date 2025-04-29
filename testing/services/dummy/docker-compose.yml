@@ -80,7 +80,7 @@ services:
  api-gateway-dummy:
   build: ./api-gateway
   ports:
-   - 8083:8080
+   - 8086:8080
   networks:
    - ukama-net
   environment:
