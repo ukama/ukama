@@ -278,9 +278,9 @@ func (e ErrorStatus) Error() string {
 }
 
 type AgentRequestData struct {
-	Iccid     string `json:"iccid"`
-	Imsi      string `json:"imsi,omitempty"`
-	SimId     string `json:"sim_id,omitempty"`
-	PackageId string `json:"package_id,omitempty"`
-	NetworkId string `json:"network_id,omitempty"`
+	Iccid        string `json:"iccid"`
+	Imsi         string `json:"imsi,omitempty"`
+	SimPackageId string `json:"sim_package_id,omitempty"`
+	PackageId    string `json:"package_id,omitempty"`
+	NetworkId    string `json:"network_id,omitempty"`
 }

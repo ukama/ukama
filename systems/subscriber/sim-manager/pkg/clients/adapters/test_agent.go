@@ -76,5 +76,5 @@ func (t *TestAgentAdapter) TerminateSim(ctx context.Context, iccid string) error
 }
 
 func (t *TestAgentAdapter) Close() {
-	t.conn.Close()
+	_ = t.conn.Close()
 }

@@ -33,10 +33,10 @@ const (
 
 var (
 	req = client.AgentRequestData{
-		Iccid:     testIccid,
-		Imsi:      testImsi,
-		NetworkId: "5248eefa-23a0-4222-b80b-e1af5047eaf8",
-		SimId:     "0ba2f8d9-e888-4071-aa09-7300daa986aa",
+		Iccid:        testIccid,
+		Imsi:         testImsi,
+		NetworkId:    "5248eefa-23a0-4222-b80b-e1af5047eaf8",
+		SimPackageId: "0ba2f8d9-e888-4071-aa09-7300daa986aa",
 	}
 
 	startTime = 1669852800

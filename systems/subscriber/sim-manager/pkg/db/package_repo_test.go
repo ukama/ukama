@@ -13,12 +13,12 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
@@ -40,7 +40,7 @@ func TestPackageRepo_Add(t *testing.T) {
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()

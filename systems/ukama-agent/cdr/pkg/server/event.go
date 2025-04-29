@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package server
 
 import (
@@ -13,11 +13,11 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 
-	log "github.com/sirupsen/logrus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	log "github.com/sirupsen/logrus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type CDREventServer struct {
@@ -34,7 +34,7 @@ func NewCDREventServer(s *CDRServer, org string) *CDREventServer {
 }
 
 func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Recieved a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch msgbus.UpdateToAcceptFromAllOrg(e.RoutingKey) {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
 		msg, err := n.unmarshalActiveSubscriberCreate(e.Msg)
