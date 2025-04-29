@@ -657,6 +657,17 @@ export const SITE_KPIS = {
         description: 'Site uptime percentage',
         format: 'number',
       },
+      {
+        unit: '',
+        show: true,
+        format: 'number',
+        name: 'Nde uptime',
+        id: 'unit_uptime',
+        description: 'Node uptime',
+        threshold: null,
+        tickInterval: undefined,
+        tickPositions: undefined,
+      },
     ],
   },
 };

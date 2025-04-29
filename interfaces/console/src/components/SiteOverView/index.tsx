@@ -78,20 +78,22 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
   useEffect(() => {
     if (!siteId) return;
 
-    const topics = [
-      `stat-${SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE}-${siteId}`,
-      `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`,
-    ];
+    const tokens = [
+      PubSub.subscribe(
+        `stat-${SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE}`,
+        (topic, value) => {
+          if (value.length > 0) {
+            setUptimePercentage(Math.floor(value[1]));
+          }
+        },
+      ),
 
-    const tokens = topics.map((topic) =>
-      PubSub.subscribe(topic, (_, value) => {
-        if (topic.includes('percentage')) {
-          setUptimePercentage(Math.floor(value));
-        } else {
-          setSiteUptimeSeconds(Math.floor(value));
+      PubSub.subscribe(`stat-${SITE_KPI_TYPES.SITE_UPTIME}`, (topic, value) => {
+        if (value.length > 0) {
+          setSiteUptimeSeconds(Math.floor(value[1]));
         }
       }),
-    );
+    ];
 
     return () => {
       tokens.forEach((token) => PubSub.unsubscribe(token));

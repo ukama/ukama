@@ -64,15 +64,13 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
   useEffect(() => {
     if (!selectedSiteId) return;
 
-    const topics = [`stat-${SITE_KPI_TYPES.SITE_UPTIME}-${selectedSiteId}`];
-
-    const tokens = topics.map((topic) =>
-      PubSub.subscribe(topic, (_, value) => {
-        if (value !== undefined) {
-          setSiteUpTime(Math.floor(value));
+    const tokens = [
+      PubSub.subscribe(`stat-${SITE_KPI_TYPES.SITE_UPTIME}`, (_, value) => {
+        if (value.length > 0) {
+          setSiteUpTime(Math.floor(value[1]));
         }
       }),
-    );
+    ];
 
     return () => {
       tokens.forEach((token) => PubSub.unsubscribe(token));

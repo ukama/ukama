@@ -141,16 +141,13 @@ export const useMetricSubscriptions = ({
     try {
       const parsedData: TMetricResDto = JSON.parse(data);
       if (parsedData?.data?.getSiteMetricStatSub) {
-        const {
-          type,
-          success,
-          siteId: subSiteId,
-          nodeId,
-          value,
-        } = parsedData.data.getSiteMetricStatSub;
+        const { type, success, nodeId, value } =
+          parsedData.data.getSiteMetricStatSub;
 
         if (success) {
-          PubSub.publish(`stat-${type}-${subSiteId}-${nodeId}`, value);
+          if (nodeId) {
+            PubSub.publish(`stat-${type}-${nodeId}`, value);
+          }
           PubSub.publish(`stat-${type}`, value);
         }
       }

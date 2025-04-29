@@ -72,7 +72,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
     if (!siteId || !nodeIds || nodeIds.length === 0) return;
 
     const tokens = nodeIds.map((nodeId) => {
-      const topic = `stat-${SITE_KPI_TYPES.NODE_UPTIME}-${siteId}-${nodeId}`;
+      const topic = `stat-${SITE_KPI_TYPES.NODE_UPTIME}-${nodeId}`;
       return PubSub.subscribe(topic, (_, uptimeValue) => {
         setNodeUptimes((prev) => ({
           ...prev,
