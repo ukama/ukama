@@ -28,8 +28,6 @@ SYS=$(jq -r '.systems' "$JSON_FILE")
 KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
 LAGOAPIKEY=$(jq -r '."lago-api-key"' "$JSON_FILE")
-COUNTRY=$(jq -r '.setup["country"]' "$JSON_FILE")
-CURRENCY=$(jq -r '.setup["currency"]' "$JSON_FILE")
 if [[ "$(uname)" == "Darwin" ]]; then
     # For Mac
     LOCAL_HOST_IP=$(ifconfig en0 | grep inet | awk '$1=="inet" {print $2}')
@@ -339,19 +337,19 @@ fi
 # Update system url in lookup db
 sleep 5
 
-# if [ "$IS_INCLUDE_BFF" = true ]; then
-#     SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
-#     SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
-#     SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
-#     SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
-#     SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
-#     SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
-#     SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
-#     SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
-#     SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
-#     SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://report-api-gateway:8080' WHERE systems."name" = 'report';"
-# fi
-# if [ "$IS_INCLUDE_BFF" = false ]; then
+if [ "$IS_INCLUDE_BFF" = true ]; then
+    SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://api-gateway-registry:8080' WHERE systems."name" = 'registry'";
+    SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://api-gateway-notification:8080' WHERE systems."name" = 'notification'";
+    SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://api-gateway-nucleus:8080' WHERE systems."name" = 'nucleus'";
+    SYS_QUERY_4="UPDATE PUBLIC.systems SET url = 'http://api-gateway-subscriber:8080' WHERE systems."name" = 'subscriber'";
+    SYS_QUERY_5="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dataplan:8080' WHERE systems."name" = 'dataplan'";
+    SYS_QUERY_6="UPDATE PUBLIC.systems SET url = 'http://api-gateway-inventory:8080' WHERE systems."name" = 'inventory'";
+    SYS_QUERY_7="UPDATE PUBLIC.systems SET url = 'http://subscriber-auth:4423' WHERE systems."name" = 'subscriber-auth'";
+    SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://api-gateway-node:8080' WHERE systems."name" = 'node'";
+    SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://api-gateway-metrics:8080' WHERE systems."name" = 'metrics'";
+    SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://report-api-gateway:8080' WHERE systems."name" = 'report';"
+fi
+if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
     SYS_QUERY_2="UPDATE PUBLIC.systems SET url = 'http://localhost:8058' WHERE systems."name" = 'notification'";
     SYS_QUERY_3="UPDATE PUBLIC.systems SET url = 'http://localhost:8060' WHERE systems."name" = 'nucleus'";
@@ -362,7 +360,7 @@ sleep 5
     SYS_QUERY_8="UPDATE PUBLIC.systems SET url = 'http://localhost:8097' WHERE systems."name" = 'node'";
     SYS_QUERY_9="UPDATE PUBLIC.systems SET url = 'http://localhost:8067' WHERE systems."name" = 'metrics'";
     SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://localhost:8079' WHERE systems."name" = 'report'";
-# fi
+fi
 
 echo "$TAG Registering systems URL in lookup db..."
 DB_URI="postgresql://postgres:Pass2020!@127.0.0.1:5401/lookup"
