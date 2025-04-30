@@ -1323,6 +1323,8 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 }
 
 func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
+	log.Infof("Collecting and pushing total sims count metric to push gateway host: %s", s.pushMetricHost)
+
 	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
@@ -1335,15 +1337,17 @@ func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
 		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing total sims count metric to pushgaway: %s", err.Error())
+		log.Errorf("Error while pushing total sims count metric to push gateway: %s", err.Error())
 
-		return fmt.Errorf("error while pushing total sims count metric to pushgaway: %w", err)
+		return fmt.Errorf("error while pushing total sims count metric to push gateway: %w", err)
 	}
 
 	return nil
 }
 
 func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
+	log.Infof("Collecting and pushing active sims count metric to push gateway host: %s", s.pushMetricHost)
+
 	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
@@ -1356,15 +1360,17 @@ func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
 		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while active sims count metric to pushgaway: %s", err.Error())
+		log.Errorf("Error while active sims count metric to push gateway: %s", err.Error())
 
-		return fmt.Errorf("error while pushing active sims count metric to pushgaway: %w", err)
+		return fmt.Errorf("error while pushing active sims count metric to push gateway: %w", err)
 	}
 
 	return nil
 }
 
 func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
+	log.Infof("Collecting and pushing inactive sims count metric to push gateway host: %s", s.pushMetricHost)
+
 	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
@@ -1377,15 +1383,17 @@ func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
 		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing inactive sims count metric to pushgaway: %s", err.Error())
+		log.Errorf("Error while pushing inactive sims count metric to push gateway: %s", err.Error())
 
-		return fmt.Errorf("error while pushing inactive sims count metric to pushgaway: %w", err)
+		return fmt.Errorf("error while pushing inactive sims count metric to push gateway: %w", err)
 	}
 
 	return nil
 }
 
 func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error {
+	log.Infof("Collecting and pushing terminated sims count metric to push gateway host: %s", s.pushMetricHost)
+
 	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %v",
@@ -1398,9 +1406,9 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
 		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing terminated sims count metric to pushgaway: %s", err.Error())
+		log.Errorf("Error while pushing terminated sims count metric to push gateway: %s", err.Error())
 
-		return fmt.Errorf("error while pushing terminated sims count metric to pushgaway: %w", err)
+		return fmt.Errorf("error while pushing terminated sims count metric to push gateway: %w", err)
 	}
 
 	return nil

@@ -531,6 +531,8 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 }
 
 func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHost string) {
+	log.Infof("Collecting and pushing data usage metric to push gateway host: %s", pushGatewayHost)
+
 	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
 		pkg.DataUsage, float64(value), labels, pkg.SystemName)
 	if err != nil {

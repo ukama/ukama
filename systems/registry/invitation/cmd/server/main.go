@@ -73,9 +73,10 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
-		log.Errorf("Failed to resolve notification address: %v", err)
+		log.Fatalf("Failed to resolve notification system address from initClient: %v", err)
 	}
 
 	mailerClient := cnotif.NewMailerClient(notifUrl.String())

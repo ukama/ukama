@@ -13,6 +13,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -110,6 +111,7 @@ func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLable
 		)
 	default:
 		log.Errorf("Metric %s type %s not supported", config.Name, config.Type)
+
 		return fmt.Errorf("metric %s type %s not supported", config.Name, config.Type)
 	}
 
@@ -131,7 +133,9 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	}
 	return nil
 }
+
 func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName string) {
+	log.Infof("Pushing metric job: %s", metriJobName)
 
 	labelDimensions := make([]string, 0, len(metrics[0].Labels))
 	for key := range metrics[0].Labels {
@@ -173,6 +177,8 @@ func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName stri
 }
 
 func CollectAndPushSimMetrics(pushGateway string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+	log.Infof("Collecting and pushing metric %q on behalf of system %q", selectedMetric, systemName)
+
 	var selectedMetrics []MetricConfig
 	var foundSelectedMetric bool
 
@@ -190,6 +196,8 @@ func CollectAndPushSimMetrics(pushGateway string, configMetrics []MetricConfig, 
 	}
 
 	if !foundSelectedMetric {
+		log.Errorf("metric %q not found", selectedMetric)
+
 		return fmt.Errorf("metric %q not found", selectedMetric)
 	}
 

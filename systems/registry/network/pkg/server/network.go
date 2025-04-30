@@ -261,7 +261,8 @@ func (n *NetworkServer) pushNetworkCount() {
 		log.Errorf("failed to get network counts: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks, float64(networkCount), map[string]string{"org": n.orgId}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NetworkMetric, pkg.NumberOfNetworks,
+		float64(networkCount), map[string]string{"org": n.orgId}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing network count metric to pushgateway %s", err.Error())
 	}
