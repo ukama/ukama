@@ -122,7 +122,7 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		route := s.baseRoutingKey.SetActionCreate().SetObject("cdr").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, merr.Error())
 		}
 	}
 
@@ -318,7 +318,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	/* Assumption: Make sure older CDR is sent from the node first
 	TODO: Handle the case if node A is not able to update CDR to the backend but
 	node B on which subscriber latches after node A was able to publish CDR on backend
-	In this case node A CDR will be rejeceted as of now
+	In this case node A CDR will be rejected as of now
 	*/
 	recs, err := s.cdrRepo.GetByTimeAndNodeId(cdrMsg.Imsi, cdrMsg.StartTime, (uint64)(time.Now().Unix()), cdrMsg.NodeId)
 	if err != nil && recs != nil {

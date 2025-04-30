@@ -35,7 +35,7 @@ type SIM struct {
 	Iccid             string    `json:"iccid" validate:"required"`
 	Msisdn            string    `json:"msisdn" validate:"required"`
 	Package           Package   `json:"package" validate:"required"`
-	FirstActivatedOn  time.Time `json:"first_actived_on" validate:"required"`
+	FirstActivatedOn  time.Time `json:"first_activated_on" validate:"required"`
 	LastActivationOn  time.Time `json:"last_activation_on" validate:"required"`
 	DeactivationCount uint64    `json:"deactivation_count" validate:"required"`
 	IsPhysical        string    `json:"type" validate:"required"`
@@ -97,7 +97,7 @@ type SubscriberAddReq struct {
 	Phone                 string `example:"4151231234" json:"phone"`
 	IdSerial              string `example:"123456789" json:"id_serial"`
 	Dob                   string `example:"Mon, 02 Jan 2006 15:04:05 MST" json:"dob"`
-	ProofOfIdentification string `example:"passport" json:"proof_of_Identification"`
+	ProofOfIdentification string `example:"passport" json:"proof_of_identification"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
 }
 

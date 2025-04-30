@@ -140,7 +140,7 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("AddPackageForSim", func(t *testing.T) {
+	t.Run("AddPackageForSimWithStartDate", func(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: packageID,

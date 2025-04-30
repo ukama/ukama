@@ -720,7 +720,7 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	if len(overlappingPackages) > 0 {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package validity period overlaps with %d or more other packaes set for this sim",
+			"cannot set package to sim: package validity period overlaps with %d or more other packages set for this sim",
 			len(overlappingPackages))
 	}
 
@@ -902,12 +902,12 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 
 	if sim.Status != ukama.SimStatusActive {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set active package on non active sim: sim's status is is %s", sim.Status)
+			"cannot set active package on non active sim: sim's status is %s", sim.Status)
 	}
 
 	if sim.Package.Id != uuid.Nil {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim currently have package %v as active. This package needs to expire first",
+			"sim currently has package %v as active. This package needs to expire first",
 			sim.Package.Id)
 	}
 

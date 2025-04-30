@@ -182,7 +182,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
 		sim.POST("/", formatDoc("Allocate a new SIM to given subscriber", ""), tonic.Handler(r.allocateSim, http.StatusCreated))
 		sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
-		sim.DELETE("/:sim_id", formatDoc("Terminate the a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
+		sim.DELETE("/:sim_id", formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
 		sim.GET("/:sim_id/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST("/:sim_id/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
 		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
