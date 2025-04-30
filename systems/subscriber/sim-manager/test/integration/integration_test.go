@@ -53,7 +53,7 @@ func init() {
 func Test_FullFlow(t *testing.T) {
 	// prerequisites
 	// In order for this to pass without errors, we need to substitute all the uuid.NewV4().String()
-	// values with real co-related values comming from subscriber-registry and
+	// values with real co-related values coming from subscriber-registry and
 	// data-plan/packages with available sims in sim-pool.
 
 	// we need real subscriberID from subscriber-registry

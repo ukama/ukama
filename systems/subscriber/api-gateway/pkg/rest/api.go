@@ -15,7 +15,7 @@ import (
 type SimInfo struct {
 	Iccid          string `example:"8910300000003540855" json:"iccid" validate:"required"`
 	SimType        string `example:"test" json:"sim_type" validate:"required"`
-	Msidn          string `example:"880170124847571" json:"msidn" validate:"required"`
+	Msisdn         string `example:"880170124847571" json:"msisdn" validate:"required"`
 	SmDpAddress    string `example:"1001.9.0.0.1" json:"smdp_address" validate:"required"`
 	ActivationCode string `example:"1010" json:"activation_code" validate:"required"`
 	QrCode         string `example:"459081a" json:"qr_code" validate:"required"`
@@ -33,7 +33,7 @@ type SIM struct {
 	Id                string    `json:"id" validate:"required"`
 	SubscriberId      string    `json:"subscriber_id" validate:"required"`
 	Iccid             string    `json:"iccid" validate:"required"`
-	Msidn             string    `json:"msidn" validate:"required"`
+	Msisdn            string    `json:"msisdn" validate:"required"`
 	Package           Package   `json:"package" validate:"required"`
 	FirstActivatedOn  time.Time `json:"first_actived_on" validate:"required"`
 	LastActivationOn  time.Time `json:"last_activation_on" validate:"required"`

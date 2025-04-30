@@ -56,7 +56,7 @@ type SimManagerServiceClient interface {
 	GetSimsByNetwork(ctx context.Context, in *GetSimsByNetworkRequest, opts ...grpc.CallOption) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error)
 	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
-	// Sim pacakge
+	// Sim package
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	ListPackagesForSim(ctx context.Context, in *ListPackagesForSimRequest, opts ...grpc.CallOption) (*ListPackagesForSimResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
@@ -230,7 +230,7 @@ type SimManagerServiceServer interface {
 	GetSimsByNetwork(context.Context, *GetSimsByNetworkRequest) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error)
 	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
-	// Sim pacakge
+	// Sim package
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	ListPackagesForSim(context.Context, *ListPackagesForSimRequest) (*ListPackagesForSimResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.

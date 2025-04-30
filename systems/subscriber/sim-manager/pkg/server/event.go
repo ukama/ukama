@@ -364,7 +364,7 @@ func unmarshalUkamaAgentCdrCreate(msg *anypb.Any) (*epb.CDRReported, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal UkamaAgent CDRReprted message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal UkamaAgent CDRReported message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

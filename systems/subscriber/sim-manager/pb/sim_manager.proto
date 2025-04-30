@@ -30,7 +30,7 @@ service SimManagerService {
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 
-    // Sim pacakge
+    // Sim package
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
@@ -133,7 +133,7 @@ message AddPackageResponse{
 
 message ListPackagesForSimRequest{
    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-   string dataPlanId = 2 [json_name = "data_paln_id"];
+   string dataPlanId = 2 [json_name = "data_plan_id"];
    string fromStartDate = 3 [json_name = "from_start_date"];
    string toStartDate = 4 [json_name = "to_start_date"];
    string fromEndDate = 5 [json_name = "from_end_date"];

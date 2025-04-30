@@ -29,8 +29,8 @@ type MetricConfig struct {
 type MetricType string
 
 const (
-	MetricUnkown    MetricType = "unavailable"
-	MetricGuage     MetricType = "guage"
+	MetricUnknown   MetricType = "unavailable"
+	MetricGauge     MetricType = "gauge"
 	MetricCounter   MetricType = "counter"
 	MetricHistogram MetricType = "histogram"
 	MetricSummary   MetricType = "summary"
@@ -46,7 +46,7 @@ type Metrics struct {
 func MetricTypeFromString(s string) MetricType {
 	switch s {
 	case "gauge":
-		return MetricGuage
+		return MetricGauge
 	case "counter":
 		return MetricCounter
 	case "histogram":
@@ -54,7 +54,7 @@ func MetricTypeFromString(s string) MetricType {
 	case "summary":
 		return MetricSummary
 	default:
-		return MetricUnkown
+		return MetricUnknown
 	}
 }
 
@@ -67,16 +67,16 @@ func NewMetrics(name string, mtype string) *Metrics {
 	return m
 }
 
-func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLables []string) error {
+func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLabels []string) error {
 	switch MetricTypeFromString(config.Type) {
-	case MetricGuage:
+	case MetricGauge:
 		m.collector = prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        config.Name,
 				Help:        config.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			customLabels,
 		)
 
 	case MetricCounter:
@@ -86,7 +86,7 @@ func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLable
 				Help:        config.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			customLabels,
 		)
 
 	case MetricSummary:
@@ -96,7 +96,7 @@ func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLable
 				Help:        config.Details,
 				ConstLabels: m.Labels,
 			},
-			customLables,
+			customLabels,
 		)
 
 	case MetricHistogram:
@@ -107,7 +107,7 @@ func (m *Metrics) InitializeMetric(name string, config MetricConfig, customLable
 				ConstLabels: m.Labels,
 				Buckets:     config.Buckets,
 			},
-			customLables,
+			customLabels,
 		)
 	default:
 		log.Errorf("Metric %s type %s not supported", config.Name, config.Type)
@@ -134,8 +134,8 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	return nil
 }
 
-func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName string) {
-	log.Infof("Pushing metric job: %s", metriJobName)
+func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName string) {
+	log.Infof("Pushing metric job: %s", metricJobName)
 
 	labelDimensions := make([]string, 0, len(metrics[0].Labels))
 	for key := range metrics[0].Labels {
@@ -165,7 +165,7 @@ func PushMetrics(pusMetricHost string, metrics []MetricConfig, metriJobName stri
 		}
 	}
 
-	pusher := push.New(pusMetricHost, metriJobName)
+	pusher := push.New(pushMetricHost, metricJobName)
 	for _, metrics := range metricCollectors {
 		for _, m := range metrics {
 			pusher.Collector(m.collector)

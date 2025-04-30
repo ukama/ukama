@@ -263,7 +263,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	if err != nil {
 		return nil, status.Errorf(codes.Internal,
-			"failed to add initial package to newlly allocated sim. Error %s", err.Error())
+			"failed to add initial package to newly allocated sim. Error %s", err.Error())
 	}
 
 	sim.Package = *firstPackage
@@ -271,7 +271,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim with lCCID: %q", simType, poolSim.Iccid)
+			"invalid sim type: %q for sim with ICCID: %q", simType, poolSim.Iccid)
 	}
 
 	agentRequest := client.AgentRequestData{
@@ -577,7 +577,7 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 }
 
 func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
-	log.Infof("Deleting sim: %v", req.GetSimId())
+	log.Infof("Terminating sim: %v", req.GetSimId())
 
 	sim, err := s.getSim(req.SimId)
 	if err != nil {
@@ -639,7 +639,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	log.Infof("Sim %s terminate successfully", req.GetSimId())
+	log.Infof("Sim %s terminated successfully", req.GetSimId())
 
 	return &pb.TerminateSimResponse{}, nil
 }
@@ -1443,6 +1443,7 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		res.LastActivatedOn = timestamppb.New(sim.LastActivatedOn)
 	}
 
+	//TODO: remove usage of timestamp and update this.
 	if sim.AllocatedAt != 0 {
 		res.AllocatedAt = timestamppb.New(sim.LastActivatedOn)
 	}

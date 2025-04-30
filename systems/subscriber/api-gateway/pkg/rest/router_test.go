@@ -164,7 +164,7 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 func TestRouter_addSimsToSimPool(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/simpool",
-		strings.NewReader(`{"sim_info": [{ "iccid": "1234567890123456789", "sim_type": "ukama_data", "msidn": "555-555-1234", "smdp_address": "http://example.com", "activation_code": "abc123", "qr_code": "qr123", "is_physical_sim": true}]}`))
+		strings.NewReader(`{"sim_info": [{ "iccid": "1234567890123456789", "sim_type": "ukama_data", "msisdn": "555-555-1234", "smdp_address": "http://example.com", "activation_code": "abc123", "qr_code": "qr123", "is_physical_sim": true}]}`))
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
