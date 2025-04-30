@@ -36,7 +36,7 @@ type Sim struct {
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
 	TerminatedAt       time.Time
-	DetetedAt          gorm.DeletedAt `gorm:"index"`
+	DeletedAt          gorm.DeletedAt `gorm:"index"`
 	SyncStatus         ukama.StatusType
 }
 
