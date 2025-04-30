@@ -39,7 +39,7 @@ const Page = () => {
   });
 
   const { data: sites } = useGetSitesQuery({
-    skip: !network?.id,
+    skip: !!network?.id,
     fetchPolicy: 'cache-and-network',
     variables: {
       data: {},
@@ -71,7 +71,7 @@ const Page = () => {
     return nodes.getNodes.nodes.map((node) => ({
       id: node.id,
       network: node.site.networkId
-        ? (sites.getSites.sites.find((site) => site.id === node.site.networkId)
+        ? (sites.getSites.sites.find((site) => site.id === node.site.siteId)
             ?.name ?? '-')
         : '-',
       state: node.status.state,
@@ -88,6 +88,7 @@ const Page = () => {
     if (search.length > 3) {
       return transformedData.filter((node) => node.id.includes(search));
     }
+    console.log('transformedData', transformedData);
     return transformedData;
   }, [transformedData, search]);
 
