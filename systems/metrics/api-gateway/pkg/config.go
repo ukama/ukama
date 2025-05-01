@@ -51,6 +51,7 @@ type MetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
+	"data_usage":           Metric{false, "data_usage", ""},
 	"cpu":                  Metric{false, "trx_soc_cpu_usage", ""},
 	"memory":               Metric{false, "trx_memory_ddr_used", ""},
 	"users":                Metric{false, "trx_lte_core_active_ue", ""},
@@ -168,20 +169,20 @@ var defaultPrometheusMetric = map[string]Metric{
 	"network_throughput_down": Metric{false, "trx_lte_stack_throughput_downlink", ""},
 
 	// Solar Power Metrics
-	"solar_panel_power":      Metric{false, "solar_panel_power", ""},
-	"solar_panel_voltage":    Metric{false, "solar_panel_voltage", ""},
-	"solar_panel_current":    Metric{false, "solar_panel_current", ""},
+	"solar_panel_power":         Metric{false, "solar_panel_power", ""},
+	"solar_panel_voltage":       Metric{false, "solar_panel_voltage", ""},
+	"solar_panel_current":       Metric{false, "solar_panel_current", ""},
 	"battery_charge_percentage": Metric{false, "battery_charge_percentage", ""},
-	
+
 	// Internet Switch Metrics
-	"switch_port_status":    Metric{false, "switch_port_status", ""},
-	"switch_port_speed": Metric{false, "switch_port_speed", ""},
-	"switch_port_power":     Metric{false, "switch_port_power", ""},
+	"switch_port_status": Metric{false, "switch_port_status", ""},
+	"switch_port_speed":  Metric{false, "switch_port_speed", ""},
+	"switch_port_power":  Metric{false, "switch_port_power", ""},
 
 	//main backhaul
-	"backhaul_speed": Metric{false, "backhaul_speed", ""},
+	"backhaul_speed":        Metric{false, "backhaul_speed", ""},
 	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
-	"site_uptime_seconds": Metric{false, "site_uptime_seconds", ""},
+	"site_uptime_seconds":   Metric{false, "site_uptime_seconds", ""},
 }
 
 type GrpcEndpoints struct {

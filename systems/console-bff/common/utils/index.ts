@@ -190,8 +190,8 @@ const getGraphsKeyByType = (type: string): string[] => {
       return ["main_backhaul_latency", "backhaul_speed"];
     case GRAPHS_TYPE.SWITCH:
       return ["switch_port_status", "switch_port_speed", "switch_port_power"];
-    case GRAPHS_TYPE.SITE:
-      return ["site_uptime_seconds"];
+    case GRAPHS_TYPE.DATA_USAGE:
+      return ["data_usage"];
     default:
       return [];
   }

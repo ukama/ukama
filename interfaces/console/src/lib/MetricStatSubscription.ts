@@ -17,6 +17,7 @@ interface IMetricStatSubscription {
   orgName: string;
   siteId?: string;
   type: Stats_Type;
+  networkId?: string;
 }
 
 function parseEvent(eventStr: any) {
@@ -45,6 +46,7 @@ export default async function MetricStatSubscription({
   nodeId,
   orgName,
   siteId = undefined,
+  networkId = undefined,
 }: IMetricStatSubscription) {
   const myHeaders = new Headers();
   myHeaders.append('Cache-Control', 'no-cache');
@@ -64,11 +66,40 @@ export default async function MetricStatSubscription({
   const signal = controller.signal;
 
   let fullUrl = '';
+  const baseParams: {
+    nodeId?: string;
+    orgName: string;
+    type: Stats_Type;
+    userId: string;
+    from: number;
+    siteId?: string;
+    networkId?: string;
+  } = {
+    nodeId,
+    orgName,
+    type,
+    userId,
+    from,
+  };
+
   if (siteId) {
-    fullUrl = `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22siteId%22%3A%22${siteId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`;
-  } else {
-    fullUrl = `${url}/graphql?query=subscription+MetricStatSub%28%24data%3ASubMetricsStatInput%21%29%7BgetMetricStatSub%28data%3A%24data%29%7Bmsg+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22nodeId%22%3A%22${nodeId}%22%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}%7D%7D&operationName=MetricStatSub&extensions=%7B%7D`;
+    baseParams.siteId = siteId;
+  } else if (networkId) {
+    baseParams.networkId = networkId;
   }
+
+  const queryParams = new URLSearchParams({
+    query: `subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value}}`,
+    operationName: 'MetricStatSub',
+    extensions: '{}',
+  });
+
+  let variables = { data: baseParams };
+
+  queryParams.append('variables', JSON.stringify(variables));
+
+  fullUrl = `${url}/graphql?${queryParams.toString()}`;
+
   const res = await fetch(fullUrl, { ...requestOptions, signal }).catch(
     (error) => {
       if (error.name === 'AbortError') {
@@ -81,33 +112,53 @@ export default async function MetricStatSubscription({
 
   if (!res || !res.ok) {
     console.error('Network response was not ok');
-    return;
+    return controller;
   }
 
   const reader = res?.body?.getReader();
   const decoder = new TextDecoder('utf-8');
   let buffer = '';
 
-  while (true) {
-    const { value, done } = (await reader?.read()) || {};
+  const processStream = async () => {
+    try {
+      while (true) {
+        const { value, done } = (await reader?.read()) || {};
 
-    if (done) {
-      console.log('Stream complete');
-      break;
-    }
+        if (done) {
+          console.log('Stream complete');
+          break;
+        }
 
-    buffer += decoder.decode(value, { stream: true });
+        buffer += decoder.decode(value, { stream: true });
 
-    let eventBoundary = buffer.indexOf('\n\n');
+        let eventBoundary = buffer.indexOf('\n\n');
 
-    while (eventBoundary !== -1) {
-      const eventStr = buffer.slice(0, eventBoundary).trim();
-      buffer = buffer.slice(eventBoundary + 2);
-      const pevent = parseEvent(eventStr);
-      if (pevent.data) {
-        PubSub.publish(key, pevent.data);
+        while (eventBoundary !== -1) {
+          const eventStr = buffer.slice(0, eventBoundary).trim();
+          buffer = buffer.slice(eventBoundary + 2);
+          const pevent = parseEvent(eventStr);
+          if (pevent.data) {
+            PubSub.publish(key, pevent.data);
+          }
+          eventBoundary = buffer.indexOf('\n\n');
+        }
       }
-      eventBoundary = buffer.indexOf('\n\n');
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Stream aborted');
+      } else {
+        console.error('Stream error:', error);
+      }
+    } finally {
+      try {
+        await reader?.cancel();
+      } catch (error) {
+        console.error('Error canceling reader:', error);
+      }
     }
-  }
+  };
+
+  processStream();
+
+  return controller;
 }
