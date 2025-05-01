@@ -26,15 +26,18 @@ import {
 const getNodeMetricRange = async (
   baseUrl: string,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
+  args: GetMetricsStatInput
 ): Promise<MetricRes> => {
-  const { from, step = 1, nodeId, userId } = args;
+  const { from, step = 1, nodeId, userId, networkId = "" } = args;
   let params = `from=${from}&step=${step}`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
   if (userId) {
     params = params + `&user=${userId}`;
+  }
+  if (networkId) {
+    params = params + `&network=${networkId}`;
   }
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
@@ -111,4 +114,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { getNodeMetricRange, getSiteMetricRange, getNotifications };
+export { getNodeMetricRange, getNotifications, getSiteMetricRange };

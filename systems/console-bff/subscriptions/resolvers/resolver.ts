@@ -4,6 +4,7 @@ import { Worker } from "worker_threads";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
+  STATS_TYPE,
 } from "../../common/enums";
 import { logger } from "../../common/logger";
 import { eventKeyToAction } from "../../common/notification";
@@ -274,7 +275,7 @@ class SubscriptionsResolvers {
 
     const wsUrl = wsUrlResolver(baseURL);
 
-    const { type, from, userId, withSubscription, nodeId } = data;
+    const { type, from, userId, withSubscription, nodeId, to } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
     const metricsKey = getGraphsKeyByType(type);
@@ -282,7 +283,19 @@ class SubscriptionsResolvers {
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(
-        async key => await getNodeMetricRange(baseURL, key, { ...data })
+        async key =>
+          await getNodeMetricRange(baseURL, key, {
+            to,
+            from,
+            userId,
+            nodeId,
+            siteId: "",
+            networkId: "",
+            step: data.step,
+            withSubscription,
+            orgName: data.orgName,
+            type: STATS_TYPE.ALL_NODE,
+          })
       );
 
       metrics.metrics = await Promise.all(metricPromises);
