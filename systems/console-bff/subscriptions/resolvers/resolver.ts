@@ -1,6 +1,7 @@
 import { Arg, Query, Resolver, Root, Subscription } from "type-graphql";
 import { Worker } from "worker_threads";
 
+import { METRIC_WS_INTERVAL } from "../../common/constants";
 import {
   NotificationScopeEnumValue,
   NotificationTypeEnumValue,
@@ -15,6 +16,7 @@ import {
   getGraphsKeyByType,
   getScopesByRole,
   getSiteMetricStatByKeysByType,
+  transformMetricsArray,
   wsUrlResolver,
 } from "../../common/utils";
 import {
@@ -33,7 +35,6 @@ import {
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
-  SubMetricByTabInput,
   SubMetricsStatInput,
 } from "./types";
 
@@ -78,42 +79,52 @@ class SubscriptionsResolvers {
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(async key => {
         const res = await getNodeMetricRange(baseURL, key, { ...data });
+        logger.info(`Metric response: ${JSON.stringify(res)}`);
         let avg = 0;
 
-        res.values = res.values.filter(value => value[1] !== 0);
-
-        if (Array.isArray(res.values) && res.values.length > 0) {
+        if (Array.isArray(res.metrics) && res.metrics.length > 0) {
           if (
-            res.values.length === 1 ||
+            res.metrics[0].values.length === 1 ||
             key === "unit_uptime" ||
-            key === "network_uptime"
+            key === "network_uptime" ||
+            key === "data_usage"
           ) {
-            avg = res.values[res.values.length - 1][1];
+            avg = res.metrics[res.metrics.length - 1].values[1][1];
           } else {
-            const sum = res.values.reduce((acc, val) => acc + val[1], 0);
-            avg = sum / res.values.length;
+            const sum = res.metrics.reduce(
+              (acc, val) => acc + val.values[1][1],
+              0
+            );
+            avg = sum / res.metrics.length;
           }
         }
-
         return {
-          msg: res.msg,
-          type: res.type,
-          nodeId: res.nodeId || "",
-          success: res.success,
-          value: formatKPIValue(res.type, avg),
+          msg: res.metrics[0].msg,
+          type: res.metrics[0].type,
+          success: res.metrics[0].success,
+          nodeId: res.metrics[0].nodeId || "",
+          siteId: res.metrics[0].siteId || "",
+          networkId: res.metrics[0].networkId || "",
+          packageId: res.metrics[0].packageId || "",
+          dataPlanId: res.metrics[0].dataPlanId || "",
+          value: formatKPIValue(res.metrics[0].type, avg),
         };
       });
 
-      metrics.metrics = await Promise.all(metricPromises);
+      const m = await Promise.all(metricPromises);
+      metrics.metrics.push(...m);
     }
 
     if (withSubscription && metrics.metrics.length > 0) {
       const workerData = {
         topic: `${userId}-${type}-${from}`,
-        url: `${wsUrl}/v1/live/metrics?interval=${
-          data.step
-        }&metric=${metricsKey.join(",")}&node=${nodeId}`,
+        url: `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&metric=${metricsKey.join(
+          ","
+        )}${nodeId ? `&node=${nodeId}` : ""}${
+          data.networkId ? `&network=${data.networkId}` : ""
+        }`,
       };
+
       const worker = new Worker(WS_THREAD, {
         workerData,
       });
@@ -127,7 +138,7 @@ class SubscriptionsResolvers {
                 success: true,
                 msg: "success",
                 type: res.Name,
-                nodeId: data.nodeId,
+                nodeId: data?.nodeId || "",
                 value: [
                   Math.floor(result.value[0]) * 1000,
                   formatKPIValue(res.Name, result.value[1]),
@@ -146,7 +157,6 @@ class SubscriptionsResolvers {
         );
       });
     }
-
     return metrics;
   }
 
@@ -260,91 +270,7 @@ class SubscriptionsResolvers {
 
     return metrics;
   }
-  @Query(() => MetricsRes)
-  async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
-    const store = openStore();
-    const { message: baseURL, status } = await getBaseURL(
-      "metrics",
-      data.orgName,
-      store
-    );
-    if (status !== 200) {
-      logger.error(`Error getting base URL for metrics stat: ${baseURL}`);
-      return { metrics: [] };
-    }
 
-    const wsUrl = wsUrlResolver(baseURL);
-
-    const { type, from, userId, withSubscription, nodeId, to } = data;
-    if (from === 0) throw new Error("Argument 'from' can't be zero.");
-
-    const metricsKey = getGraphsKeyByType(type);
-    const metrics: MetricsRes = { metrics: [] };
-
-    if (metricsKey.length > 0) {
-      const metricPromises = metricsKey.map(
-        async key =>
-          await getNodeMetricRange(baseURL, key, {
-            to,
-            from,
-            userId,
-            nodeId,
-            siteId: "",
-            networkId: "",
-            step: data.step,
-            withSubscription,
-            orgName: data.orgName,
-            type: STATS_TYPE.ALL_NODE,
-          })
-      );
-
-      metrics.metrics = await Promise.all(metricPromises);
-    }
-
-    if (withSubscription && metrics.metrics.length > 0) {
-      const workerData = {
-        topic: `${userId}/${type}/${from}`,
-        url: `${wsUrl}/v1/live/metrics?interval=${
-          data.step
-        }&metric=${metricsKey.join(",")}&node=${nodeId}`,
-      };
-
-      const worker = new Worker(WS_THREAD, {
-        workerData,
-      });
-
-      worker.on("message", (_data: any) => {
-        if (!_data.isError) {
-          try {
-            const res = JSON.parse(_data.data);
-            const result = res.data.result[0];
-            if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(workerData.topic, {
-                type: res.Name,
-                success: true,
-                msg: "success",
-                nodeId: nodeId,
-                value: [
-                  Math.floor(result.value[0]) * 1000,
-                  parseFloat(Number(result.value[1] || 0).toFixed(2)),
-                ],
-              });
-            }
-          } catch (error) {
-            logger.error(`Failed to parse WebSocket message: ${error}`);
-          }
-        }
-      });
-      worker.on("exit", async (code: any) => {
-        await store.close();
-        logger.info(
-          `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
-        );
-      });
-    }
-
-    return metrics;
-  }
   @Query(() => MetricsRes)
   async getMetricBySite(@Arg("data") data: GetMetricBySiteInput) {
     const store = openStore();
@@ -361,7 +287,7 @@ class SubscriptionsResolvers {
 
     const wsUrl = wsUrlResolver(baseURL);
 
-    const { type, from, userId, withSubscription, siteId } = data;
+    const { type, from, userId, withSubscription, siteId, to } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
     const metricsKey = getGraphsKeyByType(type);
@@ -369,11 +295,45 @@ class SubscriptionsResolvers {
 
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(async key => {
-        logger.info(`Fetching site metric for key: ${key}`);
-        const result = await getSiteMetricRange(baseURL, key, { ...data });
-        logger.info(`Got site metric result for ${key}:`, result);
-        return result;
+        const res = await getNodeMetricRange(baseURL, key, {
+          to,
+          from,
+          userId,
+          nodeId: "",
+          siteId: "",
+          networkId: "",
+          step: data.step,
+          orgName: data.orgName,
+          withSubscription: false,
+          type: STATS_TYPE.ALL_NODE,
+        });
+
+        let avg = 0;
+        if (res.metrics.length > 0) {
+          const metric = res.metrics[0];
+          if (metric.values.length > 0) {
+            if (
+              metric.values.length === 1 ||
+              key === "unit_uptime" ||
+              key === "network_uptime"
+            ) {
+              avg = metric.values[metric.values.length - 1][1];
+            } else {
+              const sum = metric.values.reduce((acc, val) => acc + val[1], 0);
+              avg = sum / metric.values.length;
+            }
+          }
+        }
+
+        return {
+          success: true,
+          msg: "success",
+          type: key,
+          nodeId: "",
+          values: [[Date.now(), avg]] as [number, number][],
+        } as MetricRes;
       });
+
       metrics.metrics = await Promise.all(metricPromises);
     }
 
@@ -424,6 +384,47 @@ class SubscriptionsResolvers {
 
     return metrics;
   }
+
+  @Query(() => MetricsRes)
+  async getMetricByTab(@Arg("data") data: GetMetricByTabInput) {
+    const store = openStore();
+    const { message: baseURL, status } = await getBaseURL(
+      "metrics",
+      data.orgName,
+      store
+    );
+    if (status !== 200) {
+      logger.error(`Error getting base URL for metrics stat: ${baseURL}`);
+      return { metrics: [] };
+    }
+
+    const { type, from, userId, nodeId, to } = data;
+    if (from === 0) throw new Error("Argument 'from' can't be zero.");
+
+    const metricsKey = getGraphsKeyByType(type);
+
+    if (metricsKey.length > 0) {
+      const metricPromises = metricsKey.map(
+        async key =>
+          await getNodeMetricRange(baseURL, key, {
+            to,
+            from,
+            userId,
+            nodeId,
+            step: data.step,
+            siteId: data.siteId,
+            orgName: data.orgName,
+            withSubscription: false,
+            networkId: data.networkId,
+            type: STATS_TYPE.ALL_NODE,
+          })
+      );
+
+      const m = await Promise.all(metricPromises);
+      return transformMetricsArray(m);
+    }
+  }
+
   @Query(() => NotificationsRes)
   async getNotifications(
     @Arg("orgId") orgId: string,
@@ -509,21 +510,6 @@ class SubscriptionsResolvers {
       worker.terminate();
     });
     return notifications;
-  }
-
-  @Subscription(() => LatestMetricSubRes, {
-    topics: ({ args }) => {
-      return `${args.data.userId}/${args.data.type}/${args.data.from}`;
-    },
-  })
-  async getMetricByTabSub(
-    @Root() payload: LatestMetricSubRes,
-    @Arg("data") data: SubMetricByTabInput
-  ): Promise<LatestMetricSubRes> {
-    const store = openStore();
-    await addInStore(store, `${data.userId}/${payload.type}/${data.from}`, 0);
-    await store.close();
-    return payload;
   }
 
   @Subscription(() => NotificationsResDto, {

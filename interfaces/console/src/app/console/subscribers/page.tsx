@@ -24,6 +24,10 @@ import {
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
+import {
+  Stats_Type,
+  useGetMetricsStatLazyQuery,
+} from '@/client/graphql/generated/subscriptions';
 import AddSubscriberStepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import DeleteConfirmation from '@/components/DeleteDialog';
@@ -34,6 +38,7 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
+import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import {
   CardWrapper,
   DataPlanEmptyView,
@@ -43,19 +48,21 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { formatBytesToMB } from '@/utils';
+import { TMetricResDto } from '@/types';
+import { formatBytesToMB, getUnixTime } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env } = useAppContext();
+  const { setSnackbarMessage, network, env, user, subscriptionClient } =
+    useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
@@ -69,6 +76,19 @@ const Page = () => {
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
+  const subscriptionKeyRef = useRef<string | null>(null);
+  const subscriptionControllerRef = useRef<AbortController | null>(null);
+
+  const cleanupSubscription = useCallback(() => {
+    if (subscriptionKeyRef.current) {
+      PubSub.unsubscribe(subscriptionKeyRef.current);
+      subscriptionKeyRef.current = null;
+    }
+    if (subscriptionControllerRef.current) {
+      subscriptionControllerRef.current.abort();
+      subscriptionControllerRef.current = null;
+    }
+  }, []);
 
   const { data: packagesData, loading: packagesLoading } = useGetPackagesQuery({
     fetchPolicy: 'cache-and-network',
@@ -294,6 +314,65 @@ const Page = () => {
         });
       },
     });
+
+  const [
+    getMetricStat,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetMetricsStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: async (data) => {
+      if (data.getMetricsStat.metrics.length > 0) {
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.DataUsage}-${statVar?.data.from ?? 0}`;
+        cleanupSubscription();
+        subscriptionKeyRef.current = sKey;
+
+        const controller = await MetricStatSubscription({
+          key: sKey,
+          userId: user.id,
+          url: env.METRIC_URL,
+          networkId: network.id,
+          orgName: user.orgName,
+          type: Stats_Type.DataUsage,
+          from: statVar?.data.from ?? 0,
+        });
+
+        subscriptionControllerRef.current = controller;
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
+    },
+  });
+
+  useEffect(() => {
+    const to = getUnixTime();
+    const from = to - 1;
+    if (network.id) {
+      cleanupSubscription();
+
+      getMetricStat({
+        variables: {
+          data: {
+            to: to,
+            step: 1,
+            from: from,
+            userId: user.id,
+            networkId: network.id,
+            orgName: user.orgName,
+            withSubscription: true,
+            type: Stats_Type.DataUsage,
+          },
+        },
+      });
+    }
+  }, [network.id, user.id, user.orgName, cleanupSubscription]);
+
+  const handleStatSubscription = (_: any, data: string) => {
+    const parsedData: TMetricResDto = JSON.parse(data);
+    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    if (success) {
+      PubSub.publish(`stat-${type}`, value);
+    }
+  };
 
   const handleDeleteSubscriber = () => {
     deleteSubscriber({

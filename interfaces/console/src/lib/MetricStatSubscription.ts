@@ -43,8 +43,8 @@ export default async function MetricStatSubscription({
   from,
   type,
   userId,
-  nodeId,
   orgName,
+  nodeId = undefined,
   siteId = undefined,
   networkId = undefined,
 }: IMetricStatSubscription) {
@@ -75,16 +75,19 @@ export default async function MetricStatSubscription({
     siteId?: string;
     networkId?: string;
   } = {
-    nodeId,
     orgName,
     type,
     userId,
     from,
   };
 
+  if (nodeId) {
+    baseParams.nodeId = nodeId;
+  }
   if (siteId) {
     baseParams.siteId = siteId;
-  } else if (networkId) {
+  }
+  if (networkId) {
     baseParams.networkId = networkId;
   }
 
