@@ -20,6 +20,7 @@ export type Scalars = {
 export enum Graphs_Type {
   Battery = 'BATTERY',
   Controller = 'CONTROLLER',
+  DataUsage = 'DATA_USAGE',
   Home = 'HOME',
   MainBackhaul = 'MAIN_BACKHAUL',
   NetworkBackhaul = 'NETWORK_BACKHAUL',
@@ -57,6 +58,7 @@ export type GetMetricByTabInput = {
 
 export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
   nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
   siteId?: InputMaybe<Scalars['String']['input']>;
@@ -202,6 +204,7 @@ export type QueryGetSiteStatArgs = {
 export enum Stats_Type {
   AllNode = 'ALL_NODE',
   Battery = 'BATTERY',
+  DataUsage = 'DATA_USAGE',
   Home = 'HOME',
   MainBackhaul = 'MAIN_BACKHAUL',
   Network = 'NETWORK',

@@ -10,6 +10,7 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
+import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
@@ -364,6 +365,16 @@ export const formatKPIValue = (type: string, value: any) => {
 const epochToISOString = (epoch: number): string => {
   const date = new Date(epoch * 1000);
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+};
+
+export const transformMetricsArray = (
+  metricsArray: MetricsRes[]
+): MetricsRes => {
+  const allMetrics: MetricRes[] = metricsArray.flatMap(item => item.metrics);
+
+  return {
+    metrics: allMetrics,
+  };
 };
 
 export {

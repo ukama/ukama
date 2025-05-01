@@ -6,4 +6,6 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-export {};
+const METRIC_WS_INTERVAL = 29;
+
+export { METRIC_WS_INTERVAL };
