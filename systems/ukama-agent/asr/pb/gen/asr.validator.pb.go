@@ -177,3 +177,9 @@ func (this *Policy) Validate() error {
 	}
 	return nil
 }
+func (this *QueryUsageReq) Validate() error {
+	return nil
+}
+func (this *QueryUsageResp) Validate() error {
+	return nil
+}

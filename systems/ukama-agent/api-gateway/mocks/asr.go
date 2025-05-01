@@ -132,6 +132,36 @@ func (_m *asr) Inactivate(req *gen.InactivateReq) (*gen.InactivateResp, error) {
 	return r0, r1
 }
 
+// QueryUsage provides a mock function with given fields: req
+func (_m *asr) QueryUsage(req *gen.QueryUsageReq) (*gen.QueryUsageResp, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryUsage")
+	}
+
+	var r0 *gen.QueryUsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.QueryUsageReq) (*gen.QueryUsageResp, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.QueryUsageReq) *gen.QueryUsageResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryUsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.QueryUsageReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Read provides a mock function with given fields: req
 func (_m *asr) Read(req *gen.ReadReq) (*gen.ReadResp, error) {
 	ret := _m.Called(req)

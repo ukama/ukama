@@ -404,6 +404,31 @@ func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForP
 	}, nil
 
 }
+func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
+	log.Debugf("Received a query usage request: %+v", req)
+
+	var sub *db.Asr
+	var err error
+	var policies []string
+
+	sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+	}
+
+	policies = []string{sub.Policy.Id.String()}
+
+	r, err := s.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policies, req.Count, req.Sort)
+	if err != nil {
+		log.Errorf("Failed to query usage: %v for imsi %s. Error: %s", err, sub.Imsi, err.Error())
+		return nil, err
+	}
+
+	return &pb.QueryUsageResp{
+		Usage: r.Usage,
+	}, nil
+
+}
 
 func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
 	_, err := s.asrRepo.GetByImsi(req.Imsi)

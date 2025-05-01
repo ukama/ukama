@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -149,14 +148,14 @@ func (p *cdrRepo) GetByPolicy(imsi string, policy string) (*[]CDR, error) {
 
 func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 	policies []string, count uint32, sort bool) (uint64, error) {
-	type Usage struct {
-		Date  time.Time
+	type CDR struct {
+		Imsi  string
 		Total uint64
 	}
 
-	var usage Usage
+	var usage CDR
 
-	tx := p.db.GetGormDb().Preload(clause.Associations)
+	tx := p.db.GetGormDb().Preload(clause.Associations).Select("imsi, sum(total_bytes) as  total").Group("imsi")
 
 	if imsi != "" {
 		tx = tx.Where("imsi = ?", imsi)
@@ -174,8 +173,8 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 		tx = tx.Where("end_time <= ?", to)
 	}
 
-	if policies != nil {
-		tx = tx.Where("policy IN ?", pq.StringArray(policies))
+	if policies != nil && len(policies) > 0 {
+		tx = tx.Where("policy = ?", policies[0])
 	}
 
 	if sort {
@@ -187,7 +186,7 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 	}
 
 	// result := tx.Find(&cdrs)
-	result := tx.Select("sum(total_bytes) as  total").First(&usage)
+	result := tx.First(&usage)
 	if result.Error != nil {
 		return 0, result.Error
 	}
