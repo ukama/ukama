@@ -173,7 +173,7 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 		tx = tx.Where("end_time <= ?", to)
 	}
 
-	if policies != nil && len(policies) > 0 {
+	if len(policies) > 0 {
 		tx = tx.Where("policy = ?", policies[0])
 	}
 

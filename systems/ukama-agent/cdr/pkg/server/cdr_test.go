@@ -82,6 +82,8 @@ func TestCDR_PostCDR(t *testing.T) {
 		&asrpb.ReadResp{}, nil)
 	cdrRepo.On("Add", &cdr).Return(nil).Once()
 	usageRepo.On("Get", cdr.Imsi).Return(&usage, nil).Once()
+	cdrRepo.On("QueryUsage", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(uint64(0), nil).Once()
 	cdrRepo.On("GetByTimeAndNodeId", cdr.Imsi, cdr.StartTime, mock.Anything, cdr.NodeId).Return(&[]db.CDR{cdr}, nil).Once()
 	usageRepo.On("Add", mock.MatchedBy(func(u *db.Usage) bool {
 		return u.Imsi == cdr.Imsi
