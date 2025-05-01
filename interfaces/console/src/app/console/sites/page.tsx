@@ -8,68 +8,53 @@
 'use client';
 
 import {
-  Component_Type,
   SiteDto,
-  useAddSiteMutation,
-  useGetComponentsByUserIdLazyQuery,
-  useGetNetworksQuery,
   useGetSitesQuery,
   useUpdateSiteMutation,
+  NodeStateEnum,
+  useGetNodesLazyQuery,
+  NodeConnectivityEnum,
 } from '@/client/graphql/generated';
 import {
   Stats_Type,
   useGetSiteStatLazyQuery,
 } from '@/client/graphql/generated/subscriptions';
-import ConfigureSiteDialog from '@/components/ConfigureSiteDialog';
 import EditSiteDialog from '@/components/EditSiteDialog';
 import SitesWrapper from '@/components/SitesWrapper';
-import { SITE_STATUS } from '@/constants';
 import { useAppContext } from '@/context';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
-import { TSiteForm } from '@/types';
 import { getUnixTime } from '@/utils';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
-import { formatISO } from 'date-fns';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import PubSub from 'pubsub-js';
-import { useEffect, useState } from 'react';
-
-const SITE_INIT = {
-  switch: '',
-  power: '',
-  access: '',
-  backhaul: '',
-  address: '',
-  spectrum: '',
-  siteName: '',
-  latitude: NaN,
-  longitude: NaN,
-  network: '',
-};
+import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
+import { useRouter } from 'next/navigation';
+import { STAT_STEP_29 } from '@/constants';
+import LoadingWrapper from '@/components/LoadingWrapper';
+import colors from '@/theme/colors';
 
 export default function Page() {
+  const router = useRouter();
   const [sitesList, setSitesList] = useState<SiteDto[]>([]);
-  const [componentsList, setComponentsList] = useState<any[]>([]);
   const { setSnackbarMessage, network, user, env, subscriptionClient } =
     useAppContext();
-  const [openSiteConfig, setOpenSiteConfig] = useState(false);
-  const [site, setSite] = useState<TSiteForm>(SITE_INIT);
   const [editSitedialogOpen, setEditSitedialogOpen] = useState(false);
+  const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
+
+  const subscriptionsRef = useRef<Record<string, boolean>>({});
+
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
     siteId: '',
   });
-  const [sitesStatus, setSitesStatus] = useState<
-    Record<
-      string,
-      {
-        status: string;
-        batteryStatus: string;
-        signalStrength: string;
-      }
-    >
-  >({});
 
+  const cleanupSubscriptions = useCallback(() => {
+    Object.keys(subscriptionsRef.current).forEach((topic) => {
+      PubSub.unsubscribe(topic);
+      delete subscriptionsRef.current[topic];
+    });
+  }, []);
   const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
+    fetchPolicy: 'network-only',
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
@@ -77,14 +62,19 @@ export default function Page() {
     onCompleted: (res) => {
       const sites = res.getSites.sites;
       setSitesList(sites);
-
-      sites.forEach((site) => {
-        fetchSiteMetrics(site.id);
+      getNodes({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
       });
     },
     onError: (error) => {
+      setSitesList([]);
       setSnackbarMessage({
-        id: 'fetching-sites-msg',
+        id: 'sites-error',
         message: error.message,
         type: 'error' as AlertColor,
         show: true,
@@ -92,368 +82,91 @@ export default function Page() {
     },
   });
 
-  const [getSiteMetrics, { variables: getSiteMetricsVar }] =
-    useGetSiteStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getSiteStat.metrics.length > 0) {
-          const siteId = getSiteMetricsVar?.data.siteId || '';
-          const metrics = data.getSiteStat.metrics;
+  const [getNodes, { loading: nodesLoading }] = useGetNodesLazyQuery({
+    fetchPolicy: 'network-only',
+    onCompleted: (res) => {
+      const allNodes = res.getNodes.nodes;
+      const unknownNodes = allNodes.filter((node) => {
+        const hasLocation = node.latitude !== 0 && node.longitude !== 0;
+        return (
+          (node.status.state === NodeStateEnum.Unknown &&
+            node.status.connectivity == NodeConnectivityEnum.Online) ||
+          !hasLocation
+        );
+      });
 
-          metrics.forEach((metric) => {
-            if (metric.type === 'site_uptime_seconds') {
-              setSitesStatus((prev) => {
-                const currentStatus = prev[siteId] || {
-                  status: SITE_STATUS.ONLINE,
-                  batteryStatus: 'Charged',
-                  signalStrength: 'Strong',
-                };
+      setUnassignedNodes(unknownNodes);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'unassigned-nodes-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
-                return {
-                  ...prev,
-                  [siteId]: {
-                    ...currentStatus,
-                    status:
-                      metric.value <= 0
-                        ? SITE_STATUS.OFFLINE
-                        : currentStatus.status,
-                  },
-                };
-              });
-            }
-          });
+  useEffect(() => {
+    setSitesList([]);
+    setUnassignedNodes([]);
 
-          // Set up subscription for real-time updates
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${siteId}`;
-          MetricStatSubscription({
-            key: sKey,
-            siteId: siteId,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Site,
-            from: getUnixTime() - 40, // 24 hours
-          });
+    cleanupSubscriptions();
 
-          PubSub.subscribe(sKey, handleSiteStatSubscription);
-        }
-      },
-      onError: (error) => {
-        console.error('Error fetching site metrics:', error);
-      },
-    });
-
-  // Query to get battery metrics
-  const [getBatteryMetrics, { variables: getBatteryMetricsVar }] =
-    useGetSiteStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getSiteStat.metrics.length > 0) {
-          const siteId = getBatteryMetricsVar?.data.siteId || '';
-          const metrics = data.getSiteStat.metrics;
-
-          // Process battery metrics
-          metrics.forEach((metric) => {
-            if (metric.type === 'battery_charge_percentage') {
-              const batteryLevel = metric.value;
-
-              setSitesStatus((prev) => {
-                const currentStatus = prev[siteId] || {
-                  status: SITE_STATUS.ONLINE,
-                  batteryStatus: 'Charged',
-                  signalStrength: 'Strong',
-                };
-
-                let batteryStatus = 'Charged';
-                let newStatus = currentStatus.status;
-
-                if (batteryLevel < 20) {
-                  batteryStatus = 'Low';
-                  if (newStatus !== SITE_STATUS.OFFLINE) {
-                    newStatus = SITE_STATUS.WARNING;
-                  }
-                } else if (batteryLevel < 50) {
-                  batteryStatus = 'Medium';
-                }
-
-                return {
-                  ...prev,
-                  [siteId]: {
-                    ...currentStatus,
-                    batteryStatus,
-                    status: newStatus,
-                  },
-                };
-              });
-            }
-          });
-
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Battery}-${siteId}`;
-          MetricStatSubscription({
-            key: sKey,
-            siteId: siteId,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.Battery,
-            from: getUnixTime() - 40,
-          });
-
-          PubSub.subscribe(sKey, handleBatteryStatSubscription);
-        }
-      },
-      onError: (error) => {
-        console.error('Error fetching battery metrics:', error);
-      },
-    });
-
-  const [getBackhaulMetrics, { variables: getBackhaulMetricsVar }] =
-    useGetSiteStatLazyQuery({
-      client: subscriptionClient,
-      fetchPolicy: 'network-only',
-      onCompleted: (data) => {
-        if (data.getSiteStat.metrics.length > 0) {
-          const siteId = getBackhaulMetricsVar?.data.siteId || '';
-          const metrics = data.getSiteStat.metrics;
-
-          metrics.forEach((metric) => {
-            if (metric.type === 'backhaul_speed') {
-              const speed = metric.value;
-
-              setSitesStatus((prev) => {
-                const currentStatus = prev[siteId] || {
-                  status: SITE_STATUS.ONLINE,
-                  batteryStatus: 'Charged',
-                  signalStrength: 'Strong',
-                };
-
-                let signalStrength = 'Strong';
-                let newStatus = currentStatus.status;
-
-                if (speed < 30) {
-                  signalStrength = 'Weak';
-                  if (newStatus !== SITE_STATUS.OFFLINE) {
-                    newStatus = SITE_STATUS.WARNING;
-                  }
-                } else if (speed < 70) {
-                  signalStrength = 'Medium';
-                }
-
-                return {
-                  ...prev,
-                  [siteId]: {
-                    ...currentStatus,
-                    signalStrength,
-                    status: newStatus,
-                  },
-                };
-              });
-            }
-          });
-
-          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.MainBackhaul}-${siteId}`;
-          MetricStatSubscription({
-            key: sKey,
-            siteId: siteId,
-            userId: user.id,
-            url: env.METRIC_URL,
-            orgName: user.orgName,
-            type: Stats_Type.MainBackhaul,
-            from: getUnixTime() - 40,
-          });
-
-          PubSub.subscribe(sKey, handleBackhaulStatSubscription);
-        }
-      },
-      onError: (error) => {
-        console.error('Error fetching backhaul metrics:', error);
-      },
-    });
-
-  const handleSiteStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
-
-      if (success && type === 'site_uptime_seconds') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
-
-          return {
-            ...prev,
-            [siteId]: {
-              ...currentStatus,
-              status:
-                value[1] <= 0 ? SITE_STATUS.OFFLINE : currentStatus.status,
-            },
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error handling site stat subscription:', error);
+    if (network.id) {
+      refetchSites();
+      getNodes({
+        variables: {
+          data: {
+            state: NodeStateEnum.Unknown,
+            connectivity: NodeConnectivityEnum.Online,
+          },
+        },
+      });
     }
-  };
+  }, [network.id, refetchSites, getNodes, cleanupSubscriptions]);
 
-  const handleBatteryStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
+  const [
+    getSiteStatMetrics,
+    { data: statData, loading: statLoading, variables: statVar },
+  ] = useGetSiteStatLazyQuery({
+    client: subscriptionClient,
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data.getSiteStat.metrics.length > 0) {
+        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
 
-      if (success && type === 'battery_charge_percentage') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
+        subscriptionsRef.current[sKey] = true;
 
-          let batteryStatus = 'Charged';
-          let newStatus = currentStatus.status;
-
-          if (value[1] < 20) {
-            batteryStatus = 'Low';
-            if (newStatus !== SITE_STATUS.OFFLINE) {
-              newStatus = SITE_STATUS.WARNING;
-            }
-          } else if (value[1] < 50) {
-            batteryStatus = 'Medium';
-          }
-
-          return {
-            ...prev,
-            [siteId]: {
-              ...currentStatus,
-              batteryStatus,
-              status: newStatus,
-            },
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error handling battery stat subscription:', error);
-    }
-  };
-
-  const handleBackhaulStatSubscription = (_: any, data: string) => {
-    try {
-      const parsedData = JSON.parse(data);
-      const { value, type, success, siteId } = parsedData.data.getMetricStatSub;
-
-      if (success && type === 'backhaul_speed') {
-        setSitesStatus((prev) => {
-          const currentStatus = prev[siteId] || {
-            status: SITE_STATUS.ONLINE,
-            batteryStatus: 'Charged',
-            signalStrength: 'Strong',
-          };
-
-          let signalStrength = 'Strong';
-          let newStatus = currentStatus.status;
-
-          if (value[1] < 30) {
-            signalStrength = 'Weak';
-            if (newStatus !== SITE_STATUS.OFFLINE) {
-              newStatus = SITE_STATUS.WARNING;
-            }
-          } else if (value[1] < 70) {
-            signalStrength = 'Medium';
-          }
-
-          return {
-            ...prev,
-            [siteId]: {
-              ...currentStatus,
-              signalStrength,
-              status: newStatus,
-            },
-          };
-        });
-      }
-    } catch (error) {
-      console.error('Error handling backhaul stat subscription:', error);
-    }
-  };
-
-  const fetchSiteMetrics = (siteId: string) => {
-    const to = getUnixTime();
-    const from = to - 40;
-
-    getSiteMetrics({
-      variables: {
-        data: {
-          to,
-          nodeId: '',
-          siteId,
-          from,
+        MetricStatBySiteSubscription({
+          key: sKey,
+          nodeIds: [],
           userId: user.id,
-          step: 300,
+          siteIds: sitesList.map((site) => site.id),
+          url: env.METRIC_URL,
           orgName: user.orgName,
-          withSubscription: true,
           type: Stats_Type.Site,
-        },
-      },
-    });
+          from: statVar?.data.from ?? 0,
+        });
 
-    getBatteryMetrics({
-      variables: {
-        data: {
-          to,
-          nodeId: '',
-          siteId,
-          from,
-          userId: user.id,
-          step: 300,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.Battery,
-        },
-      },
-    });
-
-    getBackhaulMetrics({
-      variables: {
-        data: {
-          to,
-          nodeId: '',
-          siteId,
-          from,
-          userId: user.id,
-          step: 300,
-          orgName: user.orgName,
-          withSubscription: true,
-          type: Stats_Type.MainBackhaul,
-        },
-      },
-    });
-  };
-
-  const [addSite, { loading: addSiteLoading }] = useAddSiteMutation({
-    onCompleted: () => {
-      refetchSites().then((res) => {
-        setSitesList(res.data.getSites.sites);
-      });
-      setSnackbarMessage({
-        id: 'add-site-success',
-        message: 'Site added successfully!',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'add-site-error',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
+        PubSub.subscribe(sKey, handleStatSubscription);
+      }
     },
   });
+
+  const handleStatSubscription = useCallback((_: any, data: string) => {
+    try {
+      const parsedData = JSON.parse(data);
+      const { value, type, success, siteId } =
+        parsedData?.data?.getSiteMetricStatSub;
+
+      if (!success || !siteId || !type) return;
+
+      PubSub.publish(`stat-${type}-${siteId}`, value);
+    } catch (error) {
+      console.error('Error handling subscription data:', error);
+    }
+  }, []);
 
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
@@ -477,121 +190,108 @@ export default function Page() {
     },
   });
 
-  const [getComponents] = useGetComponentsByUserIdLazyQuery({
-    onCompleted: (res) => {
-      if (res.getComponentsByUserId) {
-        setComponentsList(res.getComponentsByUserId.components);
-      }
+  const handleSiteNameUpdate = useCallback(
+    (siteId: string, siteName: string) => {
+      setCurrentSite((prevState) => ({
+        ...prevState,
+        siteId,
+        siteName: siteName,
+      }));
+      setEditSitedialogOpen(true);
     },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'components-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+    [],
+  );
 
-  const { data: networks, loading: networksLoading } = useGetNetworksQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (res) => {
-      if (res.getNetworks.networks.length === 0) {
-        setSnackbarMessage({
-          id: 'no-network-msg',
-          message: 'Please create a network first.',
-          type: 'warning' as AlertColor,
-          show: true,
-        });
-      }
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'networks-msg',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
+  const handleSaveSiteName = useCallback(
+    (siteId: string, siteName: string) => {
+      updateSite({
+        variables: {
+          siteId: siteId,
+          data: {
+            name: siteName,
+          },
+        },
       });
     },
-  });
+    [updateSite],
+  );
+
+  const closeEditSiteDialog = useCallback(() => {
+    setEditSitedialogOpen(false);
+  }, []);
 
   useEffect(() => {
-    if (!network.id)
-      setSite({
-        ...site,
-        network: network.id,
-      });
-    getComponents({
+    if (sitesList.length === 0) return;
+
+    cleanupSubscriptions();
+
+    const to = getUnixTime();
+    const from = to - STAT_STEP_29;
+    const newSKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
+
+    subscriptionsRef.current[newSKey] = true;
+
+    getSiteStatMetrics({
       variables: {
         data: {
-          category: Component_Type.All,
+          to,
+          from,
+          userId: user.id,
+          nodeIds: [],
+          siteIds: sitesList.map((site) => site.id),
+          step: STAT_STEP_29,
+          orgName: user.orgName,
+          withSubscription: true,
+          type: Stats_Type.Site,
         },
       },
     });
 
     return () => {
-      sitesList.forEach((site) => {
-        const siteKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${site.id}`;
-        const batteryKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Battery}-${site.id}`;
-        const backhaulKey = `stat-${user.orgName}-${user.id}-${Stats_Type.MainBackhaul}-${site.id}`;
-
-        PubSub.unsubscribe(siteKey);
-        PubSub.unsubscribe(batteryKey);
-        PubSub.unsubscribe(backhaulKey);
-      });
+      cleanupSubscriptions();
     };
-  }, [sitesList]);
+  }, [
+    sitesList,
+    user.id,
+    user.orgName,
+    getSiteStatMetrics,
+    env.METRIC_URL,
+    cleanupSubscriptions,
+  ]);
 
-  const handleCloseSiteConfig = () => {
-    setSite(SITE_INIT);
-    setOpenSiteConfig(false);
-  };
+  const handleConfigureNode = useCallback(
+    (nodeId: string) => {
+      const node = unassignedNodes.find((n) => n.id === nodeId);
 
-  const handleSiteConfiguration = (values: TSiteForm) => {
-    setSite(values);
-    setOpenSiteConfig(false);
-    addSite({
-      variables: {
-        data: {
-          name: values.siteName,
-          power_id: values.power,
-          location: values.address,
-          access_id: values.access,
-          switch_id: values.switch,
-          latitude: values.latitude,
-          network_id: values.network,
-          longitude: values.longitude,
-          backhaul_id: values.backhaul,
-          spectrum_id: values.spectrum,
-          install_date: formatISO(new Date()),
-        },
-      },
-    });
-  };
+      if (!node) {
+        setSnackbarMessage({
+          id: 'node-not-found',
+          message: 'Node not found',
+          type: 'error' as AlertColor,
+          show: true,
+        });
+        return;
+      }
 
-  const handleSiteNameUpdate = (siteId: string, siteName: string) => {
-    setCurrentSite((prevState) => ({
-      ...prevState,
-      siteId,
-      siteName: siteName,
-    }));
-    setEditSitedialogOpen(true);
-  };
+      let p = new URLSearchParams();
+      p.set('step', 'location');
+      p.set('flow', 'ins');
+      p.set('nid', nodeId);
 
-  const handleSaveSiteName = (siteId: string, siteName: string) => {
-    updateSite({
-      variables: {
-        siteId: siteId,
-        data: {
-          name: siteName,
-        },
-      },
-    });
-  };
+      router.push(`/configure/check?${p.toString()}`);
+    },
+    [unassignedNodes, setSnackbarMessage, router],
+  );
+  useEffect(() => {
+    return () => {
+      cleanupSubscriptions();
+    };
+  }, [cleanupSubscriptions]);
 
-  const closeEditSiteDialog = () => {
-    setEditSitedialogOpen(false);
-  };
+  const memoizedStatData = useMemo(
+    () => statData?.getSiteStat ?? { metrics: [] },
+    [statData],
+  );
 
   return (
     <Box mt={2}>
@@ -603,27 +303,33 @@ export default function Page() {
           height: 'calc(100vh - 212px)',
         }}
       >
-        <Stack spacing={2} direction={'column'} height="100%">
-          <Typography variant="h6" color="initial" sx={{ paddingLeft: '12px' }}>
-            My sites
-          </Typography>
-          <SitesWrapper
-            loading={sitesLoading || networksLoading}
-            sites={sitesList}
-            sitesStatus={sitesStatus}
-            handleSiteNameUpdate={handleSiteNameUpdate}
-          />
-        </Stack>
+        <LoadingWrapper
+          radius="small"
+          width={'100%'}
+          isLoading={nodesLoading || sitesLoading || statLoading}
+          cstyle={{
+            backgroundColor: false ? colors.white : 'transparent',
+          }}
+        >
+          <Stack spacing={2} direction={'column'} height="100%">
+            <Typography
+              variant="h6"
+              color="initial"
+              sx={{ paddingLeft: '12px' }}
+            >
+              My sites
+            </Typography>
+            <SitesWrapper
+              loading={nodesLoading || sitesLoading}
+              sites={sitesList}
+              siteMetricsStatData={memoizedStatData}
+              handleSiteNameUpdate={handleSiteNameUpdate}
+              handleConfigureNode={handleConfigureNode}
+              unassignedNodes={unassignedNodes}
+            />
+          </Stack>
+        </LoadingWrapper>
       </Paper>
-      <ConfigureSiteDialog
-        site={site}
-        open={openSiteConfig}
-        addSiteLoading={addSiteLoading}
-        onClose={handleCloseSiteConfig}
-        components={componentsList || []}
-        networks={networks?.getNetworks?.networks || []}
-        handleSiteConfiguration={handleSiteConfiguration}
-      />
       <EditSiteDialog
         open={editSitedialogOpen}
         siteId={currentSite.siteId}

@@ -10,7 +10,10 @@ import {
   Notification_Scope,
   Notification_Type,
 } from '@/client/graphql/generated';
-import { LatestMetricSubRes } from '@/client/graphql/generated/subscriptions';
+import {
+  Graphs_Type,
+  LatestMetricSubRes,
+} from '@/client/graphql/generated/subscriptions';
 import { EmotionCache } from '@emotion/react';
 import { AppProps } from 'next/app';
 
@@ -21,6 +24,7 @@ export type MenuItemType = {
   route: string;
   color?: string;
 };
+
 export type UserSettingsMenuType = {
   id: number;
   label: string;
@@ -89,6 +93,12 @@ export type CurrentBillType = {
   subTotal: number;
   dataUsage: string;
 };
+export type StatusType = 'uptime' | 'battery' | 'signal';
+
+export interface StyleOutput {
+  color: string;
+  icon: JSX.Element;
+}
 export type PaymentMethodType = {
   id?: number;
   card_experintionDetails: string;
@@ -251,11 +261,25 @@ export interface TNotificationResDto {
 interface MetricsSubData {
   getMetricByTabSub: LatestMetricSubRes;
   getMetricStatSub: LatestMetricSubRes;
+  getSiteMetricByTabSub: LatestMetricSubRes;
+  getSiteMetricStatSub: LatestMetricSubRes;
+  getMetricBySiteSub: LatestMetricSubRes;
+}
+export interface ActiveView {
+  graphType: Graphs_Type;
+  kpi: KPIType;
 }
 
 export interface TMetricResDto {
   data: MetricsSubData;
 }
+export type KPIType =
+  | 'node'
+  | 'solar'
+  | 'controller'
+  | 'battery'
+  | 'backhaul'
+  | 'switch';
 
 export type TNodePoolData = {
   id: string;
