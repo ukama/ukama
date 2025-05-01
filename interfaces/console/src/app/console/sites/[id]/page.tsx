@@ -76,7 +76,6 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
   const {
     setSnackbarMessage,
-    network,
     setSelectedDefaultSite,
     user,
     env,
@@ -134,11 +133,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     },
   });
+
   useEffect(() => {
     return () => {
       cleanupSubscriptions();
     };
   }, [cleanupSubscriptions]);
+
   const handleViewChange = useCallback(
     (kpiType: string): void => {
       const graphType = kpiToGraphType[kpiType] || Graphs_Type.Solar;
@@ -192,11 +193,10 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   );
 
   const { data: siteData, loading: sitesLoading } = useGetSitesQuery({
-    skip: !network.id,
-    nextFetchPolicy: 'network-only',
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-first',
+    nextFetchPolicy: 'cache-and-network',
     variables: {
-      data: { networkId: network.id },
+      data: {},
     },
     onError: (error) => {
       setSnackbarMessage({
@@ -209,7 +209,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   });
 
   const [fetchNodesForSite] = useGetNodesLazyQuery({
-    fetchPolicy: 'network-only',
+    fetchPolicy: 'cache-first',
     onCompleted: (data) => {
       const nodeIds = data.getNodes.nodes
         .filter(

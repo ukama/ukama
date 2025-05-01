@@ -19,22 +19,15 @@ interface IMetricStatBySiteSubscription {
   nodeIds?: string[];
 }
 
-interface SubscriptionController {
-  controller: AbortController;
-  lastActivity: number;
-}
+const activeSubscriptions = new Map<string, AbortController>();
 
-const activeSubscriptions = new Map<string, SubscriptionController>();
+function parseEvent(eventStr: string) {
+  if (!eventStr || eventStr.startsWith(':')) return null;
 
-function parseEvent(eventStr: string): {
-  data?: string;
-  id?: string;
-  event?: string;
-} {
-  const event: { data?: string; id?: string; event?: string } = {};
+  const event: any = {};
   const lines = eventStr.split('\n');
 
-  for (const line of lines) {
+  for (let line of lines) {
     if (line.startsWith('data:')) {
       event.data = line.slice(5).trim();
     } else if (line.startsWith('id:')) {
@@ -44,148 +37,152 @@ function parseEvent(eventStr: string): {
     }
   }
 
-  return event;
+  return event.data || event.id || event.event ? event : null;
 }
 
 export default function MetricStatBySiteSubscription(
   params: IMetricStatBySiteSubscription,
-): { cancel: () => void } {
+) {
   const { url, key, from, type, userId, siteIds, nodeIds, orgName } = params;
 
   if (activeSubscriptions.has(key)) {
-    const { controller } = activeSubscriptions.get(key)!;
-    controller.abort();
+    const existingController = activeSubscriptions.get(key)!;
+    existingController.abort();
     activeSubscriptions.delete(key);
   }
 
+  const queryParams = new URLSearchParams();
+  const variables = {
+    data: {
+      siteIds,
+      orgName,
+      type,
+      userId,
+      from,
+      ...(nodeIds && nodeIds.length > 0 && { nodeIds }),
+    },
+  };
+
+  queryParams.set(
+    'query',
+    'subscription SiteMetricStatSub($data: SubSiteMetricsStatInput!) { getSiteMetricStatSub(data: $data) { msg siteId nodeId success type value } }',
+  );
+  queryParams.set('variables', JSON.stringify(variables));
+  queryParams.set('operationName', 'SiteMetricStatSub');
+
+  const fullUrl = `${url}/graphql?${queryParams.toString()}`;
+
   const controller = new AbortController();
+  activeSubscriptions.set(key, controller);
 
-  activeSubscriptions.set(key, {
-    controller,
-    lastActivity: Date.now(),
-  });
+  const myHeaders = new Headers();
+  myHeaders.append('Cache-Control', 'no-cache');
+  myHeaders.append('Connection', 'keep-alive');
+  myHeaders.append('Pragma', 'no-cache');
+  myHeaders.append('Sec-Fetch-Dest', 'empty');
+  myHeaders.append('Sec-Fetch-Mode', 'cors');
+  myHeaders.append('Sec-Fetch-Site', 'same-origin');
+  myHeaders.append('accept', 'text/event-stream');
 
-  const headers = new Headers({
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    Pragma: 'no-cache',
-    accept: 'text/event-stream',
-  });
+  const requestOptions = {
+    method: 'GET',
+    headers: myHeaders,
+    signal: controller.signal,
+  };
 
-  const siteIdsParam = encodeURIComponent(JSON.stringify(siteIds));
-  let fullUrl = `${url}/graphql?query=subscription+SiteMetricStatSub%28%24data%3ASubSiteMetricsStatInput%21%29%7BgetSiteMetricStatSub%28data%3A%24data%29%7Bmsg+siteId+nodeId+success+type+value%7D%7D&variables=%7B%22data%22%3A%7B%22siteIds%22%3A${siteIdsParam}%2C%22orgName%22%3A%22${orgName}%22%2C%22type%22%3A%22${type}%22%2C%22userId%22%3A%22${userId}%22%2C%22from%22%3A${from}`;
-
-  if (nodeIds && nodeIds.length > 0) {
-    const nodeIdsParam = encodeURIComponent(JSON.stringify(nodeIds));
-    fullUrl += `%2C%22nodeIds%22%3A${nodeIdsParam}`;
-  }
-
-  fullUrl += `%7D%7D&operationName=SiteMetricStatSub&extensions=%7B%7D`;
-
-  const unloadListener = () => {
+  const handleBeforeUnload = () => {
     if (activeSubscriptions.has(key)) {
-      activeSubscriptions.get(key)!.controller.abort();
+      const controller = activeSubscriptions.get(key)!;
+      controller.abort();
       activeSubscriptions.delete(key);
     }
   };
+  window.addEventListener('beforeunload', handleBeforeUnload);
 
-  window.addEventListener('beforeunload', unloadListener);
+  const MAX_BUFFER_SIZE = 25000;
 
-  const cleanupToken = PubSub.subscribe(`cleanup-${key}`, () => {
-    if (activeSubscriptions.has(key)) {
-      activeSubscriptions.get(key)!.controller.abort();
-      activeSubscriptions.delete(key);
-      window.removeEventListener('beforeunload', unloadListener);
-      PubSub.unsubscribe(cleanupToken);
-    }
-  });
-
-  (async () => {
+  async function startSSE() {
     try {
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers,
-        signal: controller.signal,
-      });
+      const response = await fetch(fullUrl, requestOptions);
 
-      if (!response || !response.ok) {
-        console.error(
-          `Network error for subscription ${key}: ${response?.status}`,
-        );
-        return;
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP Error ${response.status}`);
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        console.error('Could not get reader from response body');
-        return;
-      }
-
+      const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
-      const MAX_BUFFER_SIZE = 50000;
 
-      while (!controller.signal.aborted) {
+      let activityTimeout: any = null;
+      const resetActivityTimeout = () => {
+        if (activityTimeout) clearTimeout(activityTimeout);
+        activityTimeout = setTimeout(
+          () => {
+            console.log('Connection timeout, closing...');
+            controller.abort();
+            activeSubscriptions.delete(key);
+          },
+          5 * 60 * 1000,
+        );
+      };
+      resetActivityTimeout();
+
+      while (true) {
+        if (controller.signal.aborted) break;
+
         const { value, done } = await reader.read();
 
-        if (done) {
-          break;
-        }
+        if (done) break;
 
-        if (activeSubscriptions.has(key)) {
-          activeSubscriptions.get(key)!.lastActivity = Date.now();
-        }
+        resetActivityTimeout();
 
-        buffer += decoder.decode(value, { stream: true });
-
-        if (buffer.length > MAX_BUFFER_SIZE) {
+        const chunk = decoder.decode(value, { stream: true });
+        if (buffer.length + chunk.length > MAX_BUFFER_SIZE) {
           buffer = buffer.slice(-MAX_BUFFER_SIZE / 2);
         }
+        buffer += chunk;
 
         let eventBoundary = buffer.indexOf('\n\n');
         while (eventBoundary !== -1) {
           const eventStr = buffer.slice(0, eventBoundary).trim();
           buffer = buffer.slice(eventBoundary + 2);
 
-          if (eventStr !== ':') {
-            const event = parseEvent(eventStr);
-            if (event.data) {
-              PubSub.publish(key, event.data);
-            }
+          const parsedEvent = parseEvent(eventStr);
+          if (parsedEvent?.data) {
+            PubSub.publish(key, parsedEvent.data);
           }
 
           eventBoundary = buffer.indexOf('\n\n');
         }
       }
-    } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Error in SSE subscription:', error);
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Fetch aborted');
+      } else {
+        console.error('SSE connection error:', error);
+
+        if (activeSubscriptions.has(key)) {
+          setTimeout(() => {
+            console.log('Attempting to reconnect...');
+            startSSE();
+          }, 2000);
+        }
       }
     } finally {
-      console.log(`SSE connection for ${key} has ended`);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     }
-  })();
+  }
 
-  const idleCheckInterval = setInterval(() => {
-    if (activeSubscriptions.has(key)) {
-      const { lastActivity, controller } = activeSubscriptions.get(key)!;
-      const inactiveTime = Date.now() - lastActivity;
-
-      if (inactiveTime > 5 * 60 * 1000) {
-        controller.abort();
-        activeSubscriptions.delete(key);
-        clearInterval(idleCheckInterval);
-        window.removeEventListener('beforeunload', unloadListener);
-      }
-    } else {
-      clearInterval(idleCheckInterval);
-    }
-  }, 60000);
+  startSSE();
 
   return {
     cancel: () => {
-      PubSub.publish(`cleanup-${key}`, null);
-      clearInterval(idleCheckInterval);
+      if (activeSubscriptions.has(key)) {
+        const controller = activeSubscriptions.get(key)!;
+        controller.abort();
+        activeSubscriptions.delete(key);
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
     },
   };
 }

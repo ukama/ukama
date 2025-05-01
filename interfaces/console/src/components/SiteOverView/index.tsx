@@ -65,7 +65,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
     if (uptimePercentageMetric?.value !== undefined) {
       const value = uptimePercentageMetric.value;
       const numValue = typeof value === 'number' ? value : parseFloat(value);
-      setUptimePercentage(Math.floor(numValue));
+      setUptimePercentage(Math.round(numValue));
     }
 
     if (uptimeSecondsMetric?.value !== undefined) {
@@ -83,7 +83,7 @@ const SiteOverview: React.FC<SiteOverviewProps> = ({
         `stat-${SITE_KPI_TYPES.SITE_UPTIME_PERCENTAGE}`,
         (topic, value) => {
           if (value.length > 0) {
-            setUptimePercentage(Math.floor(value[1]));
+            setUptimePercentage(Math.round(value[1]));
           }
         },
       ),

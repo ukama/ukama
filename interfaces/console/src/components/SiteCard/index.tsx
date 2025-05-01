@@ -9,6 +9,13 @@ import colors from '@/theme/colors';
 import { getStatusStyles } from '@/utils';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PeopleIcon from '@mui/icons-material/People';
+import RouterIcon from '@mui/icons-material/Router';
+import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
+import Battery50Icon from '@mui/icons-material/Battery50';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
+import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import {
   Box,
   Card,
@@ -184,20 +191,30 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       window.location.href = `/console/sites/${siteId}`;
     }, [siteId]);
 
+    // Updated to always provide icons with appropriate colors
     const connectionStyles =
       uptimeValue !== null
         ? getStatusStyles('uptime', uptimeValue)
-        : { icon: null, color: colors.darkGray };
+        : {
+            icon: <RouterIcon sx={{ color: colors.darkGray }} />,
+            color: colors.darkGray,
+          };
 
     const batteryStyles =
       batteryValue !== null
         ? getStatusStyles('battery', batteryValue)
-        : { icon: null, color: colors.darkGray };
+        : {
+            icon: <BatteryAlertIcon sx={{ color: colors.darkGray }} />,
+            color: colors.darkGray,
+          };
 
     const signalStyles =
       backhaulValue !== null
         ? getStatusStyles('signal', backhaulValue)
-        : { icon: null, color: colors.darkGray };
+        : {
+            icon: <SignalCellularOffIcon sx={{ color: colors.darkGray }} />,
+            color: colors.darkGray,
+          };
 
     return (
       <Card
@@ -268,91 +285,75 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           <Box display="flex" mt={3} gap={4}>
             <Box display="flex" alignItems="center" gap={1}>
               {loading || userCount === undefined || userCount === null ? (
-                <Skeleton width={24} height={24} variant="rectangular" />
+                <>
+                  <PeopleIcon sx={{ color: colors.darkGray }} />
+                  <Typography variant="body2" sx={{ color: colors.darkGray }}>
+                    0
+                  </Typography>
+                </>
               ) : (
-                <PeopleIcon sx={{ color: colors.darkGray }} />
+                <>
+                  <PeopleIcon sx={{ color: colors.darkGray }} />
+                  <Typography variant="body2" sx={{ color: colors.darkGray }}>
+                    {userCount}
+                  </Typography>
+                </>
               )}
-              <Typography variant="body2" sx={{ color: colors.darkGray }}>
-                {loading || userCount === undefined || userCount === null ? (
-                  <Skeleton width={30} />
-                ) : (
-                  userCount
-                )}
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1}>
+              {connectionStyles.icon}
+              <Typography
+                variant="body2"
+                sx={{
+                  color: connectionStyles.color,
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              >
+                {loading || uptimeValue === null
+                  ? 'Pending'
+                  : uptimeValue <= 0
+                    ? 'Offline'
+                    : 'Online'}
               </Typography>
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || uptimeValue === null ? (
-                <>
-                  <Skeleton width={24} height={24} variant="circular" />
-                  <Skeleton width={60} />
-                </>
-              ) : (
-                <>
-                  {connectionStyles.icon}
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: connectionStyles.color,
-                      display: { xs: 'none', sm: 'block' },
-                    }}
-                  >
-                    {uptimeValue <= 0 ? 'Offline' : 'Online'}
-                  </Typography>
-                </>
-              )}
+              {batteryStyles.icon}
+              <Typography
+                variant="body2"
+                sx={{
+                  color: batteryStyles.color,
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              >
+                {loading || batteryValue === null
+                  ? 'Pending'
+                  : batteryValue < 20
+                    ? 'Critical'
+                    : batteryValue < 40
+                      ? 'Low'
+                      : 'Charged'}
+              </Typography>
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || batteryValue === null ? (
-                <>
-                  <Skeleton width={24} height={24} variant="circular" />
-                  <Skeleton width={70} />
-                </>
-              ) : (
-                <>
-                  {batteryStyles.icon}
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: batteryStyles.color,
-                      display: { xs: 'none', sm: 'block' },
-                    }}
-                  >
-                    {batteryValue < 20
-                      ? 'Critical'
-                      : batteryValue < 40
-                        ? 'Low'
-                        : 'Charged'}
-                  </Typography>
-                </>
-              )}
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={1}>
-              {loading || backhaulValue === null ? (
-                <>
-                  <Skeleton width={24} height={24} variant="circular" />
-                  <Skeleton width={60} />
-                </>
-              ) : (
-                <>
-                  {signalStyles.icon}
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: signalStyles.color,
-                      display: { xs: 'none', sm: 'block' },
-                    }}
-                  >
-                    {backhaulValue < 10
-                      ? 'No signal'
-                      : backhaulValue < 70
-                        ? 'Low signal'
-                        : 'Strong'}
-                  </Typography>
-                </>
-              )}
+              {signalStyles.icon}
+              <Typography
+                variant="body2"
+                sx={{
+                  color: signalStyles.color,
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              >
+                {loading || backhaulValue === null
+                  ? 'Pending'
+                  : backhaulValue < 10
+                    ? 'No signal'
+                    : backhaulValue < 70
+                      ? 'Low signal'
+                      : 'Strong'}
+              </Typography>
             </Box>
           </Box>
         </CardContent>
