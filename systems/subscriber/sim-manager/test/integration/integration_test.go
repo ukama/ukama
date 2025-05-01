@@ -53,7 +53,7 @@ func init() {
 func Test_FullFlow(t *testing.T) {
 	// prerequisites
 	// In order for this to pass without errors, we need to substitute all the uuid.NewV4().String()
-	// values with real co-related values comming from subscriber-registry and
+	// values with real co-related values coming from subscriber-registry and
 	// data-plan/packages with available sims in sim-pool.
 
 	// we need real subscriberID from subscriber-registry
@@ -140,7 +140,7 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("AddPackageForSim", func(t *testing.T) {
+	t.Run("AddPackageForSimWithStartDate", func(t *testing.T) {
 		_, err := c.AddPackageForSim(ctx, &pb.AddPackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: packageID,
@@ -187,8 +187,8 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("DeleteSim", func(t *testing.T) {
-		_, err := c.DeleteSim(ctx, &pb.DeleteSimRequest{
+	t.Run("TerminateSim", func(t *testing.T) {
+		_, err := c.TerminateSim(ctx, &pb.TerminateSimRequest{
 			SimId: simResp.Sim.Id,
 		})
 

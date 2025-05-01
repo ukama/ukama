@@ -53,13 +53,9 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		simType := ukama.ParseSimType(msg.Type)
-
-		if simType == ukama.SimTypeOperatorData {
-			err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
-			if err != nil {
-				return nil, err
-			}
+		err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
+		if err != nil {
+			return nil, err
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.payments.processor.payment.success"):
@@ -368,7 +364,7 @@ func unmarshalUkamaAgentCdrCreate(msg *anypb.Any) (*epb.CDRReported, error) {
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal UkamaAgent CDRReprted message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal UkamaAgent CDRReported message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

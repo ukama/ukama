@@ -73,7 +73,7 @@ type simManager interface {
 	ToggleSimStatus(simId string, status string) (*simMangPb.ToggleSimStatusResponse, error)
 	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.AddPackageResponse, error)
 	RemovePackageForSim(req *simMangPb.RemovePackageRequest) (*simMangPb.RemovePackageResponse, error)
-	DeleteSim(simId string) (*simMangPb.DeleteSimResponse, error)
+	TerminateSim(simId string) (*simMangPb.TerminateSimResponse, error)
 	ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
 		toEndDate string, isActive, asExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
@@ -182,7 +182,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET("/:sim_id", formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
 		sim.POST("/", formatDoc("Allocate a new SIM to given subscriber", ""), tonic.Handler(r.allocateSim, http.StatusCreated))
 		sim.PATCH("/:sim_id", formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
-		sim.DELETE("/:sim_id", formatDoc("Delete the a given SIM", ""), tonic.Handler(r.deleteSim, http.StatusOK))
+		sim.DELETE("/:sim_id", formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
 		sim.GET("/:sim_id/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST("/:sim_id/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
 		sim.PATCH("/:sim_id/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
@@ -403,8 +403,8 @@ func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) 
 	return res, nil
 }
 
-func (r *Router) deleteSim(c *gin.Context, req *SimReq) (*simMangPb.DeleteSimResponse, error) {
-	res, err := r.clients.sm.DeleteSim(req.SimId)
+func (r *Router) terminateSim(c *gin.Context, req *SimReq) (*simMangPb.TerminateSimResponse, error) {
+	res, err := r.clients.sm.TerminateSim(req.SimId)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +451,7 @@ func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) 
 	return res, nil
 }
 
-// Deprecated: Use pkg.rest.Router.lisPackagesForSim instead.
+// Deprecated: Use pkg.rest.Router.listPackagesForSim instead.
 func (r *Router) getPackagesForSim(c *gin.Context, req *SimReq) (*simMangPb.GetPackagesForSimResponse, error) {
 	res, err := r.clients.sm.GetPackagesForSim(req.SimId)
 	if err != nil {
@@ -508,7 +508,7 @@ func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {
 	for i, iter := range req.SimInfo {
 		list[i] = &simPoolPb.AddSim{
 			Iccid:          iter.Iccid,
-			Msisdn:         iter.Msidn,
+			Msisdn:         iter.Msisdn,
 			ActivationCode: iter.ActivationCode,
 			IsPhysical:     iter.IsPhysicalSim,
 			QrCode:         iter.QrCode,
