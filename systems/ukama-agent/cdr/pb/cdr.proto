@@ -11,18 +11,21 @@ import "validator.proto";
 
     /// Add new CDR to the database
     rpc PostCDR(CDR) returns (CDRResp);
-    
+
     /// Get CDR from the database
     rpc GetCDR(RecordReq) returns (RecordResp);
 
     /// Get Usage for the subscriber current package
-    rpc GetUsage(UsageReq) returns (UsageResp); 
+    rpc GetUsage(UsageReq) returns (UsageResp);
 
     /// Get Usage for the subscriber current package
-    rpc GetUsageForPeriod(UsageForPeriodReq) returns (UsageForPeriodResp); 
-   
-     /// Get Usage detsilsfor the subscriber current cycle
-     rpc GetUsageDetails(CycleUsageReq) returns (CycleUsageResp); 
+    rpc GetUsageForPeriod(UsageForPeriodReq) returns (UsageForPeriodResp);
+
+    /// Get Usage detsils for the subscriber current cycle
+    rpc GetUsageDetails(CycleUsageReq) returns (CycleUsageResp);
+
+    /// Query Usage with various filtering params
+    rpc QueryUsage(QueryUsageReq) returns (QueryUsageResp);
 }
 
 message CDR {
@@ -41,7 +44,7 @@ message CDR {
 }
 
 message CDRResp {
- 
+
 }
 
 message RecordReq {
@@ -93,4 +96,20 @@ message UsageForPeriodReq {
 
 message UsageForPeriodResp {
   uint64 Usage = 1;
+}
+
+
+message QueryUsageReq {
+    string Imsi = 1;
+    string NodeId = 2;
+    uint64 Session = 3;
+    uint64 From = 4;
+    uint64 To = 5;
+    repeated string Policies = 6;
+    uint32 Count = 7;
+    bool Sort = 8;
+}
+
+message QueryUsageResp {
+    uint64 Usage = 1;
 }

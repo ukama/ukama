@@ -5,16 +5,20 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package db
 
 import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/lib/pq"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
+	"github.com/ukama/ukama/systems/common/sql"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // declare interface so that we can mock it
@@ -26,6 +30,9 @@ type CDRRepo interface {
 	GetByPolicy(imsi string, policy string) (*[]CDR, error)
 	GetByTime(imsi string, startTime uint64, endTime uint64) (*[]CDR, error)
 	GetByTimeAndNodeId(imsi string, startTime uint64, endTime uint64, nodeid string) (*[]CDR, error)
+
+	QueryUsage(imsi, nodeId string, session, from, to uint64,
+		policies []string, count uint32, sort bool) (uint64, error)
 }
 
 type cdrRepo struct {
@@ -138,4 +145,52 @@ func (p *cdrRepo) GetByPolicy(imsi string, policy string) (*[]CDR, error) {
 		return nil, r.Error
 	}
 	return &cdr, nil
+}
+
+func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
+	policies []string, count uint32, sort bool) (uint64, error) {
+	type Usage struct {
+		Date  time.Time
+		Total uint64
+	}
+
+	var usage Usage
+
+	tx := p.db.GetGormDb().Preload(clause.Associations)
+
+	if imsi != "" {
+		tx = tx.Where("imsi = ?", imsi)
+	}
+
+	if session > 0 {
+		tx = tx.Where("session = ?", session)
+	}
+
+	if from > 0 {
+		tx = tx.Where("start_time >= ?", from)
+	}
+
+	if to > 0 {
+		tx = tx.Where("end_time <= ?", to)
+	}
+
+	if policies != nil {
+		tx = tx.Where("policy IN ?", pq.StringArray(policies))
+	}
+
+	if sort {
+		tx = tx.Order("created_at DESC")
+	}
+
+	if count > 0 {
+		tx = tx.Limit(int(count))
+	}
+
+	// result := tx.Find(&cdrs)
+	result := tx.Select("sum(total_bytes) as  total").First(&usage)
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return usage.Total, nil
 }

@@ -210,6 +210,34 @@ func (_m *CDRRepo) GetByTimeAndNodeId(imsi string, startTime uint64, endTime uin
 	return r0, r1
 }
 
+// QueryUsage provides a mock function with given fields: imsi, nodeId, session, from, to, policies, count, sort
+func (_m *CDRRepo) QueryUsage(imsi string, nodeId string, session uint64, from uint64, to uint64, policies []string, count uint32, sort bool) (uint64, error) {
+	ret := _m.Called(imsi, nodeId, session, from, to, policies, count, sort)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryUsage")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) (uint64, error)); ok {
+		return rf(imsi, nodeId, session, from, to, policies, count, sort)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) uint64); ok {
+		r0 = rf(imsi, nodeId, session, from, to, policies, count, sort)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) error); ok {
+		r1 = rf(imsi, nodeId, session, from, to, policies, count, sort)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewCDRRepo creates a new instance of CDRRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewCDRRepo(t interface {
