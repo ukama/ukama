@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	agent "github.com/ukama/ukama/systems/common/rest/client/ukamaagent"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 )
@@ -49,6 +50,7 @@ type WMessage struct {
 	Profile   cenums.Profile `json:"profile"`
 	NodeId    string         `json:"node_id"`
 	CDRClient clients.CDRClient
+	Agent     agent.UkamaAgentClient `json:"agent"`
 }
 
 func NewConfig(name string) *Config {
