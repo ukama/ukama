@@ -128,7 +128,6 @@ export default async function MetricStatSubscription({
         const { value, done } = (await reader?.read()) || {};
 
         if (done) {
-          console.log('Stream complete');
           break;
         }
 
@@ -148,20 +147,25 @@ export default async function MetricStatSubscription({
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Stream aborted');
       } else {
         console.error('Stream error:', error);
       }
     } finally {
       try {
-        await reader?.cancel();
-      } catch (error) {
-        console.error('Error canceling reader:', error);
+        if (reader && !reader.closed) {
+          await reader.cancel();
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Error canceling reader:', error);
+        }
       }
     }
   };
 
-  processStream();
+  processStream().catch((error) => {
+    console.error('Error in processStream:', error);
+  });
 
   return controller;
 }
