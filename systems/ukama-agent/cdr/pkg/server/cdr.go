@@ -116,6 +116,26 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		log.Errorf("Error updating usage for imsi %s", err)
 	}
 
+	usage, err := s.cdrRepo.QueryUsage(req.Imsi, "", 0, 0, 0, []string{cdr.Policy}, 0, false)
+	if err != nil {
+		return nil, err
+	}
+
+	asr, err := s.asrClient.GetAsr(cdr.Imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == cdr.Policy {
+		labels := map[string]string{
+			"package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			"network":  asr.Record.NetworkId,
+			"iccid":    asr.Record.Iccid,
+		}
+
+		pushDataUsageMetrics(float64(usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
+			cdr.Policy)
+	}
+
 	/* Publish event for new CDR */
 	e := dbCDRToepbCDR(*cdr)
 	if s.msgbus != nil {
@@ -207,9 +227,9 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	asr, err := s.asrClient.GetAsr(imsi)
 	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
 		labels := map[string]string{
-			// "package":  asr.Record.SimPackageId,
+			"package":  asr.Record.SimPackageId,
 			"dataplan": asr.Record.PackageId,
-			// "network":  asr.Record.Network,
+			"network":  asr.Record.NetworkId,
 		}
 
 		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
@@ -301,7 +321,22 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 	return usage, nil
 }
 
-/* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and rport the usage */
+func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
+	log.Debugf("Received Usage query request %+v", req)
+
+	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debugf("usage query success: %+v", usage)
+
+	return &pb.QueryUsageResp{
+		Usage: usage,
+	}, nil
+}
+
+/* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and report the usage */
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
@@ -509,20 +544,6 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	if err != nil {
 		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
-	}
-
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == u.Policy {
-		labels := map[string]string{
-			// "package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			// "network":  asr.Record.Network,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			u.Policy)
 	}
 
 	log.Infof("Updated usage for imsi %s to %+v", u.Imsi, u)

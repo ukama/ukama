@@ -116,3 +116,9 @@ func (this *UsageForPeriodReq) Validate() error {
 func (this *UsageForPeriodResp) Validate() error {
 	return nil
 }
+func (this *QueryUsageReq) Validate() error {
+	return nil
+}
+func (this *QueryUsageResp) Validate() error {
+	return nil
+}

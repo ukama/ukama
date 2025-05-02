@@ -28,6 +28,8 @@ type CDR struct {
 type CDRService interface {
 	GetUsage(req string) (*pb.UsageResp, error)
 	GetUsageForPeriod(imsi string, startTime uint64, endTime uint64) (*pb.UsageForPeriodResp, error)
+	QueryUsage(imsi, nodeId string, session, from, to uint64,
+		policies []string, count uint32, sort bool) (*pb.QueryUsageResp, error)
 }
 
 func NewCDR(cdr string, timeout time.Duration) (*CDR, error) {
@@ -70,4 +72,23 @@ func (c *CDR) GetUsageForPeriod(imsi string, startTime uint64, endTime uint64) (
 	}
 
 	return c.client.GetUsageForPeriod(ctx, req)
+}
+
+func (c *CDR) QueryUsage(imsi, nodeId string, session, from, to uint64,
+	policies []string, count uint32, sort bool) (*pb.QueryUsageResp, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	req := &pb.QueryUsageReq{
+		Imsi:     imsi,
+		NodeId:   nodeId,
+		Session:  session,
+		From:     from,
+		To:       to,
+		Policies: policies,
+		Count:    count,
+		Sort:     sort,
+	}
+
+	return c.client.QueryUsage(ctx, req)
 }

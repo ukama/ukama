@@ -95,3 +95,10 @@ func (a *Asr) GetUsageForPeriod(req *pb.UsageForPeriodReq) (*pb.UsageResp, error
 
 	return a.client.GetUsageForPeriod(ctx, req)
 }
+
+func (a *Asr) QueryUsage(req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.QueryUsage(ctx, req)
+}

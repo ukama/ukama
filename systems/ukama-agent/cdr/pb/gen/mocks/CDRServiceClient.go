@@ -201,6 +201,43 @@ func (_m *CDRServiceClient) PostCDR(ctx context.Context, in *gen.CDR, opts ...gr
 	return r0, r1
 }
 
+// QueryUsage provides a mock function with given fields: ctx, in, opts
+func (_m *CDRServiceClient) QueryUsage(ctx context.Context, in *gen.QueryUsageReq, opts ...grpc.CallOption) (*gen.QueryUsageResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryUsage")
+	}
+
+	var r0 *gen.QueryUsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryUsageReq, ...grpc.CallOption) (*gen.QueryUsageResp, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryUsageReq, ...grpc.CallOption) *gen.QueryUsageResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryUsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.QueryUsageReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewCDRServiceClient creates a new instance of CDRServiceClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewCDRServiceClient(t interface {

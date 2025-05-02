@@ -72,6 +72,36 @@ func (_m *CDRService) GetUsageForPeriod(imsi string, startTime uint64, endTime u
 	return r0, r1
 }
 
+// QueryUsage provides a mock function with given fields: imsi, nodeId, session, from, to, policies, count, sort
+func (_m *CDRService) QueryUsage(imsi string, nodeId string, session uint64, from uint64, to uint64, policies []string, count uint32, sort bool) (*gen.QueryUsageResp, error) {
+	ret := _m.Called(imsi, nodeId, session, from, to, policies, count, sort)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryUsage")
+	}
+
+	var r0 *gen.QueryUsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) (*gen.QueryUsageResp, error)); ok {
+		return rf(imsi, nodeId, session, from, to, policies, count, sort)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) *gen.QueryUsageResp); ok {
+		r0 = rf(imsi, nodeId, session, from, to, policies, count, sort)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryUsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, uint64, uint64, uint64, []string, uint32, bool) error); ok {
+		r1 = rf(imsi, nodeId, session, from, to, policies, count, sort)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewCDRService creates a new instance of CDRService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewCDRService(t interface {

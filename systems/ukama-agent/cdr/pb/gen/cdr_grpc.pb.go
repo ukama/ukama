@@ -24,6 +24,7 @@ const (
 	CDRService_GetUsage_FullMethodName          = "/ukama.ukamaagent.cdr.v1.CDRService/GetUsage"
 	CDRService_GetUsageForPeriod_FullMethodName = "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageForPeriod"
 	CDRService_GetUsageDetails_FullMethodName   = "/ukama.ukamaagent.cdr.v1.CDRService/GetUsageDetails"
+	CDRService_QueryUsage_FullMethodName        = "/ukama.ukamaagent.cdr.v1.CDRService/QueryUsage"
 )
 
 // CDRServiceClient is the client API for CDRService service.
@@ -38,8 +39,10 @@ type CDRServiceClient interface {
 	GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error)
 	// / Get Usage for the subscriber current package
 	GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageForPeriodResp, error)
-	// / Get Usage detsilsfor the subscriber current cycle
+	// / Get Usage detsils for the subscriber current cycle
 	GetUsageDetails(ctx context.Context, in *CycleUsageReq, opts ...grpc.CallOption) (*CycleUsageResp, error)
+	// / Query Usage with various filtering params
+	QueryUsage(ctx context.Context, in *QueryUsageReq, opts ...grpc.CallOption) (*QueryUsageResp, error)
 }
 
 type cDRServiceClient struct {
@@ -100,6 +103,16 @@ func (c *cDRServiceClient) GetUsageDetails(ctx context.Context, in *CycleUsageRe
 	return out, nil
 }
 
+func (c *cDRServiceClient) QueryUsage(ctx context.Context, in *QueryUsageReq, opts ...grpc.CallOption) (*QueryUsageResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryUsageResp)
+	err := c.cc.Invoke(ctx, CDRService_QueryUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CDRServiceServer is the server API for CDRService service.
 // All implementations must embed UnimplementedCDRServiceServer
 // for forward compatibility.
@@ -112,8 +125,10 @@ type CDRServiceServer interface {
 	GetUsage(context.Context, *UsageReq) (*UsageResp, error)
 	// / Get Usage for the subscriber current package
 	GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageForPeriodResp, error)
-	// / Get Usage detsilsfor the subscriber current cycle
+	// / Get Usage detsils for the subscriber current cycle
 	GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error)
+	// / Query Usage with various filtering params
+	QueryUsage(context.Context, *QueryUsageReq) (*QueryUsageResp, error)
 	mustEmbedUnimplementedCDRServiceServer()
 }
 
@@ -138,6 +153,9 @@ func (UnimplementedCDRServiceServer) GetUsageForPeriod(context.Context, *UsageFo
 }
 func (UnimplementedCDRServiceServer) GetUsageDetails(context.Context, *CycleUsageReq) (*CycleUsageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsageDetails not implemented")
+}
+func (UnimplementedCDRServiceServer) QueryUsage(context.Context, *QueryUsageReq) (*QueryUsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryUsage not implemented")
 }
 func (UnimplementedCDRServiceServer) mustEmbedUnimplementedCDRServiceServer() {}
 func (UnimplementedCDRServiceServer) testEmbeddedByValue()                    {}
@@ -250,6 +268,24 @@ func _CDRService_GetUsageDetails_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CDRService_QueryUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryUsageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CDRServiceServer).QueryUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CDRService_QueryUsage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CDRServiceServer).QueryUsage(ctx, req.(*QueryUsageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CDRService_ServiceDesc is the grpc.ServiceDesc for CDRService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -276,6 +312,10 @@ var CDRService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsageDetails",
 			Handler:    _CDRService_GetUsageDetails_Handler,
+		},
+		{
+			MethodName: "QueryUsage",
+			Handler:    _CDRService_QueryUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -134,6 +134,36 @@ func (_m *AsrRecordServiceServer) Inactivate(_a0 context.Context, _a1 *gen.Inact
 	return r0, r1
 }
 
+// QueryUsage provides a mock function with given fields: _a0, _a1
+func (_m *AsrRecordServiceServer) QueryUsage(_a0 context.Context, _a1 *gen.QueryUsageReq) (*gen.QueryUsageResp, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryUsage")
+	}
+
+	var r0 *gen.QueryUsageResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryUsageReq) (*gen.QueryUsageResp, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryUsageReq) *gen.QueryUsageResp); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryUsageResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.QueryUsageReq) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Read provides a mock function with given fields: _a0, _a1
 func (_m *AsrRecordServiceServer) Read(_a0 context.Context, _a1 *gen.ReadReq) (*gen.ReadResp, error) {
 	ret := _m.Called(_a0, _a1)

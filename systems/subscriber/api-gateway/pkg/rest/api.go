@@ -58,7 +58,7 @@ type Subscriber struct {
 	Email                 string `json:"email" validate:"email,required"`
 	Phone                 string `json:"phone" validate:"required"`
 	Dob                   string `json:"dob" validate:"required"`
-	ProofOfIdentification string `json:"proof_of_Identification" validate:"required"`
+	ProofOfIdentification string `json:"proof_of_identification" validate:"required"`
 	IdSerial              string `json:"id_serial" validate:"required"`
 	Address               string `json:"address" validate:"required"`
 	SimList               []SIM  `json:"sims" validate:"required"`
@@ -122,7 +122,7 @@ type SubscriberUpdateReq struct {
 	Name                  string `example:"John" json:"name" validate:"required"`
 	Phone                 string `example:"4151231234" json:"phone"`
 	Address               string `example:"Mr John Smith. 132, My Street, Kingston, New York 12401" json:"address"`
-	ProofOfIdentification string `example:"passport" json:"proof_of_Identification"`
+	ProofOfIdentification string `example:"passport" json:"proof_of_identification"`
 	IdSerial              string `example:"123456789" json:"id_serial"`
 }
 
