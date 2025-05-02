@@ -19,6 +19,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	agent "github.com/ukama/ukama/systems/common/rest/client/ukamaagent"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	dspb "github.com/ukama/ukama/testing/services/dummy/dsimfactory/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
@@ -42,11 +43,13 @@ type DsubscriberServer struct {
 	iccidWithIMSI      map[string]string
 	nodeClient         creg.NodeClient
 	dsimfactoryService providers.DsimfactoryProvider
+	ukamaAgentClient   agent.UkamaAgentClient
 }
 
-func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, rc pkg.RoutineConfig, nodeC creg.NodeClient, cdrC clients.CDRClient, dsimfactoryService providers.DsimfactoryProvider) *DsubscriberServer {
+func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, rc pkg.RoutineConfig, nodeC creg.NodeClient, cdrC clients.CDRClient, dsimfactoryService providers.DsimfactoryProvider, ua agent.UkamaAgentClient) *DsubscriberServer {
 	return &DsubscriberServer{
 		routineConfig:      rc,
+		ukamaAgentClient:   ua,
 		cdrcClient:         cdrC,
 		nodeClient:         nodeC,
 		msgbus:             msgBus,
