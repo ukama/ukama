@@ -78,18 +78,11 @@ query GetMetricByTab($data: GetMetricByTabInput!) {
       success
       type
       values
+      networkId
+      siteId
+      packageId
+      dataPlanId
     }
-  }
-}
-
-subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
-  getMetricByTabSub(data: $data) {
-    msg
-    nodeId
-    siteId
-    success
-    type
-    value
   }
 }
 
@@ -102,6 +95,9 @@ query GetMetricsStat($data: GetMetricsStatInput!) {
       siteId
       type
       value
+      networkId
+      packageId
+      dataPlanId
     }
   }
 }
@@ -135,5 +131,9 @@ subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
     success
     type
     value
+    networkId
+    siteId
+    packageId
+    dataPlanId
   }
 }
