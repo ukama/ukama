@@ -327,25 +327,27 @@ const Page = () => {
         cleanupSubscription();
         subscriptionKeyRef.current = sKey;
 
-        const controller = await MetricStatSubscription({
-          key: sKey,
-          userId: user.id,
-          url: env.METRIC_URL,
-          networkId: network.id,
-          orgName: user.orgName,
-          type: Stats_Type.DataUsage,
-          from: statVar?.data.from ?? 0,
-        });
+        if (statVar?.data.withSubscription) {
+          const controller = await MetricStatSubscription({
+            key: sKey,
+            userId: user.id,
+            url: env.METRIC_URL,
+            networkId: network.id,
+            orgName: user.orgName,
+            type: Stats_Type.DataUsage,
+            from: statVar?.data.from ?? 0,
+          });
 
-        subscriptionControllerRef.current = controller;
-        PubSub.subscribe(sKey, handleStatSubscription);
+          subscriptionControllerRef.current = controller;
+          PubSub.subscribe(sKey, handleStatSubscription);
+        }
       }
     },
   });
 
   useEffect(() => {
     const to = getUnixTime();
-    const from = to - 1;
+    const from = to;
     if (network.id) {
       cleanupSubscription();
 
@@ -369,6 +371,7 @@ const Page = () => {
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
     const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    console.log(value);
     if (success) {
       PubSub.publish(`stat-${type}`, value);
     }

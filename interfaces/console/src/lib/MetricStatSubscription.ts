@@ -92,7 +92,7 @@ export default async function MetricStatSubscription({
   }
 
   const queryParams = new URLSearchParams({
-    query: `subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value}}`,
+    query: `subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value networkId packageId dataPlanId}}`,
     operationName: 'MetricStatSub',
     extensions: '{}',
   });

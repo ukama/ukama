@@ -51,6 +51,50 @@ const getErrorRes = (msg: string) =>
     success: false,
   } as MetricRes);
 
+const processMetricResult = (metric: any) => ({
+  msg: metric.msg,
+  type: metric.type,
+  success: metric.success,
+  nodeId: metric.nodeId || "",
+  siteId: metric.siteId || "",
+  networkId: metric.networkId || "",
+  packageId: metric.packageId || "",
+  dataPlanId: metric.dataPlanId || "",
+  value: metric.values[metric.values.length - 1][1],
+});
+
+const handleWebSocketMessage = (data: any, topic: string, pubSub: any) => {
+  if (!data.isError) {
+    try {
+      const res = JSON.parse(data.data);
+      const results = Array.isArray(res.data.result)
+        ? res.data.result
+        : [res.data.result];
+
+      results.forEach((result: any) => {
+        if (result?.metric && result.value?.length > 0) {
+          pubSub.publish(topic, {
+            success: true,
+            msg: "success",
+            type: res.Name,
+            nodeId: result?.metric?.nodeid || "",
+            siteId: result?.metric?.siteid || "",
+            networkId: result?.metric?.network || "",
+            packageId: result?.metric?.package || "",
+            dataPlanId: result?.metric?.dataplan || "",
+            value: [
+              Math.floor(result.value[0]) * 1000,
+              formatKPIValue(res.Name, result.value[1]),
+            ],
+          });
+        }
+      });
+    } catch (error) {
+      logger.error(`Failed to parse WebSocket message: ${error}`);
+    }
+  }
+};
+
 @Resolver(String)
 class SubscriptionsResolvers {
   @Query(() => MetricsStateRes)
@@ -69,7 +113,6 @@ class SubscriptionsResolvers {
     }
 
     const wsUrl = wsUrlResolver(baseURL);
-
     const { type, from, userId, withSubscription, nodeId } = data;
     if (from === 0) throw new Error("Argument 'from' can't be zero.");
 
@@ -79,84 +122,38 @@ class SubscriptionsResolvers {
     if (metricsKey.length > 0) {
       const metricPromises = metricsKey.map(async key => {
         const res = await getNodeMetricRange(baseURL, key, { ...data });
-        logger.info(`Metric response: ${JSON.stringify(res)}`);
-        let avg = 0;
-
-        if (Array.isArray(res.metrics) && res.metrics.length > 0) {
-          if (
-            res.metrics[0].values.length === 1 ||
-            key === "unit_uptime" ||
-            key === "network_uptime" ||
-            key === "data_usage"
-          ) {
-            avg = res.metrics[res.metrics.length - 1].values[1][1];
-          } else {
-            const sum = res.metrics.reduce(
-              (acc, val) => acc + val.values[1][1],
-              0
-            );
-            avg = sum / res.metrics.length;
-          }
+        if (Array.isArray(res.metrics)) {
+          res.metrics.forEach(metric => {
+            metrics.metrics.push(processMetricResult(metric));
+          });
         }
-        return {
-          msg: res.metrics[0].msg,
-          type: res.metrics[0].type,
-          success: res.metrics[0].success,
-          nodeId: res.metrics[0].nodeId || "",
-          siteId: res.metrics[0].siteId || "",
-          networkId: res.metrics[0].networkId || "",
-          packageId: res.metrics[0].packageId || "",
-          dataPlanId: res.metrics[0].dataPlanId || "",
-          value: formatKPIValue(res.metrics[0].type, avg),
-        };
       });
 
-      const m = await Promise.all(metricPromises);
-      metrics.metrics.push(...m);
+      await Promise.all(metricPromises);
     }
 
     if (withSubscription && metrics.metrics.length > 0) {
-      const workerData = {
-        topic: `${userId}-${type}-${from}`,
-        url: `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&metric=${metricsKey.join(
-          ","
-        )}${nodeId ? `&node=${nodeId}` : ""}${
-          data.networkId ? `&network=${data.networkId}` : ""
-        }`,
-      };
+      const topic = `${userId}-${type}-${from}`;
+      const url = `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&metric=${metricsKey.join(
+        ","
+      )}${nodeId ? `&node=${nodeId}` : ""}${
+        data.networkId ? `&network=${data.networkId}` : ""
+      }`;
 
       const worker = new Worker(WS_THREAD, {
-        workerData,
+        workerData: { topic, url },
       });
-      worker.on("message", (_data: any) => {
-        if (!_data.isError) {
-          try {
-            const res = JSON.parse(_data.data);
-            const result = res.data.result[0];
-            if (result && result.metric && result.value.length > 0) {
-              pubSub.publish(workerData.topic, {
-                success: true,
-                msg: "success",
-                type: res.Name,
-                nodeId: data?.nodeId || "",
-                value: [
-                  Math.floor(result.value[0]) * 1000,
-                  formatKPIValue(res.Name, result.value[1]),
-                ],
-              });
-            }
-          } catch (error) {
-            logger.error(`Failed to parse WebSocket message: ${error}`);
-          }
-        }
-      });
+
+      worker.on("message", (data: any) =>
+        handleWebSocketMessage(data, topic, pubSub)
+      );
+
       worker.on("exit", async (code: any) => {
         await store.close();
-        logger.info(
-          `WS_THREAD exited with code [${code}] for ${userId}/${type}/${from}`
-        );
+        logger.info(`WS_THREAD exited with code [${code}] for ${topic}`);
       });
     }
+
     return metrics;
   }
 
