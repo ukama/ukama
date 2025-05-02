@@ -16,7 +16,6 @@ import {
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
-  useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
@@ -102,12 +101,6 @@ const Page = () => {
     },
   });
 
-  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
-    useGetDataUsagesLazyQuery({
-      pollInterval: 180000,
-      fetchPolicy: 'network-only',
-    });
-
   const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
     variables: {
       data: {
@@ -160,15 +153,6 @@ const Page = () => {
             iccid: s.sim[0].iccid,
           });
         }
-      });
-
-      getDataUsages({
-        variables: {
-          data: {
-            for: simUsageData,
-            type: Sim_Types.UkamaData,
-          },
-        },
       });
     },
     onError: (error) => {
@@ -370,10 +354,10 @@ const Page = () => {
 
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
-    console.log(value);
+    const { msg, value, type, success, packageId } =
+      parsedData.data.getMetricStatSub;
     if (success) {
-      PubSub.publish(`stat-${type}`, value);
+      PubSub.publish(`${type}-${packageId}`, value[1]);
     }
   };
 
@@ -433,25 +417,21 @@ const Page = () => {
           const pkg = packagesData?.getPackages.packages.find(
             (pkg) => pkg.uuid === sim?.package?.package_id,
           );
-          const dataUsage = dataUsageData?.getDataUsages.usages.find(
-            (usage) => usage.simId === sim?.id,
-          );
+
           return {
             id: subscriber.uuid,
             name: subscriber.name,
             dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
-            dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
+            pacakgeId: sim?.package?.package_id,
+            // dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
+            dataUsage: '-',
             actions: '',
           };
         });
       }
     },
-    [
-      packagesData?.getPackages.packages,
-      dataUsageData?.getDataUsages.usages,
-      network,
-    ],
+    [packagesData?.getPackages.packages, network],
   );
 
   const handleOpenSubscriberDetails = useCallback(
@@ -461,22 +441,26 @@ const Page = () => {
       );
       setIsSubscriberDetailsOpen(true);
       if (subscriberInfo) {
-        const usageData = dataUsageData?.getDataUsages.usages.find(
-          (usage) => usage.simId === subscriberInfo.sim?.[0]?.id,
-        );
         const plan = packagesData?.getPackages.packages.find(
           (pkg) => pkg.uuid === subscriberInfo.sim?.[0]?.package?.package_id,
         );
+        let usageData = 0;
+        PubSub.subscribe(
+          `${Stats_Type.DataUsage}-${subscriberInfo.sim?.[0]?.package?.package_id}`,
+          (_, value) => {
+            usageData = value;
+          },
+        );
         setSubscriberDetails({
           ...subscriberInfo,
-          dataUsage: `${formatBytesToMB(Number(usageData?.usage)) || 0} MB`,
+          packageId: subscriberInfo.sim?.[0]?.package?.package_id,
+          dataUsage: `${formatBytesToMB(Number(usageData)) || 0} MB`,
           dataPlan: plan?.name ?? 'No active plan',
         });
       }
     },
     [
       data?.getSubscribersByNetwork.subscribers,
-      dataUsageData?.getDataUsages.usages,
       packagesData?.getPackages.packages,
     ],
   );
@@ -625,7 +609,7 @@ const Page = () => {
       direction={'column'}
       sx={{ height: { xs: 'calc(100vh - 158px)', md: 'calc(100vh - 172px)' } }}
     >
-      {getSubscriberByNetworkLoading || dataUsageLoading ? (
+      {getSubscriberByNetworkLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
@@ -713,7 +697,7 @@ const Page = () => {
           </Stack>
         </Paper>
       )}
-      {getSubscriberByNetworkLoading || dataUsageLoading ? (
+      {getSubscriberByNetworkLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
