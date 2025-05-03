@@ -64,19 +64,24 @@ func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint + "/" + iccid)
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
-
 		return nil, fmt.Errorf("GetSimInfo failure: %w", err)
 	}
 
-	err = json.Unmarshal(resp.Body(), &sim)
-	if err != nil {
-		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
+	body := resp.Body()
+	log.Infof("GetSimInfo response: %s", string(body))
 
+	err = json.Unmarshal(body, &sim)
+	if err != nil {
+		log.Errorf("Failed to deserialize ukama sim info. Error: %s, Body: %s", err.Error(), string(body))
 		return nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
 
-	log.Infof("Ukama Sim Info: %+v", sim)
+	if sim.Record == nil {
+		log.Errorf("Sim record is nil after unmarshaling. Body: %s", string(body))
+		return nil, fmt.Errorf("sim record is nil")
+	}
 
+	log.Infof("Ukama Sim Info: %+v", sim.Record)
 	return sim.Record, nil
 }
 
