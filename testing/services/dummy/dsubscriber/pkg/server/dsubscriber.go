@@ -117,7 +117,7 @@ func (s *DsubscriberServer) startHandler(iccid string, expiry string) {
 		s.iccidWithNode[iccid] = nodeId
 		s.iccidWithStatus[iccid] = true
 		s.iccidWithIMSI[iccid] = sim.Sim.Imsi
-		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, Imsi: sim.Sim.Imsi, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: s.cdrcClient, NodeId: nodeId, Status: true}, s.routineConfig)
+		go utils.Worker(iccid, updateChan, pkg.WMessage{Iccid: iccid, Imsi: sim.Sim.Imsi, Expiry: expiry, Profile: cenums.PROFILE_NORMAL, CDRClient: s.cdrcClient, NodeId: nodeId, Status: true, Agent: s.ukamaAgentClient}, s.routineConfig)
 	} else {
 		log.Printf("Coroutine already exists for NodeId: %s", iccid)
 	}
