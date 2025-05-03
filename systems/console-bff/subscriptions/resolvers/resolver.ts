@@ -72,7 +72,11 @@ const handleWebSocketMessage = (data: any, topic: string, pubSub: any) => {
         : [res.data.result];
 
       results.forEach((result: any) => {
-        if (result?.metric && result.value?.length > 0) {
+        if (
+          result?.metric &&
+          result.value?.length === 2 &&
+          result.value[1] !== 0
+        ) {
           pubSub.publish(topic, {
             success: true,
             msg: "success",
