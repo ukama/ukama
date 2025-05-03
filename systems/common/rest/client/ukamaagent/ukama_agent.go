@@ -64,19 +64,24 @@ func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint + "/" + iccid)
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
-
 		return nil, fmt.Errorf("GetSimInfo failure: %w", err)
 	}
 
-	err = json.Unmarshal(resp.Body(), &sim)
-	if err != nil {
-		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
+	body := resp.Body()
+	log.Infof("GetSimInfo response: %s", string(body))
 
+	err = json.Unmarshal(body, &sim)
+	if err != nil {
+		log.Errorf("Failed to deserialize ukama sim info. Error: %s, Body: %s", err.Error(), string(body))
 		return nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
 
-	log.Infof("Ukama Sim Info: %+v", sim)
+	if sim.Record == nil {
+		log.Errorf("Sim record is nil after unmarshaling. Body: %s", string(body))
+		return nil, fmt.Errorf("sim record is nil")
+	}
 
+	log.Infof("Ukama Sim Info: %+v", sim.Record)
 	return sim.Record, nil
 }
 
@@ -169,26 +174,24 @@ type UkamaSimUsage struct {
 }
 
 type UkamaSim struct {
-	Record *UkamaSimInfo `json:"sim"`
+	Record *UkamaSimInfo `json:"Record"`
 }
 
 type UkamaSimInfo struct {
-	Imsi         string  `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
-	Iccid        string  `protobuf:"bytes,3,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
-	Key          []byte  `protobuf:"bytes,4,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
-	Op           []byte  `protobuf:"bytes,5,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
-	Amf          []byte  `protobuf:"bytes,6,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
-	Apn          *Apn    `protobuf:"bytes,7,opt,name=Apn,json=apn,proto3" json:"Apn,omitempty"`
-	AlgoType     uint32  `protobuf:"varint,8,opt,name=AlgoType,json=algo_type,proto3" json:"AlgoType,omitempty"`
-	UeDlAmbrBps  uint32  `protobuf:"varint,9,opt,name=UeDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"UeDlAmbrBps,omitempty"`
-	UeUlAmbrBps  uint32  `protobuf:"varint,10,opt,name=UeUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"UeUlAmbrBps,omitempty"`
-	Sqn          string  `protobuf:"bytes,11,opt,name=Sqn,json=sqn,proto3" json:"Sqn,omitempty"`
-	CsgIdPrsent  bool    `protobuf:"varint,12,opt,name=CsgIdPrsent,json=csg_id_prsent,proto3" json:"CsgIdPrsent,omitempty"`
-	CsgId        uint32  `protobuf:"varint,13,opt,name=CsgId,json=csg_id,proto3" json:"CsgId,omitempty"`
-	PackageId    string  `protobuf:"bytes,14,opt,name=PackageId,json=package_id,proto3" json:"PackageId,omitempty"`
-	SimPackageId string  `protobuf:"bytes,15,opt,name=SimPackageId,json=sim_package_id,proto3" json:"SimPackageId,omitempty"`
-	NetworkId    string  `protobuf:"bytes,16,opt,name=NetworkId,json=network_id,proto3" json:"NetworkId,omitempty"`
-	Policy       *Policy `protobuf:"bytes,17,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
+	Imsi        string  `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Iccid       string  `protobuf:"bytes,3,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Key         []byte  `protobuf:"bytes,4,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
+	Op          []byte  `protobuf:"bytes,5,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
+	Amf         []byte  `protobuf:"bytes,6,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
+	Apn         *Apn    `protobuf:"bytes,7,opt,name=Apn,json=apn,proto3" json:"Apn,omitempty"`
+	AlgoType    uint32  `protobuf:"varint,8,opt,name=AlgoType,json=algo_type,proto3" json:"AlgoType,omitempty"`
+	UeDlAmbrBps uint32  `protobuf:"varint,9,opt,name=UeDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"UeDlAmbrBps,omitempty"`
+	UeUlAmbrBps uint32  `protobuf:"varint,10,opt,name=UeUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"UeUlAmbrBps,omitempty"`
+	Sqn         string  `protobuf:"varint,11,opt,name=Sqn,json=sqn,proto3" json:"Sqn,omitempty"`
+	CsgIdPrsent bool    `protobuf:"varint,12,opt,name=CsgIdPrsent,json=csg_id_prsent,proto3" json:"CsgIdPrsent,omitempty"`
+	CsgId       uint32  `protobuf:"varint,13,opt,name=CsgId,json=csg_id,proto3" json:"CsgId,omitempty"`
+	PackageId   string  `protobuf:"bytes,14,opt,name=PackageId,json=package_id,proto3" json:"PackageId,omitempty"`
+	Policy      *Policy `protobuf:"bytes,17,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
 }
 
 type Apn struct {
@@ -196,12 +199,12 @@ type Apn struct {
 }
 
 type Policy struct {
-	UUID         string `protobuf:"bytes,1,opt,name=UUID,json=uuid,proto3" json:"UUID,omitempty"`
-	Burst        string `protobuf:"bytes,2,opt,name=Burst,json=burst,proto3" json:"Burst,omitempty"`
-	TotalData    string `protobuf:"bytes,3,opt,name=TotalData,json=total_data,proto3" json:"TotalData,omitempty"`
-	ConsumedData string `protobuf:"bytes,4,opt,name=ConsumedData,json=consumed_data,proto3" json:"ConsumedData,omitempty"`
-	Ulbr         string `protobuf:"bytes,5,opt,name=Ulbr,json=ulbr,proto3" json:"Ulbr,omitempty"`
-	Dlbr         string `protobuf:"bytes,6,opt,name=Dlbr,json=dlbr,proto3" json:"Dlbr,omitempty"`
-	StartTime    string `protobuf:"bytes,7,opt,name=StartTime,json=start_time,proto3" json:"StartTime,omitempty"`
-	EndTime      string `protobuf:"bytes,8,opt,name=EndTime,json=end_time,proto3" json:"EndTime,omitempty"`
+	UUID         string `protobuf:"bytes,1,opt,name=UUID,json=uuid,proto3" json:"uuid,omitempty"`
+	Burst        string `protobuf:"bytes,2,opt,name=Burst,json=burst,proto3" json:"burst,omitempty"`
+	TotalData    string `protobuf:"bytes,3,opt,name=TotalData,json=total_data,proto3" json:"total_data,omitempty"`
+	ConsumedData string `protobuf:"bytes,4,opt,name=ConsumedData,json=consumed_data,proto3" json:"consumed_data,omitempty"`
+	ULBR         string `protobuf:"bytes,5,opt,name=ULBR,json=ulbr,proto3" json:"ulbr,omitempty"`
+	DLBR         string `protobuf:"bytes,6,opt,name=DLBR,json=dlbr,proto3" json:"dlbr,omitempty"`
+	StartTime    string `protobuf:"bytes,7,opt,name=StartTime,json=start_time,proto3" json:"start_time,omitempty"`
+	EndTime      string `protobuf:"bytes,8,opt,name=EndTime,json=end_time,proto3" json:"end_time,omitempty"`
 }

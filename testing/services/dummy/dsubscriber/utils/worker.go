@@ -84,7 +84,6 @@ func runLogic(iccid, nodeId, imsi string, profile cenums.Profile, cdrClient clie
 		fmt.Printf("Coroutine PostCDR for IMSI: %s error: %v\n", imsi, err)
 		return
 	}
-	fmt.Printf("Get policy: %s\n", res.Policy.UUID)
 	start := time.Now()
 	end := start.Add(time.Duration(rc.Interval*60) * time.Second)
 	fmt.Printf("Coroutine PostCDR for IMSI: %s , Start: %d, End: %d\n", imsi, start.Unix(), end.Unix())
