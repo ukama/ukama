@@ -712,7 +712,7 @@ const Page = () => {
         <Paper
           sx={{
             height: '100%',
-            overflow: 'auto',
+            overflow: 'hidden',
             borderRadius: '10px',
             px: { xs: 2, md: 3 },
             py: { xs: 2, md: 4 },

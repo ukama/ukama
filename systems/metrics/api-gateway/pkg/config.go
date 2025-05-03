@@ -51,6 +51,7 @@ type MetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
+	"package_sales_sum":    Metric{false, "package_sales_sum", ""},
 	"data_usage":           Metric{false, "data_usage", ""},
 	"cpu":                  Metric{false, "trx_soc_cpu_usage", ""},
 	"memory":               Metric{false, "trx_memory_ddr_used", ""},
