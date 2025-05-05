@@ -74,6 +74,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
+				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 			},
 		},
 	}

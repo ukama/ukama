@@ -585,6 +585,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
 
+
 func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 	r, err := n.inventoryClient.Get(nodeId)
 	if err != nil {
@@ -619,6 +620,17 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 	})
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to update node status %s", err.Error())
+	}
+	if n.msgbus != nil {
+		route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
+
+		evt := &epb.EventRegistryNodeAssign{
+			NodeId:  r.PartNumber,
+		}
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
 	}
 
 	return nil

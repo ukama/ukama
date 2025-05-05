@@ -1,11 +1,3 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2023-present, Ukama Inc.
- */
-
 package server
 
 import (
@@ -29,22 +21,23 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
-
+  
 type StateEventServer struct {
-	orgName      string
-	orgId        string
-	stateMachine *stm.StateMachine
-	instances    map[string]*stm.StateMachineInstance
-	instancesMu  sync.RWMutex
-	s            *StateServer
-	configPath   string
+	orgName        string
+	orgId          string
+	stateMachine   *stm.StateMachine
+	instances      map[string]*stm.StateMachineInstance
+	instancesMu    sync.RWMutex
+	s              *StateServer
+	configPath     string
 	epb.UnimplementedEventNotificationServiceServer
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	eventBuffer    map[string][]string
 	bufferMu       sync.RWMutex
+	processingMutex sync.Map
 }
-
+  
 func NewStateEventServer(orgName, orgId string, s *StateServer, configPath string, msgBus mb.MsgBusServiceClient) *StateEventServer {
 	server := &StateEventServer{
 		orgName:        orgName,
@@ -55,6 +48,7 @@ func NewStateEventServer(orgName, orgId string, s *StateServer, configPath strin
 		msgbus:         msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		eventBuffer:    make(map[string][]string),
+		processingMutex: sync.Map{},
 	}
 
 	server.stateMachine = stm.NewStateMachine(server.handleTransition)
@@ -63,23 +57,23 @@ func NewStateEventServer(orgName, orgId string, s *StateServer, configPath strin
 }
 
 func (n *StateEventServer) handleTransition(event stm.Event) {
-	log.Infof("Transition event received: From state %s -> %s, From substate %s -> %s",
-		event.OldState, event.NewState, event.OldSubstate, event.NewSubstate)
-
 	n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
 }
+
 func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID string) {
 	if n.msgbus == nil {
 		return
 	}
 
 	route := n.baseRoutingKey.SetAction("transition").SetObject("node").MustBuild()
+	
+	eventsForNode := n.getEventsForNode(nodeID)
 
 	evt := &epb.NodeStateChangeEvent{
 		NodeId:   nodeID,
 		State:    state,
 		Substate: substate,
-		Events:   n.getEventsForNode(nodeID),
+		Events:   eventsForNode,
 	}
 
 	err := n.msgbus.PublishRequest(route, evt)
@@ -87,6 +81,7 @@ func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID strin
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 }
+
 func (n *StateEventServer) getEventsForNode(nodeID string) []string {
 	n.bufferMu.RLock()
 	defer n.bufferMu.RUnlock()
@@ -116,15 +111,14 @@ func (n *StateEventServer) getOrCreateInstance(nodeID, initialState string) (*st
 }
 
 func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
-
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
 		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
 		if err != nil {
 			return nil, err
 		}
-		err = n.ProcessEvent(ctx, evt.NodeEventToEventConfig[evt.NodeStateEventOnline].Name, msg.NodeId, msg)
+		eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOnline].Name
+		err = n.ProcessEvent(ctx, eventName, msg.NodeId, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +128,8 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		if err != nil {
 			return nil, err
 		}
-		err = n.ProcessEvent(ctx, evt.NodeEventToEventConfig[evt.NodeStateEventOffline].Name, msg.NodeId, msg)
+		eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOffline].Name
+		err = n.ProcessEvent(ctx, eventName, msg.NodeId, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -144,7 +139,8 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		if err != nil {
 			return nil, err
 		}
-		err = n.ProcessEvent(ctx, evt.NodeEventToEventConfig[evt.NodeStateEventAssign].Name, msg.NodeId, msg)
+		eventName := evt.NodeEventToEventConfig[evt.NodeStateEventAssign].Name
+		err = n.ProcessEvent(ctx, eventName, msg.NodeId, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +150,8 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		if err != nil {
 			return nil, err
 		}
-		err = n.ProcessEvent(ctx, evt.NodeEventToEventConfig[evt.NodeStateEventRelease].Name, msg.NodeId, msg)
+		eventName := evt.NodeEventToEventConfig[evt.NodeStateEventRelease].Name
+		err = n.ProcessEvent(ctx, eventName, msg.NodeId, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +165,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 		if err != nil {
 			return nil, err
 		}
-
+		
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.notify.notification.store"):
 		msg, err := n.unmarshalNotifyEvent(e.Msg)
 		if err != nil {
@@ -185,11 +182,12 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 
 	return &epb.EventResponse{}, nil
 }
+
 func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notification, error) {
 	p := &epb.Notification{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal node notify  message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal node notify message with: %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
@@ -199,23 +197,21 @@ func (n *StateEventServer) UnmarshalTransitionEvent(msg *anypb.Any) (*epb.Enforc
 	p := &epb.EnforceNodeStateEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal node transition message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal node transition message with: %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
 }
-func (n *StateEventServer) handleEnforceTransitionEvent(ctx context.Context, key string, msg *epb.EnforceNodeStateEvent) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
+func (n *StateEventServer) handleEnforceTransitionEvent(ctx context.Context, _ string, msg *epb.EnforceNodeStateEvent) error {
 	if err := n.ProcessEvent(ctx, msg.Event, msg.NodeId, msg); err != nil {
 		log.WithError(err).Error("Error processing event")
 		return err
 	}
 	return nil
 }
-func (n *StateEventServer) handleNotifyEvent(ctx context.Context, key string, msg *epb.Notification) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
+func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {
 	var details map[string]interface{}
 	if err := json.Unmarshal(msg.Details, &details); err != nil {
 		log.WithError(err).Error("Failed to unmarshal details")
@@ -233,8 +229,10 @@ func (n *StateEventServer) handleNotifyEvent(ctx context.Context, key string, ms
 		log.Error("Value is not a string type")
 		return fmt.Errorf("value is not a string type")
 	}
-
-	log.Infof("Extracted value: %s", valueStr)
+	
+	if valueStr == "Node Online" || valueStr == "Node added"  {
+		return nil
+	}
 
 	if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
 		log.WithError(err).Error("Error processing event")
@@ -244,7 +242,11 @@ func (n *StateEventServer) handleNotifyEvent(ctx context.Context, key string, ms
 }
 
 func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
-	log.Infof("Processing event %s for node %s", eventName, nodeId)
+	mutexValue, _ := n.processingMutex.LoadOrStore(nodeId, &sync.Mutex{})
+	mutex := mutexValue.(*sync.Mutex)
+
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
 	if err != nil {
@@ -260,15 +262,9 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 	}
 
 	var currentState npb.NodeState
-	currentSubstate := ""
 	if latestState != nil && latestState.State != nil {
 		currentState = latestState.State.CurrentState
-		if len(latestState.State.SubState) > 0 {
-			currentSubstate = latestState.State.SubState[0]
-		}
-		log.Infof("Node already exists with current state %s and substate %s", currentState, currentSubstate)
 	} else {
-		log.Infof("Creating initial state entry for node %s", nodeId)
 		if err := n.createInitialNodeState(ctx, nodeId, eventName, msg); err != nil {
 			return err
 		}
@@ -281,43 +277,53 @@ func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId s
 
 	prevState := instance.CurrentState
 
-	eventsInCurrentState := n.getEventsForNode(nodeId)
-	if len(eventsInCurrentState) == 0 || eventsInCurrentState[len(eventsInCurrentState)-1] != eventName {
-		eventsInCurrentState = append(eventsInCurrentState, eventName)
-	}
-
-	_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
-		NodeId:   nodeId,
-		SubState: []string{instance.CurrentSubstate},
-		Events:   eventsInCurrentState,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to update previous state for node %s: %w", nodeId, err)
-	}
-
 	if err := instance.Transition(eventName); err != nil {
 		return fmt.Errorf("failed to transition state for node %s: %w", nodeId, err)
 	}
 
+	_, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+		NodeId:   nodeId,
+		SubState: []string{instance.CurrentSubstate}, 
+		Events:   []string{eventName},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
+	}
+
 	if instance.CurrentState != prevState {
 		stateValue := npb.NodeState_value[instance.CurrentState]
+		
 		_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
 			NodeId:       nodeId,
 			CurrentState: npb.NodeState(stateValue),
-			SubState:     []string{},
+			SubState:     []string{instance.CurrentSubstate},
 			Events:       []string{},
 		})
 		if err != nil {
 			return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
 		}
-		log.Infof("Added new state for node %s: state=%s", nodeId, instance.CurrentState)
 	}
-
-	n.clearEventsForNode(nodeId)
-
+	
 	return nil
 }
+
 func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
+	instance, err := n.getOrCreateInstance(nodeId, "Unknown")
+	if err != nil {
+		return fmt.Errorf("failed to create state machine instance: %w", err)
+	}
+	
+	if err := instance.Transition(eventName); err != nil {
+		if eventName == "online" && instance.CurrentSubstate == "" {
+			instance.CurrentSubstate = "on"
+		}
+	}
+	
+	initialSubstate := instance.CurrentSubstate
+	if initialSubstate == "" {
+		initialSubstate = "on" 
+	}
+	
 	var addStateRequest *pb.AddStateRequest
 
 	switch m := msg.(type) {
@@ -325,7 +331,7 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, e
 		addStateRequest = &pb.AddStateRequest{
 			NodeId:       nodeId,
 			CurrentState: npb.NodeState_Unknown,
-			SubState:     []string{"on"},
+			SubState:     []string{initialSubstate},
 			Events:       []string{eventName},
 			NodeIp:       m.NodeIp,
 			NodePort:     int32(m.NodePort),
@@ -337,14 +343,15 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, e
 		addStateRequest = &pb.AddStateRequest{
 			NodeId:       nodeId,
 			CurrentState: npb.NodeState_Unknown,
-			SubState:     []string{"on"},
+			SubState:     []string{initialSubstate},
 			Events:       []string{eventName},
 		}
 	}
-
-	_, err := n.s.AddNodeState(ctx, addStateRequest)
+	
+	_, err = n.s.AddNodeState(ctx, addStateRequest)
 	if err != nil {
 		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
 	}
+	
 	return nil
 }

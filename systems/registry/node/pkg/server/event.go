@@ -20,6 +20,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -59,6 +60,16 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		}
 
 		err = n.handleNodeOfflineEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.state.node.transition"):
+		c := evt.NodeEventToEventConfig[evt.NodeStateTransition]
+		msg, err := epb.UnmarshalEventNodeStateTransition(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		err = n.handleNodeStateTransitionEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -179,4 +190,28 @@ func (n *NodeEventServer) updateNodeConnectivity(nodeID, connectivity string, no
 		State:        state,
 	})
 	return err
+}
+func (n *NodeEventServer) handleNodeStateTransitionEvent(key string, msg *epb.NodeStateChangeEvent) error {
+    log.Infof("Keys %s and Proto is: %+v", key, msg)    
+    nodeID := msg.GetNodeId()
+    
+    node, err := n.s.GetNode(context.Background(), &pb.GetNodeRequest{NodeId: nodeID})
+    if err != nil {
+        log.Errorf("error getting the node: %v", err)
+        return err
+    }
+    
+    log.Infof("Updating node %s with current state: %v", node.Node.Id, node.Node.Status.State, msg.State, msg.Substate)
+    
+    _, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
+        NodeId:       nodeID,
+        Connectivity: msg.Substate,
+        State:        msg.State,
+    })
+    if err != nil {
+        log.Errorf("error updating node status: %v", err)
+        return err
+    }
+    
+    return nil
 }
