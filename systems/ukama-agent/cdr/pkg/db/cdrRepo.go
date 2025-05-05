@@ -185,7 +185,6 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 		tx = tx.Limit(int(count))
 	}
 
-	// result := tx.Find(&cdrs)
 	result := tx.First(&usage)
 	if result.Error != nil {
 		return 0, result.Error
