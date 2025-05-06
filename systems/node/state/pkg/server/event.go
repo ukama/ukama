@@ -30,6 +30,12 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
   
+const (
+    NodeNotifyEventReady  = "ready"
+    NodeNotifyEventReboot = "reboot"
+    NodeNotifyEventOnline = "Node Online"
+    NodeNotifyEventAdded  = "Node added"
+)
 type StateEventServer struct {
 	orgName        string
 	orgId          string
@@ -218,40 +224,43 @@ func (n *StateEventServer) handleEnforceTransitionEvent(ctx context.Context, _ s
 	}
 	return nil
 }
-
 func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {
-	var details map[string]interface{}
-	if err := json.Unmarshal(msg.Details, &details); err != nil {
-		return err
-	}
+    var details map[string]interface{}
+    if err := json.Unmarshal(msg.Details, &details); err != nil {
+        return err
+    }
 
-	value, exists := details["value"]
-	if !exists {
-		return fmt.Errorf("value key not found in details")
-	}
+    value, exists := details["value"]
+    if !exists {
+        return fmt.Errorf("value key not found in details")
+    }
 
-	valueStr, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("value is not a string type")
-	}
-	
-	if valueStr == "Node Online" || valueStr == "Node added" {
-		return nil
-	}
-	
-	if valueStr == "ready" {
-		if err := n.ProcessEvent(ctx, "ready", msg.NodeId, msg); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
-		return err
-	}
-	return nil
+    valueStr, ok := value.(string)
+    if !ok {
+        return fmt.Errorf("value is not a string type")
+    }
+    
+    if valueStr == NodeNotifyEventOnline || valueStr == NodeNotifyEventAdded {
+        return nil
+    }
+    
+    switch valueStr {
+    case NodeNotifyEventReady:
+        if err := n.ProcessEvent(ctx,NodeNotifyEventReady, msg.NodeId, msg); err != nil {
+            return err
+        }
+    case NodeNotifyEventReboot:
+        if err := n.ProcessEvent(ctx, NodeNotifyEventReboot, msg.NodeId, msg); err != nil {
+            return err
+        }
+    default:
+        if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
+            return err
+        }
+    }
+    
+    return nil
 }
-
 func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
 	mutexValue, _ := n.processingMutex.LoadOrStore(nodeId, &sync.Mutex{})
 	mutex := mutexValue.(*sync.Mutex)
