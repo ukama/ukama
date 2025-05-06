@@ -299,6 +299,8 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 
 	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
 	if err != nil {
+		log.Errorf("Query usage failure: Error getting usage for given imsi %s. Error: %v", req.Imsi, err)
+
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage for given imsi")
 	}
 

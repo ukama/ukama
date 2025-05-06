@@ -413,7 +413,7 @@ func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (
 
 	sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		log.Errorf("Failed to query usage: %v for imsi %s. Error: %s", err, sub.Imsi, err.Error())
+		log.Errorf("Failed to query asr record for given iccid : %s. Error: %v", req.Iccid, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting asr record for given iccid")
 	}
