@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -573,6 +574,24 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
+		c := evt.EventToEventConfig[evt.EventNodeStateTransition]
+		msg, err := epb.UnmarshalEventNodeStateTransition(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+		
+		dynamicConfig := c
+		dynamicConfig.Title = fmt.Sprintf("Node State Changed to %s", msg.State)
+		dynamicConfig.Description = fmt.Sprintf("Node changed to state: %s, connectivity: %s", msg.State, msg.Substate)
+		
+		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]

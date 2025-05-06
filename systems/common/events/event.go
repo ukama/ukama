@@ -18,7 +18,7 @@ type EventConfig struct {
 	Type        notif.NotificationType
 }
 
-type EventId int
+type EventId int 
 
 const (
 	EventInvalid EventId = iota
@@ -68,6 +68,7 @@ const (
 	EventNotificationStore
 	EventPaymentSuccess
 	EventPaymentFailed
+	EventNodeStateTransition
 )
 
 var EventRoutingKey = [...]string{
@@ -117,6 +118,7 @@ var EventRoutingKey = [...]string{
 	EventNotificationStore:  "event.cloud.local.{{ .Org}}.notification.notify.notification.store",
 	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
 	EventPaymentFailed:      "event.cloud.local.{{ .Org}}.payments.processor.payment.failed",
+	EventNodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
@@ -125,6 +127,14 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventOrgAdd",
 		Title:       "Organization Added",
 		Description: "Organization Added",
+		Scope:       notif.SCOPE_ORG,
+		Type:        TypeDefault,
+	},
+	EventNodeStateTransition: {
+		Key:         EventNodeStateTransition,
+		Name:        "EventNodeStateTransition",
+		Title:       "Node State Transition",
+		Description: "Node State Transition",
 		Scope:       notif.SCOPE_ORG,
 		Type:        TypeDefault,
 	},
