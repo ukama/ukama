@@ -611,14 +611,6 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 		return grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	_, err = n.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
-		NodeId:       r.PartNumber,
-		Connectivity: cpb.NodeConnectivity_Online.String(),
-		State:        cpb.NodeState_Configured.String(),
-	})
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to update node status %s", err.Error())
-	}
 	if n.msgbus != nil {
 		route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
 

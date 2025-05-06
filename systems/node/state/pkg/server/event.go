@@ -222,28 +222,31 @@ func (n *StateEventServer) handleEnforceTransitionEvent(ctx context.Context, _ s
 func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {
 	var details map[string]interface{}
 	if err := json.Unmarshal(msg.Details, &details); err != nil {
-		log.WithError(err).Error("Failed to unmarshal details")
 		return err
 	}
 
 	value, exists := details["value"]
 	if !exists {
-		log.Warn("Value key not found in details")
 		return fmt.Errorf("value key not found in details")
 	}
 
 	valueStr, ok := value.(string)
 	if !ok {
-		log.Error("Value is not a string type")
 		return fmt.Errorf("value is not a string type")
 	}
 	
-	if valueStr == "Node Online" || valueStr == "Node added"  {
+	if valueStr == "Node Online" || valueStr == "Node added" {
+		return nil
+	}
+	
+	if valueStr == "ready" {
+		if err := n.ProcessEvent(ctx, "ready", msg.NodeId, msg); err != nil {
+			return err
+		}
 		return nil
 	}
 
 	if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
-		log.WithError(err).Error("Error processing event")
 		return err
 	}
 	return nil
