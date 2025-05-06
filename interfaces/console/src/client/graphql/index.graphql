@@ -91,6 +91,14 @@ mutation updateNodeState($data: UpdateNodeStateInput!) {
   }
 }
 
+query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
+
 mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
     ...node
@@ -1114,3 +1122,15 @@ mutation UpdateNotification($isRead: Boolean!, $updateNotificationId: String!) {
 }
 
 ### End Notifications ###
+
+# Sims usage
+query GetDataUsages($data: SimUsagesInputDto!) {
+  getDataUsages(data: $data) {
+    usages {
+      usage
+      simId
+    }
+  }
+}
+
+##

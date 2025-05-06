@@ -994,6 +994,7 @@ export type Query = {
   getCountries: CountriesRes;
   getCurrencySymbol: CurrencyRes;
   getDataUsage: SimDataUsage;
+  getDataUsages: SimDataUsages;
   getDefaultMarkup: DefaultMarkupResDto;
   getDefaultMarkupHistory: DefaultMarkupHistoryResDto;
   getGeneratedPdfReport: GetPdfReportUrlDto;
@@ -1013,6 +1014,7 @@ export type Query = {
   getNodes: Nodes;
   getNodesByNetwork: Nodes;
   getNodesByState: Nodes;
+  getNodesForSite: Nodes;
   getNodesLocation: Nodes;
   getNotification: NotificationResDto;
   getNotifications: NotificationsResDto;
@@ -1065,7 +1067,12 @@ export type QueryGetCurrencySymbolArgs = {
 
 
 export type QueryGetDataUsageArgs = {
-  simId: Scalars['String']['input'];
+  data: SimUsageInputDto;
+};
+
+
+export type QueryGetDataUsagesArgs = {
+  data: SimUsagesInputDto;
 };
 
 
@@ -1136,6 +1143,11 @@ export type QueryGetNodesByNetworkArgs = {
 
 export type QueryGetNodesByStateArgs = {
   data: GetNodesByStateInput;
+};
+
+
+export type QueryGetNodesForSiteArgs = {
+  siteId: Scalars['String']['input'];
 };
 
 
@@ -1334,7 +1346,13 @@ export type SimAllocatePackageDto = {
 
 export type SimDataUsage = {
   __typename?: 'SimDataUsage';
+  simId: Scalars['String']['output'];
   usage: Scalars['String']['output'];
+};
+
+export type SimDataUsages = {
+  __typename?: 'SimDataUsages';
+  usages: Array<SimDataUsage>;
 };
 
 export type SimDto = {
@@ -1386,6 +1404,19 @@ export type SimToPackagesDto = {
   start_date: Scalars['String']['output'];
 };
 
+export type SimUsageInputDto = {
+  from: Scalars['Float']['input'];
+  iccid: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
+  to: Scalars['Float']['input'];
+  type: Scalars['String']['input'];
+};
+
+export type SimUsagesInputDto = {
+  for: Array<SimsUsageInputDto>;
+  type: Scalars['String']['input'];
+};
+
 export type Sims = {
   __typename?: 'Sims';
   availableSims: Scalars['String']['output'];
@@ -1396,6 +1427,11 @@ export type Sims = {
 export type SimsResDto = {
   __typename?: 'SimsResDto';
   sim: Array<SimDto>;
+};
+
+export type SimsUsageInputDto = {
+  iccid: Scalars['String']['input'];
+  simId: Scalars['String']['input'];
 };
 
 export type Site = {
@@ -1724,6 +1760,13 @@ export type UpdateNodeStateMutationVariables = Exact<{
 
 
 export type UpdateNodeStateMutation = { __typename?: 'Mutation', updateNodeState: { __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } } };
+
+export type GetNodesForSiteQueryVariables = Exact<{
+  siteId: Scalars['String']['input'];
+}>;
+
+
+export type GetNodesForSiteQuery = { __typename?: 'Query', getNodesForSite: { __typename?: 'Nodes', nodes: Array<{ __typename?: 'Node', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, attached: Array<{ __typename?: 'AttachedNodes', id: string, name: string, latitude: number, longitude: number, type: NodeTypeEnum, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }>, site: { __typename?: 'NodeSite', nodeId?: string | null, siteId?: string | null, networkId?: string | null, addedAt?: string | null }, status: { __typename?: 'NodeStatus', connectivity: string, state: string } }> } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeInput;
@@ -2196,6 +2239,13 @@ export type UpdateNotificationMutationVariables = Exact<{
 
 
 export type UpdateNotificationMutation = { __typename?: 'Mutation', updateNotification: { __typename?: 'UpdateNotificationResDto', id: string } };
+
+export type GetDataUsagesQueryVariables = Exact<{
+  data: SimUsagesInputDto;
+}>;
+
+
+export type GetDataUsagesQuery = { __typename?: 'Query', getDataUsages: { __typename?: 'SimDataUsages', usages: Array<{ __typename?: 'SimDataUsage', usage: string, simId: string }> } };
 
 export const NodeFragmentDoc = gql`
     fragment node on Node {
@@ -2895,6 +2945,48 @@ export function useUpdateNodeStateMutation(baseOptions?: Apollo.MutationHookOpti
 export type UpdateNodeStateMutationHookResult = ReturnType<typeof useUpdateNodeStateMutation>;
 export type UpdateNodeStateMutationResult = Apollo.MutationResult<UpdateNodeStateMutation>;
 export type UpdateNodeStateMutationOptions = Apollo.BaseMutationOptions<UpdateNodeStateMutation, UpdateNodeStateMutationVariables>;
+export const GetNodesForSiteDocument = gql`
+    query getNodesForSite($siteId: String!) {
+  getNodesForSite(siteId: $siteId) {
+    nodes {
+      ...node
+    }
+  }
+}
+    ${NodeFragmentDoc}`;
+
+/**
+ * __useGetNodesForSiteQuery__
+ *
+ * To run a query within a React component, call `useGetNodesForSiteQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesForSiteQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesForSiteQuery({
+ *   variables: {
+ *      siteId: // value for 'siteId'
+ *   },
+ * });
+ */
+export function useGetNodesForSiteQuery(baseOptions: Apollo.QueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables> & ({ variables: GetNodesForSiteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
+      }
+export function useGetNodesForSiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
+        }
+export function useGetNodesForSiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>(GetNodesForSiteDocument, options);
+        }
+export type GetNodesForSiteQueryHookResult = ReturnType<typeof useGetNodesForSiteQuery>;
+export type GetNodesForSiteLazyQueryHookResult = ReturnType<typeof useGetNodesForSiteLazyQuery>;
+export type GetNodesForSiteSuspenseQueryHookResult = ReturnType<typeof useGetNodesForSiteSuspenseQuery>;
+export type GetNodesForSiteQueryResult = Apollo.QueryResult<GetNodesForSiteQuery, GetNodesForSiteQueryVariables>;
 export const UpdateNodeDocument = gql`
     mutation UpdateNode($data: UpdateNodeInput!) {
   updateNode(data: $data) {
@@ -5356,3 +5448,46 @@ export function useUpdateNotificationMutation(baseOptions?: Apollo.MutationHookO
 export type UpdateNotificationMutationHookResult = ReturnType<typeof useUpdateNotificationMutation>;
 export type UpdateNotificationMutationResult = Apollo.MutationResult<UpdateNotificationMutation>;
 export type UpdateNotificationMutationOptions = Apollo.BaseMutationOptions<UpdateNotificationMutation, UpdateNotificationMutationVariables>;
+export const GetDataUsagesDocument = gql`
+    query GetDataUsages($data: SimUsagesInputDto!) {
+  getDataUsages(data: $data) {
+    usages {
+      usage
+      simId
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetDataUsagesQuery__
+ *
+ * To run a query within a React component, call `useGetDataUsagesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDataUsagesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDataUsagesQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetDataUsagesQuery(baseOptions: Apollo.QueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables> & ({ variables: GetDataUsagesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDataUsagesQuery, GetDataUsagesQueryVariables>(GetDataUsagesDocument, options);
+      }
+export function useGetDataUsagesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDataUsagesQuery, GetDataUsagesQueryVariables>(GetDataUsagesDocument, options);
+        }
+export function useGetDataUsagesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetDataUsagesQuery, GetDataUsagesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetDataUsagesQuery, GetDataUsagesQueryVariables>(GetDataUsagesDocument, options);
+        }
+export type GetDataUsagesQueryHookResult = ReturnType<typeof useGetDataUsagesQuery>;
+export type GetDataUsagesLazyQueryHookResult = ReturnType<typeof useGetDataUsagesLazyQuery>;
+export type GetDataUsagesSuspenseQueryHookResult = ReturnType<typeof useGetDataUsagesSuspenseQuery>;
+export type GetDataUsagesQueryResult = Apollo.QueryResult<GetDataUsagesQuery, GetDataUsagesQueryVariables>;

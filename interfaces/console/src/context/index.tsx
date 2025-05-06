@@ -30,6 +30,7 @@ const AppContext = createContext({
     type: 'info',
     show: false,
   },
+
   setSnackbarMessage: (s: TSnackbarMessage) => {},
   network: {
     id: '',

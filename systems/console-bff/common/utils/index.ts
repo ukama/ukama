@@ -189,23 +189,40 @@ const getGraphsKeyByType = (type: string): string[] => {
     case GRAPHS_TYPE.MAIN_BACKHAUL:
       return ["main_backhaul_latency", "backhaul_speed"];
     case GRAPHS_TYPE.SWITCH:
-      return ["switch_port_status", "switch_port_speed", "switch_port_power"];
+      return [
+        "backhaul_switch_port_status",
+        "backhaul_switch_port_speed",
+        "backhaul_switch_port_power",
+        "solar_switch_port_status",
+        "solar_switch_port_speed",
+        "solar_switch_port_power",
+        "node_switch_port_status",
+        "node_switch_port_speed",
+        "node_switch_port_power",
+      ];
     case GRAPHS_TYPE.SITE:
-      return ["site_uptime_seconds"];
+      return [
+        "site_uptime_seconds",
+        "unit_uptime",
+        "solar_panel_voltage",
+        "solar_panel_current",
+        "site_uptime_percentage",
+        "solar_panel_power",
+        "battery_charge_percentage",
+        "main_backhaul_latency",
+        "backhaul_speed",
+        "backhaul_switch_port_status",
+        "backhaul_switch_port_speed",
+        "backhaul_switch_port_power",
+        "solar_switch_port_status",
+        "solar_switch_port_speed",
+        "solar_switch_port_power",
+        "node_switch_port_status",
+        "node_switch_port_speed",
+        "node_switch_port_power",
+      ];
     default:
       return [];
-  }
-};
-const getSiteMetricStatByKeysByType = (type: STATS_TYPE): string[] => {
-  switch (type) {
-    case STATS_TYPE.SITE:
-      return ["site_uptime_seconds"];
-    case STATS_TYPE.BATTERY:
-      return ["battery_charge_percentage"];
-    case STATS_TYPE.MAIN_BACKHAUL:
-      return ["backhaul_speed"];
-    default:
-      return ["site_uptime_seconds"];
   }
 };
 
@@ -361,14 +378,19 @@ export const formatKPIValue = (type: string, value: any) => {
   }
 };
 
+const epochToISOString = (epoch: number): string => {
+  const date = new Date(epoch * 1000);
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+};
+
 export {
   csvToBase64,
+  epochToISOString,
   findProcessNKill,
   getBaseURL,
   getGraphsKeyByType,
   getPaginatedOutput,
   getScopesByRole,
-  getSiteMetricStatByKeysByType,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,

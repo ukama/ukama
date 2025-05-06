@@ -8,16 +8,16 @@
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
 import { Context } from "../context";
-import { SimDataUsage, SimUsageInputDto } from "./types";
+import { Nodes } from "./types";
 
 @Resolver()
-export class GetDataUsageResolver {
-  @Query(() => SimDataUsage)
-  async getDataUsage(
-    @Arg("data") data: SimUsageInputDto,
-    @Ctx() ctx: Context
-  ): Promise<SimDataUsage> {
-    const { dataSources, baseURL } = ctx;
-    return await dataSources.dataSource.getDataUsage(baseURL, data);
+export class GetNodesForSiteResolver {
+  @Query(() => Nodes)
+  async getNodesForSite(
+    @Arg("siteId") siteId: string,
+    @Ctx() context: Context
+  ) {
+    const { dataSources, baseURL } = context;
+    return await dataSources.dataSource.getNodesForSite(baseURL, siteId);
   }
 }

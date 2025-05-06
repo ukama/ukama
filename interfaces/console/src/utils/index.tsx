@@ -20,6 +20,7 @@ import {
   MetricRes,
   MetricsRes,
   MetricsStateRes,
+  SiteMetricsStateRes,
 } from '@/client/graphql/generated/subscriptions';
 import {
   INSTALLATION_FLOW,
@@ -28,15 +29,17 @@ import {
   ONBOARDING_FLOW,
 } from '@/constants';
 import colors from '@/theme/colors';
-import { TNodeSiteTree } from '@/types';
+import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import Battery50Icon from '@mui/icons-material/Battery50';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import RouterIcon from '@mui/icons-material/Router';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
+import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import { Skeleton, Stack, Typography } from '@mui/material';
 import { formatDistance } from 'date-fns';
 import { DashStyleValue } from 'highcharts';
@@ -155,7 +158,7 @@ const formatBytes = (bytes = 0): string => {
 
 const formatBytesToMB = (bytes = 0): string => {
   if (bytes === 0) return '0';
-  return (bytes / (1024 * 1024)).toFixed(2);
+  return Math.floor(bytes / (1024 * 1024)).toString();
 };
 
 const getDataUsageSymbol = (dataUnit: string): string => {
@@ -171,6 +174,11 @@ const getDataUsageSymbol = (dataUnit: string): string => {
   }
 };
 
+const getPortInfo: Record<string, { number: number; desc: string }> = {
+  solar: { number: 2, desc: 'Solar Controller' },
+  backhaul: { number: 3, desc: 'Backhaul' },
+  node: { number: 1, desc: 'Node' },
+};
 const getDataPlanUsage = (
   duration: string,
   currency: string,
@@ -399,7 +407,7 @@ const NodeEnumToString = (type: NodeTypeEnum): string => {
 const getKPIStatValue = (
   id: string,
   loading: boolean,
-  statsData: MetricsStateRes,
+  statsData: MetricsStateRes | SiteMetricsStateRes,
 ): string => {
   if (loading || !statsData?.metrics) return KPI_PLACEHOLDER_VALUE;
   const stat = statsData.metrics.find((item) => item.type === id);
@@ -463,6 +471,24 @@ const findNullZones = (data: any) => {
   }
 
   return zones;
+};
+
+const kpiToGraphType: Record<string, Graphs_Type> = {
+  solar: Graphs_Type.Solar,
+  battery: Graphs_Type.Battery,
+  controller: Graphs_Type.Controller,
+  main_backhaul: Graphs_Type.MainBackhaul,
+  backhaul: Graphs_Type.MainBackhaul,
+  switch: Graphs_Type.Switch,
+  node: Graphs_Type.Solar,
+};
+const graphTypeToSection: Record<Graphs_Type | string, string> = {
+  [Graphs_Type.Solar]: 'SOLAR',
+  [Graphs_Type.Battery]: 'BATTERY',
+  [Graphs_Type.Controller]: 'CONTROLLER',
+  [Graphs_Type.MainBackhaul]: 'MAIN_BACKHAUL',
+  [Graphs_Type.Switch]: 'SWITCH',
+  [Graphs_Type.Site]: 'SITE',
 };
 
 export const generatePlotLines = (values: number[] | undefined): any[] => {
@@ -575,6 +601,64 @@ const getSignalStyles = (signalStrength: string) => {
   }
 };
 
+const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
+  if (type === 'uptime') {
+    return value <= 0
+      ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }
+      : {
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
+  }
+
+  if (type === 'battery') {
+    if (value < 20) {
+      return {
+        color: colors.red,
+        icon: <BatteryAlertIcon sx={{ color: colors.red }} />,
+      };
+    } else if (value < 40) {
+      return {
+        color: colors.orange,
+        icon: <Battery50Icon sx={{ color: colors.orange }} />,
+      };
+    } else if (value > 60) {
+      return {
+        color: colors.green,
+        icon: <BatteryChargingFullIcon sx={{ color: colors.green }} />,
+      };
+    }
+  }
+
+  if (type === 'signal') {
+    if (value < 10) {
+      return {
+        color: colors.red,
+        icon: <SignalCellularOffIcon sx={{ color: colors.red }} />,
+      };
+    } else if (value < 70) {
+      return {
+        color: colors.orange,
+        icon: (
+          <SignalCellularConnectedNoInternet4BarIcon
+            sx={{ color: colors.orange }}
+          />
+        ),
+      };
+    } else {
+      return {
+        color: colors.green,
+        icon: <SignalCellularAltIcon sx={{ color: colors.green }} />,
+      };
+    }
+  }
+
+  return {
+    color: colors.green,
+    icon: <RouterIcon sx={{ color: colors.green }} />,
+  };
+};
+
 const setQueryParam = (
   key: string,
   value: string,
@@ -585,6 +669,24 @@ const setQueryParam = (
   p.set(key, value);
   window.history.replaceState({}, '', `${pathname}?${p.toString()}`);
   return p;
+};
+const getSectionFromKPI = (kpi: string) => {
+  switch (kpi) {
+    case 'solar':
+      return 'SOLAR';
+    case 'battery':
+      return 'BATTERY';
+    case 'controller':
+      return 'CONTROLLER';
+    case 'backhaul':
+      return 'MAIN_BACKHAUL';
+    case 'switch':
+      return 'SWITCH';
+    case 'node':
+      return 'NODE';
+    default:
+      return 'SOLAR';
+  }
 };
 
 const getNodeActionDescriptionByProgress = (
@@ -632,14 +734,19 @@ export {
   getNodeActionDescriptionByProgress,
   getSignalStyles,
   getSimValuefromSimType,
+  getPortInfo,
+  getStatusStyles,
   getTitleFromPath,
   getUnixTime,
   hexToRGB,
   inviteStatusEnumToString,
   isValidLatLng,
   NodeEnumToString,
+  getSectionFromKPI,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,
   structureNodeSiteDate,
+  kpiToGraphType,
+  graphTypeToSection,
 };

@@ -13,13 +13,11 @@ import { duration } from '@/utils';
 import { useRouter } from 'next/navigation';
 
 interface NodeStatusDisplayProps {
-  nodeIds: string[];
-  nodeUpTime?: number;
+  nodeUptimes: Record<string, number>;
 }
 
 const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
-  nodeIds = [],
-  nodeUpTime = 0,
+  nodeUptimes,
 }) => {
   const router = useRouter();
 
@@ -37,50 +35,63 @@ const NodeStatusDisplay: React.FC<NodeStatusDisplayProps> = ({
       }}
     >
       <Stack spacing={4}>
-        {nodeIds.map((nodeId, index) => (
-          <Paper
-            key={nodeId || index}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              mb: 2,
-              p: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FiberManualRecordIcon
-                sx={{
-                  color: colors.green,
-                  mr: 2,
-                  fontSize: 24,
-                }}
-              />
-              <Typography variant="h6" fontWeight="500">
-                {nodeId} is online and well
-              </Typography>
-            </Box>
-
-            <Typography variant="body1" sx={{ ml: 4, mb: 3 }}>
-              Node health has been up for {duration(nodeUpTime)}
-            </Typography>
-
-            <Button
-              variant="text"
+        {Object.entries(nodeUptimes).map(([nodeId, uptime]) => {
+          const isNodeDown = uptime <= 0;
+          return (
+            <Paper
+              key={nodeId}
               sx={{
-                ml: 4,
-                fontWeight: 'bold',
-                fontSize: '14px',
-                color: colors.primaryMain,
-              }}
-              onClick={() => {
-                router.push(`/console/nodes/${nodeId}`);
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                mb: 2,
+                p: 2,
               }}
             >
-              VIEW NODE
-            </Button>
-          </Paper>
-        ))}
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <FiberManualRecordIcon
+                  sx={{
+                    color: isNodeDown ? 'red' : colors.green,
+                    mr: 2,
+                    fontSize: 24,
+                  }}
+                />
+
+                <Typography variant="h6" fontWeight={500}>
+                  {`${nodeId} is ${isNodeDown ? 'currently down' : 'online and well'}`}
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="body1"
+                sx={{
+                  ml: 4,
+                  mb: 3,
+                  color: isNodeDown ? colors.red : colors.black70,
+                }}
+              >
+                {isNodeDown
+                  ? 'Node is offline'
+                  : `Node health has been up for ${duration(uptime)}`}
+              </Typography>
+
+              <Button
+                variant="text"
+                sx={{
+                  ml: 4,
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  color: colors.primaryMain,
+                }}
+                onClick={() => {
+                  router.push(`/console/nodes/${nodeId}`);
+                }}
+              >
+                VIEW NODE
+              </Button>
+            </Paper>
+          );
+        })}
       </Stack>
     </Paper>
   );
