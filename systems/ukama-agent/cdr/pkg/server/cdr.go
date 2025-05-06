@@ -83,6 +83,20 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 		return err
 	}
 
+	asr, err := s.asrClient.GetAsr(imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
+		labels := map[string]string{
+			"package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			"network":  asr.Record.NetworkId,
+		}
+
+		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
+			policy)
+	}
+
 	log.Infof("initialize package usage for imsi %s to %+v", u.Imsi, u)
 
 	return nil
@@ -208,6 +222,20 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	if err != nil {
 		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
+	}
+
+	asr, err := s.asrClient.GetAsr(imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
+		labels := map[string]string{
+			"package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			"network":  asr.Record.NetworkId,
+		}
+
+		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
+			policy)
 	}
 
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)

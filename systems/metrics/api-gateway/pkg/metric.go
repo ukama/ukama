@@ -43,6 +43,7 @@ type Filter struct {
 	subscriber string
 	sim        string
 	site       string
+	operation  string
 }
 
 func NewFilter() *Filter {
@@ -72,12 +73,13 @@ func (f *Filter) WithSim(network string, subscriber string, sim string) *Filter 
 	return f
 }
 
-func (f *Filter) WithAny(network string, subscriber string, sim string, site string, nodeId string) *Filter {
+func (f *Filter) WithAny(network string, subscriber string, sim string, site string, nodeId string, operation string) *Filter {
 	f.network = network
 	f.subscriber = subscriber
 	f.sim = sim
 	f.site = site
 	f.nodeId = nodeId
+	f.operation = operation
 	return f
 }
 
@@ -138,7 +140,7 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	data.Set("start", strconv.FormatInt(in.Start, 10))
 	data.Set("end", strconv.FormatInt(in.End, 10))
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, "avg"))
+	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
 
@@ -158,7 +160,8 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, "avg"))
+
+	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
 
@@ -279,6 +282,10 @@ func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggre
 	rateInterval := m.RateInterval
 	if m.NeedRate && len(rateInterval) == 0 {
 		rateInterval = defaultRateInterval
+	}
+
+	if aggregateFunc == "sum" {
+		return fmt.Sprintf("%s(%s {%s})", aggregateFunc, m.Metric, metricFilter.GetFilter())
 	}
 
 	if m.NeedRate {

@@ -53,25 +53,28 @@ type MetricsConfig struct {
 var defaultPrometheusMetric = map[string]Metric{
 	"cpu":                  Metric{false, "trx_soc_cpu_usage", ""},
 	"memory":               Metric{false, "trx_memory_ddr_used", ""},
-	"users":                Metric{false, "trx_lte_core_active_ue", ""},
-	"sim_usage":            Metric{false, "sim_usage_sum", ""},
-	"sim_usage_duration":   Metric{false, "sim_usage_duration_sum", ""},
-	"sim_count":            Metric{false, "number_of_active_sims", ""},
-	"active_sims":          Metric{false, "number_of_active_sims", ""},
-	"inactive_sims":        Metric{false, "number_of_inactive_sims", ""},
-	"terminated_sims":      Metric{false, "number_of_terminated_sims", ""},
-	"active_users":         Metric{false, "number_of_active_users", ""},
-	"inactive_users":       Metric{false, "number_of_inactive_users", ""},
-	"active_orgs":          Metric{false, "number_of_active_org", ""},
-	"inactive_orgs":        Metric{false, "number_of_inactive_org", ""},
-	"active_members":       Metric{false, "number_of_active_org_members", ""},
-	"inactive_members":     Metric{false, "number_of_inactive_org_members", ""},
-	"networks":             Metric{false, "number_of_networks", ""},
-	"sites":                Metric{false, "number_of_sites", ""},
 	"subscribers_active":   Metric{false, "trx_lte_core_active_ue", ""},
 	"subscribers_attached": Metric{false, "trx_lte_core_subscribers", ""},
 
 	// New Metrics
+	"active_org_users":        Metric{false, "number_of_active_users", ""},
+	"inactive_org_users":      Metric{false, "number_of_inactive_users", ""},
+	"active_orgs":             Metric{false, "number_of_active_org", ""},
+	"inactive_orgs":           Metric{false, "number_of_inactive_org", ""},
+	"platform_active_users":   Metric{false, "platform_active_users", ""},
+	"platform_inactive_users": Metric{false, "platform_inactive_users", ""},
+	"networks":                Metric{false, "number_of_networks", ""},
+	"sites":                   Metric{false, "number_of_sites", ""},
+	"online_node_count":       Metric{false, "online_node_count", ""},
+	"offline_node_count":      Metric{false, "offline_node_count", ""},
+	"active_members":          Metric{false, "active_members", ""},
+	"inactive_members":        Metric{false, "inactive_members", ""},
+
+	"sims":              Metric{false, "number_of_sims", ""},
+	"active_sims":       Metric{false, "active_sim_count", ""},
+	"inactive_sims":     Metric{false, "inactive_sim_count", ""},
+	"package_sales":     Metric{false, "package_sales_sum", ""},
+	"data_usage":        Metric{false, "data_usage", ""},
 	"unit_health":       Metric{false, "unit_health", ""},
 	"unit_status":       Metric{false, "unit_status", ""},
 	"node_load":         Metric{false, "node_load", ""},
@@ -168,20 +171,20 @@ var defaultPrometheusMetric = map[string]Metric{
 	"network_throughput_down": Metric{false, "trx_lte_stack_throughput_downlink", ""},
 
 	// Solar Power Metrics
-	"solar_panel_power":      Metric{false, "solar_panel_power", ""},
-	"solar_panel_voltage":    Metric{false, "solar_panel_voltage", ""},
-	"solar_panel_current":    Metric{false, "solar_panel_current", ""},
+	"solar_panel_power":         Metric{false, "solar_panel_power", ""},
+	"solar_panel_voltage":       Metric{false, "solar_panel_voltage", ""},
+	"solar_panel_current":       Metric{false, "solar_panel_current", ""},
 	"battery_charge_percentage": Metric{false, "battery_charge_percentage", ""},
-	
+
 	// Internet Switch Metrics
-	"switch_port_status":    Metric{false, "switch_port_status", ""},
-	"switch_port_speed": Metric{false, "switch_port_speed", ""},
-	"switch_port_power":     Metric{false, "switch_port_power", ""},
+	"switch_port_status": Metric{false, "switch_port_status", ""},
+	"switch_port_speed":  Metric{false, "switch_port_speed", ""},
+	"switch_port_power":  Metric{false, "switch_port_power", ""},
 
 	//main backhaul
-	"backhaul_speed": Metric{false, "backhaul_speed", ""},
+	"backhaul_speed":        Metric{false, "backhaul_speed", ""},
 	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
-	"site_uptime_seconds": Metric{false, "site_uptime_seconds", ""},
+	"site_uptime_seconds":   Metric{false, "site_uptime_seconds", ""},
 }
 
 type GrpcEndpoints struct {

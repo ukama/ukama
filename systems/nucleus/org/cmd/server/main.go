@@ -132,9 +132,11 @@ func initOrgDB(orgDB *gorm.DB) {
 			}
 
 			org := &db.Org{
-				Id:    OrgUUID,
-				Name:  svcConf.OrgName,
-				Owner: OwnerUUID,
+				Id:       OrgUUID,
+				Owner:    OwnerUUID,
+				Name:     svcConf.OrgName,
+				Currency: svcConf.Currency,
+				Country:  svcConf.Country,
 			}
 
 			usr := &db.User{
