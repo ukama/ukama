@@ -193,8 +193,8 @@ func (n *NodeEventServer) updateNodeConnectivity(nodeID, connectivity string, no
 }
 func (n *NodeEventServer) handleNodeStateTransitionEvent(key string, msg *epb.NodeStateChangeEvent) error {
     log.Infof("Keys %s and Proto is: %+v", key, msg)    
-    nodeID := msg.GetNodeId()
-    
+	nodeID := strings.ToLower(msg.GetNodeId())
+
     node, err := n.s.GetNode(context.Background(), &pb.GetNodeRequest{NodeId: nodeID})
     if err != nil {
         log.Errorf("error getting the node: %v", err)
@@ -205,8 +205,8 @@ func (n *NodeEventServer) handleNodeStateTransitionEvent(key string, msg *epb.No
     
     _, err = n.s.UpdateNodeStatus(context.Background(), &pb.UpdateNodeStateRequest{
         NodeId:       nodeID,
-        Connectivity: msg.Substate,
-        State:        msg.State,
+        Connectivity: ukama.Online.String(),
+        State:       msg.State,
     })
     if err != nil {
         log.Errorf("error updating node status: %v", err)

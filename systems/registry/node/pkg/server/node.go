@@ -584,8 +584,6 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
-
-
 func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 	r, err := n.inventoryClient.Get(nodeId)
 	if err != nil {
