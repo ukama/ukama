@@ -50,6 +50,7 @@ type GetMetricsRangeInput struct {
 	User       string `query:"user"`
 	Site       string `query:"site"`
 	NodeID     string `query:"node"`
+	Operation  string `query:"operation" default:"avg" validate:"oneof=avg sum"`
 }
 type GetMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
@@ -72,6 +73,7 @@ type GetWsMetricIntput struct {
 	User       string `query:"user"`
 	Site       string `query:"site"`
 	NodeID     string `query:"node"`
+	Operation  string `query:"operation" default:"avg" validate:"oneof=avg sum"`
 }
 
 type DummyParameters struct {

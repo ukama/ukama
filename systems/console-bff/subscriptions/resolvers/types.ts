@@ -155,6 +155,9 @@ export class GetMetricsStatInput {
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
 
+  @Field({ nullable: true, defaultValue: "avg" })
+  operation?: string;
+
   @Field({ nullable: true })
   siteId?: string;
 

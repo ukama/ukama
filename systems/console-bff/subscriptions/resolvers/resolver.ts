@@ -138,9 +138,9 @@ class SubscriptionsResolvers {
 
     if (withSubscription && metrics.metrics.length > 0) {
       const topic = `${userId}-${type}-${from}`;
-      const url = `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&metric=${metricsKey.join(
-        ","
-      )}${nodeId ? `&node=${nodeId}` : ""}${
+      const url = `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&operation=${
+        data.operation
+      }&metric=${metricsKey.join(",")}${nodeId ? `&node=${nodeId}` : ""}${
         data.networkId ? `&network=${data.networkId}` : ""
       }`;
 

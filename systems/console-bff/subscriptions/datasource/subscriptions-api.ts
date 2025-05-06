@@ -39,6 +39,9 @@ const getNodeMetricRange = async (
   if (networkId) {
     params = params + `&network=${networkId}`;
   }
+  if (args.operation) {
+    params = params + `&operation=${args.operation}`;
+  }
   logger.info(
     `[getNodeMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
   );
