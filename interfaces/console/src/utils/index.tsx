@@ -153,9 +153,16 @@ const formatBytes = (bytes = 0): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ` ${sizes[i]}`;
 };
 
-const formatBytesToMB = (bytes = 0): string => {
+/**
+ * Converts bytes to gigabytes (GB) and returns a string.
+ * @param bytes Number of bytes to convert.
+ * @param decimals Number of decimal places to show (default is 2).
+ * @returns String representation in GB.
+ */
+const formatBytesToGB = (bytes = 0, decimals = 2): string => {
   if (bytes === 0) return '0';
-  return Math.floor(bytes / (1024 * 1024)).toString();
+  const gb = bytes / (1024 * 1024 * 1024);
+  return gb.toFixed(decimals);
 };
 
 const getDataUsageSymbol = (dataUnit: string): string => {
@@ -620,7 +627,7 @@ export {
   fileToBase64,
   findNullZones,
   formatBytes,
-  formatBytesToMB,
+  formatBytesToGB,
   formatTime,
   getBatteryStyles,
   getConnectionStyles,
