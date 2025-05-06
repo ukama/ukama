@@ -150,6 +150,7 @@ export default function Page() {
             step: 1,
             from: from,
             userId: user.id,
+            operation: 'sum',
             networkId: network.id,
             orgName: user.orgName,
             withSubscription: true,
