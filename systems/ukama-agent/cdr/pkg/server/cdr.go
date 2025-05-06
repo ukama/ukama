@@ -12,6 +12,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
@@ -298,7 +299,7 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 
 	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
 	if err != nil {
-		return nil, err
+		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage for given imsi")
 	}
 
 	log.Debugf("usage query success: %+v", usage)

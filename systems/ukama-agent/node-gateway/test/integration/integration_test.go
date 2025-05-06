@@ -8,16 +8,17 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package integration
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/rest"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/rest"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"

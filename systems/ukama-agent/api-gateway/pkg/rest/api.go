@@ -37,7 +37,7 @@ type ReadSubscriberReq struct {
 }
 
 type QueryUsageRequest struct {
-	Iccid   string `form:"iccid" json:"iccid" query:"iccid" binding:"required"`
+	Iccid   string `json:"iccid" path:"iccid" validate:"required"`
 	NodeId  string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
 	Session uint64 `form:"session" json:"session" query:"session" binding:"required"`
 	From    uint64 `form:"from" json:"from" query:"from" binding:"required"`

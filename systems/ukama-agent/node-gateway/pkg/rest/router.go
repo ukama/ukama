@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package rest
 
 import (
@@ -14,17 +14,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
-	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/client"
-	"github.com/wI2L/fizz/openapi"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
+	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
 
 const ORG_URL_PARAMETER = "org"
@@ -93,7 +94,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	log.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -104,7 +105,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "ukama-agent-node-gateway ", "Ukama-agent system", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
-			logrus.Info("Bypassing auth")
+			log.Info("Bypassing auth")
 			return
 		}
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)

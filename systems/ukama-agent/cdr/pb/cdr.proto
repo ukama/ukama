@@ -100,7 +100,7 @@ message UsageForPeriodResp {
 
 
 message QueryUsageReq {
-    string Imsi = 1;
+    string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
     string NodeId = 2;
     uint64 Session = 3;
     uint64 From = 4;

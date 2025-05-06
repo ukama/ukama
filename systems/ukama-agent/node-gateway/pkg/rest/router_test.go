@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package rest
 
 import (
@@ -20,19 +20,20 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg"
+	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/client"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	cmocks "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen/mocks"
-	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg"
-	"github.com/ukama/ukama/systems/ukama-agent/node-gateway/pkg/client"
 )
 
 var defaultCors = cors.Config{
@@ -61,19 +62,19 @@ var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
 
 var sub = pb.ReadResp{
 	Record: &pb.Record{
-		Iccid:       iccid,
-		SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
-		Imsi:        imsi,
-		Op:          []byte("0123456789012345"),
-		Key:         []byte("0123456789012345"),
-		Amf:         []byte("800"),
-		AlgoType:    1,
-		UeDlAmbrBps: 2000000,
-		UeUlAmbrBps: 2000000,
-		Sqn:         1,
-		CsgIdPrsent: false,
-		CsgId:       0,
-		PackageId:   packageId,
+		Iccid:        iccid,
+		SimPackageId: "880f7c63-eb57-461a-b514-248ce91e9b3e",
+		Imsi:         imsi,
+		Op:           []byte("0123456789012345"),
+		Key:          []byte("0123456789012345"),
+		Amf:          []byte("800"),
+		AlgoType:     1,
+		UeDlAmbrBps:  2000000,
+		UeUlAmbrBps:  2000000,
+		Sqn:          1,
+		CsgIdPrsent:  false,
+		CsgId:        0,
+		PackageId:    packageId,
 	},
 }
 
