@@ -20,7 +20,7 @@ import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
-import { getUnixTime, structureNodeSiteDate } from '@/utils';
+import { formatBytesToGB, getUnixTime, structureNodeSiteDate } from '@/utils';
 import DataVolume from '@mui/icons-material/DataSaverOff';
 import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
@@ -56,9 +56,6 @@ export default function Page() {
   const kpiConfig = NODE_KPIS.HOME.stats;
   const [networkStats, setNetworkStats] = useState({
     uptime: 0,
-    sales: 0,
-    dataVolume: 0,
-    activeSubscribers: 0,
   });
   const { env, user, network, setSnackbarMessage, subscriptionClient } =
     useAppContext();
@@ -130,6 +127,15 @@ export default function Page() {
             from: statVar?.data.from ?? 0,
           });
 
+          data.getMetricsStat.metrics.forEach((metric) => {
+            PubSub.publish(
+              `${metric.type}-${network.id}`,
+              metric.type === kpiConfig[2].id
+                ? formatBytesToGB(metric.value)
+                : metric.value,
+            );
+          });
+
           subscriptionControllerRef.current = controller;
           PubSub.subscribe(sKey, handleStatSubscription);
         }
@@ -163,10 +169,12 @@ export default function Page() {
 
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success, packageId } =
-      parsedData.data.getMetricStatSub;
-    if (success) {
-      PubSub.publish(`${type}-${packageId}`, value[1]);
+    const { value, type, success } = parsedData.data.getMetricStatSub;
+    if (success && value.length === 2) {
+      PubSub.publish(
+        `${type}-${network.id}`,
+        type === kpiConfig[2].id ? formatBytesToGB(value[1]) : value[1],
+      );
     }
   };
 
@@ -191,34 +199,34 @@ export default function Page() {
           <StatusCard
             option={'bill'}
             subtitle2={`$`}
-            subtitle1={`${networkStats.sales}`}
-            Icon={SalesIcon}
-            options={MONTH_FILTER}
-            loading={statLoading}
-            iconColor={colors.beige}
             title={'Sales'}
+            Icon={SalesIcon}
+            loading={statLoading}
+            options={MONTH_FILTER}
+            iconColor={colors.beige}
+            topic={`${kpiConfig[1].id}-${network.id}`}
             handleSelect={(value: string) => {}}
           />
           <StatusCard
             Icon={DataVolume}
             option={'usage'}
             subtitle2={`GBs`}
-            subtitle1={`${networkStats.dataVolume}`}
             options={TIME_FILTER}
             loading={statLoading}
             title={'Data Volume'}
             iconColor={colors.secondaryMain}
+            topic={`${kpiConfig[2].id}-${network.id}`}
             handleSelect={(value: string) => {}}
           />
           <StatusCard
             option={''}
             subtitle2={''}
             Icon={GroupPeople}
-            subtitle1={`${networkStats.activeSubscribers}`}
             options={TIME_FILTER}
             loading={statLoading}
             title={'Active subscribers'}
             iconColor={colors.primaryMain}
+            topic={`${kpiConfig[3].id}-${network.id}`}
             handleSelect={(value: string) => {}}
           />
         </Stack>

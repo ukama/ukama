@@ -48,7 +48,7 @@ import {
 } from '@/styles/global';
 import colors from '@/theme/colors';
 import { TMetricResDto } from '@/types';
-import { formatBytesToMB, getUnixTime } from '@/utils';
+import { formatBytesToGB, getUnixTime } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -454,7 +454,7 @@ const Page = () => {
         setSubscriberDetails({
           ...subscriberInfo,
           packageId: subscriberInfo.sim?.[0]?.package?.package_id,
-          dataUsage: `${formatBytesToMB(Number(usageData)) || 0} MB`,
+          dataUsage: `${formatBytesToGB(Number(usageData)) || 0} MB`,
           dataPlan: plan?.name ?? 'No active plan',
         });
       }
