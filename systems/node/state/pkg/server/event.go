@@ -88,28 +88,28 @@ import (
  
 
  func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID string) {
-	 if n.msgbus == nil {
-		 log.Warn("Message bus client is nil, skipping state change event publication")
-		 return
-	 }
+	if n.msgbus == nil {
+		log.Warn("Message bus client is nil, skipping state change event publication")
+		return
+	}
  
-	 route := n.baseRoutingKey.SetAction("transition").SetObject("node").MustBuild()
-	 
-	 eventsForNode := n.getEventsForNode(nodeID)
+	route := n.baseRoutingKey.SetAction("transition").SetObject("node").MustBuild()
+	
+	eventsForNode := n.getEventsForNode(nodeID)
  
-	 evt := &epb.NodeStateChangeEvent{
-		 NodeId:   nodeID,
-		 State:    state,
-		 Substate: substate,
-		 Events:   eventsForNode,
-	 }
+	evt := &epb.NodeStateChangeEvent{
+		NodeId:   nodeID,
+		State:    state,
+		Substate: substate,
+		Events:   eventsForNode,
+	}
  
-	 err := n.msgbus.PublishRequest(route, evt)
-	 if err != nil {
-		 log.Errorf("Failed to publish message %+v with key %+v. Error: %s", evt, route, err.Error())
-	 }
-	 
-	 n.clearEventsForNode(nodeID)
+	err := n.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Error: %s", evt, route, err.Error())
+	}
+	
+	n.clearEventsForNode(nodeID)
  }
  
  func (n *StateEventServer) getEventsForNode(nodeID string) []string {
@@ -422,7 +422,7 @@ import (
 	 if err := instance.Transition(eventName); err != nil {
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
 		 
-		 if eventName == "online" && instance.CurrentSubstate == "" {
+		 if eventName == evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline] && instance.CurrentSubstate == "" {
 			 instance.CurrentSubstate = DefaultSubstate
 			 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
 		 }
