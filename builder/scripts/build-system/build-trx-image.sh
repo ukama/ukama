@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -7,14 +7,13 @@
 
 set -e
 
-STAGE="init"
 DIR="$(pwd)"
 UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
 UKAMA_STACK_REPO=""
 MODE=""
 
-trap cleanup EXIT
+trap cleanup ERR
 
 log() {
     local type="$1"
@@ -39,7 +38,7 @@ check_status() {
 
 cleanup() {
     cd "$UKAMA_STACK_REPO"
-    make clean || true
+    sudo make clean || true
     cd "$DIR"
     log "INFO" "Cleanup completed."
 }
@@ -93,6 +92,51 @@ check_git_repo_and_submodules() {
     fi
 }
 
+validate_output_artifacts() {
+    log "INFO" "Validating output artifacts..."
+
+    local output_dir="$UKAMA_STACK_REPO/distro/output"
+    local stack_dir="$UKAMA_STACK_REPO/stack/${MODE,,}/source"
+    local expected_common=(
+        "$output_dir/fw.bin"
+        "$output_dir/lsm_os"
+        "$output_dir/lsm_os.gz"
+        "$output_dir/lsm_rd.gz"
+        "$output_dir/vmlinux.64"
+        "$output_dir/vmlinux.64.debug"
+    )
+
+    local expected_stack=(
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_oamclient_buildlog.txt"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_sonserver_buildlog.txt"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_startupstack_buildlog.txt"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Dimark_Client.tgz"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/dsp.tgz"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/LFMSOFT_OCT_D.tgz"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/lsmD"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/lsmD.gz"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/pltD"
+        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/sonMifServer"
+    )
+
+    local missing=()
+    for file in "${expected_common[@]}" "${expected_stack[@]}"; do
+        if [ ! -f "$file" ]; then
+            missing+=("$file")
+        fi
+    done
+
+    if [ "${#missing[@]}" -ne 0 ]; then
+        log "ERROR" "Missing output artifacts:"
+        for f in "${missing[@]}"; do
+            echo "  - $f"
+        done
+        exit 1
+    fi
+
+    log "SUCCESS" "All expected output artifacts are present."
+}
+
 if [ -z "$1" ]; then
     log "ERROR" "Usage: $0 <lte-stack-repo> [FDD|TDD]"
     exit 1
@@ -106,7 +150,7 @@ if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
     exit 1
 fi
 
-check_required_packages
+#check_required_packages
 check_git_repo_and_submodules "$UKAMA_STACK_REPO"
 
 # Build the toolchain and stack
@@ -131,24 +175,16 @@ check_status $? "Build completed." "crosstool-ng make"
 
 make install
 check_status $? "Install completed." "crosstool-ng make install"
-
 export PATH="$BUILD_DIR/bin:$PATH"
 
 log "SUCCESS" "Toolchain built and installed."
 
 # Setup build environment
 cd "$DISTRO_DIR"
-source ./env-setup OCTEON_CNF71XX_PASS1_1
+source ./env-setup OCTEON_CNF71XX_PASS1_1 --verbose
 check_status $? "Environment setup sourced." "env-setup"
-
 export PATH="$HOST_BIN_DIR:$PATH"
-
-# Ensure python2 symlink
-if ! command -v python &> /dev/null; then
-    sudo apt install -y python2
-    sudo ln -sf /usr/bin/python2 /usr/bin/python
-    log "INFO" "python2 installed and symlinked as python"
-fi
+log "SUCCESS" "Environment setup done."
 
 # Clean up dtc parser (optional)
 cd "$DISTRO_DIR"
@@ -168,12 +204,11 @@ check_status $? "Kernel image built (lsm_os.gz)." "make kernel-deb"
 make rootfs
 check_status $? "Rootfs image built (lsm_rd.gz)." "make rootfs"
 
-make kernel
-check_status $? "Combined kernel+rootfs image built." "make kernel"
-
-# build stack
+# build stack (tdd or fdd)
 cd "$UKAMA_STACK_REPO"
 sudo make stack TYPE="$MODE"
 check_status $? "Build stack image. mode: $MODE" "make stack"
+
+validate_output_artifacts
 
 log "SUCCESS" "TRX board images creation complete!"
