@@ -14,8 +14,6 @@ UKAMA_ROOT=$(realpath ../../../)
 UKAMA_STACK_REPO=""
 MODE=""
 
-RAW_IMG="ukama-node.img"
-
 trap cleanup EXIT
 
 log() {
@@ -40,9 +38,9 @@ check_status() {
 }
 
 cleanup() {
-    cd ${UKAMA_LTE_STACK}
-    make clean
-    cd ${DIR}
+    cd "$UKAMA_STACK_REPO"
+    make clean || true
+    cd "$DIR"
     log "INFO" "Cleanup completed."
 }
 
@@ -102,7 +100,7 @@ fi
 
 UKAMA_STACK_REPO=$(realpath "$1")
 
-MODE="${2:-FDD}"  # Default to FDD if not provided
+MODE="${2:-FDD}"
 if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
     log "ERROR" "Invalid mode '$MODE'. Expected 'FDD' or 'TDD'."
     exit 1
@@ -172,5 +170,10 @@ check_status $? "Rootfs image built (lsm_rd.gz)." "make rootfs"
 
 make kernel
 check_status $? "Combined kernel+rootfs image built." "make kernel"
+
+# build stack
+cd "$UKAMA_STACK_REPO"
+sudo make stack TYPE="$MODE"
+check_status $? "Build stack image. mode: $MODE" "make stack"
 
 log "SUCCESS" "TRX board images creation complete!"
