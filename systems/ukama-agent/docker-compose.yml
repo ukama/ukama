@@ -35,27 +35,6 @@ services:
    - msgclient-ukama-agent
    - postgresd-ukama-agent
 
- # stub:
-  # build: ./asr
-  # environment:
-   # - DEBUGMODE=true
-   # - DB_USER=postgres
-   # - DB_PASSWORD=Pass2020!
-   # - DB_HOST=postgresd-ukama-agent
-   # - MSGCLIENT_HOST=msgclient-ukama-agent:9095
-   # - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   # - ASR_SERVICE_HOST=asr
-   # - ASR_SERVICE_PORT=9090
-   # - ORGNAME=${ORGNAME}
-   # - ORGID=${ORGID}
-   # - HTTP_INITCLIENT=http://api-gateway-init:8080
-  # restart: always
-  # networks:
-   # - ukama-net
-  # depends_on:
-   # - msgclient-ukama-agent
-   # - postgresd-ukama-agent
-
  cdr:
   build: ./cdr
   environment:
