@@ -100,7 +100,7 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	endTime := t.Unix()
 
 	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint +
-		fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", iccid, startTime, endTime))
+		fmt.Sprintf("/usage/%s?from=%d&to=%d", iccid, startTime, endTime))
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %s", err.Error())
 

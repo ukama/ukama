@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
+
 	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/rest/client/ukamaagent"
 )
@@ -143,7 +144,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
-				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
+				fmt.Sprintf("/usage/%s?from=%d&to=%d", testIccid, startTime, endTime))
 
 			// fake usage usage
 			usage := `{"usage":"28901234567"}`
@@ -174,7 +175,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
-				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
+				fmt.Sprintf("/usage/%s?from=%d&to=%d", testIccid, startTime, endTime))
 
 			return &http.Response{
 				StatusCode: 200,
@@ -197,7 +198,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+
-				fmt.Sprintf("/%s/period?start_time=%d&end_time=%d", testIccid, startTime, endTime))
+				fmt.Sprintf("/usage/%s?from=%d&to=%d", testIccid, startTime, endTime))
 
 			return nil
 		}
