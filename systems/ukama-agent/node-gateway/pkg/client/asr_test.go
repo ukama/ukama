@@ -85,7 +85,6 @@ func TestAsrClient_Read(t *testing.T) {
 	pResp := &pb.ReadResp{
 		Record: &pb.Record{
 			Iccid:       iccid,
-			SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
 			Imsi:        imsi,
 			Op:          []byte("0123456789012345"),
 			Key:         []byte("0123456789012345"),
