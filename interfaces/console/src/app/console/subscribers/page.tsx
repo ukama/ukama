@@ -16,6 +16,7 @@ import {
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
+  useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
   useGetSimsQuery,
@@ -23,10 +24,6 @@ import {
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
 } from '@/client/graphql/generated';
-import {
-  Stats_Type,
-  useGetMetricsStatLazyQuery,
-} from '@/client/graphql/generated/subscriptions';
 import AddSubscriberStepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
 import DeleteConfirmation from '@/components/DeleteDialog';
@@ -37,7 +34,6 @@ import SubscriberDetails from '@/components/SubscriberDetails';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
-import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import {
   CardWrapper,
   DataPlanEmptyView,
@@ -47,15 +43,14 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { TMetricResDto } from '@/types';
-import { formatBytesToGB, getUnixTime } from '@/utils';
+import { formatBytesToGB } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
@@ -75,19 +70,6 @@ const Page = () => {
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
-  const subscriptionKeyRef = useRef<string | null>(null);
-  const subscriptionControllerRef = useRef<AbortController | null>(null);
-
-  const cleanupSubscription = useCallback(() => {
-    if (subscriptionKeyRef.current) {
-      PubSub.unsubscribe(subscriptionKeyRef.current);
-      subscriptionKeyRef.current = null;
-    }
-    if (subscriptionControllerRef.current) {
-      subscriptionControllerRef.current.abort();
-      subscriptionControllerRef.current = null;
-    }
-  }, []);
 
   const { data: packagesData, loading: packagesLoading } = useGetPackagesQuery({
     fetchPolicy: 'cache-and-network',
@@ -118,6 +100,12 @@ const Page = () => {
       });
     },
   });
+
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+    useGetDataUsagesLazyQuery({
+      pollInterval: 120000,
+      fetchPolicy: 'network-only',
+    });
 
   const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
     onCompleted: (res) => {
@@ -153,6 +141,15 @@ const Page = () => {
             iccid: s.sim[0].iccid,
           });
         }
+      });
+
+      getDataUsages({
+        variables: {
+          data: {
+            for: simUsageData,
+            type: Sim_Types.UkamaData,
+          },
+        },
       });
     },
     onError: (error) => {
@@ -299,68 +296,6 @@ const Page = () => {
       },
     });
 
-  const [
-    getMetricStat,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetMetricsStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: async (data) => {
-      if (data.getMetricsStat.metrics.length > 0) {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.DataUsage}-${statVar?.data.from ?? 0}`;
-        cleanupSubscription();
-        subscriptionKeyRef.current = sKey;
-
-        if (statVar?.data.withSubscription) {
-          const controller = await MetricStatSubscription({
-            key: sKey,
-            userId: user.id,
-            url: env.METRIC_URL,
-            networkId: network.id,
-            orgName: user.orgName,
-            type: Stats_Type.DataUsage,
-            from: statVar?.data.from ?? 0,
-          });
-
-          subscriptionControllerRef.current = controller;
-          PubSub.subscribe(sKey, handleStatSubscription);
-        }
-      }
-    },
-  });
-
-  useEffect(() => {
-    const to = getUnixTime();
-    const from = to;
-    if (network.id) {
-      cleanupSubscription();
-
-      getMetricStat({
-        variables: {
-          data: {
-            to: to,
-            step: 1,
-            from: from,
-            userId: user.id,
-            networkId: network.id,
-            orgName: user.orgName,
-            withSubscription: true,
-            type: Stats_Type.DataUsage,
-          },
-        },
-      });
-    }
-  }, [network.id, user.id, user.orgName, cleanupSubscription]);
-
-  const handleStatSubscription = (_: any, data: string) => {
-    const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success, packageId } =
-      parsedData.data.getMetricStatSub;
-    if (success) {
-      PubSub.publish(`${type}-${packageId}`, value[1]);
-    }
-  };
-
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
@@ -417,21 +352,27 @@ const Page = () => {
           const pkg = packagesData?.getPackages.packages.find(
             (pkg) => pkg.uuid === sim?.package?.package_id,
           );
+          const dataUsage = dataUsageData?.getDataUsages.usages.find(
+            (usage) => usage.simId === sim?.id,
+          );
 
           return {
             id: subscriber.uuid,
             name: subscriber.name,
-            dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
-            pacakgeId: sim?.package?.package_id,
-            // dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
-            dataUsage: '-',
+            packageId: sim?.package?.package_id,
+            dataPlan: pkg?.name ?? 'No active plan',
+            dataUsage: `${formatBytesToGB(Number(dataUsage?.usage)) || 0} GB`,
             actions: '',
           };
         });
       }
     },
-    [packagesData?.getPackages.packages, network],
+    [
+      packagesData?.getPackages.packages,
+      dataUsageData?.getDataUsages.usages,
+      network,
+    ],
   );
 
   const handleOpenSubscriberDetails = useCallback(
@@ -441,26 +382,24 @@ const Page = () => {
       );
       setIsSubscriberDetailsOpen(true);
       if (subscriberInfo) {
+        const usageData = dataUsageData?.getDataUsages.usages.find(
+          (usage) => usage.simId === subscriberInfo.sim?.[0]?.id,
+        );
         const plan = packagesData?.getPackages.packages.find(
           (pkg) => pkg.uuid === subscriberInfo.sim?.[0]?.package?.package_id,
         );
-        let usageData = 0;
-        PubSub.subscribe(
-          `${Stats_Type.DataUsage}-${subscriberInfo.sim?.[0]?.package?.package_id}`,
-          (_, value) => {
-            usageData = value;
-          },
-        );
+
         setSubscriberDetails({
           ...subscriberInfo,
           packageId: subscriberInfo.sim?.[0]?.package?.package_id,
-          dataUsage: `${formatBytesToGB(Number(usageData)) || 0} MB`,
+          dataUsage: `${formatBytesToGB(Number(usageData?.usage)) || 0} GB`,
           dataPlan: plan?.name ?? 'No active plan',
         });
       }
     },
     [
       data?.getSubscribersByNetwork.subscribers,
+      dataUsageData?.getDataUsages.usages,
       packagesData?.getPackages.packages,
     ],
   );
@@ -697,7 +636,7 @@ const Page = () => {
           </Stack>
         </Paper>
       )}
-      {getSubscriberByNetworkLoading ? (
+      {getSubscriberByNetworkLoading || dataUsageLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}

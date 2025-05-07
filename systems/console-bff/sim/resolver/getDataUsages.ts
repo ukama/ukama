@@ -18,8 +18,8 @@ export class GetDataUsagesResolver {
     @Ctx() ctx: Context
   ): Promise<SimDataUsages> {
     const { dataSources, baseURL } = ctx;
-    const to = Math.floor(new Date().getTime() / 1000);
-    const from = to - 180000;
+    const to = Math.round(Date.now() - 60 / 1000);
+    const from = to - 240;
 
     const usages = await Promise.all(
       data.for.map(item =>

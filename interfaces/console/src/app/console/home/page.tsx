@@ -14,7 +14,6 @@ import {
 import EmptyView from '@/components/EmptyView';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import { SitesTree } from '@/components/NetworkMap/OverlayUI';
-import NetworkStatus from '@/components/NetworkStatus';
 import { MONTH_FILTER, NODE_KPIS, TIME_FILTER } from '@/constants';
 import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
@@ -28,7 +27,7 @@ import SalesIcon from '@mui/icons-material/MonetizationOn';
 import { AlertColor, Paper, Skeleton, Stack } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 const NetworkMap = dynamic(() => import('@/components/NetworkMap'), {
   ssr: false,
   loading: () => (
@@ -54,9 +53,6 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
 
 export default function Page() {
   const kpiConfig = NODE_KPIS.HOME.stats;
-  const [networkStats, setNetworkStats] = useState({
-    uptime: 0,
-  });
   const { env, user, network, setSnackbarMessage, subscriptionClient } =
     useAppContext();
   const subscriptionKeyRef = useRef<string | null>(null);
@@ -181,6 +177,7 @@ export default function Page() {
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
       <Grid size={12}>
+        {/* TODO: Need more discussion
         <NetworkStatus
           title={
             network.name
@@ -192,7 +189,7 @@ export default function Page() {
           availableNodes={undefined}
           statusType="ONLINE"
           tooltipInfo="Network is online"
-        />
+        /> */}
       </Grid>
       <Grid size={12}>
         <Stack direction={'row'} spacing={{ xs: 0.5, md: 1 }}>

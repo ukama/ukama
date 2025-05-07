@@ -193,6 +193,6 @@ export const dtoToUsageDto = (
   const data = res.usage;
   return {
     simId: args.simId,
-    usage: data[args.iccid],
+    usage: data[args.iccid] ?? "0",
   };
 };
