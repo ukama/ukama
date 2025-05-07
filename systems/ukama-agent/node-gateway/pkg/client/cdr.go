@@ -27,11 +27,11 @@ type CDR struct {
 }
 
 func NewCDR(host string, timeout time.Duration) *CDR {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+
 	client := pb.NewCDRServiceClient(conn)
 
 	return &CDR{
@@ -52,7 +52,10 @@ func NewCdrFromClient(asrClient pb.CDRServiceClient) *CDR {
 }
 
 func (c *CDR) Close() {
-	_ = c.conn.Close()
+	err := c.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close CDR client connection. Error: %v ", err)
+	}
 }
 
 func (c *CDR) PostCDR(req *pb.CDR) (*pb.CDRResp, error) {

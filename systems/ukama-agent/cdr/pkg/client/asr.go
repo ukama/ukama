@@ -46,7 +46,10 @@ func NewAsrClient(asrHost string, timeout time.Duration) (AsrService, error) {
 }
 
 func (c *asrClient) Close() {
-	_ = c.conn.Close()
+	err := c.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+	}
 }
 
 func (c *asrClient) GetAsr(imsi string) (*pb.ReadResp, error) {

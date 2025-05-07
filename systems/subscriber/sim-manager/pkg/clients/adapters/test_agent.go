@@ -17,6 +17,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
@@ -76,5 +77,8 @@ func (t *TestAgentAdapter) TerminateSim(ctx context.Context, iccid string) error
 }
 
 func (t *TestAgentAdapter) Close() {
-	_ = t.conn.Close()
+	err := t.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close TestAgent client connection. Error: %v ", err)
+	}
 }

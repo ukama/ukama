@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 )
 
 type Asr struct {
@@ -29,7 +30,7 @@ func NewAsr(host string, timeout time.Duration) *Asr {
 
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewAsrRecordServiceClient(conn)
 
@@ -51,7 +52,10 @@ func NewAsrFromClient(asrClient pb.AsrRecordServiceClient) *Asr {
 }
 
 func (r *Asr) Close() {
-	_ = r.conn.Close()
+	err := r.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+	}
 }
 
 func (a *Asr) Activate(req *pb.ActivateReq) (*pb.ActivateResp, error) {

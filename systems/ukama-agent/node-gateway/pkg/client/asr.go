@@ -52,7 +52,10 @@ func NewAsrFromClient(asrClient pb.AsrRecordServiceClient) *Asr {
 }
 
 func (r *Asr) Close() {
-	_ = r.conn.Close()
+	err := r.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+	}
 }
 
 func (a *Asr) UpdateGuti(req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
