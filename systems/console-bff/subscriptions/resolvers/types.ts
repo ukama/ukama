@@ -146,6 +146,9 @@ export class GetMetricsStatInput {
   @Field({ nullable: true })
   networkId?: string;
 
+  @Field({ nullable: true })
+  siteId?: string;
+
   @Field()
   orgName: string;
 

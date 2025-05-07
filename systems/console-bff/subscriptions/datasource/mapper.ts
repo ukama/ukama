@@ -87,7 +87,13 @@ export const parseMetricsResponse = (
     networkId: item.metric?.network ?? args.networkId ?? "",
     packageId: item.metric?.package ?? "",
     dataPlanId: item.metric?.dataplan ?? "",
-    values: fixTimestampInMetricData(item.values, 1, args.to, args.from, type),
+    values: fixTimestampInMetricData(
+      item.values,
+      1,
+      args.to ?? Math.floor(Date.now() / 1000),
+      args.from,
+      type
+    ),
   }));
   const metricsRes: MetricsRes = {
     metrics: metricResArray,
