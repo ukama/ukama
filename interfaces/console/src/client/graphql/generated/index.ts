@@ -1407,7 +1407,9 @@ export type SimUsageInputDto = {
 };
 
 export type SimUsagesInputDto = {
-  for: Array<SimsUsageInputDto>;
+  from?: InputMaybe<Scalars['Float']['input']>;
+  networkId: Scalars['String']['input'];
+  to?: InputMaybe<Scalars['Float']['input']>;
   type: Scalars['String']['input'];
 };
 
@@ -1421,11 +1423,6 @@ export type Sims = {
 export type SimsResDto = {
   __typename?: 'SimsResDto';
   sim: Array<SimDto>;
-};
-
-export type SimsUsageInputDto = {
-  iccid: Scalars['String']['input'];
-  simId: Scalars['String']['input'];
 };
 
 export type Site = {

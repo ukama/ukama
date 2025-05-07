@@ -66,7 +66,6 @@ export class SimUsageInputDto {
   from: number;
 }
 
-@InputType()
 export class SimsUsageInputDto {
   @Field(() => String)
   iccid: string;
@@ -76,8 +75,14 @@ export class SimsUsageInputDto {
 }
 @InputType()
 export class SimUsagesInputDto {
-  @Field(() => [SimsUsageInputDto])
-  for: SimsUsageInputDto[];
+  @Field(() => String)
+  networkId: string;
+
+  @Field({ nullable: true, defaultValue: 0 })
+  to?: number;
+
+  @Field({ nullable: true, defaultValue: 0 })
+  from?: number;
 
   @Field()
   type: string;

@@ -135,7 +135,7 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 		return fmt.Errorf("failed to Unmarshal payment metadata as map[string]string: %w", err)
 	}
 
-	simId, ok := metadata["simId"]
+	simId, ok := metadata["sim"]
 	if !ok {
 		return fmt.Errorf("missing simId metadata for successful package payment: %s", msg.ItemId)
 	}

@@ -10,7 +10,6 @@ import {
   AllocateSimApiDto,
   Sim_Status,
   Sim_Types,
-  SimsUsageInputDto,
   SubscribersResDto,
   useAddPackagesToSimMutation,
   useAddSubscriberMutation,
@@ -101,12 +100,6 @@ const Page = () => {
     },
   });
 
-  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
-    useGetDataUsagesLazyQuery({
-      pollInterval: 120000,
-      fetchPolicy: 'network-only',
-    });
-
   const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
     onCompleted: (res) => {
       if (res.getSimsBySubscriber) {
@@ -133,21 +126,12 @@ const Page = () => {
         const iccid = query.get('iccid');
         setSearch(iccid ?? '');
       }
-      const simUsageData: SimsUsageInputDto[] = [];
-      data.getSubscribersByNetwork.subscribers.map((s) => {
-        if (s && s.sim && s.sim[0]) {
-          simUsageData.push({
-            simId: s.sim[0].id,
-            iccid: s.sim[0].iccid,
-          });
-        }
-      });
 
       getDataUsages({
         variables: {
           data: {
-            for: simUsageData,
             type: Sim_Types.UkamaData,
+            networkId: network.id,
           },
         },
       });
@@ -293,6 +277,18 @@ const Page = () => {
           type: 'error' as AlertColor,
           show: true,
         });
+      },
+    });
+
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+    useGetDataUsagesLazyQuery({
+      pollInterval: 120000,
+      fetchPolicy: 'network-only',
+      variables: {
+        data: {
+          type: Sim_Types.UkamaData,
+          networkId: network.id,
+        },
       },
     });
 
