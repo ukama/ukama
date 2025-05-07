@@ -92,7 +92,6 @@ query GetMetricsStat($data: GetMetricsStatInput!) {
       success
       msg
       nodeId
-      siteId
       type
       value
       networkId
@@ -101,12 +100,13 @@ query GetMetricsStat($data: GetMetricsStatInput!) {
     }
   }
 }
-query GetSiteStat($data: GetMetricsStatInput!) {
+query GetSiteStat($data: GetMetricsSiteStatInput!) {
   getSiteStat(data: $data) {
     metrics {
       success
       msg
       siteId
+      nodeId
       type
       value
     }
@@ -116,7 +116,6 @@ query GetMetricBySite($data: GetMetricBySiteInput!) {
   getMetricBySite(data: $data) {
     metrics {
       msg
-      nodeId
       success
       type
       values
@@ -135,5 +134,16 @@ subscription GetMetricsStatSub($data: SubMetricsStatInput!) {
     siteId
     packageId
     dataPlanId
+  }
+}
+
+subscription GetSiteMetricStatSub($data: SubSiteMetricsStatInput!) {
+  getSiteMetricStatSub(data: $data) {
+    msg
+    siteId
+    nodeId
+    success
+    type
+    value
   }
 }

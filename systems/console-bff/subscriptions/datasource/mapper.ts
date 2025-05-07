@@ -99,7 +99,7 @@ export const parseMetricsResponse = (
 export const parseSiteMetricRes = (
   res: any,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
+  args: GetMetricRangeInput
 ): MetricRes => {
   let result: any[] = [];
   if (res.data?.data?.result) {

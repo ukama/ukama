@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/num30/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -33,6 +34,7 @@ import (
 
 	generated "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg"
+	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/client"
 	"github.com/ukama/ukama/testing/services/dummy/dcontroller/pkg/server"
 )
   
@@ -74,17 +76,11 @@ import (
 		 serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		 serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
 		 serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-		 nodeClient := creg.NewNodeClient(serviceConfig.RegistryHost)
+	 nodeClient := creg.NewNodeClient(serviceConfig.RegistryHost)
+	 dNodeClient := client.NewDNodeClient(serviceConfig.DNodeURL,10*time.Second)
 
-	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient,nodeClient)
-	 
-	 if serviceConfig.DNodeURL != "" {
-		 log.Infof("Initializing DNode client with URL: %s", serviceConfig.DNodeURL)
-		 controllerServer.AddScenarioMonitoring(serviceConfig.DNodeURL)
-	 } else {
-		 log.Warnf("DNode URL not configured, node scenario updates will be disabled")
-	 }
-	 
+	 controllerServer := server.NewControllerServer(serviceConfig.OrgName, mbClient, nodeClient, dNodeClient)
+	
 	 nSrv := server.NewEventServer(serviceConfig.OrgName, controllerServer)
 	
 	 log.Debugf("MessageBus Client is %+v", mbClient)
@@ -100,7 +96,6 @@ import (
 	 waitForExit()
 	 
 	 log.Info("Cleaning up resources...")
-	 controllerServer.Cleanup()
 	 
 	 log.Infof("Exiting service %s", pkg.ServiceName)
  }

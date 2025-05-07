@@ -15,7 +15,6 @@ interface IMetricStatSubscription {
   nodeId?: string;
   userId: string;
   orgName: string;
-  siteId?: string;
   type: Stats_Type;
   networkId?: string;
 }
@@ -45,7 +44,6 @@ export default async function MetricStatSubscription({
   userId,
   orgName,
   nodeId = undefined,
-  siteId = undefined,
   networkId = undefined,
 }: IMetricStatSubscription) {
   const myHeaders = new Headers();
@@ -83,9 +81,6 @@ export default async function MetricStatSubscription({
 
   if (nodeId) {
     baseParams.nodeId = nodeId;
-  }
-  if (siteId) {
-    baseParams.siteId = siteId;
   }
   if (networkId) {
     baseParams.networkId = networkId;

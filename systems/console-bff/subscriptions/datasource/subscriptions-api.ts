@@ -12,6 +12,7 @@ import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE, STATS_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
+  GetMetricRangeInput,
   GetMetricsStatInput,
   MetricRes,
   MetricsRes,
@@ -65,7 +66,7 @@ const getNodeMetricRange = async (
 const getSiteMetricRange = async (
   baseUrl: string,
   type: string,
-  args: GetMetricsStatInput
+  args: GetMetricRangeInput
 ): Promise<MetricRes> => {
   const { from, step = 1, userId, siteId } = args;
 

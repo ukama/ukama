@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Grid,
@@ -20,16 +20,17 @@ import {
 import { CheckCircle } from '@mui/icons-material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { SiteDto } from '@/client/graphql/generated';
-import AddIcon from '@mui/icons-material/Add';
 import { duration } from '@/utils';
+import CancelIcon from '@mui/icons-material/Cancel';
+import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { SITE_KPI_TYPES } from '@/constants';
 
 interface SiteDetailsHeaderProps {
-  addSite: () => void;
   siteList: SiteDto[];
   selectedSiteId: string | null;
   onSiteChange: (siteId: string) => void;
   isLoading: boolean;
-  siteUpTime: number;
+  siteStatMetrics: SiteMetricsStateRes;
 }
 
 const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
@@ -37,9 +38,44 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
   selectedSiteId,
   onSiteChange,
   isLoading,
-  siteUpTime,
+  siteStatMetrics,
 }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [siteUpTime, setSiteUpTime] = useState<number>(0);
+
+  useEffect(() => {
+    if (!selectedSiteId || !siteStatMetrics?.metrics?.length) return;
+
+    const siteMetrics = siteStatMetrics.metrics.filter(
+      (metric) => metric.siteId === selectedSiteId && metric.success,
+    );
+
+    const uptimeSecondsMetric = siteMetrics.find(
+      (metric) => metric.type === SITE_KPI_TYPES.SITE_UPTIME,
+    );
+
+    if (uptimeSecondsMetric?.value !== undefined) {
+      const value = uptimeSecondsMetric.value;
+      const numValue = typeof value === 'number' ? value : parseFloat(value);
+      setSiteUpTime(Math.floor(numValue));
+    }
+  }, [selectedSiteId, siteStatMetrics]);
+
+  useEffect(() => {
+    if (!selectedSiteId) return;
+
+    const tokens = [
+      PubSub.subscribe(`stat-${SITE_KPI_TYPES.SITE_UPTIME}`, (_, value) => {
+        if (value.length > 0) {
+          setSiteUpTime(Math.floor(value[1]));
+        }
+      }),
+    ];
+
+    return () => {
+      tokens.forEach((token) => PubSub.unsubscribe(token));
+    };
+  }, [selectedSiteId]);
 
   const handleMenuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -69,7 +105,11 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
           <>
             {selectedSite ? (
               <>
-                <CheckCircle color="success" />
+                {siteUpTime > 0 ? (
+                  <CheckCircle color="success" />
+                ) : (
+                  <CancelIcon color="error" />
+                )}
                 <Typography variant="body1">{selectedSite.name}</Typography>
               </>
             ) : (
@@ -111,7 +151,15 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
                 ]}
           </Menu>
         </Stack>
-        Site is up for <b>{duration(siteUpTime)}</b>
+        {isLoading || siteUpTime == null ? (
+          <Skeleton variant="text" width="60" height={20} sx={{ mb: 2 }} />
+        ) : siteUpTime === 0 ? (
+          <Typography variant="body1">Site is currently down</Typography>
+        ) : (
+          <Typography variant="body1">
+            Site is up for <b>{duration(siteUpTime)}</b>
+          </Typography>
+        )}
       </Box>
     </Grid>
   );

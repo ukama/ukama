@@ -77,7 +77,7 @@ services:
   networks:
    - ukama-net
 
- api-gateway-dummy:
+ api-gateway:
   build: ./api-gateway
   ports:
    - 8086:8080
