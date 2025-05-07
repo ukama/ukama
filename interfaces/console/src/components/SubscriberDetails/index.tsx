@@ -161,11 +161,13 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
           </Stack>
         </Stack>
       </DialogTitle>
+      <MenuItem onClick={() => handleMenuItemClick('pauseService')}>
+        Pause service
+      </MenuItem>
       <Menu anchorEl={anchorEl} open={open} onClose={handleCloseItem}>
         <MenuItem
           onClick={() => handleMenuItemClick('deleteSubscriber')}
           sx={{ color: colors.red }}
-          disabled={true}
         >
           Delete subscriber
         </MenuItem>

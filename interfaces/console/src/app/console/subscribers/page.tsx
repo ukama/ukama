@@ -482,6 +482,8 @@ const Page = () => {
           subscriberId: subscriberId,
         },
       });
+    } else if (action === 'pauseService') {
+      // Implement pause service for sub
     }
   };
 
