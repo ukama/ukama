@@ -588,11 +588,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		
 		dynamicConfig := c
-		dynamicConfig.Title = fmt.Sprintf("Node State Changed to %s", msg.State)
-		dynamicConfig.Description = fmt.Sprintf("Node changed to state: %s, connectivity: %s", msg.State, msg.Substate)
+		dynamicConfig.Title = fmt.Sprintf("Node State: %s", msg.State)
+		dynamicConfig.Description = fmt.Sprintf("Connectivity: %s", msg.Substate)
 		
 		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
-
+		
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
 		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)

@@ -135,7 +135,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventNodeStateTransition",
 		Title:       "Node State Transition",
 		Description: "Node State Transition",
-		Scope:       notif.SCOPE_ORG,
+		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
 	},
 	EventSiteCreate: {

@@ -72,6 +72,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
 				"event.cloud.local.{{ .Org}}.node.state.node.transition",
+				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 			},
 		},
 	}
