@@ -97,6 +97,13 @@ validate_output_artifacts() {
 
     local output_dir="$UKAMA_STACK_REPO/distro/output"
     local stack_dir="$UKAMA_STACK_REPO/stack/${MODE,,}/source"
+    local stack_build_dir=""
+    if [[ "$MODE" == "TDD" ]]; then
+        stack_build_dir="$stack_dir/LTE_Stack_TDD_Bin_startup_NMMdisable_IPV6disable_158239"
+    else
+        stack_build_dir="$stack_dir/LTE_Stack_FDD_Bin_startup_NMMdisable_IPV6disable_158476"
+    fi
+
     local expected_common=(
         "$output_dir/fw.bin"
         "$output_dir/lsm_os"
@@ -107,16 +114,13 @@ validate_output_artifacts() {
     )
 
     local expected_stack=(
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_oamclient_buildlog.txt"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_sonserver_buildlog.txt"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Buildlogs/158476_startupstack_buildlog.txt"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/Dimark_Client.tgz"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/dsp.tgz"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/LFMSOFT_OCT_D.tgz"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/lsmD"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/lsmD.gz"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/pltD"
-        "$stack_dir/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_158476/sonMifServer"
+        "$stack_build_dir/Dimark_Client.tgz"
+        "$stack_build_dir/dsp.tgz"
+        "$stack_build_dir/LFMSOFT_OCT_D.tgz"
+        "$stack_build_dir/lsmD"
+        "$stack_build_dir/lsmD.gz"
+        "$stack_build_dir/pltD"
+        "$stack_build_dir/sonMifServer"
     )
 
     local missing=()
