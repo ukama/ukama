@@ -9,14 +9,60 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand/v2"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 )
+
+type prometheusResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string `json:"resultType"`
+		Result     []struct {
+			Metric struct {
+				Name    string `json:"__name__"`
+				Env     string `json:"env"`
+				Job     string `json:"job"`
+				Network string `json:"network"`
+				Org     string `json:"org"`
+			} `json:"metric"`
+			Value []interface{} `json:"value"`
+		} `json:"result"`
+	} `json:"data"`
+}
+
+func getMetricValue(query string) (int, error) {
+	resp, err := http.Get("http://prometheus:9090/api/v1/query?query=" + query)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var result prometheusResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return 0, err
+	}
+
+	if len(result.Data.Result) == 0 {
+		return 0, nil
+	}
+
+	valueStr := result.Data.Result[0].Value[1].(string)
+	return strconv.Atoi(valueStr)
+}
 
 func Worker(id string, updateChan chan config.WMessage, initial config.WMessage) {
 	kpis := initial.Kpis
@@ -63,6 +109,15 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 			case "unit_uptime":
 				kpi.KPI.With(labels).Inc()
 				continue
+			case "trx_lte_core_active_ue":
+				count, err := getSubscriber()
+				if err != nil {
+					fmt.Printf("Error getting subscriber: %s\n", err)
+					continue
+				}
+				values[kpi.Key] = float64(count)
+				kpi.KPI.With(labels).Set(values[kpi.Key])
+				continue
 			// TODO: Can handle different scenario cases here for different KPIs
 			default:
 				switch profile {
@@ -73,9 +128,22 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 				default:
 					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
 				}
+				kpi.KPI.With(labels).Set(values[kpi.Key])
 			}
-
-			kpi.KPI.With(labels).Set(values[kpi.Key])
 		}
 	}
+}
+
+func getSubscriber() (int, error) {
+	activeCount, err := getMetricValue("active_sim_count")
+	if err != nil {
+		return 0, err
+	}
+
+	inactiveCount, err := getMetricValue("inactive_sim_count")
+	if err != nil {
+		return 0, err
+	}
+
+	return activeCount - inactiveCount, nil
 }
