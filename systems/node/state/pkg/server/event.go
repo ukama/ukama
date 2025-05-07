@@ -371,7 +371,6 @@ func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, e
 	_, err = n.s.AddNodeState(ctx, addStateRequest)
 	if err != nil {
 		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
-	}
-	
+	}	
 	return nil
 }

@@ -588,8 +588,12 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		
 		dynamicConfig := c
-		dynamicConfig.Title = fmt.Sprintf("Node State: %s", msg.State)
-		dynamicConfig.Description = fmt.Sprintf("Connectivity: %s", msg.Substate)
+		shortNodeId := msg.NodeId
+		if len(msg.NodeId) > 6 {
+			shortNodeId = msg.NodeId[len(msg.NodeId)-6:]
+		}
+		dynamicConfig.Title = fmt.Sprintf("Node %s: %s", shortNodeId, msg.State)
+		dynamicConfig.Description = fmt.Sprintf("Status: %s", msg.Substate)
 		
 		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 		

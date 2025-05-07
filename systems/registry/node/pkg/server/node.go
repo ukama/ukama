@@ -129,7 +129,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
 
-/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Get node  %v", req.GetNodeId())
 
@@ -151,7 +150,6 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 	return resp, nil
 }
 
-/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetSiteId())
 
@@ -175,7 +173,6 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteReque
 	return resp, nil
 }
 
-/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetNetworkId())
 
@@ -199,7 +196,6 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 	return resp, nil
 }
 
-/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Getting all nodes.")
 
@@ -218,7 +214,6 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 	return resp, nil
 }
 
-/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(), req.GetState())
 
@@ -585,6 +580,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
 func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
+	log.Infof("Add node to site %s", nodeId)
 	r, err := n.inventoryClient.Get(nodeId)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "node not found in inventory against component id: %s, Error %s", nodeId, err.Error())
@@ -616,6 +612,7 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 
 		evt := &epb.EventRegistryNodeAssign{
 			NodeId:  r.PartNumber,
+			Type:    r.Type,
 		}
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
