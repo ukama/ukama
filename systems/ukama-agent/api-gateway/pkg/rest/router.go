@@ -125,7 +125,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		asr.GET("/:iccid/period", formatDoc("Get Subscriber usage package", ""), tonic.Handler(r.getUsageForPeriod, http.StatusOK))
 
 		usage := auth.Group("/usage", "Data Usage", "Active susbcriber data usage")
-		usage.GET("", formatDoc("Query data usage with various filtering params", ""), tonic.Handler(r.queryUsage, http.StatusOK))
+		usage.GET("/:iccid", formatDoc("Query data usage for a givent ICCID with various filtering params", ""), tonic.Handler(r.queryUsage, http.StatusOK))
 	}
 
 }

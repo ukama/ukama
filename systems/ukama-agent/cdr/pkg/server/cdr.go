@@ -12,6 +12,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
@@ -81,20 +82,6 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 	if err != nil {
 		log.Errorf("Error initialization usage for imsi %s. Error %+v", imsi, err)
 		return err
-	}
-
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
-		labels := map[string]string{
-			"package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			"network":  asr.Record.NetworkId,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			policy)
 	}
 
 	log.Infof("initialize package usage for imsi %s to %+v", u.Imsi, u)
@@ -224,20 +211,6 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 		return err
 	}
 
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
-		labels := map[string]string{
-			"package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			"network":  asr.Record.NetworkId,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			policy)
-	}
-
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
 
 	return nil
@@ -326,7 +299,9 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 
 	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
 	if err != nil {
-		return nil, err
+		log.Errorf("Query usage failure: Error getting usage matching request %v. Error: %v", req, err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage matiching request:")
 	}
 
 	log.Debugf("usage query success: %+v", usage)

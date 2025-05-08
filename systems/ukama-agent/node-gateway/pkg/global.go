@@ -11,4 +11,3 @@ package pkg
 const ServiceName = "nodegateway"
 const SystemName = "ukamagateway"
 const InstanceId = SystemName + "-" + ServiceName + "-" + "debug"
-

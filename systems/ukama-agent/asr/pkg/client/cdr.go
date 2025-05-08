@@ -49,7 +49,10 @@ func NewCDR(cdr string, timeout time.Duration) (*CDR, error) {
 }
 
 func (c *CDR) Close() {
-	_ = c.conn.Close()
+	err := c.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close CDR client connection. Error: %v ", err)
+	}
 }
 
 func (c *CDR) GetUsage(imsi string) (*pb.UsageResp, error) {
