@@ -43,12 +43,13 @@ type HttpServices struct {
 }
 
 type WMessage struct {
-	Iccid     string         `json:"iccid"`
-	Imsi      string         `json:"imsi"`
-	Expiry    string         `json:"expiry"`
-	Status    bool           `json:"status"`
-	Profile   cenums.Profile `json:"profile"`
-	NodeId    string         `json:"node_id"`
+	Iccid     string           `json:"iccid"`
+	Imsi      string           `json:"imsi"`
+	Expiry    string           `json:"expiry"`
+	Status    bool             `json:"status"`
+	Profile   cenums.Profile   `json:"profile"`
+	NodeId    string           `json:"node_id"`
+	Scenario  cenums.SCENARIOS `json:"scenario"`
 	CDRClient clients.CDRClient
 	Agent     agent.UkamaAgentClient `json:"agent"`
 }

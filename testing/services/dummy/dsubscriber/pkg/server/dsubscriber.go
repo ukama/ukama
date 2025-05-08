@@ -66,7 +66,8 @@ func NewDsubscriberServer(orgName string, msgBus mb.MsgBusServiceClient, rc pkg.
 func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
 	log.Infof("Received Update request: %+v", req)
 	profile := cenums.ParseProfileType(req.Dsubscriber.Profile)
-	s.updateCoroutine(req.Dsubscriber.Iccid, profile)
+	scenario := cenums.ParseScenarioType(req.Dsubscriber.Scenario)
+	s.updateCoroutine(req.Dsubscriber.Iccid, profile, scenario)
 	return &pb.UpdateResponse{
 		Dsubscriber: &pb.Dsubscriber{
 			Iccid:   req.Dsubscriber.Iccid,
@@ -143,7 +144,7 @@ func (s *DsubscriberServer) updateHandler(iccid string, expiry string) {
 	}
 }
 
-func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile) {
+func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, scenario cenums.SCENARIOS) {
 	log.Infof("Update a message with ICCID %s, Profile %d", iccid, profile)
 
 	s.mu.Lock()
@@ -157,10 +158,11 @@ func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile
 	status := s.iccidWithStatus[iccid]
 	imsi := s.iccidWithIMSI[iccid]
 	msg := pkg.WMessage{
-		Iccid:   iccid,
-		Profile: profile,
-		Status:  status,
-		Imsi:    imsi,
+		Iccid:    iccid,
+		Profile:  profile,
+		Status:   status,
+		Imsi:     imsi,
+		Scenario: scenario,
 	}
 
 	select {

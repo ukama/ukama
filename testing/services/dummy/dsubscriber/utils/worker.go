@@ -28,11 +28,12 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 	profile := initial.Profile
 	expiry := initial.Expiry
 	status := initial.Status
+	scenario := initial.Scenario
 	imsi := initial.Imsi
 
 	fmt.Printf("Coroutine %s started with: %d, %s\n", iccid, profile, expiry)
 
-	runLogic(iccid, nodeId, imsi, profile, cdrClient, count, interval, rc, agent)
+	runLogic(iccid, nodeId, imsi, profile, scenario, cdrClient, count, interval, rc, agent)
 
 	ticker := time.NewTicker(time.Duration(rc.Interval) * time.Minute)
 	defer ticker.Stop()
@@ -48,28 +49,31 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 				nodeId = msg.NodeId
 			}
 			profile = msg.Profile
+			scenario = msg.Scenario
 			expiry = msg.Expiry
 			status = msg.Status
 			imsi = msg.Imsi
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", iccid, profile, expiry)
 		case <-ticker.C:
-			if status {
-				runLogic(iccid, nodeId, imsi, profile, cdrClient, count, interval, rc, agent)
+			if status && (scenario == cenums.SCENARIO_NODE_RF_ON || scenario == cenums.SCENARIO_DEFAULT) {
+				runLogic(iccid, nodeId, imsi, profile, scenario, cdrClient, count, interval, rc, agent)
 				count += 1
 				interval += rc.Interval
 			}
 		}
-		expiryDate, _ := time.Parse(time.RFC3339, expiry)
-		diff := time.Until(expiryDate)
-		totalMints := uint64(math.Round(diff.Minutes()))
-		if interval > totalMints {
-			fmt.Printf("Coroutine %s stopping for limit reach\n", iccid)
-			return
+		if scenario == cenums.SCENARIO_NODE_RF_ON || scenario == cenums.SCENARIO_DEFAULT {
+			expiryDate, _ := time.Parse(time.RFC3339, expiry)
+			diff := time.Until(expiryDate)
+			totalMints := uint64(math.Round(diff.Minutes()))
+			if interval > totalMints {
+				fmt.Printf("Coroutine %s stopping for limit reach\n", iccid)
+				return
+			}
 		}
 	}
 }
 
-func runLogic(iccid, nodeId, imsi string, profile cenums.Profile, cdrClient clients.CDRClient, count int, interval uint64, rc pkg.RoutineConfig, ua agent.UkamaAgentClient) {
+func runLogic(iccid, nodeId, imsi string, profile cenums.Profile, scenario cenums.SCENARIOS, cdrClient clients.CDRClient, count int, interval uint64, rc pkg.RoutineConfig, ua agent.UkamaAgentClient) {
 	usage := 0.0
 	if profile == cenums.PROFILE_MIN {
 		usage = rc.Min + rand.Float64()*(rc.Normal-rc.Min)*0.1

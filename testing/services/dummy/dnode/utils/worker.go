@@ -110,13 +110,19 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 				kpi.KPI.With(labels).Inc()
 				continue
 			case "trx_lte_core_active_ue":
-				count, err := getSubscriber()
-				if err != nil {
-					fmt.Printf("Error getting subscriber: %s\n", err)
-					continue
+				if scenario == cenums.SCENARIO_NODE_RF_OFF {
+					values[kpi.Key] = 0
+					kpi.KPI.With(labels).Set(values[kpi.Key])
+
+				} else {
+					count, err := getSubscriber()
+					if err != nil {
+						fmt.Printf("Error getting subscriber: %s\n", err)
+						continue
+					}
+					values[kpi.Key] = float64(count)
+					kpi.KPI.With(labels).Set(values[kpi.Key])
 				}
-				values[kpi.Key] = float64(count)
-				kpi.KPI.With(labels).Set(values[kpi.Key])
 				continue
 			// TODO: Can handle different scenario cases here for different KPIs
 			default:
