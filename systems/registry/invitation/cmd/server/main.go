@@ -73,9 +73,10 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	notifUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
-		log.Errorf("Failed to resolve notification address: %v", err)
+		log.Fatalf("Failed to resolve notification system address from initClient: %v", err)
 	}
 
 	mailerClient := cnotif.NewMailerClient(notifUrl.String())
@@ -103,9 +104,9 @@ func runGrpcServer(gormdb sql.Db) {
 
 func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Register(); err != nil {
-		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
+		log.Fatalf("Failed to register with Message Client Service. Error %s", err.Error())
 	}
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
 }

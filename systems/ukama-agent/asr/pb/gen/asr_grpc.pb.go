@@ -27,6 +27,7 @@ const (
 	AsrRecordService_Read_FullMethodName              = "/ukama.subscriber.asr.v1.AsrRecordService/Read"
 	AsrRecordService_GetUsage_FullMethodName          = "/ukama.subscriber.asr.v1.AsrRecordService/GetUsage"
 	AsrRecordService_GetUsageForPeriod_FullMethodName = "/ukama.subscriber.asr.v1.AsrRecordService/GetUsageForPeriod"
+	AsrRecordService_QueryUsage_FullMethodName        = "/ukama.subscriber.asr.v1.AsrRecordService/QueryUsage"
 )
 
 // AsrRecordServiceClient is the client API for AsrRecordService service.
@@ -69,6 +70,8 @@ type AsrRecordServiceClient interface {
 	GetUsage(ctx context.Context, in *UsageReq, opts ...grpc.CallOption) (*UsageResp, error)
 	// / This RPC provides you with the usage for period
 	GetUsageForPeriod(ctx context.Context, in *UsageForPeriodReq, opts ...grpc.CallOption) (*UsageResp, error)
+	// / Query Usage with various filtering params
+	QueryUsage(ctx context.Context, in *QueryUsageReq, opts ...grpc.CallOption) (*QueryUsageResp, error)
 }
 
 type asrRecordServiceClient struct {
@@ -159,6 +162,16 @@ func (c *asrRecordServiceClient) GetUsageForPeriod(ctx context.Context, in *Usag
 	return out, nil
 }
 
+func (c *asrRecordServiceClient) QueryUsage(ctx context.Context, in *QueryUsageReq, opts ...grpc.CallOption) (*QueryUsageResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QueryUsageResp)
+	err := c.cc.Invoke(ctx, AsrRecordService_QueryUsage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AsrRecordServiceServer is the server API for AsrRecordService service.
 // All implementations must embed UnimplementedAsrRecordServiceServer
 // for forward compatibility.
@@ -199,6 +212,8 @@ type AsrRecordServiceServer interface {
 	GetUsage(context.Context, *UsageReq) (*UsageResp, error)
 	// / This RPC provides you with the usage for period
 	GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageResp, error)
+	// / Query Usage with various filtering params
+	QueryUsage(context.Context, *QueryUsageReq) (*QueryUsageResp, error)
 	mustEmbedUnimplementedAsrRecordServiceServer()
 }
 
@@ -232,6 +247,9 @@ func (UnimplementedAsrRecordServiceServer) GetUsage(context.Context, *UsageReq) 
 }
 func (UnimplementedAsrRecordServiceServer) GetUsageForPeriod(context.Context, *UsageForPeriodReq) (*UsageResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsageForPeriod not implemented")
+}
+func (UnimplementedAsrRecordServiceServer) QueryUsage(context.Context, *QueryUsageReq) (*QueryUsageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryUsage not implemented")
 }
 func (UnimplementedAsrRecordServiceServer) mustEmbedUnimplementedAsrRecordServiceServer() {}
 func (UnimplementedAsrRecordServiceServer) testEmbeddedByValue()                          {}
@@ -398,6 +416,24 @@ func _AsrRecordService_GetUsageForPeriod_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AsrRecordService_QueryUsage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryUsageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AsrRecordServiceServer).QueryUsage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AsrRecordService_QueryUsage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AsrRecordServiceServer).QueryUsage(ctx, req.(*QueryUsageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AsrRecordService_ServiceDesc is the grpc.ServiceDesc for AsrRecordService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -436,6 +472,10 @@ var AsrRecordService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsageForPeriod",
 			Handler:    _AsrRecordService_GetUsageForPeriod_Handler,
+		},
+		{
+			MethodName: "QueryUsage",
+			Handler:    _AsrRecordService_QueryUsage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

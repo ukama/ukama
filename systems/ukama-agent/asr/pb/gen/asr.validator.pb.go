@@ -177,3 +177,18 @@ func (this *Policy) Validate() error {
 	}
 	return nil
 }
+func (this *QueryUsageReq) Validate() error {
+	if this.Iccid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
+	}
+	if !(len(this.Iccid) > 17) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length greater than '17'`, this.Iccid))
+	}
+	if !(len(this.Iccid) < 23) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must have a length smaller than '23'`, this.Iccid))
+	}
+	return nil
+}
+func (this *QueryUsageResp) Validate() error {
+	return nil
+}

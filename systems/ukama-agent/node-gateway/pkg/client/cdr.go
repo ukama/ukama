@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
 
 type CDR struct {
@@ -26,11 +27,11 @@ type CDR struct {
 }
 
 func NewCDR(host string, timeout time.Duration) *CDR {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
+
 	client := pb.NewCDRServiceClient(conn)
 
 	return &CDR{
@@ -51,7 +52,10 @@ func NewCdrFromClient(asrClient pb.CDRServiceClient) *CDR {
 }
 
 func (c *CDR) Close() {
-	c.conn.Close()
+	err := c.conn.Close()
+	if err != nil {
+		log.Errorf("Failed to close CDR client connection. Error: %v ", err)
+	}
 }
 
 func (c *CDR) PostCDR(req *pb.CDR) (*pb.CDRResp, error) {

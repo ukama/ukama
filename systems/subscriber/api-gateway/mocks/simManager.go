@@ -72,36 +72,6 @@ func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.AllocateSim
 	return r0, r1
 }
 
-// DeleteSim provides a mock function with given fields: simId
-func (_m *simManager) DeleteSim(simId string) (*gen.DeleteSimResponse, error) {
-	ret := _m.Called(simId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteSim")
-	}
-
-	var r0 *gen.DeleteSimResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteSimResponse, error)); ok {
-		return rf(simId)
-	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteSimResponse); ok {
-		r0 = rf(simId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteSimResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // GetPackagesForSim provides a mock function with given fields: simId
 func (_m *simManager) GetPackagesForSim(simId string) (*gen.GetPackagesForSimResponse, error) {
 	ret := _m.Called(simId)
@@ -365,6 +335,36 @@ func (_m *simManager) SetActivePackageForSim(req *gen.SetActivePackageRequest) (
 
 	if rf, ok := ret.Get(1).(func(*gen.SetActivePackageRequest) error); ok {
 		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TerminateSim provides a mock function with given fields: simId
+func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, error) {
+	ret := _m.Called(simId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TerminateSim")
+	}
+
+	var r0 *gen.TerminateSimResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.TerminateSimResponse, error)); ok {
+		return rf(simId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.TerminateSimResponse); ok {
+		r0 = rf(simId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.TerminateSimResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(simId)
 	} else {
 		r1 = ret.Error(1)
 	}

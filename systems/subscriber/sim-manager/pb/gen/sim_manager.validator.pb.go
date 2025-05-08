@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -133,13 +133,13 @@ func (this *ToggleSimStatusRequest) Validate() error {
 func (this *ToggleSimStatusResponse) Validate() error {
 	return nil
 }
-func (this *DeleteSimRequest) Validate() error {
+func (this *TerminateSimRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
 	return nil
 }
-func (this *DeleteSimResponse) Validate() error {
+func (this *TerminateSimResponse) Validate() error {
 	return nil
 }
 

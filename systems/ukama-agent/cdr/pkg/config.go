@@ -18,7 +18,7 @@ import (
 
 const (
 	DataUsage = "data_usage"
-	CountType = "count"
+	CountType = "gauge"
 )
 
 type Config struct {

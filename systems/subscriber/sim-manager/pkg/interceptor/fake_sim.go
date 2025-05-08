@@ -29,7 +29,7 @@ import (
 const (
 	getSimRPCSuffix          = "SimManagerService/GetSim"
 	toggleSimStatusRPCSuffix = "SimManagerService/ToggleSimStatus"
-	deleteSimRPCSuffix       = "SimManagerService/DeleteSim"
+	terminateSimRPCSuffix    = "SimManagerService/TerminateSim"
 
 	statusActive   = "active"
 	statusInactive = "inactive"
@@ -70,8 +70,8 @@ func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any
 			}
 		}
 
-	case strings.HasSuffix(info.FullMethod, deleteSimRPCSuffix):
-		if rq, ok := req.(*pb.DeleteSimRequest); ok {
+	case strings.HasSuffix(info.FullMethod, terminateSimRPCSuffix):
+		if rq, ok := req.(*pb.TerminateSimRequest); ok {
 			if err := utils.ParseTestUUID(rq.SimId); err == nil {
 				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 

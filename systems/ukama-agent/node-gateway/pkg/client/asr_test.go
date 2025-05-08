@@ -15,8 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	//"github.com/ukama/ukama/systems/init/lookup/gen/mocks"
-
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
 )
@@ -84,19 +82,19 @@ func TestAsrClient_Read(t *testing.T) {
 
 	pResp := &pb.ReadResp{
 		Record: &pb.Record{
-			Iccid:       iccid,
-			SimId:       "880f7c63-eb57-461a-b514-248ce91e9b3e",
-			Imsi:        imsi,
-			Op:          []byte("0123456789012345"),
-			Key:         []byte("0123456789012345"),
-			Amf:         []byte("800"),
-			AlgoType:    1,
-			UeDlAmbrBps: 2000000,
-			UeUlAmbrBps: 2000000,
-			Sqn:         1,
-			CsgIdPrsent: false,
-			CsgId:       0,
-			PackageId:   packageId,
+			Iccid:        iccid,
+			SimPackageId: "880f7c63-eb57-461a-b514-248ce91e9b3e",
+			Imsi:         imsi,
+			Op:           []byte("0123456789012345"),
+			Key:          []byte("0123456789012345"),
+			Amf:          []byte("800"),
+			AlgoType:     1,
+			UeDlAmbrBps:  2000000,
+			UeUlAmbrBps:  2000000,
+			Sqn:          1,
+			CsgIdPrsent:  false,
+			CsgId:        0,
+			PackageId:    packageId,
 		},
 	}
 

@@ -54,6 +54,7 @@ type asr interface {
 	Read(req *pb.ReadReq) (*pb.ReadResp, error)
 	GetUsage(req *pb.UsageReq) (*pb.UsageResp, error)
 	GetUsageForPeriod(req *pb.UsageForPeriodReq) (*pb.UsageResp, error)
+	QueryUsage(req *pb.QueryUsageReq) (*pb.QueryUsageResp, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -118,10 +119,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		asr := auth.Group("/asr", "Asr", "Active susbcriber registry")
 		asr.GET("/:iccid", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
 		asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
-		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
+		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		asr.GET("/:iccid/usage", formatDoc("Get Subscriber usage for time", ""), tonic.Handler(r.getUsage, http.StatusOK))
 		asr.GET("/:iccid/period", formatDoc("Get Subscriber usage package", ""), tonic.Handler(r.getUsageForPeriod, http.StatusOK))
+
+		usage := auth.Group("/usage", "Data Usage", "Active susbcriber data usage")
+		usage.GET("/:iccid", formatDoc("Query data usage for a givent ICCID with various filtering params", ""), tonic.Handler(r.queryUsage, http.StatusOK))
 	}
 
 }
@@ -188,5 +192,17 @@ func (r *Router) getUsageForPeriod(c *gin.Context, req *UsageForPeriodRequest) (
 		},
 		StartTime: req.StartTime,
 		EndTime:   req.EndTime,
+	})
+}
+
+func (r *Router) queryUsage(c *gin.Context, req *QueryUsageRequest) (*pb.QueryUsageResp, error) {
+	return r.clients.a.QueryUsage(&pb.QueryUsageReq{
+		Iccid:   req.Iccid,
+		NodeId:  req.NodeId,
+		Session: req.Session,
+		From:    req.From,
+		To:      req.To,
+		Count:   req.Count,
+		Sort:    req.Sort,
 	})
 }

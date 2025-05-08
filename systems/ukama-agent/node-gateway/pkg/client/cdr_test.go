@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package client
 
 import (
@@ -15,10 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	//"github.com/ukama/ukama/systems/init/lookup/gen/mocks"
-
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen/mocks"
 )

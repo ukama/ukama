@@ -51,7 +51,7 @@ func NewRegistryFromClient(RegistryClient pb.RegistryServiceClient) *Registry {
 }
 
 func (sub *Registry) Close() {
-	sub.conn.Close()
+	_ = sub.conn.Close()
 }
 
 func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
@@ -83,7 +83,7 @@ func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*
 	defer cancel()
 	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
 		SubscriberId:          subscriber.SubscriberId,
-		Name:				   subscriber.Name,
+		Name:                  subscriber.Name,
 		PhoneNumber:           subscriber.PhoneNumber,
 		Address:               subscriber.Address,
 		IdSerial:              subscriber.IdSerial,

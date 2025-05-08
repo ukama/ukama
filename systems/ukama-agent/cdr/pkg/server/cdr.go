@@ -12,6 +12,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
@@ -83,21 +84,7 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 		return err
 	}
 
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
-		labels := map[string]string{
-			"package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			"network":  asr.Record.NetworkId,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			policy)
-	}
-
-	log.Infof("Initilaize package usage for imsi %s to %+v", u.Imsi, u)
+	log.Infof("initialize package usage for imsi %s to %+v", u.Imsi, u)
 
 	return nil
 }
@@ -116,13 +103,33 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		log.Errorf("Error updating usage for imsi %s", err)
 	}
 
+	usage, err := s.cdrRepo.QueryUsage(req.Imsi, "", 0, 0, 0, []string{cdr.Policy}, 0, false)
+	if err != nil {
+		return nil, err
+	}
+
+	asr, err := s.asrClient.GetAsr(cdr.Imsi)
+	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == cdr.Policy {
+		labels := map[string]string{
+			"package":  asr.Record.SimPackageId,
+			"dataplan": asr.Record.PackageId,
+			"network":  asr.Record.NetworkId,
+			"iccid":    asr.Record.Iccid,
+		}
+
+		pushDataUsageMetrics(float64(usage), labels, s.pushGatewayHost)
+	} else {
+		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
+			cdr.Policy)
+	}
+
 	/* Publish event for new CDR */
 	e := dbCDRToepbCDR(*cdr)
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetActionCreate().SetObject("cdr").MustBuild()
 		merr := s.msgbus.PublishRequest(route, e)
 		if merr != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, merr.Error())
 		}
 	}
 
@@ -202,20 +209,6 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 	if err != nil {
 		log.Errorf("Error updating usage for imsi %s. Error %+v", imsi, err)
 		return err
-	}
-
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == policy {
-		labels := map[string]string{
-			// "package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			// "network":  asr.Record.Network,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			policy)
 	}
 
 	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
@@ -301,7 +294,24 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 	return usage, nil
 }
 
-/* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and rport the usage */
+func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
+	log.Debugf("Received Usage query request %+v", req)
+
+	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
+	if err != nil {
+		log.Errorf("Query usage failure: Error getting usage matching request %v. Error: %v", req, err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage matiching request:")
+	}
+
+	log.Debugf("usage query success: %+v", usage)
+
+	return &pb.QueryUsageResp{
+		Usage: usage,
+	}, nil
+}
+
+/* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and report the usage */
 func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
@@ -317,8 +327,8 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 	/* Assumption: Make sure older CDR is sent from the node first
 	TODO: Handle the case if node A is not able to update CDR to the backend but
-	node B on which subcriber latches after node A was able to publish CDR on backend
-	In this case node A CDR will be rejeceted as of now
+	node B on which subscriber latches after node A was able to publish CDR on backend
+	In this case node A CDR will be rejected as of now
 	*/
 	recs, err := s.cdrRepo.GetByTimeAndNodeId(cdrMsg.Imsi, cdrMsg.StartTime, (uint64)(time.Now().Unix()), cdrMsg.NodeId)
 	if err != nil && recs != nil {
@@ -413,14 +423,14 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 			} else {
 				/* New session
 				Assumption: We only allow the CDR which are generated(updated) after the last updated cdr in backend db
-				We mugth have to check it in future if we miss any CDR
+				We might have to check it in future if we miss any CDR
 				We can still compile the report from CDR table as it contain all received CDR
 				*/
 				log.Infof("End session %d and create new session %d for imsi %s", ou.LastSessionId, sessionId, cdr.Imsi)
 				if cdr.LastUpdatedAt > lastUpdatedAt {
 					lastUpdatedAt = cdr.LastUpdatedAt
 					u.LastSessionUsage = u.Usage                  /* Usage till last session last cdr */
-					u.Historical = u.Historical + cdr.TotalBytes  /* usage is hitorical + current */
+					u.Historical = u.Historical + cdr.TotalBytes  /* usage is historical + current */
 					u.Usage = u.LastSessionUsage + cdr.TotalBytes /*usage for this package is last session + current */
 					u.LastNodeId = cdr.NodeId
 					u.LastCDRUpdatedAt = cdr.LastUpdatedAt
@@ -440,7 +450,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 			log.Infof("End session %d and create new session %d for imsi %s because of node handover from %s to %s", ou.LastSessionId, sessionId, cdr.Imsi, lastCDRNodeId, cdr.NodeId)
 			lastUpdatedAt = cdr.LastUpdatedAt
 			u.LastSessionUsage = u.Usage                 /* Usage till last session last cdr */
-			u.Historical = u.Historical + cdr.TotalBytes /* usage is hitorical + current */
+			u.Historical = u.Historical + cdr.TotalBytes /* usage is historical + current */
 			u.Usage = u.LastSessionUsage + cdr.TotalBytes
 			u.LastNodeId = cdr.NodeId
 			u.LastCDRUpdatedAt = cdr.LastUpdatedAt
@@ -511,26 +521,14 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 		return err
 	}
 
-	asr, err := s.asrClient.GetAsr(imsi)
-	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == u.Policy {
-		labels := map[string]string{
-			// "package":  asr.Record.SimPackageId,
-			"dataplan": asr.Record.PackageId,
-			// "network":  asr.Record.Network,
-		}
-
-		pushDataUsageMetrics(float64(u.Usage), labels, s.pushGatewayHost)
-	} else {
-		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
-			u.Policy)
-	}
-
 	log.Infof("Updated usage for imsi %s to %+v", u.Imsi, u)
 
 	return nil
 }
 
 func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHost string) {
+	log.Infof("Collecting and pushing data usage metric to push gateway host: %s", pushGatewayHost)
+
 	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
 		pkg.DataUsage, float64(value), labels, pkg.SystemName)
 	if err != nil {

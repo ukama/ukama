@@ -1076,7 +1076,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		packageClient.AssertExpectations(t)
 	})
 }
-func TestSimManagerServer_DeleteSim(t *testing.T) {
+func TestSimManagerServer_TerminateSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var simID = uuid.NewV4()
 		msgbusClient := &cmocks.MsgBusServiceClient{}
@@ -1116,7 +1116,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
 
-		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
 			SimId: simID.String(),
 		})
 
@@ -1144,7 +1144,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
 			SimId: simID.String(),
 		})
 
@@ -1177,7 +1177,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
 			SimId: simID.String(),
 		})
 
@@ -1214,7 +1214,7 @@ func TestSimManagerServer_DeleteSim(t *testing.T) {
 		s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.DeleteSim(context.TODO(), &pb.DeleteSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
 			SimId: simID.String(),
 		})
 

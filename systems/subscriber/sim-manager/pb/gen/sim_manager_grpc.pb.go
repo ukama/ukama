@@ -32,7 +32,7 @@ const (
 	SimManagerService_GetSimsBySubscriber_FullMethodName    = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber"
 	SimManagerService_GetSimsByNetwork_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork"
 	SimManagerService_ToggleSimStatus_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus"
-	SimManagerService_DeleteSim_FullMethodName              = "/ukama.subscriber.sim_manager.v1.SimManagerService/DeleteSim"
+	SimManagerService_TerminateSim_FullMethodName           = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminateSim"
 	SimManagerService_AddPackageForSim_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim"
 	SimManagerService_ListPackagesForSim_FullMethodName     = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListPackagesForSim"
 	SimManagerService_GetPackagesForSim_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesForSim"
@@ -55,8 +55,8 @@ type SimManagerServiceClient interface {
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
 	GetSimsByNetwork(ctx context.Context, in *GetSimsByNetworkRequest, opts ...grpc.CallOption) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error)
-	DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error)
-	// Sim pacakge
+	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
+	// Sim package
 	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
 	ListPackagesForSim(ctx context.Context, in *ListPackagesForSimRequest, opts ...grpc.CallOption) (*ListPackagesForSimResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
@@ -136,10 +136,10 @@ func (c *simManagerServiceClient) ToggleSimStatus(ctx context.Context, in *Toggl
 	return out, nil
 }
 
-func (c *simManagerServiceClient) DeleteSim(ctx context.Context, in *DeleteSimRequest, opts ...grpc.CallOption) (*DeleteSimResponse, error) {
+func (c *simManagerServiceClient) TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteSimResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_DeleteSim_FullMethodName, in, out, cOpts...)
+	out := new(TerminateSimResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_TerminateSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -229,8 +229,8 @@ type SimManagerServiceServer interface {
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
 	GetSimsByNetwork(context.Context, *GetSimsByNetworkRequest) (*GetSimsByNetworkResponse, error)
 	ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error)
-	DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error)
-	// Sim pacakge
+	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
+	// Sim package
 	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
 	ListPackagesForSim(context.Context, *ListPackagesForSimRequest) (*ListPackagesForSimResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
@@ -268,8 +268,8 @@ func (UnimplementedSimManagerServiceServer) GetSimsByNetwork(context.Context, *G
 func (UnimplementedSimManagerServiceServer) ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ToggleSimStatus not implemented")
 }
-func (UnimplementedSimManagerServiceServer) DeleteSim(context.Context, *DeleteSimRequest) (*DeleteSimResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteSim not implemented")
+func (UnimplementedSimManagerServiceServer) TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminateSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPackageForSim not implemented")
@@ -421,20 +421,20 @@ func _SimManagerService_ToggleSimStatus_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimManagerService_DeleteSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteSimRequest)
+func _SimManagerService_TerminateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TerminateSimRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SimManagerServiceServer).DeleteSim(ctx, in)
+		return srv.(SimManagerServiceServer).TerminateSim(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SimManagerService_DeleteSim_FullMethodName,
+		FullMethod: SimManagerService_TerminateSim_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).DeleteSim(ctx, req.(*DeleteSimRequest))
+		return srv.(SimManagerServiceServer).TerminateSim(ctx, req.(*TerminateSimRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -597,8 +597,8 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SimManagerService_ToggleSimStatus_Handler,
 		},
 		{
-			MethodName: "DeleteSim",
-			Handler:    _SimManagerService_DeleteSim_Handler,
+			MethodName: "TerminateSim",
+			Handler:    _SimManagerService_TerminateSim_Handler,
 		},
 		{
 			MethodName: "AddPackageForSim",

@@ -35,7 +35,8 @@ type Sim struct {
 	TrafficPolicy      uint32
 	AllocatedAt        int64 `gorm:"autoCreateTime"`
 	UpdatedAt          time.Time
-	TerminatedAt       gorm.DeletedAt `gorm:"index"`
+	TerminatedAt       time.Time
+	DeletedAt          gorm.DeletedAt `gorm:"index"`
 	SyncStatus         ukama.StatusType
 }
 
