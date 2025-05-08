@@ -21,6 +21,7 @@ package events
 	 NodeStateEventRelease
 	 NodeStateEventOnline
 	 NodeStateEventOffline
+	 NodeStateTransition
  )
  
  var NodeStateEventRoutingKey = map[NodeStateEventId]string{
@@ -28,6 +29,7 @@ package events
 	 NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
 	 NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	 NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
+	 NodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
  }
  
  var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
@@ -51,5 +53,10 @@ package events
 		 Key:        NodeStateEventOnline,
 		 Name:       "online",
 		 RoutingKey: NodeStateEventRoutingKey[NodeStateEventOnline],
+	 },
+	 NodeStateTransition: {
+		 Key:        NodeStateTransition,
+		 Name:       "transition",
+		 RoutingKey: NodeStateEventRoutingKey[NodeStateTransition],
 	 },
  }

@@ -59,7 +59,7 @@ export default function Page() {
       getNodes({
         variables: {
           data: {
-            state: NodeStateEnum.Configured,
+            state: NodeStateEnum.Operational,
           },
         },
       });

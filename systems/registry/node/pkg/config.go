@@ -70,9 +70,8 @@ func NewConfig(name string) *Config {
 			Host:    "msgclient-registry:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
-				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
+				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 			},
 		},
