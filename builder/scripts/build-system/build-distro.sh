@@ -40,14 +40,16 @@ apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev \
 # build apps
 ${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
 if [ $? -eq 0 ]; then
-  echo "Apps build:"
-  ls -ltr ${UKAMA_REPO}/build/pkgs/*
+    echo "Apps build:"
+    ls -ltr "${UKAMA_REPO}/build/pkgs/"*
 
-  echo "Package vendor libs"
-  cd ${UKAMA_REPO}/nodes/ukamaOS/distro/vendor	
-  ls -ltr /build/lib/*
-  mkdir -p ${UKAMA_REPO}/build/libs
-  tar -zcvf ${UKAMA_REPO}/build/libs/vendor_libs.tgz build/*
-else 
-  exit 1	
+    echo "Package vendor libs"
+    cd "${UKAMA_REPO}/nodes/ukamaOS/distro/vendor" || exit 1
+
+    ls -ltr build/lib/*
+
+    mkdir -p "${UKAMA_REPO}/build/libs"
+    tar -zcvf "${UKAMA_REPO}/build/libs/vendor_libs.tgz" build/lib/*
+else
+  exit 1
 fi

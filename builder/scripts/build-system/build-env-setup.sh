@@ -6,8 +6,6 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-# Script to build and package ukamaOS app
-
 set -e
 set -x
 
