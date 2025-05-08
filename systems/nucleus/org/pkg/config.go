@@ -37,6 +37,8 @@ type Config struct {
 	OrchestratorHost  string            `default:"http://orchestrator:8080"`
 	InitClientHost    string            `default:"http://ukama.initclient:8080"`
 	OrgName           string            `default:"ukama"`
+	Country           string            `default:"us"`
+	Currency          string            `default:"usd"`
 	OwnerId           string
 	OrgId             string
 }

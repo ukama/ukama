@@ -41,7 +41,7 @@ func TestGetQuery(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: false}
 		r := m.getQuery(NewFilter().WithNodeId("ND12"), "1h", "sum")
 
-		assert.Equal(t, "sum(memory {nodeid='ND12'}) without (job,instance,receive,tenant_id)", r)
+		assert.Equal(t, "sum(memory {nodeid='ND12'})", r)
 	})
 
 }

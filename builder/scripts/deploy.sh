@@ -24,6 +24,8 @@ PASSWORD=$(jq -r '.setup.password' "$JSON_FILE")
 OWNERNAME=$(jq -r '.setup.name' "$JSON_FILE")
 ORGNAME=$(jq -r '.setup["org-name"]' "$JSON_FILE")
 ORGID=$(jq -r '.setup["org-id"]' "$JSON_FILE")
+COUNTRY=$(jq -r '.setup["country"]' "$JSON_FILE")
+CURRENCY=$(jq -r '.setup["currency"]' "$JSON_FILE")
 SYS=$(jq -r '.systems' "$JSON_FILE")
 KEY=$(jq -r '.key' "$JSON_FILE")
 METADATA=$(jq -c '.' ../metadata.json)
@@ -67,6 +69,8 @@ function set_env() {
     export MASTERORGNAME=$MASTERORGNAME
     export LOCAL_HOST_IP=$LOCAL_HOST_IP
     export COMPONENT_ENVIRONMENT=test
+    export COUNTRY=$COUNTRY
+    export CURRENCY=$CURRENCY
 }
 
 function run_docker_compose() {
