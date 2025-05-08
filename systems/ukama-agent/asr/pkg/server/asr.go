@@ -74,7 +74,7 @@ func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("Error getting ASR profile for ismi %s.Error: %v", imsi, err)
-		return grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
+		return grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi:")
 	}
 
 	r, err := s.cdr.GetUsage(imsi)
@@ -103,13 +103,13 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 	case *pb.ReadReq_Imsi:
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi:")
 		}
 
 	case *pb.ReadReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 		}
 	}
 
@@ -201,7 +201,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 	/* Send message to PCRF */
 	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
+		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}
 
 	/* Add to ASR */
@@ -229,7 +229,7 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 
 	err = s.asrRepo.Add(asr)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
 	err, removed := s.pc.RunPolicyControl(asr.Imsi, false)
@@ -255,14 +255,14 @@ func (s *AsrRecordServer) Activate(c context.Context, req *pb.ActivateReq) (*pb.
 func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
 	asrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 	}
 
 	/* We assum that packageId is validated by subscriber. */
 	pId, err := uuid.FromString(req.PackageId)
 	if err != nil {
 		log.Errorf("PackageId not valid.")
-		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id")
+		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id:")
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -276,12 +276,12 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	/* Send message to PCRF */
 	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error creating policy")
+		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}
 
 	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
 	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi, false)
@@ -298,12 +298,12 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	/* read the updated profile */
 	nRec, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 	}
 
 	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf:")
 	}
 
 	asrRecord.Policy = *policy
@@ -315,7 +315,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 
 	delAsrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -327,12 +327,12 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 
 	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
 	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber", true)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf")
+		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf:")
 	}
 
 	log.Debugf("Deleted subscriber %+v", delAsrRecord)
@@ -351,13 +351,13 @@ func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.Usa
 
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi:")
 		}
 
 	case *pb.UsageReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 		}
 	}
 
@@ -383,13 +383,13 @@ func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForP
 
 		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given imsi:")
 		}
 
 	case *pb.UsageForPeriodReq_Iccid:
 		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid")
+			return nil, grpc.SqlErrorToGrpc(err, "error getting asr record for given iccid:")
 		}
 	}
 
@@ -415,7 +415,7 @@ func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (
 	if err != nil {
 		log.Errorf("Failed to query asr record for given iccid : %s. Error: %v", req.Iccid, err)
 
-		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting asr record for given iccid")
+		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting asr record for given iccid:")
 	}
 
 	policies = []string{sub.Policy.Id.String()}
@@ -430,7 +430,6 @@ func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (
 	return &pb.QueryUsageResp{
 		Usage: r.Usage,
 	}, nil
-
 }
 
 func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
@@ -484,7 +483,7 @@ func (s *AsrRecordServer) UpdateandSyncAsrProfile(imsi string) error {
 
 	sub, err := s.asrRepo.GetByImsi(imsi)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "error getting asr record by imsi")
+		return grpc.SqlErrorToGrpc(err, "error getting asr record by imsi:")
 	}
 
 	r, err := s.cdr.GetUsage(imsi)

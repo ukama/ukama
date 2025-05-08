@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	UkamaSimsEndpoint = "/v1/asr"
+	UkamaSimsEndpoint  = "/v1/asr"
+	UkamaUsageEndpoint = "/v1/usage"
 )
 
 type UkamaAgentClient interface {
@@ -99,8 +100,8 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 
 	endTime := t.Unix()
 
-	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint +
-		fmt.Sprintf("/usage/%s?from=%d&to=%d", iccid, startTime, endTime))
+	resp, err := o.R.Get(o.u.String() + UkamaUsageEndpoint +
+		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime))
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %s", err.Error())
 
