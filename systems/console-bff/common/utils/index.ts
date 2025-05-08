@@ -125,7 +125,12 @@ const getGraphsKeyByType = (type: string): string[] => {
   switch (type) {
     case GRAPHS_TYPE.HOME:
     case STATS_TYPE.HOME:
-      return ["package_sales", "data_usage", "active_sims", "network_uptime"];
+      return [
+        "package_sales",
+        "data_usage",
+        "subscribers_active",
+        "network_uptime",
+      ];
     case GRAPHS_TYPE.NODE_HEALTH:
       return ["unit_uptime", "unit_health", "node_load"];
     case GRAPHS_TYPE.SUBSCRIBERS:
