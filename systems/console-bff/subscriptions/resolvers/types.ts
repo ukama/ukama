@@ -28,6 +28,15 @@ export class MetricRes {
   nodeId?: string;
 
   @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  packageId?: string;
+
+  @Field({ nullable: true })
+  dataPlanId?: string;
+
+  @Field({ nullable: true })
   siteId?: string;
 
   @Field()
@@ -83,6 +92,15 @@ export class LatestMetricSubRes {
   @Field()
   siteId?: string;
 
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  packageId?: string;
+
+  @Field({ nullable: true })
+  dataPlanId?: string;
+
   @Field()
   type: string;
 
@@ -125,6 +143,12 @@ export class GetMetricsStatInput {
   @Field({ nullable: true })
   nodeId?: string;
 
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
+
   @Field()
   orgName: string;
 
@@ -133,6 +157,9 @@ export class GetMetricsStatInput {
 
   @Field(() => STATS_TYPE)
   type: STATS_TYPE;
+
+  @Field({ nullable: true, defaultValue: "avg" })
+  operation?: string;
 
   @Field()
   from: number;
@@ -167,8 +194,8 @@ export class GetMetricsSiteStatInput {
   @Field()
   from: number;
 
-  @Field({ nullable: true })
-  to?: number;
+  @Field()
+  to: number;
 
   @Field({ defaultValue: 30 })
   step: number;
@@ -179,8 +206,11 @@ export class GetMetricsSiteStatInput {
 
 @InputType()
 export class SubMetricsStatInput {
-  @Field()
-  nodeId: string;
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  networkId?: string;
 
   @Field()
   orgName: string;
@@ -218,8 +248,14 @@ export class SubSiteMetricsStatInput {
 
 @InputType()
 export class GetMetricByTabInput {
-  @Field()
-  nodeId: string;
+  @Field({ nullable: true })
+  nodeId?: string;
+
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   orgName: string;
@@ -233,8 +269,8 @@ export class GetMetricByTabInput {
   @Field()
   from: number;
 
-  @Field({ nullable: true })
-  to?: number;
+  @Field()
+  to: number;
 
   @Field({ defaultValue: 1 })
   step: number;
@@ -265,6 +301,15 @@ export class MetricStateRes {
 
   @Field()
   value: number;
+
+  @Field({ nullable: true })
+  networkId?: string;
+
+  @Field({ nullable: true })
+  packageId?: string;
+
+  @Field({ nullable: true })
+  dataPlanId?: string;
 }
 
 @InputType()
@@ -284,8 +329,8 @@ export class GetMetricBySiteInput {
   @Field()
   siteId?: string;
 
-  @Field({ nullable: true })
-  to?: number;
+  @Field()
+  to: number;
 
   @Field({ defaultValue: 1 })
   step: number;

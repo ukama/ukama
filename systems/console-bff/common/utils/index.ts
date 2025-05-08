@@ -10,6 +10,7 @@ import { readFile } from "fs";
 import { RootDatabase } from "lmdb";
 
 import InitAPI from "../../init/datasource/init_api";
+import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import {
   GRAPHS_TYPE,
   NOTIFICATION_SCOPE,
@@ -124,12 +125,7 @@ const getGraphsKeyByType = (type: string): string[] => {
   switch (type) {
     case GRAPHS_TYPE.HOME:
     case STATS_TYPE.HOME:
-      return [
-        "network_sales",
-        "network_data_volume",
-        "network_active_ue",
-        "network_uptime",
-      ];
+      return ["package_sales", "data_usage", "active_sims", "network_uptime"];
     case GRAPHS_TYPE.NODE_HEALTH:
       return ["unit_uptime", "unit_health", "node_load"];
     case GRAPHS_TYPE.SUBSCRIBERS:
@@ -188,6 +184,8 @@ const getGraphsKeyByType = (type: string): string[] => {
       ];
     case GRAPHS_TYPE.MAIN_BACKHAUL:
       return ["main_backhaul_latency", "backhaul_speed"];
+    case GRAPHS_TYPE.DATA_USAGE:
+      return ["data_usage"];
     case GRAPHS_TYPE.SWITCH:
       return [
         "backhaul_switch_port_status",
@@ -381,6 +379,16 @@ export const formatKPIValue = (type: string, value: any) => {
 const epochToISOString = (epoch: number): string => {
   const date = new Date(epoch * 1000);
   return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+};
+
+export const transformMetricsArray = (
+  metricsArray: MetricsRes[]
+): MetricsRes => {
+  const allMetrics: MetricRes[] = metricsArray.flatMap(item => item.metrics);
+
+  return {
+    metrics: allMetrics,
+  };
 };
 
 export {

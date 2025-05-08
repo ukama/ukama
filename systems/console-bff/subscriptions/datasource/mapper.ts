@@ -14,6 +14,7 @@ import {
   GetMetricsStatInput,
   LatestMetricRes,
   MetricRes,
+  MetricsRes,
   NotificationsAPIRes,
   NotificationsAPIResDto,
   NotificationsRes,
@@ -29,13 +30,18 @@ const ERROR_RESPONSE = {
   type: "",
 };
 
-const getEmptyMetric = (args: GetMetricRangeInput): MetricRes => {
-  return {
+const getEmptyMetric = (
+  args: GetMetricRangeInput | GetMetricsStatInput
+): MetricRes => {
+  const result: MetricRes = {
     ...ERROR_RESPONSE,
     type: args.type,
-    nodeId: args.nodeId,
+    nodeId: args.nodeId ?? "",
+    siteId: args.siteId ?? "",
+    networkId: "",
     values: [[0, 0]],
-  } as MetricRes;
+  };
+  return result;
 };
 
 export const parseLatestMetricRes = (
@@ -57,42 +63,45 @@ export const parseLatestMetricRes = (
   }
 };
 
-export const parseMetricRes = (
-  res: any,
+export const parseMetricsResponse = (
+  res: Array<{
+    metric: {
+      env: string;
+      nodeid?: string;
+      siteid?: string;
+      network?: string;
+      package?: string;
+      dataplan?: string;
+    };
+    values: [number, string][];
+  }>,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
-): MetricRes => {
-  const { result } = res.data.data;
-  logger.info(`Parsing metric response for type ${type}:`, result);
+  args: GetMetricsStatInput
+): MetricsRes => {
+  const metricResArray: MetricRes[] = res.map(item => ({
+    type: type,
+    success: true,
+    msg: "success",
+    nodeId: item.metric.nodeid ?? args.nodeId ?? "",
+    siteId: item.metric?.siteid ?? args.siteId ?? "",
+    networkId: item.metric?.network ?? args.networkId ?? "",
+    packageId: item.metric?.package ?? "",
+    dataPlanId: item.metric?.dataplan ?? "",
+    values: fixTimestampInMetricData(
+      item.values,
+      1,
+      args.to ?? Math.floor(Date.now() / 1000),
+      args.from,
+      type
+    ),
+  }));
+  const metricsRes: MetricsRes = {
+    metrics: metricResArray,
+  };
 
-  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
-  return hasValues
-    ? {
-        type: type,
-        success: true,
-        msg: "success",
-        nodeId: result[0].metric?.nodeid ?? "",
-        siteId: result[0].metric?.siteid ?? "",
-        values: fixTimestampInMetricData(
-          result[0].values,
-          METRICS_INTERVAL,
-          args.to || Date.now(),
-          args.from,
-          type
-        ),
-      }
-    : getEmptyMetric({
-        nodeId: result[0].metric.nodeid,
-        orgId: "",
-        to: args.to,
-        type: args.type,
-        siteId: result[0].metric.siteid,
-        from: args.from,
-        step: args.step,
-        userId: args.userId,
-        withSubscription: false,
-      });
+  return metricsRes;
 };
+
 export const parseSiteMetricRes = (
   res: any,
   type: string,

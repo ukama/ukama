@@ -10,7 +10,6 @@ import {
   AllocateSimApiDto,
   Sim_Status,
   Sim_Types,
-  SimsUsageInputDto,
   SubscribersResDto,
   useAddPackagesToSimMutation,
   useAddSubscriberMutation,
@@ -43,19 +42,20 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { formatBytesToMB } from '@/utils';
+import { formatBytesToGB } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env } = useAppContext();
+  const { setSnackbarMessage, network, env, user, subscriptionClient } =
+    useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
@@ -81,12 +81,6 @@ const Page = () => {
       });
     },
   });
-
-  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
-    useGetDataUsagesLazyQuery({
-      pollInterval: 180000,
-      fetchPolicy: 'network-only',
-    });
 
   const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
     variables: {
@@ -132,21 +126,12 @@ const Page = () => {
         const iccid = query.get('iccid');
         setSearch(iccid ?? '');
       }
-      const simUsageData: SimsUsageInputDto[] = [];
-      data.getSubscribersByNetwork.subscribers.map((s) => {
-        if (s && s.sim && s.sim[0]) {
-          simUsageData.push({
-            simId: s.sim[0].id,
-            iccid: s.sim[0].iccid,
-          });
-        }
-      });
 
       getDataUsages({
         variables: {
           data: {
-            for: simUsageData,
             type: Sim_Types.UkamaData,
+            networkId: network.id,
           },
         },
       });
@@ -295,6 +280,18 @@ const Page = () => {
       },
     });
 
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+    useGetDataUsagesLazyQuery({
+      pollInterval: 120000,
+      fetchPolicy: 'network-only',
+      variables: {
+        data: {
+          type: Sim_Types.UkamaData,
+          networkId: network.id,
+        },
+      },
+    });
+
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
@@ -354,12 +351,14 @@ const Page = () => {
           const dataUsage = dataUsageData?.getDataUsages.usages.find(
             (usage) => usage.simId === sim?.id,
           );
+
           return {
             id: subscriber.uuid,
             name: subscriber.name,
-            dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
-            dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
+            packageId: sim?.package?.package_id,
+            dataPlan: pkg?.name ?? 'No active plan',
+            dataUsage: `${formatBytesToGB(Number(dataUsage?.usage)) || 0} GB`,
             actions: '',
           };
         });
@@ -385,9 +384,11 @@ const Page = () => {
         const plan = packagesData?.getPackages.packages.find(
           (pkg) => pkg.uuid === subscriberInfo.sim?.[0]?.package?.package_id,
         );
+
         setSubscriberDetails({
           ...subscriberInfo,
-          dataUsage: `${formatBytesToMB(Number(usageData?.usage)) || 0} MB`,
+          packageId: subscriberInfo.sim?.[0]?.package?.package_id,
+          dataUsage: `${formatBytesToGB(Number(usageData?.usage)) || 0} GB`,
           dataPlan: plan?.name ?? 'No active plan',
         });
       }
@@ -543,7 +544,7 @@ const Page = () => {
       direction={'column'}
       sx={{ height: { xs: 'calc(100vh - 158px)', md: 'calc(100vh - 172px)' } }}
     >
-      {getSubscriberByNetworkLoading || dataUsageLoading ? (
+      {getSubscriberByNetworkLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
@@ -646,7 +647,7 @@ const Page = () => {
         <Paper
           sx={{
             height: '100%',
-            overflow: 'auto',
+            overflow: 'hidden',
             borderRadius: '10px',
             px: { xs: 2, md: 3 },
             py: { xs: 2, md: 4 },

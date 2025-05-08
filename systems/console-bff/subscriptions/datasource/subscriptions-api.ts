@@ -9,16 +9,17 @@ import { GraphQLError } from "graphql";
 
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
-import { API_METHOD_TYPE } from "../../common/enums";
+import { API_METHOD_TYPE, STATS_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
   GetMetricRangeInput,
   GetMetricsStatInput,
   MetricRes,
+  MetricsRes,
   NotificationsRes,
 } from "../resolvers/types";
 import {
-  parseMetricRes,
+  parseMetricsResponse,
   parseNotificationsRes,
   parseSiteMetricRes,
 } from "./mapper";
@@ -26,22 +27,38 @@ import {
 const getNodeMetricRange = async (
   baseUrl: string,
   type: string,
-  args: GetMetricsStatInput | GetMetricRangeInput
-): Promise<MetricRes> => {
-  const { from, step = 1, nodeId, userId } = args;
-  let params = `from=${from}&step=${step}`;
+  args: GetMetricsStatInput
+): Promise<MetricsRes> => {
+  const { to, from, nodeId, userId, networkId = "" } = args;
+  let params = `from=${from}&to=${to}&step=1`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
   if (userId) {
     params = params + `&user=${userId}`;
   }
+  if (networkId) {
+    params = params + `&network=${networkId}`;
+  }
+  if (args.operation) {
+    params = params + `&operation=${args.operation}`;
+  }
+  logger.info(
+    `[getNodeMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
+  );
   return await asyncRestCall({
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res => parseMetricRes(res, type, args))
+    .then(res =>
+      parseMetricsResponse(
+        type === STATS_TYPE.DATA_USAGE ? res.data : res.data.data.result,
+        type,
+        args
+      )
+    )
     .catch(err => {
+      logger.error(`Error fetching metrics: ${err}`);
       throw new GraphQLError(err);
     });
 };
@@ -111,4 +128,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { getNodeMetricRange, getSiteMetricRange, getNotifications };
+export { getNodeMetricRange, getNotifications, getSiteMetricRange };
