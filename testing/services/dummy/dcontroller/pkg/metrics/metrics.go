@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
 	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 )
 
 const (
@@ -40,9 +40,6 @@ type Metrics struct {
 	solarPanelPower          *prometheus.GaugeVec
 	siteUptimeSeconds        *prometheus.GaugeVec 
 	siteUptimePercentage     *prometheus.GaugeVec 
-	switchPortStatus         *prometheus.GaugeVec 
-	switchPortSpeed          *prometheus.GaugeVec 
-	switchPortPower          *prometheus.GaugeVec 
 	mu                       sync.Mutex
 	siteUptimeStreakCounters map[string]int64       
 	lastUptimeBeforeReset    map[string]int64       
@@ -142,32 +139,6 @@ func New() *Metrics {
 		m.nodeSwitchPortPowerVec, m.nodeSwitchPortSpeedVec, m.nodeSwitchPortStatusVec,
 	)
 	return m
-}
-
-func getSingleMetricValue(gauge *prometheus.GaugeVec, siteID string) float64 {
-    metric, err := gauge.GetMetricWithLabelValues(siteID)
-    if err != nil {
-        log.Warnf("Error getting metric for site %s: %v", siteID, err)
-        return -999
-    }
-    ch := make(chan prometheus.Metric, 1)
-    metric.Collect(ch)
-    select {
-    case m := <-ch:
-        var metricOut dto.Metric
-        if err := m.Write(&metricOut); err != nil {
-            log.Errorf("Error writing metric to DTO for site %s: %v", siteID, err)
-            return -999
-        }
-        if metricOut.Gauge != nil && metricOut.Gauge.Value != nil {
-            return *metricOut.Gauge.Value
-        }
-        log.Warnf("Metric collected for site %s is not a gauge or has no value", siteID)
-        return -999
-    case <-time.After(1 * time.Second):
-        log.Warnf("Timeout getting metric value for site %s", siteID)
-        return -999
-    }
 }
 
 
@@ -541,6 +512,56 @@ func (mm *MetricsManager) StopSiteMetrics(siteID string) {
 	log.Infof("INFO: Cleaned up internal state and Prometheus labels for site %s.", siteID)
 }
 
+
+func (mm *MetricsManager) UpdateMetricsProfile(siteID string, profile pb.Profile) error {
+    mm.mu.Lock()
+    isActive := mm.ActiveSites[siteID]
+    mm.mu.Unlock()
+
+    if !isActive {
+        return fmt.Errorf("site %s is not actively managed", siteID)
+    }
+
+    mm.Metrics.mu.Lock()
+    defer mm.Metrics.mu.Unlock()
+
+    config, exists := mm.Metrics.siteConfigs[siteID]
+    if !exists {
+        return fmt.Errorf("no config found for site %s", siteID)
+    }
+
+    oldConfig := config
+
+    switch profile {
+    case pb.Profile_PROFILE_MINI:
+        config.AvgBackhaulSpeed = math.Max(5, config.AvgBackhaulSpeed * 0.5)
+        config.AvgLatency = math.Min(100, config.AvgLatency * 2)
+        config.SolarEfficiency = math.Max(0.1, config.SolarEfficiency * 0.5)
+        
+    case pb.Profile_PROFILE_MAX:
+        config.AvgBackhaulSpeed = math.Min(1000, config.AvgBackhaulSpeed * 2)
+        config.AvgLatency = math.Max(5, config.AvgLatency * 0.5)
+        config.SolarEfficiency = math.Min(1.0, config.SolarEfficiency * 1.5)
+        
+    case pb.Profile_PROFILE_NORMAL:
+        if config.AvgBackhaulSpeed < 20 || config.AvgBackhaulSpeed > 200 {
+            config.AvgBackhaulSpeed = 100
+        }
+        if config.AvgLatency < 5 || config.AvgLatency > 100 {
+            config.AvgLatency = 20
+        }
+        if config.SolarEfficiency < 0.3 || config.SolarEfficiency > 0.9 {
+            config.SolarEfficiency = 0.7
+        }
+    }
+
+    mm.Metrics.siteConfigs[siteID] = config
+    
+    log.Infof("[%s] Updated metrics profile to %s. Config changed from %+v to %+v", 
+        siteID, profile.String(), oldConfig, config)
+    
+    return nil
+}
 
 func (mm *MetricsManager) UpdatePortStatus(siteID string, portNumber int, enabled bool) error {
 	mm.mu.Lock()

@@ -31,6 +31,8 @@ const (
 	MetricsController_StopMetrics_FullMethodName      = "/ukama.dummy.dcontroller.v1.MetricsController/StopMetrics"
 	MetricsController_GetMetrics_FullMethodName       = "/ukama.dummy.dcontroller.v1.MetricsController/GetMetrics"
 	MetricsController_UpdatePortStatus_FullMethodName = "/ukama.dummy.dcontroller.v1.MetricsController/UpdatePortStatus"
+	MetricsController_Update_FullMethodName           = "/ukama.dummy.dcontroller.v1.MetricsController/Update"
+	MetricsController_Start_FullMethodName            = "/ukama.dummy.dcontroller.v1.MetricsController/Start"
 )
 
 // MetricsControllerClient is the client API for MetricsController service.
@@ -42,6 +44,9 @@ type MetricsControllerClient interface {
 	StopMetrics(ctx context.Context, in *StopMetricsRequest, opts ...grpc.CallOption) (*StopMetricsResponse, error)
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
 	UpdatePortStatus(ctx context.Context, in *UpdatePortStatusRequest, opts ...grpc.CallOption) (*UpdatePortStatusResponse, error)
+	// Missing RPCs needed for the handler functions
+	Update(ctx context.Context, in *UpdateMetricsRequest, opts ...grpc.CallOption) (*UpdateMetricsResponse, error)
+	Start(ctx context.Context, in *StartMetricsRequest, opts ...grpc.CallOption) (*StartMetricsResponse, error)
 }
 
 type metricsControllerClient struct {
@@ -102,6 +107,26 @@ func (c *metricsControllerClient) UpdatePortStatus(ctx context.Context, in *Upda
 	return out, nil
 }
 
+func (c *metricsControllerClient) Update(ctx context.Context, in *UpdateMetricsRequest, opts ...grpc.CallOption) (*UpdateMetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateMetricsResponse)
+	err := c.cc.Invoke(ctx, MetricsController_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metricsControllerClient) Start(ctx context.Context, in *StartMetricsRequest, opts ...grpc.CallOption) (*StartMetricsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StartMetricsResponse)
+	err := c.cc.Invoke(ctx, MetricsController_Start_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetricsControllerServer is the server API for MetricsController service.
 // All implementations must embed UnimplementedMetricsControllerServer
 // for forward compatibility.
@@ -111,6 +136,9 @@ type MetricsControllerServer interface {
 	StopMetrics(context.Context, *StopMetricsRequest) (*StopMetricsResponse, error)
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
 	UpdatePortStatus(context.Context, *UpdatePortStatusRequest) (*UpdatePortStatusResponse, error)
+	// Missing RPCs needed for the handler functions
+	Update(context.Context, *UpdateMetricsRequest) (*UpdateMetricsResponse, error)
+	Start(context.Context, *StartMetricsRequest) (*StartMetricsResponse, error)
 	mustEmbedUnimplementedMetricsControllerServer()
 }
 
@@ -135,6 +163,12 @@ func (UnimplementedMetricsControllerServer) GetMetrics(context.Context, *GetMetr
 }
 func (UnimplementedMetricsControllerServer) UpdatePortStatus(context.Context, *UpdatePortStatusRequest) (*UpdatePortStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePortStatus not implemented")
+}
+func (UnimplementedMetricsControllerServer) Update(context.Context, *UpdateMetricsRequest) (*UpdateMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
+func (UnimplementedMetricsControllerServer) Start(context.Context, *StartMetricsRequest) (*StartMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Start not implemented")
 }
 func (UnimplementedMetricsControllerServer) mustEmbedUnimplementedMetricsControllerServer() {}
 func (UnimplementedMetricsControllerServer) testEmbeddedByValue()                           {}
@@ -247,6 +281,42 @@ func _MetricsController_UpdatePortStatus_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetricsController_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsControllerServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetricsController_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsControllerServer).Update(ctx, req.(*UpdateMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetricsController_Start_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetricsControllerServer).Start(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetricsController_Start_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetricsControllerServer).Start(ctx, req.(*StartMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetricsController_ServiceDesc is the grpc.ServiceDesc for MetricsController service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -273,6 +343,14 @@ var MetricsController_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePortStatus",
 			Handler:    _MetricsController_UpdatePortStatus_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _MetricsController_Update_Handler,
+		},
+		{
+			MethodName: "Start",
+			Handler:    _MetricsController_Start_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -87,6 +87,22 @@ func (this *EthernetMetrics) Validate() error {
 func (this *PowerMetrics) Validate() error {
 	return nil
 }
+func (this *PortUpdate) Validate() error {
+	return nil
+}
+func (this *UpdateMetricsRequest) Validate() error {
+	for _, item := range this.PortUpdates {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("PortUpdates", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *UpdateMetricsResponse) Validate() error {
+	return nil
+}
 func (this *StartMetricsRequest) Validate() error {
 	if this.SiteConfig != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.SiteConfig); err != nil {
