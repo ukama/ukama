@@ -196,6 +196,7 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 	return resp, nil
 }
 
+/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Getting all nodes.")
 
@@ -214,6 +215,7 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 	return resp, nil
 }
 
+/** Deprecated: Use List API instead */
 func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(), req.GetState())
 

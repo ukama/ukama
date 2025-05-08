@@ -288,7 +288,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Node Online",
 		Description: "Node Online",
 		Scope:       notif.SCOPE_ORG,
-		Type:        notif.TYPE_ACTIONABLE_INFO,
+		Type:        notif.TYPE_INFO,
 	},
 	EventNodeOffline: {
 		Key:         EventNodeOffline,
@@ -296,7 +296,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Node Offline",
 		Description: "Node Offline",
 		Scope:       notif.SCOPE_ORG,
-		Type:        notif.TYPE_ACTIONABLE_INFO,
+		Type:        notif.TYPE_INFO,
 	},
 	EventSimActivate: {
 		Key:         EventSimActivate,

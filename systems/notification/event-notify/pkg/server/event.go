@@ -592,8 +592,28 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if len(msg.NodeId) > 6 {
 			shortNodeId = msg.NodeId[len(msg.NodeId)-6:]
 		}
+		
 		dynamicConfig.Title = fmt.Sprintf("Node %s: %s", shortNodeId, msg.State)
 		dynamicConfig.Description = fmt.Sprintf("Status: %s", msg.Substate)
+		
+		notificationType := notif.TYPE_INFO
+		
+		if msg.State == "Faulty" {
+			notificationType = notif.TYPE_CRITICAL
+		} else if msg.State == "Unknown" {
+			notificationType = notif.TYPE_ACTIONABLE_WARNING 
+		}
+		
+		if notificationType == notif.TYPE_INFO {
+			switch msg.Substate {
+			case "off":
+				notificationType = notif.TYPE_WARNING
+			case "reboot", "update", "upgrade", "downgrade":
+				notificationType = notif.TYPE_WARNING
+			}
+		}
+		
+		dynamicConfig.Type = notificationType
 		
 		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 		
