@@ -75,8 +75,6 @@ class SimApi extends RESTDataSource {
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
-    }).then(res => {
-      return res;
     });
   };
 
@@ -106,13 +104,6 @@ class SimApi extends RESTDataSource {
     });
 
     logger.info(`SimRes: ${JSON.stringify(simRes)}`);
-
-    if (simRes.sim.id) {
-      await this.toggleSimStatus(baseURL, {
-        sim_id: simRes.sim.id,
-        status: "active",
-      });
-    }
 
     return dtoToAllocateSimResDto(simRes);
   };
