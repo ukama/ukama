@@ -176,7 +176,7 @@ function fixTimestampInMetricData(
       ]);
       dataIndex++;
     } else {
-      result.push([prevTimestamp * 1000, 0]);
+      result.push([prevTimestamp * 1000, -1]);
     }
     prevTimestamp += step;
   }

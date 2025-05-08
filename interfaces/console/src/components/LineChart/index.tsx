@@ -18,7 +18,7 @@ import './linechart.css';
 const initDataFixes = (data: any) => {
   return data.map((point: any) => {
     let y = point[1];
-    if (point.length > 0 && y === 0) {
+    if (point.length > 0 && y === -1) {
       y = null;
     }
     return [point[0], y];

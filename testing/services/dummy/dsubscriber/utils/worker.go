@@ -55,13 +55,13 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 			imsi = msg.Imsi
 			fmt.Printf("Coroutine %s updated args: %d, %s\n", iccid, profile, expiry)
 		case <-ticker.C:
-			if status && (scenario == cenums.SCENARIO_NODE_RF_ON || scenario == cenums.SCENARIO_DEFAULT) {
+			if status {
 				runLogic(iccid, nodeId, imsi, profile, scenario, cdrClient, count, interval, rc, agent)
 				count += 1
 				interval += rc.Interval
 			}
 		}
-		if scenario == cenums.SCENARIO_NODE_RF_ON || scenario == cenums.SCENARIO_DEFAULT {
+		if status {
 			expiryDate, _ := time.Parse(time.RFC3339, expiry)
 			diff := time.Until(expiryDate)
 			totalMints := uint64(math.Round(diff.Minutes()))
