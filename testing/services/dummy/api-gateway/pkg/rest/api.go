@@ -8,34 +8,41 @@
 
 package rest
 
-type UpdateReq struct {
-	Iccid   string `form:"iccid" json:"iccid" validate:"required"`
-	Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
-}
-
-type SimPoolUploadSimReq struct {
-	Data string `example:"SUNDSUQsTVNJU0ROLFNtRHBBZGRyZXNzLEFjdGl2YXRpb25Db2RlLElzUGh5c2ljYWwsUXJDb2RlCjg5MTAzMDAwMDAwMDM1NDA4NTUsODgwMTcwMTI0ODQ3NTcxLDEwMDEuOS4wLjAuMSwxMDEwLFRSVUUsNDU5MDgxYQo4OTEwMzAwMDAwMDAzNTQwODQ1LDg4MDE3MDEyNDg0NzU3MiwxMDAxLjkuMC4wLjIsMTAxMCxUUlVFLDQ1OTA4MWIKODkxMDMwMDAwMDAwMzU0MDgzNSw4ODAxNzAxMjQ4NDc1NzMsMTAwMS45LjAuMC4zLDEwMTAsVFJVRSw0NTkwODFj" type:"array" format:"byte" form:"data" json:"data" binding:"required" validate:"required"`
-}
-
-type GetSims struct {
-}
-
-type GetSimByIccid struct {
-	Iccid string `json:"iccid" path:"iccid" validate:"required"`
-}
-
-type UpdateSiteMetricsReq struct {
-	SiteId      string       `form:"siteId" json:"siteId,omitempty" validate:"required"`
-	Profile     string       `form:"profile" json:"profile,omitempty" `
-	PortUpdates []PortUpdate `form:"portUpdates" json:"portUpdates,omitempty" `
-}
-
-type PortUpdate struct {
-	PortNumber int32 `form:"portNumber" json:"portNumber" validate:"required"`
-	Status     bool  `form:"status" json:"status" validate:"required"`
-}
-
-type StartReq struct {
-	SiteId  string `form:"siteId" json:"siteId,omitempty" validate:"required"`
-	Profile string `form:"profile" json:"profile,omitempty"`
+ type UpdateReq struct {
+	 Iccid   string `form:"iccid" json:"iccid" validate:"required"`
+	 Profile string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
+ }
+ 
+ type SimPoolUploadSimReq struct {
+	 Data string `example:"SUNDSUQsTVNJU0ROLFNtRHBBZGRyZXNzLEFjdGl2YXRpb25Db2RlLElzUGh5c2ljYWwsUXJDb2RlCjg5MTAzMDAwMDAwMDM1NDA4NTUsODgwMTcwMTI0ODQ3NTcxLDEwMDEuOS4wLjAuMSwxMDEwLFRSVUUsNDU5MDgxYQo4OTEwMzAwMDAwMDAzNTQwODQ1LDg4MDE3MDEyNDg0NzU3MiwxMDAxLjkuMC4wLjIsMTAxMCxUUlVFLDQ1OTA4MWIKODkxMDMwMDAwMDAwMzU0MDgzNSw4ODAxNzAxMjQ4NDc1NzMsMTAwMS45LjAuMC4zLDEwMTAsVFJVRSw0NTkwODFj" type:"array" format:"byte" form:"data" json:"data" binding:"required" validate:"required"`
+ }
+ 
+ type GetSims struct {
+ }
+ 
+ type GetSimByIccid struct {
+	 Iccid string `json:"iccid" path:"iccid" validate:"required"`
+ }
+ 
+ type UpdateSiteMetricsReq struct {
+	 SiteId      string       `form:"siteId" json:"siteId,omitempty" validate:"required"`
+	 Profile     string       `form:"profile" json:"profile,omitempty" `
+	 PortUpdates []PortUpdate `form:"portUpdates" json:"portUpdates,omitempty" `
+ }
+ 
+ type PortUpdate struct {
+	 PortNumber int32 `form:"portNumber" json:"portNumber" validate:"required"`
+	 Status     bool  `form:"status" json:"status" validate:"required"`
+ }
+ 
+ type SiteConfig struct {
+	 AvgBackhaulSpeed float64 `form:"avgBackhaulSpeed" json:"avgBackhaulSpeed"`
+	 AvgLatency       float64 `form:"avgLatency" json:"avgLatency"`
+	 SolarEfficiency  float64 `form:"solarEfficiency" json:"solarEfficiency"`
+ }
+ 
+ type StartReq struct {
+    SiteId     string      `form:"siteId" json:"siteId,omitempty" validate:"required"`
+    Profile    string      `form:"profile" json:"profile,omitempty"`
+    SiteConfig *SiteConfig `form:"siteConfig" json:"siteConfig,omitempty"`
 }
