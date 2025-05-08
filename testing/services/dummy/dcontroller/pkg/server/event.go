@@ -85,9 +85,21 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
         SolarEfficiency:  0.7 + rand.Float64()*0.2,  
     }
     
+    profileNum := rand.IntN(10)
+    var profile pb.Profile
+    switch {
+    case profileNum < 2:
+        profile = pb.Profile_PROFILE_MINI
+    case profileNum < 9:
+        profile = pb.Profile_PROFILE_NORMAL
+    default:
+        profile = pb.Profile_PROFILE_MAX
+    }
+    
     metricsReq := &pb.StartMetricsRequest{
         SiteId:     msg.SiteId,
         SiteConfig: randomConfig,
+        Profile:    profile,
     }
     
     ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -100,11 +112,11 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
     }
     
     if !resp.Success {
-        log.Warnf("StartMetrics returned unsuccessful for site %s", msg.SiteId)
         return fmt.Errorf("failed to start metrics for site %s", msg.SiteId)
     }
     
-    log.Infof("Successfully started metrics for site %s with config: %+v", msg.SiteId, randomConfig)
+    log.Infof("Successfully started metrics for site %s with config: %+v and profile: %s", 
+        msg.SiteId, randomConfig, profile.String())
     
     return nil
 }

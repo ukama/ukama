@@ -18,11 +18,14 @@ export const eventKeyToAction = (
   data: NotificationsResDto
 ): TEventKeyToAction => {
   switch (key) {
-    case "EventNodeOnline":
-      return {
-        title: "Configure node",
-        action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
-      };
+    case "EventNodeStateTransition":
+      if (data.title && data.title.includes("Unknown")) {
+        return {
+          title: "Configure node",
+          action: `${CONSOLE_APP_URL}/configure/check?step=1&flow=ins&nid=${data.resourceId}`,
+        };
+      }
+      return { title: "Node state changed", action: "" };
 
     case "EventInvoiceGenerate":
       return {

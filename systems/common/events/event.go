@@ -18,7 +18,7 @@ type EventConfig struct {
 	Type        notif.NotificationType
 }
 
-type EventId int
+type EventId int 
 
 const (
 	EventInvalid EventId = iota
@@ -68,6 +68,7 @@ const (
 	EventNotificationStore
 	EventPaymentSuccess
 	EventPaymentFailed
+	EventNodeStateTransition
 )
 
 var EventRoutingKey = [...]string{
@@ -117,6 +118,7 @@ var EventRoutingKey = [...]string{
 	EventNotificationStore:  "event.cloud.local.{{ .Org}}.notification.notify.notification.store",
 	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
 	EventPaymentFailed:      "event.cloud.local.{{ .Org}}.payments.processor.payment.failed",
+	EventNodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
 }
 
 var EventToEventConfig = map[EventId]EventConfig{
@@ -126,6 +128,14 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Organization Added",
 		Description: "Organization Added",
 		Scope:       notif.SCOPE_ORG,
+		Type:        TypeDefault,
+	},
+	EventNodeStateTransition: {
+		Key:         EventNodeStateTransition,
+		Name:        "EventNodeStateTransition",
+		Title:       "Node State Transition",
+		Description: "Node State Transition",
+		Scope:       notif.SCOPE_NETWORK,
 		Type:        TypeDefault,
 	},
 	EventSiteCreate: {
@@ -278,7 +288,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Node Online",
 		Description: "Node Online",
 		Scope:       notif.SCOPE_ORG,
-		Type:        notif.TYPE_ACTIONABLE_INFO,
+		Type:        notif.TYPE_INFO,
 	},
 	EventNodeOffline: {
 		Key:         EventNodeOffline,
@@ -286,7 +296,7 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Title:       "Node Offline",
 		Description: "Node Offline",
 		Scope:       notif.SCOPE_ORG,
-		Type:        notif.TYPE_ACTIONABLE_INFO,
+		Type:        notif.TYPE_INFO,
 	},
 	EventSimActivate: {
 		Key:         EventSimActivate,

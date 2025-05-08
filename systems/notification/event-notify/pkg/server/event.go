@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -574,6 +575,48 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
 
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
+		c := evt.EventToEventConfig[evt.EventNodeStateTransition]
+		msg, err := epb.UnmarshalEventNodeStateTransition(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+		
+		jmsg, err := json.Marshal(msg)
+		if err != nil {
+			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		}
+		
+		dynamicConfig := c
+		shortNodeId := msg.NodeId
+		if len(msg.NodeId) > 6 {
+			shortNodeId = msg.NodeId[len(msg.NodeId)-6:]
+		}
+		
+		dynamicConfig.Title = fmt.Sprintf("Node %s: %s", shortNodeId, msg.State)
+		dynamicConfig.Description = fmt.Sprintf("Status: %s", msg.Substate)
+		
+		notificationType := notif.TYPE_INFO
+		
+		if msg.State == "Faulty" {
+			notificationType = notif.TYPE_CRITICAL
+		} else if msg.State == "Unknown" {
+			notificationType = notif.TYPE_ACTIONABLE_WARNING 
+		}
+		
+		if notificationType == notif.TYPE_INFO {
+			switch msg.Substate {
+			case "off":
+				notificationType = notif.TYPE_WARNING
+			case "reboot", "update", "upgrade", "downgrade":
+				notificationType = notif.TYPE_WARNING
+			}
+		}
+		
+		dynamicConfig.Type = notificationType
+		
+		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+		
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
 		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)

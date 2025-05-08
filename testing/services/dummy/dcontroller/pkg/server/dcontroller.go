@@ -10,7 +10,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"math"
 
+	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -173,3 +175,95 @@ func (s *DControllerServer) GetSiteMetrics(ctx context.Context, req *pb.GetSiteM
     }, nil
 }
 
+
+func (s *DControllerServer) Update(ctx context.Context, req *pb.UpdateMetricsRequest) (*pb.UpdateMetricsResponse, error) {
+    siteId := req.SiteId
+    if siteId == "" {
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: "Site ID is required",
+        }, nil
+    }
+
+    if !s.metricsManager.IsMetricsRunning(siteId) {
+        return &pb.UpdateMetricsResponse{
+            Success: false,
+            Message: "Metrics not running for this site",
+        }, nil
+    }
+
+    for _, update := range req.PortUpdates {
+        err := s.metricsManager.UpdatePortStatus(siteId, int(update.PortNumber), update.Status)
+        if err != nil {
+            return &pb.UpdateMetricsResponse{
+                Success: false,
+                Message: fmt.Sprintf("Failed to update port status: %v", err),
+            }, nil
+        }
+    }
+
+    if req.Profile != pb.Profile_PROFILE_UNSPECIFIED {
+        log.Infof("Updating metrics profile for site %s to %s", siteId, req.Profile.String())
+        
+        err := s.metricsManager.UpdateMetricsProfile(siteId, req.Profile)
+        if err != nil {
+            return &pb.UpdateMetricsResponse{
+                Success: false,
+                Message: fmt.Sprintf("Failed to update metrics profile: %v", err),
+            }, nil
+        }
+    }
+
+    return &pb.UpdateMetricsResponse{
+        Success: true,
+        Message: fmt.Sprintf("Updated metrics for site %s", siteId),
+    }, nil
+}
+func (s *DControllerServer) Start(ctx context.Context, req *pb.StartMetricsRequest) (*pb.StartMetricsResponse, error) {
+    siteId := req.SiteId
+    if siteId == "" {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: "Site ID is required",
+        }, nil
+    }
+
+    config := metrics.SiteConfig{
+        AvgBackhaulSpeed: req.SiteConfig.AvgBackhaulSpeed,
+        AvgLatency:       req.SiteConfig.AvgLatency,
+        SolarEfficiency:  req.SiteConfig.SolarEfficiency,
+    }
+
+    switch req.Profile {
+    case pb.Profile_PROFILE_MINI:
+        config.AvgBackhaulSpeed = math.Max(5, config.AvgBackhaulSpeed * 0.5)
+        config.AvgLatency = math.Min(100, config.AvgLatency * 2)
+        config.SolarEfficiency = math.Max(0.1, config.SolarEfficiency * 0.5)
+        log.Infof("Applied MINI profile adjustments for site %s", siteId)
+        
+    case pb.Profile_PROFILE_MAX:
+        config.AvgBackhaulSpeed = math.Min(1000, config.AvgBackhaulSpeed * 2)
+        config.AvgLatency = math.Max(5, config.AvgLatency * 0.5)
+        config.SolarEfficiency = math.Min(1.0, config.SolarEfficiency * 1.5)
+        log.Infof("Applied MAX profile adjustments for site %s", siteId)
+        
+    case pb.Profile_PROFILE_NORMAL:
+        log.Infof("Using NORMAL profile for site %s", siteId)
+        
+    default:
+        log.Infof("Using default profile for site %s", siteId)
+    }
+
+    err := s.metricsManager.StartSiteMetrics(siteId, config)
+    if err != nil {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: fmt.Sprintf("Failed to start metrics: %v", err),
+        }, nil
+    }
+
+    return &pb.StartMetricsResponse{
+        Success: true,
+        Message: fmt.Sprintf("Started metrics for site %s", siteId),
+    }, nil
+}

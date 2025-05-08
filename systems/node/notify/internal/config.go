@@ -40,6 +40,7 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventNodeCreate],
 				evt.EventRoutingKey[evt.EventNodeOnline],
 				evt.EventRoutingKey[evt.EventNodeOffline],
+				"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish",
 			},
 		},
 	}

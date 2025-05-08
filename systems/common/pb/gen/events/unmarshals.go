@@ -144,8 +144,19 @@ func UnmarshalEventRegistryNodeAssign(msg *anypb.Any, emsg string) (*EventRegist
 	return p, nil
 }
 
+
+
 func UnmarshalEventRegistryNodeDelete(msg *anypb.Any, emsg string) (*EventRegistryNodeDelete, error) {
 	p := &EventRegistryNodeDelete{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+func UnmarshalEventNodeStateTransition(msg *anypb.Any, emsg string) (*NodeStateChangeEvent, error) {
+	p := &NodeStateChangeEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())

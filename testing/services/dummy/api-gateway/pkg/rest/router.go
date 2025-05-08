@@ -214,20 +214,43 @@ func (r *Router) updateSiteMetricsHandler(c *gin.Context, req *UpdateSiteMetrics
 }
 
 func (r *Router) startHandler(c *gin.Context, req *StartReq) (*pbdc.StartMetricsResponse, error) {
-	var profile pbdc.Profile
+    var profile pbdc.Profile
 
-	if req.Profile == "" {
-		profile = pbdc.Profile_PROFILE_NORMAL
-	} else {
-		profileValue, ok := pbdc.Profile_value[req.Profile]
-		if !ok {
-			return nil, fmt.Errorf("invalid profile: %s", req.Profile)
-		}
-		profile = pbdc.Profile(profileValue)
-	}
+    if req.Profile == "" {
+        profile = pbdc.Profile_PROFILE_NORMAL
+    } else {
+        profileValue, ok := pbdc.Profile_value[req.Profile]
+        if !ok {
+            return nil, fmt.Errorf("invalid profile: %s", req.Profile)
+        }
+        profile = pbdc.Profile(profileValue)
+    }
 
-	return r.clients.DController.Start(&pbdc.StartMetricsRequest{
-		SiteId:  req.SiteId,
-		Profile: profile,
-	})
+    startReq := &pbdc.StartMetricsRequest{
+        SiteId:  req.SiteId,
+        Profile: profile,
+    }
+
+    if req.SiteConfig.AvgBackhaulSpeed != 0 || 
+       req.SiteConfig.AvgLatency != 0 || 
+       req.SiteConfig.SolarEfficiency != 0 {
+        
+        startReq.SiteConfig = &pbdc.SiteConfig{
+            AvgBackhaulSpeed: req.SiteConfig.AvgBackhaulSpeed,
+            AvgLatency:       req.SiteConfig.AvgLatency,
+            SolarEfficiency:  req.SiteConfig.SolarEfficiency,
+        }
+    }
+
+    resp, err := r.clients.DController.Start(startReq)
+    if err != nil {
+        r.logger.WithError(err).Errorf("Failed to start metrics for site %s", req.SiteId)
+        return nil, err
+    }
+    
+    if !resp.Success {
+        r.logger.Warnf("Start metrics request returned unsuccessful: %s", resp.Message)
+    }
+
+    return resp, nil
 }

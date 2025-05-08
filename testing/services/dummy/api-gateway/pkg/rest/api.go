@@ -36,7 +36,14 @@ type PortUpdate struct {
 	Status     bool  `form:"status" json:"status" validate:"required"`
 }
 
+type SiteConfig struct {
+	AvgBackhaulSpeed float64 `form:"avgBackhaulSpeed" json:"avgBackhaulSpeed"`
+	AvgLatency       float64 `form:"avgLatency" json:"avgLatency"`
+	SolarEfficiency  float64 `form:"solarEfficiency" json:"solarEfficiency"`
+}
+
 type StartReq struct {
-	SiteId  string `form:"siteId" json:"siteId,omitempty" validate:"required"`
-	Profile string `form:"profile" json:"profile,omitempty"`
+	SiteId     string      `form:"siteId" json:"siteId,omitempty" validate:"required"`
+	Profile    string      `form:"profile" json:"profile,omitempty"`
+	SiteConfig *SiteConfig `form:"siteConfig" json:"siteConfig,omitempty"`
 }

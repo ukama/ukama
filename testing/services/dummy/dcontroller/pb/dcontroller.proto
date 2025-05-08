@@ -11,15 +11,24 @@
  option go_package = "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen";
   
  package ukama.dummy.dcontroller.v1;
+ 
  service MetricsController {
     rpc GetSiteMetrics(GetSiteMetricsRequest) returns (GetSiteMetricsResponse) {}
     rpc StartMetrics(StartMetricsRequest) returns (StartMetricsResponse) {}
     rpc StopMetrics(StopMetricsRequest) returns (StopMetricsResponse) {}
     rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse) {}
     rpc UpdatePortStatus(UpdatePortStatusRequest) returns (UpdatePortStatusResponse) {}
+    rpc Update(UpdateMetricsRequest) returns (UpdateMetricsResponse) {}
+    rpc Start(StartMetricsRequest) returns (StartMetricsResponse) {}
  }
  
- // Port constants defined as enum
+ enum Profile {
+    PROFILE_UNSPECIFIED = 0;
+    PROFILE_NORMAL = 1;
+    PROFILE_MINI = 2;
+    PROFILE_MAX = 3;
+ }
+ 
  enum PortType {
      PORT_UNKNOWN = 0;
      PORT_NODE = 1;
@@ -47,6 +56,7 @@
  message GetMetricsRequest {
     string siteId = 1;
  }
+ 
  message GetMetricsResponse {
     repeated BackhaulMetrics backhaul = 1;
     repeated EthernetMetrics ethernet = 2;
@@ -56,6 +66,7 @@
  message StopMetricsRequest {
      string siteId = 1;
  }
+ 
  message StopMetricsResponse {
      bool success = 1;
      string message = 2;
@@ -90,9 +101,26 @@
      double solarPanelPower = 4;
  }
  
+ message PortUpdate {
+     int32 portNumber = 1;
+     bool status = 2;
+ }
+ 
+ message UpdateMetricsRequest {
+     string siteId = 1;
+     repeated PortUpdate portUpdates = 2;
+     Profile profile = 3;
+ }
+ 
+ message UpdateMetricsResponse {
+     bool success = 1;
+     string message = 2;
+ }
+ 
  message StartMetricsRequest {
      string siteId = 1;
      SiteConfig siteConfig = 2;
+     Profile profile = 3;
  }
  
  message StartMetricsResponse {
