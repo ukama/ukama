@@ -9,6 +9,7 @@
 # Script to build and package ukamaOS app
 
 set -e
+set -x
 
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/buildenv"
@@ -73,7 +74,7 @@ if [[ -n "{$MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
   	echo "Mount success"
   else
   	echo "Mount failed"
-	${INSTALL_DIR}/destroy
+#	${INSTALL_DIR}/destroy
   	exit 1
   fi
 fi
@@ -85,10 +86,10 @@ sync;
 ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.21 /ukamarepo"
 if [ $? -eq 0 ]; then
   echo "Build completed successfully."
-  ${INSTALL_DIR}/destroy
+# ${INSTALL_DIR}/destroy
 else
   echo "Build failed."
-  ${INSTALL_DIR}/destroy
+# ${INSTALL_DIR}/destroy
   exit 1
 fi
 
