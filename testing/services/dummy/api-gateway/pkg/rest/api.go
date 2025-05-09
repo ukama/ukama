@@ -9,7 +9,7 @@
 package rest
 
 type UpdateReq struct {
-	Iccid    string `form:"iccid" json:"iccid" validate:"required"`
+	Iccid    string `form:"iccid" json:"iccid"`
 	Profile  string `form:"profile" json:"profile,omitempty" validate:"eq=normal|eq=min|eq=max" enum:"normal,min,max"`
 	Scenario string `form:"scenario" json:"scenario,omitempty" validate:"eq=default|eq=backhaul_down|eq=backhaul_downlink_down|eq=node_off|eq=node_on|eq=node_restart|eq=node_rf_off|eq=node_rf_on" enum:"default,backhaul_down,backhaul_downlink_down,node_off,node_on,node_restart,node_rf_off,node_rf_on"`
 }

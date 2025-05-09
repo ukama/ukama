@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -70,8 +71,9 @@ func (s *DsubscriberServer) Update(ctx context.Context, req *pb.UpdateRequest) (
 	s.updateCoroutine(req.Dsubscriber.Iccid, profile, scenario)
 	return &pb.UpdateResponse{
 		Dsubscriber: &pb.Dsubscriber{
-			Iccid:   req.Dsubscriber.Iccid,
-			Profile: req.Dsubscriber.Profile,
+			Iccid:    req.Dsubscriber.Iccid,
+			Profile:  req.Dsubscriber.Profile,
+			Scenario: req.Dsubscriber.Scenario,
 		},
 	}, nil
 }
@@ -145,19 +147,52 @@ func (s *DsubscriberServer) updateHandler(iccid string, expiry string) {
 }
 
 func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile, scenario cenums.SCENARIOS) {
-	log.Infof("Update a message with ICCID %s, Profile %d", iccid, profile)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if isRFScenario(scenario) {
+		s.handleRFScenario(profile, scenario)
+		return
+	}
+	log.Infof("Updating coroutine with ICCID: %s, Profile: %d, Scenario: %s", iccid, profile, scenario)
+
+	s.handleIndividualUpdate(iccid, profile, scenario)
+}
+
+func isRFScenario(scenario cenums.SCENARIOS) bool {
+	return scenario == cenums.SCENARIO_NODE_RF_OFF || scenario == cenums.SCENARIO_NODE_RF_ON
+}
+
+func (s *DsubscriberServer) handleRFScenario(profile cenums.Profile, scenario cenums.SCENARIOS) {
+	status := scenario == cenums.SCENARIO_NODE_RF_ON
+	log.Infof("Processing RF scenario: %s, Setting status to: %t", scenario, status)
+
+	for currIccid, updateChan := range s.coroutines {
+		if err := s.updateCoroutineStatus(currIccid, updateChan, profile, scenario, status); err != nil {
+			log.Errorf("Failed to update coroutine for ICCID %s: %v", currIccid, err)
+		}
+	}
+}
+
+func (s *DsubscriberServer) handleIndividualUpdate(iccid string, profile cenums.Profile, scenario cenums.SCENARIOS) {
 	updateChan, exists := s.coroutines[iccid]
 	if !exists {
-		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
+		log.Warnf("Coroutine does not exist for ICCID: %s", iccid)
 		return
 	}
 
-	imsi := s.iccidWithIMSI[iccid]
 	status := scenario != cenums.SCENARIO_NODE_RF_OFF
+	if err := s.updateCoroutineStatus(iccid, updateChan, profile, scenario, status); err != nil {
+		log.Errorf("Failed to update coroutine for ICCID %s: %v", iccid, err)
+	}
+}
+
+func (s *DsubscriberServer) updateCoroutineStatus(iccid string, updateChan chan pkg.WMessage, profile cenums.Profile, scenario cenums.SCENARIOS, status bool) error {
+	imsi, exists := s.iccidWithIMSI[iccid]
+	if !exists {
+		return fmt.Errorf("IMSI not found for ICCID: %s", iccid)
+	}
 
 	s.iccidWithStatus[iccid] = status
 
@@ -171,52 +206,70 @@ func (s *DsubscriberServer) updateCoroutine(iccid string, profile cenums.Profile
 
 	select {
 	case updateChan <- msg:
-		log.Infof("Sent update message to coroutine for ICCID: %s", iccid)
+		log.Infof("Successfully sent update message to coroutine for ICCID: %s", iccid)
+		return nil
 	default:
 		log.Warnf("Coroutine channel for ICCID %s is full, dropping message", iccid)
+		return fmt.Errorf("channel full for ICCID: %s", iccid)
 	}
 }
 
 func (s *DsubscriberServer) toggleUsageGenerationByNodeId(nodeId string, isOnline bool) {
-	log.Infof("Toggle usage generation under NodeId %s, State online: %t", nodeId, isOnline)
+	log.Infof("Toggling usage generation for NodeId: %s, State: %t", nodeId, isOnline)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	found := false
 	for iccid, nId := range s.iccidWithNode {
 		if nId == nodeId {
-			updateChan, exists := s.coroutines[iccid]
-			if !exists {
-				log.Printf("Coroutine does not exist for ICCID: %s", iccid)
-				return
+			if err := s.toggleCoroutineStatus(iccid, isOnline); err != nil {
+				log.Errorf("Failed to toggle coroutine for ICCID %s: %v", iccid, err)
 			}
-
-			imsi := s.iccidWithIMSI[iccid]
-			updateChan <- pkg.WMessage{
-				Iccid:  iccid,
-				Status: isOnline,
-				Imsi:   imsi,
-			}
+			found = true
 			break
 		}
+	}
+
+	if !found {
+		log.Warnf("No coroutines found for NodeId: %s", nodeId)
 	}
 }
 
 func (s *DsubscriberServer) toggleUsageGenerationByIccid(iccid string, isActive bool) {
-	log.Infof("Toggle usage generation for ICCID %s, State active: %t", iccid, isActive)
+	log.Infof("Toggling usage generation for ICCID: %s, State: %t", iccid, isActive)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if err := s.toggleCoroutineStatus(iccid, isActive); err != nil {
+		log.Errorf("Failed to toggle coroutine for ICCID %s: %v", iccid, err)
+	}
+}
+
+func (s *DsubscriberServer) toggleCoroutineStatus(iccid string, isActive bool) error {
 	updateChan, exists := s.coroutines[iccid]
 	if !exists {
-		log.Printf("Coroutine does not exist for ICCID: %s", iccid)
-		return
+		return fmt.Errorf("coroutine does not exist for ICCID: %s", iccid)
 	}
-	imsi := s.iccidWithIMSI[iccid]
-	updateChan <- pkg.WMessage{
+
+	imsi, exists := s.iccidWithIMSI[iccid]
+	if !exists {
+		return fmt.Errorf("IMSI not found for ICCID: %s", iccid)
+	}
+
+	msg := pkg.WMessage{
 		Iccid:  iccid,
 		Status: isActive,
 		Imsi:   imsi,
+	}
+
+	select {
+	case updateChan <- msg:
+		log.Infof("Successfully toggled status for ICCID: %s to %t", iccid, isActive)
+		return nil
+	default:
+		log.Warnf("Coroutine channel for ICCID %s is full, dropping message", iccid)
+		return fmt.Errorf("channel full for ICCID: %s", iccid)
 	}
 }
