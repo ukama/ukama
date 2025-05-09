@@ -390,6 +390,7 @@ const Page = () => {
           packageId: subscriberInfo.sim?.[0]?.package?.package_id,
           dataUsage: `${formatBytesToGB(Number(usageData?.usage)) || 0} GB`,
           dataPlan: plan?.name ?? 'No active plan',
+          simIccid: subscriberInfo.sim?.[0]?.iccid,
         });
       }
     },
