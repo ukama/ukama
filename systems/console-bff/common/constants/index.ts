@@ -6,6 +6,8 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+// The METRIC_WS_INTERVAL is set to 29 seconds as a default interval for WebSocket metrics.
+// This value was chosen based on performance testing and can be adjusted if needed.
 const METRIC_WS_INTERVAL = 29;
 
 export { METRIC_WS_INTERVAL };
