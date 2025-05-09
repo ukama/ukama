@@ -48,7 +48,7 @@ const useDataPlans = () => {
 
   const [getCurrencySymbol, { data: currencyData }] =
     useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'network-only',
+      fetchPolicy: 'cache-first',
       onError: (error) => {
         setSnackbarMessage({
           id: 'currency-info-error',
@@ -237,6 +237,7 @@ const DataPlansPage = () => {
                 <Grid item xs={12} sm={6} md={4} key={pkg.uuid}>
                   <PlanCard
                     {...pkg}
+                    currency={currencySymbol}
                     amount={pkg.amount.toString()}
                     dataVolume={pkg.dataVolume.toString()}
                     handleOptionMenuItemAction={(

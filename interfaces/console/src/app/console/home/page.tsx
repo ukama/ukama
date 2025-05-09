@@ -6,7 +6,11 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 'use client';
-import { useGetNodesQuery, useGetSitesQuery } from '@/client/graphql/generated';
+import {
+  useGetCurrencySymbolQuery,
+  useGetNodesQuery,
+  useGetSitesQuery,
+} from '@/client/graphql/generated';
 import {
   Stats_Type,
   useGetMetricsStatLazyQuery,
@@ -105,44 +109,58 @@ export default function Page() {
     },
   });
 
-  const [
-    getMetricStat,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetMetricsStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: async (data) => {
-      if (data.getMetricsStat.metrics.length > 0) {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
-        cleanupSubscription();
-        subscriptionKeyRef.current = sKey;
-
-        if (statVar?.data.withSubscription) {
-          const controller = await MetricStatSubscription({
-            key: sKey,
-            userId: user.id,
-            url: env.METRIC_URL,
-            networkId: network.id,
-            orgName: user.orgName,
-            type: Stats_Type.Home,
-            from: statVar?.data.from ?? 0,
-          });
-
-          data.getMetricsStat.metrics.forEach((metric) => {
-            PubSub.publish(
-              `${metric.type}-${network.id}`,
-              metric.type === kpiConfig[2].id
-                ? formatBytesToGB(metric.value)
-                : metric.value,
-            );
-          });
-
-          subscriptionControllerRef.current = controller;
-          PubSub.subscribe(sKey, handleStatSubscription);
-        }
-      }
+  const { data: currencyData } = useGetCurrencySymbolQuery({
+    skip: !user.currency,
+    fetchPolicy: 'cache-first',
+    variables: {
+      code: user.currency,
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'currency-info-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
     },
   });
+
+  const [getMetricStat, { loading: statLoading, variables: statVar }] =
+    useGetMetricsStatLazyQuery({
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: async (data) => {
+        if (data.getMetricsStat.metrics.length > 0) {
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
+          cleanupSubscription();
+          subscriptionKeyRef.current = sKey;
+
+          if (statVar?.data.withSubscription) {
+            const controller = await MetricStatSubscription({
+              key: sKey,
+              userId: user.id,
+              url: env.METRIC_URL,
+              networkId: network.id,
+              orgName: user.orgName,
+              type: Stats_Type.Home,
+              from: statVar?.data.from ?? 0,
+            });
+
+            data.getMetricsStat.metrics.forEach((metric) => {
+              PubSub.publish(
+                `${metric.type}-${network.id}`,
+                metric.type === kpiConfig[2].id
+                  ? formatBytesToGB(metric.value)
+                  : metric.value,
+              );
+            });
+
+            subscriptionControllerRef.current = controller;
+            PubSub.subscribe(sKey, handleStatSubscription);
+          }
+        }
+      },
+    });
 
   useEffect(() => {
     const to = getUnixTime();
@@ -200,7 +218,7 @@ export default function Page() {
         <Stack direction={'row'} spacing={{ xs: 0.5, md: 1 }}>
           <StatusCard
             option={'bill'}
-            subtitle2={`$`}
+            subtitle2={currencyData?.getCurrencySymbol.symbol ?? ''}
             title={'Sales'}
             Icon={SalesIcon}
             loading={statLoading}

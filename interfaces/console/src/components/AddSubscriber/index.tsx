@@ -73,6 +73,7 @@ const useStyles = makeStyles(() => ({
 
 interface SubscriberFormProps {
   isOpen: boolean;
+  currencySymbol: string;
   handleCloseAction: () => void;
   handleAddSubscriber: (
     subscriber: SubscriberDetailsType,
@@ -89,6 +90,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   packages,
   sims,
   isLoading,
+  currencySymbol,
 }) => {
   const { setSnackbarMessage } = useAppContext();
   const [activeStep, setActiveStep] = useState(0);
@@ -398,7 +400,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                         packages.map((plan) => (
                           <MenuItem key={plan.uuid} value={plan.uuid}>
                             <Typography variant="body1">
-                              {`${plan.name} - ${plan.currency} ${plan.amount}/${plan.dataVolume} ${plan.dataUnit}`}
+                              {`${plan.name} - ${currencySymbol} ${plan.amount}/${plan.dataVolume} ${plan.dataUnit}`}
                             </Typography>
                           </MenuItem>
                         ))

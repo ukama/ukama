@@ -15,6 +15,7 @@ import {
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
+  useGetCurrencySymbolQuery,
   useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
@@ -279,6 +280,22 @@ const Page = () => {
         });
       },
     });
+
+  const { data: currencyData } = useGetCurrencySymbolQuery({
+    skip: !user.currency,
+    fetchPolicy: 'cache-first',
+    variables: {
+      code: user.currency,
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'currency-info-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
 
   const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
     useGetDataUsagesLazyQuery({
@@ -621,7 +638,9 @@ const Page = () => {
                           isOptions={false}
                           dataUnit={dataUnit}
                           duration={duration}
-                          currency={currency}
+                          currency={
+                            currencyData?.getCurrencySymbol.symbol ?? ''
+                          }
                           dataVolume={dataVolume}
                         />
                       </CardWrapper>
@@ -677,6 +696,7 @@ const Page = () => {
       )}
       <AddSubscriberStepperDialog
         isOpen={openAddSubscriber}
+        currencySymbol={currencyData?.getCurrencySymbol.symbol ?? ''}
         handleCloseAction={() => setOpenAddSubscriber(false)}
         handleAddSubscriber={handleAddSubscriber}
         sims={simPoolData?.getSimsFromPool.sims ?? []}
