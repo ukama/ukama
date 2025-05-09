@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -euo pipefail
 # Function to display all scenarios with descriptions
 show_scenarios() {
     echo "Available Scenarios:"
