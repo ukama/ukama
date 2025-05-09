@@ -6,9 +6,8 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-# Script to build and package ukamaOS app
-
-set -e 
+set -e
+set -x
 
 # Initialize variables
 PARTITION_TYPE=""
@@ -204,7 +203,7 @@ function copy_required_libs() {
 function copy_misc_files() {
     
 	log "INFO" "Copying various files to image"
-    rm ${MANIFEST_FILE}
+    rm -f ${MANIFEST_FILE}
     create_manifest_file
     
     #sudo cp ${MANIFEST_FILE} "/manifest.json"
@@ -270,8 +269,6 @@ NETWORK
     log_message "Network configuration updated for eth0"
 }
 
-
-
 # Create a custom OpenRC service
 create_openrc_service() {
     log_message "Creating OpenRC service: $SERVICE_NAME"
@@ -325,7 +322,11 @@ setup_rootfs() {
     # Install essential packages
     apk add alpine-base openrc busybox bash sudo shadow tzdata
     apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
-    apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk build-base git tcpdump ethtool iperf3 htop vim doas
+    apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev \
+        iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap \
+        libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
+        tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
+        build-base git tcpdump ethtool iperf3 htop vim doas
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -333,7 +334,7 @@ setup_rootfs() {
     # Configure networking
     apk add dhcpcd iproute2 iputils
     rc-update add dhcpcd default
-    rc-service dhcpcd start
+#    rc-service dhcpcd start
 
     # Set hostname
     echo "ukama-linux" > /etc/hostname
@@ -354,7 +355,7 @@ setup_rootfs() {
     # Enable SSH access
     apk add openssh
     rc-update add sshd default
-    rc-service sshd start
+#    rc-service sshd start
 
     # Enable system services
     rc-update add networking default
@@ -362,7 +363,7 @@ setup_rootfs() {
     rc-update add dhcpcd default
     rc-update add acpid default
 
-    log_message "INFO" "Root filesystem setup completed."
+    log_message "INFO" "root filesystem setup completed."
 }
 
 function create_manifest_file() {
@@ -452,7 +453,6 @@ EOF
   echo '    ]}'  >> ${MANIFEST_FILE}
   echo '}'       >> ${MANIFEST_FILE}
 }
-
 
 function setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
