@@ -38,6 +38,11 @@ function makeClient(baseUrl: string) {
               return existing;
             },
           },
+          getCurrencySymbol: {
+            merge(existing, incoming) {
+              return incoming;
+            },
+          },
         },
       },
       Site: {

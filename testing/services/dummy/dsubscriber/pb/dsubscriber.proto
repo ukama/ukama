@@ -27,4 +27,5 @@ message UpdateResponse {
 message Dsubscriber {
     string iccid = 1;
     string profile = 2;
+    string scenario = 3;
 }

@@ -10,16 +10,16 @@ import {
   AllocateSimApiDto,
   Sim_Status,
   Sim_Types,
-  SimsUsageInputDto,
   SubscribersResDto,
   useAddPackagesToSimMutation,
   useAddSubscriberMutation,
   useAllocateSimMutation,
   useDeleteSubscriberMutation,
+  useGetCurrencySymbolQuery,
   useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
-  useGetSimsQuery,
+  useGetSimsFromPoolQuery,
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
@@ -43,19 +43,20 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { formatBytesToMB } from '@/utils';
+import { formatBytesToGB } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env } = useAppContext();
+  const { setSnackbarMessage, network, env, user, subscriptionClient } =
+    useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
@@ -82,13 +83,7 @@ const Page = () => {
     },
   });
 
-  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
-    useGetDataUsagesLazyQuery({
-      pollInterval: 180000,
-      fetchPolicy: 'network-only',
-    });
-
-  const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
+  const { data: simPoolData, refetch: refetchSims } = useGetSimsFromPoolQuery({
     variables: {
       data: {
         status: Sim_Status.Unassigned,
@@ -132,21 +127,12 @@ const Page = () => {
         const iccid = query.get('iccid');
         setSearch(iccid ?? '');
       }
-      const simUsageData: SimsUsageInputDto[] = [];
-      data.getSubscribersByNetwork.subscribers.map((s) => {
-        if (s && s.sim && s.sim[0]) {
-          simUsageData.push({
-            simId: s.sim[0].id,
-            iccid: s.sim[0].iccid,
-          });
-        }
-      });
 
       getDataUsages({
         variables: {
           data: {
-            for: simUsageData,
             type: Sim_Types.UkamaData,
+            networkId: network.id,
           },
         },
       });
@@ -295,6 +281,34 @@ const Page = () => {
       },
     });
 
+  const { data: currencyData } = useGetCurrencySymbolQuery({
+    skip: !user.currency,
+    fetchPolicy: 'cache-first',
+    variables: {
+      code: user.currency,
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'currency-info-error',
+        message: error.message,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
+  const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
+    useGetDataUsagesLazyQuery({
+      pollInterval: 120000,
+      fetchPolicy: 'network-only',
+      variables: {
+        data: {
+          type: Sim_Types.UkamaData,
+          networkId: network.id,
+        },
+      },
+    });
+
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
@@ -354,12 +368,14 @@ const Page = () => {
           const dataUsage = dataUsageData?.getDataUsages.usages.find(
             (usage) => usage.simId === sim?.id,
           );
+
           return {
             id: subscriber.uuid,
             name: subscriber.name,
-            dataPlan: pkg?.name ?? 'No active plan',
             email: subscriber.email,
-            dataUsage: `${formatBytesToMB(Number(dataUsage?.usage)) || 0} MB`,
+            packageId: sim?.package?.package_id,
+            dataPlan: pkg?.name ?? 'No active plan',
+            dataUsage: `${formatBytesToGB(Number(dataUsage?.usage)) || 0} GB`,
             actions: '',
           };
         });
@@ -385,10 +401,13 @@ const Page = () => {
         const plan = packagesData?.getPackages.packages.find(
           (pkg) => pkg.uuid === subscriberInfo.sim?.[0]?.package?.package_id,
         );
+
         setSubscriberDetails({
           ...subscriberInfo,
-          dataUsage: `${formatBytesToMB(Number(usageData?.usage)) || 0} MB`,
+          packageId: subscriberInfo.sim?.[0]?.package?.package_id,
+          dataUsage: `${formatBytesToGB(Number(usageData?.usage)) || 0} GB`,
           dataPlan: plan?.name ?? 'No active plan',
+          simIccid: subscriberInfo.sim?.[0]?.iccid,
         });
       }
     },
@@ -543,7 +562,7 @@ const Page = () => {
       direction={'column'}
       sx={{ height: { xs: 'calc(100vh - 158px)', md: 'calc(100vh - 172px)' } }}
     >
-      {getSubscriberByNetworkLoading || dataUsageLoading ? (
+      {getSubscriberByNetworkLoading ? (
         <LoadingWrapper
           radius="small"
           width={'100%'}
@@ -619,7 +638,9 @@ const Page = () => {
                           isOptions={false}
                           dataUnit={dataUnit}
                           duration={duration}
-                          currency={currency}
+                          currency={
+                            currencyData?.getCurrencySymbol.symbol ?? ''
+                          }
                           dataVolume={dataVolume}
                         />
                       </CardWrapper>
@@ -646,7 +667,7 @@ const Page = () => {
         <Paper
           sx={{
             height: '100%',
-            overflow: 'auto',
+            overflow: 'hidden',
             borderRadius: '10px',
             px: { xs: 2, md: 3 },
             py: { xs: 2, md: 4 },
@@ -675,9 +696,10 @@ const Page = () => {
       )}
       <AddSubscriberStepperDialog
         isOpen={openAddSubscriber}
+        currencySymbol={currencyData?.getCurrencySymbol.symbol ?? ''}
         handleCloseAction={() => setOpenAddSubscriber(false)}
         handleAddSubscriber={handleAddSubscriber}
-        sims={simPoolData?.getSims.sim ?? []}
+        sims={simPoolData?.getSimsFromPool.sims ?? []}
         packages={packagesData?.getPackages.packages ?? []}
         isLoading={addSubscriberLoading || allocateSimLoading}
       />

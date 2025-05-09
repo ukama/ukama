@@ -25,6 +25,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	agent "github.com/ukama/ukama/systems/common/rest/client/ukamaagent"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/cmd/version"
 	generated "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
@@ -72,6 +73,12 @@ func runGrpcServer() {
 
 	cdrC := clients.NewCDRClient(serviceConfig.Http.AgentNodeGateway)
 
+	ukamaAgentUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Errorf("Failed to resolve ukama agent address: %v", err)
+	}
+
 	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
@@ -79,7 +86,9 @@ func runGrpcServer() {
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
-	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.RoutineConfig, nodeClient, cdrC, providers.NewDsimfactoryProvider(serviceConfig.DsimfactoryHost))
+	ukamaAgentClient := agent.NewUkamaAgentClient(ukamaAgentUrl.String())
+
+	dsubServer := server.NewDsubscriberServer(serviceConfig.OrgName, mbClient, serviceConfig.RoutineConfig, nodeClient, cdrC, providers.NewDsimfactoryProvider(serviceConfig.DsimfactoryHost), ukamaAgentClient)
 	nSrv := server.NewDsubEventServer(serviceConfig.OrgName, dsubServer)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)

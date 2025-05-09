@@ -341,10 +341,6 @@ export type GetSimPackagesDtoApi = {
   sim_id: Scalars['String']['output'];
 };
 
-export type GetSimPoolStatsInput = {
-  type: Sim_Types;
-};
-
 export type GetSimsInput = {
   status: Sim_Status;
   type: Sim_Types;
@@ -383,6 +379,11 @@ export type ItemResDto = {
   code: Scalars['String']['output'];
   name: Scalars['String']['output'];
   type: Scalars['String']['output'];
+};
+
+export type ListSimsInput = {
+  networkId: Scalars['String']['input'];
+  status: Scalars['String']['input'];
 };
 
 export type MemberDto = {
@@ -1034,6 +1035,7 @@ export type Query = {
   getSims: SimsResDto;
   getSimsByNetwork: SubscriberSimsResDto;
   getSimsBySubscriber: SubscriberToSimsDto;
+  getSimsFromPool: SimsPoolResDto;
   getSite: SiteDto;
   getSites: SitesResDto;
   getSubscriber: SubscriberDto;
@@ -1197,12 +1199,12 @@ export type QueryGetSimArgs = {
 
 
 export type QueryGetSimPoolStatsArgs = {
-  data: GetSimPoolStatsInput;
+  data: GetSimsInput;
 };
 
 
 export type QueryGetSimsArgs = {
-  data: GetSimsInput;
+  data: ListSimsInput;
 };
 
 
@@ -1213,6 +1215,11 @@ export type QueryGetSimsByNetworkArgs = {
 
 export type QueryGetSimsBySubscriberArgs = {
   data: GetSimBySubscriberInputDto;
+};
+
+
+export type QueryGetSimsFromPoolArgs = {
+  data: GetSimsInput;
 };
 
 
@@ -1357,16 +1364,34 @@ export type SimDataUsages = {
 
 export type SimDto = {
   __typename?: 'SimDto';
-  activationCode?: Maybe<Scalars['String']['output']>;
-  createdAt?: Maybe<Scalars['String']['output']>;
+  activationsCount: Scalars['String']['output'];
+  allocatedAt: Scalars['String']['output'];
+  deactivationsCount: Scalars['String']['output'];
+  firstActivatedOn: Scalars['String']['output'];
   iccid: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  isAllocated: Scalars['Boolean']['output'];
-  isPhysical: Scalars['String']['output'];
+  imsi: Scalars['String']['output'];
+  isPhysical: Scalars['Boolean']['output'];
+  lastActivatedOn: Scalars['String']['output'];
   msisdn: Scalars['String']['output'];
-  qrCode: Scalars['String']['output'];
-  simType: Scalars['String']['output'];
-  smapAddress: Scalars['String']['output'];
+  networkId: Scalars['String']['output'];
+  package?: Maybe<SimPackage>;
+  status: Scalars['String']['output'];
+  subscriberId: Scalars['String']['output'];
+  syncStatus: Scalars['String']['output'];
+  trafficPolicy: Scalars['Float']['output'];
+  type: Scalars['String']['output'];
+};
+
+export type SimPackage = {
+  __typename?: 'SimPackage';
+  asExpired: Scalars['Boolean']['output'];
+  defaultDuration: Scalars['String']['output'];
+  endDate: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  packageId: Scalars['String']['output'];
+  startDate: Scalars['String']['output'];
 };
 
 export type SimPackageDto = {
@@ -1378,6 +1403,23 @@ export type SimPackageDto = {
   package_id: Scalars['String']['output'];
   start_date: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
+};
+
+export type SimPoolResDto = {
+  __typename?: 'SimPoolResDto';
+  activationCode: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  deletedAt: Scalars['String']['output'];
+  iccid: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  isAllocated: Scalars['Boolean']['output'];
+  isFailed: Scalars['Boolean']['output'];
+  isPhysical: Scalars['Boolean']['output'];
+  msisdn: Scalars['String']['output'];
+  qrCode: Scalars['String']['output'];
+  simType: Scalars['String']['output'];
+  smApAddress: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
 };
 
 export type SimPoolStatsDto = {
@@ -1405,15 +1447,17 @@ export type SimToPackagesDto = {
 };
 
 export type SimUsageInputDto = {
-  from: Scalars['Float']['input'];
+  from: Scalars['String']['input'];
   iccid: Scalars['String']['input'];
   simId: Scalars['String']['input'];
-  to: Scalars['Float']['input'];
+  to: Scalars['String']['input'];
   type: Scalars['String']['input'];
 };
 
 export type SimUsagesInputDto = {
-  for: Array<SimsUsageInputDto>;
+  from?: InputMaybe<Scalars['Float']['input']>;
+  networkId: Scalars['String']['input'];
+  to?: InputMaybe<Scalars['Float']['input']>;
   type: Scalars['String']['input'];
 };
 
@@ -1424,14 +1468,14 @@ export type Sims = {
   totalSims: Scalars['String']['output'];
 };
 
-export type SimsResDto = {
-  __typename?: 'SimsResDto';
-  sim: Array<SimDto>;
+export type SimsPoolResDto = {
+  __typename?: 'SimsPoolResDto';
+  sims: Array<SimPoolResDto>;
 };
 
-export type SimsUsageInputDto = {
-  iccid: Scalars['String']['input'];
-  simId: Scalars['String']['input'];
+export type SimsResDto = {
+  __typename?: 'SimsResDto';
+  sims: Array<SimDto>;
 };
 
 export type Site = {
@@ -1990,11 +2034,18 @@ export type GetReportQueryVariables = Exact<{
 export type GetReportQuery = { __typename?: 'Query', getReport: { __typename?: 'GetReportDto', report: { __typename?: 'ReportDto', id: string, ownerId: string, ownerType: string, networkId: string, period: string, type: string, isPaid: boolean, createdAt: string, rawReport: { __typename?: 'RawReportDto', issuingDate: string, paymentDueDate: string, paymentOverdue: boolean, invoiceType: string, status: string, paymentStatus: string, feesAmountCents: string, taxesAmountCents: string, subTotalExcludingTaxesAmountCents: string, subTotalIncludingTaxesAmountCents: string, vatAmountCents: string, vatAmountCurrency?: string | null, totalAmountCents: string, currency: string, fileUrl: string, customer: { __typename?: 'CustomerDto', externalId: string, name: string, email?: string | null, addressLine1?: string | null, legalName?: string | null, legalNumber?: string | null, phone?: string | null, currency: string, timezone?: string | null, vatRate: number, createdAt: string }, subscriptions: Array<{ __typename?: 'SubscriptionDto', externalCustomerId: string, externalId: string, planCode: string, name?: string | null, status: string, createdAt: string, startedAt: string, canceledAt?: string | null, terminatedAt?: string | null }>, fees: Array<{ __typename?: 'FeeDto', taxesAmountCents: string, taxesPreciseAmount: string, totalAmountCents: string, totalAmountCurrency: string, eventsCount: string, units: number, item: { __typename?: 'ItemResDto', type: string, code: string, name: string } }> } } } };
 
 export type GetSimPoolStatsQueryVariables = Exact<{
-  data: GetSimPoolStatsInput;
+  data: GetSimsInput;
 }>;
 
 
 export type GetSimPoolStatsQuery = { __typename?: 'Query', getSimPoolStats: { __typename?: 'SimPoolStatsDto', total: number, available: number, consumed: number, failed: number, esim: number, physical: number } };
+
+export type GetSimsFromPoolQueryVariables = Exact<{
+  data: GetSimsInput;
+}>;
+
+
+export type GetSimsFromPoolQuery = { __typename?: 'Query', getSimsFromPool: { __typename?: 'SimsPoolResDto', sims: Array<{ __typename?: 'SimPoolResDto', id: string, qrCode: string, iccid: string, msisdn: string, isAllocated: boolean, isFailed: boolean, simType: string, smApAddress: string, activationCode: string, createdAt: string, deletedAt: string, updatedAt: string, isPhysical: boolean }> } };
 
 export type UploadSimsMutationVariables = Exact<{
   data: UploadSimsInputDto;
@@ -2003,7 +2054,9 @@ export type UploadSimsMutationVariables = Exact<{
 
 export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
 
-export type SimPoolFragment = { __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string };
+export type SimPackageFragment = { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean };
+
+export type SimFragment = { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null };
 
 export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null };
 
@@ -2028,14 +2081,14 @@ export type GetSimQueryVariables = Exact<{
 }>;
 
 
-export type GetSimQuery = { __typename?: 'Query', getSim: { __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string } };
+export type GetSimQuery = { __typename?: 'Query', getSim: { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null } };
 
 export type GetSimsQueryVariables = Exact<{
-  data: GetSimsInput;
+  data: ListSimsInput;
 }>;
 
 
-export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sim: Array<{ __typename?: 'SimDto', activationCode?: string | null, createdAt?: string | null, iccid: string, id: string, isAllocated: boolean, isPhysical: string, msisdn: string, qrCode: string, simType: string, smapAddress: string }> } };
+export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sims: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null }> } };
 
 export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
@@ -2476,20 +2529,40 @@ export const RawReportFragmentDoc = gql`
     ${CustomerFragmentDoc}
 ${SubscriptionFragmentDoc}
 ${FeeFragmentDoc}`;
-export const SimPoolFragmentDoc = gql`
-    fragment SimPool on SimDto {
-  activationCode
-  createdAt
-  iccid
+export const SimPackageFragmentDoc = gql`
+    fragment SimPackage on SimPackage {
   id
-  isAllocated
-  isPhysical
-  msisdn
-  qrCode
-  simType
-  smapAddress
+  packageId
+  startDate
+  endDate
+  defaultDuration
+  isActive
+  asExpired
 }
     `;
+export const SimFragmentDoc = gql`
+    fragment Sim on SimDto {
+  id
+  subscriberId
+  networkId
+  iccid
+  msisdn
+  imsi
+  type
+  status
+  isPhysical
+  trafficPolicy
+  firstActivatedOn
+  lastActivatedOn
+  activationsCount
+  deactivationsCount
+  allocatedAt
+  syncStatus
+  package {
+    ...SimPackage
+  }
+}
+    ${SimPackageFragmentDoc}`;
 export const SimAllocationPackageFragmentDoc = gql`
     fragment SimAllocationPackage on SimAllocatePackageDto {
   id
@@ -4144,7 +4217,7 @@ export type GetReportLazyQueryHookResult = ReturnType<typeof useGetReportLazyQue
 export type GetReportSuspenseQueryHookResult = ReturnType<typeof useGetReportSuspenseQuery>;
 export type GetReportQueryResult = Apollo.QueryResult<GetReportQuery, GetReportQueryVariables>;
 export const GetSimPoolStatsDocument = gql`
-    query GetSimPoolStats($data: GetSimPoolStatsInput!) {
+    query GetSimPoolStats($data: GetSimsInput!) {
   getSimPoolStats(data: $data) {
     total
     available
@@ -4188,6 +4261,60 @@ export type GetSimPoolStatsQueryHookResult = ReturnType<typeof useGetSimPoolStat
 export type GetSimPoolStatsLazyQueryHookResult = ReturnType<typeof useGetSimPoolStatsLazyQuery>;
 export type GetSimPoolStatsSuspenseQueryHookResult = ReturnType<typeof useGetSimPoolStatsSuspenseQuery>;
 export type GetSimPoolStatsQueryResult = Apollo.QueryResult<GetSimPoolStatsQuery, GetSimPoolStatsQueryVariables>;
+export const GetSimsFromPoolDocument = gql`
+    query GetSimsFromPool($data: GetSimsInput!) {
+  getSimsFromPool(data: $data) {
+    sims {
+      id
+      qrCode
+      iccid
+      msisdn
+      isAllocated
+      isFailed
+      simType
+      smApAddress
+      activationCode
+      createdAt
+      deletedAt
+      updatedAt
+      isPhysical
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetSimsFromPoolQuery__
+ *
+ * To run a query within a React component, call `useGetSimsFromPoolQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetSimsFromPoolQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetSimsFromPoolQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetSimsFromPoolQuery(baseOptions: Apollo.QueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables> & ({ variables: GetSimsFromPoolQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>(GetSimsFromPoolDocument, options);
+      }
+export function useGetSimsFromPoolLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>(GetSimsFromPoolDocument, options);
+        }
+export function useGetSimsFromPoolSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>(GetSimsFromPoolDocument, options);
+        }
+export type GetSimsFromPoolQueryHookResult = ReturnType<typeof useGetSimsFromPoolQuery>;
+export type GetSimsFromPoolLazyQueryHookResult = ReturnType<typeof useGetSimsFromPoolLazyQuery>;
+export type GetSimsFromPoolSuspenseQueryHookResult = ReturnType<typeof useGetSimsFromPoolSuspenseQuery>;
+export type GetSimsFromPoolQueryResult = Apollo.QueryResult<GetSimsFromPoolQuery, GetSimsFromPoolQueryVariables>;
 export const UploadSimsDocument = gql`
     mutation uploadSims($data: UploadSimsInputDto!) {
   uploadSims(data: $data) {
@@ -4290,10 +4417,10 @@ export type ToggleSimStatusMutationOptions = Apollo.BaseMutationOptions<ToggleSi
 export const GetSimDocument = gql`
     query getSim($data: GetSimInputDto!) {
   getSim(data: $data) {
-    ...SimPool
+    ...Sim
   }
 }
-    ${SimPoolFragmentDoc}`;
+    ${SimFragmentDoc}`;
 
 /**
  * __useGetSimQuery__
@@ -4328,14 +4455,14 @@ export type GetSimLazyQueryHookResult = ReturnType<typeof useGetSimLazyQuery>;
 export type GetSimSuspenseQueryHookResult = ReturnType<typeof useGetSimSuspenseQuery>;
 export type GetSimQueryResult = Apollo.QueryResult<GetSimQuery, GetSimQueryVariables>;
 export const GetSimsDocument = gql`
-    query GetSims($data: GetSimsInput!) {
+    query GetSims($data: ListSimsInput!) {
   getSims(data: $data) {
-    sim {
-      ...SimPool
+    sims {
+      ...Sim
     }
   }
 }
-    ${SimPoolFragmentDoc}`;
+    ${SimFragmentDoc}`;
 
 /**
  * __useGetSimsQuery__

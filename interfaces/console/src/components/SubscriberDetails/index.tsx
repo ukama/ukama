@@ -28,7 +28,6 @@ import {
 } from '@mui/material';
 import React, { useCallback, useEffect, useState } from 'react';
 import SimTable from './SimInfoTab';
-import BillingCycle from './billingCycle';
 import DataPlanComponent from './dataPlanInfo';
 
 interface SubscriberProps {
@@ -183,7 +182,7 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
             <Tab label="INFORMATION" />
             <Tab label="DATA USAGE" />
             <Tab label="SIMS" />
-            <Tab label="HISTORY" />
+            {/* <Tab label="HISTORY" /> */}
           </Tabs>
         </Box>
 
@@ -274,11 +273,12 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
               />
             </Box>
           )}
-          {selectedsTab === 3 && (
+          {/* TODO: Need more discussion
+            {selectedsTab === 3 && (
             <Box>
               <BillingCycle />
             </Box>
-          )}
+          )} */}
         </Box>
       </Box>
       <DialogActions>

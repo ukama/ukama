@@ -20,6 +20,7 @@ export type Scalars = {
 export enum Graphs_Type {
   Battery = 'BATTERY',
   Controller = 'CONTROLLER',
+  DataUsage = 'DATA_USAGE',
   Home = 'HOME',
   MainBackhaul = 'MAIN_BACKHAUL',
   NetworkBackhaul = 'NETWORK_BACKHAUL',
@@ -38,7 +39,7 @@ export type GetMetricBySiteInput = {
   orgName: Scalars['String']['input'];
   siteId: Scalars['String']['input'];
   step?: Scalars['Float']['input'];
-  to?: InputMaybe<Scalars['Float']['input']>;
+  to: Scalars['Float']['input'];
   type: Graphs_Type;
   userId: Scalars['String']['input'];
   withSubscription?: Scalars['Boolean']['input'];
@@ -46,10 +47,12 @@ export type GetMetricBySiteInput = {
 
 export type GetMetricByTabInput = {
   from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
+  siteId?: InputMaybe<Scalars['String']['input']>;
   step?: Scalars['Float']['input'];
-  to?: InputMaybe<Scalars['Float']['input']>;
+  to: Scalars['Float']['input'];
   type: Graphs_Type;
   userId: Scalars['String']['input'];
   withSubscription?: Scalars['Boolean']['input'];
@@ -61,7 +64,7 @@ export type GetMetricsSiteStatInput = {
   orgName: Scalars['String']['input'];
   siteIds?: InputMaybe<Array<Scalars['String']['input']>>;
   step?: Scalars['Float']['input'];
-  to?: InputMaybe<Scalars['Float']['input']>;
+  to: Scalars['Float']['input'];
   type: Stats_Type;
   userId?: InputMaybe<Scalars['String']['input']>;
   withSubscription?: Scalars['Boolean']['input'];
@@ -69,8 +72,11 @@ export type GetMetricsSiteStatInput = {
 
 export type GetMetricsStatInput = {
   from: Scalars['Float']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
   nodeId?: InputMaybe<Scalars['String']['input']>;
+  operation?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
+  siteId?: InputMaybe<Scalars['String']['input']>;
   step?: Scalars['Float']['input'];
   to?: InputMaybe<Scalars['Float']['input']>;
   type: Stats_Type;
@@ -80,8 +86,11 @@ export type GetMetricsStatInput = {
 
 export type LatestMetricSubRes = {
   __typename?: 'LatestMetricSubRes';
+  dataPlanId?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
   nodeId: Scalars['String']['output'];
+  packageId?: Maybe<Scalars['String']['output']>;
   siteId: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
@@ -90,8 +99,11 @@ export type LatestMetricSubRes = {
 
 export type MetricRes = {
   __typename?: 'MetricRes';
+  dataPlanId?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
   nodeId?: Maybe<Scalars['String']['output']>;
+  packageId?: Maybe<Scalars['String']['output']>;
   siteId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
@@ -100,8 +112,11 @@ export type MetricRes = {
 
 export type MetricStateRes = {
   __typename?: 'MetricStateRes';
+  dataPlanId?: Maybe<Scalars['String']['output']>;
   msg: Scalars['String']['output'];
+  networkId?: Maybe<Scalars['String']['output']>;
   nodeId: Scalars['String']['output'];
+  packageId?: Maybe<Scalars['String']['output']>;
   success: Scalars['Boolean']['output'];
   type: Scalars['String']['output'];
   value: Scalars['Float']['output'];
@@ -212,6 +227,7 @@ export type QueryGetSiteStatArgs = {
 export enum Stats_Type {
   AllNode = 'ALL_NODE',
   Battery = 'BATTERY',
+  DataUsage = 'DATA_USAGE',
   Home = 'HOME',
   MainBackhaul = 'MAIN_BACKHAUL',
   Network = 'NETWORK',
@@ -236,17 +252,10 @@ export type SiteMetricsStateRes = {
   metrics: Array<SiteMetricStateRes>;
 };
 
-export type SubMetricByTabInput = {
-  from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
-  orgName: Scalars['String']['input'];
-  type: Graphs_Type;
-  userId: Scalars['String']['input'];
-};
-
 export type SubMetricsStatInput = {
   from: Scalars['Float']['input'];
-  nodeId: Scalars['String']['input'];
+  networkId?: InputMaybe<Scalars['String']['input']>;
+  nodeId?: InputMaybe<Scalars['String']['input']>;
   orgName: Scalars['String']['input'];
   type: Stats_Type;
   userId: Scalars['String']['input'];
@@ -271,16 +280,10 @@ export type SubSiteMetricsStatInput = {
 
 export type Subscription = {
   __typename?: 'Subscription';
-  getMetricByTabSub: LatestMetricSubRes;
   getMetricStatSub: LatestMetricSubRes;
   getSiteMetricByTabSub: LatestMetricSubRes;
   getSiteMetricStatSub: LatestMetricSubRes;
   notificationSubscription: NotificationsResDto;
-};
-
-
-export type SubscriptionGetMetricByTabSubArgs = {
-  data: SubMetricByTabInput;
 };
 
 
@@ -340,28 +343,14 @@ export type GetMetricByTabQueryVariables = Exact<{
 }>;
 
 
-export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId?: string | null, success: boolean, type: string, values: Array<Array<number>> }> } };
-
-export type GetMetricByTabSubSubscriptionVariables = Exact<{
-  data: SubMetricByTabInput;
-}>;
-
-
-export type GetMetricByTabSubSubscription = { __typename?: 'Subscription', getMetricByTabSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, siteId: string, success: boolean, type: string, value: Array<number> } };
-
-export type GetSiteMetricByTabSubSubscriptionVariables = Exact<{
-  data: SubSiteMetricByTabInput;
-}>;
-
-
-export type GetSiteMetricByTabSubSubscription = { __typename?: 'Subscription', getSiteMetricByTabSub: { __typename?: 'LatestMetricSubRes', type: string, success: boolean, msg: string, siteId: string, value: Array<number> } };
+export type GetMetricByTabQuery = { __typename?: 'Query', getMetricByTab: { __typename?: 'MetricsRes', metrics: Array<{ __typename?: 'MetricRes', msg: string, nodeId?: string | null, success: boolean, type: string, values: Array<Array<number>>, networkId?: string | null, siteId?: string | null, packageId?: string | null, dataPlanId?: string | null }> } };
 
 export type GetMetricsStatQueryVariables = Exact<{
   data: GetMetricsStatInput;
 }>;
 
 
-export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number }> } };
+export type GetMetricsStatQuery = { __typename?: 'Query', getMetricsStat: { __typename?: 'MetricsStateRes', metrics: Array<{ __typename?: 'MetricStateRes', success: boolean, msg: string, nodeId: string, type: string, value: number, networkId?: string | null, packageId?: string | null, dataPlanId?: string | null }> } };
 
 export type GetSiteStatQueryVariables = Exact<{
   data: GetMetricsSiteStatInput;
@@ -382,7 +371,7 @@ export type GetMetricsStatSubSubscriptionVariables = Exact<{
 }>;
 
 
-export type GetMetricsStatSubSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number> } };
+export type GetMetricsStatSubSubscription = { __typename?: 'Subscription', getMetricStatSub: { __typename?: 'LatestMetricSubRes', msg: string, nodeId: string, success: boolean, type: string, value: Array<number>, networkId?: string | null, siteId: string, packageId?: string | null, dataPlanId?: string | null } };
 
 export type GetSiteMetricStatSubSubscriptionVariables = Exact<{
   data: SubSiteMetricsStatInput;
@@ -525,6 +514,10 @@ export const GetMetricByTabDocument = gql`
       success
       type
       values
+      networkId
+      siteId
+      packageId
+      dataPlanId
     }
   }
 }
@@ -562,75 +555,6 @@ export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQ
 export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
 export type GetMetricByTabSuspenseQueryHookResult = ReturnType<typeof useGetMetricByTabSuspenseQuery>;
 export type GetMetricByTabQueryResult = Apollo.QueryResult<GetMetricByTabQuery, GetMetricByTabQueryVariables>;
-export const GetMetricByTabSubDocument = gql`
-    subscription GetMetricByTabSub($data: SubMetricByTabInput!) {
-  getMetricByTabSub(data: $data) {
-    msg
-    nodeId
-    siteId
-    success
-    type
-    value
-  }
-}
-    `;
-
-/**
- * __useGetMetricByTabSubSubscription__
- *
- * To run a query within a React component, call `useGetMetricByTabSubSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetMetricByTabSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetMetricByTabSubSubscription({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables> & ({ variables: GetMetricByTabSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetMetricByTabSubSubscription, GetMetricByTabSubSubscriptionVariables>(GetMetricByTabSubDocument, options);
-      }
-export type GetMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetMetricByTabSubSubscription>;
-export type GetMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricByTabSubSubscription>;
-export const GetSiteMetricByTabSubDocument = gql`
-    subscription getSiteMetricByTabSub($data: SubSiteMetricByTabInput!) {
-  getSiteMetricByTabSub(data: $data) {
-    type
-    success
-    msg
-    siteId
-    value
-  }
-}
-    `;
-
-/**
- * __useGetSiteMetricByTabSubSubscription__
- *
- * To run a query within a React component, call `useGetSiteMetricByTabSubSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetSiteMetricByTabSubSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetSiteMetricByTabSubSubscription({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetSiteMetricByTabSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetSiteMetricByTabSubSubscription, GetSiteMetricByTabSubSubscriptionVariables> & ({ variables: GetSiteMetricByTabSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetSiteMetricByTabSubSubscription, GetSiteMetricByTabSubSubscriptionVariables>(GetSiteMetricByTabSubDocument, options);
-      }
-export type GetSiteMetricByTabSubSubscriptionHookResult = ReturnType<typeof useGetSiteMetricByTabSubSubscription>;
-export type GetSiteMetricByTabSubSubscriptionResult = Apollo.SubscriptionResult<GetSiteMetricByTabSubSubscription>;
 export const GetMetricsStatDocument = gql`
     query GetMetricsStat($data: GetMetricsStatInput!) {
   getMetricsStat(data: $data) {
@@ -640,6 +564,9 @@ export const GetMetricsStatDocument = gql`
       nodeId
       type
       value
+      networkId
+      packageId
+      dataPlanId
     }
   }
 }
@@ -777,6 +704,10 @@ export const GetMetricsStatSubDocument = gql`
     success
     type
     value
+    networkId
+    siteId
+    packageId
+    dataPlanId
   }
 }
     `;

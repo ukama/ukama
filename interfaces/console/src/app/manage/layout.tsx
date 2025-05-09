@@ -140,21 +140,22 @@ const MenuSection: React.FC<MenuSectionProps> = ({
 
 const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const theme = useTheme();
-  const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
   const pathname = usePathname();
-  const { isDarkMode, setNetwork } = useAppContext();
+  const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
+  const { isDarkMode, user, network, setNetwork } = useAppContext();
 
   useGetNetworksQuery({
-    fetchPolicy: 'cache-first',
+    fetchPolicy: 'network-only',
+    skip: !!network.id,
     onCompleted: (data) => {
-      if (data.getNetworks.networks.length > 0) {
+      if (data.getNetworks.networks.length > 0)
         setNetwork({
           id: data.getNetworks.networks[0].id,
           name: data.getNetworks.networks[0].name,
         });
-      }
     },
   });
+
   return (
     <Container maxWidth={'xl'} sx={{ my: { xs: 2, md: 8 } }}>
       <Stack direction={'column'} spacing={{ xs: 2, md: 4 }}>

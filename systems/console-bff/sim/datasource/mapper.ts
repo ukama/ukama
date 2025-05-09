@@ -8,17 +8,18 @@
 import { SIM_TYPES } from "../../common/enums";
 import {
   AllocateSimAPIDto,
-  GetSimPackagesDtoAPI,
-  SimAPIResDto,
+  SimAPIDto,
   SimAllResDto,
   SimDataUsage,
   SimDetailsDto,
   SimDto,
-  SimPackagesResDto,
-  SimToPackagesResDto,
+  SimPackage,
+  SimPackageAPI,
+  SimPoolResDto,
   SimUsageInputDto,
   SimsAPIResDto,
   SimsAlloAPIResDto,
+  SimsPoolResDto,
   SimsResDto,
   SubscriberToSimsDto,
   SubscriberToSimsResDto,
@@ -88,18 +89,37 @@ export const dtoToAllocateSimsDto = (
   };
 };
 
-export const dtoToSimResDto = (res: SimAPIResDto): SimDto => {
+export const dtoToSimResDto = (res: SimAPIDto): SimDto => {
   return {
-    activationCode: res.sim.activation_code,
-    createdAt: res.sim.created_at,
-    iccid: res.sim.iccid,
-    id: res.sim.id,
-    isAllocated: res.sim.is_allocated,
-    isPhysical: res.sim.is_physical,
-    msisdn: res.sim.msisdn,
-    qrCode: res.sim.qr_code,
-    simType: res.sim.sim_type as SIM_TYPES,
-    smapAddress: res.sim.sm_ap_address,
+    id: res.id,
+    subscriberId: res.subscriber_id,
+    networkId: res.network_id,
+    iccid: res.iccid,
+    msisdn: res.msisdn,
+    imsi: res.imsi,
+    type: res.type,
+    status: res.status,
+    isPhysical: res.is_physical,
+    trafficPolicy: res.traffic_policy,
+    allocatedAt: res.allocated_at,
+    syncStatus: res.sync_status,
+    firstActivatedOn: res.firstActivatedOn,
+    lastActivatedOn: res.lastActivatedOn,
+    activationsCount: res.activationsCount,
+    deactivationsCount: res.deactivationsCount,
+    package: res.package ? dtoToSimPackageDto(res.package) : undefined,
+  };
+};
+
+const dtoToSimPackageDto = (res: SimPackageAPI): SimPackage => {
+  return {
+    id: res.id,
+    endDate: res.end_date,
+    isActive: res.is_active,
+    packageId: res.package_id,
+    startDate: res.start_date,
+    asExpired: res.as_expired,
+    defaultDuration: res.default_duration,
   };
 };
 
@@ -160,29 +180,10 @@ export const mapSubscriberToSimsResDto = (
 export const dtoToSimsDto = (res: SimsAPIResDto): SimsResDto => {
   const sims: SimDto[] = [];
   for (const sim of res.sims) {
-    sims.push(dtoToSimResDto({ sim: sim }));
+    sims.push(dtoToSimResDto(sim));
   }
   return {
-    sim: sims,
-  };
-};
-
-export const dtoToSimPackagesDto = (
-  res: GetSimPackagesDtoAPI
-): SimPackagesResDto => {
-  const packages: SimToPackagesResDto[] = [];
-  for (const pkg of res.packages) {
-    packages.push({
-      id: pkg.id,
-      packageId: pkg.package_id,
-      startDate: pkg.start_date,
-      endDate: pkg.end_date,
-      isActive: pkg.is_active,
-    });
-  }
-  return {
-    simId: res.sim_id,
-    packages: packages,
+    sims: sims,
   };
 };
 
@@ -193,6 +194,28 @@ export const dtoToUsageDto = (
   const data = res.usage;
   return {
     simId: args.simId,
-    usage: data[args.iccid],
+    usage: data[args.iccid] ?? "0",
   };
+};
+
+export const dtoToSimsFromPoolDto = (res: any): SimsPoolResDto => {
+  const sims: SimPoolResDto[] = [];
+  for (const sim of res.sims) {
+    sims.push({
+      id: sim.id,
+      iccid: sim.iccid,
+      msisdn: sim.msisdn,
+      qrCode: sim.qr_code,
+      simType: sim.sim_type,
+      isFailed: sim.is_failed,
+      updatedAt: sim.updated_at,
+      createdAt: sim.created_at,
+      deletedAt: sim.deleted_at,
+      isPhysical: sim.is_physical,
+      isAllocated: sim.is_allocated,
+      smApAddress: sim.sm_ap_address,
+      activationCode: sim.activation_code,
+    });
+  }
+  return { sims: sims };
 };

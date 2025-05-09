@@ -10,7 +10,6 @@ import { NonEmptyArray } from "type-graphql";
 import { AddPackagesToSimResolver } from "./addPackagestoSim";
 import { AllocateSimResolver } from "./allocateSim";
 import { DeleteSimResolver } from "./delete";
-import { GetSimByNetworkResolver } from "./getByNetwork";
 import { GetDataUsageResolver } from "./getDataUsage";
 import { GetDataUsagesResolver } from "./getDataUsages";
 import { GetPackagesForSimResolver } from "./getPackagesForSim";
@@ -18,6 +17,7 @@ import { GetSimResolver } from "./getSim";
 import { GetSimPoolStatsResolver } from "./getSimPoolStats";
 import { GetSimsResolver } from "./getSims";
 import { GetSimsBySubscriberResolver } from "./getSimsBySubscriber";
+import { GetSimsFromPoolResolver } from "./getSimsFromPool";
 import { RemovePackageForSimResolver } from "./removePackageForSim";
 import { ToggleSimStatusResolver } from "./toggleSimStatus";
 import { UploadSimsResolver } from "./uploadSims";
@@ -25,7 +25,7 @@ import { UploadSimsResolver } from "./uploadSims";
 const resolvers: NonEmptyArray<any> = [
   AllocateSimResolver,
   DeleteSimResolver,
-  GetSimByNetworkResolver,
+  GetSimsFromPoolResolver,
   AddPackagesToSimResolver,
   GetSimsBySubscriberResolver,
   GetDataUsageResolver,

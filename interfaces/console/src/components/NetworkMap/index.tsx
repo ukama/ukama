@@ -56,7 +56,14 @@ const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {
     >
       {children(ReactLeaflet, Leaflet)}
       <ReactLeaflet.ZoomControl position="bottomright" />
-      <MapLayer data={markersData} />
+      <MapLayer
+        data={{
+          nodes:
+            markersData?.nodes?.filter(
+              (node) => node.latitude !== 0 || node.longitude !== 0,
+            ) || [],
+        }}
+      />
     </MapContainer>
   );
 };

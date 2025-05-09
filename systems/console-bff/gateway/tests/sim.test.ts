@@ -20,7 +20,6 @@ import SimApi from "../../sim/datasource/sim_api";
 import { AddPackagesToSimResolver } from "../../sim/resolver/addPackagestoSim";
 import { AllocateSimResolver } from "../../sim/resolver/allocateSim";
 import { DeleteSimResolver } from "../../sim/resolver/delete";
-import { GetSimByNetworkResolver } from "../../sim/resolver/getByNetwork";
 import { GetSimBySubscriberResolver } from "../../sim/resolver/getBySubscriber";
 import { GetDataUsageResolver } from "../../sim/resolver/getDataUsage";
 import { GetPackagesForSimResolver } from "../../sim/resolver/getPackagesForSim";
@@ -59,7 +58,6 @@ const createSchema = async () => {
       AddPackagesToSimResolver,
       AllocateSimResolver,
       DeleteSimResolver,
-      GetSimByNetworkResolver,
       GetSimBySubscriberResolver,
       GetDataUsageResolver,
       GetPackagesForSimResolver,

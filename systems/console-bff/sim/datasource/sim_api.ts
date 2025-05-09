@@ -9,7 +9,6 @@ import { RESTDataSource } from "@apollo/datasource-rest";
 
 import { ENCRYPTION_KEY } from "../../common/configs";
 import { logger } from "../../common/logger";
-import { epochToISOString } from "../../common/utils";
 import generateTokenFromIccid from "../../common/utils/generateSimToken";
 import {
   AllocateSimAPIDto,
@@ -17,18 +16,19 @@ import {
   DeleteSimInputDto,
   DeleteSimResDto,
   GetPackagesForSimInputDto,
-  GetSimByNetworkInputDto,
   GetSimBySubscriberIdInputDto,
   GetSimInputDto,
   GetSimPackagesDtoAPI,
+  GetSimsInput,
+  ListSimsInput,
   RemovePackageFormSimInputDto,
   RemovePackageFromSimResDto,
   SimDataUsage,
-  SimDetailsDto,
   SimDto,
   SimPoolStatsDto,
   SimStatusResDto,
   SimUsageInputDto,
+  SimsPoolResDto,
   SimsResDto,
   SubscriberToSimsDto,
   ToggleSimStatusInputDto,
@@ -37,9 +37,9 @@ import {
 } from "../resolver/types";
 import {
   dtoToAllocateSimResDto,
-  dtoToSimDetailsDto,
   dtoToSimResDto,
   dtoToSimsDto,
+  dtoToSimsFromPoolDto,
   dtoToUsageDto,
   mapSubscriberToSimsResDto,
 } from "./mapper";
@@ -75,8 +75,6 @@ class SimApi extends RESTDataSource {
     this.baseURL = baseURL;
     return this.patch(`/${VERSION}/${SIM}/${req.sim_id}`, {
       body: { status: req.status },
-    }).then(res => {
-      return res;
     });
   };
 
@@ -107,13 +105,6 @@ class SimApi extends RESTDataSource {
 
     logger.info(`SimRes: ${JSON.stringify(simRes)}`);
 
-    if (simRes.sim.id) {
-      await this.toggleSimStatus(baseURL, {
-        sim_id: simRes.sim.id,
-        status: "active",
-      });
-    }
-
     return dtoToAllocateSimResDto(simRes);
   };
 
@@ -127,13 +118,16 @@ class SimApi extends RESTDataSource {
     }).then(res => dtoToSimResDto(res));
   };
 
-  getSims = async (baseURL: string, type: string): Promise<SimsResDto> => {
+  getSimsFromPool = async (
+    baseURL: string,
+    data: GetSimsInput
+  ): Promise<SimsPoolResDto> => {
     this.logger.info(
-      `GetSims [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sims/${type}`
+      `GetSims [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sims/${data.type}`
     );
     this.baseURL = baseURL;
-    return this.get(`/${VERSION}/${SIMPOOL}/sims/${type}`).then(res =>
-      dtoToSimsDto(res)
+    return this.get(`/${VERSION}/${SIMPOOL}/sims/${data.type}`).then(res =>
+      dtoToSimsFromPoolDto(res)
     );
   };
 
@@ -143,11 +137,10 @@ class SimApi extends RESTDataSource {
   ): Promise<SimDataUsage> => {
     this.baseURL = baseURL;
     const params = new URLSearchParams({
+      to: String(data.to ?? ""),
+      from: String(data.from ?? ""),
+      sim_id: data.simId,
       cdr_type: data.type,
-      sim_type: data.type,
-      ...(data.from && { from: epochToISOString(data.from) }),
-      ...(data.to && { to: epochToISOString(data.to) }),
-      ...(data.simId && { sim_id: data.simId }),
     }).toString();
     this.logger.info(
       `GetDataUsage [GET]: ${baseURL}/${VERSION}/usages?${params}`
@@ -155,18 +148,6 @@ class SimApi extends RESTDataSource {
     return this.get(`/${VERSION}/usages?${params}`).then(res =>
       dtoToUsageDto(res, data)
     );
-  };
-
-  getSimByNetworkId = async (
-    baseURL: string,
-    req: GetSimByNetworkInputDto
-  ): Promise<SimDetailsDto> => {
-    this.baseURL = baseURL;
-    return this.put(``, {
-      body: {
-        networkId: req.networkId,
-      },
-    }).then(res => dtoToSimDetailsDto(res));
   };
 
   deleteSim = async (
@@ -242,6 +223,16 @@ class SimApi extends RESTDataSource {
     );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIMPOOL}/stats/${type}`).then(res => res);
+  };
+
+  list = async (baseURL: string, req: ListSimsInput): Promise<SimsResDto> => {
+    this.logger.info(`List [GET]: ${baseURL}/${VERSION}/sim`);
+    this.baseURL = baseURL;
+    const params = new URLSearchParams({
+      sim_status: req.status,
+      network_id: req.networkId,
+    }).toString();
+    return this.get(`/${VERSION}/sim?${params}`).then(res => dtoToSimsDto(res));
   };
 }
 

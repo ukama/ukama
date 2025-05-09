@@ -168,8 +168,9 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 	defer s.mu.Unlock()
 
 	scenarioType := cenums.ParseScenarioType(scenario)
-	var handlerErr error
+	profileType := cenums.ParseProfileType(profile)
 
+	var handlerErr error
 	switch scenarioType {
 	case cenums.SCENARIO_BACKHAUL_DOWN:
 	case cenums.SCENARIO_NODE_OFF:
@@ -180,6 +181,11 @@ func (s *Server) updateHandler(w http.ResponseWriter, r *http.Request) {
 
 	case cenums.SCENARIO_NODE_RESTART:
 		handlerErr = s.handleNodeRestart(nodeID, profile, scenarioType)
+	default:
+		s.coroutines[nodeID.String()] <- config.WMessage{
+			Profile:  profileType,
+			Scenario: scenarioType,
+		}
 	}
 
 	if handlerErr != nil {

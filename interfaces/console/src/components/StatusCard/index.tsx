@@ -19,6 +19,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
+import { useEffect, useState } from 'react';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   selectStyle: {
@@ -41,10 +42,10 @@ const useStyles = makeStyles<Theme>((theme) => ({
 
 type StatusCardProps = {
   Icon: any;
+  topic: string;
   title: string;
   option: string;
   loading: boolean;
-  subtitle1: string;
   subtitle2: string;
   iconColor?: string;
   handleSelect: Function;
@@ -53,17 +54,26 @@ type StatusCardProps = {
 
 const StatusCard = ({
   Icon,
+  topic,
   title,
   option,
   options,
   loading,
   iconColor,
-  subtitle1 = '0',
   subtitle2 = '',
   handleSelect,
 }: StatusCardProps) => {
-  const classes = useStyles();
+  const [subtitle1, setSubtitle1] = useState<string>('0');
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    const c = PubSub.subscribe(topic, (_, data) => {
+      setSubtitle1(data);
+    });
+    return () => {
+      PubSub.unsubscribe(c);
+    };
+  }, [topic]);
 
   return (
     <>

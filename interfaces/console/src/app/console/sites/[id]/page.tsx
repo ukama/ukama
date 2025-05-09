@@ -17,20 +17,20 @@ import {
 } from '@/client/graphql/generated';
 import { Graphs_Type } from '@/client/graphql/generated/subscriptions';
 import SiteComponents from '@/components/SiteComponents';
-import { SectionData } from '@/constants/index';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
 import { SITE_KPIS } from '@/constants';
+import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
 import { ActiveView, KPIType } from '@/types';
-import { useFetchAddress } from '@/utils/useFetchAddress';
 import { graphTypeToSection, kpiToGraphType } from '@/utils';
+import { useFetchAddress } from '@/utils/useFetchAddress';
+import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
 import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
 import dynamic from 'next/dynamic';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -383,7 +383,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             address={CurrentSiteaddress}
             height={'100%'}
             mapStyle="satellite"
-            showUserCount={true}
+            showUserCount={false} // TODO: Commenting this out for now as we don't have a way to get subscribers by site yet
             userCount={0}
           />
         </Grid>

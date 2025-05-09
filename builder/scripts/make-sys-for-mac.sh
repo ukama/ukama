@@ -53,14 +53,11 @@ filter_make_sys() {
             "services")
                 PATHS+=("services/msgClient")
                 ;;
-            "services")
-                PATHS+=("services/msgClient")
-                ;;
             "dummy")
                 PATHS+=("dummy/dnode" "dummy/dsubscriber" "dummy/api-gateway" "dummy/dcontroller" "dummy/dsimfactory")
                 ;;
             "ukamaagent")
-                PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr")
+                PATHS+=("ukama-agent/api-gateway" "ukama-agent/cdr" "ukama-agent/asr" "ukama-agent/node-gateway")
                 ;;
         esac
     done
@@ -92,5 +89,5 @@ for path in "${PATHS[@]}"; do
         echo -e "${TAG} Failed to build system: ${RED}${system}${NC} - service: ${RED}${service}${NC}"
     fi
 
-    cd - >/dev/null
+    cd - >/dev/null || exit
 done

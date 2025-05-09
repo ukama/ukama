@@ -5,17 +5,14 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
+import { SITE_KPI_TYPES } from '@/constants';
 import colors from '@/theme/colors';
 import { getStatusStyles } from '@/utils';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import PeopleIcon from '@mui/icons-material/People';
-import RouterIcon from '@mui/icons-material/Router';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
-import Battery50Icon from '@mui/icons-material/Battery50';
-import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RouterIcon from '@mui/icons-material/Router';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
-import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
-import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import {
   Box,
   Card,
@@ -27,10 +24,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import PubSub from 'pubsub-js';
-import { SiteMetricsStateRes } from '@/client/graphql/generated/subscriptions';
-import { SITE_KPI_TYPES } from '@/constants';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 const extractMetricValue = (value: any): number | null => {
   if (Array.isArray(value) && value.length > 1) {
@@ -283,6 +278,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           </Box>
 
           <Box display="flex" mt={3} gap={4}>
+            {/* TODO: Commenting this out for now as we don't have a way to get subscribers by site yet
             <Box display="flex" alignItems="center" gap={1}>
               {loading || userCount === undefined || userCount === null ? (
                 <>
@@ -300,7 +296,7 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                 </>
               )}
             </Box>
-
+          */}
             <Box display="flex" alignItems="center" gap={1}>
               {connectionStyles.icon}
               <Typography

@@ -7,8 +7,9 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
+import { logger } from "../../common/logger";
 import { Context } from "../context";
-import { SimDataUsages, SimUsagesInputDto } from "./types";
+import { SimDataUsages, SimDto, SimUsagesInputDto } from "./types";
 
 @Resolver()
 export class GetDataUsagesResolver {
@@ -18,17 +19,37 @@ export class GetDataUsagesResolver {
     @Ctx() ctx: Context
   ): Promise<SimDataUsages> {
     const { dataSources, baseURL } = ctx;
-    const to = Math.floor(new Date().getTime() / 1000);
-    const from = to - 180000;
+
+    const sims = await dataSources.dataSource.list(baseURL, {
+      networkId: data.networkId,
+      status: "active",
+    });
+
+    const simUsages: any =
+      sims.sims
+        .map((s: SimDto) => {
+          if (s && s.id && s.package && s.package.id) {
+            return {
+              simId: s.id,
+              iccid: s.iccid,
+              packageEnd: s.package.endDate,
+              packageStart: s.package.startDate,
+            };
+          }
+          return null;
+        })
+        .filter(item => item !== null) ?? [];
+
+    logger.info(`SimUsages: ${JSON.stringify(simUsages)}`);
 
     const usages = await Promise.all(
-      data.for.map(item =>
+      simUsages.map((item: any) =>
         dataSources.dataSource.getDataUsage(baseURL, {
-          to,
-          from,
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,
+          from: item.packageStart,
+          to: new Date().toISOString(),
         })
       )
     );
