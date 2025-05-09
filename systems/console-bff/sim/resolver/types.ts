@@ -30,24 +30,6 @@ export class AllocateSimInputDto {
   traffic_policy: number;
 }
 
-@ObjectType()
-export class SimPackageDto {
-  @Field()
-  id: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  description: string;
-
-  @Field()
-  createdAt: string;
-
-  @Field()
-  updatedAt: string;
-}
-
 @InputType()
 export class SimUsageInputDto {
   @Field()
@@ -60,19 +42,12 @@ export class SimUsageInputDto {
   type: string;
 
   @Field()
-  to: number;
+  to: string;
 
   @Field()
-  from: number;
+  from: string;
 }
 
-export class SimsUsageInputDto {
-  @Field(() => String)
-  iccid: string;
-
-  @Field(() => String)
-  simId: string;
-}
 @InputType()
 export class SimUsagesInputDto {
   @Field(() => String)
@@ -89,6 +64,30 @@ export class SimUsagesInputDto {
 }
 
 @ObjectType()
+export class SimPackage {
+  @Field()
+  id: string;
+
+  @Field()
+  packageId: string;
+
+  @Field()
+  startDate: string;
+
+  @Field()
+  endDate: string;
+
+  @Field()
+  defaultDuration: string;
+
+  @Field()
+  isActive: boolean;
+
+  @Field()
+  asExpired: boolean;
+}
+
+@ObjectType()
 export class SimDetailsDto {
   @Field()
   id: string;
@@ -102,8 +101,8 @@ export class SimDetailsDto {
   @Field()
   orgId: string;
 
-  @Field(() => SimPackageDto)
-  Package: SimPackageDto;
+  @Field(() => SimPackage)
+  Package: SimPackage;
 
   @Field()
   iccid: string;
@@ -176,14 +175,6 @@ export class GetSimPackagesDtoAPI {
   @Field(() => [SimToPackagesDto])
   packages: SimToPackagesDto[];
 }
-@ObjectType()
-export class SimPackagesResDto {
-  @Field()
-  simId: string;
-  @Field(() => [SimToPackagesResDto])
-  packages: SimToPackagesResDto[];
-}
-
 @ObjectType()
 export class SimToPackagesDto {
   @Field()
@@ -327,37 +318,82 @@ export class AllocateSimAPIDto {
   @Field()
   sync_status: string;
 }
+
+@ObjectType()
+export class SimPackageAPI {
+  @Field()
+  id: string;
+
+  @Field()
+  package_id: string;
+
+  @Field()
+  start_date: string;
+
+  @Field()
+  end_date: string;
+
+  @Field()
+  default_duration: string;
+
+  @Field()
+  is_active: boolean;
+
+  @Field()
+  as_expired: boolean;
+}
 @ObjectType()
 export class SimAPIDto {
   @Field()
-  activation_code: string;
+  id: string;
 
   @Field()
-  created_at: string;
+  subscriber_id: string;
+
+  @Field()
+  network_id: string;
+
+  @Field(() => SimPackageAPI, { nullable: true })
+  package?: SimPackageAPI;
 
   @Field()
   iccid: string;
 
   @Field()
-  id: string;
-
-  @Field()
-  is_allocated: boolean;
-
-  @Field()
-  is_physical: string;
-
-  @Field()
   msisdn: string;
 
   @Field()
-  qr_code: string;
+  imsi: string;
 
   @Field()
-  sim_type: string;
+  type: string;
 
   @Field()
-  sm_ap_address: string;
+  status: string;
+
+  @Field()
+  is_physical: boolean;
+
+  @Field()
+  traffic_policy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocated_at: string;
+
+  @Field()
+  sync_status: string;
 }
 
 @ObjectType()
@@ -452,37 +488,59 @@ export class SubscriberSimsAPIDto {
   @Field()
   sync_status: string;
 }
+
 @ObjectType()
 export class SimDto {
-  @Field({ nullable: true })
-  activationCode?: string;
+  @Field()
+  id: string;
 
-  @Field({ nullable: true })
-  createdAt?: string;
+  @Field()
+  subscriberId: string;
+
+  @Field()
+  networkId: string;
+
+  @Field(() => SimPackage, { nullable: true })
+  package?: SimPackage;
 
   @Field()
   iccid: string;
 
   @Field()
-  id: string;
-
-  @Field()
-  isAllocated: boolean;
-
-  @Field()
-  isPhysical: string;
-
-  @Field()
   msisdn: string;
 
   @Field()
-  qrCode: string;
+  imsi: string;
 
   @Field()
-  simType: SIM_TYPES;
+  type: string;
 
   @Field()
-  smapAddress: string;
+  status: string;
+
+  @Field()
+  isPhysical: boolean;
+
+  @Field()
+  trafficPolicy: number;
+
+  @Field()
+  firstActivatedOn: string;
+
+  @Field()
+  lastActivatedOn: string;
+
+  @Field()
+  activationsCount: string;
+
+  @Field()
+  deactivationsCount: string;
+
+  @Field()
+  allocatedAt: string;
+
+  @Field()
+  syncStatus: string;
 }
 
 @ObjectType()
@@ -490,7 +548,6 @@ export class SimAPIResDto {
   @Field(() => SimAPIDto)
   sim: SimAPIDto;
 }
-
 export class SimAllResDto {
   @Field(() => AllocateSimAPIDto)
   sim: AllocateSimAPIDto;
@@ -499,11 +556,6 @@ export class SimAllResDto {
 export class SimsAlloAPIResDto {
   @Field(() => [SimAPIDto])
   sims: AllocateSimAPIDto[];
-}
-@ObjectType()
-export class GetSimAPIResDto {
-  @Field(() => SimDetailsDto)
-  sim: SimDetailsDto;
 }
 
 @ObjectType()
@@ -514,7 +566,7 @@ export class SimsAPIResDto {
 @ObjectType()
 export class SimsResDto {
   @Field(() => [SimDto])
-  sim: SimDto[];
+  sims: SimDto[];
 }
 
 @ObjectType()
@@ -578,7 +630,58 @@ export class GetSimsInput {
 }
 
 @InputType()
-export class GetSimPoolStatsInput {
-  @Field(() => SIM_TYPES)
-  type: SIM_TYPES;
+export class ListSimsInput {
+  @Field()
+  status: string;
+
+  @Field()
+  networkId: string;
+}
+
+@ObjectType()
+export class SimPoolResDto {
+  @Field()
+  id: string;
+
+  @Field()
+  qrCode: string;
+
+  @Field()
+  iccid: string;
+
+  @Field()
+  msisdn: string;
+
+  @Field()
+  isAllocated: boolean;
+
+  @Field()
+  isFailed: boolean;
+
+  @Field()
+  simType: string;
+
+  @Field()
+  smApAddress: string;
+
+  @Field()
+  activationCode: string;
+
+  @Field()
+  createdAt: string;
+
+  @Field()
+  deletedAt: string;
+
+  @Field()
+  updatedAt: string;
+
+  @Field()
+  isPhysical: boolean;
+}
+
+@ObjectType()
+export class SimsPoolResDto {
+  @Field(() => [SimPoolResDto])
+  sims: SimPoolResDto[];
 }

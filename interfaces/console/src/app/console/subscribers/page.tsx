@@ -18,7 +18,7 @@ import {
   useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
-  useGetSimsQuery,
+  useGetSimsFromPoolQuery,
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
@@ -82,7 +82,7 @@ const Page = () => {
     },
   });
 
-  const { data: simPoolData, refetch: refetchSims } = useGetSimsQuery({
+  const { data: simPoolData, refetch: refetchSims } = useGetSimsFromPoolQuery({
     variables: {
       data: {
         status: Sim_Status.Unassigned,
@@ -678,7 +678,7 @@ const Page = () => {
         isOpen={openAddSubscriber}
         handleCloseAction={() => setOpenAddSubscriber(false)}
         handleAddSubscriber={handleAddSubscriber}
-        sims={simPoolData?.getSims.sim ?? []}
+        sims={simPoolData?.getSimsFromPool.sims ?? []}
         packages={packagesData?.getPackages.packages ?? []}
         isLoading={addSubscriberLoading || allocateSimLoading}
       />

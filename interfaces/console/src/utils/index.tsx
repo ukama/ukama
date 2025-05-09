@@ -30,13 +30,13 @@ import {
 } from '@/constants';
 import colors from '@/theme/colors';
 import { StatusType, StyleOutput, TNodeSiteTree } from '@/types';
-import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
-import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import Battery50Icon from '@mui/icons-material/Battery50';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import RouterIcon from '@mui/icons-material/Router';
+import SignalCellular1BarIcon from '@mui/icons-material/SignalCellular1Bar';
+import SignalCellular2BarIcon from '@mui/icons-material/SignalCellular2Bar';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import SignalCellularConnectedNoInternet4BarIcon from '@mui/icons-material/SignalCellularConnectedNoInternet4Bar';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
@@ -166,6 +166,13 @@ const formatBytesToGB = (bytes = 0, decimals = 2): string => {
   if (bytes === 0) return '0';
   const gb = bytes / (1024 * 1024 * 1024);
   return gb.toFixed(decimals);
+};
+
+const formatBytesToGigabit = (bytes = 0, decimals = 2): string => {
+  if (bytes === 0) return '0';
+  // Convert bytes to bits (multiply by 8) then to gigabits
+  const gigabit = (bytes * 8) / (1024 * 1024 * 1024);
+  return gigabit.toFixed(decimals);
 };
 
 const getDataUsageSymbol = (dataUnit: string): string => {
@@ -730,6 +737,7 @@ export {
   findNullZones,
   formatBytes,
   formatBytesToGB,
+  formatBytesToGigabit,
   formatTime,
   getBatteryStyles,
   getConnectionStyles,
@@ -739,21 +747,21 @@ export {
   getInvitationStatusColor,
   getKPIStatValue,
   getNodeActionDescriptionByProgress,
+  getPortInfo,
+  getSectionFromKPI,
   getSignalStyles,
   getSimValuefromSimType,
-  getPortInfo,
   getStatusStyles,
   getTitleFromPath,
   getUnixTime,
+  graphTypeToSection,
   hexToRGB,
   inviteStatusEnumToString,
   isValidLatLng,
+  kpiToGraphType,
   NodeEnumToString,
-  getSectionFromKPI,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,
   structureNodeSiteDate,
-  kpiToGraphType,
-  graphTypeToSection,
 };

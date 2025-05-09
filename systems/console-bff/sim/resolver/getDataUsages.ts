@@ -7,12 +7,9 @@
  */
 import { Arg, Ctx, Query, Resolver } from "type-graphql";
 
-import { SUB_GRAPHS } from "../../common/configs";
-import { openStore } from "../../common/storage";
-import { getBaseURL } from "../../common/utils";
-import SubscriberApi from "../../subscriber/datasource/subscriber_api";
+import { logger } from "../../common/logger";
 import { Context } from "../context";
-import { SimDataUsages, SimUsagesInputDto, SimsUsageInputDto } from "./types";
+import { SimDataUsages, SimDto, SimUsagesInputDto } from "./types";
 
 @Resolver()
 export class GetDataUsagesResolver {
@@ -21,51 +18,38 @@ export class GetDataUsagesResolver {
     @Arg("data") data: SimUsagesInputDto,
     @Ctx() ctx: Context
   ): Promise<SimDataUsages> {
-    const { dataSources, baseURL, headers } = ctx;
-    const store = openStore();
-    const subUrl = await getBaseURL(
-      SUB_GRAPHS.subscriber.name,
-      headers.orgName,
-      store
-    );
-    const subAPI = new SubscriberApi();
-    const subs = await subAPI.getSubscribersByNetwork(
-      subUrl.message,
-      data.networkId
-    );
+    const { dataSources, baseURL } = ctx;
 
-    const simUsages: SimsUsageInputDto[] =
-      subs.subscribers
-        .map(s => {
-          if (s && s.sim && s.sim[0]) {
+    const sims = await dataSources.dataSource.list(baseURL, {
+      networkId: data.networkId,
+      status: "active",
+    });
+
+    const simUsages: any =
+      sims.sims
+        .map((s: SimDto) => {
+          if (s && s.id && s.package && s.package.id) {
             return {
-              simId: s.sim[0].id,
-              iccid: s.sim[0].iccid,
+              simId: s.id,
+              iccid: s.iccid,
+              packageEnd: s.package.endDate,
+              packageStart: s.package.startDate,
             };
           }
           return null;
         })
-        .filter((item): item is SimsUsageInputDto => item !== null) ?? [];
+        .filter(item => item !== null) ?? [];
 
-    let to = data.to ?? 0;
-    let from = data.from ?? 0;
-
-    if (to === 0) {
-      to = Math.round(Date.now() / 1000) - 60;
-    }
-
-    if (from === 0) {
-      from = to - 240;
-    }
+    logger.info(`SimUsages: ${JSON.stringify(simUsages)}`);
 
     const usages = await Promise.all(
-      simUsages.map(item =>
+      simUsages.map((item: any) =>
         dataSources.dataSource.getDataUsage(baseURL, {
-          to,
-          from,
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,
+          from: item.packageStart,
+          to: new Date().toISOString(),
         })
       )
     );

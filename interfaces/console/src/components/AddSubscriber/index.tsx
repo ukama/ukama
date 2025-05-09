@@ -1,7 +1,7 @@
 import {
   AllocateSimApiDto,
   PackageDto,
-  SimDto,
+  SimPoolResDto,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { globalUseStyles } from '@/styles/global';
@@ -78,7 +78,7 @@ interface SubscriberFormProps {
     subscriber: SubscriberDetailsType,
   ) => Promise<AllocateSimApiDto>;
   packages: PackageDto[];
-  sims: SimDto[];
+  sims: SimPoolResDto[];
   isLoading: boolean;
 }
 
@@ -96,7 +96,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [submissionData, setSubmissionData] =
     useState<AllocateSimApiDto | null>(null);
-  const [selectedSim, setSelectedSim] = useState<SimDto | null>(null);
+  const [selectedSim, setSelectedSim] = useState<SimPoolResDto | null>(null);
 
   const gclasses = globalUseStyles();
   const classes = useStyles();
