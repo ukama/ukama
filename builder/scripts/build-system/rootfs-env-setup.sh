@@ -9,6 +9,7 @@
 # Script to build and package ukamaOS app
 
 set -e
+set -x
 
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/rootfs"
@@ -39,10 +40,10 @@ done
 # mount detination ignored by script
 MOUNT_DEST="ukamarepo"  # Destination inside chroot
 
-if [ -d "${INSTALL_DIR}" ]; then
-  echo "Directory exists. Deleting ${INSTALL_DIR}"
-  rm -rf "${INSTALL_DIR}"
-fi
+#if [ -d "${INSTALL_DIR}" ]; then
+#  echo "Directory exists. Deleting ${INSTALL_DIR}"
+#  rm -rf "${INSTALL_DIR}"
+#fi
 
 echo "Getting alpine-chroot-command."
 wget -O alpine-chroot-install https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/master/alpine-chroot-install
@@ -58,7 +59,6 @@ if ! command -v alpine-chroot-install &>/dev/null; then
   echo "Install it from: https://github.com/alpinelinux/alpine-chroot-install"
   exit 1
 fi
-
 
 # Run the installation
 echo "Installing Alpine Linux ${VERSION} in ${INSTALL_DIR} with architecture ${ARCH} using mirror ${MIRROR}."
@@ -90,12 +90,20 @@ sleep 2;
 sync;
 
 # starting build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- "-p" "active" "-r" "v3.21" "-n" "starterd" "-c" "/sbin/starterd"
+${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- \
+              "-p" "active" \
+              "-r" "v3.21" \
+              "-n" "starterd" \
+              "-c" "/sbin/starterd" \
+              "-A" "${ARCH}" \
+              "-V" "${VERSION}" \
+              "-M" "${MIRROR}"
+
 if [ $? -eq 0 ]; then
-  echo "rootfs created successfully."
-  #${INSTALL_DIR}/destroy
+    echo "rootfs created successfully."
+    #${INSTALL_DIR}/destroy
 else
-  echo "rootfs creation failed"
-  #${INSTALL_DIR}/destroy
-  exit 1
+    echo "rootfs creation failed"
+    #${INSTALL_DIR}/destroy
+    exit 1
 fi

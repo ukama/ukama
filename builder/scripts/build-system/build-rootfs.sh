@@ -15,7 +15,9 @@ ROOTFS_VERSION=""
 SERVICE_NAME=""
 SERVICE_CMD=""
 SERVICE_ARGS=""
-MAJOR_VERSION="v3.21"
+ARCH=""
+VERSION=""
+MIRROR=""
 
 UKAMA_ROOT="/ukamarepo"
 UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
@@ -106,85 +108,59 @@ function install_starter_app() {
     rm -rf starterd_latest/
 }
 
-function copy_linux_files_for_x86_64() {
-   
-	# kernel
-    if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage" ]; then
-        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage /boot/
-    else
-        log "ERROR" "kernel file missing"
-        exit 1
-    fi
- 
-    # modules
-    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
-
-}
-
-function copy_linux_files_for_armv7() {
-	# kernel
-	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage" ]; then
-		cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage /boot/
-	else
-		log "ERROR" "kernel file missing"
-		exit 1
-	fi
-    
-	# dtb
-	if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
-    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
-	else
-		log "ERROR" "dtb file missing"
-		exit 1
-	fi
-
-	# modules
-	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
-}
-
-function copy_linux_files_for_aarch64(){
-
-	# kernel
-	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image" ]; then
-    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image /boot/
-	else
-        log "ERROR" "kernel file missing"
-        exit 1
-    fi
-	
-	# dtb
-    if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
-        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
-    else
-        log "ERROR" "dtb file missing"
-        exit 1
-    fi
-
-    # modules
-    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
-
-}
-
 function copy_linux_kernel() {
-    log "INFO" "Copying linux kernel..."
-    #/ukamarepo/nodes/ukamaOS/kernel/build/
-	arch=$(uname -m)
-    # Check the architecture and perform different actions
-	if [[ "$arch" == "x86_64" ]]; then
-    	log "INFO" "System is 64-bit architecture (x86_64)"
-		copy_linux_files_for_x86_64
-	elif [[ "$arch" == "armv7l" ]]; then
-    	log "INFO" "System is 32-bit ARM architecture (armv7l)"
- 		copy_linux_files_for_armv7
-	elif [[ "$arch" == "aarch64" ]]; then
-    	log "INFO" "System is 64-bit ARM architecture (aarch64)"
-		copy_linux_files_for_aarch64
-	else
-    	log "ERROR" "Unknown architecture: $arch"
-    	# Handle any other architecture types or errors
-		exit 1
-	fi 
+    log "INFO" "Setting up Alpine kernel for rootfs..."
 
+    if [[ -z "$ARCH" || -z "$VERSION" || -z "$MIRROR" ]]; then
+        log "ERROR" "ARCH, VERSION, or MIRROR not set"
+        exit 1
+    fi
+
+    case "$ARCH" in
+        x86_64|aarch64|armv7)
+            ;;
+        *)
+            log "ERROR" "Unsupported architecture: $ARCH"
+            exit 1
+            ;;
+    esac
+
+    KERNEL_PKG="linux-lts"
+    APK_TMP="/tmp/alpine-kernel-$ARCH"
+    ROOTFS="/"
+
+    mkdir -p "$APK_TMP"
+
+    apk --root "$APK_TMP" --arch "$ARCH" --update-cache --repositories-file /dev/null \
+        --repository "$MIRROR/$VERSION/main" add --initdb "$KERNEL_PKG"
+
+    if [ $? -ne 0 ]; then
+        log "ERROR" "Failed to install Alpine kernel"
+        rm -rf "$APK_TMP"
+        exit 1
+    fi
+
+    mkdir -p "$ROOTFS/boot"
+
+    case "$ARCH" in
+        x86_64)
+            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "$ROOTFS/boot/kernel.img"
+            ;;
+        aarch64)
+            cp "$APK_TMP/boot/Image" "$ROOTFS/boot/kernel.img"
+            ;;
+        armv7)
+            cp "$APK_TMP/boot/zImage" "$ROOTFS/boot/kernel.img"
+            ;;
+    esac
+
+    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "$ROOTFS/boot/" \; 2>/dev/null || true
+
+    mkdir -p "$ROOTFS/lib/modules"
+    cp -a "$APK_TMP/lib/modules/"* "$ROOTFS/lib/modules/" 2>/dev/null || true
+
+    rm -rf "$APK_TMP"
+    log "INFO" "Kernel setup complete: kernel.img + dtbs + modules"
 }
 
 function copy_all_apps() {
@@ -512,6 +488,9 @@ while getopts "p:r:n:c:a:" opt; do
         n) SERVICE_NAME="${OPTARG}" ;;
         c) SERVICE_CMD="${OPTARG}" ;;
         a) SERVICE_ARGS="${OPTARG}" ;;
+        A) ARCH="${OPTARG}" ;;
+        V) VERSION="${OPTARG}" ;;
+        M) MIRROR="${OPTARG}" ;;
         *) usage ;;
     esac
 done
