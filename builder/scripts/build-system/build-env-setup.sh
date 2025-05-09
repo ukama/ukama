@@ -50,7 +50,6 @@ if ! command -v alpine-chroot-install &>/dev/null; then
   exit 1
 fi
 
-
 # Run the installation
 echo "Installing Alpine Linux ${VERSION} in ${INSTALL_DIR} with architecture ${ARCH} using mirror ${MIRROR}."
 alpine-chroot-install -d "${INSTALL_DIR}" -a "${ARCH}" -m "${MIRROR}" -b "${VERSION}" -p "bash" 
@@ -84,10 +83,10 @@ sync;
 ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.21 /ukamarepo"
 if [ $? -eq 0 ]; then
   echo "Build completed successfully."
-# ${INSTALL_DIR}/destroy
+#  ${INSTALL_DIR}/destroy
 else
   echo "Build failed."
-# ${INSTALL_DIR}/destroy
+#  ${INSTALL_DIR}/destroy
   exit 1
 fi
 

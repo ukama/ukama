@@ -187,8 +187,8 @@ log "SUCCESS" "Toolchain built and installed."
 cd "$DISTRO_DIR"
 source ./env-setup OCTEON_CNF71XX_PASS1_1 --verbose
 check_status $? "Environment setup sourced." "env-setup"
-export PATH="$HOST_BIN_DIR:$PATH"
 log "SUCCESS" "Environment setup done."
+export PATH="$HOST_BIN_DIR:$PATH"
 
 # Clean up dtc parser (optional)
 cd "$DISTRO_DIR"
