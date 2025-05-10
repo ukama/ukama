@@ -6,8 +6,6 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-# Script to build and package ukamaOS app
-
 set -e
 set -x
 
@@ -18,7 +16,7 @@ INSTALL_DIR="$(pwd)/rootfs"
 ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
-MOUNT_SRC=""   # Source directory to mount
+MOUNT_SRC=""             # Source directory to mount
 MOUNT_DEST="/ukamarepo"  # Destination inside chroot
 
 # Parse command-line arguments
@@ -30,7 +28,7 @@ while getopts "a:v:m:i:h" opt; do
     i) MOUNT_SRC="$OPTARG" ;;
     h) 
       echo "Usage: $0 [-a arch] [-v version] [-m mirror] [-i source]"
-      echo "Example: $0 -a armhf -v v3.21 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared"
+      echo "Example: $0 -a armhf -v v3.17 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared"
       exit 0
       ;;
     *) echo "Invalid option"; exit 1 ;;
@@ -86,13 +84,15 @@ if [[ -n "${MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
   fi
 fi
 
-sleep 2;
+sleep 5;
 sync;
+
+/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/rootfs/enter-chroot /bin/ash -c 'ls /ukamarepo'
 
 # starting build
 ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- \
               "-p" "active" \
-              "-r" "v3.21" \
+              "-r" "v3.17" \
               "-n" "starterd" \
               "-c" "/sbin/starterd" \
               "-A" "${ARCH}" \

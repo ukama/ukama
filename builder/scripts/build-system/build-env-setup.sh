@@ -28,7 +28,7 @@ while getopts "a:v:m:i:h" opt; do
     i) MOUNT_SRC="$OPTARG" ;;
     h) 
       echo "Usage: $0 [-a arch] [-v version] [-m mirror] [-i source]"
-      echo "Example: $0 -a armhf -v v3.21 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared"
+      echo "Example: $0 -a armhf -v v3.17 -m http://dl-cdn.alpinelinux.org/alpine -i /home/user/shared"
       exit 0
       ;;
     *) echo "Invalid option"; exit 1 ;;
@@ -80,7 +80,7 @@ sleep 2;
 sync;
 
 # starting build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.21 /ukamarepo"
+${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.17 /ukamarepo"
 if [ $? -eq 0 ]; then
   echo "Build completed successfully."
 #  ${INSTALL_DIR}/destroy

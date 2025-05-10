@@ -11,7 +11,7 @@
 set -e
 set -x
 
-MAJOR_VERSION=${1:-v3.21}
+MAJOR_VERSION=${1:-v3.17}
 UKAMA_REPO=${2:-/ukamarepo} 
 
 # set up resolv.conf
