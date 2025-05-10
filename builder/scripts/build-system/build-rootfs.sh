@@ -117,7 +117,14 @@ function copy_linux_kernel() {
     fi
 
     case "$ARCH" in
-        x86_64|aarch64|armv7)
+        x86_64|aarch64)
+            KERNEL_PKG="linux-lts"
+            ;;
+        armv7)
+            KERNEL_PKG="linux-vanilla"
+            ;;
+        armhf)
+            KERNEL_PKG="linux-rpi2"
             ;;
         *)
             log "ERROR" "Unsupported architecture: $ARCH"
@@ -125,7 +132,6 @@ function copy_linux_kernel() {
             ;;
     esac
 
-    KERNEL_PKG="linux-lts"
     APK_TMP="/tmp/alpine-kernel-$ARCH"
     ROOTFS="/"
 
@@ -135,7 +141,7 @@ function copy_linux_kernel() {
         --repository "$MIRROR/$VERSION/main" add --initdb "$KERNEL_PKG"
 
     if [ $? -ne 0 ]; then
-        log "ERROR" "Failed to install Alpine kernel"
+        log "ERROR" "Failed to install Alpine kernel: $KERNEL_PKG"
         rm -rf "$APK_TMP"
         exit 1
     fi
@@ -149,18 +155,20 @@ function copy_linux_kernel() {
         aarch64)
             cp "$APK_TMP/boot/Image" "$ROOTFS/boot/kernel.img"
             ;;
-        armv7)
+        armv7|armhf)
             cp "$APK_TMP/boot/zImage" "$ROOTFS/boot/kernel.img"
             ;;
     esac
 
+    # Copy DTBs if available
     find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "$ROOTFS/boot/" \; 2>/dev/null || true
 
+    # Copy kernel modules
     mkdir -p "$ROOTFS/lib/modules"
     cp -a "$APK_TMP/lib/modules/"* "$ROOTFS/lib/modules/" 2>/dev/null || true
 
     rm -rf "$APK_TMP"
-    log "INFO" "Kernel setup complete: kernel.img + dtbs + modules"
+    log "INFO" "Kernel setup complete: $KERNEL_PKG installed with kernel.img + dtbs + modules"
 }
 
 function copy_all_apps() {
@@ -318,9 +326,11 @@ setup_rootfs() {
     # Set up root user
     echo "root:root" | chpasswd
 
-    # Create a new user
-    adduser -D -s /bin/bash -G wheel ukama
-    echo "ukama:ukama" | chpasswd
+    # Create 'ukama' user only if it doesn't already exist
+    if ! id "ukama" >/dev/null 2>&1; then
+        adduser -D -s /bin/bash -G wheel ukama
+        echo "ukama:ukama" | chpasswd
+    fi
     echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
     # Configure doas (instead of sudo)
@@ -481,7 +491,7 @@ for arg in "$@"; do
 done
 
 # Parse options using getopts
-while getopts "p:r:n:c:a:" opt; do
+while getopts "p:r:n:c:a:A:V:M:" opt; do
     case "${opt}" in
         p) PARTITION_TYPE="${OPTARG}" ;;
         r) ROOTFS_VERSION="${OPTARG}" ;;
@@ -506,9 +516,6 @@ if [[ "$PARTITION_TYPE" != "active" && "$PARTITION_TYPE" != "passive" ]]; then
     exit 1
 fi
 
-#copy anyother scripts required
-
-# Main execution
 setup_rootfs  # Set up root filesystem
 
 log "INFO" "Preparing mount for ${PARTITION_TYPE}"
