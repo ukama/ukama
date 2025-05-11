@@ -109,22 +109,34 @@ function install_starter_app() {
 }
 
 function copy_linux_kernel() {
-    log "INFO" "Setting up Alpine kernel for rootfs..."
+    log "INFO" "Setting up kernel for ARCH=$ARCH..."
 
-    if [[ -z "$ARCH" || -z "$VERSION" || -z "$MIRROR" ]]; then
-        log "ERROR" "ARCH, VERSION, or MIRROR not set"
-        exit 1
-    fi
+    FINAL_ROOTFS="/"
+    KERNEL_TMP_DIR="/tmp/alpine-kernel-${ARCH}"
+    ROOTFS_TMP_DIR="/tmp/alpine-rootfs-${ARCH}"
 
     case "$ARCH" in
-        x86_64|aarch64)
+        x86_64)
+            KERNEL_PKG="linux-lts"
+            ;;
+        aarch64)
             KERNEL_PKG="linux-lts"
             ;;
         armv7)
             KERNEL_PKG="linux-vanilla"
             ;;
         armhf)
-            KERNEL_PKG="linux-rpi2"
+            log "INFO" "Using QEMU-based method to extract ARMHF kernel"
+            LOG_EXEC builder/scripts/extract_armhf_kernel.sh
+
+            cp -a "${KERNEL_TMP_DIR}/boot/"* "${FINAL_ROOTFS}/boot/"
+            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "${FINAL_ROOTFS}/lib/modules/"
+
+            log "INFO" "Cleaning up temp kernel rootfs"
+            rm -rf "${KERNEL_TMP_DIR}" "${ROOTFS_TMP_DIR}"
+
+            log "SUCCESS" "ARMHF kernel installed via QEMU"
+            return
             ;;
         *)
             log "ERROR" "Unsupported architecture: $ARCH"
@@ -132,43 +144,34 @@ function copy_linux_kernel() {
             ;;
     esac
 
+    # apk --initdb method for all other supported archs
     APK_TMP="/tmp/alpine-kernel-$ARCH"
-    ROOTFS="/"
-
     mkdir -p "$APK_TMP"
 
-    apk --root "$APK_TMP" --arch "$ARCH" --update-cache --repositories-file /dev/null \
+    LOG_EXEC apk --root "$APK_TMP" --arch "$ARCH" --update-cache \
+        --repositories-file /dev/null \
         --repository "$MIRROR/$VERSION/main" add --initdb "$KERNEL_PKG"
 
-    if [ $? -ne 0 ]; then
-        log "ERROR" "Failed to install Alpine kernel: $KERNEL_PKG"
-        rm -rf "$APK_TMP"
-        exit 1
-    fi
-
-    mkdir -p "$ROOTFS/boot"
+    mkdir -p "$FINAL_ROOTFS/boot"
 
     case "$ARCH" in
         x86_64)
-            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "$ROOTFS/boot/kernel.img"
+            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "$FINAL_ROOTFS/boot/kernel.img"
             ;;
         aarch64)
-            cp "$APK_TMP/boot/Image" "$ROOTFS/boot/kernel.img"
+            cp "$APK_TMP/boot/Image" "$FINAL_ROOTFS/boot/kernel.img"
             ;;
-        armv7|armhf)
-            cp "$APK_TMP/boot/zImage" "$ROOTFS/boot/kernel.img"
+        armv7)
+            cp "$APK_TMP/boot/zImage" "$FINAL_ROOTFS/boot/kernel.img"
             ;;
     esac
 
-    # Copy DTBs if available
-    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "$ROOTFS/boot/" \; 2>/dev/null || true
-
-    # Copy kernel modules
-    mkdir -p "$ROOTFS/lib/modules"
-    cp -a "$APK_TMP/lib/modules/"* "$ROOTFS/lib/modules/" 2>/dev/null || true
+    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "$FINAL_ROOTFS/boot/" \; 2>/dev/null || true
+    mkdir -p "$FINAL_ROOTFS/lib/modules"
+    cp -a "$APK_TMP/lib/modules/"* "$FINAL_ROOTFS/lib/modules/" 2>/dev/null || true
 
     rm -rf "$APK_TMP"
-    log "INFO" "Kernel setup complete: $KERNEL_PKG installed with kernel.img + dtbs + modules"
+    log "SUCCESS" "Kernel installed using apk --initdb method"
 }
 
 function copy_all_apps() {
@@ -462,7 +465,6 @@ function setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created."
 }
 
-
 function get_apps_name() {
 
 	# Loop through each .tar.gz file in the directory
@@ -477,9 +479,7 @@ function get_apps_name() {
 	echo "Extracted app prefixes: ${APP_NAMES[@]}"
 }
 
-
 #Main 
-
 setup_ukama_dirs
 
 log "INFO" "Script ${0} called with args $#"
