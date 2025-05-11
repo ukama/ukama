@@ -9,15 +9,17 @@
 set -e
 set -x
 
+source "$(dirname "$0")/chroot-utils.sh"
+
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/rootfs"
-
-# Default values
 ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
 MOUNT_SRC=""             # Source directory to mount
 MOUNT_DEST="/ukamarepo"  # Destination inside chroot
+
+trap "unmount_chroot_binds '${INSTALL_DIR}' '${MOUNT_DEST}'" EXIT
 
 # Parse command-line arguments
 while getopts "a:v:m:i:h" opt; do
@@ -70,18 +72,8 @@ else
   exit 1
 fi
 
-# mount dir
-mkdir -p ${INSTALL_DIR}/${MOUNT_DEST}
-if [[ -n "${MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
-  echo "Mounting ${MOUNT_SRC} to ${INSTALL_DIR}/${MOUNT_DEST}"
-  mount --bind "${MOUNT_SRC}" "${INSTALL_DIR}/${MOUNT_DEST}"
-  if [ $? -eq 0 ]; then
-        echo "Mount success"
-  else
-        echo "Mount failed"
-        ${INSTALL_DIR}/destroy
-        exit 1
-  fi
+if [[ -n "${MOUNT_SRC}" ]]; then
+  mount_chroot_binds "${INSTALL_DIR}" "${MOUNT_SRC}" "${MOUNT_DEST}"
 fi
 
 sleep 5;

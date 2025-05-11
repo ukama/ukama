@@ -127,7 +127,7 @@ function copy_linux_kernel() {
             ;;
         armhf)
             log "INFO" "Using QEMU-based method to extract ARMHF kernel"
-            LOG_EXEC builder/scripts/extract_armhf_kernel.sh
+            LOG_EXEC "${UKAMA_ROOT}/builder/scripts/build-system/extract_armhf_kernel.sh"
 
             cp -a "${KERNEL_TMP_DIR}/boot/"* "${FINAL_ROOTFS}/boot/"
             cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "${FINAL_ROOTFS}/lib/modules/"

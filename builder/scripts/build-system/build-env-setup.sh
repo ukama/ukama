@@ -9,15 +9,17 @@
 set -e
 set -x
 
+source "$(dirname "$0")/chroot-utils.sh"
+
 # Set the installation directory as "rootfs" inside the current directory
 INSTALL_DIR="$(pwd)/buildenv"
-
-# Default values
 ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
 MOUNT_SRC=""   # Source directory to mount
 MOUNT_DEST="ukamarepo"  # Destination inside chroot
+
+trap "unmount_chroot_binds '${INSTALL_DIR}' '${MOUNT_DEST}'" EXIT
 
 # Parse command-line arguments
 while getopts "a:v:m:i:h" opt; do
@@ -63,17 +65,8 @@ else
 fi
 
 # mount dir
-mkdir -p ${INSTALL_DIR}/${MOUNT_DEST}
-if [[ -n "{$MOUNT_SRC}" && -n "${MOUNT_DEST}" ]]; then
-  echo "Mounting ${MOUNT_SRC} to ${INSTALL_DIR}/${MOUNT_DEST}"
-  mount --bind "${MOUNT_SRC}" "${INSTALL_DIR}/${MOUNT_DEST}"
-  if [ $? -eq 0 ]; then
-  	echo "Mount success"
-  else
-  	echo "Mount failed"
-#	${INSTALL_DIR}/destroy
-  	exit 1
-  fi
+if [ -n "${MOUNT_SRC}" ]; then
+    mount_chroot_binds "${INSTALL_DIR}" "${MOUNT_SRC}" "${MOUNT_DEST}"
 fi
 
 sleep 2;
@@ -82,12 +75,12 @@ sync;
 # starting build
 ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.17 /ukamarepo"
 if [ $? -eq 0 ]; then
-  echo "Build completed successfully."
+    echo "Build completed successfully."
 #  ${INSTALL_DIR}/destroy
 else
-  echo "Build failed."
+    echo "Build failed."
 #  ${INSTALL_DIR}/destroy
-  exit 1
+    exit 1
 fi
 
 echo "Closing ${0}"
