@@ -7,7 +7,6 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 set -e
-set -x
 
 ALPINE_VERSION="v3.17"
 MINOR_VERSION="3"

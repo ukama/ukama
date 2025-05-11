@@ -9,7 +9,6 @@
 # Script to build and package ukamaOS app
 
 set -e
-set -x
 
 MAJOR_VERSION=${1:-v3.17}
 UKAMA_REPO=${2:-/ukamarepo} 

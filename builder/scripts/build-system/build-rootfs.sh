@@ -7,7 +7,6 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 set -e
-set -x
 
 # Initialize variables
 PARTITION_TYPE=""
