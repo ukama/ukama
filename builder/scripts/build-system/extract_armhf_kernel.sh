@@ -24,11 +24,6 @@ mkdir -p "$ROOTFS_DIR" "$KERNEL_OUT"
 # Download and extract Alpine minirootfs
 curl -sSL "${MIRROR}/${ALPINE_VERSION}/releases/${ARCH}/alpine-minirootfs-${ALPINE_VERSION#v}.${MINOR_VERSION}-${ARCH}.tar.gz" | sudo tar -xz -C "$ROOTFS_DIR"
 
-# Register binfmt if not done already
-if ! grep -q qemu-arm /proc/sys/fs/binfmt_misc/qemu-arm 2>/dev/null; then
-    sudo update-binfmts --enable qemu-arm
-fi
-
 # Copy QEMU static binary
 sudo cp /usr/bin/qemu-arm-static "$ROOTFS_DIR/usr/bin/"
 
