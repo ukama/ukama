@@ -87,8 +87,6 @@ fi
 sleep 5;
 sync;
 
-/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/rootfs/enter-chroot /bin/ash -c 'ls /ukamarepo'
-
 # starting build
 ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-rootfs.sh "$@"' -- \
               "-p" "active" \
