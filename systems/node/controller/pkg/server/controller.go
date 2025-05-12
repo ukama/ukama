@@ -280,7 +280,7 @@ func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfS
 		return nil, err
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+req.NodeId, "/v1/rf/"+req.NodeId, data)
+	err = c.publishMessage(c.orgName+"."+"."+"."+req.NodeId, "/v1/rf/"+nId.String(), data)
 	if err != nil {
 		log.Errorf("Failed to publish RF switch message. Errors: %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish RF switch message: %s", err.Error())
