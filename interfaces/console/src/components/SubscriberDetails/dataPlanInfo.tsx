@@ -41,14 +41,16 @@ const DataPlanComponent: React.FC<Props> = ({
           )}
         </Typography>
       </Stack>
-      <Stack direction="row" spacing={2}>
+      {/* 
+      TODO: Need more discussion
+        <Stack direction="row" spacing={2}>
         <Typography variant="body1" sx={{ color: colors.black }}>
           Current site:
         </Typography>
         <Typography variant="subtitle1" sx={{ color: colors.black }}>
           {currentSite ?? ''}
         </Typography>
-      </Stack>
+      </Stack> */}
       <Stack direction="row" spacing={2}>
         <Typography variant="body1" sx={{ color: colors.black }}>
           Month usage:

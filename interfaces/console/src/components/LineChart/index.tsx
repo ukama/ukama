@@ -17,8 +17,9 @@ import './linechart.css';
 
 const initDataFixes = (data: any) => {
   return data.map((point: any) => {
+    // If the y-value is -1, it indicates missing or invalid data, so we nullify it.
     let y = point[1];
-    if (point.length > 0 && y === 0) {
+    if (point.length > 0 && y === -1) {
       y = null;
     }
     return [point[0], y];

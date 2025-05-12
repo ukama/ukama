@@ -7,7 +7,8 @@
  */
 import { Ctx, Query, Resolver } from "type-graphql";
 
-import { SIM_TYPE, SUB_GRAPHS } from "../../common/configs";
+import { SUB_GRAPHS } from "../../common/configs";
+import { SIM_STATUS, SIM_TYPES } from "../../common/enums";
 import { openStore } from "../../common/storage";
 import { getBaseURL } from "../../common/utils";
 import ComponentApi from "../../component/datasource/component_api";
@@ -283,13 +284,16 @@ export class GetOrgTreeResolver {
       res.dataplans = [];
     }
 
-    const simsRes = await simsAPI.getSims(subscriberUrl.message, SIM_TYPE);
-    if (simsRes.sim.length > 0) {
+    const simsRes = await simsAPI.getSimsFromPool(subscriberUrl.message, {
+      type: SIM_TYPES.ukama_data,
+      status: SIM_STATUS.ALL,
+    });
+    if (simsRes.sims.length > 0) {
       const simr = DEFAULT_ORG_TREE.sims;
-      simr.totalSims = simsRes.sim.length.toString();
-      const consumed = simsRes.sim.filter(sim => sim.isAllocated === true);
+      simr.totalSims = simsRes.sims.length.toString();
+      const consumed = simsRes.sims.filter(sim => sim.isAllocated === true);
       simr.consumed = consumed.length.toString();
-      simr.availableSims = (simsRes.sim.length - consumed.length).toString();
+      simr.availableSims = (simsRes.sims.length - consumed.length).toString();
       res.sims = simr;
     } else {
       res.sims = undefined;
