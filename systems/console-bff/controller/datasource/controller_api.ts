@@ -14,6 +14,7 @@ import {
   RestartNodesInputDto,
   RestartSiteInputDto,
   ToggleInternetSwitchInputDto,
+  ToggleRFStatusInputDto,
 } from "../resolvers/types";
 
 const CONTROLLER = "controller";
@@ -98,6 +99,26 @@ class ControllerApi extends RESTDataSource {
       .catch(() => {
         return { success: false };
       });
+  };
+  toggleRFStatus = async (
+    baseURL: string,
+    req: ToggleRFStatusInputDto
+  ): Promise<TBooleanResponse> => {
+    this.logger.info(
+      `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-rf`
+    );
+
+    this.baseURL = baseURL;
+    return this.post(
+      `/${VERSION}/${CONTROLLER}/nodes/${req.nodeId}/toggle-rf`,
+      {
+        body: {
+          status: req.status,
+        },
+      }
+    ).then(() => {
+      return { success: true };
+    });
   };
 }
 

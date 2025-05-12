@@ -14,6 +14,7 @@ import {
   NodeTypeEnum,
   useGetNodesQuery,
   useRestartNodeMutation,
+  useToggleRfStatusMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -184,6 +185,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
         PubSub.subscribe(sKey, handleStatSubscription);
       }
+    },
+  });
+
+  const [toggleRFStatus] = useToggleRfStatusMutation({
+    fetchPolicy: 'network-only',
+    onCompleted: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-rf-status-success-msg',
+        message: `RF status turned ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        } successfully.`,
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-rf-status-error-msg',
+        message: `Failed to turn RF status ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        }.`,
+        type: 'error',
+        show: true,
+      });
     },
   });
 
@@ -363,7 +388,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
+      case NODE_ACTIONS_ENUM.NODE_RF_ON:
       case NODE_ACTIONS_ENUM.NODE_RF_OFF:
+        if (currentNode?.id) {
+          toggleRFStatus({
+            variables: {
+              data: {
+                nodeId: currentNode.id,
+                status: action === NODE_ACTIONS_ENUM.NODE_RF_ON,
+              },
+            },
+          });
+        }
         break;
       default:
         return;

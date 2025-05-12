@@ -437,6 +437,7 @@ export type Mutation = {
   restartSite: CBooleanResponse;
   setDefaultNetwork: CBooleanResponse;
   toggleInternetSwitch: CBooleanResponse;
+  toggleRFStatus: CBooleanResponse;
   toggleSimStatus: SimStatusResDto;
   updateFirstVisit: UserFistVisitResDto;
   updateInvitation: UpdateInvitationResDto;
@@ -584,6 +585,11 @@ export type MutationSetDefaultNetworkArgs = {
 
 export type MutationToggleInternetSwitchArgs = {
   data: ToggleInternetSwitchInputDto;
+};
+
+
+export type MutationToggleRfStatusArgs = {
+  data: ToggleRfStatusInputDto;
 };
 
 
@@ -1588,6 +1594,11 @@ export type ToggleInternetSwitchInputDto = {
   status: Scalars['Boolean']['input'];
 };
 
+export type ToggleRfStatusInputDto = {
+  nodeId: Scalars['String']['input'];
+  status: Scalars['Boolean']['input'];
+};
+
 export type ToggleSimStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
@@ -1802,6 +1813,13 @@ export type ToggleInternetSwitchMutationVariables = Exact<{
 
 
 export type ToggleInternetSwitchMutation = { __typename?: 'Mutation', toggleInternetSwitch: { __typename?: 'CBooleanResponse', success: boolean } };
+
+export type ToggleRfStatusMutationVariables = Exact<{
+  data: ToggleRfStatusInputDto;
+}>;
+
+
+export type ToggleRfStatusMutation = { __typename?: 'Mutation', toggleRFStatus: { __typename?: 'CBooleanResponse', success: boolean } };
 
 export type MemberFragment = { __typename?: 'MemberDto', role: string, userId: string, isDeactivated: boolean, memberSince?: string | null, id: string };
 
@@ -3179,6 +3197,39 @@ export function useToggleInternetSwitchMutation(baseOptions?: Apollo.MutationHoo
 export type ToggleInternetSwitchMutationHookResult = ReturnType<typeof useToggleInternetSwitchMutation>;
 export type ToggleInternetSwitchMutationResult = Apollo.MutationResult<ToggleInternetSwitchMutation>;
 export type ToggleInternetSwitchMutationOptions = Apollo.BaseMutationOptions<ToggleInternetSwitchMutation, ToggleInternetSwitchMutationVariables>;
+export const ToggleRfStatusDocument = gql`
+    mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+  toggleRFStatus(data: $data) {
+    success
+  }
+}
+    `;
+export type ToggleRfStatusMutationFn = Apollo.MutationFunction<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
+
+/**
+ * __useToggleRfStatusMutation__
+ *
+ * To run a mutation, you first call `useToggleRfStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleRfStatusMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [toggleRfStatusMutation, { data, loading, error }] = useToggleRfStatusMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useToggleRfStatusMutation(baseOptions?: Apollo.MutationHookOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>(ToggleRfStatusDocument, options);
+      }
+export type ToggleRfStatusMutationHookResult = ReturnType<typeof useToggleRfStatusMutation>;
+export type ToggleRfStatusMutationResult = Apollo.MutationResult<ToggleRfStatusMutation>;
+export type ToggleRfStatusMutationOptions = Apollo.BaseMutationOptions<ToggleRfStatusMutation, ToggleRfStatusMutationVariables>;
 export const GetMembersDocument = gql`
     query GetMembers {
   getMembers {
