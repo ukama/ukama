@@ -18,7 +18,7 @@ PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 DATA_MOUNT="/media/data"
 
-RAW_IMG="ukama-node.img"
+RAW_IMG="ukama-amplifier-node.img"
 
 BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
 BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
@@ -77,7 +77,9 @@ build_firmware() {
     local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
     cwd=$(pwd)
     log "INFO" "Building firmware for Node: ${node}"
+
     cd "${path}"
+    make clean TARGET="${node}" ROOTFSPATH="${path}/build"
     make TARGET="${node}" ROOTFSPATH="${path}/build"
     check_status $? "Firmware (at91 and uboot) build successfull" ${STAGE}
     cd "${cwd}"
