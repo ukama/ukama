@@ -116,9 +116,13 @@ class ControllerApi extends RESTDataSource {
           status: req.status,
         },
       }
-    ).then(() => {
-      return { success: true };
-    }).catch(() => { return { success: false }; });
+    )
+      .then(() => {
+        return { success: true };
+      })
+      .catch(() => {
+        return { success: false };
+      });
   };
 }
 
