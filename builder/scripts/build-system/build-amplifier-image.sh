@@ -6,6 +6,7 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 set -e
+set -x
 
 STAGE="init"
 DIR="$(pwd)"
@@ -19,8 +20,8 @@ DATA_MOUNT="/media/data"
 
 RAW_IMG="ukama-node.img"
 
-BOOT1_BIN=${UKAMA_OS}/firmware/build/at91-bootstrap/at91bootstrap.bin
-BOOT2_BIN=${UKAMA_OS}/firmware/build/u-boot/u-boot.bin
+BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
+BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs 
 MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
@@ -62,12 +63,24 @@ cleanup() {
     log "INFO" "Cleanup completed."
 }
 
-create_image() {
-    STAGE="create_image"
+create_disk_image() {
+    STAGE="create_disk_image"
     log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
     dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=61120512
     check_status $? "Raw image created" ${STAGE}
+}
+
+build_firmware() {
+    STAGE="build_firmware"
+    local node=$1
+    local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
+    cwd=$(pwd)
+    log "INFO" "Building firmware for Node: ${node}"
+    cd "${path}"
+    make TARGET="${node}" ROOTFSPATH="${path}/build"
+    check_status $? "Firmware (at91 and uboot) build successfull" ${STAGE}
+    cd "${cwd}"
 }
 
 setup_loop_device() {
@@ -244,16 +257,15 @@ copy_misc_files() {
 	
 }
 
-# Sanity check.
+# Main
+build_firmware "amplifier"
 if [ ! -f "${BOOT1_BIN}" ]; then
     log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-    log "INFO" "Make sure you have ran build-env-setup"
     exit 1
 fi
 
 if [ ! -f "${BOOT2_BIN}" ]; then
     log "ERROR" "boot file ${BOOT2_BIN} does not exist"
-    log "INFO" "Make sure you have ran build-env-setup"
     exit 1
 fi
 
@@ -266,8 +278,8 @@ else
     exit 1
 fi
 
-# Execute each step
-create_image
+build_firmware "amplifier"
+create_disk_image
 setup_loop_device
 clean_first_50MB
 partition_image
