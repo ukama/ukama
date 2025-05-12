@@ -114,3 +114,15 @@ func (r *Controller) ToggleInternetSwitch(status bool, port int32, siteId string
 
 	return res, nil
 }
+
+func (r *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	res, err := r.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

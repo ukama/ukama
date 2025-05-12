@@ -73,6 +73,15 @@ func (this *RestartNodesResponse) Validate() error {
 func (this *RestartSiteResponse) Validate() error {
 	return nil
 }
+func (this *ToggleRfSwitchRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	return nil
+}
+func (this *ToggleRfSwitchResponse) Validate() error {
+	return nil
+}
 func (this *RestartNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
