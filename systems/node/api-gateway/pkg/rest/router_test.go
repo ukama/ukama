@@ -241,7 +241,7 @@ func Test_postToggleRfHandler(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 	c := &nmocks.ControllerServiceClient{}
 
-	c.On("ToggleRf", mock.Anything, &cpb.ToggleRfSwitchRequest{
+	c.On("ToggleRfSwitch", mock.Anything, &cpb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
 		Status: false,
 	}).Return(&cpb.ToggleRfSwitchResponse{}, nil)
