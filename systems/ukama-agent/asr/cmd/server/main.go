@@ -143,7 +143,7 @@ func runGrpcServer(gormdb sql.Db) {
 	controller := pm.NewPolicyController(asrRepo, mbClient, dataPlanUrl.String(),
 		serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
 
-	// asr service
+	// ASR service
 	asrServer, err := server.NewAsrRecordServer(asrRepo, gutiRepo,
 		factory, networkClient, controller, cdr, serviceConfig.OrgId, serviceConfig.OrgName,
 		mbClient, serviceConfig.AllowedTimeOfService) //

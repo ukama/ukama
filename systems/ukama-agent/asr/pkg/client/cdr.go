@@ -36,7 +36,7 @@ func NewCDR(cdr string, timeout time.Duration) (*CDR, error) {
 
 	conn, err := grpc.NewClient(cdr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Errorf("Failed to connect to cdr service at %s. Error %s", cdr, err.Error())
+		log.Errorf("Failed to connect to CDR service at %s. Error %s", cdr, err.Error())
 		return nil, err
 	}
 	client := pb.NewCDRServiceClient(conn)
