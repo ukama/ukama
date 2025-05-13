@@ -118,9 +118,6 @@ function copy_linux_kernel() {
         x86_64)
             KERNEL_PKG="linux-lts"
             ;;
-        aarch64)
-            KERNEL_PKG="linux-lts"
-            ;;
         armv7)
             KERNEL_PKG="linux-vanilla"
             ;;
@@ -128,13 +125,48 @@ function copy_linux_kernel() {
             log "INFO" "Using QEMU-based method to extract ARMHF kernel"
             LOG_EXEC "${UKAMA_ROOT}/builder/scripts/build-system/extract_armhf_kernel.sh"
 
-            cp -a "${KERNEL_TMP_DIR}/boot/"* "${FINAL_ROOTFS}/boot/"
-            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "${FINAL_ROOTFS}/lib/modules/"
+            cp -a "${KERNEL_TMP_DIR}/boot/"* "$FINAL_ROOTFS/boot/"
+            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "$FINAL_ROOTFS/lib/modules/"
 
             log "INFO" "Cleaning up temp kernel rootfs"
-            rm -rf "${KERNEL_TMP_DIR}" "${ROOTFS_TMP_DIR}"
+            rm -rf "$KERNEL_TMP_DIR" "$ROOTFS_TMP_DIR"
 
             log "SUCCESS" "ARMHF kernel installed via QEMU"
+            return
+            ;;
+        aarch64)
+            log "INFO" "Using official Alpine RPi image to extract /boot for RPi4"
+
+            ALPINE_VERSION="${VERSION#v}"
+            ALPINE_RPI_URL="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/releases/aarch64/alpine-rpi-${ALPINE_VERSION}.0-aarch64.tar.gz"
+            TMP_RPI_DIR="/tmp/alpine-rpi"
+            mkdir -p "$TMP_RPI_DIR/rootfs"
+
+            log "INFO" "Downloading: $ALPINE_RPI_URL"
+            wget -qO "$TMP_RPI_DIR/rpi.tar.gz" "$ALPINE_RPI_URL" || {
+                log "ERROR" "Failed to download $ALPINE_RPI_URL"
+                exit 1
+            }
+
+            log "INFO" "Extracting Alpine RPi image"
+            tar -xzf "$TMP_RPI_DIR/rpi.tar.gz" -C "$TMP_RPI_DIR/rootfs"
+
+            log "INFO" "Copying /boot files to rootfs"
+            cp -a "$TMP_RPI_DIR/rootfs/boot/"* "$FINAL_ROOTFS/boot/" || {
+                log "ERROR" "Failed to copy /boot files"
+                exit 1
+            }
+
+            if [ -d "$TMP_RPI_DIR/rootfs/lib/modules" ]; then
+                log "INFO" "Copying available modules"
+                mkdir -p "$FINAL_ROOTFS/lib/modules"
+                cp -a "$TMP_RPI_DIR/rootfs/lib/modules/"* "$FINAL_ROOTFS/lib/modules/"
+            else
+                log "WARNING" "No kernel modules found in tarball; skipping /lib/modules"
+            fi
+
+            rm -rf "$TMP_RPI_DIR"
+            log "SUCCESS" "RPi4 /boot installed from Alpine tarball"
             return
             ;;
         *)
@@ -143,22 +175,21 @@ function copy_linux_kernel() {
             ;;
     esac
 
-    # apk --initdb method for all other supported archs
+    # apk fallback for x86_64 and armv7
     APK_TMP="/tmp/alpine-kernel-$ARCH"
     mkdir -p "$APK_TMP"
 
-    LOG_EXEC apk --root "$APK_TMP" --arch "$ARCH" --update-cache \
-        --repositories-file /dev/null \
-        --repository "$MIRROR/$VERSION/main" add --initdb "$KERNEL_PKG"
+    LOG_EXEC apk --root "$APK_TMP" --arch "$ARCH" \
+        --initdb \
+        --no-cache \
+        --repository "$MIRROR/$VERSION/main" \
+        add "$KERNEL_PKG"
 
     mkdir -p "$FINAL_ROOTFS/boot"
 
     case "$ARCH" in
         x86_64)
             cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "$FINAL_ROOTFS/boot/kernel.img"
-            ;;
-        aarch64)
-            cp "$APK_TMP/boot/Image" "$FINAL_ROOTFS/boot/kernel.img"
             ;;
         armv7)
             cp "$APK_TMP/boot/zImage" "$FINAL_ROOTFS/boot/kernel.img"
@@ -170,7 +201,7 @@ function copy_linux_kernel() {
     cp -a "$APK_TMP/lib/modules/"* "$FINAL_ROOTFS/lib/modules/" 2>/dev/null || true
 
     rm -rf "$APK_TMP"
-    log "SUCCESS" "Kernel installed using apk --initdb method"
+    log "SUCCESS" "Kernel installed using apk fallback path"
 }
 
 function copy_all_apps() {
@@ -203,7 +234,6 @@ function copy_misc_files() {
     sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
          "/etc/services"
 }
-
 
 # Update /etc/fstab based on partition type
 update_fstab() {
