@@ -9,6 +9,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"time"
 
@@ -18,6 +19,9 @@ import (
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
@@ -299,9 +303,24 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 
 	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Infof("No CDR found while querying usage: returning 0 as data usage.")
+
+			return &pb.QueryUsageResp{
+				Usage: 0,
+			}, nil
+		}
+
 		log.Errorf("Query usage failure: Error getting usage matching request %v. Error: %v", req, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage matiching request:")
+	}
+
+	if usage == 0 {
+		log.Errorf("Query usage failure: Inconsistent CDR in DB for request: %v", req)
+		log.Warnf("Query Usage failure: You should check nodes correctly reported CDR for request: %v", req)
+
+		return nil, status.Errorf(codes.OutOfRange, "query usage failure: inconsistent CDR in DB for request: %v", req)
 	}
 
 	log.Debugf("usage query success: %+v", usage)
