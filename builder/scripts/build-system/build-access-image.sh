@@ -274,7 +274,6 @@ copy_rootfs
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
 update_fstab "${PASSIVE_MOUNT}"
-copy_linux_kernel
 
 unmount_partition "${BOOT_MOUNT}"
 unmount_partition "${PRIMARY_MOUNT}"

@@ -107,10 +107,58 @@ function install_starter_app() {
     rm -rf starterd_latest/
 }
 
+function install_rpi4_kernel_from_tarball() {
+    log "INFO" "Installing RPi4 kernel and boot files via Alpine RPi tarball"
+
+    ALPINE_VERSION="${VERSION#v}"
+    ALPINE_RPI_URL="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/releases/aarch64/alpine-rpi-${ALPINE_VERSION}.0-aarch64.tar.gz"
+    TMP_RPI_DIR="/tmp/alpine-rpi"
+    FINAL_BOOT="/boot"
+
+    mkdir -p "$TMP_RPI_DIR/rootfs" "$FINAL_BOOT"
+
+    log "INFO" "Downloading: $ALPINE_RPI_URL"
+    wget -qO "$TMP_RPI_DIR/rpi.tar.gz" "$ALPINE_RPI_URL" || {
+        log "ERROR" "Failed to download $ALPINE_RPI_URL"
+        exit 1
+    }
+
+    log "INFO" "Extracting Alpine RPi image"
+    tar -xzf "$TMP_RPI_DIR/rpi.tar.gz" -C "$TMP_RPI_DIR/rootfs"
+
+    log "INFO" "Copying kernel to /boot/kernel.img"
+    cp "$TMP_RPI_DIR/rootfs/boot/vmlinuz-rpi" "$FINAL_BOOT/kernel.img" || {
+        log "ERROR" "Missing vmlinuz-rpi in tarball"
+        exit 1
+    }
+
+    log "INFO" "Copying bootloader firmware and configs"
+    cp "$TMP_RPI_DIR/rootfs"/bootcode.bin "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/start*.elf "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/fixup*.dat "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/config.txt "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/cmdline.txt "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/*.dtb "$FINAL_BOOT/" 2>/dev/null || true
+
+    log "INFO" "Copying overlays"
+    mkdir -p "$FINAL_BOOT/overlays"
+    cp -a "$TMP_RPI_DIR/rootfs/overlays/"* "$FINAL_BOOT/overlays/" 2>/dev/null || true
+
+    if [ -d "$TMP_RPI_DIR/rootfs/lib/modules" ]; then
+        log "INFO" "Copying kernel modules"
+        mkdir -p "/lib/modules"
+        cp -a "$TMP_RPI_DIR/rootfs/lib/modules/"* "/lib/modules/"
+    else
+        log "WARNING" "No /lib/modules found in RPi tarball"
+    fi
+
+    rm -rf "$TMP_RPI_DIR"
+    log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
+}
+
 function copy_linux_kernel() {
     log "INFO" "Setting up kernel for ARCH=$ARCH..."
 
-    FINAL_ROOTFS="/"
     KERNEL_TMP_DIR="/tmp/alpine-kernel-${ARCH}"
     ROOTFS_TMP_DIR="/tmp/alpine-rootfs-${ARCH}"
 
@@ -124,49 +172,14 @@ function copy_linux_kernel() {
         armhf)
             log "INFO" "Using QEMU-based method to extract ARMHF kernel"
             LOG_EXEC "${UKAMA_ROOT}/builder/scripts/build-system/extract_armhf_kernel.sh"
-
-            cp -a "${KERNEL_TMP_DIR}/boot/"* "$FINAL_ROOTFS/boot/"
-            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "$FINAL_ROOTFS/lib/modules/"
-
-            log "INFO" "Cleaning up temp kernel rootfs"
+            cp -a "${KERNEL_TMP_DIR}/boot/"* "/boot/"
+            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "/lib/modules/"
             rm -rf "$KERNEL_TMP_DIR" "$ROOTFS_TMP_DIR"
-
             log "SUCCESS" "ARMHF kernel installed via QEMU"
             return
             ;;
         aarch64)
-            log "INFO" "Using official Alpine RPi image to extract /boot for RPi4"
-
-            ALPINE_VERSION="${VERSION#v}"
-            ALPINE_RPI_URL="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/releases/aarch64/alpine-rpi-${ALPINE_VERSION}.0-aarch64.tar.gz"
-            TMP_RPI_DIR="/tmp/alpine-rpi"
-            mkdir -p "$TMP_RPI_DIR/rootfs"
-
-            log "INFO" "Downloading: $ALPINE_RPI_URL"
-            wget -qO "$TMP_RPI_DIR/rpi.tar.gz" "$ALPINE_RPI_URL" || {
-                log "ERROR" "Failed to download $ALPINE_RPI_URL"
-                exit 1
-            }
-
-            log "INFO" "Extracting Alpine RPi image"
-            tar -xzf "$TMP_RPI_DIR/rpi.tar.gz" -C "$TMP_RPI_DIR/rootfs"
-
-            log "INFO" "Copying /boot files to rootfs"
-            cp -a "$TMP_RPI_DIR/rootfs/boot/"* "$FINAL_ROOTFS/boot/" || {
-                log "ERROR" "Failed to copy /boot files"
-                exit 1
-            }
-
-            if [ -d "$TMP_RPI_DIR/rootfs/lib/modules" ]; then
-                log "INFO" "Copying available modules"
-                mkdir -p "$FINAL_ROOTFS/lib/modules"
-                cp -a "$TMP_RPI_DIR/rootfs/lib/modules/"* "$FINAL_ROOTFS/lib/modules/"
-            else
-                log "WARNING" "No kernel modules found in tarball; skipping /lib/modules"
-            fi
-
-            rm -rf "$TMP_RPI_DIR"
-            log "SUCCESS" "RPi4 /boot installed from Alpine tarball"
+            install_rpi4_kernel_from_tarball
             return
             ;;
         *)
@@ -185,20 +198,20 @@ function copy_linux_kernel() {
         --repository "$MIRROR/$VERSION/main" \
         add "$KERNEL_PKG"
 
-    mkdir -p "$FINAL_ROOTFS/boot"
+    mkdir -p "/boot"
 
     case "$ARCH" in
         x86_64)
-            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "$FINAL_ROOTFS/boot/kernel.img"
+            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "/boot/kernel.img"
             ;;
         armv7)
-            cp "$APK_TMP/boot/zImage" "$FINAL_ROOTFS/boot/kernel.img"
+            cp "$APK_TMP/boot/zImage" "/boot/kernel.img"
             ;;
     esac
 
-    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "$FINAL_ROOTFS/boot/" \; 2>/dev/null || true
-    mkdir -p "$FINAL_ROOTFS/lib/modules"
-    cp -a "$APK_TMP/lib/modules/"* "$FINAL_ROOTFS/lib/modules/" 2>/dev/null || true
+    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "/boot/" \; 2>/dev/null || true
+    mkdir -p "/lib/modules"
+    cp -a "$APK_TMP/lib/modules/"* "/lib/modules/" 2>/dev/null || true
 
     rm -rf "$APK_TMP"
     log "SUCCESS" "Kernel installed using apk fallback path"
@@ -223,7 +236,7 @@ function copy_misc_files() {
     rm -f ${MANIFEST_FILE}
     create_manifest_file
     
-    #sudo cp ${MANIFEST_FILE} "/manifest.json"
+    sudo mv ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
     install_starter_app "/"
