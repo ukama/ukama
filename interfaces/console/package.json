@@ -53,6 +53,7 @@
     "@graphql-codegen/typescript-operations": "^4.2.1",
     "@graphql-codegen/typescript-react-apollo": "^4.3.0",
     "@graphql-codegen/typescript-resolvers": "^4.1.0",
+    "@playwright/test": "^1.52.0",
     "@types/leaflet": "^1.9.12",
     "@types/node": "^20",
     "@types/pubsub-js": "^1.8.6",
