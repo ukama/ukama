@@ -22,7 +22,6 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
-  handleMetricWSMessage,
   transformMetricsArray,
   wsUrlResolver,
 } from "../../common/utils";
@@ -39,12 +38,10 @@ import {
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
-  MetricStateRes,
   MetricsRes,
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
-  SiteMetricStateRes,
   SiteMetricsStateRes,
   SubMetricsStatInput,
   SubSiteMetricByTabInput,
@@ -343,7 +340,7 @@ class SubscriptionsResolvers {
     metricKeys: string[],
     data: GetMetricsSiteStatInput,
     siteId: string
-  ): Promise<MetricRes[]> {
+  ): Promise<any[]> {
     const results = await Promise.all(
       metricKeys.map(async key => {
         try {
@@ -369,21 +366,24 @@ class SubscriptionsResolvers {
   private processSiteMetricResults(results: any[], siteId: string): any[] {
     return results.map(res => {
       let avg = 0;
-
       if (Array.isArray(res.values)) {
         res.values = res.values.filter((value: any) => value[1] !== 0);
-
         if (res.values.length === 1 || res.type === "site_uptime_seconds") {
           avg = res.values[res.values.length - 1][1];
+        } else if (res.type === "site_uptime_percentage") {
+          const sum = res.values.reduce(
+            (acc: number, val: any) => acc + val[1],
+            0
+          );
+          avg = sum / res.values.length;
         } else {
           const sum = res.values.reduce(
             (acc: number, val: any) => acc + val[1],
             0
           );
-          avg = res.values.length > 0 ? sum / res.values.length : 0;
+          avg = sum / res.values.length;
         }
       }
-
       return {
         msg: res.msg,
         type: res.type,
@@ -401,51 +401,29 @@ class SubscriptionsResolvers {
     data: GetMetricsSiteStatInput,
     siteId: string,
     nodeId: string
-  ): Promise<SiteMetricStateRes[]> {
+  ): Promise<any[]> {
     const nodeResults: MetricsStateRes = { metrics: [] };
-
     if (metricKeys.length > 0) {
       const metricPromises = metricKeys.map(async key => {
-        try {
-          const res = await getNodeMetricRange(baseURL, key, {
-            ...data,
-            nodeId,
+        const res = await getNodeMetricRange(baseURL, key, { ...data, nodeId });
+        if (Array.isArray(res.metrics)) {
+          res.metrics.forEach(metric => {
+            nodeResults.metrics.push(processMetricResult(metric));
           });
-          if (Array.isArray(res.metrics)) {
-            res.metrics.forEach(metric => {
-              nodeResults.metrics.push(processMetricResult(metric));
-            });
-          }
-        } catch (error) {
-          logger.error(
-            `Error processing node metric ${key} for node ${nodeId} in site ${siteId}: ${error}`
-          );
-          nodeResults.metrics.push({
-            msg: "Error",
-            type: key,
-            siteId: siteId || "",
-            nodeId: nodeId || "",
-            success: false,
-            value: 0,
-          } as MetricStateRes);
         }
       });
-
       await Promise.all(metricPromises);
     }
-
-    return nodeResults.metrics.map(
-      res =>
-        ({
-          msg: res.msg,
-          type: res.type,
-          siteId: siteId || "",
-          nodeId: nodeId || "",
-          success: res.success,
-          value: formatKPIValue(res.type, res.value),
-        } as SiteMetricStateRes)
-    );
+    return nodeResults.metrics.map(res => ({
+      msg: res.msg,
+      type: res.type,
+      siteId: siteId || "",
+      nodeId: nodeId || "",
+      success: res.success,
+      value: formatKPIValue(res.type, res.value),
+    }));
   }
+
   private setupSiteStateWSWorkers(
     wsUrl: string,
     metricKeys: string[],
@@ -454,6 +432,67 @@ class SubscriptionsResolvers {
     nodeIds: string[] | undefined,
     baseTopic: string
   ) {
+    const handleSiteWSMessage = (
+      wsData: any,
+      topic: string,
+      siteId: string,
+      nodeId: string = ""
+    ) => {
+      if (!wsData.isError) {
+        try {
+          const res = JSON.parse(wsData.data);
+          if (res?.data?.result && res.data.result.length > 0) {
+            res.data.result.forEach((result: any) => {
+              if (
+                result &&
+                result.metric &&
+                result.value &&
+                result.value.length > 0
+              ) {
+                if (!nodeId) {
+                  const resultSiteId =
+                    result.metric.site || result.metric.instance || siteId;
+
+                  pubSub.publish(topic, {
+                    success: true,
+                    msg: "success",
+                    type: res.Name,
+                    siteId: resultSiteId,
+                    nodeId: "",
+                    value: [
+                      Math.floor(result.value[0]) * 1000,
+                      formatKPIValue(res.Name, result.value[1]),
+                    ],
+                  });
+                } else {
+                  const resultNodeId =
+                    result.metric.node || result.metric.nodeid || nodeId;
+
+                  pubSub.publish(topic, {
+                    success: true,
+                    msg: "success",
+                    type: res.Name,
+                    siteId: siteId,
+                    nodeId: resultNodeId,
+                    value: [
+                      Math.floor(result.value[0]) * 1000,
+                      formatKPIValue(res.Name, result.value[1]),
+                    ],
+                  });
+                }
+              }
+            });
+          }
+        } catch (error) {
+          logger.error(
+            `Failed to parse WebSocket message for ${
+              nodeId ? `node ${nodeId}` : `site ${siteId}`
+            }: ${error}`
+          );
+        }
+      }
+    };
+
     for (const siteId of siteIds) {
       for (const metricKey of metricKeys) {
         const siteUrlParams = new URLSearchParams();
@@ -467,8 +506,8 @@ class SubscriptionsResolvers {
           workerData: { topic: baseTopic, url: siteMetricUrl },
         });
 
-        siteWorker.on("message", (data: any) =>
-          handleMetricWSMessage(data, baseTopic, pubSub, siteId, "")
+        siteWorker.on("message", (wsData: any) =>
+          handleSiteWSMessage(wsData, baseTopic, siteId)
         );
 
         siteWorker.on("exit", (code: any) => {
@@ -490,8 +529,8 @@ class SubscriptionsResolvers {
               workerData: { topic: baseTopic, url: nodeMetricUrl },
             });
 
-            nodeWorker.on("message", (data: any) =>
-              handleMetricWSMessage(data, baseTopic, pubSub, siteId, "")
+            nodeWorker.on("message", (wsData: any) =>
+              handleSiteWSMessage(wsData, baseTopic, siteId, nodeId)
             );
 
             nodeWorker.on("exit", (code: any) => {
