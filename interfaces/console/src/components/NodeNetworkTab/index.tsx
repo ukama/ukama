@@ -47,18 +47,18 @@ const NodeNetworkTab = ({
     handleSectionChange(
       value === 1 ? Graphs_Type.NetworkBackhaul : Graphs_Type.NetworkCellular,
     );
-    setSelected(value);
+    setSelected((prev) => (prev === 1 ? 0 : 1));
   };
-
   return (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 3 }}>
         <Stack spacing={2}>
           <NodeStatsContainer
             index={0}
-            loading={statLoading}
             title={'Cellular'}
+            isClickable={true}
             selected={selected}
+            loading={statLoading}
             isCollapsable={false}
             handleAction={handleOnSelected}
           >
