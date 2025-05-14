@@ -37,6 +37,7 @@ export const NODE_ACTIONS_ENUM = {
   NODE_RESTART: 'node-restart',
   NODE_RF_OFF: 'node-rf-off',
   NODE_OFF: 'node-off',
+  NODE_RF_ON: 'node-rf-on',
 };
 
 export const NODE_ACTIONS_BUTTONS = [
@@ -46,6 +47,7 @@ export const NODE_ACTIONS_BUTTONS = [
     consent: 'Are you sure you want to restart node?',
   },
   { id: NODE_ACTIONS_ENUM.NODE_RF_OFF, name: 'Turn RF Off' },
+  { id: NODE_ACTIONS_ENUM.NODE_RF_ON, name: 'Turn RF On' },
   // { id: 'node-on-off', name: 'Turn Node Off' },
 ];
 
