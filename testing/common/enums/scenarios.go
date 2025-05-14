@@ -12,6 +12,7 @@ const (
 	SCENARIO_NODE_ON                SCENARIOS = "node_on"
 	SCENARIO_NODE_RESTART           SCENARIOS = "node_restart"
 	SCENARIO_NODE_RF_OFF            SCENARIOS = "node_rf_off"
+	SCENARIO_NODE_RF_ON             SCENARIOS = "node_rf_on"
 )
 
 func ParseScenarioType(value string) SCENARIOS {
@@ -23,6 +24,7 @@ func ParseScenarioType(value string) SCENARIOS {
 		"node_on":                SCENARIO_NODE_ON,
 		"node_restart":           SCENARIO_NODE_RESTART,
 		"node_rf_off":            SCENARIO_NODE_RF_OFF,
+		"node_rf_on":             SCENARIO_NODE_RF_ON,
 	}
 
 	v, ok := t[strings.ToLower(value)]

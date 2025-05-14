@@ -48,6 +48,10 @@ type ToggleInternetSwitchRequest struct {
 	Status bool   `json:"status" example:"{{Status}}"`
 	Port   int32  `json:"port" example:"{{Port}}" validate:"required"`
 }
+type ToggleRfRequest struct {
+	NodeId string `json:"node_id" example:"{{NodeId}}" validate:"required" path:"node_id"`
+	Status bool   `json:"status" example:"{{Status}}"`
+}
 
 type ApplyConfigRequest struct {
 	Commit string `json:"commit" path:"commit" example:"commit" validate:"required"`

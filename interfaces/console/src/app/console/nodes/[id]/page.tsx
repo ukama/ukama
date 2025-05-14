@@ -51,7 +51,7 @@ import {
 } from '@/utils';
 import { Stack, Tab, Tabs } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const NODE_UPTIME_KEY = 'unit_uptime';
 interface INodePage {
@@ -77,6 +77,25 @@ const Page: React.FC<INodePage> = ({ params }) => {
   const [selectedTab, setSelectedTab] = useState<number>(0);
   const [metrics, setMetrics] = useState<MetricsRes>({ metrics: [] });
   const { user, setSnackbarMessage, env, subscriptionClient } = useAppContext();
+  const subscriptionKeyRef = useRef<string | null>(null);
+  const subscriptionControllerRef = useRef<AbortController | null>(null);
+
+  const cleanupSubscription = useCallback(() => {
+    if (subscriptionKeyRef.current) {
+      PubSub.unsubscribe(subscriptionKeyRef.current);
+      subscriptionKeyRef.current = null;
+    }
+    if (subscriptionControllerRef.current) {
+      subscriptionControllerRef.current.abort();
+      subscriptionControllerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cleanupSubscription();
+    };
+  }, [cleanupSubscription]);
 
   const { data: nodesData, loading: nodesLoading } = useGetNodesQuery({
     skip: !id,
@@ -165,7 +184,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
   ] = useGetMetricsStatLazyQuery({
     client: subscriptionClient,
     fetchPolicy: 'network-only',
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
       if (data.getMetricsStat.metrics.length > 0) {
         data.getMetricsStat.metrics.forEach((m) => {
           if (m.type === NODE_UPTIME_KEY) {
@@ -174,7 +193,10 @@ const Page: React.FC<INodePage> = ({ params }) => {
         });
 
         const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${statVar?.data.from ?? 0}`;
-        MetricStatSubscription({
+        cleanupSubscription();
+        subscriptionKeyRef.current = sKey;
+
+        const controller = await MetricStatSubscription({
           key: sKey,
           nodeId: id,
           userId: user.id,
@@ -183,6 +205,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
           type: Stats_Type.AllNode,
           from: statVar?.data.from ?? 0,
         });
+
+        subscriptionControllerRef.current = controller;
         PubSub.subscribe(sKey, handleStatSubscription);
       }
     },
@@ -224,8 +248,8 @@ const Page: React.FC<INodePage> = ({ params }) => {
       });
       router.back();
     } else if (id) {
-      const to = getUnixTime();
-      const from = to - STAT_STEP_29;
+      cleanupSubscription();
+
       getMetricStat({
         variables: {
           data: {
@@ -241,11 +265,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
         },
       });
     }
-    return () => {
-      const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.AllNode}-${from ?? 0}`;
-      PubSub.unsubscribe(sKey);
-    };
-  }, []);
+  }, [id, user.id, user.orgName, cleanupSubscription]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;

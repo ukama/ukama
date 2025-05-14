@@ -9,8 +9,12 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand/v2"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -18,10 +22,55 @@ import (
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
 )
 
+type prometheusResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		ResultType string `json:"resultType"`
+		Result     []struct {
+			Metric struct {
+				Name    string `json:"__name__"`
+				Env     string `json:"env"`
+				Job     string `json:"job"`
+				Network string `json:"network"`
+				Org     string `json:"org"`
+			} `json:"metric"`
+			Value []interface{} `json:"value"`
+		} `json:"result"`
+	} `json:"data"`
+}
+
+func getMetricValue(query string) (int, error) {
+	resp, err := http.Get("http://prometheus:9090/api/v1/query?query=" + query)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var result prometheusResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		return 0, err
+	}
+
+	if len(result.Data.Result) == 0 {
+		return 0, nil
+	}
+
+	valueStr := result.Data.Result[0].Value[1].(string)
+	return strconv.Atoi(valueStr)
+}
+
+var profile cenums.Profile
+var scenario cenums.SCENARIOS
+
 func Worker(id string, updateChan chan config.WMessage, initial config.WMessage) {
 	kpis := initial.Kpis
-	profile := initial.Profile
-	scenario := initial.Scenario
+	profile = initial.Profile
+	scenario = initial.Scenario
 
 	fmt.Printf("Coroutine %s started with: %d, %s\n", id, profile, scenario)
 
@@ -35,8 +84,8 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 
 	for {
 		time.Sleep(1 * time.Second)
+		labels := prometheus.Labels{"nodeid": id}
 		select {
-
 		case msg, ok := <-updateChan:
 			if !ok {
 				fmt.Printf("Coroutine %s with Scenario is: %s, which leads to coroutine shutdown.", id, scenario)
@@ -54,28 +103,59 @@ func Worker(id string, updateChan chan config.WMessage, initial config.WMessage)
 		}
 
 		fmt.Printf("Coroutine %s working with: %d, %s\n", id, profile, scenario)
+		pushMetrics(kpis, labels, scenario, profile)
 
-		labels := prometheus.Labels{"nodeid": id}
-		values := make(map[string]float64)
+	}
+}
 
-		for _, kpi := range kpis.KPIs {
-			switch kpi.Key {
-			case "unit_uptime":
-				kpi.KPI.With(labels).Inc()
-				continue
-			// TODO: Can handle different scenario cases here for different KPIs
-			default:
-				switch profile {
-				case cenums.PROFILE_MIN:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
-				case cenums.PROFILE_MAX:
-					values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.3
-				default:
-					values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
+func pushMetrics(kpis config.NodeKPIs, labels prometheus.Labels, scenario cenums.SCENARIOS, profile cenums.Profile) {
+	values := make(map[string]float64)
+
+	for _, kpi := range kpis.KPIs {
+		switch kpi.Key {
+		case "unit_uptime":
+			kpi.KPI.With(labels).Inc()
+			continue
+		case "trx_lte_core_active_ue":
+			if scenario == "node_rf_off" {
+				values[kpi.Key] = 0
+				kpi.KPI.With(labels).Set(values[kpi.Key])
+
+			} else {
+				count, err := getSubscriber()
+				if err != nil {
+					fmt.Printf("Error getting subscriber: %s\n", err)
+					continue
 				}
+				values[kpi.Key] = float64(count)
+				kpi.KPI.With(labels).Set(values[kpi.Key])
 			}
-
+			continue
+		// TODO: Can handle different scenario cases here for different KPIs
+		default:
+			switch profile {
+			case cenums.PROFILE_MIN:
+				values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
+			case cenums.PROFILE_MAX:
+				values[kpi.Key] = kpi.Normal + rand.Float64()*(kpi.Max-kpi.Normal)*0.3
+			default:
+				values[kpi.Key] = kpi.Min + rand.Float64()*(kpi.Normal-kpi.Min)*0.3
+			}
 			kpi.KPI.With(labels).Set(values[kpi.Key])
 		}
 	}
+}
+
+func getSubscriber() (int, error) {
+	activeCount, err := getMetricValue("active_sim_count")
+	if err != nil {
+		return 0, err
+	}
+
+	inactiveCount, err := getMetricValue("inactive_sim_count")
+	if err != nil {
+		return 0, err
+	}
+
+	return activeCount - inactiveCount, nil
 }

@@ -570,8 +570,8 @@ query GetReport($id: String!) {
 }
 ### Billing end ###
 
-### SimPool Start ###
-query GetSimPoolStats($data: GetSimPoolStatsInput!) {
+### Sim Start ###
+query GetSimPoolStats($data: GetSimsInput!) {
   getSimPoolStats(data: $data) {
     total
     available
@@ -581,23 +581,63 @@ query GetSimPoolStats($data: GetSimPoolStatsInput!) {
     physical
   }
 }
+
+query GetSimsFromPool($data: GetSimsInput!) {
+  getSimsFromPool(data: $data) {
+    sims {
+      id
+      qrCode
+      iccid
+      msisdn
+      isAllocated
+      isFailed
+      simType
+      smApAddress
+      activationCode
+      createdAt
+      deletedAt
+      updatedAt
+      isPhysical
+    }
+  }
+}
+
 mutation uploadSims($data: UploadSimsInputDto!) {
   uploadSims(data: $data) {
     iccid
   }
 }
 
-fragment SimPool on SimDto {
-  activationCode
-  createdAt
-  iccid
+fragment SimPackage on SimPackage {
   id
-  isAllocated
-  isPhysical
+  packageId
+  startDate
+  endDate
+  defaultDuration
+  isActive
+  asExpired
+}
+
+fragment Sim on SimDto {
+  id
+  subscriberId
+  networkId
+  iccid
   msisdn
-  qrCode
-  simType
-  smapAddress
+  imsi
+  type
+  status
+  isPhysical
+  trafficPolicy
+  firstActivatedOn
+  lastActivatedOn
+  activationsCount
+  deactivationsCount
+  allocatedAt
+  syncStatus
+  package {
+    ...SimPackage
+  }
 }
 fragment SimAllocationPackage on SimAllocatePackageDto {
   id
@@ -638,19 +678,19 @@ mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
 
 query getSim($data: GetSimInputDto!) {
   getSim(data: $data) {
-    ...SimPool
+    ...Sim
   }
 }
 
-query GetSims($data: GetSimsInput!) {
+query GetSims($data: ListSimsInput!) {
   getSims(data: $data) {
-    sim {
-      ...SimPool
+    sims {
+      ...Sim
     }
   }
 }
 
-### SimPool End ###
+### Sim End ###
 
 ### Subscriber Start ###
 

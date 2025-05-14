@@ -261,6 +261,33 @@ func (c *ControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb.Tog
 	return &pb.ToggleInternetSwitchResponse{}, nil
 }
 
+func (c *ControllerServer) ToggleRfSwitch(ctx context.Context, req *pb.ToggleRfSwitchRequest) (*pb.ToggleRfSwitchResponse, error) {
+	log.Infof("Toggling RF on/off for node %v, to %v", req.NodeId, req.Status)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of node id. Error %s", err.Error())
+	}
+
+	msg := &pb.ToggleRfSwitchRequest{
+		NodeId: nId.String(),
+		Status: req.Status,
+	}
+
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), fmt.Sprintf("/v1/rf/%s", nId.String()), data)
+	if err != nil {
+		log.Errorf("Failed to publish RF switch message. Errors: %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "Failed to publish RF switch message: %s", err.Error())
+	}
+	return &pb.ToggleRfSwitchResponse{}, nil
+}
+
 func (c *ControllerServer) publishMessage(target string, path string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &cpb.NodeFeederMessage{

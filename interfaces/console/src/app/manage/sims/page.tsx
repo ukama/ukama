@@ -7,10 +7,10 @@
  */
 'use client';
 import {
-  SimDto,
+  SimPoolResDto,
   Sim_Status,
   Sim_Types,
-  useGetSimsQuery,
+  useGetSimsFromPoolQuery,
   useUploadSimsMutation,
 } from '@/client/graphql/generated';
 import EmptyView from '@/components/EmptyView';
@@ -25,31 +25,32 @@ import { AlertColor, Box, Paper } from '@mui/material';
 import { useState } from 'react';
 
 const Page = () => {
-  const [data, setData] = useState<SimDto[]>([]);
+  const [data, setData] = useState<SimPoolResDto[]>([]);
   const { setSnackbarMessage, env } = useAppContext();
   const [isUploadSims, setIsUploadSims] = useState<boolean>(false);
 
-  const { loading: simsLoading, refetch: refetchSims } = useGetSimsQuery({
-    fetchPolicy: 'cache-and-network',
-    skip: false,
-    variables: {
-      data: {
-        status: Sim_Status.All,
-        type: env.SIM_TYPE as Sim_Types,
+  const { loading: simsLoading, refetch: refetchSims } =
+    useGetSimsFromPoolQuery({
+      fetchPolicy: 'cache-and-network',
+      skip: false,
+      variables: {
+        data: {
+          status: Sim_Status.All,
+          type: env.SIM_TYPE as Sim_Types,
+        },
       },
-    },
-    onCompleted: (data) => {
-      setData(data?.getSims?.sim ?? []);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'sim-pool',
-        message: error.message,
-        type: 'error' as AlertColor,
-        show: true,
-      });
-    },
-  });
+      onCompleted: (data) => {
+        setData(data?.getSimsFromPool?.sims ?? []);
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'sim-pool',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
 
   const [uploadSimPool, { loading: uploadSimsLoading }] = useUploadSimsMutation(
     {

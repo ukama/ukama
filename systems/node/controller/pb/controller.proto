@@ -10,6 +10,7 @@ service ControllerService {
   rpc RestartSite(RestartSiteRequest) returns (RestartSiteResponse);
   rpc RestartNode(RestartNodeRequest) returns (RestartNodeResponse);
   rpc RestartNodes(RestartNodesRequest) returns (RestartNodesResponse);
+  rpc ToggleRfSwitch(ToggleRfSwitchRequest) returns (ToggleRfSwitchResponse);
   rpc ToggleInternetSwitch(ToggleInternetSwitchRequest) returns (ToggleInternetSwitchResponse);
   rpc PingNode(PingNodeRequest) returns  (PingNodeResponse);
 }
@@ -44,6 +45,14 @@ message RestartNodesResponse {
 }
 
 message RestartSiteResponse {
+}
+
+message ToggleRfSwitchRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  bool status = 2;  // true for on, false for off
+}
+
+message ToggleRfSwitchResponse {
 }
 
 message RestartNodeRequest {

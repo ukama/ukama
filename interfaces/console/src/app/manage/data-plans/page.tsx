@@ -23,10 +23,16 @@ import { useAppContext } from '@/context';
 import { colors } from '@/theme';
 import { CreatePlanType, DataUnitType } from '@/types';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import { AlertColor, Box, Grid, Paper } from '@mui/material';
-import { useState } from 'react';
+import { Box, Grid, Paper } from '@mui/material';
+import { SetStateAction, useState } from 'react';
 
-const INIT_DATAPLAN = {
+interface DialogState {
+  isOpen: boolean;
+  mode: 'create' | 'edit';
+  data: CreatePlanType;
+}
+
+const INIT_DATAPLAN: CreatePlanType = {
   id: '',
   name: '',
   country: '',
@@ -37,35 +43,28 @@ const INIT_DATAPLAN = {
   dataUnit: DataUnitType.GigaBytes,
 };
 
-const Page = () => {
-  const [data, setData] = useState<any>([]);
+const useDataPlans = () => {
   const { network, user, setSnackbarMessage } = useAppContext();
-  const [dataplan, setDataplan] = useState<CreatePlanType>(INIT_DATAPLAN);
-  const [isDataPlan, setIsDataPlan] = useState<boolean>(false);
 
   const [getCurrencySymbol, { data: currencyData }] =
     useGetCurrencySymbolLazyQuery({
-      fetchPolicy: 'network-only',
+      fetchPolicy: 'cache-first',
       onError: (error) => {
         setSnackbarMessage({
           id: 'currency-info-error',
           message: error.message,
-          type: 'error' as AlertColor,
+          type: 'error',
           show: true,
         });
       },
     });
 
   useGetNetworkQuery({
-    variables: {
-      networkId: network.id,
-    },
+    fetchPolicy: 'cache-first',
+    skip: !network.id,
+    variables: { networkId: network.id },
     onCompleted: () => {
-      getCurrencySymbol({
-        variables: {
-          code: user.currency,
-        },
-      });
+      getCurrencySymbol({ variables: { code: user.currency } });
     },
   });
 
@@ -74,75 +73,83 @@ const Page = () => {
     loading: packagesLoading,
     refetch: getDataPlans,
   } = useGetPackagesQuery({
-    fetchPolicy: 'cache-and-network',
-    onCompleted: (data) => {
-      setData(data?.getPackages.packages ?? []);
-    },
+    fetchPolicy: 'network-only',
     onError: (error) => {
       setSnackbarMessage({
         id: 'packages',
         message: error.message,
-        type: 'error' as AlertColor,
+        type: 'error',
         show: true,
       });
     },
   });
 
-  const [addDataPlan, { loading: dataPlanLoading }] = useAddPackageMutation({
+  const [addDataPlan, { loading: addLoading }] = useAddPackageMutation({
     onCompleted: () => {
       getDataPlans();
       setSnackbarMessage({
         id: 'add-data-plan',
         message: 'Data plan added successfully',
-        type: 'success' as AlertColor,
-        show: true,
-      });
-      setIsDataPlan(false);
-      setDataplan(INIT_DATAPLAN);
-    },
-    onError: (error) => {
-      setSnackbarMessage({
-        id: 'data-plan-error',
-        message: error.message,
-        type: 'error' as AlertColor,
+        type: 'success',
         show: true,
       });
     },
   });
 
-  const [updatePackage, { loading: updatePkgLoading }] =
-    useUpdatePacakgeMutation({
-      onCompleted: () => {
-        getDataPlans();
-        setSnackbarMessage({
-          id: 'update-data-plan',
-          message: 'Data plan updated successfully',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'data-plan-update-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [updatePackage, { loading: updateLoading }] = useUpdatePacakgeMutation({
+    onCompleted: () => {
+      getDataPlans();
+      setSnackbarMessage({
+        id: 'update-data-plan',
+        message: 'Data plan updated successfully',
+        type: 'success',
+        show: true,
+      });
+    },
+  });
+
+  return {
+    packages: packagesData?.getPackages.packages ?? [],
+    currencySymbol: currencyData?.getCurrencySymbol.symbol ?? '',
+    loading: packagesLoading || addLoading || updateLoading,
+    addDataPlan,
+    updatePackage,
+    user,
+  };
+};
+
+const DataPlansPage = () => {
+  const {
+    packages,
+    currencySymbol,
+    loading,
+    addDataPlan,
+    updatePackage,
+    user,
+  } = useDataPlans();
+  const { setSnackbarMessage } = useAppContext();
+  const [dialogState, setDialogState] = useState<DialogState>({
+    isOpen: false,
+    mode: 'create',
+    data: INIT_DATAPLAN,
+  });
 
   const handleAddDataPlanAction = () => {
-    if (user.currency) {
-      setDataplan(INIT_DATAPLAN);
-      setIsDataPlan(true);
-    } else {
+    if (!user.currency) {
       setSnackbarMessage({
         id: 'network-not-selected',
         message: 'Something went wrong, please try again',
-        type: 'warning' as AlertColor,
+        type: 'warning',
         show: true,
       });
+      return;
     }
+
+    setDialogState({
+      isOpen: true,
+      mode: 'create',
+      data: INIT_DATAPLAN,
+    });
   };
 
   const handleDataPlanAction = (action: string, values: CreatePlanType) => {
@@ -151,11 +158,11 @@ const Page = () => {
         variables: {
           data: {
             name: values.name,
-            amount: values?.amount,
+            amount: values.amount,
             dataUnit: values.dataUnit,
             country: user.country ?? '',
             currency: user.currency ?? '',
-            dataVolume: values?.dataVolume,
+            dataVolume: values.dataVolume,
             duration: parseInt(values.duration),
           },
         },
@@ -170,33 +177,38 @@ const Page = () => {
           },
         },
       });
-      setIsDataPlan(false);
     }
+    setDialogState((prev) => ({ ...prev, isOpen: false }));
   };
 
-  const handleOptionMenuItemAction = (id: string, action: string) => {
-    if (action === 'edit') {
-      const d: PackageDto | undefined = packagesData?.getPackages.packages.find(
-        (pkg: PackageDto) => pkg.uuid === id,
-      );
-      setDataplan({
-        id: id,
-        name: d?.name ?? '',
-        duration: d?.duration.toString() ?? '',
-        dataVolume: d?.dataVolume ?? 0,
-        country: d?.country ?? '',
-        currency: d?.currency ?? '',
-        amount: typeof d?.rate.amount === 'number' ? d.rate.amount : 0,
-        dataUnit: d?.dataUnit as DataUnitType,
-      });
-      setIsDataPlan(true);
-    }
+  const handleEdit = (id: string) => {
+    const packageToEdit = packages.find((pkg: PackageDto) => pkg.uuid === id);
+    if (!packageToEdit) return;
+
+    setDialogState({
+      isOpen: true,
+      mode: 'edit',
+      data: {
+        id,
+        name: packageToEdit.name,
+        duration: packageToEdit.duration.toString(),
+        dataVolume: packageToEdit.dataVolume,
+        country: packageToEdit.country,
+        currency: packageToEdit.currency,
+        amount:
+          typeof packageToEdit.rate.amount === 'number'
+            ? packageToEdit.rate.amount
+            : 0,
+        dataUnit: packageToEdit.dataUnit as DataUnitType,
+      },
+    });
   };
+
   return (
     <LoadingWrapper
       width={'100%'}
       radius="medium"
-      isLoading={packagesLoading ?? dataPlanLoading ?? updatePkgLoading}
+      isLoading={loading}
       height={'calc(100vh - 244px)'}
     >
       <Paper
@@ -217,50 +229,56 @@ const Page = () => {
             handleButtonAction={handleAddDataPlanAction}
           />
           <br />
-          {data.length === 0 ? (
+          {packages.length === 0 ? (
             <EmptyView icon={UpdateIcon} title="No data plan created yet!" />
           ) : (
             <Grid container rowSpacing={2} columnSpacing={2}>
-              {data.map(
-                ({
-                  uuid,
-                  name,
-                  duration,
-                  currency,
-                  dataVolume,
-                  dataUnit,
-                  amount,
-                }: any) => (
-                  <Grid item xs={12} sm={6} md={4} key={uuid}>
-                    <PlanCard
-                      uuid={uuid}
-                      name={name}
-                      amount={amount}
-                      dataUnit={dataUnit}
-                      duration={duration}
-                      currency={currency}
-                      dataVolume={dataVolume}
-                      handleOptionMenuItemAction={handleOptionMenuItemAction}
-                    />
-                  </Grid>
-                ),
-              )}
+              {packages.map((pkg: PackageDto) => (
+                <Grid item xs={12} sm={6} md={4} key={pkg.uuid}>
+                  <PlanCard
+                    {...pkg}
+                    currency={currencySymbol}
+                    amount={pkg.amount.toString()}
+                    dataVolume={pkg.dataVolume.toString()}
+                    handleOptionMenuItemAction={(
+                      id: string,
+                      action: string,
+                    ) => {
+                      if (action === 'edit') handleEdit(id);
+                    }}
+                  />
+                </Grid>
+              ))}
             </Grid>
           )}
         </Box>
-        {isDataPlan && (
+        {dialogState.isOpen && (
           <DataPlanDialog
-            data={dataplan}
-            isOpen={isDataPlan}
-            setData={setDataplan}
-            currencySymbol={currencyData?.getCurrencySymbol.symbol ?? ''}
-            title={'Create data plan'}
+            data={dialogState.data}
+            isOpen={dialogState.isOpen}
+            setData={(newData: SetStateAction<CreatePlanType>) =>
+              setDialogState((prev) => ({
+                ...prev,
+                data:
+                  typeof newData === 'function' ? newData(prev.data) : newData,
+              }))
+            }
+            currencySymbol={currencySymbol}
+            title={
+              dialogState.mode === 'create'
+                ? 'Create data plan'
+                : 'Edit data plan'
+            }
             labelNegativeBtn={'Cancel'}
-            action={dataplan.id ? 'update' : 'add'}
+            action={dialogState.mode === 'create' ? 'add' : 'update'}
             handleSuccessAction={handleDataPlanAction}
-            handleCloseAction={() => setIsDataPlan(false)}
+            handleCloseAction={() =>
+              setDialogState((prev) => ({ ...prev, isOpen: false }))
+            }
             labelSuccessBtn={
-              dataplan.id ? 'Update Data Plan' : 'Save Data Plan'
+              dialogState.mode === 'create'
+                ? 'Save Data Plan'
+                : 'Update Data Plan'
             }
           />
         )}
@@ -269,4 +287,4 @@ const Page = () => {
   );
 };
 
-export default Page;
+export default DataPlansPage;
