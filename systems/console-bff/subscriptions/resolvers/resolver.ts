@@ -22,6 +22,7 @@ import {
   getBaseURL,
   getGraphsKeyByType,
   getScopesByRole,
+  handleMetricWSMessage,
   transformMetricsArray,
   wsUrlResolver,
 } from "../../common/utils";
@@ -368,6 +369,7 @@ class SubscriptionsResolvers {
   private processSiteMetricResults(results: any[], siteId: string): any[] {
     return results.map(res => {
       let avg = 0;
+
       if (Array.isArray(res.values)) {
         res.values = res.values.filter((value: any) => value[1] !== 0);
 
@@ -378,9 +380,10 @@ class SubscriptionsResolvers {
             (acc: number, val: any) => acc + val[1],
             0
           );
-          avg = sum / res.values.length;
+          avg = res.values.length > 0 ? sum / res.values.length : 0;
         }
       }
+
       return {
         msg: res.msg,
         type: res.type,
@@ -464,44 +467,11 @@ class SubscriptionsResolvers {
           workerData: { topic: baseTopic, url: siteMetricUrl },
         });
 
-        siteWorker.on("message", (_data: any) => {
-          if (!_data.isError) {
-            try {
-              const res = JSON.parse(_data.data);
-              if (res?.data?.result && res.data.result.length > 0) {
-                res.data.result.forEach((result: any) => {
-                  if (
-                    result &&
-                    result.metric &&
-                    result.value &&
-                    result.value.length > 0
-                  ) {
-                    const resultSiteId =
-                      result.metric.site || result.metric.instance || siteId;
+        siteWorker.on("message", (data: any) =>
+          handleMetricWSMessage(data, baseTopic, pubSub, siteId, "")
+        );
 
-                    pubSub.publish(baseTopic, {
-                      success: true,
-                      msg: "success",
-                      type: res.Name,
-                      siteId: resultSiteId,
-                      nodeId: "",
-                      value: [
-                        Math.floor(result.value[0]) * 1000,
-                        formatKPIValue(res.Name, result.value[1]),
-                      ],
-                    });
-                  }
-                });
-              }
-            } catch (error) {
-              logger.error(
-                `Failed to parse WebSocket message for ${siteId}/${metricKey}: ${error}`
-              );
-            }
-          }
-        });
-
-        siteWorker.on("exit", async (code: any) => {
+        siteWorker.on("exit", (code: any) => {
           logger.info(
             `WS_THREAD for site ${siteId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
           );
@@ -520,45 +490,11 @@ class SubscriptionsResolvers {
               workerData: { topic: baseTopic, url: nodeMetricUrl },
             });
 
-            nodeWorker.on("message", (_data: any) => {
-              if (!_data.isError) {
-                try {
-                  const res = JSON.parse(_data.data);
+            nodeWorker.on("message", (data: any) =>
+              handleMetricWSMessage(data, baseTopic, pubSub, siteId, "")
+            );
 
-                  if (res?.data?.result && res.data.result.length > 0) {
-                    res.data.result.forEach((result: any) => {
-                      if (
-                        result &&
-                        result.metric &&
-                        result.value &&
-                        result.value.length > 0
-                      ) {
-                        const resultNodeId =
-                          result.metric.node || result.metric.nodeid || nodeId;
-
-                        pubSub.publish(baseTopic, {
-                          success: true,
-                          msg: "success",
-                          type: res.Name,
-                          siteId: siteId,
-                          nodeId: resultNodeId,
-                          value: [
-                            Math.floor(result.value[0]) * 1000,
-                            formatKPIValue(res.Name, result.value[1]),
-                          ],
-                        });
-                      }
-                    });
-                  }
-                } catch (error) {
-                  logger.error(
-                    `Failed to parse WebSocket message for node ${nodeId}/${metricKey}: ${error}`
-                  );
-                }
-              }
-            });
-
-            nodeWorker.on("exit", async (code: any) => {
+            nodeWorker.on("exit", (code: any) => {
               logger.info(
                 `WS_THREAD for node ${nodeId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
               );

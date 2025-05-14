@@ -395,12 +395,56 @@ export const transformMetricsArray = (
     metrics: allMetrics,
   };
 };
+const handleMetricWSMessage = (
+  data: any,
+  topic: string,
+  pubSub: any,
+  defaultSiteId: string = "",
+  defaultNodeId: string = ""
+) => {
+  if (!data.isError) {
+    try {
+      const res = JSON.parse(data.data);
+
+      if (res?.data?.result && res.data.result.length > 0) {
+        res.data.result.forEach((result: any) => {
+          if (
+            result &&
+            result.metric &&
+            result.value &&
+            result.value.length > 0
+          ) {
+            const resultSiteId =
+              result.metric.site || result.metric.instance || defaultSiteId;
+            const resultNodeId =
+              result.metric.node || result.metric.nodeid || defaultNodeId;
+
+            pubSub.publish(topic, {
+              success: true,
+              msg: "success",
+              type: res.Name,
+              siteId: resultSiteId,
+              nodeId: resultNodeId,
+              value: [
+                Math.floor(result.value[0]) * 1000,
+                formatKPIValue(res.Name, result.value[1]),
+              ],
+            });
+          }
+        });
+      }
+    } catch (error) {
+      logger.error(`Failed to parse WebSocket message: ${error}`);
+    }
+  }
+};
 
 export {
   csvToBase64,
   epochToISOString,
   findProcessNKill,
   getBaseURL,
+  handleMetricWSMessage,
   getGraphsKeyByType,
   getPaginatedOutput,
   getScopesByRole,
