@@ -38,10 +38,12 @@ import {
   GetMetricsStatInput,
   LatestMetricSubRes,
   MetricRes,
+  MetricStateRes,
   MetricsRes,
   MetricsStateRes,
   NotificationsRes,
   NotificationsResDto,
+  SiteMetricStateRes,
   SiteMetricsStateRes,
   SubMetricsStatInput,
   SubSiteMetricByTabInput,
@@ -340,7 +342,7 @@ class SubscriptionsResolvers {
     metricKeys: string[],
     data: GetMetricsSiteStatInput,
     siteId: string
-  ): Promise<any[]> {
+  ): Promise<MetricRes[]> {
     const results = await Promise.all(
       metricKeys.map(async key => {
         try {
@@ -368,14 +370,9 @@ class SubscriptionsResolvers {
       let avg = 0;
       if (Array.isArray(res.values)) {
         res.values = res.values.filter((value: any) => value[1] !== 0);
+
         if (res.values.length === 1 || res.type === "site_uptime_seconds") {
           avg = res.values[res.values.length - 1][1];
-        } else if (res.type === "site_uptime_percentage") {
-          const sum = res.values.reduce(
-            (acc: number, val: any) => acc + val[1],
-            0
-          );
-          avg = sum / res.values.length;
         } else {
           const sum = res.values.reduce(
             (acc: number, val: any) => acc + val[1],
@@ -401,29 +398,51 @@ class SubscriptionsResolvers {
     data: GetMetricsSiteStatInput,
     siteId: string,
     nodeId: string
-  ): Promise<any[]> {
+  ): Promise<SiteMetricStateRes[]> {
     const nodeResults: MetricsStateRes = { metrics: [] };
+
     if (metricKeys.length > 0) {
       const metricPromises = metricKeys.map(async key => {
-        const res = await getNodeMetricRange(baseURL, key, { ...data, nodeId });
-        if (Array.isArray(res.metrics)) {
-          res.metrics.forEach(metric => {
-            nodeResults.metrics.push(processMetricResult(metric));
+        try {
+          const res = await getNodeMetricRange(baseURL, key, {
+            ...data,
+            nodeId,
           });
+          if (Array.isArray(res.metrics)) {
+            res.metrics.forEach(metric => {
+              nodeResults.metrics.push(processMetricResult(metric));
+            });
+          }
+        } catch (error) {
+          logger.error(
+            `Error processing node metric ${key} for node ${nodeId} in site ${siteId}: ${error}`
+          );
+          nodeResults.metrics.push({
+            msg: "Error",
+            type: key,
+            siteId: siteId || "",
+            nodeId: nodeId || "",
+            success: false,
+            value: 0,
+          } as MetricStateRes);
         }
       });
+
       await Promise.all(metricPromises);
     }
-    return nodeResults.metrics.map(res => ({
-      msg: res.msg,
-      type: res.type,
-      siteId: siteId || "",
-      nodeId: nodeId || "",
-      success: res.success,
-      value: formatKPIValue(res.type, res.value),
-    }));
-  }
 
+    return nodeResults.metrics.map(
+      res =>
+        ({
+          msg: res.msg,
+          type: res.type,
+          siteId: siteId || "",
+          nodeId: nodeId || "",
+          success: res.success,
+          value: formatKPIValue(res.type, res.value),
+        } as SiteMetricStateRes)
+    );
+  }
   private setupSiteStateWSWorkers(
     wsUrl: string,
     metricKeys: string[],
