@@ -23,12 +23,7 @@ import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
-import {
-  formatBytesToGB,
-  formatBytesToGigabit,
-  getUnixTime,
-  structureNodeSiteDate,
-} from '@/utils';
+import { formatBytesToGB, getUnixTime, structureNodeSiteDate } from '@/utils';
 import DataVolume from '@mui/icons-material/DataSaverOff';
 import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
@@ -192,7 +187,7 @@ export default function Page() {
     if (success && value.length === 2) {
       PubSub.publish(
         `${type}-${network.id}`,
-        type === kpiConfig[2].id ? formatBytesToGigabit(value[1]) : value[1],
+        type === kpiConfig[2].id ? formatBytesToGB(value[1]) : value[1],
       );
     }
   };
