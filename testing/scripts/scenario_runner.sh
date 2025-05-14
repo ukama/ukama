@@ -101,7 +101,7 @@ while true; do
                     \"type\": \"event\"
                 }")
             echo "API Response: $nr"
-            
+            ;;
         "node_on"|"node_off"|"node_restart")
             echo "Running node $SCENARIO scenario..."
             echo "Making API call with Node ID: $NODE_ID"
