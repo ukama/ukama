@@ -144,3 +144,34 @@ func TestControllerServer_RestartNodes(t *testing.T) {
 	assert.NoError(t, err)
 
 }
+
+func TestControllerServer_ToggleRf(t *testing.T) {
+	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	conRepo := &mocks.NodeLogRepo{}
+
+	nodeId := "uk-983794-hnode-78-7830"
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, pkg.IsDebugMode)
+
+	msg := &pb.ToggleRfSwitchRequest{
+		NodeId: nodeId,
+		Status: true,
+	}
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return
+	}
+	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &cpb.NodeFeederMessage{
+		Target:     "test-org" + "." + "." + "." + nodeId,
+		HTTPMethod: "POST",
+		Path:       "/v1/rf/" + nodeId,
+		Msg:        data,
+	}).Return(nil).Once()
+
+	_, err = s.ToggleRfSwitch(context.TODO(), &pb.ToggleRfSwitchRequest{
+		NodeId: nodeId,
+		Status: true,
+	})
+
+	msgclientRepo.AssertExpectations(t)
+	assert.NoError(t, err)
+}

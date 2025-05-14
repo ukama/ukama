@@ -230,3 +230,30 @@ func Test_getRunningConfigVersionHandler(t *testing.T) {
 	}
 	c.AssertExpectations(t)
 }
+
+func Test_postToggleRfHandler(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	nodeId := "60285a2a-fe1d-4261-a868-5be480075b8f"
+	jsonPayload := `{"status": false}`
+	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-rf", strings.NewReader(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	arc := &providers.AuthRestClient{}
+	c := &nmocks.ControllerServiceClient{}
+
+	c.On("ToggleRfSwitch", mock.Anything, &cpb.ToggleRfSwitchRequest{
+		NodeId: nodeId,
+		Status: false,
+	}).Return(&cpb.ToggleRfSwitchResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Controller: client.NewControllerFromClient(c),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	c.AssertExpectations(t)
+}
