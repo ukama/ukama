@@ -365,9 +365,10 @@ class SubscriptionsResolvers {
 
   private processSiteMetricResults(results: any[], siteId: string): any[] {
     return results.map(res => {
-      let avg = 0;
-      if (Array.isArray(res.values)) {
-        res.values = res.values.filter((value: any) => value[1] !== 0);
+      let avg = null;
+      let success = res.success;
+
+      if (Array.isArray(res.values) && res.values.length > 0) {
         if (res.values.length === 1 || res.type === "site_uptime_seconds") {
           avg = res.values[res.values.length - 1][1];
         } else if (res.type === "site_uptime_percentage") {
@@ -383,18 +384,24 @@ class SubscriptionsResolvers {
           );
           avg = sum / res.values.length;
         }
+
+        if (avg < 0) {
+          success = false;
+        }
+      } else {
+        success = false;
       }
+
       return {
         msg: res.msg,
         type: res.type,
         siteId: res.siteId || siteId || "",
         nodeId: "",
-        success: res.success,
-        value: formatKPIValue(res.type, avg),
+        success: success,
+        value: success ? formatKPIValue(res.type, avg) : null,
       };
     });
   }
-
   private async fetchNodeMetrics(
     baseURL: string,
     metricKeys: string[],
