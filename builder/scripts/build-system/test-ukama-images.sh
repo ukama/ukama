@@ -10,13 +10,14 @@
 set -euo pipefail
 
 MOUNT_DIR="/mnt/testimg"
-TMP_DIR="/tmp/testimg"
 EXPECTED_PARTITIONS=(1 2 5 6 7 8)  # boot, recovery, primary, passive, data, swap
+
 REQUIRED_FILES_PRIMARY=(
   "/boot/kernel.img"
   "/sbin/starter.d"
   "/manifest.json"
 )
+
 REQUIRED_FILES_BOOT=(
   "/boot/bootcode.bin"  # for access node (optional)
   "/boot/boot.bin"      # for amplifier node
@@ -36,17 +37,24 @@ log() {
 }
 
 fail() {
-    echo -e "\033[1;31m[FAIL]\033[0m $*"
+    log "ERROR" "$*"
     exit 1
 }
 
 cleanup() {
     log "INFO" "Cleaning up mounts and mappings"
     for p in "${EXPECTED_PARTITIONS[@]}"; do
-        sudo umount "$MOUNT_DIR/p$p" 2>/dev/null || true
+        umount "$MOUNT_DIR/p$p" 2>/dev/null || true
     done
-    [ -n "${LOOP_DEV:-}" ] && sudo kpartx -dv "$LOOP_DEV" && sudo losetup -d "$LOOP_DEV"
-    sudo rm -rf "$MOUNT_DIR"
+
+    if [[ -n "${LOOP_DEV:-}" ]]; then
+        if losetup -a | grep -q "$LOOP_DEV"; then
+            kpartx -dv "$LOOP_DEV" 2>/dev/null || true
+            losetup -d "$LOOP_DEV" 2>/dev/null || true
+        fi
+    fi
+
+    rm -rf "$MOUNT_DIR"
 }
 trap cleanup EXIT
 
@@ -54,18 +62,18 @@ test_image() {
     local img="$1"
     log "INFO" "Testing image: $img"
 
-    # Determine if it's a COM image
+    # Detect if it's a COM image (bootloader files not expected)
     local is_com_image=0
     if [[ "$(basename "$img")" == "ukama-com-image.img" ]]; then
         is_com_image=1
         log "INFO" "Detected COM image — skipping bootloader checks"
     fi
 
-    [ -f "$img" ] || fail "Image not found: $img"
-    [ $(stat -c %s "$img") -gt 1048576 ] || fail "Image too small: $img"
+    [[ -f "$img" ]] || fail "Image not found: $img"
+    [[ "$(stat -c %s "$img")" -gt 1048576 ]] || fail "Image too small: $img"
 
-    LOOP_DEV=$(sudo losetup -f --show "$img")
-    sudo kpartx -av "$LOOP_DEV" >/dev/null
+    LOOP_DEV=$(losetup -f --show "$img")
+    kpartx -av "$LOOP_DEV" >/dev/null
 
     DEVICE=$(basename "$LOOP_DEV")
     mkdir -p "$MOUNT_DIR"
@@ -75,13 +83,17 @@ test_image() {
         local part_mount="$MOUNT_DIR/p${p}"
         mkdir -p "$part_mount"
         log "INFO" "Mounting $part_dev to $part_mount"
-        if ! sudo mount "$part_dev" "$part_mount"; then
-            [[ $p == 8 ]] && log "INFO" "Skipping mount test for swap partition" && continue
+
+        if ! mount "$part_dev" "$part_mount"; then
+            if [[ $p == 8 ]]; then
+                log "INFO" "Skipping mount for optional swap partition"
+                continue
+            fi
             fail "Failed to mount partition $p"
         fi
     done
 
-    # Only check boot files for non-COM images
+    # Boot partition check (if not COM image)
     if [[ "$is_com_image" -eq 0 ]]; then
         local bootdir="$MOUNT_DIR/p1"
         for file in "${REQUIRED_FILES_BOOT[@]}"; do
@@ -95,7 +107,7 @@ test_image() {
         log "INFO" "Boot file checks skipped for COM image"
     fi
 
-    # Check primary rootfs files
+    # Primary partition file checks
     local primarydir="$MOUNT_DIR/p5"
     for file in "${REQUIRED_FILES_PRIMARY[@]}"; do
         if [[ ! -f "$primarydir$file" ]]; then
@@ -112,7 +124,6 @@ main() {
     [[ $# -lt 1 ]] && fail "Usage: $0 <img1> [img2 ...]"
     for img in "$@"; do
         test_image "$img"
-        cleanup  # needed between runs
     done
 }
 
