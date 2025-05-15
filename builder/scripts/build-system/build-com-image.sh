@@ -3,7 +3,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# Copyright (c) 2024-present, Ukama Inc.
+# Copyright (c) 2025-present, Ukama Inc.
 
 set -e
 
@@ -17,13 +17,9 @@ PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 DATA_MOUNT="/media/data"
 
-RAW_IMG="ukama-amplifier-node.img"
-
-BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
-BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
+RAW_IMG="ukama-com-image.img"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs 
-MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
 
 trap cleanup EXIT
 
@@ -80,7 +76,7 @@ build_firmware() {
     cd "${path}"
     make clean TARGET="${node}" ROOTFSPATH="${path}/build"
     make TARGET="${node}" ROOTFSPATH="${path}/build"
-    check_status $? "Firmware (at91 and uboot) build successful" ${STAGE}
+    check_status $? "Firmware (coreboot) build successfull" ${STAGE}
     cd "${cwd}"
 }
 
@@ -168,16 +164,6 @@ unmount_partition() {
     check_status $? "${mount_point} unmounted" "${STAGE}"
 }
 
-copy_bootloaders() {
-    STAGE="copy_bootloaders"
-    log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
-
-    sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
-    sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
-
-    check_status $? "Bootloaders copied" ${STAGE}
-}
-
 copy_rootfs() {
     STAGE="copy_rootfs"
 
@@ -246,35 +232,12 @@ detach_loop_device() {
     check_status $? "Loop device detached" ${STAGE}
 }
 
-copy_misc_files() {
-	DEST_DIR=$1
-	# MISC FILES Copy
-	if [ -d "${MISC_FILES_DIR}" ] && [ "$(ls -A ${MISC_FILES_DIR})" ]; then
-    	log "INFO" "${MISC_FILES_DIR} exist."
-		rsync -aAXv ${MISC_FILES_DIR}/* ${DEST_DIR}/
-	else
-    	log "Nothing to copy" "${MISC_FILES_DIR} does not exist"
-	fi
-	
-}
-
 # Main
 if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
     log "INFO" "ROOTFS exist."
 else
     log "ERROR" "${ROOTFS_DIR} does not exist"
     log "INFO" "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
-    exit 1
-fi
-
-build_firmware "amplifier"
-if [ ! -f "${BOOT1_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-    exit 1
-fi
-
-if [ ! -f "${BOOT2_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT2_BIN} does not exist"
     exit 1
 fi
 
@@ -287,15 +250,10 @@ format_partitions
 mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
-copy_bootloaders
 copy_rootfs
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
 update_fstab "${PASSIVE_MOUNT}"
-
-#these files are secific to amplifier nodes
-copy_misc_files "${PRIMARY_MOUNT}"
-copy_misc_files "${PASSIVE_MOUNT}"
 
 unmount_partition "${BOOT_MOUNT}"
 unmount_partition "${PRIMARY_MOUNT}"
@@ -303,3 +261,4 @@ unmount_partition "${PASSIVE_MOUNT}"
 detach_loop_device
 
 log "SUCCESS" "Disk image creation completed successfully!"
+

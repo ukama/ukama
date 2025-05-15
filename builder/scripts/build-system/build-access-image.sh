@@ -5,6 +5,8 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
+# Build image for Ukama access node.
+
 set -e
 
 STAGE="init"
@@ -17,13 +19,11 @@ PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 DATA_MOUNT="/media/data"
 
-RAW_IMG="ukama-amplifier-node.img"
+RAW_IMG="ukama-access-node.img"
 
-BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
-BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
-
-ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs 
-MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
+ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs/
+FIRMWARE_REPO="https://github.com/raspberrypi/firmware"
+FIRMWARE_ZIP_URL="${FIRMWARE_REPO}/archive/refs/heads/master.zip"
 
 trap cleanup EXIT
 
@@ -32,10 +32,10 @@ log() {
     local message="$2"
     local color
     case "$type" in
-        "INFO") color="\033[1;34m";;
+        "INFO")    color="\033[1;34m";;
         "SUCCESS") color="\033[1;32m";;
-        "ERROR") color="\033[1;31m";;
-        *) color="\033[1;37m";;
+        "ERROR")   color="\033[1;31m";;
+        *)         color="\033[1;37m";;
     esac
     echo -e "${color}${type}: ${message}\033[0m"
 }
@@ -70,18 +70,34 @@ create_disk_image() {
     check_status $? "Raw image created" ${STAGE}
 }
 
-build_firmware() {
-    STAGE="build_firmware"
-    local node=$1
-    local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
-    cwd=$(pwd)
-    log "INFO" "Building firmware for Node: ${node}"
+download_and_copy_rpi_firmware() {
+    STAGE="download_and_copy_rpi_firmware"
+    BOOT_DIR="$1"
+    TMP_DIR="/tmp/rpi-bootloader"
 
-    cd "${path}"
-    make clean TARGET="${node}" ROOTFSPATH="${path}/build"
-    make TARGET="${node}" ROOTFSPATH="${path}/build"
-    check_status $? "Firmware (at91 and uboot) build successful" ${STAGE}
-    cd "${cwd}"
+    log "INFO" "Downloading Raspberry Pi bootloader from $FIRMWARE_REPO ..."
+
+    # Clean up previous temp dir
+    rm -rf "$TMP_DIR"
+    mkdir -p "$TMP_DIR"
+
+    wget -qO "$TMP_DIR/master.zip" "$FIRMWARE_ZIP_URL"
+    unzip -q "$TMP_DIR/master.zip" -d "$TMP_DIR"
+
+    FIRMWARE_BOOT="$TMP_DIR/firmware-master/boot"
+    if [ ! -d "$FIRMWARE_BOOT" ]; then
+        log "ERROR" "Failed to extract firmware boot folder"
+        return 1
+    fi
+
+    mkdir -p "$BOOT_DIR"
+    cp "$FIRMWARE_BOOT"/{bootcode.bin,start*.elf,fixup*.dat,config.txt,cmdline.txt} \
+       "$BOOT_DIR" 2>/dev/null || true
+    cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR" 2>/dev/null || true
+
+    log "INFO" "Bootloader files copied to $BOOT_DIR"
+
+    rm -rf "$TMP_DIR"
 }
 
 setup_loop_device() {
@@ -107,7 +123,7 @@ partition_image() {
     log "INFO" "Creating partitions on ${LOOPDISK} using sfdisk"
     sudo sfdisk "${LOOPDISK}" <<-__EOF__
 label: dos
-,1G,83      
+,1G,83
 ,4G,83
 ,,5
 ,6G,83
@@ -134,7 +150,7 @@ format_partitions() {
 
     mkfs.vfat -F 32 -n boot "${DISK}1"
     check_status $? "boot partition formatted" ${STAGE}
-	
+
 	mkfs.ext4 -L recovery "${DISK}2"
     check_status $? "recovery rootfs formatted" ${STAGE}
 
@@ -149,7 +165,6 @@ format_partitions() {
 
 	mkswap "${DISK}8"
 	check_status $? "swap partition created" ${STAGE}
-    
 }
 
 mount_partition() {
@@ -168,27 +183,17 @@ unmount_partition() {
     check_status $? "${mount_point} unmounted" "${STAGE}"
 }
 
-copy_bootloaders() {
-    STAGE="copy_bootloaders"
-    log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
-
-    sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
-    sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
-
-    check_status $? "Bootloaders copied" ${STAGE}
-}
-
 copy_rootfs() {
     STAGE="copy_rootfs"
 
     log "INFO" "Copying rootfs to primary and passive"
 	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
-	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc	
+	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc
 
 	log "INFO" "Copying rootfs to primary and passive"
 	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
     mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
-	
+
 	sync
 }
 
@@ -246,35 +251,12 @@ detach_loop_device() {
     check_status $? "Loop device detached" ${STAGE}
 }
 
-copy_misc_files() {
-	DEST_DIR=$1
-	# MISC FILES Copy
-	if [ -d "${MISC_FILES_DIR}" ] && [ "$(ls -A ${MISC_FILES_DIR})" ]; then
-    	log "INFO" "${MISC_FILES_DIR} exist."
-		rsync -aAXv ${MISC_FILES_DIR}/* ${DEST_DIR}/
-	else
-    	log "Nothing to copy" "${MISC_FILES_DIR} does not exist"
-	fi
-	
-}
-
 # Main
 if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
     log "INFO" "ROOTFS exist."
 else
     log "ERROR" "${ROOTFS_DIR} does not exist"
-    log "INFO" "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
-    exit 1
-fi
-
-build_firmware "amplifier"
-if [ ! -f "${BOOT1_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-    exit 1
-fi
-
-if [ ! -f "${BOOT2_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT2_BIN} does not exist"
+    log "INFO" "Make sure you have run build-env-setup and rootfs-env-setup.sh scripts"
     exit 1
 fi
 
@@ -287,15 +269,11 @@ format_partitions
 mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
-copy_bootloaders
+download_and_copy_rpi_firmware "${BOOT_MOUNT}"
 copy_rootfs
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
 update_fstab "${PASSIVE_MOUNT}"
-
-#these files are secific to amplifier nodes
-copy_misc_files "${PRIMARY_MOUNT}"
-copy_misc_files "${PASSIVE_MOUNT}"
 
 unmount_partition "${BOOT_MOUNT}"
 unmount_partition "${PRIMARY_MOUNT}"

@@ -6,9 +6,7 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-# Script to build and package ukamaOS app
-
-set -e 
+set -e
 
 # Initialize variables
 PARTITION_TYPE=""
@@ -16,7 +14,9 @@ ROOTFS_VERSION=""
 SERVICE_NAME=""
 SERVICE_CMD=""
 SERVICE_ARGS=""
-MAJOR_VERSION="v3.21"
+ARCH=""
+VERSION=""
+MIRROR=""
 
 UKAMA_ROOT="/ukamarepo"
 UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
@@ -107,85 +107,140 @@ function install_starter_app() {
     rm -rf starterd_latest/
 }
 
-function copy_linux_files_for_x86_64() {
-   
-	# kernel
-    if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage" ]; then
-        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/bzImage /boot/
-    else
-        log "ERROR" "kernel file missing"
-        exit 1
-    fi
- 
-    # modules
-    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
+function install_rpi4_kernel_from_tarball() {
+    log "INFO" "Installing RPi4 kernel and boot files via Alpine RPi tarball"
 
+    ALPINE_VERSION="${VERSION#v}"
+    ALPINE_RPI_URL="https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VERSION}/releases/aarch64/alpine-rpi-${ALPINE_VERSION}.0-aarch64.tar.gz"
+    TMP_RPI_DIR="/tmp/alpine-rpi"
+    FINAL_BOOT="/boot"
+
+    mkdir -p "$TMP_RPI_DIR/rootfs" "$FINAL_BOOT"
+
+    log "INFO" "Downloading: $ALPINE_RPI_URL"
+    wget -qO "$TMP_RPI_DIR/rpi.tar.gz" "$ALPINE_RPI_URL" || {
+        log "ERROR" "Failed to download $ALPINE_RPI_URL"
+        exit 1
+    }
+
+    log "INFO" "Extracting Alpine RPi image"
+    tar -xzf "$TMP_RPI_DIR/rpi.tar.gz" -C "$TMP_RPI_DIR/rootfs"
+
+    log "INFO" "Copying kernel to /boot/kernel.img"
+    cp "$TMP_RPI_DIR/rootfs/boot/vmlinuz-rpi" "$FINAL_BOOT/kernel.img" || {
+        log "ERROR" "Missing vmlinuz-rpi in tarball"
+        exit 1
+    }
+
+    log "INFO" "Copying bootloader firmware and configs"
+    cp "$TMP_RPI_DIR/rootfs"/bootcode.bin "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/start*.elf "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/fixup*.dat "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/config.txt "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/cmdline.txt "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/*.dtb "$FINAL_BOOT/" 2>/dev/null || true
+
+    log "INFO" "Copying overlays"
+    mkdir -p "$FINAL_BOOT/overlays"
+    cp -a "$TMP_RPI_DIR/rootfs/overlays/"* "$FINAL_BOOT/overlays/" 2>/dev/null || true
+
+    if [ -d "$TMP_RPI_DIR/rootfs/lib/modules" ]; then
+        log "INFO" "Copying kernel modules"
+        mkdir -p "/lib/modules"
+        cp -a "$TMP_RPI_DIR/rootfs/lib/modules/"* "/lib/modules/"
+    else
+        log "WARNING" "No /lib/modules found in RPi tarball"
+    fi
+
+    rm -rf "$TMP_RPI_DIR"
+    log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
-function copy_linux_files_for_armv7() {
-	# kernel
-	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage" ]; then
-		cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/zImage /boot/
-	else
-		log "ERROR" "kernel file missing"
-		exit 1
-	fi
-    
-	# dtb
-	if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
-    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
-	else
-		log "ERROR" "dtb file missing"
-		exit 1
-	fi
+function install_x86_64_kernel() {
+    local kernel_tmp_dir="/tmp/alpine-kernel-x86_64"
+    local miniroot_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-minirootfs-${VERSION#v}.0-x86_64.tar.gz"
+    local kernel_pkg="linux-lts"
 
-	# modules
-	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
-}
+    log "INFO" "Downloading and extracting Alpine minirootfs from $miniroot_url"
+    mkdir -p "$kernel_tmp_dir"
+    curl -sSL "$miniroot_url" | tar -xz -C "$kernel_tmp_dir"
 
-function copy_linux_files_for_aarch64(){
+    log "INFO" "Installing $kernel_pkg directly (no chroot, since we are already inside one)"
+    cp /etc/resolv.conf "$kernel_tmp_dir/etc/resolv.conf"
 
-	# kernel
-	if [ -f "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image" ]; then
-    	cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/Image /boot/
-	else
-        log "ERROR" "kernel file missing"
-        exit 1
-    fi
-	
-	# dtb
-    if find "${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot" -maxdepth 1 -type f -name "*.dtb" | grep -q .; then
-        cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/boot/*.dtb /boot/
-    else
-        log "ERROR" "dtb file missing"
-        exit 1
-    fi
+    echo "${MIRROR}/${VERSION}/main" > "$kernel_tmp_dir/etc/apk/repositories"
 
-    # modules
-    cp -vrf ${UKAMA_ROOT}/nodes/ukamaOS/kernel/build/lib/modules /lib/modules
+    apk --root "$kernel_tmp_dir" --arch x86_64 \
+        --no-cache update
 
+    apk --root "$kernel_tmp_dir" --arch x86_64 \
+        --no-cache add "$kernel_pkg"
+
+    log "INFO" "Copying kernel and modules"
+    mkdir -p /boot /lib/modules
+    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/kernel.img
+    cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
+
+    rm -rf "$kernel_tmp_dir"
+    log "SUCCESS" "$kernel_pkg installed cleanly from minirootfs"
 }
 
 function copy_linux_kernel() {
-    log "INFO" "Copying linux kernel..."
-    #/ukamarepo/nodes/ukamaOS/kernel/build/
-	arch=$(uname -m)
-    # Check the architecture and perform different actions
-	if [[ "$arch" == "x86_64" ]]; then
-    	log "INFO" "System is 64-bit architecture (x86_64)"
-		copy_linux_files_for_x86_64
-	elif [[ "$arch" == "armv7l" ]]; then
-    	log "INFO" "System is 32-bit ARM architecture (armv7l)"
- 		copy_linux_files_for_armv7
-	elif [[ "$arch" == "aarch64" ]]; then
-    	log "INFO" "System is 64-bit ARM architecture (aarch64)"
-		copy_linux_files_for_aarch64
-	else
-    	log "ERROR" "Unknown architecture: $arch"
-    	# Handle any other architecture types or errors
-		exit 1
-	fi 
+    log "INFO" "Setting up kernel for ARCH=$ARCH..."
 
+    KERNEL_TMP_DIR="/tmp/alpine-kernel-${ARCH}"
+    ROOTFS_TMP_DIR="/tmp/alpine-rootfs-${ARCH}"
+
+    case "$ARCH" in
+        x86_64)
+            install_x86_64_kernel
+            ;;
+        armv7)
+            KERNEL_PKG="linux-vanilla"
+            ;;
+        armhf)
+            log "INFO" "Using QEMU-based method to extract ARMHF kernel"
+            LOG_EXEC "${UKAMA_ROOT}/builder/scripts/build-system/extract_armhf_kernel.sh"
+            cp -a "${KERNEL_TMP_DIR}/boot/"* "/boot/"
+            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "/lib/modules/"
+            rm -rf "$KERNEL_TMP_DIR" "$ROOTFS_TMP_DIR"
+            log "SUCCESS" "ARMHF kernel installed via QEMU"
+            return
+            ;;
+        aarch64)
+            install_rpi4_kernel_from_tarball
+            return
+            ;;
+        *)
+            log "ERROR" "Unsupported architecture: $ARCH"
+            exit 1
+            ;;
+    esac
+
+    # apk fallback for x86_64 and armv7
+    APK_TMP="/tmp/alpine-kernel-$ARCH"
+    mkdir -p "$APK_TMP"
+
+    LOG_EXEC apk --root "$APK_TMP" --arch "$ARCH" \
+        --initdb \
+        --no-cache \
+        --repository "$MIRROR/$VERSION/main" \
+        add "$KERNEL_PKG"
+
+    mkdir -p "/boot"
+
+    case "$ARCH" in
+        armv7)
+            cp "$APK_TMP/boot/zImage" "/boot/kernel.img"
+            ;;
+    esac
+
+    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "/boot/" \; 2>/dev/null || true
+    mkdir -p "/lib/modules"
+    cp -a "$APK_TMP/lib/modules/"* "/lib/modules/" 2>/dev/null || true
+
+    rm -rf "$APK_TMP"
+    log "SUCCESS" "Kernel installed using apk fallback path"
 }
 
 function copy_all_apps() {
@@ -204,10 +259,10 @@ function copy_required_libs() {
 function copy_misc_files() {
     
 	log "INFO" "Copying various files to image"
-    rm ${MANIFEST_FILE}
+    rm -f ${MANIFEST_FILE}
     create_manifest_file
     
-    #sudo cp ${MANIFEST_FILE} "/manifest.json"
+    sudo mv ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
     install_starter_app "/"
@@ -218,7 +273,6 @@ function copy_misc_files() {
     sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
          "/etc/services"
 }
-
 
 # Update /etc/fstab based on partition type
 update_fstab() {
@@ -269,8 +323,6 @@ NETWORK
     #ifdown eth0 && ifup eth0
     log_message "Network configuration updated for eth0"
 }
-
-
 
 # Create a custom OpenRC service
 create_openrc_service() {
@@ -325,7 +377,11 @@ setup_rootfs() {
     # Install essential packages
     apk add alpine-base openrc busybox bash sudo shadow tzdata
     apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
-    apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk build-base git tcpdump ethtool iperf3 htop vim doas
+    apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev \
+        iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap \
+        libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
+        tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
+        build-base git tcpdump ethtool iperf3 htop vim doas
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -333,7 +389,7 @@ setup_rootfs() {
     # Configure networking
     apk add dhcpcd iproute2 iputils
     rc-update add dhcpcd default
-    rc-service dhcpcd start
+#    rc-service dhcpcd start
 
     # Set hostname
     echo "ukama-linux" > /etc/hostname
@@ -341,9 +397,11 @@ setup_rootfs() {
     # Set up root user
     echo "root:root" | chpasswd
 
-    # Create a new user
-    adduser -D -s /bin/bash -G wheel ukama
-    echo "ukama:ukama" | chpasswd
+    # Create 'ukama' user only if it doesn't already exist
+    if ! id "ukama" >/dev/null 2>&1; then
+        adduser -D -s /bin/bash -G wheel ukama
+        echo "ukama:ukama" | chpasswd
+    fi
     echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
     # Configure doas (instead of sudo)
@@ -354,7 +412,7 @@ setup_rootfs() {
     # Enable SSH access
     apk add openssh
     rc-update add sshd default
-    rc-service sshd start
+#    rc-service sshd start
 
     # Enable system services
     rc-update add networking default
@@ -362,7 +420,7 @@ setup_rootfs() {
     rc-update add dhcpcd default
     rc-update add acpid default
 
-    log_message "INFO" "Root filesystem setup completed."
+    log_message "INFO" "root filesystem setup completed."
 }
 
 function create_manifest_file() {
@@ -453,7 +511,6 @@ EOF
   echo '}'       >> ${MANIFEST_FILE}
 }
 
-
 function setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
 
@@ -476,7 +533,6 @@ function setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created."
 }
 
-
 function get_apps_name() {
 
 	# Loop through each .tar.gz file in the directory
@@ -491,9 +547,7 @@ function get_apps_name() {
 	echo "Extracted app prefixes: ${APP_NAMES[@]}"
 }
 
-
 #Main 
-
 setup_ukama_dirs
 
 log "INFO" "Script ${0} called with args $#"
@@ -505,13 +559,16 @@ for arg in "$@"; do
 done
 
 # Parse options using getopts
-while getopts "p:r:n:c:a:" opt; do
+while getopts "p:r:n:c:a:A:V:M:" opt; do
     case "${opt}" in
         p) PARTITION_TYPE="${OPTARG}" ;;
         r) ROOTFS_VERSION="${OPTARG}" ;;
         n) SERVICE_NAME="${OPTARG}" ;;
         c) SERVICE_CMD="${OPTARG}" ;;
         a) SERVICE_ARGS="${OPTARG}" ;;
+        A) ARCH="${OPTARG}" ;;
+        V) VERSION="${OPTARG}" ;;
+        M) MIRROR="${OPTARG}" ;;
         *) usage ;;
     esac
 done
@@ -527,9 +584,6 @@ if [[ "$PARTITION_TYPE" != "active" && "$PARTITION_TYPE" != "passive" ]]; then
     exit 1
 fi
 
-#copy anyother scripts required
-
-# Main execution
 setup_rootfs  # Set up root filesystem
 
 log "INFO" "Preparing mount for ${PARTITION_TYPE}"
@@ -554,6 +608,6 @@ copy_misc_files
 log "INFO" "Copy kernel"
 copy_linux_kernel
 
-echo "Roootfs build success."
+echo "Rootfs build success."
 exit 0
 ~                                                                     
