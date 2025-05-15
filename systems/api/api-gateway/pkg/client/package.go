@@ -11,6 +11,7 @@ package client
 import (
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
@@ -39,7 +40,7 @@ func NewPackageClientSet(pkg cdplan.PackageClient) Package {
 func (p *datapackage) GetPackage(id string) (*cdplan.PackageInfo, error) {
 	pkg, err := p.pc.Get(id)
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	if pkg.SyncStatus == ukama.StatusTypeUnknown.String() || pkg.SyncStatus == ukama.StatusTypeFailed.String() {
@@ -92,7 +93,7 @@ func (p *datapackage) AddPackage(name, orgId, ownerId, from, to, baserateId stri
 		Networks:      networks,
 	})
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	return pkg, nil
