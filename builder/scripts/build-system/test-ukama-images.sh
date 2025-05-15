@@ -23,8 +23,16 @@ REQUIRED_FILES_BOOT=(
 )
 
 log() {
-    local type="$1"; shift
-    echo -e "\033[1;36m[$type]\033[0m $*"
+    local type="$1"
+    local message="$2"
+    local color
+    case "$type" in
+        "INFO") color="\033[1;34m";;
+        "PASS") color="\033[1;32m";;
+        "ERROR") color="\033[1;31m";;
+        *) color="\033[1;37m";;
+    esac
+    echo -e "${color}${type}: ${message}\033[0m"
 }
 
 fail() {
@@ -46,6 +54,13 @@ test_image() {
     local img="$1"
     log "INFO" "Testing image: $img"
 
+    # Determine if it's a COM image
+    local is_com_image=0
+    if [[ "$(basename "$img")" == "ukama-com-image.img" ]]; then
+        is_com_image=1
+        log "INFO" "Detected COM image — skipping bootloader checks"
+    fi
+
     [ -f "$img" ] || fail "Image not found: $img"
     [ $(stat -c %s "$img") -gt 1048576 ] || fail "Image too small: $img"
 
@@ -66,15 +81,19 @@ test_image() {
         fi
     done
 
-    # Check boot partition files
-    local bootdir="$MOUNT_DIR/p1"
-    for file in "${REQUIRED_FILES_BOOT[@]}"; do
-        if compgen -G "$bootdir$file" > /dev/null; then
-            log "INFO" "Found boot file: $file"
-        else
-            log "WARN" "Boot file not found (optional): $file"
-        fi
-    done
+    # Only check boot files for non-COM images
+    if [[ "$is_com_image" -eq 0 ]]; then
+        local bootdir="$MOUNT_DIR/p1"
+        for file in "${REQUIRED_FILES_BOOT[@]}"; do
+            if compgen -G "$bootdir$file" > /dev/null; then
+                log "INFO" "Found boot file: $file"
+            else
+                log "ERROR" "Boot file not found (optional): $file"
+            fi
+        done
+    else
+        log "INFO" "Boot file checks skipped for COM image"
+    fi
 
     # Check primary rootfs files
     local primarydir="$MOUNT_DIR/p5"
