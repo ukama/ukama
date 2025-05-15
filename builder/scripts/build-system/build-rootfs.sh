@@ -156,6 +156,35 @@ function install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
+function install_x86_64_kernel() {
+    local kernel_tmp_dir="/tmp/alpine-kernel-x86_64"
+    local miniroot_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-minirootfs-${VERSION#v}.0-x86_64.tar.gz"
+    local kernel_pkg="linux-lts"
+
+    log "INFO" "Downloading and extracting Alpine minirootfs from $miniroot_url"
+    mkdir -p "$kernel_tmp_dir"
+    curl -sSL "$miniroot_url" | tar -xz -C "$kernel_tmp_dir"
+
+    log "INFO" "Installing $kernel_pkg directly (no chroot, since we are already inside one)"
+    cp /etc/resolv.conf "$kernel_tmp_dir/etc/resolv.conf"
+
+    echo "${MIRROR}/${VERSION}/main" > "$kernel_tmp_dir/etc/apk/repositories"
+
+    apk --root "$kernel_tmp_dir" --arch x86_64 \
+        --no-cache update
+
+    apk --root "$kernel_tmp_dir" --arch x86_64 \
+        --no-cache add "$kernel_pkg"
+
+    log "INFO" "Copying kernel and modules"
+    mkdir -p /boot /lib/modules
+    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/kernel.img
+    cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
+
+    rm -rf "$kernel_tmp_dir"
+    log "SUCCESS" "$kernel_pkg installed cleanly from minirootfs"
+}
+
 function copy_linux_kernel() {
     log "INFO" "Setting up kernel for ARCH=$ARCH..."
 
@@ -164,7 +193,7 @@ function copy_linux_kernel() {
 
     case "$ARCH" in
         x86_64)
-            KERNEL_PKG="linux-lts"
+            install_x86_64_kernel
             ;;
         armv7)
             KERNEL_PKG="linux-vanilla"
@@ -201,9 +230,6 @@ function copy_linux_kernel() {
     mkdir -p "/boot"
 
     case "$ARCH" in
-        x86_64)
-            cp "$(find "$APK_TMP/boot" -name 'vmlinuz-*' | head -n1)" "/boot/kernel.img"
-            ;;
         armv7)
             cp "$APK_TMP/boot/zImage" "/boot/kernel.img"
             ;;
@@ -582,6 +608,6 @@ copy_misc_files
 log "INFO" "Copy kernel"
 copy_linux_kernel
 
-echo "Roootfs build success."
+echo "Rootfs build success."
 exit 0
 ~                                                                     
