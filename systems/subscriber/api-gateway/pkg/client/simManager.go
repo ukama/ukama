@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
@@ -170,7 +171,7 @@ func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.GetUsages(ctx,
+	resp, err := sm.client.GetUsages(ctx,
 		&pb.UsageRequest{
 			SimId:   simId,
 			SimType: simType,
@@ -179,4 +180,10 @@ func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string
 			To:      to,
 			Region:  region,
 		})
+
+	if err != nil {
+		return nil, cclient.HandleRestErrorStatus(err)
+	}
+
+	return resp, nil
 }

@@ -11,6 +11,7 @@ package client
 import (
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
@@ -41,7 +42,7 @@ func NewSimClientSet(sm csub.SimClient, sb csub.SubscriberClient) Sim {
 func (s *sim) GetSim(id string) (*csub.SimInfo, error) {
 	sim, err := s.smc.Get(id)
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	if sim.SyncStatus == ukama.StatusTypeUnknown.String() || sim.SyncStatus == ukama.StatusTypeFailed.String() {
@@ -99,7 +100,7 @@ func (s *sim) ConfigureSim(subscriberId, orgId, networkId, name,
 		TrafficPolicy: trafficPolicy,
 	})
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	return sim, nil

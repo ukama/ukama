@@ -497,6 +497,7 @@ func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageR
 	}
 
 	return r.clients.sm.GetUsages(req.SimId, req.SimType, cdrType, req.From, req.To, req.Region)
+
 }
 
 func addReqToAddSimReqPb(req *SimPoolAddSimReq) (*simPoolPb.AddRequest, error) {

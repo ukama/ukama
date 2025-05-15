@@ -831,9 +831,8 @@ func TestRouter_RegisterNode(t *testing.T) {
 		}
 
 		nodeInfo := &creg.NodeInfo{
-			Id:    nodeId,
-			Name:  nodeName,
-			OrgId: orgId.String(),
+			Id:   nodeId,
+			Name: nodeName,
 		}
 
 		body, err := json.Marshal(node)

@@ -51,7 +51,7 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
 
 			// fake sim info
-			sim := `{"sim":{"iccid": "890000000000000001234", "imsi": "20000233489900"}}`
+			sim := `{"record":{"iccid": "890000000000000001234", "imsi": "20000233489900"}}`
 
 			// Send mock response
 			return &http.Response{
