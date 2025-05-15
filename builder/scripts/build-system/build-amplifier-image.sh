@@ -80,7 +80,7 @@ build_firmware() {
     cd "${path}"
     make clean TARGET="${node}" ROOTFSPATH="${path}/build"
     make TARGET="${node}" ROOTFSPATH="${path}/build"
-    check_status $? "Firmware (at91 and uboot) build successfull" ${STAGE}
+    check_status $? "Firmware (at91 and uboot) build successful" ${STAGE}
     cd "${cwd}"
 }
 

@@ -256,7 +256,7 @@ if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
     log "INFO" "ROOTFS exist."
 else
     log "ERROR" "${ROOTFS_DIR} does not exist"
-    log "INFO" "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
+    log "INFO" "Make sure you have run build-env-setup and rootfs-env-setup.sh scripts"
     exit 1
 fi
 
