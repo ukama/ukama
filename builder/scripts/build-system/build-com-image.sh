@@ -19,9 +19,6 @@ DATA_MOUNT="/media/data"
 
 RAW_IMG="ukama-com-image.img"
 
-#BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
-#BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
-
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs 
 
 trap cleanup EXIT
@@ -167,16 +164,6 @@ unmount_partition() {
     check_status $? "${mount_point} unmounted" "${STAGE}"
 }
 
-copy_bootloaders() {
-    STAGE="copy_bootloaders"
-    log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
-
-    sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
-    sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
-
-    check_status $? "Bootloaders copied" ${STAGE}
-}
-
 copy_rootfs() {
     STAGE="copy_rootfs"
 
@@ -254,17 +241,6 @@ else
     exit 1
 fi
 
-build_firmware "tower"
-if [ ! -f "${BOOT1_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-    exit 1
-fi
-
-if [ ! -f "${BOOT2_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT2_BIN} does not exist"
-    exit 1
-fi
-
 create_disk_image
 setup_loop_device
 clean_first_50MB
@@ -274,7 +250,6 @@ format_partitions
 mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
-copy_bootloaders
 copy_rootfs
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
