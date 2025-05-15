@@ -501,52 +501,56 @@ class SubscriptionsResolvers {
     };
 
     for (const siteId of siteIds) {
-      for (const metricKey of metricKeys) {
-        const siteUrlParams = new URLSearchParams();
-        siteUrlParams.append("interval", data.step.toString());
-        siteUrlParams.append("metric", metricKey);
-        siteUrlParams.append("site", siteId);
+      const siteUrlParams = new URLSearchParams();
+      siteUrlParams.append("interval", data.step.toString());
+      siteUrlParams.append("metric", metricKeys.join(","));
+      siteUrlParams.append("site", siteId);
 
-        const siteMetricUrl = `${wsUrl}/v1/live/metrics?${siteUrlParams.toString()}`;
+      const siteMetricUrl = `${wsUrl}/v1/live/metrics?${siteUrlParams.toString()}`;
 
-        const siteWorker = new Worker(WS_THREAD, {
-          workerData: { topic: baseTopic, url: siteMetricUrl },
+      const siteWorker = new Worker(WS_THREAD, {
+        workerData: { topic: baseTopic, url: siteMetricUrl },
+      });
+
+      siteWorker.on("message", (wsData: any) =>
+        handleSiteWSMessage(wsData, baseTopic, siteId)
+      );
+
+      siteWorker.on("exit", (code: any) => {
+        logger.info(
+          `WS_THREAD for site ${siteId} with metrics [${metricKeys.join(
+            ", "
+          )}] exited with code [${code}] for ${baseTopic}`
+        );
+      });
+    }
+
+    if (Array.isArray(nodeIds) && nodeIds.length > 0) {
+      for (const nodeId of nodeIds) {
+        const nodeUrlParams = new URLSearchParams();
+        nodeUrlParams.append("interval", data.step.toString());
+        nodeUrlParams.append("metric", metricKeys.join(","));
+        nodeUrlParams.append("node", nodeId);
+
+        const nodeMetricUrl = `${wsUrl}/v1/live/metrics?${nodeUrlParams.toString()}`;
+
+        const nodeWorker = new Worker(WS_THREAD, {
+          workerData: { topic: baseTopic, url: nodeMetricUrl },
         });
 
-        siteWorker.on("message", (wsData: any) =>
-          handleSiteWSMessage(wsData, baseTopic, siteId)
-        );
+        for (const siteId of siteIds) {
+          nodeWorker.on("message", (wsData: any) =>
+            handleSiteWSMessage(wsData, baseTopic, siteId, nodeId)
+          );
+        }
 
-        siteWorker.on("exit", (code: any) => {
+        nodeWorker.on("exit", (code: any) => {
           logger.info(
-            `WS_THREAD for site ${siteId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
+            `WS_THREAD for node ${nodeId} with metrics [${metricKeys.join(
+              ", "
+            )}] exited with code [${code}] for ${baseTopic}`
           );
         });
-
-        if (Array.isArray(nodeIds) && nodeIds.length > 0) {
-          for (const nodeId of nodeIds) {
-            const nodeUrlParams = new URLSearchParams();
-            nodeUrlParams.append("interval", data.step.toString());
-            nodeUrlParams.append("metric", metricKey);
-            nodeUrlParams.append("node", nodeId);
-
-            const nodeMetricUrl = `${wsUrl}/v1/live/metrics?${nodeUrlParams.toString()}`;
-
-            const nodeWorker = new Worker(WS_THREAD, {
-              workerData: { topic: baseTopic, url: nodeMetricUrl },
-            });
-
-            nodeWorker.on("message", (wsData: any) =>
-              handleSiteWSMessage(wsData, baseTopic, siteId, nodeId)
-            );
-
-            nodeWorker.on("exit", (code: any) => {
-              logger.info(
-                `WS_THREAD for node ${nodeId}, metric ${metricKey} exited with code [${code}] for ${baseTopic}`
-              );
-            });
-          }
-        }
       }
     }
   }
