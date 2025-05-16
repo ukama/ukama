@@ -7,13 +7,7 @@
  */
 import { consoleTest } from '../test_base';
 
-consoleTest(
-  'Node actions Test',
-  async ({ page, login, restartNode, nodeRFOff, nodeRFOn, renameNode }) => {
-    await login();
-    await renameNode();
-    await nodeRFOff();
-    await nodeRFOn();
-    await restartNode();
-  },
-);
+consoleTest('Site Actions Test', async ({ page, login, renameSite }) => {
+  await login();
+  await renameSite();
+});

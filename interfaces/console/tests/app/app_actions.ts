@@ -29,6 +29,36 @@ export const appTest = base.extend<ConsoleTests>({
       await page.getByRole('button', { name: 'Submit' }).click();
     });
   },
+  renameNode: async ({ page }, use) => {
+    await use(async () => {
+      await page.getByRole('link', { name: 'Nodes' }).click();
+      await page.locator('table tbody tr:first-child td:first-child a').click();
+      await page.getByRole('button', { name: 'Edit NODE' }).click();
+      await page.getByRole('textbox', { name: 'NODE NAME' }).click();
+      await page
+        .getByRole('textbox', { name: 'NODE NAME' })
+        .press('ControlOrMeta+a');
+      await page
+        .getByRole('textbox', { name: 'NODE NAME' })
+        .fill(`${faker.lorem.word(5)}-node`);
+      await page.getByRole('button', { name: 'Save' }).click();
+    });
+  },
+  renameSite: async ({ page }, use) => {
+    await use(async () => {
+      await page.getByRole('link', { name: 'Sites' }).click();
+      await page.getByRole('button', { name: 'menu' }).click();
+      await page.getByRole('menuitem', { name: 'Edit Name' }).click();
+      await page.getByRole('textbox', { name: 'Site Name' }).click();
+      await page
+        .getByRole('textbox', { name: 'Site Name' })
+        .press('ControlOrMeta+a');
+      await page
+        .getByRole('textbox', { name: 'Site Name' })
+        .fill(`${faker.lorem.word(4)}-site`);
+      await page.getByRole('button', { name: 'Save' }).click();
+    });
+  },
   createSubscriber: async ({ page }, use) => {
     await use(async () => {
       await page.getByRole('link', { name: 'Subscribers' }).click();

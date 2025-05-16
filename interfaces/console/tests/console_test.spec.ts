@@ -5,28 +5,30 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from './helpers';
 import { consoleTest } from './test_base';
 
 consoleTest.describe('Console End-to-End Test Flow', () => {
-  consoleTest('1. Login Test', async ({ page }) => {
-    await login(page);
+  consoleTest('1. Login Test', async ({ page, login }) => {
+    await login();
   });
 
-  consoleTest('2. Onboarding Test', async ({ page, onboarding }) => {
-    await login(page);
+  consoleTest('2. Onboarding Test', async ({ page, onboarding, login }) => {
+    await login();
     await onboarding();
   });
 
-  consoleTest('3. Sim Pool Management Test', async ({ page, uploadSims }) => {
-    await login(page);
-    await uploadSims();
-  });
+  consoleTest(
+    '3. Sim Pool Management Test',
+    async ({ page, uploadSims, login }) => {
+      await login();
+      await uploadSims();
+    },
+  );
 
   consoleTest(
     '4. Data Plan Management Test',
-    async ({ page, createMonthlyPlan, createDailyPlan, editPlan }) => {
-      await login(page);
+    async ({ page, createMonthlyPlan, createDailyPlan, editPlan, login }) => {
+      await login();
       await createMonthlyPlan();
       await createDailyPlan();
       await editPlan();
@@ -35,20 +37,33 @@ consoleTest.describe('Console End-to-End Test Flow', () => {
 
   consoleTest(
     '5. Subscriber Management Test',
-    async ({ page, createSubscriber, topupSubscriberData }) => {
-      await login(page);
+    async ({ page, createSubscriber, topupSubscriberData, login }) => {
+      await login();
       await createSubscriber();
       await topupSubscriberData();
     },
   );
 
-  consoleTest('6. Network Management Test', async ({ page, createNetwork }) => {
-    await login(page);
-    await createNetwork();
+  consoleTest(
+    '6. Network Management Test',
+    async ({ page, createNetwork, login }) => {
+      await login();
+      await createNetwork();
+    },
+  );
+
+  consoleTest('7. Rename Site Test', async ({ page, renameSite, login }) => {
+    await login();
+    await renameSite();
   });
 
-  consoleTest('7. Logout Test', async ({ page, logout }) => {
-    await login(page);
+  consoleTest('8. Rename Node Test', async ({ page, renameNode, login }) => {
+    await login();
+    await renameNode();
+  });
+
+  consoleTest('9. Logout Test', async ({ page, logout, login }) => {
+    await login();
     await logout();
   });
 });
