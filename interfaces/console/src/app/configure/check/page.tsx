@@ -30,6 +30,8 @@ import { Button, Stack } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+const DURATION = 5;
+
 const Check = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -38,7 +40,6 @@ const Check = () => {
   const [node, setNode] = useState<Node | undefined>(undefined);
   const nodeId = searchParams.get('nid') ?? '';
   const networkId = searchParams.get('networkid') ?? '';
-  const [duration, setDuration] = useState(5);
   const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const [showReturn, setShowReturn] = useState(false);
   const [title] = useState(
@@ -54,16 +55,8 @@ const Check = () => {
   const [description, setDescription] = useState('');
   const { setSnackbarMessage } = useAppContext();
 
-  console.log(
-    !networkId || !network.id,
-    !networkId,
-    !network.id,
-    networkId,
-    network.id,
-  );
-
   useGetNetworksQuery({
-    skip: !(!networkId || !network.id),
+    skip: !network.id,
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0) {
@@ -208,7 +201,6 @@ const Check = () => {
   const handleRetry = () => {
     setSubtitle(flow === NETWORK_FLOW ? 'Loading up your network...' : '');
     setDescription('');
-    setDuration(5);
     setShowReturn(false);
     getNodesByState({
       variables: {
@@ -239,7 +231,7 @@ const Check = () => {
   return (
     <Stack spacing={{ xs: 4, md: 6 }}>
       <InstallSiteLoading
-        duration={duration}
+        duration={DURATION}
         title={title}
         subtitle={subtitle}
         handleBack={handleBack}
