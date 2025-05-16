@@ -75,7 +75,7 @@ export const manageTest = base.extend<ConsoleTests>({
       await page
         .locator('input[type="file"]')
         .setInputFiles(
-          `${SIM_POOL_CSV_PATH}/100Sims_part_${faker.number.int({ min: 2, max: 50 })}.csv`,
+          `${process.cwd()}/${SIM_POOL_CSV_PATH}/100Sims_part_${faker.number.int({ min: 2, max: 50 })}.csv`,
         );
       await page.getByRole('button', { name: 'Claim' }).click();
     });

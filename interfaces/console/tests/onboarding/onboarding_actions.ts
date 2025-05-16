@@ -45,7 +45,10 @@ export const onboardingTest = base.extend<ConsoleTests>({
       await page.getByRole('button', { name: 'Configure site' }).click();
       await page
         .locator('input[type="file"]')
-        .setInputFiles(`${SIM_POOL_CSV_PATH}/100Sims_part_1.csv`);
+        .setInputFiles(
+          `${process.cwd()}/${SIM_POOL_CSV_PATH}/100Sims_part_1.csv`,
+        );
+
       await page.getByRole('button', { name: 'Upload sims' }).click();
       await page.getByRole('button', { name: 'Continue to console' }).click();
     });

@@ -128,6 +128,7 @@ const Page = () => {
               isIdHyperlink={true}
               columns={MANAGE_SIM_POOL_COLUMN}
               hyperlinkPrefix="/console/subscribers?"
+              height="calc(100vh - 320px)"
             />
           )}
         </Box>
