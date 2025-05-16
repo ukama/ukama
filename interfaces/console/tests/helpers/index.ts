@@ -20,9 +20,6 @@ interface SimRecord {
   QrCode: string;
 }
 
-/**
- * Generates a single fake SIM record.
- */
 function generateSimRecord(index: number): SimRecord {
   return {
     'Unnamed: 0': index,
@@ -35,11 +32,6 @@ function generateSimRecord(index: number): SimRecord {
   };
 }
 
-/**
- * Generates a CSV file with fake SIM records.
- * @param recordCount - Number of records to generate
- * @param filePath - Full file path to save the CSV file
- */
 export async function createFakeSimCSV(
   recordCount: number,
   filePath: string,

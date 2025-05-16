@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +5,7 @@ import { faker } from '@faker-js/faker';
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { faker } from '@faker-js/faker';
 import { test as base } from '@playwright/test';
 import { log } from 'node:console';
 import { ConsoleTests } from '../types';
