@@ -164,7 +164,6 @@ const SubscriberDetails: React.FC<SubscriberProps> = ({
         <MenuItem
           onClick={() => handleMenuItemClick('deleteSubscriber')}
           sx={{ color: colors.red }}
-          disabled={true}
         >
           Delete subscriber
         </MenuItem>
