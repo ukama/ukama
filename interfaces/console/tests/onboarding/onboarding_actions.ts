@@ -7,7 +7,8 @@
  */
 import { faker } from '@faker-js/faker';
 import { test as base } from '@playwright/test';
-import { CONSOLE_ROOT_URL, SIM_POOL_CSV_PATH } from '../constants';
+import { CONSOLE_ROOT_URL, TMP_SIMS_PATH } from '../constants';
+import { createFakeSimCSV } from '../helpers';
 import { ConsoleTests } from '../types';
 
 export const onboardingTest = base.extend<ConsoleTests>({
@@ -43,12 +44,10 @@ export const onboardingTest = base.extend<ConsoleTests>({
       await page.getByRole('combobox', { name: 'BACKHAUL' }).click();
       await page.locator('li:nth-child(1)').click();
       await page.getByRole('button', { name: 'Configure site' }).click();
+      await createFakeSimCSV(2, `${process.cwd()}/${TMP_SIMS_PATH}/Sims_1.csv`);
       await page
         .locator('input[type="file"]')
-        .setInputFiles(
-          `${process.cwd()}/${SIM_POOL_CSV_PATH}/100Sims_part_1.csv`,
-        );
-
+        .setInputFiles(`${process.cwd()}/${TMP_SIMS_PATH}/Sims_1.csv`);
       await page.getByRole('button', { name: 'Upload sims' }).click();
       await page.getByRole('button', { name: 'Continue to console' }).click();
     });

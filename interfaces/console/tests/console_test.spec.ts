@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from './helpers/auth';
+import { login } from './helpers';
 import { consoleTest } from './test_base';
 
 consoleTest.describe('Console End-to-End Test Flow', () => {

@@ -5,10 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { appTest } from './app_actions';
+import { consoleTest } from '../test_base';
 
-appTest('Logout Test', async ({ page, logout }) => {
-  await login(page);
+consoleTest('Logout Test', async ({ page, login, logout }) => {
+  await login();
   await logout();
 });

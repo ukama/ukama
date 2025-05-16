@@ -7,7 +7,8 @@
  */
 import { faker } from '@faker-js/faker';
 import { test as base } from '@playwright/test';
-import { SIM_POOL_CSV_PATH } from '../constants';
+import { TMP_SIMS_PATH } from '../constants';
+import { createFakeSimCSV } from '../helpers';
 import { ConsoleTests } from '../types';
 
 export const manageTest = base.extend<ConsoleTests>({
@@ -72,11 +73,14 @@ export const manageTest = base.extend<ConsoleTests>({
       await page.locator('#manage-btn').click();
       await page.getByRole('link', { name: 'SIM pool' }).click();
       await page.getByRole('button', { name: 'CLAIM SIMS' }).click();
+      const name = `Sims_${faker.number.int({ min: 1, max: 100 })}`;
+      await createFakeSimCSV(
+        2,
+        `${process.cwd()}/${TMP_SIMS_PATH}/${name}.csv`,
+      );
       await page
         .locator('input[type="file"]')
-        .setInputFiles(
-          `${process.cwd()}/${SIM_POOL_CSV_PATH}/100Sims_part_${faker.number.int({ min: 2, max: 50 })}.csv`,
-        );
+        .setInputFiles(`${process.cwd()}/${TMP_SIMS_PATH}/${name}.csv`);
       await page.getByRole('button', { name: 'Claim' }).click();
     });
   },

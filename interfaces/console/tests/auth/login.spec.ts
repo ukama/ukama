@@ -5,9 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import test from '@playwright/test';
-import { login } from '../helpers/auth';
+import { authTest } from './auth_actions';
 
-test('Login Test', async ({ page }) => {
-  await login(page);
+authTest('Login Test', async ({ page, login }) => {
+  await login();
 });

@@ -5,10 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { manageTest } from './manage_actions';
+import { consoleTest } from '../test_base';
 
-manageTest('Sim Pool Test', async ({ page, uploadSims }) => {
-  await login(page);
+consoleTest('Sim Pool Test', async ({ page, login, uploadSims }) => {
+  await login();
   await uploadSims();
 });

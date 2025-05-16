@@ -5,13 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { appTest } from './app_actions';
+import { consoleTest } from '../test_base';
 
-appTest(
+consoleTest(
   'Node actions Test',
-  async ({ page, restartNode, nodeRFOff, nodeRFOn }) => {
-    await login(page);
+  async ({ page, login, restartNode, nodeRFOff, nodeRFOn }) => {
+    await login();
     await nodeRFOff();
     await nodeRFOn();
     await restartNode();

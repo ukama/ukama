@@ -5,13 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { appTest } from './app_actions';
+import { consoleTest } from '../test_base';
 
-appTest(
+consoleTest(
   'Subscriber Test',
-  async ({ page, createSubscriber, topupSubscriberData }) => {
-    await login(page);
+  async ({ page, login, createSubscriber, topupSubscriberData }) => {
+    await login();
     await createSubscriber();
     await topupSubscriberData();
   },

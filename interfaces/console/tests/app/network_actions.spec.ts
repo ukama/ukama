@@ -5,10 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { appTest } from './app_actions';
+import { consoleTest } from '../test_base';
 
-appTest('Network Test', async ({ page, createNetwork }) => {
-  await login(page);
+consoleTest('Network Test', async ({ page, login, createNetwork }) => {
+  await login();
   await createNetwork();
 });

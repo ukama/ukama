@@ -5,13 +5,12 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { manageTest } from './manage_actions';
+import { consoleTest } from '../test_base';
 
-manageTest(
+consoleTest(
   'Data Plan Test',
-  async ({ page, editPlan, createMonthlyPlan, createDailyPlan }) => {
-    await login(page);
+  async ({ page, login, editPlan, createMonthlyPlan, createDailyPlan }) => {
+    await login();
     await createMonthlyPlan();
     await createDailyPlan();
     await editPlan();

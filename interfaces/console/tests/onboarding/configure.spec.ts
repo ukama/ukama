@@ -5,10 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { login } from '../helpers/auth';
-import { onboardingTest } from './onboarding_actions';
+import { consoleTest } from '../test_base';
 
-onboardingTest('OnBoarding Test', async ({ page, onboarding }) => {
-  await login(page);
+consoleTest('OnBoarding Test', async ({ page, login, onboarding }) => {
+  await login();
   await onboarding();
 });
