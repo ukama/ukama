@@ -133,6 +133,13 @@ export const BILLING_TABLE_COLUMNS: ColumnsWithOptions[] = [
 export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   { id: 1, Icon: null, title: 'Edit subscriber', route: 'edit-sub' },
   { id: 2, Icon: null, title: 'Top up data', route: 'top-up-data' },
+  {
+    id: 3,
+    Icon: null,
+    title: 'Delete subscriber',
+    route: 'delete-sub',
+    color: colors.redMatt,
+  },
 ];
 
 export const BILLING_HISTORY_TABLE_MENU: MenuItemType[] = [

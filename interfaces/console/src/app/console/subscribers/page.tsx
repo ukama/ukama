@@ -64,7 +64,10 @@ const Page = () => {
     useState<boolean>(false);
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [deletedSubscriber, setDeletedSubscriber] = useState<string>('');
+  const [deletedSubscriber, setDeletedSubscriber] = useState<{
+    id: string;
+    name: string;
+  }>({ id: '', name: '' });
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [topUpSubscriberName, setTopUpSubscriberName] = useState('');
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
@@ -312,7 +315,7 @@ const Page = () => {
   const handleDeleteSubscriber = () => {
     deleteSubscriber({
       variables: {
-        subscriberId: deletedSubscriber,
+        subscriberId: deletedSubscriber.id,
       },
     });
   };
@@ -340,8 +343,15 @@ const Page = () => {
   const onTableMenuItem = async (id: string, type: string) => {
     switch (type) {
       case 'delete-sub':
+        const subscriberToDelete =
+          data?.getSubscribersByNetwork.subscribers.find(
+            (subscriber) => subscriber.uuid === id,
+          );
         setIsConfirmationOpen(true);
-        setDeletedSubscriber(id);
+        setDeletedSubscriber({
+          id: id,
+          name: subscriberToDelete?.name ?? 'This subscriber',
+        });
         break;
 
       case 'top-up-data':
@@ -708,7 +718,7 @@ const Page = () => {
         open={isConfirmationOpen}
         onDelete={handleDeleteSubscriber}
         onCancel={handleCancel}
-        itemName={deletedSubscriber}
+        itemName={deletedSubscriber.name}
         loading={deleteSubscriberLoading}
       />
       <SubscriberDetails
