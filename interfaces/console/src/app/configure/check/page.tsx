@@ -56,7 +56,7 @@ const Check = () => {
   const { setSnackbarMessage } = useAppContext();
 
   useGetNetworksQuery({
-    skip: !network.id,
+    skip: !!network.id,
     fetchPolicy: 'cache-and-network',
     onCompleted: (data) => {
       if (data.getNetworks.networks.length > 0) {
