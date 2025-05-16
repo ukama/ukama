@@ -19,4 +19,5 @@ export type ConsoleTests = {
   restartNode: () => Promise<void>;
   nodeRFOff: () => Promise<void>;
   nodeRFOn: () => Promise<void>;
+  logout: () => Promise<void>;
 };

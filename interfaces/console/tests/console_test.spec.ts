@@ -46,4 +46,9 @@ consoleTest.describe('Console End-to-End Test Flow', () => {
     await login(page);
     await createNetwork();
   });
+
+  consoleTest('7. Logout Test', async ({ page, logout }) => {
+    await login(page);
+    await logout();
+  });
 });

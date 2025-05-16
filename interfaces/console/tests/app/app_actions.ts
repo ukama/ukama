@@ -105,6 +105,12 @@ export const appTest = base.extend<ConsoleTests>({
       await page.getByRole('button', { name: 'Confirm' }).click();
     });
   },
+  logout: async ({ page }, use) => {
+    await use(async () => {
+      await page.locator('button').nth(3).click();
+      await page.getByRole('link', { name: 'Logout of account' }).click();
+    });
+  },
 });
 
 export { expect } from '@playwright/test';
