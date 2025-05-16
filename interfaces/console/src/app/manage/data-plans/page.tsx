@@ -225,6 +225,7 @@ const DataPlansPage = () => {
           <PageContainerHeader
             showSearch={false}
             title={'Data plans'}
+            buttonId="create-data-plan-btn"
             buttonTitle={'CREATE DATA PLAN'}
             handleButtonAction={handleAddDataPlanAction}
           />

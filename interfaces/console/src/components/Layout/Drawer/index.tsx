@@ -32,8 +32,8 @@ const BasicDropdown = dynamic(() => import('@/components/BasicDropdown'), {
 interface IUDrawer {
   placeholder: string;
   networks: NetworkDto[];
-  handleAddNetwork: Function;
-  handleNetworkChange: Function;
+  handleAddNetwork: () => void;
+  handleNetworkChange: (value: string) => void;
 }
 
 export default function UDrawer({
@@ -77,6 +77,7 @@ export default function UDrawer({
     >
       <Box mx={2} my={2}>
         <BasicDropdown
+          id={'network-dropdown'}
           value={network.id}
           list={getDropDownData()}
           isShowAddOption={isOwner}

@@ -374,7 +374,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
               >
                 Select the purchased data plan
               </Typography>
-              <Field name="plan">
+              <Field name="plan" id="add-subscriber-plan-select">
                 {({ field, meta }: any) => (
                   <FormControl
                     fullWidth
@@ -385,6 +385,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                     </InputLabel>
                     <Select
                       {...field}
+                      label="DATA PLAN"
                       input={
                         <OutlinedInput
                           notched
