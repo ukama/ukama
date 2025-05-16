@@ -24,9 +24,9 @@ interface ILayoutProps {
   isDarkMode: boolean;
   networks: NetworkDto[];
   children: React.ReactNode;
-  handleAddNetwork: Function;
-  handleNetworkChange: Function;
+  handleAddNetwork: () => void;
   notifications: NotificationsRes;
+  handleNetworkChange: (value: string) => void;
   handleAction: (action: string, id: string) => void;
 }
 

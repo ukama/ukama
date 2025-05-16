@@ -58,6 +58,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   isCompactView,
 }) => (
   <Link
+    id={id}
     href={path}
     prefetch={id === 'manage-members'}
     style={{
