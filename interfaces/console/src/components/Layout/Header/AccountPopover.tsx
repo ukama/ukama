@@ -37,6 +37,7 @@ const AccountPopover = () => {
   return (
     <>
       <IconButton
+        id="account-settings-btn"
         sx={{
           ...IconStyle,
         }}

@@ -107,7 +107,7 @@ export const appTest = base.extend<ConsoleTests>({
   },
   logout: async ({ page }, use) => {
     await use(async () => {
-      await page.locator('button').nth(3).click();
+      await page.locator('#account-settings-btn').click();
       await page.getByRole('link', { name: 'Logout of account' }).click();
     });
   },
