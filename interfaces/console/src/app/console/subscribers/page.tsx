@@ -19,6 +19,7 @@ import {
   useGetDataUsagesLazyQuery,
   useGetPackagesQuery,
   useGetSimsBySubscriberLazyQuery,
+  useGetPackagesForSimLazyQuery,
   useGetSimsFromPoolQuery,
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
@@ -30,7 +31,7 @@ import DeleteConfirmation from '@/components/DeleteDialog';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
-import SubscriberDetails from '@/components/SubscriberDetails';
+import SubscriberDetailsDialog from '@/components/SubscriberDetailsDialog';
 import TopUpData from '@/components/TopUpData';
 import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
 import { useAppContext } from '@/context';
@@ -57,6 +58,7 @@ const Page = () => {
   const [search, setSearch] = useState<string>('');
   const { setSnackbarMessage, network, env, user, subscriptionClient } =
     useAppContext();
+  const [simPackageHistories, setSimPackageHistories] = useState<any[]>([]);
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
@@ -64,6 +66,7 @@ const Page = () => {
     useState<boolean>(false);
   const [subscriberSimList, setSubscriberSimList] = useState<any[]>();
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [dataUsageForSim, setDataUsageForSim] = useState<string>('');
   const [deletedSubscriber, setDeletedSubscriber] = useState<{
     id: string;
     name: string;
@@ -73,7 +76,6 @@ const Page = () => {
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
     subscribers: [],
   });
-
   const { data: packagesData, loading: packagesLoading } = useGetPackagesQuery({
     fetchPolicy: 'cache-and-network',
     onError: (error) => {
@@ -150,6 +152,28 @@ const Page = () => {
     },
   });
 
+  const [getPackagesForSim, { loading: packagesForSimLoading }] =
+    useGetPackagesForSimLazyQuery({
+      onCompleted: (res) => {
+        if (res.getPackagesForSim && res.getPackagesForSim.packages) {
+          setSimPackageHistories((prevHistories) => [
+            ...prevHistories,
+            ...res.getPackagesForSim.packages.map((pkg) => ({
+              ...pkg,
+              simId: res.getPackagesForSim.sim_id,
+            })),
+          ]);
+        }
+      },
+      onError: (error) => {
+        setSnackbarMessage({
+          id: 'packages-history-error',
+          message: error.message,
+          type: 'error' as AlertColor,
+          show: true,
+        });
+      },
+    });
   const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
     useToggleSimStatusMutation({
       onCompleted: () => {
@@ -400,10 +424,49 @@ const Page = () => {
 
   const handleOpenSubscriberDetails = useCallback(
     (id: string) => {
+      setSimPackageHistories([]);
+
       const subscriberInfo = data?.getSubscribersByNetwork.subscribers.find(
         (subscriber) => subscriber.uuid === id,
       );
       setIsSubscriberDetailsOpen(true);
+
+      getSimBySubscriber({
+        variables: {
+          data: {
+            subscriberId: id,
+          },
+        },
+        onCompleted: (res) => {
+          if (res.getSimsBySubscriber && res.getSimsBySubscriber.sims) {
+            setSubscriberSimList(res.getSimsBySubscriber.sims);
+
+            if (res.getSimsBySubscriber.sims.length > 0) {
+              const firstSim = res.getSimsBySubscriber.sims[0];
+              getPackagesForSim({
+                variables: {
+                  data: {
+                    sim_id: firstSim.id,
+                  },
+                },
+              });
+            }
+          }
+        },
+      });
+      getDataUsages({
+        variables: {
+          data: {
+            type: Sim_Types.UkamaData,
+            networkId: network.id,
+          },
+        },
+      });
+      setDataUsageForSim(
+        dataUsageData?.getDataUsages.usages.find(
+          (usage) => usage.simId === subscriberInfo?.sim?.[0]?.id,
+        )?.usage ?? '',
+      );
       if (subscriberInfo) {
         const usageData = dataUsageData?.getDataUsages.usages.find(
           (usage) => usage.simId === subscriberInfo.sim?.[0]?.id,
@@ -425,6 +488,8 @@ const Page = () => {
       data?.getSubscribersByNetwork.subscribers,
       dataUsageData?.getDataUsages.usages,
       packagesData?.getPackages.packages,
+      getSimBySubscriber,
+      getPackagesForSim,
     ],
   );
 
@@ -565,6 +630,8 @@ const Page = () => {
         direction === 'left' ? -scrollAmount : scrollAmount;
     }
   };
+  console.log('subscriber');
+
   return (
     <Stack
       mt={2}
@@ -721,15 +788,32 @@ const Page = () => {
         itemName={deletedSubscriber.name}
         loading={deleteSubscriberLoading}
       />
-      <SubscriberDetails
-        ishowSubscriberDetails={isSubscriberDetailsOpen}
-        handleClose={handleCloseSubscriberDetails}
-        subscriberInfo={subscriberDetails}
-        handleSimActionOption={handleSimAction}
-        handleUpdateSubscriber={handleUpdateSubscriber}
-        loading={updateSubscriberLoading}
-        handleDeleteSubscriber={handleSubscriberMenuAction}
-        simStatusLoading={toggleSimStatusLoading}
+
+      <SubscriberDetailsDialog
+        open={isSubscriberDetailsOpen}
+        onClose={handleCloseSubscriberDetails}
+        subscriber={{
+          id: subscriberDetails?.uuid || '',
+          firstName: subscriberDetails?.name || '',
+          email: subscriberDetails?.email || '',
+        }}
+        onUpdateSubscriber={(updates) =>
+          handleUpdateSubscriber(subscriberDetails?.uuid, updates)
+        }
+        onDeleteSubscriber={() =>
+          handleSubscriberMenuAction(
+            'deleteSubscriber',
+            subscriberDetails?.uuid,
+          )
+        }
+        onTopUpPlan={handleTopUpDataPreparation}
+        sims={subscriberSimList ?? []}
+        onSimAction={handleSimAction}
+        onDeleteSim={(simId) => handleSimAction('deleteSim', simId)}
+        packageHistories={simPackageHistories}
+        packagesData={packagesData?.getPackages}
+        loadingPackageHistories={packagesForSimLoading}
+        dataUsage={dataUsageForSim}
       />
       <TopUpData
         isToPup={isTopupData}
