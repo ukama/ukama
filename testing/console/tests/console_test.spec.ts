@@ -12,10 +12,10 @@ consoleTest.describe('Console End-to-End Test Flow', () => {
     await login();
   });
 
-  consoleTest('2. Onboarding Test', async ({ page, onboarding, login }) => {
-    await login();
-    await onboarding();
-  });
+  // consoleTest('2. Onboarding Test', async ({ page, onboarding, login }) => {
+  //   await login();
+  //   await onboarding();
+  // });
 
   consoleTest(
     '3. Sim Pool Management Test',

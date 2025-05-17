@@ -20,7 +20,7 @@ export const manageTest = base.extend<ConsoleTests>({
       await page.getByRole('textbox', { name: 'DATA PLAN NAME' }).click();
       await page
         .getByRole('textbox', { name: 'DATA PLAN NAME' })
-        .fill(faker.lorem.word(6));
+        .fill(`${faker.lorem.word(6)}-monthly`);
       await page.getByRole('textbox', { name: 'PRICE' }).click();
       await page
         .getByRole('textbox', { name: 'PRICE' })
@@ -40,7 +40,7 @@ export const manageTest = base.extend<ConsoleTests>({
       await page.getByRole('textbox', { name: 'DATA PLAN NAME' }).click();
       await page
         .getByRole('textbox', { name: 'DATA PLAN NAME' })
-        .fill(faker.lorem.word(6));
+        .fill(`${faker.lorem.word(6)}-daily`);
       await page.getByRole('textbox', { name: 'PRICE' }).click();
       await page
         .getByRole('textbox', { name: 'PRICE' })

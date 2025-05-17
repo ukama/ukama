@@ -10,4 +10,4 @@ export const LOGIN_URL = `http://localhost:4455/auth/login`;
 export const MANAGE_URL = `${CONSOLE_ROOT_URL}/manage`;
 export const TEST_USER_EMAIL = 'admin@ukama.com';
 export const TEST_USER_PASSWORD = '@Pass2025.';
-export const TMP_SIMS_PATH = 'interfaces/console/tests/test-temp';
+export const TMP_SIMS_PATH = 'testing/console/tests/test-temp';

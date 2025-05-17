@@ -33,7 +33,6 @@ const MapLayer = ({ data }: IMapLayer) => {
         maxZoom: 20,
         noWrap: true,
         maxNativeZoom: 20,
-        accessToken: env.MAP_BOX_TOKEN,
         attribution: '&copy; <a href="https://www.mapbox.com">Mapbox</a> ',
       },
     ).addTo(map);
