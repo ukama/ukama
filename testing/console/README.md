@@ -8,3 +8,8 @@ i.e: `test-network`, `test-user`, `test-site`, `test-node`
 5. DO NOT edit the generated_test.ts and recorded tests manually.
 6. Make sure steps not to be repeated.
 7. Record each test from scratch.
+8. Updating patch file with required changes.
+
+## How to generate tests
+
+After updating patch file with required changes, run the `patch_test.spec.ts` test to generate tests.
