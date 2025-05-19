@@ -43,11 +43,9 @@ test('Onboarding Test', async ({ page }) => {
   await page.getByRole('combobox', { name: 'BACKHAUL' }).click();
   await page.getByRole('option', { name: 'Other' }).click();
   await page.getByRole('button', { name: 'Configure site' }).click();
-  await page.getByText('Drag & Drop Or Choose file to').click();
+  await page.locator('#csv-file-input-onboarding').click();
   await page
-    .locator('div')
-    .filter({ hasText: /^Drag & Drop Or Choose file to upload\.$/ })
-    .nth(1)
+    .locator('#csv-file-input-onboarding')
     .setInputFiles('100Sims_part_4.csv');
   await page.getByRole('button', { name: 'Upload sims' }).click();
   await page.getByRole('button', { name: 'Continue to console' }).click();
@@ -79,12 +77,8 @@ test('Sim Pool Test', async ({ page }) => {
   await page.locator('#manage-btn').click();
   await page.getByRole('link', { name: 'SIM pool' }).click();
   await page.getByRole('button', { name: 'CLAIM SIMS' }).click();
-  await page.getByText('Drag & Drop Or Choose file to').click();
-  await page
-    .locator('div')
-    .filter({ hasText: /^Drag & Drop Or Choose file to upload\.$/ })
-    .nth(1)
-    .setInputFiles('100Sims_part_10.csv');
+  await page.locator('#csv-file-input').click();
+  await page.locator('#csv-file-input').setInputFiles('100Sims_part_10.csv');
   await page.getByRole('button', { name: 'Claim' }).click();
 });
 

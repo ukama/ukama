@@ -69,8 +69,8 @@ test('apply patch to generated test', async () => {
       )
       .replace(/'test-network'/g, 'faker.lorem.word(5)')
       .replace(
-        /await page\.getByText\('Drag & Drop Or Choose file to'\).click\(\);/g,
-        `await page.locator('${PATTERNS.FILE_UPLOAD}').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile1}.csv');`,
+        /await page\s*\.locator\('#csv-file-input'\)\s*\.setInputFiles\('.*'\);/g,
+        `await page.locator('#csv-file-input input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile2}.csv');`,
       )
       .replace(
         /await page\.getByRole\('textbox', { name: 'DATA PLAN NAME' }\)\.fill\('.*'\);/g,
@@ -177,6 +177,10 @@ test('apply patch to generated test', async () => {
         /await page\.getByRole\('combobox', { name: 'BACKHAUL' }\)\.click\(\);\s*await page\.getByRole\('option', { name: '.*' }\)\.click\(\);/g,
         `await page.getByRole('combobox', { name: 'BACKHAUL' }).click();
       await page.locator('li:nth-child(1)').click();`,
+      )
+      .replace(
+        /await page\s*\.locator\('#csv-file-input-onboarding'\)\s*\.setInputFiles\('.*'\);/g,
+        `await page.locator('#csv-file-input-onboarding input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile1}.csv');`,
       );
 
     const finalContent = patchedContent

@@ -138,6 +138,7 @@ const Page = () => {
             labelSuccessBtn={'Claim'}
             labelNegativeBtn={'Cancel'}
             title={'Upload SIMs'}
+            note={'Drag & Drop Or Choose file to upload. (format:*.csv)'}
             handleSuccessAction={handleUploadSimsAction}
             handleCloseAction={() => setIsUploadSims(false)}
           />
