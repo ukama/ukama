@@ -12,4 +12,4 @@ i.e: `test-network`, `test-user`, `test-site`, `test-node`
 
 ## How to generate tests
 
-After updating patch file with required changes, run the `patch_test.spec.ts` test to generate tests.
+After updating patch file with required changes, run the `pnpm test` in terminal.
