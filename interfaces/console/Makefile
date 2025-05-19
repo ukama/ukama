@@ -1,6 +1,6 @@
 .PHONY: all test clean build
 
 build:
-	yarn install  --frozen-lockfile && yarn build 
+	pnpm install --frozen-lockfile && pnpm build 
 test:
-	yarn test --ci  --coverage --watchAll=false
+	pnpm test --ci --coverage --watchAll=false
