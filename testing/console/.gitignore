@@ -44,3 +44,4 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /tests/test-temp/
+/test-temp/

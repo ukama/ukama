@@ -40,13 +40,14 @@ const BasicDropdown = ({
   };
 
   return (
-    <FormControl sx={{ width: '100%' }} size="small">
+    <FormControl id={id} sx={{ width: '100%' }} size="small">
       <Select
         id={id}
+        name={id}
+        displayEmpty
         value={value}
         disableUnderline
         variant="standard"
-        displayEmpty
         data-testid={`${id}-select`}
         renderValue={getDisplayValue}
         onChange={(e) => handleOnChange(e.target.value)}
