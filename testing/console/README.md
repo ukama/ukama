@@ -1,9 +1,10 @@
 # Test generation rules
 
-1. Use faker to generate random data
-2. Use playwright to create test cases
-3. While creating test cases, use format `test-<test-name>` as input values.
+1. Use faker library for data generation
+2. Use playwright codegen to create test cases `npx playwright codegen http://localhost:3000/`
+3. While recording test cases, use input values format as `test-<test-name>`
 i.e: `test-network`, `test-user`, `test-site`, `test-node`
 4. While coping tests to generated_test.ts file, name the test accordingly. i.e: `test('test', async ({ page })` to `test('TEST_NAME Test', async ({ page })`
-5. Make sure steps not to be repeated.
-6. Record each test from scratch.
+5. DO NOT edit the generated_test.ts and recorded tests manually.
+6. Make sure steps not to be repeated.
+7. Record each test from scratch.
