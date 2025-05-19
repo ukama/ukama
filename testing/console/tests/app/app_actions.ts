@@ -77,9 +77,6 @@ export const appTest = base.extend<ConsoleTests>({
         page,
         page.getByRole('combobox', { name: 'SIM ICCID*' }),
       );
-      await page.waitForSelector('button:not([disabled])', {
-        state: 'visible',
-      });
       await page.getByRole('button', { name: 'Next' }).click();
       await page.getByLabel('', { exact: true }).click();
       await page.locator(`li:nth-child(1) > .MuiTypography-root`).click();

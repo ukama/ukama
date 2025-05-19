@@ -17,6 +17,9 @@ export async function selectRandomOption(page: Page, locator: Locator) {
   if (options.length > 0) {
     const randomIndex = Math.floor(Math.random() * options.length);
     await options[randomIndex].click();
+    await page.waitForSelector('button:not([disabled])', {
+      state: 'visible',
+    });
   } else {
     console.error('No options found in the dropdown');
   }
