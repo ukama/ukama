@@ -32,12 +32,13 @@ jobs:
      with:
       node-version: 24
       cache: 'pnpm'
+      cache-dependency-path: 'interfaces/console/pnpm-lock.yaml'
 
    - name: Setup pnpm cache
      uses: actions/cache@v3
      with:
       path: ~/.pnpm-store
-      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+      key: ${{ runner.os }}-pnpm-store-${{ hashFiles('interfaces/console/pnpm-lock.yaml') }}
       restore-keys: |
        ${{ runner.os }}-pnpm-store-
 
@@ -111,6 +112,7 @@ jobs:
      with:
       node-version: 24
       cache: 'pnpm'
+      cache-dependency-path: 'interfaces/console/pnpm-lock.yaml'
 
    # ESLint and Prettier must be in `package.json`
    - name: Install Node.js dependencies
