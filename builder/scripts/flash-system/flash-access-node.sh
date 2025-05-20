@@ -9,6 +9,8 @@
 set -x
 set -euo pipefail
 
+trap cleanup EXIT
+
 REQUIRED_TOOLS=(dd lsblk grep timeout screen expect sudo lsusb make gcc libusb-1.0-0-dev git)
 
 IMAGE_NAME="ukama-access-node.img"
@@ -35,6 +37,12 @@ log() {
         *) color="\033[0m";;
     esac
     echo -e "${color}${type}: ${msg}\033[0m"
+}
+
+cleanup() {
+    log INFO "Cleaning up..."
+    sudo pkill -f "cat $UART_PORT" || true
+    sudo umount "$MOUNT_POINT" 2>/dev/null || true
 }
 
 usage() {
