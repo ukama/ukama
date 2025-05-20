@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React from 'react';
 import {
   Dialog,
@@ -10,11 +17,10 @@ import {
   Tab,
   Box,
   Button,
-  styled,
   Menu,
   MenuItem,
 } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
 import { colors } from '@/theme';
 import { PackagesResDto, SubscriberSimsDto } from '@/client/graphql/generated';
@@ -38,7 +44,6 @@ interface SubscriberDialogProps {
   onTopUpPlan: (subscriberId: string) => void;
   sims?: SubscriberSimsDto[];
   onSimAction?: (action: string, simId: string) => void;
-  onDeleteSim?: (simId: string) => void;
   packageHistories?: any[];
   packagesData?: PackagesResDto;
   loadingPackageHistories?: boolean;
@@ -48,7 +53,7 @@ interface SubscriberDialogProps {
 function TabPanel({ children, value, index }: any) {
   return (
     <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -69,7 +74,6 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
   onTopUpPlan,
   sims,
   onSimAction,
-  onDeleteSim,
   packageHistories,
   packagesData,
   loadingPackageHistories,
@@ -77,8 +81,14 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
 }) => {
   const [tabIndex, setTabIndex] = React.useState(0);
   const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [pendingChanges, setPendingChanges] = React.useState<{
+    name?: string;
+    email?: string;
+  }>({});
 
   const handleTabChange = (_: React.SyntheticEvent, newIndex: number) => {
+    if (isEditing) return;
     setTabIndex(newIndex);
   };
 
@@ -91,20 +101,39 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
     closeMenu();
   };
 
+  const handleDoneClick = () => {
+    if (Object.keys(pendingChanges).length > 0) {
+      onUpdateSubscriber(pendingChanges);
+    }
+    setPendingChanges({});
+    setIsEditing(false);
+    onClose();
+  };
+
+  const handleCloseClick = () => {
+    if (isEditing) {
+      setPendingChanges({});
+      setIsEditing(false);
+    }
+    onClose();
+  };
+
+  const updatePendingChanges = (updates: { name?: string; email?: string }) => {
+    setPendingChanges((prev) => ({ ...prev, ...updates }));
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleCloseClick} fullWidth maxWidth="sm">
       <DialogTitle sx={{ px: 3, pt: 2, pb: 1, position: 'relative' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            {subscriber.firstName}
-          </Typography>
+          <Typography variant="h6">{subscriber.firstName}</Typography>
           <IconButton size="small" onClick={openMenu} sx={{ ml: 0.5 }}>
-            <MoreHorizIcon fontSize="small" />
+            <MoreVertIcon fontSize="medium" />
           </IconButton>
         </Box>
         <IconButton
           aria-label="close"
-          onClick={onClose}
+          onClick={handleCloseClick}
           sx={{
             position: 'absolute',
             right: 12,
@@ -138,12 +167,26 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
         variant="fullWidth"
         sx={{
           px: 3,
-          borderBottom: `1px solid ${colors.black10}`,
+          position: 'relative',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: 0,
+            left: '24px',
+            right: '24px',
+            height: '1px',
+            backgroundColor: colors.black10,
+          },
         }}
       >
         {/* //TODO billing cycle sitll under discussion */}
         {['INFORMATION', 'DATA PLANS', 'SIMS', 'HISTORY'].map((label, idx) => (
-          <Tab key={label} label={label} {...a11yProps(idx)} />
+          <Tab
+            key={label}
+            label={label}
+            {...a11yProps(idx)}
+            disabled={isEditing && tabIndex !== idx}
+          />
         ))}
       </Tabs>
 
@@ -151,7 +194,9 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
         <TabPanel value={tabIndex} index={0}>
           <SubscriberInfoTab
             subscriber={subscriber}
-            onUpdateSubscriber={onUpdateSubscriber}
+            onUpdateSubscriber={updatePendingChanges}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
           />
         </TabPanel>
         <TabPanel value={tabIndex} index={1}>
@@ -162,11 +207,7 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
           />
         </TabPanel>
         <TabPanel value={tabIndex} index={2}>
-          <SubscriberSimsTab
-            sims={sims}
-            onSimAction={onSimAction}
-            onDeleteSim={onDeleteSim}
-          />
+          <SubscriberSimsTab sims={sims} onSimAction={onSimAction} />
         </TabPanel>
         <TabPanel value={tabIndex} index={3}>
           <SubscriberHistoryTab
@@ -178,8 +219,11 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} variant="contained">
-          CLOSE
+        <Button
+          onClick={isEditing ? handleDoneClick : handleCloseClick}
+          variant="contained"
+        >
+          {isEditing ? 'DONE' : 'CLOSE'}
         </Button>
       </DialogActions>
     </Dialog>

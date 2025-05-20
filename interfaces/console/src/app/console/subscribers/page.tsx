@@ -24,6 +24,7 @@ import {
   useGetSubscribersByNetworkQuery,
   useToggleSimStatusMutation,
   useUpdateSubscriberMutation,
+  useDeleteSimMutation,
 } from '@/client/graphql/generated';
 import AddSubscriberStepperDialog from '@/components/AddSubscriber';
 import DataTableWithOptions from '@/components/DataTableWithOptions';
@@ -56,8 +57,7 @@ import { useCallback, useRef, useState } from 'react';
 const Page = () => {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env, user, subscriptionClient } =
-    useAppContext();
+  const { setSnackbarMessage, network, env, user } = useAppContext();
   const [simPackageHistories, setSimPackageHistories] = useState<any[]>([]);
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
@@ -71,6 +71,13 @@ const Page = () => {
     id: string;
     name: string;
   }>({ id: '', name: '' });
+  const [isSimDeleteConfirmationOpen, setIsSimDeleteConfirmationOpen] =
+    useState(false);
+  const [simToDelete, setSimToDelete] = useState<{
+    id: string;
+    iccid: string;
+    isLastSim: boolean;
+  }>({ id: '', iccid: '', isLastSim: false });
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [topUpSubscriberName, setTopUpSubscriberName] = useState('');
   const [subscriber, setSubscriber] = useState<SubscribersResDto>({
@@ -152,6 +159,54 @@ const Page = () => {
     },
   });
 
+  const handleSimDelete = (
+    simId: string,
+    iccid: string,
+    isLastSim: boolean,
+  ) => {
+    setSimToDelete({
+      id: simId,
+      iccid: iccid,
+      isLastSim: isLastSim,
+    });
+    setIsSimDeleteConfirmationOpen(true);
+  };
+  const [deleteSim, { loading: deleteSimLoading }] = useDeleteSimMutation({
+    onCompleted: () => {
+      if (subscriberDetails) {
+        getSimBySubscriber({
+          variables: {
+            data: {
+              subscriberId: subscriberDetails.uuid,
+            },
+          },
+        });
+      }
+
+      if (simToDelete.isLastSim) {
+        refetchSubscribers();
+      }
+
+      setSnackbarMessage({
+        id: 'delete-sim-success',
+        message: `SIM ${simToDelete.iccid} deletion initiated. ${
+          simToDelete.isLastSim ? 'This will also delete the subscriber.' : ''
+        }`,
+        type: 'info' as AlertColor,
+        show: true,
+      });
+
+      setIsSimDeleteConfirmationOpen(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'delete-sim-error',
+        message: `Error deleting SIM: ${error.message}`,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
   const [getPackagesForSim, { loading: packagesForSimLoading }] =
     useGetPackagesForSimLazyQuery({
       onCompleted: (res) => {
@@ -174,26 +229,26 @@ const Page = () => {
         });
       },
     });
-  const [toggleSimStatus, { loading: toggleSimStatusLoading }] =
-    useToggleSimStatusMutation({
-      onCompleted: () => {
-        setSnackbarMessage({
-          id: 'sim-activated-success',
-          message: 'Sim state updated successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-        refetchSubscribers();
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'sim-activated-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+  const [toggleSimStatus] = useToggleSimStatusMutation({
+    onCompleted: () => {
+      setSnackbarMessage({
+        id: 'sim-activated-success',
+        message: 'Sim state updated successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+      refetchSubscribers();
+      setIsSubscriberDetailsOpen(false);
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'sim-activated-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const [addPackagesToSim, { loading: addPackagesToSimLoading }] =
     useAddPackagesToSimMutation({
@@ -267,8 +322,8 @@ const Page = () => {
         refetchSubscribers();
         setSnackbarMessage({
           id: 'delete-subscriber-success',
-          message: 'Subscriber deleted successfully!',
-          type: 'success' as AlertColor,
+          message: `Deletion started for "${deletedSubscriber.name}". SIMs are being processed.`,
+          type: 'info' as AlertColor,
           show: true,
         });
         setIsConfirmationOpen(false);
@@ -409,7 +464,7 @@ const Page = () => {
             email: subscriber.email,
             packageId: sim?.package?.package_id,
             dataPlan: pkg?.name ?? 'No active plan',
-            dataUsage: `${formatBytesToGB(Number(dataUsage?.usage)) || 0} GB`,
+            dataUsage: `${isNaN(Number(dataUsage?.usage)) ? 0 : formatBytesToGB(Number(dataUsage?.usage))} GB`,
             actions: '',
           };
         });
@@ -443,13 +498,11 @@ const Page = () => {
 
             if (res.getSimsBySubscriber.sims.length > 0) {
               const firstSim = res.getSimsBySubscriber.sims[0];
-              getPackagesForSim({
-                variables: {
-                  data: {
-                    sim_id: firstSim.id,
-                  },
-                },
-              });
+              if (firstSim?.id) {
+                getPackagesForSim({
+                  variables: { data: { sim_id: firstSim.id } },
+                });
+              }
             }
           }
         },
@@ -506,7 +559,11 @@ const Page = () => {
     setIsConfirmationOpen(false);
   };
 
-  const handleSimAction = (action: string, simId: string) => {
+  const handleSimAction = (
+    action: string,
+    simId: string,
+    additionalData?: any,
+  ) => {
     switch (action) {
       case 'deactivateSim':
       case 'activateSim':
@@ -519,7 +576,17 @@ const Page = () => {
           },
         });
         break;
+      case 'deleteSim':
+        setIsSubscriberDetailsOpen(false);
+        setSimToDelete({
+          id: simId,
+          iccid: additionalData.iccid,
+          isLastSim: additionalData.isLastSim,
+        });
+        setIsSimDeleteConfirmationOpen(true);
+        break;
       case 'topUp':
+        setIsSubscriberDetailsOpen(false);
         setIsTopupData(true);
         break;
       default:
@@ -780,15 +847,14 @@ const Page = () => {
         packages={packagesData?.getPackages.packages ?? []}
         isLoading={addSubscriberLoading || allocateSimLoading}
       />
-
       <DeleteConfirmation
         open={isConfirmationOpen}
         onDelete={handleDeleteSubscriber}
         onCancel={handleCancel}
         itemName={deletedSubscriber.name}
+        itemType="subscriber"
         loading={deleteSubscriberLoading}
       />
-
       <SubscriberDetailsDialog
         open={isSubscriberDetailsOpen}
         onClose={handleCloseSubscriberDetails}
@@ -809,7 +875,6 @@ const Page = () => {
         onTopUpPlan={handleTopUpDataPreparation}
         sims={subscriberSimList ?? []}
         onSimAction={handleSimAction}
-        onDeleteSim={(simId) => handleSimAction('deleteSim', simId)}
         packageHistories={simPackageHistories}
         packagesData={packagesData?.getPackages}
         loadingPackageHistories={packagesForSimLoading}
@@ -823,6 +888,23 @@ const Page = () => {
         packages={packagesData?.getPackages.packages ?? []}
         sims={subscriberSimList ?? []}
         subscriberName={topUpSubscriberName}
+      />
+      <DeleteConfirmation
+        open={isSimDeleteConfirmationOpen}
+        onDelete={() => {
+          deleteSim({
+            variables: {
+              data: {
+                simId: simToDelete.id,
+              },
+            },
+          });
+        }}
+        onCancel={() => setIsSimDeleteConfirmationOpen(false)}
+        itemName={simToDelete.iccid}
+        itemType="sim"
+        loading={deleteSimLoading}
+        isLastSim={simToDelete.isLastSim}
       />
     </Stack>
   );

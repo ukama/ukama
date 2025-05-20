@@ -1,4 +1,11 @@
-import React from 'react';
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+import React, { useEffect, useState } from 'react';
 import { Typography, Box, TextField, IconButton, styled } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { colors } from '@/theme';
@@ -12,6 +19,8 @@ interface Subscriber {
 interface SubscriberInfoTabProps {
   subscriber: Subscriber;
   onUpdateSubscriber: (updates: { name?: string; email?: string }) => void;
+  isEditing: boolean;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const FieldLabel = styled(Typography)(({ theme }) => ({
@@ -42,32 +51,52 @@ const EditButton = styled(IconButton)(() => ({
 const SubscriberInfoTab: React.FC<SubscriberInfoTabProps> = ({
   subscriber,
   onUpdateSubscriber,
+  isEditing,
+  setIsEditing,
 }) => {
-  const [editingField, setEditingField] = React.useState<
+  const [editingField, setEditingField] = useState<
     'firstName' | 'email' | null
   >(null);
-  const [inputValues, setInputValues] = React.useState({
+  const [inputValues, setInputValues] = useState({
     firstName: subscriber.firstName,
     email: subscriber.email,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     setInputValues({
       firstName: subscriber.firstName,
       email: subscriber.email,
     });
   }, [subscriber]);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setEditingField(null);
+    }
+  }, [isEditing]);
+
   const startEditing = (field: 'firstName' | 'email') => {
     setEditingField(field);
+    setIsEditing(true);
   };
 
-  const saveChanges = (field: 'firstName' | 'email') => {
-    if (inputValues[field] !== subscriber[field]) {
-      onUpdateSubscriber({
-        [field === 'firstName' ? 'name' : 'email']: inputValues[field],
-      });
+  const handleFieldChange = (field: 'firstName' | 'email', value: string) => {
+    setInputValues((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    const updateKey = field === 'firstName' ? 'name' : 'email';
+
+    if (value !== subscriber[field]) {
+      const updates = { [updateKey]: value };
+      onUpdateSubscriber(updates);
+    } else {
+      onUpdateSubscriber({ [updateKey]: undefined });
     }
+  };
+
+  const finishEditingField = () => {
     setEditingField(null);
   };
 
@@ -76,12 +105,16 @@ const SubscriberInfoTab: React.FC<SubscriberInfoTabProps> = ({
     field: 'firstName' | 'email',
   ) => {
     if (e.key === 'Enter') {
-      saveChanges(field);
+      finishEditingField();
     } else if (e.key === 'Escape') {
       setInputValues((prev) => ({
         ...prev,
         [field]: subscriber[field],
       }));
+
+      const updateKey = field === 'firstName' ? 'name' : 'email';
+      onUpdateSubscriber({ [updateKey]: undefined });
+
       setEditingField(null);
     }
   };
@@ -95,19 +128,14 @@ const SubscriberInfoTab: React.FC<SubscriberInfoTabProps> = ({
             autoFocus
             fullWidth
             value={inputValues.firstName}
-            onChange={(e) =>
-              setInputValues((prev) => ({
-                ...prev,
-                firstName: e.target.value,
-              }))
-            }
-            onBlur={() => saveChanges('firstName')}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+            onBlur={finishEditingField}
             onKeyDown={(e) => handleKeyDown(e, 'firstName')}
             sx={{ mb: 2 }}
           />
         ) : (
           <FieldValue onClick={() => startEditing('firstName')}>
-            {subscriber.firstName}
+            {inputValues.firstName}
           </FieldValue>
         )}
         <EditButton onClick={() => startEditing('firstName')}>
@@ -122,19 +150,14 @@ const SubscriberInfoTab: React.FC<SubscriberInfoTabProps> = ({
             autoFocus
             fullWidth
             value={inputValues.email}
-            onChange={(e) =>
-              setInputValues((prev) => ({
-                ...prev,
-                email: e.target.value,
-              }))
-            }
-            onBlur={() => saveChanges('email')}
+            onChange={(e) => handleFieldChange('email', e.target.value)}
+            onBlur={finishEditingField}
             onKeyDown={(e) => handleKeyDown(e, 'email')}
             sx={{ mb: 2 }}
           />
         ) : (
           <FieldValue onClick={() => startEditing('email')}>
-            {subscriber.email}
+            {inputValues.email}
           </FieldValue>
         )}
         <EditButton onClick={() => startEditing('email')}>

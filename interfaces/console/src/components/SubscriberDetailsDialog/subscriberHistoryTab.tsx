@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React from 'react';
 import {
   Box,
@@ -10,6 +17,7 @@ import {
 } from '@mui/material';
 import { colors } from '@/theme';
 import { PackagesResDto } from '@/client/graphql/generated';
+import { formatBytesToGB } from '@/utils';
 
 interface SubscriberHistoryTabProps {
   packageHistories?: any[];
@@ -50,7 +58,6 @@ const SubscriberHistoryTab: React.FC<SubscriberHistoryTabProps> = ({
                     const packageDetails = packagesData?.packages?.find(
                       (p) => p.uuid === pkg.package_id,
                     );
-
                     return (
                       <TableRow
                         key={pkg.id}
@@ -67,8 +74,10 @@ const SubscriberHistoryTab: React.FC<SubscriberHistoryTabProps> = ({
                             ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days`
                             : 'Unknown plan'}
                         </TableCell>
-                        <TableCell>
-                          {(pkg.dataUsage || 'N/A') + ' GB'}
+                        <TableCell sx={{ color: colors.black70 }}>
+                          {isNaN(Number(pkg.dataUsage))
+                            ? '0 GB'
+                            : `${formatBytesToGB(Number(pkg.dataUsage))} GB`}
                         </TableCell>
                       </TableRow>
                     );

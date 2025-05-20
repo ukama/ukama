@@ -1,4 +1,11 @@
-import React from 'react';
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+import React, { useState } from 'react';
 import {
   Box,
   Table,
@@ -9,6 +16,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { colors } from '@/theme';
@@ -16,19 +24,63 @@ import { SubscriberSimsDto } from '@/client/graphql/generated';
 
 interface SubscriberSimsTabProps {
   sims?: SubscriberSimsDto[];
-  onSimAction?: (action: string, simId: string) => void;
-  onDeleteSim?: (simId: string) => void;
+  onSimAction?: (action: string, simId: string, additionalData?: any) => void;
 }
 
 const SubscriberSimsTab: React.FC<SubscriberSimsTabProps> = ({
   sims,
   onSimAction,
-  onDeleteSim,
 }) => {
-  const [simMenuAnchor, setSimMenuAnchor] = React.useState<{
+  const [simMenuAnchor, setSimMenuAnchor] = useState<{
     el: HTMLElement;
     id: string;
   } | null>(null);
+
+  const handleOpenSimMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    simId: string,
+  ) => {
+    setSimMenuAnchor({
+      el: event.currentTarget,
+      id: simId,
+    });
+  };
+
+  const handleCloseSimMenu = () => {
+    setSimMenuAnchor(null);
+  };
+
+  const handleDeleteSimRequest = (simId: string) => {
+    const sim = sims?.find((s) => s.id === simId);
+    if (sim && onSimAction) {
+      const isLastSim = sims?.length === 1;
+
+      // Pass additional data along with the action and simId
+      onSimAction('deleteSim', sim.id, {
+        iccid: sim.iccid,
+        isLastSim: isLastSim,
+      });
+
+      setSimMenuAnchor(null);
+    }
+  };
+
+  const handleToggleSimStatus = (simId: string) => {
+    const sim = sims?.find((s) => s.id === simId);
+    if (sim && onSimAction) {
+      const action =
+        sim.status.toLowerCase() === 'active' ? 'deactivateSim' : 'activateSim';
+
+      onSimAction(action, simId);
+      setSimMenuAnchor(null);
+    }
+  };
+
+  const selectedSim = simMenuAnchor?.id
+    ? sims?.find((s) => s.id === simMenuAnchor.id)
+    : null;
+
+  const canDeleteSim = selectedSim?.status.toLowerCase() === 'inactive';
 
   return (
     <>
@@ -58,12 +110,7 @@ const SubscriberSimsTab: React.FC<SubscriberSimsTabProps> = ({
                   <TableCell align="right">
                     <IconButton
                       size="small"
-                      onClick={(e) => {
-                        setSimMenuAnchor({
-                          el: e.currentTarget,
-                          id: sim.id,
-                        });
-                      }}
+                      onClick={(e) => handleOpenSimMenu(e, sim.id)}
                     >
                       <MoreHorizIcon fontSize="small" />
                     </IconButton>
@@ -81,44 +128,49 @@ const SubscriberSimsTab: React.FC<SubscriberSimsTabProps> = ({
         </Table>
       </Box>
 
-      {/* Menu for SIM actions */}
       <Menu
         anchorEl={simMenuAnchor?.el}
         open={Boolean(simMenuAnchor)}
-        onClose={() => setSimMenuAnchor(null)}
+        onClose={handleCloseSimMenu}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem
           onClick={() => {
-            const sim = sims?.find((s) => s.id === simMenuAnchor?.id);
-            if (sim && simMenuAnchor) {
-              const action =
-                sim.status.toLowerCase() === 'active'
-                  ? 'deactivateSim'
-                  : 'activateSim';
-              onSimAction?.(action, simMenuAnchor.id);
-              setSimMenuAnchor(null);
+            if (simMenuAnchor?.id) {
+              handleToggleSimStatus(simMenuAnchor.id);
             }
           }}
         >
-          {sims
-            ?.find((s) => s.id === simMenuAnchor?.id)
-            ?.status.toLowerCase() === 'active'
+          {selectedSim?.status.toLowerCase() === 'active'
             ? 'Deactivate SIM'
             : 'Activate SIM'}
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (simMenuAnchor?.id && onDeleteSim) {
-              onDeleteSim(simMenuAnchor.id);
-              setSimMenuAnchor(null);
-            }
-          }}
-          sx={{ color: colors.error }}
+
+        <Tooltip
+          title={
+            !canDeleteSim
+              ? 'SIM must be deactivated before it can be deleted'
+              : ''
+          }
+          placement="left"
         >
-          Delete SIM
-        </MenuItem>
+          <span>
+            <MenuItem
+              onClick={() => {
+                if (simMenuAnchor?.id && canDeleteSim) {
+                  handleDeleteSimRequest(simMenuAnchor.id);
+                }
+              }}
+              disabled={!canDeleteSim}
+              sx={{
+                color: canDeleteSim ? colors.error : colors.black38,
+              }}
+            >
+              Delete SIM
+            </MenuItem>
+          </span>
+        </Tooltip>
       </Menu>
     </>
   );

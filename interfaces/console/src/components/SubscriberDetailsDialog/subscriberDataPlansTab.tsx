@@ -1,7 +1,15 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import React from 'react';
-import { Typography, Box, styled } from '@mui/material';
+import { Typography, Box, styled, Stack } from '@mui/material';
 import { colors } from '@/theme';
 import { PackagesResDto } from '@/client/graphql/generated';
+import { formatBytesToGB } from '@/utils';
 
 interface SubscriberDataPlansTabProps {
   packageHistories?: any[];
@@ -16,11 +24,6 @@ const FieldLabel = styled(Typography)(({ theme }) => ({
   marginBottom: theme.spacing(0.5),
 }));
 
-const FieldValue = styled(Typography)(({ theme }) => ({
-  fontSize: theme.typography.body1.fontSize,
-  marginBottom: theme.spacing(2),
-}));
-
 const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
   packageHistories,
   packagesData,
@@ -28,74 +31,97 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
 }) => {
   return (
     <>
-      <Box sx={{ mb: 3 }}>
-        <FieldLabel>DATE PLAN</FieldLabel>
-        {packageHistories && packageHistories.some((pkg) => pkg.is_active) ? (
-          <FieldValue>
-            {(() => {
-              const activePackage = packageHistories.find(
-                (pkg) => pkg.is_active,
-              );
-              if (!activePackage) return 'No active plan';
-
-              const packageDetails = packagesData?.packages?.find(
-                (p) => p.uuid === activePackage.package_id,
-              );
-
-              return packageDetails
-                ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days / $${packageDetails.amount}`
-                : 'Unknown plan';
-            })()}
-          </FieldValue>
-        ) : (
-          <FieldValue>No active plan</FieldValue>
-        )}
-      </Box>
-
-      <Box sx={{ mb: 3 }}>
-        <FieldLabel>DATA USAGE</FieldLabel>
-        {packageHistories && packageHistories.some((pkg) => pkg.is_active) ? (
-          <FieldValue>
-            {dataUsage != undefined ? `${dataUsage}GB` : 'No Usage'}
-          </FieldValue>
-        ) : (
-          <FieldValue>Not applicable</FieldValue>
-        )}
-      </Box>
-
       <Box>
-        <FieldLabel>UPCOMING</FieldLabel>
-        {packageHistories && packageHistories.length > 0 ? (
-          (() => {
-            const upcomingPackages = packageHistories
-              .filter((pkg) => new Date(pkg.start_date) > new Date())
-              .sort(
-                (a, b) =>
-                  new Date(a.start_date).getTime() -
-                  new Date(b.start_date).getTime(),
-              );
+        <Box sx={{ display: 'flex', mb: 1 }}>
+          <Typography
+            variant="body1"
+            color={colors.black70}
+            sx={{ width: 150 }}
+          >
+            Date plan
+          </Typography>
+          <Typography variant="subtitle1" color={colors.black70}>
+            {(() => {
+              const currentPackage =
+                packageHistories && packageHistories.length > 0
+                  ? packagesData?.packages?.find(
+                      (p) => p.uuid === packageHistories[0]?.package_id,
+                    )
+                  : null;
 
-            return upcomingPackages.length > 0 ? (
-              upcomingPackages.map((pkg, index) => {
-                const packageDetails = packagesData?.packages?.find(
-                  (p) => p.uuid === pkg.package_id,
-                );
+              return currentPackage
+                ? `${currentPackage.dataVolume} ${currentPackage.dataUnit} / ${currentPackage.duration} days / $${currentPackage.amount}`
+                : 'No active plan';
+            })()}
+          </Typography>
+        </Box>
 
-                return (
-                  <FieldValue key={pkg.id} sx={{ mb: 1 }}>
-                    {packageDetails
-                      ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days / $${packageDetails.amount}`
-                      : 'Unknown plan'}
-                  </FieldValue>
+        <Box sx={{ display: 'flex', mb: 1 }}>
+          <Typography
+            variant="body1"
+            color={colors.black70}
+            sx={{ width: 150 }}
+          >
+            Data usage
+          </Typography>
+          <Typography variant="subtitle1" color={colors.black70}>
+            {isNaN(Number(dataUsage))
+              ? '0 GB'
+              : `${formatBytesToGB(Number(dataUsage))} GB`}
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', mb: 1 }}>
+          <Typography
+            variant="body1"
+            color={colors.black70}
+            sx={{ width: 150, alignSelf: 'flex-start' }}
+          >
+            Upcoming
+          </Typography>
+          <Box>
+            {packageHistories && packageHistories.length > 0 ? (
+              (() => {
+                const upcomingPackages = packageHistories
+                  .filter((pkg) => new Date(pkg.start_date) > new Date())
+                  .sort(
+                    (a, b) =>
+                      new Date(a.start_date).getTime() -
+                      new Date(b.start_date).getTime(),
+                  );
+
+                return upcomingPackages.length > 0 ? (
+                  upcomingPackages.map((pkg, index) => {
+                    const packageDetails = packagesData?.packages?.find(
+                      (p) => p.uuid === pkg.package_id,
+                    );
+
+                    return (
+                      <Typography
+                        variant="subtitle1"
+                        key={pkg.id}
+                        sx={{ mb: 2 }}
+                        color={colors.black70}
+                      >
+                        {packageDetails
+                          ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days / $${packageDetails.amount}`
+                          : 'Unknown plan'}
+                      </Typography>
+                    );
+                  })
+                ) : (
+                  <Typography variant="subtitle1" color={colors.black70}>
+                    No upcoming plans
+                  </Typography>
                 );
-              })
+              })()
             ) : (
-              <FieldValue>No upcoming plans</FieldValue>
-            );
-          })()
-        ) : (
-          <FieldValue>No upcoming plans</FieldValue>
-        )}
+              <Typography variant="subtitle1" color={colors.black70}>
+                No upcoming plans
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </Box>
     </>
   );
