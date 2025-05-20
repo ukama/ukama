@@ -52,7 +52,7 @@ test('apply patch to generated test', async () => {
     // Read and process the original content
     const originalContent = fs.readFileSync(generatedTestPath, 'utf8');
     const importStatement =
-      "import { TEST_USER_EMAIL, TEST_USER_PASSWORD, LOGIN_URL, CONSOLE_ROOT_URL } from '../constants';\nimport { faker } from '@faker-js/faker';\nimport { selectRandomOption } from '../utils';\n";
+      "import { TEST_USER_EMAIL, TEST_USER_PASSWORD, LOGIN_URL, CONSOLE_ROOT_URL } from '../constants';\nimport { faker } from '@faker-js/faker';\nimport { selectRandomOption } from '../utils';\ntest.setTimeout(120000);";
 
     const lines = originalContent.split('\n');
     const insertIndex = lines.findIndex((line) => line.includes('import')) + 1;

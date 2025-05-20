@@ -117,7 +117,7 @@ const Header = ({
             />
             {isManager && (
               <IconButton
-                id="manage-btn"
+                data-testid="manage-btn"
                 onClick={() => onNavigate('Manage', '/manage')}
                 sx={{
                   ...IconStyle,
