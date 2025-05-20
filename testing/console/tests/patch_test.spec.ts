@@ -143,19 +143,22 @@ test('apply patch to generated test', async () => {
       .replace(
         /await page\.getByRole\('combobox', { name: 'SIM ICCID\*' }\)\.click\(\);\s*await page\.getByRole\('option', { name: '\d+' }\)\.click\(\);/g,
         `await page.getByRole('combobox', { name: 'SIM ICCID*' }).click();
-      await selectRandomOption(
-        page,
-        page.getByRole('combobox', { name: 'SIM ICCID*' }),
-      );`,
+         await selectRandomOption(
+          page,
+          page.getByRole('combobox', { name: 'SIM ICCID*' }),
+         );`,
       )
       .replace(
         /await page\s*\.getByLabel\('', { exact: true }\)\.click\(\);\s*await page\s*\.getByText\('textor - .*'\)\.click\(\);/g,
-        `await page.getByLabel('', { exact: true }).click();
-        await page.waitForSelector('li[role="option"]', { state: 'visible' });
-        await page.locator('li[role="option"]').first().click();
-        await page.waitForSelector('button:not([disabled])', {
-          state: 'visible',
-        });`,
+        ` const dropdown = page.getByRole('combobox');
+          await dropdown.waitFor({ state: 'visible' });
+          await dropdown.click();
+          const options = page.locator('[role="option"]');
+          await options.first().waitFor({ state: 'visible', timeout: 30000 });
+          await options.first().click();
+          await page.waitForSelector('button:not([disabled])', {
+            state: 'visible',
+          });`,
       )
       .replace(
         /await page\s*\.getByRole\('row', { name: '.*' }\)\s*\.locator\('#data-table-action-popover'\)\s*\.click\(\);/g,
