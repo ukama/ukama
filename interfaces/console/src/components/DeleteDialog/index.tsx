@@ -1,3 +1,10 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
 import { colors } from '@/theme';
 import React, { useState } from 'react';
 
@@ -11,7 +18,6 @@ import {
   DialogTitle,
   IconButton,
   Typography,
-  Box,
 } from '@mui/material';
 
 interface DeleteConfirmationProps {
@@ -23,7 +29,6 @@ interface DeleteConfirmationProps {
   loading?: boolean;
   title?: string;
   description?: string;
-  isLastSim?: boolean;
 }
 
 const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
@@ -35,7 +40,6 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   loading = false,
   title,
   description,
-  isLastSim = false, // Default to false
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -70,11 +74,6 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
         <Typography variant="body1" sx={{ color: colors.black70, mb: 2 }}>
           Are you sure you want to delete the SIM <strong>{itemName}</strong>?
           This will permanently remove all associated packages and usage data.
-        </Typography>
-
-        <Typography variant="body1" sx={{ color: colors.black70 }}>
-          {isLastSim &&
-            'This is the last SIM for this subscriber. Deleting it will also remove the subscriber record.'}
         </Typography>
       </>
     );

@@ -998,7 +998,6 @@ const Page = () => {
         itemName={simToDelete.iccid}
         itemType="sim"
         loading={deleteSimLoading}
-        isLastSim={simToDelete.isLastSim}
       />
     </Stack>
   );
