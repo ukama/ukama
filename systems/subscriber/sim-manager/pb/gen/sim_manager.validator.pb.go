@@ -7,10 +7,10 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -51,6 +51,21 @@ func (this *AllocateSimResponse) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
 		}
 	}
+	return nil
+}
+
+var _regex_TerminateSimsForSubscriberRequest_SubscriberId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *TerminateSimsForSubscriberRequest) Validate() error {
+	if !_regex_TerminateSimsForSubscriberRequest_SubscriberId.MatchString(this.SubscriberId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SubscriberId))
+	}
+	if this.SubscriberId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SubscriberId", fmt.Errorf(`value '%v' must not be an empty string`, this.SubscriberId))
+	}
+	return nil
+}
+func (this *TerminateSimsForSubscriberResponse) Validate() error {
 	return nil
 }
 func (this *GetSimRequest) Validate() error {

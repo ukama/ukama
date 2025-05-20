@@ -30,6 +30,10 @@ service SimManagerService {
     rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
     rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 
+    //This new methods will terminatSims and packages for subscriber
+    rpc TerminateSimsForSubscriber(TerminateSimsForSubscriberRequest) returns (TerminateSimsForSubscriberResponse);
+
+
     // Sim package
     rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
     rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
@@ -56,6 +60,12 @@ message AllocateSimRequest {
 
 message AllocateSimResponse {
     Sim sim = 1;
+}
+
+message TerminateSimsForSubscriberRequest {
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+}
+message TerminateSimsForSubscriberResponse {
 }
 
 message GetSimRequest {

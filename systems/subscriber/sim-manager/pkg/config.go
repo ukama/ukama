@@ -61,8 +61,10 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 				"event.cloud.local.{{ .Org}}.payments.processor.payment.success",
 				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete",
 				"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create",
 				"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.sims.cleanup_completed",
 			},
 		},
 	}
