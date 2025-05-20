@@ -231,7 +231,7 @@ fi
 
 rm -rf "$UART_LOG"
 
-check_dependencies
+check_and_install_dependencies
 build_rpiboot
 wait_for_cm4_usb
 start_rpiboot
