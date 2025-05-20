@@ -141,17 +141,33 @@ wait_for_cm4_usb() {
 start_rpiboot() {
     log INFO "Uploading bootloader to CM4 (rpiboot)..."
     sudo "$RPIBOOT_DIR/rpiboot" >/dev/null &
-    log INFO "Waiting for mass storage device..."
-    for i in {1..20}; do
-        sleep 2
-        BLOCK_DEVICE=$(lsblk -d -o NAME,SIZE,MODEL | grep -E 'sd[b-z]|mmcblk[0-9]' | awk '{print $1}' | tail -n1)
-        if [[ -n "$BLOCK_DEVICE" && -b "/dev/$BLOCK_DEVICE" ]]; then
-            BLOCK_DEVICE="/dev/$BLOCK_DEVICE"
+
+    log INFO "Waiting for rpiboot to complete..."
+    wait
+
+    log INFO "Waiting for eMMC device to appear via dmesg..."
+    for i in {1..30}; do
+        log INFO "Sleeping for 5 seconds ....."
+        sleep 5
+
+        dev=$(sudo dmesg | tac | grep -m1 -oE 'sd[b-z]' | head -n1 || true)
+        log INFO "DEBUG: dev=$dev"
+
+        if [[ -b "/dev/$dev" ]]; then
+            log INFO "/dev/$dev exists as block"
+        else
+            log ERROR "/dev/$dev does NOT exist yet"
+        fi
+
+        if [[ -n "$dev" && -b "/dev/$dev" ]]; then
+            BLOCK_DEVICE="/dev/$dev"
             log SUCCESS "CM4 eMMC detected as $BLOCK_DEVICE"
             return
         fi
     done
+
     log ERROR "eMMC device not detected after rpiboot."
+    sudo dmesg | tail -30
     exit 1
 }
 
@@ -211,7 +227,7 @@ test_ssh_connectivity() {
         spawn ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP "echo SSH OK"
         expect {
             "yes/no" { send "yes\r"; exp_continue }
-            "assword:" { send "$SSH_PASS\r" }
+            "password:" { send "$SSH_PASS\r" }
         }
         expect "SSH OK"
 EOF
