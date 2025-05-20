@@ -79,8 +79,16 @@ test('apply patch to generated test', async () => {
           }`,
       )
       .replace(
+        /await page\.getByTestId\('manage-btn'\)\.click\(\);\s*await page\.getByTestId\('manage-sim'\)\.click\(\);/g,
+        `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForTimeout(2000);\n  await page.getByTestId('manage-sim').click();`,
+      )
+      .replace(
         /await page\s*\.locator\('#csv-file-input'\)\s*\.setInputFiles\('.*'\);/g,
         `await page.locator('#csv-file-input input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile2}.csv');`,
+      )
+      .replace(
+        /await page\.getByTestId\('manage-btn'\)\.click\(\);\s*await page\.getByTestId\('manage-data-plan'\)\.click\(\);/g,
+        `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForTimeout(2000);\n  await page.getByTestId('manage-data-plan').click();`,
       )
       .replace(
         /await page\.getByRole\('textbox', { name: 'DATA PLAN NAME' }\)\.fill\('.*'\);/g,
@@ -110,6 +118,19 @@ test('apply patch to generated test', async () => {
       .replace(
         /await page\s*\.getByRole\('textbox', { name: 'Site Name' }\)\s*\.fill\('.*'\);/g,
         `await page.getByRole('textbox', { name: 'Site Name' }).fill(\`\${faker.lorem.word(5)}-site\`);`,
+      )
+      .replace(
+        /await page\.getByRole\('link', { name: 'Subscribers' }\)\.click\(\);/g,
+        `await page.waitForURL('**/console/home');
+          await page.getByRole('link', { name: 'Subscribers' }).click();`,
+      )
+      .replace(
+        /await page\.getByRole\('button', { name: 'Add Subscriber' }\)\.click\(\);/g,
+        `await page.getByRole('button', { name: 'Add Subscriber' }).click();
+         await page.waitForSelector('[role="dialog"]', {
+          state: 'visible',
+          timeout: 30000,
+         });`,
       )
       .replace(
         /await page\.getByRole\('textbox', { name: 'Name' }\)\.fill\('.*'\);/g,
@@ -191,6 +212,16 @@ test('apply patch to generated test', async () => {
       .replace(
         /await page\s*\.locator\('#csv-file-input-onboarding'\)\s*\.setInputFiles\('.*'\);/g,
         `await page.locator('#csv-file-input-onboarding input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile1}.csv');`,
+      )
+      .replace(
+        /await page\.getByTestId\('account-settings-btn'\)\.click\(\);\s*await page\.getByTestId\('logout-link'\)\.click\(\);/g,
+        `await page.waitForURL('**/console/home');
+          await page.getByTestId('account-settings-btn').click();
+          await page.waitForSelector('[data-testid="logout-link"]', {
+            state: 'visible',
+            timeout: 30000,
+          });
+          await page.getByTestId('logout-link').click();`,
       );
 
     const finalContent = patchedContent
