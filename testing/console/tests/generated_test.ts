@@ -78,7 +78,7 @@ test('Sim Pool Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'EMAIL' }).press('Tab');
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
-  await page.locator('#manage-btn').click();
+  await page.getByTestId('manage-btn').click();
   await page.getByRole('link', { name: 'SIM pool' }).click();
   await page.getByRole('button', { name: 'CLAIM SIMS' }).click();
   await page.locator('#csv-file-input').click();
@@ -93,7 +93,7 @@ test('Data Plan Creation Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'EMAIL' }).press('Tab');
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
-  await page.locator('#manage-btn').click();
+  await page.getByTestId('manage-btn').click();
   await page.getByRole('link', { name: 'Data plans' }).click();
   await page.getByRole('button', { name: 'CREATE DATA PLAN' }).click();
   await page.getByRole('textbox', { name: 'DATA PLAN NAME' }).click();
@@ -240,6 +240,6 @@ test('Logout Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'EMAIL' }).press('Tab');
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
-  await page.locator('#account-settings-btn').click();
+  await page.getByTestId('account-settings-btn').click();
   await page.getByRole('link', { name: 'Logout of account' }).click();
 });
