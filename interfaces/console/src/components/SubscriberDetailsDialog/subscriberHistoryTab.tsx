@@ -54,6 +54,8 @@ const SubscriberHistoryTab: React.FC<SubscriberHistoryTabProps> = ({
                       new Date(b.start_date).getTime() -
                       new Date(a.start_date).getTime(),
                   )
+                  // TODO: show only 5 need to discussion if we need to show more than 5 or add pagination
+                  .slice(0, 5)
                   .map((pkg, idx) => {
                     const packageDetails = packagesData?.packages?.find(
                       (p) => p.uuid === pkg.package_id,
@@ -71,7 +73,7 @@ const SubscriberHistoryTab: React.FC<SubscriberHistoryTabProps> = ({
                         </TableCell>
                         <TableCell sx={{ color: colors.black70 }}>
                           {packageDetails
-                            ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days`
+                            ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} /${packageDetails.duration} ${packageDetails.duration === 1 ? 'day' : 'days'}`
                             : 'Unknown plan'}
                         </TableCell>
                         <TableCell sx={{ color: colors.black70 }}>

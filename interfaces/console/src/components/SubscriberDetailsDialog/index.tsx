@@ -48,6 +48,7 @@ interface SubscriberDialogProps {
   packagesData?: PackagesResDto;
   loadingPackageHistories?: boolean;
   dataUsage: string;
+  currencySymbol?: string;
 }
 
 function TabPanel({ children, value, index }: any) {
@@ -78,6 +79,7 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
   packagesData,
   loadingPackageHistories,
   dataUsage,
+  currencySymbol,
 }) => {
   const [tabIndex, setTabIndex] = React.useState(0);
   const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
@@ -115,6 +117,7 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
       setPendingChanges({});
       setIsEditing(false);
     }
+    setMenuAnchor(null);
     onClose();
   };
 
@@ -145,7 +148,10 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
         <Menu
           anchorEl={menuAnchor}
           open={Boolean(menuAnchor)}
-          onClose={closeMenu}
+          onClose={() => {
+            closeMenu();
+            setMenuAnchor(null);
+          }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
           MenuListProps={{ dense: true }}
@@ -204,6 +210,7 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
             packageHistories={packageHistories}
             packagesData={packagesData}
             dataUsage={dataUsage}
+            currencySymbol={currencySymbol}
           />
         </TabPanel>
         <TabPanel value={tabIndex} index={2}>

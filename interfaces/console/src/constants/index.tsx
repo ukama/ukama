@@ -892,6 +892,10 @@ export const NODE_KPIS = {
     ],
   },
 };
+export const SUBSCRIBER_ERROR_MESSAGES = {
+  DUPLICATE_EMAIL: 'A subscriber with this email already exists.',
+  DEFAULT: 'An error occurred. Please try again.',
+};
 
 export const TIME_FILTER_OPTIONS = [
   { id: '1', label: 'LIVE' },

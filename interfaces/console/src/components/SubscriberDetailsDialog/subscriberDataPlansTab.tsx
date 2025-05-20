@@ -15,32 +15,27 @@ interface SubscriberDataPlansTabProps {
   packageHistories?: any[];
   packagesData?: PackagesResDto;
   dataUsage: string;
+  currencySymbol?: string;
 }
-
-const FieldLabel = styled(Typography)(({ theme }) => ({
-  color: colors.black38,
-  fontSize: theme.typography.caption.fontSize,
-  lineHeight: theme.typography.caption.lineHeight,
-  marginBottom: theme.spacing(0.5),
-}));
 
 const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
   packageHistories,
   packagesData,
   dataUsage,
+  currencySymbol,
 }) => {
   return (
     <>
       <Box>
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Typography
-            variant="body1"
+            variant="body2"
             color={colors.black70}
             sx={{ width: 150 }}
           >
             Date plan
           </Typography>
-          <Typography variant="subtitle1" color={colors.black70}>
+          <Typography variant="body2" color={colors.black70}>
             {(() => {
               const currentPackage =
                 packageHistories && packageHistories.length > 0
@@ -50,7 +45,7 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
                   : null;
 
               return currentPackage
-                ? `${currentPackage.dataVolume} ${currentPackage.dataUnit} / ${currentPackage.duration} days / $${currentPackage.amount}`
+                ? `${currentPackage.dataVolume} ${currentPackage.dataUnit} / ${currentPackage.duration} ${currentPackage.duration === 1 ? 'day' : 'days'} /${currencySymbol}   ${currentPackage.amount}`
                 : 'No active plan';
             })()}
           </Typography>
@@ -58,13 +53,13 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
 
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Typography
-            variant="body1"
+            variant="body2"
             color={colors.black70}
             sx={{ width: 150 }}
           >
             Data usage
           </Typography>
-          <Typography variant="subtitle1" color={colors.black70}>
+          <Typography variant="body2" color={colors.black70}>
             {isNaN(Number(dataUsage))
               ? '0 GB'
               : `${formatBytesToGB(Number(dataUsage))} GB`}
@@ -73,7 +68,7 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
 
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Typography
-            variant="body1"
+            variant="body2"
             color={colors.black70}
             sx={{ width: 150, alignSelf: 'flex-start' }}
           >
@@ -89,34 +84,37 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
                       new Date(a.start_date).getTime() -
                       new Date(b.start_date).getTime(),
                   );
+                // TODO: show only 3 need to discussion if we need to show more than 3
+                const packagesToShow = upcomingPackages.slice(0, 3);
 
                 return upcomingPackages.length > 0 ? (
-                  upcomingPackages.map((pkg, index) => {
-                    const packageDetails = packagesData?.packages?.find(
-                      (p) => p.uuid === pkg.package_id,
-                    );
+                  <Stack spacing={1}>
+                    {packagesToShow.map((pkg, index) => {
+                      const packageDetails = packagesData?.packages?.find(
+                        (p) => p.uuid === pkg.package_id,
+                      );
 
-                    return (
-                      <Typography
-                        variant="subtitle1"
-                        key={pkg.id}
-                        sx={{ mb: 2 }}
-                        color={colors.black70}
-                      >
-                        {packageDetails
-                          ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} days / $${packageDetails.amount}`
-                          : 'Unknown plan'}
-                      </Typography>
-                    );
-                  })
+                      return (
+                        <Typography
+                          variant="body2"
+                          key={pkg.id}
+                          color={colors.black70}
+                        >
+                          {packageDetails
+                            ? `${packageDetails.dataVolume} ${packageDetails.dataUnit} / ${packageDetails.duration} ${packageDetails.duration === 1 ? 'day' : 'days'} / ${currencySymbol}  ${packageDetails.amount}`
+                            : 'Unknown plan'}
+                        </Typography>
+                      );
+                    })}
+                  </Stack>
                 ) : (
-                  <Typography variant="subtitle1" color={colors.black70}>
+                  <Typography variant="body2" color={colors.black70}>
                     No upcoming plans
                   </Typography>
                 );
               })()
             ) : (
-              <Typography variant="subtitle1" color={colors.black70}>
+              <Typography variant="body2" color={colors.black70}>
                 No upcoming plans
               </Typography>
             )}

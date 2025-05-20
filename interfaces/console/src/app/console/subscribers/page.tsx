@@ -34,7 +34,11 @@ import PageContainerHeader from '@/components/PageContainerHeader';
 import PlanCard from '@/components/PlanCard';
 import SubscriberDetailsDialog from '@/components/SubscriberDetailsDialog';
 import TopUpData from '@/components/TopUpData';
-import { SUBSCRIBER_TABLE_COLUMNS, SUBSCRIBER_TABLE_MENU } from '@/constants';
+import {
+  SUBSCRIBER_ERROR_MESSAGES,
+  SUBSCRIBER_TABLE_COLUMNS,
+  SUBSCRIBER_TABLE_MENU,
+} from '@/constants';
 import { useAppContext } from '@/context';
 import {
   CardWrapper,
@@ -52,7 +56,7 @@ import SubscriberIcon from '@mui/icons-material/PeopleAlt';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
 import { AlertColor, Box, Paper, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const Page = () => {
   const query = useSearchParams();
@@ -114,6 +118,7 @@ const Page = () => {
   });
 
   const [getSimBySubscriber] = useGetSimsBySubscriberLazyQuery({
+    fetchPolicy: 'network-only',
     onCompleted: (res) => {
       if (res.getSimsBySubscriber) {
         setSubscriberSimList(res.getSimsBySubscriber.sims);
@@ -159,18 +164,6 @@ const Page = () => {
     },
   });
 
-  const handleSimDelete = (
-    simId: string,
-    iccid: string,
-    isLastSim: boolean,
-  ) => {
-    setSimToDelete({
-      id: simId,
-      iccid: iccid,
-      isLastSim: isLastSim,
-    });
-    setIsSimDeleteConfirmationOpen(true);
-  };
   const [deleteSim, { loading: deleteSimLoading }] = useDeleteSimMutation({
     onCompleted: () => {
       if (subscriberDetails) {
@@ -183,9 +176,13 @@ const Page = () => {
         });
       }
 
-      if (simToDelete.isLastSim) {
-        refetchSubscribers();
-      }
+      refetchSubscribers().then((response) => {
+        if (response?.data?.getSubscribersByNetwork) {
+          setSubscriber({
+            subscribers: [...response.data.getSubscribersByNetwork.subscribers],
+          });
+        }
+      });
 
       setSnackbarMessage({
         id: 'delete-sim-success',
@@ -209,6 +206,7 @@ const Page = () => {
   });
   const [getPackagesForSim, { loading: packagesForSimLoading }] =
     useGetPackagesForSimLazyQuery({
+      fetchPolicy: 'network-only',
       onCompleted: (res) => {
         if (res.getPackagesForSim && res.getPackagesForSim.packages) {
           setSimPackageHistories((prevHistories) => [
@@ -229,6 +227,7 @@ const Page = () => {
         });
       },
     });
+
   const [toggleSimStatus] = useToggleSimStatusMutation({
     onCompleted: () => {
       setSnackbarMessage({
@@ -237,7 +236,43 @@ const Page = () => {
         type: 'success' as AlertColor,
         show: true,
       });
-      refetchSubscribers();
+
+      refetchSubscribers().then((response) => {
+        if (response?.data?.getSubscribersByNetwork) {
+          setSubscriber({
+            subscribers: [...response.data.getSubscribersByNetwork.subscribers],
+          });
+          if (subscriberDetails) {
+            getSimBySubscriber({
+              variables: {
+                data: {
+                  subscriberId: subscriberDetails.uuid,
+                },
+              },
+              onCompleted: (res) => {
+                if (res.getSimsBySubscriber && res.getSimsBySubscriber.sims) {
+                  setSubscriberSimList(res.getSimsBySubscriber.sims);
+                  const updatedSubscriberInfo =
+                    response.data.getSubscribersByNetwork.subscribers.find(
+                      (sub) => sub.uuid === subscriberDetails.uuid,
+                    );
+
+                  if (updatedSubscriberInfo) {
+                    setSubscriberDetails({
+                      ...updatedSubscriberInfo,
+                      packageId:
+                        updatedSubscriberInfo.sim?.[0]?.package?.package_id,
+                      dataUsage: subscriberDetails.dataUsage,
+                      dataPlan: subscriberDetails.dataPlan,
+                      simIccid: updatedSubscriberInfo.sim?.[0]?.iccid,
+                    });
+                  }
+                }
+              },
+            });
+          }
+        }
+      });
       setIsSubscriberDetailsOpen(false);
     },
     onError: (error) => {
@@ -259,6 +294,12 @@ const Page = () => {
           type: 'success' as AlertColor,
           show: true,
         });
+        if (subscriberSimList && subscriberSimList.length > 0) {
+          setSimPackageHistories([]);
+          getPackagesForSim({
+            variables: { data: { sim_id: subscriberSimList[0].id } },
+          });
+        }
       },
       onError: (error) => {
         setSnackbarMessage({
@@ -307,9 +348,18 @@ const Page = () => {
         refetchSims();
       },
       onError: (error) => {
+        const errorMsg =
+          (error.graphQLErrors?.[0]?.extensions?.response as any)?.body
+            ?.error || '';
+        const userFriendlyMessage = errorMsg.includes(
+          'idx_subscribers_active_email',
+        )
+          ? SUBSCRIBER_ERROR_MESSAGES.DUPLICATE_EMAIL
+          : error.message;
+
         setSnackbarMessage({
           id: 'add-subscriber-error',
-          message: error.message,
+          message: userFriendlyMessage,
           type: 'error' as AlertColor,
           show: true,
         });
@@ -319,7 +369,15 @@ const Page = () => {
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
       onCompleted: () => {
-        refetchSubscribers();
+        refetchSubscribers().then((response) => {
+          if (response?.data?.getSubscribersByNetwork) {
+            setSubscriber({
+              subscribers: [
+                ...response.data.getSubscribersByNetwork.subscribers,
+              ],
+            });
+          }
+        });
         setSnackbarMessage({
           id: 'delete-subscriber-success',
           message: `Deletion started for "${deletedSubscriber.name}". SIMs are being processed.`,
@@ -337,6 +395,37 @@ const Page = () => {
         });
       },
     });
+  useEffect(() => {
+    const handleSubscriberNotification = (_: any, data: string) => {
+      try {
+        const parsedData = JSON.parse(data);
+        const { eventKey } = parsedData.data.notificationSubscription;
+
+        if (eventKey === 'EventSubscriberDelete') {
+          refetchSubscribers().then((response) => {
+            if (response?.data?.getSubscribersByNetwork) {
+              setSubscriber({
+                subscribers: [
+                  ...response.data.getSubscribersByNetwork.subscribers,
+                ],
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error processing notification:', error);
+      }
+    };
+
+    if (user.id && network.id && user.orgId) {
+      const topic = `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`;
+      PubSub.subscribe(topic, handleSubscriberNotification);
+
+      return () => {
+        PubSub.unsubscribe(topic);
+      };
+    }
+  }, [user.id, network.id, user.orgId, user.role, refetchSubscribers]);
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
@@ -405,6 +494,7 @@ const Page = () => {
     );
 
     setIsTopupData(true);
+    setIsSubscriberDetailsOpen(false);
 
     getSimBySubscriber({
       variables: {
@@ -617,7 +707,6 @@ const Page = () => {
     } catch (error) {
       console.error('Error handling top up:', error);
       setIsTopupData(false);
-      throw error;
     }
   };
   const handleUpdateSubscriber = (
@@ -638,11 +727,15 @@ const Page = () => {
     subscriberId: string,
   ) => {
     if (action === 'deleteSubscriber') {
-      deleteSubscriber({
-        variables: {
-          subscriberId: subscriberId,
-        },
+      const subscriberToDelete = data?.getSubscribersByNetwork.subscribers.find(
+        (subscriber) => subscriber.uuid === subscriberId,
+      );
+      setIsConfirmationOpen(true);
+      setDeletedSubscriber({
+        id: subscriberId,
+        name: subscriberToDelete?.name ?? 'This subscriber',
       });
+      setIsSubscriberDetailsOpen(false);
     }
   };
 
@@ -879,6 +972,7 @@ const Page = () => {
         packagesData={packagesData?.getPackages}
         loadingPackageHistories={packagesForSimLoading}
         dataUsage={dataUsageForSim}
+        currencySymbol={currencyData?.getCurrencySymbol.symbol ?? ''}
       />
       <TopUpData
         isToPup={isTopupData}
