@@ -6,22 +6,24 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 # Flash and verify Ukama image for the access node (rpi4)
-
+set -x
 set -euo pipefail
 
-REQUIRED_TOOLS=(dd lsblk grep timeout screen expect sudo)
+REQUIRED_TOOLS=(dd lsblk grep timeout screen expect sudo lsusb make gcc libusb-1.0-0-dev git)
 
 IMAGE_NAME="ukama-access-node.img"
-DEVICE=${1:-}
-UART_PORT=${2:-/dev/ttyUSB0}
-EXPECTED_BOOT_STRING=${3:-"Ukama OS boot complete"}
+UART_PORT="${1:-/dev/ttyUSB0}"
+EXPECTED_BOOT_STRING="${2:-Ukama OS boot complete}"
+SSH_IP="${3:-}"
+SSH_USER="${4:-}"
+SSH_PASS="${5:-}"
+
 BAUD_RATE=115200
 UART_LOG="/tmp/rpi_uart.log"
-SSH_IP=${4:-}
-SSH_USER=${5:-}
-SSH_PASS=${6:-}
 MOUNT_POINT="/mnt/rpi"
+BLOCK_DEVICE=""
 BLOCK_SIZE=4M
+RPIBOOT_DIR="/tmp/rpiboot"
 
 log() {
     local type="$1"; shift
@@ -37,12 +39,11 @@ log() {
 
 usage() {
     echo -e "\nUsage:"
-    echo "  $0 <DEVICE> <UART_PORT> (EXPECTED_BOOT_STRING) [SSH_IP] [SSH_USER] [SSH_PASS]"
+    echo "  $0 <UART_PORT> [EXPECTED_BOOT_STRING] [SSH_IP] [SSH_USER] [SSH_PASS]"
     echo
     echo "Arguments:"
-    echo "  DEVICE                Target block device (e.g. /dev/sdX or /dev/mmcblk0)"
     echo "  UART_PORT             UART port connected to CM4 (e.g. /dev/ttyUSB0)"
-    echo "  EXPECTED_BOOT_STRING  (Optional) String to detect in UART output (e.g. 'UkamaOS boot complete')"
+    echo "  EXPECTED_BOOT_STRING  (Optional) String to detect in UART output (default: 'Ukama OS boot complete')"
     echo "  SSH_IP                (Optional) IP address of Pi for SSH verification"
     echo "  SSH_USER              (Optional) SSH username"
     echo "  SSH_PASS              (Optional) SSH password"
@@ -109,32 +110,61 @@ check_and_install_dependencies() {
     log SUCCESS "Installed missing tools."
 }
 
-validate_device() {
-    if [[ -z "$DEVICE" || ! -b "$DEVICE" ]]; then
-        log ERROR "Block device $DEVICE is not valid or not specified."
-        exit 1
+build_rpiboot() {
+    if [[ ! -x "$RPIBOOT_DIR/rpiboot" ]]; then
+        log INFO "Building rpiboot..."
+        rm -rf "$RPIBOOT_DIR"
+        git clone --depth=1 https://github.com/raspberrypi/usbboot "$RPIBOOT_DIR"
+        pushd "$RPIBOOT_DIR" >/dev/null
+        make
+        popd >/dev/null
+        log SUCCESS "rpiboot built successfully."
     fi
-    log INFO "Flashing to $DEVICE"
+}
+
+wait_for_cm4_usb() {
+    log INFO "Waiting for CM4 in USB boot mode..."
+    until lsusb | grep -q "Broadcom.*BCM2711 Boot"; do
+        sleep 1
+    done
+    log SUCCESS "CM4 detected in USB boot mode."
+}
+
+start_rpiboot() {
+    log INFO "Uploading bootloader to CM4 (rpiboot)..."
+    sudo "$RPIBOOT_DIR/rpiboot" >/dev/null &
+    log INFO "Waiting for mass storage device..."
+    for i in {1..20}; do
+        sleep 2
+        BLOCK_DEVICE=$(lsblk -d -o NAME,SIZE,MODEL | grep -E 'sd[b-z]|mmcblk[0-9]' | awk '{print $1}' | tail -n1)
+        if [[ -n "$BLOCK_DEVICE" && -b "/dev/$BLOCK_DEVICE" ]]; then
+            BLOCK_DEVICE="/dev/$BLOCK_DEVICE"
+            log SUCCESS "CM4 eMMC detected as $BLOCK_DEVICE"
+            return
+        fi
+    done
+    log ERROR "eMMC device not detected after rpiboot."
+    exit 1
 }
 
 flash_image() {
-    log INFO "Flashing image to $DEVICE ..."
-    sudo dd if="$IMAGE_NAME" of="$DEVICE" bs=$BLOCK_SIZE status=progress conv=fsync
+    log INFO "Flashing image to $BLOCK_DEVICE..."
+    sudo dd if="$IMAGE_NAME" of="$BLOCK_DEVICE" bs=$BLOCK_SIZE status=progress conv=fsync
     sync
-    log SUCCESS "Image flashed to $DEVICE"
+    log SUCCESS "Image flashed to $BLOCK_DEVICE"
 }
 
-mount_and_verify_boot() {
-    log INFO "Verifying boot partition structure ..."
-    BOOT_PART="${DEVICE}1"
-    [[ "$DEVICE" =~ mmcblk ]] && BOOT_PART="${DEVICE}p1"
+mount_and_verify_boot_partition() {
+    log INFO "Verifying boot partition..."
+    BOOT_PART="${BLOCK_DEVICE}1"
+    [[ "$BLOCK_DEVICE" =~ mmcblk ]] && BOOT_PART="${BLOCK_DEVICE}p1"
 
-    mkdir -p "$MOUNT_POINT"
+    sudo mkdir -p "$MOUNT_POINT"
     sudo mount "$BOOT_PART" "$MOUNT_POINT"
     if [ -f "$MOUNT_POINT/config.txt" ]; then
-        log SUCCESS "Boot partition looks good."
+        log SUCCESS "Boot partition verified."
     else
-        log ERROR "Boot partition seems invalid or missing files."
+        log ERROR "Boot partition is missing config.txt!"
         sudo umount "$MOUNT_POINT"
         exit 1
     fi
@@ -142,33 +172,30 @@ mount_and_verify_boot() {
 }
 
 monitor_uart_boot_log() {
-    log INFO "Waiting for RPi boot via UART log on $UART_PORT ..."
+    log INFO "Monitoring UART on $UART_PORT for boot log..."
     sudo timeout 120s cat "$UART_PORT" > "$UART_LOG" &
-    sleep 10  # Give it time to boot
-
+    sleep 10
     for i in {1..24}; do
         if grep -q "$EXPECTED_BOOT_STRING" "$UART_LOG"; then
-            log SUCCESS "Detected expected boot message: \"$EXPECTED_BOOT_STRING\""
+            log SUCCESS "Detected boot message: '$EXPECTED_BOOT_STRING'"
             return 0
         fi
         sleep 5
     done
-
-    log ERROR "Boot log does not contain expected string after timeout."
+    log ERROR "Expected boot string not found in UART log."
     tail "$UART_LOG"
     return 1
 }
 
 test_ssh_connectivity() {
     if [[ -z "$SSH_IP" || -z "$SSH_USER" || -z "$SSH_PASS" ]]; then
-        log INFO "SSH test skipped — IP or credentials not provided."
+        log INFO "Skipping SSH check — no credentials provided."
         return
     fi
 
-    log INFO "Testing SSH connection to $SSH_USER@$SSH_IP"
-
+    log INFO "Attempting SSH connection to $SSH_USER@$SSH_IP"
     expect <<EOF
-        spawn ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP "echo 'SSH OK'"
+        spawn ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP "echo SSH OK"
         expect {
             "yes/no" { send "yes\r"; exp_continue }
             "assword:" { send "$SSH_PASS\r" }
@@ -177,30 +204,31 @@ test_ssh_connectivity() {
 EOF
 
     if [[ $? -eq 0 ]]; then
-        log SUCCESS "SSH test passed."
+        log SUCCESS "SSH check passed."
     else
-        log ERROR "SSH test failed."
+        log ERROR "SSH failed."
         return 1
     fi
 }
 
-# Main
-if [[ $# -lt 2 ]]; then
-    log ERROR "Not enough arguments."
+if [[ $# -lt 1 ]]; then
     usage
+    exit 1
 fi
 
-check_and_install_dependencies
-validate_device
+check_dependencies
+build_rpiboot
+wait_for_cm4_usb
+start_rpiboot
 
 if [[ ! -f "$IMAGE_NAME" ]]; then
-    log ERROR "Image file $IMAGE_NAME not found."
+    log ERROR "$IMAGE_NAME not found"
     exit 1
 fi
 
 flash_image
-mount_and_verify_boot
+mount_and_verify_boot_partition
 monitor_uart_boot_log
 test_ssh_connectivity
 
-log SUCCESS "All steps completed successfully."
+log SUCCESS "All steps completed successfully. CM4 is flashed and verified!"
