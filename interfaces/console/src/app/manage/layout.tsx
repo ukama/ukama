@@ -60,6 +60,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   <Link
     id={id}
     href={path}
+    data-testid={id}
     prefetch={id === 'manage-members'}
     style={{
       borderRadius: 4,

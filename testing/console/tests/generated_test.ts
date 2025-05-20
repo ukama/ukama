@@ -79,7 +79,7 @@ test('Sim Pool Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
   await page.getByTestId('manage-btn').click();
-  await page.getByRole('link', { name: 'SIM pool' }).click();
+  await page.getByTestId('manage-sim').click();
   await page.getByRole('button', { name: 'CLAIM SIMS' }).click();
   await page.locator('#csv-file-input').click();
   await page.locator('#csv-file-input').setInputFiles('100Sims_part_10.csv');
@@ -94,7 +94,7 @@ test('Data Plan Creation Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
   await page.getByTestId('manage-btn').click();
-  await page.getByRole('link', { name: 'Data plans' }).click();
+  await page.getByTestId('manage-data-plan').click();
   await page.getByRole('button', { name: 'CREATE DATA PLAN' }).click();
   await page.getByRole('textbox', { name: 'DATA PLAN NAME' }).click();
   await page.getByRole('textbox', { name: 'DATA PLAN NAME' }).fill('Test-Plan');
