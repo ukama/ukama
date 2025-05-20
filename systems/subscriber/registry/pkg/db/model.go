@@ -18,7 +18,7 @@ import (
 	 SubscriberId          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	 Name             string    `gorm:"size:255"`
 	 NetworkId             uuid.UUID `gorm:"type:uuid;index"`
-	 Email                 string    `gorm:"size:255;unique;not null;index"`
+	 Email                 string    `gorm:"size:255;not null;index"` 
 	 PhoneNumber           string    `gorm:"size:15"`
 	 Gender                string    `gorm:"size:255"`
 	 DOB                   string

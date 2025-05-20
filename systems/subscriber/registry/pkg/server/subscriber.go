@@ -384,23 +384,28 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 		log.Errorf("Error while getting subscriber: %s", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
 	}
-	log.Infof("Delete Subscriber : %v ", subscriberId)
 
-	err = s.subscriberRepo.Delete(subscriberId)
+	log.Infof("Initiating subscriber deletion: %v", subscriberId)
+
+	simManagerClient, err := s.simManagerService.GetSimManagerService()
 	if err != nil {
-		log.WithError(err).Error("error while deleting subscriber")
-
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+		log.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+		return nil, err
 	}
 
-	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	log.Infof("Pushing delete subscriber event to %v", route)
-	_ = s.PublishEventMessage(route, &epb.EventSubscriberDeleted{
+	_, err = simManagerClient.TerminateSimsForSubscriber(ctx, &simMangerPb.TerminateSimsForSubscriberRequest{
 		SubscriberId: subscriber.SubscriberId.String(),
 	})
-
-	return &pb.DeleteSubscriberResponse{}, nil
+	if err != nil {
+		log.Errorf("Failed to terminate SIMs for subscriber %s: %v", subscriberId, err)
+		return nil, status.Errorf(codes.Internal, "Failed to terminate SIMs: %v", err)
+	}
+	log.Infof("Successfully initiated deletion for subscriber: %v. SIM Manager will handle coordination.", subscriberId)
+	return &pb.DeleteSubscriberResponse{
+		
+	}, nil
 }
+
 
 func (s *SubcriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
 
@@ -469,3 +474,4 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		Dob:                   s.DOB,
 	}
 }
+
