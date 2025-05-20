@@ -46,3 +46,4 @@ node_modules/
 /tests/test-temp/
 /test-temp/
 /tests/patched_test.spec.ts
+/tests/split_tests/
