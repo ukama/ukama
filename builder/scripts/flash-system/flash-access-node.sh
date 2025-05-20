@@ -157,7 +157,12 @@ start_rpiboot() {
 
 flash_image() {
     log INFO "Flashing image to $BLOCK_DEVICE..."
-    sudo dd if="$IMAGE_NAME" of="$BLOCK_DEVICE" bs=$BLOCK_SIZE status=progress conv=fsync
+    if command -v pv &>/dev/null; then
+        log INFO "Using pv for flashing progress..."
+        sudo pv "$IMAGE_NAME" | sudo dd of="$BLOCK_DEVICE" bs=$BLOCK_SIZE conv=fsync
+    else
+        sudo dd if="$IMAGE_NAME" of="$BLOCK_DEVICE" bs=$BLOCK_SIZE status=progress conv=fsync
+    fi
     sync
     log SUCCESS "Image flashed to $BLOCK_DEVICE"
 }
@@ -223,6 +228,8 @@ if [[ $# -lt 1 ]]; then
     usage
     exit 1
 fi
+
+rm -rf "$UART_LOG"
 
 check_dependencies
 build_rpiboot
