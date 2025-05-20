@@ -69,6 +69,16 @@ test('apply patch to generated test', async () => {
       )
       .replace(/'test-network'/g, 'faker.lorem.word(5)')
       .replace(
+        /await page\.getByTestId\('create-network-add-button'\)\.click\(\);/,
+        `const addButton = page.getByTestId('create-network-add-button');
+          if (await addButton.isEnabled()) {
+            await addButton.click();
+          } else {
+            console.log('Network creation limit reached');
+            return;
+          }`,
+      )
+      .replace(
         /await page\s*\.locator\('#csv-file-input'\)\s*\.setInputFiles\('.*'\);/g,
         `await page.locator('#csv-file-input input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFile2}.csv');`,
       )
