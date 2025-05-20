@@ -67,6 +67,7 @@ const AccountPopover = () => {
         <Paper data-testid="account-settings-popover" sx={{ px: 3, py: 2 }}>
           <Stack spacing={1}>
             <Link
+              data-testid="account-settings-link"
               href={`${env.AUTH_APP_URL}/user/account-settings`}
               prefetch={true}
               style={{
@@ -88,6 +89,7 @@ const AccountPopover = () => {
             </Link>
             <Divider />
             <Link
+              data-testid="logout-link"
               href={`/logout`}
               prefetch={false}
               style={{

@@ -241,5 +241,5 @@ test('Logout Test', async ({ page }) => {
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
   await page.getByTestId('account-settings-btn').click();
-  await page.getByRole('link', { name: 'Logout of account' }).click();
+  await page.getByTestId('logout-link').click();
 });
