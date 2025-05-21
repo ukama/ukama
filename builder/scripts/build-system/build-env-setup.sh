@@ -15,10 +15,10 @@ INSTALL_DIR="$(pwd)/buildenv"
 ARCH="x86_64"
 VERSION="latest-stable"
 MIRROR="http://dl-cdn.alpinelinux.org/alpine"
-MOUNT_SRC=""   # Source directory to mount
+MOUNT_SRC=""            # Source directory to mount
 MOUNT_DEST="ukamarepo"  # Destination inside chroot
 
-trap 'if [ -x "${INSTALL_DIR}/destroy" ]; then sudo "${INSTALL_DIR}/destroy"; else unmount_chroot_binds "${INSTALL_DIR}" "${MOUNT_DEST}"; fi' EXIT
+trap 'if [ -x "${INSTALL_DIR}/destroy" ]; then sudo "${INSTALL_DIR}/destroy" --remove; else unmount_chroot_binds "${INSTALL_DIR}" "${MOUNT_DEST}"; fi' EXIT
 
 # Parse command-line arguments
 while getopts "a:v:m:i:h" opt; do
