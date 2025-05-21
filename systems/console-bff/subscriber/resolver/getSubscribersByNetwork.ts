@@ -42,6 +42,7 @@ export class GetSubscribersByNetworkResolver {
         idSerial: sub.idSerial,
         networkId: sub.networkId,
         proofOfIdentification: sub.proofOfIdentification,
+        subscriberStatus: sub.subscriberStatus,
         sim: sub.sim,
       });
     }
