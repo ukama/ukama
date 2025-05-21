@@ -227,32 +227,32 @@ set_permissions() {
 
 # Update /etc/fstab based on partition type
 update_fstab() {
-	PARTITION_TYPE=$1
+    PARTITION_TYPE=$1
     log "INFO" "Updating /etc/fstab for partition type: ${PARTITION_TYPE}"
 
-    if [[ "${PARTITION_TYPE}" == ${PRIMARY_MOUNT} ]]; then
+    if [[ "${PARTITION_TYPE}" == "${PRIMARY_MOUNT}" ]]; then
         cat <<FSTAB > ${PRIMARY_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p6  /passive     auto    ro          0 2
-/dev/mmcblk1p5  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=passive     /passive        ext4    ro                    0 2
+LABEL=primary     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     else
         cat <<FSTAB > ${PASSIVE_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p5  /passive     auto    ro          0 2
-/dev/mmcblk1p6  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=primary     /passive        ext4    ro                    0 2
+LABEL=passive     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     fi
 
