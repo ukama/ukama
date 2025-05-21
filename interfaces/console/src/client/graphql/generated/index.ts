@@ -1525,6 +1525,7 @@ export type SubscriberDto = {
   phone: Scalars['String']['output'];
   proofOfIdentification: Scalars['String']['output'];
   sim?: Maybe<Array<SubscriberSimDto>>;
+  subscriberStatus: Scalars['String']['output'];
   uuid: Scalars['String']['output'];
 };
 
@@ -2092,21 +2093,21 @@ export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'Sims
 
 export type SubscriberSimFragment = { __typename?: 'SubscriberDto', sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
-export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
+export type SubscriberFragment = { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, subscriberStatus: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null };
 
 export type AddSubscriberMutationVariables = Exact<{
   data: SubscriberInputDto;
 }>;
 
 
-export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
+export type AddSubscriberMutation = { __typename?: 'Mutation', addSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, subscriberStatus: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type GetSubscriberQueryVariables = Exact<{
   subscriberId: Scalars['String']['input'];
 }>;
 
 
-export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
+export type GetSubscriberQuery = { __typename?: 'Query', getSubscriber: { __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, subscriberStatus: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null } };
 
 export type UpdateSubscriberMutationVariables = Exact<{
   subscriberId: Scalars['String']['input'];
@@ -2128,7 +2129,7 @@ export type GetSubscribersByNetworkQueryVariables = Exact<{
 }>;
 
 
-export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null }> } };
+export type GetSubscribersByNetworkQuery = { __typename?: 'Query', getSubscribersByNetwork: { __typename?: 'SubscribersResDto', subscribers: Array<{ __typename?: 'SubscriberDto', uuid: string, address: string, dob: string, email: string, name: string, gender: string, idSerial: string, networkId: string, phone: string, proofOfIdentification: string, subscriberStatus: string, sim?: Array<{ __typename?: 'SubscriberSimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, sync_status?: string | null, isPhysical?: boolean | null, package?: { __typename?: 'SimPackageDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean, created_at: string, updated_at: string } | null }> | null }> } };
 
 export type GetSubscriberMetricsByNetworkQueryVariables = Exact<{
   networkId: Scalars['String']['input'];
@@ -2629,6 +2630,7 @@ export const SubscriberFragmentDoc = gql`
   networkId
   phone
   proofOfIdentification
+  subscriberStatus
   ...SubscriberSim
 }
     ${SubscriberSimFragmentDoc}`;

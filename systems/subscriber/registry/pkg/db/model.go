@@ -11,6 +11,7 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
  
@@ -23,6 +24,7 @@ import (
 	 Gender                string    `gorm:"size:255"`
 	 DOB                   string
 	 ProofOfIdentification string `gorm:"size:255"`
+	 SubscriberStatus 			  ukama.SubscriberStatus `gorm:"size:255"`
 	 IdSerial              string `gorm:"size:255"`
 	 Address               string `gorm:"size:255"`
 	 CreatedAt             time.Time

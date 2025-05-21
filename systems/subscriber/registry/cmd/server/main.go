@@ -10,6 +10,8 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -75,6 +77,17 @@ func initDb() sql.Db {
     
     return d
 }
+func setupSignalHandling(server *server.SubcriberServer) {
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    
+    go func() {
+        <-c
+        log.Info("Received shutdown signal")
+        server.Shutdown()
+        os.Exit(0)
+    }()
+}
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
@@ -109,6 +122,7 @@ func runGrpcServer(gormdb sql.Db) {
 		pb.RegisterRegistryServiceServer(s, srv)
 			egenerated.RegisterEventNotificationServiceServer(s, registryEventServer)
 	})
+	 setupSignalHandling(srv)
 
 	go msgBusListener(mbClient)
 

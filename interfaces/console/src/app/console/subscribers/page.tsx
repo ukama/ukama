@@ -547,6 +547,10 @@ const Page = () => {
           const dataUsage = dataUsageData?.getDataUsages.usages.find(
             (usage) => usage.simId === sim?.id,
           );
+          const statusLabel =
+            subscriber.subscriberStatus === 'pending_deletion'
+              ? 'Deleting...'
+              : 'Active';
 
           return {
             id: subscriber.uuid,
@@ -555,6 +559,7 @@ const Page = () => {
             packageId: sim?.package?.package_id,
             dataPlan: pkg?.name ?? 'No active plan',
             dataUsage: `${isNaN(Number(dataUsage?.usage)) ? 0 : formatBytesToGB(Number(dataUsage?.usage))} GB`,
+            status: statusLabel,
             actions: '',
           };
         });
@@ -926,7 +931,23 @@ const Page = () => {
             columns={SUBSCRIBER_TABLE_COLUMNS}
             dataset={structureData(subscriber)}
             menuOptions={SUBSCRIBER_TABLE_MENU}
-            onMenuItemClick={onTableMenuItem}
+            onMenuItemClick={(id: string, type: string) => {
+              const rows = structureData(subscriber) || [];
+              const row = rows.find((r) => r.id === id);
+
+              if (row && row.status === 'Deleting...') {
+                setSnackbarMessage({
+                  id: 'pending-deletion-warning',
+                  message:
+                    'This subscriber is currently being deleted and cannot be modified.',
+                  type: 'warning' as AlertColor,
+                  show: true,
+                });
+                return;
+              }
+
+              onTableMenuItem(id, type);
+            }}
             emptyViewLabel={'No subscribers yet!'}
           />
         </Paper>

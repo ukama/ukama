@@ -724,6 +724,7 @@ fragment Subscriber on SubscriberDto {
   networkId
   phone
   proofOfIdentification
+  subscriberStatus
   ...SubscriberSim
 }
 

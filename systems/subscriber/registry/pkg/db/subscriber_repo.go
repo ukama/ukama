@@ -9,7 +9,10 @@
 package db
 
 import (
+	"time"
+
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -22,6 +25,8 @@ type SubscriberRepo interface {
 	Update(subscriberId uuid.UUID, sub Subscriber) error
 	GetByNetwork(networkId uuid.UUID) ([]Subscriber, error)
 	ListSubscribers() ([]Subscriber, error)
+	FindPendingDeletionBefore(threshold time.Time) ([]Subscriber, error)
+    MarkAsPendingDeletion(subscriberId uuid.UUID) error
 }
 
 type subscriberRepo struct {
@@ -115,4 +120,28 @@ func (s *subscriberRepo) GetByNetwork(networkId uuid.UUID) ([]Subscriber, error)
 		return nil, result.Error
 	}
 	return subscribers, nil
+}
+
+func (s *subscriberRepo) FindPendingDeletionBefore(threshold time.Time) ([]Subscriber, error) {
+    var subscribers []Subscriber
+    result := s.Db.GetGormDb().Where("status = ? AND updated_at < ?", 
+        ukama.SubscriberStatusPendingDeletion, threshold).Find(&subscribers)
+    return subscribers, result.Error
+}
+
+func (s *subscriberRepo) MarkAsPendingDeletion(subscriberId uuid.UUID) error {
+    result := s.Db.GetGormDb().Model(&Subscriber{}).
+        Where("subscriber_id = ?", subscriberId).
+        Updates(map[string]interface{}{
+            "status": ukama.SubscriberStatusPendingDeletion,
+        })
+    
+    if result.Error != nil {
+        return result.Error
+    }
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    
+    return nil
 }

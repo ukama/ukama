@@ -10,8 +10,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -46,21 +49,28 @@ type SubcriberServer struct {
 	simManagerService    client.SimManagerClientProvider
 	orgClient            cnucl.OrgClient
 	networkClient        creg.NetworkClient
+	deletionCheckCancel  context.CancelFunc
 	pb.UnimplementedRegistryServiceServer
 }
 
 func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubcriberServer {
-	return &SubcriberServer{
-		orgName:              orgName,
-		subscriberRepo:       subscriberRepo,
-		msgbus:               msgBus,
-		simManagerService:    simManagerService,
-		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:                orgId,
-		orgClient:            orgService,
-		networkClient:        networkClient,
-	}
+    server := &SubcriberServer{
+        orgName:              orgName,
+        subscriberRepo:       subscriberRepo,
+        msgbus:               msgBus,
+        simManagerService:    simManagerService,
+        subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+        orgId:                orgId,
+        orgClient:            orgService,
+        networkClient:        networkClient,
+    }
+    
+    // Start the deletion check process
+    go server.startDeletionCheck()
+    
+    return server
 }
+
 
 func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	log.Infof("Adding subscriber: %v", req)
@@ -114,6 +124,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
+		SubscriberStatus:      ukama.SubscriberStatusActive, 
 		DOB:                   dob,
 		IdSerial:              req.GetIdSerial(),
 	}
@@ -372,38 +383,48 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberId()
+    subscriberId, err := uuid.FromString(subscriberIdReq)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument,
+            "invalid format of subscriber uuid. Error %s", err.Error())
+    }
 
-	subscriberId, err := uuid.FromString(subscriberIdReq)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", err.Error())
-	}
+    subscriber, err := s.subscriberRepo.Get(subscriberId)
+    if err != nil {
+        log.Errorf("Error while getting subscriber: %s", err.Error())
+        return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+    }
 
-	subscriber, err := s.subscriberRepo.Get(subscriberId)
-	if err != nil {
-		log.Errorf("Error while getting subscriber: %s", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
-	}
+    if subscriber.SubscriberStatus == ukama.SubscriberStatusPendingDeletion {
+        return &pb.DeleteSubscriberResponse{
+        }, nil
+    }
 
-	log.Infof("Initiating subscriber deletion: %v", subscriberId)
+    err = s.subscriberRepo.MarkAsPendingDeletion(subscriberId)
+    if err != nil {
+        log.Errorf("Error marking subscriber as pending deletion: %s", err.Error())
+        return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+    }
 
-	simManagerClient, err := s.simManagerService.GetSimManagerService()
-	if err != nil {
-		log.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
-		return nil, err
-	}
+    log.Infof("Initiating subscriber deletion: %v", subscriberId)
 
-	_, err = simManagerClient.TerminateSimsForSubscriber(ctx, &simMangerPb.TerminateSimsForSubscriberRequest{
-		SubscriberId: subscriber.SubscriberId.String(),
-	})
-	if err != nil {
-		log.Errorf("Failed to terminate SIMs for subscriber %s: %v", subscriberId, err)
-		return nil, status.Errorf(codes.Internal, "Failed to terminate SIMs: %v", err)
-	}
-	log.Infof("Successfully initiated deletion for subscriber: %v. SIM Manager will handle coordination.", subscriberId)
-	return &pb.DeleteSubscriberResponse{
-		
-	}, nil
+    simManagerClient, err := s.simManagerService.GetSimManagerService()
+    if err != nil {
+        log.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+        return nil, err
+    }
+
+    _, err = simManagerClient.TerminateSimsForSubscriber(ctx, &simMangerPb.TerminateSimsForSubscriberRequest{
+        SubscriberId: subscriber.SubscriberId.String(),
+    })
+    if err != nil {
+        log.Errorf("Failed to terminate SIMs for subscriber %s: %v", subscriberId, err)
+        return nil, status.Errorf(codes.Internal, "Failed to terminate SIMs: %v", err)
+    }
+    
+    log.Infof("Successfully initiated deletion for subscriber: %v. SIM Manager will handle coordination.", subscriberId)
+    return &pb.DeleteSubscriberResponse{
+    }, nil
 }
 
 
@@ -469,9 +490,93 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		NetworkId:             s.NetworkId.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
+		SubscriberStatus:                s.SubscriberStatus.String(),
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
 		Dob:                   s.DOB,
 	}
 }
 
+func (s *SubcriberServer) checkStuckDeletions() {
+    log.Info("Running scheduled check for stuck subscriber deletions")
+    
+    // Find subscribers stuck in pending deletion for over 1 hour
+    threshold := time.Now().Add(-1 * time.Hour)
+    stuckSubscribers, err := s.subscriberRepo.FindPendingDeletionBefore(threshold)
+    if err != nil {
+        log.Errorf("Error checking for stuck deletions: %v", err)
+        return
+    }
+    
+    if len(stuckSubscribers) == 0 {
+        log.Debug("No stuck deletions found")
+        return
+    }
+    
+    log.Warnf("Found %d subscribers stuck in pending deletion state", len(stuckSubscribers))
+    
+    for _, subscriber := range stuckSubscribers {
+        log.Warnf("Subscriber %s (name: %s, email: %s) stuck in deletion since %s", 
+            subscriber.SubscriberId, subscriber.Name, subscriber.Email, subscriber.UpdatedAt)
+        
+        // Retry the deletion process
+        ctx := context.Background()
+        go s.retrySubscriberDeletion(ctx, subscriber)
+    }
+}
+
+func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscriber db.Subscriber) {
+    log.Infof("Retrying deletion for subscriber %s", subscriber.SubscriberId)
+    
+    now := time.Now()
+    subscriber.UpdatedAt = now
+    err := s.subscriberRepo.Update(subscriber.SubscriberId, subscriber)
+    if err != nil {
+        log.Errorf("Failed to update timestamp for subscriber %s: %v", 
+            subscriber.SubscriberId, err)
+        return
+    }
+    
+    simManagerClient, err := s.simManagerService.GetSimManagerService()
+    if err != nil {
+        log.Errorf("Failed to get SimManagerClient for retry: %v", err)
+        return
+    }
+    
+    _, err = simManagerClient.TerminateSimsForSubscriber(ctx, &simMangerPb.TerminateSimsForSubscriberRequest{
+        SubscriberId: subscriber.SubscriberId.String(),
+    })
+    
+    if err != nil {
+        log.Errorf("Retry failed for subscriber %s: %v", subscriber.SubscriberId, err)
+        
+        alertMessage := fmt.Sprintf("Failed to delete subscriber %s (name: %s, email: %s) after retry. Manual intervention may be required.", 
+            subscriber.SubscriberId, subscriber.Name, subscriber.Email)
+        log.Error(alertMessage)
+    } else {
+        log.Infof("Successfully initiated retry for subscriber %s", subscriber.SubscriberId)
+    }
+}
+func (s *SubcriberServer) startDeletionCheck() {
+    ticker := time.NewTicker(15 * time.Minute)
+    defer ticker.Stop()
+    
+    ctx, cancel := context.WithCancel(context.Background())
+    s.deletionCheckCancel = cancel
+    defer cancel()
+    
+    for {
+        select {
+        case <-ticker.C:
+            s.checkStuckDeletions()
+        case <-ctx.Done():
+            log.Info("Stopping stuck deletion check process")
+            return
+        }
+    }
+}
+func (s *SubcriberServer) Shutdown() {
+    if s.deletionCheckCancel != nil {
+        s.deletionCheckCancel()
+    }
+}

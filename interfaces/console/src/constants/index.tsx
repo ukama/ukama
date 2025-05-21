@@ -119,6 +119,7 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'email', label: 'Email', minWidth: 180 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
+  { id: 'status', label: 'Status', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
 
