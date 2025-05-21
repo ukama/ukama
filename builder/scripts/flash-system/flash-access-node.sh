@@ -6,7 +6,6 @@
 # Copyright (c) 2024-present, Ukama Inc.
 
 # Flash and verify Ukama image for the access node (rpi4)
-set -x
 set -euo pipefail
 
 trap cleanup EXIT
@@ -14,11 +13,8 @@ trap cleanup EXIT
 REQUIRED_TOOLS=(dd lsblk grep timeout screen expect sudo lsusb make gcc libusb-1.0-0-dev git)
 
 IMAGE_NAME="ukama-access-node.img"
-UART_PORT="${1:-/dev/ttyUSB0}"
-EXPECTED_BOOT_STRING="${2:-Ukama OS boot complete}"
-SSH_IP="${3:-}"
-SSH_USER="${4:-}"
-SSH_PASS="${5:-}"
+UART_PORT="/dev/ttyUSB0}"
+EXPECTED_BOOT_STRING="Ukama OS boot complete}"
 
 BAUD_RATE=115200
 UART_LOG="/tmp/rpi_uart.log"
@@ -47,14 +43,11 @@ cleanup() {
 
 usage() {
     echo -e "\nUsage:"
-    echo "  $0 <UART_PORT> [EXPECTED_BOOT_STRING] [SSH_IP] [SSH_USER] [SSH_PASS]"
+    echo "  $0 [--verify]"
     echo
-    echo "Arguments:"
-    echo "  UART_PORT             UART port connected to CM4 (e.g. /dev/ttyUSB0)"
-    echo "  EXPECTED_BOOT_STRING  (Optional) String to detect in UART output (default: 'Ukama OS boot complete')"
-    echo "  SSH_IP                (Optional) IP address of Pi for SSH verification"
-    echo "  SSH_USER              (Optional) SSH username"
-    echo "  SSH_PASS              (Optional) SSH password"
+    echo "Modes:"
+    echo "  (no args)       Flash image to CM4 eMMC via rpiboot"
+    echo "  --verify        After power cycle, verify UART boot log"
     echo
     exit 1
 }
@@ -216,33 +209,10 @@ monitor_uart_boot_log() {
     return 1
 }
 
-test_ssh_connectivity() {
-    if [[ -z "$SSH_IP" || -z "$SSH_USER" || -z "$SSH_PASS" ]]; then
-        log INFO "Skipping SSH check — no credentials provided."
-        return
-    fi
-
-    log INFO "Attempting SSH connection to $SSH_USER@$SSH_IP"
-    expect <<EOF
-        spawn ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_IP "echo SSH OK"
-        expect {
-            "yes/no" { send "yes\r"; exp_continue }
-            "password:" { send "$SSH_PASS\r" }
-        }
-        expect "SSH OK"
-EOF
-
-    if [[ $? -eq 0 ]]; then
-        log SUCCESS "SSH check passed."
-    else
-        log ERROR "SSH failed."
-        return 1
-    fi
-}
-
-if [[ $# -lt 1 ]]; then
-    usage
-    exit 1
+if [[ $# -ge 1 && "$1" == "--verify" ]]; then
+    monitor_uart_boot_log
+    log SUCCESS "Verification complete. CM4 boot confirmed."
+    exit 0
 fi
 
 rm -rf "$UART_LOG"
@@ -259,7 +229,11 @@ fi
 
 flash_image
 mount_and_verify_boot_partition
-monitor_uart_boot_log
-test_ssh_connectivity
 
 log SUCCESS "All steps completed successfully. CM4 is flashed and verified!"
+log INFO "\nNext steps:"
+echo "  1. Power off the CM4"
+echo "  2. Remove BOOT jumper or switch it off"
+echo "  3. Power it back on"
+echo "  4. Once booted, run this script with \"--verify\" to test UART boot log."
+
