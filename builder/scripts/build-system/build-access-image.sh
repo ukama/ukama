@@ -77,7 +77,6 @@ download_and_copy_rpi_firmware() {
 
     log "INFO" "Downloading Raspberry Pi bootloader from $FIRMWARE_REPO ..."
 
-    # Clean up previous temp dir
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
 
@@ -90,12 +89,29 @@ download_and_copy_rpi_firmware() {
         return 1
     fi
 
-    mkdir -p "$BOOT_DIR"
-    cp "$FIRMWARE_BOOT"/{bootcode.bin,start*.elf,fixup*.dat,config.txt,cmdline.txt} \
-       "$BOOT_DIR" 2>/dev/null || true
-    cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR" 2>/dev/null || true
+    mkdir -p "$BOOT_DIR/firmware"
+    cp "$FIRMWARE_BOOT"/{start*.elf,fixup*.dat,bootcode.bin} "$BOOT_DIR/firmware/" 2>/dev/null || true
+    cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR/firmware/" 2>/dev/null || true
+    cp -r "$FIRMWARE_BOOT/overlays" "$BOOT_DIR/firmware/" 2>/dev/null || true
 
-    log "INFO" "Bootloader files copied to $BOOT_DIR"
+    # Write a clean config.txt
+    cat <<EOF > "$BOOT_DIR/firmware/config.txt"
+enable_uart=1
+arm_64bit=1
+kernel=kernel.img
+gpu_mem=64
+boot_delay=1
+disable_splash=1
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
+EOF
+
+    # Write cmdline.txt
+    cat <<EOF > "$BOOT_DIR/firmware/cmdline.txt"
+console=serial0,115200 console=tty1 root=LABEL=primary rootfstype=ext4 fsck.repair=yes rootwait
+EOF
+
+    log "SUCCESS" "Bootloader files and boot config copied to $BOOT_DIR/firmware"
 
     rm -rf "$TMP_DIR"
 }
