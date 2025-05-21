@@ -24,7 +24,7 @@ echo "https://dl-cdn.alpinelinux.org/alpine/${MAJOR_VERSION}/community" >> /etc/
 apk update
 apk upgrade
 
-# ===== Install Essential System Packages =====
+# install essential system packages
 apk add alpine-base openrc busybox bash sudo shadow tzdata
 
 apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
@@ -38,7 +38,7 @@ apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev \
     libunistring-dev \
     patchelf
 
-#build apps
+# build apps
 ${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
 if [ $? -eq 0 ]; then
     echo "Apps build:"
