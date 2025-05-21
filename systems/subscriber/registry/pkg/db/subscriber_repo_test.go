@@ -16,6 +16,7 @@ import (
 
 	"github.com/tj/assert"
 	int_db "github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+    "github.com/ukama/ukama/systems/common/ukama"  
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
@@ -57,59 +58,59 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestSubscriber_Add(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-	}
-	defer db.Close()
-	gdb, _ := gorm.Open(postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	}), &gorm.Config{})
-	repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
-	dateStr := "07-03-2023"
+    db, mock, err := sqlmock.New()
+    if err != nil {
+        t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+    }
+    defer db.Close()
+    gdb, _ := gorm.Open(postgres.New(postgres.Config{
+        DSN:                  "sqlmock_db_0",
+        DriverName:           "postgres",
+        Conn:                 db,
+        PreferSimpleProtocol: true,
+    }), &gorm.Config{})
+    repo := int_db.NewSubscriberRepo(&UkamaDbMock{
+        GormDb: gdb,
+    })
+    dateStr := "07-03-2023"
 
-	subscriber := int_db.Subscriber{
-		SubscriberId:          uuid.NewV4(),
-		Name:                  "John",
-		NetworkId:             uuid.NewV4(),
-		
-		PhoneNumber:           "555-555-5555",
-		Gender:                "Male",
-		DOB:                   dateStr,
-		ProofOfIdentification: "Driver's License",
-		IdSerial:              "ABC123",
-		Address:               "123 Main St.",
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
-		DeletedAt:             nil,
-	}
+    subscriber := int_db.Subscriber{
+        SubscriberId:          uuid.NewV4(),
+        Name:                  "John",
+        NetworkId:             uuid.NewV4(),
+        PhoneNumber:           "555-555-5555",
+        Gender:                "Male",
+        DOB:                   dateStr,
+        ProofOfIdentification: "Driver's License",
+        SubscriberStatus:      ukama.SubscriberStatusActive, 
+        IdSerial:              "ABC123",
+        Address:               "123 Main St.",
+        CreatedAt:             time.Now(),
+        UpdatedAt:             time.Now(),
+        DeletedAt:             nil,
+    }
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
-		subscriber.SubscriberId,
-		subscriber.Name,
-		subscriber.NetworkId,
-		subscriber.Email,
-		subscriber.PhoneNumber,
-		subscriber.Gender,
-		subscriber.DOB,
-		subscriber.ProofOfIdentification,
-		subscriber.IdSerial,
-		subscriber.Address,
-		subscriber.CreatedAt,
-		subscriber.UpdatedAt,
-		subscriber.DeletedAt).WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
+    mock.ExpectBegin()
+    mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
+        subscriber.SubscriberId,
+        subscriber.Name,
+        subscriber.NetworkId,
+        subscriber.Email,
+        subscriber.PhoneNumber,
+        subscriber.Gender,
+        subscriber.DOB,
+        subscriber.ProofOfIdentification,
+        subscriber.SubscriberStatus, 
+        subscriber.IdSerial,
+        subscriber.Address,
+        subscriber.CreatedAt,
+        subscriber.UpdatedAt,
+        subscriber.DeletedAt).WillReturnResult(sqlmock.NewResult(1, 1))
+    mock.ExpectCommit()
 
-	err = repo.Add(&subscriber, nil)
-	assert.NoError(t, err)
-	assert.NoError(t, mock.ExpectationsWereMet())
-
+    err = repo.Add(&subscriber, nil)
+    assert.NoError(t, err)
+    assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestSubscriber_Get(t *testing.T) {
