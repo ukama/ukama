@@ -150,13 +150,15 @@ func (s *subscriberRepo) MarkAsPendingDeletion(subscriberId uuid.UUID) error {
     
     return nil
 }
+
+
 func (r *subscriberRepo) IncrementDeletionRetry(subscriberId uuid.UUID) error {
-    now := time.Time{}
+    now := time.Now()  
     result := r.Db.GetGormDb().Model(&Subscriber{}).
         Where("subscriber_id = ?", subscriberId).
         Updates(map[string]interface{}{
             "deletion_retry_count":  gorm.Expr("deletion_retry_count + 1"),
-            "deletion_last_attempt": &now,
+            "deletion_last_attempt": &now,  
             "updated_at":           now,
         })
     

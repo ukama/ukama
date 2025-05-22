@@ -270,6 +270,8 @@ fragment SubscriberSims on SubscriberToSimsDto {
     status
     allocatedAt
     isPhysical
+    syncStatus
+    trafficPolicy
   }
 }
 

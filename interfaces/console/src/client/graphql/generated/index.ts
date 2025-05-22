@@ -1909,7 +1909,7 @@ export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typ
 
 export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
 
-export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
+export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean, syncStatus: string, trafficPolicy: number }> };
 
 export type PackageFragment = { __typename?: 'PackageDto', uuid: string, name: string, active: boolean, duration: number, simType: string, createdAt: string, deletedAt: string, updatedAt: string, smsVolume: number, dataVolume: number, voiceVolume: number, ulbr: string, dlbr: string, type: string, dataUnit: string, voiceUnit: string, messageUnit: string, flatrate: boolean, currency: string, from: string, to: string, country: string, provider: string, apn: string, ownerId: string, amount: number, rate: { __typename?: 'PackageRateAPIDto', sms_mo: string, sms_mt: number, data: number, amount: number }, markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
@@ -1930,7 +1930,7 @@ export type GetSimsBySubscriberQueryVariables = Exact<{
 }>;
 
 
-export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> } };
+export type GetSimsBySubscriberQuery = { __typename?: 'Query', getSimsBySubscriber: { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean, syncStatus: string, trafficPolicy: number }> } };
 
 export type AddPackageMutationVariables = Exact<{
   data: AddPackageInputDto;
@@ -2381,6 +2381,8 @@ export const SubscriberSimsFragmentDoc = gql`
     status
     allocatedAt
     isPhysical
+    syncStatus
+    trafficPolicy
   }
 }
     `;
