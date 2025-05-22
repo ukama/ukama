@@ -33,7 +33,7 @@ services:
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-metrics:9095
    - EXPORTER_SERVICE_HOST=exporter
-   - EXPORTER_SERVICE_PORT=9092
+   - EXPORTER_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
   restart: always
   networks:
@@ -46,6 +46,9 @@ services:
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
    - BYPASS_AUTH_MODE=true
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - ORGNAME=${ORGNAME}
+   - PERIOD=
   restart: always
   depends_on:
    - exporter
@@ -68,19 +71,20 @@ services:
   networks:
    - ukama-net
 
- initclient-node:
+ initclient-metrics:
   build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=metrics
-   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_DNS=api-gateway-metrics
    - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=initclient-node
+   - ENV_INIT_CLIENT_ADDR=initclient-metrics
    - ENV_INIT_CLIENT_PORT=8080
    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
   restart: always
