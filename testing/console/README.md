@@ -1,15 +1,19 @@
 # Test generation rules
 
-1. Use faker library for data generation
-2. Use playwright codegen to create test cases `npx playwright codegen http://localhost:3000/`
-3. While recording test cases, use input values format as `test-<test-name>`
-   i.e: `test-network`, `test-user`, `test-site`, `test-node`
-4. While coping tests to generated_test.ts file, name the test accordingly. i.e: `test('test', async ({ page })` to `test('TEST_NAME Test', async ({ page })`
-5. DO NOT edit the generated_test.ts and recorded tests manually.
-6. Make sure steps not to be repeated.
-7. Record each test from scratch.
-8. Updating patch file with required changes.
+1. Use playwright codegen to record test cases `npx playwright codegen http://localhost:3000/`
+   a. While recording test cases, use input values format as `test-<test-name>`
+   i.e: `test-network`, `test-user`, `test-site`, `test-node`.
+   b. DO NOT modify the recorded test steps manually - any changes should be made through patches to ensure consistency and maintainability.
+   c. Make sure steps not to be repeated.
+   d. Record each test from scratch.
+2. Create file under `console/autogen` dir according to the test name.
+3. Add patch for the test case in `console/patches` dir (if needed).
+4. Call the patch apply method in tests/apply_patches.spec.ts file.
 
-## How to generate tests
+## Apply patch to generate tests
 
-After updating patch file with required changes, run the `pnpm test` in terminal.
+To apply patches on auto gen files, run the `pnpm patch-tests` in terminal. This will generate tests in `tests/patched` dir.
+
+## Run tests
+
+To run tests, run the `pnpm test` in terminal.

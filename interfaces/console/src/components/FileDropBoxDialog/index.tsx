@@ -26,7 +26,7 @@ import { useDropzone } from 'react-dropzone';
 
 type FileDropBoxDialogProps = {
   title: string;
-  note?: string;
+  note: string;
   isOpen: boolean;
   handleCloseAction: any;
   labelSuccessBtn?: string;

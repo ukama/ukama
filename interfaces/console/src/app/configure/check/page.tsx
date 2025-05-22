@@ -142,7 +142,7 @@ const Check = () => {
   useEffect(() => {
     if (!networkId && network.id)
       setQueryParam('networkid', network.id, searchParams.toString(), pathname);
-  }, [networkId]);
+  }, [networkId, network.id]);
 
   useEffect(() => {
     if (nodeId) {
