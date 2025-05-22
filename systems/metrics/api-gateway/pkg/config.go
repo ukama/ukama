@@ -30,6 +30,13 @@ type Config struct {
 	MetricsStore      string         `default:"http://localhost:8080"`
 	Auth              *config.Auth   `mapstructure:"auth"`
 	MetricsConfig     *MetricsConfig
+	OrgName           string
+	Period            time.Duration `default:"5s"`
+	Http              HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type Metric struct {
@@ -182,22 +189,22 @@ var defaultPrometheusMetric = map[string]Metric{
 	"switch_port_power":  Metric{false, "switch_port_power", ""},
 
 	//main backhaul
-	"backhaul_speed":        Metric{false, "backhaul_speed", ""},
-	"main_backhaul_latency": Metric{false, "main_backhaul_latency", ""},
-	"site_uptime_seconds":   Metric{false, "site_uptime_seconds", ""},
+	"backhaul_speed":         Metric{false, "backhaul_speed", ""},
+	"main_backhaul_latency":  Metric{false, "main_backhaul_latency", ""},
+	"site_uptime_seconds":    Metric{false, "site_uptime_seconds", ""},
 	"site_uptime_percentage": Metric{false, "site_uptime_percentage", ""},
 
 	"backhaul_switch_port_status": Metric{false, "backhaul_switch_port_status", ""},
 	"backhaul_switch_port_speed":  Metric{false, "backhaul_switch_port_speed", ""},
 	"backhaul_switch_port_power":  Metric{false, "backhaul_switch_port_power", ""},
-	
-	"solar_switch_port_status":    Metric{false, "solar_switch_port_status", ""},
-	"solar_switch_port_speed":     Metric{false, "solar_switch_port_speed", ""},
-	"solar_switch_port_power":     Metric{false, "solar_switch_port_power", ""},
-	
-	"node_switch_port_status":     Metric{false, "node_switch_port_status", ""},
-	"node_switch_port_speed":      Metric{false, "node_switch_port_speed", ""},
-	"node_switch_port_power":      Metric{false, "node_switch_port_power", ""},
+
+	"solar_switch_port_status": Metric{false, "solar_switch_port_status", ""},
+	"solar_switch_port_speed":  Metric{false, "solar_switch_port_speed", ""},
+	"solar_switch_port_power":  Metric{false, "solar_switch_port_power", ""},
+
+	"node_switch_port_status": Metric{false, "node_switch_port_status", ""},
+	"node_switch_port_speed":  Metric{false, "node_switch_port_speed", ""},
+	"node_switch_port_power":  Metric{false, "node_switch_port_power", ""},
 }
 
 type GrpcEndpoints struct {
@@ -240,6 +247,7 @@ func NewConfig() *Config {
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
 		},
-		Auth: config.LoadAuthHostConfig("auth"),
+		Auth:   config.LoadAuthHostConfig("auth"),
+		Period: time.Second * 5,
 	}
 }
