@@ -78,11 +78,14 @@ func TestSubscriber_Add(t *testing.T) {
         SubscriberId:          uuid.NewV4(),
         Name:                  "John",
         NetworkId:             uuid.NewV4(),
+        Email:                 "john@example.com",  
         PhoneNumber:           "555-555-5555",
         Gender:                "Male",
         DOB:                   dateStr,
         ProofOfIdentification: "Driver's License",
         SubscriberStatus:      ukama.SubscriberStatusActive, 
+        DeletionRetryCount:    0,                   
+        DeletionLastAttempt:   nil,                 
         IdSerial:              "ABC123",
         Address:               "123 Main St.",
         CreatedAt:             time.Now(),
@@ -101,6 +104,8 @@ func TestSubscriber_Add(t *testing.T) {
         subscriber.DOB,
         subscriber.ProofOfIdentification,
         subscriber.SubscriberStatus, 
+        subscriber.DeletionRetryCount,    
+        subscriber.DeletionLastAttempt,   
         subscriber.IdSerial,
         subscriber.Address,
         subscriber.CreatedAt,
@@ -129,8 +134,15 @@ func TestSubscriber_Get(t *testing.T) {
 			PreferSimpleProtocol: true,
 		}), &gorm.Config{})
 
-		subRow := sqlmock.NewRows([]string{"subscriber_id"}).
-			AddRow(subID)
+		subRow := sqlmock.NewRows([]string{
+			"subscriber_id", "name", "network_id", "email", "phone_number", 
+			"gender", "dob", "proof_of_identification", "subscriber_status", 
+			"deletion_retry_count", "deletion_last_attempt", 
+			"id_serial", "address", "created_at", "updated_at", "deleted_at"}).
+			AddRow(subID, "John", uuid.NewV4(), "john@example.com", "555-555-5555", 
+				"Male", "1990-01-01", "Passport", ukama.SubscriberStatusActive, 
+				0, nil, 
+				"ABC123", "123 Main St", time.Now(), time.Now(), nil)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
 			WithArgs(subID, sqlmock.AnyArg()).
@@ -150,6 +162,7 @@ func TestSubscriber_Get(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sub)
 	})
+	
 	t.Run("SubscriberNotFound", func(t *testing.T) {
 		// Arrange
 		var subID = uuid.NewV4()

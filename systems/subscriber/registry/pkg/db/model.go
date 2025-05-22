@@ -24,7 +24,9 @@ import (
 	 Gender                string    `gorm:"size:255"`
 	 DOB                   string
 	 ProofOfIdentification string `gorm:"size:255"`
-	 SubscriberStatus 			  ukama.SubscriberStatus `gorm:"size:255"`
+	 SubscriberStatus 			  ukama.SubscriberStatus 
+	 DeletionRetryCount    int                      `gorm:"default:0"`
+     DeletionLastAttempt   *time.Time               
 	 IdSerial              string `gorm:"size:255"`
 	 Address               string `gorm:"size:255"`
 	 CreatedAt             time.Time

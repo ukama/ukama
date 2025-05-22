@@ -119,7 +119,7 @@ export const SUBSCRIBER_TABLE_COLUMNS: ColumnsWithOptions[] = [
   { id: 'email', label: 'Email', minWidth: 180 },
   { id: 'dataPlan', label: 'Data Plan', minWidth: 140 },
   { id: 'dataUsage', label: 'Data Usage', minWidth: 140 },
-  { id: 'status', label: 'Status', minWidth: 140 },
+  { id: 'subscriberStatus', label: 'Status', minWidth: 140 },
   { id: 'actions', label: 'Actions', align: 'right', minWidth: 80 },
 ];
 
@@ -137,7 +137,7 @@ export const SUBSCRIBER_TABLE_MENU: MenuItemType[] = [
   {
     id: 3,
     Icon: null,
-    title: 'Delete subscriber',
+    title: 'Delete',
     route: 'delete-sub',
     color: colors.redMatt,
   },
@@ -896,6 +896,9 @@ export const NODE_KPIS = {
 export const SUBSCRIBER_ERROR_MESSAGES = {
   DUPLICATE_EMAIL: 'A subscriber with this email already exists.',
   DEFAULT: 'An error occurred. Please try again.',
+  RETRY_DELETION: 'Retrying deletion for this subscriber...',
+  ACTION_BLOCKED_DELETING:
+    'This subscriber is being deleted. Only retry deletion is available.',
 };
 
 export const TIME_FILTER_OPTIONS = [

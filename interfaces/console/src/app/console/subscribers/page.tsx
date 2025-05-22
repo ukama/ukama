@@ -49,7 +49,7 @@ import {
   ScrollContainer,
 } from '@/styles/global';
 import colors from '@/theme/colors';
-import { formatBytesToGB } from '@/utils';
+import { formatBytesToGB, getDisplayStatus } from '@/utils';
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import SubscriberIcon from '@mui/icons-material/PeopleAlt';
@@ -547,10 +547,6 @@ const Page = () => {
           const dataUsage = dataUsageData?.getDataUsages.usages.find(
             (usage) => usage.simId === sim?.id,
           );
-          const statusLabel =
-            subscriber.subscriberStatus === 'pending_deletion'
-              ? 'Deleting...'
-              : 'Active';
 
           return {
             id: subscriber.uuid,
@@ -559,7 +555,7 @@ const Page = () => {
             packageId: sim?.package?.package_id,
             dataPlan: pkg?.name ?? 'No active plan',
             dataUsage: `${isNaN(Number(dataUsage?.usage)) ? 0 : formatBytesToGB(Number(dataUsage?.usage))} GB`,
-            status: statusLabel,
+            subscriberStatus: getDisplayStatus(subscriber.subscriberStatus),
             actions: '',
           };
         });
@@ -934,18 +930,28 @@ const Page = () => {
             onMenuItemClick={(id: string, type: string) => {
               const rows = structureData(subscriber) || [];
               const row = rows.find((r) => r.id === id);
-
-              if (row && row.status === 'Deleting...') {
-                setSnackbarMessage({
-                  id: 'pending-deletion-warning',
-                  message:
-                    'This subscriber is currently being deleted and cannot be modified.',
-                  type: 'warning' as AlertColor,
-                  show: true,
-                });
-                return;
+              if (row && row.subscriberStatus === 'Deleting...') {
+                if (type === 'delete-sub') {
+                  setSnackbarMessage({
+                    id: 'retry-deletion-info',
+                    message: SUBSCRIBER_ERROR_MESSAGES.RETRY_DELETION,
+                    type: 'info' as AlertColor,
+                    show: true,
+                  });
+                  deleteSubscriber({
+                    variables: { subscriberId: id },
+                  });
+                  return;
+                } else {
+                  setSnackbarMessage({
+                    id: 'action-blocked',
+                    message: SUBSCRIBER_ERROR_MESSAGES.ACTION_BLOCKED_DELETING,
+                    type: 'warning' as AlertColor,
+                    show: true,
+                  });
+                  return;
+                }
               }
-
               onTableMenuItem(id, type);
             }}
             emptyViewLabel={'No subscribers yet!'}

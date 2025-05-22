@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -39,6 +38,8 @@ import (
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
+
+const MAX_DELETION_RETRIES = 3
 
 type SubcriberServer struct {
 	orgName              string
@@ -496,12 +497,9 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		Dob:                   s.DOB,
 	}
 }
-
 func (s *SubcriberServer) checkStuckDeletions() {
-    log.Info("Running scheduled check for stuck subscriber deletions")
+    threshold := time.Now().Add(-5 * time.Minute)
     
-    // Find subscribers stuck in pending deletion for over 1 hour
-    threshold := time.Now().Add(-1 * time.Hour)
     stuckSubscribers, err := s.subscriberRepo.FindPendingDeletionBefore(threshold)
     if err != nil {
         log.Errorf("Error checking for stuck deletions: %v", err)
@@ -509,30 +507,32 @@ func (s *SubcriberServer) checkStuckDeletions() {
     }
     
     if len(stuckSubscribers) == 0 {
-        log.Debug("No stuck deletions found")
         return
     }
     
-    log.Warnf("Found %d subscribers stuck in pending deletion state", len(stuckSubscribers))
+    log.Infof("Found %d subscribers stuck in pending deletion state", len(stuckSubscribers))
     
     for _, subscriber := range stuckSubscribers {
-        log.Warnf("Subscriber %s (name: %s, email: %s) stuck in deletion since %s", 
-            subscriber.SubscriberId, subscriber.Name, subscriber.Email, subscriber.UpdatedAt)
+        if subscriber.DeletionRetryCount >= MAX_DELETION_RETRIES {
+            log.Errorf("Subscriber %s has exceeded maximum retry attempts (%d). Manual intervention required.", 
+                subscriber.SubscriberId, MAX_DELETION_RETRIES)
+            continue
+        }
         
-        // Retry the deletion process
+        log.Infof("Retrying deletion for subscriber %s (attempt %d/%d)", 
+            subscriber.SubscriberId, subscriber.DeletionRetryCount+1, MAX_DELETION_RETRIES)
+        
         ctx := context.Background()
         go s.retrySubscriberDeletion(ctx, subscriber)
     }
 }
 
+
+
 func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscriber db.Subscriber) {
-    log.Infof("Retrying deletion for subscriber %s", subscriber.SubscriberId)
-    
-    now := time.Now()
-    subscriber.UpdatedAt = now
-    err := s.subscriberRepo.Update(subscriber.SubscriberId, subscriber)
+    err := s.subscriberRepo.IncrementDeletionRetry(subscriber.SubscriberId)
     if err != nil {
-        log.Errorf("Failed to update timestamp for subscriber %s: %v", 
+        log.Errorf("Failed to increment retry count for subscriber %s: %v", 
             subscriber.SubscriberId, err)
         return
     }
@@ -550,15 +550,14 @@ func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscribe
     if err != nil {
         log.Errorf("Retry failed for subscriber %s: %v", subscriber.SubscriberId, err)
         
-        alertMessage := fmt.Sprintf("Failed to delete subscriber %s (name: %s, email: %s) after retry. Manual intervention may be required.", 
-            subscriber.SubscriberId, subscriber.Name, subscriber.Email)
-        log.Error(alertMessage)
-    } else {
-        log.Infof("Successfully initiated retry for subscriber %s", subscriber.SubscriberId)
+        if subscriber.DeletionRetryCount+1 >= MAX_DELETION_RETRIES {
+            log.Errorf("Subscriber %s deletion failed after %d attempts. Manual intervention required.", 
+                subscriber.SubscriberId, MAX_DELETION_RETRIES)
+        }
     }
 }
 func (s *SubcriberServer) startDeletionCheck() {
-    ticker := time.NewTicker(15 * time.Minute)
+    ticker := time.NewTicker(2 * time.Minute)
     defer ticker.Stop()
     
     ctx, cancel := context.WithCancel(context.Background())
@@ -570,7 +569,6 @@ func (s *SubcriberServer) startDeletionCheck() {
         case <-ticker.C:
             s.checkStuckDeletions()
         case <-ctx.Done():
-            log.Info("Stopping stuck deletion check process")
             return
         }
     }

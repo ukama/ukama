@@ -27,6 +27,7 @@ type SubscriberRepo interface {
 	ListSubscribers() ([]Subscriber, error)
 	FindPendingDeletionBefore(threshold time.Time) ([]Subscriber, error)
     MarkAsPendingDeletion(subscriberId uuid.UUID) error
+    IncrementDeletionRetry(subscriberId uuid.UUID) error
 }
 
 type subscriberRepo struct {
@@ -124,16 +125,39 @@ func (s *subscriberRepo) GetByNetwork(networkId uuid.UUID) ([]Subscriber, error)
 
 func (s *subscriberRepo) FindPendingDeletionBefore(threshold time.Time) ([]Subscriber, error) {
     var subscribers []Subscriber
-    result := s.Db.GetGormDb().Where("status = ? AND updated_at < ?", 
+    result := s.Db.GetGormDb().Where("subscriber_status = ? AND deletion_last_attempt < ?", 
         ukama.SubscriberStatusPendingDeletion, threshold).Find(&subscribers)
     return subscribers, result.Error
 }
 
 func (s *subscriberRepo) MarkAsPendingDeletion(subscriberId uuid.UUID) error {
+    now := time.Now()
     result := s.Db.GetGormDb().Model(&Subscriber{}).
         Where("subscriber_id = ?", subscriberId).
         Updates(map[string]interface{}{
-            "status": ukama.SubscriberStatusPendingDeletion,
+            "subscriber_status":      ukama.SubscriberStatusPendingDeletion,
+            "deletion_retry_count":   0,          
+            "deletion_last_attempt":  &now,        
+            "updated_at":            now,
+        })
+    
+    if result.Error != nil {
+        return result.Error
+    }
+    if result.RowsAffected == 0 {
+        return gorm.ErrRecordNotFound
+    }
+    
+    return nil
+}
+func (r *subscriberRepo) IncrementDeletionRetry(subscriberId uuid.UUID) error {
+    now := time.Time{}
+    result := r.Db.GetGormDb().Model(&Subscriber{}).
+        Where("subscriber_id = ?", subscriberId).
+        Updates(map[string]interface{}{
+            "deletion_retry_count":  gorm.Expr("deletion_retry_count + 1"),
+            "deletion_last_attempt": &now,
+            "updated_at":           now,
         })
     
     if result.Error != nil {

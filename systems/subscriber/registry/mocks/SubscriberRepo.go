@@ -174,6 +174,24 @@ func (_m *SubscriberRepo) GetByNetwork(networkId uuid.UUID) ([]db.Subscriber, er
 	return r0, r1
 }
 
+// IncrementDeletionRetry provides a mock function with given fields: subscriberId
+func (_m *SubscriberRepo) IncrementDeletionRetry(subscriberId uuid.UUID) error {
+	ret := _m.Called(subscriberId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IncrementDeletionRetry")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
+		r0 = rf(subscriberId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ListSubscribers provides a mock function with no fields
 func (_m *SubscriberRepo) ListSubscribers() ([]db.Subscriber, error) {
 	ret := _m.Called()
