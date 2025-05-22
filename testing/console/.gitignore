@@ -45,5 +45,4 @@ node_modules/
 /playwright/.cache/
 /tests/test-temp/
 /test-temp/
-/tests/patched_test.spec.ts
-/tests/split_tests/
+/tests/patched
