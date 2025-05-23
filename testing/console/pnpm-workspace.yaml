@@ -3,8 +3,8 @@ packages:
   - 'src/**'
   # exclude test directories
   - '!**/test/**'
-  - "!**/__tests__/**"
-  - "testing/console/**"
+  - '!**/__tests__/**'
+  - 'testing/console/**'
   # exclude build and cache directories
   - '!**/node_modules/**'
   - '!**/.next/**'

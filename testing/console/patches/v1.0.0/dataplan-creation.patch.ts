@@ -9,9 +9,11 @@
 import { TMP_SIMS_PATH } from '@/constants';
 import { createFakeSimCSV } from '@/helpers';
 import { faker } from '@faker-js/faker';
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyDataPlanCreationPatch = async () => {
+  const version = path.basename(__dirname);
   const simpoolFileName = `manage-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
@@ -49,7 +51,7 @@ const applyDataPlanCreationPatch = async () => {
     },
   ];
 
-  await applyPatch('dataplan-creation', 'manage', customReplacements);
+  await applyPatch('dataplan-creation', version, 'manage', customReplacements);
 };
 
 export default applyDataPlanCreationPatch;

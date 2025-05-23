@@ -6,22 +6,19 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
-const applyRenameNodePatch = async () => {
+const applyNodeRfOffPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex: /await page\.getByRole\('link', { name: 'uk-.*' }\)\.click\(\);/g,
       replacement: `await page.locator('table tbody tr:first-child td:first-child a').click();`,
     },
-    {
-      regex:
-        /await page\.getByRole\('textbox', { name: 'NODE NAME' }\)\.fill\('.*'\);/g,
-      replacement: `await page.getByRole('textbox', { name: 'NODE NAME' }).fill(\`\${faker.lorem.word(5)}-node\`);`,
-    },
   ];
 
-  await applyPatch('rename-node', 'node', customReplacements);
+  await applyPatch('node-rf-off', version, 'node', customReplacements);
 };
 
-export default applyRenameNodePatch;
+export default applyNodeRfOffPatch;

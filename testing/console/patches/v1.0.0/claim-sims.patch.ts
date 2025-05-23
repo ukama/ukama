@@ -9,9 +9,11 @@
 import { TMP_SIMS_PATH } from '@/constants';
 import { createFakeSimCSV } from '@/helpers';
 import { faker } from '@faker-js/faker';
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyClaimSimsPatch = async () => {
+  const version = path.basename(__dirname);
   const simpoolFileName = `manage-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
@@ -33,7 +35,7 @@ const applyClaimSimsPatch = async () => {
     },
   ];
 
-  await applyPatch('claim-sims', 'manage', customReplacements);
+  await applyPatch('claim-sims', version, 'manage', customReplacements);
 };
 
 export default applyClaimSimsPatch;

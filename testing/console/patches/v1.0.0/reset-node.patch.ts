@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyResetNodePatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex: /await page\.getByRole\('link', { name: 'uk-.*' }\)\.click\(\);/g,
@@ -16,7 +18,7 @@ const applyResetNodePatch = async () => {
     },
   ];
 
-  await applyPatch('reset-node', 'node', customReplacements);
+  await applyPatch('reset-node', version, 'node', customReplacements);
 };
 
 export default applyResetNodePatch;

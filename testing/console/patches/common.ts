@@ -6,16 +6,17 @@ const defaultImportStatement =
 
 export const applyPatch = async (
   fileName: string,
+  version: string,
   testDir: string,
   customReplacements: { regex: RegExp; replacement: string }[] = [],
 ) => {
   const generatedTestPath = path.join(
     __dirname,
-    `../autogen/${fileName}.autogen.ts`,
+    `../autogen/${version}/${fileName}.autogen.ts`,
   );
   const patchedTestPath = path.join(
     __dirname,
-    `../tests/patched/${testDir}/${fileName}.spec.ts`,
+    `../tests/patched/${version}/${testDir}/${fileName}.spec.ts`,
   );
 
   const originalContent = fs.readFileSync(generatedTestPath, 'utf8');

@@ -6,14 +6,15 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
-const applyRenameSitePatch = async () => {
+const applyRenameNodePatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
-      regex:
-        /await page\s*\.getByRole\('textbox', { name: 'Site Name' }\)\s*\.fill\('.*'\);/g,
-      replacement: `await page.getByRole('textbox', { name: 'Site Name' }).fill(\`\${faker.lorem.word(5)}-site\`);`,
+      regex: /await page\.getByRole\('link', { name: 'uk-.*' }\)\.click\(\);/g,
+      replacement: `await page.locator('table tbody tr:first-child td:first-child a').click();`,
     },
     {
       regex:
@@ -22,7 +23,7 @@ const applyRenameSitePatch = async () => {
     },
   ];
 
-  await applyPatch('rename-site', 'site', customReplacements);
+  await applyPatch('rename-node', version, 'node', customReplacements);
 };
 
-export default applyRenameSitePatch;
+export default applyRenameNodePatch;

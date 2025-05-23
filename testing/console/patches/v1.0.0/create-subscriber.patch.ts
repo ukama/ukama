@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyCreateSubscriberPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex:
@@ -58,7 +60,12 @@ const applyCreateSubscriberPatch = async () => {
     },
   ];
 
-  await applyPatch('create-subscriber', 'subscriber', customReplacements);
+  await applyPatch(
+    'create-subscriber',
+    version,
+    'subscriber',
+    customReplacements,
+  );
 };
 
 export default applyCreateSubscriberPatch;

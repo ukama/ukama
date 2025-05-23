@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyTopupSubscriberPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex:
@@ -27,7 +29,12 @@ const applyTopupSubscriberPatch = async () => {
     },
   ];
 
-  await applyPatch('topup-subscriber', 'subscriber', customReplacements);
+  await applyPatch(
+    'topup-subscriber',
+    version,
+    'subscriber',
+    customReplacements,
+  );
 };
 
 export default applyTopupSubscriberPatch;

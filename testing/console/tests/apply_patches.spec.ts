@@ -22,56 +22,56 @@ import {
   applyRenameSitePatch,
   applyResetNodePatch,
   applyTopupSubscriberPatch,
-} from '../patches';
+} from '../patches/v1.0.0';
 
-test('apply login patch', async () => {
+test('v1.0.0 - Apply login patch', async () => {
   await applyLoginPatch();
 });
 
-test('apply logout patch', async () => {
+test('v1.0.0 - Apply logout patch', async () => {
   await applyLogoutPatch();
 });
 
-test('apply data plan creation patch', async () => {
+test('v1.0.0 - Apply data plan creation patch', async () => {
   await applyDataPlanCreationPatch();
 });
 
-test('apply create network patch', async () => {
+test('v1.0.0 - Apply create network patch', async () => {
   await applyCreateNetworkPatch();
 });
 
-test('apply claim sims patch', async () => {
+test('v1.0.0 - Apply claim sims patch', async () => {
   await applyClaimSimsPatch();
 });
 
-test('apply rename node patch', async () => {
+test('v1.0.0 - Apply rename node patch', async () => {
   await applyRenameNodePatch();
 });
 
-test('apply rename site patch', async () => {
+test('v1.0.0 - Apply rename site patch', async () => {
   await applyRenameSitePatch();
 });
 
-test('apply reset node patch', async () => {
+test('v1.0.0 - Apply reset node patch', async () => {
   await applyResetNodePatch();
 });
 
-test('apply node rf off patch', async () => {
+test('v1.0.0 - Apply node rf off patch', async () => {
   await applyNodeRfOffPatch();
 });
 
-test('apply node rf on patch', async () => {
+test('v1.0.0 - Apply node rf on patch', async () => {
   await applyNodeRfOnPatch();
 });
 
-test('apply create subscriber patch', async () => {
+test('v1.0.0 - Apply create subscriber patch', async () => {
   await applyCreateSubscriberPatch();
 });
 
-test('apply topup subscriber patch', async () => {
+test('v1.0.0 - Apply topup subscriber patch', async () => {
   await applyTopupSubscriberPatch();
 });
 
-test('apply onboarding patch', async () => {
+test('v1.0.0 - Apply onboarding patch', async () => {
   await applyOnboardingPatch();
 });

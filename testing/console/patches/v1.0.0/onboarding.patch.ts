@@ -9,9 +9,11 @@
 import { CONSOLE_ROOT_URL, TMP_SIMS_PATH } from '@/constants';
 import { createFakeSimCSV } from '@/helpers';
 import { faker } from '@faker-js/faker';
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyOnboardingPatch = async () => {
+  const version = path.basename(__dirname);
   const simpoolFileName = `onboarding-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
@@ -72,7 +74,7 @@ const applyOnboardingPatch = async () => {
       replacement: `await page.locator('#csv-file-input-onboarding input[type="file"]').setInputFiles('${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFileName}.csv');`,
     },
   ];
-  await applyPatch('onboarding', 'onboarding', customReplacements);
+  await applyPatch('onboarding', version, 'onboarding', customReplacements);
 };
 
 export default applyOnboardingPatch;

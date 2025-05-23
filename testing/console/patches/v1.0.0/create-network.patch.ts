@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyCreateNetworkPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex:
@@ -32,7 +34,7 @@ const applyCreateNetworkPatch = async () => {
     },
   ];
 
-  await applyPatch('create-network', 'network', customReplacements);
+  await applyPatch(`create-network`, version, 'network', customReplacements);
 };
 
 export default applyCreateNetworkPatch;

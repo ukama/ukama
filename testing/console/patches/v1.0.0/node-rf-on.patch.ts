@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyNodeRfOnPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex: /await page\.getByRole\('link', { name: 'uk-.*' }\)\.click\(\);/g,
@@ -16,7 +18,7 @@ const applyNodeRfOnPatch = async () => {
     },
   ];
 
-  await applyPatch('node-rf-on', 'node', customReplacements);
+  await applyPatch('node-rf-on', version, 'node', customReplacements);
 };
 
 export default applyNodeRfOnPatch;

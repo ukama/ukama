@@ -6,9 +6,11 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyLogoutPatch = async () => {
+  const version = path.basename(__dirname);
   const customReplacements = [
     {
       regex:
@@ -22,7 +24,7 @@ const applyLogoutPatch = async () => {
           await page.getByTestId('logout-link').click();`,
     },
   ];
-  await applyPatch('logout', 'auth', customReplacements);
+  await applyPatch('logout', version, 'auth', customReplacements);
 };
 
 export default applyLogoutPatch;

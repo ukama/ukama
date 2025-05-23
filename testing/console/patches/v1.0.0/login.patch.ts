@@ -6,10 +6,12 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-import { applyPatch } from './common';
+import path from 'path';
+import { applyPatch } from '../common';
 
 const applyLoginPatch = async () => {
-  await applyPatch('login', 'auth');
+  const version = path.basename(__dirname);
+  await applyPatch('login', version, 'auth');
 };
 
 export default applyLoginPatch;
