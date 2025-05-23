@@ -15,7 +15,7 @@ const applyCreateSubscriberPatch = async () => {
     {
       regex:
         /await page\.getByRole\('link', { name: 'Subscribers' }\)\.click\(\);/g,
-      replacement: `await page.waitForURL('**/console/home');\nawait page.getByRole('link', { name: 'Subscribers' }).click();`,
+      replacement: `await page.waitForURL('**/console/home');\nawait page.getByRole('link', { name: 'Subscribers' }).click();\n await page.waitForTimeout(2000);`,
     },
     {
       regex:

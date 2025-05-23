@@ -17,7 +17,7 @@ const applyClaimSimsPatch = async () => {
   const simpoolFileName = `manage-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
-      2,
+      3,
       `${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFileName}.csv`,
     ),
   ]);
