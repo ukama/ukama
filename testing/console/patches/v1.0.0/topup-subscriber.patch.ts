@@ -14,6 +14,11 @@ const applyTopupSubscriberPatch = async () => {
   const customReplacements = [
     {
       regex:
+        /await page\.getByRole\('link', { name: 'Subscribers' }\)\.click\(\);/g,
+      replacement: `await page.waitForURL('**/console/home');\nawait page.getByRole('link', { name: 'Subscribers' }).click();\n await page.waitForTimeout(2000);`,
+    },
+    {
+      regex:
         /await page\s*\.getByRole\('row', { name: '.*' }\)\s*\.locator\('#data-table-action-popover'\)\s*\.click\(\);/g,
       replacement: `await page.locator('table tbody tr:first-child').locator('#data-table-action-popover').click();`,
     },
