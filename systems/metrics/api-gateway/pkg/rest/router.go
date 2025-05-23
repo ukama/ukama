@@ -16,18 +16,19 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	"github.com/gorilla/websocket"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/client"
+
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 )
 
@@ -300,7 +301,6 @@ func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricIntput) error {
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
-
 	ok := r.m.MetricsExist(filterBase.Metric)
 	if !ok {
 		return rest.HttpError{
