@@ -175,6 +175,7 @@ const Sims = () => {
             }}
           >
             <div
+              id="csv-file-input-onboarding"
               {...getRootProps({ className: 'dropzone' })}
               style={{
                 width: '100%',

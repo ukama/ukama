@@ -128,6 +128,7 @@ const Page = () => {
               isIdHyperlink={true}
               columns={MANAGE_SIM_POOL_COLUMN}
               hyperlinkPrefix="/console/subscribers?"
+              height="calc(100vh - 320px)"
             />
           )}
         </Box>
@@ -137,6 +138,7 @@ const Page = () => {
             labelSuccessBtn={'Claim'}
             labelNegativeBtn={'Cancel'}
             title={'Upload SIMs'}
+            note={'Drag & Drop Or Choose file to upload. (format:*.csv)'}
             handleSuccessAction={handleUploadSimsAction}
             handleCloseAction={() => setIsUploadSims(false)}
           />

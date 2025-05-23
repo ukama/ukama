@@ -296,11 +296,13 @@ const SimpleDataTable = React.memo(
     return (
       <TableContainer
         sx={{
-          mt: '24px',
-          height: height ? height : '100%',
+          mt: '16px',
+          maxHeight: height ? height : '100%',
+          overflow: 'auto',
+          display: 'block',
         }}
       >
-        <Table stickyHeader>
+        <Table stickyHeader sx={{ width: '100%' }}>
           <MemoizedTableHeader
             columns={columns}
             order={order}

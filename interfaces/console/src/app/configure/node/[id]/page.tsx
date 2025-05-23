@@ -158,6 +158,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         >
           <LField label="Network" value={''} />
           <BasicDropdown
+            id={'network-dropdown'}
             value={networkSelected}
             isShowAddOption={false}
             placeholder={'Select Network'}
@@ -186,7 +187,7 @@ const NodeConfigure: React.FC<INodeConfigure> = ({ params }) => {
         >
           Back
         </Button>
-        <Button variant="contained" onClick={handleNext}>
+        <Button id="next-button" variant="contained" onClick={handleNext}>
           Next
         </Button>
       </Stack>
