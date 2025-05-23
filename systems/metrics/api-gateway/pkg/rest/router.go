@@ -29,7 +29,8 @@ import (
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/client"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
+	pbe "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
+	pbs "github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 )
 
 type Router struct {
@@ -50,11 +51,12 @@ type RouterConfig struct {
 
 type Clients struct {
 	e exporter
+	s client.Sanitizer
 }
 
 type exporter interface {
 	/* Yet to add RPC for exporteer.*/
-	Dummy(req *pb.DummyParameter) (*pb.DummyParameter, error)
+	Dummy(req *pbe.DummyParameter) (*pbe.DummyParameter, error)
 }
 
 var upgrader = websocket.Upgrader{
@@ -80,11 +82,12 @@ var (
 func NewClientsSet(endpoints *pkg.GrpcEndpoints, metricHost string, debug bool) *Clients {
 	c := &Clients{}
 	c.e = client.NewExporter(endpoints.Exporter, endpoints.Timeout)
+	c.s = client.NewSanitizer(endpoints.Sanitizer, endpoints.Timeout)
+
 	return c
 }
 
 func NewRouter(clients *Clients, config *RouterConfig, m *pkg.Metrics, authfunc func(*gin.Context, string) error) *Router {
-
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -186,6 +189,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
+
+		sanitizer := auth.Group("/sanitize", "Sanitizer", "Sanitizer")
+		sanitizer.POST("", formatDoc("Sanitize", "Stream metrics for Sanitizer service"), tonic.Handler(r.sanitizeMetrics, http.StatusOK))
 	}
 }
 
@@ -198,6 +204,10 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 
 func parse_metrics_request(mReq string) []string {
 	return strings.Split(mReq, ",")
+}
+
+func (r *Router) sanitizeMetrics(c *gin.Context, m *GetWsMetricIntput) (*pbs.SanitizeResponse, error) {
+	return r.clients.s.Sanitize()
 }
 
 func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
@@ -338,6 +348,6 @@ func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *
 	return httpErrorOrNil(httpCode, err)
 }
 
-func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pb.DummyParameter, error) {
-	return r.clients.e.Dummy(&pb.DummyParameter{})
+func (r *Router) getDummyHandler(c *gin.Context, req *DummyParameters) (*pbe.DummyParameter, error) {
+	return r.clients.e.Dummy(&pbe.DummyParameter{})
 }

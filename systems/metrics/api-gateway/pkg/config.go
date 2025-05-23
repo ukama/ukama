@@ -208,8 +208,9 @@ var defaultPrometheusMetric = map[string]Metric{
 }
 
 type GrpcEndpoints struct {
-	Timeout  time.Duration
-	Exporter string
+	Timeout   time.Duration
+	Exporter  string
+	Sanitizer string
 }
 
 type HttpEndpoints struct {
