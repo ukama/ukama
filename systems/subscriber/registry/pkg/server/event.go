@@ -11,15 +11,17 @@ package server
 import (
 	"context"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-
-	log "github.com/sirupsen/logrus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 
@@ -50,12 +52,73 @@ func (es *RegistryEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		if err != nil {
 			return nil, err
 		}
-
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
+		msg, err := es.unmarshalAsrInactivated(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = es.handleSubscriberDeactivated(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
+		msg, err := es.unmarshalAsrActivated(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = es.handleSubscriberActivated(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
+}
+func (es *RegistryEventServer) handleSubscriberDeactivated(ctx context.Context, event *epb.AsrInactivated) error {
+	log.Infof("SIM deactivated - IMSI: %s, ICCID: %s", event.Subscriber.Imsi, event.Subscriber.Iccid)
+	return es.updateSubscriberStatusBySim(ctx, event.Subscriber.Iccid, ukama.SubscriberStatusInactive)
+}
+
+func (es *RegistryEventServer) handleSubscriberActivated(ctx context.Context, event *epb.AsrActivated) error {
+	log.Infof("SIM activated - IMSI: %s, ICCID: %s", event.Subscriber.Imsi, event.Subscriber.Iccid)
+	return es.updateSubscriberStatusBySim(ctx, event.Subscriber.Iccid, ukama.SubscriberStatusActive)
+}
+
+func (es *RegistryEventServer) updateSubscriberStatusBySim(ctx context.Context, iccid string, status ukama.SubscriberStatus) error {
+	simManagerClient, err := es.s.simManagerService.GetSimManagerService()
+	if err != nil {
+		log.Errorf("Failed to get SIM manager client: %v", err)
+		return err
+	}
+	
+	simResp, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{
+		Iccid: iccid,
+	})
+	if err != nil {
+		log.Errorf("Failed to get SIM by ICCID %s: %v", iccid, err)
+		return err
+	}
+	
+	subscriberId, err := uuid.FromString(simResp.Sims[0].SubscriberId)
+	if err != nil {
+		log.Errorf("Invalid subscriber ID %s: %v", simResp.Sims[0].SubscriberId, err)
+		return err
+	}
+	
+	subscriber := db.Subscriber{
+		SubscriberStatus: status,
+	}
+	
+	err = es.s.subscriberRepo.Update(subscriberId, subscriber)
+	if err != nil {
+		log.Errorf("Failed to update subscriber %s status: %v", subscriberId, err)
+		return err
+	}
+	
+	log.Infof("Updated subscriber %s status to %s", subscriberId, status)
+	return nil
 }
 
 func (es *RegistryEventServer) handleEventCompleteSubscriberDeletion(routingKey string, msg *epb.EventSubscriberDeletionCompleted) error {
@@ -103,6 +166,24 @@ func (es *RegistryEventServer) unmarshalEventSubscriberAsrCleanupCompleted(msg *
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to unmarshal EventSubscriberAsrCleanupCompleted message: %+v. Error: %s", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+func (es *RegistryEventServer) unmarshalAsrInactivated(msg *anypb.Any) (*epb.AsrInactivated, error) {
+	p := &epb.AsrInactivated{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal AsrInactivated: %v", err)
+		return nil, err
+	}
+	return p, nil
+}
+func (es *RegistryEventServer) unmarshalAsrActivated(msg *anypb.Any) (*epb.AsrActivated, error) {
+	p := &epb.AsrActivated{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal AsrActivated: %v", err)
 		return nil, err
 	}
 	return p, nil

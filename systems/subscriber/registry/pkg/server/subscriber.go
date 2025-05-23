@@ -66,7 +66,6 @@ func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBu
         networkClient:        networkClient,
     }
     
-    // Start the deletion check process
     go server.startDeletionCheck()
     
     return server
@@ -498,7 +497,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 	}
 }
 func (s *SubcriberServer) checkStuckDeletions() {
-    threshold := time.Now().Add(-5 * time.Minute)
+    threshold := time.Now().Add(-15 * time.Minute)
     
     stuckSubscribers, err := s.subscriberRepo.FindPendingDeletionBefore(threshold)
     if err != nil {
@@ -557,7 +556,7 @@ func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscribe
     }
 }
 func (s *SubcriberServer) startDeletionCheck() {
-    ticker := time.NewTicker(2 * time.Minute)
+    ticker := time.NewTicker(10 * time.Minute)
     defer ticker.Stop()
     
     ctx, cancel := context.WithCancel(context.Background())

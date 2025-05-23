@@ -709,6 +709,8 @@ const getDisplayStatus = (subscriberStatus: string): string => {
       return 'Active';
     case 'pending_deletion':
       return 'Deleting...';
+    case 'inactive':
+      return 'Inactive';
     default:
       return subscriberStatus;
   }

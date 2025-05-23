@@ -43,6 +43,8 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sims.deletion_completed",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create",
 			},
 		},
 	}

@@ -871,8 +871,36 @@ const Page = () => {
     }
   };
 
-  console.log('subscriber');
+  const handleMenuItemClick = (id: string, type: string) => {
+    const subscriber = data?.getSubscribersByNetwork.subscribers.find(
+      (subscriber) => subscriber.uuid === id,
+    );
 
+    if (subscriber && subscriber.subscriberStatus === 'pending_deletion') {
+      if (type === 'delete-sub') {
+        setSnackbarMessage({
+          id: 'retry-deletion-info',
+          message: SUBSCRIBER_ERROR_MESSAGES.RETRY_DELETION,
+          type: 'info' as AlertColor,
+          show: true,
+        });
+        deleteSubscriber({
+          variables: { subscriberId: id },
+        });
+        return;
+      } else {
+        setSnackbarMessage({
+          id: 'action-blocked',
+          message: SUBSCRIBER_ERROR_MESSAGES.ACTION_BLOCKED_DELETING,
+          type: 'warning' as AlertColor,
+          show: true,
+        });
+        return;
+      }
+    }
+
+    onTableMenuItem(id, type);
+  };
   return (
     <Stack
       mt={2}
@@ -1008,33 +1036,7 @@ const Page = () => {
             columns={SUBSCRIBER_TABLE_COLUMNS}
             dataset={structureData(uiState.subscribers)}
             menuOptions={SUBSCRIBER_TABLE_MENU}
-            onMenuItemClick={(id: string, type: string) => {
-              const rows = structureData(uiState.subscribers) || [];
-              const row = rows.find((r) => r.id === id);
-              if (row && row.subscriberStatus === 'Deleting...') {
-                if (type === 'delete-sub') {
-                  setSnackbarMessage({
-                    id: 'retry-deletion-info',
-                    message: SUBSCRIBER_ERROR_MESSAGES.RETRY_DELETION,
-                    type: 'info' as AlertColor,
-                    show: true,
-                  });
-                  deleteSubscriber({
-                    variables: { subscriberId: id },
-                  });
-                  return;
-                } else {
-                  setSnackbarMessage({
-                    id: 'action-blocked',
-                    message: SUBSCRIBER_ERROR_MESSAGES.ACTION_BLOCKED_DELETING,
-                    type: 'warning' as AlertColor,
-                    show: true,
-                  });
-                  return;
-                }
-              }
-              onTableMenuItem(id, type);
-            }}
+            onMenuItemClick={handleMenuItemClick}
             emptyViewLabel={'No subscribers yet!'}
           />
         </Paper>
