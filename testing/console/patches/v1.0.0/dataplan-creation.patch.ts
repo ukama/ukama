@@ -26,7 +26,7 @@ const applyDataPlanCreationPatch = async () => {
     {
       regex:
         /await page\.getByTestId\('manage-btn'\)\.click\(\);\s*await page\.getByTestId\('manage-data-plan'\)\.click\(\);/g,
-      replacement: `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForTimeout(2000);\n  await page.getByTestId('manage-data-plan').click();`,
+      replacement: `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForURL('**/manage');\n  await page.getByTestId('manage-data-plan').click();\n  await page.waitForURL('**/manage/data-plans');`,
     },
     {
       regex:

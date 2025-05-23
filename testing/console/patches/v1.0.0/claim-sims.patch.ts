@@ -17,7 +17,7 @@ const applyClaimSimsPatch = async () => {
   const simpoolFileName = `manage-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
-      3,
+      5,
       `${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFileName}.csv`,
     ),
   ]);
@@ -26,7 +26,7 @@ const applyClaimSimsPatch = async () => {
     {
       regex:
         /await page\.getByTestId\('manage-btn'\)\.click\(\);\s*await page\.getByTestId\('manage-sim'\)\.click\(\);/g,
-      replacement: `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForTimeout(2000);\n  await page.getByTestId('manage-sim').click();`,
+      replacement: `await page.waitForURL('**/console/home');\n  await page.getByTestId('manage-btn').click();\n  await page.waitForURL('**/manage');\n  await page.getByTestId('manage-sim').click();\n  await page.waitForURL('**/manage/sims');`,
     },
     {
       regex:

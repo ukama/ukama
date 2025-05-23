@@ -17,7 +17,7 @@ const applyOnboardingPatch = async () => {
   const simpoolFileName = `onboarding-sims-${faker.number.int({ min: 50, max: 100 })}`;
   await Promise.all([
     createFakeSimCSV(
-      3,
+      5,
       `${process.cwd()}/${TMP_SIMS_PATH}/${simpoolFileName}.csv`,
     ),
   ]);
