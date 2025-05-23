@@ -42,17 +42,18 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 		sub := &db.Subscriber{
 			Name:                 "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
+			Email:                "johndoe@example.com",
+			PhoneNumber:          "1234567890",
+			Gender:               "Male",
+			Address:              "1 Main St",
 			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
-			NetworkId:             networkId,
-			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
+			IdSerial:             "123456789",
+			NetworkId:            networkId,
+			SubscriberStatus:     ukama.SubscriberStatusActive, 
+			DOB:                  time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		subscriberRepo.On("Add", sub, mock.AnythingOfType("func(*db.Subscriber, *gorm.DB) error")).Return(nil).Once()
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
@@ -98,10 +99,11 @@ func TestAdd(t *testing.T) {
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
 			NetworkId:             networkId,
+			SubscriberStatus:      ukama.SubscriberStatusActive,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		subscriberRepo.On("Add", sub, mock.AnythingOfType("func(*db.Subscriber, *gorm.DB) error")).Return(nil).Once()
 
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 

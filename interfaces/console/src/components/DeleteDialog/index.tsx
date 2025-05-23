@@ -25,7 +25,10 @@ interface DeleteConfirmationProps {
   onCancel: () => void;
   open: boolean;
   itemName: string;
-  loading: boolean;
+  itemType?: 'subscriber' | 'sim';
+  loading?: boolean;
+  title?: string;
+  description?: string;
 }
 
 const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
@@ -33,7 +36,10 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   onCancel,
   open,
   itemName,
+  itemType = 'subscriber',
   loading = false,
+  title,
+  description,
 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -48,6 +54,39 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
     }
   };
 
+  const dialogTitle =
+    title ||
+    `Delete ${itemType === 'subscriber' ? 'Subscriber' : 'SIM'} Confirmation`;
+
+  let dialogContent;
+
+  if (itemType === 'subscriber') {
+    dialogContent = (
+      <Typography variant="body1" sx={{ color: colors.black70 }}>
+        Are you certain you wish to delete the following subscriber -{' '}
+        <span style={{ fontWeight: 'bold' }}>{itemName}</span>? This action will
+        also remove all SIMs associated with them from your network.
+      </Typography>
+    );
+  } else {
+    dialogContent = (
+      <>
+        <Typography variant="body1" sx={{ color: colors.black70, mb: 2 }}>
+          Are you sure you want to delete the SIM <strong>{itemName}</strong>?
+          This will permanently remove all associated packages and usage data.
+        </Typography>
+      </>
+    );
+  }
+
+  if (description) {
+    dialogContent = (
+      <Typography variant="body1" sx={{ color: colors.black }}>
+        {description}
+      </Typography>
+    );
+  }
+
   return (
     <Dialog
       open={open}
@@ -55,7 +94,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
-      <DialogTitle id="alert-dialog-title">Delete Confirmation</DialogTitle>
+      <DialogTitle id="alert-dialog-title">{dialogTitle}</DialogTitle>
       <IconButton
         aria-label="close"
         onClick={handleClose}
@@ -69,11 +108,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
       </IconButton>
       <DialogContent>
         <DialogContentText id="alert-dialog-description">
-          <Typography variant="body1" sx={{ color: colors.black }}>
-            Are you certain you wish to delete the following subscriber -{' '}
-            <span style={{ color: 'black' }}>{itemName}</span> ? This action
-            will also remove all SIMs associated with them from your network.
-          </Typography>
+          {dialogContent}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
@@ -83,7 +118,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
         <Button
           variant="contained"
           onClick={handleDelete}
-          sx={{ background: 'red' }}
+          sx={{ background: colors.error }}
           disabled={loading}
         >
           Delete

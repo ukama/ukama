@@ -112,3 +112,8 @@ message EventSimPackageExpire{
     string dataPlanId = 5 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "plan_id"];
     string packageId = 6 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }
+
+message EventSubscriberDeletionCompleted {
+    string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
+    string networkId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
+}

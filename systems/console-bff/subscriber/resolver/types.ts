@@ -106,6 +106,9 @@ export class SubscriberAPIDto {
   @Field()
   proof_of_identification: string;
 
+  @Field()
+  subscriber_status: string;
+
   @Field(() => [SubSimAPIDto])
   sim: SubSimAPIDto[];
 }
@@ -197,7 +200,7 @@ export class SubscriberSimDto {
   type: string;
 
   @Field()
-  status: string;
+  status?: string;
 
   @Field()
   allocatedAt: string;
@@ -239,6 +242,9 @@ export class SubscriberDto {
 
   @Field()
   phone: string;
+
+  @Field()
+  subscriberStatus: string;
 
   @Field()
   proofOfIdentification: string;

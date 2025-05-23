@@ -8,6 +8,8 @@ replace github.com/ukama/ukama/systems/ukama-agent/cdr => ../cdr
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
+replace github.com/ukama/ukama/systems/common => ../../common
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/gin-contrib/cors v1.7.5

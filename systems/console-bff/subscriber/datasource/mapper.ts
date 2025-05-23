@@ -33,6 +33,7 @@ export const addSubscriberReqToSubscriberResDto = (
     uuid: res.Subscriber.subscriber_id,
     name: res.Subscriber.name,
     networkId: res.Subscriber.network_id,
+    subscriberStatus: res.Subscriber.subscriber_status,
     proofOfIdentification: res.Subscriber.proof_of_identification,
   };
 };
@@ -65,6 +66,7 @@ export const dtoToSubscriberResDto = (
     idSerial: res.subscriber.id_serial,
     uuid: res.subscriber.subscriber_id,
     name: res.subscriber.name,
+    subscriberStatus: res.subscriber.subscriber_status,
     networkId: res.subscriber.network_id,
     proofOfIdentification: res.subscriber.proof_of_identification,
   };
