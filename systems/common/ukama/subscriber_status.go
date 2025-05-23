@@ -20,7 +20,8 @@ type SubscriberStatus uint8
 const (
 	SubscriberStatusUnknown        SubscriberStatus = iota 
 	SubscriberStatusActive                               
-	SubscriberStatusPendingDeletion                       
+	SubscriberStatusPendingDeletion   
+	SubscriberStatusInactive                    
 )
 
 func (s *SubscriberStatus) Scan(value interface{}) error {
@@ -37,6 +38,7 @@ func (s SubscriberStatus) String() string {
 		0: "unknown", 
 		1: "active", 
 		2: "pending_deletion",
+		3:"inactive",
 	}
 
 	v, ok := t[s]
@@ -57,6 +59,7 @@ func ParseSubscriberStatus(value string) SubscriberStatus {
 		"unknown":          0, 
 		"active":           1, 
 		"pending_deletion": 2,
+		"inactive":         3,
 	}
 
 	v, ok := t[strings.ToLower(value)]
