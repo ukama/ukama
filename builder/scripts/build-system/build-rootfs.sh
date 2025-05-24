@@ -499,4 +499,4 @@ copy_linux_kernel
 
 echo "Rootfs build success."
 exit 0
-~                                                                     
+                                                                 
