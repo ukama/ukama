@@ -22,6 +22,8 @@ UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
 UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
+COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
+ACCESS_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/access.config"
 MANIFEST_FILE="manifest.json"
 
 BOOT_MOUNT="/media/boot"
@@ -29,7 +31,6 @@ RECOVERY_MOUNT="/media/recovery"
 PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 DATA_MOUNT="/media/data"
-
 
 RAW_IMG="ukama-access-node.img"
 
@@ -170,6 +171,9 @@ map_partitions() {
     log "INFO" "Mapping partitions using kpartx"
     sudo kpartx -v -a "${LOOPDISK}"
     check_status $? "Partitions mapped" ${STAGE}
+
+    DEVICE=$(basename "${LOOPDISK}")
+    DISK="/dev/mapper/${DEVICE}p"
 }
 
 format_partitions() {
@@ -302,10 +306,22 @@ mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
 download_and_copy_rpi_firmware "${BOOT_MOUNT}"
 
 # create board specific manifest and cp its pkds/libs
+get_enabled_apps "$COMMON_CONFIG_FILE" "$ACCESS_CONFIG_FILE"
+if [[ ${#APPS[@]} -gt 0 ]]; then
+    log "INFO" "APPS are: ${APPS[@]}"
+else
+    log "ERROR" "APPS not assigned. Exit"
+    unmount_partition "${BOOT_MOUNT}"
+    unmount_partition "${PRIMARY_MOUNT}"
+    unmount_partition "${PASSIVE_MOUNT}"
+    detach_loop_device
+
+    log "ERROR" "Disk image creation unsuccessful"
+    exit 1
+fi
 copy_all_apps "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
 copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
-APP_NAMES=("wimcd" "configd" "metricsd" "lookoutd" "deviced" "notifyd")
-create_manifest_file "$MANIFEST_FILE" "${APP_NAMES[@]}"
+create_manifest_file "$MANIFEST_FILE" "${APPS[@]}"
 
 copy_rootfs
 set_permissions

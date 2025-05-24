@@ -57,33 +57,66 @@ function create_manifest_file() {
     "services": [
 EOF
 
+    local entries=()
     for app in "${app_names[@]}"; do
         case "$app" in
             "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-                cat <<EOF >> "${manifest_file}"
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
+                entries+=(
+"        {
+            \"name\"   : \"$app\",
+            \"tag\"    : \"latest\",
+            \"restart\" : \"yes\",
+            \"space\"  : \"services\"
+         }"
+                )
                 ;;
         esac
     done
 
-    # Remove last comma
-    sed -i '$ s/,$//' "${manifest_file}"
+    (IFS=,
+     printf "%s\n" "${entries[*]}" >> "${manifest_file}")
+
     echo '    ]' >> "${manifest_file}"
     echo '}' >> "${manifest_file}"
+    
+#    for app in "${app_names[@]}"; do
+#        case "$app" in
+#            "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
+#                cat <<EOF >> "${manifest_file}"
+#        {
+#            "name"   : "$app",
+#            "tag"    : "latest",
+#            "restart": "yes",
+#            "space"  : "services"
+#        },
+#EOF
+#                ;;
+#        esac
+#    done
+#
+#    # Remove last comma
+#    sed -i '$ s/,$//' "${manifest_file}"
+#    echo '    ]' >> "${manifest_file}"
+#    echo '}' >> "${manifest_file}"
 }
 
 function copy_all_apps() {
     local repo_pkg="$1"
     local dest_pkg="$2"
 
-    log "INFO" "Copying apps from ${repo_pkg} to ${dest_pkg}"
-    cp -rvf "${repo_pkg}" "${dest_pkg}"
+    log "INFO" "Copying selected apps from ${repo_pkg} to ${dest_pkg}"
+
+    mkdir -p "$dest_pkg"
+
+    for app in "${APPS[@]}"; do
+        app_file="${repo_pkg}/${app}_latest.tar.gz"
+        if [[ -f "$app_file" ]]; then
+            log "INFO" "Copying $app_file"
+            cp -v "$app_file" "$dest_pkg/"
+        else
+            log "WARN" "App package not found: $app_file"
+        fi
+    done
 }
 
 function copy_required_libs() {
@@ -97,3 +130,31 @@ function copy_required_libs() {
     popd > /dev/null
 }
 
+get_enabled_apps() {
+    local common_config="$1"
+    local board_config="$2"
+    declare -A app_map
+    local line key val
+
+    # Read common config
+    while IFS='=' read -r key val; do
+        [[ -n "$key" && "$key" != \#* ]] && app_map["$key"]="$val"
+    done < "$common_config"
+
+    # Read board-specific config if provided
+    if [[ -n "$board_config" && -f "$board_config" ]]; then
+        while IFS='=' read -r key val; do
+            [[ -n "$key" && "$key" != \#* ]] && app_map["$key"]="$val"
+        done < "$board_config"
+    fi
+
+    # Build global APPS array
+    APPS=()
+    for key in "${!app_map[@]}"; do
+        if [[ "${app_map[$key]}" == "yes" ]]; then
+            APPS+=("$key")
+        fi
+    done
+
+    export APPS
+}
