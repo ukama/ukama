@@ -9,19 +9,33 @@
 
 set -e
 
+PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
+if [ ! -f "$PKG_UTILS" ]; then
+    echo "ERROR: Missing $PKG_UTILS"
+    exit 1
+fi
+source "$PKG_UTILS"
+
 STAGE="init"
 DIR="$(pwd)"
 UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
+UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
+UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
+MANIFEST_FILE="manifest.json"
+
 BOOT_MOUNT="/media/boot"
 RECOVERY_MOUNT="/media/recovery"
 PRIMARY_MOUNT="/media/primary"
 PASSIVE_MOUNT="/media/passive"
 DATA_MOUNT="/media/data"
 
+
 RAW_IMG="ukama-access-node.img"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs/
+UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
+APP_NAMES=()
 FIRMWARE_REPO="https://github.com/raspberrypi/firmware"
 FIRMWARE_ZIP_URL="${FIRMWARE_REPO}/archive/refs/heads/master.zip"
 
@@ -167,7 +181,7 @@ format_partitions() {
     mkfs.vfat -F 32 -n boot "${DISK}1"
     check_status $? "boot partition formatted" ${STAGE}
 
-	mkfs.ext4 -L recovery "${DISK}2"
+    mkfs.ext4 -L recovery "${DISK}2"
     check_status $? "recovery rootfs formatted" ${STAGE}
 
     mkfs.ext4 -L primary "${DISK}5"
@@ -179,8 +193,8 @@ format_partitions() {
     mkfs.ext4 -L data "${DISK}7"
     check_status $? "data partition formatted" ${STAGE}
 
-	mkswap "${DISK}8"
-	check_status $? "swap partition created" ${STAGE}
+    mkswap "${DISK}8"
+    check_status $? "swap partition created" ${STAGE}
 }
 
 mount_partition() {
@@ -286,6 +300,13 @@ mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
 download_and_copy_rpi_firmware "${BOOT_MOUNT}"
+
+# create board specific manifest and cp its pkds/libs
+copy_all_apps "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
+copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
+APP_NAMES=("wimcd" "configd" "metricsd" "lookoutd" "deviced" "notifyd")
+create_manifest_file "$MANIFEST_FILE" "${APP_NAMES[@]}"
+
 copy_rootfs
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"

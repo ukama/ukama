@@ -243,25 +243,9 @@ function copy_linux_kernel() {
     log "SUCCESS" "Kernel installed using apk fallback path"
 }
 
-function copy_all_apps() {
-    log "INFO" "Copying apps"
-    cp -rvf ${UKAMA_REPO_APP_PKG} ${UKAMA_APP_PKG}
-}
-
-function copy_required_libs() {
-    log "INFO" "Installing required libs"
-    pushd ${UKAMA_REPO_LIB_PKG}
-    tar zxvf vendor_libs.tgz 
-    cp -vrf ./build/* /usr/
-	popd
-}
-
 function copy_misc_files() {
     
 	log "INFO" "Copying various files to image"
-    rm -f ${MANIFEST_FILE}
-    create_manifest_file
-    
     sudo mv ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
@@ -423,94 +407,6 @@ setup_rootfs() {
     log_message "INFO" "root filesystem setup completed."
 }
 
-function create_manifest_file() {
-    log "INFO" "Creating manifest file"
-
-   cat <<EOF > ${MANIFEST_FILE}
-{
-    "version": "0.1",
-
-    "spaces" : [
-        { "name" : "boot" },
-        { "name" : "services" },
-        { "name" : "reboot" }
-    ],
-
-    "capps": [
-        {
-            "name"   : "noded",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"   : "bootstrap",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "noded",
-                                "state" : "active"
-                        }
-                ]
-        },
-        {
-            "name"   : "meshd",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-                                "state" : "done"
-                        }
-                ]
-        }
-EOF
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-  echo "Adding manifest for ${APP_NAMES[@]}"
-  for app in "${APP_NAMES[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${APP_NAMES[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  # Remove the last comma and close the JSON array
-  sed -i '$ s/,$//' ${MANIFEST_FILE}
-  echo '    ]}'  >> ${MANIFEST_FILE}
-  echo '}'       >> ${MANIFEST_FILE}
-}
-
 function setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
 
@@ -594,13 +490,6 @@ configure_network  # Configure network
 
 log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
 create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}# Create OpenRC service
-
-log "INFO" "Copying libs"
-copy_required_libs
-
-log "INFO" "Copying apps"
-copy_all_apps
-#get_apps_name
 
 log "INFO" "Create manifest."
 copy_misc_files 
