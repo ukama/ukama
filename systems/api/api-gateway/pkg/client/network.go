@@ -9,14 +9,13 @@
 package client
 
 import (
-	"errors"
 	"net/http"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
@@ -45,7 +44,7 @@ func NewNetworkClientSet(ntwk creg.NetworkClient) Network {
 func (n *network) GetNetwork(id string) (*creg.NetworkInfo, error) {
 	net, err := n.nc.Get(id)
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	if net.SyncStatus == ukama.StatusTypeUnknown.String() || net.SyncStatus == ukama.StatusTypeFailed.String() {
@@ -83,21 +82,8 @@ func (n *network) CreateNetwork(orgName, NetworkName string, allowedCountries,
 		PaymentLinks:     paymentLinks,
 	})
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	return net, nil
-}
-
-func handleRestErrorStatus(err error) error {
-	e := cclient.ErrorStatus{}
-
-	if errors.As(err, &e) {
-		return crest.HttpError{
-			HttpCode: e.StatusCode,
-			Message:  e.Error(),
-		}
-	}
-
-	return err
 }
