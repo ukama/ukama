@@ -246,7 +246,6 @@ function copy_linux_kernel() {
 function copy_misc_files() {
     
 	log "INFO" "Copying various files to image"
-    sudo mv ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
     install_starter_app "/"
@@ -491,7 +490,7 @@ configure_network  # Configure network
 log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
 create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}# Create OpenRC service
 
-log "INFO" "Create manifest."
+log "INFO" "Copy misc files."
 copy_misc_files 
 
 log "INFO" "Copy kernel"

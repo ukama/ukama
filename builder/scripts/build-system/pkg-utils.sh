@@ -112,7 +112,7 @@ function copy_all_apps() {
         app_file="${repo_pkg}/${app}_latest.tar.gz"
         if [[ -f "$app_file" ]]; then
             log "INFO" "Copying $app_file"
-            cp -v "$app_file" "$dest_pkg/"
+            cp "$app_file" "$dest_pkg/"
         else
             log "WARN" "App package not found: $app_file"
         fi
@@ -126,7 +126,7 @@ function copy_required_libs() {
     log "INFO" "Installing required libs from ${lib_pkg}"
     pushd "${lib_pkg}" > /dev/null
     tar zxvf vendor_libs.tgz 
-    cp -vrf ./build/* "${rootfs}/usr/"
+    cp -rf ./build/* "${rootfs}/usr/"
     popd > /dev/null
 }
 

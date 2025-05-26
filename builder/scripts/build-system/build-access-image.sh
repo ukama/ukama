@@ -221,11 +221,11 @@ copy_rootfs() {
     STAGE="copy_rootfs"
 
     log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
 	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc
 
 	log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
     mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
 
 	sync
