@@ -105,7 +105,9 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 	// log.Infof("Raw body: %s", string(data))
 
 	for _, ts := range metricsPayload.Timeseries {
-		metric := NodeMetricMetaData{}
+		metric := NodeMetricMetaData{
+			AdditionalLabels: make(map[string]string)}
+
 		metric.Value = ts.Samples[0].Value
 
 		for _, label := range ts.Labels {

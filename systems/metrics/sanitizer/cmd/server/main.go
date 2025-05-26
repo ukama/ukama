@@ -13,20 +13,18 @@ import (
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
-
-	"github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
-	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/server"
 	"gopkg.in/yaml.v3"
 
-	pkg "github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
-
 	"github.com/ukama/ukama/systems/metrics/sanitizer/cmd/version"
+	"github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
+	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pkg "github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 )
 
 const (
@@ -39,7 +37,6 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
-
 	runGrpcServer()
 }
 
@@ -59,6 +56,7 @@ func initConfig() {
 	}
 
 	pkg.IsDebugMode = serviceConfig.DebugMode
+
 	log.Infof("Config: %+v", serviceConfig)
 }
 
@@ -108,11 +106,9 @@ func runGrpcServer() {
 	}
 
 	rpcServer.StartServer()
-
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
