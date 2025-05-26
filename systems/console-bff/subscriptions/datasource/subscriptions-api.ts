@@ -12,30 +12,27 @@ import { VERSION } from "../../common/configs";
 import { API_METHOD_TYPE, STATS_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
-  GetMetricRangeInput,
   GetMetricsStatInput,
-  MetricRes,
   MetricsRes,
   NotificationsRes,
 } from "../resolvers/types";
-import {
-  parseMetricsResponse,
-  parseNotificationsRes,
-  parseSiteMetricRes,
-} from "./mapper";
+import { parseMetricsResponse, parseNotificationsRes } from "./mapper";
 
 const getNodeMetricRange = async (
   baseUrl: string,
   type: string,
   args: GetMetricsStatInput
 ): Promise<MetricsRes> => {
-  const { to, from, nodeId, networkId = "" } = args;
+  const { to, from, nodeId, networkId = "", siteId } = args;
   let params = `from=${from}&to=${to}&step=1`;
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
   if (networkId && type !== "subscribers_active") {
     params = params + `&network=${networkId}`;
+  }
+  if (siteId) {
+    params = params + `&site=${siteId}`;
   }
   if (args.operation) {
     params = params + `&operation=${args.operation}`;
@@ -56,40 +53,6 @@ const getNodeMetricRange = async (
     )
     .catch(err => {
       logger.error(`Error fetching metrics: ${err}`);
-      throw new GraphQLError(err);
-    });
-};
-
-const getSiteMetricRange = async (
-  baseUrl: string,
-  type: string,
-  args: GetMetricRangeInput
-): Promise<MetricRes> => {
-  const { from, step = 1, userId, siteId } = args;
-
-  let params = `from=${from}&step=${step}`;
-  if (siteId) {
-    params = params + `&site=${siteId}`;
-  }
-  if (userId) {
-    params = params + `&user=${userId}`;
-  }
-
-  logger.info(
-    `[getMetricRange] Request URL: ${baseUrl}/${VERSION}/range/metrics/${type}?${params}`
-  );
-
-  return await asyncRestCall({
-    method: API_METHOD_TYPE.GET,
-    url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
-  })
-    .then(res => {
-      return parseSiteMetricRes(res, type, args);
-    })
-    .catch(err => {
-      logger.error(
-        `[getMetricRange] Error fetching metrics for ${type}: ${err}`
-      );
       throw new GraphQLError(err);
     });
 };
@@ -125,4 +88,4 @@ const getNotifications = async (
   }).then(res => parseNotificationsRes(res.data));
 };
 
-export { getNodeMetricRange, getNotifications, getSiteMetricRange };
+export { getNodeMetricRange, getNotifications };

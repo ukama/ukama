@@ -197,6 +197,9 @@ export class GetMetricsSiteStatInput {
   @Field()
   to: number;
 
+  @Field({ nullable: true, defaultValue: "avg" })
+  operation?: string;
+
   @Field({ defaultValue: 30 })
   step: number;
 
@@ -298,6 +301,9 @@ export class MetricStateRes {
 
   @Field()
   type: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
 
   @Field()
   value: number;
