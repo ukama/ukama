@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/num30/config"
+	"google.golang.org/grpc"
 
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/collector"
@@ -25,9 +26,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"google.golang.org/grpc"
+)
+
+const (
+	registrySystem = "registry"
 )
 
 var serviceConfig *pkg.Config
@@ -84,8 +89,16 @@ func runGrpcServer() {
 
 	mc := collector.NewMetricsCollector(serviceConfig.OrgName, serviceConfig.MetricConfig)
 
+	// Looking up registry system's host from initClient
+	registrySystemUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
+		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
+	}
+
 	// Sanitizer service
-	sanitizer, err := server.NewSanitizerServer(serviceConfig.OrgName, serviceConfig.Org, mbClient)
+	sanitizer, err := server.NewSanitizerServer(registrySystemUrl.String(), serviceConfig.PushGatewayHost,
+		serviceConfig.OrgName, serviceConfig.Org, mbClient)
 	if err != nil {
 		log.Fatalf("Sanitizer server initialization failed. Error: %v", err)
 	}

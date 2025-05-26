@@ -20,7 +20,7 @@ import (
 )
 
 type Sanitizer interface {
-	Sanitize() (*pb.SanitizeResponse, error)
+	Sanitize([]byte) (*pb.SanitizeResponse, error)
 }
 
 type sanitizer struct {
@@ -58,11 +58,13 @@ func (s *sanitizer) Close() {
 	s.conn.Close()
 }
 
-func (s *sanitizer) Sanitize() (*pb.SanitizeResponse, error) {
+func (s *sanitizer) Sanitize(data []byte) (*pb.SanitizeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.Sanitize(ctx, &pb.SanitizeRequest{})
+	res, err := s.client.Sanitize(ctx, &pb.SanitizeRequest{
+		Data: data,
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -20,6 +20,7 @@ service SanitizerService {
 }
 
 message SanitizeRequest {
+  bytes data = 1;
 }
 
 message SanitizeResponse {

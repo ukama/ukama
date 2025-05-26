@@ -76,6 +76,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"offline_node_count":      Metric{false, "offline_node_count", ""},
 	"active_members":          Metric{false, "active_members", ""},
 	"inactive_members":        Metric{false, "inactive_members", ""},
+	"node_active_subscribers": Metric{false, "active_subscribers_per_node", ""},
 
 	"sims":              Metric{false, "number_of_sims", ""},
 	"active_sims":       Metric{false, "active_sim_count", ""},
@@ -229,8 +230,9 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:  3 * time.Second,
-			Exporter: "0.0.0.0:9090",
+			Timeout:   3 * time.Second,
+			Exporter:  "0.0.0.0:9090",
+			Sanitizer: "sanitizer:9090",
 		},
 		HttpServices: HttpEndpoints{
 			Timeout:     3 * time.Second,

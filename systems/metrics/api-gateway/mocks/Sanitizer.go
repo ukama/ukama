@@ -12,9 +12,9 @@ type Sanitizer struct {
 	mock.Mock
 }
 
-// Sanitize provides a mock function with no fields
-func (_m *Sanitizer) Sanitize() (*gen.SanitizeResponse, error) {
-	ret := _m.Called()
+// Sanitize provides a mock function with given fields: _a0
+func (_m *Sanitizer) Sanitize(_a0 []byte) (*gen.SanitizeResponse, error) {
+	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Sanitize")
@@ -22,19 +22,19 @@ func (_m *Sanitizer) Sanitize() (*gen.SanitizeResponse, error) {
 
 	var r0 *gen.SanitizeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.SanitizeResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func([]byte) (*gen.SanitizeResponse, error)); ok {
+		return rf(_a0)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.SanitizeResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func([]byte) *gen.SanitizeResponse); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SanitizeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}

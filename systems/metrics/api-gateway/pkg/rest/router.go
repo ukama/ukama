@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
@@ -206,12 +207,18 @@ func parse_metrics_request(mReq string) []string {
 	return strings.Split(mReq, ",")
 }
 
-func (r *Router) sanitizeMetrics(c *gin.Context, m *GetWsMetricIntput) (*pbs.SanitizeResponse, error) {
-	return r.clients.s.Sanitize()
+func (r *Router) sanitizeMetrics(c *gin.Context) (*pbs.SanitizeResponse, error) {
+	data, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		log.Errorf("Failure while reading request body before sanitizing: %v", err)
+
+		return nil, fmt.Errorf("failure while reading request body before sanitizing: %w", err)
+	}
+
+	return r.clients.s.Sanitize(data)
 }
 
 func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
-
 	log.Infof("Requesting metrics %s", m.Metric)
 
 	//Upgrade get request to webSocket protocol

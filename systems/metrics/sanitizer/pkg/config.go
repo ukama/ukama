@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
+
+	pmetric "github.com/ukama/ukama/systems/common/metrics"
 )
 
 const (
@@ -22,19 +24,30 @@ const (
 	LABEL_SITE       = "site"
 )
 
+const (
+	NodeActiveSubscribers = "active_subscribers_per_node"
+	GaugeType             = "gauge"
+)
+
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Grpc              *config.Grpc      `default:"{}"`
+	Grpc              *config.Grpc `default:"{}"`
+	Http              HttpServices
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
 	Queue             *config.Queue     `default:"{}"`
 	Service           *config.Service   `default:"{}"`
 	ExporterHost      string            `default:"localhost"`
+	PushGatewayHost   string            `default:"http://localhost:9091"`
 	Org               string            `default:""`
 	IsMsgBus          bool              `default:"true"`
 	MetricConfig      []MetricConfig    `default:"{}"`
 	Metrics           *config.Metrics   `default:"{}"`
 	OrgName           string
+}
+
+type HttpServices struct {
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type MetricSchema struct {
@@ -92,4 +105,13 @@ func NewConfig(name string) *Config {
 			},
 		},
 	}
+}
+
+var NodeActiveSubscribersMetric = []pmetric.MetricConfig{
+	{
+		Name:   NodeActiveSubscribers,
+		Type:   GaugeType,
+		Labels: map[string]string{"node_id": "", "site": "", "network": ""},
+		Value:  0,
+	},
 }
