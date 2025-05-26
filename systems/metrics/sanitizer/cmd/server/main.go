@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
-	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/collector"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/server"
 	"gopkg.in/yaml.v3"
 
@@ -28,7 +27,6 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const (
@@ -87,8 +85,6 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	mc := collector.NewMetricsCollector(serviceConfig.OrgName, serviceConfig.MetricConfig)
-
 	// Looking up registry system's host from initClient
 	registrySystemUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
 		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
@@ -103,17 +99,9 @@ func runGrpcServer() {
 		log.Fatalf("Sanitizer server initialization failed. Error: %v", err)
 	}
 
-	nSrv := server.NewSanitizerEventServer(serviceConfig.OrgName, mc)
-
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterSanitizerServiceServer(s, sanitizer)
-		if serviceConfig.IsMsgBus {
-			egen.RegisterEventNotificationServiceServer(s, nSrv)
-		}
-		mc.RegisterGrpcService(s)
 	})
-
-	mc.StartMetricServer(serviceConfig.Metrics)
 
 	if serviceConfig.IsMsgBus {
 		go msgBusListener(mbClient)

@@ -64,7 +64,13 @@ func NewSanitizerServer(registryHost, pushGatewayHost, orgName string, org strin
 			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
 	}
 
-	s.syncNodeCache()
+	err := s.syncNodeCache()
+	if err != nil {
+		log.Errorf("error while initializing new sanitizer server: %v", err)
+
+		return nil, fmt.Errorf("error while initializing new sanitizer server: %w", err)
+	}
+
 	s.NodeMetricCache = map[string]float64{}
 
 	return &s, nil
@@ -132,7 +138,7 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 func (s *SanitizerServer) syncNodeCache() error {
 	log.Infof("Fetching list of nodes with metadata.")
 
-	var nCache map[string]NodeMetaData
+	nCache := map[string]NodeMetaData{}
 
 	nodeClient := registry.NewNodeClient(s.registryHost)
 	resp, err := nodeClient.GetAll()
