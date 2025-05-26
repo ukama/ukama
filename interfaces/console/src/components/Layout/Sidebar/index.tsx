@@ -32,7 +32,6 @@ interface ISidebarProps {
 }
 
 const Sidebar = ({
-  isOpen,
   isDarkMode,
   placeholder,
   networks = [],

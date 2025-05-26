@@ -33,13 +33,13 @@ interface INodeOverviewTab {
   metrics: MetricsRes;
   statLoading: boolean;
   metricsLoading: boolean;
-  onNodeSelected: Function;
+  onNodeSelected: (node: Node) => void;
   isUpdateAvailable: boolean;
-  handleUpdateNode: Function;
+  handleUpdateNode: () => void;
   selectedNode: Node | undefined;
   connectedUsers: string | undefined;
-  getNodeSoftwareUpdateInfos: Function;
-  handleOverviewSectionChange: Function;
+  getNodeSoftwareUpdateInfos: () => void;
+  handleOverviewSectionChange: (section: Graphs_Type) => void;
   nodeMetricsStatData: MetricsStateRes;
 }
 

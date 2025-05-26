@@ -23,7 +23,6 @@ const InstallSiteLoading = ({
   duration,
   description,
   onCompleted,
-  handleBack,
 }: IInstallSiteLoading) => {
   const [progress, setProgress] = React.useState(0);
   const [remainingTime, setRemainingTime] = React.useState(duration);

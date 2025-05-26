@@ -51,9 +51,9 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
   const currentBill =
     bills && bills?.length > 0
       ? [...bills].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )[0]
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )[0]
       : null;
 
   const hasMultipleUnpaidBills =
@@ -157,7 +157,7 @@ const CurrentBillCard: React.FC<CurrentBillCardProps> = ({
                 (bill) => (
                   <Typography variant="body1">
                     {Number(bill?.rawReport?.totalAmountCents) < 1
-                      ? `Free trial $0`
+                      ? 'Free trial $0'
                       : `Total due: $${(Number(bill?.rawReport?.totalAmountCents || 0) / 100).toFixed(2)}`}
                   </Typography>
                 ),

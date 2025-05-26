@@ -32,11 +32,11 @@ interface IMap {
 }
 
 const NetworkMap = ({ id, zoom, markersData, children }: IMap) => {
-  let mapClassName = styles.map;
-  let mapContainer = styles['leaflet-container'];
+  const mapClassName = styles.map;
+  const mapContainer = styles['leaflet-container'];
 
   useEffect(() => {
-    (async function init() {
+    (function init() {
       Leaflet.Icon.Default.mergeOptions(ICON);
       Leaflet.Control.Zoom.prototype.options.position = 'bottomright';
     })();

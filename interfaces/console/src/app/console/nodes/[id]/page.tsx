@@ -351,7 +351,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    const { value, type, success } = parsedData.data.getMetricStatSub;
     if (success) {
       if (type === NODE_UPTIME_KEY) {
         setNodeUptime(Math.floor(value[1]));

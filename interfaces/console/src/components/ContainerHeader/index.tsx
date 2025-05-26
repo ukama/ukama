@@ -20,8 +20,8 @@ type ContainerHeaderProps = {
   buttonTitle?: string;
   showButton?: boolean;
   showSearchBox?: boolean;
-  handleSearchChange?: Function;
-  handleButtonAction?: Function;
+  handleSearchChange?: (value: string) => void;
+  handleButtonAction?: () => void;
 };
 
 const StyledInputBase = styled(InputBase)(() => ({

@@ -70,7 +70,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     siteId,
     name,
     address,
-    userCount = 0,
     handleSiteNameUpdate,
     loading,
     maxAddressLength = 49,

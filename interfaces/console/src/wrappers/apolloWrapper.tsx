@@ -26,20 +26,20 @@ function makeClient(baseUrl: string) {
       Query: {
         fields: {
           getSites: {
-            merge(existing, incoming) {
+            merge(_existing, incoming) {
               return incoming;
             },
           },
           getNodes: {
-            merge(existing, incoming, { args, readField }) {
+            merge(_existing, incoming) {
               return incoming;
             },
-            read(existing, { args, readField }) {
+            read(existing) {
               return existing;
             },
           },
           getCurrencySymbol: {
-            merge(existing, incoming) {
+            merge(_existing, incoming) {
               return incoming;
             },
           },

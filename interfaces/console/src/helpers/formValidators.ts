@@ -122,15 +122,15 @@ const DataPlanSchema = Yup.object().shape({
     .default(DataUnitType.GigaBytes)
     .required(),
   duration: Yup.string().required('Duration is required'),
-  amount: Yup.number().required().positive("Value can't be negative").min(1),
+  amount: Yup.number().required().positive('Value can\'t be negative').min(1),
   dataVolume: Yup.number()
     .required()
-    .positive("Data volume can't be negative")
+    .positive('Data volume can\'t be negative')
     .min(1),
   id: Yup.string(),
   country: Yup.string(),
   currency: Yup.string(),
-  name: Yup.string().required().min(5, "Name can't be less than 5 characters"),
+  name: Yup.string().required().min(5, 'Name can\'t be less than 5 characters'),
 });
 
 export {

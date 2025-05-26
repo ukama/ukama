@@ -31,7 +31,7 @@ type AddNodeDialogProps = {
   labelSuccessBtn?: string;
   handleSuccessAction?: any;
   labelNegativeBtn?: string;
-  handleNodeCheck: Function;
+  handleNodeCheck: (id: string, checked: boolean) => void;
   data: Record<string, string | boolean>[] | undefined;
 };
 
@@ -69,7 +69,7 @@ const AddNodeDialog = ({
           }
         >
           {data.map(({ id, name, isChecked }) => {
-            const labelId = `node-checkbox-${id}`;
+            const labelId = `node-checkbox-${id.toString()}`;
             return (
               <ListItem key={id.toString()} disablePadding>
                 <ListItemIcon sx={{ ml: 1 }}>
@@ -78,7 +78,9 @@ const AddNodeDialog = ({
                     disableRipple
                     sx={{ p: 0 }}
                     checked={isChecked as boolean}
-                    onChange={(e) => handleNodeCheck(id, e.target.checked)}
+                    onChange={(e) =>
+                      handleNodeCheck(id.toString(), e.target.checked)
+                    }
                     inputProps={{ 'aria-labelledby': labelId }}
                   />
                 </ListItemIcon>

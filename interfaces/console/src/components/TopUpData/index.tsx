@@ -5,11 +5,11 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
 import { PackageDto, SimDto } from '@/client/graphql/generated';
+import colors from '@/theme/colors';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import {
   Autocomplete,
   Box,
@@ -28,9 +28,9 @@ import {
   Typography,
   styled,
 } from '@mui/material';
-import { Formik, Form, Field, FieldArray, FormikErrors } from 'formik';
+import { Field, FieldArray, Form, Formik, FormikErrors } from 'formik';
+import React from 'react';
 import * as Yup from 'yup';
-import colors from '@/theme/colors';
 
 interface TopUpProps {
   onCancel: () => void;
@@ -59,7 +59,7 @@ const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
   padding: theme.spacing(2, 3),
 }));
 
-const FormContainer = styled(Box)(({ theme }) => ({
+const FormContainer = styled(Box)(() => ({
   '& .MuiAutocomplete-input': {
     height: '23px',
     padding: '7.5px 4px !important',

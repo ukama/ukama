@@ -66,18 +66,18 @@ export default function AppThemeProvider({
         fontFamily: rubik.style.fontFamily,
         color: textColor,
       },
-      subtitle1: { fontFamily: 'Work Sans, sans-serif' },
-      subtitle2: { fontFamily: 'Work Sans, sans-serif' },
+      subtitle1: { fontFamily: workSans.style.fontFamily },
+      subtitle2: { fontFamily: workSans.style.fontFamily },
       body1: {
-        fontFamily: 'Work Sans, sans-serif',
+        fontFamily: workSans.style.fontFamily,
         letterSpacing: '-0.02em',
       },
       body2: {
-        fontFamily: 'Work Sans, sans-serif',
+        fontFamily: workSans.style.fontFamily,
         letterSpacing: '-0.02em',
       },
       caption: {
-        fontFamily: 'Work Sans, sans-serif',
+        fontFamily: workSans.style.fontFamily,
       },
     },
     palette: {
@@ -287,7 +287,7 @@ export default function AppThemeProvider({
             '.MuiTypography-root': {
               fontSize: '1rem',
               color: mode ? colors.white : colors.vulcan,
-              fontFamily: 'Work Sans, sans-serif',
+              fontFamily: workSans.style.fontFamily,
             },
           },
         },

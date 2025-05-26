@@ -17,11 +17,7 @@ interface Props {
   bundle: string | undefined;
 }
 
-const DataPlanComponent: React.FC<Props> = ({
-  packageName,
-  currentSite,
-  bundle,
-}) => {
+const DataPlanComponent: React.FC<Props> = ({ packageName, bundle }) => {
   return (
     <Stack direction="column" spacing={2}>
       <Stack direction="row" spacing={2}>

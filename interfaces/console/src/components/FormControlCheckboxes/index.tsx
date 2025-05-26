@@ -18,7 +18,7 @@ import React from 'react';
 
 type FormControlCheckboxesProp = {
   values: any;
-  handleChange: Function;
+  handleChange: (name: string, checked: boolean) => void;
   checkboxList: StatsItemType[];
 };
 

@@ -94,7 +94,7 @@ const Check = () => {
 
   const [getNode] = useGetNodeLazyQuery({
     fetchPolicy: 'network-only',
-    onCompleted: async (data) => {
+    onCompleted: (data) => {
       if (data.getNode.latitude && data.getNode.longitude && nodeId) {
         if (
           data.getNode.status.connectivity === NodeConnectivityEnum.Online &&
@@ -108,7 +108,7 @@ const Check = () => {
             type: 'warning',
             show: true,
           });
-          router.push(`/console/home`);
+          router.push('/console/home');
         }
       }
     },
@@ -118,7 +118,7 @@ const Check = () => {
     fetchPolicy: 'network-only',
     onCompleted: (data) => {
       if (node && data.getNodeState.currentState === NodeStateEnum.Unknown) {
-        let p = setQueryParam(
+        const p = setQueryParam(
           'lat',
           node.latitude.toString(),
           searchParams.toString(),
@@ -246,11 +246,11 @@ const Check = () => {
           <Button
             variant="contained"
             sx={{ width: 'fit-content', alignSelf: 'flex-end' }}
-            onClick={() => {
+            onClick={() =>
               flow === INSTALLATION_FLOW
                 ? router.push('/console/home')
-                : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`);
-            }}
+                : router.push(`/configure/sims?flow=${ONBOARDING_FLOW}`)
+            }
           >
             {flow === INSTALLATION_FLOW
               ? 'Return to home'

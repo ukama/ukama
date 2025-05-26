@@ -9,7 +9,7 @@
 import { Node } from '@/client/graphql/generated';
 import { Button } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { styled } from '@mui/styles';
+import { styled } from '@mui/material/styles';
 import LoadingWrapper from '../LoadingWrapper';
 import NodeDropDown from '../NodeDropDown';
 import SplitButton from '../SplitButton';
@@ -23,13 +23,13 @@ interface INodeStatus {
   nodes: any;
   uptime: number;
   loading: boolean;
-  onAddNode: Function;
+  onAddNode?: () => void;
   isShowNodeAction?: boolean;
   nodeActionOptions: any[];
-  handleNodeSelected: Function;
-  handleEditNodeClick: Function;
+  handleNodeSelected: (node: Node) => void;
+  handleEditNodeClick: (node: Node) => void;
   selectedNode: Node | undefined;
-  handleNodeActionClick: Function;
+  handleNodeActionClick: (id: string) => void;
 }
 
 const NodeStatus = ({

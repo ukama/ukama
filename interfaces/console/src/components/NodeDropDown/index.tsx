@@ -6,46 +6,14 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import {
-  Node,
-  NodeConnectivityEnum,
-  NodeStateEnum,
-} from '@/client/graphql/generated';
+import { Node, NodeConnectivityEnum } from '@/client/graphql/generated';
 import { colors } from '@/theme';
 import { duration, hexToRGB } from '@/utils';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InfoIcon from '@mui/icons-material/InfoOutlined';
-import {
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { MenuItem, SelectChangeEvent, Stack, Typography } from '@mui/material';
 import LoadingWrapper from '../LoadingWrapper';
-import { PaperProps, SelectDisplayProps, useStyles } from './styles';
-
-const getStatus = (status: NodeStateEnum, time: number): JSX.Element => {
-  let str = '';
-  switch (status) {
-    case NodeStateEnum.Unknown:
-      str = 'Active';
-    case NodeStateEnum.Configured:
-      str = 'Configured';
-    case NodeStateEnum.Operational:
-      str = 'Onboarded';
-    case NodeStateEnum.Faulty:
-      str = 'Faulty';
-    default:
-      str = 'Unknown';
-  }
-  return (
-    <Typography variant={'subtitle1'}>
-      <b>UPTIME HERE: </b>
-      {str}
-    </Typography>
-  );
-};
+import { PaperProps, SelectDisplayProps, SelectStyle } from './styles';
 
 const getStatusIcon = (status: NodeConnectivityEnum) => {
   switch (status) {
@@ -64,26 +32,26 @@ interface INodeDropDown {
   uptime: number;
   loading: boolean;
   isNodeReady?: boolean;
-  onAddNode: Function;
+  onAddNode?: () => void;
   nodes: Node[] | [];
-  onNodeSelected: Function;
+  onNodeSelected: (node: Node) => void;
   selectedNode: Node | undefined;
 }
 
 const NodeDropDown = ({
   uptime,
   nodes = [],
-  onAddNode,
   selectedNode,
   loading = true,
   onNodeSelected,
   isNodeReady = true,
 }: INodeDropDown) => {
-  const classes = useStyles();
-  const handleChange = (e: SelectChangeEvent<string>) => {
-    const { target } = e;
-    target.value &&
-      onNodeSelected(nodes.find((item: Node) => item.name === target.value));
+  const handleChange = (e: SelectChangeEvent<unknown>) => {
+    const value = e.target.value as string;
+    const node = nodes.find((item: Node) => item.name === value);
+    if (node) {
+      onNodeSelected(node);
+    }
   };
   return (
     <Stack direction={'row'} spacing={1} alignItems="center">
@@ -91,7 +59,7 @@ const NodeDropDown = ({
         getStatusIcon(selectedNode.status.connectivity as NodeConnectivityEnum)}
 
       <LoadingWrapper radius="small" isLoading={loading} width={'fit-content'}>
-        <Select
+        <SelectStyle
           disableUnderline
           variant="standard"
           onChange={handleChange}
@@ -116,8 +84,7 @@ const NodeDropDown = ({
               },
             },
           }}
-          className={classes.selectStyle}
-          renderValue={(selected) => selected}
+          renderValue={(selected: unknown) => selected as React.ReactNode}
         >
           {nodes.map(({ id, name }) => (
             <MenuItem
@@ -141,7 +108,7 @@ const NodeDropDown = ({
               </Typography>
             </MenuItem>
           ))}
-        </Select>
+        </SelectStyle>
       </LoadingWrapper>
 
       {selectedNode && (

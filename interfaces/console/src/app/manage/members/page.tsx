@@ -46,7 +46,7 @@ import React, { useEffect, useState } from 'react';
 
 const Page = () => {
   const [tabIndex, setTabIndex] = useState(0);
-  const { user, setSnackbarMessage } = useAppContext();
+  const { setSnackbarMessage } = useAppContext();
   const [search, setSearch] = useState<string>('');
   const [isInviteMember, setIsInviteMember] = useState<boolean>(false);
   const [data, setData] = useState({ members: [], invites: [] });

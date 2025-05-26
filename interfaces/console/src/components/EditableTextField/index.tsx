@@ -15,7 +15,7 @@ type EditableTextFieldProps = {
   type?: string;
   value: string;
   editable?: boolean;
-  handleOnChange?: Function;
+  handleOnChange?: (value: string) => void;
 };
 
 const EditableTextField = ({

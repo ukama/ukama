@@ -19,7 +19,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { styled } from '@mui/styles';
+import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
 import LoadingWrapper from '../LoadingWrapper';
 

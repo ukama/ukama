@@ -56,7 +56,7 @@ const getLatLng = (sites: any[], links: any[]): ILink[] => {
       const siteA = links[i].siteA;
       const siteB = links[i].siteB;
       const locs: LatLngTuple[] = [];
-      sites.forEach((site) => {
+      sites.forEach(() => {
         // if (site.id === siteA ?? site.id === siteB) {
         //   locs.push([
         //     parseFloat(site.location.lat),
@@ -71,10 +71,8 @@ const getLatLng = (sites: any[], links: any[]): ILink[] => {
   return data.length > 0 ? data : [];
 };
 
-const addRasterData = async (url: string, map: any, id: string) => {
-  const buf = await fetch(url).then((response) => {
-    return response.arrayBuffer();
-  });
+const addRasterData = async (url: string, _: any, __: string) => {
+  await fetch(url).then((response) => response.arrayBuffer());
 };
 
 const getKey = (lat: string, lng: string) =>
@@ -87,8 +85,6 @@ const CustomMarker = ({
   links,
   center,
   setZoom,
-  isAddLink,
-  linkSites,
   handleAction,
   selectedLink,
   handleAddMarker,
@@ -96,7 +92,6 @@ const CustomMarker = ({
   handleDeleteSite,
   handleDragMarker,
   handleLinkClick,
-  handleAddLinkToSite,
   handleGenerateAction,
 }: ICustomMarker) => {
   const map = useMap();
@@ -260,17 +255,17 @@ const CustomMarker = ({
                   ]);
                   handleDragMarker(event.target.getLatLng(), item.location.id);
                 },
-                popupopen: (event: any) => {
-                  if (isAddLink) {
-                    event.target.closePopup();
-                    const { lat, lng } = event.target.getLatLng();
-                    const s = data.find(
-                      (d) =>
-                        d.location.lat.includes(`${lat}`) &&
-                        d.location.lng.includes(`${lng}`),
-                    );
-                    s?.id && handleAddLinkToSite(s?.id);
-                  }
+                popupopen: () => {
+                  // if (isAddLink) {
+                  //   event.target.closePopup();
+                  //   const { lat, lng } = event.target.getLatLng();
+                  //   const s = data.find(
+                  //     (d) =>
+                  //       d.location.lat.includes(`${lat}`) &&
+                  //       d.location.lng.includes(`${lng}`),
+                  //   );
+                  //   s?.id && handleAddLinkToSite(s?.id);
+                  // }
                 },
               }}
             >

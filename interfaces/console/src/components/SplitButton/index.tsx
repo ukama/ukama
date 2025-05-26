@@ -20,7 +20,7 @@ import BasicDialog from '../BasicDialog';
 
 type splitButtonProps = {
   options: any[];
-  handleSplitActionClick: Function;
+  handleSplitActionClick: (id: string) => void;
 };
 const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
   const isHaveOptions = options.length > 1;
@@ -98,7 +98,7 @@ const SplitButton = ({ options, handleSplitActionClick }: splitButtonProps) => {
             <Paper>
               <ClickAwayListener onClickAway={handleClose}>
                 <MenuList id="node-action-menu">
-                  {options.map(({ id, name }, index) => (
+                  {options.map(({ id, name }) => (
                     <MenuItem
                       key={id}
                       selected={id === selectedIndex}

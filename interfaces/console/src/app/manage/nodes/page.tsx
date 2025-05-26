@@ -72,7 +72,7 @@ const Page = () => {
       id: node.id,
       network: node.site.networkId
         ? (sites.getSites.sites.find((site) => site.id === node.site.networkId)
-            ?.name ?? '-')
+          ?.name ?? '-')
         : '-',
       state: node.status.state,
       site: getSiteName(node.site.siteId),

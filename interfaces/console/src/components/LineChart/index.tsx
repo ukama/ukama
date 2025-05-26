@@ -87,8 +87,8 @@ const LineChart = ({
               const chart: any =
                 Highcharts.charts.length > 0
                   ? Highcharts.charts.find(
-                      (c: any) => c?.title?.textStr === topic,
-                    )
+                    (c: any) => c?.title?.textStr === topic,
+                  )
                   : null;
               if (chart && data.length > 0) {
                 const series = chart.series[0];

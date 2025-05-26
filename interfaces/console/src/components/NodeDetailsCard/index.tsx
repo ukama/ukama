@@ -18,8 +18,8 @@ interface INodeDetailsCard {
   nodeTitle: string;
   nodeType?: any;
   isUpdateAvailable: boolean;
-  handleUpdateNode: Function;
-  getNodeUpdateInfos: Function;
+  handleUpdateNode: () => void;
+  getNodeUpdateInfos: () => void;
 }
 
 const NodeDetailsCard = ({

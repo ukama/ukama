@@ -55,7 +55,7 @@ const Network = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
-  const { setSnackbarMessage, network, setNetwork } = useAppContext();
+  const { setSnackbarMessage, setNetwork } = useAppContext();
 
   useGetNetworksQuery({
     fetchPolicy: 'cache-and-network',
@@ -129,7 +129,7 @@ const Network = () => {
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
-        onSubmit={async (values) => {
+        onSubmit={(values) => {
           handleAddNetwork(values);
         }}
       >

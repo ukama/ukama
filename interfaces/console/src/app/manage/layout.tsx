@@ -144,7 +144,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const pathname = usePathname();
   const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
-  const { isDarkMode, user, network, setNetwork } = useAppContext();
+  const { isDarkMode, network, setNetwork } = useAppContext();
 
   useGetNetworksQuery({
     fetchPolicy: 'network-only',

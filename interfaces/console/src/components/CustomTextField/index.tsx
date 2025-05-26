@@ -5,10 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
-import { TextField } from '@mui/material';
+import { GlobalInput } from '@/styles/global';
 import { useField } from 'formik';
-import { globalUseStyles } from '@/styles/global';
+import React from 'react';
 
 interface CustomTextFieldProps {
   label: string;
@@ -22,10 +21,9 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
   onChange,
 }) => {
   const [field, meta] = useField(name);
-  const gclasses = globalUseStyles();
 
   return (
-    <TextField
+    <GlobalInput
       {...field}
       label={label}
       fullWidth
@@ -35,15 +33,12 @@ const CustomTextField: React.FC<CustomTextFieldProps> = ({
           onChange(e);
         }
       }}
-      InputLabelProps={{
-        shrink: true,
-      }}
       helperText={meta.touched && meta.error ? meta.error : ''}
       error={meta.touched && Boolean(meta.error)}
       spellCheck={false}
-      InputProps={{
-        classes: {
-          input: gclasses.inputFieldStyle,
+      slotProps={{
+        inputLabel: {
+          shrink: true,
         },
       }}
     />

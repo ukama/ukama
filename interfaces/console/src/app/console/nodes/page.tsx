@@ -100,7 +100,7 @@ export default function Page() {
     setSearch(str);
   };
 
-  const handleActionMenuClick = (action: string, id: string) => {
+  const handleActionMenuClick = (action: string, _: string) => {
     switch (action) {
       case 'edit-node':
         break;

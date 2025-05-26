@@ -95,7 +95,7 @@ const AddNetworkDialog = ({
         <Formik
           initialValues={initialValues}
           validationSchema={validationSchema}
-          onSubmit={async (values) => {
+          onSubmit={(values) => {
             handleSuccessAction(values);
           }}
         >

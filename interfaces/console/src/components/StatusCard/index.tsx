@@ -18,27 +18,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import { useEffect, useState } from 'react';
-
-const useStyles = makeStyles<Theme>((theme) => ({
-  selectStyle: {
-    width: '108px',
-    textAlign: 'end',
-    '& p': {
-      color: theme?.palette?.text?.secondary,
-      fontWeight: 500,
-      fontSize: '14px',
-      lineHeight: '157%',
-    },
-    '& .MuiSelect-iconStandard': {
-      paddingBottom: '4px',
-    },
-    '& .MuiSelect-iconOpen': {
-      paddingBottom: '0px',
-    },
-  },
-}));
 
 type StatusCardProps = {
   Icon: any;
@@ -48,7 +28,7 @@ type StatusCardProps = {
   loading: boolean;
   subtitle2: string;
   iconColor?: string;
-  handleSelect: Function;
+  handleSelect: () => void;
   options: SelectItemType[];
 };
 
@@ -56,12 +36,9 @@ const StatusCard = ({
   Icon,
   topic,
   title,
-  option,
-  options,
   loading,
   iconColor,
   subtitle2 = '',
-  handleSelect,
 }: StatusCardProps) => {
   const [subtitle1, setSubtitle1] = useState<string>('0');
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));

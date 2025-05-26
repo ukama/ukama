@@ -273,7 +273,7 @@ export default function Page() {
         return;
       }
 
-      let p = new URLSearchParams();
+      const p = new URLSearchParams();
       p.set('step', 'location');
       p.set('flow', 'ins');
       p.set('nid', nodeId);

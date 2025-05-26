@@ -25,16 +25,13 @@ import { useRouter } from 'next/navigation';
 const Page = () => {
   const { user } = useAppContext();
   const router = useRouter();
-  const {
-    data: invitationsData,
-    refetch: refetchInvitations,
-    loading: invitationLoading,
-  } = useGetInvitationsByEmailQuery({
-    fetchPolicy: 'network-only',
-    variables: {
-      email: user.email,
-    },
-  });
+  const { data: invitationsData, loading: invitationLoading } =
+    useGetInvitationsByEmailQuery({
+      fetchPolicy: 'network-only',
+      variables: {
+        email: user.email,
+      },
+    });
 
   const [updateInvitation, { loading: updateInvitationLoading }] =
     useUpdateInvitationMutation({

@@ -5,25 +5,17 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
+import colors from '@/theme/colors';
 import {
   Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  Button,
-  Tooltip,
   Skeleton,
-  Chip,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import DevicesIcon from '@mui/icons-material/Devices';
-import colors from '@/theme/colors';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-
-interface NodeStatus {
-  connectivity: string;
-  state: string;
-}
+import React from 'react';
 
 interface UnassignedNodeProps {
   id: string;
@@ -111,7 +103,7 @@ const UnassignedNodeCard: React.FC<UnassignedNodeProps> = ({
             {loading ? (
               <Skeleton width={250} />
             ) : (
-              `This node is not assigned to any site. Configure it to add to a site.`
+              'This node is not assigned to any site. Configure it to add to a site.'
             )}
           </Typography>
         </Box>

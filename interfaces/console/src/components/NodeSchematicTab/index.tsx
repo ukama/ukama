@@ -12,7 +12,7 @@ import Image from 'next/image';
 
 type ISchematicsProps = {
   schematicsSpecsData?: any;
-  getSearchValue: Function;
+  getSearchValue: (value: string) => void;
   nodeTitle: string | undefined;
   loading: boolean;
 };

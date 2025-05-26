@@ -21,14 +21,13 @@ import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
-const PLACEHOLDER_VALUE = 'NA';
 interface INodeOverviewTab {
   loading: boolean;
   metricFrom: number;
   metrics: MetricsRes;
   statLoading: boolean;
   selectedNode: Node | undefined;
-  handleSectionChange: Function;
+  handleSectionChange: (section: Graphs_Type) => void;
   nodeMetricsStatData: MetricsStateRes;
 }
 const NodeNetworkTab = ({
