@@ -142,7 +142,7 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
 	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
-	log.Infof("GetMetric query: %s", data.Encode())
+	log.Infof("GetMetricRange query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
@@ -193,21 +193,21 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 
 	bytes, err := io.ReadAll(b)
 	if err != nil {
-		log.Errorf("Failed to read promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to read prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 
 	rmap := map[string]interface{}{}
 	err = json.Unmarshal([]byte(bytes), &rmap)
 	if err != nil {
-		log.Errorf("Failed to unmarshal promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to unmarshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 	rmap["Name"] = metricName
 
 	rb, err := json.Marshal(rmap)
 	if err != nil {
-		log.Errorf("Failed to marshal promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to marshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 
@@ -238,7 +238,7 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 	if formatting {
 		err = formatMetricsResponse(metricName, w, res.Body)
 		if err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "failed to formatt response")
+			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
 		}
 	} else {
 		_, err = io.Copy(w, res.Body)
@@ -249,7 +249,7 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 
 	err = res.Body.Close()
 	if err != nil {
-		log.Warnf("fail to properly close respose body. Error: %v", err)
+		log.Warnf("fail to properly close response body. Error: %v", err)
 	}
 
 	return res.StatusCode, nil

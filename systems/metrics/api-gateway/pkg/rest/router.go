@@ -125,7 +125,7 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	auth := r.f.Group("/v1", "metrics system ", "metrics system version v1", func(ctx *gin.Context) {
+	auth := r.f.Group("/v1", "metrics system", "metrics system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
 			return
@@ -229,7 +229,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 	defer func() {
 		err := ws.Close()
 		if err != nil {
-			log.Warnf("fail to properly close websocket connexion. Error: %v", err)
+			log.Warnf("fail to properly close websocket connection. Error: %v", err)
 		}
 	}()
 
@@ -248,7 +248,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 				break
 			}
 
-			err = r.wsMetericHandler(w, &mreq)
+			err = r.wsMetricHandler(w, &mreq)
 			if err != nil {
 				log.Info("write:", err)
 				ok = false
@@ -317,7 +317,7 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
 }
 
-func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricInput) error {
+func (r *Router) wsMetricHandler(w io.Writer, in *GetWsMetricInput) error {
 	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation), true)
 }
 

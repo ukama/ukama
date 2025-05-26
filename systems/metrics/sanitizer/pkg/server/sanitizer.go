@@ -126,6 +126,8 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 			if metric.Value != s.NodeMetricCache[metric.MainLabel] {
 				s.NodeMetricCache[metric.MainLabel] = metric.Value
+
+				// check these node s.NodeCache[metric.MainLabel] for nil derefence
 				metric.AdditionalLabels["network"] = s.NodeCache[metric.MainLabel].NetworkId
 				metric.AdditionalLabels["site"] = s.NodeCache[metric.MainLabel].SiteId
 				metricsToPush = append(metricsToPush, metric)
