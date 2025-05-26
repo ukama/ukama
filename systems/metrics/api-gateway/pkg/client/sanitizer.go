@@ -55,7 +55,10 @@ func NewSanitizerFromClient(sanitizerClient pb.SanitizerServiceClient) *sanitize
 }
 
 func (s *sanitizer) Close() {
-	s.conn.Close()
+	err := s.conn.Close()
+	if err != nil {
+		log.Warnf("fail to properly close sanitizer client. Error: %v", err)
+	}
 }
 
 func (s *sanitizer) Sanitize(data []byte) (*pb.SanitizeResponse, error) {

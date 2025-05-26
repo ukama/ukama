@@ -59,7 +59,7 @@ var NodeActiveSubscribersMetric = []pmetric.MetricConfig{
 	{
 		Name:   NodeActiveSubscribers,
 		Type:   GaugeType,
-		Labels: map[string]string{"node_id": "", "site": "", "network": ""},
+		Labels: map[string]string{"nodeId": "", "site": "", "network": ""},
 		Value:  0,
 	},
 }

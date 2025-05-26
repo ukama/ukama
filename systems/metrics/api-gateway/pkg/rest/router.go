@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
@@ -56,7 +55,7 @@ type Clients struct {
 }
 
 type exporter interface {
-	/* Yet to add RPC for exporteer.*/
+	/* Yet to add RPC for exporter.*/
 	Dummy(req *pbe.DummyParameter) (*pbe.DummyParameter, error)
 }
 
@@ -75,7 +74,7 @@ var (
 	pongWait = 100 * time.Second
 	// pingInterval has to be less than pongWait, We cant multiply by 0.9 to get 90% of time
 	// Because that can make decimals, so instead *9 / 10 to get 90%
-	// The reason why it has to be less than PingRequency is becuase otherwise it will send a new Ping before getting response
+	// The reason why it has to be less than PingRequency is because otherwise it will send a new Ping before getting response
 	pingInterval = (pongWait * 9) / 10
 )
 */
@@ -128,7 +127,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	auth := r.f.Group("/v1", "metrics system ", "metrics system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
-			logrus.Info("Bypassing auth")
+			log.Info("Bypassing auth")
 			return
 		}
 		s := fmt.Sprintf("%s, %s, %s", pkg.SystemName, ctx.Request.Method, ctx.Request.URL.Path)
@@ -218,16 +217,21 @@ func (r *Router) sanitizeMetrics(c *gin.Context) (*pbs.SanitizeResponse, error) 
 	return r.clients.s.Sanitize(data)
 }
 
-func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
+func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 	log.Infof("Requesting metrics %s", m.Metric)
 
 	//Upgrade get request to webSocket protocol
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		logrus.Infof("upgrade: %s", err.Error())
+		log.Infof("upgrade: %s", err.Error())
 		return err
 	}
-	defer ws.Close()
+	defer func() {
+		err := ws.Close()
+		if err != nil {
+			log.Warnf("fail to properly close websocket connexion. Error: %v", err)
+		}
+	}()
 
 	reqs := parse_metrics_request(m.Metric)
 	for {
@@ -235,23 +239,23 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricIntput) error {
 		for i, req := range reqs {
 			mreq := *m
 			mreq.Metric = req
-			logrus.Infof("Calling routine %d for metric %+v", i, mreq)
+			log.Infof("Calling routine %d for metric %+v", i, mreq)
 
 			w, err := ws.NextWriter(1)
 			if err != nil {
-				logrus.Errorf("Error getting writer: %s", err.Error())
+				log.Errorf("Error getting writer: %s", err.Error())
 				ok = false
 				break
 			}
 
 			err = r.wsMetericHandler(w, &mreq)
 			if err != nil {
-				logrus.Info("write:", err)
+				log.Info("write:", err)
 				ok = false
 				break
 			}
 
-			logrus.Infof("routine for metric %s", mreq.Metric)
+			log.Infof("routine for metric %s", mreq.Metric)
 		}
 		if !ok {
 			break
@@ -276,7 +280,7 @@ func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetric
 }
 
 func (r *Router) simMetricHandler(c *gin.Context, in *GetSimMetricsInput) error {
-	logrus.Infof("Request Sim metrics: %+v", in)
+	log.Infof("Request Sim metrics: %+v", in)
 
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSim(in.Network, in.Subscriber, in.Sim))
 }
@@ -286,7 +290,7 @@ func (r *Router) networkMetricHandler(c *gin.Context, in *GetNetworkMetricsInput
 	return httpErrorOrNil(httpCode, err)
 }
 func (r *Router) siteMetricHandler(c *gin.Context, in *GetSiteMetricsInput) error {
-	logrus.Infof("Request Site metrics: %+v", in)
+	log.Infof("Request Site metrics: %+v", in)
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithSite(in.SiteID))
 }
 
@@ -313,7 +317,7 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
 }
 
-func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricIntput) error {
+func (r *Router) wsMetericHandler(w io.Writer, in *GetWsMetricInput) error {
 	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation), true)
 }
 
@@ -330,7 +334,7 @@ func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterB
 		to = time.Now().Unix()
 	}
 
-	logrus.Infof("Metrics request with filters: %+v", filter)
+	log.Infof("Metrics request with filters: %+v", filter)
 	httpCode, err := r.m.GetMetricRange(strings.ToLower(filterBase.Metric), filter, &pkg.Interval{
 		Start: filterBase.From,
 		End:   to,
@@ -349,7 +353,7 @@ func (r *Router) requestMetricInternal(writer io.Writer, metric string, filter *
 			Message:  "Metric not found"}
 	}
 
-	logrus.Infof("Metrics %s requested with filters: %+v", metric, filter)
+	log.Infof("Metrics %s requested with filters: %+v", metric, filter)
 	httpCode, err := r.m.GetMetric(strings.ToLower(metric), filter, writer, formatting)
 
 	return httpErrorOrNil(httpCode, err)

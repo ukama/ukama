@@ -64,7 +64,7 @@ type GetSimMetricsInput struct {
 	Sim        string `path:"sim" validate:"required"`
 }
 
-type GetWsMetricIntput struct {
+type GetWsMetricInput struct {
 	Metric     string `query:"metric" validate:"required"`
 	Interval   int    `query:"interval" validate:"required"` //Node/Network/Organization/Site/Sub/User
 	Network    string `query:"network"`

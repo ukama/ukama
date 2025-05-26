@@ -50,7 +50,8 @@ type SanitizerServer struct {
 	msgbus          mb.MsgBusServiceClient
 }
 
-func NewSanitizerServer(registryHost, pushGatewayHost, orgName string, org string, msgBus mb.MsgBusServiceClient) (*SanitizerServer, error) {
+func NewSanitizerServer(registryHost, pushGatewayHost, orgName string, org string,
+	msgBus mb.MsgBusServiceClient) (*SanitizerServer, error) {
 	s := SanitizerServer{
 		registryHost:    registryHost,
 		pushGatewayHost: pushGatewayHost,
@@ -108,25 +109,27 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 		metric := NodeMetricMetaData{
 			AdditionalLabels: make(map[string]string)}
 
-		metric.Value = ts.Samples[0].Value
+		if len(ts.Samples) > 0 {
+			metric.Value = ts.Samples[0].Value
 
-		for _, label := range ts.Labels {
-			if label.Name == "__name__" || label.Name == "env" || label.Name == "job" {
-				continue
+			for _, label := range ts.Labels {
+				if label.Name == "__name__" || label.Name == "env" || label.Name == "job" {
+					continue
+				}
+
+				if label.Name == "nodeId" {
+					metric.MainLabel = label.Value
+				}
+
+				metric.AdditionalLabels[label.Name] = label.Value
 			}
 
-			if label.Name == "nodeId" {
-				metric.MainLabel = label.Value
+			if metric.Value != s.NodeMetricCache[metric.MainLabel] {
+				s.NodeMetricCache[metric.MainLabel] = metric.Value
+				metric.AdditionalLabels["network"] = s.NodeCache[metric.MainLabel].NetworkId
+				metric.AdditionalLabels["site"] = s.NodeCache[metric.MainLabel].SiteId
+				metricsToPush = append(metricsToPush, metric)
 			}
-
-			metric.AdditionalLabels[label.Name] = label.Value
-		}
-
-		if metric.Value != s.NodeMetricCache[metric.MainLabel] {
-			s.NodeMetricCache[metric.MainLabel] = metric.Value
-			metric.AdditionalLabels["network"] = s.NodeCache[metric.MainLabel].NetworkId
-			metric.AdditionalLabels["site"] = s.NodeCache[metric.MainLabel].SiteId
-			metricsToPush = append(metricsToPush, metric)
 		}
 	}
 
