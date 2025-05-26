@@ -5,23 +5,23 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React, { useState } from 'react';
+import { SubscriberSimDto } from '@/client/graphql/generated';
+import colors from '@/theme/colors';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
+  IconButton,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Menu,
-  MenuItem,
 } from '@mui/material';
-import { styled } from '@mui/system';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import colors from '@/theme/colors';
+import { styled } from '@mui/styles';
+import React, { useState } from 'react';
 import LoadingWrapper from '../LoadingWrapper';
-import { SubscriberSimDto } from '@/client/graphql/generated';
 
 interface SimTableProps {
   simData: SubscriberSimDto[];

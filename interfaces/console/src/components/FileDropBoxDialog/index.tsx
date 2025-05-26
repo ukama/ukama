@@ -26,6 +26,7 @@ import { useDropzone } from 'react-dropzone';
 
 type FileDropBoxDialogProps = {
   title: string;
+  note: string;
   isOpen: boolean;
   handleCloseAction: any;
   labelSuccessBtn?: string;
@@ -34,6 +35,7 @@ type FileDropBoxDialogProps = {
 };
 
 const FileDropBoxDialog = ({
+  note,
   title,
   isOpen,
   labelSuccessBtn,
@@ -131,6 +133,7 @@ const FileDropBoxDialog = ({
               }}
             >
               <div
+                id="csv-file-input"
                 {...getRootProps({ className: 'dropzone' })}
                 style={{
                   width: '100%',
@@ -142,7 +145,7 @@ const FileDropBoxDialog = ({
               >
                 <input {...getInputProps()} />
                 <Typography variant="body2" sx={{ cursor: 'inherit' }}>
-                  Drag & Drop Or Choose file to upload.
+                  {note}
                 </Typography>
               </div>
             </Box>
