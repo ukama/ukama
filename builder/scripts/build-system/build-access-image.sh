@@ -97,7 +97,7 @@ create_disk_image() {
     STAGE="create_disk_image"
     log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
-    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=61120512
+    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=33554432
     check_status $? "Raw image created" ${STAGE}
 }
 
