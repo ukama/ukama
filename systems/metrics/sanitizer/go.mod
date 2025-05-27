@@ -11,9 +11,7 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 require (
 	github.com/golang/protobuf v1.5.4
 	github.com/golang/snappy v1.0.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/num30/config v0.1.3
-	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/prometheus v0.304.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
@@ -48,6 +46,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iamolegga/enviper v1.4.2 // indirect
@@ -78,6 +77,7 @@ require (
 	github.com/penglongli/gin-metrics v0.1.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect

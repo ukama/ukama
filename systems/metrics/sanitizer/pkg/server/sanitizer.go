@@ -26,6 +26,14 @@ import (
 	pb "github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 )
 
+const (
+	name = "__name__"
+	env  = "env"
+	job  = "job"
+	// mainLabel = "nodeId"
+	mainLabel = "network"
+)
+
 type NodeMetaData struct {
 	NodeId    string
 	NetworkId string
@@ -33,7 +41,7 @@ type NodeMetaData struct {
 }
 
 type NodeMetricMetaData struct {
-	MainLabel        string
+	MainLabelValue   string
 	AdditionalLabels map[string]string
 	Value            float64
 }
@@ -113,23 +121,39 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 			metric.Value = ts.Samples[0].Value
 
 			for _, label := range ts.Labels {
-				if label.Name == "__name__" || label.Name == "env" || label.Name == "job" {
+				if label.Name == name || label.Name == env || label.Name == job {
 					continue
 				}
 
-				if label.Name == "nodeId" {
-					metric.MainLabel = label.Value
+				if label.Name == mainLabel {
+					metric.MainLabelValue = label.Value
+					continue
 				}
 
 				metric.AdditionalLabels[label.Name] = label.Value
 			}
 
-			if metric.Value != s.NodeMetricCache[metric.MainLabel] {
-				s.NodeMetricCache[metric.MainLabel] = metric.Value
+			if metric.MainLabelValue == "" {
+				log.Warnf("main label %q not found in timeseries data, moving on to next metric...",
+					mainLabel)
 
-				// check these node s.NodeCache[metric.MainLabel] for nil derefence
-				metric.AdditionalLabels["network"] = s.NodeCache[metric.MainLabel].NetworkId
-				metric.AdditionalLabels["site"] = s.NodeCache[metric.MainLabel].SiteId
+				continue
+			}
+
+			value, ok := s.NodeMetricCache[metric.MainLabelValue]
+			if !ok || value != metric.Value {
+				s.NodeMetricCache[metric.MainLabelValue] = metric.Value
+
+				cachedNode, ok := s.NodeCache[metric.MainLabelValue]
+				if !ok {
+					log.Warnf("metadata not found in cache for nodeId: %s, skipping...",
+						metric.MainLabelValue)
+
+					continue
+				}
+
+				metric.AdditionalLabels["network"] = cachedNode.NetworkId
+				metric.AdditionalLabels["site"] = cachedNode.SiteId
 				metricsToPush = append(metricsToPush, metric)
 			}
 		}
