@@ -13,14 +13,14 @@ MOUNT_DIR="/mnt/testimg"
 EXPECTED_PARTITIONS=(1 2 5 6 7 8)  # boot, recovery, primary, passive, data, swap
 
 REQUIRED_FILES_PRIMARY=(
-  "/boot/kernel.img"
   "/sbin/starter.d"
   "/manifest.json"
+  "/boot/kernel.img"
 )
 
 REQUIRED_FILES_BOOT=(
-  "/boot/bootcode.bin"  # for access node (optional)
-  "/boot/boot.bin"      # for amplifier node
+    "/boot/bootcode.bin"  # for access node (optional)
+    "/boot/boot.bin"      # for amplifier node
 )
 
 log() {
