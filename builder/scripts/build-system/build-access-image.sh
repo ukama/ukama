@@ -109,6 +109,21 @@ download_and_copy_rpi_firmware() {
     cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR/firmware/" 2>/dev/null || true
     cp -r "$FIRMWARE_BOOT/overlays" "$BOOT_DIR/firmware/" 2>/dev/null || true
 
+    # Copy actual kernel image
+    if [ -f "${ROOTFS_DIR}/boot/kernel.img" ]; then
+        cp "${ROOTFS_DIR}/boot/kernel.img" "$BOOT_DIR/firmware/"
+        log "INFO" "Copied kernel.img from rootfs"
+    elif [ -f "${ROOTFS_DIR}/boot/vmlinuz-rpi" ]; then
+        cp "${ROOTFS_DIR}/boot/vmlinuz-rpi" "$BOOT_DIR/firmware/kernel.img"
+        log "INFO" "Renamed vmlinuz-rpi to kernel.img and copied to firmware/"
+    elif [ -f "${ROOTFS_DIR}/boot/Image" ]; then
+        cp "${ROOTFS_DIR}/boot/Image" "$BOOT_DIR/firmware/kernel.img"
+        log "INFO" "Renamed Image to kernel.img and copied to firmware/"
+    else
+        log "ERROR" "No kernel image found in ${ROOTFS_DIR}/boot"
+        exit 1
+    fi
+
     # Write a clean config.txt
     cat <<EOF > "$BOOT_DIR/firmware/config.txt"
 enable_uart=1
