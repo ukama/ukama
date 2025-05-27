@@ -117,8 +117,15 @@ const setupWebSocketWorkers = (
   for (const siteId of sites) {
     for (const nodeId of nodes) {
       const topic = `stat-${data.orgName}-${data.userId}-${data.type}-${data.from}`;
+
+      const workerContext = {
+        siteId: siteId || "",
+        nodeId: nodeId || "",
+        topic: topic,
+      };
+
       let url = `${wsUrl}/v1/live/metrics?interval=${METRIC_WS_INTERVAL}&operation=${
-        data.operation
+        data.operation || "mean"
       }&metric=${metricsKey.join(",")}`;
 
       if (nodeId) {
@@ -129,12 +136,47 @@ const setupWebSocketWorkers = (
       }
 
       const worker = new Worker(WS_THREAD, {
-        workerData: { topic, url },
+        workerData: {
+          topic,
+          url,
+          context: workerContext,
+        },
       });
 
-      worker.on("message", (wsData: any) =>
-        handleWebSocketMessage(wsData, topic, pubSub)
-      );
+      worker.on("message", (wsData: any) => {
+        if (!wsData.isError) {
+          try {
+            const res = JSON.parse(wsData.data);
+            const results = Array.isArray(res.data.result)
+              ? res.data.result
+              : [res.data.result];
+
+            results.forEach((result: any) => {
+              if (result?.metric && result.value?.length === 2) {
+                const metricSiteId = result?.metric?.siteid || siteId || "";
+                const metricNodeId = result?.metric?.nodeid || nodeId || "";
+
+                pubSub.publish(topic, {
+                  success: true,
+                  msg: "success",
+                  type: res.Name,
+                  nodeId: metricNodeId,
+                  siteId: metricSiteId,
+                  networkId: result?.metric?.network || "",
+                  packageId: result?.metric?.package || "",
+                  dataPlanId: result?.metric?.dataplan || "",
+                  value: [
+                    Math.floor(result.value[0]) * 1000,
+                    formatKPIValue(res.Name, result.value[1]),
+                  ],
+                });
+              }
+            });
+          } catch (error) {
+            logger.error(`Failed to parse WebSocket message: ${error}`);
+          }
+        }
+      });
 
       worker.on("exit", async (code: any) => {
         await store.close();
@@ -425,53 +467,61 @@ class SubscriptionsResolvers {
     @Arg("data") data: GetMetricsSiteStatInput
   ): Promise<MetricsStateRes> {
     const store = openStore();
-    const { message: baseURL, status } = await getBaseURL(
-      "metrics",
-      data.orgName,
-      store
-    );
-    if (status !== 200) {
-      logger.error(`Error getting base URL for metrics stat: ${baseURL}`);
-      return { metrics: [] };
-    }
 
-    const wsUrl = wsUrlResolver(baseURL);
-    const { type, from, withSubscription, nodeIds, siteIds } = data;
-    if (from === 0) throw new Error("Argument 'from' can't be zero.");
-
-    const metricsKey = getGraphsKeyByType(type);
-    const metrics: MetricsStateRes = { metrics: [] };
-
-    if (metricsKey.length > 0) {
-      const sites = siteIds && siteIds.length > 0 ? siteIds : [""];
-      const nodes = nodeIds && nodeIds.length > 0 ? nodeIds : [""];
-
-      for (const siteId of sites) {
-        for (const nodeId of nodes) {
-          const processedMetrics = await fetchMetricsForSiteNodeCombination(
-            baseURL,
-            metricsKey,
-            siteId,
-            nodeId,
-            data
-          );
-          metrics.metrics.push(...processedMetrics);
-        }
-      }
-    }
-
-    if (withSubscription && metrics.metrics.length > 0) {
-      setupWebSocketWorkers(
-        wsUrl,
-        data,
-        metricsKey,
-        siteIds || [],
-        nodeIds || [],
+    try {
+      const { message: baseURL, status } = await getBaseURL(
+        "metrics",
+        data.orgName,
         store
       );
-    }
+      if (status !== 200) {
+        logger.error(`Error getting base URL for metrics stat: ${baseURL}`);
+        return { metrics: [] };
+      }
 
-    return metrics;
+      const wsUrl = wsUrlResolver(baseURL);
+      const { type, from, withSubscription, nodeIds, siteIds } = data;
+      if (from === 0) throw new Error("Argument 'from' can't be zero.");
+
+      const metricsKey = getGraphsKeyByType(type);
+      const metrics: MetricsStateRes = { metrics: [] };
+
+      if (metricsKey.length > 0) {
+        const sites = siteIds && siteIds.length > 0 ? siteIds : [""];
+        const nodes = nodeIds && nodeIds.length > 0 ? nodeIds : [""];
+
+        for (const siteId of sites) {
+          for (const nodeId of nodes) {
+            const processedMetrics = await fetchMetricsForSiteNodeCombination(
+              baseURL,
+              metricsKey,
+              siteId,
+              nodeId,
+              data
+            );
+            metrics.metrics.push(...processedMetrics);
+          }
+        }
+      }
+
+      if (withSubscription && metrics.metrics.length > 0) {
+        setupWebSocketWorkers(
+          wsUrl,
+          data,
+          metricsKey,
+          siteIds || [],
+          nodeIds || [],
+          store
+        );
+      } else {
+        await store.close();
+      }
+
+      return metrics;
+    } catch (error) {
+      await store.close();
+      throw error;
+    }
   }
 
   @Subscription(() => LatestMetricSubRes, {
