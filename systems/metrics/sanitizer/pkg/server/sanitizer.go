@@ -27,11 +27,10 @@ import (
 )
 
 const (
-	name = "__name__"
-	env  = "env"
-	job  = "job"
-	// mainLabel = "nodeId"
-	mainLabel = "network"
+	name      = "__name__"
+	env       = "env"
+	job       = "job"
+	mainLabel = "nodeId"
 )
 
 type NodeMetaData struct {
@@ -195,11 +194,13 @@ func (s *SanitizerServer) syncNodeCache() error {
 }
 
 func pushUpdatedNodeMetrics(value float64, labels map[string]string, pushGatewayHost string) {
-	log.Infof("Collecting and pushing node active subscribers metric to push gateway host: %s", pushGatewayHost)
+	log.Infof("Collecting and pushing node active subscribers metric to push gateway host: %s",
+		pushGatewayHost)
 
 	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.NodeActiveSubscribersMetric,
 		pkg.NodeActiveSubscribers, float64(value), labels, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing node active subscribers metric to push gateway %s", err.Error())
+		log.Errorf("Error while pushing node active subscribers metric to push gateway %s",
+			err.Error())
 	}
 }
