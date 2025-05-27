@@ -105,13 +105,6 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 		return nil, fmt.Errorf("fail to unmarshal remote_write data. Error: %w", err)
 	}
 
-	// data, err = json.Marshal(metricsPayload)
-	// if err != nil {
-	// return nil, err
-	// }
-
-	// log.Infof("Raw body: %s", string(data))
-
 	for _, ts := range metricsPayload.Timeseries {
 		metric := NodeMetricMetaData{
 			AdditionalLabels: make(map[string]string)}
@@ -153,6 +146,7 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 				metric.AdditionalLabels["network"] = cachedNode.NetworkId
 				metric.AdditionalLabels["site"] = cachedNode.SiteId
+
 				metricsToPush = append(metricsToPush, metric)
 			}
 		}
