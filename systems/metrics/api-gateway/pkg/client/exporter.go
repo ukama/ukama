@@ -52,7 +52,7 @@ func NewExporterFromClient(c pb.ExporterServiceClient) *Exporter {
 func (r *Exporter) Close() {
 	err := r.conn.Close()
 	if err != nil {
-		log.Warnf("fail to properly close exporter client. Error: %v", err)
+		log.Warnf("failed to properly close exporter client. Error: %v", err)
 	}
 }
 

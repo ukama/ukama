@@ -65,12 +65,7 @@ func (s *sanitizer) Sanitize(data []byte) (*pb.SanitizeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.Sanitize(ctx, &pb.SanitizeRequest{
+	return s.client.Sanitize(ctx, &pb.SanitizeRequest{
 		Data: data,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }

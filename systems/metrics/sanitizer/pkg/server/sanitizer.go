@@ -93,16 +93,16 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 	data, err := snappy.Decode(nil, req.Data)
 	if err != nil {
-		log.Errorf("Fail to decode remote_write data. Error: %v", err)
+		log.Errorf("Failed to decode remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("fail to decode remote_write data. Error: %w", err)
+		return nil, fmt.Errorf("failed to decode remote_write data. Error: %w", err)
 	}
 
 	err = metricsPayload.Unmarshal(data)
 	if err != nil {
-		log.Errorf("Fail to unmarshal remote_write data. Error: %v", err)
+		log.Errorf("Failed to unmarshal remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("fail to unmarshal remote_write data. Error: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal remote_write data. Error: %w", err)
 	}
 
 	for _, ts := range metricsPayload.Timeseries {
@@ -167,9 +167,9 @@ func (s *SanitizerServer) syncNodeCache() error {
 	nodeClient := registry.NewNodeClient(s.registryHost)
 	resp, err := nodeClient.GetAll()
 	if err != nil {
-		log.Errorf("Fail to get list of nodes with metadata: Error: %v", err)
+		log.Errorf("Failed to get list of nodes with metadata: Error: %v", err)
 
-		return fmt.Errorf("fail to get list of nodes with metadata: Error: %w", err)
+		return fmt.Errorf("failed to get list of nodes with metadata: Error: %w", err)
 	}
 
 	for _, n := range resp.Nodes {

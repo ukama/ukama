@@ -249,7 +249,7 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 
 	err = res.Body.Close()
 	if err != nil {
-		log.Warnf("fail to properly close response body. Error: %v", err)
+		log.Warnf("failed to properly close response body. Error: %v", err)
 	}
 
 	return res.StatusCode, nil

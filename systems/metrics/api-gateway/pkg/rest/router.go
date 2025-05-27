@@ -229,7 +229,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 	defer func() {
 		err := ws.Close()
 		if err != nil {
-			log.Warnf("fail to properly close websocket connection. Error: %v", err)
+			log.Warnf("failed to properly close websocket connection. Error: %v", err)
 		}
 	}()
 

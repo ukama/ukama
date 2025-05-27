@@ -1,1 +1,1 @@
-# Sanitize service
+# Sanitizer service
