@@ -339,6 +339,9 @@ copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
 create_manifest_file "$MANIFEST_FILE" "${APPS[@]}"
 
 copy_rootfs
+cp -rf "${MANIFEST_FILE}" "${PRIMARY_MOUNT}"
+cp -rf "${MANIFEST_FILE}" "${PASSIVE_MOUNT}"
+rm -rf "${MANIFEST_FILE}"
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
 update_fstab "${PASSIVE_MOUNT}"
