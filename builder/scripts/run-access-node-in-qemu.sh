@@ -95,7 +95,7 @@ qemu-system-aarch64 \
   -smp 4 \
   -m "${RAM_SIZE}" \
   -kernel "${BUILD_DIR}/${KERNEL_IMAGE}" \
-  -append "root=/dev/vda5 rootfstype=ext4 rw panic=0 console=ttyAMA0" \
+  -append "root=LABEL=primary rootfstype=ext4 rw rootwait panic=0 console=ttyAMA0" \
   -drive format=raw,file="${BUILD_DIR}/${IMG_NAME}",if=none,id=hd0,cache=writeback \
   -device virtio-blk,drive=hd0,bootindex=0 \
   -netdev user,id=mynet,hostfwd=tcp::2222-:22 \
