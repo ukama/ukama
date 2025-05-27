@@ -39,6 +39,9 @@ UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
 APP_NAMES=()
 FIRMWARE_REPO="https://github.com/raspberrypi/firmware"
 FIRMWARE_ZIP_URL="${FIRMWARE_REPO}/archive/refs/heads/master.zip"
+ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
+ALPINE_VERSION="3.19"
+ALPINE_ARCH="aarch64"
 
 trap cleanup EXIT
 
@@ -75,6 +78,19 @@ cleanup() {
     sudo kpartx -dv "${RAW_IMG}" 2>/dev/null || true
     sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
     log "INFO" "Cleanup completed."
+}
+
+check_label() {
+    local dev="$1"
+    local expected="$2"
+
+    actual=$(sudo e2label "$dev")
+    if [[ "$actual" != "$expected" ]]; then
+        log "ERROR" "$dev label mismatch: got '$actual', expected '$expected'"
+        exit 1
+    else
+        log "SUCCESS" "$dev label confirmed: $actual"
+    fi
 }
 
 create_disk_image() {
@@ -311,6 +327,12 @@ format_partitions
 mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
+
+check_label "/dev/mapper/$(basename ${LOOPDISK})p5" "primary"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p2" "recovery"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p6" "passive"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p7" "data"
+
 download_and_copy_rpi_firmware "${BOOT_MOUNT}"
 
 # create board specific manifest and cp its pkds/libs
