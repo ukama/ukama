@@ -90,7 +90,7 @@ download_and_copy_rpi_firmware() {
     BOOT_DIR="$1"
     TMP_DIR="/tmp/rpi-bootloader"
 
-    log "INFO" "Downloading Raspberry Pi bootloader from $FIRMWARE_REPO ..."
+    log "INFO" "Downloading Raspberry Pi bootloader and kernel from $FIRMWARE_REPO ..."
 
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
@@ -101,31 +101,24 @@ download_and_copy_rpi_firmware() {
     FIRMWARE_BOOT="$TMP_DIR/firmware-master/boot"
     if [ ! -d "$FIRMWARE_BOOT" ]; then
         log "ERROR" "Failed to extract firmware boot folder"
-        return 1
-    fi
-
-    mkdir -p "$BOOT_DIR/firmware"
-    cp "$FIRMWARE_BOOT"/{start*.elf,fixup*.dat,bootcode.bin} "$BOOT_DIR/firmware/" 2>/dev/null || true
-    cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR/firmware/" 2>/dev/null || true
-    cp -r "$FIRMWARE_BOOT/overlays" "$BOOT_DIR/firmware/" 2>/dev/null || true
-
-    # Copy actual kernel image
-    if [ -f "${ROOTFS_DIR}/boot/kernel.img" ]; then
-        cp "${ROOTFS_DIR}/boot/kernel.img" "$BOOT_DIR/firmware/"
-        log "INFO" "Copied kernel.img from rootfs"
-    elif [ -f "${ROOTFS_DIR}/boot/vmlinuz-rpi" ]; then
-        cp "${ROOTFS_DIR}/boot/vmlinuz-rpi" "$BOOT_DIR/firmware/kernel.img"
-        log "INFO" "Renamed vmlinuz-rpi to kernel.img and copied to firmware/"
-    elif [ -f "${ROOTFS_DIR}/boot/Image" ]; then
-        cp "${ROOTFS_DIR}/boot/Image" "$BOOT_DIR/firmware/kernel.img"
-        log "INFO" "Renamed Image to kernel.img and copied to firmware/"
-    else
-        log "ERROR" "No kernel image found in ${ROOTFS_DIR}/boot"
         exit 1
     fi
 
-    # Write a clean config.txt
-    cat <<EOF > "$BOOT_DIR/firmware/config.txt"
+    # Copy everything from official firmware repo boot folder
+    mkdir -p "$BOOT_DIR"
+    cp -a "$FIRMWARE_BOOT/"* "$BOOT_DIR/"
+
+    # Rename kernel8.img to kernel.img for consistency (optional)
+    if [ -f "$BOOT_DIR/kernel8.img" ]; then
+        cp "$BOOT_DIR/kernel8.img" "$BOOT_DIR/kernel.img"
+        log "INFO" "Copied kernel8.img → kernel.img"
+    elif [ ! -f "$BOOT_DIR/kernel.img" ]; then
+        log "ERROR" "No kernel8.img or kernel.img found in firmware repo"
+        exit 1
+    fi
+
+    # Overwrite with known working config.txt
+    cat <<EOF > "$BOOT_DIR/config.txt"
 enable_uart=1
 arm_64bit=1
 kernel=kernel.img
@@ -137,11 +130,11 @@ dtoverlay=disable-wifi
 EOF
 
     # Write cmdline.txt
-    cat <<EOF > "$BOOT_DIR/firmware/cmdline.txt"
+    cat <<EOF > "$BOOT_DIR/cmdline.txt"
 console=serial0,115200 console=tty1 root=LABEL=primary rootfstype=ext4 fsck.repair=yes rootwait
 EOF
 
-    log "SUCCESS" "Bootloader files and boot config copied to $BOOT_DIR/firmware"
+    log "SUCCESS" "Bootloader, kernel, and config files copied to $BOOT_DIR"
 
     rm -rf "$TMP_DIR"
 }
