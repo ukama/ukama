@@ -71,7 +71,12 @@ const processMetricResult = (metric: any) => ({
   value: metric.values[metric.values.length - 1][1],
 });
 
-const handleWebSocketMessage = (data: any, topic: string, pubSub: any) => {
+const handleWebSocketMessage = (
+  data: any,
+  topic: string,
+  pubSub: any,
+  context?: { siteId?: string; nodeId?: string }
+) => {
   if (!data.isError) {
     try {
       const res = JSON.parse(data.data);
@@ -81,12 +86,15 @@ const handleWebSocketMessage = (data: any, topic: string, pubSub: any) => {
 
       results.forEach((result: any) => {
         if (result?.metric && result.value?.length === 2) {
+          const metricSiteId = result?.metric?.siteid || context?.siteId || "";
+          const metricNodeId = result?.metric?.nodeid || context?.nodeId || "";
+
           pubSub.publish(topic, {
             success: true,
             msg: "success",
             type: res.Name,
-            nodeId: result?.metric?.nodeid || "",
-            siteId: result?.metric?.siteid || "",
+            nodeId: metricNodeId,
+            siteId: metricSiteId,
             networkId: result?.metric?.network || "",
             packageId: result?.metric?.package || "",
             dataPlanId: result?.metric?.dataplan || "",
@@ -102,6 +110,7 @@ const handleWebSocketMessage = (data: any, topic: string, pubSub: any) => {
     }
   }
 };
+
 const setupWebSocketWorkers = (
   wsUrl: string,
   data: GetMetricsSiteStatInput,
@@ -144,38 +153,7 @@ const setupWebSocketWorkers = (
       });
 
       worker.on("message", (wsData: any) => {
-        if (!wsData.isError) {
-          try {
-            const res = JSON.parse(wsData.data);
-            const results = Array.isArray(res.data.result)
-              ? res.data.result
-              : [res.data.result];
-
-            results.forEach((result: any) => {
-              if (result?.metric && result.value?.length === 2) {
-                const metricSiteId = result?.metric?.siteid || siteId || "";
-                const metricNodeId = result?.metric?.nodeid || nodeId || "";
-
-                pubSub.publish(topic, {
-                  success: true,
-                  msg: "success",
-                  type: res.Name,
-                  nodeId: metricNodeId,
-                  siteId: metricSiteId,
-                  networkId: result?.metric?.network || "",
-                  packageId: result?.metric?.package || "",
-                  dataPlanId: result?.metric?.dataplan || "",
-                  value: [
-                    Math.floor(result.value[0]) * 1000,
-                    formatKPIValue(res.Name, result.value[1]),
-                  ],
-                });
-              }
-            });
-          } catch (error) {
-            logger.error(`Failed to parse WebSocket message: ${error}`);
-          }
-        }
+        handleWebSocketMessage(wsData, topic, pubSub, workerContext);
       });
 
       worker.on("exit", async (code: any) => {
