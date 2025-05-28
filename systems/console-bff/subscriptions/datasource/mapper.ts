@@ -5,12 +5,9 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { METRICS_INTERVAL } from "../../common/configs";
-import { logger } from "../../common/logger";
 import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
-  GetMetricRangeInput,
   GetMetricsStatInput,
   LatestMetricRes,
   MetricRes,
@@ -28,20 +25,6 @@ const ERROR_RESPONSE = {
   orgId: "",
   nodeId: "",
   type: "",
-};
-
-const getEmptyMetric = (
-  args: GetMetricRangeInput | GetMetricsStatInput
-): MetricRes => {
-  const result: MetricRes = {
-    ...ERROR_RESPONSE,
-    type: args.type,
-    nodeId: args.nodeId ?? "",
-    siteId: args.siteId ?? "",
-    networkId: "",
-    values: [[0, 0]],
-  };
-  return result;
 };
 
 export const parseLatestMetricRes = (
@@ -102,59 +85,6 @@ export const parseMetricsResponse = (
   return metricsRes;
 };
 
-export const parseSiteMetricRes = (
-  res: any,
-  type: string,
-  args: GetMetricRangeInput
-): MetricRes => {
-  let result: any[] = [];
-  if (res.data?.data?.result) {
-    result = res.data.data.result;
-  } else if (res.data?.result) {
-    result = res.data.result;
-  } else if (res.data) {
-    result = Array.isArray(res.data) ? res.data : [res.data];
-  } else {
-    result = res.result || (Array.isArray(res) ? res : [res]);
-  }
-
-  if (!Array.isArray(result)) {
-    logger.error(`Unexpected result structure:`, result);
-    result = [];
-  }
-
-  const hasValues = result.length > 0 && result[0]?.values?.length > 0;
-
-  let siteId = "";
-  if (result.length > 0 && result[0]?.metric) {
-    siteId = result[0].metric.site || result[0].metric.siteid || "";
-  }
-
-  return hasValues
-    ? {
-        type: type,
-        success: true,
-        msg: "success",
-        siteId: siteId,
-        values: fixTimestampInMetricData(
-          result[0].values,
-          METRICS_INTERVAL,
-          args.to || Date.now(),
-          args.from,
-          type
-        ),
-      }
-    : getEmptyMetric({
-        orgId: "",
-        to: args.to,
-        type: args.type,
-        siteId: siteId || args.siteId || "",
-        from: args.from,
-        step: args.step,
-        userId: args.userId,
-        withSubscription: false,
-      });
-};
 function fixTimestampInMetricData(
   data: [number, string | null][],
   step: number,
