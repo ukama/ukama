@@ -351,33 +351,6 @@ export class MetricsStateRes {
   metrics: MetricStateRes[];
 }
 
-@ObjectType()
-export class SiteMetricsStateRes {
-  @Field(() => [SiteMetricStateRes])
-  metrics: SiteMetricStateRes[];
-}
-
-@ObjectType()
-export class SiteMetricStateRes {
-  @Field()
-  success: boolean;
-
-  @Field()
-  msg: string;
-
-  @Field()
-  siteId?: string;
-
-  @Field({ nullable: true })
-  nodeId?: string;
-
-  @Field()
-  type: string;
-
-  @Field()
-  value: number;
-}
-
 @InputType()
 export class SubMetricRangeInput {
   @Field()
