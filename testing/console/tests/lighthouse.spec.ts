@@ -6,6 +6,7 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 import {
+  CONSOLE_ROOT_URL,
   CONSOLE_URLS_FOR_LIGHTHOUSE,
   LIGHTHOUSE_SCORE_THRESHOLD,
   LOGIN_URL,
@@ -132,7 +133,9 @@ async function runLighthouseAudit(
     } as any);
 
     if (!runnerResult) {
-      console.error(`Lighthouse audit failed for ${url}`);
+      console.error(
+        `Lighthouse audit failed for ${url.replace(CONSOLE_ROOT_URL, '')}`,
+      );
       return null;
     }
 
@@ -143,7 +146,10 @@ async function runLighthouseAudit(
         : runnerResult.report,
     };
   } catch (error) {
-    console.error(`Error running Lighthouse audit for ${url}:`, error);
+    console.error(
+      `Error running Lighthouse audit for ${url.replace(CONSOLE_ROOT_URL, '')}:`,
+      error,
+    );
     return null;
   } finally {
     await cdpConnection.close(); // Close CDP connection
@@ -167,9 +173,13 @@ function saveReport(url: string, result: LighthouseAuditResult) {
   const jsonPath = path.join(reportDir, jsonFileName);
   try {
     fs.writeFileSync(htmlPath, result.report);
-    console.log(`HTML report for ${url} saved to ${htmlPath}`);
+    console.log(
+      `HTML report for ${url.replace(CONSOLE_ROOT_URL, '')} saved to ${htmlPath}`,
+    );
     fs.writeFileSync(jsonPath, JSON.stringify(result.lhr, null, 2));
-    console.log(`JSON report for ${url} saved to ${jsonPath}`);
+    console.log(
+      `JSON report for ${url.replace(CONSOLE_ROOT_URL, '')} saved to ${jsonPath}`,
+    );
   } catch (error) {
     console.error(`Failed to save report for ${url}:`, error);
   }
@@ -179,7 +189,9 @@ test.describe('Lighthouse Audits', () => {
   test.setTimeout(120000); // Set timeout to 2 minutes
 
   for (const url of CONSOLE_URLS_FOR_LIGHTHOUSE) {
-    test(`Lighthouse audit for ${url}`, async ({ authData }) => {
+    test(`Lighthouse audit for ${url.replace(CONSOLE_ROOT_URL, '')}`, async ({
+      authData,
+    }) => {
       // Pass authentication data to the Lighthouse function
       const result = await runLighthouseAudit(url, authData);
       // If the audit failed, fail the test
