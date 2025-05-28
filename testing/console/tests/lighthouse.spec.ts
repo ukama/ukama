@@ -1,29 +1,69 @@
-import { LOGIN_URL, TEST_USER_EMAIL, TEST_USER_PASSWORD } from '@/constants';
-import { expect, test } from '@playwright/test';
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2025-present, Ukama Inc.
+ */
+import {
+  CONSOLE_URLS_FOR_LIGHTHOUSE,
+  LIGHTHOUSE_SCORE_THRESHOLD,
+  LOGIN_URL,
+  TEST_USER_EMAIL,
+  TEST_USER_PASSWORD,
+} from '@/constants';
+import { test as base, expect } from '@playwright/test';
 import chromeLauncher from 'chrome-launcher';
 import CDP from 'chrome-remote-interface';
 import fs from 'fs';
 import lighthouse from 'lighthouse';
 import path from 'path';
-import { URL } from 'url';
-// URLs to audit
-const authenticatedUrls = [
-  'http://localhost:3000/console/home',
-  'http://localhost:3000/console/sites',
-  'http://localhost:3000/console/subscribers',
-  'http://localhost:3000/console/nodes',
-  'http://localhost:3000/manage/billing',
-  'http://localhost:3000/manage/data-plans',
-  'http://localhost:3000/manage/sims',
-  'http://localhost:3000/manage/nodes',
-  'http://localhost:3000/manage/members',
-];
 
-// Define a type for the audit result for better type safety
+// Define the auth fixture type
+type AuthFixture = {
+  authData: { cookies: any[]; localStorage: any[] };
+};
+
+// Extend the base test with our auth fixture
+const test = base.extend<AuthFixture>({
+  authData: async ({ page }, use) => {
+    // Login before each test
+    console.log('Navigating to login page:', LOGIN_URL);
+    await page.goto(LOGIN_URL);
+
+    // Add a wait for the page to be ready
+    await page.waitForLoadState('networkidle');
+
+    const emailInput = page.getByRole('textbox', { name: 'EMAIL' });
+    await emailInput.waitFor({ state: 'visible', timeout: 10000 });
+
+    await emailInput.fill(TEST_USER_EMAIL);
+    await emailInput.press('Tab');
+
+    await page
+      .getByRole('textbox', { name: 'PASSWORD' })
+      .fill(TEST_USER_PASSWORD);
+
+    await page.getByRole('button', { name: 'LOG IN' }).click();
+
+    await page.waitForURL('**/console/home', { timeout: 30000 });
+
+    // Capture authentication state
+    const authData = {
+      cookies: await page.context().cookies(),
+      localStorage: [],
+    };
+
+    // Provide the auth data to the test
+    await use(authData);
+  },
+});
+
 interface LighthouseAuditResult {
-  lhr: any; // Replace 'any' with a more specific Lighthouse report type if you have one
-  report: string; // The HTML report content
+  lhr: NonNullable<Awaited<ReturnType<typeof lighthouse>>>['lhr'];
+  report: string;
 }
+
 // Function to run a single Lighthouse audit
 async function runLighthouseAudit(
   url: string,
@@ -69,14 +109,6 @@ async function runLighthouseAudit(
       });
     }
 
-    // Apply local storage (requires evaluating JavaScript in the page context)
-    // This is a bit more complex as Lighthouse controls the page lifecycle.
-    // A common approach is to use a Lighthouse custom gatherer or a script
-    // that runs before the audit. For simplicity in this example, we'll
-    // focus on cookies which are usually sufficient for session management.
-    // If you heavily rely on local storage for auth, you'll need a more
-    // advanced approach.
-
     const runnerResult = await lighthouse(url, {
       port: chrome.port,
       output: ['html', 'json'],
@@ -118,6 +150,7 @@ async function runLighthouseAudit(
     await chrome.kill();
   }
 }
+
 // Save report to file
 function saveReport(url: string, result: LighthouseAuditResult) {
   const reportDir = path.join(
@@ -141,39 +174,12 @@ function saveReport(url: string, result: LighthouseAuditResult) {
     console.error(`Failed to save report for ${url}:`, error);
   }
 }
+
 test.describe('Lighthouse Audits', () => {
   test.setTimeout(120000); // Set timeout to 2 minutes
-  let authData: { cookies: any[]; localStorage: any[] }; // Declare variable to store auth data
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    console.log('Navigating to login page:', LOGIN_URL);
-    await page.goto(LOGIN_URL);
 
-    // Add a wait for the page to be ready
-    await page.waitForLoadState('networkidle');
-
-    const emailInput = page.getByRole('textbox', { name: 'EMAIL' });
-    await emailInput.waitFor({ state: 'visible', timeout: 10000 });
-
-    await emailInput.fill(TEST_USER_EMAIL);
-    await emailInput.press('Tab');
-
-    await page
-      .getByRole('textbox', { name: 'PASSWORD' })
-      .fill(TEST_USER_PASSWORD);
-
-    await page.getByRole('button', { name: 'LOG IN' }).click();
-
-    await page.waitForURL('**/console/home', { timeout: 30000 });
-
-    // **Capture authentication state**
-    authData = {
-      cookies: await page.context().cookies(),
-      localStorage: [], // Placeholder
-    };
-  });
-  for (const url of authenticatedUrls) {
-    test(`Lighthouse audit for ${url}`, async ({ page }) => {
+  for (const url of CONSOLE_URLS_FOR_LIGHTHOUSE) {
+    test(`Lighthouse audit for ${url}`, async ({ authData }) => {
       // Pass authentication data to the Lighthouse function
       const result = await runLighthouseAudit(url, authData);
       // If the audit failed, fail the test
@@ -193,16 +199,18 @@ test.describe('Lighthouse Audits', () => {
         seo: result.lhr.categories.seo?.score,
       });
 
-      // Assert minimum scores with null checks
-      const scoreThreshold = 0.2;
       const performanceScore = result.lhr.categories.performance?.score ?? 0;
       const bestPracticesScore =
         result.lhr.categories['best-practices']?.score ?? 0;
       const seoScore = result.lhr.categories.seo?.score ?? 0;
 
-      expect(performanceScore).toBeGreaterThanOrEqual(scoreThreshold);
-      expect(bestPracticesScore).toBeGreaterThanOrEqual(scoreThreshold);
-      expect(seoScore).toBeGreaterThanOrEqual(scoreThreshold);
+      expect(performanceScore).toBeGreaterThanOrEqual(
+        LIGHTHOUSE_SCORE_THRESHOLD,
+      );
+      expect(bestPracticesScore).toBeGreaterThanOrEqual(
+        LIGHTHOUSE_SCORE_THRESHOLD,
+      );
+      expect(seoScore).toBeGreaterThanOrEqual(LIGHTHOUSE_SCORE_THRESHOLD);
 
       console.log(
         `Lighthouse report saved to for artifact upload: lighthouse-reports/${url.replace(/[^a-zA-Z0-9]/g, '_')}/report.html`,

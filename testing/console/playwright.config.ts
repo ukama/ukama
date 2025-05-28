@@ -1,6 +1,14 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2025-present, Ukama Inc.
+ */
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
+import { CONSOLE_ROOT_URL } from './constants';
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
@@ -12,7 +20,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    baseURL: CONSOLE_ROOT_URL,
     trace: 'on-first-retry',
     viewport: { width: 1280, height: 720 },
     navigationTimeout: 60000,
@@ -39,7 +47,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'pnpm prod',
-    url: process.env.BASE_URL || 'http://localhost:3000',
+    url: CONSOLE_ROOT_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
     stdout: 'pipe',
