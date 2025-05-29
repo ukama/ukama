@@ -79,8 +79,27 @@ cleanup() {
 check_label() {
     local dev="$1"
     local expected="$2"
+    local actual
 
-    actual=$(sudo e2label "$dev")
+    local fstype
+    fstype=$(blkid -o value -s TYPE "$dev")
+
+    case "$fstype" in
+        vfat)
+            actual=$(sudo fatlabel "$dev" | tail -n1)
+            ;;
+        swap)
+            actual=$(blkid -s LABEL -o value "$dev")
+            ;;
+        ext*)
+            actual=$(sudo e2label "$dev")
+            ;;
+        *)
+            log "ERROR" "Unsupported filesystem type: $fstype on $dev"
+            exit 1
+            ;;
+    esac
+
     if [[ "$actual" != "$expected" ]]; then
         log "ERROR" "$dev label mismatch: got '$actual', expected '$expected'"
         exit 1
@@ -164,7 +183,7 @@ format_partitions() {
     mkfs.ext4 -L primary "${DISK}3"
     check_status $? "primary partition formatted" ${STAGE}
 
-    mkswap "${DISK}4"
+    mkswap -L swap "${DISK}4"
     check_status $? "swap partition created" ${STAGE}
 }
 
