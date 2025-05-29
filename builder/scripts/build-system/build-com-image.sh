@@ -5,13 +5,7 @@
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-# FIX ME:
-# a. board specific
-# b. parition
-# c. label (fstab)
-#
-
-set -e
+set -euo pipefail
 
 PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
 if [ ! -f "$PKG_UTILS" ]; then
@@ -191,11 +185,11 @@ copy_rootfs() {
     STAGE="copy_rootfs"
 
     log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
 	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc	
 
 	log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
     mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
 	
 	sync
