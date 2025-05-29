@@ -1,0 +1,65 @@
+name: console-testing
+
+on:
+ push:
+  paths:
+   - 'testing/console/**'
+   - '.github/workflows/testing-console.yml'
+
+jobs:
+ test:
+  name: Run Playwright Tests
+  runs-on: ubuntu-latest
+
+  steps:
+   - uses: actions/checkout@v4
+
+   - name: Setup Node.js
+     uses: actions/setup-node@v4
+     with:
+      node-version: '20'
+
+   - name: Setup pnpm
+     uses: pnpm/action-setup@v2
+     with:
+      version: 8
+
+   - name: Install dependencies
+     run: |
+      cd testing/console
+      pnpm install
+      pnpm exec playwright install --with-deps
+
+   - name: Run Playwright tests
+     run: |
+      cd testing/console
+      pnpm patch-tests
+      pnpm test
+
+   - name: Upload test results
+     if: always()
+     uses: actions/upload-artifact@v4
+     with:
+      name: playwright-report
+      path: testing/console/playwright-report
+      retention-days: 30
+
+   - name: Comment PR with report URL
+     if: github.event_name == 'pull_request'
+     uses: actions/github-script@v7
+     with:
+      script: |
+       const fs = require('fs');
+       const reportPath = 'testing/console/playwright-report/index.html';
+
+       if (fs.existsSync(reportPath)) {
+         const runId = context.runId;
+         const reportUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts`;
+         
+         github.rest.issues.createComment({
+           issue_number: context.issue.number,
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           body: `🎭 Playwright test results are available [here](${reportUrl})`
+         });
+       }
