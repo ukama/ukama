@@ -20,7 +20,6 @@ interface IMetricStatBySiteSubscription {
 }
 
 const activeSubscriptions = new Map<string, AbortController>();
-
 function parseEvent(eventStr: string) {
   if (!eventStr || eventStr.startsWith(':')) return null;
 
@@ -37,8 +36,7 @@ function parseEvent(eventStr: string) {
     }
   }
 
-  const result = event.data || event.id || event.event ? event : null;
-  return result;
+  return event.data || event.id || event.event ? event : null;
 }
 export default function MetricStatBySiteSubscription(
   params: IMetricStatBySiteSubscription,

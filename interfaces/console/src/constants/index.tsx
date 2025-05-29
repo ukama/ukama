@@ -11,7 +11,6 @@ import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
-import { format } from 'path';
 
 export const STAT_STEP_29 = 29;
 export const METRIC_RANGE_3600 = 3600;
