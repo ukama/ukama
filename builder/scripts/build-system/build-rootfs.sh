@@ -178,7 +178,7 @@ function install_x86_64_kernel() {
 
     log "INFO" "Copying kernel and modules"
     mkdir -p /boot /lib/modules
-    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/kernel.img
+    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/
     cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
 
     rm -rf "$kernel_tmp_dir"
