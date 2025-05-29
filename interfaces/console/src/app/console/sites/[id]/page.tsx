@@ -20,7 +20,7 @@ import SiteComponents from '@/components/SiteComponents';
 import SiteDetailsHeader from '@/components/SiteDetailsHeader';
 import SiteInfo from '@/components/SiteInfos';
 import SiteOverview from '@/components/SiteOverView';
-import { SITE_KPIS } from '@/constants';
+import { SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
 import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
 import { ActiveView, KPIType } from '@/types';
@@ -319,6 +319,25 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     }
   }, [activeSite.id, fetchNodesForSite]);
+  const getInitialNodeUptimes = (): Record<string, number> => {
+    if (!statData?.getSiteStat?.metrics || !nodeIds || nodeIds.length === 0) {
+      return {};
+    }
+
+    const nodeUptimes: Record<string, number> = {};
+    statData.getSiteStat.metrics.forEach((metric: any) => {
+      if (
+        metric.type === SITE_KPI_TYPES.NODE_UPTIME &&
+        metric.nodeId &&
+        metric.success
+      ) {
+        nodeUptimes[metric.nodeId] = metric.value;
+      }
+    });
+
+    return nodeUptimes;
+  };
+  const initialNodeUptimes = getInitialNodeUptimes();
 
   if (!isDataReady) {
     return (
@@ -402,6 +421,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
           onComponentClick={handleViewChange}
           onSwitchChange={handleSwitchChange}
           nodeIds={nodeIds}
+          initialNodeUptimes={initialNodeUptimes}
         />
       </Box>
     </Box>

@@ -494,7 +494,7 @@ const kpiToGraphType: Record<string, Graphs_Type> = {
   main_backhaul: Graphs_Type.MainBackhaul,
   backhaul: Graphs_Type.MainBackhaul,
   switch: Graphs_Type.Switch,
-  node: Graphs_Type.Solar,
+  node: Graphs_Type.Site,
 };
 const graphTypeToSection: Record<Graphs_Type | string, string> = {
   [Graphs_Type.Solar]: 'SOLAR',

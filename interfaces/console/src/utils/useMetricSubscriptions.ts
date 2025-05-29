@@ -123,7 +123,7 @@ export const useMetricSubscriptions = ({
 
         MetricStatBySiteSubscription({
           key: sKey,
-          nodeIds,
+          nodeIds: [],
           siteIds: [siteId],
           userId,
           url: metricUrl,
@@ -200,35 +200,16 @@ export const useMetricSubscriptions = ({
           withSubscription: true,
           type: Stats_Type.Site,
           siteIds: [siteId],
-          nodeIds,
+          nodeIds: [],
         },
       },
-    });
-
-    MetricStatBySiteSubscription({
-      key: sKey,
-      siteIds: [siteId],
-      userId,
-      url: metricUrl,
-      orgName,
-      type: Stats_Type.Site,
-      from,
-      nodeIds,
     });
 
     return () => {
       PubSub.unsubscribe(sKey);
       delete subscriptionsRef.current[sKey];
     };
-  }, [
-    siteId,
-    nodeIds,
-    nodesFetched,
-    userId,
-    orgName,
-    metricUrl,
-    getSiteMetricStat,
-  ]);
+  }, [siteId, nodesFetched, userId, orgName, getSiteMetricStat]);
 
   const resetMetrics = useCallback(() => {
     setMetrics({ metrics: [] });
