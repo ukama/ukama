@@ -11,6 +11,7 @@ import { ColumnsWithOptions, MenuItemType } from '@/types';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import UpdateIcon from '@mui/icons-material/SystemUpdateAltRounded';
+import { format } from 'path';
 
 export const STAT_STEP_29 = 29;
 export const METRIC_RANGE_3600 = 3600;
@@ -661,13 +662,10 @@ export const SITE_KPIS = {
       {
         unit: '',
         show: true,
-        format: 'number',
-        name: 'Nde uptime',
+        name: 'Node uptime',
         id: 'unit_uptime',
         description: 'Node uptime',
-        threshold: null,
-        tickInterval: undefined,
-        tickPositions: undefined,
+        format: 'number',
       },
     ],
   },

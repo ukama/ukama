@@ -37,9 +37,9 @@ function parseEvent(eventStr: string) {
     }
   }
 
-  return event.data || event.id || event.event ? event : null;
+  const result = event.data || event.id || event.event ? event : null;
+  return result;
 }
-
 export default function MetricStatBySiteSubscription(
   params: IMetricStatBySiteSubscription,
 ) {
@@ -118,7 +118,6 @@ export default function MetricStatBySiteSubscription(
         if (activityTimeout) clearTimeout(activityTimeout);
         activityTimeout = setTimeout(
           () => {
-            console.log('Connection timeout, closing...');
             controller.abort();
             activeSubscriptions.delete(key);
           },
@@ -157,13 +156,9 @@ export default function MetricStatBySiteSubscription(
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
       } else {
-        console.error('SSE connection error:', error);
-
         if (activeSubscriptions.has(key)) {
           setTimeout(() => {
-            console.log('Attempting to reconnect...');
             startSSE();
           }, 2000);
         }
