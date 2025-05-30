@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/prometheus/client_golang/prometheus"
 	cenums "github.com/ukama/ukama/testing/common/enums"
 	"github.com/ukama/ukama/testing/services/dummy/dnode/config"
@@ -149,13 +151,10 @@ func pushMetrics(kpis config.NodeKPIs, labels prometheus.Labels, scenario cenums
 func getSubscriber() (int, error) {
 	activeCount, err := getMetricValue("active_sim_count")
 	if err != nil {
+		logrus.Errorf("Failed to get active_sim_count: %v", err)
 		return 0, err
 	}
-
-	inactiveCount, err := getMetricValue("inactive_sim_count")
-	if err != nil {
-		return 0, err
-	}
-
-	return activeCount - inactiveCount, nil
+	return activeCount, nil
 }
+
+
