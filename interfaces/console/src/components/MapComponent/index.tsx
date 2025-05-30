@@ -16,7 +16,7 @@ interface MapProps {
   users: number;
 }
 
-const Map: React.FC<MapProps> = ({ site, users }) => {
+const Map: React.FC<MapProps> = ({ users }) => {
   return (
     <Box sx={{ position: 'relative', borderRadius: '30%' }}>
       {/* <GoogleMap

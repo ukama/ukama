@@ -55,8 +55,7 @@ import { useCallback, useRef, useState } from 'react';
 const Page = () => {
   const query = useSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { setSnackbarMessage, network, env, user, subscriptionClient } =
-    useAppContext();
+  const { setSnackbarMessage, network, env, user } = useAppContext();
   const [openAddSubscriber, setOpenAddSubscriber] = useState(false);
   const [isTopupData, setIsTopupData] = useState<boolean>(false);
   const [subscriberDetails, setSubscriberDetails] = useState<any>();
@@ -189,7 +188,7 @@ const Page = () => {
     });
   const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
     {
-      onCompleted: (res) => {
+      onCompleted: () => {
         setSnackbarMessage({
           id: 'allocate-sim-success',
           message: 'SIM allocated successfully!',
@@ -210,7 +209,7 @@ const Page = () => {
 
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
-      onCompleted: (res) => {
+      onCompleted: () => {
         refetchSubscribers().then((data) => {
           setSubscriber(() => ({
             subscribers: [...data.data.getSubscribersByNetwork.subscribers],
@@ -258,7 +257,7 @@ const Page = () => {
 
   const [updateSubscriber, { loading: updateSubscriberLoading }] =
     useUpdateSubscriberMutation({
-      onCompleted: (res) => {
+      onCompleted: () => {
         refetchSubscribers().then((data) => {
           setSubscriber(() => ({
             subscribers: [...data.data.getSubscribersByNetwork.subscribers],
@@ -337,7 +336,7 @@ const Page = () => {
     }
   };
 
-  const onTableMenuItem = async (id: string, type: string) => {
+  const onTableMenuItem = (id: string, type: string) => {
     switch (type) {
       case 'delete-sub':
         setIsConfirmationOpen(true);
@@ -491,10 +490,7 @@ const Page = () => {
     refetchSubscribers();
   };
 
-  const handleSubscriberMenuAction = async (
-    action: string,
-    subscriberId: string,
-  ) => {
+  const handleSubscriberMenuAction = (action: string, subscriberId: string) => {
     if (action === 'deleteSubscriber') {
       deleteSubscriber({
         variables: {
@@ -625,7 +621,6 @@ const Page = () => {
                       uuid,
                       name,
                       duration,
-                      currency,
                       dataVolume,
                       dataUnit,
                       amount,

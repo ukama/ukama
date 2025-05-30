@@ -43,11 +43,11 @@ interface DataTableWithOptionsInterface {
   withStatusColumn?: boolean;
   isRowClickable?: boolean;
   emptyViewLabel?: string;
-  onMenuItemClick: Function;
+  onMenuItemClick: (id: string, type: string) => void;
   menuOptions: MenuItemType[];
   columns: ColumnsWithOptions[];
   networkList?: NetworkDto[];
-  getSelectedNetwork?: Function;
+  getSelectedNetwork?: (networkId: string) => void;
   emptyViewDescription?: string;
 }
 
@@ -57,7 +57,7 @@ type CellValueByTypeProps = {
   isRowClickable: boolean;
   withStatusColumn: boolean;
   menuOptions: MenuItemType[];
-  onMenuItemClick: Function;
+  onMenuItemClick: (type: string) => void;
 };
 
 const CellValueByType = ({

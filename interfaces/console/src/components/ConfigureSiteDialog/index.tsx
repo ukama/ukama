@@ -8,10 +8,11 @@
 import { NetworkDto } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
 import { AddSiteValidationSchema } from '@/helpers/formValidators';
-import { globalUseStyles } from '@/styles/global';
+import { GlobalInput } from '@/styles/global';
 import colors from '@/theme/colors';
 import { TSiteForm } from '@/types';
 import { isValidLatLng } from '@/utils';
+import { useFetchAddress } from '@/utils/useFetchAddress';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -19,19 +20,18 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  IconButton,
   MenuItem,
   Stack,
   Step,
   StepLabel,
   Stepper,
-  IconButton,
   TextField,
   Typography,
 } from '@mui/material';
-import { Field, Form, Formik } from 'formik';
+import { Form, Formik } from 'formik';
 import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
-import { useFetchAddress } from '@/utils/useFetchAddress';
 
 const SiteMapComponent = dynamic(() => import('../SiteMapComponent'), {
   loading: () => <p>Site map is loading</p>,
@@ -79,7 +79,6 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
   handleSiteConfiguration,
 }) => {
   const { setSnackbarMessage } = useAppContext();
-  const gclasses = globalUseStyles();
   const [activeStep, setActiveStep] = useState(0);
   const [formValues, setFormValues] = useState(site);
   const { address, isLoading, error, fetchAddress } = useFetchAddress();
@@ -233,7 +232,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
             {({ errors, touched, isValid, handleReset }) => (
               <Form>
                 <Stack>
-                  <Field
+                  <GlobalInput
                     as={TextField}
                     fullWidth
                     select
@@ -241,12 +240,9 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                     name="switch"
                     label="SWITCH"
                     margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
                       },
                     }}
                     error={touched.switch && Boolean(errors.switch)}
@@ -257,21 +253,17 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         {component.description}
                       </MenuItem>
                     ))}
-                  </Field>
-                  <Field
-                    as={TextField}
+                  </GlobalInput>
+                  <GlobalInput
                     fullWidth
                     select
                     required
                     name="power"
                     label="POWER"
                     margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
                       },
                     }}
                     error={touched.power && Boolean(errors.power)}
@@ -282,21 +274,17 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         {component.description}
                       </MenuItem>
                     ))}
-                  </Field>
-                  <Field
-                    as={TextField}
+                  </GlobalInput>
+                  <GlobalInput
                     fullWidth
                     select
                     required
                     name="backhaul"
                     label="BACKHAUL"
                     margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
                       },
                     }}
                     error={touched.backhaul && Boolean(errors.backhaul)}
@@ -307,21 +295,17 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         {component.description}
                       </MenuItem>
                     ))}
-                  </Field>
-                  <Field
-                    as={TextField}
+                  </GlobalInput>
+                  <GlobalInput
                     fullWidth
                     select
                     required
                     name="access"
                     label="ACCESS"
                     margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
                       },
                     }}
                     error={touched.access && Boolean(errors.access)}
@@ -332,21 +316,17 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         {component.description}
                       </MenuItem>
                     ))}
-                  </Field>
-                  <Field
-                    as={TextField}
+                  </GlobalInput>
+                  <GlobalInput
                     fullWidth
                     select
                     required
                     name="spectrum"
                     label="SPECTRUM BAND"
                     margin="normal"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      classes: {
-                        input: gclasses.inputFieldStyle,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
                       },
                     }}
                     error={touched.spectrum && Boolean(errors.spectrum)}
@@ -357,7 +337,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         {component.description}
                       </MenuItem>
                     ))}
-                  </Field>
+                  </GlobalInput>
                 </Stack>
                 <Stack
                   direction="row"
@@ -431,8 +411,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                         currentAddress
                       )}
                     </Typography>
-                    <Field
-                      as={TextField}
+                    <GlobalInput
                       fullWidth
                       required
                       margin="normal"
@@ -441,32 +420,25 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                       placeholder="site-name"
                       error={touched.siteName && Boolean(errors.siteName)}
                       helperText={touched.siteName && errors.siteName}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
                         },
                       }}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         updateFormValues('siteName', e.target.value);
                       }}
                     />
-                    <Field
-                      as={TextField}
+                    <GlobalInput
                       fullWidth
                       select
                       required
                       name="network"
                       label="Network"
                       margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
                         },
                       }}
                       error={touched.network && Boolean(errors.network)}
@@ -483,8 +455,8 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                           {network.name}
                         </MenuItem>
                       ))}
-                    </Field>
-                    <TextField
+                    </GlobalInput>
+                    <GlobalInput
                       required
                       fullWidth
                       type="number"
@@ -502,12 +474,9 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                           updateFormValues('address', address);
                         }
                       }}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
                         },
                       }}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -517,7 +486,7 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                       error={touched.latitude && Boolean(errors.latitude)}
                       helperText={touched.latitude && errors.latitude}
                     />
-                    <TextField
+                    <GlobalInput
                       required
                       fullWidth
                       type="number"
@@ -535,12 +504,9 @@ const ConfigureSiteDialog: React.FC<IConfigureSiteDialog> = ({
                           updateFormValues('address', address);
                         }
                       }}
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      InputProps={{
-                        classes: {
-                          input: gclasses.inputFieldStyle,
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
                         },
                       }}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

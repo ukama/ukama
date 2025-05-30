@@ -241,11 +241,8 @@ const DataPlansPage = () => {
                     currency={currencySymbol}
                     amount={pkg.amount.toString()}
                     dataVolume={pkg.dataVolume.toString()}
-                    handleOptionMenuItemAction={(
-                      id: string,
-                      action: string,
-                    ) => {
-                      if (action === 'edit') handleEdit(id);
+                    handleOptionMenuItemAction={(type: string) => {
+                      if (type === 'edit') handleEdit(pkg.uuid);
                     }}
                   />
                 </Grid>

@@ -12,7 +12,7 @@ import { SiteNameSchemaValidation } from '@/helpers/formValidators';
 import colors from '@/theme/colors';
 import { Button, Divider, Stack, TextField, Typography } from '@mui/material';
 import { FormikProvider, FormikValues, useFormik } from 'formik';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
 interface ISiteName {
@@ -24,7 +24,6 @@ interface ISiteName {
 const SiteName = ({ params }: ISiteName) => {
   const { id } = params;
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const qpLat = searchParams.get('lat') ?? '';
   const qpLng = searchParams.get('lng') ?? '';

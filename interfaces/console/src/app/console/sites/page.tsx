@@ -41,6 +41,7 @@ export default function Page() {
   const [unassignedNodes, setUnassignedNodes] = useState<any[]>([]);
 
   const subscriptionsRef = useRef<Record<string, boolean>>({});
+  const activeSubscriptionRef = useRef<any>(null);
 
   const [currentSite, setCurrentSite] = useState({
     siteName: '',
@@ -52,24 +53,22 @@ export default function Page() {
       PubSub.unsubscribe(topic);
       delete subscriptionsRef.current[topic];
     });
+
+    if (activeSubscriptionRef.current?.cancel) {
+      activeSubscriptionRef.current.cancel();
+      activeSubscriptionRef.current = null;
+    }
   }, []);
-  const { refetch: refetchSites, loading: sitesLoading } = useGetSitesQuery({
+
+  const {
+    data: sitesData,
+    refetch: refetchSites,
+    loading: sitesLoading,
+  } = useGetSitesQuery({
     fetchPolicy: 'network-only',
     skip: !network.id,
     variables: {
       data: { networkId: network.id },
-    },
-    onCompleted: (res) => {
-      const sites = res.getSites.sites;
-      setSitesList(sites);
-      getNodes({
-        variables: {
-          data: {
-            state: NodeStateEnum.Unknown,
-            connectivity: NodeConnectivityEnum.Online,
-          },
-        },
-      });
     },
     onError: (error) => {
       setSitesList([]);
@@ -108,13 +107,20 @@ export default function Page() {
   });
 
   useEffect(() => {
+    if (sitesData?.getSites?.sites) {
+      setSitesList(sitesData.getSites.sites);
+    }
+  }, [sitesData]);
+
+  useEffect(() => {
+    if (!network.id) return;
+
     setSitesList([]);
     setUnassignedNodes([]);
-
     cleanupSubscriptions();
 
-    if (network.id) {
-      refetchSites();
+    Promise.all([
+      refetchSites(),
       getNodes({
         variables: {
           data: {
@@ -122,44 +128,50 @@ export default function Page() {
             connectivity: NodeConnectivityEnum.Online,
           },
         },
-      });
-    }
+      }),
+    ]);
+
+    return cleanupSubscriptions;
   }, [network.id, refetchSites, getNodes, cleanupSubscriptions]);
 
-  const [
-    getSiteStatMetrics,
-    { data: statData, loading: statLoading, variables: statVar },
-  ] = useGetSiteStatLazyQuery({
-    client: subscriptionClient,
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data.getSiteStat.metrics.length > 0) {
-        const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${statVar?.data.from ?? 0}`;
+  const [getSiteStatMetrics, { data: statData, loading: statLoading }] =
+    useGetSiteStatLazyQuery({
+      client: subscriptionClient,
+      fetchPolicy: 'network-only',
+      onCompleted: (data) => {
+        if (data.getSiteStat.metrics.length > 0) {
+          const from = getUnixTime() - STAT_STEP_29;
+          const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
 
-        subscriptionsRef.current[sKey] = true;
+          if (!subscriptionsRef.current[sKey]) {
+            subscriptionsRef.current[sKey] = true;
 
-        MetricStatBySiteSubscription({
-          key: sKey,
-          nodeIds: [],
-          userId: user.id,
-          siteIds: sitesList.map((site) => site.id),
-          url: env.METRIC_URL,
-          orgName: user.orgName,
-          type: Stats_Type.Site,
-          from: statVar?.data.from ?? 0,
-        });
+            if (activeSubscriptionRef.current?.cancel) {
+              activeSubscriptionRef.current.cancel();
+            }
 
-        PubSub.subscribe(sKey, handleStatSubscription);
-      }
-    },
-  });
+            activeSubscriptionRef.current = MetricStatBySiteSubscription({
+              key: sKey,
+              nodeIds: [],
+              userId: user.id,
+              siteIds: sitesList.map((site) => site.id),
+              url: env.METRIC_URL,
+              orgName: user.orgName,
+              type: Stats_Type.Site,
+              from: from,
+            });
+
+            PubSub.subscribe(sKey, handleStatSubscription);
+          }
+        }
+      },
+    });
 
   const handleStatSubscription = useCallback((_: any, data: string) => {
     try {
       const parsedData = JSON.parse(data);
       const { value, type, success, siteId } =
         parsedData?.data?.getSiteMetricStatSub;
-
       if (!success || !siteId || !type) return;
 
       PubSub.publish(`stat-${type}-${siteId}`, value);
@@ -170,9 +182,7 @@ export default function Page() {
 
   const [updateSite, { loading: updateSiteLoading }] = useUpdateSiteMutation({
     onCompleted: () => {
-      refetchSites().then((res) => {
-        setSitesList(res.data.getSites.sites);
-      });
+      refetchSites();
       setSnackbarMessage({
         id: 'update-site-success',
         message: 'Site updated successfully!',
@@ -192,11 +202,10 @@ export default function Page() {
 
   const handleSiteNameUpdate = useCallback(
     (siteId: string, siteName: string) => {
-      setCurrentSite((prevState) => ({
-        ...prevState,
+      setCurrentSite({
         siteId,
         siteName: siteName,
-      }));
+      });
       setEditSitedialogOpen(true);
     },
     [],
@@ -221,15 +230,10 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (sitesList.length === 0) return;
-
-    cleanupSubscriptions();
+    if (sitesList.length === 0 || !user.id) return;
 
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
-    const newSKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Site}-${from}`;
-
-    subscriptionsRef.current[newSKey] = true;
 
     getSiteStatMetrics({
       variables: {
@@ -246,18 +250,7 @@ export default function Page() {
         },
       },
     });
-
-    return () => {
-      cleanupSubscriptions();
-    };
-  }, [
-    sitesList,
-    user.id,
-    user.orgName,
-    getSiteStatMetrics,
-    env.METRIC_URL,
-    cleanupSubscriptions,
-  ]);
+  }, [sitesList, user.id, user.orgName, getSiteStatMetrics]);
 
   const handleConfigureNode = useCallback(
     (nodeId: string) => {
@@ -273,7 +266,7 @@ export default function Page() {
         return;
       }
 
-      let p = new URLSearchParams();
+      const p = new URLSearchParams();
       p.set('step', 'location');
       p.set('flow', 'ins');
       p.set('nid', nodeId);
@@ -282,6 +275,7 @@ export default function Page() {
     },
     [unassignedNodes, setSnackbarMessage, router],
   );
+
   useEffect(() => {
     return () => {
       cleanupSubscriptions();
@@ -291,6 +285,11 @@ export default function Page() {
   const memoizedStatData = useMemo(
     () => statData?.getSiteStat ?? { metrics: [] },
     [statData],
+  );
+
+  const isLoading = useMemo(
+    () => nodesLoading || sitesLoading || statLoading,
+    [nodesLoading, sitesLoading, statLoading],
   );
 
   return (
@@ -306,7 +305,7 @@ export default function Page() {
         <LoadingWrapper
           radius="small"
           width={'100%'}
-          isLoading={nodesLoading || sitesLoading || statLoading}
+          isLoading={isLoading}
           cstyle={{
             backgroundColor: false ? colors.white : 'transparent',
           }}

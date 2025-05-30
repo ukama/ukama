@@ -18,8 +18,8 @@ interface IPageContainerHeader {
   subtitle?: string;
   showSearch?: boolean;
   buttonTitle?: string;
-  onSearchChange?: Function;
-  handleButtonAction?: Function;
+  onSearchChange?: (value: string) => void;
+  handleButtonAction?: () => void;
 }
 
 const PageContainerHeader = ({

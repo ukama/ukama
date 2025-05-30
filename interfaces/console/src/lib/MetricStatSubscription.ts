@@ -23,7 +23,7 @@ function parseEvent(eventStr: any) {
   const event: any = {};
   const lines = eventStr.split('\n');
 
-  for (let line of lines) {
+  for (const line of lines) {
     if (line.startsWith('data:')) {
       event.data = line.slice(5).trim();
     } else if (line.startsWith('id:')) {
@@ -87,12 +87,12 @@ export default async function MetricStatSubscription({
   }
 
   const queryParams = new URLSearchParams({
-    query: `subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value networkId packageId dataPlanId}}`,
+    query: 'subscription MetricStatSub($data:SubMetricsStatInput!){getMetricStatSub(data:$data){msg nodeId success type value networkId packageId dataPlanId}}',
     operationName: 'MetricStatSub',
     extensions: '{}',
   });
 
-  let variables = { data: baseParams };
+  const variables = { data: baseParams };
 
   queryParams.append('variables', JSON.stringify(variables));
 

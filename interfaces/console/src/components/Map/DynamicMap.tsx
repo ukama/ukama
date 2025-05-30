@@ -76,7 +76,7 @@ const UkamaMap = ({
   }
 
   useEffect(() => {
-    (async function init() {
+    (function init() {
       Leaflet.Icon.Default.mergeOptions(ICON);
       Leaflet.Control.Zoom.prototype.options.position = 'bottomright';
     })();

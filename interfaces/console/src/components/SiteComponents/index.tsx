@@ -37,6 +37,7 @@ interface SiteComponentsProps {
   onComponentClick: (kpiType: string) => void;
   onSwitchChange?: (portNumber: number, currentStatus: boolean) => void;
   nodeIds?: string[];
+  initialNodeUptimes?: Record<string, number>;
 }
 
 const SiteComponents: React.FC<SiteComponentsProps> = ({
@@ -50,6 +51,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   onComponentClick,
   onSwitchChange,
   nodeIds,
+  initialNodeUptimes,
 }) => {
   const hasMetricsData =
     metrics && metrics.metrics && metrics.metrics.length > 0;
@@ -67,7 +69,11 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
   >({});
 
   const [nodeUptimes, setNodeUptimes] = useState<Record<string, number>>({});
-
+  useEffect(() => {
+    if (initialNodeUptimes && Object.keys(initialNodeUptimes).length > 0) {
+      setNodeUptimes(initialNodeUptimes);
+    }
+  }, [initialNodeUptimes]);
   useEffect(() => {
     if (!siteId || !nodeIds || nodeIds.length === 0) return;
 

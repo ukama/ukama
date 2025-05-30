@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-import { globalUseStyles } from '@/styles/global';
+import { GlobalInput } from '@/styles/global';
 import CloseIcon from '@mui/icons-material/Close';
 import {
   Button,
@@ -16,7 +16,6 @@ import {
   DialogTitle,
   IconButton,
   Stack,
-  TextField,
 } from '@mui/material';
 import React, { useState } from 'react';
 
@@ -39,7 +38,6 @@ const EditNode = ({
   handleCloseAction,
   handleSuccessAction,
 }: EditNodeProps) => {
-  const gclasses = globalUseStyles();
   const [value, setValue] = useState(nodeName);
   return (
     <Dialog
@@ -61,15 +59,14 @@ const EditNode = ({
       </Stack>
 
       <DialogContent>
-        <TextField
+        <GlobalInput
           required
           fullWidth
           value={value}
           label={'NODE NAME'}
-          InputLabelProps={{ shrink: true }}
-          InputProps={{
-            classes: {
-              input: gclasses.inputFieldStyle,
+          slotProps={{
+            inputLabel: {
+              shrink: true,
             },
           }}
           onChange={(e: any) => setValue(e.target.value)}

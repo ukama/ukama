@@ -60,9 +60,7 @@ const SiteConfigure = ({ params }: IPage) => {
       backhaul: qpbackhaul ?? '',
     },
     validateOnChange: true,
-    onSubmit: (values) => {
-      handleSubmit();
-    },
+    onSubmit: () => handleSubmit(),
     validationSchema: SiteConfigureSchema,
   });
 

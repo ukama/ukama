@@ -117,6 +117,7 @@ function getUserFromToken(token: string): User {
       isEmailVerified: isEmailVerified.includes('true'),
     };
   } catch (error) {
+    console.error('Error getting user from token:', error);
     return USER_INIT;
   }
 }
@@ -160,7 +161,7 @@ const middleware = async (request: NextRequest) => {
 
   if (!session) {
     return NextResponse.redirect(
-      new URL(`/auth/login`, process.env.NEXT_PUBLIC_AUTH_APP_URL),
+      new URL('/auth/login', process.env.NEXT_PUBLIC_AUTH_APP_URL),
     );
   }
 
@@ -168,6 +169,7 @@ const middleware = async (request: NextRequest) => {
   try {
     userObj = await getUserObject(session.value, cookieToken);
   } catch (error) {
+    console.error('Error getting user object:', error);
     return NextResponse.rewrite(
       new URL('/unauthorized', process.env.NEXT_PUBLIC_APP_URL),
     );
