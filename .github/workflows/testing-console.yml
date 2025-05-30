@@ -24,6 +24,18 @@ jobs:
      with:
       version: 8
 
+   - name: Install OpenVPN
+     run: |
+      sudo apt-get update
+      sudo apt-get install -y openvpn
+
+   - name: Setup VPN
+     run: |
+      echo "${{ secrets.VPN_CONFIG }}" > vpn.ovpn
+      sudo openvpn --config vpn.ovpn --daemon
+      sleep 10  # Wait for VPN connection to establish
+      curl ifconfig.me  # Verify VPN connection
+
    - name: Install dependencies
      run: |
       cd testing/console
@@ -63,3 +75,9 @@ jobs:
            body: `🎭 Playwright test results are available [here](${reportUrl})`
          });
        }
+
+   - name: Cleanup VPN
+     if: always()
+     run: |
+      sudo killall openvpn || true
+      rm -f vpn.ovpn
