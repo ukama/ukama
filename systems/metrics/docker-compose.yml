@@ -89,8 +89,7 @@ services:
    - ukama-net
 
  initclient-metrics:
-  # build: ../services/initClient
-  image: main-init
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
