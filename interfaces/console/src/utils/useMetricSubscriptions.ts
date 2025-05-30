@@ -5,20 +5,20 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { useEffect, useRef, useState, useCallback } from 'react';
-import PubSub from 'pubsub-js';
-import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import {
   Graphs_Type,
+  MetricsRes,
   Stats_Type,
   useGetMetricBySiteLazyQuery,
   useGetSiteStatLazyQuery,
-  MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { getUnixTime } from '@/utils';
 import { METRIC_RANGE_10800, STAT_STEP_29 } from '@/constants';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { TMetricResDto } from '@/types';
+import { getUnixTime } from '@/utils';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+import PubSub from 'pubsub-js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MetricSubscriptionsProps {
   siteId: string;
@@ -38,7 +38,6 @@ export const useMetricSubscriptions = ({
   metricUrl,
   subscriptionClient,
   activeGraphType,
-  nodeIds,
   nodesFetched,
 }: MetricSubscriptionsProps) => {
   const subscriptionsRef = useRef<Record<string, boolean>>({});

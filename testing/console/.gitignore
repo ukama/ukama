@@ -46,3 +46,4 @@ node_modules/
 /tests/test-temp/
 /test-temp/
 /tests/patched
+lighthouse-reports
