@@ -17,16 +17,28 @@ setup_grub() {
 
     LOOPDEV=$(sudo losetup --find --partscan --show "$IMG")
     sudo mkdir -p "$MOUNTPOINT"
-    sudo mount "${LOOPDEV}p3" "$MOUNTPOINT"
 
-    ROOT_UUID=$(sudo blkid -s UUID -o value "${LOOPDEV}p3" || true)
+    ROOT_PART=""
+    for i in {1..4}; do
+        PART_DEV="${LOOPDEV}p${i}"
+        sudo mount "$PART_DEV" "$MOUNTPOINT" || continue
 
-    if [[ -n "$ROOT_UUID" ]]; then
-        KERNEL_ARGS="root=UUID=${ROOT_UUID} rootfstype=ext4 rw console=ttyS0"
-    else
-        echo "WARNING: Could not determine UUID, falling back to /dev/sda3"
-        KERNEL_ARGS="root=/dev/vda3 rootfstype=ext4 rw console=ttyS0"
+        if [ -f "$MOUNTPOINT/sbin/init" ] || [ -f "$MOUNTPOINT/init" ]; then
+            ROOT_PART="/dev/sda${i}"
+            echo "Found root partition: $ROOT_PART"
+            break
+        fi
+
+        sudo umount "$MOUNTPOINT"
+    done
+
+    if [ -z "$ROOT_PART" ]; then
+        echo "ERROR: Could not detect root partition with /sbin/init"
+        sudo losetup -d "$LOOPDEV"
+        exit 1
     fi
+
+    KERNEL_ARGS="root=${ROOT_PART} rootfstype=ext4 rw console=ttyS0 debug ignore_loglevel"
 
     sudo mkdir -p "${MOUNTPOINT}/boot/grub"
     sudo grub-install \
@@ -53,14 +65,15 @@ run_qemu() {
 
     qemu-system-x86_64 \
         -m 2048 \
-        -drive file="$IMG",format=raw,if=none,id=virtio \
+        -kernel /boot/vmlinuz \
+        -append "root=/dev/sda2 rootfstype=ext4 rw console=ttyS0" \
+        -drive file="$IMG",format=raw,if=none,id=hd0 \
         -device ide-hd,drive=hd0,bus=ide.0 \
-        -enable-kvm \
         -nographic \
         -serial mon:stdio \
-        -boot menu=on \
-        -net nic -net user,hostfwd=tcp::2222-:22
+        -enable-kvm
 }
 
-setup_grub
+#setup_grub
 run_qemu
+
