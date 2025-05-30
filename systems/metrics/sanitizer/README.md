@@ -1,6 +1,5 @@
 # Sanitizer service
 
-
 This service is providing the following features:
 
     Add support for Prometheus remote_write for metrics pushes
