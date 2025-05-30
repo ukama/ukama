@@ -39,6 +39,24 @@ services:
   networks:
    - ukama-net
 
+ sanitizer:
+  build: ./sanitizer
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - PUSHGATEWAYHOST=http://${LOCAL_HOST_IP}:9091
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-metrics:9095
+   - SANITIZER_SERVICE_HOST=sanitizer
+   - SANITIZER_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+
  api-gateway-metrics:
   build: ./api-gateway
   ports:
@@ -46,7 +64,6 @@ services:
   environment:
    - METRICSCONFIG_METRICSSERVER=http://prometheus:9090
    - BYPASS_AUTH_MODE=true
-   - HTTP_INITCLIENT=http://api-gateway-init:8080
    - ORGNAME=${ORGNAME}
    - PERIOD=
   restart: always
@@ -72,7 +89,8 @@ services:
    - ukama-net
 
  initclient-metrics:
-  build: ../services/initClient
+  # build: ../services/initClient
+  image: main-init
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
