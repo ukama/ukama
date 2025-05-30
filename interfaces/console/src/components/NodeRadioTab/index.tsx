@@ -16,7 +16,6 @@ import LineChart from '../LineChart';
 import NodeStatItem from '../NodeStatItem';
 import NodeStatsContainer from '../NodeStatsContainer';
 
-const PLACEHOLDER_VALUE = 'NA';
 interface INodeRadioTab {
   metrics: any;
   loading: boolean;

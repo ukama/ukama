@@ -10,7 +10,7 @@ function parseEvent(eventStr: any) {
   const event: any = {};
   const lines = eventStr.split('\n');
 
-  for (let line of lines) {
+  for (const line of lines) {
     if (line.startsWith('data:')) {
       event.data = line.slice(5).trim();
     } else if (line.startsWith('id:')) {

@@ -62,15 +62,15 @@ const SearchBar = ({
 
   const handleSelect =
     ({ description }: any) =>
-    () => {
-      setValue(description, false);
-      clearSuggestions();
+      () => {
+        setValue(description, false);
+        clearSuggestions();
 
-      getGeocode({ address: description }).then((results) => {
-        const { lat, lng } = getLatLng(results[0]);
-        handleLocationSelected({ lat, lng });
-      });
-    };
+        getGeocode({ address: description }).then((results) => {
+          const { lat, lng } = getLatLng(results[0]);
+          handleLocationSelected({ lat, lng });
+        });
+      };
 
   const renderSuggestions = () =>
     data.map((suggestion) => {

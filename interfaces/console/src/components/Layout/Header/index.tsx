@@ -42,7 +42,7 @@ const ULogo = dynamic(() =>
 interface IHeaderProps {
   isOpen: boolean;
   isLoading: boolean;
-  onNavigate: Function;
+  onNavigate: (page: string, path: string) => void;
   notifications: NotificationsRes;
   handleAction: (action: string, id: string) => void;
 }
@@ -73,7 +73,6 @@ const AppBar = styled(Box, {
 
 const Header = ({
   isOpen,
-  isLoading,
   onNavigate,
   notifications,
   handleAction,

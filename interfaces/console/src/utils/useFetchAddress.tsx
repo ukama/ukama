@@ -40,7 +40,8 @@ export const useFetchAddress = (): UseFetchAddressResult => {
 
       const data = await response.json();
       setAddress(data.display_name || 'Location not found');
-    } catch (err) {
+    } catch (error) {
+      console.error('Error fetching address:', error);
       setError('Error fetching address');
       setAddress('Location not found');
     } finally {

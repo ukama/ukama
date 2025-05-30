@@ -7,7 +7,6 @@
  */
 'use client';
 import { Sim_Types, useUploadSimsMutation } from '@/client/graphql/generated';
-import { INSTALLATION_FLOW } from '@/constants';
 import { useAppContext } from '@/context';
 import colors from '@/theme/colors';
 import { fileToBase64, setQueryParam } from '@/utils';
@@ -30,7 +29,6 @@ const Sims = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
-  const flow = searchParams.get('flow') ?? INSTALLATION_FLOW;
   const { env, setSnackbarMessage } = useAppContext();
   const [file, setFile] = useState<any>();
   const { acceptedFiles, getRootProps, getInputProps } = useDropzone({

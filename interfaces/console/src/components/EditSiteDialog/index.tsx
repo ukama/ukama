@@ -5,21 +5,20 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
+import { UpdateSiteSchema } from '@/helpers/formValidators';
+import { GlobalInput } from '@/styles/global';
+import CloseIcon from '@mui/icons-material/Close';
 import {
+  Box,
+  Button,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
-  TextField,
-  Button,
-  CircularProgress,
-  Box,
   IconButton,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import { globalUseStyles } from '@/styles/global';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { UpdateSiteSchema } from '@/helpers/formValidators';
+import { ErrorMessage, Field, Form, Formik } from 'formik';
+import React from 'react';
 
 interface EditSiteDialogProps {
   open: boolean;
@@ -81,19 +80,22 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
             <DialogContent>
               <Field name="siteName">
                 {({ field }: { field: any }) => (
-                  <TextField
+                  <GlobalInput
                     {...field}
                     autoFocus
                     margin="dense"
                     label="Site Name"
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      classes: { input: globalUseStyles().inputFieldStyle },
-                      endAdornment: updateSiteLoading ? (
-                        <CircularProgress size={20} />
-                      ) : null,
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                      input: {
+                        endAdornment: updateSiteLoading ? (
+                          <CircularProgress size={20} />
+                        ) : null,
+                      },
                     }}
                     error={touched.siteName && !!errors.siteName}
                     helperText={<ErrorMessage name="siteName" />}
@@ -101,18 +103,18 @@ const EditSiteDialog: React.FC<EditSiteDialogProps> = ({
                 )}
               </Field>
             </DialogContent>
-            
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                justifyContent: 'flex-end', 
-                p: 3, 
-                pt: 0 
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                p: 3,
+                pt: 0,
               }}
             >
-              <Button 
-                type="button" 
-                onClick={onClose} 
+              <Button
+                type="button"
+                onClick={onClose}
                 color="secondary"
                 sx={{ mr: 1 }}
               >

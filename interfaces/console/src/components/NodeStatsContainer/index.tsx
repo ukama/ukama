@@ -19,9 +19,9 @@ interface INodeStatsContainer {
   isAlert?: boolean; //Pass true to show red border
   isCollapse?: boolean;
   isClickable?: boolean;
-  onCollapse?: Function;
+  onCollapse?: () => void;
   isCollapsable?: boolean;
-  handleAction?: Function;
+  handleAction?: (index: number) => void;
   children: React.ReactNode;
 }
 
