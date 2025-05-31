@@ -66,12 +66,13 @@ run_qemu() {
     qemu-system-x86_64 \
         -m 2048 \
         -kernel /boot/vmlinuz \
-        -append "root=/dev/sda2 rootfstype=ext4 rw console=ttyS0" \
+        -append "root=/dev/sda2 rootfstype=ext4 rw console=ttyS0 debug ignore_loglevel rootflags=data=writeback" \
         -drive file="$IMG",format=raw,if=none,id=hd0 \
         -device ide-hd,drive=hd0,bus=ide.0 \
+        -enable-kvm \
         -nographic \
         -serial mon:stdio \
-        -enable-kvm
+        -net nic -net user,hostfwd=tcp::2222-:22
 }
 
 #setup_grub
