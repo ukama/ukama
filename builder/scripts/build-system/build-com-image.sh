@@ -6,7 +6,6 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 set -euo pipefail
-set -x
 
 PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
 if [ ! -f "$PKG_UTILS" ]; then
@@ -229,35 +228,31 @@ set_permissions() {
     check_status $? "Permissions set for passive" ${STAGE}
 }
 
-# Update /etc/fstab based on partition type
 update_fstab() {
     PARTITION_TYPE=$1
     log "INFO" "Updating /etc/fstab for partition type: ${PARTITION_TYPE}"
 
-    if [[ "${PARTITION_TYPE}" == ${PRIMARY_MOUNT} ]]; then
-        cat <<FSTAB > ${PRIMARY_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p3  /passive     auto    ro          0 2
-/dev/mmcblk1p2  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
-/dev/mmcblk1p4  none         swap    sw          0 0
-FSTAB
-
+    # Detect QEMU
+    if grep -qi qemu /proc/cpuinfo 2>/dev/null || [[ "$(systemd-detect-virt 2>/dev/null || true)" == "qemu" ]]; then
+        ROOT_DEV="/dev/sda3"
+        BOOT_DEV="/dev/sda1"
+        SWAP_DEV="/dev/sda4"
     else
-        cat <<FSTAB > ${PASSIVE_MOUNT}/etc/fstab
+        ROOT_DEV="/dev/mmcblk1p3"
+        BOOT_DEV="/dev/mmcblk1p1"
+        SWAP_DEV="/dev/mmcblk1p4"
+    fi
+
+    # Clean fstab without redundant mounts
+    cat <<FSTAB > ${PARTITION_TYPE}/etc/fstab
 proc            /proc        proc    defaults    0 0
 sysfs           /sys         sysfs   defaults    0 0
 devpts          /dev/pts     devpts  defaults    0 0
 tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /primary     auto    ro          0 2
-/dev/mmcblk1p3  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
-/dev/mmcblk1p4  none         swap    sw          0 0
+${ROOT_DEV}     /            ext4    defaults    0 1
+# ${BOOT_DEV}   /boot/firmware vfat  ro          0 2
+${SWAP_DEV}     none         swap    sw          0 0
 FSTAB
-    fi
 
     log "INFO" "${PARTITION_TYPE}/etc/fstab updated successfully."
 }
