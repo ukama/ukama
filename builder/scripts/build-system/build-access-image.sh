@@ -3,16 +3,29 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
-# Copyright (c) 2024-present, Ukama Inc.
+# Copyright (c) 2025-present, Ukama Inc.
 
 # Build image for Ukama access node.
 
 set -e
 
+PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
+if [ ! -f "$PKG_UTILS" ]; then
+    echo "ERROR: Missing $PKG_UTILS"
+    exit 1
+fi
+source "$PKG_UTILS"
+
 STAGE="init"
 DIR="$(pwd)"
 UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
+UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
+UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
+COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
+ACCESS_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/access.config"
+MANIFEST_FILE="manifest.json"
+
 BOOT_MOUNT="/media/boot"
 RECOVERY_MOUNT="/media/recovery"
 PRIMARY_MOUNT="/media/primary"
@@ -22,8 +35,13 @@ DATA_MOUNT="/media/data"
 RAW_IMG="ukama-access-node.img"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs/
+UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
+APP_NAMES=()
 FIRMWARE_REPO="https://github.com/raspberrypi/firmware"
 FIRMWARE_ZIP_URL="${FIRMWARE_REPO}/archive/refs/heads/master.zip"
+ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
+ALPINE_VERSION="3.19"
+ALPINE_ARCH="aarch64"
 
 trap cleanup EXIT
 
@@ -62,11 +80,24 @@ cleanup() {
     log "INFO" "Cleanup completed."
 }
 
+check_label() {
+    local dev="$1"
+    local expected="$2"
+
+    actual=$(sudo e2label "$dev")
+    if [[ "$actual" != "$expected" ]]; then
+        log "ERROR" "$dev label mismatch: got '$actual', expected '$expected'"
+        exit 1
+    else
+        log "SUCCESS" "$dev label confirmed: $actual"
+    fi
+}
+
 create_disk_image() {
     STAGE="create_disk_image"
     log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
-    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=61120512
+    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=33554432
     check_status $? "Raw image created" ${STAGE}
 }
 
@@ -75,9 +106,8 @@ download_and_copy_rpi_firmware() {
     BOOT_DIR="$1"
     TMP_DIR="/tmp/rpi-bootloader"
 
-    log "INFO" "Downloading Raspberry Pi bootloader from $FIRMWARE_REPO ..."
+    log "INFO" "Downloading Raspberry Pi bootloader and kernel from $FIRMWARE_REPO ..."
 
-    # Clean up previous temp dir
     rm -rf "$TMP_DIR"
     mkdir -p "$TMP_DIR"
 
@@ -87,15 +117,40 @@ download_and_copy_rpi_firmware() {
     FIRMWARE_BOOT="$TMP_DIR/firmware-master/boot"
     if [ ! -d "$FIRMWARE_BOOT" ]; then
         log "ERROR" "Failed to extract firmware boot folder"
-        return 1
+        exit 1
     fi
 
+    # Copy everything from official firmware repo boot folder
     mkdir -p "$BOOT_DIR"
-    cp "$FIRMWARE_BOOT"/{bootcode.bin,start*.elf,fixup*.dat,config.txt,cmdline.txt} \
-       "$BOOT_DIR" 2>/dev/null || true
-    cp "$FIRMWARE_BOOT"/*.dtb "$BOOT_DIR" 2>/dev/null || true
+    cp -a "$FIRMWARE_BOOT/"* "$BOOT_DIR/"
 
-    log "INFO" "Bootloader files copied to $BOOT_DIR"
+    # Rename kernel8.img to kernel.img for consistency (optional)
+    if [ -f "$BOOT_DIR/kernel8.img" ]; then
+        cp "$BOOT_DIR/kernel8.img" "$BOOT_DIR/kernel.img"
+        log "INFO" "Copied kernel8.img → kernel.img"
+    elif [ ! -f "$BOOT_DIR/kernel.img" ]; then
+        log "ERROR" "No kernel8.img or kernel.img found in firmware repo"
+        exit 1
+    fi
+
+    # Overwrite with known working config.txt
+    cat <<EOF > "$BOOT_DIR/config.txt"
+enable_uart=1
+arm_64bit=1
+kernel=kernel.img
+gpu_mem=64
+boot_delay=1
+disable_splash=1
+dtoverlay=disable-bt
+dtoverlay=disable-wifi
+EOF
+
+    # Write cmdline.txt
+    cat <<EOF > "$BOOT_DIR/cmdline.txt"
+console=serial0,115200 console=tty1 root=LABEL=primary rootfstype=ext4 fsck.repair=yes rootwait
+EOF
+
+    log "SUCCESS" "Bootloader, kernel, and config files copied to $BOOT_DIR"
 
     rm -rf "$TMP_DIR"
 }
@@ -140,6 +195,9 @@ map_partitions() {
     log "INFO" "Mapping partitions using kpartx"
     sudo kpartx -v -a "${LOOPDISK}"
     check_status $? "Partitions mapped" ${STAGE}
+
+    DEVICE=$(basename "${LOOPDISK}")
+    DISK="/dev/mapper/${DEVICE}p"
 }
 
 format_partitions() {
@@ -151,7 +209,7 @@ format_partitions() {
     mkfs.vfat -F 32 -n boot "${DISK}1"
     check_status $? "boot partition formatted" ${STAGE}
 
-	mkfs.ext4 -L recovery "${DISK}2"
+    mkfs.ext4 -L recovery "${DISK}2"
     check_status $? "recovery rootfs formatted" ${STAGE}
 
     mkfs.ext4 -L primary "${DISK}5"
@@ -163,8 +221,8 @@ format_partitions() {
     mkfs.ext4 -L data "${DISK}7"
     check_status $? "data partition formatted" ${STAGE}
 
-	mkswap "${DISK}8"
-	check_status $? "swap partition created" ${STAGE}
+    mkswap "${DISK}8"
+    check_status $? "swap partition created" ${STAGE}
 }
 
 mount_partition() {
@@ -187,11 +245,11 @@ copy_rootfs() {
     STAGE="copy_rootfs"
 
     log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
 	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc
 
 	log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
+	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
     mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
 
 	sync
@@ -211,32 +269,32 @@ set_permissions() {
 
 # Update /etc/fstab based on partition type
 update_fstab() {
-	PARTITION_TYPE=$1
+    PARTITION_TYPE=$1
     log "INFO" "Updating /etc/fstab for partition type: ${PARTITION_TYPE}"
 
-    if [[ "${PARTITION_TYPE}" == ${PRIMARY_MOUNT} ]]; then
+    if [[ "${PARTITION_TYPE}" == "${PRIMARY_MOUNT}" ]]; then
         cat <<FSTAB > ${PRIMARY_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p6  /passive     auto    ro          0 2
-/dev/mmcblk1p5  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=passive     /passive        ext4    ro                    0 2
+LABEL=primary     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     else
         cat <<FSTAB > ${PASSIVE_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p5  /passive     auto    ro          0 2
-/dev/mmcblk1p6  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=primary     /passive        ext4    ro                    0 2
+LABEL=passive     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     fi
 
@@ -269,8 +327,36 @@ format_partitions
 mount_partition "${DISK}1" "${BOOT_MOUNT}"
 mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
 mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
+
+check_label "/dev/mapper/$(basename ${LOOPDISK})p5" "primary"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p2" "recovery"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p6" "passive"
+check_label "/dev/mapper/$(basename ${LOOPDISK})p7" "data"
+
 download_and_copy_rpi_firmware "${BOOT_MOUNT}"
+
+# create board specific manifest and cp its pkds/libs
+get_enabled_apps "$COMMON_CONFIG_FILE" "$ACCESS_CONFIG_FILE"
+if [[ ${#APPS[@]} -gt 0 ]]; then
+    log "INFO" "APPS are: ${APPS[@]}"
+else
+    log "ERROR" "APPS not assigned. Exit"
+    unmount_partition "${BOOT_MOUNT}"
+    unmount_partition "${PRIMARY_MOUNT}"
+    unmount_partition "${PASSIVE_MOUNT}"
+    detach_loop_device
+
+    log "ERROR" "Disk image creation unsuccessful"
+    exit 1
+fi
+copy_all_apps "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
+copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
+create_manifest_file "$MANIFEST_FILE" "${APPS[@]}"
+
 copy_rootfs
+cp -rf "${MANIFEST_FILE}" "${PRIMARY_MOUNT}"
+cp -rf "${MANIFEST_FILE}" "${PASSIVE_MOUNT}"
+rm -rf "${MANIFEST_FILE}"
 set_permissions
 update_fstab "${PRIMARY_MOUNT}"
 update_fstab "${PASSIVE_MOUNT}"

@@ -18,14 +18,30 @@ function mount_chroot_binds() {
     sudo mount --bind "${SRC}" "${CHROOT}/${DST}"
 }
 
-# Unmount a bind mount from a chroot path
+# Unmount chroot mounts safely (custom and system)
 function unmount_chroot_binds() {
     local CHROOT="$1"
-    local DST="$2"
-    local TARGET="${CHROOT}/${DST}"
+    local CUSTOM_DST="$2"
 
-    if mountpoint -q "$TARGET"; then
-        echo "Unmounting ${TARGET}"
-        sudo umount -l "$TARGET"
-    fi
+    echo "Unmounting chroot mounts under ${CHROOT}..."
+
+    # Unmount in reverse order
+    for mnt in \
+        "$CHROOT/dev/pts" \
+        "$CHROOT/dev/shm" \
+        "$CHROOT/dev/mqueue" \
+        "$CHROOT/dev/hugepages" \
+        "$CHROOT/dev" \
+        "$CHROOT/proc" \
+        "$CHROOT/sys/kernel/config" \
+        "$CHROOT/sys/fs/fuse/connections" \
+        "$CHROOT/sys" \
+        "$CHROOT/run" \
+        "$CHROOT/$CUSTOM_DST"
+    do
+        if mountpoint -q "$mnt"; then
+            echo "Unmounting $mnt"
+            sudo umount -lf "$mnt"
+        fi
+    done
 }
