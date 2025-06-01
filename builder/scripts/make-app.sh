@@ -12,8 +12,8 @@ set -e
 
 # Base parameters
 UKAMA_OS=`realpath ../ukamaOS`
-SYS_ROOT=${UKAMA_OS}/distro/
-SCRIPTS_ROOT=${SYS_ROOT}/scripts/
+SYS_ROOT=${UKAMA_OS}/distro
+SCRIPTS_ROOT=${SYS_ROOT}/scripts
 
 # Build the app at given src path and cmd
 build_app() {
@@ -70,7 +70,7 @@ case "$ACTION" in
 	    $2
 	    ;;
     "patchelf")
-	    patchelf --set-rpath /lib $2
+#	    patchelf --set-rpath /lib $2
 	    ;;
     "mkdir")
 	    mkdir -p $2
