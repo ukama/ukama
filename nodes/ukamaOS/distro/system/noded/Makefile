@@ -116,6 +116,10 @@ LDFLAGS+=-L$(PLATFORM_LIB_DIR)
 LDFLAGS+=-L$(VENDOR_LIBS_DIR)
 LDFLAGS+=-L$(VENDOR_LIBS64_DIR)
 
+LDFLAGS+=-Wl,-rpath,$(PLATFORM_DIR)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB_DIR)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64_DIR)
+
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
 MEMCHECK := valgrind
