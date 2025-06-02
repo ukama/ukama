@@ -5,6 +5,10 @@ on:
   paths:
    - 'testing/console/**'
    - '.github/workflows/testing-console.yml'
+ pull_request:
+  paths:
+   - 'testing/console/**'
+   - '.github/workflows/testing-console.yml'
 
 jobs:
  test:
@@ -68,16 +72,32 @@ jobs:
       script: |
        const fs = require('fs');
        const reportPath = 'testing/console/playwright-report/index.html';
+       const statsPath = 'testing/console/test-results/test-results.json';
 
        if (fs.existsSync(reportPath)) {
          const runId = context.runId;
          const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/playwright-report`;
          
+         let statsMessage = '';
+         if (fs.existsSync(statsPath)) {
+           const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+           const total = stats.total;
+           const passed = stats.passed;
+           const failed = stats.failed;
+           const skipped = stats.skipped;
+           
+           statsMessage = `\n\n📊 Test Results:\n` +
+             `- Total Tests: ${total}\n` +
+             `- ✅ Passed: ${passed}\n` +
+             `- ❌ Failed: ${failed}\n` +
+             `- ⏭️ Skipped: ${skipped}`;
+         }
+         
          github.rest.issues.createComment({
            issue_number: context.payload.pull_request.number,
            owner: context.repo.owner,
            repo: context.repo.repo,
-           body: `🎭 Playwright test results are available [here](${artifactUrl})`
+           body: `🎭 Playwright test results are available [here](${artifactUrl})${statsMessage}`
          });
        }
 
