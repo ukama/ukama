@@ -11,27 +11,10 @@ import { getMetricsClient } from '@/client/client';
 import { TEnv, TNetwork, TSnackbarMessage, TUser } from '@/types';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
-type TActionStates = {
-  simActivation: boolean;
-  simDeactivation: boolean;
-  simDeletion: boolean;
-  subscriberDeletion: boolean;
-  subscriberCreation: boolean;
-};
-const INITIAL_ACTION_STATES: TActionStates = {
-  simActivation: false,
-  simDeactivation: false,
-  simDeletion: false,
-  subscriberDeletion: false,
-  subscriberCreation: false,
-};
-
 const AppContext = createContext({
   pageName: 'Home',
   setPageName: (pageName: string) => {},
   token: '',
-  actionStates: INITIAL_ACTION_STATES,
-  setActionState: (action: keyof TActionStates, state: boolean) => {},
   setToken: (token: string) => {},
   isDarkMode: false,
   setIsDarkMode: (isDarkMode: boolean) => {},
@@ -92,7 +75,6 @@ const AppContext = createContext({
     country_calling_code: '',
   },
   setMetaInfo: (info: any) => {},
-  resetActionStates: () => {},
 });
 
 const AppContextWrapper = ({
@@ -135,9 +117,6 @@ const AppContextWrapper = ({
   const [skeltonLoading, setSkeltonLoading] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
   const [selectedDefaultSite, setSelectedDefaultSite] = useState('');
-  const [actionStates, setActionStatesInternal] = useState<TActionStates>(
-    INITIAL_ACTION_STATES,
-  );
 
   const [snackbarMessage, setSnackbarMessage] = useState<TSnackbarMessage>({
     id: 'message-id',
@@ -151,16 +130,6 @@ const AppContextWrapper = ({
   });
   const [user, setUser] = useState<TUser>(initalUserValues);
 
-  const setActionState = (action: keyof TActionStates, state: boolean) => {
-    setActionStatesInternal((prev) => ({
-      ...prev,
-      [action]: state,
-    }));
-  };
-
-  const resetActionStates = () => {
-    setActionStatesInternal(INITIAL_ACTION_STATES);
-  };
   const value = useMemo(
     () => ({
       env,
@@ -187,9 +156,6 @@ const AppContextWrapper = ({
       setSubscriptionClient,
       metaInfo,
       setMetaInfo,
-      actionStates,
-      setActionState,
-      resetActionStates,
     }),
     [
       env,
@@ -216,8 +182,6 @@ const AppContextWrapper = ({
       setSubscriptionClient,
       metaInfo,
       setMetaInfo,
-      resetActionStates,
-      actionStates,
     ],
   );
 

@@ -62,23 +62,10 @@ const StatusCard = dynamic(() => import('@/components/StatusCard'), {
 
 export default function Page() {
   const kpiConfig = NODE_KPIS.HOME.stats;
-  const {
-    env,
-    user,
-    network,
-    setSnackbarMessage,
-    subscriptionClient,
-    actionStates,
-    resetActionStates,
-  } = useAppContext();
+  const { env, user, network, setSnackbarMessage, subscriptionClient } =
+    useAppContext();
   const subscriptionKeyRef = useRef<string | null>(null);
   const subscriptionControllerRef = useRef<AbortController | null>(null);
-  const isSubscriberActionInProgress =
-    actionStates.simActivation ||
-    actionStates.simDeactivation ||
-    actionStates.simDeletion ||
-    actionStates.subscriberDeletion ||
-    actionStates.subscriberCreation;
 
   const cleanupSubscription = useCallback(() => {
     if (subscriptionKeyRef.current) {
@@ -143,10 +130,12 @@ export default function Page() {
       client: subscriptionClient,
       fetchPolicy: 'network-only',
       onCompleted: async (data) => {
-        if (isSubscriberActionInProgress) {
-          console.log('Fresh metrics data received, resetting action states');
-          resetActionStates();
-        }
+        // if (isSubscriberActionInProgress) {
+        //   console.log('Fresh metrics data received, resetting action states');
+        //   resetActionStates();
+        // }
+        console.log('Initial metrics received:', data.getMetricsStat.metrics);
+
         if (data.getMetricsStat.metrics.length > 0) {
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
           cleanupSubscription();
@@ -208,29 +197,12 @@ export default function Page() {
     const { value, type, success } = parsedData.data.getMetricStatSub;
 
     if (success && value.length === 2) {
-      if (type === kpiConfig[3].id && isSubscriberActionInProgress) {
-        console.log(
-          'Fresh subscriber count received via subscription, resetting action states',
-        );
-        resetActionStates();
-      }
-
       PubSub.publish(
         `${type}-${network.id}`,
         type === kpiConfig[2].id ? formatBytesToGigabit(value[1]) : value[1],
       );
     }
   };
-  useEffect(() => {
-    if (isSubscriberActionInProgress) {
-      const timeout = setTimeout(() => {
-        console.log('Timeout reached, force resetting action states');
-        resetActionStates();
-      }, 30000); // 30 seconds timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isSubscriberActionInProgress, resetActionStates]);
 
   return (
     <Grid container rowSpacing={2} columnSpacing={2}>
@@ -278,7 +250,7 @@ export default function Page() {
             subtitle2={''}
             Icon={GroupPeople}
             options={TIME_FILTER}
-            loading={statLoading || isSubscriberActionInProgress}
+            loading={statLoading}
             title={'Active subscribers'}
             iconColor={colors.primaryMain}
             topic={`${kpiConfig[3].id}-${network.id}`}

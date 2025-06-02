@@ -71,14 +71,7 @@ import {
 
 const Page = () => {
   const query = useSearchParams();
-  const {
-    setSnackbarMessage,
-    network,
-    env,
-    user,
-    setActionState,
-    actionStates,
-  } = useAppContext();
+  const { setSnackbarMessage, network, env, user } = useAppContext();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [dialogStates, setDialogStates] = useState<DialogStates>(
@@ -207,7 +200,6 @@ const Page = () => {
 
   const [deleteSim, { loading: deleteSimLoading }] = useDeleteSimMutation({
     onCompleted: () => {
-      setActionState('simDeletion', false);
       if (subscriberData.details) {
         getSimBySubscriber({
           variables: {
@@ -244,7 +236,6 @@ const Page = () => {
       closeDialog('simDeleteConfirmation');
     },
     onError: (error) => {
-      setActionState('simDeletion', false);
       setSnackbarMessage({
         id: 'delete-sim-error',
         message: `Error deleting SIM: ${error.message}`,
@@ -282,12 +273,12 @@ const Page = () => {
 
   const [toggleSimStatus] = useToggleSimStatusMutation({
     onCompleted: () => {
-      setActionState('simActivation', false);
-      setActionState('simDeactivation', false);
+      refetchSubscribers().then(() => {});
+
       setSnackbarMessage({
-        id: 'sim-activated-success',
-        message: 'Sim state updated successfully!',
-        type: 'success' as AlertColor,
+        id: 'sim-toggle-success',
+        message: 'SIM status updated successfully',
+        type: 'success',
         show: true,
       });
 
@@ -340,8 +331,6 @@ const Page = () => {
       closeDialog('subscriberDetails');
     },
     onError: (error) => {
-      setActionState('simActivation', false);
-      setActionState('simDeactivation', false);
       setSnackbarMessage({
         id: 'sim-activated-error',
         message: error.message,
@@ -402,7 +391,6 @@ const Page = () => {
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
       onCompleted: (res) => {
-        setActionState('subscriberCreation', false);
         refetchSubscribers().then((data) => {
           updateUIState({
             subscribers: {
@@ -419,7 +407,6 @@ const Page = () => {
         refetchSims();
       },
       onError: (error) => {
-        setActionState('subscriberCreation', false);
         const errorMsg =
           (error.graphQLErrors?.[0]?.extensions?.response as any)?.body
             ?.error || '';
@@ -441,7 +428,6 @@ const Page = () => {
   const [deleteSubscriber, { loading: deleteSubscriberLoading }] =
     useDeleteSubscriberMutation({
       onCompleted: () => {
-        setActionState('subscriberDeletion', false);
         refetchSubscribers().then((response) => {
           if (response?.data?.getSubscribersByNetwork) {
             updateUIState({
@@ -462,7 +448,6 @@ const Page = () => {
         closeDialog('confirmation');
       },
       onError: (error) => {
-        setActionState('subscriberDeletion', false);
         setSnackbarMessage({
           id: 'delete-subscriber-error',
           message: error.message,
@@ -568,7 +553,6 @@ const Page = () => {
     });
 
   const handleDeleteSubscriber = () => {
-    setActionState('subscriberDeletion', true);
     deleteSubscriber({
       variables: {
         subscriberId: operationData.deletedSubscriber.id,
@@ -746,7 +730,6 @@ const Page = () => {
   ) => {
     switch (action) {
       case 'deactivateSim':
-        setActionState('simDeactivation', true);
         toggleSimStatus({
           variables: {
             data: {
@@ -756,9 +739,7 @@ const Page = () => {
           },
         });
         break;
-
       case 'activateSim':
-        setActionState('simActivation', true);
         toggleSimStatus({
           variables: {
             data: {
@@ -848,9 +829,7 @@ const Page = () => {
     subscriber: any,
   ): Promise<AllocateSimApiDto> => {
     try {
-      setActionState('subscriberCreation', true);
       updateSubscriberData({ details: subscriber });
-
       const subscriberResponse = await addSubscriber({
         variables: {
           data: {
@@ -888,7 +867,6 @@ const Page = () => {
       throw error;
     }
   };
-
   const scroll = (direction: 'left' | 'right'): void => {
     if (scrollContainerRef.current) {
       const scrollAmount = scrollContainerRef.current.clientWidth / 2;
@@ -910,8 +888,6 @@ const Page = () => {
           type: 'info' as AlertColor,
           show: true,
         });
-
-        setActionState('subscriberDeletion', true);
 
         deleteSubscriber({
           variables: { subscriberId: id },
@@ -1130,7 +1106,6 @@ const Page = () => {
       <DeleteConfirmation
         open={dialogStates.simDeleteConfirmation}
         onDelete={() => {
-          setActionState('simDeletion', true);
           deleteSim({
             variables: {
               data: {
