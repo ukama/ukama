@@ -48,12 +48,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  webServer: {
-    command: 'pnpm prod',
-    url: CONSOLE_ROOT_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // webServer: {
+  //   command: 'pnpm prod',
+  //   url: CONSOLE_ROOT_URL,
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 120000,
+  //   stdout: 'pipe',
+  //   stderr: 'pipe',
+  // },
 });
