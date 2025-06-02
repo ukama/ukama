@@ -11,3 +11,13 @@ export const MANAGE_URL = `${CONSOLE_ROOT_URL}/manage`;
 export const TEST_USER_EMAIL = 'admin@ukama.com';
 export const TEST_USER_PASSWORD = '@Pass2025.';
 export const TMP_SIMS_PATH = 'test-temp';
+export const CONSOLE_URLS_FOR_LIGHTHOUSE = [
+  `${CONSOLE_ROOT_URL}/console/home`,
+  `${CONSOLE_ROOT_URL}/console/sites`,
+  `${CONSOLE_ROOT_URL}/console/subscribers`,
+  `${CONSOLE_ROOT_URL}/console/nodes`,
+  `${CONSOLE_ROOT_URL}/manage/billing`,
+  `${CONSOLE_ROOT_URL}/manage/data-plans`,
+  `${CONSOLE_ROOT_URL}/manage/sims`,
+];
+export const LIGHTHOUSE_SCORE_THRESHOLD = 0.2;
