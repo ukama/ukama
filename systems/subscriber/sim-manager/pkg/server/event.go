@@ -166,24 +166,22 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 
 	return err
 }
-
 func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
 		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
-
 		return nil
 	}
 
-	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
 	if len(sims) == 0 {
-		return fmt.Errorf("no corresponding active sim found for given iccid %q",
+		return fmt.Errorf("no corresponding sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
@@ -203,8 +201,6 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 		StartTime:    cdr.ConnectTime,
 		EndTime:      cdr.CloseTime,
 		Id:           cdr.Id,
-		// OrgId:        s.OrgId.String(),
-		// SessionId: msg.InventoryId,
 	}
 
 	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
@@ -217,11 +213,11 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 
 	return err
 }
-
 func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	// FIXED: Changed ukama.SimStatusActive to ukama.SimStatusUnknown to include inactive SIMs
+	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
@@ -247,9 +243,6 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 		BytesUsed:    cdr.TotalBytes,
 		StartTime:    cdr.StartTime,
 		EndTime:      cdr.EndTime,
-		// Id:           cdr.Id,
-		// OrgId:        s.OrgId.String(),
-		// SessionId:    cdr.Session,
 	}
 
 	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
@@ -262,11 +255,11 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 
 	return err
 }
-
 func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	// FIXED: Changed ukama.SimStatusActive to ukama.SimStatusUnknown to include inactive SIMs
+	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			asrProfile.Iccid, err)
@@ -300,7 +293,7 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 			termReq.PackageId, termReq.SimId, err)
 	}
 
-	// Get next package to activate if any
+	// Rest of the function remains the same...
 	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",

@@ -596,7 +596,7 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 
 		if err := s.terminateAllSimPackages(ctx, sim.Id.String()); err != nil {
 			errorMsg := fmt.Sprintf("Failed to terminate packages for SIM %s: %v", sim.Id, err)
-			log.Errorf(errorMsg)
+			log.Errorf("%s", errorMsg)
 			processingErrors = append(processingErrors, errorMsg)
 			continue
 		}
@@ -611,7 +611,7 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 			err = s.simRepo.Update(simUpdates, nil)
 			if err != nil {
 				errorMsg := fmt.Sprintf("Failed to deactivate SIM %s: %v", sim.Id, err)
-				log.Errorf(errorMsg)
+				log.Errorf("%s", errorMsg)
 				processingErrors = append(processingErrors, errorMsg)
 				continue
 			}
@@ -629,7 +629,7 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 		})
 		if err != nil {
 			errorMsg := fmt.Sprintf("Failed to terminate SIM %s: %v", sim.Id, err)
-			log.Errorf(errorMsg)
+			log.Errorf("%s", errorMsg)
 			processingErrors = append(processingErrors, errorMsg)
 			continue
 		}
@@ -640,8 +640,8 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 	if len(processingErrors) > 0 {
 		errorMsg := fmt.Sprintf("Failed to process %d SIMs: %s",
 			len(processingErrors), strings.Join(processingErrors, "; "))
-		log.Errorf(errorMsg)
-		return nil, status.Errorf(codes.Internal, errorMsg)
+			log.Errorf("%s", errorMsg)
+		return nil, status.Errorf(codes.Internal, "Failed to process SIMs: %v", errorMsg)
 	}
 
 	err = s.triggerAsrCleanup(req.SubscriberId, simDetails)
@@ -649,7 +649,29 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 		log.Errorf("Failed to trigger ASR cleanup for subscriber %s: %v", req.SubscriberId, err)
 		return nil, status.Errorf(codes.Internal, "Failed to trigger ASR cleanup: %v", err)
 	}
-
+	if len(simList) > 0 {
+		networkId := simList[0].NetworkId.String()
+		
+		err = s.pushActiveSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing active sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushInactiveSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing inactive sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushTerminatedSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing terminated sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushTotalSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing total sims count metric: %s", err.Error())
+		}
+	}
 	log.Infof("Successfully initiated ASR cleanup for subscriber %s", req.SubscriberId)
 	return &pb.TerminateSimsForSubscriberResponse{}, nil
 }
@@ -777,6 +799,10 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
+	}
+	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing active sims count metric on sim terminate operation: %s", err.Error())
 	}
 
 	evtMsg := &epb.EventSimTermination{
