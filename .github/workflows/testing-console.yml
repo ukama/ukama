@@ -43,10 +43,15 @@ jobs:
       pnpm exec playwright install --with-deps
 
    - name: Run Playwright tests
+     env:
+      CONSOLE_ROOT_URL: ${{ secrets.CONSOLE_ROOT_URL }}
+      AUTH_BASE_URL: ${{ secrets.AUTH_BASE_URL }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      LIGHTHOUSE_SCORE_THRESHOLD: ${{ secrets.LIGHTHOUSE_SCORE_THRESHOLD }}
      run: |
       cd testing/console
-      pnpm patch-tests
-      pnpm test
+      pnpm test-ci
 
    - name: Upload test results
      if: always()
