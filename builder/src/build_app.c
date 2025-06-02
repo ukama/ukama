@@ -38,12 +38,14 @@ int build_app(Config *config) {
           ukamaRoot, SCRIPT, build->source, build->cmd);
   if (system(runMe) < 0) return FALSE;
 
+#if 0
 #ifndef ALPINE_BUILD
   if (!build->staticFlag) {
       /* set rpath for the executable */
       sprintf(runMe, "%s/%s patchelf %s", ukamaRoot, SCRIPT, build->binFrom);
       if (system(runMe) < 0 ) return FALSE;
   }
+#endif
 #endif
 
   sprintf(runMe, "%s/%s cp %s %s_%s%s", ukamaRoot, SCRIPT,
@@ -69,13 +71,14 @@ int build_app(Config *config) {
       if (system(runMe) < 0) return FALSE;
   }
 
-#ifndef ALPINE_BUILD
   if (!build->staticFlag) {
       sprintf(runMe, "%s/%s libs %s %s_%s", ukamaRoot, SCRIPT,
               build->binFrom, config->capp->name, config->capp->version);
       if (system(runMe) < 0) return FALSE;
   }
-#else
+
+#if 0
+  // Currently, we are focusing on using alpine - commented it out.
   if (!build->staticFlag) {
       sprintf(runMe, "%s/%s cp %s/%s %s_%s/lib",
               ukamaRoot, SCRIPT, ukamaRoot, LIB_USYS,
