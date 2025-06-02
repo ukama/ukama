@@ -77,29 +77,23 @@ jobs:
          
          let statsMessage = '';
          if (fs.existsSync(statsPath)) {
-           const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
-           const total = stats.total;
-           const passed = stats.passed;
-           const failed = stats.failed;
-           const skipped = stats.skipped;
-           
-           statsMessage = `\n\n📊 Test Results:\n` +
-             `- Total Tests: ${total}\n` +
-             `- ✅ Passed: ${passed}\n` +
-             `- ❌ Failed: ${failed}\n` +
-             `- ⏭️ Skipped: ${skipped}`;
-         }
-         
-         github.rest.issues.createComment({
-           issue_number: context.payload.pull_request.number,
-           owner: context.repo.owner,
-           repo: context.repo.repo,
-           body: `🎭 Playwright test results are available [here](${artifactUrl})${statsMessage}`
-         });
-       }
+           const results = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+           let total = 0, passed = 0, failed = 0, skipped = 0;
 
-   - name: Cleanup VPN
-     if: always()
-     run: |
-      sudo killall openvpn || true
-      rm -f vpn.ovpn
+           function countTests(suites) {
+             for (const suite of suites) {
+               if (suite.suites) countTests(suite.suites);
+               if (suite.tests) {
+                 for (const test of suite.tests) {
+                   total++;
+                   if (test.status === 'passed') passed++;
+                   else if (test.status === 'failed') failed++;
+                   else if (test.status === 'skipped') skipped++;
+                 }
+               }
+             }
+           }
+           countTests(results.suites);
+
+           statsMessage = `\n\n📊 Test Results:\n` +
+             `- Total Tests: ${total}\n`
