@@ -1,11 +1,11 @@
 packages:
   # include all source files
-  - "src/**"
+  - 'src/**'
   # exclude test directories
-  - "!**/test/**"
-  - "!**/__tests__/**"
-  - "!**/testing/**"
+  - '!**/test/**'
+  - '!**/__tests__/**'
+  - '!**/testing/**'
   # exclude build and cache directories
-  - "!**/node_modules/**"
-  - "!**/.next/**"
-  - "!**/.temp/**"
+  - '!**/node_modules/**'
+  - '!**/.next/**'
+  - '!**/.temp/**'

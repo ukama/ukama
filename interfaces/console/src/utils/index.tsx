@@ -450,12 +450,12 @@ export const duration = (s: number) =>
   formatDistance(0, s * 1000, { includeSeconds: true });
 
 const findNullZones = (data: any) => {
-  let zones = [];
+  const zones = [];
   let inNullZone = false;
   let start = null;
 
   for (let i = 0; i < data.length; i++) {
-    let [x, y] = data[i];
+    const [x, y] = data[i];
 
     if (y === null) {
       if (!inNullZone) {
@@ -494,7 +494,7 @@ const kpiToGraphType: Record<string, Graphs_Type> = {
   main_backhaul: Graphs_Type.MainBackhaul,
   backhaul: Graphs_Type.MainBackhaul,
   switch: Graphs_Type.Switch,
-  node: Graphs_Type.Solar,
+  node: Graphs_Type.Site,
 };
 const graphTypeToSection: Record<Graphs_Type | string, string> = {
   [Graphs_Type.Solar]: 'SOLAR',
@@ -620,9 +620,9 @@ const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
     return value <= 0
       ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }
       : {
-          color: colors.green,
-          icon: <RouterIcon sx={{ color: colors.green }} />,
-        };
+        color: colors.green,
+        icon: <RouterIcon sx={{ color: colors.green }} />,
+      };
   }
 
   if (type === 'battery') {

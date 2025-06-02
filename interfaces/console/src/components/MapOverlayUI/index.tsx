@@ -73,8 +73,8 @@ const RightIconButtonStyle = {
 interface ILeftOverlayUI {
   isAddSite: boolean;
   isAddLink: boolean;
-  handleAddSite: Function;
-  handleAddLink: Function;
+  handleAddSite: () => void;
+  handleAddLink: () => void;
   isCurrentDraft: boolean;
   handleLocationSelected: (loc: LatLngLiteral) => void;
 }
@@ -143,9 +143,9 @@ export const LeftOverlayUI = ({
 );
 
 interface IRightOverlayUI {
-  handleClick: Function;
+  handleClick: (event: any) => void;
   isCurrentDraft: boolean;
-  handlePowerInfo: Function;
+  handlePowerInfo: (event: any) => void;
   siteInfoId: string | undefined;
   powerInfoId: string | undefined;
 }
@@ -354,7 +354,7 @@ const SiteDetails = ({ site }: ISiteDetails) => (
           fontSize: '16px',
         },
       }}
-      onChange={(e) => {}}
+      onChange={() => {}}
     />
   </Stack>
 );

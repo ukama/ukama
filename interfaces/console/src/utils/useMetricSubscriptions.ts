@@ -5,20 +5,20 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { useEffect, useRef, useState, useCallback } from 'react';
-import PubSub from 'pubsub-js';
-import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import {
   Graphs_Type,
+  MetricsRes,
   Stats_Type,
   useGetMetricBySiteLazyQuery,
   useGetSiteStatLazyQuery,
-  MetricsRes,
 } from '@/client/graphql/generated/subscriptions';
-import { getUnixTime } from '@/utils';
 import { METRIC_RANGE_10800, STAT_STEP_29 } from '@/constants';
 import MetricStatBySiteSubscription from '@/lib/MetricStatBySiteSubscription';
 import { TMetricResDto } from '@/types';
+import { getUnixTime } from '@/utils';
+import { ApolloClient, NormalizedCacheObject } from '@apollo/client';
+import PubSub from 'pubsub-js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface MetricSubscriptionsProps {
   siteId: string;
@@ -38,7 +38,6 @@ export const useMetricSubscriptions = ({
   metricUrl,
   subscriptionClient,
   activeGraphType,
-  nodeIds,
   nodesFetched,
 }: MetricSubscriptionsProps) => {
   const subscriptionsRef = useRef<Record<string, boolean>>({});
@@ -123,7 +122,7 @@ export const useMetricSubscriptions = ({
 
         MetricStatBySiteSubscription({
           key: sKey,
-          nodeIds,
+          nodeIds: [],
           siteIds: [siteId],
           userId,
           url: metricUrl,
@@ -200,35 +199,16 @@ export const useMetricSubscriptions = ({
           withSubscription: true,
           type: Stats_Type.Site,
           siteIds: [siteId],
-          nodeIds,
+          nodeIds: [],
         },
       },
-    });
-
-    MetricStatBySiteSubscription({
-      key: sKey,
-      siteIds: [siteId],
-      userId,
-      url: metricUrl,
-      orgName,
-      type: Stats_Type.Site,
-      from,
-      nodeIds,
     });
 
     return () => {
       PubSub.unsubscribe(sKey);
       delete subscriptionsRef.current[sKey];
     };
-  }, [
-    siteId,
-    nodeIds,
-    nodesFetched,
-    userId,
-    orgName,
-    metricUrl,
-    getSiteMetricStat,
-  ]);
+  }, [siteId, nodesFetched, userId, orgName, getSiteMetricStat]);
 
   const resetMetrics = useCallback(() => {
     setMetrics({ metrics: [] });

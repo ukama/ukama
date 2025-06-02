@@ -50,7 +50,10 @@ func NewExporterFromClient(c pb.ExporterServiceClient) *Exporter {
 }
 
 func (r *Exporter) Close() {
-	r.conn.Close()
+	err := r.conn.Close()
+	if err != nil {
+		log.Warnf("failed to properly close exporter client. Error: %v", err)
+	}
 }
 
 func (e *Exporter) Dummy(req *pb.DummyParameter) (*pb.DummyParameter, error) {

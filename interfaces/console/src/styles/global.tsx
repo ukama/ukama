@@ -15,38 +15,21 @@ import {
   Link,
   Paper,
   Skeleton,
+  TextField,
   Tooltip,
   TooltipProps,
   styled,
   tooltipClasses,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 
 interface IRoundedCard {
   radius?: string;
 }
 
-const globalUseStyles = makeStyles(() => ({
-  inputFieldStyle: {
-    height: '24px',
-    padding: '12px 14px',
-  },
-  disableInputFieldStyle: {
-    padding: '4px 0px',
-    '-webkit-text-fill-color': `${colors.black} !important`,
-  },
-  backToNodeGroupButtonStyle: {
-    position: 'fixed',
-    left: '50%',
-    bottom: '20px',
-    transform: 'translate(-50%, -50%)',
-    margin: '0 auto',
-    pointer: 'cursor',
-  },
-  GridContainer: {
-    padding: '1em',
-  },
-}));
+const GlobalInput = styled(TextField)({
+  height: '24px',
+  padding: '12px 14px',
+});
 
 const RootContainer = styled(Container)((props) => ({
   height: 'auto',
@@ -73,7 +56,7 @@ const GradiantBarNoRadius = styled(Box)({
     'linear-gradient(90deg, #00D3EB 0%, #2190F6 14.06%, #6974F8 44.27%, #6974F8 58.85%, #271452 100%)',
 });
 
-const HorizontalContainerJustify = styled(Box)((props) => ({
+const HorizontalContainerJustify = styled(Box)(() => ({
   width: '100%',
   height: 'auto',
   display: 'flex',
@@ -212,7 +195,7 @@ const ComponentContainer = {
   overflow: 'hidden',
 };
 
-const ScrollContainer = styled(Box)(({ theme }) => ({
+const ScrollContainer = styled(Box)(() => ({
   position: 'relative',
   width: '100%',
   overflow: 'hidden',
@@ -255,7 +238,7 @@ const NavigationButton = styled(IconButton)(({ theme }) => ({
   border: `1px solid ${colors.black38}`,
 }));
 
-const CardWrapper = styled(Box)(({ theme }) => ({
+const CardWrapper = styled(Box)(() => ({
   width: 'calc(25% - 12px)',
   minWidth: 200,
   flexShrink: 0,
@@ -277,6 +260,7 @@ export {
   ContainerMax,
   DarkTooltip,
   DataPlanEmptyView,
+  GlobalInput,
   GradiantBar,
   GradiantBarNoRadius,
   HorizontalContainer,
@@ -294,5 +278,4 @@ export {
   SimpleCardWithBorder,
   SkeletonRoundedCard,
   VerticalContainer,
-  globalUseStyles,
 };

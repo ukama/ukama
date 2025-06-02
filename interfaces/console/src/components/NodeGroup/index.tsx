@@ -11,7 +11,7 @@ import LoadingWrapper from '../LoadingWrapper';
 interface INodeGroup {
   nodes: any;
   loading: boolean;
-  handleNodeAction: Function;
+  handleNodeAction: (id: string) => void;
 }
 
 const NodeGroup = ({ nodes, loading, handleNodeAction }: INodeGroup) => {

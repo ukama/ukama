@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 )
@@ -134,7 +134,7 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	defer cancel()
 
 	u := fmt.Sprintf("%s/api/v1/query_range", strings.TrimSuffix(m.conf.MetricsServer, "/"))
-	logrus.Infof("GetMetricRange url: %s", u)
+	log.Infof("GetMetricRange url: %s", u)
 
 	data := url.Values{}
 	data.Set("start", strconv.FormatInt(in.Start, 10))
@@ -142,7 +142,7 @@ func (m *Metrics) GetMetricRange(metricType string, metricFilter *Filter, in *In
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
 	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
-	logrus.Infof("GetMetric query: %s", data.Encode())
+	log.Infof("GetMetricRange query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
@@ -163,7 +163,7 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, w io.Writer
 
 	data.Set("query", m.conf.Metrics[metricType].getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
-	logrus.Infof("GetMetric query: %s", data.Encode())
+	log.Infof("GetMetric query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, formatting)
 }
@@ -184,7 +184,7 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 	data := url.Values{}
 	data.Set("query", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
 
-	logrus.Infof("GetAggregateMetric query: %s", data.Encode())
+	log.Infof("GetAggregateMetric query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, u, data, w, false)
 }
@@ -193,31 +193,31 @@ func formatMetricsResponse(metricName string, w io.Writer, b io.ReadCloser) erro
 
 	bytes, err := io.ReadAll(b)
 	if err != nil {
-		logrus.Errorf("Failed to read promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to read prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 
 	rmap := map[string]interface{}{}
 	err = json.Unmarshal([]byte(bytes), &rmap)
 	if err != nil {
-		logrus.Errorf("Failed to unmarshal promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to unmarshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 	rmap["Name"] = metricName
 
 	rb, err := json.Marshal(rmap)
 	if err != nil {
-		logrus.Errorf("Failed to marshal promtheus response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to marshal prometheus response for %s Error: %v", metricName, err)
 		return err
 	}
 
 	n, err := w.Write(rb)
 	if err != nil {
-		logrus.Errorf("Failed to add prometheus reponse to ws response for %s Error: %v", metricName, err)
+		log.Errorf("Failed to add prometheus response to ws response for %s Error: %v", metricName, err)
 		return err
 	}
 
-	logrus.Infof("Updated %d bytes of response: %s", n, string(rb))
+	log.Infof("Updated %d bytes of response: %s", n, string(rb))
 	return nil
 }
 
@@ -229,16 +229,16 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
-	logrus.Infof("Request is: %v Body %+v", req, data.Encode())
+	log.Infof("Request is: %v Body %+v", req, data.Encode())
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "failed to execute request")
 	}
-	logrus.Infof("Response Body %+v", res.Body)
+	log.Infof("Response Body %+v", res.Body)
 	if formatting {
 		err = formatMetricsResponse(metricName, w, res.Body)
 		if err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "failed to formatt response")
+			return http.StatusInternalServerError, errors.Wrap(err, "failed to format response")
 		}
 	} else {
 		_, err = io.Copy(w, res.Body)
@@ -247,7 +247,11 @@ func (m *Metrics) processPromRequest(ctx context.Context, metricName string, url
 		}
 	}
 
-	res.Body.Close()
+	err = res.Body.Close()
+	if err != nil {
+		log.Warnf("failed to properly close response body. Error: %v", err)
+	}
+
 	return res.StatusCode, nil
 }
 

@@ -59,7 +59,7 @@ const getSiteMetricValue = (
   if (!metricsData || !metricsData.metrics || !siteId) return null;
 
   const metric = metricsData.metrics.find(
-    (m) => m.type === metricId && m.success == true && m.siteId === siteId,
+    (m) => m.type === metricId && m.success === true && m.siteId === siteId,
   );
 
   return metric ? extractMetricValue(metric.value) : null;
@@ -70,7 +70,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     siteId,
     name,
     address,
-    userCount = 0,
     handleSiteNameUpdate,
     loading,
     maxAddressLength = 49,
@@ -86,80 +85,95 @@ const SiteCard: React.FC<SiteCardProps> = memo(
 
     useEffect(() => {
       if (
-        metricsData &&
-        metricsData.metrics &&
-        metricsData.metrics.length > 0
-      ) {
-        const uptime = getSiteMetricValue(
-          SITE_KPI_TYPES.SITE_UPTIME,
-          metricsData,
-          siteId,
-        );
-        if (uptime !== null) setUptimeValue(uptime);
+        !metricsData ||
+        !metricsData.metrics ||
+        metricsData.metrics.length === 0
+      )
+        return;
 
-        const batteryCharge = getSiteMetricValue(
-          SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE,
-          metricsData,
-          siteId,
-        );
-        if (batteryCharge !== null) setBatteryValue(batteryCharge);
+      const uptime = getSiteMetricValue(
+        SITE_KPI_TYPES.SITE_UPTIME,
+        metricsData,
+        siteId,
+      );
+      if (uptime !== null) setUptimeValue(uptime);
 
-        const backhaul = getSiteMetricValue(
-          SITE_KPI_TYPES.BACKHAUL_SPEED,
-          metricsData,
-          siteId,
-        );
-        if (backhaul !== null) setBackhaulValue(backhaul);
-      }
+      const batteryCharge = getSiteMetricValue(
+        SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE,
+        metricsData,
+        siteId,
+      );
+      if (batteryCharge !== null) setBatteryValue(batteryCharge);
+
+      const backhaul = getSiteMetricValue(
+        SITE_KPI_TYPES.BACKHAUL_SPEED,
+        metricsData,
+        siteId,
+      );
+      if (backhaul !== null) setBackhaulValue(backhaul);
     }, [metricsData, siteId]);
 
     useEffect(() => {
-      Object.values(subscriptionsRef.current).forEach((token) => {
-        PubSub.unsubscribe(token);
-      });
-      subscriptionsRef.current = {};
-
-      const uptimeTopic = `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`;
-      const batteryChargeTopic = `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`;
-      const backhaulTopic = `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`;
-
-      const uptimeToken = PubSub.subscribe(uptimeTopic, (_, data) => {
-        if (data && data.length > 1) {
-          const value = extractMetricValue(data[1]);
-          if (value !== null) setUptimeValue(value);
-        }
-      });
-
-      const batteryChargeToken = PubSub.subscribe(
-        batteryChargeTopic,
-        (_, data) => {
-          if (data && data.length > 1) {
-            const value = extractMetricValue(data[1]);
-            if (value !== null) setBatteryValue(value);
-          }
-        },
-      );
-
-      const backhaulToken = PubSub.subscribe(backhaulTopic, (_, data) => {
-        if (data && data.length > 1) {
-          const value = extractMetricValue(data[1]);
-          if (value !== null) setBackhaulValue(value);
-        }
-      });
-
-      subscriptionsRef.current = {
-        uptime: uptimeToken,
-        battery: batteryChargeToken,
-        backhaul: backhaulToken,
-      };
-
-      return () => {
+      const cleanup = () => {
         Object.values(subscriptionsRef.current).forEach((token) => {
           PubSub.unsubscribe(token);
         });
         subscriptionsRef.current = {};
       };
-    }, [siteId]);
+
+      cleanup();
+
+      if (loading || !siteId) return;
+
+      const handleUptimeUpdate = (_: any, data: any) => {
+        if (data !== null && data !== undefined) {
+          const value =
+            Array.isArray(data) && data.length > 1
+              ? extractMetricValue(data[1])
+              : extractMetricValue(data);
+          if (value !== null) setUptimeValue(value);
+        }
+      };
+
+      const handleBatteryUpdate = (_: any, data: any) => {
+        if (data !== null && data !== undefined) {
+          const value =
+            Array.isArray(data) && data.length > 1
+              ? extractMetricValue(data[1])
+              : extractMetricValue(data);
+          if (value !== null) setBatteryValue(value);
+        }
+      };
+
+      const handleBackhaulUpdate = (_: any, data: any) => {
+        if (data !== null && data !== undefined) {
+          const value =
+            Array.isArray(data) && data.length > 1
+              ? extractMetricValue(data[1])
+              : extractMetricValue(data);
+          if (value !== null) setBackhaulValue(value);
+        }
+      };
+
+      const uptimeTopic = `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`;
+      const batteryTopic = `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`;
+      const backhaulTopic = `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`;
+
+      subscriptionsRef.current.uptime = PubSub.subscribe(
+        uptimeTopic,
+        handleUptimeUpdate,
+      );
+      subscriptionsRef.current.battery = PubSub.subscribe(
+        batteryTopic,
+        handleBatteryUpdate,
+      );
+      subscriptionsRef.current.backhaul = PubSub.subscribe(
+        backhaulTopic,
+        handleBackhaulUpdate,
+      );
+
+      return cleanup;
+    }, [siteId, loading]);
 
     const displayAddress = loading
       ? ''
@@ -186,7 +200,6 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       window.location.href = `/console/sites/${siteId}`;
     }, [siteId]);
 
-    // Updated to always provide icons with appropriate colors
     const connectionStyles =
       uptimeValue !== null
         ? getStatusStyles('uptime', uptimeValue)
@@ -354,6 +367,16 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           </Box>
         </CardContent>
       </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    return (
+      prevProps.siteId === nextProps.siteId &&
+      prevProps.name === nextProps.name &&
+      prevProps.address === nextProps.address &&
+      prevProps.loading === nextProps.loading &&
+      prevProps.userCount === nextProps.userCount &&
+      prevProps.metricsData === nextProps.metricsData
     );
   },
 );

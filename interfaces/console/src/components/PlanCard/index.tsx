@@ -19,11 +19,10 @@ interface IPlanCard {
   dataUnit: string;
   dataVolume: string;
   isOptions?: boolean;
-  handleOptionMenuItemAction?: Function;
+  handleOptionMenuItemAction?: (type: string) => void;
 }
 
 const PlanCard = ({
-  uuid,
   name,
   amount,
   dataUnit,
@@ -69,8 +68,7 @@ const PlanCard = ({
                   { id: 0, title: 'Edit', route: 'edit', Icon: null },
                 ]}
                 handleItemClick={(type: string) =>
-                  handleOptionMenuItemAction &&
-                  handleOptionMenuItemAction(uuid, type)
+                  handleOptionMenuItemAction && handleOptionMenuItemAction(type)
                 }
               />
             )}

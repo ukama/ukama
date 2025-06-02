@@ -90,7 +90,7 @@ const AccountPopover = () => {
             <Divider />
             <Link
               data-testid="logout-link"
-              href={`/logout`}
+              href={'/logout'}
               prefetch={false}
               style={{
                 borderRadius: 4,

@@ -11,16 +11,15 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
-
+	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/rest"
-	"github.com/ukama/ukama/systems/common/providers"
 
+	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	"github.com/ukama/ukama/systems/common/config"
 )
 
 var svcConf = pkg.NewConfig()

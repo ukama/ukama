@@ -76,7 +76,7 @@ const DataPlanDialog = ({
         <Formik
           initialValues={dataplan}
           validationSchema={DataPlanSchema}
-          onSubmit={async (values) => {
+          onSubmit={(values) => {
             setDataplan({
               ...dataplan,
               name: values.name,

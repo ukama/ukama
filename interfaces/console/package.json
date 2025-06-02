@@ -17,11 +17,10 @@
     "@apollo/client": "^3.10.4",
     "@apollo/experimental-nextjs-app-support": "^0.11.2",
     "@emotion/react": "^11.11.4",
-    "@emotion/styled": "^11.11.5",
+    "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.1.10",
-    "@mui/material": "^6.1.10",
-    "@mui/material-nextjs": "^6.1.9",
-    "@mui/styles": "^6.1.10",
+    "@mui/material": "^6.4.11",
+    "@mui/material-nextjs": "^6.4.3",
     "@mui/x-tree-view": "^7.23.0",
     "@stripe/react-stripe-js": "^3.0.0",
     "@stripe/stripe-js": "^5.2.0",
@@ -58,9 +57,14 @@
     "@types/pubsub-js": "^1.8.6",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
+    "eslint": "^8.56.0",
     "eslint-config-next": "14.2.3",
     "prettier": "^3.3.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0"
   }
 }

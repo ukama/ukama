@@ -19,7 +19,7 @@ import { useState } from 'react';
 
 interface ITimeFilter {
   options?: StatsPeriodItemType[];
-  handleFilterSelect: Function;
+  handleFilterSelect: (value: string) => void;
 }
 
 const TimeFilter = ({
