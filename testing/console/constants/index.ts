@@ -10,7 +10,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const CONSOLE_ROOT_URL =
-  process.env.CONSOLE_ROOT_URL || 'http://localhost:3000';
+  process.env.CONSOLE_BASE_URL || 'http://localhost:3000';
 export const LOGIN_URL = `${process.env.AUTH_BASE_URL || 'http://localhost:4455'}/auth/login`;
 export const MANAGE_URL = `${CONSOLE_ROOT_URL}/manage`;
 export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'admin@ukama.com';

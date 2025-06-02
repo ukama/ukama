@@ -44,7 +44,7 @@ jobs:
 
    - name: Run Playwright tests
      env:
-      CONSOLE_ROOT_URL: ${{ secrets.CONSOLE_ROOT_URL }}
+      CONSOLE_BASE_URL: ${{ secrets.CONSOLE_BASE_URL }}
       AUTH_BASE_URL: ${{ secrets.AUTH_BASE_URL }}
       TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
       TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
