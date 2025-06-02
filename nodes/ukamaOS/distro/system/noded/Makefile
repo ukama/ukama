@@ -35,7 +35,6 @@ PLATFORM_DIR:=$(DISTRO_DIR)/platform
 PLATFORM_HEADERS_DIRS:=$(PLATFORM_DIR)/sys/inc
 PLATFORM_HEADERS_DIRS+=$(PLATFORM_DIR)/log/inc
 PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
-PLATFORM_LIB:=usys 
 
 INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
 INC_HEADERS+=$(DISTRO_DIR)/system/common/inc
@@ -67,7 +66,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 # Build
 BUILD_DIR:=build
 
-
 # VENDOR_PKG
 ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
@@ -75,6 +73,7 @@ ifeq ($(ALPINE_BUILD),1)
 else
 	VENDOR_PKG = tomlc jansson ulfius
 endif
+
 # Platform Package
 PLATFORM_PKG = usys
 
@@ -96,7 +95,7 @@ CURL_LIB_DEP+=-lcrypto
 LIBS+=-lpthread
 LIBS+=-lrt
 LIBS+=-lm
-LIBS+=-l$(PLATFORM_LIB)
+LIBS+=-lusys
 LIBS+=-l$(JSON_LIB)
 LIBS+=-l$(HTTP_SERVER_LIB)
 LIBS+=$(ULFIUS_LIB_DEP)
@@ -116,7 +115,7 @@ LDFLAGS+=-L$(PLATFORM_LIB_DIR)
 LDFLAGS+=-L$(VENDOR_LIBS_DIR)
 LDFLAGS+=-L$(VENDOR_LIBS64_DIR)
 
-LDFLAGS+=-Wl,-rpath,$(PLATFORM_DIR)
+LDFLAGS+=-Wl,-rpath,$(PLATFORM_LIB_DIR)
 LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB_DIR)
 LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64_DIR)
 
@@ -246,7 +245,7 @@ $(SCHEMA): $(SCH_OBJFILES)
 
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGETBIN)
-	$(CC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
+	$(CC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -lusys
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
