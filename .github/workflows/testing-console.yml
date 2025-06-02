@@ -5,10 +5,6 @@ on:
   paths:
    - 'testing/console/**'
    - '.github/workflows/testing-console.yml'
- pull_request:
-  paths:
-   - 'testing/console/**'
-   - '.github/workflows/testing-console.yml'
 
 jobs:
  test:
@@ -75,13 +71,13 @@ jobs:
 
        if (fs.existsSync(reportPath)) {
          const runId = context.runId;
-         const reportUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts`;
+         const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/playwright-report`;
          
          github.rest.issues.createComment({
            issue_number: context.payload.pull_request.number,
            owner: context.repo.owner,
            repo: context.repo.repo,
-           body: `🎭 Playwright test results are available [here](${reportUrl})`
+           body: `🎭 Playwright test results are available [here](${artifactUrl})`
          });
        }
 
