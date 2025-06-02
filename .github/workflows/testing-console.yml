@@ -1,10 +1,6 @@
 name: console-testing
 
 on:
- push:
-  paths:
-   - 'testing/console/**'
-   - '.github/workflows/testing-console.yml'
  pull_request:
   paths:
    - 'testing/console/**'
