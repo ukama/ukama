@@ -61,6 +61,26 @@ func (es *RegistryEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		if err != nil {
 			return nil, err
 		}
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate"):
+		msg, err := es.unmarshalSimActivation(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = es.handleSimActivation(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
+
+	// NEW: SIM Deactivation Event  
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.deactivate"):
+		msg, err := es.unmarshalSimDeactivation(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+		err = es.handleSimDeactivation(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
 		msg, err := es.unmarshalAsrActivated(e.Msg)
 		if err != nil {
@@ -75,6 +95,50 @@ func (es *RegistryEventServer) EventNotification(ctx context.Context, e *epb.Eve
 	}
 
 	return &epb.EventResponse{}, nil
+}
+func (es *RegistryEventServer) handleSimDeactivation(ctx context.Context, event *epb.EventSimDeactivation) error {
+	log.Infof("SIM deactivated - ID: %s, ICCID: %s, Subscriber: %s", event.Id, event.Iccid, event.SubscriberId)
+	
+	subscriberId, err := uuid.FromString(event.SubscriberId)
+	if err != nil {
+		log.Errorf("Invalid subscriber ID %s: %v", event.SubscriberId, err)
+		return err
+	}
+	
+	subscriber := db.Subscriber{
+		SubscriberStatus: ukama.SubscriberStatusInactive,
+	}
+	
+	err = es.s.subscriberRepo.Update(subscriberId, subscriber)
+	if err != nil {
+		log.Errorf("Failed to update subscriber %s status to inactive: %v", subscriberId, err)
+		return err
+	}
+	
+	log.Infof("Updated subscriber %s status to inactive due to SIM deactivation", subscriberId)
+	return nil
+}
+func (es *RegistryEventServer) handleSimActivation(ctx context.Context, event *epb.EventSimActivation) error {
+	log.Infof("SIM activated - ID: %s, ICCID: %s, Subscriber: %s", event.Id, event.Iccid, event.SubscriberId)
+	
+	subscriberId, err := uuid.FromString(event.SubscriberId)
+	if err != nil {
+		log.Errorf("Invalid subscriber ID %s: %v", event.SubscriberId, err)
+		return err
+	}
+	
+	subscriber := db.Subscriber{
+		SubscriberStatus: ukama.SubscriberStatusActive,
+	}
+	
+	err = es.s.subscriberRepo.Update(subscriberId, subscriber)
+	if err != nil {
+		log.Errorf("Failed to update subscriber %s status to active: %v", subscriberId, err)
+		return err
+	}
+	
+	log.Infof("Updated subscriber %s status to active due to SIM activation", subscriberId)
+	return nil
 }
 func (es *RegistryEventServer) handleSubscriberDeactivated(ctx context.Context, event *epb.AsrInactivated) error {
 	log.Infof("SIM deactivated - IMSI: %s, ICCID: %s", event.Subscriber.Imsi, event.Subscriber.Iccid)
@@ -184,6 +248,25 @@ func (es *RegistryEventServer) unmarshalAsrActivated(msg *anypb.Any) (*epb.AsrAc
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to unmarshal AsrActivated: %v", err)
+		return nil, err
+	}
+	return p, nil
+}
+func (es *RegistryEventServer) unmarshalSimActivation(msg *anypb.Any) (*epb.EventSimActivation, error) {
+	p := &epb.EventSimActivation{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal EventSimActivation message: %+v. Error: %s", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func (es *RegistryEventServer) unmarshalSimDeactivation(msg *anypb.Any) (*epb.EventSimDeactivation, error) {
+	p := &epb.EventSimDeactivation{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal EventSimDeactivation message: %+v. Error: %s", msg, err.Error())
 		return nil, err
 	}
 	return p, nil

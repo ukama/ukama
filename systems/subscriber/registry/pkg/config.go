@@ -45,6 +45,8 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sims.deletion_completed",
 				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
 				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.deactivate",
 			},
 		},
 	}
