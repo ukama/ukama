@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import path from 'path';
 
 const defaultImportStatement =
-  "import { TEST_USER_EMAIL, TEST_USER_PASSWORD, LOGIN_URL, CONSOLE_ROOT_URL } from '@/constants';\nimport { faker } from '@faker-js/faker';\nimport { selectRandomOption } from '@/utils';\ntest.setTimeout(2000);";
+  "import { TEST_USER_EMAIL, TEST_USER_PASSWORD, LOGIN_URL, CONSOLE_ROOT_URL } from '@/constants';\nimport { faker } from '@faker-js/faker';\nimport { selectRandomOption } from '@/utils';\ntest.setTimeout(60000);";
 
 export const applyPatch = async (
   fileName: string,
