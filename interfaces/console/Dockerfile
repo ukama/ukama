@@ -1,17 +1,32 @@
-FROM node:18-alpine AS base
+FROM node:24-bullseye-slim AS base
+
+# Install pnpm globally with the same version as local (10.11.0) and retry options
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000 && \
+    npm install -g pnpm@10.11.0
 
 FROM base AS builder
 
 WORKDIR /app
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN  yarn --frozen-lockfile
+# Install dependencies first
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
 
+# Configure pnpm and install dependencies
+RUN pnpm config set fetch-retry-mintimeout 20000 && \
+    pnpm config set fetch-retry-maxtimeout 120000 && \
+    pnpm config set fetch-timeout 300000 && \
+    pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy source files
 COPY src ./src
 COPY public ./public
 COPY next.config.mjs .
 COPY tsconfig.json .
 
+# Set environment variables
 ARG NEXT_PUBLIC_NODE_ENV
 ENV NEXT_PUBLIC_NODE_ENV=${NEXT_PUBLIC_NODE_ENV}
 ARG NEXT_PUBLIC_APP_URL
@@ -35,8 +50,8 @@ ENV NEXT_PUBLIC_APP_DOMAIN=${NEXT_PUBLIC_APP_DOMAIN}
 ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
-
-RUN yarn build
+# Build the application
+RUN pnpm run build
 
 FROM base AS runner
 
@@ -51,6 +66,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Set environment variables in runner
 ARG NEXT_PUBLIC_NODE_ENV
 ENV NEXT_PUBLIC_NODE_ENV=${NEXT_PUBLIC_NODE_ENV}
 ARG NEXT_PUBLIC_APP_URL
@@ -76,4 +92,4 @@ ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
 
 EXPOSE 8080
 
-CMD ["yarn", "start"]
+CMD ["pnpm", "start"]

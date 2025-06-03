@@ -5,20 +5,20 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import React from 'react';
+import { ReportDto } from '@/client/graphql/generated';
+import colors from '@/theme/colors';
 import {
   Box,
+  Button,
+  Divider,
   Paper,
   Stack,
   Typography,
-  Button,
-  Divider,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import colors from '@/theme/colors';
-import { ReportDto } from '@/client/graphql/generated';
 import { format } from 'date-fns';
+import React from 'react';
 interface OutStandingBillCardProps {
   reports?: ReportDto[];
   loading?: boolean;
@@ -26,7 +26,6 @@ interface OutStandingBillCardProps {
 }
 const OutStandingBillCard: React.FC<OutStandingBillCardProps> = ({
   reports,
-  loading = false,
   onPaySingle,
 }) => {
   const theme = useTheme();

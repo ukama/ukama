@@ -37,6 +37,7 @@ export const NODE_ACTIONS_ENUM = {
   NODE_RESTART: 'node-restart',
   NODE_RF_OFF: 'node-rf-off',
   NODE_OFF: 'node-off',
+  NODE_RF_ON: 'node-rf-on',
 };
 
 export const NODE_ACTIONS_BUTTONS = [
@@ -46,6 +47,7 @@ export const NODE_ACTIONS_BUTTONS = [
     consent: 'Are you sure you want to restart node?',
   },
   { id: NODE_ACTIONS_ENUM.NODE_RF_OFF, name: 'Turn RF Off' },
+  { id: NODE_ACTIONS_ENUM.NODE_RF_ON, name: 'Turn RF On' },
   // { id: 'node-on-off', name: 'Turn Node Off' },
 ];
 
@@ -669,13 +671,10 @@ export const SITE_KPIS = {
       {
         unit: '',
         show: true,
-        format: 'number',
-        name: 'Nde uptime',
+        name: 'Node uptime',
         id: 'unit_uptime',
         description: 'Node uptime',
-        threshold: null,
-        tickInterval: undefined,
-        tickPositions: undefined,
+        format: 'number',
       },
     ],
   },
@@ -907,9 +906,9 @@ export const TIME_FILTER_OPTIONS = [
 ];
 
 export const SITE_KPI_TYPES = {
-  SITE_UPTIME: `site_uptime_seconds`,
-  BATTERY_CHARGE_PERCENTAGE: `battery_charge_percentage`,
-  BACKHAUL_SPEED: `backhaul_speed`,
-  SITE_UPTIME_PERCENTAGE: `site_uptime_percentage`,
-  NODE_UPTIME: `unit_uptime`,
+  SITE_UPTIME: 'site_uptime_seconds',
+  BATTERY_CHARGE_PERCENTAGE: 'battery_charge_percentage',
+  BACKHAUL_SPEED: 'backhaul_speed',
+  SITE_UPTIME_PERCENTAGE: 'site_uptime_percentage',
+  NODE_UPTIME: 'unit_uptime',
 };

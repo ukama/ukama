@@ -27,12 +27,11 @@ interface ISidebarProps {
   isDarkMode: boolean;
   placeholder: string;
   networks: NetworkDto[];
-  handleAddNetwork: Function;
-  handleNetworkChange: Function;
+  handleAddNetwork: () => void;
+  handleNetworkChange: (value: string) => void;
 }
 
 const Sidebar = ({
-  isOpen,
   isDarkMode,
   placeholder,
   networks = [],
@@ -64,6 +63,7 @@ const Sidebar = ({
         <Box mx={2} my={2}>
           <BasicDropdown
             value={network.id}
+            id={'create-network'}
             list={getDropDownData()}
             isShowAddOption={isOwner}
             placeholder={placeholder}

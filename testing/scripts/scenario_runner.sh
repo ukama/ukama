@@ -90,8 +90,8 @@ while true; do
                 -H 'Content-Type: application/json' \
                 -d "{
                     \"details\": {
-                        \"latitude\": -4.322447,
-                        \"longitude\": 15.307045
+                        \"latitude\": 37.7781135,
+                        \"longitude\": -121.983609
                     },
                     \"node_id\": \"$NODE_ID\",
                     \"service_name\": \"health\", 
@@ -102,7 +102,6 @@ while true; do
                 }")
             echo "API Response: $nr"
             ;;
-            
         "node_on"|"node_off"|"node_restart")
             echo "Running node $SCENARIO scenario..."
             echo "Making API call with Node ID: $NODE_ID"

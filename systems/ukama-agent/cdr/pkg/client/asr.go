@@ -32,7 +32,8 @@ type AsrService interface {
 func NewAsrClient(asrHost string, timeout time.Duration) (AsrService, error) {
 	conn, err := grpc.NewClient(asrHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Errorf("Failed to connect to asr service at %s. Error %s", asrHost, err.Error())
+		log.Errorf("Failed to connect to ASR service at %s. Error %s", asrHost, err.Error())
+
 		return nil, err
 	}
 

@@ -8,7 +8,10 @@
 
 package client
 
-import creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+import (
+	"github.com/ukama/ukama/systems/common/rest/client"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+)
 
 type Node interface {
 	GetNode(string) (*creg.NodeInfo, error)
@@ -35,7 +38,7 @@ func NewNodeClientSet(nd creg.NodeClient) Node {
 func (n *node) GetNode(id string) (*creg.NodeInfo, error) {
 	node, err := n.nc.Get(id)
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	return node, nil
@@ -49,7 +52,7 @@ func (n *node) RegisterNode(nodeId, nodeName, orgId, state string) (*creg.NodeIn
 		State:  state,
 	})
 	if err != nil {
-		return nil, handleRestErrorStatus(err)
+		return nil, client.HandleRestErrorStatus(err)
 	}
 
 	return node, nil
@@ -61,7 +64,7 @@ func (n *node) AttachNode(id, left, right string) error {
 		AmpNodeR: right,
 	})
 	if err != nil {
-		return handleRestErrorStatus(err)
+		return client.HandleRestErrorStatus(err)
 	}
 
 	return nil
@@ -70,7 +73,7 @@ func (n *node) AttachNode(id, left, right string) error {
 func (n *node) DetachNode(id string) error {
 	err := n.nc.Detach(id)
 	if err != nil {
-		return handleRestErrorStatus(err)
+		return client.HandleRestErrorStatus(err)
 	}
 
 	return nil
@@ -82,7 +85,7 @@ func (n *node) AddNodeToSite(id, networkId, siteId string) error {
 		SiteId:    siteId,
 	})
 	if err != nil {
-		return handleRestErrorStatus(err)
+		return client.HandleRestErrorStatus(err)
 	}
 
 	return nil
@@ -91,7 +94,7 @@ func (n *node) AddNodeToSite(id, networkId, siteId string) error {
 func (n *node) RemoveNodeFromSite(id string) error {
 	err := n.nc.RemoveFromSite(id)
 	if err != nil {
-		return handleRestErrorStatus(err)
+		return client.HandleRestErrorStatus(err)
 	}
 
 	return nil
@@ -100,7 +103,7 @@ func (n *node) RemoveNodeFromSite(id string) error {
 func (n *node) DeleteNode(id string) error {
 	err := n.nc.Delete(id)
 	if err != nil {
-		return handleRestErrorStatus(err)
+		return client.HandleRestErrorStatus(err)
 	}
 
 	return nil

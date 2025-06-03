@@ -9,6 +9,7 @@
 package client
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -92,7 +93,7 @@ func (r *Resty) Get(url string) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -121,7 +122,7 @@ func (r *Resty) GetWithQuery(url, q string) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -155,7 +156,7 @@ func (r *Resty) Post(url string, b []byte) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -189,7 +190,7 @@ func (r *Resty) Put(url string, b []byte) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -223,7 +224,7 @@ func (r *Resty) Patch(url string, b []byte) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -252,7 +253,7 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 		respError = fmt.Errorf("empty error response from remote API")
 	}
 
-	errStatus := ErrorStatus{
+	errStatus := &ErrorStatus{
 		StatusCode: resp.StatusCode(),
 		RawError:   respError,
 	}
@@ -273,7 +274,7 @@ type ErrorStatus struct {
 	RawError   error `json:"raw_error,omitempty"`
 }
 
-func (e ErrorStatus) Error() string {
+func (e *ErrorStatus) Error() string {
 	return fmt.Sprintf("%d: %s", e.StatusCode, e.RawError.Error())
 }
 
@@ -283,4 +284,21 @@ type AgentRequestData struct {
 	SimPackageId string `json:"sim_package_id,omitempty"`
 	PackageId    string `json:"package_id,omitempty"`
 	NetworkId    string `json:"network_id,omitempty"`
+}
+
+func HandleRestErrorStatus(err error) error {
+	var e *ErrorStatus
+
+	if errors.As(err, &e) {
+		log.Infof("Unwrapping error status: %v", e)
+
+		return crest.HttpError{
+			HttpCode: e.StatusCode,
+			Message:  e.Error(),
+		}
+	}
+
+	log.Infof("Returning generic error: %v", err)
+
+	return err
 }

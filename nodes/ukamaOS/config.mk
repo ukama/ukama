@@ -51,12 +51,12 @@ override LOCAL := linux
 
 # Set TARGET_BOARD and TARGET if not already set
 ifndef TARGET
-    override TARGET_BOARD := LOCAL
-    export TARGET := $(LOCAL)
+	override TARGET := $(shell echo $(LOCAL) | tr '[:upper:]' '[:lower:]')
 else
-    override TARGET_BOARD := $(TARGET)
-    export TARGET
+	override TARGET := $(shell echo $(TARGET) | tr '[:upper:]' '[:lower:]')
 endif
+override TARGET_BOARD := $(TARGET)
+export TARGET
 
 # Paths for application configurations
 APP_CONFIG_DIR := $(NODES_DIR)/configs/capps

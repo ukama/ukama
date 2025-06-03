@@ -37,8 +37,13 @@ const AccountPopover = () => {
   return (
     <>
       <IconButton
+        data-testid="account-settings-btn"
         sx={{
           ...IconStyle,
+          padding: '8px',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          },
         }}
         onClick={handleClick}
       >
@@ -59,9 +64,10 @@ const AccountPopover = () => {
           horizontal: 'center',
         }}
       >
-        <Paper sx={{ px: 3, py: 2 }}>
+        <Paper data-testid="account-settings-popover" sx={{ px: 3, py: 2 }}>
           <Stack spacing={1}>
             <Link
+              data-testid="account-settings-link"
               href={`${env.AUTH_APP_URL}/user/account-settings`}
               prefetch={true}
               style={{
@@ -83,7 +89,8 @@ const AccountPopover = () => {
             </Link>
             <Divider />
             <Link
-              href={`/logout`}
+              data-testid="logout-link"
+              href={'/logout'}
               prefetch={false}
               style={{
                 borderRadius: 4,

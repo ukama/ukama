@@ -9,8 +9,13 @@ package server
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -241,7 +246,7 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 		return 0, err
 	}
 
-	log.Debugf("Found %d cdr for imsi %s. CDR: %+v", len(*recs), imsi, recs)
+	log.Debugf("Found %d CDR for imsi %s. CDR: %+v", len(*recs), imsi, recs)
 	cdrs := *recs
 	sort.Slice(cdrs, func(i, j int) bool {
 		return cdrs[i].LastUpdatedAt < cdrs[j].LastUpdatedAt
@@ -264,7 +269,7 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 					usage = usageTillLastSession + cdr.TotalBytes
 					lastUpdatedAt = cdr.LastUpdatedAt
 				} else {
-					log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+					log.Infof("Ignoring CDR %+v because last used CDR for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
 					continue
 				}
 				/* Handle end of session CDR */
@@ -279,7 +284,7 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 					lastUpdatedAt = cdr.LastUpdatedAt
 					lastSessionId = cdr.Session
 				} else {
-					log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+					log.Infof("Ignoring CDR %+v because last used CDR for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
 					continue
 				}
 				/* Handle end of session CDR */
@@ -296,7 +301,7 @@ func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64
 				lastUpdatedAt = cdr.LastUpdatedAt
 				lastSessionId = cdr.Session
 			} else {
-				log.Infof("Ignoring CDR %+v because last used cdr for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
+				log.Infof("Ignoring CDR %+v because last used CDR for usage was with LastUpdatedAt %d", cdr, lastUpdatedAt)
 				continue
 			}
 		}
@@ -311,6 +316,14 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 
 	usage, err := s.cdrRepo.QueryUsage(req.Imsi, req.NodeId, req.Session, req.From, req.To, req.Policies, req.Count, req.Sort)
 	if err != nil {
+		if errors.Is(err, gorm.ErrInvalidData) {
+			log.Errorf("Query usage failure: Inconsistent CDR in DB for request: %v", req)
+			log.Warnf("Query Usage failure: You should check nodes correctly reported CDR for request: %v", req)
+
+			return nil, status.Errorf(codes.OutOfRange,
+				"query usage failure: inconsistent CDR(s) in DB for request: %v", req)
+		}
+
 		log.Errorf("Query usage failure: Error getting usage matching request %v. Error: %v", req, err)
 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting usage matiching request:")
@@ -434,14 +447,14 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 			} else {
 				/* New session
-				Assumption: We only allow the CDR which are generated(updated) after the last updated cdr in backend db
+				Assumption: We only allow the CDR which are generated(updated) after the last updated CDR in backend db
 				We might have to check it in future if we miss any CDR
 				We can still compile the report from CDR table as it contain all received CDR
 				*/
 				log.Infof("End session %d and create new session %d for imsi %s", ou.LastSessionId, sessionId, cdr.Imsi)
 				if cdr.LastUpdatedAt > lastUpdatedAt {
 					lastUpdatedAt = cdr.LastUpdatedAt
-					u.LastSessionUsage = u.Usage                  /* Usage till last session last cdr */
+					u.LastSessionUsage = u.Usage                  /* Usage till last session last CDR */
 					u.Historical = u.Historical + cdr.TotalBytes  /* usage is historical + current */
 					u.Usage = u.LastSessionUsage + cdr.TotalBytes /*usage for this package is last session + current */
 					u.LastNodeId = cdr.NodeId
@@ -458,10 +471,10 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 			}
 
 		} else {
-			/* This will always be new session as new node is reporting cdr now */
+			/* This will always be new session as new node is reporting CDR now */
 			log.Infof("End session %d and create new session %d for imsi %s because of node handover from %s to %s", ou.LastSessionId, sessionId, cdr.Imsi, lastCDRNodeId, cdr.NodeId)
 			lastUpdatedAt = cdr.LastUpdatedAt
-			u.LastSessionUsage = u.Usage                 /* Usage till last session last cdr */
+			u.LastSessionUsage = u.Usage                 /* Usage till last session last CDR */
 			u.Historical = u.Historical + cdr.TotalBytes /* usage is historical + current */
 			u.Usage = u.LastSessionUsage + cdr.TotalBytes
 			u.LastNodeId = cdr.NodeId

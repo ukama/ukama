@@ -12,13 +12,15 @@ import { RestartNodeResolver } from "./restartNode";
 import { RestartNodesResolver } from "./restartNodes";
 import { RestartSiteResolver } from "./restartSite";
 import { ToggleInternetSwitchResolver } from "./toggleInternetSwitch";
+import { ToggleRFStatusResolver } from "./toggleRFStatus";
 
 const resolvers: NonEmptyArray<any> = [
+  ExampleResolver,
   RestartNodeResolver,
   RestartNodesResolver,
   RestartSiteResolver,
+  ToggleRFStatusResolver,
   ToggleInternetSwitchResolver,
-  ExampleResolver,
 ];
 
 export default resolvers;

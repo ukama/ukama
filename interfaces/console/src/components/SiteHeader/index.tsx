@@ -14,6 +14,7 @@ import {
   Grid,
   MenuItem,
   Select,
+  SelectChangeEvent,
   Stack,
   Typography,
 } from '@mui/material';
@@ -39,16 +40,14 @@ const SiteHeader: React.FC<SiteHeaderProps> = ({
   restartSiteAction,
 }) => {
   const [selectedSite, setSelectedSite] = React.useState('site1');
-  const [siteHealth, setSiteHealth] = React.useState('online');
-  const [isSiteSelected, setIsSiteSelected] = React.useState(false);
+  const [siteHealth] = React.useState('online');
 
-  const handleSiteChange = (e: any) => {
+  const handleSiteChange = (e: SelectChangeEvent<string>) => {
     e.stopPropagation();
     const selectedValue = e.target.value;
     if (selectedValue === undefined) {
       return;
     } else {
-      setIsSiteSelected(true);
       const selectedSite = sites.find((site) => site.name === selectedValue);
       if (selectedSite) {
         sitesAction(selectedSite);

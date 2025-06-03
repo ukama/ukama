@@ -14,6 +14,7 @@ import {
   NodeTypeEnum,
   useGetNodesQuery,
   useRestartNodeMutation,
+  useToggleRfStatusMutation,
   useUpdateNodeMutation,
 } from '@/client/graphql/generated';
 import {
@@ -211,6 +212,30 @@ const Page: React.FC<INodePage> = ({ params }) => {
     },
   });
 
+  const [toggleRFStatus] = useToggleRfStatusMutation({
+    fetchPolicy: 'network-only',
+    onCompleted: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-rf-status-success-msg',
+        message: `RF status turned ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        } successfully.`,
+        type: 'success',
+        show: true,
+      });
+    },
+    onError: (_, context) => {
+      setSnackbarMessage({
+        id: 'toggle-rf-status-error-msg',
+        message: `Failed to turn RF status ${
+          context?.variables?.data?.status ? 'On' : 'Off'
+        }.`,
+        type: 'error',
+        show: true,
+      });
+    },
+  });
+
   useEffect(() => {
     const to = getUnixTime();
     const from = to - STAT_STEP_29;
@@ -326,7 +351,7 @@ const Page: React.FC<INodePage> = ({ params }) => {
 
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
-    const { msg, value, type, success } = parsedData.data.getMetricStatSub;
+    const { value, type, success } = parsedData.data.getMetricStatSub;
     if (success) {
       if (type === NODE_UPTIME_KEY) {
         setNodeUptime(Math.floor(value[1]));
@@ -383,7 +408,18 @@ const Page: React.FC<INodePage> = ({ params }) => {
           },
         });
         break;
+      case NODE_ACTIONS_ENUM.NODE_RF_ON:
       case NODE_ACTIONS_ENUM.NODE_RF_OFF:
+        if (currentNode?.id) {
+          toggleRFStatus({
+            variables: {
+              data: {
+                nodeId: currentNode.id,
+                status: action === NODE_ACTIONS_ENUM.NODE_RF_ON,
+              },
+            },
+          });
+        }
         break;
       default:
         return;

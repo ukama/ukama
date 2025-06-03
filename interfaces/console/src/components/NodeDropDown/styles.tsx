@@ -7,15 +7,12 @@
  */
 
 import { colors } from '@/theme';
-import { Theme } from '@mui/material';
-import { makeStyles } from '@mui/styles';
+import { Select, styled } from '@mui/material';
 
-const useStyles = makeStyles<Theme>(() => ({
-  selectStyle: () => ({
-    width: 'fit-content',
-    color: colors.primaryMain,
-  }),
-}));
+const SelectStyle = styled(Select)({
+  width: 'fit-content',
+  color: colors.primaryMain,
+});
 
 const SelectDisplayProps = {
   style: {
@@ -34,4 +31,4 @@ const PaperProps = {
   borderRadius: '4px',
 };
 
-export { PaperProps, SelectDisplayProps, useStyles };
+export { PaperProps, SelectDisplayProps, SelectStyle };

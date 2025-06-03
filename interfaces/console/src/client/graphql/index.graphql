@@ -142,6 +142,12 @@ mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {
   }
 }
 
+mutation ToggleRFStatus($data: ToggleRFStatusInputDto!) {
+  toggleRFStatus(data: $data) {
+    success
+  }
+}
+
 ### End Node ###
 
 ### Member Start ###

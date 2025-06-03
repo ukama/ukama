@@ -23,12 +23,7 @@ import { useAppContext } from '@/context';
 import MetricStatSubscription from '@/lib/MetricStatSubscription';
 import { colors } from '@/theme';
 import { TMetricResDto } from '@/types';
-import {
-  formatBytesToGB,
-  formatBytesToGigabit,
-  getUnixTime,
-  structureNodeSiteDate,
-} from '@/utils';
+import { formatBytesToGB, getUnixTime, structureNodeSiteDate } from '@/utils';
 import DataVolume from '@mui/icons-material/DataSaverOff';
 import GroupPeople from '@mui/icons-material/Group';
 import NetworkIcon from '@mui/icons-material/Hub';
@@ -193,7 +188,7 @@ export default function Page() {
     if (success && value.length === 2) {
       PubSub.publish(
         `${type}-${network.id}`,
-        type === kpiConfig[2].id ? formatBytesToGigabit(value[1]) : value[1],
+        type === kpiConfig[2].id ? formatBytesToGB(value[1]) : value[1],
       );
     }
   };
@@ -226,18 +221,18 @@ export default function Page() {
             options={MONTH_FILTER}
             iconColor={colors.beige}
             topic={`${kpiConfig[1].id}-${network.id}`}
-            handleSelect={(value: string) => {}}
+            handleSelect={() => {}}
           />
           <StatusCard
             Icon={DataVolume}
             option={'usage'}
-            subtitle2={`GBs`}
+            subtitle2={'GBs'}
             options={TIME_FILTER}
             loading={statLoading}
             title={'Data Volume'}
             iconColor={colors.secondaryMain}
             topic={`${kpiConfig[2].id}-${network.id}`}
-            handleSelect={(value: string) => {}}
+            handleSelect={() => {}}
           />
           <StatusCard
             option={''}
@@ -248,7 +243,7 @@ export default function Page() {
             title={'Active subscribers'}
             iconColor={colors.primaryMain}
             topic={`${kpiConfig[3].id}-${network.id}`}
-            handleSelect={(value: string) => {}}
+            handleSelect={() => {}}
           />
         </Stack>
       </Grid>

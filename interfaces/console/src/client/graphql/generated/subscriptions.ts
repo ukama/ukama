@@ -434,17 +434,17 @@ export const GetNotificationsDocument = gql`
  * });
  */
 export function useGetNotificationsQuery(baseOptions: Apollo.QueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables> & ({ variables: GetNotificationsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
+}
 export function useGetNotificationsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useLazyQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
+}
 export function useGetNotificationsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetNotificationsQuery, GetNotificationsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions};
+  return Apollo.useSuspenseQuery<GetNotificationsQuery, GetNotificationsQueryVariables>(GetNotificationsDocument, options);
+}
 export type GetNotificationsQueryHookResult = ReturnType<typeof useGetNotificationsQuery>;
 export type GetNotificationsLazyQueryHookResult = ReturnType<typeof useGetNotificationsLazyQuery>;
 export type GetNotificationsSuspenseQueryHookResult = ReturnType<typeof useGetNotificationsSuspenseQuery>;
@@ -500,9 +500,9 @@ export const NotificationSubscriptionDocument = gql`
  * });
  */
 export function useNotificationSubscriptionSubscription(baseOptions: Apollo.SubscriptionHookOptions<NotificationSubscriptionSubscription, NotificationSubscriptionSubscriptionVariables> & ({ variables: NotificationSubscriptionSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<NotificationSubscriptionSubscription, NotificationSubscriptionSubscriptionVariables>(NotificationSubscriptionDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useSubscription<NotificationSubscriptionSubscription, NotificationSubscriptionSubscriptionVariables>(NotificationSubscriptionDocument, options);
+}
 export type NotificationSubscriptionSubscriptionHookResult = ReturnType<typeof useNotificationSubscriptionSubscription>;
 export type NotificationSubscriptionSubscriptionResult = Apollo.SubscriptionResult<NotificationSubscriptionSubscription>;
 export const GetMetricByTabDocument = gql`
@@ -540,17 +540,17 @@ export const GetMetricByTabDocument = gql`
  * });
  */
 export function useGetMetricByTabQuery(baseOptions: Apollo.QueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables> & ({ variables: GetMetricByTabQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+}
 export function useGetMetricByTabLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useLazyQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+}
 export function useGetMetricByTabSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricByTabQuery, GetMetricByTabQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions};
+  return Apollo.useSuspenseQuery<GetMetricByTabQuery, GetMetricByTabQueryVariables>(GetMetricByTabDocument, options);
+}
 export type GetMetricByTabQueryHookResult = ReturnType<typeof useGetMetricByTabQuery>;
 export type GetMetricByTabLazyQueryHookResult = ReturnType<typeof useGetMetricByTabLazyQuery>;
 export type GetMetricByTabSuspenseQueryHookResult = ReturnType<typeof useGetMetricByTabSuspenseQuery>;
@@ -589,17 +589,17 @@ export const GetMetricsStatDocument = gql`
  * });
  */
 export function useGetMetricsStatQuery(baseOptions: Apollo.QueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables> & ({ variables: GetMetricsStatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+}
 export function useGetMetricsStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useLazyQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+}
 export function useGetMetricsStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricsStatQuery, GetMetricsStatQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions};
+  return Apollo.useSuspenseQuery<GetMetricsStatQuery, GetMetricsStatQueryVariables>(GetMetricsStatDocument, options);
+}
 export type GetMetricsStatQueryHookResult = ReturnType<typeof useGetMetricsStatQuery>;
 export type GetMetricsStatLazyQueryHookResult = ReturnType<typeof useGetMetricsStatLazyQuery>;
 export type GetMetricsStatSuspenseQueryHookResult = ReturnType<typeof useGetMetricsStatSuspenseQuery>;
@@ -636,17 +636,17 @@ export const GetSiteStatDocument = gql`
  * });
  */
 export function useGetSiteStatQuery(baseOptions: Apollo.QueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables> & ({ variables: GetSiteStatQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+}
 export function useGetSiteStatLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useLazyQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+}
 export function useGetSiteStatSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetSiteStatQuery, GetSiteStatQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions};
+  return Apollo.useSuspenseQuery<GetSiteStatQuery, GetSiteStatQueryVariables>(GetSiteStatDocument, options);
+}
 export type GetSiteStatQueryHookResult = ReturnType<typeof useGetSiteStatQuery>;
 export type GetSiteStatLazyQueryHookResult = ReturnType<typeof useGetSiteStatLazyQuery>;
 export type GetSiteStatSuspenseQueryHookResult = ReturnType<typeof useGetSiteStatSuspenseQuery>;
@@ -681,17 +681,17 @@ export const GetMetricBySiteDocument = gql`
  * });
  */
 export function useGetMetricBySiteQuery(baseOptions: Apollo.QueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables> & ({ variables: GetMetricBySiteQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
+}
 export function useGetMetricBySiteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
-        }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useLazyQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
+}
 export function useGetMetricBySiteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
-        }
+  const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions};
+  return Apollo.useSuspenseQuery<GetMetricBySiteQuery, GetMetricBySiteQueryVariables>(GetMetricBySiteDocument, options);
+}
 export type GetMetricBySiteQueryHookResult = ReturnType<typeof useGetMetricBySiteQuery>;
 export type GetMetricBySiteLazyQueryHookResult = ReturnType<typeof useGetMetricBySiteLazyQuery>;
 export type GetMetricBySiteSuspenseQueryHookResult = ReturnType<typeof useGetMetricBySiteSuspenseQuery>;
@@ -729,9 +729,9 @@ export const GetMetricsStatSubDocument = gql`
  * });
  */
 export function useGetMetricsStatSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetMetricsStatSubSubscription, GetMetricsStatSubSubscriptionVariables> & ({ variables: GetMetricsStatSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetMetricsStatSubSubscription, GetMetricsStatSubSubscriptionVariables>(GetMetricsStatSubDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useSubscription<GetMetricsStatSubSubscription, GetMetricsStatSubSubscriptionVariables>(GetMetricsStatSubDocument, options);
+}
 export type GetMetricsStatSubSubscriptionHookResult = ReturnType<typeof useGetMetricsStatSubSubscription>;
 export type GetMetricsStatSubSubscriptionResult = Apollo.SubscriptionResult<GetMetricsStatSubSubscription>;
 export const GetSiteMetricStatSubDocument = gql`
@@ -764,8 +764,8 @@ export const GetSiteMetricStatSubDocument = gql`
  * });
  */
 export function useGetSiteMetricStatSubSubscription(baseOptions: Apollo.SubscriptionHookOptions<GetSiteMetricStatSubSubscription, GetSiteMetricStatSubSubscriptionVariables> & ({ variables: GetSiteMetricStatSubSubscriptionVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetSiteMetricStatSubSubscription, GetSiteMetricStatSubSubscriptionVariables>(GetSiteMetricStatSubDocument, options);
-      }
+  const options = {...defaultOptions, ...baseOptions};
+  return Apollo.useSubscription<GetSiteMetricStatSubSubscription, GetSiteMetricStatSubSubscriptionVariables>(GetSiteMetricStatSubDocument, options);
+}
 export type GetSiteMetricStatSubSubscriptionHookResult = ReturnType<typeof useGetSiteMetricStatSubSubscription>;
 export type GetSiteMetricStatSubSubscriptionResult = Apollo.SubscriptionResult<GetSiteMetricStatSubSubscription>;

@@ -22,7 +22,7 @@ interface IGraphTitleWrapper {
   variant?: Variant;
   showFilter?: boolean;
   children: React.ReactNode;
-  handleFilterChange?: Function | undefined;
+  handleFilterChange?: (value: string) => void;
 }
 
 const GraphTitleWrapper = ({

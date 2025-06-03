@@ -96,9 +96,8 @@ func TestCient_RegisterNode(t *testing.T) {
 			OrgId:  orgId.String(),
 			State:  state,
 		}).Return(&creg.NodeInfo{
-			Id:    nodeId,
-			Name:  nodeName,
-			OrgId: orgId.String(),
+			Id:   nodeId,
+			Name: nodeName,
 		}, nil).Once()
 
 		nodeInfo, err := n.RegisterNode(nodeId, nodeName, orgId.String(), state)

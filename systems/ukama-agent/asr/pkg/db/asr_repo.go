@@ -212,7 +212,7 @@ func (r *asrRecordRepo) UpdateTai(imsi string, tai Tai) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		err := tx.Model(&Asr{}).Where("imsi=?", imsi).First(&imsiM).Error
 		if err != nil {
-			return errors.Wrap(err, "error getting asr record for given imsi")
+			return errors.Wrap(err, "error getting ASR record for given imsi")
 		}
 
 		var count int64

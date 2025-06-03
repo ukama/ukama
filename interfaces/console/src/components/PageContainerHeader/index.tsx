@@ -14,17 +14,19 @@ import { Button, Grid, TextField, Typography } from '@mui/material';
 interface IPageContainerHeader {
   title: string;
   search?: string;
+  buttonId?: string;
   subtitle?: string;
   showSearch?: boolean;
   buttonTitle?: string;
-  onSearchChange?: Function;
-  handleButtonAction?: Function;
+  onSearchChange?: (value: string) => void;
+  handleButtonAction?: () => void;
 }
 
 const PageContainerHeader = ({
   title,
   search,
   subtitle,
+  buttonId,
   onSearchChange,
   buttonTitle = '',
   showSearch = true,
@@ -75,6 +77,7 @@ const PageContainerHeader = ({
         {buttonTitle && (
           <Grid item xs={12} md={'auto'}>
             <Button
+              id={buttonId}
               variant="contained"
               color="primary"
               size="medium"

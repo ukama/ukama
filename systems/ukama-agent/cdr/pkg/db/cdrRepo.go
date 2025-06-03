@@ -9,6 +9,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -190,7 +191,15 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 
 	result := tx.First(&usage)
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return 0, nil
+		}
+
 		return 0, result.Error
+	}
+
+	if usage.Total == 0 {
+		return 0, gorm.ErrInvalidData
 	}
 
 	return usage.Total, nil

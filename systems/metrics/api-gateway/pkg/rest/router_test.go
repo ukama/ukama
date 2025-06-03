@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/systems/common/providers"
@@ -27,12 +27,6 @@ import (
 func init() {
 	gin.SetMode(gin.TestMode)
 }
-
-// var defaultCongif = &rest.HttpConfig{
-// 	Cors: cors.Config{
-// 		AllowAllOrigins: true,
-// 	},
-// }
 
 func Test_RouterPing(t *testing.T) {
 	// arrange
@@ -63,7 +57,7 @@ func Test_GetMetrics(t *testing.T) {
 	// arrange
 	body := ""
 	testSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logrus.Info(r.URL.String())
+		log.Info(r.URL.String())
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			t.Error(err)
@@ -121,5 +115,4 @@ func Test_GetMetrics(t *testing.T) {
 		}
 
 	})
-
 }

@@ -6,6 +6,8 @@
 #
 # Copyright (c) 2023-present, Ukama Inc.
 
+set -e
+
 export UKAMA_ROOT=$1
 CONFIG_DIR=${UKAMA_ROOT}/builder/configs/
 
@@ -27,5 +29,5 @@ done
 # cleanup
 make clean
 
-cp -r ${UKAMA_ROOT}/builder/pkgs $CWD
+cp -r ${UKAMA_ROOT}/build/pkgs $CWD
 cd $CWD

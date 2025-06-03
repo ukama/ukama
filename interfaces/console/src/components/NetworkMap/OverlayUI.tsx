@@ -22,7 +22,6 @@ import {
   Typography,
 } from '@mui/material';
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 export const LabelOverlayUI = ({ name }: { name: string }) => {
@@ -53,7 +52,6 @@ interface ISitesTree {
 }
 
 export const SitesTree = ({ sites }: ISitesTree) => {
-  const router = useRouter();
   return (
     <Box
       sx={{

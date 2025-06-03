@@ -20,14 +20,13 @@ interface IMetricStatBySiteSubscription {
 }
 
 const activeSubscriptions = new Map<string, AbortController>();
-
 function parseEvent(eventStr: string) {
   if (!eventStr || eventStr.startsWith(':')) return null;
 
   const event: any = {};
   const lines = eventStr.split('\n');
 
-  for (let line of lines) {
+  for (const line of lines) {
     if (line.startsWith('data:')) {
       event.data = line.slice(5).trim();
     } else if (line.startsWith('id:')) {
@@ -39,7 +38,6 @@ function parseEvent(eventStr: string) {
 
   return event.data || event.id || event.event ? event : null;
 }
-
 export default function MetricStatBySiteSubscription(
   params: IMetricStatBySiteSubscription,
 ) {
@@ -118,7 +116,6 @@ export default function MetricStatBySiteSubscription(
         if (activityTimeout) clearTimeout(activityTimeout);
         activityTimeout = setTimeout(
           () => {
-            console.log('Connection timeout, closing...');
             controller.abort();
             activeSubscriptions.delete(key);
           },
@@ -157,13 +154,9 @@ export default function MetricStatBySiteSubscription(
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        console.log('Fetch aborted');
       } else {
-        console.error('SSE connection error:', error);
-
         if (activeSubscriptions.has(key)) {
           setTimeout(() => {
-            console.log('Attempting to reconnect...');
             startSSE();
           }, 2000);
         }

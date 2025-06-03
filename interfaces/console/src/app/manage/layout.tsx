@@ -58,7 +58,9 @@ const MenuItem: React.FC<MenuItemProps> = ({
   isCompactView,
 }) => (
   <Link
+    id={id}
     href={path}
+    data-testid={id}
     prefetch={id === 'manage-members'}
     style={{
       borderRadius: 4,
@@ -142,7 +144,7 @@ const ManageLayout: React.FC<ManageLayoutProps> = ({ children }) => {
   const theme = useTheme();
   const pathname = usePathname();
   const isCompactView = useMediaQuery(theme.breakpoints.down('md'));
-  const { isDarkMode, user, network, setNetwork } = useAppContext();
+  const { isDarkMode, network, setNetwork } = useAppContext();
 
   useGetNetworksQuery({
     fetchPolicy: 'network-only',

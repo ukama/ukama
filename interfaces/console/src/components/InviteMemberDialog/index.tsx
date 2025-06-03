@@ -31,8 +31,8 @@ type InviteMemberDialogProps = {
   isOpen: boolean;
   labelSuccessBtn?: string;
   labelNegativeBtn?: string;
-  handleCloseAction: Function;
-  handleSuccessAction?: Function;
+  handleCloseAction: () => void;
+  handleSuccessAction?: (member: any) => void;
   invitationLoading?: boolean;
 };
 

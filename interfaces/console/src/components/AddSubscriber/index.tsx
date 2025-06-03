@@ -4,9 +4,9 @@ import {
   SimPoolResDto,
 } from '@/client/graphql/generated';
 import { useAppContext } from '@/context';
-import { globalUseStyles } from '@/styles/global';
 import colors from '@/theme/colors';
 import { SubscriberDetailsType } from '@/types';
+import styled from '@emotion/styled';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -32,7 +32,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { makeStyles } from '@mui/styles';
 import { Field, Form, Formik } from 'formik';
 import QRCode from 'qrcode.react';
 import React, { useState } from 'react';
@@ -55,21 +54,17 @@ const stepZeroSchema = Yup.object().shape({
       'Invalid email format',
     ),
 });
-const useStyles = makeStyles(() => ({
-  selectStyle: {
-    width: '100%',
-    height: '48px',
-  },
-  formControl: {
-    width: '100%',
-    height: '48px',
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 10,
-    top: 14,
-  },
-}));
+
+const SelectStyle = styled(Select)({
+  width: '100%',
+  height: '48px',
+});
+
+const CloseButtonStyle = styled(IconButton)({
+  position: 'absolute',
+  right: 10,
+  top: 14,
+});
 
 interface SubscriberFormProps {
   isOpen: boolean;
@@ -99,9 +94,6 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
   const [submissionData, setSubmissionData] =
     useState<AllocateSimApiDto | null>(null);
   const [selectedSim, setSelectedSim] = useState<SimPoolResDto | null>(null);
-
-  const gclasses = globalUseStyles();
-  const classes = useStyles();
 
   const initialValues: SubscriberDetailsType = {
     name: '',
@@ -209,13 +201,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
           <>
             <DialogTitle sx={{ color: colors.black }}>
               Add Subscriber
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                className={classes.closeButton}
-              >
+              <CloseButtonStyle aria-label="close" onClick={handleClose}>
                 <CloseIcon />
-              </IconButton>
+              </CloseButtonStyle>
             </DialogTitle>
             <DialogContent>
               <Typography
@@ -234,11 +222,18 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                       required
                       fullWidth
                       label="Name"
+                      sx={{
+                        height: '48px',
+                        '& .MuiInputBase-root': {
+                          height: '100%',
+                        },
+                      }}
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        classes: { input: gclasses.inputFieldStyle },
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
                       }}
                     />
                   )}
@@ -250,11 +245,18 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                       required
                       fullWidth
                       label="Email"
+                      sx={{
+                        height: '48px',
+                        '& .MuiInputBase-root': {
+                          height: '100%',
+                        },
+                      }}
                       error={meta.touched && Boolean(meta.error)}
                       helperText={meta.touched && meta.error}
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{
-                        classes: { input: gclasses.inputFieldStyle },
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
                       }}
                     />
                   )}
@@ -281,13 +283,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
           <>
             <DialogTitle>
               Enter SIM ICCID
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                className={classes.closeButton}
-              >
+              <CloseButtonStyle aria-label="close" onClick={handleClose}>
                 <CloseIcon />
-              </IconButton>
+              </CloseButtonStyle>
             </DialogTitle>
             <DialogContent>
               <Typography
@@ -301,7 +299,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                 undone.{' '}
               </Typography>
               <Field name="simIccid">
-                {({ field, form, meta }: any) => (
+                {({ field, form }: any) => (
                   <Autocomplete
                     freeSolo
                     value={field.value}
@@ -358,13 +356,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
           <>
             <DialogTitle>
               Select data plan
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                className={classes.closeButton}
-              >
+              <CloseButtonStyle aria-label="close" onClick={handleClose}>
                 <CloseIcon />
-              </IconButton>
+              </CloseButtonStyle>
             </DialogTitle>
             <DialogContent>
               <Typography
@@ -374,7 +368,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
               >
                 Select the purchased data plan
               </Typography>
-              <Field name="plan">
+              <Field name="plan" id="add-subscriber-plan-select">
                 {({ field, meta }: any) => (
                   <FormControl
                     fullWidth
@@ -383,8 +377,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                     <InputLabel htmlFor="outlined-plan" shrink>
                       DATA PLAN
                     </InputLabel>
-                    <Select
+                    <SelectStyle
                       {...field}
+                      label="DATA PLAN"
                       input={
                         <OutlinedInput
                           notched
@@ -392,7 +387,6 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                           id="outlined-plan"
                         />
                       }
-                      className={classes.selectStyle}
                     >
                       {packages.length === 0 ? (
                         <NoItemMessage message="No packages available. Please add packages first." />
@@ -405,7 +399,7 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
                           </MenuItem>
                         ))
                       )}
-                    </Select>
+                    </SelectStyle>
                     {meta.touched && meta.error && (
                       <FormHelperText>{meta.error}</FormHelperText>
                     )}
@@ -437,13 +431,9 @@ const AddSubscriberStepperDialog: React.FC<SubscriberFormProps> = ({
           <>
             <DialogTitle>
               Successfully added [{formik.values.name}]
-              <IconButton
-                aria-label="close"
-                onClick={handleClose}
-                className={classes.closeButton}
-              >
+              <CloseButtonStyle aria-label="close" onClick={handleClose}>
                 <CloseIcon />
-              </IconButton>
+              </CloseButtonStyle>
             </DialogTitle>
             <DialogContent>
               {submissionData?.is_physical ? (

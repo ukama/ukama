@@ -139,7 +139,7 @@ export default function ConosleLayout({
           role: user.role,
           startTimestamp: startTimeStamp,
         },
-      }).then((data) => {
+      }).then(() => {
         ServerNotificationSubscription(
           env.METRIC_URL,
           `notification-${user.orgId}-${user.id}-${user.role}-${network.id}`,

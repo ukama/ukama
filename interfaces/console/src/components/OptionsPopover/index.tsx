@@ -24,7 +24,7 @@ type ItemProps = {
   title: string;
   titleColor?: string;
   isShowUpdate: boolean;
-  handleItemClick: Function;
+  handleItemClick: (type: string) => void;
 };
 
 const OptionItem = ({
@@ -72,7 +72,7 @@ type OptionsPopoverProps = {
   cid: string;
   isShowUpdate?: boolean;
   menuOptions: MenuItemType[];
-  handleItemClick: Function;
+  handleItemClick: (type: string) => void;
   style?: any;
 };
 
@@ -92,6 +92,7 @@ const OptionsPopover = ({
   return (
     <>
       <IconButton
+        id={cid}
         onClick={handlePopoverOpen}
         aria-describedby={id}
         style={style}

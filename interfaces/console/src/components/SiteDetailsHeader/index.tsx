@@ -128,27 +128,27 @@ const SiteDetailsHeader: React.FC<SiteDetailsHeaderProps> = ({
           >
             {isLoading
               ? [
-                  <MenuItem key="loading-1">
-                    <Skeleton variant="rectangular" height={30} width={200} />
-                  </MenuItem>,
-                  <MenuItem key="loading-2">
-                    <Skeleton variant="rectangular" height={30} width={200} />
-                  </MenuItem>,
-                  <MenuItem key="loading-3">
-                    <Skeleton variant="rectangular" height={30} width={200} />
-                  </MenuItem>,
-                ]
+                <MenuItem key="loading-1">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+                <MenuItem key="loading-2">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+                <MenuItem key="loading-3">
+                  <Skeleton variant="rectangular" height={30} width={200} />
+                </MenuItem>,
+              ]
               : [
-                  ...siteList.map((site) => (
-                    <MenuItem
-                      key={site.id}
-                      onClick={() => handleSiteSelect(site.id)}
-                      selected={selectedSiteId === site.id}
-                    >
-                      {site.name}
-                    </MenuItem>
-                  )),
-                ]}
+                ...siteList.map((site) => (
+                  <MenuItem
+                    key={site.id}
+                    onClick={() => handleSiteSelect(site.id)}
+                    selected={selectedSiteId === site.id}
+                  >
+                    {site.name}
+                  </MenuItem>
+                )),
+              ]}
           </Menu>
         </Stack>
         {isLoading || siteUpTime == null ? (

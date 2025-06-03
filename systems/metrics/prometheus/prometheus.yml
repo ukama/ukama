@@ -58,3 +58,15 @@ scrape_configs:
     static_configs:
       - targets: ['dnode:8085']
     metrics_path: "/metrics"
+
+remote_write:
+  - url: "http://api-gateway-metrics:8080/v1/sanitize"
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: trx_lte_core_active_ue
+        action: keep
+    queue_config:
+      batch_send_deadline: 10s      # max wait before sending a batch
+      max_samples_per_send: 500     # force batching
+      min_backoff: 5s
+      max_backoff: 30s
