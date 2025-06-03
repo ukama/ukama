@@ -109,20 +109,29 @@ endif
 
 prometheus-client:
 	$(call print_msg,"prometheus-client")
-ifeq (,$(wildcard ${DEP_DIR}/lib/libprom.*))
-	mkdir -p $@/prom/build && \
+ifeq (,$(wildcard ${DEP_DIR}/lib/libprom*.*))
+	@echo "Building prom"
+	mkdir -p $@/prom/build
 	cd $@/prom/build && \
-	cmake ../ -DCMAKE_C_COMPILER=${CC} -DCMAKE_C_FLAGS="${CFLAGS}" \
-		-DCMAKE_LD_FLAGS="${LD_FLAGS}" \
-		-DCMAKE_TOOLCHAIN_FILE=$(CUR_PATH)cmake_tool_chain_file.cmake && \
-	make install DESTDIR=$(DEP_DIR)
+		cmake ../ \
+			-DCMAKE_C_COMPILER=${CC} \
+			-DCMAKE_C_FLAGS="${CFLAGS}" \
+			-DCMAKE_EXE_LINKER_FLAGS="${LD_FLAGS}" \
+			-DCMAKE_TOOLCHAIN_FILE=$(CUR_PATH)cmake_tool_chain_file.cmake \
+			-DCMAKE_INSTALL_PREFIX=/usr && \
+		make && make install DESTDIR=$(DEP_DIR)
+
 	@echo "Building promhttp"
-	mkdir -p $@/promhttp/build && \
+	mkdir -p $@/promhttp/build
 	cd $@/promhttp/build && \
-	cmake ../ -DCMAKE_C_COMPILER=${CC} -DCMAKE_C_FLAGS="${CFLAGS}" \
-		-DCMAKE_LD_FLAGS="${LD_FLAGS}" \
-		-DCMAKE_TOOLCHAIN_FILE=$(CUR_PATH)cmake_tool_chain_file.cmake && \
-	make install DESTDIR=$(DEP_DIR)
+		cmake ../ \
+			-DCMAKE_C_COMPILER=${CC} \
+			-DCMAKE_C_FLAGS="${CFLAGS}" \
+			-DCMAKE_EXE_LINKER_FLAGS="${LD_FLAGS}" \
+			-DCMAKE_TOOLCHAIN_FILE=$(CUR_PATH)cmake_tool_chain_file.cmake \
+			-DCMAKE_INSTALL_PREFIX=/usr && \
+		make && make install DESTDIR=$(DEP_DIR)
+
 	$(call post_build_cleanup,$@/prom/build)
 	$(call post_build_cleanup,$@/promhttp/build)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}

@@ -9,23 +9,23 @@ include ../../../config.mk
 TARGET_EXEC = config.d
 
 VERSION_FILE = version.h
-ARTIFACTS = $(TARGET_EXEC)
+ARTIFACTS    = $(TARGET_EXEC)
 
 APP_NAME = $(CUR_BUILD_DIRNAME)
 TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 APP_CONFIG = 
 
-VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
-VENDOR_BUILD = $(VENDOR_DIR)/build/
-VENDOR_INC   = $(VENDOR_BUILD)/include/
-VENDOR_LIB   = $(VENDOR_BUILD)/lib/
-VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor
+VENDOR_BUILD = $(VENDOR_DIR)/build
+VENDOR_INC   = $(VENDOR_BUILD)/include
+VENDOR_LIB   = $(VENDOR_BUILD)/lib
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64
 
-PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform/
-PLATFORM_BUILD   = $(PLATFORM_DIR)/build/
+PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform
+PLATFORM_BUILD   = $(PLATFORM_DIR)/build
 PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
 PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
-PLATFORM_LIB     = $(PLATFORM_DIR)/build/
+PLATFORM_LIB     = $(PLATFORM_DIR)/build
 
 # Packages needed to compile target
 ifeq ($(ALPINE_BUILD),1)
@@ -46,13 +46,17 @@ CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
-CFLAGS+=-I./inc/common/
+CFLAGS+=-I./inc/common
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
 
 LDFLAGS+=-L$(VENDOR_LIB)
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
+
+LDFLAGS+=-Wl,-rpath,$(PLATFORM_LIB)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64)
 
 # Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto

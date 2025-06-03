@@ -9,7 +9,7 @@
 set -e
 
 export UKAMA_ROOT=$1
-CONFIG_DIR=${UKAMA_ROOT}/builder/configs/
+CONFIG_DIR=${UKAMA_ROOT}/builder/configs
 
 CWD=`pwd`
 cd ${UKAMA_ROOT}/builder
