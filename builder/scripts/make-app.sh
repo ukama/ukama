@@ -70,7 +70,7 @@ case "$ACTION" in
 	    $2
 	    ;;
     "patchelf")
-#	    patchelf --set-rpath /lib $2
+	    patchelf --set-rpath /lib $2
 	    ;;
     "mkdir")
 	    mkdir -p $2
