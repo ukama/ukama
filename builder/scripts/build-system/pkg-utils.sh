@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -101,13 +101,15 @@ function copy_all_apps() {
 
 function copy_required_libs() {
     local lib_pkg="$1"
-    local rootfs="$2"
+    local dest="$2"
+    local tmp_dir
 
     log "INFO" "Installing required libs from ${lib_pkg}"
-    pushd "${lib_pkg}" > /dev/null
-    tar zxf vendor_libs.tgz
-    cp -rf ./build/* "${rootfs}/usr/"
-    popd > /dev/null
+    tmp_dir=$(mktemp -d)
+    tar -zxf "${lib_pkg}/vendor_libs.tgz" -C "$tmp_dir"
+    cp -f "${tmp_dir}"/* "${dest}/"
+
+#    rm -rf "$tmp_dir"
 }
 
 get_enabled_apps() {
