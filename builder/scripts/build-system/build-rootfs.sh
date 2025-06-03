@@ -489,7 +489,7 @@ log "INFO" "Network configuration"
 configure_network  # Configure network
 
 log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
-create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}# Create OpenRC service
+create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}
 
 log "INFO" "Copy misc files."
 copy_misc_files 
@@ -499,4 +499,3 @@ copy_linux_kernel
 
 echo "Rootfs build success."
 exit 0
-                                                                 

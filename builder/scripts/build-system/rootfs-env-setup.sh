@@ -84,7 +84,7 @@ ${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system
               "-p" "active" \
               "-r" "v3.17" \
               "-n" "starterd" \
-              "-c" "/sbin/starterd" \
+              "-c" "/sbin/starter.d" \
               "-A" "${ARCH}" \
               "-V" "${VERSION}" \
               "-M" "${MIRROR}"
