@@ -44,11 +44,18 @@ if [ $? -eq 0 ]; then
     echo "Apps build:"
     ls -ltr "${UKAMA_REPO}/build/pkgs/"*
 
-    echo "Package vendor libs"
-    cd "${UKAMA_REPO}/nodes/ukamaOS/distro/vendor" || exit 1
-    ls -ltr build/lib/*
+    echo "Package vendor libs and platform lib"
     mkdir -p "${UKAMA_REPO}/build/libs"
-    tar -zcvf "${UKAMA_REPO}/build/libs/vendor_libs.tgz" build/lib/*
+
+    VENDOR_LIB_DIR="${UKAMA_REPO}/nodes/ukamaOS/distro/vendor/build/lib"
+    PLATFORM_LIB="${UKAMA_REPO}/nodes/ukamaOS/distro/platform/build/libusys.so"
+
+    # Get list of *.a and *.so files (flat only)
+    FILES=$(cd "$VENDOR_LIB_DIR" && ls *.a *.so 2>/dev/null)
+
+    tar -zcvf "${UKAMA_REPO}/build/libs/vendor_libs.tgz" \
+        -C "$VENDOR_LIB_DIR" $FILES \
+        -C "$(dirname "$PLATFORM_LIB")" "$(basename "$PLATFORM_LIB")"
 else
     exit 1
 fi
