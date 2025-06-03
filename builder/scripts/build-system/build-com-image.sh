@@ -303,9 +303,9 @@ else
     log "ERROR" "Disk image creation unsuccessful"
     exit 1
 fi
-copy_all_apps "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
-copy_required_libs "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR"
-create_manifest_file "$MANIFEST_FILE" "${APPS[@]}"
+copy_all_apps        "$UKAMA_REPO_APP_PKG" "$UKAMA_APP_PKG"
+copy_required_libs   "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR/lib"
+create_manifest_file "$MANIFEST_FILE"      "${APPS[@]}"
 
 copy_rootfs
 cp -rf "${MANIFEST_FILE}" "${PRIMARY_MOUNT}"
