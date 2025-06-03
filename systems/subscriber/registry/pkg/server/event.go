@@ -27,11 +27,11 @@ import (
 
 type RegistryEventServer struct {
 	orgName string
-	s       *SubcriberServer
+	s       *SubscriberServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewRegistryEventServer(orgName string, s *SubcriberServer) *RegistryEventServer {
+func NewRegistryEventServer(orgName string, s *SubscriberServer) *RegistryEventServer {
 	return &RegistryEventServer{
 		orgName: orgName,
 		s:       s,
@@ -71,7 +71,6 @@ func (es *RegistryEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-	// NEW: SIM Deactivation Event  
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.deactivate"):
 		msg, err := es.unmarshalSimDeactivation(e.Msg)
 		if err != nil {

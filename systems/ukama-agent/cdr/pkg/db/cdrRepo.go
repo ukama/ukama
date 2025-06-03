@@ -129,10 +129,12 @@ func (p *cdrRepo) GetByTime(imsi string, startTime uint64, endTime uint64) (*[]C
 func (p *cdrRepo) GetByTimeAndNodeId(imsi string, startTime uint64, endTime uint64, nodeId string) (*[]CDR, error) {
 	var cdr []CDR
 	
-	r := p.db.GetGormDb().Where("imsi = ? AND start_time >= ? AND node_id = ?", imsi, startTime, nodeId).Find(&cdr)
+	r := p.db.GetGormDb().Where("imsi = ? AND start_time >= ? AND start_time <= ? AND end_time <= ? AND node_id = ?", 
+		imsi, startTime, endTime, endTime, nodeId).Find(&cdr)
 	
 	if r.Error != nil {
-		log.Errorf("error getting cdr for imsi %s with start time %d and node %s. Error: %+v", imsi, startTime, nodeId, r.Error)
+		log.Errorf("error getting cdr for imsi %s with time range %d-%d and node %s. Error: %+v", 
+			imsi, startTime, endTime, nodeId, r.Error)
 		return nil, r.Error
 	}
 	return &cdr, nil

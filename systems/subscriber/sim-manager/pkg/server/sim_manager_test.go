@@ -725,6 +725,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
     t.Run("SuccessfulTermination", func(t *testing.T) {
         var subscriberID = uuid.NewV4()
+        var networkID = uuid.NewV4() // Add networkID
         var simID1 = uuid.NewV4()
         var simID2 = uuid.NewV4()
 
@@ -738,12 +739,14 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
                 {
                     Id:           simID1,
                     SubscriberId: subscriberID,
+                    NetworkId:    networkID, // Set NetworkId
                     Status:       ukama.SimStatusActive,
                     Iccid:        "test-iccid-1",
                 },
                 {
                     Id:           simID2,
                     SubscriberId: subscriberID,
+                    NetworkId:    networkID, // Set NetworkId
                     Status:       ukama.SimStatusInactive,
                     Iccid:        "test-iccid-2",
                 },
@@ -790,6 +793,23 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
         simRepo.On("Update", mock.MatchedBy(func(sim *db.Sim) bool {
             return sim.Id == simID2 && sim.Status == ukama.SimStatusTerminated
         }), mock.Anything).Return(nil).Once()
+
+        // Mock calls for push metric functions (these happen at the end of TerminateSimsForSubscriber)
+        // pushActiveSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusActive, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
+        
+        // pushInactiveSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
+        
+        // pushTerminatedSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusTerminated, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
+        
+        // pushTotalSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
 
         // Message bus for ASR cleanup
         msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -1201,17 +1221,22 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 func TestSimManagerServer_TerminateSim(t *testing.T) {
     t.Run("SimFound", func(t *testing.T) {
         var simID = uuid.NewV4()
+        var networkID = uuid.NewV4() // Add networkID
+        var subscriberID = uuid.NewV4() // Add subscriberID
         msgbusClient := &cmocks.MsgBusServiceClient{}
 
         simRepo := &mocks.SimRepo{}
         agentFactory := &mocks.AgentFactory{}
 
         sim := simRepo.On("Get", simID).
-            Return(&db.Sim{Id: simID,
-                Iccid:      testIccid,
-                Status:     ukama.SimStatusInactive,
-                Type:       ukama.SimTypeTest,
-                IsPhysical: false,
+            Return(&db.Sim{
+                Id:           simID,
+                SubscriberId: subscriberID,
+                NetworkId:    networkID, // Set NetworkId
+                Iccid:        testIccid,
+                Status:       ukama.SimStatusInactive,
+                Type:         ukama.SimTypeTest,
+                IsPhysical:   false,
             }, nil).
             Once().
             ReturnArguments.Get(0).(*db.Sim)
@@ -1224,16 +1249,34 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
         agentAdapter.On("TerminateSim", mock.Anything,
             sim.Iccid).Return(nil).Once()
 
+        // Check for other SIMs for the subscriber - should return more than 1 to avoid triggering subscriber deletion
+        simRepo.On("List", "", "", sim.SubscriberId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{
+                *sim, // The current SIM
+                {Id: uuid.NewV4(), SubscriberId: subscriberID}, // Another SIM for same subscriber
+            }, nil).Once()
+
         simRepo.On("Update",
             &db.Sim{
                 Id:     sim.Id,
                 Status: ukama.SimStatusTerminated,
             },
             mock.Anything).Return(nil).Once()
+        
         msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-        simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-            mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Times(3)
+        // Mock calls for push metric functions
+        // pushTerminatedSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusTerminated, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
+        
+        // pushInactiveSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
+        
+        // pushActiveSimsCountMetric
+        simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusActive, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
 
         s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
             nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
@@ -1263,9 +1306,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
             }, nil).
             Once()
             
-        // Using AtLeast(0) to indicate it can be called any number of times (including zero)
-        simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-            mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Maybe()
+        // This test should fail before making any List calls, so no need to mock List
 
         s := NewSimManagerServer(OrgName, simRepo,
             nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -1282,26 +1323,33 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 
     t.Run("SimTypeNotSupported", func(t *testing.T) {
         var simID = uuid.NewV4()
+        var subscriberID = uuid.NewV4()
 
         simRepo := &mocks.SimRepo{}
         agentFactory := &mocks.AgentFactory{}
 
         sim := simRepo.On("Get", simID).
-            Return(&db.Sim{Id: simID,
-                Iccid:      testIccid,
-                Status:     ukama.SimStatusInactive,
-                Type:       100,
-                IsPhysical: false,
+            Return(&db.Sim{
+                Id:           simID,
+                SubscriberId: subscriberID,
+                Iccid:        testIccid,
+                Status:       ukama.SimStatusInactive,
+                Type:         100, // Invalid sim type
+                IsPhysical:   false,
             }, nil).
             Once().
             ReturnArguments.Get(0).(*db.Sim)
 
+        // Check for other SIMs for the subscriber - return multiple SIMs to avoid subscriber deletion flow
+        simRepo.On("List", "", "", sim.SubscriberId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{
+                *sim, // The current SIM
+                {Id: uuid.NewV4(), SubscriberId: subscriberID}, // Another SIM for same subscriber
+            }, nil).Once()
+
         agentFactory.On("GetAgentAdapter", sim.Type).
             Return(&mocks.AgentAdapter{}, false).
             Once()
-            
-        simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-            mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Maybe()
 
         s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
             nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -1318,19 +1366,29 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 
     t.Run("SimAgentFailToTerminate", func(t *testing.T) {
         var simID = uuid.NewV4()
+        var subscriberID = uuid.NewV4()
 
         simRepo := &mocks.SimRepo{}
         agentFactory := &mocks.AgentFactory{}
 
         sim := simRepo.On("Get", simID).
-            Return(&db.Sim{Id: simID,
-                Iccid:      testIccid,
-                Status:     ukama.SimStatusInactive,
-                Type:       ukama.SimTypeTest,
-                IsPhysical: false,
+            Return(&db.Sim{
+                Id:           simID,
+                SubscriberId: subscriberID,
+                Iccid:        testIccid,
+                Status:       ukama.SimStatusInactive,
+                Type:         ukama.SimTypeTest,
+                IsPhysical:   false,
             }, nil).
             Once().
             ReturnArguments.Get(0).(*db.Sim)
+
+        // Check for other SIMs for the subscriber - return multiple SIMs to avoid subscriber deletion flow
+        simRepo.On("List", "", "", sim.SubscriberId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
+            uint32(0), false, uint32(0), false).Return([]db.Sim{
+                *sim, // The current SIM
+                {Id: uuid.NewV4(), SubscriberId: subscriberID}, // Another SIM for same subscriber
+            }, nil).Once()
 
         agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
             Return(&mocks.AgentAdapter{}, true).
@@ -1339,9 +1397,6 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 
         agentAdapter.On("TerminateSim", mock.Anything,
             sim.Iccid).Return(errors.New("anyError")).Once()
-            
-        simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-            mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]db.Sim{}, nil).Maybe()
 
         s := NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
             nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)

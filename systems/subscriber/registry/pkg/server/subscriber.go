@@ -41,7 +41,7 @@ import (
 
 const MAX_DELETION_RETRIES = 3
 
-type SubcriberServer struct {
+type SubscriberServer struct {
 	orgName              string
 	orgId                string
 	msgbus               mb.MsgBusServiceClient
@@ -54,8 +54,8 @@ type SubcriberServer struct {
 	pb.UnimplementedRegistryServiceServer
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubcriberServer {
-    server := &SubcriberServer{
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubscriberServer {
+    server := &SubscriberServer{
         orgName:              orgName,
         subscriberRepo:       subscriberRepo,
         msgbus:               msgBus,
@@ -72,7 +72,7 @@ func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBu
 }
 
 
-func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+func (s *SubscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	log.Infof("Adding subscriber: %v", req)
 
 	var dob string
@@ -157,7 +157,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}, nil
 }
 
-func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+func (s *SubscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 	log.Infof("Getting subscriber with ID: %v", req)
 
 	subscriberIdReq := req.GetSubscriberId()
@@ -196,7 +196,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	return resp, nil
 }
 
-func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberByEmailRequest) (*pb.GetSubscriberByEmailResponse, error) {
+func (s *SubscriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberByEmailRequest) (*pb.GetSubscriberByEmailResponse, error) {
 	log.Infof("Getting subscriber with email: %v", req)
 
 	subscriberEmailReq := req.GetEmail()
@@ -230,7 +230,7 @@ func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberB
 	return resp, nil
 }
 
-func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
+func (s *SubscriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	log.Infof("List all subscribers")
 
 	subscribers, err := s.subscriberRepo.ListSubscribers()
@@ -303,7 +303,7 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	return subscriberList, nil
 }
 
-func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+func (s *SubscriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	log.Infof("Get subscribers by network: %v ", req)
 
 	networkIdReq := req.GetNetworkId()
@@ -342,7 +342,7 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 	return subscriberList, nil
 }
 
-func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+func (s *SubscriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	log.Infof("Updating subscriber: %v", req)
 
 	subscriberId, err := uuid.FromString(req.GetSubscriberId())
@@ -381,7 +381,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	return &pb.UpdateSubscriberResponse{}, nil
 }
 
-func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
+func (s *SubscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberId()
     subscriberId, err := uuid.FromString(subscriberIdReq)
     if err != nil {
@@ -428,7 +428,7 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 }
 
 
-func (s *SubcriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
+func (s *SubscriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
 
 	err := s.msgbus.PublishRequest(route, msg)
 	if err != nil {
@@ -496,7 +496,7 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		Dob:                   s.DOB,
 	}
 }
-func (s *SubcriberServer) checkStuckDeletions() {
+func (s *SubscriberServer) checkStuckDeletions() {
     threshold := time.Now().Add(-15 * time.Minute)
     
     stuckSubscribers, err := s.subscriberRepo.FindPendingDeletionBefore(threshold)
@@ -528,7 +528,7 @@ func (s *SubcriberServer) checkStuckDeletions() {
 
 
 
-func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscriber db.Subscriber) {
+func (s *SubscriberServer) retrySubscriberDeletion(ctx context.Context, subscriber db.Subscriber) {
     err := s.subscriberRepo.IncrementDeletionRetry(subscriber.SubscriberId)
     if err != nil {
         log.Errorf("Failed to increment retry count for subscriber %s: %v", 
@@ -555,7 +555,7 @@ func (s *SubcriberServer) retrySubscriberDeletion(ctx context.Context, subscribe
         }
     }
 }
-func (s *SubcriberServer) startDeletionCheck() {
+func (s *SubscriberServer) startDeletionCheck() {
     ticker := time.NewTicker(10 * time.Minute)
     defer ticker.Stop()
     
@@ -572,7 +572,7 @@ func (s *SubcriberServer) startDeletionCheck() {
         }
     }
 }
-func (s *SubcriberServer) Shutdown() {
+func (s *SubscriberServer) Shutdown() {
     if s.deletionCheckCancel != nil {
         s.deletionCheckCancel()
     }

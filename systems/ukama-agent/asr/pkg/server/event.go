@@ -98,7 +98,7 @@ func (l *AsrEventServer) unmarshalSimAsrCleanupRequested(msg *anypb.Any) (*epb.E
 	p := &epb.EventSimAsrCleanupRequested{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddSystemRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal simAsrCleanupRequested message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil

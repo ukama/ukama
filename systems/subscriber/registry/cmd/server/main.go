@@ -77,7 +77,7 @@ func initDb() sql.Db {
     
     return d
 }
-func setupSignalHandling(server *server.SubcriberServer) {
+func setupSignalHandling(server *server.SubscriberServer) {
     c := make(chan os.Signal, 1)
     signal.Notify(c, os.Interrupt, syscall.SIGTERM)
     

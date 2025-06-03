@@ -130,12 +130,6 @@ export default function Page() {
       client: subscriptionClient,
       fetchPolicy: 'network-only',
       onCompleted: async (data) => {
-        // if (isSubscriberActionInProgress) {
-        //   console.log('Fresh metrics data received, resetting action states');
-        //   resetActionStates();
-        // }
-        console.log('Initial metrics received:', data.getMetricsStat.metrics);
-
         if (data.getMetricsStat.metrics.length > 0) {
           const sKey = `stat-${user.orgName}-${user.id}-${Stats_Type.Home}-${statVar?.data.from ?? 0}`;
           cleanupSubscription();

@@ -35,7 +35,7 @@ const SubscriberDataPlansTab: React.FC<SubscriberDataPlansTabProps> = ({
             color={colors.black70}
             sx={{ width: 150 }}
           >
-            Date plan
+            Data plan
           </Typography>
           <Skeleton variant="text" width={200} height={20} />
         </Box>
