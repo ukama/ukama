@@ -78,26 +78,6 @@ EOF
 
     echo '    ]' >> "${manifest_file}"
     echo '}' >> "${manifest_file}"
-    
-#    for app in "${app_names[@]}"; do
-#        case "$app" in
-#            "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-#                cat <<EOF >> "${manifest_file}"
-#        {
-#            "name"   : "$app",
-#            "tag"    : "latest",
-#            "restart": "yes",
-#            "space"  : "services"
-#        },
-#EOF
-#                ;;
-#        esac
-#    done
-#
-#    # Remove last comma
-#    sed -i '$ s/,$//' "${manifest_file}"
-#    echo '    ]' >> "${manifest_file}"
-#    echo '}' >> "${manifest_file}"
 }
 
 function copy_all_apps() {
@@ -125,7 +105,7 @@ function copy_required_libs() {
 
     log "INFO" "Installing required libs from ${lib_pkg}"
     pushd "${lib_pkg}" > /dev/null
-    tar zxvf vendor_libs.tgz 
+    tar zxf vendor_libs.tgz
     cp -rf ./build/* "${rootfs}/usr/"
     popd > /dev/null
 }
