@@ -369,7 +369,7 @@ const Page = () => {
 
   const [allocateSim, { loading: allocateSimLoading }] = useAllocateSimMutation(
     {
-      onCompleted: (res) => {
+      onCompleted: () => {
         setSnackbarMessage({
           id: 'allocate-sim-success',
           message: 'SIM allocated successfully!',
@@ -390,7 +390,7 @@ const Page = () => {
 
   const [addSubscriber, { loading: addSubscriberLoading }] =
     useAddSubscriberMutation({
-      onCompleted: (res) => {
+      onCompleted: () => {
         refetchSubscribers().then((data) => {
           updateUIState({
             subscribers: {
@@ -497,32 +497,31 @@ const Page = () => {
     updateUIState,
   ]);
 
-  const [updateSubscriber, { loading: updateSubscriberLoading }] =
-    useUpdateSubscriberMutation({
-      onCompleted: (res) => {
-        refetchSubscribers().then((data) => {
-          updateUIState({
-            subscribers: {
-              subscribers: [...data.data.getSubscribersByNetwork.subscribers],
-            },
-          });
+  const [updateSubscriber] = useUpdateSubscriberMutation({
+    onCompleted: () => {
+      refetchSubscribers().then((data) => {
+        updateUIState({
+          subscribers: {
+            subscribers: [...data.data.getSubscribersByNetwork.subscribers],
+          },
         });
-        setSnackbarMessage({
-          id: 'update-subscriber-success',
-          message: 'Subscriber updated successfully!',
-          type: 'success' as AlertColor,
-          show: true,
-        });
-      },
-      onError: (error) => {
-        setSnackbarMessage({
-          id: 'update-subscriber-error',
-          message: error.message,
-          type: 'error' as AlertColor,
-          show: true,
-        });
-      },
-    });
+      });
+      setSnackbarMessage({
+        id: 'update-subscriber-success',
+        message: 'Subscriber updated successfully!',
+        type: 'success' as AlertColor,
+        show: true,
+      });
+    },
+    onError: (error) => {
+      setSnackbarMessage({
+        id: 'update-subscriber-error',
+        message: error.message,
+        type: 'error' as AlertColor,
+        show: true,
+      });
+    },
+  });
 
   const { data: currencyData } = useGetCurrencySymbolQuery({
     skip: !user.currency,
@@ -583,7 +582,7 @@ const Page = () => {
     }
   };
 
-  const onTableMenuItem = async (id: string, type: string) => {
+  const onTableMenuItem = (id: string, type: string) => {
     switch (type) {
       case 'delete-sub':
         const subscriberToDelete =
@@ -803,10 +802,7 @@ const Page = () => {
     refetchSubscribers();
   };
 
-  const handleSubscriberMenuAction = async (
-    action: string,
-    subscriberId: string,
-  ) => {
+  const handleSubscriberMenuAction = (action: string, subscriberId: string) => {
     if (action === 'deleteSubscriber') {
       const subscriberToDelete = data?.getSubscribersByNetwork.subscribers.find(
         (subscriber) => subscriber.uuid === subscriberId,
@@ -976,7 +972,6 @@ const Page = () => {
                       uuid,
                       name,
                       duration,
-                      currency,
                       dataVolume,
                       dataUnit,
                       amount,

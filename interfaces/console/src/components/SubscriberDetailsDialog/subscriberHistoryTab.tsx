@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import { colors } from '@/theme';
 import { PackagesResDto } from '@/client/graphql/generated';
-import { formatBytesToGB } from '@/utils';
 
 interface SubscriberHistoryTabProps {
   packageHistories?: any[];

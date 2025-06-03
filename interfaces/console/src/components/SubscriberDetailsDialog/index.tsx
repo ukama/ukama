@@ -49,10 +49,6 @@ interface SubscriberDialogProps {
   loadingPackageHistories?: boolean;
   dataUsage: string;
   currencySymbol?: string;
-  dataUsages?: Array<{
-    simId: string;
-    usage: string;
-  }>;
 }
 
 function TabPanel({ children, value, index }: any) {
@@ -84,7 +80,6 @@ const SubscriberDetailsDialog: React.FC<SubscriberDialogProps> = ({
   loadingPackageHistories,
   dataUsage,
   currencySymbol,
-  dataUsages,
 }) => {
   const [tabIndex, setTabIndex] = React.useState(0);
   const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
