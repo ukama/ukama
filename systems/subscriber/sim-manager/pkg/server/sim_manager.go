@@ -577,24 +577,15 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 	log.Infof("Found %d SIMs to process for subscriber %s", len(simList), subscriberId)
 
 	var processingErrors []string
-	var simDetails []*epb.SimDetail
-
 	for _, sim := range simList {
 		log.Infof("Processing SIM %s (status: %s) for subscriber deletion", sim.Id, sim.Status)
-
-		simDetails = append(simDetails, &epb.SimDetail{
-			SimId:  sim.Id.String(),
-			Iccid:  sim.Iccid,
-			Imsi:   sim.Imsi,
-			Status: sim.Status.String(),
-		})
 
 		if sim.Status == ukama.SimStatusTerminated {
 			log.Infof("SIM %s already terminated, skipping", sim.Id)
 			continue
 		}
 
-		if err := s.terminateAllSimPackages(ctx, sim.Id.String()); err != nil {
+		if err := s.terminateAllSimPackages(sim.Id.String()); err != nil {
 			errorMsg := fmt.Sprintf("Failed to terminate packages for SIM %s: %v", sim.Id, err)
 			log.Errorf("%s", errorMsg)
 			processingErrors = append(processingErrors, errorMsg)
@@ -644,11 +635,6 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "Failed to process SIMs: %v", errorMsg)
 	}
 
-	err = s.triggerAsrCleanup(req.SubscriberId, simDetails)
-	if err != nil {
-		log.Errorf("Failed to trigger ASR cleanup for subscriber %s: %v", req.SubscriberId, err)
-		return nil, status.Errorf(codes.Internal, "Failed to trigger ASR cleanup: %v", err)
-	}
 	if len(simList) > 0 {
 		networkId := simList[0].NetworkId.String()
 		
@@ -673,10 +659,11 @@ func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *
 		}
 	}
 	log.Infof("Successfully initiated ASR cleanup for subscriber %s", req.SubscriberId)
-	return &pb.TerminateSimsForSubscriberResponse{}, nil
+	return &pb.TerminateSimsForSubscriberResponse{
+	}, nil
 }
 
-func (s *SimManagerServer) terminateAllSimPackages(ctx context.Context, simId string) error {
+func (s *SimManagerServer) terminateAllSimPackages(simId string) error {
 	packages, err := s.packageRepo.List(simId, "", "", "", "", "", false, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("failed to get packages for SIM %s: %w", simId, err)
@@ -1594,22 +1581,7 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 
 	return nil
 }
-func (s *SimManagerServer) triggerAsrCleanup(subscriberId string, simDetails []*epb.SimDetail) error {
-	// Publish ASR cleanup event
-	route := s.baseRoutingKey.SetAction("cleanup_requested").SetObject("sims").MustBuild()
 
-	cleanupEvent := &epb.EventSimAsrCleanupRequested{
-		SubscriberId: subscriberId,
-		SimDetails:   simDetails,
-	}
-
-	err := s.PublishEventMessage(route, cleanupEvent)
-	if err != nil {
-		return fmt.Errorf("failed to publish ASR cleanup event: %w", err)
-	}
-
-	return nil
-}
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	res := &pb.Sim{

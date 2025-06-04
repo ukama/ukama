@@ -82,12 +82,16 @@ func setupSignalHandling(server *server.SubscriberServer) {
     signal.Notify(c, os.Interrupt, syscall.SIGTERM)
     
     go func() {
-        <-c
-        log.Info("Received shutdown signal")
+        sig := <-c
+        log.Infof("Received shutdown signal: %v", sig)
+        
         server.Shutdown()
+        
+        log.Info("Graceful shutdown completed")
         os.Exit(0)
     }()
 }
+
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
@@ -115,7 +119,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
-	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, orgClient, networkClient)
+	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, orgClient, networkClient, serviceConfig)
 	registryEventServer := server.NewRegistryEventServer(serviceConfig.OrgName, srv)
 	
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

@@ -324,11 +324,11 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		Iccid:     delAsrRecord.Iccid,
 		NetworkId: delAsrRecord.NetworkId,
 	}
-	//Remove this line as we do not want to remove completely the ASR record for deactivated sim
-	// err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
-	// if err != nil {
-	// 	return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
-	// }
+
+	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
+	}
 
 	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber", true)
 	if err != nil {

@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/ukama"
 	int_db "github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
-    "github.com/ukama/ukama/systems/common/ukama"  
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 

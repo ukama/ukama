@@ -54,7 +54,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.*.ukamaagent.cdr.cdr.create",
-				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sims.cleanup_requested",
+				"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.deletion_initiated",
 			},
 		},
 	}

@@ -26,6 +26,7 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 )
 
 const OrgName = "testorg"
@@ -62,7 +63,18 @@ func TestAdd(t *testing.T) {
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient, config)
+		
+		defer s.Shutdown()
+		
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			Name:                  sub.Name,
 			Email:                 sub.Email,
@@ -107,7 +119,17 @@ func TestAdd(t *testing.T) {
 
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient, config)
+		
+		defer s.Shutdown()
 
 		networkClient.On("GetDefault", mock.Anything).Return(
 			&creg.NetworkInfo{
@@ -141,7 +163,17 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo.On("Get", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId.String()})
 
@@ -156,7 +188,17 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId})
 
@@ -165,6 +207,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 		subRepo.AssertExpectations(t)
 	})
 }
+
 func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
@@ -175,7 +218,17 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId.String()})
 
@@ -190,7 +243,17 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId})
 

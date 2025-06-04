@@ -17,7 +17,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 
@@ -56,12 +55,12 @@ func (l *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sims.cleanup_requested"):
-		msg, err := l.unmarshalSimAsrCleanupRequested(e.Msg)
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.deletion_initiated"):
+		msg, err := l.unmarshalSubscriberDeletionInitiated(e.Msg)
 		if err != nil {
 			return nil, err
 		}
-		err = l.handleSimAsrCleanupRequested(ctx, e.RoutingKey, msg)
+		err = l.handleSubscriberDeletionInitiated(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -73,89 +72,66 @@ func (l *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	return &epb.EventResponse{}, nil
 }
 
-func (l *AsrEventServer) unmarshalCDRCreate(msg *anypb.Any) (*epb.CDRReported, error) {
-	p := &epb.CDRReported{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal AddSystemRequest message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
+func (l *AsrEventServer) handleSubscriberDeletionInitiated(ctx context.Context, key string, msg *epb.EventSubscriberDeletionInitiated) error {
+	log.Infof("Processing subscriber deletion initiation from Registry. SubscriberId: %s, SIMs: %d", 
+		msg.SubscriberId, len(msg.Sims))
 
+	var simResults []*epb.SimCleanupResult
+	overallSuccess := true
 
-func (l *AsrEventServer) handleEventCDRCreate(key string, msg *epb.CDRReported) error {
-	log.Infof("Keys %s and Proto is: %+v", key, msg)
-	err := l.s.UpdateandSyncAsrProfile(msg.GetImsi())
-	if err != nil {
-		log.Errorf("Failed to update the active subscriber %+s.Error: %+v", msg.Imsi, err)
-		return err
-	}
-	return nil
-}
+	for _, simDetail := range msg.Sims {
+		log.Infof("Processing ASR cleanup for SIM - ID: %s, ICCID: %s", 
+			simDetail.SimId, simDetail.Iccid)
 
-func (l *AsrEventServer) unmarshalSimAsrCleanupRequested(msg *anypb.Any) (*epb.EventSimAsrCleanupRequested, error) {
-	p := &epb.EventSimAsrCleanupRequested{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal simAsrCleanupRequested message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
-func (l *AsrEventServer) handleSimAsrCleanupRequested(ctx context.Context, key string, msg *epb.EventSimAsrCleanupRequested) error {
-	log.Infof("Processing SIM ASR cleanup request from SIM Manager. SubscriberId: %s, SimDetails: %d", 
-		msg.SubscriberId, len(msg.SimDetails))
-
-	var cleanupErrors []string
-	var successfulCleanups []string
-
-	for _, simDetail := range msg.SimDetails {
-		log.Infof("Processing ASR cleanup for SIM - ID: %s, ICCID: %s, IMSI: %s, Status: %s", 
-			simDetail.SimId, simDetail.Iccid, simDetail.Imsi, simDetail.Status)
-
-		if simDetail.Status == ukama.SimStatusTerminated.String() {
-			log.Infof("SIM %s (ICCID: %s) already terminated, skipping ASR cleanup", 
-				simDetail.SimId, simDetail.Iccid)
-			successfulCleanups = append(successfulCleanups, simDetail.Iccid)
-			continue
+		result := &epb.SimCleanupResult{
+			SimId:   simDetail.SimId,
+			Iccid:   simDetail.Iccid,
+			Success: false,
 		}
 
 		err := l.deleteAsrRecordByIccid(simDetail.Iccid)
 		if err != nil {
 			errorMsg := fmt.Sprintf("Failed to cleanup ASR for ICCID %s: %v", simDetail.Iccid, err)
 			log.Errorf(errorMsg)
-			cleanupErrors = append(cleanupErrors, errorMsg)
-			continue
+			overallSuccess = false
+		} else {
+			log.Infof("Successfully cleaned up ASR record for ICCID: %s", simDetail.Iccid)
+			result.Success = true
 		}
 
-		log.Infof("Successfully cleaned up ASR record for ICCID: %s", simDetail.Iccid)
-		successfulCleanups = append(successfulCleanups, simDetail.Iccid)
+		simResults = append(simResults, result)
+	}
+
+	successCount := 0
+	for _, result := range simResults {
+		if result.Success {
+			successCount++
+		}
 	}
 
 	log.Infof("ASR cleanup summary for subscriber %s: %d successful, %d failed", 
-		msg.SubscriberId, len(successfulCleanups), len(cleanupErrors))
+		msg.SubscriberId, successCount, len(simResults)-successCount)
 
-	success := len(cleanupErrors) == 0
-
-	err := l.publishAsrCleanupCompletionToSimManager(msg, success)
+	err := l.publishAsrCleanupCompleted(msg.SubscriberId, simResults, overallSuccess)
 	if err != nil {
 		log.Errorf("Failed to publish ASR cleanup completion: %v", err)
 		return err
 	}
 
-	log.Infof("Completed ASR cleanup processing and notified for subscriber: %s", msg.SubscriberId)
+	log.Infof("Completed ASR cleanup and notified SIM Manager for subscriber: %s", msg.SubscriberId)
 	return nil
 }
-func (l *AsrEventServer) publishAsrCleanupCompletionToSimManager(originalEvent *epb.EventSimAsrCleanupRequested, success bool) error {
-	completionEvent := &epb.EventSimAsrCleanupCompleted{
-		SubscriberId: originalEvent.SubscriberId,
-		NetworkId:    originalEvent.NetworkId,
-		Success:      success,
-	}
-	route := l.s.baseRoutingKey.SetAction("cleanup_completed").SetObject("sims").MustBuild()
 
-	log.Infof("Publishing ASR cleanup completion at %s: %+v", route, completionEvent)
+func (l *AsrEventServer) publishAsrCleanupCompleted(subscriberId string, simResults []*epb.SimCleanupResult, overallSuccess bool) error {
+	completionEvent := &epb.EventSimAsrCleanupCompleted{
+		SubscriberId:    subscriberId,
+		SimResults:      simResults,
+		OverallSuccess:  overallSuccess,
+	}
+
+	route := l.s.baseRoutingKey.SetAction("asr_cleanup_completed").SetObject("subscriber").MustBuild()
+
+	log.Infof("Publishing ASR cleanup completion to SIM Manager at %s: %+v", route, completionEvent)
 
 	if l.s.msgbus != nil {
 		err := l.s.msgbus.PublishRequest(route, completionEvent)
@@ -163,8 +139,7 @@ func (l *AsrEventServer) publishAsrCleanupCompletionToSimManager(originalEvent *
 			log.Errorf("Failed to publish ASR cleanup completion: %v", err)
 			return err
 		}
-		log.Infof("Successfully published ASR cleanup completion for subscriber: %s", 
-			originalEvent.SubscriberId)
+		log.Infof("Successfully published ASR cleanup completion for subscriber: %s", subscriberId)
 	} else {
 		log.Warnf("Message bus client not available, cannot publish ASR cleanup completion")
 	}
@@ -180,7 +155,6 @@ func (l *AsrEventServer) deleteAsrRecordByIccid(iccid string) error {
 		}
 		return fmt.Errorf("error checking ASR record for ICCID %s: %w", iccid, err)
 	}
-
 	pcrfData := &pm.SimInfo{
 		ID:        asrRecord.ID,
 		Imsi:      asrRecord.Imsi,
@@ -200,4 +174,32 @@ func (l *AsrEventServer) deleteAsrRecordByIccid(iccid string) error {
 
 	return nil
 }
+func (l *AsrEventServer) unmarshalCDRCreate(msg *anypb.Any) (*epb.CDRReported, error) {
+	p := &epb.CDRReported{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal AddSystemRequest message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
 
+func (l *AsrEventServer) handleEventCDRCreate(key string, msg *epb.CDRReported) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+	err := l.s.UpdateandSyncAsrProfile(msg.GetImsi())
+	if err != nil {
+		log.Errorf("Failed to update the active subscriber %+s.Error: %+v", msg.Imsi, err)
+		return err
+	}
+	return nil
+}
+
+func (l *AsrEventServer) unmarshalSubscriberDeletionInitiated(msg *anypb.Any) (*epb.EventSubscriberDeletionInitiated, error) {
+	p := &epb.EventSubscriberDeletionInitiated{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal EventSubscriberDeletionInitiated message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}

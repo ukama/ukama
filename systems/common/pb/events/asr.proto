@@ -6,6 +6,7 @@ package ukama.events.v1;
 
 import "validator.proto";
 
+
 message Subscriber {
     string Imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16 }, json_name="imsi"];
     string Iccid = 2 [(validator.field) = {string_not_empty: true,  length_gt: 5, length_lt: 16}, json_name="iccid"];
@@ -28,23 +29,14 @@ message AsrUpdated {
     Subscriber Subscriber = 1;
 }
 
-message SimDetail {
+message SimCleanupResult {
   string simId = 1;
   string iccid = 2;
-  string imsi = 3;
-  string status = 4;
-}
-
-
-message EventSimAsrCleanupRequested {
-  string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-  string networkId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];   
-  repeated SimDetail simDetails = 3;  
+  bool success = 3;
 }
 
 message EventSimAsrCleanupCompleted {
   string subscriberId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
-  string networkId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "network_id"];
-  bool success = 3;
+  repeated SimCleanupResult sim_results = 2 [json_name = "sim_results"];
+  bool overall_success = 3; 
 }
-

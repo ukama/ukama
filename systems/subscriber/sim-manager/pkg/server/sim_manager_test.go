@@ -725,34 +725,31 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
     t.Run("SuccessfulTermination", func(t *testing.T) {
         var subscriberID = uuid.NewV4()
-        var networkID = uuid.NewV4() // Add networkID
+        var networkID = uuid.NewV4() 
         var simID1 = uuid.NewV4()
         var simID2 = uuid.NewV4()
 
         simRepo := &mocks.SimRepo{}
-        msgbusClient := &cmocks.MsgBusServiceClient{}
         packageRepo := &mocks.PackageRepo{}
 
-        // Expect a call to List to find all SIMs for the subscriber
         simRepo.On("List", "", "", subscriberID.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
             uint32(0), false, uint32(0), false).Return([]db.Sim{
                 {
                     Id:           simID1,
                     SubscriberId: subscriberID,
-                    NetworkId:    networkID, // Set NetworkId
+                    NetworkId:    networkID, 
                     Status:       ukama.SimStatusActive,
                     Iccid:        "test-iccid-1",
                 },
                 {
                     Id:           simID2,
                     SubscriberId: subscriberID,
-                    NetworkId:    networkID, // Set NetworkId
+                    NetworkId:    networkID, 
                     Status:       ukama.SimStatusInactive,
                     Iccid:        "test-iccid-2",
                 },
             }, nil).Once()
 
-        // For the first SIM (active)
         packageRepo.On("List", simID1.String(), "", "", "", "", "", false, false, uint32(0), false).
             Return([]db.Package{
                 {
@@ -763,22 +760,18 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
                 },
             }, nil).Once()
 
-        // Package update for first SIM
         packageRepo.On("Update", mock.MatchedBy(func(pkg *db.Package) bool {
             return pkg.IsActive == false && pkg.AsExpired == true
         }), mock.Anything).Return(nil).Once()
 
-        // Deactivate the first SIM (active -> inactive)
         simRepo.On("Update", mock.MatchedBy(func(sim *db.Sim) bool {
             return sim.Id == simID1 && sim.Status == ukama.SimStatusInactive
         }), mock.Anything).Return(nil).Once()
 
-        // Terminate the first SIM (inactive -> terminated)
         simRepo.On("Update", mock.MatchedBy(func(sim *db.Sim) bool {
             return sim.Id == simID1 && sim.Status == ukama.SimStatusTerminated
         }), mock.Anything).Return(nil).Once()
 
-        // For the second SIM (already inactive)
         packageRepo.On("List", simID2.String(), "", "", "", "", "", false, false, uint32(0), false).
             Return([]db.Package{
                 {
@@ -789,33 +782,26 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
                 },
             }, nil).Once()
 
-        // Terminate the second SIM (already inactive -> terminated)
         simRepo.On("Update", mock.MatchedBy(func(sim *db.Sim) bool {
             return sim.Id == simID2 && sim.Status == ukama.SimStatusTerminated
         }), mock.Anything).Return(nil).Once()
 
-        // Mock calls for push metric functions (these happen at the end of TerminateSimsForSubscriber)
-        // pushActiveSimsCountMetric
+        
         simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusActive, 
             uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
         
-        // pushInactiveSimsCountMetric
         simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusInactive, 
             uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
         
-        // pushTerminatedSimsCountMetric
         simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusTerminated, 
             uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
         
-        // pushTotalSimsCountMetric
         simRepo.On("List", "", "", "", networkID.String(), ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
             uint32(0), false, uint32(0), false).Return([]db.Sim{}, nil).Once()
 
-        // Message bus for ASR cleanup
-        msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
         s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil,
-            nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
+            nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
 
         resp, err := s.TerminateSimsForSubscriber(context.TODO(), &pb.TerminateSimsForSubscriberRequest{
             SubscriberId: subscriberID.String(),
@@ -826,7 +812,6 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
 
         simRepo.AssertExpectations(t)
         packageRepo.AssertExpectations(t)
-        msgbusClient.AssertExpectations(t)
     })
 
     t.Run("ErrorFetchingSims", func(t *testing.T) {
@@ -834,7 +819,6 @@ func TestSimManagerServer_TerminateSimsForSubscriber(t *testing.T) {
 
         simRepo := &mocks.SimRepo{}
 
-        // Simulate an error when fetching SIMs
         simRepo.On("List", "", "", subscriberID.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 
             uint32(0), false, uint32(0), false).Return(nil, errors.New("database error")).Once()
 

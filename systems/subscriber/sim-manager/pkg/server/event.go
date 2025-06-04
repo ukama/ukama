@@ -74,7 +74,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			}
 		}
 
-	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.sims.cleanup_completed"):
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.subscriber.asr_cleanup_completed"):
 		msg, err := unmarshalEventSimAsrCleanupCompleted(e.Msg)
 		if err != nil {
 			return nil, err
@@ -337,16 +337,35 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 	return nil
 }
 func (es *SimManagerEventServer) handleAsrCleanupCompleted(ctx context.Context, routingKey string, msg *epb.EventSimAsrCleanupCompleted) error {
-	log.Infof("Received ASR cleanup completion from ASR service. SubscriberId: %s, Success: %v", 
-		msg.SubscriberId, msg.Success)
+	log.Infof("Received ASR cleanup completion from ASR service. SubscriberId: %s", msg.SubscriberId)
 
-	if !msg.Success {
-		log.Errorf("ASR cleanup failed for subscriber %s", msg.SubscriberId)
-	} else {
-		log.Infof("ASR cleanup successful for subscriber %s", msg.SubscriberId)
+	if msg.SimResults != nil {
+		successCount := 0
+		for _, result := range msg.SimResults {
+			if result.Success {
+				successCount++
+			} else {
+				log.Warnf("ASR cleanup failed for SIM %s (ICCID: %s)", 
+					result.SimId, result.Iccid)
+			}
+		}
+		log.Infof("ASR cleanup summary: %d successful, %d failed", 
+			successCount, len(msg.SimResults)-successCount)
 	}
 
-	err := es.publishSubscriberDeletionCompleted(msg)
+	log.Infof("Starting SIM and package cleanup for subscriber: %s", msg.SubscriberId)
+	
+	_, err := es.s.TerminateSimsForSubscriber(ctx, &pb.TerminateSimsForSubscriberRequest{
+		SubscriberId: msg.SubscriberId,
+	})
+	if err != nil {
+		log.Errorf("Failed to terminate SIMs for subscriber %s: %v", msg.SubscriberId, err)
+
+	} else {
+		log.Infof("Successfully completed SIM and package cleanup for subscriber: %s", msg.SubscriberId)
+	}
+
+	err = es.publishSubscriberDeletionCompleted(msg.SubscriberId)
 	if err != nil {
 		log.Errorf("Failed to publish subscriber deletion completion: %v", err)
 		return err
@@ -355,11 +374,9 @@ func (es *SimManagerEventServer) handleAsrCleanupCompleted(ctx context.Context, 
 	log.Infof("Successfully completed full deletion flow for subscriber: %s", msg.SubscriberId)
 	return nil
 }
-
-func (es *SimManagerEventServer) publishSubscriberDeletionCompleted(msg *epb.EventSimAsrCleanupCompleted) error {
+func (es *SimManagerEventServer) publishSubscriberDeletionCompleted(subscriberId string) error {
 	completionEvent := &epb.EventSubscriberDeletionCompleted{
-		SubscriberId: msg.SubscriberId,
-		NetworkId:    msg.NetworkId,
+		SubscriberId: subscriberId,
 	}
 
 	route := es.s.baseRoutingKey.
@@ -367,7 +384,7 @@ func (es *SimManagerEventServer) publishSubscriberDeletionCompleted(msg *epb.Eve
 		SetObject("sims").
 		MustBuild()
 
-	log.Infof("Publishing subscriber deletion completion to Subscriber Registry at %s: %+v", route, completionEvent)
+	log.Infof("Publishing subscriber deletion completion to Registry at %s: %+v", route, completionEvent)
 
 	err := es.s.PublishEventMessage(route, completionEvent)
 	if err != nil {
@@ -375,9 +392,10 @@ func (es *SimManagerEventServer) publishSubscriberDeletionCompleted(msg *epb.Eve
 		return err
 	}
 
-	log.Infof("Successfully published subscriber deletion completion for: %s", msg.SubscriberId)
+	log.Infof("Successfully published deletion completion for subscriber: %s", subscriberId)
 	return nil
 }
+
 
 func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
 	p := &epb.Payment{}

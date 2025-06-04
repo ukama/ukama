@@ -71,18 +71,16 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 			log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
 			return err
 		}
-		ou = &db.Usage{} 
+		ou = &db.Usage{}
 	}
 
 	u := db.Usage{
 		Imsi:             imsi,
 		Policy:           policy,
-		Usage:            ou.Usage,            
-		LastSessionId:    ou.LastSessionId,    
-		LastSessionUsage: ou.LastSessionUsage, 
-		Historical:       ou.Historical,      
-		LastNodeId:       ou.LastNodeId,       
-		LastCDRUpdatedAt: ou.LastCDRUpdatedAt, 
+		Usage:            0,
+		LastSessionId:    0,
+		LastSessionUsage: 0,
+		Historical:       ou.Historical,
 	}
 
 	err = s.usageRepo.Add(&u)
@@ -91,7 +89,8 @@ func (s *CDRServer) InitUsage(imsi string, policy string) error {
 		return err
 	}
 
-	log.Infof("Initialize/reactivate usage for imsi %s, preserved usage: %d bytes", u.Imsi, u.Usage)
+	log.Infof("initialize package usage for imsi %s to %+v", u.Imsi, u)
+
 	return nil
 }
 
@@ -195,32 +194,20 @@ func (s *CDRServer) GetUsageForPeriod(c context.Context, req *pb.UsageForPeriodR
 }
 
 func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
+
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
 		log.Errorf("Error getting usage for imsi %s. Error %+v", imsi, err)
 		return err
 	}
 
-	var newUsage, newLastSessionUsage uint64
-	if ou.Policy != policy {
-		newUsage = 0
-		newLastSessionUsage = 0
-		log.Infof("Policy changed from %s to %s for imsi %s - resetting usage", ou.Policy, policy, imsi)
-	} else {
-		newUsage = ou.Usage
-		newLastSessionUsage = ou.LastSessionUsage
-		log.Infof("Same policy %s for imsi %s - preserving usage: %d bytes", policy, imsi, newUsage)
-	}
-
 	u := db.Usage{
 		Imsi:             imsi,
 		Policy:           policy,
-		Usage:            newUsage,
-		LastSessionId:    0, 
-		LastSessionUsage: newLastSessionUsage,
+		Usage:            0,
+		LastSessionId:    0,
+		LastSessionUsage: 0,
 		Historical:       ou.Historical,
-		LastNodeId:       ou.LastNodeId,
-		LastCDRUpdatedAt: ou.LastCDRUpdatedAt,
 	}
 
 	err = s.usageRepo.Add(&u)
@@ -229,10 +216,11 @@ func (s *CDRServer) ResetPackageUsage(imsi string, policy string) error {
 		return err
 	}
 
-	log.Infof("Updated package usage for imsi %s from %+v to %+v", u.Imsi, ou, u)
+	log.Infof("Reset package usage for imsi %s  from %+v to %+v", u.Imsi, ou, u)
 
 	return nil
 }
+
 /* This API to be used for period start date to any time till end date */
 func (s *CDRServer) GetPeriodUsage(imsi string, startTime uint64, endTime uint64) (uint64, error) {
 	var lastSessionId uint64
