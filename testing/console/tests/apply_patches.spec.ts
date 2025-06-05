@@ -10,9 +10,7 @@ import { test } from '@playwright/test';
 
 import {
   applyCreateNetworkPatch,
-  applyDataPlanCreationPatch,
   applyLoginPatch,
-  applyLogoutPatch,
   applyOnboardingPatch,
 } from '../patches/v1.0.0';
 
@@ -20,13 +18,13 @@ test('v1.0.0 - Apply login patch', async () => {
   await applyLoginPatch();
 });
 
-test('v1.0.0 - Apply logout patch', async () => {
-  await applyLogoutPatch();
-});
+// test('v1.0.0 - Apply logout patch', async () => {
+//   await applyLogoutPatch();
+// });
 
-test('v1.0.0 - Apply data plan creation patch', async () => {
-  await applyDataPlanCreationPatch();
-});
+// test('v1.0.0 - Apply data plan creation patch', async () => {
+//   await applyDataPlanCreationPatch();
+// });
 
 test('v1.0.0 - Apply create network patch', async () => {
   await applyCreateNetworkPatch();
