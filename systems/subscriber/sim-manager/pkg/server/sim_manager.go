@@ -734,23 +734,25 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 	}
 
 	if len(otherSims) == 1 {
-		log.Infof("SIM %s is the only SIM for subscriber %s, triggering full subscriber deletion flow",
-			sim.Id, sim.SubscriberId)
+    log.Infof("SIM %s is the only SIM for subscriber %s, triggering full subscriber deletion cascade",
+        sim.Id, sim.SubscriberId)
 
-		_, err = s.TerminateSimsForSubscriber(ctx, &pb.TerminateSimsForSubscriberRequest{
-			SubscriberId: sim.SubscriberId.String(),
-		})
+    subscriberRegistrySvc, err := s.subscriberRegistryService.GetClient()
+    if err != nil {
+        log.Errorf("Failed to get subscriber registry client: %v", err)
+        return nil, err
+    }
 
-		if err != nil {
-			log.Errorf("Failed to trigger subscriber deletion for subscriber %s: %v",
-				sim.SubscriberId, err)
-			return nil, err
-		}
+    _, err = subscriberRegistrySvc.Delete(ctx, &subregpb.DeleteSubscriberRequest{
+        SubscriberId: sim.SubscriberId.String(),
+    })
+    if err != nil {
+        log.Errorf("Failed to initiate subscriber deletion for %s: %v", sim.SubscriberId, err)
+        return nil, err
+    }
 
-		log.Infof("Successfully initiated full subscriber deletion flow for subscriber %s",
-			sim.SubscriberId)
-
-		return &pb.TerminateSimResponse{}, nil
+    log.Infof("Successfully initiated full subscriber deletion cascade for subscriber %s", sim.SubscriberId)
+    return &pb.TerminateSimResponse{}, nil
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)

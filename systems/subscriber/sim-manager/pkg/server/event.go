@@ -336,8 +336,8 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 
 	return nil
 }
-func (es *SimManagerEventServer) handleAsrCleanupCompleted(ctx context.Context, routingKey string, msg *epb.EventSimAsrCleanupCompleted) error {
-	log.Infof("Received ASR cleanup completion from ASR service. SubscriberId: %s", msg.SubscriberId)
+func (es *SimManagerEventServer) handleAsrCleanupCompleted(ctx context.Context, k string, msg *epb.EventSimAsrCleanupCompleted) error {
+	log.Infof("Keys %s and Proto is: %+v", k, msg)	
 
 	if msg.SimResults != nil {
 		successCount := 0

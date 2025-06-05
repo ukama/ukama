@@ -325,11 +325,21 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		NetworkId: delAsrRecord.NetworkId,
 	}
 
-	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
-	}
-
+	// TODO: Fix - Commented out ASR record deletion during deactivation
+	// Issue: Deleting the ASR record on deactivation causes usage data loss and 
+	// prevents proper usage accumulation when the SIM is reactivated.
+	// 
+	// Expected behavior:
+	// - Deactivation should PAUSE the subscriber (preserve ASR record and usage data)
+	// - Termination should DELETE the subscriber (remove ASR record permanently)
+	// 
+	// Current workaround: Preserve ASR record during deactivation to maintain usage continuity.
+	// The record will be cleaned up during SIM termination instead.
+	//
+	// err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
+	// if err != nil {
+	// 	return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
+	// }
 	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber", true)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating pcrf:")
