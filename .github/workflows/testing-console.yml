@@ -4,12 +4,14 @@ on:
  pull_request:
   paths:
    - 'testing/console/**'
+   - 'interfaces/console/**'
    - '.github/workflows/testing-console.yml'
 
 jobs:
  test:
   name: Run Playwright Tests
   runs-on: ubuntu-latest
+  timeout-minutes: 15
 
   steps:
    - uses: actions/checkout@v4
