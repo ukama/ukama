@@ -23,6 +23,18 @@ if ! command -v losetup >/dev/null || ! command -v docker >/dev/null; then
     exit 1
 fi
 
+### === CLEANUP EXISTING CONTAINER ===
+if docker ps -a --format '{{.Names}}' | grep -q "^${DOCKER_CONTAINER_NAME}$"; then
+    echo "[INFO] Removing existing container named ${DOCKER_CONTAINER_NAME}..."
+    docker rm -f "$DOCKER_CONTAINER_NAME"
+fi
+
+### === CLEANUP EXISTING IMAGE ===
+if docker images -q "$DOCKER_IMAGE_NAME" >/dev/null; then
+    echo "[INFO] Removing existing Docker image: $DOCKER_IMAGE_NAME"
+    docker rmi -f "$DOCKER_IMAGE_NAME"
+fi
+
 ### === MOUNT IMAGE PARTITION ===
 echo "[INFO] Attaching loop device for $IMG_FILE..."
 LOOPDEV=$(sudo losetup --find --partscan --show "$IMG_FILE")
