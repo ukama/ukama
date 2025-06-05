@@ -27,10 +27,12 @@ import (
 )
 
 const (
-	name      = "__name__"
-	env       = "env"
-	job       = "job"
-	mainLabel = "nodeId"
+	name         = "__name__"
+	env          = "env"
+	job          = "job"
+	nodeLabel    = "nodeid"
+	networkLabel = "network"
+	siteLabel    = "site"
 )
 
 type NodeMetaData struct {
@@ -112,12 +114,13 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 		if len(ts.Samples) > 0 {
 			metric.Value = ts.Samples[0].Value
 
+			log.Info("processing sample value: ", metric.Value)
 			for _, label := range ts.Labels {
 				if label.Name == name || label.Name == env || label.Name == job {
 					continue
 				}
 
-				if label.Name == mainLabel {
+				if label.Name == nodeLabel {
 					metric.MainLabelValue = label.Value
 					continue
 				}
@@ -127,13 +130,14 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 			if metric.MainLabelValue == "" {
 				log.Warnf("main label %q not found in timeseries data, moving on to next metric...",
-					mainLabel)
+					nodeLabel)
 
 				continue
 			}
 
 			value, ok := s.NodeMetricCache[metric.MainLabelValue]
 			if !ok || value != metric.Value {
+				log.Infof("Got new metric value to cache: %f", metric.Value)
 				s.NodeMetricCache[metric.MainLabelValue] = metric.Value
 
 				cachedNode, ok := s.NodeCache[metric.MainLabelValue]
@@ -144,11 +148,14 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 					continue
 				}
 
-				metric.AdditionalLabels["network"] = cachedNode.NetworkId
-				metric.AdditionalLabels["site"] = cachedNode.SiteId
+				metric.AdditionalLabels[networkLabel] = cachedNode.NetworkId
+				metric.AdditionalLabels[siteLabel] = cachedNode.SiteId
+				metric.AdditionalLabels[nodeLabel] = metric.MainLabelValue
 
 				metricsToPush = append(metricsToPush, metric)
 			}
+
+			log.Infof("No new metric to cache for value: %f, skipping ...", value)
 		}
 	}
 
@@ -156,7 +163,7 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 		pushUpdatedNodeMetrics(m.Value, m.AdditionalLabels, s.pushGatewayHost)
 	}
 
-	return nil, nil
+	return &pb.SanitizeResponse{}, nil
 }
 
 func (s *SanitizerServer) syncNodeCache() error {
@@ -172,10 +179,12 @@ func (s *SanitizerServer) syncNodeCache() error {
 		return fmt.Errorf("failed to get list of nodes with metadata: Error: %w", err)
 	}
 
+	log.Infof("Found %d nodes to cache", len(resp.Nodes))
+
 	for _, n := range resp.Nodes {
-		if n.Site.NodeId != "" {
-			nCache[n.Site.NodeId] = NodeMetaData{
-				NodeId:    n.Site.NodeId,
+		if n.Site.SiteId != "" {
+			nCache[n.Id] = NodeMetaData{
+				NodeId:    n.Id,
 				NetworkId: n.Site.NetworkId,
 				SiteId:    n.Site.SiteId,
 			}
@@ -183,6 +192,8 @@ func (s *SanitizerServer) syncNodeCache() error {
 	}
 
 	s.NodeCache = nCache
+
+	log.Infof("Cached %d nodes", len(nCache))
 
 	return nil
 }
