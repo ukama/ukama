@@ -62,14 +62,6 @@ jobs:
       path: testing/console/playwright-report
       retention-days: 30
 
-   - name: Upload HTML report
-     if: always()
-     uses: actions/upload-artifact@v4
-     with:
-      name: playwright-report-html
-      path: testing/console/playwright-report/index.html
-      retention-days: 30
-
    - name: Comment PR with report URL
      if: github.event_name == 'pull_request'
      uses: actions/github-script@v7
@@ -88,15 +80,9 @@ jobs:
          });
          
          const reportArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'playwright-report');
-         const htmlReportArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'playwright-report-html');
-         
          const artifactUrl = reportArtifact ? 
            `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/${reportArtifact.id}` :
            `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts`;
-           
-         const htmlReportUrl = htmlReportArtifact ?
-           `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/${htmlReportArtifact.id}` :
-           artifactUrl;
          
          let statsMessage = '';
          if (fs.existsSync(statsPath)) {
@@ -132,6 +118,6 @@ jobs:
            issue_number: context.issue.number,
            owner: context.repo.owner,
            repo: context.repo.repo,
-           body: `${statsMessage}\n\n[View full report](${artifactUrl})\n[View HTML report](${htmlReportUrl})`
+           body: `${statsMessage}\n\n[View full report](${artifactUrl})`
          });
        }
