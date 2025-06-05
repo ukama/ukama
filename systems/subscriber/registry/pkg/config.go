@@ -14,18 +14,25 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
+type DeletionWorkerConfig struct {
+	CheckInterval   time.Duration `default:"10m"`
+	DeletionTimeout time.Duration `default:"15m"`
+	MaxRetries      int           `default:"3"`
+}
+
 type Config struct {
-	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"10s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
-	SimManagerHost   string           `default:"simmanager:9090"`
-	Service          *uconf.Service
-	Http             HttpServices
-	OrgName          string
-	OrgId            string
+	uconf.BaseConfig  `mapstructure:",squash"`
+	DB                *uconf.Database        `default:"{}"`
+	Grpc              *uconf.Grpc           `default:"{}"`
+	Queue             *uconf.Queue          `default:"{}"`
+	Timeout           time.Duration         `default:"10s"`
+	MsgClient         *uconf.MsgClient      `default:"{}"`
+	SimManagerHost    string                `default:"simmanager:9090"`
+	Service           *uconf.Service
+	Http              HttpServices
+	OrgName           string
+	OrgId             string
+	DeletionWorker    *DeletionWorkerConfig `default:"{}"`
 }
 
 type HttpServices struct {
@@ -41,6 +48,18 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sims.deletion_completed",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete",
+				"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate",
+				"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.deactivate",
+			},
+		},
+		DeletionWorker: &DeletionWorkerConfig{
+			CheckInterval:   10 * time.Minute,
+			DeletionTimeout: 15 * time.Minute,
+			MaxRetries:      3,
 		},
 	}
 }

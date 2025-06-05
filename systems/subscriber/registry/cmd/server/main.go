@@ -10,9 +10,12 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
@@ -58,16 +61,37 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Subscriber{})
 
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
+func initDb() sql.Db {
+    log.Infof("Initializing Database")
+    d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+    err := d.Init(&db.Subscriber{})
+
+    if err != nil {
+        log.Fatalf("Database initialization failed. Error: %v", err)
+    }
+    
+    if err := d.GetGormDb().Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_subscribers_active_email ON subscribers (email) WHERE deleted_at IS NULL").Error; err != nil {
+        log.Fatalf("Failed to create conditional unique index on email. Error: %v", err)
+    }
+    
+    return d
 }
+func setupSignalHandling(server *server.SubscriberServer) {
+    c := make(chan os.Signal, 1)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    
+    go func() {
+        sig := <-c
+        log.Infof("Received shutdown signal: %v", sig)
+        
+        server.Shutdown()
+        
+        log.Info("Graceful shutdown completed")
+        os.Exit(0)
+    }()
+}
+
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
@@ -95,11 +119,14 @@ func runGrpcServer(gormdb sql.Db) {
 
 	simMClient := client.NewSimManagerClientProvider(serviceConfig.SimManagerHost)
 
-	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, orgClient, networkClient)
-
+	srv := server.NewSubscriberServer(serviceConfig.OrgName, db.NewSubscriberRepo(gormdb), mbClient, simMClient, serviceConfig.OrgId, orgClient, networkClient, serviceConfig)
+	registryEventServer := server.NewRegistryEventServer(serviceConfig.OrgName, srv)
+	
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterRegistryServiceServer(s, srv)
+			egenerated.RegisterEventNotificationServiceServer(s, registryEventServer)
 	})
+	 setupSignalHandling(srv)
 
 	go msgBusListener(mbClient)
 

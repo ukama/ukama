@@ -104,6 +104,19 @@ const CellValueByType = ({
           label={row[type]}
         />
       );
+    case 'subscriberStatus':
+      return (
+        <Chip
+          label={row[type]}
+          sx={{
+            backgroundColor:
+              row[type] === 'Active' || row[type] === 'active'
+                ? colors.primaryLight
+                : colors.dullRed,
+            color: (theme) => theme.palette.text.primary,
+          }}
+        />
+      );
     case 'actions':
       if (
         (withStatusColumn &&

@@ -488,8 +488,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
+		dynamicConfig := c
+		dynamicConfig.Title = fmt.Sprintf("Subscriber '%s' removed", msg.Name)
+		dynamicConfig.Description = "All associated SIMs have been deleted"
 
-		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+    	_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimsUpload]):
 		c := evt.EventToEventConfig[evt.EventSimsUpload]

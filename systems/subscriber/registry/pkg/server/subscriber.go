@@ -12,6 +12,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -34,10 +35,12 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/worker"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
 
-type SubcriberServer struct {
+
+type SubscriberServer struct {
 	orgName              string
 	orgId                string
 	msgbus               mb.MsgBusServiceClient
@@ -46,23 +49,30 @@ type SubcriberServer struct {
 	simManagerService    client.SimManagerClientProvider
 	orgClient            cnucl.OrgClient
 	networkClient        creg.NetworkClient
+	deletionWorker       *worker.DeletionWorker
 	pb.UnimplementedRegistryServiceServer
 }
 
-func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient) *SubcriberServer {
-	return &SubcriberServer{
-		orgName:              orgName,
-		subscriberRepo:       subscriberRepo,
-		msgbus:               msgBus,
-		simManagerService:    simManagerService,
-		subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		orgId:                orgId,
-		orgClient:            orgService,
-		networkClient:        networkClient,
-	}
+func NewSubscriberServer(orgName string, subscriberRepo db.SubscriberRepo, msgBus mb.MsgBusServiceClient, simManagerService client.SimManagerClientProvider, orgId string, orgService cnucl.OrgClient, networkClient creg.NetworkClient, config *pkg.Config) *SubscriberServer {
+    server := &SubscriberServer{
+        orgName:              orgName,
+        subscriberRepo:       subscriberRepo,
+        msgbus:               msgBus,
+        simManagerService:    simManagerService,
+        subscriberRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+        orgId:                orgId,
+        orgClient:            orgService,
+        networkClient:        networkClient,
+		deletionWorker:       worker.NewDeletionWorker(subscriberRepo, simManagerService, config.DeletionWorker),
+
+    }
+	
+    server.deletionWorker.Start()
+    return server
 }
 
-func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+
+func (s *SubscriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
 	log.Infof("Adding subscriber: %v", req)
 
 	var dob string
@@ -114,6 +124,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 		Gender:                req.GetGender(),
 		Address:               req.GetAddress(),
 		ProofOfIdentification: req.GetProofOfIdentification(),
+		SubscriberStatus:      ukama.SubscriberStatusActive, 
 		DOB:                   dob,
 		IdSerial:              req.GetIdSerial(),
 	}
@@ -146,7 +157,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	}, nil
 }
 
-func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
+func (s *SubscriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest) (*pb.GetSubscriberResponse, error) {
 	log.Infof("Getting subscriber with ID: %v", req)
 
 	subscriberIdReq := req.GetSubscriberId()
@@ -185,7 +196,7 @@ func (s *SubcriberServer) Get(ctx context.Context, req *pb.GetSubscriberRequest)
 	return resp, nil
 }
 
-func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberByEmailRequest) (*pb.GetSubscriberByEmailResponse, error) {
+func (s *SubscriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberByEmailRequest) (*pb.GetSubscriberByEmailResponse, error) {
 	log.Infof("Getting subscriber with email: %v", req)
 
 	subscriberEmailReq := req.GetEmail()
@@ -219,7 +230,7 @@ func (s *SubcriberServer) GetByEmail(ctx context.Context, req *pb.GetSubscriberB
 	return resp, nil
 }
 
-func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
+func (s *SubscriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubscribersRequest) (*pb.ListSubscribersResponse, error) {
 	log.Infof("List all subscribers")
 
 	subscribers, err := s.subscriberRepo.ListSubscribers()
@@ -292,7 +303,7 @@ func (s *SubcriberServer) ListSubscribers(ctx context.Context, req *pb.ListSubsc
 	return subscriberList, nil
 }
 
-func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+func (s *SubscriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	log.Infof("Get subscribers by network: %v ", req)
 
 	networkIdReq := req.GetNetworkId()
@@ -331,7 +342,7 @@ func (s *SubcriberServer) GetByNetwork(ctx context.Context, req *pb.GetByNetwork
 	return subscriberList, nil
 }
 
-func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+func (s *SubscriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
 	log.Infof("Updating subscriber: %v", req)
 
 	subscriberId, err := uuid.FromString(req.GetSubscriberId())
@@ -370,39 +381,74 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 	return &pb.UpdateSubscriberResponse{}, nil
 }
 
-func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
+func (s *SubscriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRequest) (*pb.DeleteSubscriberResponse, error) {
 	subscriberIdReq := req.GetSubscriberId()
+    subscriberId, err := uuid.FromString(subscriberIdReq)
+    if err != nil {
+        return nil, status.Errorf(codes.InvalidArgument,
+            "invalid format of subscriber uuid. Error %s", err.Error())
+    }
 
-	subscriberId, err := uuid.FromString(subscriberIdReq)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of subscriber uuid. Error %s", err.Error())
-	}
+    subscriber, err := s.subscriberRepo.Get(subscriberId)
+    if err != nil {
+        log.Errorf("Error while getting subscriber: %s", err.Error())
+        return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+    }
 
-	subscriber, err := s.subscriberRepo.Get(subscriberId)
-	if err != nil {
-		log.Errorf("Error while getting subscriber: %s", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
-	}
-	log.Infof("Delete Subscriber : %v ", subscriberId)
+    if subscriber.SubscriberStatus == ukama.SubscriberStatusPendingDeletion {
+        return &pb.DeleteSubscriberResponse{}, nil
+    }
 
-	err = s.subscriberRepo.Delete(subscriberId)
-	if err != nil {
-		log.WithError(err).Error("error while deleting subscriber")
+    err = s.subscriberRepo.MarkAsPendingDeletion(subscriberId)
+    if err != nil {
+        log.Errorf("Error marking subscriber as pending deletion: %s", err.Error())
+        return nil, grpc.SqlErrorToGrpc(err, "subscriber")
+    }
 
-		return nil, grpc.SqlErrorToGrpc(err, "subscriber")
-	}
+    log.Infof("Initiating subscriber deletion cascade: %v", subscriberId)
 
-	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
-	log.Infof("Pushing delete subscriber event to %v", route)
-	_ = s.PublishEventMessage(route, &epb.EventSubscriberDeleted{
-		SubscriberId: subscriber.SubscriberId.String(),
-	})
+    simManagerClient, err := s.simManagerService.GetSimManagerService()
+    if err != nil {
+        log.Errorf("Failed to get SimManagerServiceClient. Error: %s", err.Error())
+        return nil, err
+    }
 
-	return &pb.DeleteSubscriberResponse{}, nil
+    simResp, err := simManagerClient.ListSims(ctx, &simMangerPb.ListSimsRequest{
+        SubscriberId: subscriberId.String(),
+    })
+    if err != nil {
+        log.Errorf("Failed to get SIMs for subscriber %s: %v", subscriberId, err)
+        return nil, err
+    }
+
+    var simDetails []*epb.Sim
+    for _, sim := range simResp.Sims {
+        simDetails = append(simDetails, &epb.Sim{
+            SimId: sim.Id,
+            Iccid: sim.Iccid,
+        })
+    }
+
+    log.Infof("Found %d SIMs for subscriber %s deletion", len(simDetails), subscriberId)
+
+    route := s.subscriberRoutingKey.SetAction("deletion_initiated").SetObject("subscriber").MustBuild()
+    deletionEvent := &epb.EventSubscriberDeletionInitiated{
+        SubscriberId: subscriber.SubscriberId.String(),
+        Name:         subscriber.Name,
+        Sims:         simDetails,
+    }
+
+    err = s.PublishEventMessage(route, deletionEvent)
+    if err != nil {
+        log.Errorf("Failed to publish deletion initiation event: %v", err)
+        return nil, status.Errorf(codes.Internal, "Failed to initiate deletion: %v", err)
+    }
+    
+    log.Infof("Successfully initiated deletion cascade for subscriber: %v with %d SIMs", subscriberId, len(simDetails))
+    return &pb.DeleteSubscriberResponse{}, nil
 }
 
-func (s *SubcriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
+func (s *SubscriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
 
 	err := s.msgbus.PublishRequest(route, msg)
 	if err != nil {
@@ -464,8 +510,16 @@ func dbSubscriberToPbSubscriber(s *db.Subscriber, simList []*upb.Sim) *upb.Subsc
 		NetworkId:             s.NetworkId.String(),
 		Gender:                s.Gender,
 		Address:               s.Address,
+		SubscriberStatus:                s.SubscriberStatus.String(),
 		CreatedAt:             s.CreatedAt.String(),
 		UpdatedAt:             s.UpdatedAt.String(),
 		Dob:                   s.DOB,
 	}
+}
+
+func (s *SubscriberServer) Shutdown() {
+    log.Info("Shutting down SubscriberServer and deletion worker")
+    if s.deletionWorker != nil {
+        s.deletionWorker.Stop()
+    }
 }

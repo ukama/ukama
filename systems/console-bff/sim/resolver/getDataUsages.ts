@@ -18,44 +18,52 @@ export class GetDataUsagesResolver {
     @Arg("data") data: SimUsagesInputDto,
     @Ctx() ctx: Context
   ): Promise<SimDataUsages> {
-    const { dataSources, baseURL } = ctx;
+    try {
+      const { dataSources, baseURL } = ctx;
 
-    const sims = await dataSources.dataSource.list(baseURL, {
-      networkId: data.networkId,
-      status: "active",
-    });
+      const [activeSims, inactiveSims] = await Promise.all([
+        dataSources.dataSource.list(baseURL, {
+          networkId: data.networkId,
+          status: "active",
+        }),
+        dataSources.dataSource.list(baseURL, {
+          networkId: data.networkId,
+          status: "inactive",
+        }),
+      ]);
 
-    const simUsages: any =
-      sims.sims
-        .map((s: SimDto) => {
-          if (s && s.id && s.package && s.package.id) {
-            return {
-              simId: s.id,
-              iccid: s.iccid,
-              packageEnd: s.package.endDate,
-              packageStart: s.package.startDate,
-            };
+      const allSims = [
+        ...(activeSims.sims || []),
+        ...(inactiveSims.sims || []),
+      ];
+      const validSims = allSims.filter(
+        (s: SimDto) =>
+          s?.id && s?.iccid && s?.package?.id && s?.package?.startDate
+      );
+
+      logger.info(`Processing ${validSims.length} sims for usage data`);
+
+      const usages = await Promise.all(
+        validSims.map(async (sim: SimDto) => {
+          try {
+            return await dataSources.dataSource.getDataUsage(baseURL, {
+              type: data.type,
+              iccid: sim.iccid!,
+              simId: sim.id!,
+              from: sim.package!.startDate!,
+              to: new Date().toISOString(),
+            });
+          } catch (error) {
+            logger.warn(`Failed to get usage for SIM ${sim.id}: ${error}`);
+            return { usage: "0", simId: sim.id! };
           }
-          return null;
         })
-        .filter(item => item !== null) ?? [];
+      );
 
-    logger.info(`SimUsages: ${JSON.stringify(simUsages)}`);
-
-    const usages = await Promise.all(
-      simUsages.map((item: any) =>
-        dataSources.dataSource.getDataUsage(baseURL, {
-          type: data.type,
-          iccid: item.iccid,
-          simId: item.simId,
-          from: item.packageStart,
-          to: new Date().toISOString(),
-        })
-      )
-    );
-
-    return {
-      usages,
-    };
+      return { usages: usages.filter(usage => usage?.simId) };
+    } catch (error) {
+      logger.error(`Error fetching data usages: ${error}`);
+      throw error;
+    }
   }
 }

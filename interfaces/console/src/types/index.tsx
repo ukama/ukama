@@ -9,6 +9,7 @@
 import {
   Notification_Scope,
   Notification_Type,
+  SubscribersResDto,
 } from '@/client/graphql/generated';
 import {
   Graphs_Type,
@@ -94,6 +95,64 @@ export type CurrentBillType = {
   dataUsage: string;
 };
 export type StatusType = 'uptime' | 'battery' | 'signal';
+export interface DialogStates {
+  addSubscriber: boolean;
+  subscriberDetails: boolean;
+  topupData: boolean;
+  confirmation: boolean;
+  simDeleteConfirmation: boolean;
+}
+
+export interface SubscriberData {
+  details: any;
+  simList: any[];
+  packageHistories: any[];
+  topUpSubscriberName: string;
+  dataUsageForSim: string;
+}
+
+export interface OperationData {
+  deletedSubscriber: {
+    id: string;
+    name: string;
+  };
+  simToDelete: {
+    id: string;
+    iccid: string;
+    isLastSim: boolean;
+  };
+}
+
+export interface UIState {
+  search: string;
+  subscribers: SubscribersResDto;
+}
+
+export const INITIAL_SUBSCRIBER_DIALOG_STATES: DialogStates = {
+  addSubscriber: false,
+  subscriberDetails: false,
+  topupData: false,
+  confirmation: false,
+  simDeleteConfirmation: false,
+};
+
+export const INITIAL_SUBSCRIBER_DATA: SubscriberData = {
+  details: undefined,
+  simList: [],
+  packageHistories: [],
+  topUpSubscriberName: '',
+  dataUsageForSim: '',
+};
+
+export const INITIAL_OPERATION_DATA: OperationData = {
+  deletedSubscriber: { id: '', name: '' },
+  simToDelete: { id: '', iccid: '', isLastSim: false },
+};
+
+export const INITIAL_SUBSCRIBER_UI_STATE: UIState = {
+  search: '',
+  subscribers: { subscribers: [] },
+};
 
 export interface StyleOutput {
   color: string;

@@ -11,6 +11,7 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
  
@@ -18,11 +19,14 @@ import (
 	 SubscriberId          uuid.UUID `gorm:"primaryKey;type:uuid"`
 	 Name             string    `gorm:"size:255"`
 	 NetworkId             uuid.UUID `gorm:"type:uuid;index"`
-	 Email                 string    `gorm:"size:255;unique;not null;index"`
+	 Email                 string    `gorm:"size:255;not null;index"` 
 	 PhoneNumber           string    `gorm:"size:15"`
 	 Gender                string    `gorm:"size:255"`
 	 DOB                   string
 	 ProofOfIdentification string `gorm:"size:255"`
+	 SubscriberStatus 			  ukama.SubscriberStatus 
+	 DeletionRetryCount    int                      `gorm:"default:0"`
+     DeletionLastAttempt   *time.Time               
 	 IdSerial              string `gorm:"size:255"`
 	 Address               string `gorm:"size:255"`
 	 CreatedAt             time.Time

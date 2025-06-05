@@ -74,6 +74,17 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			}
 		}
 
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.subscriber.asr_cleanup_completed"):
+		msg, err := unmarshalEventSimAsrCleanupCompleted(e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = es.handleAsrCleanupCompleted(ctx, e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.cdr.create"):
 		msg, err := unmarshalOperatorCdrCreate(e.Msg)
 		if err != nil {
@@ -95,7 +106,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		if err != nil {
 			return nil, err
 		}
-
+		
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
 		msg, err := unmarshalUkamaAgentAsrProfileDelete(e.Msg)
 		if err != nil {
@@ -155,24 +166,22 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 
 	return err
 }
-
 func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
 		log.Warnf("Unsupported CDR Type (%s) received for data usage count. Skipping", cdr.Type)
-
 		return nil
 	}
 
-	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
 	if len(sims) == 0 {
-		return fmt.Errorf("no corresponding active sim found for given iccid %q",
+		return fmt.Errorf("no corresponding sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
@@ -192,8 +201,6 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 		StartTime:    cdr.ConnectTime,
 		EndTime:      cdr.CloseTime,
 		Id:           cdr.Id,
-		// OrgId:        s.OrgId.String(),
-		// SessionId: msg.InventoryId,
 	}
 
 	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
@@ -206,11 +213,11 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 
 	return err
 }
-
 func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	// FIXED: Changed ukama.SimStatusActive to ukama.SimStatusUnknown to include inactive SIMs
+	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
@@ -236,9 +243,6 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 		BytesUsed:    cdr.TotalBytes,
 		StartTime:    cdr.StartTime,
 		EndTime:      cdr.EndTime,
-		// Id:           cdr.Id,
-		// OrgId:        s.OrgId.String(),
-		// SessionId:    cdr.Session,
 	}
 
 	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
@@ -251,11 +255,11 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 
 	return err
 }
-
 func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	// FIXED: Changed ukama.SimStatusActive to ukama.SimStatusUnknown to include inactive SIMs
+	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			asrProfile.Iccid, err)
@@ -289,7 +293,7 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 			termReq.PackageId, termReq.SimId, err)
 	}
 
-	// Get next package to activate if any
+	// Rest of the function remains the same...
 	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
@@ -332,6 +336,66 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 
 	return nil
 }
+func (es *SimManagerEventServer) handleAsrCleanupCompleted(ctx context.Context, k string, msg *epb.EventSimAsrCleanupCompleted) error {
+	log.Infof("Keys %s and Proto is: %+v", k, msg)	
+
+	if msg.SimResults != nil {
+		successCount := 0
+		for _, result := range msg.SimResults {
+			if result.Success {
+				successCount++
+			} else {
+				log.Warnf("ASR cleanup failed for SIM %s (ICCID: %s)", 
+					result.SimId, result.Iccid)
+			}
+		}
+		log.Infof("ASR cleanup summary: %d successful, %d failed", 
+			successCount, len(msg.SimResults)-successCount)
+	}
+
+	log.Infof("Starting SIM and package cleanup for subscriber: %s", msg.SubscriberId)
+	
+	_, err := es.s.TerminateSimsForSubscriber(ctx, &pb.TerminateSimsForSubscriberRequest{
+		SubscriberId: msg.SubscriberId,
+	})
+	if err != nil {
+		log.Errorf("Failed to terminate SIMs for subscriber %s: %v", msg.SubscriberId, err)
+
+	} else {
+		log.Infof("Successfully completed SIM and package cleanup for subscriber: %s", msg.SubscriberId)
+	}
+
+	err = es.publishSubscriberDeletionCompleted(msg.SubscriberId)
+	if err != nil {
+		log.Errorf("Failed to publish subscriber deletion completion: %v", err)
+		return err
+	}
+
+	log.Infof("Successfully completed full deletion flow for subscriber: %s", msg.SubscriberId)
+	return nil
+}
+func (es *SimManagerEventServer) publishSubscriberDeletionCompleted(subscriberId string) error {
+	completionEvent := &epb.EventSubscriberDeletionCompleted{
+		SubscriberId: subscriberId,
+	}
+
+	route := es.s.baseRoutingKey.
+		SetAction("deletion_completed").
+		SetObject("sims").
+		MustBuild()
+
+	log.Infof("Publishing subscriber deletion completion to Registry at %s: %+v", route, completionEvent)
+
+	err := es.s.PublishEventMessage(route, completionEvent)
+	if err != nil {
+		log.Errorf("Failed to publish subscriber deletion completion: %v", err)
+		return err
+	}
+
+	log.Infof("Successfully published deletion completion for subscriber: %s", subscriberId)
+	return nil
+}
+
 
 func unmarshalProcessorPaymentSuccess(msg *anypb.Any) (*epb.Payment, error) {
 	p := &epb.Payment{}
@@ -378,6 +442,20 @@ func unmarshalUkamaAgentAsrProfileDelete(msg *anypb.Any) (*epb.Profile, error) {
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal UkamaAgent ASR profile message with : %+v. Error %s.", msg, err.Error())
+
+		return nil, err
+	}
+
+	return p, nil
+}
+
+
+func unmarshalEventSimAsrCleanupCompleted(msg *anypb.Any) (*epb.EventSimAsrCleanupCompleted, error) {
+	p := &epb.EventSimAsrCleanupCompleted{}
+
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal EventSimAsrCleanupCompleted message with : %+v. Error %s.", msg, err.Error())
 
 		return nil, err
 	}

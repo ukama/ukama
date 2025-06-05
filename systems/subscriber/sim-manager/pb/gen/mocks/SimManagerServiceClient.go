@@ -497,6 +497,43 @@ func (_m *SimManagerServiceClient) TerminateSim(ctx context.Context, in *gen.Ter
 	return r0, r1
 }
 
+// TerminateSimsForSubscriber provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) TerminateSimsForSubscriber(ctx context.Context, in *gen.TerminateSimsForSubscriberRequest, opts ...grpc.CallOption) (*gen.TerminateSimsForSubscriberResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TerminateSimsForSubscriber")
+	}
+
+	var r0 *gen.TerminateSimsForSubscriberResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminateSimsForSubscriberRequest, ...grpc.CallOption) (*gen.TerminateSimsForSubscriberResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminateSimsForSubscriberRequest, ...grpc.CallOption) *gen.TerminateSimsForSubscriberResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.TerminateSimsForSubscriberResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.TerminateSimsForSubscriberRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ToggleSimStatus provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) ToggleSimStatus(ctx context.Context, in *gen.ToggleSimStatusRequest, opts ...grpc.CallOption) (*gen.ToggleSimStatusResponse, error) {
 	_va := make([]interface{}, len(opts))

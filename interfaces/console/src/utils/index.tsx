@@ -703,6 +703,18 @@ const getSectionFromKPI = (kpi: string) => {
   }
 };
 
+const getDisplayStatus = (subscriberStatus: string): string => {
+  switch (subscriberStatus) {
+    case 'active':
+      return 'Active';
+    case 'pending_deletion':
+      return 'Deleting...';
+    case 'inactive':
+      return 'Inactive';
+    default:
+      return subscriberStatus;
+  }
+};
 const getNodeActionDescriptionByProgress = (
   progress: number,
   action: string,
@@ -760,6 +772,7 @@ export {
   isValidLatLng,
   kpiToGraphType,
   NodeEnumToString,
+  getDisplayStatus,
   provideStatusColor,
   roleEnumToString,
   setQueryParam,

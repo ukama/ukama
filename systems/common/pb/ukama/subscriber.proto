@@ -30,7 +30,7 @@ import "google/protobuf/timestamp.proto";
     string dob = 12 [json_name = "dob"];
     string idSerial =13 [json_name = "id_serial"];
     string gender =14;
-
+    string subscriberStatus = 15 [json_name = "subscriber_status"];
 }
 
 message Sim {

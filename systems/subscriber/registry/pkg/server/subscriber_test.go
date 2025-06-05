@@ -26,6 +26,7 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 )
 
 const OrgName = "testorg"
@@ -42,17 +43,18 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 		sub := &db.Subscriber{
 			Name:                 "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
+			Email:                "johndoe@example.com",
+			PhoneNumber:          "1234567890",
+			Gender:               "Male",
+			Address:              "1 Main St",
 			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
-			NetworkId:             networkId,
-			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
+			IdSerial:             "123456789",
+			NetworkId:            networkId,
+			SubscriberStatus:     ukama.SubscriberStatusActive, 
+			DOB:                  time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		subscriberRepo.On("Add", sub, mock.AnythingOfType("func(*db.Subscriber, *gorm.DB) error")).Return(nil).Once()
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
@@ -61,7 +63,18 @@ func TestAdd(t *testing.T) {
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient, config)
+		
+		defer s.Shutdown()
+		
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			Name:                  sub.Name,
 			Email:                 sub.Email,
@@ -98,14 +111,25 @@ func TestAdd(t *testing.T) {
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
 			NetworkId:             networkId,
+			SubscriberStatus:      ukama.SubscriberStatusActive,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		subscriberRepo.On("Add", sub, mock.AnythingOfType("func(*db.Subscriber, *gorm.DB) error")).Return(nil).Once()
 
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient, config)
+		
+		defer s.Shutdown()
 
 		networkClient.On("GetDefault", mock.Anything).Return(
 			&creg.NetworkInfo{
@@ -139,7 +163,17 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo.On("Get", subscriberId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId.String()})
 
@@ -154,7 +188,17 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
 			SubscriberId: subscriberId})
 
@@ -163,6 +207,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 		subRepo.AssertExpectations(t)
 	})
 }
+
 func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
@@ -173,7 +218,17 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo.On("GetByNetwork", networkId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId.String()})
 
@@ -188,7 +243,17 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subRepo := &mocks.SubscriberRepo{}
 
-		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient)
+		config := &pkg.Config{
+			DeletionWorker: &pkg.DeletionWorkerConfig{
+				CheckInterval:  time.Minute,
+				DeletionTimeout: time.Hour,
+				MaxRetries:     3,
+			},
+		}
+
+		s := NewSubscriberServer(OrgName, subRepo, nil, nil, OrgId, nil, networkClient, config)
+		defer s.Shutdown()
+		
 		subResp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{
 			NetworkId: networkId})
 

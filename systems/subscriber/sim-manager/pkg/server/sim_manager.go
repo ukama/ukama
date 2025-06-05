@@ -558,6 +558,144 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 
 	return resp, nil
 }
+func (s *SimManagerServer) TerminateSimsForSubscriber(ctx context.Context, req *pb.TerminateSimsForSubscriberRequest) (*pb.TerminateSimsForSubscriberResponse, error) {
+	log.Infof("Terminating all SIMs for subscriber: %v", req.SubscriberId)
+
+	subscriberId, err := uuid.FromString(req.SubscriberId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of subscriber uuid. Error %s", err.Error())
+	}
+
+	simList, err := s.simRepo.List("", "", subscriberId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+
+	if err != nil {
+		log.Errorf("Failed to get SIMs for subscriber %s: %v", subscriberId, err)
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
+	}
+
+	log.Infof("Found %d SIMs to process for subscriber %s", len(simList), subscriberId)
+
+	var processingErrors []string
+	for _, sim := range simList {
+		log.Infof("Processing SIM %s (status: %s) for subscriber deletion", sim.Id, sim.Status)
+
+		if sim.Status == ukama.SimStatusTerminated {
+			log.Infof("SIM %s already terminated, skipping", sim.Id)
+			continue
+		}
+
+		if err := s.terminateAllSimPackages(sim.Id.String()); err != nil {
+			errorMsg := fmt.Sprintf("Failed to terminate packages for SIM %s: %v", sim.Id, err)
+			log.Errorf("%s", errorMsg)
+			processingErrors = append(processingErrors, errorMsg)
+			continue
+		}
+
+		if sim.Status == ukama.SimStatusActive {
+			simUpdates := &sims.Sim{
+				Id:                 sim.Id,
+				Status:             ukama.SimStatusInactive,
+				DeactivationsCount: sim.DeactivationsCount + 1,
+			}
+
+			err = s.simRepo.Update(simUpdates, nil)
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to deactivate SIM %s: %v", sim.Id, err)
+				log.Errorf("%s", errorMsg)
+				processingErrors = append(processingErrors, errorMsg)
+				continue
+			}
+			log.Infof("Successfully deactivated SIM: %s", sim.Id)
+		}
+
+		simUpdates := &sims.Sim{
+			Id:     sim.Id,
+			Status: ukama.SimStatusTerminated,
+		}
+
+		err = s.simRepo.Update(simUpdates, func(sim *sims.Sim, tx *gorm.DB) error {
+			sim.TerminatedAt = time.Now().UTC()
+			return nil
+		})
+		if err != nil {
+			errorMsg := fmt.Sprintf("Failed to terminate SIM %s: %v", sim.Id, err)
+			log.Errorf("%s", errorMsg)
+			processingErrors = append(processingErrors, errorMsg)
+			continue
+		}
+
+		log.Infof("Successfully terminated SIM: %s", sim.Id)
+	}
+
+	if len(processingErrors) > 0 {
+		errorMsg := fmt.Sprintf("Failed to process %d SIMs: %s",
+			len(processingErrors), strings.Join(processingErrors, "; "))
+			log.Errorf("%s", errorMsg)
+		return nil, status.Errorf(codes.Internal, "Failed to process SIMs: %v", errorMsg)
+	}
+
+	if len(simList) > 0 {
+		networkId := simList[0].NetworkId.String()
+		
+		err = s.pushActiveSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing active sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushInactiveSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing inactive sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushTerminatedSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing terminated sims count metric: %s", err.Error())
+		}
+		
+		err = s.pushTotalSimsCountMetric(networkId)
+		if err != nil {
+			log.Errorf("Error while pushing total sims count metric: %s", err.Error())
+		}
+	}
+	log.Infof("Successfully initiated ASR cleanup for subscriber %s", req.SubscriberId)
+	return &pb.TerminateSimsForSubscriberResponse{
+	}, nil
+}
+
+func (s *SimManagerServer) terminateAllSimPackages(simId string) error {
+	packages, err := s.packageRepo.List(simId, "", "", "", "", "", false, false, 0, false)
+	if err != nil {
+		return fmt.Errorf("failed to get packages for SIM %s: %w", simId, err)
+	}
+
+	for _, pkg := range packages {
+		if pkg.IsActive && !pkg.AsExpired {
+			// Terminate active packages
+			packageToTerminate := &sims.Package{
+				Id:        pkg.Id,
+				IsActive:  false,
+				AsExpired: true,
+			}
+
+			err = s.packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
+				packageToTerminate.EndDate = time.Now().UTC()
+				return nil
+			})
+			if err != nil {
+				return fmt.Errorf("failed to terminate active package %s: %w", pkg.Id, err)
+			}
+		} else if !pkg.IsActive && !pkg.AsExpired {
+			// Remove future packages
+			err = s.packageRepo.Delete(pkg.Id, nil)
+			if err != nil {
+				return fmt.Errorf("failed to remove future package %s: %w", pkg.Id, err)
+			}
+		}
+	}
+
+	return nil
+}
 
 func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSimStatusRequest) (*pb.ToggleSimStatusResponse, error) {
 	log.Infof("Toggling status for sim: %v", req.GetSimId())
@@ -587,6 +725,34 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 	if sim.Status != ukama.SimStatusInactive {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for deletion", sim.Status)
+	}
+
+	otherSims, err := s.simRepo.List("", "", sim.SubscriberId.String(), "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Failed to check for other SIMs for subscriber %s: %v", sim.SubscriberId, err)
+		return nil, grpc.SqlErrorToGrpc(err, "sims")
+	}
+
+	if len(otherSims) == 1 {
+    log.Infof("SIM %s is the only SIM for subscriber %s, triggering full subscriber deletion cascade",
+        sim.Id, sim.SubscriberId)
+
+    subscriberRegistrySvc, err := s.subscriberRegistryService.GetClient()
+    if err != nil {
+        log.Errorf("Failed to get subscriber registry client: %v", err)
+        return nil, err
+    }
+
+    _, err = subscriberRegistrySvc.Delete(ctx, &subregpb.DeleteSubscriberRequest{
+        SubscriberId: sim.SubscriberId.String(),
+    })
+    if err != nil {
+        log.Errorf("Failed to initiate subscriber deletion for %s: %v", sim.SubscriberId, err)
+        return nil, err
+    }
+
+    log.Infof("Successfully initiated full subscriber deletion cascade for subscriber %s", sim.SubscriberId)
+    return &pb.TerminateSimResponse{}, nil
 	}
 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
@@ -622,6 +788,10 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
+	}
+	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Error while pushing active sims count metric on sim terminate operation: %s", err.Error())
 	}
 
 	evtMsg := &epb.EventSimTermination{
@@ -1413,6 +1583,7 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 
 	return nil
 }
+
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 	res := &pb.Sim{
