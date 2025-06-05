@@ -124,7 +124,6 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 					metric.MainLabelValue = label.Value
 					continue
 				}
-
 				metric.AdditionalLabels[label.Name] = label.Value
 			}
 
@@ -147,14 +146,12 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 					continue
 				}
-
 				metric.AdditionalLabels[networkLabel] = cachedNode.NetworkId
 				metric.AdditionalLabels[siteLabel] = cachedNode.SiteId
 				metric.AdditionalLabels[nodeLabel] = metric.MainLabelValue
 
 				metricsToPush = append(metricsToPush, metric)
 			}
-
 			log.Infof("No new metric to cache for value: %f, skipping ...", value)
 		}
 	}
