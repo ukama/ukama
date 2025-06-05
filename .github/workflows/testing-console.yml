@@ -54,7 +54,7 @@ jobs:
      run: |
       cd testing/console
       mkdir -p test-results
-      pnpm test
+      pnpm test-ci
 
    - name: Upload test results
      if: always()
