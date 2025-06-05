@@ -16,7 +16,6 @@
 #include "config.h"
 #include "toml.h"
 
-
 int parse_config(Config *config, toml_table_t *configData) {
 
 	toml_datum_t nodedHost;
@@ -88,7 +87,7 @@ bool read_bootstrap_server_info(char **buffer) {
     }
 
     fread(*buffer, sizeof(char), length-1, file);
-    buffer[length] = '\0';
+    (*buffer)[length] = '\0';
 
     fclose(file);
 
