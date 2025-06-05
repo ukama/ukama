@@ -9,19 +9,11 @@
 import { test } from '@playwright/test';
 
 import {
-  applyClaimSimsPatch,
   applyCreateNetworkPatch,
-  applyCreateSubscriberPatch,
   applyDataPlanCreationPatch,
   applyLoginPatch,
   applyLogoutPatch,
-  applyNodeRfOffPatch,
-  applyNodeRfOnPatch,
   applyOnboardingPatch,
-  applyRenameNodePatch,
-  applyRenameSitePatch,
-  applyResetNodePatch,
-  applyTopupSubscriberPatch,
 } from '../patches/v1.0.0';
 
 test('v1.0.0 - Apply login patch', async () => {
@@ -72,6 +64,6 @@ test('v1.0.0 - Apply create network patch', async () => {
 //   await applyTopupSubscriberPatch();
 // });
 
-// test('v1.0.0 - Apply onboarding patch', async () => {
-//   await applyOnboardingPatch();
-// });
+test('v1.0.0 - Apply onboarding patch', async () => {
+  await applyOnboardingPatch();
+});

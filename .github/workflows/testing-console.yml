@@ -52,7 +52,7 @@ jobs:
      run: |
       cd testing/console
       mkdir -p test-results
-      pnpm test-ci
+      pnpm test
 
    - name: Upload test results
      if: always()
@@ -60,7 +60,7 @@ jobs:
      with:
       name: playwright-report
       path: testing/console/playwright-report
-      retention-days: 30
+      retention-days: 7
 
    - name: Comment PR with report URL
      if: github.event_name == 'pull_request'
