@@ -184,7 +184,6 @@ export default function Page() {
   const handleStatSubscription = (_: any, data: string) => {
     const parsedData: TMetricResDto = JSON.parse(data);
     const { value, type, success } = parsedData.data.getMetricStatSub;
-
     if (success && value.length === 2) {
       PubSub.publish(
         `${type}-${network.id}`,
