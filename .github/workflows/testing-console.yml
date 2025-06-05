@@ -68,12 +68,22 @@ jobs:
      with:
       script: |
        const fs = require('fs');
+       console.log('Current working directory:', process.cwd());
        const reportPath = 'testing/console/playwright-report/index.html';
        const statsPath = 'testing/console/test-results/test-results.json';
 
        if (fs.existsSync(reportPath)) {
          const runId = context.runId;
-         const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/playwright-report`;
+         const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           run_id: runId
+         });
+         
+         const reportArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'playwright-report');
+         const artifactUrl = reportArtifact ? 
+           `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/${reportArtifact.id}` :
+           `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts`;
          
          let statsMessage = '';
          if (fs.existsSync(statsPath)) {
@@ -95,7 +105,7 @@ jobs:
            }
            countTests(results.suites);
 
-           statsMessage = `\n\n📊 Test Results:\n` +
+           statsMessage = `📊 Test Results:\n` +
              `- Total Tests: ${total}\n` +
              `- ✅ Passed: ${passed}\n` +
              `- ❌ Failed: ${failed}\n` +
@@ -106,6 +116,6 @@ jobs:
            issue_number: context.issue.number,
            owner: context.repo.owner,
            repo: context.repo.repo,
-           body: `📊 Test Results:\n\n${statsMessage}\n\n[View full report](${artifactUrl})`
+           body: `${statsMessage}\n\n[View full report](${artifactUrl})`
          });
        }
