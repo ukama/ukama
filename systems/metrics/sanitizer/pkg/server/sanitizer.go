@@ -30,7 +30,7 @@ const (
 	name      = "__name__"
 	env       = "env"
 	job       = "job"
-	mainLabel = "nodeId"
+	mainLabel = "nodeid"
 )
 
 type NodeMetaData struct {
