@@ -24,3 +24,5 @@ test('Rename Site Test', async ({ page }) => {
     .fill('updated-test-site');
   await page.getByRole('button', { name: 'Save' }).click();
 });
+
+
