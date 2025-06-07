@@ -5,22 +5,18 @@
 // -----------------------------------------------------------------------------
 import { test } from '@playwright/test';
 
-test('Rename Site Test', async ({ page }) => {
+test('Site switch Node port toggle Test', async ({ page }) => {
   await page.goto('http://localhost:4455/auth/login');
   await page.getByRole('textbox', { name: 'EMAIL' }).click();
+  await page.getByRole('textbox', { name: 'EMAIL' }).click();
   await page.getByRole('textbox', { name: 'EMAIL' }).fill('admin@ukama.com');
-  await page.getByRole('textbox', { name: 'EMAIL' }).press('Tab');
+  await page.getByRole('textbox', { name: 'PASSWORD' }).click();
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
   await page.getByRole('button', { name: 'LOG IN' }).click();
   await page.getByRole('link', { name: 'Sites' }).click();
-  await page.getByRole('button', { name: 'menu' }).click();
-  await page.getByRole('menuitem', { name: 'Edit Name' }).click();
-  await page.getByRole('textbox', { name: 'Site Name' }).click();
-  await page
-    .getByRole('textbox', { name: 'Site Name' })
-    .press('ControlOrMeta+a');
-  await page
-    .getByRole('textbox', { name: 'Site Name' })
-    .fill('updated-test-site');
-  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('heading', { name: 'alius-site' }).click();
+  await page.locator('rect:nth-child(15)').click();
+  await page.getByRole('button', { name: 'Port 1 (Node)' }).click();
+  await page.getByRole('checkbox').uncheck();
+  await page.getByRole('checkbox').check();
 });
