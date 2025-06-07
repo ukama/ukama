@@ -365,7 +365,8 @@ setup_rootfs() {
         libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
         tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
         build-base git tcpdump ethtool iperf3 htop vim doas \
-        e2fsprogs dosfstools util-linux
+        e2fsprogs dosfstools util-linux \
+        jansson
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
