@@ -19,6 +19,9 @@ import applyRenameNodePatch from './rename-node.patch';
 import applyRenameSitePatch from './rename-site.patch';
 import applyResetNodePatch from './reset-node.patch';
 import applyTopupSubscriberPatch from './topup-subscriber.patch';
+import applyBackhaulPortTogglePatch from './backhaul-switch-port-toggle.patch';
+import applySolarPortTogglePatch from './solar-switch-port-toggle.patch';
+import applyNodePortTogglePatch from './node-switch-port-toggle.patch';
 export {
   applyClaimSimsPatch,
   applyCreateNetworkPatch,
@@ -33,4 +36,7 @@ export {
   applyRenameSitePatch,
   applyResetNodePatch,
   applyTopupSubscriberPatch,
+  applyBackhaulPortTogglePatch,
+  applySolarPortTogglePatch,
+  applyNodePortTogglePatch,
 };
