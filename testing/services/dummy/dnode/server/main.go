@@ -65,7 +65,7 @@ func NewServer() (*Server, error) {
 		},
 		coroutines: make(map[string]chan config.WMessage),
 		server: &http.Server{
-			Addr:         fmt.Sprintf(":%d", config.NewConfig().Port),
+			Addr:         fmt.Sprintf(":%d", serviceConfig.Port),
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		},
