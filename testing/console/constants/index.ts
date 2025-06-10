@@ -17,7 +17,7 @@ export const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'admin@ukama.com';
 export const TEST_USER_PASSWORD =
   process.env.TEST_USER_PASSWORD || '@Pass2025.';
 export const TMP_SIMS_PATH = 'test-temp';
-export const LIGHTHOUSE_SCORE_THRESHOLD = parseInt(
+export const LIGHTHOUSE_SCORE_THRESHOLD = parseFloat(
   process.env.LIGHTHOUSE_SCORE_THRESHOLD || '0.2',
 );
 export const CONSOLE_URLS_FOR_LIGHTHOUSE = [
