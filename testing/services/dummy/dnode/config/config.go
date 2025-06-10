@@ -17,11 +17,9 @@ import (
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
-const PORT = 8085
-
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	Port             int `default:"8085"`
+	Port             int `default:"8080"`
 	KpiConfig        NodeKPIs
 	KpiRanges        KPIRanges
 }
@@ -69,6 +67,7 @@ type KPIRanges struct {
 
 func NewConfig() *Config {
 	return &Config{
+		Port: 8080,
 		KpiConfig: NodeKPIs{
 			KPIs: []NodeKPI{
 				{

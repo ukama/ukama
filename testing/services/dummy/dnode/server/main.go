@@ -65,7 +65,7 @@ func NewServer() (*Server, error) {
 		},
 		coroutines: make(map[string]chan config.WMessage),
 		server: &http.Server{
-			Addr:         fmt.Sprintf(":%d", config.PORT),
+			Addr:         fmt.Sprintf(":%d", config.NewConfig().Port),
 			ReadTimeout:  10 * time.Second,
 			WriteTimeout: 10 * time.Second,
 		},
@@ -87,7 +87,7 @@ func (s *Server) Start() error {
 	http.HandleFunc("/update", s.updateHandler)
 	http.HandleFunc("/online", s.onlineHandler)
 
-	logger.Infof("Server starting on port %d", config.PORT)
+	logger.Infof("Server starting on port %d", config.NewConfig().Port)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
