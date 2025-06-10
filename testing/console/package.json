@@ -10,7 +10,7 @@
     "patch-tests": "pnpm playwright test tests/apply_patches.spec.ts && pnpm prettier",
     "clean-up": "rm -rf test-temp && rm -rf playwright-report && rm -rf test-results && rm -rf tests/patched",
     "test": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/**/**/*.spec.ts --grep-invert \"Onboarding Test\" && pnpm exec playwright show-report",
-    "test-ci": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/network/*.spec.ts"
+    "test-ci": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/manage/*.spec.ts"
   },
   "keywords": [],
   "author": "",
