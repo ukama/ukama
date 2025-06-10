@@ -59,3 +59,25 @@ if [ $? -eq 0 ]; then
 else
     exit 1
 fi
+
+# Temporary - mocksysfs
+cwd=`pwd`
+cd "${UKAMA_REPO}/nodes/ukamaOS/distro/system/noded"
+rm -rf /tmp/sys/
+rm -rf "${cwd}/mocksysfs"
+./utils/prepare_env.sh -u tnode -u anode
+./build/genSchema --u UK-SA9001-HNODE-A1-1103 \
+                  --n com --m UK-SA9001-COM-A1-1103  \
+                  --f mfgdata/schema/com.json --n trx \
+                  --m UK-SA9001-TRX-A1-1103  \
+                  --f mfgdata/schema/trx.json --n mask \
+                  --m UK-SA9001-MSK-A1-1103\
+                  --f mfgdata/schema/mask.json
+./build/genInventory --n com --m UK-SA9001-COM-A1-1103 \
+                     --f mfgdata/schema/com.json -n trx \
+                     --m UK-SA9001-TRX-A1-1103 \
+                     --f mfgdata/schema/trx.json \
+                     --n mask -m UK-SA9001-MSK-A1-1103 \
+                     --f mfgdata/schema/mask.json
+cp -rf /tmp/sys "${cwd}/mocksysfs"
+cd "${cwd}"
