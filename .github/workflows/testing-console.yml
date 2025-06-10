@@ -101,6 +101,7 @@ jobs:
                        if (test.status === 'expected') passed++;
                        else if (test.status === 'unexpected') failed++;
                        else if (test.status === 'skipped') skipped++;
+                       else if (test.status === 'flaky') flaky++;
                      }
                    }
                  }
@@ -113,7 +114,8 @@ jobs:
              `- Total Tests: ${total}\n` +
              `- ✅ Passed: ${passed}\n` +
              `- ❌ Failed: ${failed}\n` +
-             `- ⏭️ Skipped: ${skipped}`;
+             `- ⏭️ Skipped: ${skipped}\n` +
+             `- ⚠️ Flaky: ${flaky}`;
          }
 
          await github.rest.issues.createComment({
