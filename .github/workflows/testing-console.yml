@@ -89,7 +89,7 @@ jobs:
          let statsMessage = '';
          if (fs.existsSync(statsPath)) {
            const results = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
-           let total = 0, passed = 0, failed = 0, skipped = 0;
+           let total = 0, passed = 0, failed = 0, skipped = 0, flaky = 0;
 
            function countTests(suites) {
              for (const suite of suites) {
