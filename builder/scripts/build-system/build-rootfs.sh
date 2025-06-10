@@ -255,6 +255,13 @@ function copy_misc_files() {
     sudo mkdir -p "/etc"
     sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
          "/etc/services"
+
+    # copy mocksysfs related files (not needed for actual HW) - XXX
+    mkdir -p "/tmp/sys"
+    cp -rf ${UKAMA_ROOT}/builder/scripts/build-system/mocksysfs/* \
+       "/tmp/sys/"
+    cp -rf "${UKAMA_ROOT}/nodes/ukamaOS/distro/system/noded/mfgdata" \
+       "/ukama/mocksysfs/"
 }
 
 # Update /etc/fstab based on partition type
@@ -365,7 +372,8 @@ setup_rootfs() {
         libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
         tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
         build-base git tcpdump ethtool iperf3 htop vim doas \
-        e2fsprogs dosfstools util-linux
+        e2fsprogs dosfstools util-linux \
+        jansson
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -416,6 +424,7 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/pkgs"
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
+    mkdir -p "/ukama/mocksysfs"
     mkdir -p "/passive"
     mkdir -p "/boot/firmware"
     mkdir -p "/data"
