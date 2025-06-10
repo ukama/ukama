@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,8 +12,8 @@ set -e
 
 # Base parameters
 UKAMA_OS=`realpath ../ukamaOS`
-SYS_ROOT=${UKAMA_OS}/distro/
-SCRIPTS_ROOT=${SYS_ROOT}/scripts/
+SYS_ROOT=${UKAMA_OS}/distro
+SCRIPTS_ROOT=${SYS_ROOT}/scripts
 
 # Build the app at given src path and cmd
 build_app() {

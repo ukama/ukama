@@ -202,7 +202,8 @@ void log_remote_init(char *serviceName) {
 
     if (handler.websocket) return;
     if (rlogdPort == 0)    return;
-    if (strcmp(serviceName, SERVICE_RLOG) == 0) return;
+    if (strcmp(serviceName, SERVICE_RLOG) == 0)    return;
+    if (strcmp(serviceName, SERVICE_STARTER) == 0) return;
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&hasData, NULL);

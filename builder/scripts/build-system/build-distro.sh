@@ -24,7 +24,7 @@ echo "https://dl-cdn.alpinelinux.org/alpine/${MAJOR_VERSION}/community" >> /etc/
 apk update
 apk upgrade
 
-# ===== Install Essential System Packages =====
+# install essential system packages
 apk add alpine-base openrc busybox bash sudo shadow tzdata
 
 apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
@@ -38,17 +38,46 @@ apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev \
     libunistring-dev \
     patchelf
 
-#build apps
+# build apps
 ${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
 if [ $? -eq 0 ]; then
     echo "Apps build:"
     ls -ltr "${UKAMA_REPO}/build/pkgs/"*
 
-    echo "Package vendor libs"
-    cd "${UKAMA_REPO}/nodes/ukamaOS/distro/vendor" || exit 1
-    ls -ltr build/lib/*
+    echo "Package vendor libs and platform lib"
     mkdir -p "${UKAMA_REPO}/build/libs"
-    tar -zcvf "${UKAMA_REPO}/build/libs/vendor_libs.tgz" build/lib/*
+
+    VENDOR_LIB_DIR="${UKAMA_REPO}/nodes/ukamaOS/distro/vendor/build/lib"
+    PLATFORM_LIB="${UKAMA_REPO}/nodes/ukamaOS/distro/platform/build/libusys.so"
+
+    # Get list of *.a and *.so files (flat only)
+    FILES=$(cd "$VENDOR_LIB_DIR" && ls *.a *.so* 2>/dev/null)
+
+    tar -zcvf "${UKAMA_REPO}/build/libs/vendor_libs.tgz" \
+        -C "$VENDOR_LIB_DIR" $FILES \
+        -C "$(dirname "$PLATFORM_LIB")" "$(basename "$PLATFORM_LIB")"
 else
     exit 1
 fi
+
+# Temporary - mocksysfs
+cwd=`pwd`
+cd "${UKAMA_REPO}/nodes/ukamaOS/distro/system/noded"
+rm -rf /tmp/sys/
+rm -rf "${cwd}/mocksysfs"
+./utils/prepare_env.sh -u tnode -u anode
+./build/genSchema --u UK-SA9001-HNODE-A1-1103 \
+                  --n com --m UK-SA9001-COM-A1-1103  \
+                  --f mfgdata/schema/com.json --n trx \
+                  --m UK-SA9001-TRX-A1-1103  \
+                  --f mfgdata/schema/trx.json --n mask \
+                  --m UK-SA9001-MSK-A1-1103\
+                  --f mfgdata/schema/mask.json
+./build/genInventory --n com --m UK-SA9001-COM-A1-1103 \
+                     --f mfgdata/schema/com.json -n trx \
+                     --m UK-SA9001-TRX-A1-1103 \
+                     --f mfgdata/schema/trx.json \
+                     --n mask -m UK-SA9001-MSK-A1-1103 \
+                     --f mfgdata/schema/mask.json
+cp -rf /tmp/sys "${cwd}/mocksysfs"
+cd "${cwd}"

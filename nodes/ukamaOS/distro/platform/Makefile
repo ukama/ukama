@@ -16,11 +16,11 @@ UTEST_BIN := platform
 DISTRO_DIR:=../
 
 # Vendor
-VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
-VENDOR_BUILD = $(VENDOR_DIR)/build/
-VENDOR_INC   = $(VENDOR_BUILD)/include/
-VENDOR_LIB   = $(VENDOR_BUILD)/lib/
-VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor
+VENDOR_BUILD = $(VENDOR_DIR)/build
+VENDOR_INC   = $(VENDOR_BUILD)/include
+VENDOR_LIB   = $(VENDOR_BUILD)/lib
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64
 
 #VENDOR_INC+=$(VENDOR_DIR)/headers/musl/
 
@@ -60,6 +60,10 @@ LDFLAGS+=$(LDPATH)
 LDFLAGS+=-L$(CURDIR)/$(BUILD_DIR)
 LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L$(VENDOR_LIB64)
+
+LDFLAGS+=-Wl,-rpath,$(PLATFORM_LIB)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB)
+LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64)
 
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report

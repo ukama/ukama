@@ -178,7 +178,7 @@ function install_x86_64_kernel() {
 
     log "INFO" "Copying kernel and modules"
     mkdir -p /boot /lib/modules
-    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/kernel.img
+    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/vmlinuz
     cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
 
     rm -rf "$kernel_tmp_dir"
@@ -243,26 +243,9 @@ function copy_linux_kernel() {
     log "SUCCESS" "Kernel installed using apk fallback path"
 }
 
-function copy_all_apps() {
-    log "INFO" "Copying apps"
-    cp -rvf ${UKAMA_REPO_APP_PKG} ${UKAMA_APP_PKG}
-}
-
-function copy_required_libs() {
-    log "INFO" "Installing required libs"
-    pushd ${UKAMA_REPO_LIB_PKG}
-    tar zxvf vendor_libs.tgz 
-    cp -vrf ./build/* /usr/
-	popd
-}
-
 function copy_misc_files() {
     
 	log "INFO" "Copying various files to image"
-    rm -f ${MANIFEST_FILE}
-    create_manifest_file
-    
-    sudo mv ${MANIFEST_FILE} "/manifest.json"
 
     # install the starter.d app
     install_starter_app "/"
@@ -272,6 +255,13 @@ function copy_misc_files() {
     sudo mkdir -p "/etc"
     sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
          "/etc/services"
+
+    # copy mocksysfs related files (not needed for actual HW) - XXX
+    mkdir -p "/tmp/sys"
+    cp -rf ${UKAMA_ROOT}/builder/scripts/build-system/mocksysfs/* \
+       "/tmp/sys/"
+    cp -rf "${UKAMA_ROOT}/nodes/ukamaOS/distro/system/noded/mfgdata" \
+       "/ukama/mocksysfs/"
 }
 
 # Update /etc/fstab based on partition type
@@ -280,27 +270,27 @@ update_fstab() {
 
     if [[ "$PARTITION_TYPE" == "active" ]]; then
         cat <<FSTAB > /etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p6  /passive     auto    ro          0 2
-/dev/mmcblk1p5  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=passive     /passive        ext4    ro                    0 2
+LABEL=primary     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     else
         cat <<FSTAB > /etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p5  /passive     auto    ro          0 2
-/dev/mmcblk1p6  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
+proc              /proc           proc    defaults              0 0
+sysfs             /sys            sysfs   defaults              0 0
+devpts            /dev/pts        devpts  defaults              0 0
+tmpfs             /tmp            tmpfs   defaults              0 0
+LABEL=recovery    /recovery       ext4    ro                    0 2
+LABEL=data        /data           ext4    ro                    0 2
+LABEL=primary     /passive        ext4    ro                    0 2
+LABEL=passive     /               ext4    errors=remount-ro     0 1
+LABEL=boot        /boot/firmware  vfat    ro                    0 2
 FSTAB
     fi
 
@@ -381,7 +371,9 @@ setup_rootfs() {
         iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap \
         libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
         tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
-        build-base git tcpdump ethtool iperf3 htop vim doas
+        build-base git tcpdump ethtool iperf3 htop vim doas \
+        e2fsprogs dosfstools util-linux \
+        jansson
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -423,94 +415,6 @@ setup_rootfs() {
     log_message "INFO" "root filesystem setup completed."
 }
 
-function create_manifest_file() {
-    log "INFO" "Creating manifest file"
-
-   cat <<EOF > ${MANIFEST_FILE}
-{
-    "version": "0.1",
-
-    "spaces" : [
-        { "name" : "boot" },
-        { "name" : "services" },
-        { "name" : "reboot" }
-    ],
-
-    "capps": [
-        {
-            "name"   : "noded",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot"
-        },
-        {
-            "name"   : "bootstrap",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "noded",
-                                "state" : "active"
-                        }
-                ]
-        },
-        {
-            "name"   : "meshd",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "boot",
-                "depends_on" : [
-                {
-                    "capp"  : "bootstrap",
-                                "state" : "done"
-                        }
-                ]
-        }
-EOF
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-  echo "Adding manifest for ${APP_NAMES[@]}"
-  for app in "${APP_NAMES[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  echo '        ,' >> ${MANIFEST_FILE}
-  echo '        {"name" : "services", "capps" : [' >> ${MANIFEST_FILE}
-
-  for app in "${APP_NAMES[@]}"; do
-    case "$app" in
-      "wimcd"|"configd"|"metricsd"|"lookoutd"|"deviced"|"notifyd")
-        cat <<EOF >> ${MANIFEST_FILE}
-        {
-            "name"   : "$app",
-            "tag"    : "latest",
-            "restart": "yes",
-            "space"  : "services"
-        },
-EOF
-        ;;
-    esac
-  done
-
-  # Remove the last comma and close the JSON array
-  sed -i '$ s/,$//' ${MANIFEST_FILE}
-  echo '    ]}'  >> ${MANIFEST_FILE}
-  echo '}'       >> ${MANIFEST_FILE}
-}
-
 function setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
 
@@ -520,6 +424,7 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/pkgs"
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
+    mkdir -p "/ukama/mocksysfs"
     mkdir -p "/passive"
     mkdir -p "/boot/firmware"
     mkdir -p "/data"
@@ -593,16 +498,9 @@ log "INFO" "Network configuration"
 configure_network  # Configure network
 
 log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
-create_openrc_service ${SERVICE_NAME}  ${SERVICE_CMD}# Create OpenRC service
+create_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
 
-log "INFO" "Copying libs"
-copy_required_libs
-
-log "INFO" "Copying apps"
-copy_all_apps
-#get_apps_name
-
-log "INFO" "Create manifest."
+log "INFO" "Copy misc files."
 copy_misc_files 
 
 log "INFO" "Copy kernel"
@@ -610,4 +508,3 @@ copy_linux_kernel
 
 echo "Rootfs build success."
 exit 0
-~                                                                     
