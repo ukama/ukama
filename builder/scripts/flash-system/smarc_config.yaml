@@ -1,0 +1,21 @@
+network:
+  dev_eth: "eth1"
+  static_ip: "192.168.53.100"
+  target_ip: "192.168.53.151"
+
+image:
+  name: "ukama-os.img"
+  path: "/home/factory/images/ukama-os.img"
+
+usb:
+  device: "/dev/sdX"  # e.g., /dev/sdb
+  iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
+
+serial:
+  device: "/dev/ttyUSB0"
+  baud: 115200
+
+flash:
+  target_device: "/dev/mmcblk0"
+  success_marker: "Flash complete. Rebooting."
+  boot_marker: "login:"

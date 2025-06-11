@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-CONFIG="config.yaml"
+CONFIG="smarc_config.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
 
