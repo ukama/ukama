@@ -4,8 +4,13 @@ on:
  pull_request:
   paths:
    - 'testing/console/**'
-   - 'interfaces/console/**'
    - '.github/workflows/testing-console.yml'
+   - 'interfaces/console/src/app/manage/**'
+   - 'interfaces/console/src/app/console/home/**'
+   - 'interfaces/console/src/app/console/site/**'
+   - 'interfaces/console/src/app/console/node/**'
+   - 'interfaces/console/src/app/console/subscriber/**'
+   - 'interfaces/console/src/app/configure/**'
 
 jobs:
  test:
@@ -54,7 +59,42 @@ jobs:
      run: |
       cd testing/console
       mkdir -p test-results
-      pnpm test-ci
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/manage/**"* ]]; then
+        echo "Running manage tests..."
+        pnpm test-manage
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/site/**"* ]]; then
+        echo "Running site tests..."
+        pnpm test-site
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/node/**"* ]]; then
+        echo "Running node tests..."
+        pnpm test-node
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/subscriber/**"* ]]; then
+        echo "Running subscriber tests..."
+        pnpm test-subscriber
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/home/**"* ]]; then
+        echo "Running network tests..."
+        pnpm test-network
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/configure/**"* ]]; then
+        echo "Running configure tests..."
+        pnpm test-onboarding
+      fi
+
+      if [[ "${{ github.event.pull_request.changed_files }}" == *"testing/console/"* ]] || 
+         [[ "${{ github.event.pull_request.changed_files }}" == *".github/workflows/testing-console.yml"* ]]; then
+        echo "Running all tests..."
+        pnpm test-auth
+      fi
 
    - name: Upload test results
      if: always()
