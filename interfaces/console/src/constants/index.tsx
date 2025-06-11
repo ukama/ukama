@@ -706,7 +706,7 @@ export const NODE_KPIS = {
         show: true,
         format: 'number',
         name: 'Network subscribers',
-        id: 'subscribers_active',
+        id: 'node_active_subscribers',
         description: 'Network active subscribers',
         threshold: null,
       },
