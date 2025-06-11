@@ -8,8 +8,15 @@
     "lint-fix": "eslint --fix .",
     "lighthouse:audit": "pnpm playwright test tests/lighthouse.spec.ts",
     "patch-tests": "pnpm playwright test tests/apply_patches.spec.ts && pnpm prettier",
-    "clean-up": "rm -rf test-temp && rm -rf playwright-report && rm -rf test-results && rm -rf tests/patched && rm -rf lighthouse-reports",
-    "test": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/**/**/*.spec.ts --grep-invert \"Onboarding Test\" && pnpm exec playwright show-report"
+    "clean-up": "rm -rf test-temp && rm -rf playwright-report && rm -rf test-results && rm -rf tests/patched",
+    "test": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/**/**/*.spec.ts --grep-invert \"Onboarding Test\" && pnpm exec playwright show-report",
+    "test-auth": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/auth/*.spec.ts",
+    "test-manage": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/manage/*.spec.ts",
+    "test-network": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/network/*.spec.ts",
+    "test-node": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/node/*.spec.ts",
+    "test-site": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/site/*.spec.ts",
+    "test-subscriber": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/subscriber/*.spec.ts",
+    "test-onboarding": "pnpm clean-up && playwright test tests/apply_patches.spec.ts && playwright test tests/patched/v1.0.0/onboarding/*.spec.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +29,6 @@
     "@types/chrome-remote-interface": "^0.31.14",
     "@types/json2csv": "^5.0.7",
     "@types/node": "^20",
-    "chrome-launcher": "^1.2.0",
     "dotenv": "^16.5.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.3",
@@ -30,7 +36,6 @@
     "lighthouse": "^12.6.0",
     "next": "^15.3.2",
     "prettier": "^3.3.2",
-    "typescript": "^5.8.3",
-    "chrome-remote-interface": "^0.33.3"
+    "typescript": "^5.8.3"
   }
 }

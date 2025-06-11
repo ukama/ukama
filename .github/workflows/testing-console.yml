@@ -1,0 +1,175 @@
+name: console-testing
+
+on:
+ pull_request:
+  paths:
+   - 'testing/console/**'
+   - '.github/workflows/testing-console.yml'
+   - 'interfaces/console/src/app/manage/**'
+   - 'interfaces/console/src/app/console/home/**'
+   - 'interfaces/console/src/app/console/site/**'
+   - 'interfaces/console/src/app/console/node/**'
+   - 'interfaces/console/src/app/console/subscriber/**'
+   - 'interfaces/console/src/app/configure/**'
+
+jobs:
+ test:
+  name: Run Playwright Tests
+  runs-on: ubuntu-latest
+  timeout-minutes: 15
+
+  steps:
+   - uses: actions/checkout@v4
+
+   - name: Setup Node.js
+     uses: actions/setup-node@v4
+     with:
+      node-version: '20'
+
+   - name: Setup pnpm
+     uses: pnpm/action-setup@v2
+     with:
+      version: 8
+
+   - name: Install OpenVPN
+     run: |
+      sudo apt-get update
+      sudo apt-get install -y openvpn
+
+   - name: Setup VPN
+     run: |
+      echo "${{ secrets.VPN_CONFIG }}" > vpn.ovpn
+      sudo openvpn --config vpn.ovpn --daemon
+      sleep 10  # Wait for VPN connection to establish
+      curl ifconfig.me  # Verify VPN connection
+
+   - name: Install dependencies
+     run: |
+      cd testing/console
+      pnpm install
+      pnpm exec playwright install --with-deps
+
+   - name: Run Playwright tests
+     env:
+      CONSOLE_BASE_URL: ${{ secrets.CONSOLE_BASE_URL }}
+      AUTH_BASE_URL: ${{ secrets.AUTH_BASE_URL }}
+      TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      LIGHTHOUSE_SCORE_THRESHOLD: ${{ secrets.LIGHTHOUSE_SCORE_THRESHOLD }}
+     run: |
+      cd testing/console
+      mkdir -p test-results
+
+      # Get list of changed files
+      CHANGED_FILES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" | \
+        jq -r '.[].filename')
+
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/manage/"; then
+        echo "Running manage tests..."
+        pnpm test-manage
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/site/"; then
+        echo "Running site tests..."
+        pnpm test-site
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/node/"; then
+        echo "Running node tests..."
+        pnpm test-node
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/subscriber/"; then
+        echo "Running subscriber tests..."
+        pnpm test-subscriber
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/home/"; then
+        echo "Running network tests..."
+        pnpm test-network
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/configure/"; then
+        echo "Running configure tests..."
+        pnpm test-onboarding
+      fi
+
+      if echo "$CHANGED_FILES" | grep -q "testing/console/" || \
+         echo "$CHANGED_FILES" | grep -q ".github/workflows/testing-console.yml"; then
+        echo "Running all tests..."
+        pnpm test-auth
+      fi
+
+   - name: Upload test results
+     if: always()
+     uses: actions/upload-artifact@v4
+     with:
+      name: playwright-report
+      path: testing/console/playwright-report
+      retention-days: 7
+
+   - name: Comment PR with report URL
+     if: github.event_name == 'pull_request'
+     uses: actions/github-script@v7
+     with:
+      script: |
+       const fs = require('fs');
+       const reportPath = 'testing/console/playwright-report/index.html';
+       const statsPath = 'testing/console/test-results/test-results.json';
+
+       if (fs.existsSync(reportPath)) {
+         const runId = context.runId;
+         const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           run_id: runId
+         });
+         
+         const reportArtifact = artifacts.data.artifacts.find(artifact => artifact.name === 'playwright-report');
+         const artifactUrl = reportArtifact ? 
+           `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts/${reportArtifact.id}` :
+           `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${runId}/artifacts`;
+         
+         let statsMessage = '';
+         if (fs.existsSync(statsPath)) {
+           const results = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+           let total = 0, passed = 0, failed = 0, skipped = 0, flaky = 0;
+
+           function countTests(suites) {
+             for (const suite of suites) {
+               if (suite.specs) {
+                 for (const spec of suite.specs) {
+                   if (spec.tests) {
+                     for (const test of spec.tests) {
+                       total++;
+                       if (test.status === 'expected') passed++;
+                       else if (test.status === 'unexpected') failed++;
+                       else if (test.status === 'skipped') skipped++;
+                       else if (test.status === 'flaky') flaky++;
+                     }
+                   }
+                 }
+               }
+             }
+           }
+           countTests(results.suites);
+
+           statsMessage = `📊 Test Results:\n` +
+             `- Total Tests: ${total}\n` +
+             `- ✅ Passed: ${passed}\n` +
+             `- ❌ Failed: ${failed}\n` +
+             `- ⏭️ Skipped: ${skipped}\n` +
+             `- ⚠️ Flaky: ${flaky}`;
+         }
+
+         await github.rest.issues.createComment({
+           issue_number: context.issue.number,
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           body: `${statsMessage}\n\n[View full report](${artifactUrl})`
+         });
+       }

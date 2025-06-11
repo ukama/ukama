@@ -18,7 +18,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'test-results/test-results.json' }],
+  ],
   use: {
     baseURL: CONSOLE_ROOT_URL,
     trace: 'on-first-retry',
@@ -45,12 +48,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  webServer: {
-    command: 'pnpm prod',
-    url: CONSOLE_ROOT_URL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // webServer: {
+  //   command: 'pnpm prod',
+  //   url: CONSOLE_ROOT_URL,
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 120000,
+  //   stdout: 'pipe',
+  //   stderr: 'pipe',
+  // },
 });
