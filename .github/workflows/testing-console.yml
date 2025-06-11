@@ -60,38 +60,46 @@ jobs:
       cd testing/console
       mkdir -p test-results
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/manage/**"* ]]; then
+      # Get list of changed files
+      CHANGED_FILES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+        "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" | \
+        jq -r '.[].filename')
+
+      echo "Changed files:"
+      echo "$CHANGED_FILES"
+
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/manage/"; then
         echo "Running manage tests..."
         pnpm test-manage
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/site/**"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/site/"; then
         echo "Running site tests..."
         pnpm test-site
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/node/**"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/node/"; then
         echo "Running node tests..."
         pnpm test-node
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/subscriber/**"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/subscriber/"; then
         echo "Running subscriber tests..."
         pnpm test-subscriber
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/console/home/**"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/console/home/"; then
         echo "Running network tests..."
         pnpm test-network
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"interfaces/console/src/app/configure/**"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "interfaces/console/src/app/configure/"; then
         echo "Running configure tests..."
         pnpm test-onboarding
       fi
 
-      if [[ "${{ github.event.pull_request.changed_files }}" == *"testing/console/"* ]] || 
-         [[ "${{ github.event.pull_request.changed_files }}" == *".github/workflows/testing-console.yml"* ]]; then
+      if echo "$CHANGED_FILES" | grep -q "testing/console/" || \
+         echo "$CHANGED_FILES" | grep -q ".github/workflows/testing-console.yml"; then
         echo "Running all tests..."
         pnpm test-auth
       fi
