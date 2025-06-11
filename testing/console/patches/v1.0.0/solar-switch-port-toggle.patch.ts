@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2025-present, Ukama Inc.
  */
+
 import path from 'path';
 import { applyPatch } from '../common';
 
@@ -12,17 +13,32 @@ const applySolarPortTogglePatch = async () => {
   const version = path.basename(__dirname);
   const customReplacements = [
     {
-      regex: /await page\.getByText\('cinis-siteRue de Baraka,'\)\.click\(\);/g,
-      replacement: `await page.getByText(/.*-.*/).first().click();`,
+      regex: /await page\.getByTestId\('site-switch'\)\.first\(\)\.click\(\);/g,
+      replacement: `await page.getByTestId('site-switch').first().click({ force: true });
+                    await page.waitForTimeout(1000);`,
     },
     {
-      regex: /await page\.locator\('rect:nth-child\(15\)'\)\.click\(\);/g,
-      replacement: `await page.locator('rect:nth-child(15)').click();`,
+      regex:
+        /await page\.getByRole\('heading', { name: 'test-site1' }\)\.click\(\);/g,
+      replacement: `await page.getByRole('heading', { name: /.+-.+/ }).first().click();
+                    await page.waitForTimeout(1000);`,
     },
     {
       regex:
         /await page\.getByRole\('button', { name: 'Port 2 \(Solar Controller\)' }\)\.click\(\);/g,
-      replacement: `await page.getByRole('button', { name: /Port.*Solar/i }).click();`,
+      replacement: `if (await page.locator('text=Not available').count()) return;
+                    await page.getByRole('button', { name: 'Port 2 (Solar Controller)' }).click();
+                    await page.waitForTimeout(1000);`,
+    },
+    {
+      regex: /await page\.getByRole\('checkbox'\)\.uncheck\(\);/g,
+      replacement: `await page.getByRole('checkbox').uncheck();
+                    await page.waitForTimeout(1000);`,
+    },
+    {
+      regex: /await page\.getByRole\('checkbox'\)\.check\(\);/g,
+      replacement: `await page.getByRole('checkbox').check();
+                    await page.waitForTimeout(1000);`,
     },
   ];
 

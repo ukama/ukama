@@ -174,6 +174,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         height="56"
         rx="12"
         // fill=" #ff0000"
+        data-testid="site-switch"
         fill-opacity="0.07"
         cursor={'pointer'}
         onClick={() => handleNodeClick('switch')}
@@ -186,6 +187,7 @@ const SiteFlowDiagram: React.FC<SiteFlowDiagramProps> = ({
         width="56"
         height="56"
         rx="12"
+        data-testid="site-switch"
         stroke={getStrokeColor('switch')}
         strokeWidth={activeKPI === 'switch' ? 2 : 1}
         onClick={() => handleNodeClick('switch')}

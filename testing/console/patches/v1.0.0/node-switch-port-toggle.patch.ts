@@ -5,25 +5,41 @@
  *
  * Copyright (c) 2025-present, Ukama Inc.
  */
+
 import path from 'path';
 import { applyPatch } from '../common';
 
-const applyNodePortSwitchPatch = async () => {
+const applyNodePortTogglePatch = async () => {
   const version = path.basename(__dirname);
   const customReplacements = [
     {
-      regex: /await page\.locator\('rect:nth-child\(15\)'\)\.click\(\);/g,
-      replacement: `await page.locator('rect:nth-child(15)').click();`,
+      regex: /await page\.getByTestId\('site-switch'\)\.first\(\)\.click\(\);/g,
+      replacement: `await page.getByTestId('site-switch').first().click({ force: true });
+                    await page.waitForTimeout(1000);`,
+    },
+
+    {
+      regex:
+        /await page\.getByRole\('heading', { name: 'test-site1' }\)\.click\(\);/g,
+      replacement: `await page.getByRole('heading', { name: /.+-.+/ }).first().click();
+                    await page.waitForTimeout(1000);`,
     },
     {
       regex:
-        /await page\.getByRole\('heading', { name: '[^']*-[^']*' }\)\.click\(\);/g,
-      replacement: `await page.getByRole('heading', { name: /.*-.*/ }).first().click();`,
+        /await page\.getByRole\('button', { name: 'Port 1 \(Node\)' }\)\.click\(\);/g,
+      replacement: `if (await page.locator('text=Not available').count()) return;
+                    await page.getByRole('button', { name: 'Port 1 (Node)' }).click();
+                    await page.waitForTimeout(1000);`,
     },
     {
-      regex:
-        /await page\.getByRole\('button', { name: 'Port 1 \\\(Node\\\)' }\)\.click\(\);/g,
-      replacement: `await page.getByRole('button', { name: /Port.*\\(Node\\)/ }).click();`,
+      regex: /await page\.getByRole\('checkbox'\)\.uncheck\(\);/g,
+      replacement: `await page.getByRole('checkbox').uncheck();
+                    await page.waitForTimeout(1000);`,
+    },
+    {
+      regex: /await page\.getByRole\('checkbox'\)\.check\(\);/g,
+      replacement: `await page.getByRole('checkbox').check();
+                    await page.waitForTimeout(1000);`,
     },
   ];
 
@@ -35,4 +51,4 @@ const applyNodePortSwitchPatch = async () => {
   );
 };
 
-export default applyNodePortSwitchPatch;
+export default applyNodePortTogglePatch;

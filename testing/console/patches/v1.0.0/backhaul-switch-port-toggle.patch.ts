@@ -13,23 +13,33 @@ const applyBackhaulPortTogglePatch = async () => {
   const version = path.basename(__dirname);
   const customReplacements = [
     {
-      regex:
-        /await page\.getByText\('HomeSitesNodesSubscribers'\)\.click\(\);/g,
-      replacement: `// Navigation menu click removed as it's not needed`,
+      regex: /await page\.getByTestId\('site-switch'\)\.first\(\)\.click\(\);/g,
+      replacement: `await page.getByTestId('site-switch').first().click({ force: true });
+                    await page.waitForTimeout(1000);`,
     },
+
     {
       regex:
-        /await page\.getByRole\('heading', { name: 'cinis-site' }\)\.click\(\);/g,
-      replacement: `await page.getByRole('heading', { name: /.*-.*/ }).first().click();`,
-    },
-    {
-      regex: /await page\.locator\('rect:nth-child\(15\)'\)\.click\(\);/g,
-      replacement: `await page.locator('rect:nth-child(15)').click();`,
+        /await page\.getByRole\('heading', { name: 'test-site1' }\)\.click\(\);/g,
+      replacement: `await page.getByRole('heading', { name: /.+-.+/ }).first().click();
+                    await page.waitForTimeout(1000);`,
     },
     {
       regex:
         /await page\.getByRole\('button', { name: 'Port 3 \(Backhaul\)' }\)\.click\(\);/g,
-      replacement: `await page.getByRole('button', { name: /Port.*Backhaul/i }).click();`,
+      replacement: `if (await page.locator('text=Not available').count()) return;
+                    await page.getByRole('button', { name: 'Port 1 (Backhaul)' }).click();
+                    await page.waitForTimeout(1000);`,
+    },
+    {
+      regex: /await page\.getByRole\('checkbox'\)\.uncheck\(\);/g,
+      replacement: `await page.getByRole('checkbox').uncheck();
+                    await page.waitForTimeout(1000);`,
+    },
+    {
+      regex: /await page\.getByRole\('checkbox'\)\.check\(\);/g,
+      replacement: `await page.getByRole('checkbox').check();
+                    await page.waitForTimeout(1000);`,
     },
   ];
 
