@@ -13,6 +13,8 @@ YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
 ISO_BUILDER="./create_auto_iso.sh"
 
+RETRIES=3
+
 # === Logging Setup ===
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
@@ -25,6 +27,18 @@ MAC_FILE="${TMP_LOG_DIR}/mac.txt"
 SN_FILE="${TMP_LOG_DIR}/serial.txt"
 STATUS_FILE="${TMP_LOG_DIR}/status.txt"
 ORIGINAL_SSH_STATE=$(systemctl is-active sshd || echo "unknown")
+
+cleanup() {
+    if [[ -n "${SERIAL_PID:-}" ]]; then
+        kill "$SERIAL_PID" 2>/dev/null || true
+    fi
+    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+        echo "🧹 Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
+        sudo systemctl stop sshd || true
+    fi
+}
+
+trap cleanup EXIT
 
 REQUIRED_KEYS=(
     ".network.dev_eth"
@@ -60,6 +74,30 @@ validate_config() {
         if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
             echo "❌ Missing config: $key" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
+        fi
+    done
+}
+
+check_usb_writable() {
+    echo "🧪 Verifying write access to USB device: $USB_DEV" | tee -a "$ORCHESTRATOR_LOG"
+    if ! sudo dd if=/dev/zero of="$USB_DEV" bs=512 count=1 oflag=sync &>/dev/null; then
+        echo "❌ Cannot write to USB device $USB_DEV. Check permissions or device health." | tee -a "$ORCHESTRATOR_LOG"
+        exit 1
+    fi
+}
+
+retry() {
+    local n=1
+    local max=$RETRIES
+    local delay=5
+    until "$@"; do
+        if (( n == max )); then
+            echo "❌ Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
+            return 1
+        else
+            echo "🔁 Retry $n/$max: $*" | tee -a "$ORCHESTRATOR_LOG"
+            sleep $delay
+            ((n++))
         fi
     done
 }
@@ -108,19 +146,20 @@ EOF
     chmod +x "$FLASH_SCRIPT"
 
     echo "=== [5] Build auto-run Alpine ISO ==="
-    bash "$ISO_BUILDER"
+    retry bash "$ISO_BUILDER"
 
     echo "=== [6] Flash ISO to USB ${USB_DEV} ==="
+    check_usb_writable
     sudo dd if=alpine-auto.iso of="${USB_DEV}" bs=4M status=progress && sync
 
     echo "=== [7] Insert USB into SMARC board and power it up ==="
     echo "⚠️  No user input is needed — SMARC will auto-run flash script."
     echo "📡 Monitoring serial port at ${SERIAL_DEV}..."
 
-    cat "${SERIAL_DEV}" | tee "${RAW_SERIAL}" | head -n 100 > /dev/null &
+    cat "$SERIAL_DEV" | tee "$RAW_SERIAL" | head -n 100 > /dev/null &
+    SERIAL_PID=$!
 
-    sleep 10  # Allow time for serial to emit logs
-
+    sleep 10
     MAC=$(grep -oE '([a-f0-9]{2}:){5}[a-f0-9]{2}' "$RAW_SERIAL" | head -n1 || true)
     SN=$(grep -E '^.*-[0-9A-Fa-f]{4,}$' "$RAW_SERIAL" | head -n1 || true)
 
@@ -129,7 +168,6 @@ EOF
 
     MAC_CLEAN=$(echo "$MAC" | tr -d ':' | tr '[:lower:]' '[:upper:]')
     SN_CLEAN=$(echo "$SN" | tr -d ' ' | tr '[:lower:]' '[:upper:]' | tr -cd '[:alnum:]-')
-
     NEW_LOG_DIR="logs/${TIMESTAMP}_${MAC_CLEAN}_${SN_CLEAN}"
     mv "$TMP_LOG_DIR" "$NEW_LOG_DIR"
 
@@ -138,26 +176,17 @@ EOF
     STATUS_FILE="${NEW_LOG_DIR}/status.txt"
 
     echo "=== [8] Waiting for '${SUCCESS_MARKER}' ==="
-    timeout 300 grep -q "$SUCCESS_MARKER" < <(tee "$SERIAL_LOG" < "$SERIAL_DEV")
+    retry timeout 300 grep -q "$SUCCESS_MARKER" < <(tee "$SERIAL_LOG" < "$SERIAL_DEV")
     echo "✅ Flash completed."
 
     echo "=== [9] Waiting for '${BOOT_MARKER}' ==="
-    timeout 120 grep -q "$BOOT_MARKER" < <(tee -a "$SERIAL_LOG" < "$SERIAL_DEV")
+    retry timeout 120 grep -q "$BOOT_MARKER" < <(tee -a "$SERIAL_LOG" < "$SERIAL_DEV")
     echo "✅ System booted."
 
     echo "PASS" > "$STATUS_FILE"
 
-    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
-        echo "🧹 Restoring SSH state — stopping SSHD"
-        sudo systemctl stop sshd
-    fi
 } 2>&1 | tee -a "$ORCHESTRATOR_LOG" || {
-    echo "❌ Flashing failed — logs in: $TMP_LOG_DIR"
+    echo "❌ Flashing failed — logs in: $TMP_LOG_DIR" | tee -a "$ORCHESTRATOR_LOG"
     echo "FAIL" > "$STATUS_FILE"
-
-    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
-        echo "🧹 Cleaning up: stopping SSHD"
-        sudo systemctl stop sshd
-    fi
     exit 1
 }
