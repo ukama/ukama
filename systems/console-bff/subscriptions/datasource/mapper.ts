@@ -5,6 +5,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
+import { logger } from "../../common/logger";
 import { formatKPIValue } from "../../common/utils";
 import {
   GetLatestMetricInput,
@@ -61,23 +62,32 @@ export const parseMetricsResponse = (
   type: string,
   args: GetMetricsStatInput
 ): MetricsRes => {
-  const metricResArray: MetricRes[] = res.map(item => ({
-    type: type,
-    success: true,
-    msg: "success",
-    nodeId: item.metric.nodeid ?? args.nodeId ?? "",
-    siteId: item.metric?.siteid ?? args.siteId ?? "",
-    networkId: item.metric?.network ?? args.networkId ?? "",
-    packageId: item.metric?.package ?? "",
-    dataPlanId: item.metric?.dataplan ?? "",
-    values: fixTimestampInMetricData(
-      item.values,
-      1,
-      args.to ?? Math.floor(Date.now() / 1000),
-      args.from,
-      type
-    ),
-  }));
+  const metricResArray: MetricRes[] = res.map(item => {
+    if (args.networkId && args.networkId !== item.metric.network) {
+      return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    }
+    if (args.siteId && args.siteId !== item.metric.siteid) {
+      return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    }
+    return {
+      type: type,
+      success: true,
+      msg: "success",
+      nodeId: item.metric.nodeid ?? args.nodeId ?? "",
+      siteId: item.metric?.siteid ?? args.siteId ?? "",
+      networkId: item.metric?.network ?? args.networkId ?? "",
+      packageId: item.metric?.package ?? "",
+      dataPlanId: item.metric?.dataplan ?? "",
+      values: fixTimestampInMetricData(
+        item.values,
+        1,
+        args.to ?? Math.floor(Date.now() / 1000),
+        args.from,
+        type
+      ),
+    };
+  });
+
   const metricsRes: MetricsRes = {
     metrics: metricResArray,
   };
@@ -93,7 +103,7 @@ function fixTimestampInMetricData(
   type: string
 ): [number, number][] {
   if (!Array.isArray(data) || data.length === 0) return [];
-
+  logger.info(data);
   const result: [number, number][] = [];
   let prevTimestamp: number = from;
   let dataIndex = 0;

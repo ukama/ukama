@@ -28,7 +28,7 @@ const getNodeMetricRange = async (
   if (nodeId) {
     params = params + `&node=${nodeId}`;
   }
-  if (networkId && type !== "subscribers_active") {
+  if (networkId) {
     params = params + `&network=${networkId}`;
   }
   if (siteId) {
