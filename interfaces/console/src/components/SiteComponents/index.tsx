@@ -266,7 +266,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             <Stack spacing={3}>
               {portGroup.metrics
                 .filter((m: any) => !m.id.includes('switch_port_status'))
-                .map((metric: any, index: number) => (
+                .map((metric: any, _: number) => (
                   <Box key={metric.id} data-testid={`metric-item-${metric.id}`}>
                     <Typography variant="body1" sx={{ mb: 1 }}>
                       {metric.name}
