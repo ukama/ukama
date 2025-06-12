@@ -1,18 +1,19 @@
 #!/bin/bash
-#!/bin/bash
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
+#!/bin/bash
 set -euo pipefail
 
-CONFIG="smarc_config.yaml"
+CONFIG="config.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
+ISO_BUILDER="./create_auto_iso.sh"
 
-# === Setup Logging ===
+# === Logging Setup ===
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
 mkdir -p "$TMP_LOG_DIR"
@@ -23,8 +24,8 @@ RAW_SERIAL="${TMP_LOG_DIR}/serial_raw.log"
 MAC_FILE="${TMP_LOG_DIR}/mac.txt"
 SN_FILE="${TMP_LOG_DIR}/serial.txt"
 STATUS_FILE="${TMP_LOG_DIR}/status.txt"
+ORIGINAL_SSH_STATE=$(systemctl is-active sshd || echo "unknown")
 
-# Required config keys
 REQUIRED_KEYS=(
     ".network.dev_eth"
     ".network.static_ip"
@@ -40,7 +41,6 @@ REQUIRED_KEYS=(
     ".flash.boot_marker"
 )
 
-# === Helpers ===
 ensure_yq() {
     if [ ! -x "$YQ_BIN" ]; then
         echo "📦 Downloading yq..." | tee -a "$ORCHESTRATOR_LOG"
@@ -64,11 +64,9 @@ validate_config() {
     done
 }
 
-# === Init ===
 ensure_yq
 validate_config
 
-# === Load Config ===
 DEV_ETH=$(yq_read        '.network.dev_eth')
 STATIC_IP=$(yq_read      '.network.static_ip')
 TARGET_IP=$(yq_read      '.network.target_ip')
@@ -82,21 +80,22 @@ TARGET_DEV=$(yq_read     '.flash.target_device')
 SUCCESS_MARKER=$(yq_read '.flash.success_marker')
 BOOT_MARKER=$(yq_read    '.flash.boot_marker')
 
-# === Main Process ===
 {
-    echo "=== [1] Configuring ${DEV_ETH} with static IP ==="
+    echo "=== [1] Configure dev Ethernet (${DEV_ETH}) ==="
     sudo ip addr flush dev "$DEV_ETH" || true
     sudo ip addr add "${STATIC_IP}/24" dev "$DEV_ETH"
     sudo ip link set dev "$DEV_ETH" up
 
-    echo "=== [2] Starting SSH server ==="
-    sudo systemctl start sshd
+    echo "=== [2] Start SSH (as needed) ==="
+    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+        echo "🔐 Starting SSH temporarily for image transfer"
+        sudo systemctl start sshd
+    fi
 
-    echo "=== [3] Writing Alpine ISO to USB ${USB_DEV} ==="
+    echo "=== [3] Download Alpine ISO ==="
     wget -O alpine.iso "$ISO_URL"
-    sudo dd if=alpine.iso of="$USB_DEV" bs=4M status=progress && sync
 
-    echo "=== [4] Writing SMARC flash script ==="
+    echo "=== [4] Generate flash script ==="
     cat > "$FLASH_SCRIPT" <<EOF
 #!/bin/sh
 set -e
@@ -108,52 +107,57 @@ reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
-    echo "=== [5] Boot SMARC board and connect UART ==="
-    echo "➡️  Press ENTER when you see Alpine prompt"
-    read -r
+    echo "=== [5] Build auto-run Alpine ISO ==="
+    bash "$ISO_BUILDER"
 
-    # Start serial log capture
-    cat "$SERIAL_DEV" | tee "$RAW_SERIAL" | head -n 100 > /dev/null &
+    echo "=== [6] Flash ISO to USB ${USB_DEV} ==="
+    sudo dd if=alpine-auto.iso of="${USB_DEV}" bs=4M status=progress && sync
 
-    echo "ℹ️  On the SMARC serial console, run:"
-    echo "   ip link show eth0"
-    echo "   dmidecode -s system-serial-number"
-    echo "➡️  Press ENTER when done"
-    read -r
+    echo "=== [7] Insert USB into SMARC board and power it up ==="
+    echo "⚠️  No user input is needed — SMARC will auto-run flash script."
+    echo "📡 Monitoring serial port at ${SERIAL_DEV}..."
 
-    # === Extract MAC and Serial ===
+    cat "${SERIAL_DEV}" | tee "${RAW_SERIAL}" | head -n 100 > /dev/null &
+
+    sleep 10  # Allow time for serial to emit logs
+
     MAC=$(grep -oE '([a-f0-9]{2}:){5}[a-f0-9]{2}' "$RAW_SERIAL" | head -n1 || true)
     SN=$(grep -E '^.*-[0-9A-Fa-f]{4,}$' "$RAW_SERIAL" | head -n1 || true)
 
     [ -n "$MAC" ] && echo "$MAC" > "$MAC_FILE"
-    [ -n "$SN" ]  && echo "$SN" > "$SN_FILE"
+    [ -n "$SN" ] && echo "$SN" > "$SN_FILE"
 
-    echo "MAC: ${MAC:-Not found}"   | tee -a "$ORCHESTRATOR_LOG"
-    echo "Serial: ${SN:-Not found}" | tee -a "$ORCHESTRATOR_LOG"
-
-    # Rename log folder
     MAC_CLEAN=$(echo "$MAC" | tr -d ':' | tr '[:lower:]' '[:upper:]')
-    SN_CLEAN=$(echo "$SN"   | tr -d ' ' | tr '[:lower:]' '[:upper:]' | tr -cd '[:alnum:]-')
-    NEW_LOG_DIR="logs/${TIMESTAMP}_${MAC_CLEAN}_${SN_CLEAN}"
+    SN_CLEAN=$(echo "$SN" | tr -d ' ' | tr '[:lower:]' '[:upper:]' | tr -cd '[:alnum:]-')
 
+    NEW_LOG_DIR="logs/${TIMESTAMP}_${MAC_CLEAN}_${SN_CLEAN}"
     mv "$TMP_LOG_DIR" "$NEW_LOG_DIR"
+
     ORCHESTRATOR_LOG="${NEW_LOG_DIR}/orchestrator.log"
     SERIAL_LOG="${NEW_LOG_DIR}/serial_console.log"
     STATUS_FILE="${NEW_LOG_DIR}/status.txt"
 
-    # === Flash Success Marker ===
-    echo "=== [6] Waiting for flash success marker: $SUCCESS_MARKER ==="
+    echo "=== [8] Waiting for '${SUCCESS_MARKER}' ==="
     timeout 300 grep -q "$SUCCESS_MARKER" < <(tee "$SERIAL_LOG" < "$SERIAL_DEV")
-    echo "✅ Flash succeeded."
+    echo "✅ Flash completed."
 
-    echo "=== [7] Waiting for OS boot marker: $BOOT_MARKER ==="
+    echo "=== [9] Waiting for '${BOOT_MARKER}' ==="
     timeout 120 grep -q "$BOOT_MARKER" < <(tee -a "$SERIAL_LOG" < "$SERIAL_DEV")
-    echo "✅ System booted successfully."
+    echo "✅ System booted."
 
     echo "PASS" > "$STATUS_FILE"
 
+    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+        echo "🧹 Restoring SSH state — stopping SSHD"
+        sudo systemctl stop sshd
+    fi
 } 2>&1 | tee -a "$ORCHESTRATOR_LOG" || {
-    echo "❌ Flashing failed. See logs in $TMP_LOG_DIR or $NEW_LOG_DIR"
+    echo "❌ Flashing failed — logs in: $TMP_LOG_DIR"
     echo "FAIL" > "$STATUS_FILE"
+
+    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+        echo "🧹 Cleaning up: stopping SSHD"
+        sudo systemctl stop sshd
+    fi
     exit 1
 }

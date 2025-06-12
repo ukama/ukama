@@ -1,14 +1,14 @@
 network:
-  dev_eth: "eth1"
+  dev_eth: "enp0s25"
   static_ip: "192.168.53.100"
   target_ip: "192.168.53.151"
 
 image:
-  name: "ukama-os.img"
-  path: "/home/factory/images/ukama-os.img"
+  name: "ukama-com-image.img"
+  path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-com-image.img"
 
 usb:
-  device: "/dev/sdX"  # e.g., /dev/sdb
+  device: "/dev/sdb1"
   iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
 
 serial:
