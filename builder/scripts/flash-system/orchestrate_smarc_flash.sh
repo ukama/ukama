@@ -26,7 +26,6 @@ RAW_SERIAL="${TMP_LOG_DIR}/serial_raw.log"
 MAC_FILE="${TMP_LOG_DIR}/mac.txt"
 SN_FILE="${TMP_LOG_DIR}/serial.txt"
 STATUS_FILE="${TMP_LOG_DIR}/status.txt"
-ORIGINAL_SSH_STATE=$(systemctl is-active sshd || echo "unknown")
 
 cleanup() {
     if [[ -n "${SERIAL_PID:-}" ]]; then
@@ -102,6 +101,16 @@ retry() {
     done
 }
 
+detect_ssh_state() {
+    systemctl status sshd.service &>/dev/null
+    case $? in
+        0) echo "active" ;;
+        3) echo "inactive" ;;
+        4) echo "not-installed" ;;
+        *) echo "unknown" ;;
+    esac
+}
+
 ensure_yq
 validate_config
 
@@ -118,6 +127,8 @@ TARGET_DEV=$(yq_read     '.flash.target_device')
 SUCCESS_MARKER=$(yq_read '.flash.success_marker')
 BOOT_MARKER=$(yq_read    '.flash.boot_marker')
 
+ORIGINAL_SSH_STATE=$(detect_ssh_state)
+
 {
     echo "=== [1] Configure dev Ethernet (${DEV_ETH}) ==="
     sudo ip addr flush dev "$DEV_ETH" || true
@@ -125,9 +136,11 @@ BOOT_MARKER=$(yq_read    '.flash.boot_marker')
     sudo ip link set dev "$DEV_ETH" up
 
     echo "=== [2] Start SSH (as needed) ==="
-    if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
+    if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
         echo "🔐 Starting SSH temporarily for image transfer"
         sudo systemctl start sshd
+    elif [ "$ORIGINAL_SSH_STATE" = "not-installed" ]; then
+        echo "⚠️ SSHD is not installed — skipping SSH-related steps."
     fi
 
     echo "=== [3] Download Alpine ISO ==="
