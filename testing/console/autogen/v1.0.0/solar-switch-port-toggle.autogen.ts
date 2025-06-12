@@ -7,7 +7,7 @@ import { test } from '@playwright/test';
 
 test('Site switch Solar port toggle Test', async ({ page }) => {
   await page.goto('http://localhost:4455/auth/login');
-  await page.getByRole('textbox', { name: 'EMAIL' }).click();
+  await page.getByRole('textbox', { name: 'EMAIL' }).dblclick();
   await page.getByRole('textbox', { name: 'EMAIL' }).fill('admin@ukama.com');
   await page.getByRole('textbox', { name: 'PASSWORD' }).dblclick();
   await page.getByRole('textbox', { name: 'PASSWORD' }).fill('@Pass2025.');
@@ -15,7 +15,7 @@ test('Site switch Solar port toggle Test', async ({ page }) => {
   await page.getByRole('link', { name: 'Sites' }).click();
   await page.getByRole('heading', { name: 'test-site1' }).click();
   await page.getByTestId('site-switch').first().click();
-  await page.getByRole('button', { name: 'Port 2 (Solar Controller)' }).click();
+  await page.getByTestId('accordion-summary-solar').click();
   await page.getByRole('checkbox').uncheck();
   await page.getByRole('checkbox').check();
 });

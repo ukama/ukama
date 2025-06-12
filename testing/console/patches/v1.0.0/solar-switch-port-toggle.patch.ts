@@ -25,23 +25,27 @@ const applySolarPortTogglePatch = async () => {
     },
     {
       regex:
-        /await page\.getByRole\('button', { name: 'Port 2 \(Solar Controller\)' }\)\.click\(\);/g,
+        /(?:await page\.getByTestId\('(?:port-toggle-button|accordion-summary-solar)'\)\.click\(\);\s*)+/g,
       replacement: `if (await page.locator('text=Not available').count()) return;
-                    await page.getByRole('button', { name: 'Port 2 (Solar Controller)' }).click();
+                    await page.waitForTimeout(2000);
+                    await page.getByTestId('accordion-summary-node').click();
                     await page.waitForTimeout(1000);`,
     },
     {
-      regex: /await page\.getByRole\('checkbox'\)\.uncheck\(\);/g,
-      replacement: `await page.getByRole('checkbox').uncheck();
+      regex:
+        /await page\.getByRole\('checkbox'[^)]*\)\.uncheck\(\);\s*await page\.getByRole\('checkbox'[^)]*\)\.check\(\);/g,
+      replacement: `await page.getByTestId('toggle-switch-node').click();
+                    await page.waitForTimeout(500);
+                    await page.getByTestId('toggle-switch-node').click();
                     await page.waitForTimeout(1000);`,
     },
     {
-      regex: /await page\.getByRole\('checkbox'\)\.check\(\);/g,
-      replacement: `await page.getByRole('checkbox').check();
+      regex:
+        /await page\.getBy(?:Role\('checkbox'[^)]*\)|TestId\('status-metric-node'\)[^;]+)\.(uncheck|check|click)\(\);/g,
+      replacement: `await page.getByTestId('toggle-switch-node').click();
                     await page.waitForTimeout(1000);`,
     },
   ];
-
   await applyPatch(
     'solar-switch-port-toggle',
     version,
