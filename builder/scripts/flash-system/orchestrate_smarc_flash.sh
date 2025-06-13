@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -35,6 +35,9 @@ cleanup() {
         echo "🧹 Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
     fi
+
+    rm -rf ${YQ_BIN}
+    rm -rf alpine.iso
 }
 
 trap cleanup EXIT
@@ -92,7 +95,7 @@ retry() {
     until "$@"; do
         if (( n == max )); then
             echo "❌ Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
-            return 1
+            exit 1
         else
             echo "🔁 Retry $n/$max: $*" | tee -a "$ORCHESTRATOR_LOG"
             sleep $delay
@@ -144,7 +147,7 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
     fi
 
     echo "=== [3] Download Alpine ISO ==="
-    wget -O alpine.iso "$ISO_URL"
+    curl -L "$ISO_URL" -o alpine.iso
 
     echo "=== [4] Generate flash script ==="
     cat > "$FLASH_SCRIPT" <<EOF
@@ -159,16 +162,19 @@ EOF
     chmod +x "$FLASH_SCRIPT"
 
     echo "=== [5] Build auto-run Alpine ISO ==="
-    retry bash "$ISO_BUILDER"
+    "$ISO_BUILDER"
 
     echo "=== [6] Flash ISO to USB ${USB_DEV} ==="
     check_usb_writable
     sudo dd if=alpine-auto.iso of="${USB_DEV}" bs=4M status=progress && sync
 
     echo "=== [7] Insert USB into SMARC board and power it up ==="
-    echo "⚠️  No user input is needed — SMARC will auto-run flash script."
-    echo "📡 Monitoring serial port at ${SERIAL_DEV}..."
+    echo "⚠️  No user interaction required — SMARC will auto-run the flash script from USB."
+    echo "🔌 Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
+    echo "⏳ Press ENTER to begin monitoring the serial port..."
+    read -r
 
+    echo "📡 Monitoring serial output from SMARC via ${SERIAL_DEV}..."
     cat "$SERIAL_DEV" | tee "$RAW_SERIAL" | head -n 100 > /dev/null &
     SERIAL_PID=$!
 
