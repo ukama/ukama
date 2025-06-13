@@ -52,7 +52,7 @@ export const parseMetricsResponse = (
     metric: {
       env: string;
       nodeid?: string;
-      siteid?: string;
+      site?: string;
       network?: string;
       package?: string;
       dataplan?: string;
@@ -66,7 +66,7 @@ export const parseMetricsResponse = (
     if (args.networkId && args.networkId !== item.metric.network) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
-    if (args.siteId && args.siteId !== item.metric.siteid) {
+    if (args.siteId && args.siteId !== item.metric.site) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
     return {
@@ -74,7 +74,7 @@ export const parseMetricsResponse = (
       success: true,
       msg: "success",
       nodeId: item.metric.nodeid ?? args.nodeId ?? "",
-      siteId: item.metric?.siteid ?? args.siteId ?? "",
+      siteId: item.metric?.site ?? args.siteId ?? "",
       networkId: item.metric?.network ?? args.networkId ?? "",
       packageId: item.metric?.package ?? "",
       dataPlanId: item.metric?.dataplan ?? "",
@@ -102,8 +102,8 @@ function fixTimestampInMetricData(
   from: number,
   type: string
 ): [number, number][] {
+  logger.info("fixTimestampInMetricData", data);
   if (!Array.isArray(data) || data.length === 0) return [];
-  logger.info(data);
   const result: [number, number][] = [];
   let prevTimestamp: number = from;
   let dataIndex = 0;

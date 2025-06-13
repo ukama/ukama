@@ -147,15 +147,10 @@ func pushMetrics(kpis config.NodeKPIs, labels prometheus.Labels, scenario cenums
 }
 
 func getSubscriber() (int, error) {
-	activeCount, err := getMetricValue("active_sim_count")
+	activeCount, err := getMetricValue("number_of_sims")
 	if err != nil {
 		return 0, err
 	}
 
-	inactiveCount, err := getMetricValue("inactive_sim_count")
-	if err != nil {
-		return 0, err
-	}
-
-	return activeCount - inactiveCount, nil
+	return activeCount, nil
 }

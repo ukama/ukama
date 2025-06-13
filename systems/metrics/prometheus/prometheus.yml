@@ -56,7 +56,7 @@ scrape_configs:
   - job_name: ukama-nodes
     scrape_interval: "10s"
     static_configs:
-      - targets: ['dnode:8085']
+      - targets: ['dnode:8080']
     metrics_path: "/metrics"
 
 remote_write:
