@@ -208,25 +208,33 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
       <Box
         key={portGroup.id}
         sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', py: 2 }}
+        data-testid={`port-${portGroup.id}-container`}
       >
         <Accordion
           expanded={isExpanded}
           onChange={() => togglePortExpand(portGroup.id)}
           sx={{ boxShadow: 'none' }}
+          data-testid={`accordion-${portGroup.id}`}
         >
           <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             sx={{ display: 'flex', alignItems: 'center', p: 0 }}
+            data-testid={`accordion-summary-${portGroup.id}`}
           >
             <Typography
               variant="subtitle1"
               fontWeight="medium"
               sx={{ flexGrow: 1 }}
+              data-testid={`accordion-title-${portGroup.id}`}
             >
               {portTitle}
             </Typography>
           </AccordionSummary>
-          <AccordionDetails sx={{ mt: 2, ml: 2, p: 0 }}>
+
+          <AccordionDetails
+            sx={{ mt: 2, ml: 2, p: 0 }}
+            data-testid={`accordion-details-${portGroup.id}`}
+          >
             {statusMetric && (
               <Box
                 sx={{
@@ -237,6 +245,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                   pb: 2,
                   borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
                 }}
+                data-testid={`status-metric-${portGroup.id}`}
               >
                 <Typography variant="body1">{statusMetric.name}</Typography>
                 <Box display="flex" alignItems="center">
@@ -248,6 +257,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                     onChange={handleToggle}
                     disabled={isDisabled}
                     color="primary"
+                    data-testid={`toggle-switch-${portGroup.id}`}
                   />
                 </Box>
               </Box>
@@ -256,8 +266,8 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
             <Stack spacing={3}>
               {portGroup.metrics
                 .filter((m: any) => !m.id.includes('switch_port_status'))
-                .map((metric: any) => (
-                  <Box key={metric.id}>
+                .map((metric: any, _: number) => (
+                  <Box key={metric.id} data-testid={`metric-item-${metric.id}`}>
                     <Typography variant="body1" sx={{ mb: 1 }}>
                       {metric.name}
                     </Typography>
@@ -271,6 +281,7 @@ const SiteComponents: React.FC<SiteComponentsProps> = ({
                       hasData={isMetricValue(metric.id, metrics)}
                       initData={getMetricValue(metric.id, metrics)}
                       format={metric.format}
+                      data-testid={`line-chart-${metric.id}`}
                     />
                   </Box>
                 ))}

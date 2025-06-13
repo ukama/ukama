@@ -22,12 +22,25 @@ import {
   applyRenameSitePatch,
   applyResetNodePatch,
   applyTopupSubscriberPatch,
+  applyBackhaulPortTogglePatch,
+  applySolarPortTogglePatch,
+  applyNodePortTogglePatch,
 } from '../patches/v1.0.0';
 
 test('v1.0.0 - Apply login patch', async () => {
   await applyLoginPatch();
 });
 
+test('v1.0.0 - Apply node port toggle patch', async () => {
+  await applyNodePortTogglePatch();
+});
+test('v1.0.0 - Apply backhaul port toggle patch', async () => {
+  await applyBackhaulPortTogglePatch();
+});
+
+test('v1.0.0 - Apply solar port toggle patch', async () => {
+  await applySolarPortTogglePatch();
+});
 test('v1.0.0 - Apply logout patch', async () => {
   await applyLogoutPatch();
 });
