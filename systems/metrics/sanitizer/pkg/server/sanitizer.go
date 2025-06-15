@@ -13,14 +13,13 @@ import (
 	"fmt"
 	"sync"
 
-	// "github.com/klauspost/compress/snappy"
-	"github.com/golang/snappy"
 	"github.com/prometheus/prometheus/prompb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 
+	snappy "github.com/klauspost/compress/s2"
 	log "github.com/sirupsen/logrus"
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -154,8 +153,9 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 				metric.AdditionalLabels[nodeLabel] = metric.MainLabelValue
 
 				metricsToPush = append(metricsToPush, metric)
+			} else {
+				log.Infof("No new metric to cache for value: %f, skipping ...", value)
 			}
-			log.Infof("No new metric to cache for value: %f, skipping ...", value)
 		}
 	}
 
@@ -211,7 +211,7 @@ func (s *SanitizerServer) syncNodeCache() error {
 		return fmt.Errorf("failed to get list of nodes with metadata: Error: %w", err)
 	}
 
-	log.Infof("Found %d nodes to cache", len(resp.Nodes))
+	log.Infof("Found %d node(s) to cache", len(resp.Nodes))
 
 	for _, n := range resp.Nodes {
 		if n.Site.SiteId != "" {
@@ -224,7 +224,7 @@ func (s *SanitizerServer) syncNodeCache() error {
 	}
 
 	s.updateNodeCache(nCache)
-	log.Infof("Cached %d nodes", len(nCache))
+	log.Infof("Cached %d node(s)", len(nCache))
 
 	return nil
 }
