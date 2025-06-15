@@ -55,7 +55,7 @@ func (se *SanitizerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(se.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assign"):
+	case msgbus.PrepareRoute(se.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.release"):
 		msg, err := unmarshalNodeReleaseEvent(e.Msg)
 		if err != nil {
 			return nil, err
