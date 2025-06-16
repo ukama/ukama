@@ -3,50 +3,83 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 set -euo pipefail
+set -x
 
 ORIG_ISO="alpine.iso"
-AUTO_ISO="alpine-auto.iso"
+AUTO_ISO="alpine-auto-usb"
 FLASH_SCRIPT="flash-smarc.sh"
-ISO_MOUNT="iso-mount"
-ISO_ROOT="iso-root"
+MNT_ISO="iso-mount"
+MNT_USB="usb-mount"
 APKOVL_DIR="apkovl-root"
 APKOVL_FILE="custom.apkovl.tar.gz"
+USB_PART="${USB_DEV}1"
 
-# Temporary work files to clean on exit
-TEMP_DIRS=("$ISO_MOUNT" "$ISO_ROOT" "$APKOVL_DIR")
-TEMP_FILES=("$APKOVL_FILE" "ORIG_ISO")
+TEMP_DIRS=($MNT_ISO $MNT_USB $APKOVL_DIR)
+TEMP_FILES=($APKOVL_FILE)
 
 cleanup() {
-    echo "🧹 Cleaning up temporary files and directories..."
-    for d in "${TEMP_DIRS[@]}"; do
-        [ -d "$d" ] && rm -rf "$d"
-    done
-    for f in "${TEMP_FILES[@]}"; do
-        [ -f "$f" ] && rm -f "$f"
-    done
+    echo "🧹 Cleaning up..."
+    for d in "${TEMP_DIRS[@]}"; do [ -d "$d" ] && sudo umount "$d" || true; rm -rf "$d"; done
+    for f in "${TEMP_FILES[@]}"; do [ -f "$f" ] && rm -f "$f"; done
 }
 trap cleanup EXIT
 
-echo "📦 Creating auto-bootable Alpine ISO with apkovl..."
+# Step 1: Format USB device
+echo "🔧 Partitioning USB device $USB_DEV"
+[[ "$USB_DEV" =~ [0-9]+$ ]] && {
+    echo "❌ ERROR: usb.device must be a full block device (e.g. /dev/sdb), not a partition like /dev/sdb1"
+    exit 1
+}
+sudo parted --script "$USB_DEV" \
+  mklabel msdos \
+  mkpart primary fat32 1MiB 100% \
+  set 1 boot on
 
-# Step 1: Mount original ISO read-only
-mkdir -p "$ISO_MOUNT" "$ISO_ROOT"
-sudo mount -o loop "$ORIG_ISO" "$ISO_MOUNT"
-sudo rsync -a "$ISO_MOUNT"/ "$ISO_ROOT"/
-sudo umount "$ISO_MOUNT"
-rmdir "$ISO_MOUNT"
+sudo mkfs.vfat -F 32 -n UKAMA_ALPINE "$USB_PART"
 
-# Fix ownership and permissions
-sudo chown -R "$USER:$USER" "$ISO_ROOT"
-chmod -R u+w "$ISO_ROOT"
+# Step 2: Mount ISO and USB
+mkdir -p "$MNT_ISO" "$MNT_USB"
+sudo mount -o loop "$ORIG_ISO" "$MNT_ISO"
+sudo mount "$USB_PART" "$MNT_USB"
 
-# Step 2: Create apkovl with autorun and flash script
+# Step 3: Copy Alpine ISO files to USB
+sudo rsync -a "$MNT_ISO"/ "$MNT_USB"/
+
+# Step 3.5: Enable serial logging based on boot mode
+echo "🔍 Detecting boot mode configuration (BIOS vs UEFI)..."
+
+SYS_CFG="$MNT_USB/syslinux.cfg"
+UEFI_CFG="$MNT_USB/boot/extlinux/extlinux.conf"  # Alpine often places this for UEFI
+
+if [ -f "$SYS_CFG" ]; then
+    echo "🛠️  Detected BIOS boot (syslinux), patching serial console"
+    if ! grep -q '^SERIAL' "$SYS_CFG"; then
+        echo 'SERIAL 0 115200' | sudo tee -a "$SYS_CFG" > /dev/null
+    fi
+    sudo sed -i '/^APPEND / s|$| console=ttyS0,115200|' "$SYS_CFG"
+elif [ -f "$UEFI_CFG" ]; then
+    echo "🛠️  Detected UEFI boot (extlinux), patching serial console"
+    sudo sed -i '/^  APPEND / s|$| console=ttyS0,115200|' "$UEFI_CFG"
+else
+    echo "⚠️  No known boot config found (syslinux or extlinux), skipping serial patch"
+fi
+
+# Step 4: Install syslinux bootloader
+sudo syslinux --install "$USB_PART"
+
+# Optional: Add UEFI boot support
+if [ -d "$MNT_ISO/EFI/BOOT" ]; then
+    sudo mkdir -p "$MNT_USB/EFI/BOOT"
+    sudo cp -r "$MNT_ISO/EFI/BOOT/"* "$MNT_USB/EFI/BOOT/"
+fi
+
+# Step 5: Create custom apkovl with autorun
 mkdir -p "$APKOVL_DIR/etc/local.d"
 mkdir -p "$APKOVL_DIR/etc/runlevels/default"
 
 cat > "$APKOVL_DIR/etc/local.d/autorun.start" <<EOF
 #!/bin/sh
-echo "[AutoISO] Running flash script..."
+echo "[AutoUSB] Running flash script..."
 /flash-smarc.sh > /flash.log 2>&1
 EOF
 chmod +x "$APKOVL_DIR/etc/local.d/autorun.start"
@@ -56,17 +89,12 @@ cp "$FLASH_SCRIPT" "$APKOVL_DIR/flash-smarc.sh"
 chmod +x "$APKOVL_DIR/flash-smarc.sh"
 
 tar -C "$APKOVL_DIR" -czf "$APKOVL_FILE" .
+mkdir -p "$MNT_USB/apkovl"
+sudo cp "$APKOVL_FILE" "$MNT_USB/apkovl/"
 
-# Step 3: Inject apkovl into ISO root
-mkdir -p "$ISO_ROOT/apkovl"
-cp "$APKOVL_FILE" "$ISO_ROOT/apkovl/"
+# Step 6: Sync and unmount
+sync
+sudo umount "$MNT_USB"
+sudo umount "$MNT_ISO"
 
-# Step 4: Rebuild ISO
-mkisofs -quiet -l -R -V "Ukama-AlpineAuto" \
-    -b boot/syslinux/isolinux.bin \
-    -c boot/syslinux/boot.cat \
-    -no-emul-boot -boot-load-size 4 -boot-info-table \
-    -o "$AUTO_ISO" "$ISO_ROOT"
-
-echo "✅ Custom ISO created: $AUTO_ISO"
-exit 1
+echo "✅ Bootable USB created successfully with autorun and serial logging."

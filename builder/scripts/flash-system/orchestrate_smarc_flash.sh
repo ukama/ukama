@@ -1,21 +1,12 @@
 #!/bin/bash
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# Copyright (c) 2025-present, Ukama Inc.
-
-#!/bin/bash
 set -euo pipefail
 
 CONFIG="smarc_config.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
 ISO_BUILDER="./create_auto_iso.sh"
-
 RETRIES=3
 
-# === Logging Setup ===
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 TMP_LOG_DIR="logs/${TIMESTAMP}_UNKNOWN"
 mkdir -p "$TMP_LOG_DIR"
@@ -35,26 +26,17 @@ cleanup() {
         echo "🧹 Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
     fi
-
-    rm -rf ${YQ_BIN}
-    rm -rf alpine.iso
+    rm -f "$YQ_BIN"
+    rm -f alpine.iso
 }
-
 trap cleanup EXIT
 
 REQUIRED_KEYS=(
-    ".network.dev_eth"
-    ".network.static_ip"
-    ".network.target_ip"
-    ".image.name"
-    ".image.path"
-    ".usb.device"
-    ".usb.iso_url"
-    ".serial.device"
-    ".serial.baud"
-    ".flash.target_device"
-    ".flash.success_marker"
-    ".flash.boot_marker"
+    ".network.dev_eth" ".network.static_ip" ".network.target_ip"
+    ".image.name" ".image.path"
+    ".usb.device" ".usb.iso_url"
+    ".serial.device" ".serial.baud"
+    ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
 )
 
 ensure_yq() {
@@ -80,18 +62,8 @@ validate_config() {
     done
 }
 
-check_usb_writable() {
-    echo "🧪 Verifying write access to USB device: $USB_DEV" | tee -a "$ORCHESTRATOR_LOG"
-    if ! sudo dd if=/dev/zero of="$USB_DEV" bs=512 count=1 oflag=sync &>/dev/null; then
-        echo "❌ Cannot write to USB device $USB_DEV. Check permissions or device health." | tee -a "$ORCHESTRATOR_LOG"
-        exit 1
-    fi
-}
-
 retry() {
-    local n=1
-    local max=$RETRIES
-    local delay=5
+    local n=1 max=$RETRIES delay=5
     until "$@"; do
         if (( n == max )); then
             echo "❌ Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
@@ -161,49 +133,52 @@ reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
-    echo "=== [5] Build auto-run Alpine ISO ==="
-    "$ISO_BUILDER"
+    echo "=== [5] Create bootable USB with custom autorun ==="
+    USB_DEV="$USB_DEV" "$ISO_BUILDER"
 
-    echo "=== [6] Flash ISO to USB ${USB_DEV} ==="
-    check_usb_writable
-    sudo dd if=alpine-auto.iso of="${USB_DEV}" bs=4M status=progress && sync
+    echo "🔁 Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
+    read -r qemu_choice
 
-    echo "=== [7] Insert USB into SMARC board and power it up ==="
-    echo "⚠️  No user interaction required — SMARC will auto-run the flash script from USB."
-    echo "🔌 Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
-    echo "⏳ Press ENTER to begin monitoring the serial port..."
-    read -r
+    if [[ "$qemu_choice" == "y" || "$qemu_choice" == "Y" ]]; then
+        if [ ! -e /dev/kvm ]; then
+            echo "⚠️  /dev/kvm not found. Running without KVM acceleration."
+            KVM=""
+        else
+            KVM="-enable-kvm"
+        fi
 
-    echo "📡 Monitoring serial output from SMARC via ${SERIAL_DEV}..."
-    cat "$SERIAL_DEV" | tee "$RAW_SERIAL" | head -n 100 > /dev/null &
-    SERIAL_PID=$!
+        echo "🚀 Booting actual USB device ($USB_DEV) in QEMU..."
+        sudo qemu-system-x86_64 \
+             $KVM \
+             -m 1024 \
+             -machine type=pc,accel=kvm \
+             -boot order=d \
+             -drive file="$USB_DEV",format=raw,if=virtio,media=disk \
+             -serial mon:stdio \
+             -display none \
+             -name "AlpineUSBTest"
+    else
+        echo "=== [6] Insert USB into SMARC board and power it up ==="
+        echo "⚠️  No user interaction required — SMARC will auto-run the flash script from USB."
+        echo "🔌 Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
+        echo "⏳ Press ENTER to begin monitoring the serial port..."
+        read -r
 
-    sleep 10
-    MAC=$(grep -oE '([a-f0-9]{2}:){5}[a-f0-9]{2}' "$RAW_SERIAL" | head -n1 || true)
-    SN=$(grep -E '^.*-[0-9A-Fa-f]{4,}$' "$RAW_SERIAL" | head -n1 || true)
+        echo "📡 Monitoring serial output from SMARC via ${SERIAL_DEV}..."
+        touch "$SERIAL_LOG"
+        cat "$SERIAL_DEV" | tee "$RAW_SERIAL" "$SERIAL_LOG" &
+        SERIAL_PID=$!
 
-    [ -n "$MAC" ] && echo "$MAC" > "$MAC_FILE"
-    [ -n "$SN" ] && echo "$SN" > "$SN_FILE"
+        echo "=== [7] Waiting for '${SUCCESS_MARKER}' ==="
+        retry timeout 300 grep -q "$SUCCESS_MARKER" "$SERIAL_LOG"
+        echo "✅ Flash completed."
 
-    MAC_CLEAN=$(echo "$MAC" | tr -d ':' | tr '[:lower:]' '[:upper:]')
-    SN_CLEAN=$(echo "$SN" | tr -d ' ' | tr '[:lower:]' '[:upper:]' | tr -cd '[:alnum:]-')
-    NEW_LOG_DIR="logs/${TIMESTAMP}_${MAC_CLEAN}_${SN_CLEAN}"
-    mv "$TMP_LOG_DIR" "$NEW_LOG_DIR"
+        echo "=== [8] Waiting for '${BOOT_MARKER}' ==="
+        retry timeout 120 grep -q "$BOOT_MARKER" "$SERIAL_LOG"
+        echo "✅ System booted."
 
-    ORCHESTRATOR_LOG="${NEW_LOG_DIR}/orchestrator.log"
-    SERIAL_LOG="${NEW_LOG_DIR}/serial_console.log"
-    STATUS_FILE="${NEW_LOG_DIR}/status.txt"
-
-    echo "=== [8] Waiting for '${SUCCESS_MARKER}' ==="
-    retry timeout 300 grep -q "$SUCCESS_MARKER" < <(tee "$SERIAL_LOG" < "$SERIAL_DEV")
-    echo "✅ Flash completed."
-
-    echo "=== [9] Waiting for '${BOOT_MARKER}' ==="
-    retry timeout 120 grep -q "$BOOT_MARKER" < <(tee -a "$SERIAL_LOG" < "$SERIAL_DEV")
-    echo "✅ System booted."
-
-    echo "PASS" > "$STATUS_FILE"
-
+        echo "PASS" > "$STATUS_FILE"
+    fi
 } 2>&1 | tee -a "$ORCHESTRATOR_LOG" || {
     echo "❌ Flashing failed — logs in: $TMP_LOG_DIR" | tee -a "$ORCHESTRATOR_LOG"
     echo "FAIL" > "$STATUS_FILE"
