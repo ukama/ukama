@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -68,6 +69,8 @@ func (se *SanitizerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
+
+		return nil, fmt.Errorf("no handler routing key %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
