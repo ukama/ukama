@@ -195,6 +195,44 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		assert.Nil(tt, c)
 	})
 
+	t.Run("InvalidParameterFrom", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
+				fmt.Sprintf("/%s?from=%d&to=%d", testIccid, startTime, endTime))
+
+			return nil
+		}
+
+		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
+
+		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, "lol", to, region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("InvalidParameterTo", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
+				fmt.Sprintf("/%s?from=%d&to=%d", testIccid, startTime, endTime))
+
+			return nil
+		}
+
+		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
+
+		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, "to", region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
