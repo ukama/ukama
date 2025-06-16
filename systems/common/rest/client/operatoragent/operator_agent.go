@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/validation"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -83,6 +84,16 @@ func (o *operatorAgentClient) GetUsages(iccid, cdrType, from, to, region string)
 	log.Debugf("Getting operator sim usages: %v", iccid)
 
 	usage := OperatorSimUsage{}
+
+	_, err := validation.FromString(from)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+	}
+
+	_, err = validation.FromString(to)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+	}
 
 	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
 		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))

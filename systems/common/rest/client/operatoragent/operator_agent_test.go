@@ -182,6 +182,44 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 		assert.Nil(tt, c)
 	})
 
+	t.Run("InvalidParameterFrom", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
+				operatoragent.OperatorUsagesEndpoint, testIccid, cdrType, "lol", to, region))
+
+			return nil
+		}
+
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
+
+		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, "lol", to, region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("InvalidParameterTo", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
+				operatoragent.OperatorUsagesEndpoint, testIccid, cdrType, from, "lol", region))
+
+			return nil
+		}
+
+		testOperatorClient := operatoragent.NewOperatorAgentClient("")
+
+		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+
+		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, "lol", region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), fmt.Sprintf("%s?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s",
