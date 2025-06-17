@@ -78,22 +78,24 @@ sudo mount "$USB_PART" "$MNT_USB"
 # 📦 Copy ISO contents to USB
 sudo rsync -a "$MNT_ISO"/ "$MNT_USB"/
 
-# ⚙️ Patch boot config (if found) for console logging (optional)
+ ⚙️ Detect and patch boot config (GRUB, syslinux, or extlinux)
+GRUB_CFG="$MNT_USB/boot/grub/grub.cfg"
 SYS_CFG="$MNT_USB/syslinux.cfg"
 UEFI_CFG="$MNT_USB/boot/extlinux/extlinux.conf"
 
-echo "🔍 Detecting boot mode configuration (BIOS vs UEFI)..."
+echo "🔍 Patching bootloader to enable 'data' mode for apkovl loading..."
+
 if [ -f "$SYS_CFG" ]; then
-    echo "🛠️  Detected BIOS boot (syslinux), patching serial console"
-    if ! grep -q '^SERIAL' "$SYS_CFG"; then
-        echo 'SERIAL 0 115200' | sudo tee -a "$SYS_CFG" > /dev/null
-    fi
-    sudo sed -i '/^APPEND / s|$| console=ttyS0,115200|' "$SYS_CFG"
+    echo "🛠️  Patching syslinux.cfg..."
+    sudo sed -i '/^APPEND / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$SYS_CFG"
 elif [ -f "$UEFI_CFG" ]; then
-    echo "🛠️  Detected UEFI boot (extlinux), patching serial console"
-    sudo sed -i '/^  APPEND / s|$| console=ttyS0,115200|' "$UEFI_CFG"
+    echo "🛠️  Patching extlinux.conf..."
+    sudo sed -i '/^  APPEND / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$UEFI_CFG"
+elif [ -f "$GRUB_CFG" ]; then
+    echo "🛠️  Patching grub.cfg..."
+    sudo sed -i '/^[[:space:]]*linux / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$GRUB_CFG"
 else
-    echo "⚠️  No known boot config found (syslinux or extlinux), skipping serial patch"
+    echo "⚠️  No known boot config found (syslinux, extlinux, or grub). apkovl may not be loaded."
 fi
 
 # 🧬 Add EFI boot if present
