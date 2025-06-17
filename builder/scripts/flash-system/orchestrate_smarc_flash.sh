@@ -37,6 +37,7 @@ REQUIRED_KEYS=(
     ".usb.device" ".usb.iso_url"
     ".serial.device" ".serial.baud"
     ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
+    ".system.target_hostname"
 )
 
 ensure_yq() {
@@ -89,18 +90,19 @@ detect_ssh_state() {
 ensure_yq
 validate_config
 
-DEV_ETH=$(yq_read        '.network.dev_eth')
-STATIC_IP=$(yq_read      '.network.static_ip')
-TARGET_IP=$(yq_read      '.network.target_ip')
-IMG_NAME=$(yq_read       '.image.name')
-IMG_PATH=$(yq_read       '.image.path')
-USB_DEV=$(yq_read        '.usb.device')
-ISO_URL=$(yq_read        '.usb.iso_url')
-SERIAL_DEV=$(yq_read     '.serial.device')
-SERIAL_BAUD=$(yq_read    '.serial.baud')
-TARGET_DEV=$(yq_read     '.flash.target_device')
-SUCCESS_MARKER=$(yq_read '.flash.success_marker')
-BOOT_MARKER=$(yq_read    '.flash.boot_marker')
+DEV_ETH=$(yq_read         '.network.dev_eth')
+STATIC_IP=$(yq_read       '.network.static_ip')
+TARGET_IP=$(yq_read       '.network.target_ip')
+IMG_NAME=$(yq_read        '.image.name')
+IMG_PATH=$(yq_read        '.image.path')
+USB_DEV=$(yq_read         '.usb.device')
+ISO_URL=$(yq_read         '.usb.iso_url')
+SERIAL_DEV=$(yq_read      '.serial.device')
+SERIAL_BAUD=$(yq_read     '.serial.baud')
+TARGET_DEV=$(yq_read      '.flash.target_device')
+SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
+BOOT_MARKER=$(yq_read     '.flash.boot_marker')
+TARGET_HOSTNAME=$(yq_read '.system.target_hostname')
 
 ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
@@ -134,7 +136,7 @@ EOF
     chmod +x "$FLASH_SCRIPT"
 
     echo "=== [5] Create bootable USB with custom autorun ==="
-    USB_DEV="$USB_DEV" "$ISO_BUILDER"
+    USB_DEV="$USB_DEV" HOSTNAME="$TARGET_HOSTNAME" "$ISO_BUILDER"
 
     echo "🔁 Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
     read -r qemu_choice
@@ -158,6 +160,9 @@ EOF
              -display none \
              -name "AlpineUSBTest"
     else
+        # Eject USB
+        sudo eject "$USB_DEV"
+        
         echo "=== [6] Insert USB into SMARC board and power it up ==="
         echo "⚠️  No user interaction required — SMARC will auto-run the flash script from USB."
         echo "🔌 Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."

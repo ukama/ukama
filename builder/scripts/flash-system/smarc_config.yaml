@@ -15,6 +15,9 @@ serial:
   device: "/dev/ttyUSB0"
   baud: 115200
 
+system:
+  target_hostname: "localhost"
+
 flash:
   target_device: "/dev/mmcblk0"
   success_marker: "Flash complete. Rebooting."
