@@ -36,7 +36,7 @@ import (
 		 MsgClient: &uconf.MsgClient{
 			 Timeout: 5 * time.Second,
 			 ListenerRoutes: []string{
-				 evt.EventRoutingKey[evt.EventSiteCreate],
+				 evt.EventRoutingKey[evt.EventNodeAssign],
 				 "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish",
 			 },
 		 },

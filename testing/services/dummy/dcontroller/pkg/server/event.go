@@ -46,9 +46,10 @@ import (
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 
-	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
-		c := evt.EventToEventConfig[evt.EventSiteCreate]
-		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+	
+    case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
+		c := evt.EventToEventConfig[evt.EventNodeAssign]
+		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -57,6 +58,7 @@ import (
 		if err != nil {
 			return nil, err
 		}
+
 	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
 		nodeMsg := &cpb.NodeFeederMessage{}
 		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
@@ -76,8 +78,8 @@ import (
 
 	return &epb.EventResponse{}, nil
 }
-func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) error {
-    log.Infof("Handling node assignment event for site: %s", msg.SiteId)
+func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventRegistryNodeAssign) error {
+    log.Infof("Handling node assignment event for site: %s and node: %s", msg.Site, msg.NodeId)
     
     randomConfig := &pb.SiteConfig{
         AvgBackhaulSpeed: 30 + rand.Float64()*70,    
@@ -97,7 +99,9 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
     }
     
     metricsReq := &pb.StartMetricsRequest{
-        SiteId:     msg.SiteId,
+        SiteId:     msg.Site,
+		NodeId:     msg.NodeId,
+		NetworkId:  msg.Network,
         SiteConfig: randomConfig,
         Profile:    profile,
     }
@@ -107,16 +111,16 @@ func (n *DControllerEventServer) handleSiteMonitoring(msg *epb.EventAddSite) err
     
     resp, err := n.server.StartMetrics(ctx, metricsReq)
     if err != nil {
-        log.Errorf("Failed to start metrics for site %s: %v", msg.SiteId, err)
+        log.Errorf("Failed to start metrics for site %s: %v", msg.Site, err)
         return err
     }
     
     if !resp.Success {
-        return fmt.Errorf("failed to start metrics for site %s", msg.SiteId)
+        return fmt.Errorf("failed to start metrics for site %s", msg.Site)
     }
     
     log.Infof("Successfully started metrics for site %s with config: %+v and profile: %s", 
-        msg.SiteId, randomConfig, profile.String())
+        msg.Site, randomConfig, profile.String())
     
     return nil
 }
