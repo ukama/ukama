@@ -183,7 +183,7 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 	case PORT_NODE:
 		m.nodeSwitchPortStatusVec.WithLabelValues(siteID, nodeID, networkID).Set(statusValue)
 		if !enabled { 
-			log.Infof("INFO: [%s] NODE port DOWN. Saving uptime streak before reset.", siteID)
+			log.Infof("[%s] NODE port DOWN. Saving uptime streak before reset.", siteID)
 			m.nodeSwitchPortSpeedVec.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.nodeSwitchPortPowerVec.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			
@@ -192,12 +192,12 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 			m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.siteUptimeStreakCounters[siteID] = 0
 		} else { 
-			log.Infof("INFO: [%s] NODE port UP.", siteID)
+			log.Infof("[%s] NODE port UP.", siteID)
 			if isBackhaulNowUp {
 				if lastUptime, exists := m.lastUptimeBeforeReset[siteID]; exists && lastUptime > 0 {
 					m.siteUptimeStreakCounters[siteID] = lastUptime
 					m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(float64(lastUptime))
-					log.Infof("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
+					log.Infof("[%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
 				}
 			}
 		}
@@ -216,7 +216,7 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 	case PORT_BACKHAUL:
 		m.backhaulSwitchPortStatus.WithLabelValues(siteID, nodeID, networkID).Set(statusValue)
 		if !enabled { 
-			log.Infof("INFO: [%s] BACKHAUL port DOWN. Saving uptime streak before reset.", siteID)
+			log.Infof("[%s] BACKHAUL port DOWN. Saving uptime streak before reset.", siteID)
 			m.backhaulSwitchPortSpeed.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.backhaulSwitchPortPower.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.backhaulSpeed.WithLabelValues(siteID, nodeID, networkID).Set(0)
@@ -226,12 +226,12 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 			m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.siteUptimeStreakCounters[siteID] = 0
 		} else { 
-			log.Infof("INFO: [%s] BACKHAUL port UP.", siteID)
+			log.Infof("[%s] BACKHAUL port UP.", siteID)
 			if isNodeNowUp {
 				if lastUptime, exists := m.lastUptimeBeforeReset[siteID]; exists && lastUptime > 0 {
 					m.siteUptimeStreakCounters[siteID] = lastUptime
 					m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(float64(lastUptime))
-					log.Infof("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
+					log.Infof("[%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
 				}
 			}
 		}
@@ -240,9 +240,9 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 	}
 
 	if wasSiteUp && !isSiteNowUp {
-		log.Infof("INFO: [%s] Site considered DOWN due to port status change.", siteID)
+		log.Infof("[%s] Site considered DOWN due to port status change.", siteID)
 	} else if !wasSiteUp && isSiteNowUp {
-		log.Infof("INFO: [%s] Site considered UP. Uptime streak resumed from %d seconds.", 
+		log.Infof("[%s] Site considered UP. Uptime streak resumed from %d seconds.", 
 			siteID, m.siteUptimeStreakCounters[siteID])
 	}
 
@@ -250,7 +250,7 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 }
 
 func (m *Metrics) StartMetricsGenerator(siteID string, config SiteConfig, nodeID string, networkID string) {
-	log.Infof("DEBUG: Starting metrics generator for site %s with config %+v", siteID, config)
+	log.Infof("Starting metrics generator for site %s with config %+v", siteID, config)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	m.mu.Lock()
@@ -307,7 +307,7 @@ func (m *Metrics) StartMetricsGenerator(siteID string, config SiteConfig, nodeID
 			sitePortStatus, exists := m.portStatus[siteID]
 			if !exists {
 				m.mu.Unlock()
-				log.Infof("INFO: [%s] Site no longer active, stopping metrics generator.", siteID)
+				log.Infof("[%s] Site no longer active, stopping metrics generator.", siteID)
 				return 
 			}
 			config, configExists := m.siteConfigs[siteID]
@@ -460,18 +460,18 @@ func (mm *MetricsManager) StartSiteMetrics(siteID string, config SiteConfig, nod
 	log.Infof("Marked site %s as active in manager.", siteID)
 
 	mm.Metrics.StartMetricsGenerator(siteID, config, nodeID, networkID)
-	log.Infof("INFO: Started metrics generator for site %s.", siteID)
+	log.Infof("Started metrics generator for site %s.", siteID)
 	return nil
 }
 
 func (mm *MetricsManager) StopSiteMetrics(siteID string) {
-	log.Infof("INFO: Attempting to stop metrics and clean up for site %s", siteID)
+	log.Infof("Attempting to stop metrics and clean up for site %s", siteID)
 
 	mm.mu.Lock()
 	isActive := mm.ActiveSites[siteID]
 	if isActive {
 		delete(mm.ActiveSites, siteID)
-		log.Infof("INFO: Marked site %s as inactive in manager.", siteID)
+		log.Infof("Marked site %s as inactive in manager.", siteID)
 	} else {
 		log.Warnf("Attempted to stop metrics for already inactive site: %s. Proceeding with cleanup.", siteID)
 	}
@@ -515,7 +515,7 @@ func (mm *MetricsManager) StopSiteMetrics(siteID string) {
 		log.Warnf("Could not find nodeID/networkID for site %s during cleanup. Some Prometheus labels may not be deleted properly.", siteID)
 	}
 
-	log.Infof("INFO: Cleaned up internal state and Prometheus labels for site %s.", siteID)
+	log.Infof("Cleaned up internal state and Prometheus labels for site %s.", siteID)
 }
 
 
