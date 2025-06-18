@@ -55,8 +55,8 @@ sudo mount "$DATA_PART" "$MNT_DATA"
 # Copy Alpine ISO to BOOT partition
 sudo rsync -a "$MNT_ISO"/ "$MNT_BOOT"/
 
-# Copy flash script + README to DATA partition
-sudo cp "$FLASH_SCRIPT" "$MNT_DATA/flash-smarc.sh"
+# Move flash script + README to DATA partition
+sudo mv "$FLASH_SCRIPT" "$MNT_DATA/$FLASH_SCRIPT"
 sudo chmod +x "$MNT_DATA/flash-smarc.sh"
 
 cat <<EOF | sudo tee "$MNT_DATA/$README_FILE" >/dev/null
