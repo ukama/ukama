@@ -66,5 +66,3 @@ message NodeOnlineEvent{
 message NodeOfflineEvent{
     string nodeId = 1;
 }
-
-

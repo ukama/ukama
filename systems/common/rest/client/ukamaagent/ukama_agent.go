@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -22,6 +23,8 @@ import (
 const (
 	UkamaSimsEndpoint  = "/v1/asr"
 	UkamaUsageEndpoint = "/v1/usage"
+
+	defaultStartTime = 1
 )
 
 type UkamaAgentClient interface {
@@ -84,21 +87,26 @@ func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting ukama sim usages: %v", iccid)
 
+	var startTime int64 = defaultStartTime
+	var endTime int64 = time.Now().Add(time.Hour).Unix()
+
 	usage := UkamaSimUsage{}
 
-	frm, err := validation.FromString(from)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+	if from != "" {
+		frm, err := validation.FromString(from)
+		if err != nil {
+			return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+		}
+		startTime = frm.Unix()
 	}
 
-	startTime := frm.Unix()
-
-	t, err := validation.FromString(to)
-	if err != nil {
-		return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+	if to != "" {
+		t, err := validation.FromString(to)
+		if err != nil {
+			return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+		}
+		endTime = t.Unix()
 	}
-
-	endTime := t.Unix()
 
 	resp, err := o.R.Get(o.u.String() + UkamaUsageEndpoint +
 		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime))
