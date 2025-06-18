@@ -674,7 +674,7 @@ export const SITE_KPIS = {
         name: 'Active subscribers',
         format: 'number',
         id: 'node_active_subscribers',
-        description: 'Current active subscriber on the site',
+        description: 'Current active subscribers on the site',
         threshold: null,
       },
     ],
