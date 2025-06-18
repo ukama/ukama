@@ -192,12 +192,12 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 			m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(0)
 			m.siteUptimeStreakCounters[siteID] = 0
 		} else { 
-			log.Printf("INFO: [%s] NODE port UP.", siteID)
+			log.Infof("INFO: [%s] NODE port UP.", siteID)
 			if isBackhaulNowUp {
 				if lastUptime, exists := m.lastUptimeBeforeReset[siteID]; exists && lastUptime > 0 {
 					m.siteUptimeStreakCounters[siteID] = lastUptime
 					m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(float64(lastUptime))
-					log.Printf("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
+					log.Infof("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
 				}
 			}
 		}
@@ -231,7 +231,7 @@ func (m *Metrics) UpdatePortStatus(siteID string, portNumber int, enabled bool) 
 				if lastUptime, exists := m.lastUptimeBeforeReset[siteID]; exists && lastUptime > 0 {
 					m.siteUptimeStreakCounters[siteID] = lastUptime
 					m.siteUptimeSeconds.WithLabelValues(siteID, nodeID, networkID).Set(float64(lastUptime))
-					log.Errorf("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
+					log.Infof("INFO: [%s] Resuming uptime streak from %d seconds", siteID, lastUptime)
 				}
 			}
 		}
@@ -268,7 +268,7 @@ func (m *Metrics) StartMetricsGenerator(siteID string, config SiteConfig, nodeID
 	m.siteNodeIDs[siteID] = nodeID
 	m.siteNetworkIDs[siteID] = networkID
 	startTime := m.siteStartTimes[siteID] 
-	log.Infof(" Initialized site %s node %s network %s. Start Time: %s", siteID, startTime.Format(time.RFC3339), nodeID, networkID)
+	log.Infof(" Initialized site %s node %s network %s. Start Time: %s", siteID, nodeID, networkID, startTime.Format(time.RFC3339))
 	m.mu.Unlock()
 
 	m.backhaulSwitchPortStatus.WithLabelValues(siteID, nodeID, networkID).Set(1)
@@ -440,7 +440,6 @@ type MetricsManager struct {
 }
 
 func NewMetricsManager() *MetricsManager {
-	log.Println("DEBUG: Creating new MetricsManager")
 	return &MetricsManager{
 		Metrics:     New(),
 		ActiveSites: make(map[string]bool),
@@ -519,6 +518,7 @@ func (mm *MetricsManager) StopSiteMetrics(siteID string) {
 	log.Infof("INFO: Cleaned up internal state and Prometheus labels for site %s.", siteID)
 }
 
+
 func (mm *MetricsManager) UpdateMetricsProfile(siteID string, profile pb.Profile) error {
     mm.mu.Lock()
     isActive := mm.ActiveSites[siteID]
@@ -576,6 +576,7 @@ func (mm *MetricsManager) UpdatePortStatus(siteID string, portNumber int, enable
 
 	if !isActive {
 		log.Infof("UpdatePortStatus called for site %s which is not actively managed.", siteID)
+	
 	}
 
 	err := mm.Metrics.UpdatePortStatus(siteID, portNumber, enabled)
@@ -585,6 +586,7 @@ func (mm *MetricsManager) UpdatePortStatus(siteID string, portNumber int, enable
 	return err 
 }
 
+
 func (mm *MetricsManager) IsMetricsRunning(siteID string) bool {
 	mm.mu.Lock()
 	defer mm.mu.Unlock()
@@ -593,6 +595,7 @@ func (mm *MetricsManager) IsMetricsRunning(siteID string) bool {
 }
 
 func (mm *MetricsManager) GetSiteMetrics(siteID string) (map[string]float64, error) {
+
 	metrics := make(map[string]float64)
 	gathered, err := prometheus.DefaultGatherer.Gather()
 	if err != nil {
@@ -635,6 +638,7 @@ func (mm *MetricsManager) GetSiteMetrics(siteID string) (map[string]float64, err
 	}
 
 	if !foundSiteMetrics {
+
 		log.Infof("[%s] No Prometheus metrics found with the site label.", siteID)
 	}
 
