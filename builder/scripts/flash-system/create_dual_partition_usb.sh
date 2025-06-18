@@ -82,4 +82,4 @@ EOF
 
 sync
 
-echo "✅ Dual-partition USB created. Bootable Alpine + flash script in place."
+echo "Dual-partition USB created. Bootable Alpine + flash script in place."

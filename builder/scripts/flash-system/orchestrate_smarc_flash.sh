@@ -1,4 +1,7 @@
 #!/bin/bash -x
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+# Copyright (c) 2025-present, Ukama Inc.
+
 set -euo pipefail
 
 CONFIG="smarc_config.yaml"
@@ -23,16 +26,18 @@ cleanup() {
         kill "$SERIAL_PID" 2>/dev/null || true
     fi
     if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
-        echo "🧹 Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
+        echo "Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
     fi
+    echo "Restoring NetworkManager control of $DEV_ETH"
+    nmcli device set "$DEV_ETH" managed yes 2>/dev/null || true
     rm -f "$YQ_BIN"
     rm -f alpine.iso
 }
 trap cleanup EXIT
 
 REQUIRED_KEYS=(
-    ".network.dev_eth" ".network.static_ip"
+    ".network.dev_eth" ".network.host_ip" ".network.target_ip"
     ".image.name" ".image.path"
     ".usb.device" ".usb.iso_url"
     ".serial.device" ".serial.baud"
@@ -41,7 +46,7 @@ REQUIRED_KEYS=(
 
 ensure_yq() {
     if [ ! -x "$YQ_BIN" ]; then
-        echo "📦 Downloading yq..." | tee -a "$ORCHESTRATOR_LOG"
+        echo "Downloading yq..." | tee -a "$ORCHESTRATOR_LOG"
         mkdir -p .bin
         curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o "$YQ_BIN"
         chmod +x "$YQ_BIN"
@@ -53,7 +58,7 @@ yq_read() {
 }
 
 validate_config() {
-    echo "🔍 Validating config..." | tee -a "$ORCHESTRATOR_LOG"
+    echo "Validating config..." | tee -a "$ORCHESTRATOR_LOG"
     for key in "${REQUIRED_KEYS[@]}"; do
         if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
             echo "❌ Missing config: $key" | tee -a "$ORCHESTRATOR_LOG"
@@ -69,7 +74,7 @@ retry() {
             echo "❌ Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         else
-            echo "🔁 Retry $n/$max: $*" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Retry $n/$max: $*" | tee -a "$ORCHESTRATOR_LOG"
             sleep $delay
             ((n++))
         fi
@@ -90,7 +95,8 @@ ensure_yq
 validate_config
 
 DEV_ETH=$(yq_read         '.network.dev_eth')
-STATIC_IP=$(yq_read       '.network.static_ip')
+HOST_IP=$(yq_read         '.network.host_ip')
+TARGET_IP=$(yq_read       '.network.target_ip')
 IMG_NAME=$(yq_read        '.image.name')
 IMG_PATH=$(yq_read        '.image.path')
 USB_DEV=$(yq_read         '.usb.device')
@@ -113,9 +119,12 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
     fi
 
     echo "=== [1] Configure dev Ethernet (${DEV_ETH}) ==="
+    nmcli device set enp0s25 managed no 
+    sudo ip link set "$DEV_ETH" down || true
     sudo ip addr flush dev "$DEV_ETH" || true
-    sudo ip addr add "${STATIC_IP}/24" dev "$DEV_ETH"
-    sudo ip link set dev "$DEV_ETH" up
+    sudo ip addr add "$HOST_IP/24" dev "$DEV_ETH"
+    sudo ip link set "$DEV_ETH" up
+    ip addr show "$DEV_ETH"
 
     echo "=== [2] Start SSH (as needed) ==="
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
@@ -133,11 +142,14 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
 #!/bin/sh
 set -eux
 
-echo "[SMARC] Getting IP via DHCP"
-udhcpc -i eth0
+echo "[SMARC] Setting static IP ${TARGET_IP} on eth0"
+ip addr flush dev eth0 || true
+ip addr add ${TARGET_IP}/24 dev eth0
+ip link set eth0 up
 
-echo "[SMARC] Downloading image from ${STATIC_IP}"
-scp root@${STATIC_IP}:${IMG_PATH} /tmp/${IMG_NAME}
+echo "[SMARC] Downloading image from ${HOST_IP}"
+scp -o StrictHostKeyChecking=no root@${HOST_IP}:${IMG_PATH} /tmp/${IMG_NAME}
+timeout 20s scp -v -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${STATIC_IP}:${IMG_PATH} /tmp/${IMG_NAME}
 
 ls -lh /tmp/${IMG_NAME}
 
