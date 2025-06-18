@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/bash -x
 set -euo pipefail
 
 CONFIG="smarc_config.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
-ISO_BUILDER="./create_auto_iso.sh"
+ISO_BUILDER="./create_dual_partition_usb.sh"
 RETRIES=3
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -32,12 +32,11 @@ cleanup() {
 trap cleanup EXIT
 
 REQUIRED_KEYS=(
-    ".network.dev_eth" ".network.static_ip" ".network.target_ip"
+    ".network.dev_eth" ".network.static_ip"
     ".image.name" ".image.path"
     ".usb.device" ".usb.iso_url"
     ".serial.device" ".serial.baud"
     ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
-    ".system.target_hostname"
 )
 
 ensure_yq() {
@@ -92,7 +91,6 @@ validate_config
 
 DEV_ETH=$(yq_read         '.network.dev_eth')
 STATIC_IP=$(yq_read       '.network.static_ip')
-TARGET_IP=$(yq_read       '.network.target_ip')
 IMG_NAME=$(yq_read        '.image.name')
 IMG_PATH=$(yq_read        '.image.path')
 USB_DEV=$(yq_read         '.usb.device')
@@ -102,11 +100,18 @@ SERIAL_BAUD=$(yq_read     '.serial.baud')
 TARGET_DEV=$(yq_read      '.flash.target_device')
 SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
 BOOT_MARKER=$(yq_read     '.flash.boot_marker')
-TARGET_HOSTNAME=$(yq_read '.system.target_hostname')
 
 ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
 {
+
+    # === [0] Verify USB device exists ===
+    if [ ! -b "$USB_DEV" ]; then
+        echo "USB device '$USB_DEV' not found or is not a block device."
+        echo "Make sure it's plugged in and use the full device path (e.g., /dev/sdb)"
+        exit 1
+    fi
+
     echo "=== [1] Configure dev Ethernet (${DEV_ETH}) ==="
     sudo ip addr flush dev "$DEV_ETH" || true
     sudo ip addr add "${STATIC_IP}/24" dev "$DEV_ETH"
@@ -114,10 +119,10 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
     echo "=== [2] Start SSH (as needed) ==="
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
-        echo "🔐 Starting SSH temporarily for image transfer"
+        echo "Starting SSH temporarily for image transfer"
         sudo systemctl start sshd
     elif [ "$ORIGINAL_SSH_STATE" = "not-installed" ]; then
-        echo "⚠️ SSHD is not installed — skipping SSH-related steps."
+        echo "SSHD is not installed — skipping SSH-related steps."
     fi
 
     echo "=== [3] Download Alpine ISO ==="
@@ -126,30 +131,45 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
     echo "=== [4] Generate flash script ==="
     cat > "$FLASH_SCRIPT" <<EOF
 #!/bin/sh
-set -e
+set -eux
+
+echo "[SMARC] Getting IP via DHCP"
 udhcpc -i eth0
+
+echo "[SMARC] Downloading image from ${STATIC_IP}"
 scp root@${STATIC_IP}:${IMG_PATH} /tmp/${IMG_NAME}
-dd if=/tmp/${IMG_NAME} of=${TARGET_DEV} bs=4M status=progress && sync
-echo "[SMARC] ${SUCCESS_MARKER}"
+
+ls -lh /tmp/${IMG_NAME}
+
+if [ ! -f /tmp/${IMG_NAME} ]; then
+  echo "[SMARC] Image not found after scp!"
+  exit 1
+fi
+
+echo "[SMARC] Flashing image to ${TARGET_DEV}"
+dd if=/tmp/${IMG_NAME} of=${TARGET_DEV} bs=4M status=progress
+sync
+
+echo "[SMARC] Flash complete"
 reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
     echo "=== [5] Create bootable USB with custom autorun ==="
-    USB_DEV="$USB_DEV" HOSTNAME="$TARGET_HOSTNAME" "$ISO_BUILDER"
+    USB_DEV="$USB_DEV" FLASH_SCRIPT="$FLASH_SCRIPT" "$ISO_BUILDER"
 
-    echo "🔁 Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
+    echo "Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
     read -r qemu_choice
 
     if [[ "$qemu_choice" == "y" || "$qemu_choice" == "Y" ]]; then
         if [ ! -e /dev/kvm ]; then
-            echo "⚠️  /dev/kvm not found. Running without KVM acceleration."
+            echo "/dev/kvm not found. Running without KVM acceleration."
             KVM=""
         else
             KVM="-enable-kvm"
         fi
 
-        echo "🚀 Booting actual USB device ($USB_DEV) in QEMU..."
+        echo "Booting actual USB device ($USB_DEV) in QEMU..."
         sudo qemu-system-x86_64 \
              $KVM \
              -m 1024 \
@@ -162,25 +182,26 @@ EOF
     else
         # Eject USB
         sudo eject "$USB_DEV"
-        
+
         echo "=== [6] Insert USB into SMARC board and power it up ==="
-        echo "⚠️  No user interaction required — SMARC will auto-run the flash script from USB."
-        echo "🔌 Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
-        echo "⏳ Press ENTER to begin monitoring the serial port..."
+        echo "USB is ready. Insert into target and run flash-smarc.sh manually."
+        echo "(Boot to Alpine, mount /dev/sda2, run /mnt/flash-smarc.sh)"
+        echo "Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
+        echo "Once ready, press ENTER to begin monitoring the serial port..."
         read -r
 
-        echo "📡 Monitoring serial output from SMARC via ${SERIAL_DEV}..."
+        echo "Monitoring serial output from SMARC via ${SERIAL_DEV}..."
         touch "$SERIAL_LOG"
         cat "$SERIAL_DEV" | tee "$RAW_SERIAL" "$SERIAL_LOG" &
         SERIAL_PID=$!
 
         echo "=== [7] Waiting for '${SUCCESS_MARKER}' ==="
         retry timeout 300 grep -q "$SUCCESS_MARKER" "$SERIAL_LOG"
-        echo "✅ Flash completed."
+        echo "Flash completed."
 
         echo "=== [8] Waiting for '${BOOT_MARKER}' ==="
         retry timeout 120 grep -q "$BOOT_MARKER" "$SERIAL_LOG"
-        echo "✅ System booted."
+        echo "System booted."
 
         echo "PASS" > "$STATUS_FILE"
     fi

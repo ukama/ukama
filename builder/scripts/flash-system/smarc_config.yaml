@@ -1,7 +1,6 @@
 network:
   dev_eth: "enp0s25"
   static_ip: "192.168.53.100"
-  target_ip: "192.168.53.151"
 
 image:
   name: "ukama-com-image.img"
@@ -14,9 +13,6 @@ usb:
 serial:
   device: "/dev/ttyUSB0"
   baud: 115200
-
-system:
-  target_hostname: "localhost"
 
 flash:
   target_device: "/dev/mmcblk0"

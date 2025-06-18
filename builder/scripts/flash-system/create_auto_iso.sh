@@ -68,7 +68,7 @@ sudo parted --script "$USB_DEV" \
   mkpart primary fat32 1MiB 100% \
   set 1 boot on
 
-sudo mkfs.vfat -F 32 -n UKAMALPINE "$USB_PART"
+sudo mkfs.vfat -F 32 -n ALPINE_DATA "$USB_PART"
 
 # 📁 Mount ISO and USB
 mkdir -p "$MNT_ISO" "$MNT_USB"
@@ -78,7 +78,9 @@ sudo mount "$USB_PART" "$MNT_USB"
 # 📦 Copy ISO contents to USB
 sudo rsync -a "$MNT_ISO"/ "$MNT_USB"/
 
- ⚙️ Detect and patch boot config (GRUB, syslinux, or extlinux)
+read
+
+echo "⚙️ Detect and patch boot config (GRUB, syslinux, or extlinux)"
 GRUB_CFG="$MNT_USB/boot/grub/grub.cfg"
 SYS_CFG="$MNT_USB/syslinux.cfg"
 UEFI_CFG="$MNT_USB/boot/extlinux/extlinux.conf"
@@ -93,7 +95,8 @@ elif [ -f "$UEFI_CFG" ]; then
     sudo sed -i '/^  APPEND / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$UEFI_CFG"
 elif [ -f "$GRUB_CFG" ]; then
     echo "🛠️  Patching grub.cfg..."
-    sudo sed -i '/^[[:space:]]*linux / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$GRUB_CFG"
+    # ✅ Replace any existing line with a known-good one
+    sudo sed -i '/^[[:space:]]*linux /c\    linux    /boot/vmlinuz-lts modules=loop,squashfs,sd-mod,usb-storage quiet data' "$GRUB_CFG"
 else
     echo "⚠️  No known boot config found (syslinux, extlinux, or grub). apkovl may not be loaded."
 fi
@@ -122,7 +125,7 @@ echo "[AutoUSB] Running flash script..." >> /flash.log
 echo "[AutoUSB] Flash script completed" >> /flash.log
 EOF
 chmod +x "$APKOVL_DIR/etc/local.d/autorun.start"
-ln -sf /etc/init.d/local "$APKOVL_DIR/etc/runlevels/default/local"
+ln -sf ../../init.d/local "$APKOVL_DIR/etc/runlevels/default/local"
 
 # Copy flash script into overlay
 cp "$FLASH_SCRIPT" "$APKOVL_DIR/flash-smarc.sh"
