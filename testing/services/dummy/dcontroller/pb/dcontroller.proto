@@ -121,6 +121,8 @@
      string siteId = 1;
      SiteConfig siteConfig = 2;
      Profile profile = 3;
+     string networkId = 4;
+     string nodeId  = 5; 
  }
  
  message StartMetricsResponse {

@@ -44,7 +44,6 @@ type MetricsControllerClient interface {
 	StopMetrics(ctx context.Context, in *StopMetricsRequest, opts ...grpc.CallOption) (*StopMetricsResponse, error)
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
 	UpdatePortStatus(ctx context.Context, in *UpdatePortStatusRequest, opts ...grpc.CallOption) (*UpdatePortStatusResponse, error)
-	// Missing RPCs needed for the handler functions
 	Update(ctx context.Context, in *UpdateMetricsRequest, opts ...grpc.CallOption) (*UpdateMetricsResponse, error)
 	Start(ctx context.Context, in *StartMetricsRequest, opts ...grpc.CallOption) (*StartMetricsResponse, error)
 }
@@ -136,7 +135,6 @@ type MetricsControllerServer interface {
 	StopMetrics(context.Context, *StopMetricsRequest) (*StopMetricsResponse, error)
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
 	UpdatePortStatus(context.Context, *UpdatePortStatusRequest) (*UpdatePortStatusResponse, error)
-	// Missing RPCs needed for the handler functions
 	Update(context.Context, *UpdateMetricsRequest) (*UpdateMetricsResponse, error)
 	Start(context.Context, *StartMetricsRequest) (*StartMetricsResponse, error)
 	mustEmbedUnimplementedMetricsControllerServer()
