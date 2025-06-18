@@ -24,13 +24,24 @@ import { SITE_KPI_TYPES, SITE_KPIS } from '@/constants';
 import { SectionData } from '@/constants/index';
 import { useAppContext } from '@/context';
 import { ActiveView, KPIType } from '@/types';
-import { graphTypeToSection, kpiToGraphType } from '@/utils';
+import {
+  extractMetricValue,
+  graphTypeToSection,
+  kpiToGraphType,
+} from '@/utils';
 import { useFetchAddress } from '@/utils/useFetchAddress';
 import { useMetricSubscriptions } from '@/utils/useMetricSubscriptions';
 import { AlertColor, Box, Grid, Skeleton } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import PubSub from 'pubsub-js';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 const SiteMapComponent = dynamic(
   () => import('@/components/SiteMapComponent'),
@@ -62,6 +73,32 @@ interface SiteDetailsProps {
   };
 }
 
+const getSiteActiveSubscribers = (
+  metricsData: any,
+  siteId: string,
+): number | null => {
+  if (!metricsData || !metricsData.metrics || !siteId) return null;
+
+  const subscriberMetrics = metricsData.metrics.filter(
+    (m: any) =>
+      m.type === SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS &&
+      m.success === true &&
+      m.siteId === siteId,
+  );
+
+  if (subscriberMetrics.length === 0) return null;
+
+  const totalSubscribers = subscriberMetrics.reduce(
+    (total: number, metric: any) => {
+      const value = extractMetricValue(metric.value);
+      return total + (value || 0);
+    },
+    0,
+  );
+
+  return totalSubscribers;
+};
+
 const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const { id } = params;
   const router = useRouter();
@@ -69,10 +106,13 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
   const [nodeIds, setNodeIds] = useState<string[]>([]);
   const [nodesFetched, setNodesFetched] = useState(false);
   const [isDataReady, setIsDataReady] = useState(false);
+  const [activeSubscribers, setActiveSubscribers] = useState<number>(0);
   const [activeView, setActiveView] = useState<ActiveView>({
     graphType: Graphs_Type.Solar,
     kpi: 'solar',
   });
+
+  const subscribersSubscriptionRef = useRef<string | null>(null);
 
   const {
     setSnackbarMessage,
@@ -134,9 +174,60 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     },
   });
 
+  const handleSubscribersUpdate = useCallback((_: any, data: any) => {
+    if (data !== null && data !== undefined) {
+      const value =
+        Array.isArray(data) && data.length > 1
+          ? extractMetricValue(data[1])
+          : extractMetricValue(data);
+
+      if (value !== null) {
+        setActiveSubscribers(value);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!id || !activeSite.id) return;
+
+    if (subscribersSubscriptionRef.current) {
+      PubSub.unsubscribe(subscribersSubscriptionRef.current);
+      subscribersSubscriptionRef.current = null;
+    }
+
+    const subscribersTopic = `stat-${SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS}-${id}`;
+    subscribersSubscriptionRef.current = PubSub.subscribe(
+      subscribersTopic,
+      handleSubscribersUpdate,
+    );
+
+    return () => {
+      if (subscribersSubscriptionRef.current) {
+        PubSub.unsubscribe(subscribersSubscriptionRef.current);
+        subscribersSubscriptionRef.current = null;
+      }
+    };
+  }, [id, activeSite.id, handleSubscribersUpdate]);
+
+  useEffect(() => {
+    if (statData?.getSiteStat && activeSite.id) {
+      const initialSubscribers = getSiteActiveSubscribers(
+        statData.getSiteStat,
+        activeSite.id,
+      );
+      if (initialSubscribers !== null) {
+        setActiveSubscribers(initialSubscribers);
+      }
+    }
+  }, [statData, activeSite.id]);
+
   useEffect(() => {
     return () => {
       cleanupSubscriptions();
+      if (subscribersSubscriptionRef.current) {
+        PubSub.unsubscribe(subscribersSubscriptionRef.current);
+        subscribersSubscriptionRef.current = null;
+      }
     };
   }, [cleanupSubscriptions]);
 
@@ -319,6 +410,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
       });
     }
   }, [activeSite.id, fetchNodesForSite]);
+
   const getInitialNodeUptimes = (): Record<string, number> => {
     if (!statData?.getSiteStat?.metrics || !nodeIds || nodeIds.length === 0) {
       return {};
@@ -337,6 +429,7 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
 
     return nodeUptimes;
   };
+
   const initialNodeUptimes = getInitialNodeUptimes();
 
   if (!isDataReady) {
@@ -402,8 +495,8 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
             address={CurrentSiteaddress}
             height={'100%'}
             mapStyle="satellite"
-            showUserCount={false} // TODO: Commenting this out for now as we don't have a way to get subscribers by site yet
-            userCount={0}
+            showUserCount={true}
+            userCount={activeSubscribers}
           />
         </Grid>
       </Grid>
@@ -427,4 +520,5 @@ const Page: React.FC<SiteDetailsProps> = ({ params }) => {
     </Box>
   );
 };
+
 export default Page;
