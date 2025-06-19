@@ -137,8 +137,6 @@ class SimApi extends RESTDataSource {
   ): Promise<SimDataUsage> => {
     this.baseURL = baseURL;
     const params = new URLSearchParams({
-      to: String(data.to ?? ""),
-      from: String(data.from ?? ""),
       sim_id: data.simId,
       cdr_type: data.type,
     }).toString();

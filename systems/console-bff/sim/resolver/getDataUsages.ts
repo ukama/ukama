@@ -48,8 +48,6 @@ export class GetDataUsagesResolver {
           type: data.type,
           iccid: item.iccid,
           simId: item.simId,
-          from: item.packageStart,
-          to: new Date().toISOString(),
         })
       )
     );
