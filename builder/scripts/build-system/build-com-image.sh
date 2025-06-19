@@ -111,7 +111,8 @@ create_disk_image() {
     STAGE="create_disk_image"
     log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
-    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=67108864
+    # Allocate 4GB image
+    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=8388608
     check_status $? "Raw image created" ${STAGE}
 }
 
@@ -134,22 +135,22 @@ clean_first_50MB() {
 }
 
 # partitions:
-# 1 GB  -> Boot
-# 8 GB  -> Passive
-# 16 GB -> Primary (root)
-# 4 GB  -> Swap
+# 128 MB -> Boot
+#   1 GB -> Passive
+#   2 GB -> Primary (root)
+# 512 MB -> Swap
 partition_image() {
     STAGE="partition_image"
-    log "INFO" "Creating 5 aligned primary partitions on ${LOOPDISK} using sfdisk"
+    log "INFO" "Creating 4 aligned primary partitions on ${LOOPDISK} using sfdisk"
 
     sudo sfdisk "${LOOPDISK}" <<-__EOF__
 label: dos
 unit: sectors
 
-start=2048,        size=2097152,   type=83
-start=2100200,     size=33554432,  type=83
-start=35654632,    size=16777216,  type=83
-start=52431848,    size=8388608,   type=82
+start=2048,        size=262144,    type=83
+start=264192,      size=2097152,   type=83
+start=2361344,     size=4194304,   type=83
+start=6555648,     size=1048576,   type=82
 __EOF__
 
     check_status $? "Partitions created" ${STAGE}
