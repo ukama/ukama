@@ -161,7 +161,7 @@ wget http://${HOST_IP}:8000/$(basename "$IMG_PATH") -O /mnt/${IMG_NAME}
 ls -lh /mnt/${IMG_NAME}
 
 if [ ! -f /mnt/${IMG_NAME} ]; then
-  echo "[SMARC] Image not found after scp!"
+  echo "[SMARC] Image not found after wget!"
   exit 1
 fi
 

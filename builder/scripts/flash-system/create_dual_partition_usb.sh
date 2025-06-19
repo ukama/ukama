@@ -42,7 +42,7 @@ sudo parted --script "$USB_DEV" \
     mkpart primary fat32 1024MiB 100%
 
 sudo mkfs.vfat -F 32 -n BOOT "$BOOT_PART"
-sudo mkfs.vfat -F 32 -n DATA "$DATA_PART"
+sudo mkfs.ext4 -L DATA "$DATA_PART"
 
 # Mount everything
 mkdir -p "$MNT_ISO" "$MNT_BOOT" "$MNT_DATA"
@@ -68,7 +68,7 @@ To flash the image onto the internal eMMC:
 2. Log into Alpine as 'root' (no password).
 3. Mount the second partition:
 
-   mount /dev/sda2 /mnt
+   mount -t ext4 /dev/sda2 /mnt
 
 4. Run the flashing script:
 
