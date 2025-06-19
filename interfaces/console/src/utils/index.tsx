@@ -245,6 +245,12 @@ const structureNodeSiteDate = (nodes: Nodes, sites: SitesResDto) => {
 
   return t;
 };
+export const extractMetricValue = (value: any): number | null => {
+  if (Array.isArray(value) && value.length > 1) {
+    return typeof value[1] === 'number' ? value[1] : null;
+  }
+  return typeof value === 'number' ? value : null;
+};
 
 export const getMetricValue = (key: string, metrics: MetricsRes) => {
   const metric = metrics.metrics.find((item: MetricRes) => item.type === key);
@@ -620,9 +626,9 @@ const getStatusStyles = (type: StatusType, value: number): StyleOutput => {
     return value <= 0
       ? { color: colors.red, icon: <RouterIcon sx={{ color: colors.red }} /> }
       : {
-        color: colors.green,
-        icon: <RouterIcon sx={{ color: colors.green }} />,
-      };
+          color: colors.green,
+          icon: <RouterIcon sx={{ color: colors.green }} />,
+        };
   }
 
   if (type === 'battery') {

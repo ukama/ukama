@@ -11,6 +11,7 @@ import colors from '@/theme/colors';
 import { getStatusStyles } from '@/utils';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PeopleIcon from '@mui/icons-material/People';
 import RouterIcon from '@mui/icons-material/Router';
 import SignalCellularOffIcon from '@mui/icons-material/SignalCellularOff';
 import {
@@ -65,6 +66,29 @@ const getSiteMetricValue = (
   return metric ? extractMetricValue(metric.value) : null;
 };
 
+const getSiteActiveSubscribers = (
+  metricsData?: SiteMetricsStateRes,
+  siteId?: string,
+): number | null => {
+  if (!metricsData || !metricsData.metrics || !siteId) return null;
+
+  const subscriberMetrics = metricsData.metrics.filter(
+    (m) =>
+      m.type === 'node_active_subscribers' &&
+      m.success === true &&
+      m.siteId === siteId,
+  );
+
+  if (subscriberMetrics.length === 0) return null;
+
+  const totalSubscribers = subscriberMetrics.reduce((total, metric) => {
+    const value = extractMetricValue(metric.value);
+    return total + (value || 0);
+  }, 0);
+
+  return totalSubscribers;
+};
+
 const SiteCard: React.FC<SiteCardProps> = memo(
   ({
     siteId,
@@ -80,6 +104,9 @@ const SiteCard: React.FC<SiteCardProps> = memo(
     const [uptimeValue, setUptimeValue] = useState<number | null>(null);
     const [batteryValue, setBatteryValue] = useState<number | null>(null);
     const [backhaulValue, setBackhaulValue] = useState<number | null>(null);
+    const [activeSubscribers, setActiveSubscribers] = useState<number | null>(
+      null,
+    );
 
     const subscriptionsRef = useRef<Record<string, string>>({});
 
@@ -111,6 +138,9 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         siteId,
       );
       if (backhaul !== null) setBackhaulValue(backhaul);
+
+      const subscribers = getSiteActiveSubscribers(metricsData, siteId);
+      if (subscribers !== null) setActiveSubscribers(subscribers);
     }, [metricsData, siteId]);
 
     useEffect(() => {
@@ -155,9 +185,22 @@ const SiteCard: React.FC<SiteCardProps> = memo(
         }
       };
 
+      const handleSubscribersUpdate = (_: any, data: any) => {
+        if (data !== null && data !== undefined) {
+          const value =
+            Array.isArray(data) && data.length > 1
+              ? extractMetricValue(data[1])
+              : extractMetricValue(data);
+          if (value !== null) {
+            setActiveSubscribers(value);
+          }
+        }
+      };
+
       const uptimeTopic = `stat-${SITE_KPI_TYPES.SITE_UPTIME}-${siteId}`;
       const batteryTopic = `stat-${SITE_KPI_TYPES.BATTERY_CHARGE_PERCENTAGE}-${siteId}`;
       const backhaulTopic = `stat-${SITE_KPI_TYPES.BACKHAUL_SPEED}-${siteId}`;
+      const subscribersTopic = `stat-${SITE_KPI_TYPES.ACTIVE_SUBSCRIBERS}-${siteId}`;
 
       subscriptionsRef.current.uptime = PubSub.subscribe(
         uptimeTopic,
@@ -170,6 +213,10 @@ const SiteCard: React.FC<SiteCardProps> = memo(
       subscriptionsRef.current.backhaul = PubSub.subscribe(
         backhaulTopic,
         handleBackhaulUpdate,
+      );
+      subscriptionsRef.current.subscribers = PubSub.subscribe(
+        subscribersTopic,
+        handleSubscribersUpdate,
       );
 
       return cleanup;
@@ -291,9 +338,10 @@ const SiteCard: React.FC<SiteCardProps> = memo(
           </Box>
 
           <Box display="flex" mt={3} gap={4}>
-            {/* TODO: Commenting this out for now as we don't have a way to get subscribers by site yet
             <Box display="flex" alignItems="center" gap={1}>
-              {loading || userCount === undefined || userCount === null ? (
+              {loading ||
+              activeSubscribers === undefined ||
+              activeSubscribers === null ? (
                 <>
                   <PeopleIcon sx={{ color: colors.darkGray }} />
                   <Typography variant="body2" sx={{ color: colors.darkGray }}>
@@ -304,12 +352,12 @@ const SiteCard: React.FC<SiteCardProps> = memo(
                 <>
                   <PeopleIcon sx={{ color: colors.darkGray }} />
                   <Typography variant="body2" sx={{ color: colors.darkGray }}>
-                    {userCount}
+                    {activeSubscribers}
                   </Typography>
                 </>
               )}
             </Box>
-          */}
+
             <Box display="flex" alignItems="center" gap={1}>
               {connectionStyles.icon}
               <Typography

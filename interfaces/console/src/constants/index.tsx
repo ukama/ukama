@@ -668,6 +668,15 @@ export const SITE_KPIS = {
         description: 'Node uptime',
         format: 'number',
       },
+      {
+        unit: '',
+        show: true,
+        name: 'Active subscribers',
+        format: 'number',
+        id: 'node_active_subscribers',
+        description: 'Current active subscribers on the site',
+        threshold: null,
+      },
     ],
   },
 };
@@ -896,4 +905,5 @@ export const SITE_KPI_TYPES = {
   BACKHAUL_SPEED: 'backhaul_speed',
   SITE_UPTIME_PERCENTAGE: 'site_uptime_percentage',
   NODE_UPTIME: 'unit_uptime',
+  ACTIVE_SUBSCRIBERS: 'node_active_subscribers',
 };

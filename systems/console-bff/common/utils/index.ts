@@ -223,6 +223,7 @@ const getGraphsKeyByType = (type: string): string[] => {
         "node_switch_port_status",
         "node_switch_port_speed",
         "node_switch_port_power",
+        "node_active_subscribers",
       ];
     default:
       return [];
