@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 # Copyright (c) 2025-present, Ukama Inc.
 
@@ -25,6 +25,12 @@ cleanup() {
     if [[ -n "${SERIAL_PID:-}" ]]; then
         kill "$SERIAL_PID" 2>/dev/null || true
     fi
+
+    if [[ -n "${HTTP_PID:-}" ]]; then
+        echo "Stopping temporary HTTP server..."
+        kill "$HTTP_PID" 2>/dev/null || true
+    fi
+
     if [ "$ORIGINAL_SSH_STATE" != "active" ]; then
         echo "Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
@@ -33,6 +39,7 @@ cleanup() {
     nmcli device set "$DEV_ETH" managed yes 2>/dev/null || true
     rm -f "$YQ_BIN"
     rm -f alpine.iso
+    rm -f ${FLASH_SCRIPT}
 }
 trap cleanup EXIT
 
@@ -61,7 +68,7 @@ validate_config() {
     echo "Validating config..." | tee -a "$ORCHESTRATOR_LOG"
     for key in "${REQUIRED_KEYS[@]}"; do
         if ! "$YQ_BIN" eval "$key" "$CONFIG" &>/dev/null; then
-            echo "❌ Missing config: $key" | tee -a "$ORCHESTRATOR_LOG"
+            echo "Missing config: $key" | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         fi
     done
@@ -71,7 +78,7 @@ retry() {
     local n=1 max=$RETRIES delay=5
     until "$@"; do
         if (( n == max )); then
-            echo "❌ Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
+            echo "Command failed after $n attempts." | tee -a "$ORCHESTRATOR_LOG"
             exit 1
         else
             echo "Retry $n/$max: $*" | tee -a "$ORCHESTRATOR_LOG"
@@ -110,7 +117,6 @@ BOOT_MARKER=$(yq_read     '.flash.boot_marker')
 ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
 {
-
     # === [0] Verify USB device exists ===
     if [ ! -b "$USB_DEV" ]; then
         echo "USB device '$USB_DEV' not found or is not a block device."
@@ -125,6 +131,8 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
     sudo ip addr add "$HOST_IP/24" dev "$DEV_ETH"
     sudo ip link set "$DEV_ETH" up
     ip addr show "$DEV_ETH"
+
+    sleep 2
 
     echo "=== [2] Start SSH (as needed) ==="
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
@@ -148,18 +156,17 @@ ip addr add ${TARGET_IP}/24 dev eth0
 ip link set eth0 up
 
 echo "[SMARC] Downloading image from ${HOST_IP}"
-scp -o StrictHostKeyChecking=no root@${HOST_IP}:${IMG_PATH} /tmp/${IMG_NAME}
-timeout 20s scp -v -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${STATIC_IP}:${IMG_PATH} /tmp/${IMG_NAME}
+wget http://${HOST_IP}:8000/$(basename "$IMG_PATH") -O /mnt/${IMG_NAME}
 
-ls -lh /tmp/${IMG_NAME}
+ls -lh /mnt/${IMG_NAME}
 
-if [ ! -f /tmp/${IMG_NAME} ]; then
+if [ ! -f /mnt/${IMG_NAME} ]; then
   echo "[SMARC] Image not found after scp!"
   exit 1
 fi
 
 echo "[SMARC] Flashing image to ${TARGET_DEV}"
-dd if=/tmp/${IMG_NAME} of=${TARGET_DEV} bs=4M status=progress
+dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M status=progress
 sync
 
 echo "[SMARC] Flash complete"
@@ -169,6 +176,15 @@ EOF
 
     echo "=== [5] Create bootable USB with custom autorun ==="
     USB_DEV="$USB_DEV" FLASH_SCRIPT="$FLASH_SCRIPT" "$ISO_BUILDER"
+
+    # === [5.5] Start HTTP server to serve image ===
+    echo "=== [5.5] Starting temporary HTTP server to serve image"
+    IMG_DIR=$(dirname "$IMG_PATH")
+    cd "$IMG_DIR"
+    python3 -m http.server 8000 > /dev/null 2>&1 &
+    HTTP_PID=$!
+    echo "HTTP server started with PID $HTTP_PID"
+    cd - > /dev/null
 
     echo "Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
     read -r qemu_choice

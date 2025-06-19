@@ -7,7 +7,6 @@
 # - Partition 2: FAT32 with flash script + README
 
 set -euo pipefail
-set -x
 
 : "${USB_DEV:?Must set USB_DEV}"
 : "${FLASH_SCRIPT:?Must set FLASH_SCRIPT}"
@@ -56,7 +55,7 @@ sudo mount "$DATA_PART" "$MNT_DATA"
 sudo rsync -a "$MNT_ISO"/ "$MNT_BOOT"/
 
 # Move flash script + README to DATA partition
-sudo mv "$FLASH_SCRIPT" "$MNT_DATA/$FLASH_SCRIPT"
+sudo cp "$FLASH_SCRIPT" "$MNT_DATA/$FLASH_SCRIPT"
 sudo chmod +x "$MNT_DATA/flash-smarc.sh"
 
 cat <<EOF | sudo tee "$MNT_DATA/$README_FILE" >/dev/null
