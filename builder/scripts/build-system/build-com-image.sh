@@ -203,6 +203,27 @@ unmount_partition() {
     check_status $? "${mount_point} unmounted" "${STAGE}"
 }
 
+copy_boot_partition() {
+    STAGE="copy_boot_partition"
+    log "INFO" "Copying /boot from rootfs into boot partition"
+
+    if [ ! -d "${ROOTFS_DIR}/boot" ]; then
+        log "ERROR" "Missing /boot in rootfs (${ROOTFS_DIR}/boot)"
+        exit 1
+    fi
+
+    rsync -aAX "${ROOTFS_DIR}/boot/" "${BOOT_MOUNT}/"
+
+    if [ -d "${ROOTFS_DIR}/efi" ]; then
+        rsync -aAX "${ROOTFS_DIR}/efi/" "${BOOT_MOUNT}/efi/"
+        log "INFO" "/efi directory copied to boot partition"
+    else
+        log "INFO" "No /efi directory found in rootfs — UEFI boot might fail"
+    fi
+
+    check_status $? "/boot copied to boot partition" ${STAGE}
+}
+
 copy_rootfs() {
     STAGE="copy_rootfs"
 
@@ -309,6 +330,7 @@ copy_required_libs   "$UKAMA_REPO_LIB_PKG" "$ROOTFS_DIR/lib"
 create_manifest_file "$MANIFEST_FILE"      "${APPS[@]}"
 
 copy_rootfs
+copy_boot_partition
 cp -rf "${MANIFEST_FILE}" "${PRIMARY_MOUNT}"
 cp -rf "${MANIFEST_FILE}" "${PASSIVE_MOUNT}"
 rm -rf "${MANIFEST_FILE}"
