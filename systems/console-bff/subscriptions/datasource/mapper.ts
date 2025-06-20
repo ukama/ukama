@@ -63,10 +63,18 @@ export const parseMetricsResponse = (
   args: GetMetricsStatInput
 ): MetricsRes => {
   const metricResArray: MetricRes[] = res.map(item => {
-    if (args.networkId && args.networkId !== item.metric.network) {
+    if (
+      args.operation !== "sum" &&
+      args.networkId &&
+      args.networkId !== item.metric.network
+    ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
-    if (args.siteId && args.siteId !== item.metric.site) {
+    if (
+      args.operation !== "sum" &&
+      args.siteId &&
+      args.siteId !== item.metric.site
+    ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
     return {
