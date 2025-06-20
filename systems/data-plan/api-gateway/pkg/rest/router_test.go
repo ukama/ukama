@@ -770,7 +770,7 @@ func TestRouter_GetBaseRatesById_Error(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	m.AssertExpectations(t)
+	b.AssertExpectations(t)
 }
 
 func TestRouter_UploadBaseRates(t *testing.T) {
@@ -1324,7 +1324,7 @@ func TestRouter_Package(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		m.AssertExpectations(t)
+		p.AssertExpectations(t)
 	})
 
 	t.Run("UpdatePackage", func(t *testing.T) {
