@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Auto-sign commit hook
+# This hook automatically adds the -s flag to git commit if it's missing
+
+# Get the current commit message
+COMMIT_MSG_FILE="$1"
+
+# Check if this is a merge commit or if -s flag is already present
+if grep -q "^Merge:" "$COMMIT_MSG_FILE" || grep -q "^Signed-off-by:" "$COMMIT_MSG_FILE"; then
+    exit 0
+fi
+
+# Get the current user's name and email
+USER_NAME=$(git config user.name)
+USER_EMAIL=$(git config user.email)
+
+# Check if user name and email are configured
+if [ -z "$USER_NAME" ] || [ -z "$USER_EMAIL" ]; then
+    echo "Warning: git user.name or user.email not configured."
+    echo "Please run:"
+    echo "  git config --global user.name 'Your Name'"
+    echo "  git config --global user.email 'your.email@example.com'"
+    exit 0
+fi
+
+# Add Signed-off-by line if it doesn't exist
+if ! grep -q "^Signed-off-by:" "$COMMIT_MSG_FILE"; then
+    echo "" >> "$COMMIT_MSG_FILE"
+    echo "Signed-off-by: $USER_NAME <$USER_EMAIL>" >> "$COMMIT_MSG_FILE"
+    echo "Auto-added Signed-off-by line for $USER_NAME <$USER_EMAIL>"
+fi
+
+exit 0
