@@ -463,7 +463,7 @@ export {
   getSystemNameByService,
   getTimestampCount,
   handleMetricWSMessage,
-  isMetricValidNetworkCheck,
+  isMetricNetworkCheckFailed,
   killProcess,
   parseGatewayHeaders,
   parseHeaders,
