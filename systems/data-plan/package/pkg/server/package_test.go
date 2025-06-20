@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/data-plan/package/mocks"
 	"github.com/ukama/ukama/systems/data-plan/package/pkg/db"
 
@@ -90,7 +89,6 @@ func TestPackageServer_GetPackages_Success(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
-// Error case SQL error
 func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
@@ -103,42 +101,6 @@ func TestPackageServer_GetPackages_Error1(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, pkg2)
 }
-
-func TestPackageServer_GetPackageByOrg_Success(t *testing.T) {
-
-	packageRepo := &mocks.PackageRepo{}
-	var mockFilters = &pb.GetAllRequest{}
-	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
-
-	packageRepo.On("GetAll").Return([]db.Package{{
-		Uuid:        uuid.NewV4(),
-		Name:        "Silver Plan",
-		SimType:     ukama.SimTypeTest,
-		OwnerId:     uuid.NewV4(),
-		Active:      true,
-		Duration:    30,
-		SmsVolume:   1000,
-		DataVolume:  5000000,
-		VoiceVolume: 500,
-		Type:        ukama.PackageTypePostpaid,
-
-		DataUnits:    ukama.DataUnitTypeMB,
-		VoiceUnits:   ukama.CallUnitTypeSec,
-		MessageUnits: ukama.MessageUnitTypeInt,
-		Flatrate:     false,
-		Currency:     "Dollar",
-		From:         time.Now(),
-		To:           time.Now().Add(time.Hour * 24 * 30),
-		Country:      "USA",
-		Provider:     "ukama",
-	}}, nil)
-	pkg, err := s.GetAll(context.TODO(), mockFilters)
-	assert.NoError(t, err)
-	assert.Equal(t, int64(5000000), pkg.Packages[0].DataVolume)
-	packageRepo.AssertExpectations(t)
-}
-
-// Error cases
 
 func TestPackageServer_GetPackage_Error(t *testing.T) {
 	var orgId = uuid.NewV4()
@@ -155,9 +117,6 @@ func TestPackageServer_GetPackage_Error(t *testing.T) {
 	packageRepo.AssertExpectations(t)
 }
 
-// End Get package org //
-
-// Add packages //
 func TestPackageServer_AddPackage(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	baserate := uuid.NewV4().String()
@@ -256,7 +215,6 @@ func TestPackageServer_DeletePackage_Error1(t *testing.T) {
 	assert.Nil(t, pkg1)
 }
 
-// Error case: Id 0
 func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	packageRepo := &mocks.PackageRepo{}
 	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
@@ -269,4 +227,382 @@ func TestPackageServer_DeletePackage_Success_Error2(t *testing.T) {
 	pkg2, err := s.Delete(context.TODO(), mockFilters)
 	assert.Error(t, err)
 	assert.Nil(t, pkg2)
+}
+
+func TestPackageServer_Get_InvalidUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+	req := &pb.GetPackageRequest{
+		Uuid: "invalid-uuid",
+	}
+
+	pkg, err := s.Get(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, pkg)
+	assert.Contains(t, err.Error(), "invalid format of package uuid")
+}
+
+func TestPackageServer_GetDetails_Success(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	packageUUID := uuid.NewV4()
+
+	req := &pb.GetPackageRequest{
+		Uuid: packageUUID.String(),
+	}
+
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+	packageRepo.On("GetDetails", packageUUID).Return(&db.Package{
+		Name: "Test Package Details",
+	}, nil)
+
+	pkg, err := s.GetDetails(context.TODO(), req)
+	assert.NoError(t, err)
+	assert.Equal(t, "Test Package Details", pkg.Package.Name)
+	packageRepo.AssertExpectations(t)
+}
+
+func TestPackageServer_GetDetails_InvalidUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+	req := &pb.GetPackageRequest{
+		Uuid: "invalid-uuid",
+	}
+
+	pkg, err := s.GetDetails(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, pkg)
+	assert.Contains(t, err.Error(), "invalid format of package uuid")
+}
+
+func TestPackageServer_GetAll_Success(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+
+	req := &pb.GetAllRequest{}
+
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+	packages := []db.Package{
+		{Name: "Package 1"},
+		{Name: "Package 2"},
+	}
+	packageRepo.On("GetAll").Return(packages, nil)
+
+	resp, err := s.GetAll(context.TODO(), req)
+	assert.NoError(t, err)
+	assert.Len(t, resp.Packages, 2)
+	assert.Equal(t, "Package 1", resp.Packages[0].Name)
+	assert.Equal(t, "Package 2", resp.Packages[1].Name)
+	packageRepo.AssertExpectations(t)
+}
+
+func TestPackageServer_Add_InvalidOwnerUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    "invalid-uuid",
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid format of owner uuid")
+}
+
+func TestPackageServer_Add_InvalidBaserateUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: "invalid-uuid",
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid format of base rate")
+}
+
+func TestPackageServer_Add_InvalidFromDate(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       "invalid-date",
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error:")
+}
+
+func TestPackageServer_Add_InvalidToDate(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         "invalid-date",
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error:")
+}
+
+func TestPackageServer_Add_PastFromDate(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(-time.Hour * 24).Format(time.RFC3339), // Past date
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error:")
+}
+
+func TestPackageServer_Add_PastToDate(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(-time.Hour * 24).Format(time.RFC3339), // Past date
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error:")
+}
+
+func TestPackageServer_Add_InvalidDateRange(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339), // Later date
+		To:         time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339), // Earlier date
+	}
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error:")
+}
+
+func TestPackageServer_Add_RateClientError(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    uuid.NewV4().String(),
+		BaserateId: uuid.NewV4().String(),
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	rate.On("GetClient").Return(nil, errors.New("rate client error"))
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "rate client error")
+}
+
+func TestPackageServer_Add_GetRateByIdError(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+	ownerId := uuid.NewV4().String()
+	baserate := uuid.NewV4().String()
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    ownerId,
+		BaserateId: baserate,
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	rateClient := &splmocks.RateServiceClient{}
+	rate.On("GetClient").Return(rateClient, nil)
+	rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
+		OwnerId:  ownerId,
+		BaseRate: baserate,
+	}).Return(nil, errors.New("rate not found"))
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid base id")
+}
+
+func TestPackageServer_Add_PackageRepoError(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+	ownerId := uuid.NewV4().String()
+	baserate := uuid.NewV4().String()
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    ownerId,
+		BaserateId: baserate,
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	rateClient := &splmocks.RateServiceClient{}
+	rate.On("GetClient").Return(rateClient, nil)
+	rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
+		OwnerId:  ownerId,
+		BaseRate: baserate,
+	}).Return(&rpb.GetRateByIdResponse{
+		Rate: &bpb.Rate{
+			SmsMo:    1,
+			SmsMt:    1,
+			Data:     10,
+			Country:  "USA",
+			Provider: "ukama",
+		},
+	}, nil)
+
+	packageRepo.On("Add", mock.Anything, mock.Anything).Return(errors.New("package repo error"))
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "Error while adding a package")
+}
+
+func TestPackageServer_Delete_Success(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	packageUUID := uuid.NewV4()
+
+	s := NewPackageServer(OrgName, packageRepo, nil, msgbusClient, OrgId)
+
+	req := &pb.DeletePackageRequest{
+		Uuid: packageUUID.String(),
+	}
+
+	packageRepo.On("Delete", packageUUID).Return(nil)
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+
+	resp, err := s.Delete(context.TODO(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, packageUUID.String(), resp.Uuid)
+	packageRepo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
+}
+
+func TestPackageServer_Delete_InvalidUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+	req := &pb.DeletePackageRequest{
+		Uuid: "invalid-uuid",
+	}
+
+	resp, err := s.Delete(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid format of package uuid")
+}
+
+func TestPackageServer_Update_InvalidUUID(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
+
+	req := &pb.UpdatePackageRequest{
+		Uuid: "invalid-uuid",
+		Name: "Updated Package",
+	}
+
+	resp, err := s.Update(context.TODO(), req)
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Contains(t, err.Error(), "invalid format of package uuid")
+}
+
+func TestPackageServer_Add_FlatratePackage(t *testing.T) {
+	packageRepo := &mocks.PackageRepo{}
+	rate := &mocks.RateClientProvider{}
+	ownerId := uuid.NewV4().String()
+	baserate := uuid.NewV4().String()
+
+	s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
+
+	req := &pb.AddPackageRequest{
+		OwnerId:    ownerId,
+		BaserateId: baserate,
+		Flatrate:   true, // Test flatrate package
+		From:       time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
+		To:         time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
+	}
+
+	rateClient := &splmocks.RateServiceClient{}
+	rate.On("GetClient").Return(rateClient, nil)
+	rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
+		OwnerId:  ownerId,
+		BaseRate: baserate,
+	}).Return(&rpb.GetRateByIdResponse{
+		Rate: &bpb.Rate{
+			SmsMo:    1,
+			SmsMt:    1,
+			Data:     10,
+			Country:  "USA",
+			Provider: "ukama",
+		},
+	}, nil)
+
+	packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
+
+	resp, err := s.Add(context.TODO(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.True(t, resp.Package.Flatrate)
+	packageRepo.AssertExpectations(t)
 }

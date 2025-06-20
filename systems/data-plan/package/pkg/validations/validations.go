@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package validationErrors
+package validations
 
 import (
 	"errors"

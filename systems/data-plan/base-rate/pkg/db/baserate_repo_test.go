@@ -10,6 +10,7 @@ package db
 
 import (
 	extsql "database/sql"
+	"errors"
 	"log"
 	"regexp"
 	"testing"
@@ -409,5 +410,119 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestBaseRateRepo_ErrorCases(t *testing.T) {
+	newRepo := func() (*baseRateRepo, sqlmock.Sqlmock, func()) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+		repo := NewBaseRateRepo(&UkamaDbMock{GormDb: gdb})
+		return repo, mock, func() { db.Close() }
+	}
+
+	t.Run("GetBaseRateById returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRateById(uuid.NewV4())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesHistoryByCountry returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesHistoryByCountry("c", "p", SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesByCountry returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesByCountry("c", "p", SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesForPeriod returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesForPackage returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("UploadBaseRates delete error (not NotFound)", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WillReturnError(errors.New("delete error"))
+		mock.ExpectRollback()
+		rate := BaseRate{Country: "c", Provider: "p", SimType: SimTypeUkamaData, EffectiveAt: time.Now()}
+		err := repo.UploadBaseRates([]BaseRate{rate})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "delete error")
+	})
+
+	t.Run("GetBaseRatesByCountry empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesByCountry("c", "p", SimTypeUkamaData)
+		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("GetBaseRatesForPeriod empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("GetBaseRatesForPackage empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("UploadBaseRates transaction begin error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
+		rate := BaseRate{Country: "c", Provider: "p", SimType: SimTypeUkamaData, EffectiveAt: time.Now()}
+		err := repo.UploadBaseRates([]BaseRate{rate})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "transaction begin error")
 	})
 }

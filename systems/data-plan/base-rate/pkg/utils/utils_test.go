@@ -37,6 +37,113 @@ func TestRateService_ParseToModel(t *testing.T) {
 	assert.Equal(t, db.ParseType("ukama_data"), dbRate[0].SimType)
 }
 
+func TestParseToModel_ErrorCases(t *testing.T) {
+	effectiveAt := "2023-04-10T20:05:29Z"
+	endAt := "2024-04-10T20:05:29Z"
+	simType := "ukama_data"
+
+	tests := []struct {
+		name      string
+		rawRates  []RawRates
+		effAt     string
+		endAt     string
+		wantError string
+	}{
+		{
+			name: "IMSI parsing error",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "notanumber",
+				Sms_mo:  "$0.1",
+				Sms_mt:  "$0.1",
+				Data:    "$0.1",
+			}},
+			effAt:     effectiveAt,
+			endAt:     endAt,
+			wantError: "failed parsing imsi value",
+		},
+		{
+			name: "SMS MO parsing error",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "1",
+				Sms_mo:  "notanumber",
+				Sms_mt:  "$0.1",
+				Data:    "$0.1",
+			}},
+			effAt:     effectiveAt,
+			endAt:     endAt,
+			wantError: "failed parsing SMS MO rate",
+		},
+		{
+			name: "SMS MT parsing error",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "1",
+				Sms_mo:  "$0.1",
+				Sms_mt:  "notanumber",
+				Data:    "$0.1",
+			}},
+			effAt:     effectiveAt,
+			endAt:     endAt,
+			wantError: "failed parsing SMS MT rate",
+		},
+		{
+			name: "Data parsing error",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "1",
+				Sms_mo:  "$0.1",
+				Sms_mt:  "$0.1",
+				Data:    "notanumber",
+			}},
+			effAt:     effectiveAt,
+			endAt:     endAt,
+			wantError: "failed parsing Data rate",
+		},
+		{
+			name: "Invalid effective_at date format",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "1",
+				Sms_mo:  "$0.1",
+				Sms_mt:  "$0.1",
+				Data:    "$0.1",
+			}},
+			effAt:     "notadate",
+			endAt:     endAt,
+			wantError: "invalid time format for effective at",
+		},
+		{
+			name: "Invalid endAt date format",
+			rawRates: []RawRates{{
+				Country: "Country",
+				Network: "Net",
+				Imsi:    "1",
+				Sms_mo:  "$0.1",
+				Sms_mt:  "$0.1",
+				Data:    "$0.1",
+			}},
+			effAt:     effectiveAt,
+			endAt:     "notadate",
+			wantError: "invalid time format for end at",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseToModel(tt.rawRates, tt.effAt, tt.endAt, simType)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantError)
+		})
+	}
+}
+
 // Fetch data success case
 func TestRateService_FetchData_Success(t *testing.T) {
 	mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"

@@ -10,6 +10,7 @@ package db
 
 import (
 	extsql "database/sql"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -65,6 +66,47 @@ func TestDefaultMarkupRepo_Create(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("Create_DatabaseError", func(t *testing.T) {
+		// Arrange
+		var markup float64 = 10
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), markup).
+			WillReturnError(errors.New("database error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.CreateDefaultMarkupRate(markup)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "database error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestDefaultMarkupRepo_Get(t *testing.T) {
@@ -112,6 +154,77 @@ func TestDefaultMarkupRepo_Get(t *testing.T) {
 
 	})
 
+	t.Run("Get_NotFound", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		m, err := r.GetDefaultMarkupRate()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, m)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Get_DatabaseError", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WillReturnError(errors.New("database error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		m, err := r.GetDefaultMarkupRate()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, m)
+		assert.Contains(t, err.Error(), "database error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestDefaultMarkupRepo_Delete(t *testing.T) {
@@ -156,6 +269,78 @@ func TestDefaultMarkupRepo_Delete(t *testing.T) {
 
 	})
 
+	t.Run("Delete_DatabaseError", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), nil).
+			WillReturnError(errors.New("database error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.DeleteDefaultMarkupRate()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "database error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Delete_TransactionBeginError", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.DeleteDefaultMarkupRate()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "transaction begin error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestDefaultMarkupRepo_Update(t *testing.T) {
@@ -205,6 +390,91 @@ func TestDefaultMarkupRepo_Update(t *testing.T) {
 
 	})
 
+	t.Run("Update_DeleteError", func(t *testing.T) {
+		// Arrange
+		var markup float64 = 10
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(errors.New("delete error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.UpdateDefaultMarkupRate(markup)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "delete error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Update_CreateError", func(t *testing.T) {
+		// Arrange
+		var markup float64 = 10
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), markup).
+			WillReturnError(errors.New("create error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.UpdateDefaultMarkupRate(markup)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "create error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestDefaultMarkupRepo_GetHistory(t *testing.T) {
