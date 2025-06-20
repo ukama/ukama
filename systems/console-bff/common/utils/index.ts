@@ -442,7 +442,7 @@ const handleMetricWSMessage = (
   }
 };
 
-const isMetricValidNetworkCheck = (
+const isMetricNetworkCheckFailed = (
   arg: string,
   res: string,
   op: string
