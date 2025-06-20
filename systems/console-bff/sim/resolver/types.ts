@@ -40,24 +40,12 @@ export class SimUsageInputDto {
 
   @Field()
   type: string;
-
-  @Field()
-  to: string;
-
-  @Field()
-  from: string;
 }
 
 @InputType()
 export class SimUsagesInputDto {
   @Field(() => String)
   networkId: string;
-
-  @Field({ nullable: true, defaultValue: 0 })
-  to?: number;
-
-  @Field({ nullable: true, defaultValue: 0 })
-  from?: number;
 
   @Field()
   type: string;

@@ -298,7 +298,7 @@ const Page = () => {
 
   const [getDataUsages, { data: dataUsageData, loading: dataUsageLoading }] =
     useGetDataUsagesLazyQuery({
-      pollInterval: 120000,
+      pollInterval: 30000,
       fetchPolicy: 'network-only',
       variables: {
         data: {
