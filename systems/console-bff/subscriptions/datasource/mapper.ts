@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { logger } from "../../common/logger";
-import { formatKPIValue } from "../../common/utils";
+import { formatKPIValue, isMetricValidNetworkCheck } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricsStatInput,
@@ -64,16 +64,20 @@ export const parseMetricsResponse = (
 ): MetricsRes => {
   const metricResArray: MetricRes[] = res.map(item => {
     if (
-      args.operation !== "sum" &&
-      args.networkId &&
-      args.networkId !== item.metric.network
+      isMetricValidNetworkCheck(
+        args.networkId || "",
+        item.metric.network || "",
+        args.operation || ""
+      )
     ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
     if (
-      args.operation !== "sum" &&
-      args.siteId &&
-      args.siteId !== item.metric.site
+      isMetricValidNetworkCheck(
+        args.siteId || "",
+        item.metric.site || "",
+        args.operation || ""
+      )
     ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }

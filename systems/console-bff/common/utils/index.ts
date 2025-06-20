@@ -442,6 +442,15 @@ const handleMetricWSMessage = (
   }
 };
 
+const isMetricValidNetworkCheck = (
+  arg: string,
+  res: string,
+  op: string
+): boolean => {
+  if (op !== "sum" && arg && arg !== res) return true;
+  return false;
+};
+
 export {
   csvToBase64,
   epochToISOString,
@@ -454,6 +463,7 @@ export {
   getSystemNameByService,
   getTimestampCount,
   handleMetricWSMessage,
+  isMetricValidNetworkCheck,
   killProcess,
   parseGatewayHeaders,
   parseHeaders,
