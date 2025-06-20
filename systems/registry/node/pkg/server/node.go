@@ -609,13 +609,16 @@ func (n *NodeServer) addNodeToSite(nodeId, siteId, networkId string) error {
 		return grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	if n.msgbus != nil {
+    if n.msgbus != nil {
 		route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
-
+		
 		evt := &epb.EventRegistryNodeAssign{
 			NodeId:  r.PartNumber,
 			Type:    r.Type,
+			Site:    siteId,       
+			Network: networkId,     
 		}
+		
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())

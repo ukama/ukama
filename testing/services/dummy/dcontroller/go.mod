@@ -7,7 +7,6 @@ require (
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
 	github.com/prometheus/client_golang v1.21.0
-	github.com/prometheus/client_model v0.6.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/testing/common v0.0.0-00010101000000-000000000000
@@ -73,6 +72,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/penglongli/gin-metrics v0.1.13 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
