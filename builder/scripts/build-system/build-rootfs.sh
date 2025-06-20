@@ -156,7 +156,7 @@ function install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
-function install_x86_64_kernel() {
+function install_x86_64_boot_and_kernel() {
     local kernel_tmp_dir="/tmp/alpine-kernel-x86_64"
     local miniroot_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-minirootfs-${VERSION#v}.0-x86_64.tar.gz"
     local kernel_pkg="linux-lts"
@@ -177,7 +177,11 @@ function install_x86_64_kernel() {
         --no-cache add "$kernel_pkg"
 
     log "INFO" "Copying kernel and modules"
-    mkdir -p /boot /lib/modules
+    mkdir -p /boot /lib/modules /efi
+
+    rsync -a "$kernel_tmp_dir"/boot /boot/
+    rsync -a "$kernel_tmp_dir"/efi  /efi/
+
     cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/vmlinuz
     cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
 
@@ -193,7 +197,7 @@ function copy_linux_kernel() {
 
     case "$ARCH" in
         x86_64)
-            install_x86_64_kernel
+            install_x86_64_boot_and_kernel
             ;;
         armv7)
             KERNEL_PKG="linux-vanilla"
