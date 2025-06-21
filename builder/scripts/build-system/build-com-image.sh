@@ -218,6 +218,15 @@ copy_boot_partition() {
 
     rsync -aAX "${ROOTFS_DIR}/boot/" "${BOOT_MOUNT}/"
 
+    # Patch grub.cfg
+    GRUB_CFG="${BOOT_MOUNT}/boot/grub/grub.cfg"
+    if [ -f "${GRUB_CFG}" ]; then
+        log "INFO" "Patching grub.cfg to set root device and modules"
+            sed -i 's|^linux.*|linux /boot/vmlinuz-lts root=/dev/mmcblk0p3 rootfstype=ext4 modules=mmc_block,mmc_core,sd-mod,usb-storage quiet|' "${GRUB_CFG}"
+    else
+        log "WARNING" "grub.cfg not found at ${GRUB_CFG} — skipping patch"
+    fi
+
     if [ -f "${ROOTFS_DIR}/efi/boot/bootx64.efi" ]; then
         mkdir -p "${BOOT_MOUNT}/EFI/BOOT"
         cp "${ROOTFS_DIR}/efi/boot/bootx64.efi" "${BOOT_MOUNT}/EFI/BOOT/BOOTX64.EFI"
