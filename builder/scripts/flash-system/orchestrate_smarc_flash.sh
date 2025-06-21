@@ -152,24 +152,24 @@ set -eux
 
 echo "[SMARC] Setting static IP ${TARGET_IP} on eth0"
 ip addr flush dev eth0 || true
-ip addr add ${TARGET_IP}/24 dev eth0
+ip addr add "${TARGET_IP}/24" dev eth0
 ip link set eth0 up
 
 echo "[SMARC] Downloading image from ${HOST_IP}"
-wget http://${HOST_IP}:8000/$(basename "$IMG_PATH") -O /mnt/${IMG_NAME}
+wget "http://${HOST_IP}:8000/${IMG_NAME}" -O "/mnt/${IMG_NAME}"
 
-ls -lh /mnt/${IMG_NAME}
+ls -lh "/mnt/${IMG_NAME}"
 
-if [ ! -f /mnt/${IMG_NAME} ]; then
+if [ ! -f "/mnt/${IMG_NAME}" ]; then
   echo "[SMARC] Image not found after wget!"
   exit 1
 fi
 
-echo "[SMARC] zero out all of the eMMC"
-dd if=/dev/zero of=/dev/${IMG_NAME} bs=1M
+echo "[SMARC] Zeroing first 64MB of eMMC: ${TARGET_DEV}"
+dd if=/dev/zero of="${TARGET_DEV}" bs=1M count=64
 
-echo "[SMARC] Flashing image to ${TARGET_DEV}"
-dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M && sync
+echo "[SMARC] Flashing image to eMMC: ${TARGET_DEV}"
+dd if="/mnt/${IMG_NAME}" of="${TARGET_DEV}" bs=4M && sync
 
 echo "[SMARC] Flash complete"
 reboot
