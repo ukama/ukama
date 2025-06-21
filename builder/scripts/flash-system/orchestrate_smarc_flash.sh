@@ -165,9 +165,11 @@ if [ ! -f /mnt/${IMG_NAME} ]; then
   exit 1
 fi
 
+echo "[SMARC] zero out all of the eMMC"
+dd if=/dev/zero of=/dev/${IMG_NAME} bs=1M
+
 echo "[SMARC] Flashing image to ${TARGET_DEV}"
-dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M
-sync
+dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M && sync
 
 echo "[SMARC] Flash complete"
 reboot
