@@ -166,7 +166,7 @@ if [ ! -f /mnt/${IMG_NAME} ]; then
 fi
 
 echo "[SMARC] Flashing image to ${TARGET_DEV}"
-dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M status=progress
+dd if=/mnt/${IMG_NAME} of=${TARGET_DEV} bs=4M
 sync
 
 echo "[SMARC] Flash complete"
