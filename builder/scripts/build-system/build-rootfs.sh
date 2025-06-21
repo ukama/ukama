@@ -156,7 +156,33 @@ function install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
-function install_x86_64_boot_and_kernel() {
+function install_x86_64_boot() {
+    local alpine_version="${VERSION#v}"
+    local iso_tmp_dir="/tmp/alpine-iso-x86_64"
+    local iso_mnt_dir="$iso_tmp_dir/mnt-iso"
+    local iso_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-standard-${alpine_version}.0-x86_64.iso"
+
+    # download the alpine iso image, extract boot and copy to rootfs/boot
+    mkdir -p "$iso_tmp_dir" "$iso_mnt_dir"
+    curl -sSL "$iso_url" -o "$iso_tmp_dir/alpine.iso"
+
+    if [ -f "$iso_tmp_dir/alpine.iso" ]; then
+        # check if iso is there, mount, extract the /boot and cleanup
+        sudo mount -o loop "$iso_tmp_dir/alpine.iso" "$iso_mnt_dir"
+        mkdir -p /boot /efi
+        cp -a "$iso_mnt_dir/boot" /boot
+        cp -a "$iso_mnt_dir/efi"  /efi
+
+        sudo umount "$iso_mnt_dir"
+        log "SUCCESS" "Boot files extracted"
+    else
+        log "ERROR" "Unable to find the alpine.iso to extract boot files"
+    fi
+
+    rm -rf "$iso_tmp_dir" "$iso_mnt_dir"
+}
+
+function install_x86_64_kernel() {
     local kernel_tmp_dir="/tmp/alpine-kernel-x86_64"
     local miniroot_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-minirootfs-${VERSION#v}.0-x86_64.tar.gz"
     local kernel_pkg="linux-lts"
@@ -177,19 +203,16 @@ function install_x86_64_boot_and_kernel() {
         --no-cache add "$kernel_pkg"
 
     log "INFO" "Copying kernel and modules"
-    mkdir -p /boot /lib/modules /efi
+    mkdir -p /lib/modules
 
-    rsync -a "$kernel_tmp_dir"/boot /boot/
-    rsync -a "$kernel_tmp_dir"/efi  /efi/
-
-    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/vmlinuz
+#    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/vmlinuz
     cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
 
     rm -rf "$kernel_tmp_dir"
     log "SUCCESS" "$kernel_pkg installed cleanly from minirootfs"
 }
 
-function copy_linux_kernel() {
+function copy_linux_kernel_and_boot() {
     log "INFO" "Setting up kernel for ARCH=$ARCH..."
 
     KERNEL_TMP_DIR="/tmp/alpine-kernel-${ARCH}"
@@ -197,7 +220,8 @@ function copy_linux_kernel() {
 
     case "$ARCH" in
         x86_64)
-            install_x86_64_boot_and_kernel
+            install_x86_64_kernel
+            install_x86_64_boot
             ;;
         armv7)
             KERNEL_PKG="linux-vanilla"
@@ -248,7 +272,6 @@ function copy_linux_kernel() {
 }
 
 function copy_misc_files() {
-    
 	log "INFO" "Copying various files to image"
 
     # install the starter.d app
@@ -507,8 +530,8 @@ create_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
 log "INFO" "Copy misc files."
 copy_misc_files 
 
-log "INFO" "Copy kernel"
-copy_linux_kernel
+log "INFO" "Copy boot and kernel"
+copy_linux_kernel_and_boot
 
 echo "Rootfs build success."
 exit 0
