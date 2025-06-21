@@ -16,6 +16,6 @@ serial:
   baud: 115200
 
 flash:
-  target_device: "/dev/mmcblk1"
+  target_device: "/dev/mmcblk0"
   success_marker: "Flash complete. Rebooting."
   boot_marker: "login:"
