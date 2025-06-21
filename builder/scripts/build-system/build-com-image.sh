@@ -135,7 +135,7 @@ clean_first_50MB() {
 }
 
 # partitions:
-# 128 MB -> Boot
+# 512 MB -> Boot
 #   1 GB -> Passive
 #   2 GB -> Primary (root)
 # 512 MB -> Swap
@@ -147,10 +147,10 @@ partition_image() {
 label: dos
 unit: sectors
 
-start=2048,        size=262144,    type=83
-start=264192,      size=2097152,   type=83
-start=2361344,     size=4194304,   type=83
-start=6555648,     size=1048576,   type=82
+start=2048,    size=524288,  type=ef
+start=526336,  size=2097152, type=83
+start=2623488, size=4194304, type=83
+start=6817792, size=524288,  type=82
 __EOF__
 
     check_status $? "Partitions created" ${STAGE}
