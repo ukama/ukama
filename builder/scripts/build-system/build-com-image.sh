@@ -154,6 +154,10 @@ start=6817792, size=524288,  type=82
 __EOF__
 
     check_status $? "Partitions created" ${STAGE}
+
+    # set the boot flag on partition 1
+    sudo parted "${LOOPDISK}" set 1 boot on
+    check_status $? "Boot flag set on /boot partition" ${STAGE}
 }
 
 map_partitions() {
@@ -214,11 +218,12 @@ copy_boot_partition() {
 
     rsync -aAX "${ROOTFS_DIR}/boot/" "${BOOT_MOUNT}/"
 
-    if [ -d "${ROOTFS_DIR}/efi" ]; then
-        rsync -aAX "${ROOTFS_DIR}/efi/" "${BOOT_MOUNT}/efi/"
-        log "INFO" "/efi directory copied to boot partition"
+    if [ -f "${ROOTFS_DIR}/efi/boot/bootx64.efi" ]; then
+        mkdir -p "${BOOT_MOUNT}/EFI/BOOT"
+        cp "${ROOTFS_DIR}/efi/boot/bootx64.efi" "${BOOT_MOUNT}/EFI/BOOT/BOOTX64.EFI"
+        log "INFO" "bootx64.efi copied to EFI/BOOT"
     else
-        log "INFO" "No /efi directory found in rootfs — UEFI boot might fail"
+        log "INFO" "No bootx64.efi found in rootfs/efi — UEFI boot might fail"
     fi
 
     check_status $? "/boot copied to boot partition" ${STAGE}

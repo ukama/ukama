@@ -169,9 +169,9 @@ function install_x86_64_boot() {
     if [ -f "$iso_tmp_dir/alpine.iso" ]; then
         # check if iso is there, mount, extract the /boot and cleanup
         sudo mount -o loop "$iso_tmp_dir/alpine.iso" "$iso_mnt_dir"
-        mkdir -p /boot /efi
+        mkdir -p /boot
         cp -a "$iso_mnt_dir/boot" /boot
-        cp -a "$iso_mnt_dir/efi"  /efi
+        cp -a "$iso_mnt_dir/efi"  /
 
         sudo umount "$iso_mnt_dir"
         log "SUCCESS" "Boot files extracted"
