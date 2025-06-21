@@ -232,14 +232,42 @@ copy_boot_partition() {
 copy_rootfs() {
     STAGE="copy_rootfs"
 
-    log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
+    log "INFO" "Copying rootfs to primary"
+    rsync -aAX \
+          --exclude="/dev" \
+          --exclude="/sys" \
+          --exclude="/proc" \
+          --exclude="/boot" \
+          --exclude="/efi" \
+          --exclude="/ukamarepo" \
+          --exclude="/passive" \
+          --exclude="/recovery" \
+          --exclude="/data" \
+          --exclude="/destroy" \
+          --exclude="/enter-chroot" \
+          --exclude="env.sh" \
+          --exclude="setup.log" \
+          "${ROOTFS_DIR}/" "${PRIMARY_MOUNT}/"
 	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc	
 
-	log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAX --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
+	log "INFO" "Copying rootfs to passive"
+    rsync -aAX \
+          --exclude="/dev" \
+          --exclude="/sys" \
+          --exclude="/proc" \
+          --exclude="/boot" \
+          --exclude="/efi" \
+          --exclude="/ukamarepo" \
+          --exclude="/passive" \
+          --exclude="/recovery" \
+          --exclude="/data" \
+          --exclude="/destroy" \
+          --exclude="/enter-chroot" \
+          --exclude="env.sh" \
+          --exclude="setup.log" \
+          "${ROOTFS_DIR}/" "${PASSIVE_MOUNT}/"
     mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
-	
+
 	sync
 }
 
