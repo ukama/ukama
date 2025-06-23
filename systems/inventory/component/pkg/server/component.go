@@ -133,7 +133,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			var component utils.Component
 			err = yaml.Unmarshal(content, &component)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+				return nil, status.Errorf(codes.Internal, "failed to unmarshal yaml. Error %s", err.Error())
 			}
 
 			components = append(components, component)
