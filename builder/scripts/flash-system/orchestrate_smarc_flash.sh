@@ -155,6 +155,20 @@ ip addr flush dev eth0 || true
 ip addr add "${TARGET_IP}/24" dev eth0
 ip link set eth0 up
 
+echo "[SMARC] Detecting eMMC device..."
+for dev in /dev/mmcblk*; do
+    if [ -e "\${dev}boot0" ] && [ -e "\${dev}boot1" ]; then
+        EMMC_DEV="\$dev"
+        break
+    fi
+done
+
+if [ -z "\${EMMC_DEV:-}" ]; then
+    echo "[ERROR] No eMMC device found with boot0/boot1"
+    exit 1
+fi
+echo "[SMARC] Detected eMMC device: \$EMMC_DEV"
+
 echo "[SMARC] Downloading image from ${HOST_IP}"
 wget "http://${HOST_IP}:8000/${IMG_NAME}" -O "/mnt/${IMG_NAME}"
 
@@ -165,11 +179,13 @@ if [ ! -f "/mnt/${IMG_NAME}" ]; then
   exit 1
 fi
 
-echo "[SMARC] Zeroing first 64MB of eMMC: ${TARGET_DEV}"
-dd if=/dev/zero of="${TARGET_DEV}" bs=1M count=64
+echo "[SMARC] Zeroing first 64MB of \$EMMC_DEV"
+dd if=/dev/zero of="\$EMMC_DEV" bs=1M count=64
 
-echo "[SMARC] Flashing image to eMMC: ${TARGET_DEV}"
-dd if="/mnt/${IMG_NAME}" of="${TARGET_DEV}" bs=4M && sync
+echo "[SMARC] Flashing image to \$EMMC_DEV"
+echo "[WARN] pv not found — flashing without progress bar"
+dd if="/mnt/${IMG_NAME}" of="\$EMMC_DEV" bs=4M
+sync
 
 echo "[SMARC] Flash complete"
 reboot
