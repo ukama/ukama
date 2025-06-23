@@ -55,7 +55,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Org Add event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshalmessage for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, msg.Id, "", "", "", msg.Owner, jmsg, msg.Id)
@@ -70,7 +70,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Org Add event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshalmessage for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
@@ -85,7 +85,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Org Add event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshalmessage for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
@@ -100,7 +100,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Org Add event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshalmessage for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
@@ -114,7 +114,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshalmessage for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
@@ -142,7 +142,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
@@ -156,7 +156,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
@@ -170,7 +170,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Network Delete event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
@@ -184,7 +184,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -198,7 +198,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -212,7 +212,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -226,7 +226,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -240,7 +240,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -254,7 +254,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -267,7 +267,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
@@ -282,7 +282,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Invite Delete event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
@@ -295,7 +295,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		// Handle Invite Update event
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 
@@ -308,7 +308,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -322,7 +322,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
@@ -336,7 +336,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
@@ -350,7 +350,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
@@ -364,7 +364,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
@@ -377,7 +377,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
@@ -390,7 +390,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
@@ -403,7 +403,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
@@ -417,7 +417,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
@@ -431,7 +431,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
@@ -445,7 +445,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
@@ -472,7 +472,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
@@ -486,7 +486,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
@@ -500,7 +500,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
@@ -514,7 +514,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
@@ -528,7 +528,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
@@ -542,7 +542,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
@@ -556,7 +556,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
@@ -570,7 +570,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", "", "", jmsg, "")
@@ -584,7 +584,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 		
 		dynamicConfig := c
@@ -626,7 +626,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		if msg.ItemType != ukama.ItemTypeInvoice.String() {
@@ -658,7 +658,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		if msg.ItemType != ukama.ItemTypePackage.String() {
@@ -691,7 +691,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
-			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+			log.Errorf("Failed to marshal message for %s to db. Error %+v", c.Name, err)
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)

@@ -280,3 +280,369 @@ func TestUserRepo_GetSubscriber(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestUserRepo_GetAllUsers(t *testing.T) {
+	t.Run("Success_WithValidOrgId", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		// Create multiple users for the same org
+		user1 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        testOrgId,
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_OWNER,
+		}
+		user2 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        testOrgId,
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_ADMIN,
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(testOrgId).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetAllUsers(testOrgId)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.Len(t, users, 2)
+		assert.Equal(t, user1.UserId, users[0].UserId)
+		assert.Equal(t, user2.UserId, users[1].UserId)
+		assert.Equal(t, testOrgId, users[0].OrgId)
+		assert.Equal(t, testOrgId, users[1].OrgId)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error_WithEmptyOrgId", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetAllUsers("")
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Contains(t, err.Error(), "invalid uuid")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error_WithEmptyUUID", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetAllUsers(int_db.EmptyUUID)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Contains(t, err.Error(), "invalid uuid")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error_NoRecordsFound", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		// Return empty result set
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(testOrgId).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetAllUsers(testOrgId)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+}
+
+func TestUserRepo_GetUserWithRoles(t *testing.T) {
+	t.Run("Success_WithSingleRole", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		user1 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        testOrgId,
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_OWNER,
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+
+		// Use uint8 for role type to match GORM's expectation
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(testOrgId, uint8(user1.Role)).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetUserWithRoles(testOrgId, []roles.RoleType{user1.Role})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.Len(t, users, 1)
+		assert.Equal(t, user1.UserId, users[0].UserId)
+		assert.Equal(t, user1.Role, users[0].Role)
+		assert.Equal(t, testOrgId, users[0].OrgId)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Success_WithMultipleRoles", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		user1 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        testOrgId,
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_OWNER,
+		}
+		user2 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        testOrgId,
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_ADMIN,
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+
+		// For multiple roles, GORM expands the IN clause to individual arguments
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(testOrgId, user1.Role, user2.Role).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetUserWithRoles(testOrgId, []roles.RoleType{user1.Role, user2.Role})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.Len(t, users, 2)
+		assert.Equal(t, user1.UserId, users[0].UserId)
+		assert.Equal(t, user2.UserId, users[1].UserId)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Success_WithEmptyOrgId", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		user1 := int_db.Users{
+			Id:           uuid.NewV4(),
+			OrgId:        "",
+			UserId:       uuid.NewV4().String(),
+			SubscriberId: uuid.NewV4().String(),
+			Role:         roles.TYPE_OWNER,
+		}
+
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+
+		// Use uint8 for role type to match GORM's expectation
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(uint8(user1.Role)).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetUserWithRoles("", []roles.RoleType{user1.Role})
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, users)
+		assert.Len(t, users, 1)
+		assert.Equal(t, user1.UserId, users[0].UserId)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error_NoRecordsFound", func(t *testing.T) {
+		// Arrange
+		var db *extsql.DB
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		// Return empty result set
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+
+		// Use uint8 for role type to match GORM's expectation
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(testOrgId, uint8(roles.TYPE_OWNER)).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewUserRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		users, err := r.GetUserWithRoles(testOrgId, []roles.RoleType{roles.TYPE_OWNER})
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, users)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}

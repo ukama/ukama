@@ -21,13 +21,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// var em = int_db.EventMsg{
-// 	Model: gorm.Model{
-// 		ID:        1,
-// 		CreatedAt: time.Now(),
-// 	},
-// }
-
 type EventSample struct {
 	Name string `json:"name"`
 	Id   int64  `json:"id"`
