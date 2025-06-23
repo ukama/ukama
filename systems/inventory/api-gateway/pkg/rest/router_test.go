@@ -218,3 +218,39 @@ func TestGetAccountings(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
+
+func TestSyncComponents(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", "/v1/components/sync", nil)
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	comp.On("SyncComponents", mock.Anything, mock.Anything).Return(&cpb.SyncComponentsResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestSyncAccounting(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", "/v1/accounting/sync", nil)
+	arc := &providers.AuthRestClient{}
+	acc := &amocks.AccountingServiceClient{}
+
+	acc.On("SyncAccounting", mock.Anything, mock.Anything).Return(&apb.SyncAcountingResponse{}, nil)
+
+	r := NewRouter(&Clients{
+		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	acc.AssertExpectations(t)
+}
