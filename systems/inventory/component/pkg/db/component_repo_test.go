@@ -10,6 +10,7 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"fmt"
 	"log"
 	"regexp"
 	"testing"
@@ -143,7 +144,80 @@ func Test_ComponentRepo_GetByUser(t *testing.T) {
 		assert.NotNil(t, comps)
 		assert.NoError(t, err)
 	})
+
+	t.Run("NoComponentsFound", func(t *testing.T) {
+		var db *extsql.DB
+
+		var category = int32(1)
+		var uID = uuid.NewV4()
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(uID.String(), category).
+			WillReturnRows(sqlmock.NewRows([]string{}))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := component_db.NewComponentRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		comps, err := r.GetByUser(uID.String(), category)
+
+		assert.Error(t, err)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+		assert.Nil(t, comps)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("DatabaseError", func(t *testing.T) {
+		var db *extsql.DB
+
+		var category = int32(1)
+		var uID = uuid.NewV4()
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(uID.String(), category).
+			WillReturnError(fmt.Errorf("database connection error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := component_db.NewComponentRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		comps, err := r.GetByUser(uID.String(), category)
+
+		assert.Error(t, err)
+		assert.Nil(t, comps)
+		assert.Contains(t, err.Error(), "database connection error")
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
+
 func Test_ComponentRepo_Add(t *testing.T) {
 	t.Run("AddComponent", func(t *testing.T) {
 		var db *extsql.DB

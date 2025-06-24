@@ -134,6 +134,26 @@ func TestComponentServer_GetByUser(t *testing.T) {
 		assert.Empty(t, compResp.GetComponents())
 		compRepo.AssertExpectations(t)
 	})
+
+	t.Run("Database error when getting components by user", func(t *testing.T) {
+		var uId = uuid.NewV4()
+
+		compRepo := &mocks.ComponentRepo{}
+
+		compRepo.On("GetByUser", uId.String(), int32(1)).Return(nil, gorm.ErrInvalidDB).Once()
+
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+
+		compResp, err := s.GetByUser(context.TODO(),
+			&pb.GetByUserRequest{
+				UserId:   uId.String(),
+				Category: pb.ComponentCategory_ACCESS})
+
+		assert.Error(t, err)
+		assert.Nil(t, compResp)
+		assert.Contains(t, err.Error(), "invalid db")
+		compRepo.AssertExpectations(t)
+	})
 }
 
 func TestComponentServer_SyncComponents(t *testing.T) {
