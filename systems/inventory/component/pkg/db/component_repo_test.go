@@ -156,7 +156,7 @@ func Test_ComponentRepo_GetByUser(t *testing.T) {
 
 		mock.ExpectQuery(`^SELECT.*components.*`).
 			WithArgs(uID.String(), category).
-			WillReturnRows(sqlmock.NewRows([]string{}))
+			WillReturnRows(sqlmock.NewRows([]string{"id", "inventory", "user_id", "category", "type", "description", "datasheet_url", "images_url", "part_number", "manufacturer", "managed", "warranty", "specification"}))
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
