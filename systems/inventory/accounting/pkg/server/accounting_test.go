@@ -60,6 +60,19 @@ func TestAccountingServer_Get(t *testing.T) {
 		assert.Nil(t, accResp)
 		accRepo.AssertExpectations(t)
 	})
+
+	t.Run("Invalid UUID format", func(t *testing.T) {
+		accRepo := &mocks.AccountingRepo{}
+
+		s := NewAccountingServer(OrgName, accRepo, nil, "", nil, "")
+		accResp, err := s.Get(context.TODO(), &pb.GetRequest{
+			Id: "invalid-uuid-format"})
+
+		assert.Error(t, err)
+		assert.Nil(t, accResp)
+		assert.Contains(t, err.Error(), "invalid format of accounting uuid")
+		accRepo.AssertExpectations(t)
+	})
 }
 
 func TestAccountingServer_GetByUser(t *testing.T) {
@@ -91,6 +104,25 @@ func TestAccountingServer_GetByUser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, accResp)
 		assert.Equal(t, uId.String(), accResp.GetAccounting()[0].GetUserId())
+		accRepo.AssertExpectations(t)
+	})
+
+	t.Run("Database error when getting accountings by user", func(t *testing.T) {
+		var uId = uuid.NewV4()
+
+		accRepo := &mocks.AccountingRepo{}
+
+		accRepo.On("GetByUser", uId.String()).Return(nil, gorm.ErrInvalidDB).Once()
+
+		s := NewAccountingServer(OrgName, accRepo, nil, "", nil, "")
+
+		accResp, err := s.GetByUser(context.TODO(),
+			&pb.GetByUserRequest{
+				UserId: uId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, accResp)
+		assert.Contains(t, err.Error(), "invalid db")
 		accRepo.AssertExpectations(t)
 	})
 }

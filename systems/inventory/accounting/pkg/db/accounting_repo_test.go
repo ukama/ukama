@@ -10,6 +10,7 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"fmt"
 	"log"
 	"regexp"
 	"testing"
@@ -138,6 +139,41 @@ func Test_AccountRepo_GetByUser(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, comps)
+		assert.NoError(t, err)
+	})
+
+	t.Run("DatabaseError", func(t *testing.T) {
+		var db *extsql.DB
+
+		var uID = uuid.NewV4()
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*accounting.*`).
+			WithArgs(uID.String()).
+			WillReturnError(fmt.Errorf("database connection error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := account_db.NewAccountingRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		comps, err := r.GetByUser(uID.String())
+
+		assert.Error(t, err)
+		assert.Nil(t, comps)
+		assert.Contains(t, err.Error(), "database connection error")
+		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }
