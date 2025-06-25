@@ -218,11 +218,18 @@ copy_boot_partition() {
 
     rsync -aAX "${ROOTFS_DIR}/boot/" "${BOOT_MOUNT}/"
 
+    if [ ! -f "${BOOT_MOUNT}/boot/initramfs-lts" ]; then
+        log "ERROR" "initramfs-lts missing in boot partition!"
+        exit 1
+    fi
+    
     # Patch grub.cfg
     GRUB_CFG="${BOOT_MOUNT}/boot/grub/grub.cfg"
     if [ -f "${GRUB_CFG}" ]; then
         log "INFO" "Patching grub.cfg to set root device and modules"
-            sed -i 's|^linux.*|linux /boot/vmlinuz-lts root=/dev/mmcblk0p3 rootfstype=ext4 modules=mmc_block,mmc_core,sd-mod,usb-storage quiet|' "${GRUB_CFG}"
+        #        sed -i 's|^linux.*|linux /boot/vmlinuz-lts root=LABEL=primary rootfstype=ext4 modules=mmc_block,mmc_core,sd-mod,usb-storage quiet|' "${GRUB_CFG}"
+        sed -i '/^linux /c\linux /boot/vmlinuz-lts root=LABEL=primary rootfstype=ext4 quiet' "${GRUB_CFG}"
+        sed -i '/^initrd /c\initrd /boot/initramfs-lts' "${GRUB_CFG}"
     else
         log "WARNING" "grub.cfg not found at ${GRUB_CFG} — skipping patch"
     fi
@@ -307,15 +314,14 @@ update_fstab() {
         SWAP_DEV="/dev/mmcblk1p4"
     fi
 
-    # Clean fstab without redundant mounts
     cat <<FSTAB > ${PARTITION_TYPE}/etc/fstab
 proc            /proc        proc    defaults    0 0
 sysfs           /sys         sysfs   defaults    0 0
 devpts          /dev/pts     devpts  defaults    0 0
 tmpfs           /tmp         tmpfs   defaults    0 0
-${ROOT_DEV}     /            ext4    defaults    0 1
-# ${BOOT_DEV}   /boot/firmware vfat  ro          0 2
-${SWAP_DEV}     none         swap    sw          0 0
+LABEL=primary   /            ext4    defaults    0 1
+LABEL=boot      /boot        vfat    ro          0 2
+LABEL=swap      none         swap    sw          0 0
 FSTAB
 
     log "INFO" "${PARTITION_TYPE}/etc/fstab updated successfully."
