@@ -111,8 +111,8 @@ create_disk_image() {
     STAGE="create_disk_image"
     log "INFO" "Creating a new raw image: ${RAW_IMG}"
     rm -f "${RAW_IMG}"
-    # Allocate 4GB image
-    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=8388608
+    # Allocate 16GB image (16 * 1024 * 1024 * 1024 / 512 = 33554432 blocks)
+    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=33554432
     check_status $? "Raw image created" ${STAGE}
 }
 
@@ -136,9 +136,13 @@ clean_first_50MB() {
 
 # partitions:
 # 512 MB -> Boot
-#   1 GB -> Passive
-#   2 GB -> Primary (root)
-# 512 MB -> Swap
+#   4 GB -> Passive
+#   8 GB -> Primary (root)
+# ~3.5GB -> Swap
+
+# 512MB boot (512 * 1024 * 1024 / 512 = 1048576 sectors)
+# 4GB passive (4 * 1024 * 1024 * 1024 / 512 = 8388608 sectors)
+# 8GB primary (8 * 1024 * 1024 * 1024 / 512 = 16777216 sectors)
 partition_image() {
     STAGE="partition_image"
     log "INFO" "Creating 4 aligned primary partitions on ${LOOPDISK} using sfdisk"
@@ -147,10 +151,10 @@ partition_image() {
 label: dos
 unit: sectors
 
-start=2048,    size=524288,  type=ef
-start=526336,  size=2097152, type=83
-start=2623488, size=4194304, type=83
-start=6817792, size=524288,  type=82
+start=2048,      size=1048576,  type=ef
+start=1050624,   size=8388608,  type=83
+start=9439232,   size=16777216, type=83
+start=26216448,                 type=82
 __EOF__
 
     check_status $? "Partitions created" ${STAGE}
@@ -217,7 +221,6 @@ copy_boot_partition() {
     fi
 
     rsync -aAX "${ROOTFS_DIR}/boot/" "${BOOT_MOUNT}/"
-
     if [ ! -f "${BOOT_MOUNT}/boot/initramfs-lts" ]; then
         log "ERROR" "initramfs-lts missing in boot partition!"
         exit 1
