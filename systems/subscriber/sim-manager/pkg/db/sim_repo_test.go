@@ -13,12 +13,13 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
@@ -56,23 +57,54 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func TestSimRepo_Get(t *testing.T) {
-	t.Run("SimFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
-		var netID = uuid.NewV4()
-		var subID = uuid.NewV4()
+func TestSimRepo_Add(t *testing.T) {
+	t.Run("AddSim", func(t *testing.T) {
+		sim := simdb.Sim{
+			Id:           uuid.NewV4(),
+			SubscriberId: uuid.NewV4(),
+		}
 
-		var packageID = uuid.NewV4()
+		mock, gdb := prepareDb(t)
 
-		var db *sql.DB
+		mock.ExpectBegin()
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&sim, nil)
+
+		// Assert
 		assert.NoError(t, err)
 
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestSimRepo_Get(t *testing.T) {
+	t.Run("SimFound", func(t *testing.T) {
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
 			AddRow(simID, netID, subID)
-
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
 			AddRow(packageID, simID)
 
@@ -84,21 +116,9 @@ func TestSimRepo_Get(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sim, err := r.Get(simID)
@@ -114,33 +134,17 @@ func TestSimRepo_Get(t *testing.T) {
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		// Arrange
 		var simID = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(simID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sim, err := r.Get(simID)
@@ -154,25 +158,127 @@ func TestSimRepo_Get(t *testing.T) {
 	})
 }
 
+func TestSimRepo_List(t *testing.T) {
+	const (
+		testIccid = "890000-this-is-a-test-iccid"
+		testImsi  = "890000-this-is-a-test-imsi"
+	)
+
+	t.Run("ListAll", func(t *testing.T) {
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
+			AddRow(simID, netID, subID, testIccid)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs().
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown,
+			0, false, 0, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("SimFound", func(t *testing.T) {
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
+			AddRow(simID, netID, subID, testIccid)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageID, simID)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs().
+			WillReturnRows(simRow)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simID).
+			WillReturnRows(packageRow)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List(testIccid, testImsi, subID.String(), netID.String(),
+			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("SimNotFound", func(t *testing.T) {
+		var (
+			netID = uuid.NewV4()
+			subID = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs().
+			WillReturnError(sql.ErrNoRows)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List(testIccid, testImsi, subID.String(), netID.String(),
+			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
 func TestSimRepo_GetByIccid(t *testing.T) {
 	const testIccid = "890000-this-is-a-test-iccid"
 
 	t.Run("IccidFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
-		var netID = uuid.NewV4()
-		var subID = uuid.NewV4()
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
 
-		var packageID = uuid.NewV4()
-
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
+		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
 			AddRow(simID, netID, subID, testIccid)
-
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
 			AddRow(packageID, simID)
 
@@ -184,21 +290,9 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sim, err := r.GetByIccid(testIccid)
@@ -215,30 +309,15 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 	})
 
 	t.Run("IccidNotFound", func(t *testing.T) {
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(testIccid, 1).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sim, err := r.GetByIccid(testIccid)
@@ -254,21 +333,16 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 
 func TestSimRepo_GetBySubscriber(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
-		var netID = uuid.NewV4()
-		var subID = uuid.NewV4()
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
 
-		var packageID = uuid.NewV4()
-
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
+		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
 			AddRow(simID, netID, subID)
-
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
 			AddRow(packageID, simID)
 
@@ -280,21 +354,9 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sims, err := r.GetBySubscriber(subID)
@@ -309,33 +371,17 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 	})
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
-		// Arrange
 		var subID = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(subID).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sims, err := r.GetBySubscriber(subID)
@@ -351,21 +397,16 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 
 func TestSimRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
-		var netID = uuid.NewV4()
-		var subID = uuid.NewV4()
+		var (
+			simID     = uuid.NewV4()
+			netID     = uuid.NewV4()
+			subID     = uuid.NewV4()
+			packageID = uuid.NewV4()
+		)
 
-		var packageID = uuid.NewV4()
-
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
+		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
 			AddRow(simID, netID, subID)
-
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
 			AddRow(packageID, simID)
 
@@ -377,21 +418,9 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sims, err := r.GetByNetwork(netID)
@@ -406,33 +435,17 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
-		// Arrange
 		var netID = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(netID).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
-
-		assert.NoError(t, err)
 
 		// Act
 		sims, err := r.GetByNetwork(netID)
@@ -446,65 +459,11 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 	})
 }
 
-func TestSimRepo_Add(t *testing.T) {
-	t.Run("AddSim", func(t *testing.T) {
-		// Arrange
-		var db *sql.DB
-
-		sim := simdb.Sim{
-			Id:           uuid.NewV4(),
-			SubscriberId: uuid.NewV4(),
-		}
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		mock.ExpectBegin()
-
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
-		mock.ExpectCommit()
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewSimRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		err = r.Add(&sim, nil)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}
-
 func TestSimRepo_Delete(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var db *sql.DB
-
-		// Arrange
 		var simID = uuid.NewV4()
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
@@ -514,24 +473,12 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
 		r := simdb.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Delete(simID, nil)
+		err := r.Delete(simID, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -539,4 +486,24 @@ func TestSimRepo_Delete(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+}
+
+func prepareDb(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
+	var db *sql.DB
+	var err error
+
+	db, mock, err := sqlmock.New() // mock sql.DB
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	return mock, gdb
 }
