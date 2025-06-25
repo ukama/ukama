@@ -15,6 +15,7 @@ import (
 
 	"github.com/tj/assert"
 	int_db "github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
 
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
@@ -80,7 +81,7 @@ func Test_SendEmail(t *testing.T) {
 		Status:        ukama.Pending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
-		Values: int_db.JSONMap{
+		Values: utils.JSONMap{
 			"Name": "joe",
 		},
 		CreatedAt: time.Now(),
@@ -134,7 +135,7 @@ func Test_GetEmailById(t *testing.T) {
 		Status:        ukama.Pending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
-		Values: int_db.JSONMap{
+		Values: utils.JSONMap{
 			"Name": "joe",
 		},
 		CreatedAt: time.Now(),
