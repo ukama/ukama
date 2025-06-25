@@ -27,10 +27,10 @@ import (
 )
 
 var (
-	validNestedFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+	validNestedSimFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
 		return nil
 	}
-	unvalidNestedFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+	unvalidNestedSimFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
 		return errors.New("some errors occured")
 	}
 )
@@ -93,7 +93,7 @@ func TestSimRepo_Add(t *testing.T) {
 		})
 
 		// Act
-		err := r.Add(&sim, validNestedFunc)
+		err := r.Add(&sim, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -125,7 +125,7 @@ func TestSimRepo_Add(t *testing.T) {
 		})
 
 		// Act
-		err := r.Add(&sim, validNestedFunc)
+		err := r.Add(&sim, validNestedSimFunc)
 
 		// Assert
 		assert.Error(t, err)
@@ -149,7 +149,7 @@ func TestSimRepo_Add(t *testing.T) {
 		})
 
 		// Act
-		err := r.Add(&sim, unvalidNestedFunc)
+		err := r.Add(&sim, unvalidNestedSimFunc)
 
 		// Assert
 		assert.Error(t, err)
@@ -548,6 +548,59 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SimDeleteError", func(t *testing.T) {
+		var simID = uuid.NewV4()
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sims" SET`)).
+			WithArgs(sqlmock.AnyArg(), simID).
+			WillReturnError(sql.ErrNoRows)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Delete(simID,
+			func(uuid.UUID, *gorm.DB) error { return nil })
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SimDeleteNetedFuncError", func(t *testing.T) {
+		var simID = uuid.NewV4()
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sims" SET`)).
+			WithArgs(sqlmock.AnyArg(), simID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Delete(simID,
+			func(uuid.UUID, *gorm.DB) error {
+				return errors.
+					New("some error occured")
+			})
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
