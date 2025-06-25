@@ -10,6 +10,7 @@ package db_test
 
 import (
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 
@@ -23,6 +24,15 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+)
+
+var (
+	validNestedFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+		return nil
+	}
+	unvalidNestedFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+		return errors.New("some errors occured")
+	}
 )
 
 type UkamaDbMock struct {
@@ -83,10 +93,66 @@ func TestSimRepo_Add(t *testing.T) {
 		})
 
 		// Act
-		err := r.Add(&sim, nil)
+		err := r.Add(&sim, validNestedFunc)
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddSimError", func(t *testing.T) {
+		sim := simdb.Sim{
+			Id:           uuid.NewV4(),
+			SubscriberId: uuid.NewV4(),
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sim.Id, sim.SubscriberId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(sql.ErrNoRows)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&sim, validNestedFunc)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddSimNestedFuncError", func(t *testing.T) {
+		sim := simdb.Sim{
+			Id:           uuid.NewV4(),
+			SubscriberId: uuid.NewV4(),
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&sim, unvalidNestedFunc)
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
