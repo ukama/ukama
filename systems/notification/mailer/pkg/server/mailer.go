@@ -140,6 +140,31 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	}
 }
 
+func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+	log.Infof("GetEmailById: %v", req)
+	if req.MailId == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
+	}
+
+	mailerId, err := uuid.FromString(req.GetMailId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid mail ID")
+	}
+
+	mail, err := s.mailerRepo.GetEmailById(mailerId)
+	if err != nil {
+		log.WithError(err).Error("Error while getting email")
+		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
+	}
+
+	return &pb.GetEmailByIdResponse{
+		MailId:       mail.MailId.String(),
+		TemplateName: mail.TemplateName,
+		SentAt:       mail.CreatedAt.String(),
+		Status:       pb.Status(pb.Status_value[ukama.Status(mail.Status).String()]),
+	}, nil
+}
+
 func (s *MailerServer) processEmailQueue() {
 	for payload := range s.emailQueue {
 		email, err := s.mailerRepo.GetEmailById(payload.MailId)
@@ -530,29 +555,4 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 	}
 
 	return body, nil
-}
-
-func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
-	log.Infof("GetEmailById: %v", req)
-	if req.MailId == "" {
-		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
-	}
-
-	mailerId, err := uuid.FromString(req.GetMailId())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid mail ID")
-	}
-
-	mail, err := s.mailerRepo.GetEmailById(mailerId)
-	if err != nil {
-		log.WithError(err).Error("Error while getting email")
-		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
-	}
-
-	return &pb.GetEmailByIdResponse{
-		MailId:       mail.MailId.String(),
-		TemplateName: mail.TemplateName,
-		SentAt:       mail.CreatedAt.String(),
-		Status:       pb.Status(pb.Status_value[ukama.Status(mail.Status).String()]),
-	}, nil
 }
