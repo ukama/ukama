@@ -31,6 +31,7 @@ import (
 	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
 )
 
 const (
@@ -104,7 +105,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		TemplateName: req.TemplateName,
 		Values:       s.convertValues(req.Values),
 		MailId:       mailId,
-		Attachments:  make([]struct {
+		Attachments: make([]struct {
 			Filename    string
 			ContentType string
 			Content     []byte
@@ -303,7 +304,7 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 		nextRetryTime = &t
 	}
 
-	jsonMap := make(db.JSONMap)
+	jsonMap := make(utils.JSONMap)
 	for k, v := range values {
 		jsonMap[k] = v
 	}
@@ -423,114 +424,112 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 }
 
 func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
-    var body bytes.Buffer
-    
-    // First, execute the template to get the email content
-    tmplName := data.TemplateName
-    if filepath.Ext(tmplName) == "" {
-        tmplName += templateExtension
-    }
+	var body bytes.Buffer
 
-    t := s.templates.Lookup(tmplName)
-    if t == nil {
-        return body, fmt.Errorf("template %s not found", tmplName)
-    }
+	// First, execute the template to get the email content
+	tmplName := data.TemplateName
+	if filepath.Ext(tmplName) == "" {
+		tmplName += templateExtension
+	}
 
-   
-    templateData := struct {
-        Values map[string]interface{}
-    }{
-        Values: data.Values,
-    }
+	t := s.templates.Lookup(tmplName)
+	if t == nil {
+		return body, fmt.Errorf("template %s not found", tmplName)
+	}
 
-    var templateBuffer bytes.Buffer
-    if err := t.Execute(&templateBuffer, templateData); err != nil {
-        log.WithError(err).Error("Template execution failed")
-        return body, fmt.Errorf("failed to execute template: %v", err)
-    }
+	templateData := struct {
+		Values map[string]interface{}
+	}{
+		Values: data.Values,
+	}
 
+	var templateBuffer bytes.Buffer
+	if err := t.Execute(&templateBuffer, templateData); err != nil {
+		log.WithError(err).Error("Template execution failed")
+		return body, fmt.Errorf("failed to execute template: %v", err)
+	}
 
-    templateContent := templateBuffer.String()
-    parts := strings.SplitN(templateContent, "\n\n", 2)
-    
-    headers := make(map[string]string)
-    if len(parts) > 1 {
-        headerLines := strings.Split(parts[0], "\n")
-        for _, line := range headerLines {
-            if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
-                key := strings.TrimSpace(line[:colonIdx])
-                value := strings.TrimSpace(line[colonIdx+1:])
-                headers[strings.ToLower(key)] = value
-            }
-        }
-    }
+	templateContent := templateBuffer.String()
+	parts := strings.SplitN(templateContent, "\n\n", 2)
 
-    htmlContent := ""
-    if len(parts) > 1 {
-        htmlContent = parts[1]
-    } else {
-        htmlContent = parts[0]
-    }
+	headers := make(map[string]string)
+	if len(parts) > 1 {
+		headerLines := strings.Split(parts[0], "\n")
+		for _, line := range headerLines {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				key := strings.TrimSpace(line[:colonIdx])
+				value := strings.TrimSpace(line[colonIdx+1:])
+				headers[strings.ToLower(key)] = value
+			}
+		}
+	}
 
-    fmt.Fprintf(&body, "From: %s\r\n", s.mailer.From)
-    fmt.Fprintf(&body, "To: %s\r\n", strings.Join(data.To, ", "))
-    
-    subjectTemplate := template.Must(template.New("subject").Parse(headers["subject"]))
-    var processedSubject bytes.Buffer
-    if err := subjectTemplate.Execute(&processedSubject, templateData); err != nil {
-        log.WithError(err).Error("Subject template execution failed")
-        processedSubject.WriteString("No Subject")
-    }
-    
-    fmt.Fprintf(&body, "Subject: %s\r\n", processedSubject.String())
-    fmt.Fprintf(&body, "MIME-Version: 1.0\r\n")
+	htmlContent := ""
+	if len(parts) > 1 {
+		htmlContent = parts[1]
+	} else {
+		htmlContent = parts[0]
+	}
 
-    boundary := "UkamaMailBoundary" + uuid.NewV4().String()
-    
-    if len(data.Attachments) > 0 {
-        fmt.Fprintf(&body, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n", boundary)
-        fmt.Fprintf(&body, "--%s\r\n", boundary)
-        
-        fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
-        fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
-        fmt.Fprintf(&body, "%s\r\n", htmlContent)
+	fmt.Fprintf(&body, "From: %s\r\n", s.mailer.From)
+	fmt.Fprintf(&body, "To: %s\r\n", strings.Join(data.To, ", "))
 
-        for _, att := range data.Attachments {
-            fmt.Fprintf(&body, "\r\n--%s\r\n", boundary)
-            fmt.Fprintf(&body, "Content-Type: %s; name=\"%s\"\r\n", att.ContentType, att.Filename)
-            fmt.Fprintf(&body, "Content-Disposition: attachment; filename=\"%s\"\r\n", att.Filename)
-            fmt.Fprintf(&body, "Content-Transfer-Encoding: base64\r\n\r\n")
+	subjectTemplate := template.Must(template.New("subject").Parse(headers["subject"]))
+	var processedSubject bytes.Buffer
+	if err := subjectTemplate.Execute(&processedSubject, templateData); err != nil {
+		log.WithError(err).Error("Subject template execution failed")
+		processedSubject.WriteString("No Subject")
+	}
 
-            content := att.Content
-            encoder := base64.StdEncoding
-            encoded := make([]byte, encoder.EncodedLen(len(content)))
-            encoder.Encode(encoded, content)
-            
-            lineLength := 76
-            for i := 0; i < len(encoded); i += lineLength {
-                end := i + lineLength
-                if end > len(encoded) {
-                    end = len(encoded)
-                }
-                fmt.Fprintf(&body, "%s\r\n", encoded[i:end])
-            }
-        }
-        
-        fmt.Fprintf(&body, "\r\n--%s--\r\n", boundary)
-    } else {
-        fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
-        fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
-        fmt.Fprintf(&body, "%s\r\n", htmlContent)
-    }
+	fmt.Fprintf(&body, "Subject: %s\r\n", processedSubject.String())
+	fmt.Fprintf(&body, "MIME-Version: 1.0\r\n")
 
-    if pkg.IsDebugMode {
-        log.WithFields(log.Fields{
-            "finalBody": body.String(),
-            "values":   data.Values,
-        }).Debug("Email body prepared")
-    }
+	boundary := "UkamaMailBoundary" + uuid.NewV4().String()
 
-    return body, nil
+	if len(data.Attachments) > 0 {
+		fmt.Fprintf(&body, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n", boundary)
+		fmt.Fprintf(&body, "--%s\r\n", boundary)
+
+		fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
+		fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
+		fmt.Fprintf(&body, "%s\r\n", htmlContent)
+
+		for _, att := range data.Attachments {
+			fmt.Fprintf(&body, "\r\n--%s\r\n", boundary)
+			fmt.Fprintf(&body, "Content-Type: %s; name=\"%s\"\r\n", att.ContentType, att.Filename)
+			fmt.Fprintf(&body, "Content-Disposition: attachment; filename=\"%s\"\r\n", att.Filename)
+			fmt.Fprintf(&body, "Content-Transfer-Encoding: base64\r\n\r\n")
+
+			content := att.Content
+			encoder := base64.StdEncoding
+			encoded := make([]byte, encoder.EncodedLen(len(content)))
+			encoder.Encode(encoded, content)
+
+			lineLength := 76
+			for i := 0; i < len(encoded); i += lineLength {
+				end := i + lineLength
+				if end > len(encoded) {
+					end = len(encoded)
+				}
+				fmt.Fprintf(&body, "%s\r\n", encoded[i:end])
+			}
+		}
+
+		fmt.Fprintf(&body, "\r\n--%s--\r\n", boundary)
+	} else {
+		fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
+		fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
+		fmt.Fprintf(&body, "%s\r\n", htmlContent)
+	}
+
+	if pkg.IsDebugMode {
+		log.WithFields(log.Fields{
+			"finalBody": body.String(),
+			"values":    data.Values,
+		}).Debug("Email body prepared")
+	}
+
+	return body, nil
 }
 
 func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
