@@ -21,16 +21,16 @@ import (
 
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
-	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 var (
-	validNestedSimFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+	validNestedSimFunc = func(sim *db.Sim, tx *gorm.DB) error {
 		return nil
 	}
-	unvalidNestedSimFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
+	unvalidNestedSimFunc = func(sim *db.Sim, tx *gorm.DB) error {
 		return errors.New("some errors occurred")
 	}
 )
@@ -69,7 +69,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func TestSimRepo_Add(t *testing.T) {
 	t.Run("AddSim", func(t *testing.T) {
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           uuid.NewV4(),
 			SubscriberId: uuid.NewV4(),
 		}
@@ -88,7 +88,7 @@ func TestSimRepo_Add(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -97,13 +97,11 @@ func TestSimRepo_Add(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("AddSimError", func(t *testing.T) {
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           uuid.NewV4(),
 			SubscriberId: uuid.NewV4(),
 		}
@@ -120,7 +118,7 @@ func TestSimRepo_Add(t *testing.T) {
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -129,13 +127,11 @@ func TestSimRepo_Add(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("AddSimNestedFuncError", func(t *testing.T) {
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           uuid.NewV4(),
 			SubscriberId: uuid.NewV4(),
 		}
@@ -144,7 +140,7 @@ func TestSimRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -153,9 +149,7 @@ func TestSimRepo_Add(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -182,7 +176,7 @@ func TestSimRepo_Get(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -191,12 +185,9 @@ func TestSimRepo_Get(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, sim)
 		assert.NotNil(t, sim)
 		assert.Equal(t, packageID, sim.Package.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -208,7 +199,7 @@ func TestSimRepo_Get(t *testing.T) {
 			WithArgs(simID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -217,10 +208,8 @@ func TestSimRepo_Get(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, sim)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -253,7 +242,7 @@ func TestSimRepo_List(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -290,7 +279,7 @@ func TestSimRepo_List(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -316,7 +305,7 @@ func TestSimRepo_List(t *testing.T) {
 			WithArgs().
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -356,7 +345,7 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -365,13 +354,9 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-
-		assert.NoError(t, err)
 		assert.NotNil(t, sim)
-
 		assert.Equal(t, testIccid, sim.Iccid)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("IccidNotFound", func(t *testing.T) {
@@ -381,7 +366,7 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 			WithArgs(testIccid, 1).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -390,10 +375,8 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, sim)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -420,7 +403,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -429,11 +412,9 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.NotNil(t, sims)
 		assert.Equal(t, packageID, sims[0].Package.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
@@ -445,7 +426,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 			WithArgs(subID).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -454,10 +435,8 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, sims)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -484,7 +463,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 			WithArgs(simID).
 			WillReturnRows(packageRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -493,11 +472,9 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.NotNil(t, sims)
 		assert.Equal(t, packageID, sims[0].Package.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
@@ -509,7 +486,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 			WithArgs(netID).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -518,10 +495,8 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, sims)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -533,7 +508,7 @@ func TestSimRepo_Update(t *testing.T) {
 			subID = uuid.NewV4()
 		)
 
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           simID,
 			SubscriberId: subID,
 			NetworkId:    netID,
@@ -551,7 +526,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -560,9 +535,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
@@ -572,7 +545,7 @@ func TestSimRepo_Update(t *testing.T) {
 			subID = uuid.NewV4()
 		)
 
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           simID,
 			SubscriberId: subID,
 			NetworkId:    netID,
@@ -586,7 +559,7 @@ func TestSimRepo_Update(t *testing.T) {
 			WithArgs(sim.SubscriberId, sim.NetworkId, sqlmock.AnyArg(), sim.Id).
 			WillReturnRows(simRow)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -595,9 +568,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimUpdateError", func(t *testing.T) {
@@ -607,7 +578,7 @@ func TestSimRepo_Update(t *testing.T) {
 			subID = uuid.NewV4()
 		)
 
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           simID,
 			SubscriberId: subID,
 			NetworkId:    netID,
@@ -621,7 +592,7 @@ func TestSimRepo_Update(t *testing.T) {
 			WithArgs(sim.SubscriberId, sim.NetworkId, sqlmock.AnyArg(), sim.Id).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -630,9 +601,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimUpdateNestedFuncError", func(t *testing.T) {
@@ -642,7 +611,7 @@ func TestSimRepo_Update(t *testing.T) {
 			subID = uuid.NewV4()
 		)
 
-		sim := simdb.Sim{
+		sim := db.Sim{
 			Id:           simID,
 			SubscriberId: subID,
 			NetworkId:    netID,
@@ -650,7 +619,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		mock, gdb := prepareDb(t)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -659,9 +628,7 @@ func TestSimRepo_Update(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
@@ -679,7 +646,7 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -688,9 +655,7 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimDeleteError", func(t *testing.T) {
@@ -703,7 +668,7 @@ func TestSimRepo_Delete(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), simID).
 			WillReturnError(sql.ErrNoRows)
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -713,9 +678,7 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimDeleteNetedFuncError", func(t *testing.T) {
@@ -728,7 +691,7 @@ func TestSimRepo_Delete(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), simID).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		r := simdb.NewSimRepo(&UkamaDbMock{
+		r := db.NewSimRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
@@ -741,9 +704,7 @@ func TestSimRepo_Delete(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
