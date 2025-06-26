@@ -134,11 +134,11 @@ function install_rpi4_kernel_from_tarball() {
 
     log "INFO" "Copying bootloader firmware and configs"
     cp "$TMP_RPI_DIR/rootfs"/bootcode.bin "$FINAL_BOOT/" 2>/dev/null || true
-    cp "$TMP_RPI_DIR/rootfs"/start*.elf "$FINAL_BOOT/" 2>/dev/null || true
-    cp "$TMP_RPI_DIR/rootfs"/fixup*.dat "$FINAL_BOOT/" 2>/dev/null || true
-    cp "$TMP_RPI_DIR/rootfs"/config.txt "$FINAL_BOOT/" 2>/dev/null || true
-    cp "$TMP_RPI_DIR/rootfs"/cmdline.txt "$FINAL_BOOT/" 2>/dev/null || true
-    cp "$TMP_RPI_DIR/rootfs"/*.dtb "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/start*.elf   "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/fixup*.dat   "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/config.txt   "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/cmdline.txt  "$FINAL_BOOT/" 2>/dev/null || true
+    cp "$TMP_RPI_DIR/rootfs"/*.dtb        "$FINAL_BOOT/" 2>/dev/null || true
 
     log "INFO" "Copying overlays"
     mkdir -p "$FINAL_BOOT/overlays"
@@ -167,18 +167,19 @@ function install_x86_64_boot() {
     curl -sSL "$iso_url" -o "$iso_tmp_dir/alpine.iso"
 
     if [ -f "$iso_tmp_dir/alpine.iso" ]; then
-        # check if iso is there, mount, extract the /boot and cleanup
         sudo mount -o loop "$iso_tmp_dir/alpine.iso" "$iso_mnt_dir"
-        mkdir -p /boot
-        cp -a "$iso_mnt_dir/boot" /boot
-        cp -a "$iso_mnt_dir/efi"  /
+        mkdir -p /efi /boot/ /boot/efi
+        cp -a "$iso_mnt_dir/boot/"* /boot/
+        cp -a "$iso_mnt_dir/efi/"*  /boot/efi
+	    cp -a "$iso_mnt_dir/efi/"*  /efi
 
+        apk add linux-lts
+       
         sudo umount "$iso_mnt_dir"
         log "SUCCESS" "Boot files extracted"
     else
         log "ERROR" "Unable to find the alpine.iso to extract boot files"
     fi
-
     rm -rf "$iso_tmp_dir" "$iso_mnt_dir"
 }
 
@@ -220,7 +221,7 @@ function copy_linux_kernel_and_boot() {
 
     case "$ARCH" in
         x86_64)
-            install_x86_64_kernel
+#            install_x86_64_kernel
             install_x86_64_boot
             ;;
         armv7)
@@ -255,10 +256,9 @@ function copy_linux_kernel_and_boot() {
         --repository "$MIRROR/$VERSION/main" \
         add "$KERNEL_PKG"
 
-    mkdir -p "/boot"
-
     case "$ARCH" in
         armv7)
+            mkdir -p /boot
             cp "$APK_TMP/boot/zImage" "/boot/kernel.img"
             ;;
     esac
@@ -280,6 +280,7 @@ function copy_misc_files() {
     # update /etc/services to add ports
     log "INFO" "Adding all the apps to /etc/services"
     sudo mkdir -p "/etc"
+
     sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
          "/etc/services"
 
@@ -400,7 +401,9 @@ setup_rootfs() {
         tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
         build-base git tcpdump ethtool iperf3 htop vim doas \
         e2fsprogs dosfstools util-linux \
-        jansson
+        jansson rsync
+#    apk add linux-lts \
+#        rsync
 
     # Set timezone
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
@@ -453,7 +456,7 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/registry"
     mkdir -p "/ukama/mocksysfs"
     mkdir -p "/passive"
-    mkdir -p "/boot/firmware"
+#    mkdir -p "/boot/firmware"
     mkdir -p "/data"
     mkdir -p "/recovery"
 
