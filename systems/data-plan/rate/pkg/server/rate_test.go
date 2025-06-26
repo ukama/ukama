@@ -96,7 +96,53 @@ func TestRateService_GetMarkup(t *testing.T) {
 
 	})
 
+	t.Run("InvalidUUID", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetMarkupRequest{
+			OwnerId: "invalid-uuid",
+		}
+
+		rateRes, err := rateService.GetMarkup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "Error parsing UUID")
+	})
+
+	t.Run("DatabaseErrorWhenGettingMarkup", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		ownerId := uuid.NewV4()
+		req := &pb.GetMarkupRequest{
+			OwnerId: ownerId.String(),
+		}
+
+		// Return a database error that is not a NotFound error
+		dbError := errors.New("database connection failed")
+		markupRepo.On("GetMarkupRate", ownerId).Return(nil, dbError)
+
+		rateRes, err := rateService.GetMarkup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "database connection failed")
+
+		markupRepo.AssertExpectations(t)
+	})
+
 }
+
 func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 
 	t.Run("UpdateDefaultMarkupSuccess", func(t *testing.T) {
@@ -217,6 +263,25 @@ func TestRateService_GetDefaultMarkup(t *testing.T) {
 		defMarkupRepo.AssertExpectations(t)
 	})
 
+	t.Run("GetDefaultMarkup_DatabaseError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetDefaultMarkupRequest{}
+
+		defMarkupRepo.On("GetDefaultMarkupRate").Return(nil, errors.New("database error"))
+		rateRes, err := rateService.GetDefaultMarkup(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "database error")
+		defMarkupRepo.AssertExpectations(t)
+	})
+
 }
 
 func TestRateService_GetDefaultMarkupHistory(t *testing.T) {
@@ -271,6 +336,25 @@ func TestRateService_GetDefaultMarkupHistory(t *testing.T) {
 				assert.Equal(t, defMarkup[i].CreatedAt.Format(time.RFC3339), rate.CreatedAt)
 			}
 		}
+		defMarkupRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetDefaultMarkupHistory_DatabaseError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetDefaultMarkupHistoryRequest{}
+
+		defMarkupRepo.On("GetDefaultMarkupRateHistory").Return(nil, errors.New("database error"))
+		rateRes, err := rateService.GetDefaultMarkupHistory(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "database error")
 		defMarkupRepo.AssertExpectations(t)
 	})
 
@@ -369,6 +453,281 @@ func TestRateService_GetRate(t *testing.T) {
 		markupRepo.AssertExpectations(t)
 		baserateClient.AssertExpectations(t)
 		defMarkupRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_InvalidUUID", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetRateRequest{
+			OwnerId:  "invalid-uuid",
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "Error parsing UUID")
+	})
+
+	t.Run("GetRate_InvalidDateFormatTo", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "invalid-date-format",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "invalid date format for to")
+
+		markupRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_InvalidDateFormatFrom", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "invalid-date-format",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "invalid date format for from")
+
+		markupRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_BaseRateClientError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+		baserateSvc.On("GetClient").Return(nil, errors.New("base rate client error"))
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "base rate client error")
+
+		markupRepo.AssertExpectations(t)
+		baserateSvc.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_BaseRatesError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+		baserateClient := baserateSvc.On("GetClient").
+			Return(&splmocks.BaseRatesServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*splmocks.BaseRatesServiceClient)
+
+		baserateClient.On("GetBaseRatesForPeriod", mock.Anything, mock.Anything).Return(nil, errors.New("base rates error"))
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "base rates error")
+
+		markupRepo.AssertExpectations(t)
+		baserateClient.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_NoValidBaseRates", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+		baserateClient := baserateSvc.On("GetClient").
+			Return(&splmocks.BaseRatesServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*splmocks.BaseRatesServiceClient)
+
+		baserateClient.On("GetBaseRatesForPeriod", mock.Anything, mock.Anything).Return(&bpb.GetBaseRatesResponse{
+			Rates: []*bpb.Rate{},
+		}, nil)
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "no valid base rates found")
+
+		markupRepo.AssertExpectations(t)
+		baserateClient.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_NilBaseRates", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		markups := &db.Markups{
+			OwnerId: ownerId,
+			Markup:  10,
+		}
+
+		markupRepo.On("GetMarkupRate", ownerId).Return(markups, nil)
+		baserateClient := baserateSvc.On("GetClient").
+			Return(&splmocks.BaseRatesServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*splmocks.BaseRatesServiceClient)
+
+		baserateClient.On("GetBaseRatesForPeriod", mock.Anything, mock.Anything).Return(nil, nil)
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "no valid base rates found")
+
+		markupRepo.AssertExpectations(t)
+		baserateClient.AssertExpectations(t)
+	})
+
+	t.Run("GetRate_UserMarkupError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+
+		req := &pb.GetRateRequest{
+			OwnerId:  ownerId.String(),
+			Country:  "USA",
+			Provider: "Ukama",
+			SimType:  "ukama_data",
+			From:     "2033-04-20T20:31:24-00:00",
+			To:       "2043-04-20T20:31:24-00:00",
+		}
+
+		// Only mock GetMarkupRate to return error
+		markupRepo.On("GetMarkupRate", ownerId).Return(nil, errors.New("markup database error"))
+
+		rateRes, err := rateService.GetRate(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "markup database error")
+
+		markupRepo.AssertExpectations(t)
 	})
 }
 
@@ -637,6 +996,45 @@ func TestRateService_GetMarkupHistory(t *testing.T) {
 		defMarkupRepo.AssertExpectations(t)
 	})
 
+	t.Run("GetMarkupHistory_InvalidUUID", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetMarkupHistoryRequest{
+			OwnerId: "invalid-uuid",
+		}
+
+		rateRes, err := rateService.GetMarkupHistory(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "Error parsing UUID")
+	})
+
+	t.Run("GetMarkupHistory_DatabaseError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+		OwnerId := uuid.NewV4()
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+
+		req := &pb.GetMarkupHistoryRequest{
+			OwnerId: OwnerId.String(),
+		}
+
+		markupRepo.On("GetMarkupRateHistory", OwnerId).Return(nil, errors.New("database error"))
+		rateRes, err := rateService.GetMarkupHistory(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "database error")
+		markupRepo.AssertExpectations(t)
+	})
+
 }
 
 func TestRateService_GetRateById(t *testing.T) {
@@ -661,7 +1059,6 @@ func TestRateService_GetRateById(t *testing.T) {
 			Markup:  10,
 		}
 
-		// Use original values for expected calculations
 		origData := 0.0014
 		origSmsMo := 0.0100
 		origSmsMt := 0.0001
@@ -701,7 +1098,6 @@ func TestRateService_GetRateById(t *testing.T) {
 		rateRes, err := rateService.GetRateById(context.Background(), req)
 		assert.NoError(t, err)
 		if assert.NotNil(t, rateRes) && assert.NotNil(t, rateRes.Rate) {
-			// Use InDelta for floating point comparison
 			assert.InDelta(t, expectedData, rateRes.Rate.Data, 1e-8)
 			assert.InDelta(t, expectedSmsMo, rateRes.Rate.SmsMo, 1e-8)
 			assert.InDelta(t, expectedSmsMt, rateRes.Rate.SmsMt, 1e-8)
@@ -845,5 +1241,32 @@ func TestRateService_GetRateById(t *testing.T) {
 
 		markupRepo.AssertExpectations(t)
 		baserateClient.AssertExpectations(t)
+	})
+
+	t.Run("GetRateById_UserMarkupError", func(t *testing.T) {
+		markupRepo := &mocks.MarkupsRepo{}
+		defMarkupRepo := &mocks.DefaultMarkupRepo{}
+		baserateSvc := &mocks.BaserateClientProvider{}
+
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		rateService := NewRateServer(OrgName, markupRepo, defMarkupRepo, baserateSvc, msgbusClient)
+		ownerId := uuid.NewV4()
+		baseRateId := uuid.NewV4()
+
+		req := &pb.GetRateByIdRequest{
+			OwnerId:  ownerId.String(),
+			BaseRate: baseRateId.String(),
+		}
+
+		// Mock GetMarkupRate to return error
+		markupRepo.On("GetMarkupRate", ownerId).Return(nil, errors.New("markup database error"))
+
+		rateRes, err := rateService.GetRateById(context.Background(), req)
+		assert.Error(t, err)
+		assert.Nil(t, rateRes)
+		assert.Contains(t, err.Error(), "markup database error")
+
+		markupRepo.AssertExpectations(t)
 	})
 }
