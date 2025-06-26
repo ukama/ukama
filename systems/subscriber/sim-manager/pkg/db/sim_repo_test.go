@@ -31,7 +31,7 @@ var (
 		return nil
 	}
 	unvalidNestedSimFunc = func(sim *simdb.Sim, tx *gorm.DB) error {
-		return errors.New("some errors occured")
+		return errors.New("some errors occurred")
 	}
 )
 
@@ -525,6 +525,146 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 	})
 }
 
+func TestSimRepo_Update(t *testing.T) {
+	t.Run("SimFound", func(t *testing.T) {
+		var (
+			simID = uuid.NewV4()
+			netID = uuid.NewV4()
+			subID = uuid.NewV4()
+		)
+
+		sim := simdb.Sim{
+			Id:           simID,
+			SubscriberId: subID,
+			NetworkId:    netID,
+		}
+
+		mock, gdb := prepareDb(t)
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
+			AddRow(simID, netID, subID)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*sims.*`).
+			WithArgs(sim.SubscriberId, sim.NetworkId, sqlmock.AnyArg(), sim.Id).
+			WillReturnRows(simRow)
+
+		mock.ExpectCommit()
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&sim, nil)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SimNotFound", func(t *testing.T) {
+		var (
+			simID = uuid.NewV4()
+			netID = uuid.NewV4()
+			subID = uuid.NewV4()
+		)
+
+		sim := simdb.Sim{
+			Id:           simID,
+			SubscriberId: subID,
+			NetworkId:    netID,
+		}
+
+		mock, gdb := prepareDb(t)
+		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"})
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*sims.*`).
+			WithArgs(sim.SubscriberId, sim.NetworkId, sqlmock.AnyArg(), sim.Id).
+			WillReturnRows(simRow)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&sim, validNestedSimFunc)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SimUpdateError", func(t *testing.T) {
+		var (
+			simID = uuid.NewV4()
+			netID = uuid.NewV4()
+			subID = uuid.NewV4()
+		)
+
+		sim := simdb.Sim{
+			Id:           simID,
+			SubscriberId: subID,
+			NetworkId:    netID,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*sims.*`).
+			WithArgs(sim.SubscriberId, sim.NetworkId, sqlmock.AnyArg(), sim.Id).
+			WillReturnError(sql.ErrNoRows)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&sim, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SimUpdateNestedFuncError", func(t *testing.T) {
+		var (
+			simID = uuid.NewV4()
+			netID = uuid.NewV4()
+			subID = uuid.NewV4()
+		)
+
+		sim := simdb.Sim{
+			Id:           simID,
+			SubscriberId: subID,
+			NetworkId:    netID,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		r := simdb.NewSimRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&sim, unvalidNestedSimFunc)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
 func TestSimRepo_Delete(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var simID = uuid.NewV4()
@@ -596,7 +736,7 @@ func TestSimRepo_Delete(t *testing.T) {
 		err := r.Delete(simID,
 			func(uuid.UUID, *gorm.DB) error {
 				return errors.
-					New("some error occured")
+					New("some error occurred")
 			})
 
 		// Assert
