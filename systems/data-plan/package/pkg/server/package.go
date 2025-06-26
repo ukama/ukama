@@ -322,17 +322,25 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := p.baseRoutingKey.SetAction("update").SetObject("package").MustBuild()
-	evt := &epb.UpdatePackageEvent{
-		Uuid:  req.Uuid,
-		OrgId: p.orgId,
-	}
-	err = p.msgbus.PublishRequest(route, evt)
+	updatedPackage, err := p.packageRepo.Get(packageID)
 	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		log.Error("error while getting updated package" + err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(_package)}, nil
+	if p.msgbus != nil {
+		route := p.baseRoutingKey.SetAction("update").SetObject("package").MustBuild()
+		evt := &epb.UpdatePackageEvent{
+			Uuid:  req.Uuid,
+			OrgId: p.orgId,
+		}
+		err = p.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+		}
+	}
+
+	return &pb.UpdatePackageResponse{Package: dbPackageToPbPackages(updatedPackage)}, nil
 }
 
 func dbpackagesToPbPackages(packages []db.Package) []*pb.Package {
