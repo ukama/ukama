@@ -18,6 +18,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/jszwec/csvutil"
@@ -117,7 +118,7 @@ func ParseToModel(slice []RawRates, effective_at, endAt, sim_type string) ([]db.
 			Apn:         value.Apn,
 			EffectiveAt: bg,
 			EndAt:       et,
-			SimType:     db.ParseType(sim_type),
+			SimType:     ukama.ParseSimType(sim_type),
 		})
 	}
 	return rates, nil

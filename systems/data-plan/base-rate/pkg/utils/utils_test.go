@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/data-plan/base-rate/pkg/db"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
 func TestRateService_ParseToModel(t *testing.T) {
@@ -34,7 +34,7 @@ func TestRateService_ParseToModel(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, rawRates[0].Country, dbRate[0].Country)
 	assert.Equal(t, "2023-04-10T20:05:29Z", dbRate[0].EffectiveAt.Format(time.RFC3339Nano))
-	assert.Equal(t, db.ParseType("ukama_data"), dbRate[0].SimType)
+	assert.Equal(t, ukama.ParseSimType("ukama_data"), dbRate[0].SimType)
 }
 
 func TestParseToModel_ErrorCases(t *testing.T) {

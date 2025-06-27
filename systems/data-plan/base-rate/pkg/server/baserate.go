@@ -18,6 +18,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
@@ -69,7 +70,7 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), ukama.ParseSimType(req.GetSimType()))
 
 	if err != nil {
 		log.Errorf("error while getting rates: Error: %s", err.Error())
@@ -85,7 +86,7 @@ func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetB
 func (b *BaseRateServer) GetBaseRatesHistoryByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
 	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesHistoryByCountry(req.GetCountry(), req.GetProvider(), ukama.ParseSimType(req.GetSimType()))
 
 	if err != nil {
 		log.Errorf("error while getting rates. Error: %s", err.Error())
@@ -111,7 +112,7 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to. Error: %s", err.Error())
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesForPeriod(req.GetCountry(), req.GetProvider(), from, to, ukama.ParseSimType(req.GetSimType()))
 
 	if err != nil {
 		log.Errorf("error while getting rates. Error: %s", err.Error())
@@ -137,7 +138,7 @@ func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.Get
 		return nil, status.Errorf(codes.InvalidArgument, "invalid time format for to. Error: %s", err.Error())
 	}
 
-	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, db.ParseType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRatesForPackage(req.GetCountry(), req.GetProvider(), from, to, ukama.ParseSimType(req.GetSimType()))
 
 	if err != nil {
 		log.Errorf("error while getting rates, Error: %s", err.Error())
@@ -155,7 +156,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 	effectiveAt := req.GetEffectiveAt()
 	endAt := req.GetEndAt()
 	strType := strings.ToLower(req.GetSimType())
-	simType := db.ParseType(strType)
+	simType := ukama.ParseSimType(strType)
 	log.Infof("Upload base rate fileURL: %s, effectiveAt: %s endAt: %s and simType: %s.",
 		fileUrl, effectiveAt, endAt, simType)
 
@@ -185,7 +186,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 
 	}
 
-	sType := db.ParseType(strType)
+	sType := ukama.ParseSimType(strType)
 
 	if sType.String() != req.SimType {
 		return nil, status.Errorf(codes.InvalidArgument,
