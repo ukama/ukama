@@ -316,15 +316,10 @@ func TestUpload(t *testing.T) {
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		// Due to the bug in Upload function: make([]string, len(s)) creates empty strings
-		// So we expect 4 items: 2 empty strings + 2 actual ICCIDs
-		assert.Len(t, res.Iccid, 4)
-		// Check that the actual ICCIDs are present (they will be at the end due to append)
+
+		assert.Len(t, res.Iccid, 2)
 		assert.Contains(t, res.Iccid, "1234567890123456789")
 		assert.Contains(t, res.Iccid, "9876543210987654321")
-		// Check that empty strings are present at the beginning
-		assert.Equal(t, "", res.Iccid[0])
-		assert.Equal(t, "", res.Iccid[1])
 
 		mockRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
@@ -435,12 +430,12 @@ func TestUpload(t *testing.T) {
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err) // Upload should still succeed even if message bus fails
 		assert.NotNil(t, res)
-		// Due to the bug: 1 empty string + 1 actual ICCID = 2 items
-		assert.Len(t, res.Iccid, 2)
-		// Check that the actual ICCID is present (it will be at the end due to append)
+		// After fixing the bug: 1 actual ICCID = 1 item
+		assert.Len(t, res.Iccid, 1)
+		// Check that the actual ICCID is present
 		assert.Contains(t, res.Iccid, "1234567890123456789")
-		// Check that empty string is present at the beginning
-		assert.Equal(t, "", res.Iccid[0])
+		// Check that the ICCID is at the first position
+		assert.Equal(t, "1234567890123456789", res.Iccid[0])
 
 		mockRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)

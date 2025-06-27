@@ -104,7 +104,7 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 
-	iccids := make([]string, len(result))
+	iccids := make([]string, 0, len(result))
 	for _, u := range result {
 		iccids = append(iccids, u.Iccid)
 	}
@@ -129,7 +129,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 
-	iccids := make([]string, len(s))
+	iccids := make([]string, 0, len(s))
 	for _, u := range s {
 		iccids = append(iccids, u.Iccid)
 	}
