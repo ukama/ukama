@@ -39,15 +39,12 @@ const OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
 // Fixed timestamps for consistent testing
 var (
-	fixedBaseTime    = time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC)
-	fixedFromTime    = time.Date(2025, 8, 15, 12, 0, 0, 0, time.UTC) // 30 days from base
-	fixedToTime      = time.Date(2025, 9, 15, 12, 0, 0, 0, time.UTC) // 60 days from base
-	fixedPastTime    = time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC) // 1 day before base
-	fixedLaterTime   = time.Date(2025, 9, 15, 12, 0, 0, 0, time.UTC) // 60 days from base (for invalid range tests)
-	fixedEarlierTime = time.Date(2025, 8, 15, 12, 0, 0, 0, time.UTC) // 30 days from base (for invalid range tests)
+	fixedBaseTime = time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC)
+	fixedFromTime = time.Date(2025, 8, 15, 12, 0, 0, 0, time.UTC) // 30 days from base
+	fixedToTime   = time.Date(2025, 9, 15, 12, 0, 0, 0, time.UTC) // 60 days from base
+	fixedPastTime = time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC) // 1 day before base
 )
 
-// Helper types
 type UkamaDbMock struct {
 	GormDb *gorm.DB
 }
