@@ -411,6 +411,77 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("UploadBaseRates create error", func(t *testing.T) {
+		// Arrange
+		ratID := uuid.NewV4()
+		var db *extsql.DB
+		var err error
+		sat, err := time.Parse(time.RFC3339, "2021-10-12T07:20:50.52Z")
+		assert.NoError(t, err)
+
+		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
+		assert.NoError(t, err)
+
+		expectedRate := BaseRate{
+			Uuid:        ratID,
+			Country:     "ABC",
+			Provider:    "XYZ",
+			Vpmn:        "123",
+			Imsi:        2,
+			SmsMo:       0.05,
+			SmsMt:       0.06,
+			Data:        0.07,
+			X2g:         false,
+			X3g:         false,
+			X5g:         true,
+			Lte:         true,
+			LteM:        true,
+			Apn:         "apn123",
+			EffectiveAt: sat,
+			EndAt:       eat,
+			SimType:     SimTypeUkamaData,
+			Currency:    "Dollar",
+		}
+
+		upRates := []BaseRate{expectedRate}
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).
+			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Provider, expectedRate.SimType, expectedRate.EffectiveAt).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
+			WillReturnError(errors.New("create error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewBaseRateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.UploadBaseRates(upRates)
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "create error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestBaseRateRepo_ErrorCases(t *testing.T) {
