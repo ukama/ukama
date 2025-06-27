@@ -324,7 +324,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 
 	updatedPackage, err := p.packageRepo.Get(packageID)
 	if err != nil {
-		log.Error("error while getting updated package" + err.Error())
+		log.Errorf("error while getting updated package: %v", err)
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 

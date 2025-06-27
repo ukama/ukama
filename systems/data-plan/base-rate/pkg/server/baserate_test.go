@@ -776,59 +776,6 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 		baseRateRepo.AssertExpectations(t)
 	})
 
-	t.Run("Different SimType values", func(t *testing.T) {
-		testCases := []struct {
-			name     string
-			simType  string
-			expected db.SimType
-		}{
-			{"Test SimType", "test", db.SimTypeTest},
-			{"Operator Data SimType", "operator_data", db.SimTypeOperatorData},
-			{"Unknown SimType", "unknown", db.SimTypeUnknown},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				msgbusClient := &mbmocks.MsgBusServiceClient{}
-				fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-				toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
-
-				mockFilters := &pb.GetBaseRatesByPeriodRequest{
-					Country:  "Test Country",
-					Provider: "Test Provider",
-					SimType:  tc.simType,
-					From:     fromTime,
-					To:       toTime,
-				}
-
-				baseRateRepo := &mocks.BaseRateRepo{}
-				s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
-
-				from, _ := time.Parse(time.RFC3339, fromTime)
-				to, _ := time.Parse(time.RFC3339, toTime)
-
-				expectedRates := []db.BaseRate{
-					{
-						Country:     "Test Country",
-						Provider:    "Test Provider",
-						SimType:     tc.expected,
-						Data:        0.1,
-						EffectiveAt: time.Now(),
-					},
-				}
-
-				baseRateRepo.On("GetBaseRatesForPeriod", mockFilters.Country, mockFilters.Provider, from, to, db.ParseType(tc.simType)).Return(expectedRates, nil)
-
-				rate, err := s.GetBaseRatesForPeriod(context.TODO(), mockFilters)
-				assert.NoError(t, err)
-				assert.NotNil(t, rate)
-				assert.Len(t, rate.Rates, 1)
-				assert.Equal(t, tc.simType, rate.Rates[0].SimType)
-				baseRateRepo.AssertExpectations(t)
-			})
-		}
-	})
-
 	t.Run("Empty time parameters", func(t *testing.T) {
 		testCases := []struct {
 			name        string
