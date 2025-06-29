@@ -60,11 +60,13 @@ func ParseCallUnitType(value string) CallUnitType {
 }
 
 func ReturnCallUnits(value CallUnitType) int64 {
-	t := map[CallUnitType]int64{CallUnitTypeUnknown: 0, CallUnitTypeSec: 1, CallUnitTypeMin: 60, CallUnitTypeHours: 3600}
+	t := map[CallUnitType]int64{CallUnitTypeUnknown: 0, CallUnitTypeSec: 1,
+		CallUnitTypeMin: 60, CallUnitTypeHours: 3600}
 
 	v, ok := t[value]
 	if !ok {
 		return 0
 	}
+
 	return v
 }
