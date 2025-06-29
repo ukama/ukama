@@ -302,11 +302,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	packageInfos, err := s.packageClient.Get(packageId.String())
-	if err != nil {
-		return nil, err
-	}
-
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
@@ -320,7 +315,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
 				emailTemplate.EmailKeyOrg:        s.orgName,
 				emailTemplate.EmailKeyEndDate:    sim.Package.EndDate.Format("January 2, 2006"),
-				emailTemplate.EmailKeyPackage:    packageInfos.Name,
+				emailTemplate.EmailKeyPackage:    packageInfo.Name,
 				emailTemplate.EmailKeyDuration:   fmt.Sprintf("%v", packageInfo.Duration),
 				emailTemplate.EmailKeyAmount:     fmt.Sprintf("%v", packageInfo.Amount),
 			},
@@ -712,17 +707,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	}
 
 	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
-
-	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
-	}
-
-	if len(overlappingPackages) > 0 {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package validity period overlaps with %d or more other packages set for this sim",
-			len(overlappingPackages))
-	}
 
 	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
 		pckg.Id = uuid.NewV4()

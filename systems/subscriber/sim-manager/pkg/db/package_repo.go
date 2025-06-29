@@ -9,8 +9,6 @@
 package db
 
 import (
-	"errors"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -29,7 +27,6 @@ type PackageRepo interface {
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simID uuid.UUID) ([]Package, error)
 
-	GetOverlap(*Package) ([]Package, error)
 	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
@@ -137,21 +134,6 @@ func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
 	result := p.Db.GetGormDb().Where(&Package{SimId: simID}).Find(&packages)
 	if result.Error != nil {
 		return nil, result.Error
-	}
-
-	return packages, nil
-}
-
-func (p *packageRepo) GetOverlap(pkg *Package) ([]Package, error) {
-	var packages []Package
-
-	result := p.Db.GetGormDb().Where(&Package{SimId: pkg.SimId}).Find(&packages,
-		"end_date >= ? AND start_date <= ?", pkg.StartDate, pkg.EndDate)
-
-	if result.Error != nil {
-		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, result.Error
-		}
 	}
 
 	return packages, nil
