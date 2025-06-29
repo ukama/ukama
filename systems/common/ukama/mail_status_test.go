@@ -33,18 +33,18 @@ func TestMailStatus(t *testing.T) {
 	})
 
 	t.Run("MailStatusNonValidString", func(tt *testing.T) {
-		unsupportedConnectivity := ukama.ParseStatus("failure")
+		unsupportedMailStatus := ukama.ParseStatus("failure")
 
-		assert.NotNil(t, unsupportedConnectivity)
-		assert.Equal(t, unsupportedConnectivity.String(), "pending")
-		assert.Equal(t, uint8(unsupportedConnectivity), uint8(0))
+		assert.NotNil(t, unsupportedMailStatus)
+		assert.Equal(t, unsupportedMailStatus.String(), "pending")
+		assert.Equal(t, uint8(unsupportedMailStatus), uint8(0))
 	})
 
 	t.Run("MailStatusNonValidNumber", func(tt *testing.T) {
-		unknownConnecitivty := ukama.Status(uint8(10))
+		unknownMailStatus := ukama.Status(uint8(10))
 
-		assert.NotNil(t, unknownConnecitivty)
-		assert.Equal(t, unknownConnecitivty.String(), "pending")
-		assert.Equal(t, uint8(unknownConnecitivty), uint8(10))
+		assert.NotNil(t, unknownMailStatus)
+		assert.Equal(t, unknownMailStatus.String(), "pending")
+		assert.Equal(t, uint8(unknownMailStatus), uint8(10))
 	})
 }
