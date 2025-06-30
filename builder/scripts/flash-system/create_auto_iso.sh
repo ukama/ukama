@@ -3,7 +3,6 @@
 # Copyright (c) 2025-present, Ukama Inc.
 
 set -euo pipefail
-set -x
 
 ORIG_ISO="alpine.iso"
 MNT_ISO="iso-mount"
@@ -21,7 +20,7 @@ TEMP_DIRS=($MNT_ISO $MNT_USB $APKOVL_DIR)
 TEMP_FILES=($APKOVL_FILE)
 
 cleanup() {
-    echo "🧹 Cleaning up..."
+    echo "Cleaning up..."
     for d in "${TEMP_DIRS[@]}"; do [ -d "$d" ] && sudo umount "$d" || true; rm -rf "$d"; done
     for f in "${TEMP_FILES[@]}"; do [ -f "$f" ] && rm -f "$f"; done
 }
@@ -31,10 +30,10 @@ verify_apkovl() {
     local apkovl_path="$1"
     local tmp_list="/tmp/apkovl-contents.txt"
 
-    echo "🔍 Verifying overlay tarball at $apkovl_path..."
+    echo "Verifying overlay tarball at $apkovl_path..."
 
     if [ ! -f "$apkovl_path" ]; then
-        echo "❌ ERROR: apkovl file missing: $apkovl_path"
+        echo "ERROR: apkovl file missing: $apkovl_path"
         exit 1
     fi
 
@@ -53,16 +52,16 @@ verify_apkovl() {
         fi
     done
 
-    echo "✅ apkovl overlay verified: all required files present."
+    echo "apkovl overlay verified: all required files present."
 }
 
-# 🔥 Wipe and format USB
-echo "💣 Wiping USB device $USB_DEV..."
+# Wipe and format USB
+echo "Wiping USB device $USB_DEV..."
 sudo wipefs -a "$USB_DEV"
 sudo dd if=/dev/zero of="$USB_DEV" bs=1M count=10
 sudo sync
 
-echo "🔧 Partitioning USB device $USB_DEV"
+echo "Partitioning USB device $USB_DEV"
 sudo parted --script "$USB_DEV" \
   mklabel msdos \
   mkpart primary fat32 1MiB 100% \
@@ -70,49 +69,49 @@ sudo parted --script "$USB_DEV" \
 
 sudo mkfs.vfat -F 32 -n ALPINE_DATA "$USB_PART"
 
-# 📁 Mount ISO and USB
+# Mount ISO and USB
 mkdir -p "$MNT_ISO" "$MNT_USB"
 sudo mount -o loop "$ORIG_ISO" "$MNT_ISO"
 sudo mount "$USB_PART" "$MNT_USB"
 
-# 📦 Copy ISO contents to USB
+# Copy ISO contents to USB
 sudo rsync -a "$MNT_ISO"/ "$MNT_USB"/
 
 read
 
-echo "⚙️ Detect and patch boot config (GRUB, syslinux, or extlinux)"
+echo "Detect and patch boot config (GRUB, syslinux, or extlinux)"
 GRUB_CFG="$MNT_USB/boot/grub/grub.cfg"
 SYS_CFG="$MNT_USB/syslinux.cfg"
 UEFI_CFG="$MNT_USB/boot/extlinux/extlinux.conf"
 
-echo "🔍 Patching bootloader to enable 'data' mode for apkovl loading..."
+echo "Patching bootloader to enable 'data' mode for apkovl loading..."
 
 if [ -f "$SYS_CFG" ]; then
-    echo "🛠️  Patching syslinux.cfg..."
+    echo "Patching syslinux.cfg..."
     sudo sed -i '/^APPEND / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$SYS_CFG"
 elif [ -f "$UEFI_CFG" ]; then
-    echo "🛠️  Patching extlinux.conf..."
+    echo "Patching extlinux.conf..."
     sudo sed -i '/^  APPEND / s|$| modules=loop,squashfs,sd-mod,usb-storage quiet data|' "$UEFI_CFG"
 elif [ -f "$GRUB_CFG" ]; then
-    echo "🛠️  Patching grub.cfg..."
-    # ✅ Replace any existing line with a known-good one
+    echo "Patching grub.cfg..."
+    # replace any existing line with a known-good one
     sudo sed -i '/^[[:space:]]*linux /c\    linux    /boot/vmlinuz-lts modules=loop,squashfs,sd-mod,usb-storage quiet data' "$GRUB_CFG"
 else
-    echo "⚠️  No known boot config found (syslinux, extlinux, or grub). apkovl may not be loaded."
+    echo "No known boot config found (syslinux, extlinux, or grub). apkovl may not be loaded."
 fi
 
-# 🧬 Add EFI boot if present
+# add EFI boot if present
 if [ -d "$MNT_ISO/EFI/BOOT" ]; then
     sudo mkdir -p "$MNT_USB/EFI/BOOT"
     sudo cp -r "$MNT_ISO/EFI/BOOT/"* "$MNT_USB/EFI/BOOT/"
 fi
 
-# 📦 Build apkovl overlay
+# build apkovl overlay
 mkdir -p "$APKOVL_DIR/etc/local.d"
 mkdir -p "$APKOVL_DIR/etc/runlevels/default"
 mkdir -p "$APKOVL_DIR/etc"
 
-# Set hostname
+# set hostname
 echo "$HOSTNAME" > "$APKOVL_DIR/etc/hostname"
 
 # Auto-run flash script
@@ -145,4 +144,4 @@ sync
 sudo umount "$MNT_USB"
 sudo umount "$MNT_ISO"
 
-echo "✅ Bootable USB created with hostname=${HOSTNAME} and autorun enabled."
+echo "Bootable USB created with hostname=${HOSTNAME} and autorun enabled."
