@@ -20,7 +20,7 @@ func TestNodeConnectivity(t *testing.T) {
 		onlineConnectivity := ukama.ParseNodeConnectivity("onlinE")
 
 		assert.NotNil(t, onlineConnectivity)
-		assert.Equal(t, onlineConnectivity.String(), "online")
+		assert.Equal(t, onlineConnectivity.String(), ukama.Online.String())
 		assert.Equal(t, uint8(onlineConnectivity), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestNodeConnectivity(t *testing.T) {
 
 		assert.NotNil(t, offlineConnectivity)
 		assert.Equal(t, uint8(offlineConnectivity), uint8(2))
-		assert.Equal(t, offlineConnectivity.String(), "offline")
+		assert.Equal(t, offlineConnectivity.String(), ukama.Offline.String())
 	})
 
 	t.Run("NodeConnectivityNonValidString", func(tt *testing.T) {
 		unsupportedConnectivity := ukama.ParseNodeConnectivity("failure")
 
 		assert.NotNil(t, unsupportedConnectivity)
-		assert.Equal(t, unsupportedConnectivity.String(), "unknown")
+		assert.Equal(t, unsupportedConnectivity.String(), ukama.Unknown.String())
 		assert.Equal(t, uint8(unsupportedConnectivity), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestNodeConnectivity(t *testing.T) {
 		unknownConnecitivty := ukama.NodeConnectivity(uint8(10))
 
 		assert.NotNil(t, unknownConnecitivty)
-		assert.Equal(t, unknownConnecitivty.String(), "unknown")
+		assert.Equal(t, unknownConnecitivty.String(), ukama.Unknown.String())
 		assert.Equal(t, uint8(unknownConnecitivty), uint8(10))
 	})
 }

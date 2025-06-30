@@ -20,7 +20,7 @@ func TestDataUnitType(t *testing.T) {
 		dataUnitType := ukama.ParseDataUnitType("Bytes")
 
 		assert.NotNil(t, dataUnitType)
-		assert.Equal(t, dataUnitType.String(), "Bytes")
+		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeB.String())
 		assert.Equal(t, uint8(dataUnitType), uint8(1))
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(1))
 	})
@@ -30,7 +30,7 @@ func TestDataUnitType(t *testing.T) {
 
 		assert.NotNil(t, dataUnitType)
 		assert.Equal(t, uint8(dataUnitType), uint8(2))
-		assert.Equal(t, dataUnitType.String(), "KiloBytes")
+		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeKB.String())
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(1))
 	})
 
@@ -38,7 +38,7 @@ func TestDataUnitType(t *testing.T) {
 		dataUnitType := ukama.ParseDataUnitType("failure")
 
 		assert.NotNil(t, dataUnitType)
-		assert.Equal(t, dataUnitType.String(), "unknown")
+		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeUnknown.String())
 		assert.Equal(t, uint8(dataUnitType), uint8(0))
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(0))
 	})
@@ -47,7 +47,7 @@ func TestDataUnitType(t *testing.T) {
 		dataUnitType := ukama.DataUnitType(uint8(10))
 
 		assert.NotNil(t, dataUnitType)
-		assert.Equal(t, dataUnitType.String(), "unknown")
+		assert.Equal(t, dataUnitType.String(), ukama.DataUnitTypeUnknown.String())
 		assert.Equal(t, uint8(dataUnitType), uint8(10))
 		assert.Equal(t, ukama.ReturnDataUnits(dataUnitType), int64(0))
 	})

@@ -26,6 +26,7 @@ const (
 	Failed
 	Retry
 	Process
+
 	MaxRetryCount = 3
 )
 

@@ -21,7 +21,7 @@ func TestSimType(t *testing.T) {
 		simType := ukama.ParseSimType("test")
 
 		assert.NotNil(t, simType)
-		assert.Equal(t, simType.String(), "test")
+		assert.Equal(t, simType.String(), ukama.SimTypeTest.String())
 		assert.Equal(t, uint8(simType), uint8(1))
 	})
 
@@ -30,14 +30,14 @@ func TestSimType(t *testing.T) {
 
 		assert.NotNil(t, simType)
 		assert.Equal(t, uint8(simType), uint8(3))
-		assert.Equal(t, simType.String(), "ukama_data")
+		assert.Equal(t, simType.String(), ukama.SimTypeUkamaData.String())
 	})
 
 	t.Run("SimTypeNonValidString", func(tt *testing.T) {
 		simType := ukama.ParseSimType("failure")
 
 		assert.NotNil(t, simType)
-		assert.Equal(t, simType.String(), "unknown")
+		assert.Equal(t, simType.String(), ukama.SimTypeUnknown.String())
 		assert.Equal(t, uint8(simType), uint8(0))
 	})
 
@@ -45,7 +45,7 @@ func TestSimType(t *testing.T) {
 		simType := ukama.SimType(uint8(10))
 
 		assert.NotNil(t, simType)
-		assert.Equal(t, simType.String(), "unknown")
+		assert.Equal(t, simType.String(), ukama.SimTypeUnknown.String())
 		assert.Equal(t, uint8(simType), uint8(10))
 	})
 }

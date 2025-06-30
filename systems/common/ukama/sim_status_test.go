@@ -21,7 +21,7 @@ func TestSimStatus(t *testing.T) {
 		simStatus := ukama.ParseSimStatus("active")
 
 		assert.NotNil(t, simStatus)
-		assert.Equal(t, simStatus.String(), "active")
+		assert.Equal(t, simStatus.String(), ukama.SimStatusActive.String())
 		assert.Equal(t, uint8(simStatus), uint8(1))
 	})
 
@@ -30,14 +30,14 @@ func TestSimStatus(t *testing.T) {
 
 		assert.NotNil(t, simStatus)
 		assert.Equal(t, uint8(simStatus), uint8(3))
-		assert.Equal(t, simStatus.String(), "terminated")
+		assert.Equal(t, simStatus.String(), ukama.SimStatusTerminated.String())
 	})
 
 	t.Run("SimTypeNonValidString", func(tt *testing.T) {
 		simStatus := ukama.ParseSimStatus("failure")
 
 		assert.NotNil(t, simStatus)
-		assert.Equal(t, simStatus.String(), "unknown")
+		assert.Equal(t, simStatus.String(), ukama.SimStatusUnknown.String())
 		assert.Equal(t, uint8(simStatus), uint8(0))
 	})
 
@@ -45,7 +45,7 @@ func TestSimStatus(t *testing.T) {
 		simStatus := ukama.SimStatus(uint8(10))
 
 		assert.NotNil(t, simStatus)
-		assert.Equal(t, simStatus.String(), "unknown")
+		assert.Equal(t, simStatus.String(), ukama.SimStatusUnknown.String())
 		assert.Equal(t, uint8(simStatus), uint8(10))
 	})
 }

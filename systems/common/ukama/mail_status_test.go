@@ -20,7 +20,7 @@ func TestMailStatus(t *testing.T) {
 		successMailStatus := ukama.ParseStatus("success")
 
 		assert.NotNil(t, successMailStatus)
-		assert.Equal(t, successMailStatus.String(), "success")
+		assert.Equal(t, successMailStatus.String(), ukama.Success.String())
 		assert.Equal(t, uint8(successMailStatus), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestMailStatus(t *testing.T) {
 
 		assert.NotNil(t, failedMailStatus)
 		assert.Equal(t, uint8(failedMailStatus), uint8(2))
-		assert.Equal(t, failedMailStatus.String(), "failed")
+		assert.Equal(t, failedMailStatus.String(), ukama.Failed.String())
 	})
 
 	t.Run("MailStatusNonValidString", func(tt *testing.T) {
 		unsupportedMailStatus := ukama.ParseStatus("failure")
 
 		assert.NotNil(t, unsupportedMailStatus)
-		assert.Equal(t, unsupportedMailStatus.String(), "pending")
+		assert.Equal(t, unsupportedMailStatus.String(), ukama.Pending.String())
 		assert.Equal(t, uint8(unsupportedMailStatus), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestMailStatus(t *testing.T) {
 		unknownMailStatus := ukama.Status(uint8(10))
 
 		assert.NotNil(t, unknownMailStatus)
-		assert.Equal(t, unknownMailStatus.String(), "pending")
+		assert.Equal(t, unknownMailStatus.String(), ukama.Pending.String())
 		assert.Equal(t, uint8(unknownMailStatus), uint8(10))
 	})
 }

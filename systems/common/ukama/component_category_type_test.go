@@ -21,7 +21,7 @@ func TestComponentCategory(t *testing.T) {
 		accessCategory := ukama.ParseType("access")
 
 		assert.NotNil(t, accessCategory)
-		assert.Equal(t, accessCategory.String(), "access")
+		assert.Equal(t, accessCategory.String(), ukama.ACCESS.String())
 		assert.Equal(t, uint8(accessCategory), uint8(1))
 	})
 
@@ -30,14 +30,14 @@ func TestComponentCategory(t *testing.T) {
 
 		assert.NotNil(t, backhaulCategory)
 		assert.Equal(t, uint8(backhaulCategory), uint8(2))
-		assert.Equal(t, backhaulCategory.String(), "backhaul")
+		assert.Equal(t, backhaulCategory.String(), ukama.BACKHAUL.String())
 	})
 
 	t.Run("ComponentCategoryNonValidString", func(tt *testing.T) {
 		defaultCategory := ukama.ParseType("failure")
 
 		assert.NotNil(t, defaultCategory)
-		assert.Equal(t, defaultCategory.String(), "all")
+		assert.Equal(t, defaultCategory.String(), ukama.ALL.String())
 		assert.Equal(t, uint8(defaultCategory), uint8(0))
 	})
 
@@ -45,7 +45,7 @@ func TestComponentCategory(t *testing.T) {
 		defaultCategory := ukama.ComponentCategory(uint8(10))
 
 		assert.NotNil(t, defaultCategory)
-		assert.Equal(t, defaultCategory.String(), "all")
+		assert.Equal(t, defaultCategory.String(), ukama.ALL.String())
 		assert.Equal(t, uint8(defaultCategory), uint8(10))
 	})
 }

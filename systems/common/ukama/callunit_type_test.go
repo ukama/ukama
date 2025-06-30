@@ -20,7 +20,7 @@ func TestCallUnitType(t *testing.T) {
 		callUnitType := ukama.ParseCallUnitType("seconds")
 
 		assert.NotNil(t, callUnitType)
-		assert.Equal(t, callUnitType.String(), "seconds")
+		assert.Equal(t, callUnitType.String(), ukama.CallUnitTypeSec.String())
 		assert.Equal(t, uint8(callUnitType), uint8(1))
 		assert.Equal(t, ukama.ReturnCallUnits(callUnitType), int64(1))
 	})
@@ -30,7 +30,7 @@ func TestCallUnitType(t *testing.T) {
 
 		assert.NotNil(t, callUnitType)
 		assert.Equal(t, uint8(callUnitType), uint8(2))
-		assert.Equal(t, callUnitType.String(), "minutes")
+		assert.Equal(t, callUnitType.String(), ukama.CallUnitTypeMin.String())
 		assert.Equal(t, ukama.ReturnCallUnits(callUnitType), int64(60))
 	})
 
@@ -38,7 +38,7 @@ func TestCallUnitType(t *testing.T) {
 		callUnitType := ukama.ParseCallUnitType("failure")
 
 		assert.NotNil(t, callUnitType)
-		assert.Equal(t, callUnitType.String(), "unknown")
+		assert.Equal(t, callUnitType.String(), ukama.CallUnitTypeUnknown.String())
 		assert.Equal(t, uint8(callUnitType), uint8(0))
 		assert.Equal(t, ukama.ReturnCallUnits(callUnitType), int64(0))
 	})
@@ -47,7 +47,7 @@ func TestCallUnitType(t *testing.T) {
 		callUnitType := ukama.CallUnitType(uint8(10))
 
 		assert.NotNil(t, callUnitType)
-		assert.Equal(t, callUnitType.String(), "unknown")
+		assert.Equal(t, callUnitType.String(), ukama.CallUnitTypeUnknown.String())
 		assert.Equal(t, uint8(callUnitType), uint8(10))
 		assert.Equal(t, ukama.ReturnCallUnits(callUnitType), int64(0))
 	})

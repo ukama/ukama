@@ -20,7 +20,7 @@ func TestPackageType(t *testing.T) {
 		prepaidType := ukama.ParsePackageType("prepaiD")
 
 		assert.NotNil(t, prepaidType)
-		assert.Equal(t, prepaidType.String(), "prepaid")
+		assert.Equal(t, prepaidType.String(), ukama.PackageTypePrepaid.String())
 		assert.Equal(t, uint8(prepaidType), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestPackageType(t *testing.T) {
 
 		assert.NotNil(t, postpaidType)
 		assert.Equal(t, uint8(postpaidType), uint8(2))
-		assert.Equal(t, postpaidType.String(), "postpaid")
+		assert.Equal(t, postpaidType.String(), ukama.PackageTypePostpaid.String())
 	})
 
 	t.Run("PackageTypeNonValidString", func(tt *testing.T) {
 		unsupportedType := ukama.ParsePackageType("failure")
 
 		assert.NotNil(t, unsupportedType)
-		assert.Equal(t, unsupportedType.String(), "unknown")
+		assert.Equal(t, unsupportedType.String(), ukama.PackageTypeUnknown.String())
 		assert.Equal(t, uint8(unsupportedType), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestPackageType(t *testing.T) {
 		unknownType := ukama.PackageType(uint8(10))
 
 		assert.NotNil(t, unknownType)
-		assert.Equal(t, unknownType.String(), "unknown")
+		assert.Equal(t, unknownType.String(), ukama.PackageTypeUnknown.String())
 		assert.Equal(t, uint8(unknownType), uint8(10))
 	})
 }

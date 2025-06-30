@@ -20,7 +20,7 @@ func TestNodeState(t *testing.T) {
 		configuredState := ukama.ParseNodeState("configureD")
 
 		assert.NotNil(t, configuredState)
-		assert.Equal(t, configuredState.String(), "configured")
+		assert.Equal(t, configuredState.String(), ukama.Configured.String())
 		assert.Equal(t, uint8(configuredState), uint8(1))
 		assert.True(t, ukama.IsValidNodeState("configureD"))
 	})
@@ -30,7 +30,7 @@ func TestNodeState(t *testing.T) {
 
 		assert.NotNil(t, operationalState)
 		assert.Equal(t, uint8(operationalState), uint8(2))
-		assert.Equal(t, operationalState.String(), "operational")
+		assert.Equal(t, operationalState.String(), ukama.Operational.String())
 		assert.True(t, ukama.IsValidNodeState("operational"))
 	})
 
@@ -38,7 +38,7 @@ func TestNodeState(t *testing.T) {
 		unsupportedType := ukama.ParseNodeState("failure")
 
 		assert.NotNil(t, unsupportedType)
-		assert.Equal(t, unsupportedType.String(), "unknown")
+		assert.Equal(t, unsupportedType.String(), ukama.Unknown.String())
 		assert.Equal(t, uint8(unsupportedType), uint8(0))
 		assert.False(t, ukama.IsValidNodeState("failure"))
 	})
@@ -47,7 +47,7 @@ func TestNodeState(t *testing.T) {
 		unknownState := ukama.NodeState(uint8(10))
 
 		assert.NotNil(t, unknownState)
-		assert.Equal(t, unknownState.String(), "unknown")
+		assert.Equal(t, unknownState.String(), ukama.Unknown.String())
 		assert.Equal(t, uint8(unknownState), uint8(10))
 	})
 
@@ -55,7 +55,7 @@ func TestNodeState(t *testing.T) {
 		unknownState := ukama.ParseNodeState("10")
 
 		assert.NotNil(t, unknownState)
-		assert.Equal(t, unknownState.String(), "unknown")
+		assert.Equal(t, unknownState.String(), ukama.Unknown.String())
 		assert.Equal(t, uint8(unknownState), uint8(10))
 	})
 }
