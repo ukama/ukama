@@ -25,7 +25,7 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	simManagerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	simMocks "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen/mocks"
 
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -183,7 +183,7 @@ func TestAdd(t *testing.T) {
 		networkClient := &cmocks.NetworkClient{}
 		networkId := uuid.NewV4()
 
-		sub := &db.Subscriber{
+		expectedSub := &db.Subscriber{
 			Name:                  "John",
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
@@ -195,7 +195,7 @@ func TestAdd(t *testing.T) {
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
+		subscriberRepo.On("Add", expectedSub, mock.Anything).Return(nil).Once()
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
@@ -205,18 +205,24 @@ func TestAdd(t *testing.T) {
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
-		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			Name:                  sub.Name,
-			Email:                 "JOHNDOE@EXAMPLE.COM", // Uppercase email
-			PhoneNumber:           sub.PhoneNumber,
-			Gender:                sub.Gender,
-			Dob:                   sub.DOB,
+		resp, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
+			Name:                  expectedSub.Name,
+			Email:                 "JOHNDOE@EXAMPLE.COM",
+			PhoneNumber:           expectedSub.PhoneNumber,
+			Gender:                expectedSub.Gender,
+			Dob:                   expectedSub.DOB,
 			NetworkId:             networkId.String(),
-			Address:               sub.Address,
-			ProofOfIdentification: sub.ProofOfIdentification,
-			IdSerial:              sub.IdSerial,
+			Address:               expectedSub.Address,
+			ProofOfIdentification: expectedSub.ProofOfIdentification,
+			IdSerial:              expectedSub.IdSerial,
 		})
+
 		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		subscriberRepo.AssertExpectations(t)
+		networkClient.AssertExpectations(t)
+		msgBus.AssertExpectations(t)
 	})
 
 	t.Run("Invalid date format", func(t *testing.T) {
@@ -232,13 +238,13 @@ func TestAdd(t *testing.T) {
 			Email:                 "johndoe@example.com",
 			PhoneNumber:           "1234567890",
 			Gender:                "Male",
-			Dob:                   "invalid-date-format", // Invalid date format
+			Dob:                   "invalid-date-format",
 			Address:               "1 Main St",
 			ProofOfIdentification: "Passport",
 			IdSerial:              "123456789",
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid format for DoB value")
+		assert.Contains(t, err.Error(), "invalid format for DOB value")
 	})
 
 	t.Run("Network not found", func(t *testing.T) {
@@ -299,7 +305,7 @@ func TestAdd(t *testing.T) {
 
 		networkClient.On("Get", "invalid-uuid").
 			Return(&creg.NetworkInfo{
-				Id: "invalid-uuid", // Invalid UUID format
+				Id: "invalid-uuid",
 			}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -483,15 +489,14 @@ func TestSubscriberServer_Get(t *testing.T) {
 			UpdatedAt:             time.Now(),
 		}
 
-		// Mock the sim manager service client
 		simManagerClient := &simMocks.SimManagerServiceClient{}
 
 		subscriberRepo.On("Get", subscriberId).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -553,10 +558,10 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriberRepo.On("Get", subscriberId).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -707,7 +712,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriberRepo.On("Get", subscriberId).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
 		}).Return(nil, errors.New("failed to list sims")).Once()
 
@@ -753,10 +758,10 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriberRepo.On("Get", subscriberId).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -835,10 +840,10 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberRepo.On("GetByEmail", email).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -901,10 +906,10 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberRepo.On("GetByEmail", email).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1040,7 +1045,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberRepo.On("GetByEmail", email).Return(subscriber, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
 		}).Return(nil, errors.New("failed to list sims")).Once()
 
@@ -1106,8 +1111,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId1.String(),
@@ -1117,7 +1122,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "physical",
 					Status:       "active",
 					IsPhysical:   true,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-1",
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
@@ -1132,7 +1137,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "virtual",
 					Status:       "inactive",
 					IsPhysical:   false,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-2",
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
@@ -1197,8 +1202,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1230,8 +1235,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1335,7 +1340,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(nil, errors.New("failed to list sims")).Once()
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(nil, errors.New("failed to list sims")).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.ListSubscribers(context.TODO(), &pb.ListSubscribersRequest{})
@@ -1379,8 +1384,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -1390,7 +1395,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "physical",
 					Status:       "active",
 					IsPhysical:   true,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-1",
 						StartDate: "invalid-date-format", // Invalid date format
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
@@ -1441,8 +1446,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -1452,7 +1457,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "physical",
 					Status:       "active",
 					IsPhysical:   true,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-1",
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   "invalid-date-format", // Invalid date format
@@ -1503,8 +1508,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		subscriberRepo.On("ListSubscribers").Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId.String(),
@@ -1514,7 +1519,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "physical",
 					Status:       "active",
 					IsPhysical:   true,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-1",
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
@@ -1529,7 +1534,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 					Type:         "virtual",
 					Status:       "inactive",
 					IsPhysical:   false,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-2",
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
@@ -1607,8 +1612,8 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subscriberRepo.On("GetByNetwork", networkId).Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{
 				{
 					Id:           "sim-1",
 					SubscriberId: subscriberId1.String(),
@@ -1618,7 +1623,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 					Type:         "physical",
 					Status:       "active",
 					IsPhysical:   true,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-1",
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
@@ -1633,7 +1638,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 					Type:         "virtual",
 					Status:       "inactive",
 					IsPhysical:   false,
-					Package: &simMangerPb.Package{
+					Package: &simManagerPb.Package{
 						Id:        "pkg-2",
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
@@ -1699,8 +1704,8 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subscriberRepo.On("GetByNetwork", networkId).Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1733,8 +1738,8 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subscriberRepo.On("GetByNetwork", networkId).Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simMangerPb.ListSimsResponse{
-			Sims: []*simMangerPb.Sim{},
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simManagerPb.ListSimsResponse{
+			Sims: []*simManagerPb.Sim{},
 		}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1874,7 +1879,7 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 
 		subscriberRepo.On("GetByNetwork", networkId).Return(subscribers, nil).Once()
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
-		simManagerClient.On("ListSims", mock.Anything, &simMangerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(nil, errors.New("failed to list sims by network")).Once()
+		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(nil, errors.New("failed to list sims by network")).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.GetByNetwork(context.TODO(), &pb.GetByNetworkRequest{NetworkId: networkId.String()})
