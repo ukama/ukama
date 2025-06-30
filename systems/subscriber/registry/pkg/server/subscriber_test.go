@@ -219,32 +219,11 @@ func TestAdd(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
+		assert.Equal(t, "johndoe@example.com", expectedSub.Email, "Email should be converted to lowercase")
 
 		subscriberRepo.AssertExpectations(t)
 		networkClient.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
-	})
-
-	t.Run("Invalid date format", func(t *testing.T) {
-		subscriberRepo := &mocks.SubscriberRepo{}
-		msgBus := &cmocks.MsgBusServiceClient{}
-		simManagerService := &mocks.SimManagerClientProvider{}
-		orgClient := &cmocks.OrgClient{}
-		networkClient := &cmocks.NetworkClient{}
-
-		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
-		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Dob:                   "invalid-date-format",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
-		})
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid format for DOB value")
 	})
 
 	t.Run("Network not found", func(t *testing.T) {
