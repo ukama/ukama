@@ -50,7 +50,7 @@ func (c ComponentCategory) String() string {
 }
 
 // TODO: this should be renamed to ParseComponentCategory instead + update
-// all dependents services using it.
+// all dependent services using it.
 // TODO: make this also case insensitive.
 func ParseType(value string) ComponentCategory {
 	i, err := strconv.Atoi(value)
