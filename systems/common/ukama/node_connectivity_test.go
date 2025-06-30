@@ -41,10 +41,10 @@ func TestNodeConnectivity(t *testing.T) {
 	})
 
 	t.Run("NodeConnectivityNonValidNumber", func(tt *testing.T) {
-		unknownConnecitivty := ukama.NodeConnectivity(uint8(10))
+		unknownConnectivity := ukama.NodeConnectivity(uint8(10))
 
-		assert.NotNil(t, unknownConnecitivty)
-		assert.Equal(t, unknownConnecitivty.String(), ukama.Unknown.String())
-		assert.Equal(t, uint8(unknownConnecitivty), uint8(10))
+		assert.NotNil(t, unknownConnectivity)
+		assert.Equal(t, unknownConnectivity.String(), ukama.Unknown.String())
+		assert.Equal(t, uint8(unknownConnectivity), uint8(10))
 	})
 }
