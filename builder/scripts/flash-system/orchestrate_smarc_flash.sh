@@ -38,8 +38,8 @@ cleanup() {
         echo "Restoring SSH state — stopping SSHD" | tee -a "$ORCHESTRATOR_LOG"
         sudo systemctl stop sshd || true
     fi
-    echo "Restoring NetworkManager control of $DEV_ETH"
-    nmcli device set "$DEV_ETH" managed yes 2>/dev/null || true
+    echo "Restoring NetworkManager control of $HOST_ETH"
+    nmcli device set "$HOST_ETH" managed yes 2>/dev/null || true
     rm -f "$YQ_BIN"
     rm -f alpine.iso
     rm -f ${FLASH_SCRIPT}
@@ -104,7 +104,7 @@ detect_ssh_state() {
 ensure_yq
 validate_config
 
-DEV_ETH=$(yq_read         '.network.dev_eth')
+HOST_ETH=$(yq_read        '.network.host_eth')
 HOST_IP=$(yq_read         '.network.host_ip')
 TARGET_IP=$(yq_read       '.network.target_ip')
 IMG_NAME=$(yq_read        '.image.name')
@@ -127,13 +127,13 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
         exit 1
     fi
 
-    echo "=== [1] Configure dev Ethernet (${DEV_ETH}) ==="
-    nmcli device set enp0s25 managed no 
-    sudo ip link set "$DEV_ETH" down || true
-    sudo ip addr flush dev "$DEV_ETH" || true
-    sudo ip addr add "$HOST_IP/24" dev "$DEV_ETH"
-    sudo ip link set "$DEV_ETH" up
-    ip addr show "$DEV_ETH"
+    echo "=== [1] Configure dev Ethernet (${HOST_ETH}) ==="
+    nmcli device set "$HOST_ETH" managed no
+    sudo ip link set "$HOST_ETH" down || true
+    sudo ip addr flush dev "$HOST_ETH" || true
+    sudo ip addr add "$HOST_IP/24" dev "$HOST_ETH"
+    sudo ip link set "$HOST_ETH" up
+    ip addr show "$HOST_ETH"
 
     sleep 2
 
@@ -178,8 +178,8 @@ wget "http://${HOST_IP}:8000/${IMG_NAME}" -O "/mnt/${IMG_NAME}"
 ls -lh "/mnt/${IMG_NAME}"
 
 if [ ! -f "/mnt/${IMG_NAME}" ]; then
-  echo "[SMARC] Image not found after wget!"
-  exit 1
+    echo "[SMARC] Image not found after wget!"
+    exit 1
 fi
 
 echo "[SMARC] Zeroing first 64MB of \$EMMC_DEV"
