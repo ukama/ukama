@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -9,8 +8,6 @@
 set -e
 
 # Initialize variables
-PARTITION_TYPE=""
-ROOTFS_VERSION=""
 SERVICE_NAME=""
 SERVICE_CMD=""
 SERVICE_ARGS=""
@@ -34,7 +31,7 @@ APP_NAMES=("wimcd" "configd" "metricsd" "lookoutd" "deviced" "notifyd" "noded" "
 
 # Logging function
 log_message() {
-    log "INFO" "$(date '+%Y-%m-%d %H:%M:%S') - [Partition: $PARTITION_TYPE] [RootFS: $ROOTFS_VERSION] $1"
+    log "INFO" "$(date '+%Y-%m-%d %H:%M:%S') - [RootFS: $VERSION] $1"
 }
 
 # Function to show usage
@@ -48,7 +45,7 @@ usage() {
     exit 1
 }
 
-function log() {
+log() {
     local type="$1"
     local message="$2"
     local timestamp
@@ -83,7 +80,7 @@ function log() {
     printf "%s %b%s%b %s:%s \"%s\"\n" "$timestamp" "$color" "$type" "$reset" "$file_name" "$func_name" "$message" | tee -a "$LOG_FILE"
 }
 
-function LOG_EXEC() {
+LOG_EXEC() {
     log "EXEC" "$*"
     "$@" >>"$LOG_FILE" 2>&1
     if [[ $? -ne 0 ]]; then
@@ -92,14 +89,14 @@ function LOG_EXEC() {
     fi
 }
 
-function check_command() {
+check_command() {
     command -v "$1" >/dev/null 2>&1 || {
         log "ERROR" "Command '$1' not found. Please install it."
         exit 1
     }
 }
 
-function install_starter_app() {
+install_starter_app() {
     log "INFO" "Installing starter.d"
     cd ${UKAMA_REPO_APP_PKG}
     tar zxvf starterd_latest.tar.gz
@@ -107,7 +104,7 @@ function install_starter_app() {
     rm -rf starterd_latest/
 }
 
-function install_rpi4_kernel_from_tarball() {
+install_rpi4_kernel_from_tarball() {
     log "INFO" "Installing RPi4 kernel and boot files via Alpine RPi tarball"
 
     ALPINE_VERSION="${VERSION#v}"
@@ -156,122 +153,46 @@ function install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
-function install_x86_64_boot() {
-    local alpine_version="${VERSION#v}"
-    local iso_tmp_dir="/tmp/alpine-iso-x86_64"
-    local iso_mnt_dir="$iso_tmp_dir/mnt-iso"
-    local iso_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-standard-${alpine_version}.0-x86_64.iso"
+copy_x86_64_boot() {
+    log_message "Extracting boot files from Alpine ISO"
 
-    # download the alpine iso image, extract boot and copy to rootfs/boot
-    mkdir -p "$iso_tmp_dir" "$iso_mnt_dir"
-    curl -sSL "$iso_url" -o "$iso_tmp_dir/alpine.iso"
+    local ver="${VERSION#v}"
+    local iso_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-standard-${ver}.0-x86_64.iso"
+    local tmpdir mnt
+    tmpdir=$(mktemp -d)
+    mnt="$tmpdir/mnt"
 
-    if [ -f "$iso_tmp_dir/alpine.iso" ]; then
-        sudo mount -o loop "$iso_tmp_dir/alpine.iso" "$iso_mnt_dir"
-        mkdir -p /efi /boot/ /boot/efi
-        cp -a "$iso_mnt_dir/boot/"* /boot/
-        cp -a "$iso_mnt_dir/efi/"*  /boot/efi
-	    cp -a "$iso_mnt_dir/efi/"*  /efi
+    mkdir -p "$mnt" /boot /boot/efi
+    trap 'umount "$mnt" 2>/dev/null; rm -rf "$tmpdir"' EXIT
 
-        apk add linux-lts
-       
-        sudo umount "$iso_mnt_dir"
-        log "SUCCESS" "Boot files extracted"
-    else
-        log "ERROR" "Unable to find the alpine.iso to extract boot files"
-    fi
-    rm -rf "$iso_tmp_dir" "$iso_mnt_dir"
+    log_message "Downloading ISO: $iso_url"
+    curl -fsSL "$iso_url" -o "$tmpdir/alpine.iso"
+
+    log_message "Mounting ISO"
+    mount -o loop "$tmpdir/alpine.iso" "$mnt"
+
+    log_message "Copying kernel, initramfs, and bootloader"
+    cp -a "$mnt/boot/." /boot/
+    cp -a "$mnt/efi/."  /boot/efi/
+
+    log_message "Unmounting ISO"
+    umount "$mnt"
+    trap - EXIT
+
+    log_message "Boot files extracted to /boot and /boot/efi"
 }
 
-function install_x86_64_kernel() {
-    local kernel_tmp_dir="/tmp/alpine-kernel-x86_64"
-    local miniroot_url="${MIRROR}/${VERSION}/releases/x86_64/alpine-minirootfs-${VERSION#v}.0-x86_64.tar.gz"
-    local kernel_pkg="linux-lts"
+copy_x86_64_kernel() {
+    log_message "Installing linux-lts kernel and modules"
 
-    log "INFO" "Downloading and extracting Alpine minirootfs from $miniroot_url"
-    mkdir -p "$kernel_tmp_dir"
-    curl -sSL "$miniroot_url" | tar -xz -C "$kernel_tmp_dir"
+    # Update the APK index and install the package
+    apk update
+    apk add --no-cache linux-lts
 
-    log "INFO" "Installing $kernel_pkg directly (no chroot, since we are already inside one)"
-    cp /etc/resolv.conf "$kernel_tmp_dir/etc/resolv.conf"
-
-    echo "${MIRROR}/${VERSION}/main" > "$kernel_tmp_dir/etc/apk/repositories"
-
-    apk --root "$kernel_tmp_dir" --arch x86_64 \
-        --no-cache update
-
-    apk --root "$kernel_tmp_dir" --arch x86_64 \
-        --no-cache add "$kernel_pkg"
-
-    log "INFO" "Copying kernel and modules"
-    mkdir -p /lib/modules
-
-#    cp "$kernel_tmp_dir"/boot/vmlinuz-* /boot/vmlinuz
-    cp -a "$kernel_tmp_dir"/lib/modules/* /lib/modules/
-
-    rm -rf "$kernel_tmp_dir"
-    log "SUCCESS" "$kernel_pkg installed cleanly from minirootfs"
+    log_message "SUCCESS: linux-lts package and modules installed"
 }
 
-function copy_linux_kernel_and_boot() {
-    log "INFO" "Setting up kernel for ARCH=$ARCH..."
-
-    KERNEL_TMP_DIR="/tmp/alpine-kernel-${ARCH}"
-    ROOTFS_TMP_DIR="/tmp/alpine-rootfs-${ARCH}"
-
-    case "$ARCH" in
-        x86_64)
-#            install_x86_64_kernel
-            install_x86_64_boot
-            ;;
-        armv7)
-            KERNEL_PKG="linux-vanilla"
-            ;;
-        armhf)
-            log "INFO" "Using QEMU-based method to extract ARMHF kernel"
-            LOG_EXEC "${UKAMA_ROOT}/builder/scripts/build-system/extract_armhf_kernel.sh"
-            cp -a "${KERNEL_TMP_DIR}/boot/"* "/boot/"
-            cp -a "${KERNEL_TMP_DIR}/lib/modules/"* "/lib/modules/"
-            rm -rf "$KERNEL_TMP_DIR" "$ROOTFS_TMP_DIR"
-            log "SUCCESS" "ARMHF kernel installed via QEMU"
-            return
-            ;;
-        aarch64)
-            install_rpi4_kernel_from_tarball
-            return
-            ;;
-        *)
-            log "ERROR" "Unsupported architecture: $ARCH"
-            exit 1
-            ;;
-    esac
-
-    # apk fallback for x86_64 and armv7
-    APK_TMP="/tmp/alpine-kernel-$ARCH"
-    mkdir -p "$APK_TMP"
-
-    LOG_EXEC apk --root "$APK_TMP" --arch "$ARCH" \
-        --initdb \
-        --no-cache \
-        --repository "$MIRROR/$VERSION/main" \
-        add "$KERNEL_PKG"
-
-    case "$ARCH" in
-        armv7)
-            mkdir -p /boot
-            cp "$APK_TMP/boot/zImage" "/boot/kernel.img"
-            ;;
-    esac
-
-    find "$APK_TMP" -type f -name '*.dtb' -exec cp --parents {} "/boot/" \; 2>/dev/null || true
-    mkdir -p "/lib/modules"
-    cp -a "$APK_TMP/lib/modules/"* "/lib/modules/" 2>/dev/null || true
-
-    rm -rf "$APK_TMP"
-    log "SUCCESS" "Kernel installed using apk fallback path"
-}
-
-function copy_misc_files() {
+copy_misc_files() {
 	log "INFO" "Copying various files to image"
 
     # install the starter.d app
@@ -279,10 +200,8 @@ function copy_misc_files() {
 
     # update /etc/services to add ports
     log "INFO" "Adding all the apps to /etc/services"
-    sudo mkdir -p "/etc"
-
-    sudo cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
-         "/etc/services"
+    cp "${UKAMA_ROOT}/nodes/ukamaOS/distro/scripts/files/services" \
+       "/etc/services"
 
     # copy mocksysfs related files (not needed for actual HW) - XXX
     mkdir -p "/tmp/sys"
@@ -292,62 +211,14 @@ function copy_misc_files() {
        "/ukama/mocksysfs/"
 }
 
-# Update /etc/fstab based on partition type
-update_fstab() {
-    log_message "Updating /etc/fstab for partition type: $PARTITION_TYPE"
-
-    if [[ "$PARTITION_TYPE" == "active" ]]; then
-        cat <<FSTAB > /etc/fstab
-proc              /proc           proc    defaults              0 0
-sysfs             /sys            sysfs   defaults              0 0
-devpts            /dev/pts        devpts  defaults              0 0
-tmpfs             /tmp            tmpfs   defaults              0 0
-LABEL=recovery    /recovery       ext4    ro                    0 2
-LABEL=data        /data           ext4    ro                    0 2
-LABEL=passive     /passive        ext4    ro                    0 2
-LABEL=primary     /               ext4    errors=remount-ro     0 1
-LABEL=boot        /boot/firmware  vfat    ro                    0 2
-FSTAB
-    else
-        cat <<FSTAB > /etc/fstab
-proc              /proc           proc    defaults              0 0
-sysfs             /sys            sysfs   defaults              0 0
-devpts            /dev/pts        devpts  defaults              0 0
-tmpfs             /tmp            tmpfs   defaults              0 0
-LABEL=recovery    /recovery       ext4    ro                    0 2
-LABEL=data        /data           ext4    ro                    0 2
-LABEL=primary     /passive        ext4    ro                    0 2
-LABEL=passive     /               ext4    errors=remount-ro     0 1
-LABEL=boot        /boot/firmware  vfat    ro                    0 2
-FSTAB
-    fi
-
-    log_message "/etc/fstab updated successfully."
-}
-
-# Configure network interface eth0
-configure_network() {
-    log_message "Configuring network for eth0"
-
-    cat <<NETWORK > /etc/network/interfaces
-auto eth0
-iface eth0 inet static
-    address 10.102.81.10
-    netmask 255.255.255.0
-    gateway 10.102.81.1
-NETWORK
-
-    # Apply network changes
-    #ifdown eth0 && ifup eth0
-    log_message "Network configuration updated for eth0"
-}
-
-# Create a custom OpenRC service
-create_openrc_service() {
+# Function to create and register a custom OpenRC service
+setup_openrc_service() {
     log_message "Creating OpenRC service: $SERVICE_NAME"
 
+    # Ensure init.d directory exists
     mkdir -p /etc/init.d
 
+    # Write the service script
     cat <<SERVICE > /etc/init.d/$SERVICE_NAME
 #!/sbin/openrc-run
 
@@ -361,91 +232,116 @@ depend() {
 
 start() {
     ebegin "Starting $SERVICE_NAME"
-    start-stop-daemon --start --background --exec \$command -- \$command_args
-    eend \$?
+    start-stop-daemon --start --background --exec \"$SERVICE_CMD\" -- $SERVICE_ARGS
+    eend $?
 }
 
 stop() {
     ebegin "Stopping $SERVICE_NAME"
-    start-stop-daemon --stop --exec \$command
-    eend \$?
+    start-stop-daemon --stop --exec \"$SERVICE_CMD\"
+    eend $?
 }
 SERVICE
 
+    # Make it executable and add to default runlevel
     chmod +x /etc/init.d/$SERVICE_NAME
     rc-update add $SERVICE_NAME default
-    log_message "OpenRC service $SERVICE_NAME created and added to startup."
+
+    log_message "INFO" "OpenRC service $SERVICE_NAME created and added to startup."
 }
 
-# Function to set up the root filesystem
 setup_rootfs() {
     log_message "Setting up root filesystem"
 
-    # Set up DNS
-    echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    cat > /etc/resolv.conf <<EOF
+nameserver 8.8.8.8
+EOF
+    cat > /etc/apk/repositories <<EOF
+https://dl-cdn.alpinelinux.org/alpine/${VERSION}/main
+https://dl-cdn.alpinelinux.org/alpine/${VERSION}/community
+EOF
 
-    # Set up package repositories
-    echo "https://dl-cdn.alpinelinux.org/alpine/${ROOTFS_VERSION}/main" > /etc/apk/repositories
-    echo "https://dl-cdn.alpinelinux.org/alpine/${ROOTFS_VERSION}/community" >> /etc/apk/repositories
+    # Core upgrade + packages
+    apk update && apk upgrade
+    apk add --no-cache \
+        alpine-base bash sudo shadow tzdata openrc \
+        eudev eudev-openrc \
+        kmod dosfstools \
+        acpid dhcpcd iproute2 iputils \
+        openssh \
+        readline autoconf automake cmake \
+        alpine-sdk build-base libtool \
+        openssl-dev gnutls-dev curl-dev \
+        sqlite-dev zlib libuuid libcap libidn2 libmicrohttpd-dev \
+        protobuf e2fsprogs util-linux rsync jansson tree \
+        git tcpdump ethtool iperf3 htop vim doas \
+        kbd
 
-    # Update packages
-    apk update
-    apk upgrade
+    cat > /etc/dhcpcd.conf <<'EOF'
+interface eth0
+static ip_address=10.102.81.10/24
+static routers=10.102.81.1
+static domain_name_servers=8.8.8.8 8.8.4.4
+EOF
 
-    # Install essential packages
-    apk add alpine-base openrc busybox bash sudo shadow tzdata
-    apk add acpid busybox-openrc busybox-extras busybox-mdev-openrc
-    apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev openssl-dev \
-        iptables libuuid sqlite dhcpcd protobuf iproute2 zlib curl-dev nettle libcap \
-        libidn2 libmicrohttpd gnutls openssl-dev curl-dev linux-headers bsd-compat-headers \
-        tree libtool sqlite-dev openssl-dev readline cmake autoconf automake alpine-sdk \
-        build-base git tcpdump ethtool iperf3 htop vim doas \
-        e2fsprogs dosfstools util-linux \
-        jansson rsync
-#    apk add linux-lts \
-#        rsync
+    # Enable agetty on /dev/tty1
+    ln -sf /etc/init.d/agetty /etc/init.d/agetty.tty1
 
-    # Set timezone
+    # sysinit: early, before any daemons
+    rc-update add devfs           sysinit    # mounts /dev,/proc,/sys
+    rc-update add modules         sysinit    # modprobe usbcore, ehci_hcd, usbhid, vfat, etc.
+    rc-update add loadkmap        sysinit    # apply your US keymap
+    rc-update add udev-trigger    sysinit    # now sees the USB HID devices
+    rc-update add udev-settle     sysinit
+    rc-update add udev            boot
+
+    # boot: filesystem mounts, hostname, syslog
+    rc-update add sysctl          boot
+    rc-update add bootmisc        boot
+    rc-update add hostname        boot
+    rc-update add syslog          boot
+
+    # default: network, console, SSH
+    rc-update add dhcpcd          default
+    rc-update add sshd            default
+    rc-update add acpid           default
+    rc-update add agetty.tty1     default
+
+    # vfat support
+    mkdir -p /etc/modules-load.d
+    cat > /etc/modules-load.d/vfat.conf <<EOF
+vfat
+fat
+EOF
+
+    # USB keyboard
+    cat > /etc/modules-load.d/keyboard.conf <<EOF
+usbcore
+ehci_hcd
+xhci_hcd
+usbhid
+hid_generic
+EOF
+
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-
-    # Configure networking
-    apk add dhcpcd iproute2 iputils
-    rc-update add dhcpcd default
-#    rc-service dhcpcd start
-
-    # Set hostname
     echo "ukama-linux" > /etc/hostname
 
-    # Set up root user
     echo "root:root" | chpasswd
-
-    # Create 'ukama' user only if it doesn't already exist
-    if ! id "ukama" >/dev/null 2>&1; then
+    if ! id ukama &>/dev/null; then
         adduser -D -s /bin/bash -G wheel ukama
         echo "ukama:ukama" | chpasswd
     fi
     echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
-    # Configure doas (instead of sudo)
-    apk add doas
-    echo "permit persist ukama as root" > /etc/doas.d/doas.conf
+    cat > /etc/doas.d/doas.conf <<EOF
+permit persist ukama as root
+EOF
     chmod 600 /etc/doas.d/doas.conf
 
-    # Enable SSH access
-    apk add openssh
-    rc-update add sshd default
-#    rc-service sshd start
-
-    # Enable system services
-    rc-update add networking default
-    rc-update add sshd default
-    rc-update add dhcpcd default
-    rc-update add acpid default
-
-    log_message "INFO" "root filesystem setup completed."
+    log_message "INFO" "Root filesystem setup completed."
 }
 
-function setup_ukama_dirs() {
+setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
 
     mkdir -p "/ukama"
@@ -455,10 +351,6 @@ function setup_ukama_dirs() {
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
     mkdir -p "/ukama/mocksysfs"
-    mkdir -p "/passive"
-#    mkdir -p "/boot/firmware"
-    mkdir -p "/data"
-    mkdir -p "/recovery"
 
     echo "${NODE_ID}" > "/ukama/nodeid"
     echo "localhost"  > "/ukama/bootstrap"
@@ -468,23 +360,7 @@ function setup_ukama_dirs() {
     log "SUCCESS" "Ukama directories created."
 }
 
-function get_apps_name() {
-
-	# Loop through each .tar.gz file in the directory
-	for file in "${UKAMA_REPO_APP_PKG}"/*.tar.gz; do
-    	[ -e "$file" ] || continue  # Skip if no .tar.gz files exist
-    	filename=$(basename "$file")  # Get filename without path
-    	prefix=${filename%%_*}  # Extract prefix before first underscore
-    	APP_NAMES+=("$prefix")  # Store in array
-	done
-
-	# Print the array elements
-	echo "Extracted app prefixes: ${APP_NAMES[@]}"
-}
-
-#Main 
-setup_ukama_dirs
-
+# Main
 log "INFO" "Script ${0} called with args $#"
 
 index=0
@@ -494,10 +370,8 @@ for arg in "$@"; do
 done
 
 # Parse options using getopts
-while getopts "p:r:n:c:a:A:V:M:" opt; do
+while getopts "r:n:c:a:A:V:M:" opt; do
     case "${opt}" in
-        p) PARTITION_TYPE="${OPTARG}" ;;
-        r) ROOTFS_VERSION="${OPTARG}" ;;
         n) SERVICE_NAME="${OPTARG}" ;;
         c) SERVICE_CMD="${OPTARG}" ;;
         a) SERVICE_ARGS="${OPTARG}" ;;
@@ -508,33 +382,12 @@ while getopts "p:r:n:c:a:A:V:M:" opt; do
     esac
 done
 
-# Validate required arguments
-if [[ -z "$PARTITION_TYPE" || -z "$ROOTFS_VERSION" || -z "$SERVICE_NAME" || -z "$SERVICE_CMD" ]]; then
-    usage
-fi
-
-# Validate partition type
-if [[ "$PARTITION_TYPE" != "active" && "$PARTITION_TYPE" != "passive" ]]; then
-    echo "Error: Partition type must be 'active' or 'passive'."
-    exit 1
-fi
-
-setup_rootfs  # Set up root filesystem
-
-log "INFO" "Preparing mount for ${PARTITION_TYPE}"
-update_fstab  ${PARTITION_TYPE} #Update fstab
-
-log "INFO" "Network configuration"
-configure_network  # Configure network
-
-log "INFO" "OpenRC service steup for  ${SERVICE_NAME}  ${SERVICE_CMD}"
-create_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
-
-log "INFO" "Copy misc files."
+setup_rootfs
+setup_ukama_dirs
+setup_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
 copy_misc_files 
-
-log "INFO" "Copy boot and kernel"
-copy_linux_kernel_and_boot
+copy_x86_64_kernel
+copy_x86_64_boot
 
 echo "Rootfs build success."
 exit 0
