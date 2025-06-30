@@ -11,7 +11,6 @@ package rest
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -230,7 +229,8 @@ func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (
 
 	data, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
-		log.Fatal("error:", err)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: fmt.Sprintf("failed to decode base64 data: %v", err)}
 	}
 
 	return r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
