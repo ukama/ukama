@@ -10,6 +10,7 @@ package utils
 
 import (
 	"github.com/jszwec/csvutil"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 )
@@ -54,7 +55,7 @@ func PbParseToModel(slice []*pb.AddSim) []db.Sim {
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
 			QrCode:         value.QrCode,
-			SimType:        db.ParseType(value.SimType),
+			SimType:        ukama.ParseSimType(value.SimType),
 			IsPhysical:     value.IsPhysical,
 		})
 	}
@@ -88,7 +89,7 @@ func RawSimToPb(r []RawSim, simType string) []db.Sim {
 			SmDpAddress:    value.SmDpAddress,
 			ActivationCode: value.ActivationCode,
 			IsPhysical:     value.IsPhysical == "TRUE",
-			SimType:        db.ParseType(simType),
+			SimType:        ukama.ParseSimType(simType),
 			QrCode:         value.QrCode,
 		})
 	}
