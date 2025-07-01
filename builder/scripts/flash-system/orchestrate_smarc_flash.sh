@@ -169,8 +169,11 @@ EOF
 #!/bin/sh
 set -eux
 
-echo "[SMARC] bringing up eth0 via DHCP"
-udhcpc -t0 eth0
+echo "[SMARC] Enabling eth0"
+ip link set eth0 up
+
+echo "[SMARC] Bringing up eth0 via DHCP (udhcpc)"
+udhcpc -i eth0 -q
 
 echo "[SMARC] Waiting a couple seconds for lease…"
 sleep 2
