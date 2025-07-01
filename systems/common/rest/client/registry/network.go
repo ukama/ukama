@@ -97,7 +97,7 @@ func (n *networkClient) Add(req AddNetworkRequest) (*NetworkInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("network info deserialixation failure: %w", err)
+		return nil, fmt.Errorf("network info deserialization failure: %w", err)
 	}
 
 	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
@@ -121,7 +121,7 @@ func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("network info deserialixation failure: %w", err)
+		return nil, fmt.Errorf("network info deserialization failure: %w", err)
 	}
 
 	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
@@ -143,7 +143,7 @@ func (n *networkClient) GetDefault() (*NetworkInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize network info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("network info deserialixation failure: %w", err)
+		return nil, fmt.Errorf("network info deserialization failure: %w", err)
 	}
 
 	log.Infof("Network Info: %+v", ntwk.NetworkInfo)
