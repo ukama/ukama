@@ -127,32 +127,32 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
         exit 1
     fi
 
-    echo "Configure dev Ethernet (${HOST_ETH})"
-    nmcli device set "$HOST_ETH" managed no
-    sudo ip link set "$HOST_ETH" down || true
-    sudo ip addr flush dev "$HOST_ETH" || true
-    sudo ip addr add "$HOST_IP/24" dev "$HOST_ETH"
-    sudo ip link set "$HOST_ETH" up
-    ip addr show "$HOST_ETH"
+    # Configure host Ethernet
+    echo "Configure dev Ethernet (${HOST_ETH})" | tee -a "$ORCHESTRATOR_LOG"
+    nmcli device set  "$HOST_ETH" managed no
+    sudo ip link set  "$HOST_ETH" down  || true
+    sudo ip addr flush dev "$HOST_ETH"  || true
+    sudo ip addr add   "$HOST_IP/24" dev "$HOST_ETH"
+    sudo ip link set   "$HOST_ETH"   up
+    ip addr show       "$HOST_ETH"
 
+    # install and configure dnsmasq
+    echo "Installing & configuring dnsmasq" | tee -a "$ORCHESTRATOR_LOG"
     sudo apt-get update -qq
-    sudo apt-get install -y isc-dhcp-server
+    sudo apt-get install -y dnsmasq
 
-    # Listen only on our interface:
-    echo "INTERFACESv4=\"$HOST_ETH\"" | sudo tee /etc/default/isc-dhcp-server
-
-    # Minimal dhcpd.conf for .0/24:
-    sudo tee /etc/dhcp/dhcpd.conf <<EOF
-subnet ${HOST_IP%.*}.0 netmask 255.255.255.0 {
-  range ${HOST_IP%.*}.100 ${HOST_IP%.*}.200;
-  option routers ${HOST_IP};
-  option domain-name-servers 8.8.8.8, 8.8.4.4;
-}
+    sudo tee /etc/dnsmasq.d/smarc.conf >/dev/null <<EOF
+interface=${HOST_ETH}
+bind-interfaces
+dhcp-range=${HOST_IP%.*}.100,${HOST_IP%.*}.200,12h
+dhcp-option=option:router,${HOST_IP}
+dhcp-option=option:dns-server,8.8.8.8,8.8.4.4
 EOF
 
-    sudo systemctl restart isc-dhcp-server
-    echo "DHCP server is up on $HOST_ETH"
+    sudo systemctl restart dnsmasq
+    echo "dnsmasq DHCP server is up on $HOST_ETH" | tee -a "$ORCHESTRATOR_LOG"
 
+    # start sshd
     echo "Start SSH (as needed)"
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
         echo "Starting SSH temporarily for image transfer"
@@ -170,7 +170,7 @@ EOF
 set -eux
 
 echo "[SMARC] bringing up eth0 via DHCP"
-dhcpd -t0 eth0
+udhcpc -t0 eth0
 
 echo "[SMARC] Waiting a couple seconds for lease…"
 sleep 2
