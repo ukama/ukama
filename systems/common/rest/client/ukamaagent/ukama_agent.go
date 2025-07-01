@@ -56,16 +56,16 @@ func NewUkamaAgentClient(h string) *ukamaAgentClient {
 }
 
 // Bind sim calls asr activate in order to add the ukama sims into ukama agent asr.
-func (o *ukamaAgentClient) BindSim(req client.AgentRequestData) (*UkamaSimInfo, error) {
-	return &UkamaSimInfo{}, o.ActivateSim(req)
+func (u *ukamaAgentClient) BindSim(req client.AgentRequestData) (*UkamaSimInfo, error) {
+	return &UkamaSimInfo{}, u.ActivateSim(req)
 }
 
-func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
+func (u *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	log.Debugf("Getting ukama sim info: %v", iccid)
 
 	sim := UkamaSim{}
 
-	resp, err := o.R.Get(o.u.String() + UkamaSimsEndpoint + "/" + iccid)
+	resp, err := u.R.Get(u.u.String() + UkamaSimsEndpoint + "/" + iccid)
 	if err != nil {
 		log.Errorf("GetSimInfo failure. error: %s", err.Error())
 
@@ -84,7 +84,7 @@ func (o *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	return sim.Record, nil
 }
 
-func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
+func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting ukama sim usages: %v", iccid)
 
 	var startTime int64 = defaultStartTime
@@ -108,7 +108,7 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 		endTime = t.Unix()
 	}
 
-	resp, err := o.R.Get(o.u.String() + UkamaUsageEndpoint +
+	resp, err := u.R.Get(u.u.String() + UkamaUsageEndpoint +
 		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime))
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %s", err.Error())
@@ -128,10 +128,10 @@ func (o *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	return map[string]any{iccid: usage.Usage}, nil, nil
 }
 
-func (o *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
+func (u *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
 	log.Debugf("Activating ukama sim: %v", req.Iccid)
 
-	_, err := o.R.C.R().SetBody(req).Put(o.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	_, err := u.R.C.R().SetBody(req).Put(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
 	if err != nil {
 		log.Errorf("ActivateSim failure. error: %s", err.Error())
 
@@ -141,10 +141,10 @@ func (o *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
 	return nil
 }
 
-func (o *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
+func (u *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
 	log.Debugf("Deactivating ukama sim: %v", req.Iccid)
 
-	_, err := o.R.C.R().SetBody(req).Delete(o.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	_, err := u.R.C.R().SetBody(req).Delete(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
 	if err != nil {
 		log.Errorf("DeactivateSim failure. error: %s", err.Error())
 
@@ -154,10 +154,10 @@ func (o *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
 	return nil
 }
 
-func (o *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
+func (u *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
 	log.Debugf("Updating ukama sim's pacakge: %v", req.Iccid)
 
-	_, err := o.R.C.R().SetBody(req).Patch(o.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
 	if err != nil {
 		log.Errorf("Update sim's package failure. error: %s", err.Error())
 
@@ -167,7 +167,7 @@ func (o *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
 	return nil
 }
 
-func (o *ukamaAgentClient) TerminateSim(iccid string) error {
+func (u *ukamaAgentClient) TerminateSim(iccid string) error {
 	log.Debugf("Terminating ukama sim: %v", iccid)
 
 	return nil

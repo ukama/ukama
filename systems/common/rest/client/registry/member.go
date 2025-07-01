@@ -55,12 +55,12 @@ func NewMemberClient(h string, options ...client.Option) *memberClient {
 	}
 }
 
-func (n *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
+func (m *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
 	log.Debugf("Getting member: %v", id)
 
 	mem := MemberInfoResponse{}
 
-	resp, err := n.R.Get(n.u.String() + MemberEndpoint + "/user/" + id)
+	resp, err := m.R.Get(m.u.String() + MemberEndpoint + "/user/" + id)
 	if err != nil {
 		log.Errorf("GetMember failure. error: %s", err.Error())
 
