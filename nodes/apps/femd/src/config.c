@@ -18,7 +18,6 @@ int config_init(Config *config) {
         return STATUS_NOK;
     }
     
-    // Initialize with default values
     memset(config, 0, sizeof(Config));
     
     config->serviceName = strdup(DEF_SERVICE_NAME);
@@ -65,13 +64,11 @@ int config_load_from_file(Config *config, const char *filename) {
         return STATUS_NOK;
     }
     
-    // Check if file exists
     if (access(filename, F_OK) != 0) {
         printf("[WARN] Config file does not exist: %s\n", filename);
         return STATUS_NOK;
     }
     
-    // Simple file reading
     FILE *file = fopen(filename, "r");
     if (!file) {
         printf("[ERROR] Failed to open config file: %s\n", filename);
@@ -88,34 +85,28 @@ int config_load_from_file(Config *config, const char *filename) {
     
     printf("[DEBUG] Read config file: %s\n", filename);
     
-    // Simple parsing - look for key=value pairs
     char *line = strtok(buffer, "\n");
     while (line != NULL) {
-        // Skip comments and empty lines
         if (line[0] == '#' || line[0] == '\0' || line[0] == '\n') {
             line = strtok(NULL, "\n");
             continue;
         }
         
-        // Look for key=value
         char *equals = strchr(line, '=');
         if (equals != NULL) {
             *equals = '\0';
             char *key = line;
             char *value = equals + 1;
             
-            // Trim whitespace (simple version)
             while (*key == ' ' || *key == '\t') key++;
             while (*value == ' ' || *value == '\t') value++;
             
-            // Remove trailing whitespace from value
             char *end = value + strlen(value) - 1;
             while (end > value && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r')) {
                 *end = '\0';
                 end--;
             }
             
-            // Update config based on key
             if (strcmp(key, "service_name") == 0) {
                 if (config->serviceName) free(config->serviceName);
                 config->serviceName = strdup(value);

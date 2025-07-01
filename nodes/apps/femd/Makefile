@@ -22,11 +22,9 @@ PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
 PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
-# Packages needed to compile target (minimal for now - skip for basic testing)
 VENDOR_PKG=
 PLATFORM=
 
-# Setting up various compile and link flags
 CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
@@ -42,14 +40,11 @@ LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
-# Libraries needed (minimal for now - basic system libs only)
 LIBS+=-lpthread
 
-# Source files
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
 
-# Use system gcc for now
 CC = gcc
 
 .PHONY: all clean $(TARGET_EXEC)
