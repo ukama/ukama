@@ -17,6 +17,86 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
 )
 
+const (
+	// ICCID values for PoolStats tests
+	TestIccidPool1 = "1"
+	TestIccidPool2 = "2"
+	TestIccidPool3 = "3"
+	TestIccidPool4 = "4"
+	TestIccidPool5 = "5"
+	TestIccidPool6 = "6"
+
+	// ICCID values for PbParseToModel tests
+	TestIccidPb1 = "12345678901234567890"
+	TestIccidPb2 = "11111111111111111111"
+	TestIccidPb3 = "22222222222222222222"
+	TestIccidPb4 = "33333333333333333333"
+
+	// ICCID values for ParseBytesToRawSim tests
+	TestIccidCsv1 = "12345678901234567890"
+	TestIccidCsv2 = "98765432109876543210"
+	TestIccidCsv3 = "11111111111111111111"
+
+	// ICCID values for RawSimToPb tests
+	TestIccidRaw1 = "12345678901234567890"
+	TestIccidRaw2 = "98765432109876543210"
+	TestIccidRaw3 = "11111111111111111111"
+	TestIccidRaw4 = "22222222222222222222"
+	TestIccidRaw5 = "33333333333333333333"
+	TestIccidRaw6 = "44444444444444444444"
+	TestIccidRaw7 = "55555555555555555555"
+
+	// MSISDN values
+	TestMsisdn1 = "+1234567890"
+	TestMsisdn2 = "+9876543210"
+	TestMsisdn3 = "+1111111111"
+	TestMsisdn4 = "+2222222222"
+	TestMsisdn5 = "+3333333333"
+	TestMsisdn6 = "+4444444444"
+	TestMsisdn7 = "+5555555555"
+
+	// SmDpAddress values
+	TestSmDpAddress1 = "smdp.example.com"
+	TestSmDpAddress2 = "smdp2.example.com"
+	TestSmDpAddress3 = "smdp1.example.com"
+	TestSmDpAddress4 = "smdp3.example.com"
+	TestSmDpAddress5 = "smdp4.example.com"
+	TestSmDpAddress6 = "smdp5.example.com"
+
+	// ActivationCode values
+	TestActivationCode1 = "ACT123"
+	TestActivationCode2 = "ACT456"
+	TestActivationCode3 = "ACT111"
+	TestActivationCode4 = "ACT222"
+	TestActivationCode5 = "ACT333"
+	TestActivationCode6 = "ACT444"
+	TestActivationCode7 = "ACT555"
+
+	// QR Code values
+	TestQrCode1 = "QR123"
+	TestQrCode2 = "QR456"
+	TestQrCode3 = "QR111"
+	TestQrCode4 = "QR222"
+	TestQrCode5 = "QR333"
+	TestQrCode6 = "QR444"
+	TestQrCode7 = "QR555"
+
+	// SimType string values
+	TestSimTypeTest         = "test"
+	TestSimTypeOperatorData = "operator_data"
+	TestSimTypeUkamaData    = "ukama_data"
+	TestSimTypeUnknown      = "unknown_type"
+
+	// Physical flag values
+	TestPhysicalTrue       = "TRUE"
+	TestPhysicalFalse      = "FALSE"
+	TestPhysicalTrueLower  = "true"
+	TestPhysicalFalseLower = "false"
+
+	// CSV headers
+	TestCsvHeader = "ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical"
+)
+
 func TestPoolStats(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -38,9 +118,9 @@ func TestPoolStats(t *testing.T) {
 		{
 			name: "All available physical sims",
 			sims: []db.Sim{
-				{Iccid: "1", IsAllocated: false, IsFailed: false, IsPhysical: true},
-				{Iccid: "2", IsAllocated: false, IsFailed: false, IsPhysical: true},
-				{Iccid: "3", IsAllocated: false, IsFailed: false, IsPhysical: true},
+				{Iccid: TestIccidPool1, IsAllocated: false, IsFailed: false, IsPhysical: true},
+				{Iccid: TestIccidPool2, IsAllocated: false, IsFailed: false, IsPhysical: true},
+				{Iccid: TestIccidPool3, IsAllocated: false, IsFailed: false, IsPhysical: true},
 			},
 			expected: &pb.GetStatsResponse{
 				Total:     3,
@@ -54,8 +134,8 @@ func TestPoolStats(t *testing.T) {
 		{
 			name: "All available esims",
 			sims: []db.Sim{
-				{Iccid: "1", IsAllocated: false, IsFailed: false, IsPhysical: false},
-				{Iccid: "2", IsAllocated: false, IsFailed: false, IsPhysical: false},
+				{Iccid: TestIccidPool1, IsAllocated: false, IsFailed: false, IsPhysical: false},
+				{Iccid: TestIccidPool2, IsAllocated: false, IsFailed: false, IsPhysical: false},
 			},
 			expected: &pb.GetStatsResponse{
 				Total:     2,
@@ -69,12 +149,12 @@ func TestPoolStats(t *testing.T) {
 		{
 			name: "Mixed status sims",
 			sims: []db.Sim{
-				{Iccid: "1", IsAllocated: true, IsFailed: false, IsPhysical: true},   // consumed physical
-				{Iccid: "2", IsAllocated: false, IsFailed: true, IsPhysical: true},   // failed physical
-				{Iccid: "3", IsAllocated: false, IsFailed: false, IsPhysical: true},  // available physical
-				{Iccid: "4", IsAllocated: true, IsFailed: false, IsPhysical: false},  // consumed esim
-				{Iccid: "5", IsAllocated: false, IsFailed: true, IsPhysical: false},  // failed esim
-				{Iccid: "6", IsAllocated: false, IsFailed: false, IsPhysical: false}, // available esim
+				{Iccid: TestIccidPool1, IsAllocated: true, IsFailed: false, IsPhysical: true},   // consumed physical
+				{Iccid: TestIccidPool2, IsAllocated: false, IsFailed: true, IsPhysical: true},   // failed physical
+				{Iccid: TestIccidPool3, IsAllocated: false, IsFailed: false, IsPhysical: true},  // available physical
+				{Iccid: TestIccidPool4, IsAllocated: true, IsFailed: false, IsPhysical: false},  // consumed esim
+				{Iccid: TestIccidPool5, IsAllocated: false, IsFailed: true, IsPhysical: false},  // failed esim
+				{Iccid: TestIccidPool6, IsAllocated: false, IsFailed: false, IsPhysical: false}, // available esim
 			},
 			expected: &pb.GetStatsResponse{
 				Total:     6,
@@ -88,8 +168,8 @@ func TestPoolStats(t *testing.T) {
 		{
 			name: "All consumed sims",
 			sims: []db.Sim{
-				{Iccid: "1", IsAllocated: true, IsFailed: false, IsPhysical: true},
-				{Iccid: "2", IsAllocated: true, IsFailed: false, IsPhysical: false},
+				{Iccid: TestIccidPool1, IsAllocated: true, IsFailed: false, IsPhysical: true},
+				{Iccid: TestIccidPool2, IsAllocated: true, IsFailed: false, IsPhysical: false},
 			},
 			expected: &pb.GetStatsResponse{
 				Total:     2,
@@ -103,8 +183,8 @@ func TestPoolStats(t *testing.T) {
 		{
 			name: "All failed sims",
 			sims: []db.Sim{
-				{Iccid: "1", IsAllocated: false, IsFailed: true, IsPhysical: true},
-				{Iccid: "2", IsAllocated: false, IsFailed: true, IsPhysical: false},
+				{Iccid: TestIccidPool1, IsAllocated: false, IsFailed: true, IsPhysical: true},
+				{Iccid: TestIccidPool2, IsAllocated: false, IsFailed: true, IsPhysical: false},
 			},
 			expected: &pb.GetStatsResponse{
 				Total:     2,
@@ -140,22 +220,22 @@ func TestPbParseToModel(t *testing.T) {
 			name: "Single sim",
 			input: []*pb.AddSim{
 				{
-					Iccid:          "12345678901234567890",
-					Msisdn:         "+1234567890",
-					SmDpAddress:    "smdp.example.com",
-					ActivationCode: "ACT123",
-					QrCode:         "QR123",
-					SimType:        "test",
+					Iccid:          TestIccidPb1,
+					Msisdn:         TestMsisdn1,
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
+					QrCode:         TestQrCode1,
+					SimType:        TestSimTypeTest,
 					IsPhysical:     true,
 				},
 			},
 			expected: []db.Sim{
 				{
-					Iccid:          "12345678901234567890",
-					Msisdn:         "+1234567890",
-					SmDpAddress:    "smdp.example.com",
-					ActivationCode: "ACT123",
-					QrCode:         "QR123",
+					Iccid:          TestIccidPb1,
+					Msisdn:         TestMsisdn1,
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
+					QrCode:         TestQrCode1,
 					SimType:        ukama.SimTypeTest,
 					IsPhysical:     true,
 				},
@@ -165,40 +245,40 @@ func TestPbParseToModel(t *testing.T) {
 			name: "Multiple sims with different types",
 			input: []*pb.AddSim{
 				{
-					Iccid:          "11111111111111111111",
-					Msisdn:         "+1111111111",
-					SmDpAddress:    "smdp1.example.com",
-					ActivationCode: "ACT111",
-					QrCode:         "QR111",
-					SimType:        "operator_data",
+					Iccid:          TestIccidPb2,
+					Msisdn:         TestMsisdn3,
+					SmDpAddress:    TestSmDpAddress3,
+					ActivationCode: TestActivationCode3,
+					QrCode:         TestQrCode3,
+					SimType:        TestSimTypeOperatorData,
 					IsPhysical:     true,
 				},
 				{
-					Iccid:          "22222222222222222222",
-					Msisdn:         "+2222222222",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT222",
-					QrCode:         "QR222",
-					SimType:        "ukama_data",
+					Iccid:          TestIccidPb3,
+					Msisdn:         TestMsisdn4,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode4,
+					QrCode:         TestQrCode4,
+					SimType:        TestSimTypeUkamaData,
 					IsPhysical:     false,
 				},
 			},
 			expected: []db.Sim{
 				{
-					Iccid:          "11111111111111111111",
-					Msisdn:         "+1111111111",
-					SmDpAddress:    "smdp1.example.com",
-					ActivationCode: "ACT111",
-					QrCode:         "QR111",
+					Iccid:          TestIccidPb2,
+					Msisdn:         TestMsisdn3,
+					SmDpAddress:    TestSmDpAddress3,
+					ActivationCode: TestActivationCode3,
+					QrCode:         TestQrCode3,
 					SimType:        ukama.SimTypeOperatorData,
 					IsPhysical:     true,
 				},
 				{
-					Iccid:          "22222222222222222222",
-					Msisdn:         "+2222222222",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT222",
-					QrCode:         "QR222",
+					Iccid:          TestIccidPb3,
+					Msisdn:         TestMsisdn4,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode4,
+					QrCode:         TestQrCode4,
 					SimType:        ukama.SimTypeUkamaData,
 					IsPhysical:     false,
 				},
@@ -208,22 +288,22 @@ func TestPbParseToModel(t *testing.T) {
 			name: "Unknown sim type",
 			input: []*pb.AddSim{
 				{
-					Iccid:          "33333333333333333333",
-					Msisdn:         "+3333333333",
-					SmDpAddress:    "smdp3.example.com",
-					ActivationCode: "ACT333",
-					QrCode:         "QR333",
-					SimType:        "unknown_type",
+					Iccid:          TestIccidPb4,
+					Msisdn:         TestMsisdn5,
+					SmDpAddress:    TestSmDpAddress4,
+					ActivationCode: TestActivationCode5,
+					QrCode:         TestQrCode5,
+					SimType:        TestSimTypeUnknown,
 					IsPhysical:     true,
 				},
 			},
 			expected: []db.Sim{
 				{
-					Iccid:          "33333333333333333333",
-					Msisdn:         "+3333333333",
-					SmDpAddress:    "smdp3.example.com",
-					ActivationCode: "ACT333",
-					QrCode:         "QR333",
+					Iccid:          TestIccidPb4,
+					Msisdn:         TestMsisdn5,
+					SmDpAddress:    TestSmDpAddress4,
+					ActivationCode: TestActivationCode5,
+					QrCode:         TestQrCode5,
 					SimType:        ukama.SimTypeUnknown,
 					IsPhysical:     true,
 				},
@@ -253,62 +333,62 @@ func TestParseBytesToRawSim(t *testing.T) {
 		},
 		{
 			name: "Valid CSV with headers",
-			input: []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-12345678901234567890,+1234567890,smdp.example.com,ACT123,QR123,TRUE
-98765432109876543210,+9876543210,smdp2.example.com,ACT456,QR456,FALSE`),
+			input: []byte(TestCsvHeader + "\n" +
+				TestIccidCsv1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + "," + TestPhysicalTrue + "\n" +
+				TestIccidCsv2 + "," + TestMsisdn2 + "," + TestSmDpAddress2 + "," + TestActivationCode2 + "," + TestQrCode2 + "," + TestPhysicalFalse),
 			expected: []RawSim{
 				{
-					Iccid:          "12345678901234567890",
-					Msisdn:         "+1234567890",
-					SmDpAddress:    "smdp.example.com",
-					ActivationCode: "ACT123",
-					QrCode:         "QR123",
-					IsPhysical:     "TRUE",
+					Iccid:          TestIccidCsv1,
+					Msisdn:         TestMsisdn1,
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
+					QrCode:         TestQrCode1,
+					IsPhysical:     TestPhysicalTrue,
 				},
 				{
-					Iccid:          "98765432109876543210",
-					Msisdn:         "+9876543210",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT456",
-					QrCode:         "QR456",
-					IsPhysical:     "FALSE",
+					Iccid:          TestIccidCsv2,
+					Msisdn:         TestMsisdn2,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode2,
+					QrCode:         TestQrCode2,
+					IsPhysical:     TestPhysicalFalse,
 				},
 			},
 		},
 		{
 			name: "Single row CSV",
-			input: []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-11111111111111111111,+1111111111,smdp1.example.com,ACT111,QR111,TRUE`),
+			input: []byte(TestCsvHeader + "\n" +
+				TestIccidCsv3 + "," + TestMsisdn3 + "," + TestSmDpAddress3 + "," + TestActivationCode3 + "," + TestQrCode3 + "," + TestPhysicalTrue),
 			expected: []RawSim{
 				{
-					Iccid:          "11111111111111111111",
-					Msisdn:         "+1111111111",
-					SmDpAddress:    "smdp1.example.com",
-					ActivationCode: "ACT111",
-					QrCode:         "QR111",
-					IsPhysical:     "TRUE",
+					Iccid:          TestIccidCsv3,
+					Msisdn:         TestMsisdn3,
+					SmDpAddress:    TestSmDpAddress3,
+					ActivationCode: TestActivationCode3,
+					QrCode:         TestQrCode3,
+					IsPhysical:     TestPhysicalTrue,
 				},
 			},
 		},
 		{
 			name: "CSV with empty fields",
-			input: []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-12345678901234567890,,smdp.example.com,,QR123,TRUE`),
+			input: []byte(TestCsvHeader + "\n" +
+				TestIccidCsv1 + ",," + TestSmDpAddress1 + ",," + TestQrCode1 + "," + TestPhysicalTrue),
 			expected: []RawSim{
 				{
-					Iccid:          "12345678901234567890",
+					Iccid:          TestIccidCsv1,
 					Msisdn:         "",
-					SmDpAddress:    "smdp.example.com",
+					SmDpAddress:    TestSmDpAddress1,
 					ActivationCode: "",
-					QrCode:         "QR123",
-					IsPhysical:     "TRUE",
+					QrCode:         TestQrCode1,
+					IsPhysical:     TestPhysicalTrue,
 				},
 			},
 		},
 		{
 			name: "Invalid CSV format - wrong number of columns",
-			input: []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-12345678901234567890,+1234567890,smdp.example.com,ACT123,QR123,TRUE,EXTRA_COLUMN`),
+			input: []byte(TestCsvHeader + "\n" +
+				TestIccidCsv1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + "," + TestPhysicalTrue + ",EXTRA_COLUMN"),
 			expectError: true,
 		},
 	}
@@ -344,22 +424,22 @@ func TestRawSimToPb(t *testing.T) {
 			name: "Single physical sim",
 			input: []RawSim{
 				{
-					Iccid:          "12345678901234567890",
-					Msisdn:         "+1234567890",
-					SmDpAddress:    "smdp.example.com",
-					ActivationCode: "ACT123",
-					QrCode:         "QR123",
-					IsPhysical:     "TRUE",
+					Iccid:          TestIccidRaw1,
+					Msisdn:         TestMsisdn1,
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
+					QrCode:         TestQrCode1,
+					IsPhysical:     TestPhysicalTrue,
 				},
 			},
-			simType: "test",
+			simType: TestSimTypeTest,
 			expected: []db.Sim{
 				{
-					Iccid:          "12345678901234567890",
-					Msisdn:         "+1234567890",
-					SmDpAddress:    "smdp.example.com",
-					ActivationCode: "ACT123",
-					QrCode:         "QR123",
+					Iccid:          TestIccidRaw1,
+					Msisdn:         TestMsisdn1,
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
+					QrCode:         TestQrCode1,
 					SimType:        ukama.SimTypeTest,
 					IsPhysical:     true,
 				},
@@ -369,22 +449,22 @@ func TestRawSimToPb(t *testing.T) {
 			name: "Single esim",
 			input: []RawSim{
 				{
-					Iccid:          "98765432109876543210",
-					Msisdn:         "+9876543210",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT456",
-					QrCode:         "QR456",
-					IsPhysical:     "FALSE",
+					Iccid:          TestIccidRaw2,
+					Msisdn:         TestMsisdn2,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode2,
+					QrCode:         TestQrCode2,
+					IsPhysical:     TestPhysicalFalse,
 				},
 			},
-			simType: "operator_data",
+			simType: TestSimTypeOperatorData,
 			expected: []db.Sim{
 				{
-					Iccid:          "98765432109876543210",
-					Msisdn:         "+9876543210",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT456",
-					QrCode:         "QR456",
+					Iccid:          TestIccidRaw2,
+					Msisdn:         TestMsisdn2,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode2,
+					QrCode:         TestQrCode2,
 					SimType:        ukama.SimTypeOperatorData,
 					IsPhysical:     false,
 				},
@@ -394,39 +474,39 @@ func TestRawSimToPb(t *testing.T) {
 			name: "Multiple sims with different physical types",
 			input: []RawSim{
 				{
-					Iccid:          "11111111111111111111",
-					Msisdn:         "+1111111111",
-					SmDpAddress:    "smdp1.example.com",
-					ActivationCode: "ACT111",
-					QrCode:         "QR111",
-					IsPhysical:     "TRUE",
+					Iccid:          TestIccidRaw3,
+					Msisdn:         TestMsisdn3,
+					SmDpAddress:    TestSmDpAddress3,
+					ActivationCode: TestActivationCode3,
+					QrCode:         TestQrCode3,
+					IsPhysical:     TestPhysicalTrue,
 				},
 				{
-					Iccid:          "22222222222222222222",
-					Msisdn:         "+2222222222",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT222",
-					QrCode:         "QR222",
-					IsPhysical:     "FALSE",
+					Iccid:          TestIccidRaw4,
+					Msisdn:         TestMsisdn4,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode4,
+					QrCode:         TestQrCode4,
+					IsPhysical:     TestPhysicalFalse,
 				},
 			},
-			simType: "ukama_data",
+			simType: TestSimTypeUkamaData,
 			expected: []db.Sim{
 				{
-					Iccid:          "11111111111111111111",
-					Msisdn:         "+1111111111",
-					SmDpAddress:    "smdp1.example.com",
-					ActivationCode: "ACT111",
-					QrCode:         "QR111",
+					Iccid:          TestIccidRaw3,
+					Msisdn:         TestMsisdn3,
+					SmDpAddress:    TestSmDpAddress3,
+					ActivationCode: TestActivationCode3,
+					QrCode:         TestQrCode3,
 					SimType:        ukama.SimTypeUkamaData,
 					IsPhysical:     true,
 				},
 				{
-					Iccid:          "22222222222222222222",
-					Msisdn:         "+2222222222",
-					SmDpAddress:    "smdp2.example.com",
-					ActivationCode: "ACT222",
-					QrCode:         "QR222",
+					Iccid:          TestIccidRaw4,
+					Msisdn:         TestMsisdn4,
+					SmDpAddress:    TestSmDpAddress2,
+					ActivationCode: TestActivationCode4,
+					QrCode:         TestQrCode4,
 					SimType:        ukama.SimTypeUkamaData,
 					IsPhysical:     false,
 				},
@@ -436,39 +516,39 @@ func TestRawSimToPb(t *testing.T) {
 			name: "Case insensitive physical flag",
 			input: []RawSim{
 				{
-					Iccid:          "33333333333333333333",
-					Msisdn:         "+3333333333",
-					SmDpAddress:    "smdp3.example.com",
-					ActivationCode: "ACT333",
-					QrCode:         "QR333",
-					IsPhysical:     "true",
+					Iccid:          TestIccidRaw5,
+					Msisdn:         TestMsisdn5,
+					SmDpAddress:    TestSmDpAddress4,
+					ActivationCode: TestActivationCode5,
+					QrCode:         TestQrCode5,
+					IsPhysical:     TestPhysicalTrueLower,
 				},
 				{
-					Iccid:          "44444444444444444444",
-					Msisdn:         "+4444444444",
-					SmDpAddress:    "smdp4.example.com",
-					ActivationCode: "ACT444",
-					QrCode:         "QR444",
-					IsPhysical:     "false",
+					Iccid:          TestIccidRaw6,
+					Msisdn:         TestMsisdn6,
+					SmDpAddress:    TestSmDpAddress5,
+					ActivationCode: TestActivationCode6,
+					QrCode:         TestQrCode6,
+					IsPhysical:     TestPhysicalFalseLower,
 				},
 			},
-			simType: "test",
+			simType: TestSimTypeTest,
 			expected: []db.Sim{
 				{
-					Iccid:          "33333333333333333333",
-					Msisdn:         "+3333333333",
-					SmDpAddress:    "smdp3.example.com",
-					ActivationCode: "ACT333",
-					QrCode:         "QR333",
+					Iccid:          TestIccidRaw5,
+					Msisdn:         TestMsisdn5,
+					SmDpAddress:    TestSmDpAddress4,
+					ActivationCode: TestActivationCode5,
+					QrCode:         TestQrCode5,
 					SimType:        ukama.SimTypeTest,
 					IsPhysical:     false, // Only "TRUE" (uppercase) is considered true
 				},
 				{
-					Iccid:          "44444444444444444444",
-					Msisdn:         "+4444444444",
-					SmDpAddress:    "smdp4.example.com",
-					ActivationCode: "ACT444",
-					QrCode:         "QR444",
+					Iccid:          TestIccidRaw6,
+					Msisdn:         TestMsisdn6,
+					SmDpAddress:    TestSmDpAddress5,
+					ActivationCode: TestActivationCode6,
+					QrCode:         TestQrCode6,
 					SimType:        ukama.SimTypeTest,
 					IsPhysical:     false,
 				},
@@ -478,22 +558,22 @@ func TestRawSimToPb(t *testing.T) {
 			name: "Unknown sim type",
 			input: []RawSim{
 				{
-					Iccid:          "55555555555555555555",
-					Msisdn:         "+5555555555",
-					SmDpAddress:    "smdp5.example.com",
-					ActivationCode: "ACT555",
-					QrCode:         "QR555",
-					IsPhysical:     "TRUE",
+					Iccid:          TestIccidRaw7,
+					Msisdn:         TestMsisdn7,
+					SmDpAddress:    TestSmDpAddress6,
+					ActivationCode: TestActivationCode7,
+					QrCode:         TestQrCode7,
+					IsPhysical:     TestPhysicalTrue,
 				},
 			},
-			simType: "unknown_type",
+			simType: TestSimTypeUnknown,
 			expected: []db.Sim{
 				{
-					Iccid:          "55555555555555555555",
-					Msisdn:         "+5555555555",
-					SmDpAddress:    "smdp5.example.com",
-					ActivationCode: "ACT555",
-					QrCode:         "QR555",
+					Iccid:          TestIccidRaw7,
+					Msisdn:         TestMsisdn7,
+					SmDpAddress:    TestSmDpAddress6,
+					ActivationCode: TestActivationCode7,
+					QrCode:         TestQrCode7,
 					SimType:        ukama.SimTypeUnknown,
 					IsPhysical:     true,
 				},

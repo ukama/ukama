@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/systems/common/grpc"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	ukama "github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/mocks"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
@@ -24,7 +24,48 @@ import (
 	"context"
 )
 
-const OrgName = "testOrg"
+const (
+	// Organization name for testing
+	OrgName = "testOrg"
+
+	// ICCID values
+	TestIccid1 = "1234567890123456789"
+	TestIccid2 = "9876543210987654321"
+
+	// MSISDN values
+	TestMsisdn1 = "2345678901"
+	TestMsisdn2 = "3456789012"
+
+	// SimType values
+	TestSimTypeData  = ukama.SimTypeUkamaData
+	TestSimTypeVoice = ukama.SimTypeOperatorData
+
+	// SmDpAddress values
+	TestSmDpAddress1 = "http://localhost:8080"
+	TestSmDpAddress2 = "http://localhost:8081"
+
+	// ActivationCode values
+	TestActivationCode1 = "123456"
+	TestActivationCode2 = "654321"
+
+	// QR Code values
+	TestQrCode1 = "QR123"
+	TestQrCode2 = "QR456"
+
+	// Test ID
+	TestId = uint64(1)
+
+	// Error messages
+	ErrorSimPoolRecordNotFound = "SimPool record not found!"
+	ErrorDeletingRecord        = "Error while deleting record!"
+	ErrorCreatingSims          = "Error creating sims"
+	ErrorFetchingSims          = "Error fetching sims"
+	ErrorAddingSims            = "Error adding sims"
+	ErrorMessageBus            = "Message bus error"
+
+	// CSV headers
+	CsvHeader = "ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical"
+)
 
 func TestGetStats(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
@@ -32,15 +73,15 @@ func TestGetStats(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetStatsRequest{
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 		mockRepo.On("GetSimsByType", mock.Anything).Return([]db.Sim{{
-			Iccid:          "1234567890123456789",
-			Msisdn:         "2345678901",
-			SimType:        ukama.ParseSimType("ukama_data"),
-			SmDpAddress:    "http://localhost:8080",
+			Iccid:          TestIccid1,
+			Msisdn:         TestMsisdn1,
+			SimType:        ukama.ParseSimType(TestSimTypeData.String()),
+			SmDpAddress:    TestSmDpAddress1,
 			IsAllocated:    false,
-			ActivationCode: "123456",
+			ActivationCode: TestActivationCode1,
 		}}, nil)
 		res, err := simService.GetStats(context.Background(), reqMock)
 		assert.NoError(t, err)
@@ -52,9 +93,9 @@ func TestGetStats(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetStatsRequest{
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
-		mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("SimPool record not found!"), "sim-pool"))
+		mockRepo.On("GetSimsByType", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New(ErrorSimPoolRecordNotFound), "sim-pool"))
 		res, err := simService.GetStats(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -68,7 +109,7 @@ func TestDelete(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.DeleteRequest{
-			Id: []uint64{1},
+			Id: []uint64{TestId},
 		}
 		mockRepo.On("Delete", mock.Anything).Return(nil)
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimRemoved")).Return(nil).Once()
@@ -85,9 +126,9 @@ func TestDelete(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.DeleteRequest{
-			Id: []uint64{1},
+			Id: []uint64{TestId},
 		}
-		mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error while deleting record!"), "sim-pool"))
+		mockRepo.On("Delete", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New(ErrorDeletingRecord), "sim-pool"))
 		res, err := simService.Delete(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -103,11 +144,11 @@ func TestAdd(t *testing.T) {
 		reqMock := &pb.AddRequest{
 			Sim: []*pb.AddSim{
 				{
-					Iccid:          "1234567890123456789",
-					Msisdn:         "2345678901",
-					SimType:        "ukama_data",
-					SmDpAddress:    "http://localhost:8080",
-					ActivationCode: "123456",
+					Iccid:          TestIccid1,
+					Msisdn:         TestMsisdn1,
+					SimType:        TestSimTypeData.String(),
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
 					IsPhysical:     false,
 				},
 			},
@@ -128,16 +169,16 @@ func TestAdd(t *testing.T) {
 		reqMock := &pb.AddRequest{
 			Sim: []*pb.AddSim{
 				{
-					Iccid:          "1234567890123456789",
-					Msisdn:         "2345678901",
-					SimType:        "ukama_data",
-					SmDpAddress:    "http://localhost:8080",
-					ActivationCode: "123456",
+					Iccid:          TestIccid1,
+					Msisdn:         TestMsisdn1,
+					SimType:        TestSimTypeData.String(),
+					SmDpAddress:    TestSmDpAddress1,
+					ActivationCode: TestActivationCode1,
 					IsPhysical:     false,
 				},
 			},
 		}
-		mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New("Error creating sims"), "sim-pool"))
+		mockRepo.On("Add", mock.Anything).Return(grpc.SqlErrorToGrpc(errors.New(ErrorCreatingSims), "sim-pool"))
 		res, err := simService.Add(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -152,19 +193,19 @@ func TestGet(t *testing.T) {
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetRequest{
 			IsPhysicalSim: true,
-			SimType:       "ukama_data",
+			SimType:       TestSimTypeData.String(),
 		}
 		mockRepo.On("Get", mock.Anything, mock.Anything).Return(&db.Sim{
-			Iccid:          "1234567890123456789",
-			Msisdn:         "2345678901",
-			SimType:        ukama.ParseSimType("ukama_data"),
-			SmDpAddress:    "http://localhost:8080",
-			ActivationCode: "123456",
+			Iccid:          TestIccid1,
+			Msisdn:         TestMsisdn1,
+			SimType:        ukama.ParseSimType(TestSimTypeData.String()),
+			SmDpAddress:    TestSmDpAddress1,
+			ActivationCode: TestActivationCode1,
 			IsPhysical:     false,
 		}, nil)
 		res, err := simService.Get(context.Background(), reqMock)
 		assert.NoError(t, err)
-		assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+		assert.Equal(t, TestIccid1, res.Sim.Iccid)
 		mockRepo.AssertExpectations(t)
 	})
 
@@ -174,9 +215,9 @@ func TestGet(t *testing.T) {
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetRequest{
 			IsPhysicalSim: true,
-			SimType:       "ukama_data",
+			SimType:       TestSimTypeData.String(),
 		}
-		mockRepo.On("Get", mock.Anything, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+		mockRepo.On("Get", mock.Anything, mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New(ErrorFetchingSims), "sim-pool"))
 		res, err := simService.Get(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -190,19 +231,19 @@ func TestGetByIccid(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetByIccidRequest{
-			Iccid: "1234567890123456789",
+			Iccid: TestIccid1,
 		}
 		mockRepo.On("GetByIccid", reqMock.Iccid).Return(&db.Sim{
-			Iccid:          "1234567890123456789",
-			Msisdn:         "2345678901",
-			SimType:        ukama.ParseSimType("ukama_data"),
-			SmDpAddress:    "http://localhost:8080",
-			ActivationCode: "123456",
+			Iccid:          TestIccid1,
+			Msisdn:         TestMsisdn1,
+			SimType:        ukama.ParseSimType(TestSimTypeData.String()),
+			SmDpAddress:    TestSmDpAddress1,
+			ActivationCode: TestActivationCode1,
 			IsPhysical:     false,
 		}, nil)
 		res, err := simService.GetByIccid(context.Background(), reqMock)
 		assert.NoError(t, err)
-		assert.Equal(t, "1234567890123456789", res.Sim.Iccid)
+		assert.Equal(t, TestIccid1, res.Sim.Iccid)
 		mockRepo.AssertExpectations(t)
 	})
 
@@ -211,9 +252,9 @@ func TestGetByIccid(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetByIccidRequest{
-			Iccid: "1234567890123456789",
+			Iccid: TestIccid1,
 		}
-		mockRepo.On("GetByIccid", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+		mockRepo.On("GetByIccid", mock.Anything).Return(nil, grpc.SqlErrorToGrpc(errors.New(ErrorFetchingSims), "sim-pool"))
 		res, err := simService.GetByIccid(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -227,37 +268,37 @@ func TestGetSims(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 		mockSims := []db.Sim{
 			{
-				Iccid:          "1234567890123456789",
-				Msisdn:         "2345678901",
-				SimType:        ukama.ParseSimType("ukama_data"),
-				SmDpAddress:    "http://localhost:8080",
+				Iccid:          TestIccid1,
+				Msisdn:         TestMsisdn1,
+				SimType:        ukama.ParseSimType(TestSimTypeData.String()),
+				SmDpAddress:    TestSmDpAddress1,
 				IsAllocated:    false,
-				ActivationCode: "123456",
+				ActivationCode: TestActivationCode1,
 				IsPhysical:     false,
 			},
 			{
-				Iccid:          "9876543210987654321",
-				Msisdn:         "3456789012",
-				SimType:        ukama.ParseSimType("ukama_data"),
-				SmDpAddress:    "http://localhost:8080",
+				Iccid:          TestIccid2,
+				Msisdn:         TestMsisdn2,
+				SimType:        ukama.ParseSimType(TestSimTypeData.String()),
+				SmDpAddress:    TestSmDpAddress1,
 				IsAllocated:    true,
-				ActivationCode: "654321",
+				ActivationCode: TestActivationCode2,
 				IsPhysical:     true,
 			},
 		}
-		mockRepo.On("GetSims", ukama.ParseSimType("ukama_data")).Return(mockSims, nil)
+		mockRepo.On("GetSims", ukama.ParseSimType(TestSimTypeData.String())).Return(mockSims, nil)
 		res, err := simService.GetSims(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Len(t, res.Sims, 2)
-		assert.Equal(t, "1234567890123456789", res.Sims[0].Iccid)
-		assert.Equal(t, "9876543210987654321", res.Sims[1].Iccid)
-		assert.Equal(t, "ukama_data", res.Sims[0].SimType)
-		assert.Equal(t, "ukama_data", res.Sims[1].SimType)
+		assert.Equal(t, TestIccid1, res.Sims[0].Iccid)
+		assert.Equal(t, TestIccid2, res.Sims[1].Iccid)
+		assert.Equal(t, TestSimTypeData.String(), res.Sims[0].SimType)
+		assert.Equal(t, TestSimTypeData.String(), res.Sims[1].SimType)
 		mockRepo.AssertExpectations(t)
 	})
 
@@ -266,9 +307,9 @@ func TestGetSims(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
-		mockRepo.On("GetSims", ukama.ParseSimType("ukama_data")).Return(nil, grpc.SqlErrorToGrpc(errors.New("Error fetching sims"), "sim-pool"))
+		mockRepo.On("GetSims", ukama.ParseSimType(TestSimTypeData.String())).Return(nil, grpc.SqlErrorToGrpc(errors.New(ErrorFetchingSims), "sim-pool"))
 		res, err := simService.GetSims(context.Background(), reqMock)
 		assert.Error(t, err)
 		assert.Nil(t, res)
@@ -280,9 +321,9 @@ func TestGetSims(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 		reqMock := &pb.GetSimsRequest{
-			SimType: "ukama_voice",
+			SimType: TestSimTypeVoice.String(),
 		}
-		mockRepo.On("GetSims", ukama.ParseSimType("ukama_voice")).Return([]db.Sim{}, nil)
+		mockRepo.On("GetSims", ukama.ParseSimType(TestSimTypeVoice.String())).Return([]db.Sim{}, nil)
 		res, err := simService.GetSims(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
@@ -297,20 +338,17 @@ func TestUpload(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 
-		// CSV data for testing
-		csvData := []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-1234567890123456789,2345678901,http://localhost:8080,123456,QR123,FALSE
-9876543210987654321,3456789012,http://localhost:8081,654321,QR456,TRUE`)
+		csvData := []byte(CsvHeader + "\n" +
+			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE\n" +
+			TestIccid2 + "," + TestMsisdn2 + "," + TestSmDpAddress2 + "," + TestActivationCode2 + "," + TestQrCode2 + ",TRUE")
 
 		reqMock := &pb.UploadRequest{
 			SimData: csvData,
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 
-		// Mock the repository Add method
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		// Mock the message bus publish
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
@@ -318,8 +356,8 @@ func TestUpload(t *testing.T) {
 		assert.NotNil(t, res)
 
 		assert.Len(t, res.Iccid, 2)
-		assert.Contains(t, res.Iccid, "1234567890123456789")
-		assert.Contains(t, res.Iccid, "9876543210987654321")
+		assert.Contains(t, res.Iccid, TestIccid1)
+		assert.Contains(t, res.Iccid, TestIccid2)
 
 		mockRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
@@ -330,17 +368,15 @@ func TestUpload(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 
-		// CSV data for testing
-		csvData := []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-1234567890123456789,2345678901,http://localhost:8080,123456,QR123,FALSE`)
+		csvData := []byte(CsvHeader + "\n" +
+			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE")
 
 		reqMock := &pb.UploadRequest{
 			SimData: csvData,
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 
-		// Mock the repository Add method to return error
-		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(grpc.SqlErrorToGrpc(errors.New("Error adding sims"), "sim-pool"))
+		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(grpc.SqlErrorToGrpc(errors.New(ErrorAddingSims), "sim-pool"))
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.Error(t, err)
@@ -354,24 +390,20 @@ func TestUpload(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 
-		// Empty CSV data
-		csvData := []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical`)
+		csvData := []byte(CsvHeader)
 
 		reqMock := &pb.UploadRequest{
 			SimData: csvData,
-			SimType: "ukama_voice",
+			SimType: TestSimTypeVoice.String(),
 		}
 
-		// Mock the repository Add method for empty data
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		// Mock the message bus publish for empty data
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		// For empty data, we expect 0 items since len(s) would be 0
 		assert.Len(t, res.Iccid, 0)
 
 		mockRepo.AssertExpectations(t)
@@ -383,24 +415,20 @@ func TestUpload(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 
-		// Invalid CSV data
 		invalidData := []byte(`Invalid CSV format`)
 
 		reqMock := &pb.UploadRequest{
 			SimData: invalidData,
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 
-		// Mock the repository Add method for empty data (since parsing will fail)
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		// Mock the message bus publish for empty data
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		// For invalid data, we expect 0 items since parsing will fail
 		assert.Len(t, res.Iccid, 0)
 
 		mockRepo.AssertExpectations(t)
@@ -412,30 +440,24 @@ func TestUpload(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		simService := NewSimPoolServer(OrgName, mockRepo, msgbusClient)
 
-		// CSV data for testing
-		csvData := []byte(`ICCID,MSISDN,SmDpAddress,ActivationCode,QrCode,IsPhysical
-1234567890123456789,2345678901,http://localhost:8080,123456,QR123,FALSE`)
+		csvData := []byte(CsvHeader + "\n" +
+			TestIccid1 + "," + TestMsisdn1 + "," + TestSmDpAddress1 + "," + TestActivationCode1 + "," + TestQrCode1 + ",FALSE")
 
 		reqMock := &pb.UploadRequest{
 			SimData: csvData,
-			SimType: "ukama_data",
+			SimType: TestSimTypeData.String(),
 		}
 
-		// Mock the repository Add method
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		// Mock the message bus publish to return error
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(errors.New("Message bus error")).Once()
+		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(errors.New(ErrorMessageBus)).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
-		assert.NoError(t, err) // Upload should still succeed even if message bus fails
+		assert.NoError(t, err)
 		assert.NotNil(t, res)
-		// After fixing the bug: 1 actual ICCID = 1 item
 		assert.Len(t, res.Iccid, 1)
-		// Check that the actual ICCID is present
-		assert.Contains(t, res.Iccid, "1234567890123456789")
-		// Check that the ICCID is at the first position
-		assert.Equal(t, "1234567890123456789", res.Iccid[0])
+		assert.Contains(t, res.Iccid, TestIccid1)
+		assert.Equal(t, TestIccid1, res.Iccid[0])
 
 		mockRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)

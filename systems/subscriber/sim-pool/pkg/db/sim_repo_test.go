@@ -21,6 +21,40 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	// ICCID values
+	TestIccid1        = "8910300000003540855"
+	TestIccid2        = "8910300000003540856"
+	TestIccid3        = "8910300000003540859"
+	TestIccidNotFound = "notfound-iccid"
+
+	// MSISDN values
+	TestMsisdn1 = "01010101"
+	TestMsisdn2 = "01010102"
+
+	// SmDpAddress values
+	TestSmDpAddress1 = "123456789"
+	TestSmDpAddress2 = "123456790"
+
+	// ActivationCode values
+	TestActivationCode1 = "0000"
+	TestActivationCode2 = "0001"
+
+	// QR Code values
+	TestQrCode1 = "123456789"
+	TestQrCode2 = "123456790"
+
+	// Test IDs
+	TestId1        = uint64(1)
+	TestId2        = uint64(2)
+	TestId3        = uint64(3)
+	TestIdNotFound = uint64(999)
+
+	// Database configuration
+	TestDbDSN    = "sqlmock_db_0"
+	TestDbDriver = "postgres"
+)
+
 type UkamaDbMock struct {
 	GormDb *gorm.DB
 }
@@ -62,15 +96,15 @@ func Test_GetSimsByType(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540855",
-			"01010101",
+			TestIccid1,
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeTest,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -78,8 +112,8 @@ func Test_GetSimsByType(t *testing.T) {
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -97,7 +131,7 @@ func Test_GetSimsByType(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sp)
 		assert.Len(t, sp, 1)
-		assert.Equal(t, "8910300000003540855", sp[0].Iccid)
+		assert.Equal(t, TestIccid1, sp[0].Iccid)
 	})
 
 	t.Run("GetSimsByType_MultipleResults", func(t *testing.T) {
@@ -108,26 +142,26 @@ func Test_GetSimsByType(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540855",
-			"01010101",
+			TestIccid1,
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeOperatorData,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 		rows.AddRow(
-			"8910300000003540856",
-			"01010102",
+			TestIccid2,
+			TestMsisdn2,
 			true,
 			false,
 			ukama.SimTypeOperatorData,
-			"123456790",
-			"0001",
+			TestSmDpAddress2,
+			TestActivationCode2,
 			false,
-			"123456790",
+			TestQrCode2,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -135,8 +169,8 @@ func Test_GetSimsByType(t *testing.T) {
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -154,8 +188,8 @@ func Test_GetSimsByType(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sp)
 		assert.Len(t, sp, 2)
-		assert.Equal(t, "8910300000003540855", sp[0].Iccid)
-		assert.Equal(t, "8910300000003540856", sp[1].Iccid)
+		assert.Equal(t, TestIccid1, sp[0].Iccid)
+		assert.Equal(t, TestIccid2, sp[1].Iccid)
 	})
 
 	t.Run("GetSimsByType_EmptyResult", func(t *testing.T) {
@@ -171,8 +205,8 @@ func Test_GetSimsByType(t *testing.T) {
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -203,8 +237,8 @@ func Test_GetSimsByType(t *testing.T) {
 			WillReturnError(gorm.ErrInvalidDB)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -229,21 +263,21 @@ func Test_GetByIccid(t *testing.T) {
 	t.Run("GetByIccid", func(t *testing.T) {
 
 		var db *extsql.DB
-		iccid := "8910300000003540855"
+		iccid := TestIccid1
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
 			iccid,
-			"01010101",
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeTest,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -251,8 +285,8 @@ func Test_GetByIccid(t *testing.T) {
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -275,7 +309,7 @@ func Test_GetByIccid(t *testing.T) {
 
 	t.Run("GetByIccid_RecordNotFound", func(t *testing.T) {
 		var db *extsql.DB
-		iccid := "notfound-iccid"
+		iccid := TestIccidNotFound
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
@@ -284,8 +318,8 @@ func Test_GetByIccid(t *testing.T) {
 			WillReturnError(gorm.ErrRecordNotFound)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -315,15 +349,15 @@ func Test_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540855",
-			"01010101",
+			TestIccid1,
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeTest,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -331,8 +365,8 @@ func Test_Get(t *testing.T) {
 			WillReturnRows(rows)
 
 		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
+			DSN:                  TestDbDSN,
+			DriverName:           TestDbDriver,
 			Conn:                 db,
 			PreferSimpleProtocol: true,
 		})
@@ -349,7 +383,7 @@ func Test_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sp)
-		assert.Equal(t, "8910300000003540855", sp.Iccid)
+		assert.Equal(t, TestIccid1, sp.Iccid)
 		assert.True(t, sp.IsPhysical)
 	})
 
@@ -360,15 +394,15 @@ func Test_Get(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540856",
-			"01010102",
+			TestIccid2,
+			TestMsisdn2,
 			false,
 			false,
 			ukama.SimTypeOperatorData,
-			"123456790",
-			"0001",
+			TestSmDpAddress2,
+			TestActivationCode2,
 			false,
-			"123456790",
+			TestQrCode2,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -394,7 +428,7 @@ func Test_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, sp)
-		assert.Equal(t, "8910300000003540856", sp.Iccid)
+		assert.Equal(t, TestIccid2, sp.Iccid)
 		assert.False(t, sp.IsPhysical)
 	})
 
@@ -466,15 +500,15 @@ func Test_Add(t *testing.T) {
 
 		sim := []Sim{
 			{
-				Iccid:          "8910300000003540855",
-				Msisdn:         "01010101",
+				Iccid:          TestIccid1,
+				Msisdn:         TestMsisdn1,
 				IsAllocated:    false,
 				IsFailed:       false,
 				SimType:        ukama.SimTypeTest,
-				SmDpAddress:    "123456789",
-				ActivationCode: "0000",
+				SmDpAddress:    TestSmDpAddress1,
+				ActivationCode: TestActivationCode1,
 				IsPhysical:     true,
-				QrCode:         "123456789",
+				QrCode:         TestQrCode1,
 			},
 		}
 
@@ -515,26 +549,26 @@ func Test_Add(t *testing.T) {
 
 		sims := []Sim{
 			{
-				Iccid:          "8910300000003540855",
-				Msisdn:         "01010101",
+				Iccid:          TestIccid1,
+				Msisdn:         TestMsisdn1,
 				IsAllocated:    false,
 				IsFailed:       false,
 				SimType:        ukama.SimTypeTest,
-				SmDpAddress:    "123456789",
-				ActivationCode: "0000",
+				SmDpAddress:    TestSmDpAddress1,
+				ActivationCode: TestActivationCode1,
 				IsPhysical:     true,
-				QrCode:         "123456789",
+				QrCode:         TestQrCode1,
 			},
 			{
-				Iccid:          "8910300000003540856",
-				Msisdn:         "01010102",
+				Iccid:          TestIccid2,
+				Msisdn:         TestMsisdn2,
 				IsAllocated:    false,
 				IsFailed:       false,
 				SimType:        ukama.SimTypeOperatorData,
-				SmDpAddress:    "123456790",
-				ActivationCode: "0001",
+				SmDpAddress:    TestSmDpAddress2,
+				ActivationCode: TestActivationCode2,
 				IsPhysical:     false,
-				QrCode:         "123456790",
+				QrCode:         TestQrCode2,
 			},
 		}
 
@@ -574,15 +608,15 @@ func Test_Add(t *testing.T) {
 
 		sim := []Sim{
 			{
-				Iccid:          "8910300000003540855",
-				Msisdn:         "01010101",
+				Iccid:          TestIccid1,
+				Msisdn:         TestMsisdn1,
 				IsAllocated:    false,
 				IsFailed:       false,
 				SimType:        ukama.SimTypeTest,
-				SmDpAddress:    "123456789",
-				ActivationCode: "0000",
+				SmDpAddress:    TestSmDpAddress1,
+				ActivationCode: TestActivationCode1,
 				IsPhysical:     true,
-				QrCode:         "123456789",
+				QrCode:         TestQrCode1,
 			},
 		}
 
@@ -619,7 +653,7 @@ func Test_Add(t *testing.T) {
 
 func Test_Delete(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
-		simId := []uint64{1}
+		simId := []uint64{TestId1}
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
@@ -653,7 +687,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete_MultipleIds", func(t *testing.T) {
-		simIds := []uint64{1, 2, 3}
+		simIds := []uint64{TestId1, TestId2, TestId3}
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
@@ -685,7 +719,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete_NoRecordsFound", func(t *testing.T) {
-		simId := []uint64{999} // Non-existent ID
+		simId := []uint64{TestIdNotFound} // Non-existent ID
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
@@ -718,7 +752,7 @@ func Test_Delete(t *testing.T) {
 	})
 
 	t.Run("Delete_DatabaseError", func(t *testing.T) {
-		simId := []uint64{1}
+		simId := []uint64{TestId1}
 		var db *extsql.DB
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
@@ -760,15 +794,15 @@ func Test_GetSims(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540855",
-			"01010101",
+			TestIccid1,
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeTest,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -795,7 +829,7 @@ func Test_GetSims(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
 		assert.Len(t, sims, 1)
-		assert.Equal(t, "8910300000003540855", sims[0].Iccid)
+		assert.Equal(t, TestIccid1, sims[0].Iccid)
 	})
 
 	t.Run("GetSimsWithSpecificTypeError", func(t *testing.T) {
@@ -837,26 +871,26 @@ func Test_GetSims(t *testing.T) {
 
 		rows := sqlmock.NewRows([]string{"iccid", "msisdn", "is_allocated", "is_failed", "sim_type", "sm_dp_address", "activation_code", "is_physical", "qr_code"})
 		rows.AddRow(
-			"8910300000003540855",
-			"01010101",
+			TestIccid1,
+			TestMsisdn1,
 			false,
 			false,
 			ukama.SimTypeTest,
-			"123456789",
-			"0000",
+			TestSmDpAddress1,
+			TestActivationCode1,
 			true,
-			"123456789",
+			TestQrCode1,
 		)
 		rows.AddRow(
-			"8910300000003540856",
-			"01010102",
+			TestIccid2,
+			TestMsisdn2,
 			true,
 			false,
 			ukama.SimTypeOperatorData,
-			"123456790",
-			"0001",
+			TestSmDpAddress2,
+			TestActivationCode2,
 			false,
-			"123456790",
+			TestQrCode2,
 		)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
@@ -882,8 +916,8 @@ func Test_GetSims(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
 		assert.Len(t, sims, 2)
-		assert.Equal(t, "8910300000003540855", sims[0].Iccid)
-		assert.Equal(t, "8910300000003540856", sims[1].Iccid)
+		assert.Equal(t, TestIccid1, sims[0].Iccid)
+		assert.Equal(t, TestIccid2, sims[1].Iccid)
 	})
 
 	t.Run("GetSimsWithUnknownTypeError", func(t *testing.T) {
@@ -921,7 +955,7 @@ func Test_GetSims(t *testing.T) {
 func Test_UpdateStatus(t *testing.T) {
 	t.Run("UpdateStatusSuccess", func(t *testing.T) {
 		var db *extsql.DB
-		iccid := "8910300000003540855"
+		iccid := TestIccid1
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
@@ -953,7 +987,7 @@ func Test_UpdateStatus(t *testing.T) {
 
 	t.Run("UpdateStatusDatabaseError", func(t *testing.T) {
 		var db *extsql.DB
-		iccid := "8910300000003540859"
+		iccid := TestIccid3
 		db, mock, err := sqlmock.New()
 		assert.NoError(t, err)
 
