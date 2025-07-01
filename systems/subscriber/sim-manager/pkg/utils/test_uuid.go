@@ -25,7 +25,10 @@ import (
 	"strings"
 )
 
-const testUUUIDPrefix = "testuuid"
+const (
+	testUUUIDPrefix = "testuuid"
+	urnPrefix       = "urn:uuid:"
+)
 
 // xvalues returns the value of a byte as a hexadecimal digit or 255.
 var xvalues = [256]byte{
@@ -47,15 +50,15 @@ var xvalues = [256]byte{
 	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
 }
 
-// ParseTestUUID return whether or not the provided string matches a test UUID.  Both the UUID form of
-// testuuid-xxxx-xxxx-xxxx-xxxxxxxxxxxx and
+// ParseTestUUID return whether or not the provided string matches a test UUID.
+// Both the UUID form of testuuid-xxxx-xxxx-xxxx-xxxxxxxxxxxx and
 // urn:uuid:testuuid-xxxx-xxxx-xxxx-xxxxxxxxxxxx are supported.
 func ParseTestUUID(s string) error {
 	if len(s) != 36 {
 		if len(s) != 36+9 {
 			return fmt.Errorf("invalid test UUID length: %d", len(s))
 		}
-		if strings.ToLower(s[:9]) != "urn:uuid:" {
+		if strings.ToLower(s[:9]) != urnPrefix {
 			return fmt.Errorf("invalid urn prefix: %q", s[:9])
 		}
 		s = s[9:]

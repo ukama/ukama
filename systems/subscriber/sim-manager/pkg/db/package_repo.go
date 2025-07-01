@@ -76,8 +76,8 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	return pkg, nil
 }
 
-func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
-	fromEndDate, toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
+func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
+	toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -168,12 +168,12 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 
 		result := tx.Clauses(clause.Returning{}).Updates(pkg)
 
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
-
 		if result.Error != nil {
 			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
 		return nil

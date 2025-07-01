@@ -17,7 +17,7 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
-func Test_TestUUID(t *testing.T) {
+func Test_TestParseTestUUID(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		tt := func() string {
 			s := uuid.NewV4().String()
@@ -30,15 +30,29 @@ func Test_TestUUID(t *testing.T) {
 		})
 	}
 
+	for i := 0; i < 5; i++ {
+		tt := func() string {
+			s := uuid.NewV4().String()
+			s = strings.Replace(s, s[:8], testUUUIDPrefix, 1)
+			return urnPrefix + s
+		}()
+
+		t.Run("testUuudIsValidUrnForm: "+tt, func(t *testing.T) {
+			err := ParseTestUUID(tt)
+			assert.NoError(t, err)
+		})
+	}
+
 	tests := []string{
 		"testxuid-89a6-42f6-9f54-46a85fcbe539",
 		"4e601397-e639-4857-9b39-7824856ab112",
 		"4e601397-xxxuuid-428f-46b5-bc73-a39d821b61eb",
 		"testuuid84894fc2bfb58849d15b88a9",
 		"testuuid07671441c29a31f9a2f64024651d",
+		"uXn:uuid:testuuid-89a6-42f6-9f54-46a85fcbe539",
 	}
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < len(tests); i++ {
 		tt := tests[i]
 
 		t.Run("testUuudIsNotValid: "+tt, func(t *testing.T) {
