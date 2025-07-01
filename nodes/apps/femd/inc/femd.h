@@ -16,10 +16,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "usys_types.h"
-#include "usys_log.h"
-#include "usys_mem.h"
-#include "usys_getopt.h"
+#include <getopt.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "config.h"
 

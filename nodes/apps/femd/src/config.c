@@ -7,31 +7,32 @@
  */
 
 #include "config.h"
-#include "usys_log.h"
-#include "usys_mem.h"
-#include "usys_file.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int config_init(Config *config) {
     if (!config) {
-        usys_log_error("Null config pointer");
+        printf("[ERROR] Null config pointer\n");
         return STATUS_NOK;
     }
     
     // Initialize with default values
     memset(config, 0, sizeof(Config));
     
-    config->serviceName = usys_strdup(DEF_SERVICE_NAME);
+    config->serviceName = strdup(DEF_SERVICE_NAME);
     config->servicePort = DEF_SERVICE_PORT;
-    config->logLevel = usys_strdup(DEF_LOG_LEVEL);
-    config->configFile = usys_strdup(DEF_CONFIG_FILE);
+    config->logLevel = strdup(DEF_LOG_LEVEL);
+    config->configFile = strdup(DEF_CONFIG_FILE);
     
     if (!config->serviceName || !config->logLevel || !config->configFile) {
-        usys_log_error("Failed to allocate memory for config");
+        printf("[ERROR] Failed to allocate memory for config\n");
         config_free(config);
         return STATUS_NOK;
     }
     
-    usys_log_debug("Configuration initialized with defaults");
+    printf("[DEBUG] Configuration initialized with defaults\n");
     return STATUS_OK;
 }
 
@@ -41,47 +42,51 @@ void config_free(Config *config) {
     }
     
     if (config->serviceName) {
-        usys_free(config->serviceName);
+        free(config->serviceName);
         config->serviceName = NULL;
     }
     
     if (config->logLevel) {
-        usys_free(config->logLevel);
+        free(config->logLevel);
         config->logLevel = NULL;
     }
     
     if (config->configFile) {
-        usys_free(config->configFile);
+        free(config->configFile);
         config->configFile = NULL;
     }
     
-    usys_log_debug("Configuration freed");
+    printf("[DEBUG] Configuration freed\n");
 }
 
 int config_load_from_file(Config *config, const char *filename) {
     if (!config || !filename) {
-        usys_log_error("Null config or filename");
+        printf("[ERROR] Null config or filename\n");
         return STATUS_NOK;
     }
     
     // Check if file exists
     if (access(filename, F_OK) != 0) {
-        usys_log_warn("Config file does not exist: %s", filename);
+        printf("[WARN] Config file does not exist: %s\n", filename);
         return STATUS_NOK;
     }
     
-    // For now, we'll do a simple file read and basic parsing
-    // In a real implementation, you might use a proper config parser
+    // Simple file reading
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        printf("[ERROR] Failed to open config file: %s\n", filename);
+        return STATUS_NOK;
+    }
+    
     char buffer[1024];
-    int bytes_read = usys_file_read(filename, buffer, sizeof(buffer) - 1);
-    
-    if (bytes_read <= 0) {
-        usys_log_error("Failed to read config file: %s", filename);
+    if (!fgets(buffer, sizeof(buffer), file)) {
+        printf("[ERROR] Failed to read config file: %s\n", filename);
+        fclose(file);
         return STATUS_NOK;
     }
+    fclose(file);
     
-    buffer[bytes_read] = '\0';
-    usys_log_debug("Read %d bytes from config file", bytes_read);
+    printf("[DEBUG] Read config file: %s\n", filename);
     
     // Simple parsing - look for key=value pairs
     char *line = strtok(buffer, "\n");
@@ -112,18 +117,18 @@ int config_load_from_file(Config *config, const char *filename) {
             
             // Update config based on key
             if (strcmp(key, "service_name") == 0) {
-                if (config->serviceName) usys_free(config->serviceName);
-                config->serviceName = usys_strdup(value);
-                usys_log_debug("Config: service_name = %s", value);
+                if (config->serviceName) free(config->serviceName);
+                config->serviceName = strdup(value);
+                printf("[DEBUG] Config: service_name = %s\n", value);
             } else if (strcmp(key, "service_port") == 0) {
                 config->servicePort = atoi(value);
-                usys_log_debug("Config: service_port = %d", config->servicePort);
+                printf("[DEBUG] Config: service_port = %d\n", config->servicePort);
             } else if (strcmp(key, "log_level") == 0) {
-                if (config->logLevel) usys_free(config->logLevel);
-                config->logLevel = usys_strdup(value);
-                usys_log_debug("Config: log_level = %s", value);
+                if (config->logLevel) free(config->logLevel);
+                config->logLevel = strdup(value);
+                printf("[DEBUG] Config: log_level = %s\n", value);
             } else {
-                usys_log_debug("Unknown config key: %s", key);
+                printf("[DEBUG] Unknown config key: %s\n", key);
             }
         }
         
@@ -135,13 +140,13 @@ int config_load_from_file(Config *config, const char *filename) {
 
 void config_print(const Config *config) {
     if (!config) {
-        usys_log_error("Null config pointer");
+        printf("[ERROR] Null config pointer\n");
         return;
     }
     
-    usys_log_info("Configuration:");
-    usys_log_info("  Service Name: %s", config->serviceName ? config->serviceName : "NULL");
-    usys_log_info("  Service Port: %d", config->servicePort);
-    usys_log_info("  Log Level: %s", config->logLevel ? config->logLevel : "NULL");
-    usys_log_info("  Config File: %s", config->configFile ? config->configFile : "NULL");
+    printf("[INFO] Configuration:\n");
+    printf("[INFO]   Service Name: %s\n", config->serviceName ? config->serviceName : "NULL");
+    printf("[INFO]   Service Port: %d\n", config->servicePort);
+    printf("[INFO]   Log Level: %s\n", config->logLevel ? config->logLevel : "NULL");
+    printf("[INFO]   Config File: %s\n", config->configFile ? config->configFile : "NULL");
 }
