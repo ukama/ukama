@@ -12,7 +12,7 @@
 volatile sig_atomic_t g_running = 1;
 
 void handle_sigint(int signum) {
-    usys_log_info("Received signal %d, shutting down...", signum);
+    printf("[INFO] Received signal %d, shutting down...\n", signum);
     g_running = 0;
 }
 
@@ -41,10 +41,8 @@ int main(int argc, char **argv) {
     int ret = STATUS_NOK;
     Config config = {0};
     
-    // Initialize logging
-    usys_log_set_service(SERVICE_NAME);
-    usys_log_set_level(DEF_LOG_LEVEL);
-    usys_log_info("Starting FEM daemon v%s", FEM_VERSION);
+    // Initialize logging (basic printf for now)
+    printf("[INFO] Starting FEM daemon v%s\n", FEM_VERSION);
     
     // Parse command line arguments
     static struct option long_options[] = {
@@ -68,15 +66,14 @@ int main(int argc, char **argv) {
                 exit(0);
                 break;
             case 'l':
-                usys_log_set_level(optarg);
-                usys_log_info("Log level set to: %s", optarg);
+                printf("[INFO] Log level set to: %s\n", optarg);
                 break;
             case 'p':
                 // We'll store this for later use
-                usys_log_info("Port set to: %s", optarg);
+                printf("[INFO] Port set to: %s\n", optarg);
                 break;
             case 'c':
-                usys_log_info("Config file: %s", optarg);
+                printf("[INFO] Config file: %s\n", optarg);
                 break;
             default:
                 print_usage(argv[0]);
@@ -86,38 +83,38 @@ int main(int argc, char **argv) {
     
     // Initialize configuration
     if (config_init(&config) != STATUS_OK) {
-        usys_log_error("Failed to initialize configuration");
+        printf("[ERROR] Failed to initialize configuration\n");
         goto cleanup;
     }
     
     // Load configuration from file if specified
     const char *config_file = DEF_CONFIG_FILE;
     if (config_load_from_file(&config, config_file) == STATUS_OK) {
-        usys_log_info("Configuration loaded from: %s", config_file);
+        printf("[INFO] Configuration loaded from: %s\n", config_file);
         config_print(&config);
     } else {
-        usys_log_warn("Could not load config file %s, using defaults", config_file);
+        printf("[WARN] Could not load config file %s, using defaults\n", config_file);
     }
     
     // Set up signal handling
     signal(SIGINT, handle_sigint);
     signal(SIGTERM, handle_sigint);
     
-    usys_log_info("FEM daemon started successfully");
-    usys_log_info("Service: %s, Port: %d", config.serviceName, config.servicePort);
+    printf("[INFO] FEM daemon started successfully\n");
+    printf("[INFO] Service: %s, Port: %d\n", config.serviceName, config.servicePort);
     
     // Main daemon loop
     while (g_running) {
-        usys_log_debug("Daemon is running...");
+        printf("[DEBUG] Daemon is running...\n");
         sleep(5); // Sleep for 5 seconds
     }
     
     ret = STATUS_OK;
     
 cleanup:
-    usys_log_info("Shutting down FEM daemon...");
+    printf("[INFO] Shutting down FEM daemon...\n");
     config_free(&config);
-    usys_log_info("FEM daemon shutdown complete");
+    printf("[INFO] FEM daemon shutdown complete\n");
     
     return ret == STATUS_OK ? 0 : 1;
 }

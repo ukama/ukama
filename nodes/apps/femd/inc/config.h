@@ -9,7 +9,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "usys_types.h"
+#include <stdint.h>
+#include <stdbool.h>
+
+#define STATUS_OK                 0
+#define STATUS_NOK               -1
 
 typedef struct {
     char *serviceName;

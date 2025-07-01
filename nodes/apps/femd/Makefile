@@ -22,14 +22,9 @@ PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
 PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
-# Packages needed to compile target (minimal for now)
-ifeq ($(ALPINE_BUILD),1)
-    $(info Excluding vendor library for Alpine build)
-        VENDOR_PKG=
-else
-	VENDOR_PKG = tomlc jansson
-endif
-PLATFORM = platform
+# Packages needed to compile target (minimal for now - skip for basic testing)
+VENDOR_PKG=
+PLATFORM=
 
 # Setting up various compile and link flags
 CFLAGS=-c
@@ -47,31 +42,23 @@ LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
-# Libraries needed (minimal for now)
-LIBS+=-ljansson
+# Libraries needed (minimal for now - basic system libs only)
 LIBS+=-lpthread
-LIBS+=-lusys
 
 # Source files
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
+# Use system gcc for now
+CC = gcc
 
 .PHONY: all clean $(TARGET_EXEC)
 
 all: version.h static.h $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
+$(TARGET_EXEC): $(TARGET_OBJFILES)
+	$(CC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
-
-$(PLATFORM):
-	$(MAKE) -C $(PLATFORM_DIR)
-
-$(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@
 
 version.h:
 	$(NODES_DIR)/utils/scripts/generate_version.sh
@@ -80,7 +67,7 @@ static.h:
 	$(NODES_DIR)/utils/scripts/generate_static.sh
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) version.h static.h
