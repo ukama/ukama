@@ -7,6 +7,7 @@
  */
 
 #include "femd.h"
+#include "gpio_controller.h"
 
 // Global variable to control main loop
 volatile sig_atomic_t g_running = 1;
@@ -40,8 +41,8 @@ void print_version(void) {
 int main(int argc, char **argv) {
     int ret = STATUS_NOK;
     Config config = {0};
+    GpioController gpio_controller = {0};
     
-    // Initialize logging (basic printf for now)
     printf("[INFO] Starting FEM daemon v%s\n", FEM_VERSION);
     
     // Parse command line arguments
@@ -69,7 +70,6 @@ int main(int argc, char **argv) {
                 printf("[INFO] Log level set to: %s\n", optarg);
                 break;
             case 'p':
-                // We'll store this for later use
                 printf("[INFO] Port set to: %s\n", optarg);
                 break;
             case 'c':
@@ -87,7 +87,6 @@ int main(int argc, char **argv) {
         goto cleanup;
     }
     
-    // Load configuration from file if specified
     const char *config_file = DEF_CONFIG_FILE;
     if (config_load_from_file(&config, config_file) == STATUS_OK) {
         printf("[INFO] Configuration loaded from: %s\n", config_file);
@@ -96,23 +95,43 @@ int main(int argc, char **argv) {
         printf("[WARN] Could not load config file %s, using defaults\n", config_file);
     }
     
-    // Set up signal handling
     signal(SIGINT, handle_sigint);
     signal(SIGTERM, handle_sigint);
+    
+    if (gpio_controller_init(&gpio_controller, NULL) != STATUS_OK) {
+        printf("[ERROR] Failed to initialize GPIO controller\n");
+        goto cleanup;
+    }
     
     printf("[INFO] FEM daemon started successfully\n");
     printf("[INFO] Service: %s, Port: %d\n", config.serviceName, config.servicePort);
     
-    // Main daemon loop
+    printf("[INFO] Testing GPIO functionality...\n");
+    
+    GpioStatus status;
+    if (gpio_get_all_status(&gpio_controller, FEM_UNIT_1, &status) == STATUS_OK) {
+        printf("[INFO] FEM1 Status - TX_RF: %s, RX_RF: %s, PA_VDS: %s\n",
+               status.tx_rf_enable ? "ON" : "OFF",
+               status.rx_rf_enable ? "ON" : "OFF", 
+               status.pa_vds_enable ? "ON" : "OFF");
+    }
+    
+    printf("[INFO] Testing GPIO control - enabling TX_RF for FEM1\n");
+    gpio_set_tx_rf(&gpio_controller, FEM_UNIT_1, true);
+    
+    printf("[INFO] Testing GPIO control - disabling TX_RF for FEM1\n");
+    gpio_set_tx_rf(&gpio_controller, FEM_UNIT_1, false);
+    
     while (g_running) {
         printf("[DEBUG] Daemon is running...\n");
-        sleep(5); // Sleep for 5 seconds
+        sleep(5);
     }
     
     ret = STATUS_OK;
     
 cleanup:
     printf("[INFO] Shutting down FEM daemon...\n");
+    gpio_controller_cleanup(&gpio_controller);
     config_free(&config);
     printf("[INFO] FEM daemon shutdown complete\n");
     
