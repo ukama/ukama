@@ -34,6 +34,94 @@ import (
 const OrgName = "testorg"
 const OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
+// Test data constants
+const (
+	// Names
+	TestNameJohn        = "John"
+	TestNameJane        = "Jane"
+	TestNameJohnUpdated = "John Updated"
+
+	// Emails
+	TestEmailJohn        = "johndoe@example.com"
+	TestEmailJane        = "jane@example.com"
+	TestEmailJohnLower   = "john@example.com"
+	TestEmailJaneLower   = "jane@example.com"
+	TestEmailNonexistent = "nonexistent@example.com"
+	TestEmailUpperCase   = "JOHNDOE@EXAMPLE.COM"
+
+	// Phone numbers
+	TestPhoneJohn    = "1234567890"
+	TestPhoneJane    = "0987654321"
+	TestPhoneUpdated = "9876543210"
+
+	// Gender
+	TestGenderMale   = "Male"
+	TestGenderFemale = "Female"
+
+	// Addresses
+	TestAddressJohn    = "1 Main St"
+	TestAddressJane    = "2 Oak Ave"
+	TestAddressUpdated = "123 Updated St"
+
+	// Proof of identification
+	TestProofPassport      = "Passport"
+	TestProofDriverLicense = "Driver License"
+
+	// ID serials
+	TestIdSerialJohn    = "123456789"
+	TestIdSerialJane    = "987654321"
+	TestIdSerialUpdated = "987654321"
+
+	// Network names
+	TestNetworkName = "net-1"
+
+	// Sim data
+	TestSimId1  = "sim-1"
+	TestSimId2  = "sim-2"
+	TestIccid1  = "12345678901234567890"
+	TestIccid2  = "09876543210987654321"
+	TestMsisdn1 = "1234567890"
+	TestMsisdn2 = "0987654321"
+
+	// Sim types
+	TestSimTypePhysical = "physical"
+	TestSimTypeVirtual  = "virtual"
+
+	// Sim status
+	TestSimStatusActive   = "active"
+	TestSimStatusInactive = "inactive"
+
+	// Package IDs
+	TestPackageId1 = "pkg-1"
+	TestPackageId2 = "pkg-2"
+
+	// Error messages
+	ErrNetworkNotFound             = "network not found"
+	ErrDefaultNetworkNotFound      = "default network not found"
+	ErrInvalidNetworkUUID          = "invalid format of network uuid"
+	ErrDuplicateKey                = "duplicate key value violates unique constraint"
+	ErrConnectionTimeout           = "connection timeout"
+	ErrPublishFailed               = "publish failed"
+	ErrSubscriberNotFound          = "subscriber record not found"
+	ErrInvalidSubscriberUUID       = "Invalid subscriberId format"
+	ErrDatabaseConnection          = "database connection error"
+	ErrSimManagerUnavailable       = "sim manager service unavailable"
+	ErrFailedToListSims            = "failed to list sims"
+	ErrFailedToListSimsByNetwork   = "failed to list sims by network"
+	ErrInvalidPackageStartDate     = "invalid format for Package.StartDate value"
+	ErrInvalidPackageEndDate       = "invalid format for Package.EndDate value"
+	ErrInvalidSubscriberUUIDFormat = "invalid format of subscriber uuid"
+	ErrDeleteError                 = "delete error"
+	ErrDbError                     = "db error"
+
+	// Invalid values
+	InvalidUUID       = "invalid-uuid"
+	InvalidDateFormat = "invalid-date-format"
+
+	// Empty values
+	EmptyString = ""
+)
+
 func TestAdd(t *testing.T) {
 	t.Run("Add subscriber successfully", func(t *testing.T) {
 
@@ -44,13 +132,13 @@ func TestAdd(t *testing.T) {
 		networkClient := &cmocks.NetworkClient{}
 		networkId := uuid.NewV4()
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -59,7 +147,7 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -93,13 +181,13 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -140,22 +228,22 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
-			DOB:                   "", // Empty DOB
+			DOB:                   EmptyString, // Empty DOB
 		}
 
 		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -166,7 +254,7 @@ func TestAdd(t *testing.T) {
 			Email:                 sub.Email,
 			PhoneNumber:           sub.PhoneNumber,
 			Gender:                sub.Gender,
-			Dob:                   "", // Empty DOB
+			Dob:                   EmptyString, // Empty DOB
 			NetworkId:             networkId.String(),
 			Address:               sub.Address,
 			ProofOfIdentification: sub.ProofOfIdentification,
@@ -184,13 +272,13 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		expectedSub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -199,7 +287,7 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -207,7 +295,7 @@ func TestAdd(t *testing.T) {
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
 			Name:                  expectedSub.Name,
-			Email:                 "JOHNDOE@EXAMPLE.COM",
+			Email:                 TestEmailUpperCase,
 			PhoneNumber:           expectedSub.PhoneNumber,
 			Gender:                expectedSub.Gender,
 			Dob:                   expectedSub.DOB,
@@ -219,7 +307,7 @@ func TestAdd(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
-		assert.Equal(t, "johndoe@example.com", expectedSub.Email, "Email should be converted to lowercase")
+		assert.Equal(t, TestEmailJohn, expectedSub.Email, "Email should be converted to lowercase")
 
 		subscriberRepo.AssertExpectations(t)
 		networkClient.AssertExpectations(t)
@@ -235,21 +323,21 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		networkClient.On("Get", networkId.String()).
-			Return(nil, errors.New("network not found")).Once()
+			Return(nil, errors.New(ErrNetworkNotFound)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
 			NetworkId:             networkId.String(),
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "network not found")
+		assert.Contains(t, err.Error(), ErrNetworkNotFound)
 	})
 
 	t.Run("Default network not found", func(t *testing.T) {
@@ -259,20 +347,20 @@ func TestAdd(t *testing.T) {
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 
-		networkClient.On("GetDefault").Return(nil, errors.New("default network not found")).Once()
+		networkClient.On("GetDefault").Return(nil, errors.New(ErrDefaultNetworkNotFound)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "default network not found")
+		assert.Contains(t, err.Error(), ErrDefaultNetworkNotFound)
 	})
 
 	t.Run("Invalid network UUID format", func(t *testing.T) {
@@ -282,24 +370,24 @@ func TestAdd(t *testing.T) {
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 
-		networkClient.On("Get", "invalid-uuid").
+		networkClient.On("Get", InvalidUUID).
 			Return(&creg.NetworkInfo{
-				Id: "invalid-uuid",
+				Id: InvalidUUID,
 			}, nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			NetworkId:             "invalid-uuid",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			NetworkId:             InvalidUUID,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid format of network uuid")
+		assert.Contains(t, err.Error(), ErrInvalidNetworkUUID)
 	})
 
 	t.Run("Database error - duplicate key", func(t *testing.T) {
@@ -311,13 +399,13 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -325,11 +413,11 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(errors.New("duplicate key value violates unique constraint")).Once()
+		subscriberRepo.On("Add", sub, mock.Anything).Return(errors.New(ErrDuplicateKey)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -344,7 +432,7 @@ func TestAdd(t *testing.T) {
 			IdSerial:              sub.IdSerial,
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "duplicate key value violates unique constraint")
+		assert.Contains(t, err.Error(), ErrDuplicateKey)
 	})
 
 	t.Run("Database error - internal error", func(t *testing.T) {
@@ -356,13 +444,13 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -370,11 +458,11 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
-		subscriberRepo.On("Add", sub, mock.Anything).Return(errors.New("connection timeout")).Once()
+		subscriberRepo.On("Add", sub, mock.Anything).Return(errors.New(ErrConnectionTimeout)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -389,7 +477,7 @@ func TestAdd(t *testing.T) {
 			IdSerial:              sub.IdSerial,
 		})
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "connection timeout")
+		assert.Contains(t, err.Error(), ErrConnectionTimeout)
 	})
 
 	t.Run("Message bus publish error", func(t *testing.T) {
@@ -401,13 +489,13 @@ func TestAdd(t *testing.T) {
 		networkId := uuid.NewV4()
 
 		sub := &db.Subscriber{
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 		}
@@ -416,11 +504,11 @@ func TestAdd(t *testing.T) {
 		networkClient.On("Get", networkId.String()).
 			Return(&creg.NetworkInfo{
 				Id:         networkId.String(),
-				Name:       "net-1",
+				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("publish failed")).Once()
+		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New(ErrPublishFailed)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -455,13 +543,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -477,13 +565,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 		}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 				},
 			},
@@ -501,7 +589,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 		assert.Equal(t, subscriber.Email, resp.Subscriber.Email)
 		assert.Equal(t, subscriber.SubscriberId.String(), resp.Subscriber.SubscriberId)
 		assert.Len(t, resp.Subscriber.Sim, 1)
-		assert.Equal(t, "sim-1", resp.Subscriber.Sim[0].Id)
+		assert.Equal(t, TestSimId1, resp.Subscriber.Sim[0].Id)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -520,13 +608,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -579,7 +667,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "subscriber record not found")
+		assert.Contains(t, err.Error(), ErrSubscriberNotFound)
 		subscriberRepo.AssertExpectations(t)
 	})
 
@@ -592,12 +680,12 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
-			SubscriberId: "invalid-uuid",
+			SubscriberId: InvalidUUID,
 		})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "Invalid subscriberId format")
+		assert.Contains(t, err.Error(), ErrInvalidSubscriberUUID)
 	})
 
 	t.Run("Database error", func(t *testing.T) {
@@ -609,7 +697,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriberId := uuid.NewV4()
 
-		subscriberRepo.On("Get", subscriberId).Return(nil, errors.New("database connection error")).Once()
+		subscriberRepo.On("Get", subscriberId).Return(nil, errors.New(ErrDatabaseConnection)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
@@ -618,7 +706,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "database connection error")
+		assert.Contains(t, err.Error(), ErrDatabaseConnection)
 		subscriberRepo.AssertExpectations(t)
 	})
 
@@ -634,13 +722,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -648,7 +736,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 		}
 
 		subscriberRepo.On("Get", subscriberId).Return(subscriber, nil).Once()
-		simManagerService.On("GetSimManagerService").Return(nil, errors.New("sim manager service unavailable")).Once()
+		simManagerService.On("GetSimManagerService").Return(nil, errors.New(ErrSimManagerUnavailable)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
@@ -657,7 +745,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "sim manager service unavailable")
+		assert.Contains(t, err.Error(), ErrSimManagerUnavailable)
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 	})
@@ -674,13 +762,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -693,7 +781,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(nil, errors.New("failed to list sims")).Once()
+		}).Return(nil, errors.New(ErrFailedToListSims)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Get(context.TODO(), &pb.GetSubscriberRequest{
@@ -702,7 +790,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "failed to list sims")
+		assert.Contains(t, err.Error(), ErrFailedToListSims)
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 		simManagerClient.AssertExpectations(t)
@@ -720,13 +808,13 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  TestNameJohn,
+			Email:                 TestEmailJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -742,23 +830,23 @@ func TestSubscriberServer_Get(t *testing.T) {
 		}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 				},
 				{
-					Id:           "sim-2",
+					Id:           TestSimId2,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "09876543210987654321",
-					Msisdn:       "0987654321",
-					Type:         "virtual",
-					Status:       "inactive",
+					Iccid:        TestIccid2,
+					Msisdn:       TestMsisdn2,
+					Type:         TestSimTypeVirtual,
+					Status:       TestSimStatusInactive,
 					IsPhysical:   false,
 				},
 			},
@@ -776,10 +864,10 @@ func TestSubscriberServer_Get(t *testing.T) {
 		assert.Equal(t, subscriber.Email, resp.Subscriber.Email)
 		assert.Equal(t, subscriber.SubscriberId.String(), resp.Subscriber.SubscriberId)
 		assert.Len(t, resp.Subscriber.Sim, 2)
-		assert.Equal(t, "sim-1", resp.Subscriber.Sim[0].Id)
-		assert.Equal(t, "sim-2", resp.Subscriber.Sim[1].Id)
-		assert.Equal(t, "physical", resp.Subscriber.Sim[0].Type)
-		assert.Equal(t, "virtual", resp.Subscriber.Sim[1].Type)
+		assert.Equal(t, TestSimId1, resp.Subscriber.Sim[0].Id)
+		assert.Equal(t, TestSimId2, resp.Subscriber.Sim[1].Id)
+		assert.Equal(t, TestSimTypePhysical, resp.Subscriber.Sim[0].Type)
+		assert.Equal(t, TestSimTypeVirtual, resp.Subscriber.Sim[1].Type)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -798,17 +886,17 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
-		email := "johndoe@example.com"
+		email := TestEmailJohn
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
+			Name:                  TestNameJohn,
 			Email:                 email,
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -824,13 +912,13 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 				},
 			},
@@ -848,7 +936,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		assert.Equal(t, subscriber.Email, resp.Subscriber.Email)
 		assert.Equal(t, subscriber.SubscriberId.String(), resp.Subscriber.SubscriberId)
 		assert.Len(t, resp.Subscriber.Sim, 1)
-		assert.Equal(t, "sim-1", resp.Subscriber.Sim[0].Id)
+		assert.Equal(t, TestSimId1, resp.Subscriber.Sim[0].Id)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -864,17 +952,17 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
-		email := "johndoe@example.com"
+		email := TestEmailJohn
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
+			Name:                  TestNameJohn,
 			Email:                 email,
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -916,7 +1004,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 
-		email := "nonexistent@example.com"
+		email := TestEmailNonexistent
 
 		subscriberRepo.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
 
@@ -927,7 +1015,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "subscriber record not found")
+		assert.Contains(t, err.Error(), ErrSubscriberNotFound)
 		subscriberRepo.AssertExpectations(t)
 	})
 
@@ -938,9 +1026,9 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 
-		email := "johndoe@example.com"
+		email := TestEmailJohn
 
-		subscriberRepo.On("GetByEmail", email).Return(nil, errors.New("database connection error")).Once()
+		subscriberRepo.On("GetByEmail", email).Return(nil, errors.New(ErrDatabaseConnection)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
@@ -949,7 +1037,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "database connection error")
+		assert.Contains(t, err.Error(), ErrDatabaseConnection)
 		subscriberRepo.AssertExpectations(t)
 	})
 
@@ -962,17 +1050,17 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
-		email := "johndoe@example.com"
+		email := TestEmailJohn
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
+			Name:                  TestNameJohn,
 			Email:                 email,
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -980,7 +1068,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		}
 
 		subscriberRepo.On("GetByEmail", email).Return(subscriber, nil).Once()
-		simManagerService.On("GetSimManagerService").Return(nil, errors.New("sim manager service unavailable")).Once()
+		simManagerService.On("GetSimManagerService").Return(nil, errors.New(ErrSimManagerUnavailable)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
@@ -989,7 +1077,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "sim manager service unavailable")
+		assert.Contains(t, err.Error(), ErrSimManagerUnavailable)
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 	})
@@ -1003,17 +1091,17 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
-		email := "johndoe@example.com"
+		email := TestEmailJohn
 
 		subscriber := &db.Subscriber{
 			SubscriberId:          subscriberId,
-			Name:                  "John",
+			Name:                  TestNameJohn,
 			Email:                 email,
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			PhoneNumber:           TestPhoneJohn,
+			Gender:                TestGenderMale,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 			NetworkId:             networkId,
 			DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 			CreatedAt:             time.Now(),
@@ -1026,7 +1114,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 		simManagerService.On("GetSimManagerService").Return(simManagerClient, nil).Once()
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{
 			SubscriberId: subscriberId.String(),
-		}).Return(nil, errors.New("failed to list sims")).Once()
+		}).Return(nil, errors.New(ErrFailedToListSims)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.GetByEmail(context.TODO(), &pb.GetSubscriberByEmailRequest{
@@ -1035,7 +1123,7 @@ func TestSubscriberServer_GetByEmail(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "failed to list sims")
+		assert.Contains(t, err.Error(), ErrFailedToListSims)
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 		simManagerClient.AssertExpectations(t)
@@ -1058,13 +1146,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId1,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohnLower,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1072,13 +1160,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 			},
 			{
 				SubscriberId:          subscriberId2,
-				Name:                  "Jane",
-				Email:                 "jane@example.com",
-				PhoneNumber:           "0987654321",
-				Gender:                "Female",
-				Address:               "2 Oak Ave",
-				ProofOfIdentification: "Driver License",
-				IdSerial:              "987654321",
+				Name:                  TestNameJane,
+				Email:                 TestEmailJaneLower,
+				PhoneNumber:           TestPhoneJane,
+				Gender:                TestGenderFemale,
+				Address:               TestAddressJane,
+				ProofOfIdentification: TestProofDriverLicense,
+				IdSerial:              TestIdSerialJane,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 20).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1093,31 +1181,31 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId1.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-1",
+						Id:        TestPackageId1,
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 					},
 				},
 				{
-					Id:           "sim-2",
+					Id:           TestSimId2,
 					SubscriberId: subscriberId2.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "09876543210987654321",
-					Msisdn:       "0987654321",
-					Type:         "virtual",
-					Status:       "inactive",
+					Iccid:        TestIccid2,
+					Msisdn:       TestMsisdn2,
+					Type:         TestSimTypeVirtual,
+					Status:       TestSimStatusInactive,
 					IsPhysical:   false,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-2",
+						Id:        TestPackageId2,
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
 					},
@@ -1132,18 +1220,18 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Len(t, resp.Subscribers, 2)
 
-		assert.Equal(t, "John", resp.Subscribers[0].Name)
-		assert.Equal(t, "john@example.com", resp.Subscribers[0].Email)
+		assert.Equal(t, TestNameJohn, resp.Subscribers[0].Name)
+		assert.Equal(t, TestEmailJohnLower, resp.Subscribers[0].Email)
 		assert.Equal(t, subscriberId1.String(), resp.Subscribers[0].SubscriberId)
 		assert.Len(t, resp.Subscribers[0].Sim, 1)
-		assert.Equal(t, "sim-1", resp.Subscribers[0].Sim[0].Id)
+		assert.Equal(t, TestSimId1, resp.Subscribers[0].Sim[0].Id)
 
 		// Check second subscriber
-		assert.Equal(t, "Jane", resp.Subscribers[1].Name)
-		assert.Equal(t, "jane@example.com", resp.Subscribers[1].Email)
+		assert.Equal(t, TestNameJane, resp.Subscribers[1].Name)
+		assert.Equal(t, TestEmailJaneLower, resp.Subscribers[1].Email)
 		assert.Equal(t, subscriberId2.String(), resp.Subscribers[1].SubscriberId)
 		assert.Len(t, resp.Subscribers[1].Sim, 1)
-		assert.Equal(t, "sim-2", resp.Subscribers[1].Sim[0].Id)
+		assert.Equal(t, TestSimId2, resp.Subscribers[1].Sim[0].Id)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -1163,13 +1251,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1191,8 +1279,8 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Len(t, resp.Subscribers, 1)
-		assert.Equal(t, "John", resp.Subscribers[0].Name)
-		assert.Equal(t, "john@example.com", resp.Subscribers[0].Email)
+		assert.Equal(t, TestNameJohn, resp.Subscribers[0].Name)
+		assert.Equal(t, TestEmailJohn, resp.Subscribers[0].Email)
 		assert.Equal(t, subscriberId.String(), resp.Subscribers[0].SubscriberId)
 		assert.Len(t, resp.Subscribers[0].Sim, 0)
 
@@ -1237,14 +1325,14 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		orgClient := &cmocks.OrgClient{}
 		networkClient := &cmocks.NetworkClient{}
 
-		subscriberRepo.On("ListSubscribers").Return(nil, errors.New("database connection error")).Once()
+		subscriberRepo.On("ListSubscribers").Return(nil, errors.New(ErrDatabaseConnection)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.ListSubscribers(context.TODO(), &pb.ListSubscribersRequest{})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "database connection error")
+		assert.Contains(t, err.Error(), ErrDatabaseConnection)
 		subscriberRepo.AssertExpectations(t)
 	})
 
@@ -1261,13 +1349,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1301,13 +1389,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1345,13 +1433,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1366,16 +1454,16 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-1",
+						Id:        TestPackageId1,
 						StartDate: "invalid-date-format", // Invalid date format
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 					},
@@ -1388,7 +1476,7 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "invalid format for Package.StartDate value")
+		assert.Contains(t, err.Error(), ErrInvalidPackageStartDate)
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 		simManagerClient.AssertExpectations(t)
@@ -1407,13 +1495,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1428,16 +1516,16 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-1",
+						Id:        TestPackageId1,
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   "invalid-date-format", // Invalid date format
 					},
@@ -1469,13 +1557,13 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1490,31 +1578,31 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-1",
+						Id:        TestPackageId1,
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 					},
 				},
 				{
-					Id:           "sim-2",
+					Id:           TestSimId2,
 					SubscriberId: subscriberId.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "09876543210987654321",
-					Msisdn:       "0987654321",
-					Type:         "virtual",
-					Status:       "inactive",
+					Iccid:        TestIccid2,
+					Msisdn:       TestMsisdn2,
+					Type:         TestSimTypeVirtual,
+					Status:       TestSimStatusInactive,
 					IsPhysical:   false,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-2",
+						Id:        TestPackageId2,
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
 					},
@@ -1528,14 +1616,14 @@ func TestSubscriberServer_ListSubscribers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Len(t, resp.Subscribers, 1)
-		assert.Equal(t, "John", resp.Subscribers[0].Name)
-		assert.Equal(t, "john@example.com", resp.Subscribers[0].Email)
+		assert.Equal(t, TestNameJohn, resp.Subscribers[0].Name)
+		assert.Equal(t, TestEmailJohn, resp.Subscribers[0].Email)
 		assert.Equal(t, subscriberId.String(), resp.Subscribers[0].SubscriberId)
 		assert.Len(t, resp.Subscribers[0].Sim, 2)
-		assert.Equal(t, "sim-1", resp.Subscribers[0].Sim[0].Id)
-		assert.Equal(t, "sim-2", resp.Subscribers[0].Sim[1].Id)
-		assert.Equal(t, "physical", resp.Subscribers[0].Sim[0].Type)
-		assert.Equal(t, "virtual", resp.Subscribers[0].Sim[1].Type)
+		assert.Equal(t, TestSimId1, resp.Subscribers[0].Sim[0].Id)
+		assert.Equal(t, TestSimId2, resp.Subscribers[0].Sim[1].Id)
+		assert.Equal(t, TestSimTypePhysical, resp.Subscribers[0].Sim[0].Type)
+		assert.Equal(t, TestSimTypeVirtual, resp.Subscribers[0].Sim[1].Type)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -1559,13 +1647,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId1,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1573,13 +1661,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 			},
 			{
 				SubscriberId:          subscriberId2,
-				Name:                  "Jane",
-				Email:                 "jane@example.com",
-				PhoneNumber:           "0987654321",
-				Gender:                "Female",
-				Address:               "2 Oak Ave",
-				ProofOfIdentification: "Driver License",
-				IdSerial:              "987654321",
+				Name:                  TestNameJane,
+				Email:                 TestEmailJane,
+				PhoneNumber:           TestPhoneJane,
+				Gender:                TestGenderFemale,
+				Address:               TestAddressJane,
+				ProofOfIdentification: TestProofDriverLicense,
+				IdSerial:              TestIdSerialJane,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 20).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1594,31 +1682,31 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		simManagerClient.On("ListSims", mock.Anything, &simManagerPb.ListSimsRequest{NetworkId: networkId.String()}).Return(&simManagerPb.ListSimsResponse{
 			Sims: []*simManagerPb.Sim{
 				{
-					Id:           "sim-1",
+					Id:           TestSimId1,
 					SubscriberId: subscriberId1.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "12345678901234567890",
-					Msisdn:       "1234567890",
-					Type:         "physical",
-					Status:       "active",
+					Iccid:        TestIccid1,
+					Msisdn:       TestMsisdn1,
+					Type:         TestSimTypePhysical,
+					Status:       TestSimStatusActive,
 					IsPhysical:   true,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-1",
+						Id:        TestPackageId1,
 						StartDate: time.Now().Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
 					},
 				},
 				{
-					Id:           "sim-2",
+					Id:           TestSimId2,
 					SubscriberId: subscriberId2.String(),
 					NetworkId:    networkId.String(),
-					Iccid:        "09876543210987654321",
-					Msisdn:       "0987654321",
-					Type:         "virtual",
-					Status:       "inactive",
+					Iccid:        TestIccid2,
+					Msisdn:       TestMsisdn2,
+					Type:         TestSimTypeVirtual,
+					Status:       TestSimStatusInactive,
 					IsPhysical:   false,
 					Package: &simManagerPb.Package{
-						Id:        "pkg-2",
+						Id:        TestPackageId2,
 						StartDate: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 						EndDate:   time.Now().Add(time.Hour * 24 * 60).Format(time.RFC3339),
 					},
@@ -1634,18 +1722,18 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		assert.Len(t, resp.Subscribers, 2)
 
 		// Check first subscriber
-		assert.Equal(t, "John", resp.Subscribers[0].Name)
-		assert.Equal(t, "john@example.com", resp.Subscribers[0].Email)
+		assert.Equal(t, TestNameJohn, resp.Subscribers[0].Name)
+		assert.Equal(t, TestEmailJohn, resp.Subscribers[0].Email)
 		assert.Equal(t, subscriberId1.String(), resp.Subscribers[0].SubscriberId)
 		assert.Len(t, resp.Subscribers[0].Sim, 1)
-		assert.Equal(t, "sim-1", resp.Subscribers[0].Sim[0].Id)
+		assert.Equal(t, TestSimId1, resp.Subscribers[0].Sim[0].Id)
 
 		// Check second subscriber
-		assert.Equal(t, "Jane", resp.Subscribers[1].Name)
-		assert.Equal(t, "jane@example.com", resp.Subscribers[1].Email)
+		assert.Equal(t, TestNameJane, resp.Subscribers[1].Name)
+		assert.Equal(t, TestEmailJane, resp.Subscribers[1].Email)
 		assert.Equal(t, subscriberId2.String(), resp.Subscribers[1].SubscriberId)
 		assert.Len(t, resp.Subscribers[1].Sim, 1)
-		assert.Equal(t, "sim-2", resp.Subscribers[1].Sim[0].Id)
+		assert.Equal(t, TestSimId2, resp.Subscribers[1].Sim[0].Id)
 
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
@@ -1665,13 +1753,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1693,8 +1781,8 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Len(t, resp.Subscribers, 1)
-		assert.Equal(t, "John", resp.Subscribers[0].Name)
-		assert.Equal(t, "john@example.com", resp.Subscribers[0].Email)
+		assert.Equal(t, TestNameJohn, resp.Subscribers[0].Name)
+		assert.Equal(t, TestEmailJohn, resp.Subscribers[0].Email)
 		assert.Equal(t, subscriberId.String(), resp.Subscribers[0].SubscriberId)
 		assert.Len(t, resp.Subscribers[0].Sim, 0)
 
@@ -1800,13 +1888,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1840,13 +1928,13 @@ func TestSubscriberServer_GetbyNetwork(t *testing.T) {
 		subscribers := []db.Subscriber{
 			{
 				SubscriberId:          subscriberId,
-				Name:                  "John",
-				Email:                 "john@example.com",
-				PhoneNumber:           "1234567890",
-				Gender:                "Male",
-				Address:               "1 Main St",
-				ProofOfIdentification: "Passport",
-				IdSerial:              "123456789",
+				Name:                  TestNameJohn,
+				Email:                 TestEmailJohn,
+				PhoneNumber:           TestPhoneJohn,
+				Gender:                TestGenderMale,
+				Address:               TestAddressJohn,
+				ProofOfIdentification: TestProofPassport,
+				IdSerial:              TestIdSerialJohn,
 				NetworkId:             networkId,
 				DOB:                   time.Now().Add(time.Hour * 24 * 365 * 18).Format(time.RFC3339),
 				CreatedAt:             time.Now(),
@@ -1885,11 +1973,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 
 		updateRequest := &pb.UpdateSubscriberRequest{
 			SubscriberId:          subscriberId.String(),
-			Name:                  "John Updated",
-			PhoneNumber:           "9876543210",
-			Address:               "123 Updated St",
-			ProofOfIdentification: "Driver License",
-			IdSerial:              "987654321",
+			Name:                  TestNameJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofDriverLicense,
+			IdSerial:              TestIdSerialJohn,
 		}
 
 		expectedSubscriber := &db.Subscriber{
@@ -1958,11 +2046,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 
 		updateRequest := &pb.UpdateSubscriberRequest{
 			SubscriberId:          "invalid-uuid",
-			Name:                  "John Updated",
-			PhoneNumber:           "9876543210",
-			Address:               "123 Updated St",
-			ProofOfIdentification: "Driver License",
-			IdSerial:              "987654321",
+			Name:                  TestNameJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofDriverLicense,
+			IdSerial:              TestIdSerialJohn,
 		}
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -1982,11 +2070,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 
 		updateRequest := &pb.UpdateSubscriberRequest{
 			SubscriberId:          "",
-			Name:                  "John Updated",
-			PhoneNumber:           "9876543210",
-			Address:               "123 Updated St",
-			ProofOfIdentification: "Driver License",
-			IdSerial:              "987654321",
+			Name:                  TestNameJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofDriverLicense,
+			IdSerial:              TestIdSerialJohn,
 		}
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
@@ -2008,11 +2096,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 
 		updateRequest := &pb.UpdateSubscriberRequest{
 			SubscriberId:          subscriberId.String(),
-			Name:                  "John Updated",
-			PhoneNumber:           "9876543210",
-			Address:               "123 Updated St",
-			ProofOfIdentification: "Driver License",
-			IdSerial:              "987654321",
+			Name:                  TestNameJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofDriverLicense,
+			IdSerial:              TestIdSerialJohn,
 		}
 
 		expectedSubscriber := &db.Subscriber{
@@ -2046,11 +2134,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 
 		updateRequest := &pb.UpdateSubscriberRequest{
 			SubscriberId:          subscriberId.String(),
-			Name:                  "John Updated",
-			PhoneNumber:           "9876543210",
-			Address:               "123 Updated St",
-			ProofOfIdentification: "Driver License",
-			IdSerial:              "987654321",
+			Name:                  TestNameJohn,
+			PhoneNumber:           TestPhoneJohn,
+			Address:               TestAddressJohn,
+			ProofOfIdentification: TestProofPassport,
+			IdSerial:              TestIdSerialJohn,
 		}
 
 		expectedSubscriber := &db.Subscriber{
@@ -2086,11 +2174,11 @@ func TestSubscriberServer_Update(t *testing.T) {
 		}
 
 		expectedSubscriber := &db.Subscriber{
-			Name:                  "",
-			PhoneNumber:           "",
-			Address:               "",
-			ProofOfIdentification: "",
-			IdSerial:              "",
+			Name:                  EmptyString,
+			PhoneNumber:           EmptyString,
+			Address:               EmptyString,
+			ProofOfIdentification: EmptyString,
+			IdSerial:              EmptyString,
 			SubscriberId:          subscriberId,
 		}
 
@@ -2119,7 +2207,7 @@ func TestSubscriberServer_Delete(t *testing.T) {
 		subscriberId := uuid.NewV4()
 		dbSubscriber := &db.Subscriber{
 			SubscriberId: subscriberId,
-			Name:         "John",
+			Name:         TestNameJohn,
 		}
 
 		subscriberRepo.On("Get", subscriberId).Return(dbSubscriber, nil).Once()
@@ -2158,7 +2246,7 @@ func TestSubscriberServer_Delete(t *testing.T) {
 		networkClient := &cmocks.NetworkClient{}
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
-		resp, err := s.Delete(context.TODO(), &pb.DeleteSubscriberRequest{SubscriberId: ""})
+		resp, err := s.Delete(context.TODO(), &pb.DeleteSubscriberRequest{SubscriberId: EmptyString})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -2212,7 +2300,7 @@ func TestSubscriberServer_Delete(t *testing.T) {
 		subscriberId := uuid.NewV4()
 		dbSubscriber := &db.Subscriber{
 			SubscriberId: subscriberId,
-			Name:         "John",
+			Name:         TestNameJohn,
 		}
 
 		subscriberRepo.On("Get", subscriberId).Return(dbSubscriber, nil).Once()

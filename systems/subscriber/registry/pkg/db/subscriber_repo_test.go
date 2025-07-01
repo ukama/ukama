@@ -25,16 +25,95 @@ import (
 	"gorm.io/gorm"
 )
 
+// Test data constants
+const (
+	// Names
+	TEST_NAME_JOHN         = "John"
+	TEST_NAME_JANE         = "Jane"
+	TEST_NAME_BOB          = "Bob"
+	TEST_NAME_ALICE        = "Alice"
+	TEST_NAME_CHARLIE      = "Charlie"
+	TEST_NAME_DIANA        = "Diana"
+	TEST_NAME_MINIMAL      = "Minimal"
+	TEST_NAME_JOHN_UPDATED = "John Updated"
+
+	// Emails
+	TEST_EMAIL_JOHN         = "john@example.com"
+	TEST_EMAIL_JANE         = "jane@example.com"
+	TEST_EMAIL_BOB          = "bob@example.com"
+	TEST_EMAIL_ALICE        = "alice@example.com"
+	TEST_EMAIL_CHARLIE      = "charlie@example.com"
+	TEST_EMAIL_DIANA        = "diana@example.com"
+	TEST_EMAIL_MINIMAL      = "minimal@example.com"
+	TEST_EMAIL_JOHN_UPDATED = "john.updated@example.com"
+	TEST_EMAIL_NONEXISTENT  = "nonexistent@example.com"
+	TEST_EMAIL_TEST         = "test@example.com"
+
+	// Phone numbers
+	TEST_PHONE_DEFAULT = "555-555-5555"
+	TEST_PHONE_JANE    = "555-555-5556"
+	TEST_PHONE_BOB     = "555-555-5557"
+	TEST_PHONE_ALICE   = "555-555-5558"
+	TEST_PHONE_CHARLIE = "555-555-5559"
+	TEST_PHONE_DIANA   = "555-555-5560"
+	TEST_PHONE_UPDATED = "555-555-9999"
+
+	// Gender
+	TEST_GENDER_MALE   = "Male"
+	TEST_GENDER_FEMALE = "Female"
+
+	// Dates of birth
+	TEST_DOB_DEFAULT = "07-03-2023"
+	TEST_DOB_JANE    = "15-06-1990"
+	TEST_DOB_BOB     = "22-12-1985"
+	TEST_DOB_ALICE   = "03-09-1992"
+	TEST_DOB_CHARLIE = "18-04-1988"
+	TEST_DOB_DIANA   = "11-07-1995"
+	TEST_DOB_UPDATED = "15-08-1990"
+
+	// Proof of identification
+	TEST_PROOF_DEFAULT = "Driver's License"
+	TEST_PROOF_JANE    = "Passport"
+	TEST_PROOF_BOB     = "National ID"
+	TEST_PROOF_ALICE   = "Birth Certificate"
+	TEST_PROOF_CHARLIE = "Social Security Card"
+	TEST_PROOF_DIANA   = "Voter ID"
+
+	// ID serials
+	TEST_ID_SERIAL_DEFAULT = "ABC123"
+	TEST_ID_SERIAL_JANE    = "XYZ789"
+	TEST_ID_SERIAL_BOB     = "DEF456"
+	TEST_ID_SERIAL_ALICE   = "GHI789"
+	TEST_ID_SERIAL_CHARLIE = "JKL012"
+	TEST_ID_SERIAL_DIANA   = "MNO345"
+
+	// Addresses
+	TEST_ADDRESS_DEFAULT = "123 Main St."
+	TEST_ADDRESS_JANE    = "456 Oak Ave."
+	TEST_ADDRESS_BOB     = "789 Pine St."
+	TEST_ADDRESS_ALICE   = "321 Elm St."
+	TEST_ADDRESS_CHARLIE = "654 Maple Dr."
+	TEST_ADDRESS_DIANA   = "987 Cedar Ln."
+	TEST_ADDRESS_UPDATED = "456 Updated St."
+
+	// Error messages
+	TEST_ERROR_EXPECTED      = "expected error"
+	TEST_ERROR_DB_CONNECTION = "database connection error"
+	TEST_ERROR_DB_FAILED     = "database connection failed"
+	TEST_ERROR_DB            = "db error"
+	TEST_ERROR_IMPLEMENT_ME  = "implement me"
+)
+
 type UkamaDbMock struct {
 	GormDb *gorm.DB
 }
 
 func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me: Init()")
+	panic(TEST_ERROR_IMPLEMENT_ME + ": Init()")
 }
 
 func (u UkamaDbMock) Connect() error {
-	panic("implement me: Connect()")
+	panic(TEST_ERROR_IMPLEMENT_ME + ": Connect()")
 }
 
 func (u UkamaDbMock) GetGormDb() *gorm.DB {
@@ -47,17 +126,17 @@ func (u UkamaDbMock) InitDB() error {
 
 func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func() error) error {
-	log.Fatal("implement me: ExecuteInTransaction()")
+	log.Fatal(TEST_ERROR_IMPLEMENT_ME + ": ExecuteInTransaction()")
 	return nil
 }
 
 func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
 	nestedFuncs ...func(tx *gorm.DB) error) error {
-	log.Fatal("implement me: ExecuteInTransaction2()")
+	log.Fatal(TEST_ERROR_IMPLEMENT_ME + ": ExecuteInTransaction2()")
 	return nil
 }
 
-func setupTestDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, int_db.SubscriberRepo) {
+func setupTestDB(t *testing.T) (sqlmock.Sqlmock, int_db.SubscriberRepo) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
@@ -74,7 +153,7 @@ func setupTestDB(t *testing.T) (*sql.DB, sqlmock.Sqlmock, int_db.SubscriberRepo)
 		GormDb: gdb,
 	})
 
-	return db, mock, repo
+	return mock, repo
 }
 
 func createTestSubscriber(name, email string) int_db.Subscriber {
@@ -83,12 +162,12 @@ func createTestSubscriber(name, email string) int_db.Subscriber {
 		Name:                  name,
 		NetworkId:             uuid.NewV4(),
 		Email:                 email,
-		PhoneNumber:           "555-555-5555",
-		Gender:                "Male",
-		DOB:                   "07-03-2023",
-		ProofOfIdentification: "Driver's License",
-		IdSerial:              "ABC123",
-		Address:               "123 Main St.",
+		PhoneNumber:           TEST_PHONE_DEFAULT,
+		Gender:                TEST_GENDER_MALE,
+		DOB:                   TEST_DOB_DEFAULT,
+		ProofOfIdentification: TEST_PROOF_DEFAULT,
+		IdSerial:              TEST_ID_SERIAL_DEFAULT,
+		Address:               TEST_ADDRESS_DEFAULT,
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
 		DeletedAt:             nil,
@@ -98,10 +177,9 @@ func createTestSubscriber(name, email string) int_db.Subscriber {
 func TestSubscriber_Add(t *testing.T) {
 	t.Run("SuccessWithoutNestedFunc", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		subscriber := createTestSubscriber("John", "john@example.com")
+		subscriber := createTestSubscriber(TEST_NAME_JOHN, TEST_EMAIL_JOHN)
 
 		mock.ExpectBegin()
 		mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
@@ -130,32 +208,19 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("SuccessWithNestedFunc", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId:          uuid.NewV4(),
-			Name:                  "Jane",
+			Name:                  TEST_NAME_JANE,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "jane@example.com",
-			PhoneNumber:           "555-555-5556",
-			Gender:                "Female",
-			DOB:                   "15-06-1990",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "XYZ789",
-			Address:               "456 Oak Ave.",
+			Email:                 TEST_EMAIL_JANE,
+			PhoneNumber:           TEST_PHONE_JANE,
+			Gender:                TEST_GENDER_FEMALE,
+			DOB:                   TEST_DOB_JANE,
+			ProofOfIdentification: TEST_PROOF_JANE,
+			IdSerial:              TEST_ID_SERIAL_JANE,
+			Address:               TEST_ADDRESS_JANE,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
 			DeletedAt:             nil,
@@ -187,7 +252,7 @@ func TestSubscriber_Add(t *testing.T) {
 		mock.ExpectCommit()
 
 		// Act
-		err = repo.Add(&subscriber, nestedFunc)
+		err := repo.Add(&subscriber, nestedFunc)
 
 		// Assert
 		assert.NoError(t, err)
@@ -197,38 +262,25 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("NestedFuncReturnsError", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId:          uuid.NewV4(),
-			Name:                  "Bob",
+			Name:                  TEST_NAME_BOB,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "bob@example.com",
-			PhoneNumber:           "555-555-5557",
-			Gender:                "Male",
-			DOB:                   "22-12-1985",
-			ProofOfIdentification: "National ID",
-			IdSerial:              "DEF456",
-			Address:               "789 Pine St.",
+			Email:                 TEST_EMAIL_BOB,
+			PhoneNumber:           TEST_PHONE_BOB,
+			Gender:                TEST_GENDER_MALE,
+			DOB:                   TEST_DOB_BOB,
+			ProofOfIdentification: TEST_PROOF_BOB,
+			IdSerial:              TEST_ID_SERIAL_BOB,
+			Address:               TEST_ADDRESS_BOB,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
 			DeletedAt:             nil,
 		}
 
-		expectedError := errors.New("expected error")
+		expectedError := errors.New(TEST_ERROR_EXPECTED)
 		nestedFunc := func(sub *int_db.Subscriber, tx *gorm.DB) error {
 			return expectedError
 		}
@@ -237,7 +289,7 @@ func TestSubscriber_Add(t *testing.T) {
 		mock.ExpectRollback()
 
 		// Act
-		err = repo.Add(&subscriber, nestedFunc)
+		err := repo.Add(&subscriber, nestedFunc)
 
 		// Assert
 		assert.Error(t, err)
@@ -247,38 +299,25 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("DatabaseCreateFails", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId:          uuid.NewV4(),
-			Name:                  "Alice",
+			Name:                  TEST_NAME_ALICE,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "alice@example.com",
-			PhoneNumber:           "555-555-5558",
-			Gender:                "Female",
-			DOB:                   "03-09-1992",
-			ProofOfIdentification: "Birth Certificate",
-			IdSerial:              "GHI789",
-			Address:               "321 Elm St.",
+			Email:                 TEST_EMAIL_ALICE,
+			PhoneNumber:           TEST_PHONE_ALICE,
+			Gender:                TEST_GENDER_FEMALE,
+			DOB:                   TEST_DOB_ALICE,
+			ProofOfIdentification: TEST_PROOF_ALICE,
+			IdSerial:              TEST_ID_SERIAL_ALICE,
+			Address:               TEST_ADDRESS_ALICE,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
 			DeletedAt:             nil,
 		}
 
-		expectedError := errors.New("expected error")
+		expectedError := errors.New(TEST_ERROR_EXPECTED)
 		mock.ExpectBegin()
 		mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
 			subscriber.SubscriberId,
@@ -297,7 +336,7 @@ func TestSubscriber_Add(t *testing.T) {
 		mock.ExpectRollback()
 
 		// Act
-		err = repo.Add(&subscriber, nil)
+		err := repo.Add(&subscriber, nil)
 
 		// Assert
 		assert.Error(t, err)
@@ -307,42 +346,29 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("DatabaseTransactionFails", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId:          uuid.NewV4(),
-			Name:                  "Charlie",
+			Name:                  TEST_NAME_CHARLIE,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "charlie@example.com",
-			PhoneNumber:           "555-555-5559",
-			Gender:                "Male",
-			DOB:                   "18-04-1988",
-			ProofOfIdentification: "Social Security Card",
-			IdSerial:              "JKL012",
-			Address:               "654 Maple Dr.",
+			Email:                 TEST_EMAIL_CHARLIE,
+			PhoneNumber:           TEST_PHONE_CHARLIE,
+			Gender:                TEST_GENDER_MALE,
+			DOB:                   TEST_DOB_CHARLIE,
+			ProofOfIdentification: TEST_PROOF_CHARLIE,
+			IdSerial:              TEST_ID_SERIAL_CHARLIE,
+			Address:               TEST_ADDRESS_CHARLIE,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
 			DeletedAt:             nil,
 		}
 
-		expectedError := errors.New("expected error")
+		expectedError := errors.New(TEST_ERROR_EXPECTED)
 		mock.ExpectBegin().WillReturnError(expectedError)
 
 		// Act
-		err = repo.Add(&subscriber, nil)
+		err := repo.Add(&subscriber, nil)
 
 		// Assert
 		assert.Error(t, err)
@@ -352,32 +378,19 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("NestedFuncWithDatabaseError", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId:          uuid.NewV4(),
-			Name:                  "Diana",
+			Name:                  TEST_NAME_DIANA,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "diana@example.com",
-			PhoneNumber:           "555-555-5560",
-			Gender:                "Female",
-			DOB:                   "11-07-1995",
-			ProofOfIdentification: "Voter ID",
-			IdSerial:              "MNO345",
-			Address:               "987 Cedar Ln.",
+			Email:                 TEST_EMAIL_DIANA,
+			PhoneNumber:           TEST_PHONE_DIANA,
+			Gender:                TEST_GENDER_FEMALE,
+			DOB:                   TEST_DOB_DIANA,
+			ProofOfIdentification: TEST_PROOF_DIANA,
+			IdSerial:              TEST_ID_SERIAL_DIANA,
+			Address:               TEST_ADDRESS_DIANA,
 			CreatedAt:             time.Now(),
 			UpdatedAt:             time.Now(),
 			DeletedAt:             nil,
@@ -392,7 +405,7 @@ func TestSubscriber_Add(t *testing.T) {
 		mock.ExpectRollback()
 
 		// Act
-		err = repo.Add(&subscriber, nestedFunc)
+		err := repo.Add(&subscriber, nestedFunc)
 
 		// Assert
 		assert.Error(t, err)
@@ -402,26 +415,13 @@ func TestSubscriber_Add(t *testing.T) {
 
 	t.Run("SubscriberWithMinimalFields", func(t *testing.T) {
 		// Arrange
-		db, mock, err := sqlmock.New()
-		if err != nil {
-			t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
-		}
-		defer db.Close()
-		gdb, _ := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
+		mock, repo := setupTestDB(t)
 
 		subscriber := int_db.Subscriber{
 			SubscriberId: uuid.NewV4(),
-			Name:         "Minimal",
+			Name:         TEST_NAME_MINIMAL,
 			NetworkId:    uuid.NewV4(),
-			Email:        "minimal@example.com",
+			Email:        TEST_EMAIL_MINIMAL,
 			CreatedAt:    time.Now(),
 			UpdatedAt:    time.Now(),
 		}
@@ -444,7 +444,7 @@ func TestSubscriber_Add(t *testing.T) {
 		mock.ExpectCommit()
 
 		// Act
-		err = repo.Add(&subscriber, nil)
+		err := repo.Add(&subscriber, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -458,15 +458,7 @@ func TestSubscriber_Get(t *testing.T) {
 		var subID = uuid.NewV4()
 
 		// Arrange
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-		defer db.Close()
-		gdb, err := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
+		mock, repo := setupTestDB(t)
 
 		subRow := sqlmock.NewRows([]string{"subscriber_id"}).
 			AddRow(subID)
@@ -475,10 +467,6 @@ func TestSubscriber_Get(t *testing.T) {
 			WithArgs(subID, sqlmock.AnyArg()).
 			WillReturnRows(subRow)
 
-		assert.NoError(t, err)
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
 		// Act
 		sub, err := repo.Get(subID)
 
@@ -494,27 +482,11 @@ func TestSubscriber_Get(t *testing.T) {
 		var subID = uuid.NewV4()
 
 		// Arrange
-		db, mock, err := sqlmock.New()
-
-		assert.NoError(t, err)
-
-		defer db.Close()
-		gdb, err := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-
-		assert.NoError(t, err)
+		mock, repo := setupTestDB(t)
 
 		mock.ExpectQuery(`^SELECT.*subscribers.*`).
 			WithArgs(subID, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
-		repo := int_db.NewSubscriberRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-		assert.NoError(t, err)
 
 		// Act
 		sub, err := repo.Get(subID)
@@ -531,15 +503,14 @@ func TestSubscriber_Get(t *testing.T) {
 func TestSubscriber_GetByNetwork(t *testing.T) {
 	t.Run("SuccessWithMultipleSubscribers", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		networkId := uuid.NewV4()
-		subscriber1 := createTestSubscriber("John", "john@example.com")
+		subscriber1 := createTestSubscriber(TEST_NAME_JOHN, TEST_EMAIL_JOHN)
 		subscriber1.NetworkId = networkId
-		subscriber2 := createTestSubscriber("Jane", "jane@example.com")
+		subscriber2 := createTestSubscriber(TEST_NAME_JANE, TEST_EMAIL_JANE)
 		subscriber2.NetworkId = networkId
-		subscriber3 := createTestSubscriber("Bob", "bob@example.com")
+		subscriber3 := createTestSubscriber(TEST_NAME_BOB, TEST_EMAIL_BOB)
 		subscriber3.NetworkId = networkId
 
 		rows := sqlmock.NewRows([]string{
@@ -590,11 +561,10 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 	t.Run("SuccessWithSingleSubscriber", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		networkId := uuid.NewV4()
-		subscriber := createTestSubscriber("Alice", "alice@example.com")
+		subscriber := createTestSubscriber(TEST_NAME_ALICE, TEST_EMAIL_ALICE)
 		subscriber.NetworkId = networkId
 
 		rows := sqlmock.NewRows([]string{
@@ -627,8 +597,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 	t.Run("SuccessWithNoSubscribers", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		networkId := uuid.NewV4()
 
@@ -653,11 +622,10 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 	t.Run("DatabaseError", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		networkId := uuid.NewV4()
-		dbErr := errors.New("database connection error")
+		dbErr := errors.New(TEST_ERROR_DB_CONNECTION)
 
 		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE "subscribers"."network_id" = \$1`).
 			WithArgs(networkId).
@@ -676,8 +644,7 @@ func TestSubscriber_GetByNetwork(t *testing.T) {
 
 func TestSubscriber_Delete(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 		subscriberId := uuid.NewV4()
 		mock.ExpectBegin()
 		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnResult(sqlmock.NewResult(0, 1))
@@ -688,8 +655,7 @@ func TestSubscriber_Delete(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 		subscriberId := uuid.NewV4()
 		mock.ExpectBegin()
 		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnResult(sqlmock.NewResult(0, 0))
@@ -701,10 +667,9 @@ func TestSubscriber_Delete(t *testing.T) {
 	})
 
 	t.Run("DatabaseError", func(t *testing.T) {
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 		subscriberId := uuid.NewV4()
-		dbErr := errors.New("db error")
+		dbErr := errors.New(TEST_ERROR_DB)
 		mock.ExpectBegin()
 		mock.ExpectExec(`DELETE FROM "subscribers"`).WithArgs(subscriberId).WillReturnError(dbErr)
 		mock.ExpectRollback()
@@ -718,12 +683,11 @@ func TestSubscriber_Delete(t *testing.T) {
 func TestSubscriber_ListSubscribers(t *testing.T) {
 	t.Run("SuccessWithMultipleSubscribers", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		subscriber1 := createTestSubscriber("John", "john@example.com")
-		subscriber2 := createTestSubscriber("Jane", "jane@example.com")
-		subscriber3 := createTestSubscriber("Bob", "bob@example.com")
+		subscriber1 := createTestSubscriber(TEST_NAME_JOHN, TEST_EMAIL_JOHN)
+		subscriber2 := createTestSubscriber(TEST_NAME_JANE, TEST_EMAIL_JANE)
+		subscriber3 := createTestSubscriber(TEST_NAME_BOB, TEST_EMAIL_BOB)
 
 		rows := sqlmock.NewRows([]string{
 			"subscriber_id", "name", "network_id", "email", "phone_number",
@@ -768,10 +732,9 @@ func TestSubscriber_ListSubscribers(t *testing.T) {
 
 	t.Run("SuccessWithSingleSubscriber", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		subscriber := createTestSubscriber("Alice", "alice@example.com")
+		subscriber := createTestSubscriber(TEST_NAME_ALICE, TEST_EMAIL_ALICE)
 
 		rows := sqlmock.NewRows([]string{
 			"subscriber_id", "name", "network_id", "email", "phone_number",
@@ -800,8 +763,7 @@ func TestSubscriber_ListSubscribers(t *testing.T) {
 
 	t.Run("SuccessWithNoSubscribers", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		rows := sqlmock.NewRows([]string{
 			"subscriber_id", "name", "network_id", "email", "phone_number",
@@ -823,10 +785,9 @@ func TestSubscriber_ListSubscribers(t *testing.T) {
 
 	t.Run("DatabaseError", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		expectedError := errors.New("database connection failed")
+		expectedError := errors.New(TEST_ERROR_DB_FAILED)
 		mock.ExpectQuery(`^SELECT \* FROM "subscribers"`).WillReturnError(expectedError)
 
 		// Act
@@ -843,11 +804,10 @@ func TestSubscriber_ListSubscribers(t *testing.T) {
 func TestSubscriber_GetByEmail(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		expectedEmail := "john@example.com"
-		subscriber := createTestSubscriber("John", expectedEmail)
+		expectedEmail := TEST_EMAIL_JOHN
+		subscriber := createTestSubscriber(TEST_NAME_JOHN, expectedEmail)
 
 		subRow := sqlmock.NewRows([]string{
 			"subscriber_id", "name", "network_id", "email", "phone_number",
@@ -885,10 +845,9 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		nonExistentEmail := "nonexistent@example.com"
+		nonExistentEmail := TEST_EMAIL_NONEXISTENT
 
 		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
 			WithArgs(nonExistentEmail, 1).
@@ -906,11 +865,10 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 
 	t.Run("DatabaseError", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
-		email := "test@example.com"
-		expectedError := errors.New("database connection failed")
+		email := TEST_EMAIL_TEST
+		expectedError := errors.New(TEST_ERROR_DB_FAILED)
 
 		mock.ExpectQuery(`^SELECT \* FROM "subscribers" WHERE email = \$1 ORDER BY "subscribers"\."subscriber_id" LIMIT \$2`).
 			WithArgs(email, 1).
@@ -930,23 +888,22 @@ func TestSubscriber_GetByEmail(t *testing.T) {
 func TestSubscriber_Update(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		db, mock, repo := setupTestDB(t)
-		defer db.Close()
+		mock, repo := setupTestDB(t)
 
 		subscriberId := uuid.NewV4()
-		originalSubscriber := createTestSubscriber("John", "john@example.com")
+		originalSubscriber := createTestSubscriber(TEST_NAME_JOHN, TEST_EMAIL_JOHN)
 		originalSubscriber.SubscriberId = subscriberId
 
 		updatedSubscriber := int_db.Subscriber{
-			Name:                  "John Updated",
+			Name:                  TEST_NAME_JOHN_UPDATED,
 			NetworkId:             uuid.NewV4(),
-			Email:                 "john.updated@example.com",
-			PhoneNumber:           "555-555-9999",
-			Gender:                "Male",
-			DOB:                   "15-08-1990",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "XYZ789",
-			Address:               "456 Updated St.",
+			Email:                 TEST_EMAIL_JOHN_UPDATED,
+			PhoneNumber:           TEST_PHONE_UPDATED,
+			Gender:                TEST_GENDER_MALE,
+			DOB:                   TEST_DOB_UPDATED,
+			ProofOfIdentification: TEST_PROOF_JANE,
+			IdSerial:              TEST_ID_SERIAL_JANE,
+			Address:               TEST_ADDRESS_UPDATED,
 		}
 
 		mock.ExpectBegin()
