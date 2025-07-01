@@ -269,6 +269,12 @@ func (r *Resty) Delete(url string) (*resty.Response, error) {
 	return resp, nil
 }
 
+type RoundTripFunc func(req *http.Request) *http.Response
+
+func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return r(req), nil
+}
+
 type ErrorStatus struct {
 	StatusCode int   `json:"status,omitempty"`
 	RawError   error `json:"raw_error,omitempty"`

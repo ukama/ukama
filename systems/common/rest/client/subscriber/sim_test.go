@@ -15,10 +15,13 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
-const testUuid = "03cb753f-5e03-4c97-8e47-625115476c72"
+const (
+	testUuid = "03cb753f-5e03-4c97-8e47-625115476c72"
+)
 
 func TestSimClient_Get(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
@@ -46,7 +49,7 @@ func TestSimClient_Get(t *testing.T) {
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Get(testUuid)
 
@@ -71,7 +74,7 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Get(testUuid)
 
@@ -93,7 +96,7 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Get(testUuid)
 
@@ -110,7 +113,7 @@ func TestSimClient_Get(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Get(testUuid)
 
@@ -145,7 +148,7 @@ func TestSimClient_Add(t *testing.T) {
 
 		// We replace the transport mechanism by mocking the http request
 		// so that the test stays a unit test e.g no server/network call.
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
@@ -174,7 +177,7 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
@@ -200,7 +203,7 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
@@ -221,7 +224,7 @@ func TestSimClient_Add(t *testing.T) {
 
 		testSimClient := subscriber.NewSimClient("")
 
-		testSimClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
@@ -232,10 +235,4 @@ func TestSimClient_Add(t *testing.T) {
 		assert.Error(tt, err)
 		assert.Nil(tt, s)
 	})
-}
-
-type RoundTripFunc func(req *http.Request) *http.Response
-
-func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return r(req), nil
 }

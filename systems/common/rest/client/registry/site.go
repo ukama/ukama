@@ -21,20 +21,20 @@ import (
 const SiteEndpoint = "/v1/sites"
 
 type SiteInfo struct {
-	Id          string `json:"id,omitempty"`
-	Name        string `json:"name,omitempty"`
-	NetworkId   string `json:"network_id,omitempty"`
-	BackhaulId  string `json:"backhaul_id,omitempty"`
-	PowerId     string `json:"power_id,omitempty"`
-	AccessId    string `json:"access_id,omitempty"`
-	SwitchId    string `json:"switch_id,omitempty"`
-	SpectrumId  string `json:"spectrum_id,omitempty"`
-	Deactivated bool   `json:"deactivated,omitempty"`
+	Id          string  `json:"id,omitempty"`
+	Name        string  `json:"name,omitempty"`
+	NetworkId   string  `json:"network_id,omitempty"`
+	BackhaulId  string  `json:"backhaul_id,omitempty"`
+	PowerId     string  `json:"power_id,omitempty"`
+	AccessId    string  `json:"access_id,omitempty"`
+	SwitchId    string  `json:"switch_id,omitempty"`
+	SpectrumId  string  `json:"spectrum_id,omitempty"`
+	Deactivated bool    `json:"deactivated,omitempty"`
 	Latitude    float64 `json:"latitude,omitempty"`
-    Longitude   float64 `json:"longitude,omitempty"`
-	InstallDate string `json:"install_date,omitempty"`
-	CreatedAt   string `json:"created_at,omitempty"`
-	Location    string `json:"location,omitempty"`
+	Longitude   float64 `json:"longitude,omitempty"`
+	InstallDate string  `json:"install_date,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	Location    string  `json:"location,omitempty"`
 }
 
 type Site struct {
@@ -63,12 +63,12 @@ func NewSiteClient(h string, options ...client.Option) *siteClient {
 	}
 }
 
-func (n *siteClient) Get(id string) (*SiteInfo, error) {
+func (s *siteClient) Get(id string) (*SiteInfo, error) {
 	log.Debugf("Getting site: %v", id)
 
 	site := Site{}
 
-	resp, err := n.R.Get(n.u.String() + SiteEndpoint + "/" + id)
+	resp, err := s.R.Get(s.u.String() + SiteEndpoint + "/" + id)
 	if err != nil {
 		log.Errorf("GetSite failure. error: %s", err.Error())
 
