@@ -120,14 +120,14 @@ BOOT_MARKER=$(yq_read     '.flash.boot_marker')
 ORIGINAL_SSH_STATE=$(detect_ssh_state)
 
 {
-    # === [0] Verify USB device exists ===
+    # Verify USB device exists
     if [ ! -b "$USB_DEV" ]; then
         echo "USB device '$USB_DEV' not found or is not a block device."
         echo "Make sure it's plugged in and use the full device path (e.g., /dev/sdb)"
         exit 1
     fi
 
-    echo "=== [1] Configure dev Ethernet (${HOST_ETH}) ==="
+    echo "Configure dev Ethernet (${HOST_ETH})"
     nmcli device set "$HOST_ETH" managed no
     sudo ip link set "$HOST_ETH" down || true
     sudo ip addr flush dev "$HOST_ETH" || true
@@ -135,9 +135,25 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
     sudo ip link set "$HOST_ETH" up
     ip addr show "$HOST_ETH"
 
-    sleep 2
+    sudo apt-get update -qq
+    sudo apt-get install -y isc-dhcp-server
 
-    echo "=== [2] Start SSH (as needed) ==="
+    # Listen only on our interface:
+    echo "INTERFACESv4=\"$HOST_ETH\"" | sudo tee /etc/default/isc-dhcp-server
+
+    # Minimal dhcpd.conf for .0/24:
+    sudo tee /etc/dhcp/dhcpd.conf <<EOF
+subnet ${HOST_IP%.*}.0 netmask 255.255.255.0 {
+  range ${HOST_IP%.*}.100 ${HOST_IP%.*}.200;
+  option routers ${HOST_IP};
+  option domain-name-servers 8.8.8.8, 8.8.4.4;
+}
+EOF
+
+    sudo systemctl restart isc-dhcp-server
+    echo "DHCP server is up on $HOST_ETH"
+
+    echo "Start SSH (as needed)"
     if [ "$ORIGINAL_SSH_STATE" = "inactive" ]; then
         echo "Starting SSH temporarily for image transfer"
         sudo systemctl start sshd
@@ -145,18 +161,19 @@ ORIGINAL_SSH_STATE=$(detect_ssh_state)
         echo "SSHD is not installed — skipping SSH-related steps."
     fi
 
-    echo "=== [3] Download Alpine ISO ==="
+    echo "Download Alpine ISO"
     curl -L "$ISO_URL" -o alpine.iso
 
-    echo "=== [4] Generate flash script ==="
+    echo "Generate flash script"
     cat > "$FLASH_SCRIPT" <<EOF
 #!/bin/sh
 set -eux
 
-echo "[SMARC] Setting static IP ${TARGET_IP} on eth0"
-ip addr flush dev eth0 || true
-ip addr add "${TARGET_IP}/24" dev eth0
-ip link set eth0 up
+echo "[SMARC] bringing up eth0 via DHCP"
+dhcpd -t0 eth0
+
+echo "[SMARC] Waiting a couple seconds for lease…"
+sleep 2
 
 echo "[SMARC] Detecting eMMC device..."
 for dev in /dev/mmcblk*; do
@@ -172,7 +189,7 @@ if [ -z "\${EMMC_DEV:-}" ]; then
 fi
 echo "[SMARC] Detected eMMC device: \$EMMC_DEV"
 
-echo "[SMARC] Downloading image from ${HOST_IP}"
+echo "[SMARC] Downloading image from ${HOST_IP}:8000/${IMG_NAME}"
 wget "http://${HOST_IP}:8000/${IMG_NAME}" -O "/mnt/${IMG_NAME}"
 
 ls -lh "/mnt/${IMG_NAME}"
@@ -195,11 +212,11 @@ reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
-    echo "=== [5] Create bootable USB with custom autorun ==="
+    echo "Create bootable USB with custom autorun"
     USB_DEV="$USB_DEV" FLASH_SCRIPT="$FLASH_SCRIPT" "$ISO_BUILDER"
 
-    # === [5.5] Start HTTP server to serve image ===
-    echo "=== [5.5] Starting temporary HTTP server to serve image"
+    # Start HTTP server to serve image
+    echo "Starting temporary HTTP server to serve image"
     IMG_DIR=$(dirname "$IMG_PATH")
     cd "$IMG_DIR"
     python3 -m http.server 8000 > /dev/null 2>&1 &
@@ -232,7 +249,7 @@ EOF
         # Eject USB
         sudo eject "$USB_DEV"
 
-        echo "=== [6] Insert USB into SMARC board and power it up ==="
+        echo "Insert USB into SMARC board and power it up"
         echo "USB is ready. Insert into target and run flash-smarc.sh manually."
         echo "(Boot to Alpine, mount /dev/sda2, run /mnt/flash-smarc.sh)"
         echo "Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
@@ -244,11 +261,11 @@ EOF
         cat "$SERIAL_DEV" | tee "$RAW_SERIAL" "$SERIAL_LOG" &
         SERIAL_PID=$!
 
-        echo "=== [7] Waiting for '${SUCCESS_MARKER}' ==="
+        echo "Waiting for '${SUCCESS_MARKER}'"
         retry timeout 300 grep -q "$SUCCESS_MARKER" "$SERIAL_LOG"
         echo "Flash completed."
 
-        echo "=== [8] Waiting for '${BOOT_MARKER}' ==="
+        echo "Waiting for '${BOOT_MARKER}'"
         retry timeout 120 grep -q "$BOOT_MARKER" "$SERIAL_LOG"
         echo "System booted."
 
