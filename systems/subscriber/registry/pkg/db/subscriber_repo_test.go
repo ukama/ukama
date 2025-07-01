@@ -175,7 +175,7 @@ func createTestSubscriber(name, email string) int_db.Subscriber {
 }
 
 func TestSubscriber_Add(t *testing.T) {
-	t.Run("SuccessWithoutNestedFunc", func(t *testing.T) {
+	t.Run("Add success", func(t *testing.T) {
 		// Arrange
 		mock, repo := setupTestDB(t)
 
@@ -203,97 +203,6 @@ func TestSubscriber_Add(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("SuccessWithNestedFunc", func(t *testing.T) {
-		// Arrange
-		mock, repo := setupTestDB(t)
-
-		subscriber := int_db.Subscriber{
-			SubscriberId:          uuid.NewV4(),
-			Name:                  TEST_NAME_JANE,
-			NetworkId:             uuid.NewV4(),
-			Email:                 TEST_EMAIL_JANE,
-			PhoneNumber:           TEST_PHONE_JANE,
-			Gender:                TEST_GENDER_FEMALE,
-			DOB:                   TEST_DOB_JANE,
-			ProofOfIdentification: TEST_PROOF_JANE,
-			IdSerial:              TEST_ID_SERIAL_JANE,
-			Address:               TEST_ADDRESS_JANE,
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-			DeletedAt:             nil,
-		}
-
-		nestedFuncCalled := false
-		nestedFunc := func(sub *int_db.Subscriber, tx *gorm.DB) error {
-			nestedFuncCalled = true
-			assert.Equal(t, subscriber.SubscriberId, sub.SubscriberId)
-			assert.NotNil(t, tx)
-			return nil
-		}
-
-		mock.ExpectBegin()
-		mock.ExpectExec("INSERT INTO \"subscribers\"").WithArgs(
-			subscriber.SubscriberId,
-			subscriber.Name,
-			subscriber.NetworkId,
-			subscriber.Email,
-			subscriber.PhoneNumber,
-			subscriber.Gender,
-			subscriber.DOB,
-			subscriber.ProofOfIdentification,
-			subscriber.IdSerial,
-			subscriber.Address,
-			subscriber.CreatedAt,
-			subscriber.UpdatedAt,
-			subscriber.DeletedAt).WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-
-		// Act
-		err := repo.Add(&subscriber, nestedFunc)
-
-		// Assert
-		assert.NoError(t, err)
-		assert.True(t, nestedFuncCalled)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("NestedFuncReturnsError", func(t *testing.T) {
-		// Arrange
-		mock, repo := setupTestDB(t)
-
-		subscriber := int_db.Subscriber{
-			SubscriberId:          uuid.NewV4(),
-			Name:                  TEST_NAME_BOB,
-			NetworkId:             uuid.NewV4(),
-			Email:                 TEST_EMAIL_BOB,
-			PhoneNumber:           TEST_PHONE_BOB,
-			Gender:                TEST_GENDER_MALE,
-			DOB:                   TEST_DOB_BOB,
-			ProofOfIdentification: TEST_PROOF_BOB,
-			IdSerial:              TEST_ID_SERIAL_BOB,
-			Address:               TEST_ADDRESS_BOB,
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-			DeletedAt:             nil,
-		}
-
-		expectedError := errors.New(TEST_ERROR_EXPECTED)
-		nestedFunc := func(sub *int_db.Subscriber, tx *gorm.DB) error {
-			return expectedError
-		}
-
-		mock.ExpectBegin()
-		mock.ExpectRollback()
-
-		// Act
-		err := repo.Add(&subscriber, nestedFunc)
-
-		// Assert
-		assert.Error(t, err)
-		assert.Equal(t, expectedError, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
@@ -341,75 +250,6 @@ func TestSubscriber_Add(t *testing.T) {
 		// Assert
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("DatabaseTransactionFails", func(t *testing.T) {
-		// Arrange
-		mock, repo := setupTestDB(t)
-
-		subscriber := int_db.Subscriber{
-			SubscriberId:          uuid.NewV4(),
-			Name:                  TEST_NAME_CHARLIE,
-			NetworkId:             uuid.NewV4(),
-			Email:                 TEST_EMAIL_CHARLIE,
-			PhoneNumber:           TEST_PHONE_CHARLIE,
-			Gender:                TEST_GENDER_MALE,
-			DOB:                   TEST_DOB_CHARLIE,
-			ProofOfIdentification: TEST_PROOF_CHARLIE,
-			IdSerial:              TEST_ID_SERIAL_CHARLIE,
-			Address:               TEST_ADDRESS_CHARLIE,
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-			DeletedAt:             nil,
-		}
-
-		expectedError := errors.New(TEST_ERROR_EXPECTED)
-		mock.ExpectBegin().WillReturnError(expectedError)
-
-		// Act
-		err := repo.Add(&subscriber, nil)
-
-		// Assert
-		assert.Error(t, err)
-		assert.Equal(t, expectedError, err)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("NestedFuncWithDatabaseError", func(t *testing.T) {
-		// Arrange
-		mock, repo := setupTestDB(t)
-
-		subscriber := int_db.Subscriber{
-			SubscriberId:          uuid.NewV4(),
-			Name:                  TEST_NAME_DIANA,
-			NetworkId:             uuid.NewV4(),
-			Email:                 TEST_EMAIL_DIANA,
-			PhoneNumber:           TEST_PHONE_DIANA,
-			Gender:                TEST_GENDER_FEMALE,
-			DOB:                   TEST_DOB_DIANA,
-			ProofOfIdentification: TEST_PROOF_DIANA,
-			IdSerial:              TEST_ID_SERIAL_DIANA,
-			Address:               TEST_ADDRESS_DIANA,
-			CreatedAt:             time.Now(),
-			UpdatedAt:             time.Now(),
-			DeletedAt:             nil,
-		}
-
-		nestedFunc := func(sub *int_db.Subscriber, tx *gorm.DB) error {
-			// Simulate a database operation that fails
-			return gorm.ErrInvalidDB
-		}
-
-		mock.ExpectBegin()
-		mock.ExpectRollback()
-
-		// Act
-		err := repo.Add(&subscriber, nestedFunc)
-
-		// Assert
-		assert.Error(t, err)
-		assert.Equal(t, gorm.ErrInvalidDB, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 

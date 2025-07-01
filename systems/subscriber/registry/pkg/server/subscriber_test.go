@@ -37,40 +37,36 @@ const OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 // Test data constants
 const (
 	// Names
-	TestNameJohn        = "John"
-	TestNameJane        = "Jane"
-	TestNameJohnUpdated = "John Updated"
+	TestNameJohn = "John"
+	TestNameJane = "Jane"
 
 	// Emails
 	TestEmailJohn        = "johndoe@example.com"
-	TestEmailJane        = "jane@example.com"
 	TestEmailJohnLower   = "john@example.com"
+	TestEmailJane        = "jane@example.com"
 	TestEmailJaneLower   = "jane@example.com"
 	TestEmailNonexistent = "nonexistent@example.com"
 	TestEmailUpperCase   = "JOHNDOE@EXAMPLE.COM"
 
 	// Phone numbers
-	TestPhoneJohn    = "1234567890"
-	TestPhoneJane    = "0987654321"
-	TestPhoneUpdated = "9876543210"
+	TestPhoneJohn = "1234567890"
+	TestPhoneJane = "0987654321"
 
 	// Gender
 	TestGenderMale   = "Male"
 	TestGenderFemale = "Female"
 
 	// Addresses
-	TestAddressJohn    = "1 Main St"
-	TestAddressJane    = "2 Oak Ave"
-	TestAddressUpdated = "123 Updated St"
+	TestAddressJohn = "1 Main St"
+	TestAddressJane = "2 Oak Ave"
 
 	// Proof of identification
 	TestProofPassport      = "Passport"
 	TestProofDriverLicense = "Driver License"
 
 	// ID serials
-	TestIdSerialJohn    = "123456789"
-	TestIdSerialJane    = "987654321"
-	TestIdSerialUpdated = "987654321"
+	TestIdSerialJohn = "123456789"
+	TestIdSerialJane = "987654321"
 
 	// Network names
 	TestNetworkName = "net-1"
@@ -96,23 +92,22 @@ const (
 	TestPackageId2 = "pkg-2"
 
 	// Error messages
-	ErrNetworkNotFound             = "network not found"
-	ErrDefaultNetworkNotFound      = "default network not found"
-	ErrInvalidNetworkUUID          = "invalid format of network uuid"
-	ErrDuplicateKey                = "duplicate key value violates unique constraint"
-	ErrConnectionTimeout           = "connection timeout"
-	ErrPublishFailed               = "publish failed"
-	ErrSubscriberNotFound          = "subscriber record not found"
-	ErrInvalidSubscriberUUID       = "Invalid subscriberId format"
-	ErrDatabaseConnection          = "database connection error"
-	ErrSimManagerUnavailable       = "sim manager service unavailable"
-	ErrFailedToListSims            = "failed to list sims"
-	ErrFailedToListSimsByNetwork   = "failed to list sims by network"
-	ErrInvalidPackageStartDate     = "invalid format for Package.StartDate value"
-	ErrInvalidPackageEndDate       = "invalid format for Package.EndDate value"
-	ErrInvalidSubscriberUUIDFormat = "invalid format of subscriber uuid"
-	ErrDeleteError                 = "delete error"
-	ErrDbError                     = "db error"
+	ErrNetworkNotFound           = "network not found"
+	ErrDefaultNetworkNotFound    = "default network not found"
+	ErrInvalidNetworkUUID        = "invalid format of network uuid"
+	ErrDuplicateKey              = "duplicate key value violates unique constraint"
+	ErrConnectionTimeout         = "connection timeout"
+	ErrPublishFailed             = "publish failed"
+	ErrSubscriberNotFound        = "subscriber record not found"
+	ErrInvalidSubscriberUUID     = "Invalid subscriberId format"
+	ErrDatabaseConnection        = "database connection error"
+	ErrSimManagerUnavailable     = "sim manager service unavailable"
+	ErrFailedToListSims          = "failed to list sims"
+	ErrFailedToListSimsByNetwork = "failed to list sims by network"
+	ErrInvalidPackageStartDate   = "invalid format for Package.StartDate value"
+	ErrInvalidPackageEndDate     = "invalid format for Package.EndDate value"
+	ErrDeleteError               = "delete error"
+	ErrDbError                   = "db error"
 
 	// Invalid values
 	InvalidUUID       = "invalid-uuid"
@@ -790,7 +785,7 @@ func TestSubscriberServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), ErrFailedToListSims)
+		assert.Contains(t, err.Error(), "failed to list sims")
 		subscriberRepo.AssertExpectations(t)
 		simManagerService.AssertExpectations(t)
 		simManagerClient.AssertExpectations(t)
