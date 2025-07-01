@@ -48,7 +48,7 @@ func TestNodeClient_Get(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Get(testNodeId)
@@ -147,7 +147,7 @@ func TestNodeClient_Add(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testNodeClient.Add(
@@ -265,7 +265,7 @@ func TestNodeClient_GetAll(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		nodes, err := testNodeClient.GetAll()
@@ -365,7 +365,7 @@ func TestNodeClient_GetNodesBySite(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		nodes, err := testNodeClient.GetNodesBySite(testUuid)
@@ -456,7 +456,7 @@ func TestNodeClient_Delete(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Delete(testNodeId)
@@ -523,7 +523,7 @@ func TestNodeClient_Attach(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Attach(testNodeId,
@@ -601,7 +601,7 @@ func TestNodeClient_Detach(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testNodeClient.Detach(testNodeId)
@@ -668,7 +668,7 @@ func TestNodeClient_AddToSite(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testNodeClient.AddToSite(testNodeId,
@@ -746,7 +746,7 @@ func TestNodeClient_RemoveFromSite(t *testing.T) {
 		testNodeClient := registry.NewNodeClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNodeClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testNodeClient.RemoveFromSite(testNodeId)

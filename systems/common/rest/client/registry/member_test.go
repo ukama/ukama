@@ -27,7 +27,7 @@ func TestMemberClient_GetByUserId(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint+"/user/"+testUuid)
 
 			// fake member info
-			memb := `{"member":{"member_id": "03cb753f-5e03-4c97-8e47-625115476c73", "user_id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_deactivated": false}}`
+			member := `{"member":{"member_id": "03cb753f-5e03-4c97-8e47-625115476c73", "user_id": "03cb753f-5e03-4c97-8e47-625115476c72", "is_deactivated": false}}`
 
 			// Send mock response
 			return &http.Response{
@@ -35,7 +35,7 @@ func TestMemberClient_GetByUserId(t *testing.T) {
 				Status:     "200 OK",
 
 				// Send response to be tested
-				Body: io.NopCloser(bytes.NewBufferString(memb)),
+				Body: io.NopCloser(bytes.NewBufferString(member)),
 
 				// Must be set to non-nil value or it panics
 				Header: make(http.Header),
@@ -45,7 +45,7 @@ func TestMemberClient_GetByUserId(t *testing.T) {
 		testMemberClient := registry.NewMemberClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testMemberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		m, err := testMemberClient.GetByUserId(testUuid)
@@ -54,7 +54,7 @@ func TestMemberClient_GetByUserId(t *testing.T) {
 		assert.Equal(tt, testUuid, m.Member.UserId)
 	})
 
-	t.Run("MemberkNotFound", func(tt *testing.T) {
+	t.Run("MemberNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint+"/user/"+testUuid)
 

@@ -67,7 +67,7 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testUkamaClient.GetSimInfo(testIccid)
@@ -163,7 +163,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		u, _, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)

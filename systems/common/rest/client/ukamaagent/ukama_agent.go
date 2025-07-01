@@ -46,7 +46,7 @@ func NewUkamaAgentClient(h string) *ukamaAgentClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &ukamaAgentClient{
@@ -55,7 +55,8 @@ func NewUkamaAgentClient(h string) *ukamaAgentClient {
 	}
 }
 
-// Bind sim calls asr activate in order to add the ukama sims into ukama agent asr.
+// Bind sim calls ActivateSim, which calls asr activate in order
+// to add the ukama sims into ukama agent asr.
 func (u *ukamaAgentClient) BindSim(req client.AgentRequestData) (*UkamaSimInfo, error) {
 	return &UkamaSimInfo{}, u.ActivateSim(req)
 }
@@ -155,7 +156,7 @@ func (u *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
 }
 
 func (u *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
-	log.Debugf("Updating ukama sim's pacakge: %v", req.Iccid)
+	log.Debugf("Updating ukama sim's package: %v", req.Iccid)
 
 	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
 	if err != nil {

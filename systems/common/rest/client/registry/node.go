@@ -99,7 +99,7 @@ type nodeClient struct {
 func NewNodeClient(h string, options ...client.Option) *nodeClient {
 	u, err := url.Parse(h)
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &nodeClient{
@@ -130,7 +130,7 @@ func (n *nodeClient) Add(req AddNodeRequest) (*NodeInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("node info deserailization failure: %w", err)
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
 	log.Infof("Node Info: %+v", node.NodeInfo)
@@ -154,7 +154,7 @@ func (n *nodeClient) Get(nodeId string) (*NodeInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("node info deserailization failure: %w", err)
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
 	log.Infof("Node Info: %+v", node.NodeInfo)
@@ -253,7 +253,7 @@ func (n *nodeClient) GetAll() (*Nodes, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("node info deserailization failure: %w", err)
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
 	return &nodes, nil
@@ -275,7 +275,7 @@ func (n *nodeClient) GetNodesBySite(id string) (*NodesBySite, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("node info deserailization failure: %w", err)
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
 	return &nodes, nil

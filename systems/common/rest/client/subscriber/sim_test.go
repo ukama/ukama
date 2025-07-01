@@ -48,7 +48,7 @@ func TestSimClient_Get(t *testing.T) {
 		testSimClient := subscriber.NewSimClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Get(testUuid)
@@ -147,13 +147,13 @@ func TestSimClient_Add(t *testing.T) {
 		testSimClient := subscriber.NewSimClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSimClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
-				SubscriberId: "some-subscriber_Id",
-				PackageId:    "some-package_id"},
+				SubscriberId: "some_subscriber_id",
+				PackageId:    "some_package_id"},
 		)
 
 		assert.NoError(tt, err)
@@ -181,8 +181,8 @@ func TestSimClient_Add(t *testing.T) {
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
-				SubscriberId: "some-subscriber_Id",
-				PackageId:    "some-package_id"},
+				SubscriberId: "some_subscriber_id",
+				PackageId:    "some_package_id"},
 		)
 
 		assert.Error(tt, err)
@@ -207,8 +207,8 @@ func TestSimClient_Add(t *testing.T) {
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
-				SubscriberId: "some-subscriber_Id",
-				PackageId:    "some-package_id"},
+				SubscriberId: "some_subscriber_id",
+				PackageId:    "some_package_id"},
 		)
 
 		assert.Error(tt, err)
@@ -228,8 +228,8 @@ func TestSimClient_Add(t *testing.T) {
 
 		s, err := testSimClient.Add(
 			subscriber.AddSimRequest{
-				SubscriberId: "some-subscriber_Id",
-				PackageId:    "some-package_id"},
+				SubscriberId: "some_subscriber_id",
+				PackageId:    "some_package_id"},
 		)
 
 		assert.Error(tt, err)

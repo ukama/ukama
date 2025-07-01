@@ -49,7 +49,7 @@ func TestSubscriberClient_Get(t *testing.T) {
 		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSubscriberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Get(testUuid)
@@ -148,7 +148,7 @@ func TestSubscriberClient_Add(t *testing.T) {
 		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSubscriberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.Add(
@@ -263,7 +263,7 @@ func TestSubscriberClient_GetByEmail(t *testing.T) {
 		testSubscriberClient := subscriber.NewSubscriberClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSubscriberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testSubscriberClient.GetByEmail(testEmail)

@@ -41,7 +41,7 @@ func TestMailerClient_SendEmail(t *testing.T) {
 		testMailerClient := notification.NewMailerClient(baseURL)
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testMailerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testMailerClient.SendEmail(

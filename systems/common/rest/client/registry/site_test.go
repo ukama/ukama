@@ -45,7 +45,7 @@ func TestSiteClient_Get(t *testing.T) {
 		testSiteClient := registry.NewSiteClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testSiteClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testSiteClient.Get(testUuid)

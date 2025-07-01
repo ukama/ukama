@@ -21,7 +21,7 @@ func TestComponentClient_Get(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), inventory.ComponentEndpoint+"/"+testUuid)
 
 			// fake component info
-			comonent := `{"component":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "type": "backhaul"}}`
+			comp := `{"component":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "type": "backhaul"}}`
 
 			// Send mock response
 			return &http.Response{
@@ -29,7 +29,7 @@ func TestComponentClient_Get(t *testing.T) {
 				Status:     "200 OK",
 
 				// Send response to be tested
-				Body: io.NopCloser(bytes.NewBufferString(comonent)),
+				Body: io.NopCloser(bytes.NewBufferString(comp)),
 
 				// Must be set to non-nil value or it panics
 				Header: make(http.Header),
@@ -39,7 +39,7 @@ func TestComponentClient_Get(t *testing.T) {
 		testComponentClient := inventory.NewComponentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/component call.
+		// so that the test stays a unit test e.g, no server/component call.
 		testComponentClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		c, err := testComponentClient.Get(testUuid)

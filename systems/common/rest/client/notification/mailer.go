@@ -39,7 +39,7 @@ func NewMailerClient(h string, options ...client.Option) *mailerClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &mailerClient{

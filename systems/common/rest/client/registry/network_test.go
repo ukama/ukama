@@ -47,7 +47,7 @@ func TestNetworkClient_Get(t *testing.T) {
 		testNetworkClient := registry.NewNetworkClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNetworkClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Get(testUuid)
@@ -146,7 +146,7 @@ func TestNetworkClient_GetDefault(t *testing.T) {
 		testNetworkClient := registry.NewNetworkClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNetworkClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.GetDefault()
@@ -245,7 +245,7 @@ func TestNetworkClient_Add(t *testing.T) {
 		testNetworkClient := registry.NewNetworkClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testNetworkClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		n, err := testNetworkClient.Add(

@@ -67,7 +67,7 @@ func NewSubscriberClient(h string, options ...client.Option) *subscriberClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &subscriberClient{
@@ -98,7 +98,7 @@ func (s *subscriberClient) Add(req AddSubscriberRequest) (*SubscriberInfo, error
 	if err != nil {
 		log.Tracef("Failed to deserialize subscriber info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("subscriber info deserailization failure: %w", err)
+		return nil, fmt.Errorf("subscriber info deserialization failure: %w", err)
 	}
 
 	log.Infof("Subscriber Info: %+v", subscriber.SubscriberInfo)
@@ -122,7 +122,7 @@ func (s *subscriberClient) Get(id string) (*SubscriberInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize subscriber info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("subscriber info deserailization failure: %w", err)
+		return nil, fmt.Errorf("subscriber info deserialization failure: %w", err)
 	}
 
 	log.Infof("Subscriber Info: %+v", subscriber.SubscriberInfo)
@@ -146,7 +146,7 @@ func (s *subscriberClient) GetByEmail(email string) (*SubscriberInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize subscriber info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("subscriber info deserailization failure: %w", err)
+		return nil, fmt.Errorf("subscriber info deserialization failure: %w", err)
 	}
 
 	log.Infof("Subscriber Info: %+v", subscriber.SubscriberInfo)
