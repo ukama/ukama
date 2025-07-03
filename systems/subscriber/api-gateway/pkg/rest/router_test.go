@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -39,7 +40,75 @@ import (
 	spmocks "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen/mocks"
 )
 
-var Iccid = "1234567890123456789"
+// Test data constants
+const (
+	testIccid           = "1234567890123456789"
+	testMsisdn          = "555-555-1234"
+	testMsisdn2         = "2345678901"
+	testSimType         = "ukama_data"
+	testSmDpAddress     = "http://example.com"
+	testSmDpAddress2    = "http://localhost:8080"
+	testActivationCode  = "abc123"
+	testActivationCode2 = "123456"
+	testQrCode          = "qr123"
+	testSimToken        = "abcdef"
+	testEmail           = "johndoe@example.com"
+	testPhone           = "1234567890"
+	testName            = "John"
+	testGender          = "Male"
+	testDob             = "16-04-1995"
+	testAddress         = "1 Main St"
+	testProofOfId       = "Passport"
+	testIdSerial        = "123456789"
+	testStatus          = "active"
+	testCdrType         = "voice"
+	testRegion          = "US"
+	testFromDate        = "2023-01-01"
+	testToDate          = "2023-01-31"
+	testDataPlanId      = "plan123"
+	testUsage           = 100.5
+	testUsageUnit       = "minutes"
+)
+
+// Test UUIDs
+var (
+	testSubscriberId = "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f"
+	testNetworkId    = "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
+	testSimId        = "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11"
+	testImsi         = "01234567891234"
+)
+
+// Test package data
+var (
+	testPackageId = uuid.NewV4().String()
+	testStartDate = time.Now().UTC().Format(time.RFC3339)
+	testEndDate   = time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339)
+)
+
+// Test CSV data
+const (
+	testCsvData  = "SIM,ICCID,MSISDN,SmDpAddress,ActivationCode,IsPhysical,QRCode\n8910300000003540855,880170124847571,1001.9.0.0.1,1010,TRUE,459081a\n"
+	testCsvB64   = "U0lNLElDQ0lELE1TSVNETixTbURwQWRkcmVzcyxBY3RpdmF0aW9uQ29kZSxJc1BoeXNpY2FsLFFSQ29kZQo4OTEwMzAwMDAwMDAzNTQwODU1LDg4MDE3MDEyNDg0NzU3MSwxMDAxLjkuMC4wLjEsMTAxMCxUUlVFLDQ1OTA4MWEK"
+	testCsvIccid = "8910300000003540855"
+)
+
+// Test stats data
+const (
+	testTotalSims     = 10
+	testAvailableSims = 5
+	testConsumedSims  = 5
+	testFailedSims    = 0
+)
+
+// Test counts and flags
+const (
+	testCount         = 10
+	testSort          = true
+	testIsActive      = true
+	testIsPhysical    = false
+	testIsPhysicalSim = true
+)
+
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
 }
@@ -95,23 +164,23 @@ func TestPingRoute(t *testing.T) {
 
 func TestRouter_getSimByIccid(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/simpool/sim/"+Iccid, nil)
+	req, _ := http.NewRequest("GET", "/v1/simpool/sim/"+testIccid, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.GetByIccidRequest{
-		Iccid: Iccid,
+		Iccid: testIccid,
 	}
 	csp.On("GetByIccid", mock.Anything, preq).Return(&spPb.GetByIccidResponse{Sim: &spPb.Sim{
 		Id:             1,
-		Iccid:          "1234567890123456789",
-		Msisdn:         "2345678901",
-		SimType:        "ukama_data",
-		SmDpAddress:    "http://localhost:8080",
+		Iccid:          testIccid,
+		Msisdn:         testMsisdn,
+		SimType:        testSimType,
+		SmDpAddress:    testSmDpAddress,
 		IsAllocated:    false,
-		ActivationCode: "123456",
+		ActivationCode: testActivationCode,
 	}}, nil)
 
 	r := NewRouter(&Clients{
@@ -131,20 +200,20 @@ func TestRouter_getSimByIccid(t *testing.T) {
 
 func TestRouter_getSimPoolStats(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/simpool/stats/"+"ukama_data", nil)
+	req, _ := http.NewRequest("GET", "/v1/simpool/stats/"+testSimType, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.GetStatsRequest{
-		SimType: "ukama_data",
+		SimType: testSimType,
 	}
 	csp.On("GetStats", mock.Anything, preq).Return(&spPb.GetStatsResponse{
-		Total:     10,
-		Available: 5,
-		Consumed:  5,
-		Failed:    0,
+		Total:     testTotalSims,
+		Available: testAvailableSims,
+		Consumed:  testConsumedSims,
+		Failed:    testFailedSims,
 	}, nil)
 
 	r := NewRouter(&Clients{
@@ -165,7 +234,7 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 func TestRouter_addSimsToSimPool(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/simpool",
-		strings.NewReader(`{"sim_info": [{ "iccid": "1234567890123456789", "sim_type": "ukama_data", "msisdn": "555-555-1234", "smdp_address": "http://example.com", "activation_code": "abc123", "qr_code": "qr123", "is_physical_sim": true}]}`))
+		strings.NewReader(`{"sim_info": [{ "iccid": "`+testIccid+`", "sim_type": "`+testSimType+`", "msisdn": "`+testMsisdn+`", "smdp_address": "`+testSmDpAddress+`", "activation_code": "`+testActivationCode+`", "qr_code": "`+testQrCode+`", "is_physical_sim": true}]}`))
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -174,7 +243,7 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 	preq := &spPb.AddRequest{
 		Sim: []*spPb.AddSim{
 			{
-				Iccid: "1234567890123456789", SimType: "ukama_data", Msisdn: "555-555-1234", SmDpAddress: "http://example.com", ActivationCode: "abc123", QrCode: "qr123", IsPhysical: true,
+				Iccid: testIccid, SimType: testSimType, Msisdn: testMsisdn, SmDpAddress: testSmDpAddress, ActivationCode: testActivationCode, QrCode: testQrCode, IsPhysical: true,
 			},
 		},
 	}
@@ -182,12 +251,12 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 		Sim: []*spPb.Sim{
 			{
 				Id:             1,
-				Iccid:          "1234567890123456789",
-				Msisdn:         "555-555-1234",
-				SimType:        "ukama_data",
-				SmDpAddress:    "http://localhost:8080",
+				Iccid:          testIccid,
+				Msisdn:         testMsisdn,
+				SimType:        testSimType,
+				SmDpAddress:    testSmDpAddress,
 				IsAllocated:    false,
-				ActivationCode: "abc123",
+				ActivationCode: testActivationCode,
 			},
 		},
 	}, nil)
@@ -250,16 +319,16 @@ func TestRouter_Subscriber(t *testing.T) {
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	s := &upb.Subscriber{
-		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		Name:                  "John",
-		NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		Email:                 "johndoe@example.com",
-		PhoneNumber:           "1234567890",
-		Gender:                "Male",
-		Dob:                   "16-04-1995",
-		Address:               "1 Main St",
-		ProofOfIdentification: "Passport",
-		IdSerial:              "123456789",
+		SubscriberId:          testSubscriberId,
+		Name:                  testName,
+		NetworkId:             testNetworkId,
+		Email:                 testEmail,
+		PhoneNumber:           testPhone,
+		Gender:                testGender,
+		Dob:                   testDob,
+		Address:               testAddress,
+		ProofOfIdentification: testProofOfId,
+		IdSerial:              testIdSerial,
 	}
 
 	t.Run("getSubscriber", func(t *testing.T) {
@@ -285,15 +354,15 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	t.Run("putSubscriber", func(t *testing.T) {
 		data := SubscriberAddReq{
-			Name:                  "John",
-			NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-			Email:                 "johndoe@example.com",
-			Phone:                 "1234567890",
-			Gender:                "Male",
-			Dob:                   "16-04-1995",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  testName,
+			NetworkId:             testNetworkId,
+			Email:                 testEmail,
+			Phone:                 testPhone,
+			Gender:                testGender,
+			Dob:                   testDob,
+			Address:               testAddress,
+			ProofOfIdentification: testProofOfId,
+			IdSerial:              testIdSerial,
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -347,11 +416,11 @@ func TestRouter_Subscriber(t *testing.T) {
 
 	t.Run("updateSubscriber", func(t *testing.T) {
 		data := SubscriberUpdateReq{
-			Name:                  "John",
-			Phone:                 "1234567890",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			Name:                  testName,
+			Phone:                 testPhone,
+			Address:               testAddress,
+			ProofOfIdentification: testProofOfId,
+			IdSerial:              testIdSerial,
 		}
 
 		jdata, err := json.Marshal(&data)
@@ -390,20 +459,20 @@ func TestRouter_SimManager(t *testing.T) {
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
-	subscriberId := "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f"
+	subscriberId := testSubscriberId
 	sim := &smPb.Sim{
-		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		NetworkId:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		Iccid:        "1234567890123456789",
-		Msisdn:       "555-555-1234",
-		Type:         "ukama_data",
-		Imsi:         "01234567891234",
-		IsPhysical:   false,
+		Id:           testSimId,
+		SubscriberId: testSubscriberId,
+		NetworkId:    testNetworkId,
+		Iccid:        testIccid,
+		Msisdn:       testMsisdn,
+		Type:         testSimType,
+		Imsi:         testImsi,
+		IsPhysical:   testIsPhysical,
 		Package: &smPb.Package{
-			Id:        uuid.NewV4().String(),
-			StartDate: time.Now().UTC().Format(time.RFC3339),
-			EndDate:   time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+			Id:        testPackageId,
+			StartDate: testStartDate,
+			EndDate:   testEndDate,
 		},
 	}
 
@@ -504,7 +573,7 @@ func TestRouter_SimManager(t *testing.T) {
 	t.Run("allocateSim", func(t *testing.T) {
 		p := AllocateSimReq{
 			SubscriberId: sim.SubscriberId,
-			SimToken:     "abcdef",
+			SimToken:     testSimToken,
 			PackageId:    sim.Package.Id,
 			NetworkId:    sim.NetworkId,
 			SimType:      sim.Type,
@@ -536,7 +605,7 @@ func TestRouter_SimManager(t *testing.T) {
 	})
 	t.Run("updateSimStatus", func(t *testing.T) {
 		p := ActivateDeactivateSimReq{
-			Status: "active",
+			Status: testStatus,
 		}
 
 		jdata, err := json.Marshal(&p)
@@ -621,25 +690,25 @@ func TestRouter_SimManager(t *testing.T) {
 
 func TestRouter_getSims(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/simpool/sims/ukama_data", nil)
+	req, _ := http.NewRequest("GET", "/v1/simpool/sims/"+testSimType, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
 	arc := &providers.AuthRestClient{}
 	preq := &spPb.GetSimsRequest{
-		SimType: "ukama_data",
+		SimType: testSimType,
 	}
 	csp.On("GetSims", mock.Anything, preq).Return(&spPb.GetSimsResponse{
 		Sims: []*spPb.Sim{
 			{
 				Id:             1,
-				Iccid:          "1234567890123456789",
-				Msisdn:         "2345678901",
-				SimType:        "ukama_data",
-				SmDpAddress:    "http://localhost:8080",
+				Iccid:          testIccid,
+				Msisdn:         testMsisdn,
+				SimType:        testSimType,
+				SmDpAddress:    testSmDpAddress,
 				IsAllocated:    false,
-				ActivationCode: "123456",
+				ActivationCode: testActivationCode,
 			},
 		},
 	}, nil)
@@ -661,7 +730,7 @@ func TestRouter_getSims(t *testing.T) {
 func TestRouter_uploadSimsToSimPool(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/simpool/upload",
-		strings.NewReader(`{"sim_type": "ukama_data", "data": "U0lNLElDQ0lELE1TSVNETixTbURwQWRkcmVzcyxBY3RpdmF0aW9uQ29kZSxJc1BoeXNpY2FsLFFSQ29kZQo4OTEwMzAwMDAwMDAzNTQwODU1LDg4MDE3MDEyNDg0NzU3MSwxMDAxLjkuMC4wLjEsMTAxMCxUUlVFLDQ1OTA4MWEK"}`))
+		strings.NewReader(`{"sim_type": "`+testSimType+`", "data": "`+testCsvB64+`"}`))
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -669,11 +738,11 @@ func TestRouter_uploadSimsToSimPool(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	preq := &spPb.UploadRequest{
-		SimType: "ukama_data",
-		SimData: []byte("SIM,ICCID,MSISDN,SmDpAddress,ActivationCode,IsPhysical,QRCode\n8910300000003540855,880170124847571,1001.9.0.0.1,1010,TRUE,459081a\n"),
+		SimType: testSimType,
+		SimData: []byte(testCsvData),
 	}
 	csp.On("Upload", mock.Anything, preq).Return(&spPb.UploadResponse{
-		Iccid: []string{"8910300000003540855"},
+		Iccid: []string{testCsvIccid},
 	}, nil)
 
 	r := NewRouter(&Clients{
@@ -692,8 +761,7 @@ func TestRouter_uploadSimsToSimPool(t *testing.T) {
 
 func TestRouter_getSubscriberByEmail(t *testing.T) {
 	w := httptest.NewRecorder()
-	email := "johndoe@example.com"
-	req, _ := http.NewRequest("GET", "/v1/subscriber/email/"+email, nil)
+	req, _ := http.NewRequest("GET", "/v1/subscriber/email/"+testEmail, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -701,20 +769,20 @@ func TestRouter_getSubscriberByEmail(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	s := &upb.Subscriber{
-		SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		Name:                  "John",
-		NetworkId:             "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		Email:                 email,
-		PhoneNumber:           "1234567890",
-		Gender:                "Male",
-		Dob:                   "16-04-1995",
-		Address:               "1 Main St",
-		ProofOfIdentification: "Passport",
-		IdSerial:              "123456789",
+		SubscriberId:          testSubscriberId,
+		Name:                  testName,
+		NetworkId:             testNetworkId,
+		Email:                 testEmail,
+		PhoneNumber:           testPhone,
+		Gender:                testGender,
+		Dob:                   testDob,
+		Address:               testAddress,
+		ProofOfIdentification: testProofOfId,
+		IdSerial:              testIdSerial,
 	}
 
 	preq := &subPb.GetSubscriberByEmailRequest{
-		Email: email,
+		Email: testEmail,
 	}
 	csub.On("GetByEmail", mock.Anything, preq).Return(&subPb.GetSubscriberByEmailResponse{
 		Subscriber: s,
@@ -731,14 +799,13 @@ func TestRouter_getSubscriberByEmail(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"email":"`+email+`"`)
+	assert.Contains(t, w.Body.String(), `"email":"`+testEmail+`"`)
 	csub.AssertExpectations(t)
 }
 
 func TestRouter_getSubscriberByNetwork(t *testing.T) {
 	w := httptest.NewRecorder()
-	networkId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
-	req, _ := http.NewRequest("GET", "/v1/subscribers/networks/"+networkId, nil)
+	req, _ := http.NewRequest("GET", "/v1/subscribers/networks/"+testNetworkId, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -747,21 +814,21 @@ func TestRouter_getSubscriberByNetwork(t *testing.T) {
 
 	subscribers := []*upb.Subscriber{
 		{
-			SubscriberId:          "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-			Name:                  "John",
-			NetworkId:             networkId,
-			Email:                 "johndoe@example.com",
-			PhoneNumber:           "1234567890",
-			Gender:                "Male",
-			Dob:                   "16-04-1995",
-			Address:               "1 Main St",
-			ProofOfIdentification: "Passport",
-			IdSerial:              "123456789",
+			SubscriberId:          testSubscriberId,
+			Name:                  testName,
+			NetworkId:             testNetworkId,
+			Email:                 testEmail,
+			PhoneNumber:           testPhone,
+			Gender:                testGender,
+			Dob:                   testDob,
+			Address:               testAddress,
+			ProofOfIdentification: testProofOfId,
+			IdSerial:              testIdSerial,
 		},
 	}
 
 	preq := &subPb.GetByNetworkRequest{
-		NetworkId: networkId,
+		NetworkId: testNetworkId,
 	}
 	csub.On("GetByNetwork", mock.Anything, preq).Return(&subPb.GetByNetworkResponse{
 		Subscribers: subscribers,
@@ -778,13 +845,13 @@ func TestRouter_getSubscriberByNetwork(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"network_id":"`+networkId+`"`)
+	assert.Contains(t, w.Body.String(), `"network_id":"`+testNetworkId+`"`)
 	csub.AssertExpectations(t)
 }
 
 func TestRouter_listSims(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/sim?subscriber_id=9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f&network_id=9e82c8b1-a746-4f2c-a80e-f4d14d863ea3&sim_type=ukama_data&count=10&sort=true", nil)
+	req, _ := http.NewRequest("GET", "/v1/sim?subscriber_id="+testSubscriberId+"&network_id="+testNetworkId+"&sim_type="+testSimType+"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -792,22 +859,22 @@ func TestRouter_listSims(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	sim := &smPb.Sim{
-		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		NetworkId:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		Iccid:        "1234567890123456789",
-		Msisdn:       "555-555-1234",
-		Type:         "ukama_data",
-		Imsi:         "01234567891234",
-		IsPhysical:   false,
+		Id:           testSimId,
+		SubscriberId: testSubscriberId,
+		NetworkId:    testNetworkId,
+		Iccid:        testIccid,
+		Msisdn:       testMsisdn,
+		Type:         testSimType,
+		Imsi:         testImsi,
+		IsPhysical:   testIsPhysical,
 	}
 
 	preq := &smPb.ListSimsRequest{
-		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		NetworkId:    "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3",
-		SimType:      "ukama_data",
-		Count:        10,
-		Sort:         true,
+		SubscriberId: testSubscriberId,
+		NetworkId:    testNetworkId,
+		SimType:      testSimType,
+		Count:        testCount,
+		Sort:         testSort,
 	}
 	csm.On("ListSims", mock.Anything, preq).Return(&smPb.ListSimsResponse{
 		Sims: []*smPb.Sim{sim},
@@ -824,14 +891,13 @@ func TestRouter_listSims(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"subscriber_id":"9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f"`)
+	assert.Contains(t, w.Body.String(), `"subscriber_id":"`+testSubscriberId+`"`)
 	csm.AssertExpectations(t)
 }
 
 func TestRouter_getSimsByNetwork(t *testing.T) {
 	w := httptest.NewRecorder()
-	networkId := "9e82c8b1-a746-4f2c-a80e-f4d14d863ea3"
-	req, _ := http.NewRequest("GET", "/v1/sims/networks/"+networkId, nil)
+	req, _ := http.NewRequest("GET", "/v1/sims/networks/"+testNetworkId, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -839,18 +905,18 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	sim := &smPb.Sim{
-		Id:           "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		SubscriberId: "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a9f",
-		NetworkId:    networkId,
-		Iccid:        "1234567890123456789",
-		Msisdn:       "555-555-1234",
-		Type:         "ukama_data",
-		Imsi:         "01234567891234",
-		IsPhysical:   false,
+		Id:           testSimId,
+		SubscriberId: testSubscriberId,
+		NetworkId:    testNetworkId,
+		Iccid:        testIccid,
+		Msisdn:       testMsisdn,
+		Type:         testSimType,
+		Imsi:         testImsi,
+		IsPhysical:   testIsPhysical,
 	}
 
 	preq := &smPb.GetSimsByNetworkRequest{
-		NetworkId: networkId,
+		NetworkId: testNetworkId,
 	}
 	csm.On("GetSimsByNetwork", mock.Anything, preq).Return(&smPb.GetSimsByNetworkResponse{
 		Sims: []*smPb.Sim{sim},
@@ -867,14 +933,13 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"network_id":"`+networkId+`"`)
+	assert.Contains(t, w.Body.String(), `"network_id":"`+testNetworkId+`"`)
 	csm.AssertExpectations(t)
 }
 
 func TestRouter_listPackagesForSim(t *testing.T) {
 	w := httptest.NewRecorder()
-	simId := "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11"
-	req, _ := http.NewRequest("GET", "/v1/sim/"+simId+"/package?data_plan_id=plan123&is_active=true&count=10&sort=true", nil)
+	req, _ := http.NewRequest("GET", "/v1/sim/"+testSimId+"/package?data_plan_id="+testDataPlanId+"&is_active="+strconv.FormatBool(testIsActive)+"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -882,18 +947,18 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 	arc := &providers.AuthRestClient{}
 
 	package1 := &smPb.Package{
-		Id:        uuid.NewV4().String(),
-		StartDate: time.Now().UTC().Format(time.RFC3339),
-		EndDate:   time.Date(2023, time.August, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339),
+		Id:        testPackageId,
+		StartDate: testStartDate,
+		EndDate:   testEndDate,
 	}
 
 	// Mock the gRPC client call with the correct request structure
 	preq := &smPb.ListPackagesForSimRequest{
-		SimId:      simId,
-		DataPlanId: "plan123",
-		IsActive:   true,
-		Count:      10,
-		Sort:       true,
+		SimId:      testSimId,
+		DataPlanId: testDataPlanId,
+		IsActive:   testIsActive,
+		Count:      testCount,
+		Sort:       testSort,
 	}
 	csm.On("ListPackagesForSim", mock.Anything, preq).Return(&smPb.ListPackagesForSimResponse{
 		Packages: []*smPb.Package{package1},
@@ -910,14 +975,14 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"id":"`+package1.Id+`"`)
+	assert.Contains(t, w.Body.String(), `"id":"`+testPackageId+`"`)
 	csm.AssertExpectations(t)
 }
 
 func TestRouter_addPackageForSim(t *testing.T) {
-	simId := "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11"
-	packageId := uuid.NewV4().String()
-	startDate := time.Now().UTC().Format(time.RFC3339)
+	simId := testSimId
+	packageId := testPackageId
+	startDate := testStartDate
 
 	data := AddPkgToSimReq{
 		PackageId: packageId,
@@ -959,7 +1024,7 @@ func TestRouter_addPackageForSim(t *testing.T) {
 
 func TestRouter_getUsages(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/usages?sim_id=9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11&sim_type=ukama_data&cdr_type=voice&from=2023-01-01&to=2023-01-31&region=US", nil)
+	req, _ := http.NewRequest("GET", "/v1/usages?sim_id="+testSimId+"&sim_type="+testSimType+"&cdr_type="+testCdrType+"&from="+testFromDate+"&to="+testToDate+"&region="+testRegion, nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -968,26 +1033,26 @@ func TestRouter_getUsages(t *testing.T) {
 
 	// Create a mock usage response with structpb.Struct
 	usageData := map[string]interface{}{
-		"sim_id":   "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		"sim_type": "ukama_data",
-		"cdr_type": "voice",
-		"from":     "2023-01-01",
-		"to":       "2023-01-31",
-		"region":   "US",
-		"usage":    100.5,
-		"unit":     "minutes",
+		"sim_id":   testSimId,
+		"sim_type": testSimType,
+		"cdr_type": testCdrType,
+		"from":     testFromDate,
+		"to":       testToDate,
+		"region":   testRegion,
+		"usage":    testUsage,
+		"unit":     testUsageUnit,
 	}
 
 	usageStruct, _ := structpb.NewStruct(usageData)
 
 	// Mock the gRPC client call with the correct request structure
 	preq := &smPb.UsageRequest{
-		SimId:   "9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11",
-		SimType: "ukama_data",
-		Type:    "voice",
-		From:    "2023-01-01",
-		To:      "2023-01-31",
-		Region:  "US",
+		SimId:   testSimId,
+		SimType: testSimType,
+		Type:    testCdrType,
+		From:    testFromDate,
+		To:      testToDate,
+		Region:  testRegion,
 	}
 	csm.On("GetUsages", mock.Anything, preq).Return(&smPb.UsageResponse{
 		Usage: usageStruct,
@@ -1004,7 +1069,7 @@ func TestRouter_getUsages(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), `"sim_id":"9dd5b5d8-f9e1-45c3-b5e3-5f5c5b5e9a11"`)
+	assert.Contains(t, w.Body.String(), `"sim_id":"`+testSimId+`"`)
 	csm.AssertExpectations(t)
 }
 
@@ -1013,12 +1078,12 @@ func TestRouter_addReqToAddSimReqPb(t *testing.T) {
 		req := &SimPoolAddSimReq{
 			SimInfo: []SimInfo{
 				{
-					Iccid:          "1234567890123456789",
-					SimType:        "ukama_data",
-					Msisdn:         "555-555-1234",
-					SmDpAddress:    "http://example.com",
-					ActivationCode: "abc123",
-					QrCode:         "qr123",
+					Iccid:          testIccid,
+					SimType:        testSimType,
+					Msisdn:         testMsisdn,
+					SmDpAddress:    testSmDpAddress,
+					ActivationCode: testActivationCode,
+					QrCode:         testQrCode,
 					IsPhysicalSim:  true,
 				},
 			},
@@ -1029,12 +1094,12 @@ func TestRouter_addReqToAddSimReqPb(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Len(t, result.Sim, 1)
-		assert.Equal(t, "1234567890123456789", result.Sim[0].Iccid)
-		assert.Equal(t, "ukama_data", result.Sim[0].SimType)
-		assert.Equal(t, "555-555-1234", result.Sim[0].Msisdn)
-		assert.Equal(t, "http://example.com", result.Sim[0].SmDpAddress)
-		assert.Equal(t, "abc123", result.Sim[0].ActivationCode)
-		assert.Equal(t, "qr123", result.Sim[0].QrCode)
+		assert.Equal(t, testIccid, result.Sim[0].Iccid)
+		assert.Equal(t, testSimType, result.Sim[0].SimType)
+		assert.Equal(t, testMsisdn, result.Sim[0].Msisdn)
+		assert.Equal(t, testSmDpAddress, result.Sim[0].SmDpAddress)
+		assert.Equal(t, testActivationCode, result.Sim[0].ActivationCode)
+		assert.Equal(t, testQrCode, result.Sim[0].QrCode)
 		assert.True(t, result.Sim[0].IsPhysical)
 	})
 
