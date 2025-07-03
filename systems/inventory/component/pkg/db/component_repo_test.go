@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"fmt"
 	"log"
 	"regexp"
@@ -24,6 +23,44 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	component_db "github.com/ukama/ukama/systems/inventory/component/pkg/db"
 )
+
+// Test constants
+const (
+	testInventory     = "5"
+	testType          = "tower node"
+	testDescription   = "Tower node descp"
+	testDatasheetURL  = "http://datasheepurl"
+	testImageURL      = "http://imageurl"
+	testPartNumber    = "123"
+	testManufacturer  = "ukama"
+	testManaged       = "ukama"
+	testWarranty      = 1
+	testSpecification = "metainfo"
+	testCategory      = ukama.ACCESS
+)
+
+// Test data structures
+type testComponentData struct {
+	ID            uuid.UUID
+	Inventory     string
+	UserID        uuid.UUID
+	Category      ukama.ComponentCategory
+	Type          string
+	Description   string
+	DatasheetURL  string
+	ImagesURL     string
+	PartNumber    string
+	Manufacturer  string
+	Managed       string
+	Warranty      uint32
+	Specification string
+}
+
+type testDBSetup struct {
+	mock   sqlmock.Sqlmock
+	gormDB *gorm.DB
+	repo   component_db.ComponentRepo
+}
 
 type UkamaDbMock struct {
 	GormDb *gorm.DB
@@ -57,298 +94,221 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
+func createTestComponentData() *testComponentData {
+	return &testComponentData{
+		ID:            uuid.NewV4(),
+		Inventory:     testInventory,
+		UserID:        uuid.NewV4(),
+		Category:      testCategory,
+		Type:          testType,
+		Description:   testDescription,
+		DatasheetURL:  testDatasheetURL,
+		ImagesURL:     testImageURL,
+		PartNumber:    testPartNumber,
+		Manufacturer:  testManufacturer,
+		Managed:       testManaged,
+		Warranty:      testWarranty,
+		Specification: testSpecification,
+	}
+}
+
+func convertToComponent(data *testComponentData) *component_db.Component {
+	return &component_db.Component{
+		Id:            data.ID,
+		Inventory:     data.Inventory,
+		UserId:        data.UserID,
+		Category:      data.Category,
+		Type:          data.Type,
+		Description:   data.Description,
+		DatasheetURL:  data.DatasheetURL,
+		ImagesURL:     data.ImagesURL,
+		PartNumber:    data.PartNumber,
+		Manufacturer:  data.Manufacturer,
+		Managed:       data.Managed,
+		Warranty:      data.Warranty,
+		Specification: data.Specification,
+	}
+}
+
+func setupTestDB(t *testing.T) *testDBSetup {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gormDB, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	repo := component_db.NewComponentRepo(&UkamaDbMock{
+		GormDb: gormDB,
+	})
+
+	return &testDBSetup{
+		mock:   mock,
+		gormDB: gormDB,
+		repo:   repo,
+	}
+}
+
+func getComponentColumns() []string {
+	return []string{
+		"id", "inventory", "user_id", "category", "type", "description",
+		"datasheet_url", "images_url", "part_number", "manufacturer",
+		"managed", "warranty", "specification",
+	}
+}
+
 func Test_ComponentRepo_Get(t *testing.T) {
 	t.Run("ComponentExist", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		var db *extsql.DB
-		var componentID = uuid.NewV4()
-		var uID = uuid.NewV4()
+		rows := sqlmock.NewRows(getComponentColumns()).
+			AddRow(testData.ID, testData.Inventory, testData.UserID.String(), testData.Category,
+				testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL,
+				testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty,
+				testData.Specification)
 
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "inventory", "user_id", "category", "type", "description", "datasheet_url", "image_url", "part_number", "manufacturer", "managed", "warranty", "specification"}).
-			AddRow(componentID, "5", uID.String(), int64(1), "tower node", "Tower node descp", "http://datasheepurl", "http://imageurl", "123", "ukama", "ukama", 1, "metainfo")
-
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(componentID.String(), 1).
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(testData.ID.String(), testData.Category).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		comp, err := r.Get(componentID)
+		comp, err := testSetup.repo.Get(testData.ID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, comp)
-		assert.Equal(t, comp.Id, componentID)
+		assert.Equal(t, comp.Id, testData.ID)
 
-		err = mock.ExpectationsWereMet()
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }
 
 func Test_ComponentRepo_GetByUser(t *testing.T) {
 	t.Run("ComponentExist", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		var db *extsql.DB
+		rows := sqlmock.NewRows(getComponentColumns()).
+			AddRow(testData.ID, testData.Inventory, testData.UserID.String(), testData.Category,
+				testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL,
+				testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty,
+				testData.Specification)
 
-		var componentID = uuid.NewV4()
-		var category = int32(1)
-		var uID = uuid.NewV4()
-
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		rows := sqlmock.NewRows([]string{"id", "inventory", "user_id", "category"}).
-			AddRow(componentID, "5", uID.String(), category)
-
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(uID.String(), category).
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(testData.UserID.String(), int32(testData.Category)).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+		comps, err := testSetup.repo.GetByUser(testData.UserID.String(), int32(testData.Category))
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		comps, err := r.GetByUser(uID.String(), category)
-
-		assert.NoError(t, err)
-		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, comps)
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 
 	t.Run("NoComponentsFound", func(t *testing.T) {
-		var db *extsql.DB
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		var category = int32(1)
-		var uID = uuid.NewV4()
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(testData.UserID.String(), int32(testData.Category)).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()))
 
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(uID.String(), category).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "inventory", "user_id", "category", "type", "description", "datasheet_url", "images_url", "part_number", "manufacturer", "managed", "warranty", "specification"}))
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		comps, err := r.GetByUser(uID.String(), category)
+		comps, err := testSetup.repo.GetByUser(testData.UserID.String(), int32(testData.Category))
 
 		assert.Error(t, err)
 		assert.Equal(t, gorm.ErrRecordNotFound, err)
 		assert.Nil(t, comps)
-		err = mock.ExpectationsWereMet()
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 
 	t.Run("DatabaseError", func(t *testing.T) {
-		var db *extsql.DB
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		var category = int32(1)
-		var uID = uuid.NewV4()
-
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(uID.String(), category).
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(testData.UserID.String(), int32(testData.Category)).
 			WillReturnError(fmt.Errorf("database connection error"))
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		comps, err := r.GetByUser(uID.String(), category)
+		comps, err := testSetup.repo.GetByUser(testData.UserID.String(), int32(testData.Category))
 
 		assert.Error(t, err)
 		assert.Nil(t, comps)
 		assert.Contains(t, err.Error(), "database connection error")
-		err = mock.ExpectationsWereMet()
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }
 
 func Test_ComponentRepo_Add(t *testing.T) {
 	t.Run("AddComponent", func(t *testing.T) {
-		var db *extsql.DB
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		uId := uuid.NewV4()
-		components := []*component_db.Component{
-			{
-				Id:            uuid.NewV4(),
-				Inventory:     "5",
-				UserId:        uId,
-				Category:      ukama.ACCESS,
-				Type:          "tower node",
-				Description:   "Tower node descp",
-				DatasheetURL:  "http://datasheepurl",
-				ImagesURL:     "http://imageurl",
-				PartNumber:    "123",
-				Manufacturer:  "ukama",
-				Managed:       "ukama",
-				Warranty:      1,
-				Specification: "metainfo",
-			},
-		}
+		components := []*component_db.Component{convertToComponent(testData)}
 
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
-
-		mock.ExpectBegin()
+		testSetup.mock.ExpectBegin()
 		for _, component := range components {
-			mock.ExpectExec(`INSERT INTO "components" \("id","inventory","user_id","category","type","description","datasheet_url","images_url","part_number","manufacturer","managed","warranty","specification"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13\) ON CONFLICT \("id"\) DO NOTHING`).
+			testSetup.mock.ExpectExec(`INSERT INTO "components" \("id","inventory","user_id","category","type","description","datasheet_url","images_url","part_number","manufacturer","managed","warranty","specification"\) VALUES \(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10,\$11,\$12,\$13\) ON CONFLICT \("id"\) DO NOTHING`).
 				WithArgs(component.Id, component.Inventory, component.UserId, component.Category, component.Type, component.Description, component.DatasheetURL, component.ImagesURL, component.PartNumber, component.Manufacturer, component.Managed, component.Warranty, component.Specification).
 				WillReturnResult(sqlmock.NewResult(1, 1))
 		}
-		mock.ExpectCommit()
+		testSetup.mock.ExpectCommit()
 
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(components[0].UserId.String(), int32(1)).WillReturnRows(sqlmock.NewRows([]string{
-			"id", "inventory", "user_id", "category", "type", "description", "datasheet_url", "images_url", "part_number", "manufacturer", "managed", "warranty", "specification",
-		}).AddRow(
-			components[0].Id, components[0].Inventory, components[0].UserId, components[0].Category, components[0].Type, components[0].Description, components[0].DatasheetURL, components[0].ImagesURL, components[0].PartNumber, components[0].Manufacturer, components[0].Managed, components[0].Warranty, components[0].Specification,
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(testData.UserID.String(), int32(testData.Category)).WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+			testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
 		))
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		err := testSetup.repo.Add(components)
 		assert.NoError(t, err)
 
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-		err = r.Add(components)
-		assert.NoError(t, err)
-
-		res, err := r.GetByUser(uId.String(), int32(1))
+		res, err := testSetup.repo.GetByUser(testData.UserID.String(), int32(testData.Category))
 		assert.NoError(t, err)
 		assert.NotEmpty(t, res)
 
-		err = mock.ExpectationsWereMet()
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }
 
 func Test_ComponentRepo_Delete(t *testing.T) {
 	t.Run("DeleteComponent", func(t *testing.T) {
-		var db *extsql.DB
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
 
-		cId := uuid.NewV4()
-		db, mock, err := sqlmock.New()
-		assert.NoError(t, err)
+		components := []*component_db.Component{convertToComponent(testData)}
 
-		components := []*component_db.Component{
-			{
-				Id:            cId,
-				Inventory:     "5",
-				UserId:        uuid.NewV4(),
-				Category:      ukama.ACCESS,
-				Type:          "tower node",
-				Description:   "Tower node descp",
-				DatasheetURL:  "http://datasheepurl",
-				ImagesURL:     "http://imageurl",
-				PartNumber:    "123",
-				Manufacturer:  "ukama",
-				Managed:       "ukama",
-				Warranty:      1,
-				Specification: "metainfo",
-			},
-		}
-
-		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "components" ("id","inventory","user_id","category","type","description","datasheet_url","images_url","part_number","manufacturer","managed","warranty","specification") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT ("id") DO NOTHING`)).
+		testSetup.mock.ExpectBegin()
+		testSetup.mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "components" ("id","inventory","user_id","category","type","description","datasheet_url","images_url","part_number","manufacturer","managed","warranty","specification") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT ("id") DO NOTHING`)).
 			WithArgs(components[0].Id, components[0].Inventory, components[0].UserId, components[0].Category, components[0].Type, components[0].Description, components[0].DatasheetURL, components[0].ImagesURL, components[0].PartNumber, components[0].Manufacturer, components[0].Managed, components[0].Warranty, components[0].Specification).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
+		testSetup.mock.ExpectCommit()
 
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM components`)).
+		testSetup.mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM components`)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		mock.ExpectQuery(`^SELECT.*components.*`).
-			WithArgs(components[0].Id, 1).WillReturnRows(sqlmock.NewRows([]string{}))
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WithArgs(components[0].Id, testData.Category).WillReturnRows(sqlmock.NewRows([]string{}))
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		err := testSetup.repo.Add(components)
 		assert.NoError(t, err)
 
-		r := component_db.NewComponentRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		err = r.Add(components)
+		err = testSetup.repo.Delete()
 		assert.NoError(t, err)
 
-		err = r.Delete()
-		assert.NoError(t, err)
-
-		res, err := r.Get(cId)
+		res, err := testSetup.repo.Get(testData.ID)
 		assert.Error(t, err)
 		assert.Empty(t, res)
 
-		err = mock.ExpectationsWereMet()
+		err = testSetup.mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }

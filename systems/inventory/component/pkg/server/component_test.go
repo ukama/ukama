@@ -25,7 +25,41 @@ import (
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
-const OrgName = "testorg"
+const (
+	OrgName = "testorg"
+
+	// Test data constants
+	TestInventoryID   = "2"
+	TestCategory      = 1
+	TestType          = "tower node"
+	TestDescription   = "best tower node"
+	TestDatasheetURL  = "https://datasheet.com"
+	TestImagesURL     = "https://images.com"
+	TestPartNumber    = "1234"
+	TestManufacturer  = "ukama"
+	TestManaged       = "ukama"
+	TestWarranty      = 1
+	TestSpecification = "spec"
+
+	// Git sync test data
+	TestCompany        = "test-company"
+	TestGitBranch      = "test-branch"
+	TestEmail          = "test@example.com"
+	TestComponentType  = "test-component"
+	TestComponentDesc  = "Test component description"
+	TestComponentImage = "https://example.com/image.jpg"
+	TestComponentData  = "https://example.com/datasheet.pdf"
+	TestInventoryID2   = "INV001"
+	TestPartNumber2    = "PN001"
+	TestManufacturer2  = "Test Manufacturer"
+	TestWarranty2      = 12
+	TestSpecification2 = "Test specification"
+
+	// Error messages
+	ErrInvalidUUID    = "invalid format of component uuid"
+	ErrInvalidDB      = "invalid db"
+	ErrGitCloneFailed = "failed to clone git repo"
+)
 
 func TestComponentServer_Get(t *testing.T) {
 	t.Run("Component record found", func(t *testing.T) {
@@ -72,7 +106,7 @@ func TestComponentServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, compResp)
-		assert.Contains(t, err.Error(), "invalid format of component uuid")
+		assert.Contains(t, err.Error(), ErrInvalidUUID)
 		compRepo.AssertExpectations(t)
 	})
 }
@@ -84,22 +118,22 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 		compRepo := &mocks.ComponentRepo{}
 
-		compRepo.On("GetByUser", uId.String(), int32(1)).Return(
+		compRepo.On("GetByUser", uId.String(), int32(TestCategory)).Return(
 			[]*db.Component{
 				{
 					Id:            cId,
 					UserId:        uId,
-					Inventory:     "2",
-					Category:      1,
-					Type:          "tower node",
-					Description:   "best tower node",
-					DatasheetURL:  "https://datasheet.com",
-					ImagesURL:     "https://images.com",
-					PartNumber:    "1234",
-					Manufacturer:  "ukama",
-					Managed:       "ukama",
-					Warranty:      1,
-					Specification: "spec",
+					Inventory:     TestInventoryID,
+					Category:      TestCategory,
+					Type:          TestType,
+					Description:   TestDescription,
+					DatasheetURL:  TestDatasheetURL,
+					ImagesURL:     TestImagesURL,
+					PartNumber:    TestPartNumber,
+					Manufacturer:  TestManufacturer,
+					Managed:       TestManaged,
+					Warranty:      TestWarranty,
+					Specification: TestSpecification,
 				}}, nil).Once()
 
 		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
@@ -141,7 +175,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 		compRepo := &mocks.ComponentRepo{}
 
-		compRepo.On("GetByUser", uId.String(), int32(1)).Return(nil, gorm.ErrInvalidDB).Once()
+		compRepo.On("GetByUser", uId.String(), int32(TestCategory)).Return(nil, gorm.ErrInvalidDB).Once()
 
 		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
 
@@ -152,7 +186,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, compResp)
-		assert.Contains(t, err.Error(), "invalid db")
+		assert.Contains(t, err.Error(), ErrInvalidDB)
 		compRepo.AssertExpectations(t)
 	})
 }
@@ -173,28 +207,28 @@ func TestComponentServer_SyncComponents(t *testing.T) {
 		rootJSON := `{
 			"test": [
 				{
-					"company": "test-company",
-					"git_branch_name": "test-branch",
-					"email": "test@example.com",
+					"company": "` + TestCompany + `",
+					"git_branch_name": "` + TestGitBranch + `",
+					"email": "` + TestEmail + `",
 					"user_id": "` + userId.String() + `"
 				}
 			]
 		}`
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 
-		gitClient.On("BranchCheckout", "test-branch").Return(nil)
+		gitClient.On("BranchCheckout", TestGitBranch).Return(nil)
 
 		componentYAML := `category: "ACCESS"
-type: "test-component"
-description: "Test component description"
-imagesURL: "https://example.com/image.jpg"
-datasheetURL: "https://example.com/datasheet.pdf"
-inventoryID: "INV001"
-partNumber: "PN001"
-manufacturer: "Test Manufacturer"
+type: "` + TestComponentType + `"
+description: "` + TestComponentDesc + `"
+imagesURL: "` + TestComponentImage + `"
+datasheetURL: "` + TestComponentData + `"
+inventoryID: "` + TestInventoryID2 + `"
+partNumber: "` + TestPartNumber2 + `"
+manufacturer: "` + TestManufacturer2 + `"
 managed: "ukama"
-warranty: 12
-specification: "Test specification"`
+warranty: ` + fmt.Sprintf("%d", TestWarranty2) + `
+specification: "` + TestSpecification2 + `"`
 		gitClient.On("GetFilesPath", "components").Return([]string{"components/component1.yml"}, nil)
 		gitClient.On("ReadFileYML", "components/component1.yml").Return([]byte(componentYAML), nil)
 
@@ -231,7 +265,7 @@ specification: "Test specification"`
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "failed to clone git repo")
+		assert.Contains(t, err.Error(), ErrGitCloneFailed)
 
 		compRepo.AssertExpectations(t)
 		gitClient.AssertExpectations(t)
