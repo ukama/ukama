@@ -57,7 +57,7 @@ func TestModuleId_StringLowercase(t *testing.T) {
 
 	t.Run("ModuleTypeUndefined", func(tt *testing.T) {
 		moduleId := NewVirtualModuleId("some_weird_type")
-		assert.Contains(tt, moduleId.StringLowercase(), NODE_ID_TYPE_UNDEFINED)
+		assert.Contains(tt, moduleId.StringLowercase(), MODULE_ID_TYPE_UNDEFINED)
 	})
 }
 
