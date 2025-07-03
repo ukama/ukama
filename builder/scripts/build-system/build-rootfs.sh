@@ -98,6 +98,7 @@ check_command() {
 
 install_starter_app() {
     log "INFO" "Installing starter.d"
+
     cd ${UKAMA_REPO_APP_PKG}
     tar zxvf starterd_latest.tar.gz
     cp starterd_latest/sbin/starter.d /sbin/
@@ -271,7 +272,7 @@ EOF
         openssh \
         readline autoconf automake cmake \
         alpine-sdk build-base libtool \
-        openssl-dev gnutls-dev curl-dev \
+        openssl-dev gnutls-dev curl curl-dev \
         sqlite-dev zlib libuuid libcap libidn2 libmicrohttpd-dev \
         protobuf e2fsprogs util-linux rsync jansson tree \
         git tcpdump ethtool iperf3 htop vim doas \

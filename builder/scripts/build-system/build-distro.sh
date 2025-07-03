@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -11,7 +10,8 @@
 set -e
 
 MAJOR_VERSION=${1:-v3.17}
-UKAMA_REPO=${2:-/ukamarepo} 
+UKAMA_REPO=${2:-/ukamarepo}
+export BUILD_MODE=release
 
 # set up resolv.conf
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -65,6 +65,20 @@ cwd=`pwd`
 cd "${UKAMA_REPO}/nodes/ukamaOS/distro/system/noded"
 rm -rf /tmp/sys/
 rm -rf "${cwd}/mocksysfs"
+
+# genSchema and genInventory are only run once and on host machine
+# update the rpath so it can find the right libs.
+UKAMAOS_ROOT="${UKAMA_REPO}/nodes/ukamaOS"
+VENDOR_BUILD="${UKAMAOS_ROOT}/distro/vendor/build"
+VENDOR_LIB="${VENDOR_BUILD}/lib"
+VENDOR_LIB64="${VENDOR_BUILD}/lib64"
+PLATFORM_LIB="${UKAMAOS_ROOT}/distro/platform/build"
+
+RPATH_PATHS="${PLATFORM_LIB}:${VENDOR_LIB}:${VENDOR_LIB64}"
+
+patchelf --set-rpath "${RPATH_PATHS}" "./build/genSchema"
+patchelf --set-rpath "${RPATH_PATHS}" "./build/genInventory"
+
 ./utils/prepare_env.sh -u tnode -u anode
 ./build/genSchema --u UK-SA9001-HNODE-A1-1103 \
                   --n com --m UK-SA9001-COM-A1-1103  \
