@@ -23,7 +23,48 @@ import (
 	"gorm.io/gorm"
 )
 
-const OrgName = "testorg"
+const (
+	OrgName = "testorg"
+
+	// Test data constants
+	TestVat           = "10"
+	TestItem          = "Product-1"
+	TestInventory     = "1"
+	TestOpexFee       = "100"
+	TestEffectiveDate = "2023-01-01"
+	TestDescription   = "Product-1 description"
+
+	// Sync accounting test data
+	TestCompany       = "TestCompany"
+	TestBranchName    = "test-branch"
+	TestEmail         = "test@example.com"
+	TestItemName      = "TestItem"
+	TestItemDesc      = "Test Description"
+	TestInventoryQty  = "10"
+	TestOpexFeeAmount = "100.00"
+	TestVatAmount     = "20.00"
+	BackhaulItem      = "BackhaulItem"
+	BackhaulDesc      = "Backhaul Description"
+	BackhaulInventory = "5"
+	BackhaulOpexFee   = "50.00"
+	BackhaulVat       = "10.00"
+
+	// Error messages
+	InvalidUUIDError = "invalid format of accounting uuid"
+	InvalidDBError   = "invalid db"
+	GitCloneError    = "git clone failed"
+	GitCloneErrorMsg = "failed to clone git repo"
+)
+
+var (
+	testUserId uuid.UUID
+	testAccId  uuid.UUID
+)
+
+func init() {
+	testUserId = uuid.NewV4()
+	testAccId = uuid.NewV4()
+}
 
 func TestAccountingServer_Get(t *testing.T) {
 	t.Run("Account record found", func(t *testing.T) {
@@ -70,7 +111,7 @@ func TestAccountingServer_Get(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, accResp)
-		assert.Contains(t, err.Error(), "invalid format of accounting uuid")
+		assert.Contains(t, err.Error(), InvalidUUIDError)
 		accRepo.AssertExpectations(t)
 	})
 }
@@ -86,13 +127,13 @@ func TestAccountingServer_GetByUser(t *testing.T) {
 			[]*db.Accounting{
 				{
 					Id:            aId,
-					Vat:           "10",
-					Item:          "Product-1",
+					Vat:           TestVat,
+					Item:          TestItem,
 					UserId:        uId,
-					Inventory:     "1",
-					OpexFee:       "100",
-					EffectiveDate: "2023-01-01",
-					Description:   "Product-1 description",
+					Inventory:     TestInventory,
+					OpexFee:       TestOpexFee,
+					EffectiveDate: TestEffectiveDate,
+					Description:   TestDescription,
 				}}, nil).Once()
 
 		s := NewAccountingServer(OrgName, accRepo, nil, "", nil, "")
@@ -122,7 +163,7 @@ func TestAccountingServer_GetByUser(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, accResp)
-		assert.Contains(t, err.Error(), "invalid db")
+		assert.Contains(t, err.Error(), InvalidDBError)
 		accRepo.AssertExpectations(t)
 	})
 }
@@ -135,11 +176,14 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 
 		userId := uuid.NewV4()
 
+		rootJSON := `{"test":[{"company":"` + TestCompany + `","git_branch_name":"` + TestBranchName + `","email":"` + TestEmail + `","user_id":"` + userId.String() + `"}]}`
+		manifestJSON := `{"ukama":[{"item":"` + TestItemName + `","description":"` + TestItemDesc + `","inventory":"` + TestInventoryQty + `","opex_fee":"` + TestOpexFeeAmount + `","vat":"` + TestVatAmount + `","effective_date":"` + TestEffectiveDate + `"}],"backhaul":[{"item":"` + BackhaulItem + `","description":"` + BackhaulDesc + `","inventory":"` + BackhaulInventory + `","opex_fee":"` + BackhaulOpexFee + `","vat":"` + BackhaulVat + `","effective_date":"` + TestEffectiveDate + `"}]}`
+
 		gitClient.On("SetupDir").Return(true)
 		gitClient.On("CloneGitRepo").Return(nil)
-		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(`{"test":[{"company":"TestCompany","git_branch_name":"test-branch","email":"test@example.com","user_id":"`+userId.String()+`"}]}`), nil)
-		gitClient.On("BranchCheckout", "test-branch").Return(nil)
-		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(`{"ukama":[{"item":"TestItem","description":"Test Description","inventory":"10","opex_fee":"100.00","vat":"20.00","effective_date":"2023-01-01"}],"backhaul":[{"item":"BackhaulItem","description":"Backhaul Description","inventory":"5","opex_fee":"50.00","vat":"10.00","effective_date":"2023-01-01"}]}`), nil)
+		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
+		gitClient.On("BranchCheckout", TestBranchName).Return(nil)
+		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
 
 		accRepo.On("Delete").Return(nil)
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
@@ -147,12 +191,12 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 			{
 				Id:            uuid.NewV4(),
 				UserId:        userId,
-				Item:          "TestItem",
-				Description:   "Test Description",
-				Inventory:     "10",
-				OpexFee:       "100.00",
-				Vat:           "20.00",
-				EffectiveDate: "2023-01-01",
+				Item:          TestItemName,
+				Description:   TestItemDesc,
+				Inventory:     TestInventoryQty,
+				OpexFee:       TestOpexFeeAmount,
+				Vat:           TestVatAmount,
+				EffectiveDate: TestEffectiveDate,
 			},
 		}, nil)
 
@@ -176,7 +220,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		gitClient := &cmocks.GitClient{}
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(errors.New("git clone failed"))
+		gitClient.On("CloneGitRepo").Return(errors.New(GitCloneError))
 
 		s := NewAccountingServer(OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -184,7 +228,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "failed to clone git repo")
+		assert.Contains(t, err.Error(), GitCloneErrorMsg)
 
 		gitClient.AssertExpectations(t)
 	})
