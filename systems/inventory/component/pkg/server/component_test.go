@@ -15,6 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/mocks"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
@@ -106,7 +107,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
 				UserId:   uId.String(),
-				Category: pb.ComponentCategory_ACCESS})
+				Category: ukama.ACCESS.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, compResp)
@@ -127,7 +128,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
 				UserId:   uId.String(),
-				Category: pb.ComponentCategory_BACKHAUL})
+				Category: ukama.BACKHAUL.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, compResp)
@@ -147,7 +148,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
 				UserId:   uId.String(),
-				Category: pb.ComponentCategory_ACCESS})
+				Category: ukama.ACCESS.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, compResp)

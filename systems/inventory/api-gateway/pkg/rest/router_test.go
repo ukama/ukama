@@ -30,6 +30,49 @@ import (
 	cmocks "github.com/ukama/ukama/systems/inventory/component/pb/gen/mocks"
 )
 
+// Test data constants
+const (
+	testInventoryID           = "2"
+	testCategory              = 1
+	testComponentType         = "tower node"
+	testDescription           = "best tower node"
+	testDatasheetURL          = "https://datasheet.com"
+	testImagesURL             = "https://images.com"
+	testPartNumber            = "1234"
+	testManufacturer          = "ukama"
+	testManaged               = "ukama"
+	testWarranty              = 1
+	testSpecification         = "spec"
+	testVat                   = "10"
+	testItem                  = "Product-1"
+	testAccountingInventoryID = "1"
+	testOpexFee               = "100"
+	testEffectiveDate         = "2023-01-01"
+	testAccountingDescription = "Product-1 description"
+	testPingResponse          = "pong"
+	testHTTPStatusOK          = 200
+)
+
+// Test endpoints
+const (
+	testComponentEndpoint      = "/v1/components"
+	testAccountingEndpoint     = "/v1/accounting"
+	testPingEndpoint           = "/ping"
+	testSyncComponentsEndpoint = "/v1/components/sync"
+	testSyncAccountingEndpoint = "/v1/accounting/sync"
+)
+
+// Test server configurations
+const (
+	testNodeMetricsEndpoint = "localhost:8080"
+	testAuthAppURL          = "http://localhost:4455"
+	testAuthServerURL       = "http://localhost:4434"
+	testAuthAPIGW           = "http://localhost:8080"
+	testComponentGRPC       = "component:9090"
+	testAccountingGRPC      = "accounting:9090"
+	testTimeout             = 1 * time.Second
+)
+
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
 }
@@ -39,12 +82,12 @@ var routerConfig = &RouterConfig{
 		Cors: defaultCors,
 	},
 	httpEndpoints: &pkg.HttpEndpoints{
-		NodeMetrics: "localhost:8080",
+		NodeMetrics: testNodeMetricsEndpoint,
 	},
 	auth: &cconfig.Auth{
-		AuthAppUrl:    "http://localhost:4455",
-		AuthServerUrl: "http://localhost:4434",
-		AuthAPIGW:     "http://localhost:8080",
+		AuthAppUrl:    testAuthAppURL,
+		AuthServerUrl: testAuthServerURL,
+		AuthAPIGW:     testAuthAPIGW,
 	},
 }
 
@@ -53,9 +96,9 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout:    1 * time.Second,
-		Component:  "component:9090",
-		Accounting: "accounting:9090",
+		Timeout:    testTimeout,
+		Component:  testComponentGRPC,
+		Accounting: testAccountingGRPC,
 	})
 }
 
@@ -63,14 +106,14 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	arc := &providers.AuthRestClient{}
-	req, _ := http.NewRequest("GET", "/ping", nil)
+	req, _ := http.NewRequest("GET", testPingEndpoint, nil)
 	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, 200, w.Code)
-	assert.Contains(t, w.Body.String(), "pong")
+	assert.Equal(t, testHTTPStatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), testPingResponse)
 }
 
 func TestGetComponent(t *testing.T) {
@@ -78,7 +121,7 @@ func TestGetComponent(t *testing.T) {
 	var uId = uuid.NewV4()
 	var cId = uuid.NewV4()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/components/"+cId.String(), nil)
+	req, _ := http.NewRequest("GET", testComponentEndpoint+"/"+cId.String(), nil)
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
@@ -86,17 +129,17 @@ func TestGetComponent(t *testing.T) {
 		Component: &cpb.Component{
 			Id:            cId.String(),
 			UserId:        uId.String(),
-			Inventory:     "2",
-			Category:      1,
-			Type:          "tower node",
-			Description:   "best tower node",
-			DatasheetURL:  "https://datasheet.com",
-			ImagesURL:     "https://images.com",
-			PartNumber:    "1234",
-			Manufacturer:  "ukama",
-			Managed:       "ukama",
-			Warranty:      1,
-			Specification: "spec",
+			Inventory:     testInventoryID,
+			Category:      testCategory,
+			Type:          testComponentType,
+			Description:   testDescription,
+			DatasheetURL:  testDatasheetURL,
+			ImagesURL:     testImagesURL,
+			PartNumber:    testPartNumber,
+			Manufacturer:  testManufacturer,
+			Managed:       testManaged,
+			Warranty:      testWarranty,
+			Specification: testSpecification,
 		},
 	}, nil)
 
@@ -115,9 +158,9 @@ func TestGetComponents(t *testing.T) {
 	var uId = uuid.NewV4()
 	var cId = uuid.NewV4()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/components/user/"+uId.String(), nil)
+	req, _ := http.NewRequest("GET", testComponentEndpoint+"/user/"+uId.String(), nil)
 	q := req.URL.Query()
-	q.Add("category", cpb.ComponentCategory_name[1])
+	q.Add("category", cpb.ComponentCategory_name[testCategory])
 	req.URL.RawQuery = q.Encode()
 
 	arc := &providers.AuthRestClient{}
@@ -128,17 +171,17 @@ func TestGetComponents(t *testing.T) {
 			{
 				Id:            cId.String(),
 				UserId:        uId.String(),
-				Inventory:     "2",
-				Category:      1,
-				Type:          "tower node",
-				Description:   "best tower node",
-				DatasheetURL:  "https://datasheet.com",
-				ImagesURL:     "https://images.com",
-				PartNumber:    "1234",
-				Manufacturer:  "ukama",
-				Managed:       "ukama",
-				Warranty:      1,
-				Specification: "spec",
+				Inventory:     testInventoryID,
+				Category:      testCategory,
+				Type:          testComponentType,
+				Description:   testDescription,
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    testPartNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
 			},
 		},
 	}, nil)
@@ -157,25 +200,25 @@ func TestGetAccounting(t *testing.T) {
 	var uId = uuid.NewV4()
 	var aId = uuid.NewV4()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/accounting/"+aId.String(), nil)
+	req, _ := http.NewRequest("GET", testAccountingEndpoint+"/"+aId.String(), nil)
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
 	acc.On("Get", mock.Anything, mock.Anything).Return(&apb.GetResponse{
 		Accounting: &apb.Accounting{
 			Id:            aId.String(),
-			Vat:           "10",
-			Item:          "Product-1",
+			Vat:           testVat,
+			Item:          testItem,
 			UserId:        uId.String(),
-			Inventory:     "1",
-			OpexFee:       "100",
-			EffectiveDate: "2023-01-01",
-			Description:   "Product-1 description",
+			Inventory:     testAccountingInventoryID,
+			OpexFee:       testOpexFee,
+			EffectiveDate: testEffectiveDate,
+			Description:   testAccountingDescription,
 		},
 	}, nil)
 
 	r := NewRouter(&Clients{
-		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -189,7 +232,7 @@ func TestGetAccountings(t *testing.T) {
 	var uId = uuid.NewV4()
 	var aId = uuid.NewV4()
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/accounting/user/"+uId.String(), nil)
+	req, _ := http.NewRequest("GET", testAccountingEndpoint+"/user/"+uId.String(), nil)
 
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
@@ -198,19 +241,19 @@ func TestGetAccountings(t *testing.T) {
 		Accounting: []*apb.Accounting{
 			{
 				Id:            aId.String(),
-				Vat:           "10",
-				Item:          "Product-1",
+				Vat:           testVat,
+				Item:          testItem,
 				UserId:        uId.String(),
-				Inventory:     "1",
-				OpexFee:       "100",
-				EffectiveDate: "2023-01-01",
-				Description:   "Product-1 description",
+				Inventory:     testAccountingInventoryID,
+				OpexFee:       testOpexFee,
+				EffectiveDate: testEffectiveDate,
+				Description:   testAccountingDescription,
 			},
 		},
 	}, nil)
 
 	r := NewRouter(&Clients{
-		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
@@ -221,7 +264,7 @@ func TestGetAccountings(t *testing.T) {
 
 func TestSyncComponents(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/components/sync", nil)
+	req, _ := http.NewRequest("PUT", testSyncComponentsEndpoint, nil)
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
@@ -239,14 +282,14 @@ func TestSyncComponents(t *testing.T) {
 
 func TestSyncAccounting(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/v1/accounting/sync", nil)
+	req, _ := http.NewRequest("PUT", testSyncAccountingEndpoint, nil)
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
 	acc.On("SyncAccounting", mock.Anything, mock.Anything).Return(&apb.SyncAcountingResponse{}, nil)
 
 	r := NewRouter(&Clients{
-		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
