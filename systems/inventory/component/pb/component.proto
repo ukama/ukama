@@ -28,7 +28,7 @@ message GetResponse {
 
 message GetByUserRequest {
     string userId = 1 [json_name = "user_id"];
-    ComponentCategory category = 2;
+    string category = 2;
 }
 
 message GetByUserResponse {
@@ -42,7 +42,7 @@ message SyncComponentsResponse {}
 message Component {
     string id = 1;
     string inventory = 2 [json_name = "inventory_id"];
-    ComponentCategory category = 3;
+    string category = 3;
     string type = 4;
     string userId = 5 [json_name = "user_id"];
     string description = 6;
@@ -53,13 +53,4 @@ message Component {
     string managed = 11;
     uint32 warranty = 12;
     string specification = 13;
-}
-
-enum ComponentCategory {
-    ALL = 0;
-    ACCESS = 1;
-    BACKHAUL = 2;
-    POWER = 3;
-    SWITCH = 4;
-    SPECTRUM = 5;
 }

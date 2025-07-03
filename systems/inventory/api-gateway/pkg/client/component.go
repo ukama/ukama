@@ -75,7 +75,7 @@ func (r *ComponentInventory) GetByUser(uid string, c string) (*pb.GetByUserRespo
 
 	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId:   uid,
-		Category: pb.ComponentCategory(pb.ComponentCategory_value[c]),
+		Category: c,
 	})
 	if err != nil {
 		return nil, err

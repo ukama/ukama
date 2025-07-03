@@ -10,13 +10,16 @@ import "strconv"
 
 type ComponentCategory uint8
 
+// TODO: missing sentinel value for all non valid component categories of the universe.
 const (
-	ALL      ComponentCategory = 0
-	ACCESS   ComponentCategory = 1
-	BACKHAUL ComponentCategory = 2
-	POWER    ComponentCategory = 3
-	SWITCH   ComponentCategory = 4
-	SPECTRUM ComponentCategory = 5
+	// TODO: golang fmt standard advises not using all caps as constants names.
+	// These should be camel or title cases instead.
+	ALL ComponentCategory = iota
+	ACCESS
+	BACKHAUL
+	POWER
+	SWITCH
+	SPECTRUM
 )
 
 func (c *ComponentCategory) Scan(value interface{}) error {
@@ -30,11 +33,11 @@ func (c ComponentCategory) Value() (uint8, error) {
 
 func (c ComponentCategory) String() string {
 	t := map[ComponentCategory]string{
-		0: "all", 
-		1: "access", 
-		2: "backhaul", 
-		3: "power", 
-		4: "switch", 
+		0: "all",
+		1: "access",
+		2: "backhaul",
+		3: "power",
+		4: "switch",
 		5: "spectrum",
 	}
 
@@ -46,6 +49,9 @@ func (c ComponentCategory) String() string {
 	return v
 }
 
+// TODO: this should be renamed to ParseComponentCategory instead + update
+// all dependent services using it.
+// TODO: make this also case insensitive.
 func ParseType(value string) ComponentCategory {
 	i, err := strconv.Atoi(value)
 	if err == nil {
@@ -53,11 +59,11 @@ func ParseType(value string) ComponentCategory {
 	}
 
 	t := map[string]ComponentCategory{
-		"all":      0, 
-		"access":   1, 
-		"backhaul": 2, 
-		"power":    3, 
-		"switch":   4, 
+		"all":      0,
+		"access":   1,
+		"backhaul": 2,
+		"power":    3,
+		"switch":   4,
 		"spectrum": 5,
 	}
 

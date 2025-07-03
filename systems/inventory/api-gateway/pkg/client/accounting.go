@@ -42,7 +42,7 @@ func NewAccountingInventory(accountHost string, timeout time.Duration) *Accounti
 	}
 }
 
-func NewNewAccountingInventoryFromClient(mClient pb.AccountingServiceClient) *AccountingInventory {
+func NewAccountingInventoryFromClient(mClient pb.AccountingServiceClient) *AccountingInventory {
 	return &AccountingInventory{
 		host:    "localhost",
 		timeout: 1 * time.Second,

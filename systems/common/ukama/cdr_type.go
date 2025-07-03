@@ -37,7 +37,8 @@ func (s CdrType) Value() (driver.Value, error) {
 }
 
 func (s CdrType) String() string {
-	t := map[CdrType]string{0: "unknown", 1: "data", 2: "voice", 3: "sms", 4: "voicemail", 5: "data_unlimited", 6: "data_captive_portal"}
+	t := map[CdrType]string{0: "unknown", 1: "data", 2: "voice", 3: "sms", 4: "voicemail",
+		5: "data_unlimited", 6: "data_captive_portal"}
 
 	v, ok := t[s]
 	if !ok {
@@ -53,7 +54,8 @@ func ParseCdrType(value string) CdrType {
 		return CdrType(i)
 	}
 
-	t := map[string]CdrType{"unknown": 0, "data": 1, "voice": 2, "sms": 3, "voicemail": 4, "data_unlimited": 5, "data_captive_portal": 6}
+	t := map[string]CdrType{"unknown": 0, "data": 1, "voice": 2, "sms": 3, "voicemail": 4,
+		"data_unlimited": 5, "data_captive_portal": 6}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {

@@ -18,18 +18,10 @@ import (
 
 func TestCdrType(t *testing.T) {
 	t.Run("CdrTypeValidString", func(tt *testing.T) {
-		cdr := ukama.ParseCdrType("data")
+		cdr := ukama.ParseCdrType("datA")
 
 		assert.NotNil(t, cdr)
-		assert.Equal(t, cdr.String(), "data")
-		assert.Equal(t, uint8(cdr), uint8(1))
-	})
-
-	t.Run("CdrTypeMulticaseString", func(tt *testing.T) {
-		cdr := ukama.ParseCdrType("dAta")
-
-		assert.NotNil(t, cdr)
-		assert.Equal(t, cdr.String(), "data")
+		assert.Equal(t, cdr.String(), ukama.CdrTypeData.String())
 		assert.Equal(t, uint8(cdr), uint8(1))
 	})
 
@@ -38,14 +30,14 @@ func TestCdrType(t *testing.T) {
 
 		assert.NotNil(t, cdr)
 		assert.Equal(t, uint8(cdr), uint8(3))
-		assert.Equal(t, cdr.String(), "sms")
+		assert.Equal(t, cdr.String(), ukama.CdrTypeSms.String())
 	})
 
 	t.Run("CdrTypeNonValidString", func(tt *testing.T) {
 		cdr := ukama.ParseCdrType("failure")
 
 		assert.NotNil(t, cdr)
-		assert.Equal(t, cdr.String(), "unknown")
+		assert.Equal(t, cdr.String(), ukama.CdrTypeUnknown.String())
 		assert.Equal(t, uint8(cdr), uint8(0))
 	})
 
@@ -53,7 +45,7 @@ func TestCdrType(t *testing.T) {
 		cdr := ukama.CdrType(uint8(10))
 
 		assert.NotNil(t, cdr)
-		assert.Equal(t, cdr.String(), "unknown")
+		assert.Equal(t, cdr.String(), ukama.CdrTypeUnknown.String())
 		assert.Equal(t, uint8(cdr), uint8(10))
 	})
 }
