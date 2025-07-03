@@ -20,7 +20,7 @@ func TestOwnerType(t *testing.T) {
 		owner := ukama.ParseOwnerType("org")
 
 		assert.NotNil(t, owner)
-		assert.Equal(t, owner.String(), "org")
+		assert.Equal(t, owner.String(), ukama.OwnerTypeOrg.String())
 		assert.Equal(t, uint8(owner), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestOwnerType(t *testing.T) {
 
 		assert.NotNil(t, owner)
 		assert.Equal(t, uint8(owner), uint8(2))
-		assert.Equal(t, owner.String(), "subscriber")
+		assert.Equal(t, owner.String(), ukama.OwnerTypeSubscriber.String())
 	})
 
 	t.Run("OwnerTypeNonValidString", func(tt *testing.T) {
 		owner := ukama.ParseOwnerType("failure")
 
 		assert.NotNil(t, owner)
-		assert.Equal(t, owner.String(), "unknown")
+		assert.Equal(t, owner.String(), ukama.OwnerTypeUnknown.String())
 		assert.Equal(t, uint8(owner), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestOwnerType(t *testing.T) {
 		owner := ukama.OwnerType(uint8(10))
 
 		assert.NotNil(t, owner)
-		assert.Equal(t, owner.String(), "unknown")
+		assert.Equal(t, owner.String(), ukama.OwnerTypeUnknown.String())
 		assert.Equal(t, uint8(owner), uint8(10))
 	})
 }

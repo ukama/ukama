@@ -20,7 +20,7 @@ func TestPaymentMethod(t *testing.T) {
 		stripeMethod := ukama.ParsePaymentMethod("StrIpE")
 
 		assert.NotNil(t, stripeMethod)
-		assert.Equal(t, stripeMethod.String(), "stripe")
+		assert.Equal(t, stripeMethod.String(), ukama.PaymentMethodStripe.String())
 		assert.Equal(t, uint8(stripeMethod), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestPaymentMethod(t *testing.T) {
 
 		assert.NotNil(t, mopayMethod)
 		assert.Equal(t, uint8(mopayMethod), uint8(2))
-		assert.Equal(t, mopayMethod.String(), "mopay")
+		assert.Equal(t, mopayMethod.String(), ukama.PaymentMethodMoPay.String())
 	})
 
 	t.Run("PaymentMethodNonValidString", func(tt *testing.T) {
 		unsupportedMethod := ukama.ParsePaymentMethod("failure")
 
 		assert.NotNil(t, unsupportedMethod)
-		assert.Equal(t, unsupportedMethod.String(), "unknown")
+		assert.Equal(t, unsupportedMethod.String(), ukama.PaymentMethodUnknown.String())
 		assert.Equal(t, uint8(unsupportedMethod), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestPaymentMethod(t *testing.T) {
 		unknownMethod := ukama.PaymentMethod(uint8(10))
 
 		assert.NotNil(t, unknownMethod)
-		assert.Equal(t, unknownMethod.String(), "unknown")
+		assert.Equal(t, unknownMethod.String(), ukama.PaymentMethodUnknown.String())
 		assert.Equal(t, uint8(unknownMethod), uint8(10))
 	})
 }

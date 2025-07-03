@@ -60,7 +60,8 @@ func ParseDataUnitType(value string) DataUnitType {
 }
 
 func ReturnDataUnits(value DataUnitType) int64 {
-	t := map[DataUnitType]int64{DataUnitTypeUnknown: 0, DataUnitTypeB: 1, DataUnitTypeKB: 1, DataUnitTypeMB: 1, DataUnitTypeGB: 1024}
+	t := map[DataUnitType]int64{DataUnitTypeUnknown: 0, DataUnitTypeB: 1, DataUnitTypeKB: 1,
+		DataUnitTypeMB: 1, DataUnitTypeGB: 1024}
 
 	v, ok := t[value]
 	if !ok {
