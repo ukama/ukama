@@ -158,7 +158,7 @@ func Test_AccountRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows := createMockRows(testData.account)
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
 			WithArgs(testData.accountID, 1).
 			WillReturnRows(rows)
 
@@ -185,7 +185,7 @@ func Test_AccountRepo_GetByUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		rows := createMockRows(testData.account)
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
 			WithArgs(testData.userID.String()).
 			WillReturnRows(rows)
 
@@ -207,7 +207,7 @@ func Test_AccountRepo_GetByUser(t *testing.T) {
 		mock, gdb, err := setupMockDB()
 		assert.NoError(t, err)
 
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
 			WithArgs(testData.userID.String()).
 			WillReturnError(fmt.Errorf("database connection error"))
 
@@ -281,7 +281,7 @@ func Test_AccountRepo_Delete(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM accountings`)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
 			WithArgs(accounts[0].Id, 1).WillReturnRows(sqlmock.NewRows([]string{}))
 
 		r := createAccountingRepo(gdb)

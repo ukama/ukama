@@ -13,8 +13,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/tj/assert"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/accounting/mocks"
