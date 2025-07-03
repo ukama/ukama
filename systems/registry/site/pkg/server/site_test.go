@@ -27,6 +27,79 @@ import (
 
 const OrgName = "Ukama"
 
+// Test data constants
+const (
+	testSiteName            = "Test Site"
+	testSiteLocation        = "Test Location"
+	testUpdatedSiteName     = "Updated Site Name"
+	testLongSiteName        = "This is a very long site name that might exceed some limits but should still be processed by the update function"
+	testDeactivatedSiteName = "Deactivated Site"
+	testExtremeLocation     = "Extreme Location"
+	testNewYorkLocation     = "New York"
+	testInvalidUUID         = "invalid-uuid-format"
+	testInvalidDate         = "invalid-date"
+	testValidInstallDate    = "2023-12-01T00:00:00Z"
+
+	// Coordinates
+	testLatitude         = 40.7128
+	testLongitude        = -74.0060
+	testExtremeLatitude  = 90.0  // North Pole
+	testExtremeLongitude = 180.0 // International Date Line
+
+	// Site names for list tests
+	testSite1Name               = "Site1"
+	testSite2Name               = "Site2"
+	testDeactivatedSiteListName = "DeactivatedSite"
+)
+
+// Test UUIDs - these will be generated fresh for each test
+var (
+	testSiteId     = uuid.NewV4()
+	testNetworkId  = uuid.NewV4()
+	testBackhaulId = uuid.NewV4()
+	testPowerId    = uuid.NewV4()
+	testAccessId   = uuid.NewV4()
+	testSwitchId   = uuid.NewV4()
+	testSpectrumId = uuid.NewV4()
+)
+
+// Helper function to create a mock site with test data
+func createMockSite() *db.Site {
+	return &db.Site{
+		Id:            testSiteId,
+		Name:          testSiteName,
+		Location:      testSiteLocation,
+		NetworkId:     testNetworkId,
+		BackhaulId:    testBackhaulId,
+		PowerId:       testPowerId,
+		AccessId:      testAccessId,
+		SwitchId:      testSwitchId,
+		SpectrumId:    testSpectrumId,
+		IsDeactivated: false,
+		Latitude:      testLatitude,
+		Longitude:     testLongitude,
+		InstallDate:   testValidInstallDate,
+	}
+}
+
+// Helper function to create a valid AddRequest with test data
+func createValidAddRequest() *pb.AddRequest {
+	return &pb.AddRequest{
+		Name:          testSiteName,
+		NetworkId:     testNetworkId.String(),
+		BackhaulId:    testBackhaulId.String(),
+		PowerId:       testPowerId.String(),
+		AccessId:      testAccessId.String(),
+		SwitchId:      testSwitchId.String(),
+		SpectrumId:    testSpectrumId.String(),
+		IsDeactivated: false,
+		Latitude:      testLatitude,
+		Longitude:     testLongitude,
+		Location:      testNewYorkLocation,
+		InstallDate:   testValidInstallDate,
+	}
+}
+
 func TestSiteService_Get(t *testing.T) {
 	siteRepo := &mocks.SiteRepo{}
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
@@ -35,48 +108,26 @@ func TestSiteService_Get(t *testing.T) {
 	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil)
 
 	t.Run("SiteFound", func(t *testing.T) {
-		siteId := uuid.NewV4()
-		networkId := uuid.NewV4()
-		backhaulId := uuid.NewV4()
-		powerId := uuid.NewV4()
-		accessId := uuid.NewV4()
-		switchId := uuid.NewV4()
-		spectrumId := uuid.NewV4()
+		mockSite := createMockSite()
 
-		mockSite := &db.Site{
-			Id:            siteId,
-			Name:          "Test Site",
-			Location:      "Test Location",
-			NetworkId:     networkId,
-			BackhaulId:    backhaulId,
-			PowerId:       powerId,
-			AccessId:      accessId,
-			SwitchId:      switchId,
-			SpectrumId:    spectrumId,
-			IsDeactivated: false,
-			Latitude:      40.7128,
-			Longitude:     -74.0060,
-			InstallDate:   "2023-12-01T00:00:00Z",
-		}
+		siteRepo.On("Get", testSiteId).Return(mockSite, nil).Once()
 
-		siteRepo.On("Get", siteId).Return(mockSite, nil).Once()
-
-		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
+		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: testSiteId.String()})
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
 
 		// Verify all fields are correctly mapped
-		assert.Equal(t, siteId.String(), resp.Site.Id)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
 		assert.Equal(t, mockSite.Name, resp.Site.Name)
 		assert.Equal(t, mockSite.Location, resp.Site.Location)
-		assert.Equal(t, networkId.String(), resp.Site.NetworkId)
-		assert.Equal(t, backhaulId.String(), resp.Site.BackhaulId)
-		assert.Equal(t, powerId.String(), resp.Site.PowerId)
-		assert.Equal(t, accessId.String(), resp.Site.AccessId)
-		assert.Equal(t, switchId.String(), resp.Site.SwitchId)
-		assert.Equal(t, spectrumId.String(), resp.Site.SpectrumId)
+		assert.Equal(t, testNetworkId.String(), resp.Site.NetworkId)
+		assert.Equal(t, testBackhaulId.String(), resp.Site.BackhaulId)
+		assert.Equal(t, testPowerId.String(), resp.Site.PowerId)
+		assert.Equal(t, testAccessId.String(), resp.Site.AccessId)
+		assert.Equal(t, testSwitchId.String(), resp.Site.SwitchId)
+		assert.Equal(t, testSpectrumId.String(), resp.Site.SpectrumId)
 		assert.Equal(t, mockSite.IsDeactivated, resp.Site.IsDeactivated)
 		assert.Equal(t, mockSite.Latitude, resp.Site.Latitude)
 		assert.Equal(t, mockSite.Longitude, resp.Site.Longitude)
@@ -86,11 +137,9 @@ func TestSiteService_Get(t *testing.T) {
 	})
 
 	t.Run("SiteNotFound", func(t *testing.T) {
-		siteId := uuid.NewV4()
+		siteRepo.On("Get", testSiteId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		siteRepo.On("Get", siteId).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
+		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: testSiteId.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -99,9 +148,7 @@ func TestSiteService_Get(t *testing.T) {
 	})
 
 	t.Run("InvalidUUID", func(t *testing.T) {
-		invalidUUID := "invalid-uuid-format"
-
-		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: invalidUUID})
+		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: testInvalidUUID})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -117,12 +164,11 @@ func TestSiteService_Get(t *testing.T) {
 	})
 
 	t.Run("DatabaseError", func(t *testing.T) {
-		siteId := uuid.NewV4()
 		dbError := gorm.ErrInvalidDB
 
-		siteRepo.On("Get", siteId).Return(nil, dbError).Once()
+		siteRepo.On("Get", testSiteId).Return(nil, dbError).Once()
 
-		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: siteId.String()})
+		resp, err := s.Get(context.TODO(), &pb.GetRequest{SiteId: testSiteId.String()})
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
@@ -138,19 +184,39 @@ func TestSiteService_List(t *testing.T) {
 
 	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil)
 
-	t.Run("ValidRequest", func(t *testing.T) {
-		netId := uuid.NewV4()
+	t.Run("ValidRequestWithMultipleSites", func(t *testing.T) {
+		siteRepo.ExpectedCalls = nil
 
 		mockSites := []*db.Site{
 			{
-				Id:        uuid.NewV4(),
-				NetworkId: netId,
-				Name:      "Site1",
+				Id:            uuid.NewV4(),
+				NetworkId:     testNetworkId,
+				Name:          testSite1Name,
+				Location:      testSiteLocation,
+				BackhaulId:    testBackhaulId,
+				PowerId:       testPowerId,
+				AccessId:      testAccessId,
+				SwitchId:      testSwitchId,
+				SpectrumId:    testSpectrumId,
+				IsDeactivated: false,
+				Latitude:      testLatitude,
+				Longitude:     testLongitude,
+				InstallDate:   testValidInstallDate,
 			},
 			{
-				Id:        uuid.NewV4(),
-				NetworkId: netId,
-				Name:      "Site2",
+				Id:            uuid.NewV4(),
+				NetworkId:     testNetworkId,
+				Name:          testSite2Name,
+				Location:      testNewYorkLocation,
+				BackhaulId:    testBackhaulId,
+				PowerId:       testPowerId,
+				AccessId:      testAccessId,
+				SwitchId:      testSwitchId,
+				SpectrumId:    testSpectrumId,
+				IsDeactivated: false,
+				Latitude:      testExtremeLatitude,
+				Longitude:     testExtremeLongitude,
+				InstallDate:   testValidInstallDate,
 			},
 		}
 
@@ -159,10 +225,10 @@ func TestSiteService_List(t *testing.T) {
 			mockSitesConverted = append(mockSitesConverted, *site)
 		}
 
-		siteRepo.On("List", &netId, false).Return(mockSitesConverted, nil)
+		siteRepo.On("List", &testNetworkId, false).Return(mockSitesConverted, nil).Once()
 
 		req := &pb.ListRequest{
-			NetworkId:     netId.String(),
+			NetworkId:     testNetworkId.String(),
 			IsDeactivated: false,
 		}
 
@@ -171,18 +237,48 @@ func TestSiteService_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, len(mockSites), len(resp.Sites))
+
+		// Verify all fields are correctly mapped for each site
 		for i, site := range mockSites {
 			assert.Equal(t, site.Id.String(), resp.Sites[i].Id)
 			assert.Equal(t, site.Name, resp.Sites[i].Name)
+			assert.Equal(t, site.Location, resp.Sites[i].Location)
+			assert.Equal(t, site.NetworkId.String(), resp.Sites[i].NetworkId)
+			assert.Equal(t, site.BackhaulId.String(), resp.Sites[i].BackhaulId)
+			assert.Equal(t, site.PowerId.String(), resp.Sites[i].PowerId)
+			assert.Equal(t, site.AccessId.String(), resp.Sites[i].AccessId)
+			assert.Equal(t, site.SwitchId.String(), resp.Sites[i].SwitchId)
+			assert.Equal(t, site.SpectrumId.String(), resp.Sites[i].SpectrumId)
+			assert.Equal(t, site.IsDeactivated, resp.Sites[i].IsDeactivated)
+			assert.Equal(t, site.Latitude, resp.Sites[i].Latitude)
+			assert.Equal(t, site.Longitude, resp.Sites[i].Longitude)
+			assert.Equal(t, site.InstallDate, resp.Sites[i].InstallDate)
 		}
 		siteRepo.AssertExpectations(t)
 	})
 
 	t.Run("EmptyNetworkId", func(t *testing.T) {
+		// Reset mock for this test
+		siteRepo.ExpectedCalls = nil
+
 		mockSites := []db.Site{
-			{Id: uuid.NewV4(), Name: "Site1"},
+			{
+				Id:            uuid.NewV4(),
+				Name:          testSite1Name,
+				Location:      testSiteLocation,
+				NetworkId:     testNetworkId,
+				BackhaulId:    testBackhaulId,
+				PowerId:       testPowerId,
+				AccessId:      testAccessId,
+				SwitchId:      testSwitchId,
+				SpectrumId:    testSpectrumId,
+				IsDeactivated: false,
+				Latitude:      testLatitude,
+				Longitude:     testLongitude,
+				InstallDate:   testValidInstallDate,
+			},
 		}
-		siteRepo.On("List", (*uuid.UUID)(nil), false).Return(mockSites, nil)
+		siteRepo.On("List", (*uuid.UUID)(nil), false).Return(mockSites, nil).Once()
 
 		req := &pb.ListRequest{NetworkId: "", IsDeactivated: false}
 		resp, err := s.List(context.Background(), req)
@@ -191,11 +287,12 @@ func TestSiteService_List(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, 1, len(resp.Sites))
 		assert.Equal(t, mockSites[0].Id.String(), resp.Sites[0].Id)
+		assert.Equal(t, mockSites[0].Name, resp.Sites[0].Name)
 		siteRepo.AssertExpectations(t)
 	})
 
 	t.Run("InvalidNetworkId", func(t *testing.T) {
-		req := &pb.ListRequest{NetworkId: "invalid-uuid", IsDeactivated: false}
+		req := &pb.ListRequest{NetworkId: testInvalidUUID, IsDeactivated: false}
 		resp, err := s.List(context.Background(), req)
 
 		assert.Error(t, err)
@@ -204,45 +301,66 @@ func TestSiteService_List(t *testing.T) {
 	})
 
 	t.Run("IsDeactivatedTrue", func(t *testing.T) {
-		netId := uuid.NewV4()
-		mockSites := []db.Site{
-			{Id: uuid.NewV4(), NetworkId: netId, Name: "DeactivatedSite", IsDeactivated: true},
-		}
-		siteRepo.On("List", &netId, true).Return(mockSites, nil)
+		siteRepo.ExpectedCalls = nil
 
-		req := &pb.ListRequest{NetworkId: netId.String(), IsDeactivated: true}
+		mockSites := []db.Site{
+			{
+				Id:            uuid.NewV4(),
+				NetworkId:     testNetworkId,
+				Name:          testDeactivatedSiteListName,
+				Location:      testSiteLocation,
+				BackhaulId:    testBackhaulId,
+				PowerId:       testPowerId,
+				AccessId:      testAccessId,
+				SwitchId:      testSwitchId,
+				SpectrumId:    testSpectrumId,
+				IsDeactivated: true,
+				Latitude:      testLatitude,
+				Longitude:     testLongitude,
+				InstallDate:   testValidInstallDate,
+			},
+		}
+		siteRepo.On("List", &testNetworkId, true).Return(mockSites, nil).Once()
+
+		req := &pb.ListRequest{NetworkId: testNetworkId.String(), IsDeactivated: true}
 		resp, err := s.List(context.Background(), req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, 1, len(resp.Sites))
 		assert.True(t, resp.Sites[0].IsDeactivated)
+		assert.Equal(t, mockSites[0].Name, resp.Sites[0].Name)
 		siteRepo.AssertExpectations(t)
 	})
 
-	t.Run("RepoError", func(t *testing.T) {
-		netId := uuid.NewV4()
-		siteRepo.On("List", &netId, false).Return(nil, gorm.ErrInvalidDB)
+	t.Run("EmptyResultSet", func(t *testing.T) {
+		siteRepo.ExpectedCalls = nil
 
-		req := &pb.ListRequest{NetworkId: netId.String(), IsDeactivated: false}
-		resp, err := s.List(context.Background(), req)
+		mockSites := []db.Site{}
+		siteRepo.On("List", &testNetworkId, false).Return(mockSites, nil).Once()
 
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "invalid db")
-		siteRepo.AssertExpectations(t)
-	})
-
-	t.Run("EmptyResult", func(t *testing.T) {
-		netId := uuid.NewV4()
-		siteRepo.On("List", &netId, false).Return([]db.Site{}, nil)
-
-		req := &pb.ListRequest{NetworkId: netId.String(), IsDeactivated: false}
+		req := &pb.ListRequest{NetworkId: testNetworkId.String(), IsDeactivated: false}
 		resp, err := s.List(context.Background(), req)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, 0, len(resp.Sites))
+		assert.Empty(t, resp.Sites)
+		siteRepo.AssertExpectations(t)
+	})
+
+	t.Run("DatabaseError", func(t *testing.T) {
+		siteRepo.ExpectedCalls = nil
+
+		dbError := gorm.ErrInvalidDB
+		siteRepo.On("List", &testNetworkId, false).Return(nil, dbError).Once()
+
+		req := &pb.ListRequest{NetworkId: testNetworkId.String(), IsDeactivated: false}
+		resp, err := s.List(context.Background(), req)
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Contains(t, err.Error(), "invalid db")
 		siteRepo.AssertExpectations(t)
 	})
 }
@@ -255,9 +373,6 @@ func TestSiteService_Update(t *testing.T) {
 	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil)
 
 	t.Run("Success", func(t *testing.T) {
-		siteId := uuid.NewV4()
-		newName := "Updated Site Name"
-
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
@@ -265,8 +380,8 @@ func TestSiteService_Update(t *testing.T) {
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
-			Name:   newName,
+			SiteId: testSiteId.String(),
+			Name:   testUpdatedSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -274,8 +389,8 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, siteId.String(), resp.Site.Id)
-		assert.Equal(t, newName, resp.Site.Name)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
+		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
 
 		// Verify the mock was called with correct parameters
 		siteRepo.AssertExpectations(t)
@@ -284,8 +399,8 @@ func TestSiteService_Update(t *testing.T) {
 
 	t.Run("InvalidSiteId", func(t *testing.T) {
 		req := &pb.UpdateRequest{
-			SiteId: "invalid-uuid",
-			Name:   "Test Site",
+			SiteId: testInvalidUUID,
+			Name:   testSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -298,7 +413,7 @@ func TestSiteService_Update(t *testing.T) {
 	t.Run("EmptySiteId", func(t *testing.T) {
 		req := &pb.UpdateRequest{
 			SiteId: "",
-			Name:   "Test Site",
+			Name:   testSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -309,8 +424,6 @@ func TestSiteService_Update(t *testing.T) {
 	})
 
 	t.Run("EmptyName", func(t *testing.T) {
-		siteId := uuid.NewV4()
-
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
@@ -318,7 +431,7 @@ func TestSiteService_Update(t *testing.T) {
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
+			SiteId: testSiteId.String(),
 			Name:   "",
 		}
 
@@ -327,7 +440,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, siteId.String(), resp.Site.Id)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
 		assert.Equal(t, "", resp.Site.Name)
 
 		siteRepo.AssertExpectations(t)
@@ -335,14 +448,12 @@ func TestSiteService_Update(t *testing.T) {
 	})
 
 	t.Run("DatabaseError", func(t *testing.T) {
-		siteId := uuid.NewV4()
-
 		// Mock the site repository update to return an error
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(gorm.ErrRecordNotFound).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
-			Name:   "Test Site",
+			SiteId: testSiteId.String(),
+			Name:   testSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -355,9 +466,6 @@ func TestSiteService_Update(t *testing.T) {
 	})
 
 	t.Run("MessageBusError", func(t *testing.T) {
-		siteId := uuid.NewV4()
-		newName := "Updated Site Name"
-
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
@@ -365,8 +473,8 @@ func TestSiteService_Update(t *testing.T) {
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
-			Name:   newName,
+			SiteId: testSiteId.String(),
+			Name:   testUpdatedSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -375,8 +483,8 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, siteId.String(), resp.Site.Id)
-		assert.Equal(t, newName, resp.Site.Name)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
+		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
 
 		siteRepo.AssertExpectations(t)
 		msgclientRepo.AssertExpectations(t)
@@ -385,15 +493,13 @@ func TestSiteService_Update(t *testing.T) {
 	t.Run("NilMessageBus", func(t *testing.T) {
 		// Create server without message bus
 		sNoMsgBus := NewSiteServer(OrgName, siteRepo, nil, netRepo, "", nil)
-		siteId := uuid.NewV4()
-		newName := "Updated Site Name"
 
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
-			Name:   newName,
+			SiteId: testSiteId.String(),
+			Name:   testUpdatedSiteName,
 		}
 
 		resp, err := sNoMsgBus.Update(context.Background(), req)
@@ -401,16 +507,13 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, siteId.String(), resp.Site.Id)
-		assert.Equal(t, newName, resp.Site.Name)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
+		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
 
 		siteRepo.AssertExpectations(t)
 	})
 
 	t.Run("LongName", func(t *testing.T) {
-		siteId := uuid.NewV4()
-		longName := "This is a very long site name that might exceed some limits but should still be processed by the update function"
-
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
@@ -418,8 +521,8 @@ func TestSiteService_Update(t *testing.T) {
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
-			SiteId: siteId.String(),
-			Name:   longName,
+			SiteId: testSiteId.String(),
+			Name:   testLongSiteName,
 		}
 
 		resp, err := s.Update(context.Background(), req)
@@ -427,8 +530,8 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, siteId.String(), resp.Site.Id)
-		assert.Equal(t, longName, resp.Site.Name)
+		assert.Equal(t, testSiteId.String(), resp.Site.Id)
+		assert.Equal(t, testLongSiteName, resp.Site.Name)
 
 		siteRepo.AssertExpectations(t)
 		msgclientRepo.AssertExpectations(t)
@@ -443,45 +546,23 @@ func TestSiteService_Add(t *testing.T) {
 
 	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient)
 
-	// Create valid UUIDs for testing
-	validNetworkId := uuid.NewV4()
-	validBackhaulId := uuid.NewV4()
-	validPowerId := uuid.NewV4()
-	validAccessId := uuid.NewV4()
-	validSwitchId := uuid.NewV4()
-	validSpectrumId := uuid.NewV4()
-	validInstallDate := "2023-12-01T00:00:00Z"
-
-	validRequest := &pb.AddRequest{
-		Name:          "Test Site",
-		NetworkId:     validNetworkId.String(),
-		BackhaulId:    validBackhaulId.String(),
-		PowerId:       validPowerId.String(),
-		AccessId:      validAccessId.String(),
-		SwitchId:      validSwitchId.String(),
-		SpectrumId:    validSpectrumId.String(),
-		IsDeactivated: false,
-		Latitude:      40.7128,
-		Longitude:     -74.0060,
-		Location:      "New York",
-		InstallDate:   validInstallDate,
-	}
+	validRequest := createValidAddRequest()
 
 	t.Run("Success", func(t *testing.T) {
 		// Mock network client
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -490,7 +571,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		// Mock message bus
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
@@ -520,13 +601,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidNetworkId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  "invalid-uuid",
-			BackhaulId: validBackhaulId.String(),
-			PowerId:    validPowerId.String(),
-			AccessId:   validAccessId.String(),
-			SwitchId:   validSwitchId.String(),
-			SpectrumId: validSpectrumId.String(),
+			Name:       testSiteName,
+			NetworkId:  testInvalidUUID,
+			BackhaulId: testBackhaulId.String(),
+			PowerId:    testPowerId.String(),
+			AccessId:   testAccessId.String(),
+			SwitchId:   testSwitchId.String(),
+			SpectrumId: testSpectrumId.String(),
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -538,13 +619,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidBackhaulId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  validNetworkId.String(),
-			BackhaulId: "invalid-uuid",
-			PowerId:    validPowerId.String(),
-			AccessId:   validAccessId.String(),
-			SwitchId:   validSwitchId.String(),
-			SpectrumId: validSpectrumId.String(),
+			Name:       testSiteName,
+			NetworkId:  testNetworkId.String(),
+			BackhaulId: testInvalidUUID,
+			PowerId:    testPowerId.String(),
+			AccessId:   testAccessId.String(),
+			SwitchId:   testSwitchId.String(),
+			SpectrumId: testSpectrumId.String(),
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -556,13 +637,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidPowerId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  validNetworkId.String(),
-			BackhaulId: validBackhaulId.String(),
-			PowerId:    "invalid-uuid",
-			AccessId:   validAccessId.String(),
-			SwitchId:   validSwitchId.String(),
-			SpectrumId: validSpectrumId.String(),
+			Name:       testSiteName,
+			NetworkId:  testNetworkId.String(),
+			BackhaulId: testBackhaulId.String(),
+			PowerId:    testInvalidUUID,
+			AccessId:   testAccessId.String(),
+			SwitchId:   testSwitchId.String(),
+			SpectrumId: testSpectrumId.String(),
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -574,13 +655,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidAccessId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  validNetworkId.String(),
-			BackhaulId: validBackhaulId.String(),
-			PowerId:    validPowerId.String(),
-			AccessId:   "invalid-uuid",
-			SwitchId:   validSwitchId.String(),
-			SpectrumId: validSpectrumId.String(),
+			Name:       testSiteName,
+			NetworkId:  testNetworkId.String(),
+			BackhaulId: testBackhaulId.String(),
+			PowerId:    testPowerId.String(),
+			AccessId:   testInvalidUUID,
+			SwitchId:   testSwitchId.String(),
+			SpectrumId: testSpectrumId.String(),
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -592,13 +673,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidSwitchId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  validNetworkId.String(),
-			BackhaulId: validBackhaulId.String(),
-			PowerId:    validPowerId.String(),
-			AccessId:   validAccessId.String(),
-			SwitchId:   "invalid-uuid",
-			SpectrumId: validSpectrumId.String(),
+			Name:       testSiteName,
+			NetworkId:  testNetworkId.String(),
+			BackhaulId: testBackhaulId.String(),
+			PowerId:    testPowerId.String(),
+			AccessId:   testAccessId.String(),
+			SwitchId:   testInvalidUUID,
+			SpectrumId: testSpectrumId.String(),
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -610,13 +691,13 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidSpectrumId", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:       "Test Site",
-			NetworkId:  validNetworkId.String(),
-			BackhaulId: validBackhaulId.String(),
-			PowerId:    validPowerId.String(),
-			AccessId:   validAccessId.String(),
-			SwitchId:   validSwitchId.String(),
-			SpectrumId: "invalid-uuid",
+			Name:       testSiteName,
+			NetworkId:  testNetworkId.String(),
+			BackhaulId: testBackhaulId.String(),
+			PowerId:    testPowerId.String(),
+			AccessId:   testAccessId.String(),
+			SwitchId:   testSwitchId.String(),
+			SpectrumId: testInvalidUUID,
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -628,14 +709,14 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("InvalidInstallDate", func(t *testing.T) {
 		invalidRequest := &pb.AddRequest{
-			Name:        "Test Site",
-			NetworkId:   validNetworkId.String(),
-			BackhaulId:  validBackhaulId.String(),
-			PowerId:     validPowerId.String(),
-			AccessId:    validAccessId.String(),
-			SwitchId:    validSwitchId.String(),
-			SpectrumId:  validSpectrumId.String(),
-			InstallDate: "invalid-date",
+			Name:        testSiteName,
+			NetworkId:   testNetworkId.String(),
+			BackhaulId:  testBackhaulId.String(),
+			PowerId:     testPowerId.String(),
+			AccessId:    testAccessId.String(),
+			SwitchId:    testSwitchId.String(),
+			SpectrumId:  testSpectrumId.String(),
+			InstallDate: testInvalidDate,
 		}
 
 		resp, err := s.Add(context.Background(), invalidRequest)
@@ -655,11 +736,11 @@ func TestSiteService_Add(t *testing.T) {
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -668,7 +749,7 @@ func TestSiteService_Add(t *testing.T) {
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(nil, gorm.ErrRecordNotFound)
 
 		resp, err := s.Add(context.Background(), validRequest)
@@ -690,11 +771,11 @@ func TestSiteService_Add(t *testing.T) {
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -721,11 +802,11 @@ func TestSiteService_Add(t *testing.T) {
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -734,7 +815,7 @@ func TestSiteService_Add(t *testing.T) {
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock site repository Add to return error
@@ -755,16 +836,16 @@ func TestSiteService_Add(t *testing.T) {
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -773,7 +854,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		// Mock message bus to return error
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB)
@@ -797,16 +878,16 @@ func TestSiteService_Add(t *testing.T) {
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -815,7 +896,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount to return error
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(0), gorm.ErrInvalidDB)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(0), gorm.ErrInvalidDB)
 
 		// Mock message bus
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
@@ -842,16 +923,16 @@ func TestSiteService_Add(t *testing.T) {
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -860,7 +941,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		resp, err := sNoMsgBus.Add(context.Background(), validRequest)
 
@@ -877,33 +958,33 @@ func TestSiteService_Add(t *testing.T) {
 	t.Run("EmptyName", func(t *testing.T) {
 		requestWithEmptyName := &pb.AddRequest{
 			Name:          "",
-			NetworkId:     validNetworkId.String(),
-			BackhaulId:    validBackhaulId.String(),
-			PowerId:       validPowerId.String(),
-			AccessId:      validAccessId.String(),
-			SwitchId:      validSwitchId.String(),
-			SpectrumId:    validSpectrumId.String(),
+			NetworkId:     testNetworkId.String(),
+			BackhaulId:    testBackhaulId.String(),
+			PowerId:       testPowerId.String(),
+			AccessId:      testAccessId.String(),
+			SwitchId:      testSwitchId.String(),
+			SpectrumId:    testSpectrumId.String(),
 			IsDeactivated: false,
-			Latitude:      40.7128,
-			Longitude:     -74.0060,
-			Location:      "New York",
-			InstallDate:   validInstallDate,
+			Latitude:      testLatitude,
+			Longitude:     testLongitude,
+			Location:      testNewYorkLocation,
+			InstallDate:   testValidInstallDate,
 		}
 
 		// Mock network client
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -912,7 +993,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		// Mock message bus
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
@@ -932,34 +1013,34 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("ExtremeCoordinates", func(t *testing.T) {
 		requestWithExtremeCoords := &pb.AddRequest{
-			Name:          "Test Site",
-			NetworkId:     validNetworkId.String(),
-			BackhaulId:    validBackhaulId.String(),
-			PowerId:       validPowerId.String(),
-			AccessId:      validAccessId.String(),
-			SwitchId:      validSwitchId.String(),
-			SpectrumId:    validSpectrumId.String(),
+			Name:          testSiteName,
+			NetworkId:     testNetworkId.String(),
+			BackhaulId:    testBackhaulId.String(),
+			PowerId:       testPowerId.String(),
+			AccessId:      testAccessId.String(),
+			SwitchId:      testSwitchId.String(),
+			SpectrumId:    testSpectrumId.String(),
 			IsDeactivated: false,
-			Latitude:      90.0,  // North Pole
-			Longitude:     180.0, // International Date Line
-			Location:      "Extreme Location",
-			InstallDate:   validInstallDate,
+			Latitude:      testExtremeLatitude,
+			Longitude:     testExtremeLongitude,
+			Location:      testExtremeLocation,
+			InstallDate:   testValidInstallDate,
 		}
 
 		// Mock network client
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -968,7 +1049,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		// Mock message bus
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
@@ -978,9 +1059,9 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, 90.0, resp.Site.Latitude)
-		assert.Equal(t, 180.0, resp.Site.Longitude)
-		assert.Equal(t, "Extreme Location", resp.Site.Location)
+		assert.Equal(t, testExtremeLatitude, resp.Site.Latitude)
+		assert.Equal(t, testExtremeLongitude, resp.Site.Longitude)
+		assert.Equal(t, testExtremeLocation, resp.Site.Location)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -990,34 +1071,34 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("DeactivatedSite", func(t *testing.T) {
 		deactivatedRequest := &pb.AddRequest{
-			Name:          "Deactivated Site",
-			NetworkId:     validNetworkId.String(),
-			BackhaulId:    validBackhaulId.String(),
-			PowerId:       validPowerId.String(),
-			AccessId:      validAccessId.String(),
-			SwitchId:      validSwitchId.String(),
-			SpectrumId:    validSpectrumId.String(),
+			Name:          testDeactivatedSiteName,
+			NetworkId:     testNetworkId.String(),
+			BackhaulId:    testBackhaulId.String(),
+			PowerId:       testPowerId.String(),
+			AccessId:      testAccessId.String(),
+			SwitchId:      testSwitchId.String(),
+			SpectrumId:    testSpectrumId.String(),
 			IsDeactivated: true,
-			Latitude:      40.7128,
-			Longitude:     -74.0060,
-			Location:      "New York",
-			InstallDate:   validInstallDate,
+			Latitude:      testLatitude,
+			Longitude:     testLongitude,
+			Location:      testNewYorkLocation,
+			InstallDate:   testValidInstallDate,
 		}
 
 		// Mock network client
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
 		netRepo.On("GetClient").Return(mockNetworkClient, nil)
 		mockNetworkClient.On("Get", mock.Anything, &npb.GetRequest{
-			NetworkId: validNetworkId.String(),
+			NetworkId: testNetworkId.String(),
 		}).Return(&npb.GetResponse{}, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
-			validBackhaulId.String(),
-			validPowerId.String(),
-			validAccessId.String(),
-			validSwitchId.String(),
-			validSpectrumId.String(),
+			testBackhaulId.String(),
+			testPowerId.String(),
+			testAccessId.String(),
+			testSwitchId.String(),
+			testSpectrumId.String(),
 		} {
 			inventoryClient.On("Get", componentId).Return(&inventory.ComponentInfo{}, nil)
 		}
@@ -1026,7 +1107,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo.On("Add", mock.AnythingOfType("*db.Site"), mock.AnythingOfType("func(*db.Site, *gorm.DB) error")).Return(nil)
 
 		// Mock GetSiteCount for pushSiteCount
-		siteRepo.On("GetSiteCount", validNetworkId).Return(int64(1), nil)
+		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil)
 
 		// Mock message bus
 		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
@@ -1037,7 +1118,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
 		assert.True(t, resp.Site.IsDeactivated)
-		assert.Equal(t, "Deactivated Site", resp.Site.Name)
+		assert.Equal(t, testDeactivatedSiteName, resp.Site.Name)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
