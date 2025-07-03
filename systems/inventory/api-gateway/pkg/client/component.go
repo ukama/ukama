@@ -59,39 +59,24 @@ func (r *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{
+	return r.client.Get(ctx, &pb.GetRequest{
 		Id: id,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *ComponentInventory) GetByUser(uid string, c string) (*pb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
+	return r.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId:   uid,
 		Category: c,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *ComponentInventory) SyncComponent() (*pb.SyncComponentsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
 }

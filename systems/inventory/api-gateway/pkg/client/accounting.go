@@ -59,38 +59,23 @@ func (r *AccountingInventory) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{
+	return r.client.Get(ctx, &pb.GetRequest{
 		Id: id,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *AccountingInventory) GetByUser(uid string) (*pb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
+	return r.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId: uid,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *AccountingInventory) SyncAccounts() (*pb.SyncAcountingResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.SyncAccounting(ctx, &pb.SyncAcountingRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.client.SyncAccounting(ctx, &pb.SyncAcountingRequest{})
 }

@@ -9,6 +9,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -51,15 +53,6 @@ const (
 	testAccountingDescription = "Product-1 description"
 	testPingResponse          = "pong"
 	testHTTPStatusOK          = 200
-)
-
-// Test endpoints
-const (
-	testComponentEndpoint      = "/v1/components"
-	testAccountingEndpoint     = "/v1/accounting"
-	testPingEndpoint           = "/ping"
-	testSyncComponentsEndpoint = "/v1/components/sync"
-	testSyncAccountingEndpoint = "/v1/accounting/sync"
 )
 
 // Test server configurations
@@ -106,7 +99,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	arc := &providers.AuthRestClient{}
-	req, _ := http.NewRequest("GET", testPingEndpoint, nil)
+	req, _ := http.NewRequest("GET", "/ping", nil)
 	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
@@ -116,19 +109,32 @@ func TestPingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), testPingResponse)
 }
 
-func TestGetComponent(t *testing.T) {
+func TestRouter_GetComponent(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var cId = uuid.NewV4()
+	componentId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+
+	req := GetRequest{
+		Uuid: componentId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", testComponentEndpoint+"/"+cId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/components/"+componentId, bytes.NewReader(jReq))
+
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
-	comp.On("Get", mock.Anything, mock.Anything).Return(&cpb.GetResponse{
+	compReq := &cpb.GetRequest{
+		Id: componentId,
+	}
+
+	compResp := &cpb.GetResponse{
 		Component: &cpb.Component{
-			Id:            cId.String(),
-			UserId:        uId.String(),
+			Id:            componentId,
+			UserId:        userId,
 			Inventory:     testInventoryID,
 			Category:      testCategory,
 			Type:          testComponentType,
@@ -141,36 +147,54 @@ func TestGetComponent(t *testing.T) {
 			Warranty:      testWarranty,
 			Specification: testSpecification,
 		},
-	}, nil)
+	}
+
+	comp.On("Get", mock.Anything, compReq).Return(compResp, nil)
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	comp.AssertExpectations(t)
 }
 
-func TestGetComponents(t *testing.T) {
+func TestRouter_GetComponents(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var cId = uuid.NewV4()
+	userId := uuid.NewV4().String()
+	componentId := uuid.NewV4().String()
+
+	req := GetComponents{
+		UserId:   userId,
+		Category: testCategory,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", testComponentEndpoint+"/user/"+uId.String(), nil)
-	q := req.URL.Query()
-	q.Add("category", testCategory)
-	req.URL.RawQuery = q.Encode()
+	hreq, _ := http.NewRequest("GET", "/v1/components/user/"+userId, bytes.NewReader(jReq))
+	q := hreq.URL.Query()
+	q.Add("category", req.Category)
+	hreq.URL.RawQuery = q.Encode()
 
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
-	comp.On("GetByUser", mock.Anything, mock.Anything, mock.Anything).Return(&cpb.GetByUserResponse{
+	compReq := &cpb.GetByUserRequest{
+		UserId:   userId,
+		Category: testCategory,
+	}
+
+	compResp := &cpb.GetByUserResponse{
 		Components: []*cpb.Component{
 			{
-				Id:            cId.String(),
-				UserId:        uId.String(),
+				Id:            componentId,
+				UserId:        userId,
 				Inventory:     testInventoryID,
 				Category:      testCategory,
 				Type:          testComponentType,
@@ -184,116 +208,164 @@ func TestGetComponents(t *testing.T) {
 				Specification: testSpecification,
 			},
 		},
-	}, nil)
+	}
+
+	comp.On("GetByUser", mock.Anything, compReq).Return(compResp, nil)
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	comp.AssertExpectations(t)
 }
 
-func TestGetAccounting(t *testing.T) {
-	var uId = uuid.NewV4()
-	var aId = uuid.NewV4()
+func TestRouter_GetAccounting(t *testing.T) {
+	// arrange
+	accountingId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+
+	req := GetRequest{
+		Uuid: accountingId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", testAccountingEndpoint+"/"+aId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/accounting/"+accountingId, bytes.NewReader(jReq))
+
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
-	acc.On("Get", mock.Anything, mock.Anything).Return(&apb.GetResponse{
+	accReq := &apb.GetRequest{
+		Id: accountingId,
+	}
+
+	accResp := &apb.GetResponse{
 		Accounting: &apb.Accounting{
-			Id:            aId.String(),
+			Id:            accountingId,
 			Vat:           testVat,
 			Item:          testItem,
-			UserId:        uId.String(),
+			UserId:        userId,
 			Inventory:     testAccountingInventoryID,
 			OpexFee:       testOpexFee,
 			EffectiveDate: testEffectiveDate,
 			Description:   testAccountingDescription,
 		},
-	}, nil)
+	}
+
+	acc.On("Get", mock.Anything, accReq).Return(accResp, nil)
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
 
-func TestGetAccountings(t *testing.T) {
+func TestRouter_GetAccountings(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var aId = uuid.NewV4()
+	userId := uuid.NewV4().String()
+	accountingId := uuid.NewV4().String()
+
+	req := GetAccounts{
+		UserId: userId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", testAccountingEndpoint+"/user/"+uId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/accounting/user/"+userId, bytes.NewReader(jReq))
 
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
-	acc.On("GetByUser", mock.Anything, mock.Anything).Return(&apb.GetByUserResponse{
+	accReq := &apb.GetByUserRequest{
+		UserId: userId,
+	}
+
+	accResp := &apb.GetByUserResponse{
 		Accounting: []*apb.Accounting{
 			{
-				Id:            aId.String(),
+				Id:            accountingId,
 				Vat:           testVat,
 				Item:          testItem,
-				UserId:        uId.String(),
+				UserId:        userId,
 				Inventory:     testAccountingInventoryID,
 				OpexFee:       testOpexFee,
 				EffectiveDate: testEffectiveDate,
 				Description:   testAccountingDescription,
 			},
 		},
-	}, nil)
+	}
+
+	acc.On("GetByUser", mock.Anything, accReq).Return(accResp, nil)
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
 
-func TestSyncComponents(t *testing.T) {
+func TestRouter_SyncComponents(t *testing.T) {
+	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", testSyncComponentsEndpoint, nil)
+	hreq, _ := http.NewRequest("PUT", "/v1/components/sync", nil)
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
-	comp.On("SyncComponents", mock.Anything, mock.Anything).Return(&cpb.SyncComponentsResponse{}, nil)
+	compResp := &cpb.SyncComponentsResponse{}
+
+	comp.On("SyncComponents", mock.Anything, mock.Anything).Return(compResp, nil)
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	comp.AssertExpectations(t)
 }
 
-func TestSyncAccounting(t *testing.T) {
+func TestRouter_SyncAccounting(t *testing.T) {
+	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", testSyncAccountingEndpoint, nil)
+	hreq, _ := http.NewRequest("PUT", "/v1/accounting/sync", nil)
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
-	acc.On("SyncAccounting", mock.Anything, mock.Anything).Return(&apb.SyncAcountingResponse{}, nil)
+	accResp := &apb.SyncAcountingResponse{}
+
+	acc.On("SyncAccounting", mock.Anything, mock.Anything).Return(accResp, nil)
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
