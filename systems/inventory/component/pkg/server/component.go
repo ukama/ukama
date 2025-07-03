@@ -80,7 +80,7 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 
-	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(req.GetCategory()))
+	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(ukama.ParseType(req.GetCategory())))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -133,7 +133,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			var component utils.Component
 			err = yaml.Unmarshal(content, &component)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+				return nil, status.Errorf(codes.Internal, "failed to unmarshal yaml. Error %s", err.Error())
 			}
 
 			components = append(components, component)
@@ -182,7 +182,7 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 		Id:            component.Id.String(),
 		Inventory:     component.Inventory,
 		UserId:        component.UserId.String(),
-		Category:      pb.ComponentCategory(component.Category),
+		Category:      ukama.ComponentCategory(component.Category).String(),
 		Type:          component.Type,
 		Description:   component.Description,
 		DatasheetURL:  component.DatasheetURL,

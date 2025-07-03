@@ -16,6 +16,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-pool/pkg/db"
@@ -43,7 +44,7 @@ func NewSimPoolServer(orgName string, simRepo db.SimRepo, msgBus mb.MsgBusServic
 func (p *SimPoolServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("GetSim isPhysical: %v, simType: %v", req.GetIsPhysicalSim(), req.GetSimType())
 
-	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), db.ParseType(req.GetSimType()))
+	sim, err := p.simRepo.Get(req.GetIsPhysicalSim(), ukama.ParseSimType(req.GetSimType()))
 	if err != nil {
 		log.Error("error fetching a sim " + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
@@ -67,7 +68,7 @@ func (p *SimPoolServer) GetByIccid(ctx context.Context, req *pb.GetByIccidReques
 func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	log.Infof("GetSimStats : %v ", req.GetSimType())
 
-	sim, err := p.simRepo.GetSimsByType(db.ParseType(req.SimType))
+	sim, err := p.simRepo.GetSimsByType(ukama.ParseSimType(req.SimType))
 	if err != nil {
 		log.Error("error getting a sim pool stats" + err.Error())
 
@@ -81,7 +82,7 @@ func (p *SimPoolServer) GetStats(ctx context.Context, req *pb.GetStatsRequest) (
 func (p *SimPoolServer) GetSims(ctx context.Context, req *pb.GetSimsRequest) (*pb.GetSimsResponse, error) {
 	log.Infof("GetSims : %v ", req.GetSimType())
 
-	sims, err := p.simRepo.GetSims(db.ParseType(req.SimType))
+	sims, err := p.simRepo.GetSims(ukama.ParseSimType(req.SimType))
 	if err != nil {
 		log.Error("error getting a sim pool stats" + err.Error())
 
@@ -103,7 +104,7 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 
-	iccids := make([]string, len(result))
+	iccids := make([]string, 0, len(result))
 	for _, u := range result {
 		iccids = append(iccids, u.Iccid)
 	}
@@ -128,7 +129,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "sim-pool")
 	}
 
-	iccids := make([]string, len(s))
+	iccids := make([]string, 0, len(s))
 	for _, u := range s {
 		iccids = append(iccids, u.Iccid)
 	}
