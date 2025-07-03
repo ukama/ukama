@@ -11,16 +11,8 @@ TARGET_NAME = init
 CAPP_BUILD  = ./$(TARGET_NAME)_capp/
 CAPP        = ./capp/
 
-UKAMAOS_ROOT = ../../../
-
-VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor
-VENDOR_BUILD = $(VENDOR_DIR)/build
-VENDOR_INC   = $(VENDOR_BUILD)/include
 VENDOR_USR_INC = $(VENDOR_BUILD)/usr/include
 SYS_INC = $(XGCCPATH)/../$(HOST)/include
-VENDOR_LIB   = $(VENDOR_BUILD)/lib
-VENDOR_LIB64 = $(VENDOR_BUILD)/lib64
-
 SCRIPTS = $(UKAMAOS_ROOT)/distro/scripts
 ROOTFS  = ./_ukama_minimal_rootfs
 
@@ -39,13 +31,10 @@ CFLAGS+=-I./inc
 CFLAGS+=-I$(WIMC_DIR)/inc
 CFLAGS+=-D_REENTRANT
 
+LDFLAGS+=$(RPATH_FLAGS)
 LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L${VENDOR_LIB64}
 LDFLAGS+=-static
-
-LDFLAGS+=-Wl,-rpath,$(PLATFORM_LIB)
-LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB)
-LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64)
 
 LIBS=
 
