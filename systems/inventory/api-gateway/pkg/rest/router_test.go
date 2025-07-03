@@ -32,8 +32,8 @@ import (
 
 // Test data constants
 const (
-	testInventoryID           = "2"
-	testCategory              = 1
+	testInventoryID           = "1"
+	testCategory              = "ACCESS"
 	testComponentType         = "tower node"
 	testDescription           = "best tower node"
 	testDatasheetURL          = "https://datasheet.com"
@@ -160,7 +160,7 @@ func TestGetComponents(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", testComponentEndpoint+"/user/"+uId.String(), nil)
 	q := req.URL.Query()
-	q.Add("category", cpb.ComponentCategory_name[testCategory])
+	q.Add("category", testCategory)
 	req.URL.RawQuery = q.Encode()
 
 	arc := &providers.AuthRestClient{}
