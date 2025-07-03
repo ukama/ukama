@@ -183,7 +183,58 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		userId := uuid.NewV4()
 
 		rootJSON := `{"test":[{"company":"` + TestCompany + `","git_branch_name":"` + TestBranchName + `","email":"` + TestEmail + `","user_id":"` + userId.String() + `"}]}`
-		manifestJSON := `{"ukama":[{"item":"` + TestItemName + `","description":"` + TestItemDesc + `","inventory":"` + TestInventoryQty + `","opex_fee":"` + TestOpexFeeAmount + `","vat":"` + TestVatAmount + `","effective_date":"` + TestEffectiveDate + `"}],"backhaul":[{"item":"` + BackhaulItem + `","description":"` + BackhaulDesc + `","inventory":"` + BackhaulInventory + `","opex_fee":"` + BackhaulOpexFee + `","vat":"` + BackhaulVat + `","effective_date":"` + TestEffectiveDate + `"}]}`
+
+		// Comprehensive manifest JSON that exercises all utils.Accounting struct fields
+		manifestJSON := `{
+			"effective_date": "2023-01-01",
+			"connectivityProvider": {
+				"company": "TestConnectivityProvider",
+				"poc": "John Doe",
+				"address": "123 Test Street, Test City",
+				"phone": "+1-555-123-4567",
+				"email": "contact@testprovider.com"
+			},
+			"nodes": {
+				"inventory": "100",
+				"onOrder": "50"
+			},
+			"ukama": [
+				{
+					"item": "` + TestItemName + `",
+					"description": "` + TestItemDesc + `",
+					"inventory": "` + TestInventoryQty + `",
+					"opex_fee": "` + TestOpexFeeAmount + `",
+					"vat": "` + TestVatAmount + `",
+					"effective_date": "` + TestEffectiveDate + `"
+				},
+				{
+					"item": "UkamaItem2",
+					"description": "Second Ukama Item Description",
+					"inventory": "25",
+					"opex_fee": "150.00",
+					"vat": "30.00",
+					"effective_date": "2023-02-01"
+				}
+			],
+			"backhaul": [
+				{
+					"item": "` + BackhaulItem + `",
+					"description": "` + BackhaulDesc + `",
+					"inventory": "` + BackhaulInventory + `",
+					"opex_fee": "` + BackhaulOpexFee + `",
+					"vat": "` + BackhaulVat + `",
+					"effective_date": "` + TestEffectiveDate + `"
+				},
+				{
+					"item": "BackhaulItem2",
+					"description": "Second Backhaul Item Description",
+					"inventory": "15",
+					"opex_fee": "75.00",
+					"vat": "15.00",
+					"effective_date": "2023-03-01"
+				}
+			]
+		}`
 
 		gitClient.On("SetupDir").Return(true)
 		gitClient.On("CloneGitRepo").Return(nil)
@@ -203,6 +254,36 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 				OpexFee:       TestOpexFeeAmount,
 				Vat:           TestVatAmount,
 				EffectiveDate: TestEffectiveDate,
+			},
+			{
+				Id:            uuid.NewV4(),
+				UserId:        userId,
+				Item:          "UkamaItem2",
+				Description:   "Second Ukama Item Description",
+				Inventory:     "25",
+				OpexFee:       "150.00",
+				Vat:           "30.00",
+				EffectiveDate: "2023-02-01",
+			},
+			{
+				Id:            uuid.NewV4(),
+				UserId:        userId,
+				Item:          BackhaulItem,
+				Description:   BackhaulDesc,
+				Inventory:     BackhaulInventory,
+				OpexFee:       BackhaulOpexFee,
+				Vat:           BackhaulVat,
+				EffectiveDate: TestEffectiveDate,
+			},
+			{
+				Id:            uuid.NewV4(),
+				UserId:        userId,
+				Item:          "BackhaulItem2",
+				Description:   "Second Backhaul Item Description",
+				Inventory:     "15",
+				OpexFee:       "75.00",
+				Vat:           "15.00",
+				EffectiveDate: "2023-03-01",
 			},
 		}, nil)
 
@@ -505,8 +586,96 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 
 		resp, err := s.SyncAccounting(context.TODO(), &pb.SyncAcountingRequest{})
 
-		// Note: Message bus failure should not cause the entire operation to fail
-		// The function should still return success but log the error
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		gitClient.AssertExpectations(t)
+		accRepo.AssertExpectations(t)
+		msgBus.AssertExpectations(t)
+	})
+
+	t.Run("Test utils.Accounting struct parsing with minimal data", func(t *testing.T) {
+		accRepo := &mocks.AccountingRepo{}
+		msgBus := &cmocks.MsgBusServiceClient{}
+		gitClient := &cmocks.GitClient{}
+
+		userId := uuid.NewV4()
+
+		rootJSON := `{"test":[{"company":"` + TestCompany + `","git_branch_name":"` + TestBranchName + `","email":"` + TestEmail + `","user_id":"` + userId.String() + `"}]}`
+
+		// Minimal manifest JSON to test utils.Accounting struct parsing
+		manifestJSON := `{
+			"effective_date": "2023-01-01",
+			"connectivityProvider": {
+				"company": "MinimalProvider",
+				"poc": "Jane Smith",
+				"address": "456 Minimal Ave",
+				"phone": "+1-555-987-6543",
+				"email": "jane@minimal.com"
+			},
+			"nodes": {
+				"inventory": "10",
+				"onOrder": "5"
+			},
+			"ukama": [
+				{
+					"item": "MinimalUkamaItem",
+					"description": "Minimal Ukama Description",
+					"inventory": "1",
+					"opex_fee": "50.00",
+					"vat": "10.00",
+					"effective_date": "2023-01-01"
+				}
+			],
+			"backhaul": [
+				{
+					"item": "MinimalBackhaulItem",
+					"description": "Minimal Backhaul Description",
+					"inventory": "2",
+					"opex_fee": "25.00",
+					"vat": "5.00",
+					"effective_date": "2023-01-01"
+				}
+			]
+		}`
+
+		gitClient.On("SetupDir").Return(true)
+		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
+		gitClient.On("BranchCheckout", TestBranchName).Return(nil)
+		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
+
+		accRepo.On("Delete").Return(nil)
+		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
+		accRepo.On("GetByUser", userId.String()).Return([]*db.Accounting{
+			{
+				Id:            uuid.NewV4(),
+				UserId:        userId,
+				Item:          "MinimalUkamaItem",
+				Description:   "Minimal Ukama Description",
+				Inventory:     "1",
+				OpexFee:       "50.00",
+				Vat:           "10.00",
+				EffectiveDate: "2023-01-01",
+			},
+			{
+				Id:            uuid.NewV4(),
+				UserId:        userId,
+				Item:          "MinimalBackhaulItem",
+				Description:   "Minimal Backhaul Description",
+				Inventory:     "2",
+				OpexFee:       "25.00",
+				Vat:           "5.00",
+				EffectiveDate: "2023-01-01",
+			},
+		}, nil)
+
+		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+
+		s := NewAccountingServer(OrgName, accRepo, msgBus, "", gitClient, "")
+
+		resp, err := s.SyncAccounting(context.TODO(), &pb.SyncAcountingRequest{})
+
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 
