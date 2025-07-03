@@ -46,7 +46,7 @@ func NewMemberClient(h string, options ...client.Option) *memberClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &memberClient{
@@ -55,12 +55,12 @@ func NewMemberClient(h string, options ...client.Option) *memberClient {
 	}
 }
 
-func (n *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
+func (m *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
 	log.Debugf("Getting member: %v", id)
 
 	mem := MemberInfoResponse{}
 
-	resp, err := n.R.Get(n.u.String() + MemberEndpoint + "/user/" + id)
+	resp, err := m.R.Get(m.u.String() + MemberEndpoint + "/user/" + id)
 	if err != nil {
 		log.Errorf("GetMember failure. error: %s", err.Error())
 
@@ -70,7 +70,7 @@ func (n *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize member info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("member info deserailization failure: %w", err)
+		return nil, fmt.Errorf("member info deserialization failure: %w", err)
 	}
 
 	log.Infof("Member Info: %+v", mem)

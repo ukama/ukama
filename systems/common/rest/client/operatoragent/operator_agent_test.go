@@ -52,7 +52,7 @@ func TestOperatorClient_GetSimInfo(t *testing.T) {
 		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		s, err := testOperatorClient.GetSimInfo(testIccid)
@@ -148,7 +148,7 @@ func TestOperatorClient_GetUsages(t *testing.T) {
 		testOperatorClient := operatoragent.NewOperatorAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testOperatorClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		u, c, err := testOperatorClient.GetUsages(testIccid, cdrType, from, to, region)
