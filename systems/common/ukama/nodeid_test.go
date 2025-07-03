@@ -34,14 +34,14 @@ func TestNodeId_GetNodeType(t *testing.T) {
 		}
 	})
 
-	t.Run("NodeTypeValid", func(tt *testing.T) {
+	t.Run("NodeTypeUndefined", func(tt *testing.T) {
 		nodeId := NewVirtualNodeId("some_weird_type")
 		assert.Equal(tt, NODE_ID_TYPE_UNDEFINED, nodeId.GetNodeType())
 	})
 }
 
 func TestModuleId_StringLowercase(t *testing.T) {
-	t.Run("NodeTypeValid", func(tt *testing.T) {
+	t.Run("ModuleTypeValid", func(tt *testing.T) {
 		ntypes := map[string]string{
 			"comv1": MODULE_ID_TYPE_COMP,
 			"trx":   MODULE_ID_TYPE_TRX,
@@ -55,9 +55,9 @@ func TestModuleId_StringLowercase(t *testing.T) {
 		}
 	})
 
-	t.Run("NodeTypeValid", func(tt *testing.T) {
-		nodeId := NewVirtualNodeId("some_weird_type")
-		assert.Equal(tt, NODE_ID_TYPE_UNDEFINED, nodeId.GetNodeType())
+	t.Run("ModuleTypeUndefined", func(tt *testing.T) {
+		moduleId := NewVirtualModuleId("some_weird_type")
+		assert.Contains(tt, moduleId.StringLowercase(), NODE_ID_TYPE_UNDEFINED)
 	})
 }
 

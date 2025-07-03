@@ -18,7 +18,7 @@ import (
 // on all other dependent services that are using the current name: status to MailStatus
 type Status uint8
 
-// TODO: we need unknown as aa sentinel value for all non valid values of the universe. We cannot
+// TODO: we need unknown as a sentinel value for all non valid values of the universe. We cannot
 // rely on pending (which is a valid status )
 const (
 	Pending Status = iota
