@@ -21,6 +21,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/tj/assert"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -83,7 +84,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			Apn:         "apn123",
 			EffectiveAt: time.Now(),
 			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
+			SimType:     ukama.SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -145,7 +146,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			Apn:         "apn123",
 			EffectiveAt: time.Now(),
 			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
+			SimType:     ukama.SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -212,7 +213,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 				Apn:         "apn123",
 				EffectiveAt: sat,
 				EndAt:       eat,
-				SimType:     SimTypeUkamaData,
+				SimType:     ukama.SimTypeUkamaData,
 			},
 			{
 				Uuid:        uuid.NewV4(),
@@ -231,7 +232,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 				Apn:         "apn123",
 				EffectiveAt: time.Now(),
 				EndAt:       eat,
-				SimType:     SimTypeUkamaData,
+				SimType:     ukama.SimTypeUkamaData,
 			},
 		}
 
@@ -301,7 +302,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			Apn:         "apn123",
 			EffectiveAt: time.Now(),
 			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
+			SimType:     ukama.SimTypeUkamaData,
 		}
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
@@ -368,7 +369,7 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 			Apn:         "apn123",
 			EffectiveAt: sat,
 			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
+			SimType:     ukama.SimTypeUkamaData,
 			Currency:    "Dollar",
 		}
 
@@ -411,6 +412,77 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("UploadBaseRates create error", func(t *testing.T) {
+		// Arrange
+		ratID := uuid.NewV4()
+		var db *extsql.DB
+		var err error
+		sat, err := time.Parse(time.RFC3339, "2021-10-12T07:20:50.52Z")
+		assert.NoError(t, err)
+
+		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
+		assert.NoError(t, err)
+
+		expectedRate := BaseRate{
+			Uuid:        ratID,
+			Country:     "ABC",
+			Provider:    "XYZ",
+			Vpmn:        "123",
+			Imsi:        2,
+			SmsMo:       0.05,
+			SmsMt:       0.06,
+			Data:        0.07,
+			X2g:         false,
+			X3g:         false,
+			X5g:         true,
+			Lte:         true,
+			LteM:        true,
+			Apn:         "apn123",
+			EffectiveAt: sat,
+			EndAt:       eat,
+			SimType:     ukama.SimTypeUkamaData,
+			Currency:    "Dollar",
+		}
+
+		upRates := []BaseRate{expectedRate}
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).
+			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Provider, expectedRate.SimType, expectedRate.EffectiveAt).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
+			WillReturnError(errors.New("create error"))
+
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewBaseRateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err = r.UploadBaseRates(upRates)
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "create error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestBaseRateRepo_ErrorCases(t *testing.T) {
@@ -442,7 +514,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
-		_, err := repo.GetBaseRatesHistoryByCountry("c", "p", SimTypeUkamaData)
+		_, err := repo.GetBaseRatesHistoryByCountry("c", "p", ukama.SimTypeUkamaData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db error")
 	})
@@ -451,7 +523,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
-		_, err := repo.GetBaseRatesByCountry("c", "p", SimTypeUkamaData)
+		_, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db error")
 	})
@@ -460,7 +532,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
-		_, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		_, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db error")
 	})
@@ -469,7 +541,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
-		_, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		_, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db error")
 	})
@@ -480,7 +552,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WillReturnError(errors.New("delete error"))
 		mock.ExpectRollback()
-		rate := BaseRate{Country: "c", Provider: "p", SimType: SimTypeUkamaData, EffectiveAt: time.Now()}
+		rate := BaseRate{Country: "c", Provider: "p", SimType: ukama.SimTypeUkamaData, EffectiveAt: time.Now()}
 		err := repo.UploadBaseRates([]BaseRate{rate})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "delete error")
@@ -491,7 +563,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		defer cleanup()
 		rows := sqlmock.NewRows([]string{})
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
-		rates, err := repo.GetBaseRatesByCountry("c", "p", SimTypeUkamaData)
+		rates, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
 		assert.NoError(t, err)
 		assert.Empty(t, rates)
 	})
@@ -501,7 +573,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		defer cleanup()
 		rows := sqlmock.NewRows([]string{})
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
-		rates, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		rates, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
 		assert.NoError(t, err)
 		assert.Empty(t, rates)
 	})
@@ -511,7 +583,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		defer cleanup()
 		rows := sqlmock.NewRows([]string{})
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
-		rates, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), SimTypeUkamaData)
+		rates, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
 		assert.NoError(t, err)
 		assert.Empty(t, rates)
 	})
@@ -520,7 +592,7 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
-		rate := BaseRate{Country: "c", Provider: "p", SimType: SimTypeUkamaData, EffectiveAt: time.Now()}
+		rate := BaseRate{Country: "c", Provider: "p", SimType: ukama.SimTypeUkamaData, EffectiveAt: time.Now()}
 		err := repo.UploadBaseRates([]BaseRate{rate})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "transaction begin error")

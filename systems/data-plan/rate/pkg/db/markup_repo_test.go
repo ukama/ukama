@@ -569,7 +569,6 @@ func TestMarkupRepo_Update(t *testing.T) {
 }
 
 func TestMarkupRepo_GetHistory(t *testing.T) {
-
 	t.Run("GetHistory_Success", func(t *testing.T) {
 		// Arrange
 		userId := uuid.NewV4()
@@ -615,5 +614,41 @@ func TestMarkupRepo_GetHistory(t *testing.T) {
 		assert.NoError(t, err)
 
 	})
+	t.Run("GetHistory_DatabaseError", func(t *testing.T) {
+		// Arrange
+		userId := uuid.NewV4()
 
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		// Simulate a database error
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WithArgs(userId).
+			WillReturnError(errors.New("db error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewMarkupsRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		m, err := r.GetMarkupRateHistory(userId)
+		assert.Error(t, err)
+		assert.Nil(t, m)
+		assert.Contains(t, err.Error(), "db error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }

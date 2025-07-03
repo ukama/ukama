@@ -101,13 +101,24 @@ func (r *packageRepo) Delete(uuid uuid.UUID) error {
 }
 
 func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {
-	d := b.Db.GetGormDb().Clauses(clause.Returning{}).Where("uuid = ?", uuid).Updates(pkg)
-	if d.RowsAffected == 0 {
+	tx := b.Db.GetGormDb().Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	result := tx.Clauses(clause.Returning{}).Where("uuid = ?", uuid).Updates(pkg)
+	if result.Error != nil {
+		tx.Rollback()
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		tx.Rollback()
 		return gorm.ErrRecordNotFound
 	}
 
-	//https://stackoverflow.com/questions/65683156/updates-doesnt-seem-to-update-the-associations
+	// TODO: Update is not updating the associations
+	// https://stackoverflow.com/questions/65683156/updates-doesnt-seem-to-update-the-associations
 
-	return d.Error
-
+	return tx.Commit().Error
 }

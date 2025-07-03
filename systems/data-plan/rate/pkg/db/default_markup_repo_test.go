@@ -521,5 +521,37 @@ func TestDefaultMarkupRepo_GetHistory(t *testing.T) {
 		assert.NoError(t, err)
 
 	})
+	t.Run("GetHistory_DatabaseError", func(t *testing.T) {
+		var db *extsql.DB
+		var err error
 
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		// Simulate a database error
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
+			WillReturnError(errors.New("db error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewDefaultMarkupRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		m, err := r.GetDefaultMarkupRateHistory()
+		assert.Error(t, err)
+		assert.Nil(t, m)
+		assert.Contains(t, err.Error(), "db error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }

@@ -16,14 +16,15 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 )
 
 type BaseRateRepo interface {
 	GetBaseRateById(uuid uuid.UUID) (*BaseRate, error)
-	GetBaseRatesHistoryByCountry(country, provider string, sType SimType) ([]BaseRate, error)
-	GetBaseRatesByCountry(country, provider string, simType SimType) ([]BaseRate, error)
-	GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error)
-	GetBaseRatesForPackage(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error)
+	GetBaseRatesHistoryByCountry(country, provider string, sType ukama.SimType) ([]BaseRate, error)
+	GetBaseRatesByCountry(country, provider string, simType ukama.SimType) ([]BaseRate, error)
+	GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error)
+	GetBaseRatesForPackage(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error)
 	UploadBaseRates(rateList []BaseRate) error
 }
 
@@ -46,7 +47,7 @@ func (u *baseRateRepo) GetBaseRateById(uuid uuid.UUID) (*BaseRate, error) {
 	return rate, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, provider string, sType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, provider string, sType ukama.SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Unscoped().Where(&BaseRate{Country: country, Provider: provider, SimType: sType}).Find(&rates)
 
@@ -57,7 +58,7 @@ func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, provider string, sT
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType ukama.SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	t := time.Now().Add(time.Second * 1).Format(time.RFC3339)
 	result := b.Db.GetGormDb().Model(BaseRate{}).Where("country = ?", country).Where("provider = ?", provider).
@@ -69,7 +70,7 @@ func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType S
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("provider = ?", provider).
 		Where("sim_type = ?", simType).Where("effective_at <= ?", from).Where("end_at >= ?", to).Find(&rates)
@@ -81,7 +82,7 @@ func (b *baseRateRepo) GetBaseRatesForPeriod(country, provider string, from, to 
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesForPackage(country, provider string, from, to time.Time, simType SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRatesForPackage(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error) {
 	var rates []BaseRate
 	result := b.Db.GetGormDb().Model(BaseRate{}).Unscoped().Where("country = ?", country).Where("provider = ?", provider).
 		Where("sim_type = ?", simType).Where("effective_at <= ?", from).Where("end_at >= ?", to).Order("created_at desc").Limit(1).Find(&rates)
