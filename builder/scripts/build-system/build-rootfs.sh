@@ -101,7 +101,11 @@ install_starter_app() {
 
     cd ${UKAMA_REPO_APP_PKG}
     tar zxvf starterd_latest.tar.gz
+
+    cp -rf starterd_latest/lib/*      /ukama/apps/lib
+    cp -rf starterd_latest/usr/lib/*  /ukama/apps/lib
     cp starterd_latest/sbin/starter.d /sbin/
+
     rm -rf starterd_latest/
 }
 
@@ -345,9 +349,8 @@ EOF
 setup_ukama_dirs() {
     log "INFO" "Creating Ukama directories..."
 
-    mkdir -p "/ukama"
     mkdir -p "/ukama/configs"
-    mkdir -p "/ukama/apps"
+    mkdir -p "/ukama/apps/lib"
     mkdir -p "/ukama/apps/pkgs"
     mkdir -p "/ukama/apps/rootfs"
     mkdir -p "/ukama/apps/registry"
@@ -386,7 +389,7 @@ done
 setup_rootfs
 setup_ukama_dirs
 setup_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
-copy_misc_files 
+copy_misc_files
 copy_x86_64_kernel
 copy_x86_64_boot
 
