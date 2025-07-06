@@ -56,7 +56,7 @@ sudo rsync -a "$MNT_ISO"/ "$MNT_BOOT"/
 
 # Move flash script + README to DATA partition
 sudo cp "$FLASH_SCRIPT" "$MNT_DATA/$FLASH_SCRIPT"
-sudo chmod +x "$MNT_DATA/flash-smarc.sh"
+sudo chmod +x "$MNT_DATA/$FLASH_SCRIPT"
 
 cat <<EOF | sudo tee "$MNT_DATA/$README_FILE" >/dev/null
 Ukama SMARC Flash USB
