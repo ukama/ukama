@@ -67,8 +67,8 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		// so that the test stays a unit test e.g, no server/network call.
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testUkamaClient.GetSimInfo(testIccid)
 
@@ -92,7 +92,7 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testUkamaClient.GetSimInfo(testIccid)
 
@@ -113,7 +113,7 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testUkamaClient.GetSimInfo(testIccid)
 
@@ -130,7 +130,7 @@ func TestUkamaClient_GetSimInfo(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		s, err := testUkamaClient.GetSimInfo(testIccid)
 
@@ -146,7 +146,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
 				fmt.Sprintf("/%s?from=%d&to=%d", testIccid, startTime, endTime))
 
-			// fake usage usage
+			// fake data usage
 			usage := `{"usage":"28901234567"}`
 
 			// Send mock response
@@ -163,8 +163,8 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		// so that the test stays a unit test e.g, no server/network call.
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		u, _, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
 
@@ -186,9 +186,47 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("InvalidParameterFrom", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
+				fmt.Sprintf("/%s?from=%d&to=%d", testIccid, startTime, endTime))
+
+			return nil
+		}
+
+		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
+
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, "lol", to, region)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, u)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("InvalidParameterTo", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaUsageEndpoint+
+				fmt.Sprintf("/%s?from=%d&to=%d", testIccid, startTime, endTime))
+
+			return nil
+		}
+
+		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
+
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, "to", region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -205,7 +243,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
 
@@ -228,7 +266,7 @@ func TestUkamaClient_ActivateSim(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.ActivateSim(req)
 
@@ -244,7 +282,7 @@ func TestUkamaClient_ActivateSim(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.ActivateSim(req)
 
@@ -265,7 +303,7 @@ func TestUkamaClient_DeactivateSim(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.DeactivateSim(req)
 
@@ -281,7 +319,7 @@ func TestUkamaClient_DeactivateSim(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.DeactivateSim(req)
 
@@ -302,7 +340,7 @@ func TestUkamaClient_UpdateSimPackage(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.UpdatePackage(req)
 
@@ -318,16 +356,10 @@ func TestUkamaClient_UpdateSimPackage(t *testing.T) {
 
 		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
 
-		testUkamaClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		err := testUkamaClient.UpdatePackage(req)
 
 		assert.Error(tt, err)
 	})
-}
-
-type RoundTripFunc func(req *http.Request) *http.Response
-
-func (r RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return r(req), nil
 }

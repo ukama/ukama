@@ -9,6 +9,8 @@
 package rest
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -30,6 +32,40 @@ import (
 	cmocks "github.com/ukama/ukama/systems/inventory/component/pb/gen/mocks"
 )
 
+// Test data constants
+const (
+	testInventoryID           = "1"
+	testCategory              = "ACCESS"
+	testComponentType         = "tower node"
+	testDescription           = "best tower node"
+	testDatasheetURL          = "https://datasheet.com"
+	testImagesURL             = "https://images.com"
+	testPartNumber            = "1234"
+	testManufacturer          = "ukama"
+	testManaged               = "ukama"
+	testWarranty              = 1
+	testSpecification         = "spec"
+	testVat                   = "10"
+	testItem                  = "Product-1"
+	testAccountingInventoryID = "1"
+	testOpexFee               = "100"
+	testEffectiveDate         = "2023-01-01"
+	testAccountingDescription = "Product-1 description"
+	testPingResponse          = "pong"
+	testHTTPStatusOK          = 200
+)
+
+// Test server configurations
+const (
+	testNodeMetricsEndpoint = "localhost:8080"
+	testAuthAppURL          = "http://localhost:4455"
+	testAuthServerURL       = "http://localhost:4434"
+	testAuthAPIGW           = "http://localhost:8080"
+	testComponentGRPC       = "component:9090"
+	testAccountingGRPC      = "accounting:9090"
+	testTimeout             = 1 * time.Second
+)
+
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
 }
@@ -39,12 +75,12 @@ var routerConfig = &RouterConfig{
 		Cors: defaultCors,
 	},
 	httpEndpoints: &pkg.HttpEndpoints{
-		NodeMetrics: "localhost:8080",
+		NodeMetrics: testNodeMetricsEndpoint,
 	},
 	auth: &cconfig.Auth{
-		AuthAppUrl:    "http://localhost:4455",
-		AuthServerUrl: "http://localhost:4434",
-		AuthAPIGW:     "http://localhost:8080",
+		AuthAppUrl:    testAuthAppURL,
+		AuthServerUrl: testAuthServerURL,
+		AuthAPIGW:     testAuthAPIGW,
 	},
 }
 
@@ -53,9 +89,9 @@ var testClientSet *Clients
 func init() {
 	gin.SetMode(gin.TestMode)
 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout:    1 * time.Second,
-		Component:  "component:9090",
-		Accounting: "accounting:9090",
+		Timeout:    testTimeout,
+		Component:  testComponentGRPC,
+		Accounting: testAccountingGRPC,
 	})
 }
 
@@ -69,152 +105,267 @@ func TestPingRoute(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, 200, w.Code)
-	assert.Contains(t, w.Body.String(), "pong")
+	assert.Equal(t, testHTTPStatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), testPingResponse)
 }
 
-func TestGetComponent(t *testing.T) {
+func TestRouter_GetComponent(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var cId = uuid.NewV4()
+	componentId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+
+	req := GetRequest{
+		Uuid: componentId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/components/"+cId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/components/"+componentId, bytes.NewReader(jReq))
+
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
-	comp.On("Get", mock.Anything, mock.Anything).Return(&cpb.GetResponse{
+	compReq := &cpb.GetRequest{
+		Id: componentId,
+	}
+
+	compResp := &cpb.GetResponse{
 		Component: &cpb.Component{
-			Id:            cId.String(),
-			UserId:        uId.String(),
-			Inventory:     "2",
-			Category:      1,
-			Type:          "tower node",
-			Description:   "best tower node",
-			DatasheetURL:  "https://datasheet.com",
-			ImagesURL:     "https://images.com",
-			PartNumber:    "1234",
-			Manufacturer:  "ukama",
-			Managed:       "ukama",
-			Warranty:      1,
-			Specification: "spec",
+			Id:            componentId,
+			UserId:        userId,
+			Inventory:     testInventoryID,
+			Category:      testCategory,
+			Type:          testComponentType,
+			Description:   testDescription,
+			DatasheetURL:  testDatasheetURL,
+			ImagesURL:     testImagesURL,
+			PartNumber:    testPartNumber,
+			Manufacturer:  testManufacturer,
+			Managed:       testManaged,
+			Warranty:      testWarranty,
+			Specification: testSpecification,
 		},
-	}, nil)
+	}
+
+	comp.On("Get", mock.Anything, compReq).Return(compResp, nil)
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	comp.AssertExpectations(t)
 }
 
-func TestGetComponents(t *testing.T) {
+func TestRouter_GetComponents(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var cId = uuid.NewV4()
+	userId := uuid.NewV4().String()
+	componentId := uuid.NewV4().String()
+
+	req := GetComponents{
+		UserId:   userId,
+		Category: testCategory,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/components/user/"+uId.String(), nil)
-	q := req.URL.Query()
-	q.Add("category", cpb.ComponentCategory_name[1])
-	req.URL.RawQuery = q.Encode()
+	hreq, _ := http.NewRequest("GET", "/v1/components/user/"+userId, bytes.NewReader(jReq))
+	q := hreq.URL.Query()
+	q.Add("category", req.Category)
+	hreq.URL.RawQuery = q.Encode()
 
 	arc := &providers.AuthRestClient{}
 	comp := &cmocks.ComponentServiceClient{}
 
-	comp.On("GetByUser", mock.Anything, mock.Anything, mock.Anything).Return(&cpb.GetByUserResponse{
+	compReq := &cpb.GetByUserRequest{
+		UserId:   userId,
+		Category: testCategory,
+	}
+
+	compResp := &cpb.GetByUserResponse{
 		Components: []*cpb.Component{
 			{
-				Id:            cId.String(),
-				UserId:        uId.String(),
-				Inventory:     "2",
-				Category:      1,
-				Type:          "tower node",
-				Description:   "best tower node",
-				DatasheetURL:  "https://datasheet.com",
-				ImagesURL:     "https://images.com",
-				PartNumber:    "1234",
-				Manufacturer:  "ukama",
-				Managed:       "ukama",
-				Warranty:      1,
-				Specification: "spec",
+				Id:            componentId,
+				UserId:        userId,
+				Inventory:     testInventoryID,
+				Category:      testCategory,
+				Type:          testComponentType,
+				Description:   testDescription,
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    testPartNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
 			},
 		},
-	}, nil)
+	}
+
+	comp.On("GetByUser", mock.Anything, compReq).Return(compResp, nil)
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	comp.AssertExpectations(t)
 }
 
-func TestGetAccounting(t *testing.T) {
-	var uId = uuid.NewV4()
-	var aId = uuid.NewV4()
+func TestRouter_GetAccounting(t *testing.T) {
+	// arrange
+	accountingId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+
+	req := GetRequest{
+		Uuid: accountingId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/accounting/"+aId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/accounting/"+accountingId, bytes.NewReader(jReq))
+
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
-	acc.On("Get", mock.Anything, mock.Anything).Return(&apb.GetResponse{
+	accReq := &apb.GetRequest{
+		Id: accountingId,
+	}
+
+	accResp := &apb.GetResponse{
 		Accounting: &apb.Accounting{
-			Id:            aId.String(),
-			Vat:           "10",
-			Item:          "Product-1",
-			UserId:        uId.String(),
-			Inventory:     "1",
-			OpexFee:       "100",
-			EffectiveDate: "2023-01-01",
-			Description:   "Product-1 description",
+			Id:            accountingId,
+			Vat:           testVat,
+			Item:          testItem,
+			UserId:        userId,
+			Inventory:     testAccountingInventoryID,
+			OpexFee:       testOpexFee,
+			EffectiveDate: testEffectiveDate,
+			Description:   testAccountingDescription,
 		},
-	}, nil)
+	}
+
+	acc.On("Get", mock.Anything, accReq).Return(accResp, nil)
 
 	r := NewRouter(&Clients{
-		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
 
-func TestGetAccountings(t *testing.T) {
+func TestRouter_GetAccountings(t *testing.T) {
 	// arrange
-	var uId = uuid.NewV4()
-	var aId = uuid.NewV4()
+	userId := uuid.NewV4().String()
+	accountingId := uuid.NewV4().String()
+
+	req := GetAccounts{
+		UserId: userId,
+	}
+
+	jReq, err := json.Marshal(req)
+	assert.NoError(t, err)
+
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/accounting/user/"+uId.String(), nil)
+	hreq, _ := http.NewRequest("GET", "/v1/accounting/user/"+userId, bytes.NewReader(jReq))
 
 	arc := &providers.AuthRestClient{}
 	acc := &amocks.AccountingServiceClient{}
 
-	acc.On("GetByUser", mock.Anything, mock.Anything).Return(&apb.GetByUserResponse{
+	accReq := &apb.GetByUserRequest{
+		UserId: userId,
+	}
+
+	accResp := &apb.GetByUserResponse{
 		Accounting: []*apb.Accounting{
 			{
-				Id:            aId.String(),
-				Vat:           "10",
-				Item:          "Product-1",
-				UserId:        uId.String(),
-				Inventory:     "1",
-				OpexFee:       "100",
-				EffectiveDate: "2023-01-01",
-				Description:   "Product-1 description",
+				Id:            accountingId,
+				Vat:           testVat,
+				Item:          testItem,
+				UserId:        userId,
+				Inventory:     testAccountingInventoryID,
+				OpexFee:       testOpexFee,
+				EffectiveDate: testEffectiveDate,
+				Description:   testAccountingDescription,
 			},
 		},
-	}, nil)
+	}
+
+	acc.On("GetByUser", mock.Anything, accReq).Return(accResp, nil)
 
 	r := NewRouter(&Clients{
-		Accounting: client.NewNewAccountingInventoryFromClient(acc),
+		Accounting: client.NewAccountingInventoryFromClient(acc),
 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
 
-	r.ServeHTTP(w, req)
+	// act
+	r.ServeHTTP(w, hreq)
 
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	acc.AssertExpectations(t)
+}
+
+func TestRouter_SyncComponents(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("PUT", "/v1/components/sync", nil)
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	compResp := &cpb.SyncComponentsResponse{}
+
+	comp.On("SyncComponents", mock.Anything, mock.Anything).Return(compResp, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestRouter_SyncAccounting(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("PUT", "/v1/accounting/sync", nil)
+	arc := &providers.AuthRestClient{}
+	acc := &amocks.AccountingServiceClient{}
+
+	accResp := &apb.SyncAcountingResponse{}
+
+	acc.On("SyncAccounting", mock.Anything, mock.Anything).Return(accResp, nil)
+
+	r := NewRouter(&Clients{
+		Accounting: client.NewAccountingInventoryFromClient(acc),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }

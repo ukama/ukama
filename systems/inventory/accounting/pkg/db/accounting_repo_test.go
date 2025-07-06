@@ -9,7 +9,7 @@
 package db_test
 
 import (
-	extsql "database/sql"
+	"fmt"
 	"log"
 	"regexp"
 	"testing"
@@ -22,6 +22,101 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	account_db "github.com/ukama/ukama/systems/inventory/accounting/pkg/db"
 )
+
+// Test constants for common data
+const (
+	testItem          = "tower node"
+	testInventory     = "5"
+	testEffectiveDate = "12/12/2024"
+	testOpexFee       = "1.00"
+	testVat           = "1.00"
+	testDescription   = "Some description"
+	testTowerDesc     = "Tower node descp"
+)
+
+// Test data structures
+type testData struct {
+	accountID uuid.UUID
+	userID    uuid.UUID
+	account   *account_db.Accounting
+}
+
+// Helper functions
+func createTestData() *testData {
+	accountID := uuid.NewV4()
+	userID := uuid.NewV4()
+
+	return &testData{
+		accountID: accountID,
+		userID:    userID,
+		account: &account_db.Accounting{
+			Id:            accountID,
+			Item:          testItem,
+			UserId:        userID,
+			Inventory:     testInventory,
+			EffectiveDate: testEffectiveDate,
+			OpexFee:       testOpexFee,
+			Vat:           testVat,
+			Description:   testDescription,
+		},
+	}
+}
+
+func createTowerNodeTestData() *testData {
+	accountID := uuid.NewV4()
+	userID := uuid.NewV4()
+
+	return &testData{
+		accountID: accountID,
+		userID:    userID,
+		account: &account_db.Accounting{
+			Id:            accountID,
+			Item:          testItem,
+			UserId:        userID,
+			Inventory:     testInventory,
+			EffectiveDate: testEffectiveDate,
+			OpexFee:       testOpexFee,
+			Vat:           testVat,
+			Description:   testTowerDesc,
+		},
+	}
+}
+
+func setupMockDB() (sqlmock.Sqlmock, *gorm.DB, error) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return mock, gdb, nil
+}
+
+func createMockRows(account *account_db.Accounting) *sqlmock.Rows {
+	return sqlmock.NewRows([]string{
+		"id", "item", "user_id", "inventory", "effective_date", "opex_fee", "vat", "description",
+	}).AddRow(
+		account.Id, account.Item, account.UserId, account.Inventory,
+		account.EffectiveDate, account.OpexFee, account.Vat, account.Description,
+	)
+}
+
+func createAccountingRepo(gdb *gorm.DB) account_db.AccountingRepo {
+	return account_db.NewAccountingRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+}
 
 type UkamaDbMock struct {
 	GormDb *gorm.DB
@@ -57,41 +152,25 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 
 func Test_AccountRepo_Get(t *testing.T) {
 	t.Run("AccountExist", func(t *testing.T) {
-
-		var db *extsql.DB
-		var accountID = uuid.NewV4()
-		var uID = uuid.NewV4()
-
-		db, mock, err := sqlmock.New() // mock sql.DB
+		// Arrange
+		testData := createTestData()
+		mock, gdb, err := setupMockDB()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "item", "user_id", "inventory", "effective_date", "opex_fee", "vat", "description"}).
-			AddRow(accountID, "tower node", uID, "5", "12/12/2024", "1.00", "1.00", "Some description")
-
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
-			WithArgs(accountID, 1).
+		rows := createMockRows(testData.account)
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
+			WithArgs(testData.accountID, 1).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+		r := createAccountingRepo(gdb)
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
+		// Act
+		comp, err := r.Get(testData.accountID)
 
-		r := account_db.NewAccountingRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		comp, err := r.Get(accountID)
+		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, comp)
-		assert.Equal(t, comp.Id, accountID)
+		assert.Equal(t, comp.Id, testData.accountID)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -100,44 +179,48 @@ func Test_AccountRepo_Get(t *testing.T) {
 
 func Test_AccountRepo_GetByUser(t *testing.T) {
 	t.Run("AccountExist", func(t *testing.T) {
-
-		var db *extsql.DB
-
-		var accountID = uuid.NewV4()
-		var uID = uuid.NewV4()
-
-		db, mock, err := sqlmock.New()
+		// Arrange
+		testData := createTestData()
+		mock, gdb, err := setupMockDB()
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "item", "user_id", "inventory", "effective_date", "opex_fee", "vat", "description"}).
-			AddRow(accountID, "tower node", uID, "5", "12/12/2024", "1.00", "1.00", "Some description")
-
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
-			WithArgs(uID.String()).
+		rows := createMockRows(testData.account)
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
+			WithArgs(testData.userID.String()).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+		r := createAccountingRepo(gdb)
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
+		// Act
+		comps, err := r.GetByUser(testData.userID.String())
 
-		r := account_db.NewAccountingRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		comps, err := r.GetByUser(uID.String())
-
-		assert.NoError(t, err)
-		err = mock.ExpectationsWereMet()
+		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, comps)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("DatabaseError", func(t *testing.T) {
+		// Arrange
+		testData := createTestData()
+		mock, gdb, err := setupMockDB()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
+			WithArgs(testData.userID.String()).
+			WillReturnError(fmt.Errorf("database connection error"))
+
+		r := createAccountingRepo(gdb)
+
+		// Act
+		comps, err := r.GetByUser(testData.userID.String())
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, comps)
+		assert.Contains(t, err.Error(), "database connection error")
+		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 }
@@ -145,23 +228,10 @@ func Test_AccountRepo_GetByUser(t *testing.T) {
 func Test_accounttRepo_Add(t *testing.T) {
 	t.Run("AddComponent", func(t *testing.T) {
 		// Arrange
-		var db *extsql.DB
+		testData := createTowerNodeTestData()
+		accounts := []*account_db.Accounting{testData.account}
 
-		uId := uuid.NewV4()
-		accounts := []*account_db.Accounting{
-			{
-				Id:            uuid.NewV4(),
-				Inventory:     "5",
-				UserId:        uId,
-				Description:   "Tower node descp",
-				Item:          "tower node",
-				EffectiveDate: "12/12/2024",
-				OpexFee:       "1.00",
-				Vat:           "1.00",
-			},
-		}
-
-		db, mock, err := sqlmock.New()
+		mock, gdb, err := setupMockDB()
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
@@ -172,30 +242,19 @@ func Test_accounttRepo_Add(t *testing.T) {
 		}
 		mock.ExpectCommit()
 
+		rows := createMockRows(accounts[0])
 		mock.ExpectQuery(`^SELECT.*accountings.*`).
-			WithArgs(accounts[0].UserId.String()).WillReturnRows(sqlmock.NewRows([]string{
-			"id", "item", "user_id", "inventory", "effective_date", "opex_fee", "vat", "description",
-		}).AddRow(accounts[0].Id, accounts[0].Item, accounts[0].UserId, accounts[0].Inventory, accounts[0].EffectiveDate, accounts[0].OpexFee, accounts[0].Vat, accounts[0].Description))
+			WithArgs(accounts[0].UserId.String()).WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+		r := createAccountingRepo(gdb)
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := account_db.NewAccountingRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
+		// Act
 		err = r.Add(accounts)
 		assert.NoError(t, err)
 
-		res, err := r.GetByUser(uId.String())
+		res, err := r.GetByUser(testData.userID.String())
+
+		// Assert
 		assert.NoError(t, err)
 		assert.NotEmpty(t, res)
 
@@ -206,26 +265,12 @@ func Test_accounttRepo_Add(t *testing.T) {
 
 func Test_AccountRepo_Delete(t *testing.T) {
 	t.Run("DeleteAccount", func(t *testing.T) {
-		var db *extsql.DB
+		// Arrange
+		testData := createTowerNodeTestData()
+		accounts := []*account_db.Accounting{testData.account}
 
-		db, mock, err := sqlmock.New()
+		mock, gdb, err := setupMockDB()
 		assert.NoError(t, err)
-
-		uId := uuid.NewV4()
-		aId := uuid.NewV4()
-
-		accounts := []*account_db.Accounting{
-			{
-				Id:            aId,
-				Inventory:     "5",
-				UserId:        uId,
-				Description:   "Tower node descp",
-				Item:          "tower node",
-				EffectiveDate: "12/12/2024",
-				OpexFee:       "1.00",
-				Vat:           "1.00",
-			},
-		}
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "accountings" ("id","item","user_id","inventory","effective_date","opex_fee","vat","description") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT ("id") DO NOTHING`)).
@@ -236,30 +281,21 @@ func Test_AccountRepo_Delete(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM accountings`)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
-		mock.ExpectQuery(`^SELECT.*accounting.*`).
+		mock.ExpectQuery(`^SELECT.*accountings.*`).
 			WithArgs(accounts[0].Id, 1).WillReturnRows(sqlmock.NewRows([]string{}))
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
+		r := createAccountingRepo(gdb)
 
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := account_db.NewAccountingRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
+		// Act
 		err = r.Add(accounts)
 		assert.NoError(t, err)
 
 		err = r.Delete()
 		assert.NoError(t, err)
 
-		res, err := r.Get(aId)
+		res, err := r.Get(testData.accountID)
+
+		// Assert
 		assert.Error(t, err)
 		assert.Empty(t, res)
 

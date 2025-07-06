@@ -14,6 +14,7 @@ import (
 	"net/url"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/validation"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -41,7 +42,7 @@ func NewOperatorAgentClient(h string, options ...client.Option) *operatorAgentCl
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &operatorAgentClient{
@@ -71,7 +72,7 @@ func (o *operatorAgentClient) GetSimInfo(iccid string) (*OperatorSimInfo, error)
 	if err != nil {
 		log.Tracef("Failed to deserialize operator sim info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
+		return nil, fmt.Errorf("operator sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("Operator Sim Info: %+v", sim.SimInfo)
@@ -83,6 +84,16 @@ func (o *operatorAgentClient) GetUsages(iccid, cdrType, from, to, region string)
 	log.Debugf("Getting operator sim usages: %v", iccid)
 
 	usage := OperatorSimUsage{}
+
+	_, err := validation.FromString(from)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+	}
+
+	_, err = validation.FromString(to)
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+	}
 
 	resp, err := o.R.Get(o.u.String() + OperatorUsagesEndpoint +
 		fmt.Sprintf("?iccid=%s&cdr_type=%s&from=%s&to=%s&region=%s", iccid, cdrType, from, to, region))
@@ -96,7 +107,7 @@ func (o *operatorAgentClient) GetUsages(iccid, cdrType, from, to, region string)
 	if err != nil {
 		log.Tracef("Failed to deserialize operator sim info. Error message is: %s", err.Error())
 
-		return nil, nil, fmt.Errorf("operator sim info deserailization failure: %w", err)
+		return nil, nil, fmt.Errorf("operator sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("Operator data usage (of type %T): %+v", usage.Usage, usage.Usage)

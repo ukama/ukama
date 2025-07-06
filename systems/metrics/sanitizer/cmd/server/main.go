@@ -24,6 +24,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pkg "github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 )
 
@@ -61,7 +62,6 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-
 	var mbClient mb.MsgBusServiceClient
 	var instanceId string
 
@@ -83,22 +83,23 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	// Looking up registry system's host from initClient
 	registrySystemUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
 		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}
 
-	// Sanitizer service
-	sanitizer, err := server.NewSanitizerServer(registrySystemUrl.String(), serviceConfig.PushGatewayHost,
+	sanitizerSrv, err := server.NewSanitizerServer(registrySystemUrl.String(), serviceConfig.PushGatewayHost,
 		serviceConfig.OrgName, serviceConfig.Org, mbClient)
 	if err != nil {
 		log.Fatalf("Sanitizer server initialization failed. Error: %v", err)
 	}
 
+	sanitizerEvt := server.NewSanitizerEventServer(serviceConfig.OrgName, sanitizerSrv, mbClient)
+
 	rpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		gen.RegisterSanitizerServiceServer(s, sanitizer)
+		gen.RegisterSanitizerServiceServer(s, sanitizerSrv)
+		egenerated.RegisterEventNotificationServiceServer(s, sanitizerEvt)
 	})
 
 	if serviceConfig.IsMsgBus {

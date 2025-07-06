@@ -51,13 +51,27 @@ func (s *DControllerServer) StartMetrics(ctx context.Context, req *pb.StartMetri
 			Message: "Site ID is required",
 		}, nil
 	}
+    nodeId := req.NodeId
+    if nodeId == "" {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: "Node ID is required",
+        }, nil
+    }
+    networkId := req.NetworkId
+    if networkId == "" {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: "Network ID is required",
+        }, nil
+    }
 
 	config := metrics.SiteConfig{
 		AvgBackhaulSpeed: req.SiteConfig.AvgBackhaulSpeed,
 		AvgLatency: req.SiteConfig.AvgLatency,
 		SolarEfficiency: req.SiteConfig.SolarEfficiency,
 	}
-	err := s.metricsManager.StartSiteMetrics(siteId, config)
+	err := s.metricsManager.StartSiteMetrics(siteId, config, nodeId, networkId)
 	if err != nil {
 		return &pb.StartMetricsResponse{
 			Success: false,
@@ -228,6 +242,22 @@ func (s *DControllerServer) Start(ctx context.Context, req *pb.StartMetricsReque
         }, nil
     }
 
+    nodeId := req.NodeId
+    if nodeId == "" {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: "Node ID is required",
+        }, nil
+    }
+
+    networkId := req.NetworkId
+    if networkId == "" {
+        return &pb.StartMetricsResponse{
+            Success: false,
+            Message: "Network ID is required",
+        }, nil
+    }
+
     config := metrics.SiteConfig{
         AvgBackhaulSpeed: req.SiteConfig.AvgBackhaulSpeed,
         AvgLatency:       req.SiteConfig.AvgLatency,
@@ -254,7 +284,7 @@ func (s *DControllerServer) Start(ctx context.Context, req *pb.StartMetricsReque
         log.Infof("Using default profile for site %s", siteId)
     }
 
-    err := s.metricsManager.StartSiteMetrics(siteId, config)
+    err := s.metricsManager.StartSiteMetrics(siteId, config, nodeId, networkId)
     if err != nil {
         return &pb.StartMetricsResponse{
             Success: false,

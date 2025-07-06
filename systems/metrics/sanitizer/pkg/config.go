@@ -51,6 +51,10 @@ func NewConfig(name string) *Config {
 		Service: config.LoadServiceHostConfig(name),
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
+			ListenerRoutes: []string{
+				"event.cloud.local.{{ .Org}}.registry.node.node.assign",
+				"event.cloud.local.{{ .Org}}.registry.node.node.release",
+			},
 		},
 	}
 }
@@ -59,7 +63,7 @@ var NodeActiveSubscribersMetric = []pmetric.MetricConfig{
 	{
 		Name:   NodeActiveSubscribers,
 		Type:   GaugeType,
-		Labels: map[string]string{"nodeId": "", "site": "", "network": ""},
+		Labels: map[string]string{"nodeid": "", "site": "", "network": ""},
 		Value:  0,
 	},
 }

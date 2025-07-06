@@ -60,6 +60,7 @@ func ParseNodeState(value string) NodeState {
 	return NodeState(v)
 }
 
+// Is unknown considered as valid node state?
 func IsValidNodeState(value string) bool {
 	t := map[string]NodeState{"unknown": 0, "configured": 1, "operational": 2, "faulty": 3}
 

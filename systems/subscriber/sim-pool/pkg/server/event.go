@@ -37,14 +37,24 @@ func (l *SimPoolEventServer) EventNotification(ctx context.Context, e *epb.Event
 		if err != nil {
 			return nil, err
 		}
-
-		err = l.simPoolRepo.UpdateStatus(msg.Iccid, true, false)
+		err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, l)
 		if err != nil {
 			return nil, err
 		}
+
 	default:
 		log.Errorf("handler not registered for %s", e.RoutingKey)
 	}
 
 	return &epb.EventResponse{}, nil
+}
+
+func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocation, l *SimPoolEventServer) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	err := l.simPoolRepo.UpdateStatus(msg.Iccid, true, false)
+	if err != nil {
+		return err
+	}
+	return err
 }

@@ -1,66 +1,122 @@
-package inventory
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+package inventory_test
 
 import (
-	"encoding/json"
+	"bytes"
+	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/uuid"
+
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/inventory"
 )
 
+const testUuid = "03cb753f-5e03-4c97-8e47-625115476c72"
+
 func TestComponentClient_Get(t *testing.T) {
-	// Mock data
-	componentID, err := uuid.FromString("6006846a-c371-48c6-989c-9e029e144bb5")
-	if err != nil {
-		return
-	}
-	mockResponse := Component{
-		ComponentInfo: &ComponentInfo{
-			Id:            componentID,
-			Inventory:     "200",
-			UserId:        "bc082789-bef7-4baf-9cd1-d479fdb3184b",
-			Category:      "BACKHAUL",
-			Type:          "backhaul",
-			Description:   "A 100uF capacitor",
-			DatasheetURL:  "http://example.com/datasheet2",
-			ImagesURL:     "http://example.com/image2",
-			PartNumber:    "C-100uF",
-			Manufacturer:  "Capacitors Ltd.",
-			Managed:       "no",
-			Warranty:      uint32(12),
-			Specification: "100uF, 16V",
-		},
-	}
+	t.Run("ComponentFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			// Test request parameters
+			assert.Equal(tt, req.URL.String(), inventory.ComponentEndpoint+"/"+testUuid)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		err := json.NewEncoder(w).Encode(mockResponse)
-		if err != nil {
-			t.Fatalf("Failed to encode mock response: %v", err)
+			// fake component info
+			comp := `{"component":{"id": "03cb753f-5e03-4c97-8e47-625115476c72", "type": "backhaul"}}`
+
+			// Send mock response
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+
+				// Send response to be tested
+				Body: io.NopCloser(bytes.NewBufferString(comp)),
+
+				// Must be set to non-nil value or it panics
+				Header: make(http.Header),
+			}
 		}
-	}))
-	defer ts.Close()
 
-	client := NewComponentClient(ts.URL)
+		testComponentClient := inventory.NewComponentClient("")
 
-	result, err := client.Get(componentID.String())
+		// We replace the transport mechanism by mocking the http request
+		// so that the test stays a unit test e.g, no server/component call.
+		testComponentClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-	assert.NoError(t, err)
+		c, err := testComponentClient.Get(testUuid)
 
-	assert.NotNil(t, result)
-	assert.Equal(t, mockResponse.ComponentInfo.Id, result.Id)
-	assert.Equal(t, mockResponse.ComponentInfo.Inventory, result.Inventory)
-	assert.Equal(t, mockResponse.ComponentInfo.UserId, result.UserId)
-	assert.Equal(t, mockResponse.ComponentInfo.Category, result.Category)
-	assert.Equal(t, mockResponse.ComponentInfo.Type, result.Type)
-	assert.Equal(t, mockResponse.ComponentInfo.Description, result.Description)
-	assert.Equal(t, mockResponse.ComponentInfo.DatasheetURL, result.DatasheetURL)
-	assert.Equal(t, mockResponse.ComponentInfo.ImagesURL, result.ImagesURL)
-	assert.Equal(t, mockResponse.ComponentInfo.PartNumber, result.PartNumber)
-	assert.Equal(t, mockResponse.ComponentInfo.Manufacturer, result.Manufacturer)
-	assert.Equal(t, mockResponse.ComponentInfo.Managed, result.Managed)
-	assert.Equal(t, mockResponse.ComponentInfo.Warranty, result.Warranty)
-	assert.Equal(t, mockResponse.ComponentInfo.Specification, result.Specification)
+		assert.NoError(tt, err)
+		assert.Equal(tt, testUuid, c.Id.String())
+	})
+
+	t.Run("ComponentNotFound", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), inventory.ComponentEndpoint+"/"+testUuid)
+
+			// error payload
+			resp := `{"error":"not found"}`
+
+			return &http.Response{
+				StatusCode: 404,
+				Status:     "404 NOT FOUND",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testComponentClient := inventory.NewComponentClient("")
+
+		testComponentClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		c, err := testComponentClient.Get(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("InvalidResponsePayload", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), inventory.ComponentEndpoint+"/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testComponentClient := inventory.NewComponentClient("")
+
+		testComponentClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		c, err := testComponentClient.Get(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, c)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), inventory.ComponentEndpoint+"/"+testUuid)
+
+			return nil
+		}
+
+		testComponentClient := inventory.NewComponentClient("")
+
+		testComponentClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		c, err := testComponentClient.Get(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, c)
+	})
 }

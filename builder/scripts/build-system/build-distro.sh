@@ -95,3 +95,5 @@ patchelf --set-rpath "${RPATH_PATHS}" "./build/genInventory"
                      --f mfgdata/schema/mask.json
 cp -rf /tmp/sys "${cwd}/mocksysfs"
 cd "${cwd}"
+
+exit 0

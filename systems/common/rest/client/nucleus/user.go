@@ -49,7 +49,7 @@ func NewUserClient(h string, options ...client.Option) *userClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &userClient{
@@ -74,7 +74,7 @@ func (u *userClient) GetById(id string) (*UserInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize user info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("user info deserailization failure: %w", err)
+		return nil, fmt.Errorf("user info deserialization failure: %w", err)
 	}
 
 	log.Infof("User Info: %+v", user.UserInfo)
@@ -98,7 +98,7 @@ func (u *userClient) GetByEmail(email string) (*UserInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize user info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("user info deserailization failure: %w", err)
+		return nil, fmt.Errorf("user info deserialization failure: %w", err)
 	}
 
 	log.Infof("User Info: %+v", user.UserInfo)

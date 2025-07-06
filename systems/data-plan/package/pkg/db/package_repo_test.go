@@ -10,6 +10,7 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"errors"
 	"log"
 	"testing"
 	"time"
@@ -292,5 +293,220 @@ func Test_Package_GetAll(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		assert.NotNil(t, node)
+	})
+
+	t.Run("GetAll_EmptyResult", func(t *testing.T) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		// Return empty result
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery(`^SELECT.*packages.*`).WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		packages, err := r.GetAll()
+		assert.NoError(t, err)
+		assert.Empty(t, packages)
+	})
+}
+
+func Test_Package_Get_Error(t *testing.T) {
+	t.Run("Get_NotFound", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).WillReturnError(gorm.ErrRecordNotFound)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		package_, err := r.Get(packID)
+		assert.Error(t, err)
+		assert.Nil(t, package_)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+	})
+
+	t.Run("Get_DBError", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).WillReturnError(errors.New("database error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		package_, err := r.Get(packID)
+		assert.Error(t, err)
+		assert.Nil(t, package_)
+		assert.Contains(t, err.Error(), "database error")
+	})
+}
+
+func Test_Package_GetDetails_Error(t *testing.T) {
+	t.Run("GetDetails_NotFound", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).WillReturnError(gorm.ErrRecordNotFound)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		package_, err := r.GetDetails(packID)
+		assert.Error(t, err)
+		assert.Nil(t, package_)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+	})
+
+	t.Run("GetDetails_DBError", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).WillReturnError(errors.New("database error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		package_, err := r.GetDetails(packID)
+		assert.Error(t, err)
+		assert.Nil(t, package_)
+		assert.Contains(t, err.Error(), "database error")
+	})
+}
+
+func Test_Package_Add(t *testing.T) {
+	t.Run("Add_Success", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		package_ := &int_db.Package{
+			Uuid:    packID,
+			Name:    "Test Package",
+			Active:  true,
+			Country: "USA",
+		}
+
+		packageRate := &int_db.PackageRate{
+			PackageID: packID,
+			Amount:    100,
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^INSERT INTO "packages"`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectQuery(`^INSERT INTO "package_rates"`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		err = r.Add(package_, packageRate)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Add_TransactionBeginError", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		package_ := &int_db.Package{Uuid: packID, Name: "Test Package"}
+		packageRate := &int_db.PackageRate{PackageID: packID, Amount: 100}
+
+		mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		err = r.Add(package_, packageRate)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "transaction begin error")
+	})
+}
+
+func Test_Package_Delete(t *testing.T) {
+	t.Run("Delete_Success", func(t *testing.T) {
+		packID := uuid.NewV4()
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(`^UPDATE "packages" SET "deleted_at"`).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewPackageRepo(&UkamaDbMock{GormDb: gdb})
+
+		err = r.Delete(packID)
+		assert.NoError(t, err)
 	})
 }

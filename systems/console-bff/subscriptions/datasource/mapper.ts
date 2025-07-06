@@ -5,7 +5,8 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
-import { formatKPIValue } from "../../common/utils";
+import { logger } from "../../common/logger";
+import { formatKPIValue, isMetricNetworkCheckFailed } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricsStatInput,
@@ -51,7 +52,7 @@ export const parseMetricsResponse = (
     metric: {
       env: string;
       nodeid?: string;
-      siteid?: string;
+      site?: string;
       network?: string;
       package?: string;
       dataplan?: string;
@@ -61,23 +62,44 @@ export const parseMetricsResponse = (
   type: string,
   args: GetMetricsStatInput
 ): MetricsRes => {
-  const metricResArray: MetricRes[] = res.map(item => ({
-    type: type,
-    success: true,
-    msg: "success",
-    nodeId: item.metric.nodeid ?? args.nodeId ?? "",
-    siteId: item.metric?.siteid ?? args.siteId ?? "",
-    networkId: item.metric?.network ?? args.networkId ?? "",
-    packageId: item.metric?.package ?? "",
-    dataPlanId: item.metric?.dataplan ?? "",
-    values: fixTimestampInMetricData(
-      item.values,
-      1,
-      args.to ?? Math.floor(Date.now() / 1000),
-      args.from,
-      type
-    ),
-  }));
+  const metricResArray: MetricRes[] = res.map(item => {
+    if (
+      isMetricNetworkCheckFailed(
+        args.networkId || "",
+        item.metric.network || "",
+        args.operation || ""
+      )
+    ) {
+      return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    }
+    if (
+      isMetricNetworkCheckFailed(
+        args.siteId || "",
+        item.metric.site || "",
+        args.operation || ""
+      )
+    ) {
+      return { ...ERROR_RESPONSE, values: [[0, 0]] };
+    }
+    return {
+      type: type,
+      success: true,
+      msg: "success",
+      nodeId: item.metric.nodeid ?? args.nodeId ?? "",
+      siteId: item.metric?.site ?? args.siteId ?? "",
+      networkId: item.metric?.network ?? args.networkId ?? "",
+      packageId: item.metric?.package ?? "",
+      dataPlanId: item.metric?.dataplan ?? "",
+      values: fixTimestampInMetricData(
+        item.values,
+        1,
+        args.to ?? Math.floor(Date.now() / 1000),
+        args.from,
+        type
+      ),
+    };
+  });
+
   const metricsRes: MetricsRes = {
     metrics: metricResArray,
   };
@@ -92,8 +114,8 @@ function fixTimestampInMetricData(
   from: number,
   type: string
 ): [number, number][] {
+  logger.info("fixTimestampInMetricData", data);
   if (!Array.isArray(data) || data.length === 0) return [];
-
   const result: [number, number][] = [];
   let prevTimestamp: number = from;
   let dataIndex = 0;

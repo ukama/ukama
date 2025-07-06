@@ -21,7 +21,7 @@ func TestStatusType(t *testing.T) {
 		status := ukama.ParseStatusType("pending")
 
 		assert.NotNil(t, status)
-		assert.Equal(t, status.String(), "pending")
+		assert.Equal(t, status.String(), ukama.StatusTypePending.String())
 		assert.Equal(t, uint8(status), uint8(1))
 	})
 
@@ -30,14 +30,14 @@ func TestStatusType(t *testing.T) {
 
 		assert.NotNil(t, status)
 		assert.Equal(t, uint8(status), uint8(3))
-		assert.Equal(t, status.String(), "failed")
+		assert.Equal(t, status.String(), ukama.StatusTypeFailed.String())
 	})
 
 	t.Run("StatusTypeNonValidString", func(tt *testing.T) {
 		status := ukama.ParseStatusType("failure")
 
 		assert.NotNil(t, status)
-		assert.Equal(t, status.String(), "unknown")
+		assert.Equal(t, status.String(), ukama.StatusTypeUnknown.String())
 		assert.Equal(t, uint8(status), uint8(0))
 	})
 
@@ -45,7 +45,7 @@ func TestStatusType(t *testing.T) {
 		status := ukama.StatusType(uint8(10))
 
 		assert.NotNil(t, status)
-		assert.Equal(t, status.String(), "unknown")
+		assert.Equal(t, status.String(), ukama.StatusTypeUnknown.String())
 		assert.Equal(t, uint8(status), uint8(10))
 	})
 }

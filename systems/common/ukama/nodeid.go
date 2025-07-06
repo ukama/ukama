@@ -27,16 +27,12 @@ const (
 	DELIMITER    = "-"
 	HWVERSION    = "M0"
 	UNITVERSION  = "V0"
-)
 
-const (
 	NODE_ID_TYPE_HOMENODE  = "hnode"
 	NODE_ID_TYPE_TOWERNODE = "tnode"
 	NODE_ID_TYPE_AMPNODE   = "anode"
 	NODE_ID_TYPE_UNDEFINED = "undef"
-)
 
-const (
 	MODULE_ID_TYPE_COMP      = "comv1"
 	MODULE_ID_TYPE_TRX       = "trx"
 	MODULE_ID_TYPE_CTRL      = "ctrl"
@@ -51,6 +47,7 @@ const (
 )
 
 type NodeID string
+
 type ModuleID string
 
 func (n NodeID) String() string {
@@ -219,7 +216,6 @@ func GetNodeType(n string) *string {
 				nodeType = &code
 				break
 			}
-
 		}
 	}
 
@@ -227,7 +223,6 @@ func GetNodeType(n string) *string {
 }
 
 func ValidateNodeId(id string) (NodeID, error) {
-
 	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {
 		err := errors.New("invalid length")
@@ -249,7 +244,6 @@ func ValidateNodeId(id string) (NodeID, error) {
 				match = true
 				break
 			}
-
 		}
 	}
 

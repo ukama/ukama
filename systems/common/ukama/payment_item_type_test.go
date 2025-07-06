@@ -20,7 +20,7 @@ func TestItemType(t *testing.T) {
 		packageType := ukama.ParseItemType("PacKagE")
 
 		assert.NotNil(t, packageType)
-		assert.Equal(t, packageType.String(), "package")
+		assert.Equal(t, packageType.String(), ukama.ItemTypePackage.String())
 		assert.Equal(t, uint8(packageType), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestItemType(t *testing.T) {
 
 		assert.NotNil(t, invoiceType)
 		assert.Equal(t, uint8(invoiceType), uint8(2))
-		assert.Equal(t, invoiceType.String(), "invoice")
+		assert.Equal(t, invoiceType.String(), ukama.ItemTypeInvoice.String())
 	})
 
 	t.Run("ItemTypeNonValidString", func(tt *testing.T) {
 		unsupportedType := ukama.ParseItemType("failure")
 
 		assert.NotNil(t, unsupportedType)
-		assert.Equal(t, unsupportedType.String(), "unknown")
+		assert.Equal(t, unsupportedType.String(), ukama.ItemTypeUnknown.String())
 		assert.Equal(t, uint8(unsupportedType), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestItemType(t *testing.T) {
 		unknownType := ukama.ItemType(uint8(10))
 
 		assert.NotNil(t, unknownType)
-		assert.Equal(t, unknownType.String(), "unknown")
+		assert.Equal(t, unknownType.String(), ukama.ItemTypeUnknown.String())
 		assert.Equal(t, uint8(unknownType), uint8(10))
 	})
 }

@@ -128,7 +128,7 @@ const getGraphsKeyByType = (type: string): string[] => {
       return [
         "package_sales",
         "data_usage",
-        "subscribers_active",
+        "node_active_subscribers",
         "network_uptime",
       ];
     case GRAPHS_TYPE.NODE_HEALTH:
@@ -223,6 +223,7 @@ const getGraphsKeyByType = (type: string): string[] => {
         "node_switch_port_status",
         "node_switch_port_speed",
         "node_switch_port_power",
+        "node_active_subscribers",
       ];
     default:
       return [];
@@ -371,11 +372,13 @@ export const wsUrlResolver = (url: string): string => {
 };
 
 export const formatKPIValue = (type: string, value: any) => {
+  if (value === "NaN") return 0;
   switch (type) {
     case "backhaul_latency":
       return Math.floor(Number(value || 0));
     case "subscribers_active":
-      return Math.floor(Number(value || 0));
+    case "node_active_subscribers":
+      return Math.floor(parseFloat(value || "0"));
     default:
       return parseFloat(Number(value || 0).toFixed(2));
   }
@@ -439,18 +442,28 @@ const handleMetricWSMessage = (
   }
 };
 
+const isMetricNetworkCheckFailed = (
+  arg: string,
+  res: string,
+  op: string
+): boolean => {
+  if (op !== "sum" && arg && arg !== res) return true;
+  return false;
+};
+
 export {
   csvToBase64,
   epochToISOString,
   findProcessNKill,
   getBaseURL,
-  handleMetricWSMessage,
   getGraphsKeyByType,
   getPaginatedOutput,
   getScopesByRole,
   getStripeIdByUserId,
   getSystemNameByService,
   getTimestampCount,
+  handleMetricWSMessage,
+  isMetricNetworkCheckFailed,
   killProcess,
   parseGatewayHeaders,
   parseHeaders,

@@ -98,12 +98,12 @@ func (s *subscriberRepo) Delete(subscriberId uuid.UUID) error {
 }
 
 func (b *subscriberRepo) Update(subscriberId uuid.UUID, sub Subscriber) error {
-	var updatedSubscriber Subscriber
 	db := b.Db.GetGormDb()
-	err := db.Model(&Subscriber{}).Where("subscriber_id = ?", subscriberId).Updates(sub).First(&updatedSubscriber).Error
+	err := db.Model(&Subscriber{}).Where("subscriber_id = ?", subscriberId).Updates(sub).Error
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
