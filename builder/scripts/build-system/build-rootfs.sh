@@ -237,13 +237,13 @@ depend() {
 
 start() {
     ebegin "Starting $SERVICE_NAME"
-    start-stop-daemon --start --background --exec \"$SERVICE_CMD\" -- $SERVICE_ARGS
+    start-stop-daemon --start --background --exec "$SERVICE_CMD" -- $SERVICE_ARGS
     eend $?
 }
 
 stop() {
     ebegin "Stopping $SERVICE_NAME"
-    start-stop-daemon --stop --exec \"$SERVICE_CMD\"
+    start-stop-daemon --stop --exec "$SERVICE_CMD"
     eend $?
 }
 SERVICE
