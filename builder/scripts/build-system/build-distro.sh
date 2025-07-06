@@ -61,7 +61,7 @@ else
 fi
 
 # Temporary - mocksysfs
-cwd=`pwd`
+cwd=$(pwd)
 cd "${UKAMA_REPO}/nodes/ukamaOS/distro/system/noded"
 rm -rf /tmp/sys/
 rm -rf "${cwd}/mocksysfs"
