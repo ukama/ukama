@@ -47,7 +47,7 @@ cleanup() {
 trap cleanup EXIT
 
 REQUIRED_KEYS=(
-    ".network.dev_eth" ".network.host_ip" ".network.target_ip"
+    ".network.host_eth" ".network.host_ip" ".network.target_ip"
     ".image.name" ".image.path"
     ".usb.device" ".usb.iso_url"
     ".serial.device" ".serial.baud"
