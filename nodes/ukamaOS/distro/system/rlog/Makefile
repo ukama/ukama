@@ -15,18 +15,6 @@ APP_NAME = $(CUR_BUILD_DIRNAME)
 APP_CONFIG =
 TARGET_CONFIG_DIR = $(INSTALL_DIR)$(NODE_APP_CONFIG_DIR)/$(APP_NAME)
 
-VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor
-VENDOR_BUILD = $(VENDOR_DIR)/build
-VENDOR_INC   = $(VENDOR_BUILD)/include
-VENDOR_LIB   = $(VENDOR_BUILD)/lib
-VENDOR_LIB64 = $(VENDOR_BUILD)/lib64
-
-PLATFORM_DIR     = $(UKAMAOS_ROOT)/distro/platform
-PLATFORM_BUILD   = $(PLATFORM_DIR)/build
-PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
-PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
-PLATFORM_LIB     = $(PLATFORM_DIR)/build
-
 # Packages needed to compile target
 ifeq ($(ALPINE_BUILD),1)
     $(info Excluding vendor library for Alpine build)
@@ -53,10 +41,7 @@ CFLAGS+=-I$(PLATFORM_INC_LOG)
 LDFLAGS+=-L${VENDOR_LIB} 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
-
-LDFLAGS+=-Wl,-rpath,$(PLATFORM_LIB)
-LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB)
-LDFLAGS+=-Wl,-rpath,$(VENDOR_LIB64)
+LDFLAGS+=$(RPATH_FLAGS)
 
 # Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto -lgnutls 

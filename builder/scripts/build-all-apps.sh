@@ -8,6 +8,7 @@
 
 set -e
 
+export BUILD_MODE=${BUILD_MODE:-debug}
 export UKAMA_ROOT=$1
 CONFIG_DIR=${UKAMA_ROOT}/builder/configs
 

@@ -76,7 +76,7 @@ int main (int argc, char *argv[]) {
     static struct option long_options[] = {
       { "create",    no_argument,       0, 'c'},
       { "verify",    no_argument,       0, 'v'},
-      { "config",      required_argument, 0, 'C'},
+      { "config",    required_argument, 0, 'C'},
       { "level",     required_argument, 0, 'l'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},

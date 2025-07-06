@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -72,8 +71,8 @@ fi
 sleep 2;
 sync;
 
-# starting build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "v3.17 /ukamarepo"
+# start build
+${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "${VERSION} /ukamarepo"
 if [ $? -eq 0 ]; then
     echo "Build completed successfully."
     ${INSTALL_DIR}/destroy
