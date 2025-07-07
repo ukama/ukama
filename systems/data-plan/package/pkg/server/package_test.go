@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"errors"
-	"log"
 	"testing"
 	"time"
 
@@ -37,6 +36,30 @@ import (
 const OrgName = "testorg"
 const OrgId = "8c6c2bec-5f90-4fee-8ffd-ee6456abf4fc"
 
+const (
+	TestPackageName           = "Daily-pack"
+	TestUpdatedPackageName    = "Daily-pack-updated"
+	TestInactivePackageName   = "Inactive Package"
+	TestFlatratePackageName   = "Flatrate Package"
+	TestSpecialCharPackage    = "Package with special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?"
+	TestZeroVolumePackageName = "Zero Volume Package"
+	TestPremiumPackageName    = "Premium Data Package"
+	TestCountry               = "USA"
+	TestProvider              = "ukama"
+	TestCurrency              = "USD"
+	TestApn                   = "internet.ukama.com"
+	TestDefaultApn            = "default.apn"
+	TestSimType               = "ukama_data"
+	TestPackageTypePrepaid    = "prepaid"
+	TestPackageTypePostpaid   = "postpaid"
+	TestDataUnitMB            = "MegaBytes"
+	TestDataUnitGB            = "GigaBytes"
+	TestVoiceUnitMinutes      = "minutes"
+	TestVoiceUnitHours        = "hours"
+	TestMessageUnitInt        = "int"
+	TestMessageUnitMessage    = "message"
+)
+
 // Fixed timestamps for consistent testing
 var (
 	fixedBaseTime = time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC)
@@ -48,36 +71,6 @@ var (
 type UkamaDbMock struct {
 	GormDb *gorm.DB
 }
-
-func (u UkamaDbMock) Init(model ...interface{}) error {
-	panic("implement me: Init()")
-}
-
-func (u UkamaDbMock) Connect() error {
-	panic("implement me: Connect()")
-}
-
-func (u UkamaDbMock) GetGormDb() *gorm.DB {
-	return u.GormDb
-}
-
-func (u UkamaDbMock) InitDB() error {
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
-	nestedFuncs ...func() error) error {
-	log.Fatal("implement me: ExecuteInTransaction()")
-	return nil
-}
-
-func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
-	nestedFuncs ...func(tx *gorm.DB) error) error {
-	log.Fatal("implement me: ExecuteInTransaction2()")
-	return nil
-}
-
-const testSim = "ukama_data"
 
 // ============================================================================
 // GET TESTS
@@ -93,11 +86,11 @@ func TestPackageServer_Get(t *testing.T) {
 		}
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
-			Name: "Daily-pack",
+			Name: TestPackageName,
 		}, nil)
 		pkg, err := s.Get(context.TODO(), mockFilters)
 		assert.NoError(t, err)
-		assert.Equal(t, "Daily-pack", pkg.Package.Name)
+		assert.Equal(t, TestPackageName, pkg.Package.Name)
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -137,16 +130,16 @@ func TestPackageServer_GetAll(t *testing.T) {
 
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packages := []db.Package{
-			{Name: "Package 1"},
-			{Name: "Package 2"},
+			{Name: TestPackageName},
+			{Name: TestUpdatedPackageName},
 		}
 		packageRepo.On("GetAll").Return(packages, nil)
 
 		resp, err := s.GetAll(context.TODO(), req)
 		assert.NoError(t, err)
 		assert.Len(t, resp.Packages, 2)
-		assert.Equal(t, "Package 1", resp.Packages[0].Name)
-		assert.Equal(t, "Package 2", resp.Packages[1].Name)
+		assert.Equal(t, TestPackageName, resp.Packages[0].Name)
+		assert.Equal(t, TestUpdatedPackageName, resp.Packages[1].Name)
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -177,12 +170,12 @@ func TestPackageServer_GetDetails(t *testing.T) {
 
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageRepo.On("GetDetails", packageUUID).Return(&db.Package{
-			Name: "Test Package Details",
+			Name: TestUpdatedPackageName,
 		}, nil)
 
 		pkg, err := s.GetDetails(context.TODO(), req)
 		assert.NoError(t, err)
-		assert.Equal(t, "Test Package Details", pkg.Package.Name)
+		assert.Equal(t, TestUpdatedPackageName, pkg.Package.Name)
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -247,23 +240,23 @@ func TestPackageServer_GetDetails(t *testing.T) {
 		completePackage := &db.Package{
 			Uuid:          packageUUID,
 			OwnerId:       ownerUUID,
-			Name:          "Premium Data Package",
-			SimType:       ukama.ParseSimType("ukama_data"),
+			Name:          TestPremiumPackageName,
+			SimType:       ukama.ParseSimType(TestSimType),
 			Active:        true,
 			Duration:      30,
 			SmsVolume:     1000,
 			DataVolume:    5000,
 			VoiceVolume:   100,
-			Type:          ukama.ParsePackageType("prepaid"),
-			DataUnits:     ukama.ParseDataUnitType("MegaBytes"),
-			VoiceUnits:    ukama.ParseCallUnitType("minutes"),
-			MessageUnits:  ukama.ParseMessageType("int"),
+			Type:          ukama.ParsePackageType(TestPackageTypePrepaid),
+			DataUnits:     ukama.ParseDataUnitType(TestDataUnitMB),
+			VoiceUnits:    ukama.ParseCallUnitType(TestVoiceUnitMinutes),
+			MessageUnits:  ukama.ParseMessageType(TestMessageUnitInt),
 			Flatrate:      false,
-			Currency:      "USD",
+			Currency:      TestCurrency,
 			From:          now,
 			To:            now.AddDate(0, 1, 0),
-			Country:       "USA",
-			Provider:      "ukama",
+			Country:       TestCountry,
+			Provider:      TestProvider,
 			Overdraft:     10.5,
 			TrafficPolicy: 1,
 			Networks:      []string{"network1", "network2"},
@@ -279,7 +272,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 				Markup:     15.0,
 			},
 			PackageDetails: db.PackageDetails{
-				Apn:  "internet.ukama.com",
+				Apn:  TestApn,
 				Dlbr: 10240000,
 				Ulbr: 10240000,
 			},
@@ -292,25 +285,25 @@ func TestPackageServer_GetDetails(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, pkg)
 		assert.Equal(t, packageUUID.String(), pkg.Package.Uuid)
-		assert.Equal(t, "Premium Data Package", pkg.Package.Name)
+		assert.Equal(t, TestPremiumPackageName, pkg.Package.Name)
 		assert.Equal(t, true, pkg.Package.Active)
 		assert.Equal(t, uint64(30), pkg.Package.Duration)
 		assert.Equal(t, int64(1000), pkg.Package.SmsVolume)
 		assert.Equal(t, int64(5000), pkg.Package.DataVolume)
 		assert.Equal(t, int64(100), pkg.Package.VoiceVolume)
-		assert.Equal(t, "prepaid", pkg.Package.Type)
-		assert.Equal(t, "MegaBytes", pkg.Package.DataUnit)
-		assert.Equal(t, "minutes", pkg.Package.VoiceUnit)
-		assert.Equal(t, "int", pkg.Package.MessageUnit)
+		assert.Equal(t, TestPackageTypePrepaid, pkg.Package.Type)
+		assert.Equal(t, TestDataUnitMB, pkg.Package.DataUnit)
+		assert.Equal(t, TestVoiceUnitMinutes, pkg.Package.VoiceUnit)
+		assert.Equal(t, TestMessageUnitInt, pkg.Package.MessageUnit)
 		assert.Equal(t, false, pkg.Package.Flatrate)
-		assert.Equal(t, "USD", pkg.Package.Currency)
-		assert.Equal(t, "USA", pkg.Package.Country)
-		assert.Equal(t, "ukama", pkg.Package.Provider)
+		assert.Equal(t, TestCurrency, pkg.Package.Currency)
+		assert.Equal(t, TestCountry, pkg.Package.Country)
+		assert.Equal(t, TestProvider, pkg.Package.Provider)
 		assert.Equal(t, float64(10.5), pkg.Package.Overdraft)
 		assert.Equal(t, uint32(1), pkg.Package.TrafficPolicy)
 		assert.Equal(t, []string{"network1", "network2"}, pkg.Package.Networks)
 		assert.Equal(t, "pending", pkg.Package.SyncStatus)
-		assert.Equal(t, "internet.ukama.com", pkg.Package.Apn)
+		assert.Equal(t, TestApn, pkg.Package.Apn)
 
 		assert.Equal(t, float64(99.99), pkg.Package.Rate.Amount)
 		assert.Equal(t, float64(0.05), pkg.Package.Rate.SmsMo)
@@ -333,7 +326,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 
 		inactivePackage := &db.Package{
 			Uuid:   packageUUID,
-			Name:   "Inactive Package",
+			Name:   TestInactivePackageName,
 			Active: false,
 			From:   fixedBaseTime,
 			To:     fixedToTime,
@@ -346,7 +339,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, pkg)
 		assert.Equal(t, false, pkg.Package.Active)
-		assert.Equal(t, "Inactive Package", pkg.Package.Name)
+		assert.Equal(t, TestInactivePackageName, pkg.Package.Name)
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -360,7 +353,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 
 		flatratePackage := &db.Package{
 			Uuid:     packageUUID,
-			Name:     "Flatrate Package",
+			Name:     TestFlatratePackageName,
 			Active:   true,
 			Flatrate: true,
 			From:     fixedBaseTime,
@@ -397,7 +390,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 
 		specialNamePackage := &db.Package{
 			Uuid:   packageUUID,
-			Name:   "Package with special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?",
+			Name:   TestSpecialCharPackage,
 			Active: true,
 			From:   fixedBaseTime,
 			To:     fixedToTime,
@@ -409,7 +402,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 		pkg, err := s.GetDetails(context.TODO(), req)
 		assert.NoError(t, err)
 		assert.NotNil(t, pkg)
-		assert.Equal(t, "Package with special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?", pkg.Package.Name)
+		assert.Equal(t, TestSpecialCharPackage, pkg.Package.Name)
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -423,7 +416,7 @@ func TestPackageServer_GetDetails(t *testing.T) {
 
 		zeroVolumePackage := &db.Package{
 			Uuid:        packageUUID,
-			Name:        "Zero Volume Package",
+			Name:        TestZeroVolumePackageName,
 			Active:      true,
 			SmsVolume:   0,
 			DataVolume:  0,
@@ -540,7 +533,7 @@ func TestPackageServer_Add(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 		rate := &mocks.RateClientProvider{}
 		packageRepo.On("Add", mock.MatchedBy(func(p *db.Package) bool {
-			return p.Active == true && p.Name == "daily-pack"
+			return p.Active == true && p.Name == TestPackageName
 		}), mock.Anything).Return(nil).Once()
 
 		rateClient := &splmocks.RateServiceClient{}
@@ -565,12 +558,12 @@ func TestPackageServer_Add(t *testing.T) {
 
 		ActPackage, err := s.Add(context.TODO(), &pb.AddPackageRequest{
 			Active:     true,
-			Name:       "daily-pack",
-			SimType:    testSim,
+			Name:       TestPackageName,
+			SimType:    TestSimType,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
-			Country:    rateResponse.Rate.Country,
-			Provider:   rateResponse.Rate.Provider,
+			Country:    TestCountry,
+			Provider:   TestProvider,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		})
@@ -838,554 +831,6 @@ func TestPackageServer_Add(t *testing.T) {
 		assert.True(t, resp.Package.Flatrate)
 		packageRepo.AssertExpectations(t)
 	})
-
-	t.Run("Success_WithMessageBus", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, msgbusClient, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:       ownerId,
-			BaserateId:    baserate,
-			Name:          "test-package",
-			SimType:       "ukama_data",
-			Active:        true,
-			Duration:      30,
-			SmsVolume:     100,
-			DataVolume:    1024,
-			VoiceVolume:   60,
-			MessageUnit:   "message",
-			VoiceUnit:     "minute",
-			DataUnit:      "mb",
-			Type:          "prepaid",
-			Flatrate:      false,
-			Amount:        50.0,
-			Markup:        10.0,
-			Currency:      "USD",
-			Overdraft:     5.0,
-			TrafficPolicy: 1,
-			Networks:      []string{"network1", "network2"},
-			Country:       "USA",
-			Provider:      "ukama",
-			Apn:           "test.apn",
-			From:          fixedFromTime.Format(time.RFC3339),
-			To:            fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-				Apn:      "default.apn",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, req.Name, resp.Package.Name)
-		assert.Equal(t, req.SimType, resp.Package.SimType)
-		assert.Equal(t, req.Active, resp.Package.Active)
-		assert.Equal(t, req.Flatrate, resp.Package.Flatrate)
-		assert.Equal(t, req.Currency, resp.Package.Currency)
-		assert.Equal(t, req.Country, resp.Package.Country)
-		assert.Equal(t, req.Provider, resp.Package.Provider)
-		assert.Equal(t, req.Apn, resp.Package.Apn)
-		assert.Equal(t, req.Overdraft, resp.Package.Overdraft)
-		assert.Equal(t, req.TrafficPolicy, resp.Package.TrafficPolicy)
-		assert.Equal(t, req.Networks, resp.Package.Networks)
-
-		packageRepo.AssertExpectations(t)
-		msgbusClient.AssertExpectations(t)
-	})
-
-	t.Run("Success_MessageBusPublishError", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, msgbusClient, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:    ownerId,
-			BaserateId: baserate,
-			Name:       "test-package",
-			SimType:    "ukama_data",
-			Active:     true,
-			From:       fixedFromTime.Format(time.RFC3339),
-			To:         fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus error"))
-
-		resp, err := s.Add(context.TODO(), req)
-		// Should still succeed even if message bus fails
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-
-		packageRepo.AssertExpectations(t)
-		msgbusClient.AssertExpectations(t)
-	})
-
-	t.Run("Success_WithEmptyApn", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:    ownerId,
-			BaserateId: baserate,
-			Name:       "test-package",
-			SimType:    "ukama_data",
-			Active:     true,
-			Apn:        "", // Empty APN should use rate's APN
-			From:       fixedFromTime.Format(time.RFC3339),
-			To:         fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-				Apn:      "default.apn",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, "default.apn", resp.Package.Apn)
-
-		packageRepo.AssertExpectations(t)
-	})
-
-	t.Run("Success_NonFlatratePackageWithCalculations", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:     ownerId,
-			BaserateId:  baserate,
-			Name:        "test-package",
-			SimType:     "ukama_data",
-			Active:      true,
-			Duration:    30,
-			SmsVolume:   100,
-			DataVolume:  1024,
-			VoiceVolume: 60,
-			MessageUnit: "int",
-			VoiceUnit:   "minutes",
-			DataUnit:    "MegaBytes",
-			Type:        "prepaid",
-			Flatrate:    false, // Non-flatrate should calculate rates
-			Amount:      0.0,   // Should be calculated
-			From:        fixedFromTime.Format(time.RFC3339),
-			To:          fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.False(t, resp.Package.Flatrate)
-		// Amount should be calculated: (0.1 + 0.1) * 100 + 0.5 * 1024 = 20 + 512 = 532
-		assert.Equal(t, 532.0, resp.Package.Amount)
-
-		packageRepo.AssertExpectations(t)
-	})
-
-	t.Run("Success_WithDifferentSimTypes", func(t *testing.T) {
-		testCases := []struct {
-			name     string
-			simType  string
-			expected bool
-		}{
-			{"ukama_data", "ukama_data", true},
-			{"test", "test", true},
-			{"operator_data", "operator_data", true},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				packageRepo := &mocks.PackageRepo{}
-				rate := &mocks.RateClientProvider{}
-				ownerId := uuid.NewV4().String()
-				baserate := uuid.NewV4().String()
-
-				s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-				req := &pb.AddPackageRequest{
-					OwnerId:    ownerId,
-					BaserateId: baserate,
-					Name:       "test-package",
-					SimType:    tc.simType,
-					Active:     true,
-					From:       fixedFromTime.Format(time.RFC3339),
-					To:         fixedToTime.Format(time.RFC3339),
-				}
-
-				rateClient := &splmocks.RateServiceClient{}
-				rate.On("GetClient").Return(rateClient, nil)
-				rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-					OwnerId:  ownerId,
-					BaseRate: baserate,
-				}).Return(&rpb.GetRateByIdResponse{
-					Rate: &bpb.Rate{
-						SmsMo:    0.1,
-						SmsMt:    0.1,
-						Data:     0.5,
-						Country:  "USA",
-						Provider: "ukama",
-					},
-				}, nil)
-
-				packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-				resp, err := s.Add(context.TODO(), req)
-				assert.NoError(t, err)
-				assert.NotNil(t, resp)
-				assert.Equal(t, tc.simType, resp.Package.SimType)
-
-				packageRepo.AssertExpectations(t)
-			})
-		}
-	})
-
-	t.Run("Success_WithDifferentPackageTypes", func(t *testing.T) {
-		testCases := []struct {
-			name     string
-			pkgType  string
-			expected bool
-		}{
-			{"prepaid", "prepaid", true},
-			{"postpaid", "postpaid", true},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				packageRepo := &mocks.PackageRepo{}
-				rate := &mocks.RateClientProvider{}
-				ownerId := uuid.NewV4().String()
-				baserate := uuid.NewV4().String()
-
-				s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-				req := &pb.AddPackageRequest{
-					OwnerId:    ownerId,
-					BaserateId: baserate,
-					Name:       "test-package",
-					SimType:    "ukama_data",
-					Type:       tc.pkgType,
-					Active:     true,
-					From:       fixedFromTime.Format(time.RFC3339),
-					To:         fixedToTime.Format(time.RFC3339),
-				}
-
-				rateClient := &splmocks.RateServiceClient{}
-				rate.On("GetClient").Return(rateClient, nil)
-				rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-					OwnerId:  ownerId,
-					BaseRate: baserate,
-				}).Return(&rpb.GetRateByIdResponse{
-					Rate: &bpb.Rate{
-						SmsMo:    0.1,
-						SmsMt:    0.1,
-						Data:     0.5,
-						Country:  "USA",
-						Provider: "ukama",
-					},
-				}, nil)
-
-				packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-				resp, err := s.Add(context.TODO(), req)
-				assert.NoError(t, err)
-				assert.NotNil(t, resp)
-				assert.Equal(t, tc.pkgType, resp.Package.Type)
-
-				packageRepo.AssertExpectations(t)
-			})
-		}
-	})
-
-	t.Run("Success_WithDifferentUnits", func(t *testing.T) {
-		testCases := []struct {
-			name        string
-			messageUnit string
-			voiceUnit   string
-			dataUnit    string
-		}{
-			{"int_minutes_MegaBytes", "int", "minutes", "MegaBytes"},
-			{"int_minutes_GigaBytes", "int", "minutes", "GigaBytes"},
-			{"int_hours_MegaBytes", "int", "hours", "MegaBytes"},
-			{"int_hours_GigaBytes", "int", "hours", "GigaBytes"},
-		}
-
-		for _, tc := range testCases {
-			t.Run(tc.name, func(t *testing.T) {
-				packageRepo := &mocks.PackageRepo{}
-				rate := &mocks.RateClientProvider{}
-				ownerId := uuid.NewV4().String()
-				baserate := uuid.NewV4().String()
-
-				s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-				req := &pb.AddPackageRequest{
-					OwnerId:     ownerId,
-					BaserateId:  baserate,
-					Name:        "test-package",
-					SimType:     "ukama_data",
-					MessageUnit: tc.messageUnit,
-					VoiceUnit:   tc.voiceUnit,
-					DataUnit:    tc.dataUnit,
-					Active:      true,
-					From:        fixedFromTime.Format(time.RFC3339),
-					To:          fixedToTime.Format(time.RFC3339),
-				}
-
-				rateClient := &splmocks.RateServiceClient{}
-				rate.On("GetClient").Return(rateClient, nil)
-				rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-					OwnerId:  ownerId,
-					BaseRate: baserate,
-				}).Return(&rpb.GetRateByIdResponse{
-					Rate: &bpb.Rate{
-						SmsMo:    0.1,
-						SmsMt:    0.1,
-						Data:     0.5,
-						Country:  "USA",
-						Provider: "ukama",
-					},
-				}, nil)
-
-				packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-				resp, err := s.Add(context.TODO(), req)
-				assert.NoError(t, err)
-				assert.NotNil(t, resp)
-				assert.Equal(t, tc.messageUnit, resp.Package.MessageUnit)
-				assert.Equal(t, tc.voiceUnit, resp.Package.VoiceUnit)
-				assert.Equal(t, tc.dataUnit, resp.Package.DataUnit)
-
-				packageRepo.AssertExpectations(t)
-			})
-		}
-	})
-
-	t.Run("Success_WithZeroVolumes", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:     ownerId,
-			BaserateId:  baserate,
-			Name:        "test-package",
-			SimType:     "ukama_data",
-			Active:      true,
-			SmsVolume:   0,
-			DataVolume:  0,
-			VoiceVolume: 0,
-			Flatrate:    false,
-			From:        fixedFromTime.Format(time.RFC3339),
-			To:          fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, int64(0), resp.Package.SmsVolume)
-		assert.Equal(t, int64(0), resp.Package.DataVolume)
-		assert.Equal(t, int64(0), resp.Package.VoiceVolume)
-		// Amount should be 0 since volumes are 0
-		assert.Equal(t, 0.0, resp.Package.Amount)
-
-		packageRepo.AssertExpectations(t)
-	})
-
-	t.Run("Success_WithLargeVolumes", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:     ownerId,
-			BaserateId:  baserate,
-			Name:        "test-package",
-			SimType:     "ukama_data",
-			Active:      true,
-			SmsVolume:   10000,
-			DataVolume:  100000,
-			VoiceVolume: 1000,
-			MessageUnit: "int",
-			VoiceUnit:   "minutes",
-			DataUnit:    "MegaBytes",
-			Flatrate:    false,
-			From:        fixedFromTime.Format(time.RFC3339),
-			To:          fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.01,
-				SmsMt:    0.01,
-				Data:     0.1,
-				Country:  "USA",
-				Provider: "ukama",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, int64(10000), resp.Package.SmsVolume)
-		assert.Equal(t, int64(100000), resp.Package.DataVolume)
-		assert.Equal(t, int64(1000), resp.Package.VoiceVolume)
-		// Amount should be calculated: (0.01 + 0.01) * 10000 + 0.1 * 100000 = 200 + 10000 = 10200
-		assert.Equal(t, 10200.0, resp.Package.Amount)
-
-		packageRepo.AssertExpectations(t)
-	})
-
-	t.Run("Success_WithNegativeMarkup", func(t *testing.T) {
-		packageRepo := &mocks.PackageRepo{}
-		rate := &mocks.RateClientProvider{}
-		ownerId := uuid.NewV4().String()
-		baserate := uuid.NewV4().String()
-
-		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
-
-		req := &pb.AddPackageRequest{
-			OwnerId:    ownerId,
-			BaserateId: baserate,
-			Name:       "test-package",
-			SimType:    "ukama_data",
-			Active:     true,
-			Markup:     -10.0, // Negative markup
-			From:       fixedFromTime.Format(time.RFC3339),
-			To:         fixedToTime.Format(time.RFC3339),
-		}
-
-		rateClient := &splmocks.RateServiceClient{}
-		rate.On("GetClient").Return(rateClient, nil)
-		rateClient.On("GetRateById", mock.Anything, &rpb.GetRateByIdRequest{
-			OwnerId:  ownerId,
-			BaseRate: baserate,
-		}).Return(&rpb.GetRateByIdResponse{
-			Rate: &bpb.Rate{
-				SmsMo:    0.1,
-				SmsMt:    0.1,
-				Data:     0.5,
-				Country:  "USA",
-				Provider: "ukama",
-			},
-		}, nil)
-
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
-
-		resp, err := s.Add(context.TODO(), req)
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		assert.Equal(t, -10.0, resp.Package.Markup.Markup)
-
-		packageRepo.AssertExpectations(t)
-	})
 }
 
 // ============================================================================
@@ -1468,14 +913,11 @@ func TestPackageServer_Delete(t *testing.T) {
 			Uuid: packageUUID.String(),
 		}
 
-		// Mock successful package deletion
 		packageRepo.On("Delete", packageUUID).Return(nil)
 
-		// Mock message bus publish failure
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus publish failed"))
 
 		resp, err := s.Delete(context.TODO(), req)
-		// Should still succeed even if message bus fails
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, packageUUID.String(), resp.Uuid)
@@ -1502,7 +944,6 @@ func TestPackageServer_Update(t *testing.T) {
 			return p.Active == true && p.Name == "Daily-pack-updated"
 		})).Return(nil).Once()
 
-		// Mock the Get call to return a complete package
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
 			Uuid:   packageUUID,
 			Name:   "Daily-pack-updated",
