@@ -37,12 +37,6 @@ type testData struct {
 	markup float64
 }
 
-// Common test data
-var (
-	testUserId = uuid.NewV4()
-	testMarkup = defaultMarkupRate
-)
-
 type UkamaDbMock struct {
 	GormDb *gorm.DB
 }
@@ -102,13 +96,6 @@ func createTestData() testData {
 	return testData{
 		userId: uuid.NewV4(),
 		markup: defaultMarkupRate,
-	}
-}
-
-func createTestDataWithCustomMarkup(markup float64) testData {
-	return testData{
-		userId: uuid.NewV4(),
-		markup: markup,
 	}
 }
 
