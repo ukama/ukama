@@ -36,6 +36,51 @@ import (
 	rmocks "github.com/ukama/ukama/systems/data-plan/rate/pb/gen/mocks"
 )
 
+// Test data constants
+const (
+	testCountry     = "USA"
+	testProvider    = "ABC"
+	testSimType     = "ukama_data"
+	testApn         = "ukama.tel"
+	testVpmn        = "TTC"
+	testPackageName = "Test Package"
+	testUpdatedName = "Updated Package Name"
+	testCurrency    = "USD"
+	testDataUnit    = "MegaBytes"
+	testVoiceUnit   = "seconds"
+	testPackageType = "postpaid"
+)
+
+// Test data values
+var (
+	testMarkupValue     = 10.0
+	testMarkupHistory1  = 5.5
+	testDataRate        = 0.0014
+	testSmsMoRate       = 0.0100
+	testSmsMtRate       = 0.0001
+	testImsiValue       = int64(1)
+	testSmsVolume       = int64(100)
+	testDataVolume      = int64(1024)
+	testVoiceVolume     = int64(1000)
+	testDuration        = uint64(30)
+	testAmount          = 10.50
+	testMarkup          = 5.0
+	testOverdraft       = 0.0
+	testTrafficPolicy   = uint32(1)
+	testEffectiveAt     = "2023-10-10"
+	testEffectiveAtTime = "2023-10-12T07:20:50.52Z"
+	testEndAtTime       = "2043-10-12T07:20:50.52Z"
+	testFromTime        = "2022-10-12T07:20:50.52Z"
+	testToTime          = "2023-10-12T07:20:50.52Z"
+	testFromDate        = "2023-04-01T00:00:00Z"
+	testToDate          = "2023-05-01T00:00:00Z"
+	testCreatedAt1      = "2021-11-12T11:45:26.371Z"
+	testCreatedAt2      = "2022-11-12T11:45:26.371Z"
+	testDeletedAt       = "2022-11-12T11:45:26.371Z"
+	testNetworks        = []string{"network1", "network2"}
+	testFileURL         = "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv"
+)
+
 var defaultCors = cors.Config{
 	AllowAllOrigins: true,
 }
@@ -88,11 +133,11 @@ func TestRouter_GetRates(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := GetRateRequest{
 		UserId:   ownerId,
-		Country:  "USA",
-		Provider: "ABC",
+		Country:  testCountry,
+		Provider: testProvider,
 		To:       time.Now().UTC().Format(time.RFC3339),
 		From:     time.Now().Add(time.Hour * 24 * 30).Format(time.RFC3339),
-		SimType:  "ukama_data",
+		SimType:  testSimType,
 	}
 
 	w := httptest.NewRecorder()
@@ -124,17 +169,15 @@ func TestRouter_GetRates(t *testing.T) {
 			{
 				X2G:         true,
 				X3G:         true,
-				Apn:         "Manual entry required",
 				Country:     req.Country,
-				Data:        0.0014,
-				EffectiveAt: "2023-10-10",
-				Imsi:        1,
+				Data:        testDataRate,
+				EffectiveAt: testEffectiveAt,
+				Imsi:        testImsiValue,
 				Lte:         true,
-				Provider:    "Multi Tel",
 				SimType:     req.SimType,
-				SmsMo:       0.0100,
-				SmsMt:       0.0001,
-				Vpmn:        "TTC",
+				SmsMo:       testSmsMoRate,
+				SmsMt:       testSmsMtRate,
+				Vpmn:        testVpmn,
 			},
 		},
 	}
@@ -174,7 +217,7 @@ func TestRouter_GetUserMarkup(t *testing.T) {
 
 	pResp := &rpb.GetMarkupResponse{
 		OwnerId: req.OwnerId,
-		Markup:  10,
+		Markup:  testMarkupValue,
 	}
 
 	m.On("GetMarkup", mock.Anything, pReq).Return(pResp, nil)
@@ -233,7 +276,7 @@ func TestRouter_SetUserMarkup(t *testing.T) {
 	ownerId := uuid.NewV4().String()
 	req := SetMarkupRequest{
 		OwnerId: ownerId,
-		Markup:  10,
+		Markup:  testMarkupValue,
 	}
 
 	w := httptest.NewRecorder()
@@ -287,13 +330,13 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 		OwnerId: req.OwnerId,
 		MarkupRates: []*rpb.MarkupRates{
 			{
-				CreatedAt: "2021-11-12T11:45:26.371Z",
-				DeletedAt: "2022-11-12T11:45:26.371Z",
-				Markup:    5.5,
+				CreatedAt: testCreatedAt1,
+				DeletedAt: testDeletedAt,
+				Markup:    testMarkupHistory1,
 			},
 			{
-				CreatedAt: "2022-11-12T11:45:26.371Z",
-				Markup:    10,
+				CreatedAt: testCreatedAt2,
+				Markup:    testMarkupValue,
 			},
 		},
 	}
@@ -319,7 +362,7 @@ func TestRouter_GetUserMarkupHistory(t *testing.T) {
 
 func TestRouter_SetDefaultMarkup(t *testing.T) {
 	req := SetDefaultMarkupRequest{
-		Markup: 10,
+		Markup: testMarkupValue,
 	}
 
 	w := httptest.NewRecorder()
@@ -362,7 +405,7 @@ func TestRouter_GetDefaultMarkup(t *testing.T) {
 	pReq := &rpb.GetDefaultMarkupRequest{}
 
 	pResp := &rpb.GetDefaultMarkupResponse{
-		Markup: 10,
+		Markup: testMarkupValue,
 	}
 
 	m.On("GetDefaultMarkup", mock.Anything, pReq).Return(pResp, nil)
@@ -395,13 +438,13 @@ func TestRouter_GetDefaultMarkupHistory(t *testing.T) {
 	pResp := &rpb.GetDefaultMarkupHistoryResponse{
 		MarkupRates: []*rpb.MarkupRates{
 			{
-				CreatedAt: "2021-11-12T11:45:26.371Z",
-				DeletedAt: "2022-11-12T11:45:26.371Z",
-				Markup:    5.5,
+				CreatedAt: testCreatedAt1,
+				DeletedAt: testDeletedAt,
+				Markup:    testMarkupHistory1,
 			},
 			{
-				CreatedAt: "2022-11-12T11:45:26.371Z",
-				Markup:    10,
+				CreatedAt: testCreatedAt2,
+				Markup:    testMarkupValue,
 			},
 		},
 	}
@@ -460,10 +503,10 @@ func TestRouter_GetBaseRatesById(t *testing.T) {
 
 func TestRouter_UploadBaseRates(t *testing.T) {
 	ureq := UploadBaseRatesRequest{
-		FileURL:     "https://raw.githubusercontent.com/ukama/ukama/upload-rates/systems/data-plan/base-rate/template/template.csv",
-		EffectiveAt: "2023-10-12T07:20:50.52Z",
-		EndAt:       "2043-10-12T07:20:50.52Z",
-		SimType:     "ukama_data",
+		FileURL:     testFileURL,
+		EffectiveAt: testEffectiveAtTime,
+		EndAt:       testEndAtTime,
+		SimType:     testSimType,
 	}
 
 	jreq, err := json.Marshal(&ureq)
@@ -509,9 +552,9 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 func TestRouter_GetBaseRates(t *testing.T) {
 	t.Run("ByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country:  "ABC",
-			Provider: "XYZ",
-			SimType:  "ukama_data",
+			Country:  testCountry,
+			Provider: testProvider,
+			SimType:  testSimType,
 		}
 
 		w := httptest.NewRecorder()
@@ -557,9 +600,9 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("HistoryByCountry", func(t *testing.T) {
 		ureq := GetBaseRatesByCountryRequest{
-			Country:  "ABC",
-			Provider: "XYZ",
-			SimType:  "ukama_data",
+			Country:  testCountry,
+			Provider: testProvider,
+			SimType:  testSimType,
 		}
 
 		w := httptest.NewRecorder()
@@ -605,11 +648,11 @@ func TestRouter_GetBaseRates(t *testing.T) {
 
 	t.Run("ByCountryForPeriod", func(t *testing.T) {
 		ureq := GetBaseRatesForPeriodRequest{
-			Country:  "ABC",
-			Provider: "XYZ",
-			SimType:  "ukama_data",
-			To:       "2023-10-12T07:20:50.52Z",
-			From:     "2022-10-12T07:20:50.52Z",
+			Country:  testCountry,
+			Provider: testProvider,
+			SimType:  testSimType,
+			To:       testToTime,
+			From:     testFromTime,
 		}
 
 		w := httptest.NewRecorder()
@@ -801,29 +844,29 @@ func TestRouter_Package(t *testing.T) {
 
 	t.Run("AddPackage", func(t *testing.T) {
 		ureq := AddPackageRequest{
-			Name:          "Test Package",
-			From:          "2023-04-01T00:00:00Z",
-			To:            "2023-05-01T00:00:00Z",
+			Name:          testPackageName,
+			From:          testFromDate,
+			To:            testToDate,
 			OwnerId:       uuid.NewV4().String(),
-			SimType:       "ukama_data",
-			SmsVolume:     100,
-			DataVolume:    1024,
-			DataUnit:      "MegaBytes",
-			VoiceUnit:     "seconds",
-			Duration:      30,
-			Type:          "postpaid",
+			SimType:       testSimType,
+			SmsVolume:     testSmsVolume,
+			DataVolume:    testDataVolume,
+			DataUnit:      testDataUnit,
+			VoiceUnit:     testVoiceUnit,
+			Duration:      testDuration,
+			Type:          testPackageType,
 			Flatrate:      false,
-			Amount:        10.50,
-			Markup:        5.0,
-			Apn:           "ukama.tel",
+			Amount:        testAmount,
+			Markup:        testMarkup,
+			Apn:           testApn,
 			Active:        true,
-			VoiceVolume:   1000,
+			VoiceVolume:   testVoiceVolume,
 			BaserateId:    uuid.NewV4().String(),
-			Overdraft:     0.0,
-			TrafficPolicy: 1,
-			Networks:      []string{"network1", "network2"},
-			Country:       "USA",
-			Currency:      "USD",
+			Overdraft:     testOverdraft,
+			TrafficPolicy: testTrafficPolicy,
+			Networks:      testNetworks,
+			Country:       testCountry,
+			Currency:      testCurrency,
 		}
 
 		jreq, err := json.Marshal(&ureq)
@@ -892,7 +935,7 @@ func TestRouter_Package(t *testing.T) {
 		packageUuid := uuid.NewV4().String()
 		ureq := UpdatePackageRequest{
 			Uuid:   packageUuid,
-			Name:   "Updated Package Name",
+			Name:   testUpdatedName,
 			Active: false,
 		}
 
@@ -941,11 +984,11 @@ func TestRouter_Package(t *testing.T) {
 
 func TestRouter_GetBaseRatesForPackage(t *testing.T) {
 	ureq := GetBaseRatesForPeriodRequest{
-		Country:  "ABC",
-		Provider: "XYZ",
-		SimType:  "ukama_data",
-		To:       "2023-10-12T07:20:50.52Z",
-		From:     "2022-10-12T07:20:50.52Z",
+		Country:  testCountry,
+		Provider: testProvider,
+		SimType:  testSimType,
+		To:       testToTime,
+		From:     testFromTime,
 	}
 
 	w := httptest.NewRecorder()
