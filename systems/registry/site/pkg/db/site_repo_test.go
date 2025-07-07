@@ -97,8 +97,8 @@ var updatedTestSite = db_site.Site{
 	Latitude:      testUpdatedLatitude,
 	Longitude:     testUpdatedLongitude,
 	InstallDate:   testUpdatedInstallDate,
-	CreatedAt:     time.Now(),
-	UpdatedAt:     time.Now(),
+	CreatedAt:     time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
+	UpdatedAt:     time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
 	DeletedAt:     gorm.DeletedAt{},
 }
 

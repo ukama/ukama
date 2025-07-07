@@ -100,6 +100,54 @@ func createValidAddRequest() *pb.AddRequest {
 	}
 }
 
+// Helper function to verify site field mappings
+func verifySiteFieldMappings(t *testing.T, expected *db.Site, actual *pb.Site) {
+	fieldMappings := []struct {
+		name     string
+		expected interface{}
+		actual   interface{}
+	}{
+		{"Id", expected.Id.String(), actual.Id},
+		{"Name", expected.Name, actual.Name},
+		{"Location", expected.Location, actual.Location},
+		{"NetworkId", expected.NetworkId.String(), actual.NetworkId},
+		{"BackhaulId", expected.BackhaulId.String(), actual.BackhaulId},
+		{"PowerId", expected.PowerId.String(), actual.PowerId},
+		{"AccessId", expected.AccessId.String(), actual.AccessId},
+		{"SwitchId", expected.SwitchId.String(), actual.SwitchId},
+		{"SpectrumId", expected.SpectrumId.String(), actual.SpectrumId},
+		{"IsDeactivated", expected.IsDeactivated, actual.IsDeactivated},
+		{"Latitude", expected.Latitude, actual.Latitude},
+		{"Longitude", expected.Longitude, actual.Longitude},
+		{"InstallDate", expected.InstallDate, actual.InstallDate},
+	}
+
+	for _, field := range fieldMappings {
+		assert.Equal(t, field.expected, field.actual, "Field %s mismatch", field.name)
+	}
+}
+
+// Helper function to verify specific site fields (for Update tests)
+func verifySiteFields(t *testing.T, expectedId string, expectedName string, actual *pb.Site) {
+	assert.Equal(t, expectedId, actual.Id, "Site ID mismatch")
+	assert.Equal(t, expectedName, actual.Name, "Site Name mismatch")
+}
+
+// Helper function to verify Add request fields
+func verifyAddRequestFields(t *testing.T, expected *pb.AddRequest, actual *pb.Site) {
+	assert.Equal(t, expected.Name, actual.Name, "Site Name mismatch")
+	assert.Equal(t, expected.NetworkId, actual.NetworkId, "Network ID mismatch")
+	assert.Equal(t, expected.BackhaulId, actual.BackhaulId, "Backhaul ID mismatch")
+	assert.Equal(t, expected.PowerId, actual.PowerId, "Power ID mismatch")
+	assert.Equal(t, expected.AccessId, actual.AccessId, "Access ID mismatch")
+	assert.Equal(t, expected.SwitchId, actual.SwitchId, "Switch ID mismatch")
+	assert.Equal(t, expected.SpectrumId, actual.SpectrumId, "Spectrum ID mismatch")
+	assert.Equal(t, expected.IsDeactivated, actual.IsDeactivated, "IsDeactivated mismatch")
+	assert.Equal(t, expected.Latitude, actual.Latitude, "Latitude mismatch")
+	assert.Equal(t, expected.Longitude, actual.Longitude, "Longitude mismatch")
+	assert.Equal(t, expected.Location, actual.Location, "Location mismatch")
+}
+
 func TestSiteService_Get(t *testing.T) {
 	siteRepo := &mocks.SiteRepo{}
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
@@ -119,19 +167,7 @@ func TestSiteService_Get(t *testing.T) {
 		assert.NotNil(t, resp.Site)
 
 		// Verify all fields are correctly mapped
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, mockSite.Name, resp.Site.Name)
-		assert.Equal(t, mockSite.Location, resp.Site.Location)
-		assert.Equal(t, testNetworkId.String(), resp.Site.NetworkId)
-		assert.Equal(t, testBackhaulId.String(), resp.Site.BackhaulId)
-		assert.Equal(t, testPowerId.String(), resp.Site.PowerId)
-		assert.Equal(t, testAccessId.String(), resp.Site.AccessId)
-		assert.Equal(t, testSwitchId.String(), resp.Site.SwitchId)
-		assert.Equal(t, testSpectrumId.String(), resp.Site.SpectrumId)
-		assert.Equal(t, mockSite.IsDeactivated, resp.Site.IsDeactivated)
-		assert.Equal(t, mockSite.Latitude, resp.Site.Latitude)
-		assert.Equal(t, mockSite.Longitude, resp.Site.Longitude)
-		assert.Equal(t, mockSite.InstallDate, resp.Site.InstallDate)
+		verifySiteFieldMappings(t, mockSite, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 	})
@@ -240,19 +276,7 @@ func TestSiteService_List(t *testing.T) {
 
 		// Verify all fields are correctly mapped for each site
 		for i, site := range mockSites {
-			assert.Equal(t, site.Id.String(), resp.Sites[i].Id)
-			assert.Equal(t, site.Name, resp.Sites[i].Name)
-			assert.Equal(t, site.Location, resp.Sites[i].Location)
-			assert.Equal(t, site.NetworkId.String(), resp.Sites[i].NetworkId)
-			assert.Equal(t, site.BackhaulId.String(), resp.Sites[i].BackhaulId)
-			assert.Equal(t, site.PowerId.String(), resp.Sites[i].PowerId)
-			assert.Equal(t, site.AccessId.String(), resp.Sites[i].AccessId)
-			assert.Equal(t, site.SwitchId.String(), resp.Sites[i].SwitchId)
-			assert.Equal(t, site.SpectrumId.String(), resp.Sites[i].SpectrumId)
-			assert.Equal(t, site.IsDeactivated, resp.Sites[i].IsDeactivated)
-			assert.Equal(t, site.Latitude, resp.Sites[i].Latitude)
-			assert.Equal(t, site.Longitude, resp.Sites[i].Longitude)
-			assert.Equal(t, site.InstallDate, resp.Sites[i].InstallDate)
+			verifySiteFieldMappings(t, site, resp.Sites[i])
 		}
 		siteRepo.AssertExpectations(t)
 	})
@@ -286,8 +310,7 @@ func TestSiteService_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, 1, len(resp.Sites))
-		assert.Equal(t, mockSites[0].Id.String(), resp.Sites[0].Id)
-		assert.Equal(t, mockSites[0].Name, resp.Sites[0].Name)
+		verifySiteFieldMappings(t, &mockSites[0], resp.Sites[0])
 		siteRepo.AssertExpectations(t)
 	})
 
@@ -328,8 +351,7 @@ func TestSiteService_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.Equal(t, 1, len(resp.Sites))
-		assert.True(t, resp.Sites[0].IsDeactivated)
-		assert.Equal(t, mockSites[0].Name, resp.Sites[0].Name)
+		verifySiteFieldMappings(t, &mockSites[0], resp.Sites[0])
 		siteRepo.AssertExpectations(t)
 	})
 
@@ -389,8 +411,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
+		verifySiteFields(t, testSiteId.String(), testUpdatedSiteName, resp.Site)
 
 		// Verify the mock was called with correct parameters
 		siteRepo.AssertExpectations(t)
@@ -440,8 +461,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, "", resp.Site.Name)
+		verifySiteFields(t, testSiteId.String(), "", resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		msgclientRepo.AssertExpectations(t)
@@ -483,8 +503,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
+		verifySiteFields(t, testSiteId.String(), testUpdatedSiteName, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		msgclientRepo.AssertExpectations(t)
@@ -507,8 +526,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, testUpdatedSiteName, resp.Site.Name)
+		verifySiteFields(t, testSiteId.String(), testUpdatedSiteName, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 	})
@@ -530,8 +548,7 @@ func TestSiteService_Update(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testSiteId.String(), resp.Site.Id)
-		assert.Equal(t, testLongSiteName, resp.Site.Name)
+		verifySiteFields(t, testSiteId.String(), testLongSiteName, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		msgclientRepo.AssertExpectations(t)
@@ -581,17 +598,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, validRequest.Name, resp.Site.Name)
-		assert.Equal(t, validRequest.NetworkId, resp.Site.NetworkId)
-		assert.Equal(t, validRequest.BackhaulId, resp.Site.BackhaulId)
-		assert.Equal(t, validRequest.PowerId, resp.Site.PowerId)
-		assert.Equal(t, validRequest.AccessId, resp.Site.AccessId)
-		assert.Equal(t, validRequest.SwitchId, resp.Site.SwitchId)
-		assert.Equal(t, validRequest.SpectrumId, resp.Site.SpectrumId)
-		assert.Equal(t, validRequest.IsDeactivated, resp.Site.IsDeactivated)
-		assert.Equal(t, validRequest.Latitude, resp.Site.Latitude)
-		assert.Equal(t, validRequest.Longitude, resp.Site.Longitude)
-		assert.Equal(t, validRequest.Location, resp.Site.Location)
+		verifyAddRequestFields(t, validRequest, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -865,7 +872,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, validRequest.Name, resp.Site.Name)
+		verifyAddRequestFields(t, validRequest, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -907,7 +914,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, validRequest.Name, resp.Site.Name)
+		verifyAddRequestFields(t, validRequest, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -948,7 +955,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, validRequest.Name, resp.Site.Name)
+		verifyAddRequestFields(t, validRequest, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -1003,7 +1010,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, "", resp.Site.Name)
+		verifyAddRequestFields(t, requestWithEmptyName, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -1059,9 +1066,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.Equal(t, testExtremeLatitude, resp.Site.Latitude)
-		assert.Equal(t, testExtremeLongitude, resp.Site.Longitude)
-		assert.Equal(t, testExtremeLocation, resp.Site.Location)
+		verifyAddRequestFields(t, requestWithExtremeCoords, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
@@ -1117,8 +1122,7 @@ func TestSiteService_Add(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.NotNil(t, resp.Site)
-		assert.True(t, resp.Site.IsDeactivated)
-		assert.Equal(t, testDeactivatedSiteName, resp.Site.Name)
+		verifyAddRequestFields(t, deactivatedRequest, resp.Site)
 
 		siteRepo.AssertExpectations(t)
 		netRepo.AssertExpectations(t)
