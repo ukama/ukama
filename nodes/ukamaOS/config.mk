@@ -19,6 +19,18 @@ CUR_BUILD_DIRNAME := $(notdir $(patsubst %/,%,$(CUR_PATH)))
 NODES_DIR := $(shell echo $(CUR_PATH) | sed 's|\(.*nodes\)/.*|\1|')
 UKAMAOS_ROOT := $(NODES_DIR)/ukamaOS
 
+VENDOR_DIR   := $(UKAMAOS_ROOT)/distro/vendor
+VENDOR_BUILD := $(VENDOR_DIR)/build
+VENDOR_INC   := $(VENDOR_BUILD)/include
+VENDOR_LIB   := $(VENDOR_BUILD)/lib
+VENDOR_LIB64 := $(VENDOR_BUILD)/lib64
+
+PLATFORM_DIR     := $(UKAMAOS_ROOT)/distro/platform/
+PLATFORM_BUILD   := $(PLATFORM_DIR)/build/
+PLATFORM_INC_SYS := $(PLATFORM_DIR)/sys/inc
+PLATFORM_INC_LOG := $(PLATFORM_DIR)/log/inc
+PLATFORM_LIB     := $(PLATFORM_DIR)/build/
+
 # OS and Processor configuration
 OS := $(shell uname -s)
 NPROCS := 1
@@ -82,6 +94,24 @@ ifeq ($(TARGET_BOARD), $(ACCESS_NODE))
     OPENSSLTARGET := linux-aarch64
 endif
 
+# BUILD_MODE (debug|release) -> set RPATH_FLAGS for Makefile
+
+# default to debug:
+BUILD_MODE ?= debug
+export BUILD_MODE
+
+# pick your rpath directories
+ifeq ($(BUILD_MODE),release)
+  # single hard‐coded path on “make BUILD_MODE=release”
+  RPATH_PATHS := /ukama/apps/lib
+else
+  # debug mode: use the three per‐app vars (must be defined *before* include)
+  RPATH_PATHS := $(PLATFORM_LIB) $(VENDOR_LIB) $(VENDOR_LIB64)
+endif
+
+# turn them into -Wl,-rpath,<dir> flags
+RPATH_FLAGS := $(foreach D,$(RPATH_PATHS),-Wl,-rpath,$(D))
+export RPATH_FLAGS
+
 # Export updated variables
 export
-

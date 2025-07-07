@@ -46,7 +46,7 @@ func TestPackageClient_Get(t *testing.T) {
 		testPackageClient := dataplan.NewPackageClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Get(testUuid)
@@ -143,7 +143,7 @@ func TestPackageClient_Add(t *testing.T) {
 		testPackageClient := dataplan.NewPackageClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
+		// so that the test stays a unit test e.g, no server/network call.
 		testPackageClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		p, err := testPackageClient.Add(

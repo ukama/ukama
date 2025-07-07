@@ -49,7 +49,7 @@ func NewOrgClient(h string, options ...client.Option) *orgClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &orgClient{
@@ -74,7 +74,7 @@ func (o *orgClient) Get(name string) (*OrgInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize org info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("org info deserailization failure: %w", err)
+		return nil, fmt.Errorf("org info deserialization failure: %w", err)
 	}
 
 	log.Infof("Org Info: %+v", org.OrgInfo)

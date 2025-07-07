@@ -103,7 +103,7 @@ func NewPackageClient(h string, options ...client.Option) *packageClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &packageClient{
@@ -134,7 +134,7 @@ func (p *packageClient) Add(req AddPackageRequest) (*PackageInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize package info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("package info deserialization failure: %w", err)
 	}
 
 	log.Infof("Package Info: %+v", pkg.PackageInfo)
@@ -156,7 +156,7 @@ func (p *packageClient) Get(id string) (*PackageInfo, error) {
 	err = json.Unmarshal(resp.Body(), &pkg)
 	if err != nil {
 		log.Tracef("Failed to deserialize org info. Error message is %s", err.Error())
-		return nil, fmt.Errorf("package info deserailization failure: %w", err)
+		return nil, fmt.Errorf("package info deserialization failure: %w", err)
 	}
 
 	if pkg.PackageInfo == nil {

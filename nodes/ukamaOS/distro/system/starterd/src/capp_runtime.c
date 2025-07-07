@@ -285,7 +285,7 @@ static bool install_capp(char *appName, char *rootPath) {
         return USYS_FALSE;
     }
 
-    if (copy_folder(libFolder, "/lib") == USYS_FALSE) {
+    if (copy_folder(libFolder, "/ukama/apps/lib") == USYS_FALSE) {
         usys_log_error("No lib files for %s", rootPath);
         return USYS_FALSE;
     }

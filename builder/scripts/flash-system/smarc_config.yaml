@@ -1,0 +1,21 @@
+network:
+  host_eth:  "enp0s25"
+  host_ip:   "192.168.100.1"
+  target_ip: "192.168.100.2"
+
+image:
+  name: "ukama-com-image.img"
+  path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-com-image.img"
+
+usb:
+  device:  "/dev/sdb"
+  iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
+
+serial:
+  device: "/dev/ttyUSB0"
+  baud:   115200
+
+flash:
+  target_device:  "/dev/mmcblk1"
+  success_marker: "Flash complete. Rebooting."
+  boot_marker:    "login:"

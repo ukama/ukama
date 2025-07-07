@@ -16,6 +16,7 @@ import (
 
 	"github.com/tj/assert"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
@@ -41,13 +42,13 @@ func TestSiteClient_Get(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := registry.NewSiteClient("")
+		testSiteClient := registry.NewSiteClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/network call.
-		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		// so that the test stays a unit test e.g, no server/network call.
+		testSiteClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		n, err := testNetworkClient.Get(testUuid)
+		n, err := testSiteClient.Get(testUuid)
 
 		assert.NoError(tt, err)
 		assert.Equal(tt, testUuid, n.Id)
@@ -68,13 +69,53 @@ func TestSiteClient_Get(t *testing.T) {
 			}
 		}
 
-		testNetworkClient := registry.NewSiteClient("")
+		testSiteClient := registry.NewSiteClient("")
 
-		testNetworkClient.R.C.SetTransport(RoundTripFunc(mockTransport))
+		testSiteClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		n, err := testNetworkClient.Get(testUuid)
+		n, err := testSiteClient.Get(testUuid)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, n)
 	})
+
+	t.Run("InvalidResponsePayload", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.SiteEndpoint+"/"+testUuid)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testSiteClient := registry.NewSiteClient("")
+
+		testSiteClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testSiteClient.Get(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.SiteEndpoint+"/"+testUuid)
+
+			return nil
+		}
+
+		testSiteClient := registry.NewSiteClient("")
+
+		testSiteClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testSiteClient.Get(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
 }

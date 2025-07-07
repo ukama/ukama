@@ -10,17 +10,18 @@ package db
 
 import (
 	"github.com/ukama/ukama/systems/common/sql"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm"
 )
 
 type SimRepo interface {
-	Get(isPhysicalSim bool, simType SimType) (*Sim, error)
+	Get(isPhysicalSim bool, simType ukama.SimType) (*Sim, error)
 	GetByIccid(iccid string) (*Sim, error)
-	GetSimsByType(simType SimType) ([]Sim, error)
+	GetSimsByType(simType ukama.SimType) ([]Sim, error)
 	Add(sims []Sim) error
 	Delete(id []uint64) error
 	UpdateStatus(iccid string, isAllocated, IsFailed bool) error
-	GetSims(simType SimType) ([]Sim, error)
+	GetSims(simType ukama.SimType) ([]Sim, error)
 }
 
 type simRepo struct {
@@ -33,9 +34,9 @@ func NewSimRepo(db sql.Db) *simRepo {
 	}
 }
 
-func (s *simRepo) GetSims(simType SimType) ([]Sim, error) {
+func (s *simRepo) GetSims(simType ukama.SimType) ([]Sim, error) {
 	var sim []Sim
-	if simType != SimTypeUnknown {
+	if simType != ukama.SimTypeUnknown {
 		result := s.Db.GetGormDb().Where("sim_type = ?", simType).Find(&sim)
 		if result.Error != nil {
 			return nil, result.Error
@@ -50,7 +51,7 @@ func (s *simRepo) GetSims(simType SimType) ([]Sim, error) {
 
 }
 
-func (s *simRepo) Get(isPhysicalSim bool, simType SimType) (*Sim, error) {
+func (s *simRepo) Get(isPhysicalSim bool, simType ukama.SimType) (*Sim, error) {
 	var sim Sim
 	result := s.Db.GetGormDb().Where("is_allocated = ?", false).Where("is_physical = ?", isPhysicalSim).Where("sim_type = ?", simType).First(&sim)
 
@@ -84,7 +85,7 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	return &sim, nil
 }
 
-func (s *simRepo) GetSimsByType(simType SimType) ([]Sim, error) {
+func (s *simRepo) GetSimsByType(simType ukama.SimType) ([]Sim, error) {
 	var sim []Sim
 	result := s.Db.GetGormDb().Where("sim_type = ?", simType).Find(&sim)
 

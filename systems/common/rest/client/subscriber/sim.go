@@ -63,7 +63,7 @@ func NewSimClient(h string, options ...client.Option) *simClient {
 	u, err := url.Parse(h)
 
 	if err != nil {
-		log.Fatalf("Can't parse  %s url. Error: %s", h, err.Error())
+		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}
 
 	return &simClient{
@@ -94,7 +94,7 @@ func (s *simClient) Add(req AddSimRequest) (*SimInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize sim info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("sim info deserailization failure: %w", err)
+		return nil, fmt.Errorf("sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("Sim Info: %+v", sim.SimInfo)
@@ -118,7 +118,7 @@ func (s *simClient) Get(id string) (*SimInfo, error) {
 	if err != nil {
 		log.Tracef("Failed to deserialize sim info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("sim info deserailization failure: %w", err)
+		return nil, fmt.Errorf("sim info deserialization failure: %w", err)
 	}
 
 	log.Infof("Sim Info: %+v", sim.SimInfo)

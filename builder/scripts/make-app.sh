@@ -22,7 +22,9 @@ build_app() {
     SRC=$1
     CMD=$2
 
-    cd ${SRC} && ${CMD} && cd ${CWD}
+    cd "${SRC}" && \
+        BUILD_MODE=${BUILD_MODE:-debug} ${CMD} && \
+        cd "${CWD}"
 }
 
 # copy all the required lib to rootfs

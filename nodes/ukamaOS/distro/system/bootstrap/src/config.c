@@ -65,32 +65,52 @@ int parse_config(Config *config, toml_table_t *configData) {
 
 bool read_bootstrap_server_info(char **buffer) {
 
-    FILE *file = NULL;
-    long length = 0;
+    FILE *file=NULL;
+    long length=0;
+    size_t n_read=0;
 
-    if ((file = fopen(DEF_BOOTSTRAP_FILE, "r")) == NULL) {
-        usys_log_error("Error opening bootstrap file: %s %s",
-                  DEF_BOOTSTRAP_FILE, strerror(errno));
+    file = fopen(DEF_BOOTSTRAP_FILE, "r");
+    if (!file) {
+        usys_log_error("Error opening bootstrap file '%s': %s",
+                       DEF_BOOTSTRAP_FILE, strerror(errno));
         return FALSE;
     }
 
-    fseek(file, 0, SEEK_END);
-    length = ftell(file);
-    rewind(file);
-
-    *buffer = (char *)calloc((length + 1), sizeof(char));
-    if (*buffer == NULL) {
-        usys_log_error("Memory allocation failed: %s",
-                  (length + 1) * sizeof(char));
+    if (fseek(file, 0, SEEK_END) != 0) {
+        usys_log_error("Error seeking to end of '%s': %s",
+                       DEF_BOOTSTRAP_FILE, strerror(errno));
         fclose(file);
         return FALSE;
     }
 
-    fread(*buffer, sizeof(char), length-1, file);
+    length = ftell(file);
+    if (length < 0) {
+        usys_log_error("Error getting size of '%s': %s",
+                       DEF_BOOTSTRAP_FILE, strerror(errno));
+        fclose(file);
+        return FALSE;
+    }
+    rewind(file);
+
+    *buffer = malloc((size_t)length + 1);
+    if (!*buffer) {
+        usys_log_error("Memory allocation failed for %zu bytes",
+                       (size_t)length + 1);
+        fclose(file);
+        return FALSE;
+    }
+
+    n_read = fread(*buffer, 1, (size_t)length, file);
+    if (n_read != (size_t)length) {
+        usys_log_error("Error reading '%s': read %zu of %ld bytes",
+                       DEF_BOOTSTRAP_FILE, n_read, length);
+        free(*buffer);
+        fclose(file);
+        return FALSE;
+    }
     (*buffer)[length] = '\0';
 
     fclose(file);
-
     return TRUE;
 }
 
