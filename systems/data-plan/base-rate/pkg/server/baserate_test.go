@@ -24,7 +24,26 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-const OrgName = "testorg"
+const (
+	OrgName      = "testorg"
+	TestCountry  = "Tycho crater"
+	TestProvider = "ABC Tel"
+	TestSimType  = ukama.SimTypeUkamaData
+	TestVpmn     = "TTC"
+	TestApn      = "Manual entry required"
+	TestFileUrl  = "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+	TestImsi     = 1
+	TestData     = 0.4
+	TestSmsMo    = 0.1
+	TestSmsMt    = 0.1
+)
+
+var (
+	TestEffectiveAt = time.Now().Add(time.Hour * 24).Format(time.RFC3339)
+	TestEndAt       = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
+	TestFromTime    = time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
+	TestToTime      = time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+)
 
 // TestBaseRateService_UploadBaseRates tests the UploadBaseRates RPC
 func TestBaseRateService_UploadBaseRates(t *testing.T) {
@@ -33,15 +52,15 @@ func TestBaseRateService_UploadBaseRates(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
 		rateService := NewBaseRateServer(OrgName, mockRepo, msgbusClient)
-		mockEffectiveAt := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
-		mockEndAt := time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
-		mockFileUrl := "https://raw.githubusercontent.com/ukama/ukama/main/systems/data-plan/docs/template/template.csv"
+		mockEffectiveAt := TestEffectiveAt
+		mockEndAt := TestEndAt
+		mockFileUrl := TestFileUrl
 
 		reqMock := &pb.UploadBaseRatesRequest{
 			FileURL:     mockFileUrl,
 			EffectiveAt: mockEffectiveAt,
 			EndAt:       mockEndAt,
-			SimType:     "ukama_data",
+			SimType:     TestSimType.String(),
 		}
 
 		mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
@@ -57,7 +76,7 @@ func TestBaseRateService_UploadBaseRates(t *testing.T) {
 		assert.NotEmpty(t, firstRate.Uuid)
 		assert.NotEmpty(t, firstRate.Country)
 		assert.NotEmpty(t, firstRate.Provider)
-		assert.Equal(t, "ukama_data", firstRate.SimType)
+		assert.Equal(t, TestSimType.String(), firstRate.SimType)
 		assert.Equal(t, mockEffectiveAt, firstRate.EffectiveAt)
 		assert.NotEmpty(t, firstRate.CreatedAt)
 		assert.NotEmpty(t, firstRate.UpdatedAt)
@@ -75,40 +94,40 @@ func TestBaseRateService_UploadBaseRates(t *testing.T) {
 			{
 				name:        "Empty file URL",
 				fileURL:     "",
-				effectiveAt: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
-				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
-				simType:     "ukama_data",
+				effectiveAt: TestEffectiveAt,
+				endAt:       TestEndAt,
+				simType:     TestSimType.String(),
 				expectedErr: "Please supply valid fileURL",
 			},
 			{
 				name:        "Empty effective at",
-				fileURL:     "https://example.com/file.csv",
+				fileURL:     TestFileUrl,
 				effectiveAt: "",
-				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
-				simType:     "ukama_data",
+				endAt:       TestEndAt,
+				simType:     TestSimType.String(),
 				expectedErr: "Please supply valid fileURL",
 			},
 			{
 				name:        "Empty sim type",
-				fileURL:     "https://example.com/file.csv",
-				effectiveAt: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
-				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
+				fileURL:     TestFileUrl,
+				effectiveAt: TestEffectiveAt,
+				endAt:       TestEndAt,
 				simType:     "",
 				expectedErr: "invalid sim type",
 			},
 			{
 				name:        "Invalid sim type",
-				fileURL:     "https://example.com/file.csv",
-				effectiveAt: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
-				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
+				fileURL:     TestFileUrl,
+				effectiveAt: TestEffectiveAt,
+				endAt:       TestEndAt,
 				simType:     "invalid_sim_type",
 				expectedErr: "invalid sim type",
 			},
 			{
 				name:        "Sim type case mismatch",
-				fileURL:     "https://example.com/file.csv",
-				effectiveAt: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
-				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
+				fileURL:     TestFileUrl,
+				effectiveAt: TestEffectiveAt,
+				endAt:       TestEndAt,
 				simType:     "UKAMA_DATA",
 				expectedErr: "invalid sim type",
 			},
@@ -259,10 +278,10 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 	t.Run("Success case", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "Tycho crater",
-			Provider:    "ABC Tel",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
@@ -272,21 +291,21 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 			{
 				X2g:         true,
 				X3g:         true,
-				Apn:         "Manual entry required",
-				Country:     "Tycho crater",
-				Data:        0.4,
+				Apn:         TestApn,
+				Country:     TestCountry,
+				Data:        TestData,
 				EffectiveAt: time.Now(),
-				Imsi:        1,
+				Imsi:        TestImsi,
 				Lte:         true,
-				Provider:    "Multi Tel",
-				SimType:     ukama.SimTypeUkamaData,
-				SmsMo:       0.1,
-				SmsMt:       0.1,
-				Vpmn:        "TTC",
+				Provider:    TestProvider,
+				SimType:     TestSimType,
+				SmsMo:       TestSmsMo,
+				SmsMt:       TestSmsMt,
+				Vpmn:        TestVpmn,
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -300,8 +319,8 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
 			Country:     "Multiple Country",
 			Provider:    "Multiple Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
@@ -318,7 +337,7 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 				Imsi:        1,
 				Lte:         true,
 				Provider:    "Multiple Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				SimType:     TestSimType,
 				SmsMo:       0.1,
 				SmsMt:       0.1,
 				Vpmn:        "VPMN1",
@@ -333,14 +352,14 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 				Imsi:        2,
 				Lte:         true,
 				Provider:    "Multiple Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				SimType:     TestSimType,
 				SmsMo:       0.15,
 				SmsMt:       0.15,
 				Vpmn:        "VPMN2",
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -357,14 +376,14 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
 			Country:     "Non-existent Country",
 			Provider:    "Non-existent Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return([]db.BaseRate{}, nil)
+		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return([]db.BaseRate{}, nil)
 
 		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -378,14 +397,14 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
 			Country:     "Error Country",
 			Provider:    "Error Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(nil, assert.AnError)
+		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(nil, assert.AnError)
 
 		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
 		assert.Error(t, err)
@@ -399,10 +418,10 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	t.Run("Success case", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "Tycho crater",
-			Provider:    "ABC Tel",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
@@ -412,36 +431,36 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 			{
 				X2g:         true,
 				X3g:         true,
-				Apn:         "Manual entry required",
-				Country:     "Tycho crater",
-				Data:        0.4,
+				Apn:         TestApn,
+				Country:     TestCountry,
+				Data:        TestData,
 				EffectiveAt: time.Now(),
-				Imsi:        1,
+				Imsi:        TestImsi,
 				Lte:         true,
-				Provider:    "Multi Tel",
-				SimType:     ukama.SimTypeUkamaData,
-				SmsMo:       0.1,
-				SmsMt:       0.1,
-				Vpmn:        "TTC",
+				Provider:    TestProvider,
+				SimType:     TestSimType,
+				SmsMo:       TestSmsMo,
+				SmsMt:       TestSmsMt,
+				Vpmn:        TestVpmn,
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesHistoryByCountry", TestCountry, TestProvider, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
-		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-		assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
+		assert.Equal(t, TestCountry, rate.Rates[0].Country)
+		assert.Equal(t, TestSimType.String(), rate.Rates[0].SimType)
 		baseRateRepo.AssertExpectations(t)
 	})
 
 	t.Run("Multiple historical rates", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "Historical Country",
-			Provider:    "Historical Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
@@ -452,13 +471,13 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 				X2g:         true,
 				X3g:         true,
 				Apn:         "Historical APN 1",
-				Country:     "Historical Country",
+				Country:     TestCountry,
 				Data:        0.3,
 				EffectiveAt: time.Now().Add(-24 * time.Hour),
 				Imsi:        1,
 				Lte:         true,
-				Provider:    "Historical Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.05,
 				SmsMt:       0.05,
 				Vpmn:        "HIST1",
@@ -467,13 +486,13 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 				X2g:         true,
 				X3g:         true,
 				Apn:         "Historical APN 2",
-				Country:     "Historical Country",
+				Country:     TestCountry,
 				Data:        0.4,
 				EffectiveAt: time.Now().Add(-12 * time.Hour),
 				Imsi:        2,
 				Lte:         true,
-				Provider:    "Historical Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.1,
 				SmsMt:       0.1,
 				Vpmn:        "HIST2",
@@ -482,46 +501,46 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 				X2g:         true,
 				X3g:         true,
 				Apn:         "Historical APN 3",
-				Country:     "Historical Country",
+				Country:     TestCountry,
 				Data:        0.5,
 				EffectiveAt: time.Now(),
 				Imsi:        3,
 				Lte:         true,
-				Provider:    "Historical Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.15,
 				SmsMt:       0.15,
 				Vpmn:        "HIST3",
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesHistoryByCountry", TestCountry, TestProvider, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.Len(t, rate.Rates, 3)
-		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-		assert.Equal(t, mockFilters.Country, rate.Rates[1].Country)
-		assert.Equal(t, mockFilters.Country, rate.Rates[2].Country)
-		assert.Equal(t, mockFilters.Provider, rate.Rates[0].Provider)
-		assert.Equal(t, mockFilters.Provider, rate.Rates[1].Provider)
-		assert.Equal(t, mockFilters.Provider, rate.Rates[2].Provider)
+		assert.Equal(t, TestCountry, rate.Rates[0].Country)
+		assert.Equal(t, TestCountry, rate.Rates[1].Country)
+		assert.Equal(t, TestCountry, rate.Rates[2].Country)
+		assert.Equal(t, TestProvider, rate.Rates[0].Provider)
+		assert.Equal(t, TestProvider, rate.Rates[1].Provider)
+		assert.Equal(t, TestProvider, rate.Rates[2].Provider)
 		baseRateRepo.AssertExpectations(t)
 	})
 
 	t.Run("Empty history result", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "No History Country",
-			Provider:    "No History Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return([]db.BaseRate{}, nil)
+		baseRateRepo.On("GetBaseRatesHistoryByCountry", TestCountry, TestProvider, TestSimType).Return([]db.BaseRate{}, nil)
 
 		rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -533,10 +552,10 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	t.Run("Response structure validation", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "Structure Test Country",
-			Provider:    "Structure Test Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
@@ -547,22 +566,22 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 				X2g:         true,
 				X3g:         false,
 				X5g:         true,
-				Apn:         "Test APN",
-				Country:     "Structure Test Country",
+				Apn:         TestApn,
+				Country:     TestCountry,
 				Data:        0.75,
 				EffectiveAt: time.Now(),
 				Imsi:        12345,
 				Lte:         true,
 				LteM:        false,
-				Provider:    "Structure Test Provider",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.25,
 				SmsMt:       0.30,
 				Vpmn:        "TEST_VPMN",
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesHistoryByCountry", TestCountry, TestProvider, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -570,11 +589,10 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 		assert.Len(t, rate.Rates, 1)
 
 		resultRate := rate.Rates[0]
-		assert.Equal(t, "Structure Test Country", resultRate.Country)
-		assert.Equal(t, "Structure Test Provider", resultRate.Provider)
-		assert.Equal(t, "ukama_data", resultRate.SimType)
-		assert.Equal(t, "Test APN", resultRate.Apn)
-		assert.Equal(t, "TEST_VPMN", resultRate.Vpmn)
+		assert.Equal(t, TestCountry, resultRate.Country)
+		assert.Equal(t, TestProvider, resultRate.Provider)
+		assert.Equal(t, TestSimType.String(), resultRate.SimType)
+		assert.Equal(t, TestApn, resultRate.Apn)
 		assert.Equal(t, int64(12345), resultRate.Imsi)
 		assert.Equal(t, 0.75, resultRate.Data)
 		assert.Equal(t, 0.25, resultRate.SmsMo)
@@ -594,16 +612,16 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 	t.Run("Database error", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByCountryRequest{
-			Country:     "Error Country",
-			Provider:    "Error Provider",
-			EffectiveAt: "2022-12-01T00:00:00Z",
-			SimType:     "ukama_data",
+			Country:     TestCountry,
+			Provider:    TestProvider,
+			EffectiveAt: TestEffectiveAt,
+			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesHistoryByCountry", mockFilters.Country, mockFilters.Provider, ukama.SimTypeUkamaData).Return(nil, assert.AnError)
+		baseRateRepo.On("GetBaseRatesHistoryByCountry", TestCountry, TestProvider, TestSimType).Return(nil, assert.AnError)
 
 		rate, err := s.GetBaseRatesHistoryByCountry(context.TODO(), mockFilters)
 		assert.Error(t, err)
@@ -616,13 +634,13 @@ func TestBaseRateService_GetBaseRatesHistoryByCountry(t *testing.T) {
 func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 	t.Run("Success case", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Tycho crater",
-			Provider: "ABC Tel",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -637,44 +655,44 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 			{
 				X2g:         true,
 				X3g:         true,
-				Apn:         "Manual entry required",
-				Country:     "Tycho crater",
-				Data:        0.4,
+				Apn:         TestApn,
+				Country:     TestCountry,
+				Data:        TestData,
 				EffectiveAt: time.Now(),
-				Imsi:        1,
+				Imsi:        TestImsi,
 				Lte:         true,
-				Provider:    "ABC Tel",
-				SimType:     ukama.SimTypeUkamaData,
-				SmsMo:       0.1,
-				SmsMt:       0.1,
-				Vpmn:        "TTC",
+				Provider:    TestProvider,
+				SimType:     TestSimType,
+				SmsMo:       TestSmsMo,
+				SmsMt:       TestSmsMt,
+				Vpmn:        TestVpmn,
 			},
 			{
 				X2g:         false,
 				X3g:         true,
 				Apn:         "Another APN",
-				Country:     "Tycho crater",
+				Country:     TestCountry,
 				Data:        0.5,
 				EffectiveAt: time.Now().Add(time.Hour),
 				Imsi:        2,
 				Lte:         true,
-				Provider:    "ABC Tel",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.15,
 				SmsMt:       0.15,
 				Vpmn:        "TTC2",
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesForPeriod", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesForPeriod", TestCountry, TestProvider, from, to, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesForPeriod(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.NotNil(t, rate)
 		assert.Len(t, rate.Rates, 2)
-		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-		assert.Equal(t, mockFilters.Provider, rate.Rates[0].Provider)
-		assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
+		assert.Equal(t, TestCountry, rate.Rates[0].Country)
+		assert.Equal(t, TestProvider, rate.Rates[0].Provider)
+		assert.Equal(t, TestSimType.String(), rate.Rates[0].SimType)
 		baseRateRepo.AssertExpectations(t)
 	})
 
@@ -703,9 +721,9 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				msgbusClient := &mbmocks.MsgBusServiceClient{}
 				mockFilters := &pb.GetBaseRatesByPeriodRequest{
-					Country:  "Tycho crater",
-					Provider: "ABC Tel",
-					SimType:  "ukama_data",
+					Country:  TestCountry,
+					Provider: TestProvider,
+					SimType:  TestSimType.String(),
 					From:     tt.from,
 					To:       tt.to,
 				}
@@ -723,13 +741,13 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 
 	t.Run("Empty result", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Non-existent Country",
-			Provider: "Non-existent Provider",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -740,7 +758,7 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 		from, _ := time.Parse(time.RFC3339, fromTime)
 		to, _ := time.Parse(time.RFC3339, toTime)
 
-		baseRateRepo.On("GetBaseRatesForPeriod", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return([]db.BaseRate{}, nil)
+		baseRateRepo.On("GetBaseRatesForPeriod", TestCountry, TestProvider, from, to, TestSimType).Return([]db.BaseRate{}, nil)
 
 		rate, err := s.GetBaseRatesForPeriod(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -751,13 +769,13 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 
 	t.Run("Database error", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Error Country",
-			Provider: "Error Provider",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -768,7 +786,7 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 		from, _ := time.Parse(time.RFC3339, fromTime)
 		to, _ := time.Parse(time.RFC3339, toTime)
 
-		baseRateRepo.On("GetBaseRatesForPeriod", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return(nil, assert.AnError)
+		baseRateRepo.On("GetBaseRatesForPeriod", TestCountry, TestProvider, from, to, TestSimType).Return(nil, assert.AnError)
 
 		rate, err := s.GetBaseRatesForPeriod(context.TODO(), mockFilters)
 		assert.Error(t, err)
@@ -802,9 +820,9 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				msgbusClient := &mbmocks.MsgBusServiceClient{}
 				mockFilters := &pb.GetBaseRatesByPeriodRequest{
-					Country:  "Test Country",
-					Provider: "Test Provider",
-					SimType:  "ukama_data",
+					Country:  TestCountry,
+					Provider: TestProvider,
+					SimType:  TestSimType.String(),
 					From:     tc.from,
 					To:       tc.to,
 				}
@@ -824,13 +842,13 @@ func TestBaseRateService_GetBaseRatesForPeriod(t *testing.T) {
 func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 	t.Run("Success case", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Tycho crater",
-			Provider: "ABC Tel",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -846,43 +864,43 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 				X2g:         true,
 				X3g:         true,
 				Apn:         "Package APN",
-				Country:     "Tycho crater",
-				Data:        0.4,
+				Country:     TestCountry,
+				Data:        TestData,
 				EffectiveAt: time.Now(),
-				Imsi:        1,
+				Imsi:        TestImsi,
 				Lte:         true,
-				Provider:    "ABC Tel",
-				SimType:     ukama.SimTypeUkamaData,
-				SmsMo:       0.1,
-				SmsMt:       0.1,
-				Vpmn:        "TTC",
+				Provider:    TestProvider,
+				SimType:     TestSimType,
+				SmsMo:       TestSmsMo,
+				SmsMt:       TestSmsMt,
+				Vpmn:        TestVpmn,
 			},
 			{
 				X2g:         false,
 				X3g:         true,
 				Apn:         "Premium Package APN",
-				Country:     "Tycho crater",
+				Country:     TestCountry,
 				Data:        0.8,
 				EffectiveAt: time.Now().Add(time.Hour),
 				Imsi:        2,
 				Lte:         true,
-				Provider:    "ABC Tel",
-				SimType:     ukama.SimTypeUkamaData,
+				Provider:    TestProvider,
+				SimType:     TestSimType,
 				SmsMo:       0.2,
 				SmsMt:       0.2,
 				Vpmn:        "TTC2",
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesForPackage", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRatesForPackage", TestCountry, TestProvider, from, to, TestSimType).Return(expectedRates, nil)
 
 		rate, err := s.GetBaseRatesForPackage(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.NotNil(t, rate)
 		assert.Len(t, rate.Rates, 2)
-		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
-		assert.Equal(t, mockFilters.Provider, rate.Rates[0].Provider)
-		assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
+		assert.Equal(t, TestCountry, rate.Rates[0].Country)
+		assert.Equal(t, TestProvider, rate.Rates[0].Provider)
+		assert.Equal(t, TestSimType.String(), rate.Rates[0].SimType)
 		baseRateRepo.AssertExpectations(t)
 	})
 
@@ -911,9 +929,9 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				msgbusClient := &mbmocks.MsgBusServiceClient{}
 				mockFilters := &pb.GetBaseRatesByPeriodRequest{
-					Country:  "Tycho crater",
-					Provider: "ABC Tel",
-					SimType:  "ukama_data",
+					Country:  TestCountry,
+					Provider: TestProvider,
+					SimType:  TestSimType.String(),
 					From:     tt.from,
 					To:       tt.to,
 				}
@@ -931,13 +949,13 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 
 	t.Run("Empty result", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Non-existent Country",
-			Provider: "Non-existent Provider",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -948,7 +966,7 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 		from, _ := time.Parse(time.RFC3339, fromTime)
 		to, _ := time.Parse(time.RFC3339, toTime)
 
-		baseRateRepo.On("GetBaseRatesForPackage", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return([]db.BaseRate{}, nil)
+		baseRateRepo.On("GetBaseRatesForPackage", TestCountry, TestProvider, from, to, TestSimType).Return([]db.BaseRate{}, nil)
 
 		rate, err := s.GetBaseRatesForPackage(context.TODO(), mockFilters)
 		assert.NoError(t, err)
@@ -960,9 +978,9 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 	t.Run("Invalid from time", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Tycho crater",
-			Provider: "ABC Tel",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     "invalid-time-format",
 			To:       time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 		}
@@ -979,9 +997,9 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 	t.Run("Invalid to time", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Tycho crater",
-			Provider: "ABC Tel",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     time.Now().Add(-24 * time.Hour).Format(time.RFC3339),
 			To:       "invalid-time-format",
 		}
@@ -997,13 +1015,13 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 
 	t.Run("Database error", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		fromTime := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
-		toTime := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		fromTime := TestFromTime
+		toTime := TestToTime
 
 		mockFilters := &pb.GetBaseRatesByPeriodRequest{
-			Country:  "Error Country",
-			Provider: "Error Provider",
-			SimType:  "ukama_data",
+			Country:  TestCountry,
+			Provider: TestProvider,
+			SimType:  TestSimType.String(),
 			From:     fromTime,
 			To:       toTime,
 		}
@@ -1014,7 +1032,7 @@ func TestBaseRateService_GetBaseRatesForPackage(t *testing.T) {
 		from, _ := time.Parse(time.RFC3339, fromTime)
 		to, _ := time.Parse(time.RFC3339, toTime)
 
-		baseRateRepo.On("GetBaseRatesForPackage", mockFilters.Country, mockFilters.Provider, from, to, ukama.SimTypeUkamaData).Return(nil, assert.AnError)
+		baseRateRepo.On("GetBaseRatesForPackage", TestCountry, TestProvider, from, to, TestSimType).Return(nil, assert.AnError)
 
 		rate, err := s.GetBaseRatesForPackage(context.TODO(), mockFilters)
 		assert.Error(t, err)
