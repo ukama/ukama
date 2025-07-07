@@ -475,6 +475,48 @@ func TestSiteRepo_Add(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("NestedFunctionError", func(t *testing.T) {
+		// Arrange
+		site := &db_site.Site{
+			Id:            uuid.NewV4(),
+			Name:          "valid-site-nested-error",
+			Location:      testLocation,
+			NetworkId:     testNetworkId,
+			BackhaulId:    testBackhaulId,
+			SpectrumId:    testSpectrumId,
+			PowerId:       testPowerId,
+			AccessId:      testAccessId,
+			SwitchId:      testSwitchId,
+			IsDeactivated: false,
+			Latitude:      testLatitude,
+			Longitude:     testLongitude,
+			InstallDate:   testInstallDate,
+			CreatedAt:     time.Now(),
+			UpdatedAt:     time.Now(),
+			DeletedAt:     gorm.DeletedAt{},
+		}
+
+		mock, r, err := createMockDBAndRepo(t)
+		assert.NoError(t, err)
+
+		// Define a nested function that returns an error
+		nestedFunc := func(site *db_site.Site, tx *gorm.DB) error {
+			return fmt.Errorf("nested function validation failed")
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectRollback()
+
+		// Act
+		err = r.Add(site, nestedFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "nested function validation failed")
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestSiteRepo_GetSiteCount(t *testing.T) {
@@ -574,6 +616,35 @@ func TestSiteRepo_Update(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("DatabaseUpdateError", func(t *testing.T) {
+		// Arrange
+		site := &updatedTestSite
+		mock, r, err := createMockDBAndRepo(t)
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(`^UPDATE "sites" SET`).
+			WithArgs(
+				site.Name, site.Location, site.NetworkId, site.BackhaulId,
+				site.SpectrumId, site.PowerId, site.AccessId, site.SwitchId,
+				site.IsDeactivated, site.Latitude, site.Longitude, site.InstallDate,
+				sqlmock.AnyArg(),
+				sqlmock.AnyArg(),
+				site.Id,
+			).
+			WillReturnError(fmt.Errorf("database constraint violation: site not found"))
+		mock.ExpectRollback()
+
+		// Act
+		err = r.Update(site)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "database constraint violation: site not found")
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
