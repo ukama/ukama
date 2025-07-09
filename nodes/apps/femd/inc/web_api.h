@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include "gpio_controller.h"
 #include "i2c_controller.h"
+#include "jserdes.h"
+#include "http_status.h"
 
 #define WEB_API_DEFAULT_PORT  8080
 #define WEB_API_MAX_PAYLOAD   1024
@@ -33,7 +35,7 @@ typedef struct {
 } HTTPRequest;
 
 typedef struct {
-    int status_code;
+    HttpStatusCode status_code;
     char content_type[64];
     char body[WEB_API_MAX_RESPONSE];
     int body_length;
@@ -47,9 +49,9 @@ void web_api_cleanup(WebAPIServer *server);
 
 // HTTP handling
 int web_api_handle_request(WebAPIServer *server, const HTTPRequest *request, HTTPResponse *response);
-void web_api_set_response(HTTPResponse *response, int status, const char *content_type, const char *body);
-void web_api_set_json_response(HTTPResponse *response, int status, const char *json_body);
-void web_api_set_error_response(HTTPResponse *response, int status, const char *error_message);
+void web_api_set_response(HTTPResponse *response, HttpStatusCode status, const char *content_type, const char *body);
+void web_api_set_json_response(HTTPResponse *response, HttpStatusCode status, JsonObj *json);
+void web_api_set_error_response(HTTPResponse *response, HttpStatusCode status, const char *error_message);
 
 // GPIO API endpoints
 int api_gpio_get_status(WebAPIServer *server, int fem_unit, HTTPResponse *response);
@@ -74,11 +76,6 @@ int api_eeprom_read_serial(WebAPIServer *server, int fem_unit, HTTPResponse *res
 
 // Utility functions
 int parse_fem_unit(const char *path);
-bool parse_json_bool(const char *json, const char *key);
-float parse_json_float(const char *json, const char *key);
-int parse_json_string(const char *json, const char *key, char *value, size_t max_len);
-void create_json_gpio_status(const GpioStatus *status, char *json_buffer, size_t buffer_size);
-void create_json_error(const char *error_message, char *json_buffer, size_t buffer_size);
-void create_json_success(const char *message, char *json_buffer, size_t buffer_size);
+JsonObj *parse_request_json(const char *json_str);
 
 #endif /* WEB_API_H */

@@ -18,6 +18,8 @@
 
 #include "web_api.h"
 #include "femd.h"
+#include "jserdes.h"
+#include "http_status.h"
 
 static pthread_t server_thread;
 static int server_socket = -1;
@@ -261,7 +263,7 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
 
     // Handle CORS preflight
     if (strcmp(request->method, "OPTIONS") == 0) {
-        web_api_set_response(response, 200, "text/plain", "");
+        web_api_set_response(response, HttpStatus_OK, "text/plain", "");
         return STATUS_OK;
     }
 
@@ -269,7 +271,7 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
     if (strncmp(request->path, "/v1/fem/", 8) == 0) {
         int fem_unit = parse_fem_unit(request->path);
         if (fem_unit < 1 || fem_unit > 2) {
-            web_api_set_error_response(response, 400, "Invalid FEM unit");
+            web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid FEM unit");
             return STATUS_OK;
         }
 
@@ -282,32 +284,85 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
         // GPIO control: POST /v1/fem/{1,2}/gpio/{pin}
         if (strcmp(request->method, "POST") == 0) {
             if (strstr(request->path, "/gpio/tx_rf")) {
-                bool enable = parse_json_bool(request->body, "enable");
-                return api_gpio_set_control(server, fem_unit, "tx_rf", enable, response);
+                JsonObj *json = parse_request_json(request->body);
+                if (json) {
+                    bool enable = json_is_true(json_object_get(json, "enable"));
+                    int result = api_gpio_set_control(server, fem_unit, "tx_rf", enable, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                    return STATUS_NOK;
+                }
             }
             else if (strstr(request->path, "/gpio/rx_rf")) {
-                bool enable = parse_json_bool(request->body, "enable");
-                return api_gpio_set_control(server, fem_unit, "rx_rf", enable, response);
+                JsonObj *json = parse_request_json(request->body);
+                if (json) {
+                    bool enable = json_is_true(json_object_get(json, "enable"));
+                    int result = api_gpio_set_control(server, fem_unit, "rx_rf", enable, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                    return STATUS_NOK;
+                }
             }
             else if (strstr(request->path, "/gpio/pa_vds")) {
-                bool enable = parse_json_bool(request->body, "enable");
-                return api_gpio_set_control(server, fem_unit, "pa_vds", enable, response);
+                JsonObj *json = parse_request_json(request->body);
+                if (json) {
+                    bool enable = json_is_true(json_object_get(json, "enable"));
+                    int result = api_gpio_set_control(server, fem_unit, "pa_vds", enable, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                    return STATUS_NOK;
+                }
             }
             else if (strstr(request->path, "/gpio/tx_rfpal")) {
-                bool enable = parse_json_bool(request->body, "enable");
-                return api_gpio_set_control(server, fem_unit, "tx_rfpal", enable, response);
+                JsonObj *json = parse_request_json(request->body);
+                if (json) {
+                    bool enable = json_is_true(json_object_get(json, "enable"));
+                    int result = api_gpio_set_control(server, fem_unit, "tx_rfpal", enable, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                    return STATUS_NOK;
+                }
             }
             else if (strstr(request->path, "/gpio/28v_vds")) {
-                bool enable = parse_json_bool(request->body, "enable");
-                return api_gpio_set_control(server, fem_unit, "28v_vds", enable, response);
+                JsonObj *json = parse_request_json(request->body);
+                if (json) {
+                    bool enable = json_is_true(json_object_get(json, "enable"));
+                    int result = api_gpio_set_control(server, fem_unit, "28v_vds", enable, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                    return STATUS_NOK;
+                }
             }
         }
 
         // I2C DAC endpoints: POST /v1/fem/{1,2}/i2c/dac
         if (strcmp(request->method, "POST") == 0 && strstr(request->path, "/i2c/dac")) {
-            float carrier_voltage = parse_json_float(request->body, "carrier_voltage");
-            float peak_voltage = parse_json_float(request->body, "peak_voltage");
-            return api_dac_set_voltages(server, fem_unit, carrier_voltage, peak_voltage, response);
+            JsonObj *json = parse_request_json(request->body);
+            if (json) {
+                float carrier_voltage = 0.0f, peak_voltage = 0.0f;
+                if (json_deserialize_dac_control(json, &carrier_voltage, &peak_voltage) == JSON_OK) {
+                    int result = api_dac_set_voltages(server, fem_unit, carrier_voltage, peak_voltage, response);
+                    json_free(&json);
+                    return result;
+                } else {
+                    json_free(&json);
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid DAC control parameters");
+                    return STATUS_NOK;
+                }
+            } else {
+                web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                return STATUS_NOK;
+            }
         }
 
         // I2C DAC status: GET /v1/fem/{1,2}/i2c/dac
@@ -330,25 +385,49 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
             return api_eeprom_read_serial(server, fem_unit, response);
         }
         if (strcmp(request->method, "POST") == 0 && strstr(request->path, "/i2c/eeprom")) {
-            char serial[32];
-            if (parse_json_string(request->body, "serial", serial, sizeof(serial)) > 0) {
-                return api_eeprom_write_serial(server, fem_unit, serial, response);
+            JsonObj *json = parse_request_json(request->body);
+            if (json) {
+                char *serial = NULL;
+                if (json_deserialize_eeprom_write(json, &serial) == JSON_OK && serial) {
+                    int result = api_eeprom_write_serial(server, fem_unit, serial, response);
+                    free(serial);
+                    json_free(&json);
+                    return result;
+                } else {
+                    json_free(&json);
+                    web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid serial number");
+                    return STATUS_NOK;
+                }
+            } else {
+                web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid JSON");
+                return STATUS_NOK;
             }
         }
     }
 
     // Health check endpoint
     if (strcmp(request->method, "GET") == 0 && strcmp(request->path, "/health") == 0) {
-        web_api_set_json_response(response, 200, "{\"status\":\"healthy\",\"service\":\"femd\"}");
+        JsonObj *health_json = NULL;
+        ServiceInfo info = {
+            .service_name = "femd",
+            .version = FEM_VERSION,
+            .uptime = 0  // TODO: Calculate actual uptime
+        };
+        if (json_serialize_service_info(&health_json, &info) == JSON_OK) {
+            web_api_set_json_response(response, HttpStatus_OK, health_json);
+            json_free(&health_json);
+        } else {
+            web_api_set_error_response(response, HttpStatus_InternalServerError, "Failed to serialize health info");
+        }
         return STATUS_OK;
     }
 
     // Default 404
-    web_api_set_error_response(response, 404, "Endpoint not found");
+    web_api_set_error_response(response, HttpStatus_NotFound, "Endpoint not found");
     return STATUS_OK;
 }
 
-void web_api_set_response(HTTPResponse *response, int status, const char *content_type, const char *body) {
+void web_api_set_response(HTTPResponse *response, HttpStatusCode status, const char *content_type, const char *body) {
     response->status_code = status;
     strncpy(response->content_type, content_type, sizeof(response->content_type) - 1);
     if (body) {
@@ -360,14 +439,28 @@ void web_api_set_response(HTTPResponse *response, int status, const char *conten
     }
 }
 
-void web_api_set_json_response(HTTPResponse *response, int status, const char *json_body) {
-    web_api_set_response(response, status, "application/json", json_body);
+void web_api_set_json_response(HTTPResponse *response, HttpStatusCode status, JsonObj *json) {
+    if (json) {
+        char *json_str = json_dumps(json, JSON_COMPACT);
+        if (json_str) {
+            web_api_set_response(response, status, "application/json", json_str);
+            free(json_str);
+        } else {
+            web_api_set_response(response, HttpStatus_InternalServerError, "application/json", "{\"error\":\"JSON serialization failed\"}");
+        }
+    } else {
+        web_api_set_response(response, HttpStatus_InternalServerError, "application/json", "{\"error\":\"No JSON data\"}");
+    }
 }
 
-void web_api_set_error_response(HTTPResponse *response, int status, const char *error_message) {
-    char json_error[512];
-    create_json_error(error_message, json_error, sizeof(json_error));
-    web_api_set_json_response(response, status, json_error);
+void web_api_set_error_response(HTTPResponse *response, HttpStatusCode status, const char *error_message) {
+    JsonObj *json_error = NULL;
+    if (json_serialize_error(&json_error, status, error_message) == JSON_OK) {
+        web_api_set_json_response(response, status, json_error);
+        json_free(&json_error);
+    } else {
+        web_api_set_response(response, status, "application/json", "{\"error\":\"Error serialization failed\"}");
+    }
 }
 
 // Utility functions
@@ -375,6 +468,21 @@ int parse_fem_unit(const char *path) {
     if (strstr(path, "/fem/1/")) return 1;
     if (strstr(path, "/fem/2/")) return 2;
     return -1;
+}
+
+JsonObj *parse_request_json(const char *json_str) {
+    if (!json_str || strlen(json_str) == 0) {
+        return NULL;
+    }
+    
+    json_error_t error;
+    JsonObj *json = json_loads(json_str, 0, &error);
+    if (!json) {
+        usys_log_error("JSON parse error: %s", error.text);
+        return NULL;
+    }
+    
+    return json;
 }
 
 bool parse_json_bool(const char *json, const char *key) {
@@ -472,13 +580,18 @@ int api_gpio_get_status(WebAPIServer *server, int fem_unit, HTTPResponse *respon
     GpioStatus status;
     
     if (gpio_get_all_status(server->gpio_controller, unit, &status) != STATUS_OK) {
-        web_api_set_error_response(response, 500, "Failed to read GPIO status");
+        web_api_set_error_response(response, HttpStatus_InternalServerError, "Failed to read GPIO status");
         return STATUS_NOK;
     }
     
-    char json_response[512];
-    create_json_gpio_status(&status, json_response, sizeof(json_response));
-    web_api_set_json_response(response, 200, json_response);
+    JsonObj *json_response = NULL;
+    if (json_serialize_gpio_status(&json_response, &status, fem_unit) == JSON_OK) {
+        web_api_set_json_response(response, HttpStatus_OK, json_response);
+        json_free(&json_response);
+    } else {
+        web_api_set_error_response(response, HttpStatus_InternalServerError, "Failed to serialize GPIO status");
+        return STATUS_NOK;
+    }
     
     return STATUS_OK;
 }
@@ -503,18 +616,20 @@ int api_gpio_set_control(WebAPIServer *server, int fem_unit, const char *gpio_na
         result = gpio_set_28v_vds(server->gpio_controller, unit, enable);
     }
     else {
-        web_api_set_error_response(response, 400, "Invalid GPIO name");
+        web_api_set_error_response(response, HttpStatus_BadRequest, "Invalid GPIO name");
         return STATUS_NOK;
     }
     
     if (result == STATUS_OK) {
-        char json_response[256];
-        snprintf(json_response, sizeof(json_response), 
-                 "{\"status\":\"success\",\"gpio\":\"%s\",\"enabled\":%s,\"fem_unit\":%d}",
-                 gpio_name, enable ? "true" : "false", fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        JsonObj *json_response = NULL;
+        if (json_serialize_success(&json_response, "GPIO control successful") == JSON_OK) {
+            web_api_set_json_response(response, HttpStatus_OK, json_response);
+            json_free(&json_response);
+        } else {
+            web_api_set_error_response(response, HttpStatus_InternalServerError, "Failed to serialize success response");
+        }
     } else {
-        web_api_set_error_response(response, 500, "Failed to set GPIO");
+        web_api_set_error_response(response, HttpStatus_InternalServerError, "Failed to set GPIO");
     }
     
     return result;
