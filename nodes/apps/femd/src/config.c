@@ -7,6 +7,7 @@
  */
 
 #include "config.h"
+#include "femd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +15,7 @@
 
 int config_init(Config *config) {
     if (!config) {
-        printf("[ERROR] Null config pointer\n");
+        usys_log_error("Null config pointer");
         return STATUS_NOK;
     }
     
@@ -26,12 +27,12 @@ int config_init(Config *config) {
     config->configFile = strdup(DEF_CONFIG_FILE);
     
     if (!config->serviceName || !config->logLevel || !config->configFile) {
-        printf("[ERROR] Failed to allocate memory for config\n");
+        usys_log_error("Failed to allocate memory for config");
         config_free(config);
         return STATUS_NOK;
     }
     
-    printf("[DEBUG] Configuration initialized with defaults\n");
+    usys_log_debug("Configuration initialized with defaults");
     return STATUS_OK;
 }
 
@@ -55,35 +56,35 @@ void config_free(Config *config) {
         config->configFile = NULL;
     }
     
-    printf("[DEBUG] Configuration freed\n");
+    usys_log_debug("Configuration freed");
 }
 
 int config_load_from_file(Config *config, const char *filename) {
     if (!config || !filename) {
-        printf("[ERROR] Null config or filename\n");
+        usys_log_error("Null config or filename");
         return STATUS_NOK;
     }
     
     if (access(filename, F_OK) != 0) {
-        printf("[WARN] Config file does not exist: %s\n", filename);
+        usys_log_warn("Config file does not exist: %s", filename);
         return STATUS_NOK;
     }
     
     FILE *file = fopen(filename, "r");
     if (!file) {
-        printf("[ERROR] Failed to open config file: %s\n", filename);
+        usys_log_error("Failed to open config file: %s", filename);
         return STATUS_NOK;
     }
     
     char buffer[1024];
     if (!fgets(buffer, sizeof(buffer), file)) {
-        printf("[ERROR] Failed to read config file: %s\n", filename);
+        usys_log_error("Failed to read config file: %s", filename);
         fclose(file);
         return STATUS_NOK;
     }
     fclose(file);
     
-    printf("[DEBUG] Read config file: %s\n", filename);
+    usys_log_debug("Read config file: %s", filename);
     
     char *line = strtok(buffer, "\n");
     while (line != NULL) {
@@ -110,16 +111,16 @@ int config_load_from_file(Config *config, const char *filename) {
             if (strcmp(key, "service_name") == 0) {
                 if (config->serviceName) free(config->serviceName);
                 config->serviceName = strdup(value);
-                printf("[DEBUG] Config: service_name = %s\n", value);
+                usys_log_debug("Config: service_name = %s", value);
             } else if (strcmp(key, "service_port") == 0) {
                 config->servicePort = atoi(value);
-                printf("[DEBUG] Config: service_port = %d\n", config->servicePort);
+                usys_log_debug("Config: service_port = %d", config->servicePort);
             } else if (strcmp(key, "log_level") == 0) {
                 if (config->logLevel) free(config->logLevel);
                 config->logLevel = strdup(value);
-                printf("[DEBUG] Config: log_level = %s\n", value);
+                usys_log_debug("Config: log_level = %s", value);
             } else {
-                printf("[DEBUG] Unknown config key: %s\n", key);
+                usys_log_debug("Unknown config key: %s", key);
             }
         }
         
@@ -131,13 +132,13 @@ int config_load_from_file(Config *config, const char *filename) {
 
 void config_print(const Config *config) {
     if (!config) {
-        printf("[ERROR] Null config pointer\n");
+        usys_log_error("Null config pointer");
         return;
     }
     
-    printf("[INFO] Configuration:\n");
-    printf("[INFO]   Service Name: %s\n", config->serviceName ? config->serviceName : "NULL");
-    printf("[INFO]   Service Port: %d\n", config->servicePort);
-    printf("[INFO]   Log Level: %s\n", config->logLevel ? config->logLevel : "NULL");
-    printf("[INFO]   Config File: %s\n", config->configFile ? config->configFile : "NULL");
+    usys_log_info("Configuration:");
+    usys_log_info("  Service Name: %s", config->serviceName ? config->serviceName : "NULL");
+    usys_log_info("  Service Port: %d", config->servicePort);
+    usys_log_info("  Log Level: %s", config->logLevel ? config->logLevel : "NULL");
+    usys_log_info("  Config File: %s", config->configFile ? config->configFile : "NULL");
 }
