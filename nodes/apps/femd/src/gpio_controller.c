@@ -7,6 +7,7 @@
  */
 
 #include "gpio_controller.h"
+#include "femd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,12 +34,12 @@ static int gpio_write_value(const char *basePath, FemUnit unit, GpioPin pin, boo
     FILE *file;
     
     if (unit < FEM_UNIT_1 || unit > FEM_UNIT_2) {
-        printf("[ERROR] Invalid FEM unit: %d\n", unit);
+        usys_log_error("Invalid FEM unit: %d", unit);
         return STATUS_NOK;
     }
     
     if (pin >= GPIO_MAX) {
-        printf("[ERROR] Invalid GPIO pin: %d\n", pin);
+        usys_log_error("Invalid GPIO pin: %d", pin);
         return STATUS_NOK;
     }
     
@@ -49,18 +50,18 @@ static int gpio_write_value(const char *basePath, FemUnit unit, GpioPin pin, boo
     
     file = fopen(path, "w");
     if (!file) {
-        printf("[ERROR] Failed to open GPIO %s for writing\n", path);
+        usys_log_error("Failed to open GPIO %s for writing", path);
         return STATUS_NOK;
     }
     
     if (fprintf(file, "%s", valueStr) < 0) {
-        printf("[ERROR] Failed to write value %s to GPIO %s\n", valueStr, path);
+        usys_log_error("Failed to write value %s to GPIO %s", valueStr, path);
         fclose(file);
         return STATUS_NOK;
     }
     
     fclose(file);
-    printf("[DEBUG] GPIO %s set to %s\n", path, valueStr);
+    usys_log_debug("GPIO %s set to %s", path, valueStr);
     return STATUS_OK;
 }
 
@@ -70,17 +71,17 @@ static int gpio_read_value(const char *basePath, FemUnit unit, GpioPin pin, bool
     FILE *file;
     
     if (unit < FEM_UNIT_1 || unit > FEM_UNIT_2) {
-        printf("[ERROR] Invalid FEM unit: %d\n", unit);
+        usys_log_error("Invalid FEM unit: %d", unit);
         return STATUS_NOK;
     }
     
     if (pin >= GPIO_MAX) {
-        printf("[ERROR] Invalid GPIO pin: %d\n", pin);
+        usys_log_error("Invalid GPIO pin: %d", pin);
         return STATUS_NOK;
     }
     
     if (!value) {
-        printf("[ERROR] Null value pointer\n");
+        usys_log_error("Null value pointer");
         return STATUS_NOK;
     }
     
@@ -89,12 +90,12 @@ static int gpio_read_value(const char *basePath, FemUnit unit, GpioPin pin, bool
     
     file = fopen(path, "r");
     if (!file) {
-        printf("[ERROR] Failed to open GPIO %s for reading\n", path);
+        usys_log_error("Failed to open GPIO %s for reading", path);
         return STATUS_NOK;
     }
     
     if (!fgets(buffer, sizeof(buffer), file)) {
-        printf("[ERROR] Failed to read from GPIO %s\n", path);
+        usys_log_error("Failed to read from GPIO %s", path);
         fclose(file);
         return STATUS_NOK;
     }
@@ -104,13 +105,13 @@ static int gpio_read_value(const char *basePath, FemUnit unit, GpioPin pin, bool
     int intValue = atoi(buffer);
     *value = (intValue != 0);
     
-    printf("[DEBUG] GPIO %s read value: %d\n", path, intValue);
+    usys_log_debug("GPIO %s read value: %d", path, intValue);
     return STATUS_OK;
 }
 
 int gpio_controller_init(GpioController *controller, const char *basePath) {
     if (!controller) {
-        printf("[ERROR] Null controller pointer\n");
+        usys_log_error("Null controller pointer");
         return STATUS_NOK;
     }
     
@@ -121,23 +122,23 @@ int gpio_controller_init(GpioController *controller, const char *basePath) {
     memset(controller, 0, sizeof(GpioController));
     controller->basePath = strdup(basePath);
     if (!controller->basePath) {
-        printf("[ERROR] Failed to allocate memory for GPIO base path\n");
+        usys_log_error("Failed to allocate memory for GPIO base path");
         return STATUS_NOK;
     }
     
     char testPath[GPIO_PATH_MAX_LEN];
     snprintf(testPath, sizeof(testPath), "%s/%s", basePath, fem_unit_names[FEM_UNIT_1]);
     if (access(testPath, F_OK) != 0) {
-        printf("[WARN] GPIO path %s does not exist\n", testPath);
+        usys_log_warn("GPIO path %s does not exist", testPath);
     }
     
     snprintf(testPath, sizeof(testPath), "%s/%s", basePath, fem_unit_names[FEM_UNIT_2]);
     if (access(testPath, F_OK) != 0) {
-        printf("[WARN] GPIO path %s does not exist\n", testPath);
+        usys_log_warn("GPIO path %s does not exist", testPath);
     }
     
     controller->initialized = true;
-    printf("[INFO] GPIO controller initialized with base path: %s\n", basePath);
+    usys_log_info("GPIO controller initialized with base path: %s", basePath);
     
     return STATUS_OK;
 }
@@ -153,12 +154,12 @@ void gpio_controller_cleanup(GpioController *controller) {
     }
     
     controller->initialized = false;
-    printf("[INFO] GPIO controller cleanup completed\n");
+    usys_log_info("GPIO controller cleanup completed");
 }
 
 int gpio_set_28v_vds(GpioController *controller, FemUnit unit, bool enable) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -167,7 +168,7 @@ int gpio_set_28v_vds(GpioController *controller, FemUnit unit, bool enable) {
 
 int gpio_set_tx_rf(GpioController *controller, FemUnit unit, bool enable) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -176,7 +177,7 @@ int gpio_set_tx_rf(GpioController *controller, FemUnit unit, bool enable) {
 
 int gpio_set_rx_rf(GpioController *controller, FemUnit unit, bool enable) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -185,7 +186,7 @@ int gpio_set_rx_rf(GpioController *controller, FemUnit unit, bool enable) {
 
 int gpio_set_pa_vds(GpioController *controller, FemUnit unit, bool enable) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -194,7 +195,7 @@ int gpio_set_pa_vds(GpioController *controller, FemUnit unit, bool enable) {
 
 int gpio_set_tx_rfpal(GpioController *controller, FemUnit unit, bool enable) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -203,7 +204,7 @@ int gpio_set_tx_rfpal(GpioController *controller, FemUnit unit, bool enable) {
 
 int gpio_get_psu_pgood(GpioController *controller, FemUnit unit, bool *status) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -212,7 +213,7 @@ int gpio_get_psu_pgood(GpioController *controller, FemUnit unit, bool *status) {
 
 int gpio_get_all_status(GpioController *controller, FemUnit unit, GpioStatus *status) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
@@ -262,7 +263,7 @@ int gpio_get_all_status(GpioController *controller, FemUnit unit, GpioStatus *st
 
 int gpio_disable_pa(GpioController *controller, FemUnit unit) {
     if (!controller || !controller->initialized) {
-        printf("[ERROR] GPIO controller not initialized\n");
+        usys_log_error("GPIO controller not initialized");
         return STATUS_NOK;
     }
     
