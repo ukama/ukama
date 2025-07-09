@@ -21,9 +21,27 @@
 #include <stdbool.h>
 
 #include "config.h"
+#include "version.h"
+#include "gpio_controller.h"
+#include "i2c_controller.h"
+#include "web_api.h"
+#include "yaml_config.h"
+#include "safety_monitor.h"
+
+// Use simple printf on macOS for development
+#ifdef __APPLE__
+#define usys_log_info(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
+#define usys_log_error(fmt, ...) printf("[ERROR] " fmt "\n", ##__VA_ARGS__)
+#define usys_log_warn(fmt, ...) printf("[WARN] " fmt "\n", ##__VA_ARGS__)
+#define usys_log_debug(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
+#define usys_log_set_service(name) ((void)0)
+#define usys_log_remote_init(name) ((void)0)
+#else
+#include "usys_log.h"
+#endif
 
 #define SERVICE_NAME              "femd"
-#define FEM_VERSION               "0.1.0"
+#define FEM_VERSION               VERSION
 
 #define STATUS_OK                 0
 #define STATUS_NOK               -1

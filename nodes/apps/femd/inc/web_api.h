@@ -1,0 +1,84 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2024-present, Ukama Inc.
+ */
+
+#ifndef WEB_API_H
+#define WEB_API_H
+
+#include <stdbool.h>
+#include <stdint.h>
+#include "gpio_controller.h"
+#include "i2c_controller.h"
+
+#define WEB_API_DEFAULT_PORT  8080
+#define WEB_API_MAX_PAYLOAD   1024
+#define WEB_API_MAX_RESPONSE  2048
+
+typedef struct {
+    int port;
+    bool running;
+    GpioController *gpio_controller;
+    I2CController *i2c_controller;
+} WebAPIServer;
+
+typedef struct {
+    char method[16];
+    char path[256];
+    char body[WEB_API_MAX_PAYLOAD];
+    int content_length;
+} HTTPRequest;
+
+typedef struct {
+    int status_code;
+    char content_type[64];
+    char body[WEB_API_MAX_RESPONSE];
+    int body_length;
+} HTTPResponse;
+
+// Server management
+int web_api_init(WebAPIServer *server, int port, GpioController *gpio_ctrl, I2CController *i2c_ctrl);
+int web_api_start(WebAPIServer *server);
+void web_api_stop(WebAPIServer *server);
+void web_api_cleanup(WebAPIServer *server);
+
+// HTTP handling
+int web_api_handle_request(WebAPIServer *server, const HTTPRequest *request, HTTPResponse *response);
+void web_api_set_response(HTTPResponse *response, int status, const char *content_type, const char *body);
+void web_api_set_json_response(HTTPResponse *response, int status, const char *json_body);
+void web_api_set_error_response(HTTPResponse *response, int status, const char *error_message);
+
+// GPIO API endpoints
+int api_gpio_get_status(WebAPIServer *server, int fem_unit, HTTPResponse *response);
+int api_gpio_set_control(WebAPIServer *server, int fem_unit, const char *gpio_name, bool enable, HTTPResponse *response);
+
+// I2C DAC API endpoints  
+int api_dac_set_voltages(WebAPIServer *server, int fem_unit, float carrier_voltage, float peak_voltage, HTTPResponse *response);
+int api_dac_get_config(WebAPIServer *server, int fem_unit, HTTPResponse *response);
+
+// I2C Temperature API endpoints
+int api_temp_read(WebAPIServer *server, int fem_unit, HTTPResponse *response);
+int api_temp_set_threshold(WebAPIServer *server, int fem_unit, float threshold, HTTPResponse *response);
+
+// I2C ADC API endpoints
+int api_adc_read_channel(WebAPIServer *server, int fem_unit, int channel, HTTPResponse *response);
+int api_adc_read_all(WebAPIServer *server, int fem_unit, HTTPResponse *response);
+int api_adc_set_safety(WebAPIServer *server, float max_reverse_power, float max_current, HTTPResponse *response);
+
+// I2C EEPROM API endpoints
+int api_eeprom_write_serial(WebAPIServer *server, int fem_unit, const char *serial, HTTPResponse *response);
+int api_eeprom_read_serial(WebAPIServer *server, int fem_unit, HTTPResponse *response);
+
+// Utility functions
+int parse_fem_unit(const char *path);
+bool parse_json_bool(const char *json, const char *key);
+float parse_json_float(const char *json, const char *key);
+int parse_json_string(const char *json, const char *key, char *value, size_t max_len);
+void create_json_gpio_status(const GpioStatus *status, char *json_buffer, size_t buffer_size);
+void create_json_error(const char *error_message, char *json_buffer, size_t buffer_size);
+void create_json_success(const char *message, char *json_buffer, size_t buffer_size);
+
+#endif /* WEB_API_H */

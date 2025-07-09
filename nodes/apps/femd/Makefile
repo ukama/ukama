@@ -23,7 +23,12 @@ PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
 VENDOR_PKG=
-PLATFORM=
+# Skip platform build on macOS for development
+ifeq ($(shell uname -s),Darwin)
+    PLATFORM=
+else
+    PLATFORM=platform
+endif
 
 CFLAGS=-c
 CFLAGS+=-g
@@ -41,18 +46,30 @@ LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 LIBS+=-lpthread
+# Skip usys on macOS for development
+ifneq ($(shell uname -s),Darwin)
+    LIBS+=-lusys
+endif
 
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
 
-CC = gcc
+XCC := $(XGCCPATH)$(XGCC)
+XLD := $(XGCCPATH)$(XLD)
+
+ifeq ($(XCC),)
+    XCC := gcc
+endif
 
 .PHONY: all clean $(TARGET_EXEC)
 
 all: version.h static.h $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(TARGET_OBJFILES)
-	$(CC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
+ifneq ($(PLATFORM),)
+	$(MAKE) -C $(PLATFORM_DIR)
+endif
+	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 version.h:
@@ -62,7 +79,7 @@ static.h:
 	$(NODES_DIR)/utils/scripts/generate_static.sh
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(XCC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) version.h static.h
