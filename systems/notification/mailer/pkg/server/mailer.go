@@ -365,7 +365,7 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 
 	defer func() {
 		if err := client.Close(); err != nil {
-			log.Warnf("failed to close smtp client connection: %V", err)
+			log.Warnf("failed to close smtp client connection: %v", err)
 		}
 	}()
 
@@ -415,7 +415,7 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 
 		defer func() {
 			if err := writer.Close(); err != nil {
-				log.Warnf("failed to close mail writer: %V", err)
+				log.Warnf("failed to close mail writer: %v", err)
 			}
 		}()
 
