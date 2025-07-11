@@ -14,34 +14,32 @@ import (
 	"strings"
 )
 
-// TODO: should be renamed as MailStatus instead of just status + update the new name
-// on all other dependent services that are using the current name: status to MailStatus
-type Status uint8
+type MailStatus uint8
 
 // TODO: we need unknown as a sentinel value for all non valid values of the universe. We cannot
 // rely on pending (which is a valid status)
 const (
-	Pending Status = iota
-	Success
-	Failed
-	Retry
-	Process
+	MailStatusPending MailStatus = iota
+	MailStatusSuccess
+	MailStatusFailed
+	MailStatusRetry
+	MailStatusProcess
 
 	MaxRetryCount = 3
 )
 
-func (s *Status) Scan(value interface{}) error {
-	*s = Status(uint8(value.(int64)))
+func (s *MailStatus) Scan(value interface{}) error {
+	*s = MailStatus(uint8(value.(int64)))
 
 	return nil
 }
 
-func (s Status) Value() (driver.Value, error) {
+func (s MailStatus) Value() (driver.Value, error) {
 	return int64(s), nil
 }
 
-func (s Status) String() string {
-	t := map[Status]string{0: "pending", 1: "success", 2: "failed", 3: "retry", 4: "process"}
+func (s MailStatus) String() string {
+	t := map[MailStatus]string{0: "pending", 1: "success", 2: "failed", 3: "retry", 4: "process"}
 
 	v, ok := t[s]
 	if !ok {
@@ -51,20 +49,18 @@ func (s Status) String() string {
 	return v
 }
 
-// TODO: should be renamed as ParseMailStatus + make all necessary updates on other dependent services
-// that are using this.
-func ParseStatus(value string) Status {
+func ParseMailStatus(value string) MailStatus {
 	i, err := strconv.Atoi(value)
 	if err == nil {
-		return Status(i)
+		return MailStatus(i)
 	}
 
-	t := map[string]Status{"pending": 0, "success": 1, "failed": 2, "retry": 3, "process": 4}
+	t := map[string]MailStatus{"pending": 0, "success": 1, "failed": 2, "retry": 3, "process": 4}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
-		return Status(0)
+		return MailStatus(0)
 	}
 
-	return Status(v)
+	return MailStatus(v)
 }

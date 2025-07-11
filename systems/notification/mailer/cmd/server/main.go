@@ -13,22 +13,19 @@ import (
 	"os"
 
 	"github.com/num30/config"
-
-	"github.com/ukama/ukama/systems/notification/mailer/pkg/server"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/notification/mailer/pkg"
-
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/notification/mailer/cmd/version"
-
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/server"
 
-	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
 var serviceConfig *pkg.Config

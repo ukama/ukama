@@ -21,16 +21,17 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
 const (
@@ -70,7 +71,7 @@ type MailerServer struct {
 func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.MailerConfig, templatesPath string) (*MailerServer, error) {
 	templates, err := template.ParseGlob(filepath.Join(templatesPath, "*"+templateExtension))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load email templates: %v", err)
+		return nil, fmt.Errorf("failed to load email templates: %w", err)
 	}
 
 	server := &MailerServer{
@@ -104,7 +105,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		TemplateName: req.TemplateName,
 		Values:       s.convertValues(req.Values),
 		MailId:       mailId,
-		Attachments:  make([]struct {
+		Attachments: make([]struct {
 			Filename    string
 			ContentType string
 			Content     []byte
@@ -124,7 +125,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		}
 	}
 
-	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.Pending, req.Values); err != nil {
+	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.MailStatusPending, req.Values); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
@@ -147,14 +148,14 @@ func (s *MailerServer) processEmailQueue() {
 			continue
 		}
 
-		if email.Status == ukama.Success {
+		if email.Status == ukama.MailStatusSuccess {
 			log.Warnf("Skipping email with mailId %v as it has already been sent", payload.MailId)
 			continue
 		}
 
 		if err := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 			MailId:        payload.MailId,
-			Status:        ukama.Process,
+			Status:        ukama.MailStatusProcess,
 			RetryCount:    0,
 			NextRetryTime: nil,
 			UpdatedAt:     time.Now(),
@@ -171,7 +172,7 @@ func (s *MailerServer) processEmailQueue() {
 			nextRetry := time.Now().Add(InitialBackoff)
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        ukama.Retry,
+				Status:        ukama.MailStatusRetry,
 				RetryCount:    1,
 				NextRetryTime: &nextRetry,
 				UpdatedAt:     time.Now(),
@@ -179,11 +180,12 @@ func (s *MailerServer) processEmailQueue() {
 				log.Errorf("Failed to update email status: %v", updateErr)
 			}
 		} else {
-			log.Infof("Email sent successfully to %v with template %s and mail ID %v", payload.To, payload.TemplateName, payload.MailId)
+			log.Infof("Email sent successfully to %v with template %s and mail ID %v",
+				payload.To, payload.TemplateName, payload.MailId)
 
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        ukama.Success,
+				Status:        ukama.MailStatusSuccess,
 				SentAt:        &now,
 				RetryCount:    0,
 				NextRetryTime: nil,
@@ -196,7 +198,7 @@ func (s *MailerServer) processEmailQueue() {
 	}
 }
 
-func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.Status) error {
+func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.MailStatus) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:    mailId,
 		Status:    status,
@@ -207,7 +209,7 @@ func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.Status) error
 func (s *MailerServer) updateRetryStatus(mailId uuid.UUID, retryCount int, nextRetryTime *time.Time) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:        mailId,
-		Status:        ukama.Retry,
+		Status:        ukama.MailStatusRetry,
 		RetryCount:    retryCount,
 		NextRetryTime: nextRetryTime,
 		UpdatedAt:     time.Now(),
@@ -223,7 +225,7 @@ func (s *MailerServer) processRetries() {
 		}
 
 		for _, email := range emails {
-			if email.Status == ukama.Success || email.Status == ukama.Process {
+			if email.Status == ukama.MailStatusSuccess || email.Status == ukama.MailStatusProcess {
 				continue
 			}
 
@@ -234,14 +236,13 @@ func (s *MailerServer) processRetries() {
 			if email.RetryCount >= MaxRetryCount {
 				log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
 
-				if err := s.updateStatus(email.MailId, ukama.Failed); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.MailStatusFailed); err != nil {
 					log.WithError(err).Error("Failed to update email status")
-
 				}
 				continue
 			}
 
-			if err := s.updateStatus(email.MailId, ukama.Process); err != nil {
+			if err := s.updateStatus(email.MailId, ukama.MailStatusProcess); err != nil {
 				log.WithError(err).Error("Failed to update status to processing")
 				continue
 			}
@@ -261,7 +262,7 @@ func (s *MailerServer) processRetries() {
 				}
 			} else {
 				log.WithField("mailId", email.MailId).Info("Retry successful")
-				if err := s.updateStatus(email.MailId, ukama.Success); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.MailStatusSuccess); err != nil {
 					log.WithError(err).Error("Failed to update email status")
 				}
 			}
@@ -296,9 +297,9 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.Status, values map[string]string) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.MailStatus, values map[string]string) error {
 	var nextRetryTime *time.Time
-	if status == ukama.Failed {
+	if status == ukama.MailStatusFailed {
 		t := time.Now().Add(InitialBackoff)
 		nextRetryTime = &t
 	}
@@ -324,51 +325,65 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 func (s *MailerServer) attemptSendEmail(payload *EmailPayload) error {
 	body, err := s.prepareMsg(payload)
 	if err != nil {
-		return fmt.Errorf("failed to prepare email body: %v", err)
+		return fmt.Errorf("failed to prepare email body: %w", err)
 	}
 
 	client, err := s.createSMTPClient(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create SMTP client: %v", err)
+		return fmt.Errorf("failed to create SMTP client: %w", err)
 	}
-	defer client.Close()
+
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Warnf("failed to close smtp client connection: %v", err)
+		}
+	}()
 
 	return s.sendWithClient(client, payload, body)
 }
 
 func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, error) {
-
 	dialer := &net.Dialer{
 		Timeout: dialTimeout,
 	}
 
 	conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", s.mailer.Host, s.mailer.Port))
 	if err != nil {
-		return nil, fmt.Errorf("SMTP connection failed: %v", err)
+		return nil, fmt.Errorf("SMTP connection failed: %w", err)
 	}
+
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Warnf("failed to close net client connection: %v", err)
+		}
+	}()
 
 	client, err := smtp.NewClient(conn, s.mailer.Host)
 	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("SMTP client creation failed: %v", err)
+		return nil, fmt.Errorf("SMTP client creation failed: %w", err)
 	}
+
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Warnf("failed to close smtp client connection: %v", err)
+		}
+	}()
 
 	config := &tls.Config{
 		ServerName:         s.mailer.Host,
 		InsecureSkipVerify: false,
 	}
+
 	if err := client.StartTLS(config); err != nil {
-		client.Close()
-		return nil, fmt.Errorf("TLS setup failed: %v", err)
+		return nil, fmt.Errorf("TLS setup failed: %w", err)
 	}
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 	if err := client.Auth(auth); err != nil {
-		client.Close()
 		if strings.Contains(err.Error(), "authentication failed") {
-			return nil, fmt.Errorf("SMTP authentication failed, check credentials: %v", err)
+			return nil, fmt.Errorf("SMTP authentication failed, check credentials: %w", err)
 		}
-		return nil, fmt.Errorf("SMTP authentication error: %v", err)
+		return nil, fmt.Errorf("SMTP authentication error: %w", err)
 	}
 
 	return client, nil
@@ -381,32 +396,37 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 	errCh := make(chan error, 1)
 	go func() {
 		if err := client.Mail(s.mailer.From); err != nil {
-			errCh <- fmt.Errorf("failed to set sender: %v", err)
+			errCh <- fmt.Errorf("failed to set sender: %w", err)
 			return
 		}
 
 		for _, recipient := range payload.To {
 			if err := client.Rcpt(recipient); err != nil {
-				errCh <- fmt.Errorf("failed to add recipient %s: %v", recipient, err)
+				errCh <- fmt.Errorf("failed to add recipient %s: %w", recipient, err)
 				return
 			}
 		}
 
 		writer, err := client.Data()
 		if err != nil {
-			errCh <- fmt.Errorf("failed to create message writer: %v", err)
+			errCh <- fmt.Errorf("failed to create message writer: %w", err)
 			return
 		}
-		defer writer.Close()
+
+		defer func() {
+			if err := writer.Close(); err != nil {
+				log.Warnf("failed to close mail writer: %v", err)
+			}
+		}()
 
 		if _, err := writer.Write(body.Bytes()); err != nil {
-			errCh <- fmt.Errorf("failed to write message body: %v", err)
+			errCh <- fmt.Errorf("failed to write message body: %w", err)
 			return
 		}
 
 		if err := client.Quit(); err != nil {
 			if !strings.Contains(err.Error(), "250 Ok") {
-				errCh <- fmt.Errorf("failed to close SMTP connection: %v", err)
+				errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
 				return
 			}
 		}
@@ -416,121 +436,119 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 
 	select {
 	case <-sendCtx.Done():
-		return fmt.Errorf("send operation timed out: %v", sendCtx.Err())
+		return fmt.Errorf("send operation timed out: %w", sendCtx.Err())
 	case err := <-errCh:
 		return err
 	}
 }
 
 func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
-    var body bytes.Buffer
-    
-    // First, execute the template to get the email content
-    tmplName := data.TemplateName
-    if filepath.Ext(tmplName) == "" {
-        tmplName += templateExtension
-    }
+	var body bytes.Buffer
 
-    t := s.templates.Lookup(tmplName)
-    if t == nil {
-        return body, fmt.Errorf("template %s not found", tmplName)
-    }
+	// First, execute the template to get the email content
+	tmplName := data.TemplateName
+	if filepath.Ext(tmplName) == "" {
+		tmplName += templateExtension
+	}
 
-   
-    templateData := struct {
-        Values map[string]interface{}
-    }{
-        Values: data.Values,
-    }
+	t := s.templates.Lookup(tmplName)
+	if t == nil {
+		return body, fmt.Errorf("template %s not found", tmplName)
+	}
 
-    var templateBuffer bytes.Buffer
-    if err := t.Execute(&templateBuffer, templateData); err != nil {
-        log.WithError(err).Error("Template execution failed")
-        return body, fmt.Errorf("failed to execute template: %v", err)
-    }
+	templateData := struct {
+		Values map[string]interface{}
+	}{
+		Values: data.Values,
+	}
 
+	var templateBuffer bytes.Buffer
+	if err := t.Execute(&templateBuffer, templateData); err != nil {
+		log.WithError(err).Error("Template execution failed")
+		return body, fmt.Errorf("failed to execute template: %w", err)
+	}
 
-    templateContent := templateBuffer.String()
-    parts := strings.SplitN(templateContent, "\n\n", 2)
-    
-    headers := make(map[string]string)
-    if len(parts) > 1 {
-        headerLines := strings.Split(parts[0], "\n")
-        for _, line := range headerLines {
-            if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
-                key := strings.TrimSpace(line[:colonIdx])
-                value := strings.TrimSpace(line[colonIdx+1:])
-                headers[strings.ToLower(key)] = value
-            }
-        }
-    }
+	templateContent := templateBuffer.String()
+	parts := strings.SplitN(templateContent, "\n\n", 2)
 
-    htmlContent := ""
-    if len(parts) > 1 {
-        htmlContent = parts[1]
-    } else {
-        htmlContent = parts[0]
-    }
+	headers := make(map[string]string)
+	if len(parts) > 1 {
+		headerLines := strings.Split(parts[0], "\n")
+		for _, line := range headerLines {
+			if colonIdx := strings.Index(line, ":"); colonIdx != -1 {
+				key := strings.TrimSpace(line[:colonIdx])
+				value := strings.TrimSpace(line[colonIdx+1:])
+				headers[strings.ToLower(key)] = value
+			}
+		}
+	}
 
-    fmt.Fprintf(&body, "From: %s\r\n", s.mailer.From)
-    fmt.Fprintf(&body, "To: %s\r\n", strings.Join(data.To, ", "))
-    
-    subjectTemplate := template.Must(template.New("subject").Parse(headers["subject"]))
-    var processedSubject bytes.Buffer
-    if err := subjectTemplate.Execute(&processedSubject, templateData); err != nil {
-        log.WithError(err).Error("Subject template execution failed")
-        processedSubject.WriteString("No Subject")
-    }
-    
-    fmt.Fprintf(&body, "Subject: %s\r\n", processedSubject.String())
-    fmt.Fprintf(&body, "MIME-Version: 1.0\r\n")
+	htmlContent := ""
+	if len(parts) > 1 {
+		htmlContent = parts[1]
+	} else {
+		htmlContent = parts[0]
+	}
 
-    boundary := "UkamaMailBoundary" + uuid.NewV4().String()
-    
-    if len(data.Attachments) > 0 {
-        fmt.Fprintf(&body, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n", boundary)
-        fmt.Fprintf(&body, "--%s\r\n", boundary)
-        
-        fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
-        fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
-        fmt.Fprintf(&body, "%s\r\n", htmlContent)
+	fmt.Fprintf(&body, "From: %s\r\n", s.mailer.From)
+	fmt.Fprintf(&body, "To: %s\r\n", strings.Join(data.To, ", "))
 
-        for _, att := range data.Attachments {
-            fmt.Fprintf(&body, "\r\n--%s\r\n", boundary)
-            fmt.Fprintf(&body, "Content-Type: %s; name=\"%s\"\r\n", att.ContentType, att.Filename)
-            fmt.Fprintf(&body, "Content-Disposition: attachment; filename=\"%s\"\r\n", att.Filename)
-            fmt.Fprintf(&body, "Content-Transfer-Encoding: base64\r\n\r\n")
+	subjectTemplate := template.Must(template.New("subject").Parse(headers["subject"]))
+	var processedSubject bytes.Buffer
+	if err := subjectTemplate.Execute(&processedSubject, templateData); err != nil {
+		log.WithError(err).Error("Subject template execution failed")
+		processedSubject.WriteString("No Subject")
+	}
 
-            content := att.Content
-            encoder := base64.StdEncoding
-            encoded := make([]byte, encoder.EncodedLen(len(content)))
-            encoder.Encode(encoded, content)
-            
-            lineLength := 76
-            for i := 0; i < len(encoded); i += lineLength {
-                end := i + lineLength
-                if end > len(encoded) {
-                    end = len(encoded)
-                }
-                fmt.Fprintf(&body, "%s\r\n", encoded[i:end])
-            }
-        }
-        
-        fmt.Fprintf(&body, "\r\n--%s--\r\n", boundary)
-    } else {
-        fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
-        fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
-        fmt.Fprintf(&body, "%s\r\n", htmlContent)
-    }
+	fmt.Fprintf(&body, "Subject: %s\r\n", processedSubject.String())
+	fmt.Fprintf(&body, "MIME-Version: 1.0\r\n")
 
-    if pkg.IsDebugMode {
-        log.WithFields(log.Fields{
-            "finalBody": body.String(),
-            "values":   data.Values,
-        }).Debug("Email body prepared")
-    }
+	boundary := "UkamaMailBoundary" + uuid.NewV4().String()
 
-    return body, nil
+	if len(data.Attachments) > 0 {
+		fmt.Fprintf(&body, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n", boundary)
+		fmt.Fprintf(&body, "--%s\r\n", boundary)
+
+		fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
+		fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
+		fmt.Fprintf(&body, "%s\r\n", htmlContent)
+
+		for _, att := range data.Attachments {
+			fmt.Fprintf(&body, "\r\n--%s\r\n", boundary)
+			fmt.Fprintf(&body, "Content-Type: %s; name=\"%s\"\r\n", att.ContentType, att.Filename)
+			fmt.Fprintf(&body, "Content-Disposition: attachment; filename=\"%s\"\r\n", att.Filename)
+			fmt.Fprintf(&body, "Content-Transfer-Encoding: base64\r\n\r\n")
+
+			content := att.Content
+			encoder := base64.StdEncoding
+			encoded := make([]byte, encoder.EncodedLen(len(content)))
+			encoder.Encode(encoded, content)
+
+			lineLength := 76
+			for i := 0; i < len(encoded); i += lineLength {
+				end := i + lineLength
+				if end > len(encoded) {
+					end = len(encoded)
+				}
+				fmt.Fprintf(&body, "%s\r\n", encoded[i:end])
+			}
+		}
+
+		fmt.Fprintf(&body, "\r\n--%s--\r\n", boundary)
+	} else {
+		fmt.Fprintf(&body, "Content-Type: text/html; charset=UTF-8\r\n")
+		fmt.Fprintf(&body, "Content-Transfer-Encoding: 7bit\r\n\r\n")
+		fmt.Fprintf(&body, "%s\r\n", htmlContent)
+	}
+
+	if pkg.IsDebugMode {
+		log.WithFields(log.Fields{
+			"finalBody": body.String(),
+			"values":    data.Values,
+		}).Debug("Email body prepared")
+	}
+
+	return body, nil
 }
 
 func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
@@ -554,6 +572,6 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 		MailId:       mail.MailId.String(),
 		TemplateName: mail.TemplateName,
 		SentAt:       mail.CreatedAt.String(),
-		Status:       pb.Status(pb.Status_value[ukama.Status(mail.Status).String()]),
+		Status:       pb.Status(pb.Status_value[ukama.MailStatus(mail.Status).String()]),
 	}, nil
 }

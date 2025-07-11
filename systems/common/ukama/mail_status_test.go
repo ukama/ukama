@@ -17,34 +17,34 @@ import (
 
 func TestMailStatus(t *testing.T) {
 	t.Run("MailStatusValidString", func(tt *testing.T) {
-		successMailStatus := ukama.ParseStatus("success")
+		successMailStatus := ukama.ParseMailStatus("success")
 
 		assert.NotNil(t, successMailStatus)
-		assert.Equal(t, successMailStatus.String(), ukama.Success.String())
+		assert.Equal(t, successMailStatus.String(), ukama.MailStatusSuccess.String())
 		assert.Equal(t, uint8(successMailStatus), uint8(1))
 	})
 
 	t.Run("MailStatusValidNumber", func(tt *testing.T) {
-		failedMailStatus := ukama.ParseStatus("2")
+		failedMailStatus := ukama.ParseMailStatus("2")
 
 		assert.NotNil(t, failedMailStatus)
 		assert.Equal(t, uint8(failedMailStatus), uint8(2))
-		assert.Equal(t, failedMailStatus.String(), ukama.Failed.String())
+		assert.Equal(t, failedMailStatus.String(), ukama.MailStatusFailed.String())
 	})
 
 	t.Run("MailStatusNonValidString", func(tt *testing.T) {
-		unsupportedMailStatus := ukama.ParseStatus("failure")
+		unsupportedMailStatus := ukama.ParseMailStatus("failure")
 
 		assert.NotNil(t, unsupportedMailStatus)
-		assert.Equal(t, unsupportedMailStatus.String(), ukama.Pending.String())
+		assert.Equal(t, unsupportedMailStatus.String(), ukama.MailStatusPending.String())
 		assert.Equal(t, uint8(unsupportedMailStatus), uint8(0))
 	})
 
 	t.Run("MailStatusNonValidNumber", func(tt *testing.T) {
-		unknownMailStatus := ukama.Status(uint8(10))
+		unknownMailStatus := ukama.MailStatus(uint8(10))
 
 		assert.NotNil(t, unknownMailStatus)
-		assert.Equal(t, unknownMailStatus.String(), ukama.Pending.String())
+		assert.Equal(t, unknownMailStatus.String(), ukama.MailStatusPending.String())
 		assert.Equal(t, uint8(unknownMailStatus), uint8(10))
 	})
 }
