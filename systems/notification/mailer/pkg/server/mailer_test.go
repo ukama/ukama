@@ -22,9 +22,10 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/mocks"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
 func setupServer(t *testing.T) (*MailerServer, *mocks.MailerRepo) {
@@ -68,14 +69,14 @@ func TestGetEmailById(t *testing.T) {
 					MailId:       testMailId,
 					Email:        "test@example.com",
 					TemplateName: "test-template",
-					Status:       ukama.Success,
+					Status:       ukama.MailStatusSuccess,
 					SentAt:       &testTime,
 				}, nil).Once()
 			},
 			want: &pb.GetEmailByIdResponse{
 				MailId:       testMailId.String(),
 				TemplateName: "test-template",
-				Status:       pb.Status(pb.Status_value[ukama.Success.String()]),
+				Status:       pb.Status(pb.Status_value[ukama.MailStatusSuccess.String()]),
 				SentAt:       testTime.String(),
 			},
 			wantErr: false,
@@ -139,7 +140,7 @@ func (s *MailerServer) Stop() {
 func TestProcessEmailQueue(t *testing.T) {
 	server, mockRepo := setupServer(t)
 	mailId := uuid.NewV4()
-	mockRepo.On("GetEmailById", mailId).Return(&db.Mailing{Status: ukama.Pending}, nil)
+	mockRepo.On("GetEmailById", mailId).Return(&db.Mailing{Status: ukama.MailStatusPending}, nil)
 	mockRepo.On("UpdateEmailStatus", mock.Anything).Return(nil)
 
 	go server.processEmailQueue()
