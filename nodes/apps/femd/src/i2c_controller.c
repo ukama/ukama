@@ -173,9 +173,10 @@ int i2c_detect_device(int bus, uint8_t device_addr) {
         return STATUS_NOK;
     }
     
-    // Try to read one byte to detect device presence
-    uint8_t dummy;
-    int result = (read(fd, &dummy, 1) >= 0) ? STATUS_OK : STATUS_NOK;
+    // Try a no-data write to detect device presence
+    // This is more reliable than a read as it doesn't block on devices
+    // that don't support reads or require specific command sequences
+    int result = (write(fd, NULL, 0) >= 0) ? STATUS_OK : STATUS_NOK;
     
     close(fd);
     return result;
