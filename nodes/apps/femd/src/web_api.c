@@ -182,12 +182,23 @@ static int web_api_parse_request(const char *raw_request, HTTPRequest *request) 
 
     memset(request, 0, sizeof(HTTPRequest));
 
-    char *line = strtok((char*)raw_request, "\r\n");
+    // Create a copy of the request to avoid modifying the original
+    size_t request_len = strlen(raw_request);
+    char *request_copy = malloc(request_len + 1);
+    if (!request_copy) {
+        usys_log_error("Failed to allocate memory for request parsing");
+        return STATUS_NOK;
+    }
+    strcpy(request_copy, raw_request);
+
+    char *line = strtok(request_copy, "\r\n");
     if (!line) {
+        free(request_copy);
         return STATUS_NOK;
     }
 
     if (sscanf(line, "%15s %255s", request->method, request->path) != 2) {
+        free(request_copy);
         return STATUS_NOK;
     }
 
@@ -206,6 +217,7 @@ static int web_api_parse_request(const char *raw_request, HTTPRequest *request) 
         }
     }
 
+    free(request_copy);
     return STATUS_OK;
 }
 

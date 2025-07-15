@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <math.h>
 #include <stddef.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/i2c-dev.h>
+#include <errno.h>
 
 #include "i2c_controller.h"
 #include "femd.h"
@@ -67,124 +71,114 @@ int i2c_get_bus_for_fem(FemUnit unit) {
 }
 
 int i2c_write_bytes(int bus, uint8_t device_addr, uint8_t reg, const uint8_t *data, size_t len) {
-    char command[256];
-    char data_str[128] = "";
+    char device_path[32];
+    int fd;
+    uint8_t buffer[256];
     
-    for (size_t i = 0; i < len; i++) {
-        char temp[8];
-        snprintf(temp, sizeof(temp), "0x%02X ", data[i]);
-        strcat(data_str, temp);
-    }
-    
-    if (strlen(data_str) > 0) {
-        data_str[strlen(data_str) - 1] = '\0';
-    }
-    
-    snprintf(command, sizeof(command), 
-             "i2cset -y %d 0x%02X 0x%02X %s i", 
-             bus, device_addr, reg, data_str);
-    
-    usys_log_debug("I2C write: %s", command);
-    
-    int result = system(command);
-    if (result != 0) {
-        usys_log_error("I2C write failed: bus=%d, addr=0x%02X, reg=0x%02X", 
-                       bus, device_addr, reg);
+    if (len > 254) {  // Reserve space for register byte
+        usys_log_error("I2C write data too long: %zu bytes", len);
         return STATUS_NOK;
     }
+    
+    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
+    
+    fd = open(device_path, O_RDWR);
+    if (fd < 0) {
+        usys_log_error("Failed to open I2C device %s: %s", device_path, strerror(errno));
+        return STATUS_NOK;
+    }
+    
+    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", device_addr, strerror(errno));
+        close(fd);
+        return STATUS_NOK;
+    }
+    
+    buffer[0] = reg;
+    memcpy(&buffer[1], data, len);
+    
+    if (write(fd, buffer, len + 1) != (ssize_t)(len + 1)) {
+        usys_log_error("I2C write failed: bus=%d, addr=0x%02X, reg=0x%02X: %s", 
+                       bus, device_addr, reg, strerror(errno));
+        close(fd);
+        return STATUS_NOK;
+    }
+    
+    close(fd);
+    usys_log_debug("I2C write successful: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu", 
+                   bus, device_addr, reg, len);
     
     return STATUS_OK;
 }
 
 int i2c_read_bytes(int bus, uint8_t device_addr, uint8_t reg, uint8_t *data, size_t len) {
-    char command[256];
-    FILE *fp;
+    char device_path[32];
+    int fd;
     
-    if (len == 1) {
-        snprintf(command, sizeof(command), 
-                 "i2cget -y %d 0x%02X 0x%02X", 
-                 bus, device_addr, reg);
-    } else {
-        snprintf(command, sizeof(command), 
-                 "i2cdump -y -r 0x%02X-0x%02X %d 0x%02X", 
-                 reg, reg + (uint8_t)len - 1, bus, device_addr);
-    }
-    
-    usys_log_debug("I2C read: %s", command);
-    
-    fp = popen(command, "r");
-    if (!fp) {
-        usys_log_error("Failed to execute I2C read command");
+    if (!data || len == 0) {
+        usys_log_error("Invalid parameters for I2C read");
         return STATUS_NOK;
     }
     
-    if (len == 1) {
-        char buffer[32];
-        if (fgets(buffer, sizeof(buffer), fp)) {
-            unsigned int value;
-            if (sscanf(buffer, "0x%x", &value) == 1) {
-                data[0] = (uint8_t)value;
-                pclose(fp);
-                return STATUS_OK;
-            }
-        }
-    } else {
-        char line[256];
-        bool found_data = false;
-        size_t bytes_read = 0;
-        
-        while (fgets(line, sizeof(line), fp) && bytes_read < len) {
-            if (strstr(line, ":")) {
-                char *colon = strchr(line, ':');
-                if (colon) {
-                    char *token = strtok(colon + 1, " ");
-                    while (token && bytes_read < len) {
-                        if (strlen(token) >= 2 && strncmp(token, "--", 2) != 0) {
-                            unsigned int value;
-                            if (sscanf(token, "%x", &value) == 1) {
-                                data[bytes_read++] = (uint8_t)value;
-                                found_data = true;
-                            }
-                        }
-                        token = strtok(NULL, " ");
-                    }
-                }
-            }
-        }
-        
-        pclose(fp);
-        return found_data ? STATUS_OK : STATUS_NOK;
+    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
+    
+    fd = open(device_path, O_RDWR);
+    if (fd < 0) {
+        usys_log_error("Failed to open I2C device %s: %s", device_path, strerror(errno));
+        return STATUS_NOK;
     }
     
-    pclose(fp);
-    usys_log_error("I2C read failed: bus=%d, addr=0x%02X, reg=0x%02X", 
-                   bus, device_addr, reg);
-    return STATUS_NOK;
+    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", device_addr, strerror(errno));
+        close(fd);
+        return STATUS_NOK;
+    }
+    
+    // Write register address
+    if (write(fd, &reg, 1) != 1) {
+        usys_log_error("Failed to write register address: %s", strerror(errno));
+        close(fd);
+        return STATUS_NOK;
+    }
+    
+    // Read data
+    if (read(fd, data, len) != (ssize_t)len) {
+        usys_log_error("I2C read failed: bus=%d, addr=0x%02X, reg=0x%02X: %s", 
+                       bus, device_addr, reg, strerror(errno));
+        close(fd);
+        return STATUS_NOK;
+    }
+    
+    close(fd);
+    usys_log_debug("I2C read successful: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu", 
+                   bus, device_addr, reg, len);
+    
+    return STATUS_OK;
 }
 
 int i2c_detect_device(int bus, uint8_t device_addr) {
-    char command[128];
-    FILE *fp;
-    char buffer[1024];
+    char device_path[32];
+    int fd;
     
-    snprintf(command, sizeof(command), "i2cdetect -y %d", bus);
+    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
     
-    fp = popen(command, "r");
-    if (!fp) {
+    fd = open(device_path, O_RDWR);
+    if (fd < 0) {
+        usys_log_debug("Failed to open I2C device %s: %s", device_path, strerror(errno));
         return STATUS_NOK;
     }
     
-    while (fgets(buffer, sizeof(buffer), fp)) {
-        char addr_str[8];
-        snprintf(addr_str, sizeof(addr_str), "%02x", device_addr);
-        if (strstr(buffer, addr_str)) {
-            pclose(fp);
-            return STATUS_OK;
-        }
+    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
+        close(fd);
+        return STATUS_NOK;
     }
     
-    pclose(fp);
-    return STATUS_NOK;
+    // Try to read one byte to detect device presence
+    uint8_t dummy;
+    int result = (read(fd, &dummy, 1) >= 0) ? STATUS_OK : STATUS_NOK;
+    
+    close(fd);
+    return result;
 }
 
 int dac_init(I2CController *controller, FemUnit unit) {
