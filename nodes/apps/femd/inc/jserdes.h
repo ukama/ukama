@@ -72,7 +72,7 @@ typedef struct {
     float max_reverse_power;
     float max_current;
     float max_temperature;
-} SafetyConfig;
+} SafetyThresholds;
 
 int json_serialize_error(JsonObj **json, int code, const char *str);
 int json_serialize_success(JsonObj **json, const char *message);
@@ -82,14 +82,14 @@ int json_serialize_temperature_data(JsonObj **json, const TemperatureData *data)
 int json_serialize_adc_data(JsonObj **json, const AdcData *data);
 int json_serialize_adc_all_data(JsonObj **json, const AdcAllData *data);
 int json_serialize_eeprom_data(JsonObj **json, const EepromData *data);
-int json_serialize_safety_config(JsonObj **json, const SafetyConfig *config);
+int json_serialize_safety_thresholds(JsonObj **json, const SafetyThresholds *thresholds);
 int json_serialize_service_info(JsonObj **json, const ServiceInfo *info);
 
 int json_deserialize_gpio_control(JsonObj *json, char **gpio_name, bool *enabled);
 int json_deserialize_dac_control(JsonObj *json, float *carrier_voltage, float *peak_voltage);
 int json_deserialize_temperature_threshold(JsonObj *json, float *threshold);
 int json_deserialize_eeprom_write(JsonObj *json, char **serial);
-int json_deserialize_safety_config(JsonObj *json, SafetyConfig *config);
+int json_deserialize_safety_thresholds(JsonObj *json, SafetyThresholds *thresholds);
 
 void json_free(JsonObj **json);
 void json_log(JsonObj *json);

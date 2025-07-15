@@ -16,7 +16,6 @@
 #include "i2c_controller.h"
 #include "femd.h"
 
-// Device information table
 static const I2CDeviceInfo device_info[I2C_DEVICE_MAX] = {
     {"AD5667", I2C_ADDR_DAC_AD5667, "16-bit DAC"},
     {"LM75A", I2C_ADDR_TEMP_LM75A, "Temperature sensor"},
@@ -35,7 +34,6 @@ int i2c_controller_init(I2CController *controller) {
     controller->bus_fem1 = I2C_BUS_FEM1;
     controller->bus_fem2 = I2C_BUS_FEM2;
     
-    // Initialize states
     controller->dac_state.carrier_voltage = 0.0f;
     controller->dac_state.peak_voltage = 0.0f;
     controller->dac_state.initialized = false;
@@ -72,14 +70,12 @@ int i2c_write_bytes(int bus, uint8_t device_addr, uint8_t reg, const uint8_t *da
     char command[256];
     char data_str[128] = "";
     
-    // Build data string
     for (size_t i = 0; i < len; i++) {
         char temp[8];
         snprintf(temp, sizeof(temp), "0x%02X ", data[i]);
         strcat(data_str, temp);
     }
     
-    // Remove trailing space
     if (strlen(data_str) > 0) {
         data_str[strlen(data_str) - 1] = '\0';
     }
@@ -133,7 +129,6 @@ int i2c_read_bytes(int bus, uint8_t device_addr, uint8_t reg, uint8_t *data, siz
             }
         }
     } else {
-        // Parse i2cdump output - simplified implementation
         char line[256];
         bool found_data = false;
         size_t bytes_read = 0;
@@ -192,7 +187,6 @@ int i2c_detect_device(int bus, uint8_t device_addr) {
     return STATUS_NOK;
 }
 
-// DAC operations
 int dac_init(I2CController *controller, FemUnit unit) {
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
@@ -200,13 +194,11 @@ int dac_init(I2CController *controller, FemUnit unit) {
     
     int bus = i2c_get_bus_for_fem(unit);
     
-    // Check if DAC is present
     if (i2c_detect_device(bus, I2C_ADDR_DAC_AD5667) != STATUS_OK) {
         usys_log_error("DAC AD5667 not detected on bus %d", bus);
         return STATUS_NOK;
     }
     
-    // Software reset: write 0x0600 to control register 0x40
     uint8_t reset_data[] = {0x06, 0x00};
     if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x40, reset_data, 2) != STATUS_OK) {
         usys_log_error("DAC reset failed");
@@ -222,7 +214,6 @@ int dac_init(I2CController *controller, FemUnit unit) {
 }
 
 uint16_t voltage_to_dac_value(float voltage) {
-    // Compensate for 2x hardware gain by dividing by 2
     float compensated_voltage = voltage / 2.0f;
     uint16_t dac_value = (uint16_t)((compensated_voltage / DAC_VREF) * 65535.0f);
     
@@ -249,7 +240,6 @@ int dac_set_carrier_voltage(I2CController *controller, FemUnit unit, float volta
     int bus = i2c_get_bus_for_fem(unit);
     uint16_t dac_value = voltage_to_dac_value(voltage);
     
-    // Channel A - Command byte 0x59
     uint8_t data[] = {(dac_value >> 8) & 0xFF, dac_value & 0xFF};
     
     if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x59, data, 2) != STATUS_OK) {
@@ -277,7 +267,6 @@ int dac_set_peak_voltage(I2CController *controller, FemUnit unit, float voltage)
     int bus = i2c_get_bus_for_fem(unit);
     uint16_t dac_value = voltage_to_dac_value(voltage);
     
-    // Channel B - Command byte 0x58
     uint8_t data[] = {(dac_value >> 8) & 0xFF, dac_value & 0xFF};
     
     if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x58, data, 2) != STATUS_OK) {
@@ -307,7 +296,6 @@ int dac_disable_pa(I2CController *controller, FemUnit unit) {
         return STATUS_NOK;
     }
     
-    // Set both channels to 0V
     int result1 = dac_set_carrier_voltage(controller, unit, 0.0f);
     int result2 = dac_set_peak_voltage(controller, unit, 0.0f);
     
@@ -319,33 +307,25 @@ int dac_disable_pa(I2CController *controller, FemUnit unit) {
     return STATUS_NOK;
 }
 
-// Temperature sensor operations
 float lm75a_raw_to_celsius(uint8_t msb, uint8_t lsb) {
-    // Combine the two bytes into a 16-bit word
     uint16_t temp_raw = (msb << 8) | lsb;
     
-    // Extract the temperature data from D15-D7 (right shift by 7 for 9-bit)
     int16_t temp_9bit = temp_raw >> 7;
     
-    // Handle two's complement for negative temperatures (9-bit)
     if (temp_9bit > 255) {
         temp_9bit = temp_9bit - 512;  // Subtract 2^9 for two's complement
     }
     
-    // Convert to actual temperature (each LSB = 0.5°C)
     return temp_9bit * 0.5f;
 }
 
 uint16_t celsius_to_lm75a_raw(float temperature) {
-    // Convert to 9-bit value
     int16_t temp_9bit = (int16_t)(temperature / 0.5f);
     
-    // Handle negative values using two's complement
     if (temp_9bit < 0) {
         temp_9bit = temp_9bit + 512;  // Add 2^9 for two's complement
     }
     
-    // Shift left by 7 to put in upper 9 bits (D15-D7)
     return (temp_9bit << 7) & 0xFF80;
 }
 
@@ -356,7 +336,6 @@ int temp_sensor_init(I2CController *controller, FemUnit unit) {
     
     int bus = i2c_get_bus_for_fem(unit);
     
-    // Check if temperature sensor is present
     if (i2c_detect_device(bus, I2C_ADDR_TEMP_LM75A) != STATUS_OK) {
         usys_log_error("Temperature sensor LM75A not detected on bus %d", bus);
         return STATUS_NOK;
@@ -374,7 +353,6 @@ int temp_sensor_read(I2CController *controller, FemUnit unit, float *temperature
     int bus = i2c_get_bus_for_fem(unit);
     uint8_t data[2];
     
-    // Read temperature register (0x00)
     if (i2c_read_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x00, data, 2) != STATUS_OK) {
         usys_log_error("Failed to read temperature from FEM%d", unit);
         return STATUS_NOK;
@@ -402,7 +380,6 @@ int temp_sensor_set_threshold(I2CController *controller, FemUnit unit, float thr
     
     uint8_t data[] = {(threshold_raw >> 8) & 0xFF, threshold_raw & 0xFF};
     
-    // Write to Tos register (0x03)
     if (i2c_write_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x03, data, 2) != STATUS_OK) {
         usys_log_error("Failed to set temperature threshold");
         return STATUS_NOK;
@@ -422,7 +399,6 @@ const I2CDeviceInfo* i2c_get_device_info(I2CDevice device) {
     return &device_info[device];
 }
 
-// ADC operations
 int adc_init(I2CController *controller, FemUnit unit) {
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
@@ -430,7 +406,6 @@ int adc_init(I2CController *controller, FemUnit unit) {
     
     int bus = i2c_get_bus_for_fem(unit);
     
-    // Check if ADC is present
     if (i2c_detect_device(bus, I2C_ADDR_ADC_ADS1015) != STATUS_OK) {
         usys_log_error("ADC ADS1015 not detected on bus %d", bus);
         return STATUS_NOK;
@@ -441,7 +416,6 @@ int adc_init(I2CController *controller, FemUnit unit) {
 }
 
 static int adc_configure_channel(int bus, int channel) {
-    // Config register format for ADS1015
     uint16_t mux_configs[] = {0x4000, 0x5000, 0x6000, 0x7000}; // AIN0-3 vs GND
     
     if (channel < 0 || channel > 3) {
@@ -455,14 +429,12 @@ static int adc_configure_channel(int bus, int channel) {
     config |= 0x0080;  // 1600 SPS
     config |= 0x0003;  // Disable comparator
     
-    // Write config register
     uint8_t data[] = {(config >> 8) & 0xFF, config & 0xFF};
     
     return i2c_write_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x01, data, 2);
 }
 
 float adc_raw_to_voltage(uint16_t raw_value) {
-    // ADS1015 12-bit resolution, ±4.096V range
     return ((int16_t)raw_value >> 4) * 4.096f / 2048.0f;
 }
 
@@ -477,14 +449,12 @@ int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float
     
     int bus = i2c_get_bus_for_fem(unit);
     
-    // Configure and start conversion
     if (adc_configure_channel(bus, channel) != STATUS_OK) {
         return STATUS_NOK;
     }
     
     usleep(10000); // 10ms delay for conversion
     
-    // Read conversion result
     uint8_t data[2];
     if (i2c_read_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x00, data, 2) != STATUS_OK) {
         usys_log_error("Failed to read ADC channel %d from FEM%d", channel, unit);
@@ -499,12 +469,10 @@ int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float
 }
 
 float voltage_to_reverse_power(float voltage) {
-    // Convert voltage to dBm (adjust formula based on your RF detector)
     return (voltage - 2.0f) * 20.0f - 30.0f;
 }
 
 float voltage_to_current(float voltage) {
-    // Convert voltage to current (adjust based on your current sense resistor)
     return voltage; // Example: 1V = 1A
 }
 
@@ -605,7 +573,6 @@ int adc_check_safety(I2CController *controller, FemUnit unit, bool *safety_viola
         return STATUS_OK;
     }
     
-    // Check reverse power
     float reverse_power;
     if (adc_read_reverse_power(controller, unit, &reverse_power) == STATUS_OK) {
         if (reverse_power > controller->adc_state.max_reverse_power) {
@@ -615,7 +582,6 @@ int adc_check_safety(I2CController *controller, FemUnit unit, bool *safety_viola
         }
     }
     
-    // Check PA current
     float pa_current;
     if (adc_read_pa_current(controller, unit, &pa_current) == STATUS_OK) {
         if (pa_current > controller->adc_state.max_current) {
@@ -628,7 +594,6 @@ int adc_check_safety(I2CController *controller, FemUnit unit, bool *safety_viola
     return STATUS_OK;
 }
 
-// EEPROM operations
 int eeprom_write_serial(I2CController *controller, FemUnit unit, const char *serial) {
     if (!controller || !controller->initialized || !serial) {
         return STATUS_NOK;
@@ -642,7 +607,6 @@ int eeprom_write_serial(I2CController *controller, FemUnit unit, const char *ser
         return STATUS_NOK;
     }
     
-    // Write each character
     for (size_t i = 0; i < len; i++) {
         uint8_t data = (uint8_t)serial[i];
         if (i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &data, 1) != STATUS_OK) {
@@ -652,7 +616,6 @@ int eeprom_write_serial(I2CController *controller, FemUnit unit, const char *ser
         usleep(10000); // 10ms delay for EEPROM write
     }
     
-    // Write null terminator
     uint8_t null_term = 0x00;
     i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)len, &null_term, 1);
     
@@ -670,7 +633,6 @@ int eeprom_read_serial(I2CController *controller, FemUnit unit, char *serial, si
     
     int bus = i2c_get_bus_for_fem(unit);
     
-    // Read up to 16 bytes or max_len-1 (leave space for null terminator)
     size_t read_len = (max_len - 1 < 16) ? max_len - 1 : 16;
     
     for (size_t i = 0; i < read_len; i++) {

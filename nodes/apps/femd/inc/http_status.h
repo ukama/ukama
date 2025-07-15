@@ -31,7 +31,7 @@ typedef enum {
     HttpStatus_GatewayTimeout = 504
 } HttpStatusCode;
 
-static const char *HttpStatusStr(int code) {
+static inline const char *HttpStatusStr(int code) {
     switch (code) {
         case HttpStatus_OK: return "OK";
         case HttpStatus_Created: return "Created";

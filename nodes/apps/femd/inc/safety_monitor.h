@@ -53,23 +53,19 @@ typedef struct {
     GpioController *gpio_controller;
     I2CController *i2c_controller;
     
-    // Statistics
     uint32_t total_checks;
     uint32_t total_violations;
     SafetyViolation last_violation;
     
-    // Callbacks
     void (*violation_callback)(const SafetyViolation *violation);
     void (*shutdown_callback)(FemUnit unit, SafetyViolationType reason);
 } SafetyMonitor;
 
-// Monitor management
 int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CController *i2c_ctrl);
 int safety_monitor_start(SafetyMonitor *monitor);
 void safety_monitor_stop(SafetyMonitor *monitor);
 void safety_monitor_cleanup(SafetyMonitor *monitor);
 
-// Configuration
 int safety_monitor_load_yaml_config(SafetyMonitor *monitor, const char *yaml_file);
 int safety_monitor_set_thresholds(SafetyMonitor *monitor, float max_reverse_power, float max_current, float max_temp);
 int safety_monitor_set_interval(SafetyMonitor *monitor, uint32_t interval_ms);
@@ -77,27 +73,22 @@ int safety_monitor_enable(SafetyMonitor *monitor, bool enabled);
 int safety_monitor_get_config(SafetyMonitor *monitor, SafetyConfig *config);
 int safety_monitor_get_dac_voltages_for_temp(SafetyMonitor *monitor, FemUnit unit, float temperature, float *carrier_voltage, float *peak_voltage);
 
-// Manual safety checks
 int safety_monitor_check_fem_unit(SafetyMonitor *monitor, FemUnit unit);
 int safety_monitor_check_reverse_power(SafetyMonitor *monitor, FemUnit unit);
 int safety_monitor_check_pa_current(SafetyMonitor *monitor, FemUnit unit);
 int safety_monitor_check_temperature(SafetyMonitor *monitor, FemUnit unit);
 
-// PA shutdown operations
 int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViolationType reason);
 int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit);
 bool safety_monitor_is_pa_shutdown(SafetyMonitor *monitor, FemUnit unit);
 
-// Status and statistics
 int safety_monitor_get_status(SafetyMonitor *monitor, char *status_json, size_t max_len);
 int safety_monitor_get_violations(SafetyMonitor *monitor, FemUnit unit, uint32_t *violation_counts);
 void safety_monitor_reset_statistics(SafetyMonitor *monitor);
 
-// Callbacks
 void safety_monitor_set_violation_callback(SafetyMonitor *monitor, void (*callback)(const SafetyViolation *));
 void safety_monitor_set_shutdown_callback(SafetyMonitor *monitor, void (*callback)(FemUnit, SafetyViolationType));
 
-// Utility functions
 const char* safety_violation_type_to_string(SafetyViolationType type);
 uint32_t safety_monitor_get_timestamp_ms(void);
 

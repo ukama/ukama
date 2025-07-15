@@ -28,7 +28,6 @@
 #include "yaml_config.h"
 #include "safety_monitor.h"
 
-// Use simple printf on macOS for development
 #ifdef __APPLE__
 #define usys_log_info(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
 #define usys_log_error(fmt, ...) printf("[ERROR] " fmt "\n", ##__VA_ARGS__)
@@ -48,10 +47,8 @@
 
 #define DEF_LOG_LEVEL            "INFO"
 
-// Global variables
 extern volatile sig_atomic_t g_running;
 
-// Function declarations
 void handle_sigint(int signum);
 void print_usage(const char *program);
 void print_version(void);

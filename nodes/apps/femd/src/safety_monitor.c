@@ -16,7 +16,6 @@
 #include "safety_monitor.h"
 #include "femd.h"
 
-// Forward declarations
 static void* safety_monitor_thread(void *arg);
 static int safety_monitor_perform_checks(SafetyMonitor *monitor);
 static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyViolation *violation);
@@ -31,7 +30,6 @@ int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CCo
 
     memset(monitor, 0, sizeof(SafetyMonitor));
     
-    // Initialize mutex
     if (pthread_mutex_init(&monitor->mutex, NULL) != 0) {
         usys_log_error("Failed to initialize safety monitor mutex");
         return STATUS_NOK;
@@ -40,13 +38,11 @@ int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CCo
     monitor->gpio_controller = gpio_ctrl;
     monitor->i2c_controller = i2c_ctrl;
     
-    // Load YAML configuration
     if (safety_monitor_load_yaml_config(monitor, YAML_CONFIG_PATH) != STATUS_OK) {
         usys_log_warn("Failed to load YAML config, using defaults");
         yaml_config_set_defaults(&monitor->config.yaml_config);
     }
     
-    // Initialize PA shutdown states
     for (int i = 0; i <= FEM_UNIT_2; i++) {
         monitor->config.pa_shutdown_state[i] = false;
     }
@@ -69,7 +65,6 @@ int safety_monitor_start(SafetyMonitor *monitor) {
         return STATUS_OK;
     }
 
-    // Create monitoring thread
     if (pthread_create(&monitor->monitor_thread, NULL, safety_monitor_thread, monitor) != 0) {
         usys_log_error("Failed to create safety monitor thread");
         return STATUS_NOK;
@@ -90,7 +85,6 @@ void safety_monitor_stop(SafetyMonitor *monitor) {
     monitor->running = false;
     pthread_mutex_unlock(&monitor->mutex);
 
-    // Wait for monitor thread to finish
     pthread_join(monitor->monitor_thread, NULL);
 
     usys_log_info("Safety monitor stopped");
@@ -126,7 +120,6 @@ static void* safety_monitor_thread(void *arg) {
         
         pthread_mutex_unlock(&monitor->mutex);
         
-        // Sleep for the configured interval
         usleep(monitor->config.yaml_config.check_interval_ms * 1000);
     }
     
@@ -137,7 +130,6 @@ static void* safety_monitor_thread(void *arg) {
 static int safety_monitor_perform_checks(SafetyMonitor *monitor) {
     int violations = 0;
     
-    // Check both FEM units
     for (FemUnit unit = FEM_UNIT_1; unit <= FEM_UNIT_2; unit++) {
         violations += safety_monitor_check_fem_unit(monitor, unit);
     }
@@ -152,18 +144,14 @@ int safety_monitor_check_fem_unit(SafetyMonitor *monitor, FemUnit unit) {
     
     int violations = 0;
     
-    // Skip checks if PA is already shutdown for this unit
     if (monitor->config.pa_shutdown_state[unit]) {
         return 0;
     }
     
-    // Check reverse power
     violations += safety_monitor_check_reverse_power(monitor, unit);
     
-    // Check PA current
     violations += safety_monitor_check_pa_current(monitor, unit);
     
-    // Check temperature
     violations += safety_monitor_check_temperature(monitor, unit);
     
     return violations;
@@ -173,13 +161,11 @@ int safety_monitor_check_reverse_power(SafetyMonitor *monitor, FemUnit unit) {
     float reverse_power;
     SafetyViolation violation;
     
-    // Read reverse power
     if (adc_read_reverse_power(monitor->i2c_controller, unit, &reverse_power) != STATUS_OK) {
         usys_log_debug("Failed to read reverse power for FEM%d", unit);
         return 0;
     }
     
-    // Check threshold
     if (reverse_power > monitor->config.yaml_config.max_reverse_power_dbm) {
         safety_monitor_create_violation(&violation, SAFETY_VIOLATION_REVERSE_POWER, unit,
                                       reverse_power, monitor->config.yaml_config.max_reverse_power_dbm,
@@ -195,13 +181,11 @@ int safety_monitor_check_pa_current(SafetyMonitor *monitor, FemUnit unit) {
     float pa_current;
     SafetyViolation violation;
     
-    // Read PA current
     if (adc_read_pa_current(monitor->i2c_controller, unit, &pa_current) != STATUS_OK) {
         usys_log_debug("Failed to read PA current for FEM%d", unit);
         return 0;
     }
     
-    // Check threshold
     if (pa_current > monitor->config.yaml_config.max_pa_current_a) {
         safety_monitor_create_violation(&violation, SAFETY_VIOLATION_PA_CURRENT, unit,
                                       pa_current, monitor->config.yaml_config.max_pa_current_a,
@@ -217,13 +201,11 @@ int safety_monitor_check_temperature(SafetyMonitor *monitor, FemUnit unit) {
     float temperature;
     SafetyViolation violation;
     
-    // Read temperature
     if (temp_sensor_read(monitor->i2c_controller, unit, &temperature) != STATUS_OK) {
         usys_log_debug("Failed to read temperature for FEM%d", unit);
         return 0;
     }
     
-    // Check threshold
     if (temperature > monitor->config.yaml_config.max_temperature_c) {
         safety_monitor_create_violation(&violation, SAFETY_VIOLATION_TEMPERATURE, unit,
                                       temperature, monitor->config.yaml_config.max_temperature_c,
@@ -247,26 +229,21 @@ static void safety_monitor_create_violation(SafetyViolation *violation, SafetyVi
 }
 
 static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyViolation *violation) {
-    // Update violation count
     monitor->config.violation_count[violation->unit][violation->type]++;
     monitor->total_violations++;
     
-    // Store last violation
     monitor->last_violation = *violation;
     
-    // Log the violation
     usys_log_warn("SAFETY VIOLATION: FEM%d %s - Measured: %.2f, Threshold: %.2f", 
                   violation->unit,
                   safety_violation_type_to_string(violation->type),
                   violation->measured_value,
                   violation->threshold);
     
-    // Call violation callback if set
     if (monitor->violation_callback) {
         monitor->violation_callback(violation);
     }
     
-    // Check if we need to shut down PA
     uint32_t violation_count = monitor->config.violation_count[violation->unit][violation->type];
     if (violation_count >= monitor->config.yaml_config.max_violations) {
         usys_log_error("SAFETY SHUTDOWN: FEM%d - %u violations of %s", 
@@ -287,30 +264,24 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
     usys_log_error("EXECUTING PA SHUTDOWN for FEM%d due to %s", 
                    unit, safety_violation_type_to_string(reason));
     
-    // 1. Disable PA by setting DAC values to zero
     if (dac_disable_pa(monitor->i2c_controller, unit) != STATUS_OK) {
         usys_log_error("Failed to disable DAC for FEM%d", unit);
     }
     
-    // 2. Disable PA_VDS_Enable GPIO
     if (gpio_set_pa_vds(monitor->gpio_controller, unit, false) != STATUS_OK) {
         usys_log_error("Failed to disable PA_VDS GPIO for FEM%d", unit);
     }
     
-    // 3. Disable 28V_VDS (pa_disable = 1, which means VDS disabled)
     if (gpio_set_28v_vds(monitor->gpio_controller, unit, false) != STATUS_OK) {
         usys_log_error("Failed to disable 28V_VDS for FEM%d", unit);
     }
     
-    // 4. Disable TX_RF
     if (gpio_set_tx_rf(monitor->gpio_controller, unit, false) != STATUS_OK) {
         usys_log_error("Failed to disable TX_RF for FEM%d", unit);
     }
     
-    // Mark PA as shutdown
     monitor->config.pa_shutdown_state[unit] = true;
     
-    // Call shutdown callback if set
     if (monitor->shutdown_callback) {
         monitor->shutdown_callback(unit, reason);
     }
@@ -331,12 +302,10 @@ int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit) {
     
     usys_log_info("Restoring PA for FEM%d", unit);
     
-    // Reset violation counts for this unit
     for (int i = 0; i < SAFETY_VIOLATION_MAX; i++) {
         monitor->config.violation_count[unit][i] = 0;
     }
     
-    // Mark PA as not shutdown (manual restoration)
     monitor->config.pa_shutdown_state[unit] = false;
     
     usys_log_info("PA restored for FEM%d (manual intervention required for re-enabling)", unit);
@@ -351,7 +320,6 @@ bool safety_monitor_is_pa_shutdown(SafetyMonitor *monitor, FemUnit unit) {
     return monitor->config.pa_shutdown_state[unit];
 }
 
-// Configuration functions
 int safety_monitor_load_yaml_config(SafetyMonitor *monitor, const char *yaml_file) {
     if (!monitor || !monitor->initialized) {
         return STATUS_NOK;
@@ -483,7 +451,6 @@ void safety_monitor_reset_statistics(SafetyMonitor *monitor) {
     usys_log_info("Safety monitor statistics reset");
 }
 
-// Callback functions
 void safety_monitor_set_violation_callback(SafetyMonitor *monitor, void (*callback)(const SafetyViolation *)) {
     if (monitor) {
         monitor->violation_callback = callback;
@@ -496,7 +463,6 @@ void safety_monitor_set_shutdown_callback(SafetyMonitor *monitor, void (*callbac
     }
 }
 
-// Utility functions
 const char* safety_violation_type_to_string(SafetyViolationType type) {
     switch (type) {
         case SAFETY_VIOLATION_REVERSE_POWER: return "Reverse Power";

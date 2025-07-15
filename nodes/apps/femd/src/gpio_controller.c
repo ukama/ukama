@@ -218,43 +218,43 @@ int gpio_get_all_status(GpioController *controller, FemUnit unit, GpioStatus *st
     }
     
     if (!status) {
-        printf("[ERROR] Null status pointer\n");
+        usys_log_error("Null status pointer");
         return STATUS_NOK;
     }
     
     bool pa_disable_raw;
     if (gpio_read_value(controller->basePath, unit, GPIO_28V_VDS, &pa_disable_raw) != STATUS_OK) {
-        printf("[ERROR] Failed to read 28V_VDS status\n");
+        usys_log_error("Failed to read 28V_VDS status");
         return STATUS_NOK;
     }
     status->pa_disable = !pa_disable_raw;
     
     if (gpio_read_value(controller->basePath, unit, GPIO_TX_RF, &status->tx_rf_enable) != STATUS_OK) {
-        printf("[ERROR] Failed to read TX_RF status\n");
+        usys_log_error("Failed to read TX_RF status");
         return STATUS_NOK;
     }
     
     if (gpio_read_value(controller->basePath, unit, GPIO_RX_RF, &status->rx_rf_enable) != STATUS_OK) {
-        printf("[ERROR] Failed to read RX_RF status\n");
+        usys_log_error("Failed to read RX_RF status");
         return STATUS_NOK;
     }
     
     if (gpio_read_value(controller->basePath, unit, GPIO_PA_VDS, &status->pa_vds_enable) != STATUS_OK) {
-        printf("[ERROR] Failed to read PA_VDS status\n");
+        usys_log_error("Failed to read PA_VDS status");
         return STATUS_NOK;
     }
     
     if (gpio_read_value(controller->basePath, unit, GPIO_TX_RFPAL, &status->rf_pal_enable) != STATUS_OK) {
-        printf("[ERROR] Failed to read TX_RFPAL status\n");
+        usys_log_error("Failed to read TX_RFPAL status");
         return STATUS_NOK;
     }
     
     if (gpio_read_value(controller->basePath, unit, GPIO_PSU_PGOOD, &status->pg_reg_5v) != STATUS_OK) {
-        printf("[ERROR] Failed to read PSU_PGOOD status\n");
+        usys_log_error("Failed to read PSU_PGOOD status");
         return STATUS_NOK;
     }
     
-    printf("[DEBUG] GPIO status for FEM%d: 28V_VDS=%d, TX_RF=%d, RX_RF=%d, PA_VDS=%d, TX_RFPAL=%d, PSU_PGOOD=%d\n",
+    usys_log_debug("GPIO status for FEM%d: 28V_VDS=%d, TX_RF=%d, RX_RF=%d, PA_VDS=%d, TX_RFPAL=%d, PSU_PGOOD=%d",
            unit, status->pa_disable, status->tx_rf_enable, status->rx_rf_enable,
            status->pa_vds_enable, status->rf_pal_enable, status->pg_reg_5v);
     
@@ -267,18 +267,18 @@ int gpio_disable_pa(GpioController *controller, FemUnit unit) {
         return STATUS_NOK;
     }
     
-    printf("[WARN] Emergency PA disable for FEM%d\n", unit);
+    usys_log_warn("Emergency PA disable for FEM%d", unit);
     
     if (gpio_set_pa_vds(controller, unit, false) != STATUS_OK) {
-        printf("[ERROR] Failed to disable PA_VDS for FEM%d\n", unit);
+        usys_log_error("Failed to disable PA_VDS for FEM%d", unit);
         return STATUS_NOK;
     }
     
     if (gpio_set_28v_vds(controller, unit, false) != STATUS_OK) {
-        printf("[ERROR] Failed to disable 28V_VDS for FEM%d\n", unit);
+        usys_log_error("Failed to disable 28V_VDS for FEM%d", unit);
         return STATUS_NOK;
     }
     
-    printf("[INFO] PA disabled successfully for FEM%d\n", unit);
+    usys_log_info("PA disabled successfully for FEM%d", unit);
     return STATUS_OK;
 }
