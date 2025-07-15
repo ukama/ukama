@@ -26,6 +26,8 @@ VENDOR_PKG=
 # Skip platform build on macOS for development
 ifeq ($(shell uname -s),Darwin)
     PLATFORM=
+    # Add jansson lib path for macOS
+    LDFLAGS+=-L/opt/homebrew/opt/jansson/lib
 else
     PLATFORM=platform
 endif
@@ -41,13 +43,20 @@ CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
 CFLAGS+=-D_REENTRANT
 
+# Add jansson include path for macOS
+ifeq ($(shell uname -s),Darwin)
+    CFLAGS+=-I/opt/homebrew/opt/jansson/include
+endif
+
 LDFLAGS+=-L${VENDOR_LIB} 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
 LIBS+=-lpthread
 # Skip usys on macOS for development
-ifneq ($(shell uname -s),Darwin)
+ifeq ($(shell uname -s),Darwin)
+    LIBS+=-ljansson
+else
     LIBS+=-lusys
 endif
 

@@ -24,7 +24,6 @@
 static pthread_t server_thread;
 static int server_socket = -1;
 
-// Forward declarations
 static void* web_api_server_thread(void *arg);
 static void web_api_handle_client(WebAPIServer *server, int client_socket);
 static int web_api_parse_request(const char *raw_request, HTTPRequest *request);
@@ -57,7 +56,6 @@ int web_api_start(WebAPIServer *server) {
         return STATUS_OK;
     }
 
-    // Create server thread
     if (pthread_create(&server_thread, NULL, web_api_server_thread, server) != 0) {
         usys_log_error("Failed to create web API server thread");
         return STATUS_NOK;
@@ -75,13 +73,11 @@ void web_api_stop(WebAPIServer *server) {
 
     server->running = false;
 
-    // Close server socket to interrupt accept()
     if (server_socket >= 0) {
         close(server_socket);
         server_socket = -1;
     }
 
-    // Wait for server thread to finish
     pthread_join(server_thread, NULL);
 
     usys_log_info("Web API server stopped");
@@ -100,18 +96,15 @@ static void* web_api_server_thread(void *arg) {
     socklen_t client_len = sizeof(client_addr);
     int client_socket;
 
-    // Create socket
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
         usys_log_error("Failed to create socket: %s", strerror(errno));
         return NULL;
     }
 
-    // Set socket options
     int opt = 1;
     setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    // Bind socket
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -123,7 +116,6 @@ static void* web_api_server_thread(void *arg) {
         return NULL;
     }
 
-    // Listen for connections
     if (listen(server_socket, 5) < 0) {
         usys_log_error("Failed to listen on socket: %s", strerror(errno));
         close(server_socket);
@@ -132,7 +124,6 @@ static void* web_api_server_thread(void *arg) {
 
     usys_log_info("Web API server listening on port %d", server->port);
 
-    // Accept connections
     while (server->running) {
         client_socket = accept(server_socket, (struct sockaddr*)&client_addr, &client_len);
         
@@ -146,7 +137,6 @@ static void* web_api_server_thread(void *arg) {
         usys_log_debug("Client connected from %s:%d", 
                        inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
-        // Handle client in same thread (simple implementation)
         web_api_handle_client(server, client_socket);
         close(client_socket);
     }
@@ -164,7 +154,6 @@ static void web_api_handle_client(WebAPIServer *server, int client_socket) {
     HTTPResponse response;
     int bytes_received;
 
-    // Read request
     bytes_received = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
     if (bytes_received <= 0) {
         return;
@@ -173,19 +162,16 @@ static void web_api_handle_client(WebAPIServer *server, int client_socket) {
     buffer[bytes_received] = '\0';
     usys_log_debug("Received HTTP request:\n%s", buffer);
 
-    // Parse request
     if (web_api_parse_request(buffer, &request) != STATUS_OK) {
         web_api_set_error_response(&response, 400, "Bad Request");
         web_api_send_response(client_socket, &response);
         return;
     }
 
-    // Route and handle request
     if (web_api_route_request(server, &request, &response) != STATUS_OK) {
         web_api_set_error_response(&response, 500, "Internal Server Error");
     }
 
-    // Send response
     web_api_send_response(client_socket, &response);
 }
 
@@ -196,7 +182,6 @@ static int web_api_parse_request(const char *raw_request, HTTPRequest *request) 
 
     memset(request, 0, sizeof(HTTPRequest));
 
-    // Parse first line: METHOD PATH HTTP/1.1
     char *line = strtok((char*)raw_request, "\r\n");
     if (!line) {
         return STATUS_NOK;
@@ -206,14 +191,12 @@ static int web_api_parse_request(const char *raw_request, HTTPRequest *request) 
         return STATUS_NOK;
     }
 
-    // Look for Content-Length header
     request->content_length = 0;
     char *content_length_line = strstr(raw_request, "Content-Length:");
     if (content_length_line) {
         sscanf(content_length_line, "Content-Length: %d", &request->content_length);
     }
 
-    // Find body (after \r\n\r\n)
     char *body_start = strstr(raw_request, "\r\n\r\n");
     if (body_start && request->content_length > 0) {
         body_start += 4; // Skip \r\n\r\n
@@ -230,7 +213,6 @@ static void web_api_send_response(int client_socket, const HTTPResponse *respons
     char http_response[4096];
     const char *status_text;
 
-    // Map status codes to text
     switch (response->status_code) {
         case 200: status_text = "OK"; break;
         case 400: status_text = "Bad Request"; break;
@@ -239,7 +221,6 @@ static void web_api_send_response(int client_socket, const HTTPResponse *respons
         default: status_text = "Unknown"; break;
     }
 
-    // Build HTTP response
     snprintf(http_response, sizeof(http_response),
              "HTTP/1.1 %d %s\r\n"
              "Content-Type: %s\r\n"
@@ -261,13 +242,11 @@ static void web_api_send_response(int client_socket, const HTTPResponse *respons
 static int web_api_route_request(WebAPIServer *server, const HTTPRequest *request, HTTPResponse *response) {
     usys_log_debug("Routing %s %s", request->method, request->path);
 
-    // Handle CORS preflight
     if (strcmp(request->method, "OPTIONS") == 0) {
         web_api_set_response(response, HttpStatus_OK, "text/plain", "");
         return STATUS_OK;
     }
 
-    // GPIO endpoints
     if (strncmp(request->path, "/v1/fem/", 8) == 0) {
         int fem_unit = parse_fem_unit(request->path);
         if (fem_unit < 1 || fem_unit > 2) {
@@ -275,13 +254,11 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
             return STATUS_OK;
         }
 
-        // GPIO status: GET /v1/fem/{1,2}/gpio
         if (strcmp(request->method, "GET") == 0 && 
             (strcmp(request->path + 8, "1/gpio") == 0 || strcmp(request->path + 8, "2/gpio") == 0)) {
             return api_gpio_get_status(server, fem_unit, response);
         }
 
-        // GPIO control: POST /v1/fem/{1,2}/gpio/{pin}
         if (strcmp(request->method, "POST") == 0) {
             if (strstr(request->path, "/gpio/tx_rf")) {
                 JsonObj *json = parse_request_json(request->body);
@@ -345,7 +322,6 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
             }
         }
 
-        // I2C DAC endpoints: POST /v1/fem/{1,2}/i2c/dac
         if (strcmp(request->method, "POST") == 0 && strstr(request->path, "/i2c/dac")) {
             JsonObj *json = parse_request_json(request->body);
             if (json) {
@@ -365,22 +341,18 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
             }
         }
 
-        // I2C DAC status: GET /v1/fem/{1,2}/i2c/dac
         if (strcmp(request->method, "GET") == 0 && strstr(request->path, "/i2c/dac")) {
             return api_dac_get_config(server, fem_unit, response);
         }
 
-        // Temperature endpoints
         if (strcmp(request->method, "GET") == 0 && strstr(request->path, "/i2c/temperature")) {
             return api_temp_read(server, fem_unit, response);
         }
 
-        // ADC endpoints
         if (strcmp(request->method, "GET") == 0 && strstr(request->path, "/i2c/adc")) {
             return api_adc_read_all(server, fem_unit, response);
         }
 
-        // EEPROM endpoints
         if (strcmp(request->method, "GET") == 0 && strstr(request->path, "/i2c/eeprom")) {
             return api_eeprom_read_serial(server, fem_unit, response);
         }
@@ -405,7 +377,6 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
         }
     }
 
-    // Health check endpoint
     if (strcmp(request->method, "GET") == 0 && strcmp(request->path, "/health") == 0) {
         JsonObj *health_json = NULL;
         ServiceInfo info = {
@@ -422,7 +393,6 @@ static int web_api_route_request(WebAPIServer *server, const HTTPRequest *reques
         return STATUS_OK;
     }
 
-    // Default 404
     web_api_set_error_response(response, HttpStatus_NotFound, "Endpoint not found");
     return STATUS_OK;
 }
@@ -463,7 +433,6 @@ void web_api_set_error_response(HTTPResponse *response, HttpStatusCode status, c
     }
 }
 
-// Utility functions
 int parse_fem_unit(const char *path) {
     if (strstr(path, "/fem/1/")) return 1;
     if (strstr(path, "/fem/2/")) return 2;
@@ -494,7 +463,6 @@ bool parse_json_bool(const char *json, const char *key) {
     char *pos = strstr(json, search_pattern);
     if (pos) {
         pos += strlen(search_pattern);
-        // Skip whitespace
         while (*pos == ' ' || *pos == '\t') pos++;
         
         if (strncmp(pos, "true", 4) == 0) return true;
@@ -512,7 +480,6 @@ float parse_json_float(const char *json, const char *key) {
     char *pos = strstr(json, search_pattern);
     if (pos) {
         pos += strlen(search_pattern);
-        // Skip whitespace
         while (*pos == ' ' || *pos == '\t') pos++;
         
         return (float)atof(pos);
@@ -529,7 +496,6 @@ int parse_json_string(const char *json, const char *key, char *value, size_t max
     char *pos = strstr(json, search_pattern);
     if (pos) {
         pos += strlen(search_pattern);
-        // Skip whitespace
         while (*pos == ' ' || *pos == '\t') pos++;
         
         if (*pos == '"') {
@@ -574,7 +540,6 @@ void create_json_success(const char *message, char *json_buffer, size_t buffer_s
     snprintf(json_buffer, buffer_size, "{\"status\":\"success\",\"message\":\"%s\"}", message);
 }
 
-// API endpoint implementations
 int api_gpio_get_status(WebAPIServer *server, int fem_unit, HTTPResponse *response) {
     FemUnit unit = (fem_unit == 1) ? FEM_UNIT_1 : FEM_UNIT_2;
     GpioStatus status;
@@ -638,13 +603,11 @@ int api_gpio_set_control(WebAPIServer *server, int fem_unit, const char *gpio_na
 int api_dac_set_voltages(WebAPIServer *server, int fem_unit, float carrier_voltage, float peak_voltage, HTTPResponse *response) {
     FemUnit unit = (fem_unit == 1) ? FEM_UNIT_1 : FEM_UNIT_2;
     
-    // Initialize DAC if needed
     if (dac_init(server->i2c_controller, unit) != STATUS_OK) {
         web_api_set_error_response(response, 500, "Failed to initialize DAC");
         return STATUS_NOK;
     }
     
-    // Set voltages
     int result1 = dac_set_carrier_voltage(server->i2c_controller, unit, carrier_voltage);
     int result2 = dac_set_peak_voltage(server->i2c_controller, unit, peak_voltage);
     
@@ -653,7 +616,7 @@ int api_dac_set_voltages(WebAPIServer *server, int fem_unit, float carrier_volta
         snprintf(json_response, sizeof(json_response),
                  "{\"status\":\"success\",\"carrier_voltage\":%.2f,\"peak_voltage\":%.2f,\"fem_unit\":%d}",
                  carrier_voltage, peak_voltage, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to set DAC voltages");
@@ -669,7 +632,7 @@ int api_dac_get_config(WebAPIServer *server, int fem_unit, HTTPResponse *respons
         snprintf(json_response, sizeof(json_response),
                  "{\"carrier_voltage\":%.2f,\"peak_voltage\":%.2f,\"fem_unit\":%d}",
                  carrier_voltage, peak_voltage, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to read DAC configuration");
@@ -681,7 +644,6 @@ int api_temp_read(WebAPIServer *server, int fem_unit, HTTPResponse *response) {
     FemUnit unit = (fem_unit == 1) ? FEM_UNIT_1 : FEM_UNIT_2;
     float temperature;
     
-    // Initialize temperature sensor if needed
     if (temp_sensor_init(server->i2c_controller, unit) != STATUS_OK) {
         web_api_set_error_response(response, 500, "Failed to initialize temperature sensor");
         return STATUS_NOK;
@@ -692,7 +654,7 @@ int api_temp_read(WebAPIServer *server, int fem_unit, HTTPResponse *response) {
         snprintf(json_response, sizeof(json_response),
                  "{\"temperature\":%.1f,\"unit\":\"celsius\",\"fem_unit\":%d}",
                  temperature, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to read temperature");
@@ -708,7 +670,7 @@ int api_temp_set_threshold(WebAPIServer *server, int fem_unit, float threshold, 
         snprintf(json_response, sizeof(json_response),
                  "{\"status\":\"success\",\"threshold\":%.1f,\"fem_unit\":%d}",
                  threshold, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to set temperature threshold");
@@ -720,7 +682,6 @@ int api_adc_read_channel(WebAPIServer *server, int fem_unit, int channel, HTTPRe
     FemUnit unit = (fem_unit == 1) ? FEM_UNIT_1 : FEM_UNIT_2;
     float voltage;
     
-    // Initialize ADC if needed
     if (adc_init(server->i2c_controller, unit) != STATUS_OK) {
         web_api_set_error_response(response, 500, "Failed to initialize ADC");
         return STATUS_NOK;
@@ -731,7 +692,7 @@ int api_adc_read_channel(WebAPIServer *server, int fem_unit, int channel, HTTPRe
         snprintf(json_response, sizeof(json_response),
                  "{\"channel\":%d,\"voltage\":%.3f,\"fem_unit\":%d}",
                  channel, voltage, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to read ADC channel");
@@ -743,13 +704,11 @@ int api_adc_read_all(WebAPIServer *server, int fem_unit, HTTPResponse *response)
     FemUnit unit = (fem_unit == 1) ? FEM_UNIT_1 : FEM_UNIT_2;
     float reverse_power, pa_current;
     
-    // Initialize ADC if needed
     if (adc_init(server->i2c_controller, unit) != STATUS_OK) {
         web_api_set_error_response(response, 500, "Failed to initialize ADC");
         return STATUS_NOK;
     }
     
-    // Read key ADC values
     int result1 = adc_read_reverse_power(server->i2c_controller, unit, &reverse_power);
     int result2 = adc_read_pa_current(server->i2c_controller, unit, &pa_current);
     
@@ -763,7 +722,7 @@ int api_adc_read_all(WebAPIServer *server, int fem_unit, HTTPResponse *response)
                  "\"units\":{\"reverse_power\":\"dBm\",\"pa_current\":\"A\"}"
                  "}",
                  reverse_power, pa_current, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to read ADC values");
@@ -777,7 +736,7 @@ int api_adc_set_safety(WebAPIServer *server, float max_reverse_power, float max_
         snprintf(json_response, sizeof(json_response),
                  "{\"status\":\"success\",\"max_reverse_power\":%.1f,\"max_current\":%.1f}",
                  max_reverse_power, max_current);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to set safety thresholds");
@@ -793,7 +752,7 @@ int api_eeprom_write_serial(WebAPIServer *server, int fem_unit, const char *seri
         snprintf(json_response, sizeof(json_response),
                  "{\"status\":\"success\",\"serial\":\"%s\",\"fem_unit\":%d}",
                  serial, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 500, "Failed to write serial number");
@@ -810,7 +769,7 @@ int api_eeprom_read_serial(WebAPIServer *server, int fem_unit, HTTPResponse *res
         snprintf(json_response, sizeof(json_response),
                  "{\"serial\":\"%s\",\"fem_unit\":%d}",
                  serial, fem_unit);
-        web_api_set_json_response(response, 200, json_response);
+        web_api_set_response(response, 200, "application/json", json_response);
         return STATUS_OK;
     } else {
         web_api_set_error_response(response, 404, "No serial number found");

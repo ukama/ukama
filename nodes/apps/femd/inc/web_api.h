@@ -41,40 +41,32 @@ typedef struct {
     int body_length;
 } HTTPResponse;
 
-// Server management
 int web_api_init(WebAPIServer *server, int port, GpioController *gpio_ctrl, I2CController *i2c_ctrl);
 int web_api_start(WebAPIServer *server);
 void web_api_stop(WebAPIServer *server);
 void web_api_cleanup(WebAPIServer *server);
 
-// HTTP handling
 int web_api_handle_request(WebAPIServer *server, const HTTPRequest *request, HTTPResponse *response);
 void web_api_set_response(HTTPResponse *response, HttpStatusCode status, const char *content_type, const char *body);
 void web_api_set_json_response(HTTPResponse *response, HttpStatusCode status, JsonObj *json);
 void web_api_set_error_response(HTTPResponse *response, HttpStatusCode status, const char *error_message);
 
-// GPIO API endpoints
 int api_gpio_get_status(WebAPIServer *server, int fem_unit, HTTPResponse *response);
 int api_gpio_set_control(WebAPIServer *server, int fem_unit, const char *gpio_name, bool enable, HTTPResponse *response);
 
-// I2C DAC API endpoints  
 int api_dac_set_voltages(WebAPIServer *server, int fem_unit, float carrier_voltage, float peak_voltage, HTTPResponse *response);
 int api_dac_get_config(WebAPIServer *server, int fem_unit, HTTPResponse *response);
 
-// I2C Temperature API endpoints
 int api_temp_read(WebAPIServer *server, int fem_unit, HTTPResponse *response);
 int api_temp_set_threshold(WebAPIServer *server, int fem_unit, float threshold, HTTPResponse *response);
 
-// I2C ADC API endpoints
 int api_adc_read_channel(WebAPIServer *server, int fem_unit, int channel, HTTPResponse *response);
 int api_adc_read_all(WebAPIServer *server, int fem_unit, HTTPResponse *response);
 int api_adc_set_safety(WebAPIServer *server, float max_reverse_power, float max_current, HTTPResponse *response);
 
-// I2C EEPROM API endpoints
 int api_eeprom_write_serial(WebAPIServer *server, int fem_unit, const char *serial, HTTPResponse *response);
 int api_eeprom_read_serial(WebAPIServer *server, int fem_unit, HTTPResponse *response);
 
-// Utility functions
 int parse_fem_unit(const char *path);
 JsonObj *parse_request_json(const char *json_str);
 

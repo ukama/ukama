@@ -233,10 +233,10 @@ int json_serialize_eeprom_data(JsonObj **json, const EepromData *data) {
     return ret;
 }
 
-int json_serialize_safety_config(JsonObj **json, const SafetyConfig *config) {
+int json_serialize_safety_thresholds(JsonObj **json, const SafetyThresholds *thresholds) {
     int ret = JSON_ENCODING_OK;
 
-    if (!config) {
+    if (!thresholds) {
         return ERR_FEMD_JSON_NO_VAL_TO_ENCODE;
     }
 
@@ -248,9 +248,9 @@ int json_serialize_safety_config(JsonObj **json, const SafetyConfig *config) {
     json_object_set_new(*json, JTAG_SAFETY_CONFIG, json_object());
     JsonObj *jSafety = json_object_get(*json, JTAG_SAFETY_CONFIG);
     if (jSafety) {
-        json_object_set_new(jSafety, JTAG_MAX_REVERSE_POWER, json_real(config->max_reverse_power));
-        json_object_set_new(jSafety, JTAG_MAX_CURRENT, json_real(config->max_current));
-        json_object_set_new(jSafety, JTAG_MAX_TEMPERATURE, json_real(config->max_temperature));
+        json_object_set_new(jSafety, JTAG_MAX_REVERSE_POWER, json_real(thresholds->max_reverse_power));
+        json_object_set_new(jSafety, JTAG_MAX_CURRENT, json_real(thresholds->max_current));
+        json_object_set_new(jSafety, JTAG_MAX_TEMPERATURE, json_real(thresholds->max_temperature));
     } else {
         json_decref(*json);
         *json = NULL;
@@ -367,26 +367,26 @@ int json_deserialize_eeprom_write(JsonObj *json, char **serial) {
     return ret;
 }
 
-int json_deserialize_safety_config(JsonObj *json, SafetyConfig *config) {
+int json_deserialize_safety_thresholds(JsonObj *json, SafetyThresholds *thresholds) {
     int ret = JSON_DECODING_OK;
 
-    if (!json || !config) {
+    if (!json || !thresholds) {
         return ERR_FEMD_JSON_PARSER;
     }
 
     JsonObj *jMaxPower = json_object_get(json, JTAG_MAX_REVERSE_POWER);
     if (jMaxPower && json_is_real(jMaxPower)) {
-        config->max_reverse_power = (float)json_real_value(jMaxPower);
+        thresholds->max_reverse_power = (float)json_real_value(jMaxPower);
     }
 
     JsonObj *jMaxCurrent = json_object_get(json, JTAG_MAX_CURRENT);
     if (jMaxCurrent && json_is_real(jMaxCurrent)) {
-        config->max_current = (float)json_real_value(jMaxCurrent);
+        thresholds->max_current = (float)json_real_value(jMaxCurrent);
     }
 
     JsonObj *jMaxTemp = json_object_get(json, JTAG_MAX_TEMPERATURE);
     if (jMaxTemp && json_is_real(jMaxTemp)) {
-        config->max_temperature = (float)json_real_value(jMaxTemp);
+        thresholds->max_temperature = (float)json_real_value(jMaxTemp);
     }
 
     return ret;
