@@ -22,7 +22,6 @@ type Config struct {
 	MsgClient            *config.MsgClient `default:"{}"`
 	Queue                *config.Queue     `default:"{}"`
 	Service              *config.Service   `default:"{}"`
-	AsrHost              string            `default:"localhost"`
 	FactoryHost          string            `default:"http://localhost:8085"`
 	Reroute              string            `default:"http://localhost:8085"`
 	CDRHost              string            `default:"cdr:9090"`
