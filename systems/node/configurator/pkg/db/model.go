@@ -36,7 +36,7 @@ type CommitState uint8
 const (
 	Undefined CommitState = iota
 	Default   CommitState = 1 /* First time when node connects */
-	Success   CommitState = 2 /* After first succesful commit */
+	Success   CommitState = 2 /* After first successful commit */
 	Failed    CommitState = 3 /* After failed  commit */
 	Published CommitState = 4 /* After commit is pushed to NodeFeeder but still waiting for confirmation from node */
 	Partial   CommitState = 5 /* After partial commits */
@@ -77,7 +77,7 @@ func ParseCommitState(s string) CommitState {
 		return Success
 	case "failed":
 		return Failed
-	case "commited":
+	case "committed":
 		return Rollback
 	case "rollback":
 		return Published

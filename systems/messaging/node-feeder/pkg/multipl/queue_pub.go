@@ -1,16 +1,24 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package multipl
 
 import (
 	"encoding/json"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
-
+	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/wagslane/go-rabbitmq"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
+
+	log "github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
 type queuePublisher struct {
@@ -18,10 +26,7 @@ type queuePublisher struct {
 	publisher   *rabbitmq.Publisher
 	serviceName string
 	instanceId  string
-
 }
-
-
 
 type QueuePublisher interface {
 	Publish(msg *cpb.NodeFeederMessage) error
@@ -55,8 +60,6 @@ func NewQPub(queueUri string, serviceName string, exchange string, instanceId st
 		instanceId:  instanceId,
 	}, nil
 }
-
-
 
 func (q *queuePublisher) Publish(msg *cpb.NodeFeederMessage) error {
 
@@ -116,6 +119,5 @@ func (q *queuePublisher) PublishProto(payload proto.Message, routingKey string) 
 }
 
 func (q *queuePublisher) Close() error {
-	q.conn.Close()
-	return nil
+	return q.conn.Close()
 }

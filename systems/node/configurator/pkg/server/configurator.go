@@ -11,15 +11,14 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
-
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
-	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
+	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 )
 
 type ConfiguratorServer struct {

@@ -19,7 +19,6 @@ type NodeLogRepo interface {
 	Add(nodeLog string) error
 }
 
-
 type nodeLogRepo struct {
 	Db sql.Db
 }
@@ -27,17 +26,17 @@ type nodeLogRepo struct {
 func NewNodeLogRepo(db sql.Db) NodeLogRepo {
 	return &nodeLogRepo{
 		Db: db,
-	}	
+	}
 }
 
 func (r *nodeLogRepo) Add(nodeId string) error {
 	var nodeLog NodeLog
 	if err := r.Db.GetGormDb().Where("node_id = ?", nodeId).First(&nodeLog).Error; err != nil {
 		if err := r.Db.GetGormDb().Create(&NodeLog{NodeId: nodeId}).Error; err != nil {
-			return err 
+			return err
 		}
 	} else {
-		return errors.New("Duplicate record: a record with the same nodeId already exists")
+		return errors.New("duplicate record: a record with the same nodeId already exists")
 	}
 	return nil
 }

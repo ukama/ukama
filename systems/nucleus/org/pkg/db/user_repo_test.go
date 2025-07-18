@@ -10,21 +10,21 @@ package db_test
 
 import (
 	"database/sql"
-	extsql "database/sql"
 	"regexp"
 	"testing"
-
-	"github.com/ukama/ukama/systems/common/uuid"
-	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 )
 
 func Test_UserRepo_Add(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	var testUUID = uuid.NewV4()
 
@@ -72,7 +72,7 @@ func Test_UserRepo_Add(t *testing.T) {
 }
 
 func TestUserRepo_Get(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -136,7 +136,7 @@ func TestUserRepo_Get(t *testing.T) {
 }
 
 func TestUserRepo_Delete(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -197,7 +197,7 @@ func TestUserRepo_Delete(t *testing.T) {
 }
 
 func TestUserRepo_GetUserCount(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)

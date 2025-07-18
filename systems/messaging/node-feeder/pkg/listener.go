@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package pkg
 
 import (
@@ -7,23 +15,24 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	amqp "github.com/streadway/amqp"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/global"
 	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg/metrics"
+
+	log "github.com/sirupsen/logrus"
+	amqp "github.com/streadway/amqp"
+	mb "github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
 
-const deadLetterExchangeName = "device-feeder.dead-letter"
-const deadLetterExchangeHeaderName = "x-dead-letter-exchange"
-const errorCreatingWaitingQueueErr = "error declaring waiting queue"
-const deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
+const (
+	deadLetterExchangeName         = "device-feeder.dead-letter"
+	deadLetterExchangeHeaderName   = "x-dead-letter-exchange"
+	errorCreatingWaitingQueueErr   = "error declaring waiting queue"
+	deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
+)
 
 type QueueListener struct {
 	service        string
@@ -69,13 +78,24 @@ func (q *QueueListener) declareQueueTopology(queueUri string) error {
 		return errors.Wrap(err, "error connecting to queue")
 	}
 
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Warnf("failed to close connection: %v", err)
+		}
+	}()
 
 	ch, err := conn.Channel()
 	if err != nil {
 		return errors.Wrap(err, "error creating amqp channel")
 	}
-	defer ch.Close()
+
+	defer func() {
+		err := ch.Close()
+		if err != nil {
+			log.Warnf("failed to close connection: %v", err)
+		}
+	}()
 
 	err = ch.ExchangeDeclare(deadLetterExchangeName, amqp.ExchangeFanout, true, false, false, false, nil)
 	if err != nil {
@@ -105,13 +125,13 @@ func (q *QueueListener) declareQueueTopology(queueUri string) error {
 		false,         // no-wait
 		map[string]interface{}{
 			deadLetterExchangeHeaderName:   deadLetterExchangeName,
-			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
+			deadLetterRoutingKeyHeaderName: string(mb.NodeFeederRequestRoutingKey),
 		}, // arguments
 	)
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
 	}
-	err = ch.QueueBind(dataFeederQueue.Name, string(msgbus.NodeFeederRequestRoutingKey), msgbus.DefaultExchange, false, nil)
+	err = ch.QueueBind(dataFeederQueue.Name, string(mb.NodeFeederRequestRoutingKey), mb.DefaultExchange, false, nil)
 
 	if err != nil {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
@@ -131,8 +151,8 @@ func (q *QueueListener) createWaitingQueue(ch *amqp.Channel) (amqp.Queue, error)
 		false,                       // no-wait
 		map[string]interface{}{
 			"x-message-ttl":                q.retryPeriodSec * 1000,
-			deadLetterExchangeHeaderName:   msgbus.DefaultExchange,
-			deadLetterRoutingKeyHeaderName: string(msgbus.NodeFeederRequestRoutingKey),
+			deadLetterExchangeHeaderName:   mb.DefaultExchange,
+			deadLetterRoutingKeyHeaderName: string(mb.NodeFeederRequestRoutingKey),
 		},
 	)
 	return waitingQueue, err

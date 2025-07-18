@@ -6,14 +6,4 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
-package global
-
-const (
-	ServiceName = "node-feeder"
-	QueueName   = "node-feeder"
-
-	OptionalTargetHeaderName = "df-target"
-	POD_NAME_ENV_VAR         = "POD_NAME"
-)
-
-var IsDebugMode bool = false
+package initclient_test

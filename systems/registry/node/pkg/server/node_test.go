@@ -14,15 +14,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/mocks"
-	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
-	"gorm.io/gorm"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
 var testNode = ukama.NewVirtualNodeId("HomeNode")
@@ -49,8 +51,8 @@ func TestNodeServer_Add(t *testing.T) {
 		Type: testNode.GetNodeType(),
 		Status: db.NodeStatus{
 			NodeId:       nodeId,
-			State:        ukama.Unknown,
-			Connectivity: ukama.Undefined,
+			State:        ukama.NodeStateUnknown,
+			Connectivity: ukama.NodeConnectivityUndefined,
 		},
 	}
 
@@ -143,8 +145,8 @@ func TestNodeServer_List(t *testing.T) {
 		siteId := uuid.NewV4()
 		networkId := uuid.NewV4()
 		ntype := ukama.NODE_ID_TYPE_HOMENODE
-		connectivity := ukama.Online
-		state := ukama.Unknown
+		connectivity := ukama.NodeConnectivityOnline
+		state := ukama.NodeStateUnknown
 
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
@@ -217,8 +219,8 @@ func TestNodeServer_List(t *testing.T) {
 				Type: ntype,
 				Status: db.NodeStatus{
 					NodeId:       nodeId.StringLowercase(),
-					Connectivity: ukama.Online,
-					State:        ukama.Unknown,
+					Connectivity: ukama.NodeConnectivityOnline,
+					State:        ukama.NodeStateUnknown,
 				},
 				Site: db.Site{
 					NodeId:    nodeId.StringLowercase(),
@@ -228,8 +230,8 @@ func TestNodeServer_List(t *testing.T) {
 			},
 		}
 
-		connectivityVal := uint8(ukama.Online)
-		stateVal := uint8(ukama.Unknown)
+		connectivityVal := uint8(ukama.NodeConnectivityOnline)
+		stateVal := uint8(ukama.NodeStateUnknown)
 		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
@@ -268,14 +270,14 @@ func TestNodeServer_List(t *testing.T) {
 				Type: ukama.NODE_ID_TYPE_HOMENODE,
 				Status: db.NodeStatus{
 					NodeId:       nodeId.StringLowercase(),
-					Connectivity: ukama.Online,
-					State:        ukama.Unknown,
+					Connectivity: ukama.NodeConnectivityOnline,
+					State:        ukama.NodeStateUnknown,
 				},
 			},
 		}
 
-		connectivityVal := uint8(ukama.Online)
-		stateVal := uint8(ukama.Unknown)
+		connectivityVal := uint8(ukama.NodeConnectivityOnline)
+		stateVal := uint8(ukama.NodeStateUnknown)
 		nodeRepo.On("List", nodeId.StringLowercase(), "", "", "", &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 

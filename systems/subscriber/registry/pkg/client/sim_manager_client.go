@@ -43,7 +43,7 @@ func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceC
 		if err != nil {
 			log.Errorf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
 
-			return nil, fmt.Errorf("Failed to connect to remote SimManager service: %w", err)
+			return nil, fmt.Errorf("failed to connect to remote SimManager service: %w", err)
 		}
 
 		u.simManagerService = pb.NewSimManagerServiceClient(conn)

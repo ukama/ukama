@@ -29,11 +29,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	uTypes "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
-
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
 
@@ -145,8 +143,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 			Link:      invite.Link,
 			Email:     strings.ToLower(req.GetEmail()),
 			Name:      invite.Name,
-			Role:      uTypes.RoleType(invite.Role),
-			Status:    uTypes.InvitationStatus(invite.Status),
+			Role:      upb.RoleType(invite.Role),
+			Status:    upb.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -244,7 +242,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			Email:     invite.Email,
 			Name:      invite.Name,
 			Role:      upb.RoleType(invite.Role),
-			Status:    uTypes.InvitationStatus(invite.Status),
+			Status:    upb.InvitationStatus(invite.Status),
 			UserId:    userInfo.Id,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
@@ -313,9 +311,9 @@ func dbInvitationToPbInvitation(invitation *db.Invitation) *pb.Invitation {
 		Id:       invitation.Id.String(),
 		Link:     invitation.Link,
 		Email:    invitation.Email,
-		Role:     uTypes.RoleType(invitation.Role),
+		Role:     upb.RoleType(invitation.Role),
 		Name:     invitation.Name,
-		Status:   uTypes.InvitationStatus(invitation.Status),
+		Status:   upb.InvitationStatus(invitation.Status),
 		UserId:   invitation.UserId,
 		ExpireAt: invitation.ExpiresAt.String(),
 	}

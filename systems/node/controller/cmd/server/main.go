@@ -12,27 +12,24 @@ import (
 	"os"
 
 	"github.com/num30/config"
-
-	"github.com/ukama/ukama/systems/node/controller/pkg/server"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/node/controller/pkg"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
-
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
 
 var svcConf *pkg.Config

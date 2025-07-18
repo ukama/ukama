@@ -322,12 +322,14 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 		return 0, 0, 0, err
 	}
 
-	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL", ukama.Online).Scan(&onlineCount)
+	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL",
+		ukama.NodeConnectivityOnline).Scan(&onlineCount)
 	if res1.Error != nil {
 		return 0, 0, 0, err
 	}
 
-	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL", ukama.Offline).Scan(&offlineCount)
+	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL",
+		ukama.NodeConnectivityOffline).Scan(&offlineCount)
 	if res2.Error != nil {
 		return 0, 0, 0, err
 	}

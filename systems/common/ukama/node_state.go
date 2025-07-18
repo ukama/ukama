@@ -17,10 +17,10 @@ import (
 type NodeState uint8
 
 const (
-	Unknown NodeState = iota
-	Configured
-	Operational
-	Faulty
+	NodeStateUnknown NodeState = iota
+	NodeStateConfigured
+	NodeStateOperational
+	NodeStateFaulty
 )
 
 func (s *NodeState) Scan(value interface{}) error {

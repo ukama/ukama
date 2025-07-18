@@ -30,7 +30,7 @@ type Org struct {
 }
 
 /*
-TODO: Check if this is user table is still required if not then instead of calling org we should call memeber directly from user service
+TODO: Check if this is user table is still required if not then instead of calling org we should call member directly from user service
 */
 type User struct {
 	Id          uint      `gorm:"primaryKey"`

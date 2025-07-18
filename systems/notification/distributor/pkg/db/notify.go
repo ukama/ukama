@@ -10,14 +10,14 @@ import (
 
 	"github.com/lib/pq"
 
-	log "github.com/sirupsen/logrus"
-
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/notification"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/providers"
+
+	log "github.com/sirupsen/logrus"
+	uconf "github.com/ukama/ukama/systems/common/config"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	enpb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
@@ -86,7 +86,7 @@ func (h *notifyHandler) Register(orgId string, networkId string, subscriberId st
 
 	h.subs[id] = sub
 
-	log.Infof("Registerd %s sub with %+v to the notify handler", id, sub)
+	log.Infof("Registered %s sub with %+v to the notify handler", id, sub)
 
 	return id, &sub
 }
@@ -141,7 +141,12 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			log.Warnf("failed to gracefully close DB: %v", err)
+		}
+	}()
 
 	dbCS := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable", h.Db.Host, h.Db.Port, h.Db.DbName, h.Db.Username, h.Db.Password)
 
@@ -157,13 +162,18 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer listener.Close()
+	defer func() {
+		err := listener.Close()
+		if err != nil {
+			log.Warnf("failed to gracefully close listener: %v", err)
+		}
+	}()
 
 	/*TODO: - Close the stream
 	- May be check where the notifivcatins are getting filtered based on userid/kid or subscriberid
 	- This will only report notifcation when websocket is connected if we have any old notification(stores 8Gb)  that had to be reterived by
 	anyother API method
-	- Looks like if this is session/user based we might not get trigeer properly beacuse all of the listner will be reading form the same notify queue.
+	- Looks like if this is session/user based we might not get trigeer properly because all of the listner will be reading form the same notify queue.
 	*/
 	for {
 		select {
@@ -174,7 +184,7 @@ func (h *notifyHandler) notifyHandlerRoutine() {
 			params := strings.Split(notification.Extra, ",")
 			isRead, _ := strconv.ParseBool(params[2])
 
-			/* Get notifcation detaild from event-notify service */
+			/* Get notifcation details from event-notify service */
 			res, err := h.c.Get(context.Background(), &enpb.GetRequest{Id: params[1]})
 			if err != nil {
 				log.Errorf("Error getting notification: %v", err)

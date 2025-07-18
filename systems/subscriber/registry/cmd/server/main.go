@@ -12,23 +12,23 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/subscriber/registry/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/client"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/registry/pkg/server"
-	"google.golang.org/grpc"
-	"gopkg.in/yaml.v3"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
@@ -85,7 +85,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,

@@ -11,11 +11,12 @@ package utils
 import (
 	"io"
 	"io/fs"
-	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const charset = "abcdefghijklmnopqrstuvwxyz" +
@@ -54,13 +55,25 @@ func CopyDir(srcDir, destDir string) error {
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
+
+		defer func() {
+			err := srcFile.Close()
+			if err != nil {
+				log.Warnf("failed to close source file: %v", err)
+			}
+		}()
 
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err
 		}
-		defer destFile.Close()
+
+		defer func() {
+			err := destFile.Close()
+			if err != nil {
+				log.Warnf("failed to close destination file: %v", err)
+			}
+		}()
 
 		_, err = io.Copy(destFile, srcFile)
 		if err != nil {

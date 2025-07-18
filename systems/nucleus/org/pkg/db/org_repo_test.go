@@ -10,18 +10,18 @@ package db_test
 
 import (
 	"database/sql"
-	extsql "database/sql"
 	"regexp"
 	"testing"
-
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/uuid"
-	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	log "github.com/sirupsen/logrus"
+	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
 )
 
 type UkamaDbMock struct {
@@ -57,7 +57,7 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestOrgRepo_Add(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	org := org_db.Org{
 		Id:          uuid.NewV4(),
@@ -107,7 +107,7 @@ func TestOrgRepo_Add(t *testing.T) {
 }
 
 func TestOrgRepo_Get(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -179,7 +179,7 @@ func TestOrgRepo_Get(t *testing.T) {
 }
 
 func TestOrgRepo_GetByName(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -251,7 +251,7 @@ func TestOrgRepo_GetByName(t *testing.T) {
 }
 
 func TestOrgRepo_GetByOwner(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)
@@ -323,7 +323,7 @@ func TestOrgRepo_GetByOwner(t *testing.T) {
 }
 
 // func TestOrgRepo_GetByMember(t *testing.T) {
-// 	var db *extsql.DB
+// 	var db *sql.DB
 
 // 	db, mock, err := sqlmock.New() // mock sql.DB
 // 	assert.NoError(t, err)
@@ -393,7 +393,7 @@ func TestOrgRepo_GetByOwner(t *testing.T) {
 //}
 
 func TestOrgRepo_GetAll(t *testing.T) {
-	var db *extsql.DB
+	var db *sql.DB
 
 	db, mock, err := sqlmock.New() // mock sql.DB
 	assert.NoError(t, err)

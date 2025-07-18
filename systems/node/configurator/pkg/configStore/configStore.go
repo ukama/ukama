@@ -17,17 +17,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 
-	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
-
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	utils "github.com/ukama/ukama/systems/node/configurator/pkg/utils"
 )
 
 type ConfigStore struct {
@@ -127,7 +126,7 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return err
 	}
 
-	// Get current commited version
+	// Get current committed version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get current remote configs: %v", err)
@@ -184,7 +183,7 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return nil
 	}
 
-	// Get current commited version
+	// Get current committed version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get current remote configs: %v", err)
@@ -492,7 +491,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 		state = db.Published
 
 	RecordState:
-		/* Update the version for commited config on node */
+		/* Update the version for committed config on node */
 		cRec, err := c.configRepo.Get(n)
 		if err != nil {
 			log.Errorf("Failed to get last config for node %s.Error: %v", n, err)

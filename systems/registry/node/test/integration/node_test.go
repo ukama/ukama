@@ -18,21 +18,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 
 	log "github.com/sirupsen/logrus"
 	uconf "github.com/ukama/ukama/systems/common/config"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var tConfig *TestConfig
@@ -100,7 +101,7 @@ func Test_FullFlow(t *testing.T) {
 
 		r, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
 			NodeId: node.String(),
-			State:  ukama.Offline.String(),
+			State:  ukama.NodeConnectivityOffline.String(),
 		})
 
 		handleResponse(tt, err, r)
@@ -109,7 +110,7 @@ func Test_FullFlow(t *testing.T) {
 			NodeId: node.String()})
 
 		handleResponse(tt, err, nodeResp)
-		assert.Equal(tt, ukama.Unknown.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(tt, ukama.NodeStateUnknown.String(), nodeResp.Node.Status.Connectivity)
 		assert.Equal(tt, node.GetNodeType(), nodeResp.Node.Type)
 	})
 
@@ -217,7 +218,7 @@ func Test_Listener(t *testing.T) {
 
 	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
 		NodeId: nodeID,
-		State:  ukama.Offline.String()})
+		State:  ukama.NodeConnectivityOffline.String()})
 
 	if err != nil {
 		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
@@ -234,7 +235,7 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, ukama.Offline.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.NodeConnectivityOffline.String(), nodeResp.Node.Status.Connectivity)
 	}
 }
 

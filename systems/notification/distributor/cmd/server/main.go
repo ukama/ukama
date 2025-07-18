@@ -24,7 +24,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/distributor/pb/gen"

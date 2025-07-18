@@ -13,29 +13,27 @@ import (
 	"os"
 
 	"github.com/num30/config"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 	"gorm.io/gorm"
 
-	ic "github.com/ukama/ukama/systems/common/initclient"
-	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/node/configurator/cmd/version"
+	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/providers"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/server"
-	"gopkg.in/yaml.v3"
-
-	"github.com/ukama/ukama/systems/node/configurator/pkg"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/sql"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/node/configurator/cmd/version"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
-	"google.golang.org/grpc"
+	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 )
 
 var serviceConfig *pkg.Config
@@ -91,7 +89,7 @@ func runGrpcServer(gormdb sql.Db) {
 	csite := creg.NewSiteClient(regUrl.String())
 	cnode := creg.NewNodeClient(regUrl.String())
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	s, err := providers.NewStoreClient(serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout)
 	if err != nil {

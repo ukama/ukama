@@ -11,11 +11,11 @@ package db
 import (
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/common/validation"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 )
 
 type OrgRepo interface {
