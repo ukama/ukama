@@ -12,9 +12,9 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/wI2L/jsondiff"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func JsonDiff(srcFile string, targetFile string) ([]string, bool, int, error) {

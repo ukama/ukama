@@ -24,12 +24,14 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
-var testNode1 = "uk-000000-hnode-0000"
-var testNode2 = "uk-000000-hnode-0001"
-var Service = "node/configurator"
-var TestData = "node/configurator/test/integration/data"
-
 const OrgName = "testorg"
+
+var (
+	testNode1 = "uk-000000-hnode-0000"
+	testNode2 = "uk-000000-hnode-0001"
+	Service   = "node/configurator"
+	TestData  = "node/configurator/test/integration/data"
+)
 
 func TestConfigStore_HandleConfigStoreEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
