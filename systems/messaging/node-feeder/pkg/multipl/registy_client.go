@@ -1,3 +1,13 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+//TODO: we should use registry rest client in common instead.
+
 package multipl
 
 import (
@@ -5,23 +15,26 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	"github.com/ukama/ukama/systems/common/rest"
+
+	log "github.com/sirupsen/logrus"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-const RegistryVersion = "/v1/"
-const SystemName = "registry"
+const (
+	RegistryVersion = "/v1/"
+	SystemName      = "registry"
+)
 
 type RoleType int32
 
 const (
-	RoleType_OWNER    RoleType = 0
-	RoleType_ADMIN    RoleType = 1
-	RoleType_EMPLOYEE RoleType = 2
-	RoleType_VENDOR   RoleType = 3
-	RoleType_USERS    RoleType = 4
+	RoleType_OWNER RoleType = iota
+	RoleType_ADMIN
+	RoleType_EMPLOYEE
+	RoleType_VENDOR
+	RoleType_USERS
 )
 
 // Enum value maps for RoleType.
@@ -105,7 +118,9 @@ func (r *registryProvider) GetAllNodes(orgName string) (*nodepb.GetNodesResponse
 	}
 
 	if !resp.IsSuccess() {
-		log.Errorf("Failed to get nodes from registry at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		log.Errorf("Failed to get nodes from registry at %s. HTTP resp code %d and Error message is %s",
+			r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+
 		return nil, fmt.Errorf("failed to get noddes from registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
 	}
 
