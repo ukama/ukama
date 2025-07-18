@@ -17,8 +17,7 @@ import (
 
 func TestComponentCategory(t *testing.T) {
 	t.Run("ComponentCategoryValidString", func(tt *testing.T) {
-		//TODO: add case insensitive test case after ParseType function updates.
-		accessCategory := ukama.ParseType("access")
+		accessCategory := ukama.ParseComponentCategory("aCCess")
 
 		assert.NotNil(t, accessCategory)
 		assert.Equal(t, accessCategory.String(), ukama.ACCESS.String())
@@ -26,7 +25,7 @@ func TestComponentCategory(t *testing.T) {
 	})
 
 	t.Run("ComponentCategoryValidNumber", func(tt *testing.T) {
-		backhaulCategory := ukama.ParseType("2")
+		backhaulCategory := ukama.ParseComponentCategory("2")
 
 		assert.NotNil(t, backhaulCategory)
 		assert.Equal(t, uint8(backhaulCategory), uint8(2))
@@ -34,7 +33,7 @@ func TestComponentCategory(t *testing.T) {
 	})
 
 	t.Run("ComponentCategoryNonValidString", func(tt *testing.T) {
-		defaultCategory := ukama.ParseType("failure")
+		defaultCategory := ukama.ParseComponentCategory("failure")
 
 		assert.NotNil(t, defaultCategory)
 		assert.Equal(t, defaultCategory.String(), ukama.ALL.String())

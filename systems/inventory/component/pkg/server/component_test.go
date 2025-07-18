@@ -15,15 +15,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/mocks"
-	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
-	"gorm.io/gorm"
+	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
+	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
 
 const (

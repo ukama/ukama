@@ -12,6 +12,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -20,12 +24,8 @@ import (
 	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
-
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
@@ -80,7 +80,7 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 
-	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(ukama.ParseType(req.GetCategory())))
+	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(ukama.ParseComponentCategory(req.GetCategory())))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
@@ -212,7 +212,7 @@ func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) [
 		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
 			Inventory:     i.InventoryID,
-			Category:      ukama.ParseType(i.Category), // Use ukama.ParseType here,
+			Category:      ukama.ParseComponentCategory(i.Category),
 			UserId:        uId,
 			Type:          i.Type,
 			Description:   i.Description,
