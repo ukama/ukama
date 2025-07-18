@@ -22,9 +22,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	pkg "github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 )
 
