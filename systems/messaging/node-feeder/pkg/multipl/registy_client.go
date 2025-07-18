@@ -121,7 +121,7 @@ func (r *registryProvider) GetAllNodes(orgName string) (*nodepb.GetNodesResponse
 		log.Errorf("Failed to get nodes from registry at %s. HTTP resp code %d and Error message is %s",
 			r.R.URL.String(), resp.StatusCode(), errStatus.Message)
 
-		return nil, fmt.Errorf("failed to get noddes from registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
+		return nil, fmt.Errorf("failed to get nodes from registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
 	}
 
 	err = json.Unmarshal(resp.Body(), nodeResp)
