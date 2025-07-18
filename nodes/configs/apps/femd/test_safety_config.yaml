@@ -1,0 +1,36 @@
+# Test YAML Configuration - Modified settings for testing
+safety:
+  enabled: true
+  check_interval_ms: 500  # Faster checking for testing
+  max_violations_before_shutdown: 2  # Lower threshold for testing
+  
+  thresholds:
+    max_reverse_power_dbm: -15.0    # More sensitive for testing
+    max_pa_current_a: 3.0           # Lower current limit for testing
+    max_temperature_c: 70.0         # Lower temp limit for testing
+    
+temperature_compensation:
+  fem1:
+    voltage_lookup:
+      -40: {carrier: 0.7, peak: 1.4}   # Test values
+      0:   {carrier: 1.0, peak: 1.7}   
+      25:  {carrier: 1.1, peak: 1.9}   # Different from production
+      70:  {carrier: 0.5, peak: 1.0}   # Reduced power at high temp
+      85:  {carrier: 0.0, peak: 0.0}   # Emergency shutdown
+      
+  fem2:
+    voltage_lookup:
+      -40: {carrier: 0.8, peak: 1.5}   # Slightly different for FEM2
+      0:   {carrier: 1.1, peak: 1.8}   
+      25:  {carrier: 1.2, peak: 2.0}   
+      70:  {carrier: 0.6, peak: 1.1}   # Different from FEM1
+      85:  {carrier: 0.0, peak: 0.0}   
+
+dac:
+  voltage_range:
+    min_voltage: 0.0
+    max_voltage: 2.5
+    
+  default_voltages:
+    carrier_voltage: 1.1  # Different default for testing
+    peak_voltage: 1.9     # Different default for testing
