@@ -87,7 +87,8 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 	}
 
 	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch %s host info. HTTP resp code %d and Error message is %s", icHost, resp.StatusCode(), errStatus.Message)
+		log.Tracef("Failed to fetch %s host info. HTTP resp code %d and Error message is %s",
+			icHost, resp.StatusCode(), errStatus.Message)
 
 		return nil, fmt.Errorf("host Info failure %s", errStatus.Message)
 	}
