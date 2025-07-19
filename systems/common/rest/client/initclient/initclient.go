@@ -14,19 +14,14 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/ukama/ukama/systems/common/rest/client"
 
 	log "github.com/sirupsen/logrus"
 )
 
-type ErrorMessage struct {
-	Message string `json:"message"`
-	Details string `json:"details,omitempty"`
-}
-
 type InitClient struct {
-	C   *resty.Client
-	URL *url.URL
+	u *url.URL
+	R *client.Resty
 }
 
 type SystemIPInfo struct {
@@ -46,67 +41,59 @@ type SystemLookupReq struct {
 
 const SYSTEM_API_VERSION = "/v1"
 
-func NewInitClient(host string, debug bool) (*InitClient, error) {
-	url, err := url.Parse(host)
+func NewInitClient(host string, options ...client.Option) *InitClient {
+	u, err := url.Parse(host)
 	if err != nil {
-		return nil, err
+		log.Fatalf("Can't parse %s url. Error: %v", host, err)
 	}
-	c := resty.New()
-	c.SetDebug(debug)
-	rc := &InitClient{
-		C:   c,
-		URL: url,
+
+	ic := &InitClient{
+		u: u,
+		R: client.NewResty(options...),
 	}
-	log.Tracef("Client created %+v for %s ", rc, rc.URL.String())
-	return rc, nil
+
+	log.Tracef("Client created %+v for %s ", ic, ic.u.String())
+
+	return ic
 }
 
 func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
-	i, err := NewInitClient(icHost, debug)
-	if err != nil {
-		log.Errorf("Failed to get rest client.Error %+v", err)
-		return nil, err
+	log.Infof("Getting host url from initclient for host %s and org %s", host, *org)
+
+	// errStatus := &rest.ErrorMessage{}
+	ic := NewInitClient(icHost)
+	if debug {
+		ic = NewInitClient(icHost, client.WithDebug())
 	}
 
-	errStatus := &ErrorMessage{}
-
-	pkg := SystemIPInfo{}
+	sysIpInfo := SystemIPInfo{}
 	s, err := ParseHostString(host, org)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse host string: %w", err)
 	}
 
-	resp, err := i.C.R().
-		SetError(errStatus).
-		Get(i.URL.String() + SYSTEM_API_VERSION + "/orgs/" + *org + "/systems/" + s.System)
-
+	resp, err := ic.R.Get(ic.u.String() + SYSTEM_API_VERSION + "/orgs/" + *org + "/systems/" + s.System)
 	if err != nil {
-		log.Errorf("Failed to send api request to InitClient. Error %s", err.Error())
+		log.Errorf("Get initclient system failure. error: %s", err.Error())
 
-		return nil, fmt.Errorf("api request to initclient system failure: %w", err)
+		return nil, fmt.Errorf("get initclient system failure: %w", err)
 	}
 
-	if !resp.IsSuccess() {
-		log.Tracef("Failed to fetch %s host info. HTTP resp code %d and Error message is %s",
-			icHost, resp.StatusCode(), errStatus.Message)
-
-		return nil, fmt.Errorf("host Info failure %s", errStatus.Message)
-	}
-
-	err = json.Unmarshal(resp.Body(), &pkg)
+	err = json.Unmarshal(resp.Body(), &sysIpInfo)
 	if err != nil {
 		log.Tracef("Failed to deserialize system IP info. Error message is %s", err.Error())
 
 		return nil, fmt.Errorf("system IP info deserailization failure: %w", err)
 	}
 
-	log.Infof("System IP Info: %+v", pkg)
+	log.Infof("System IP Info: %+v", sysIpInfo)
 
-	return CreateHTTPURL(pkg)
-
+	return CreateHTTPURL(sysIpInfo)
 }
 
 func CreateHTTPURL(s SystemIPInfo) (*url.URL, error) {
+	log.Infof("Creating HTTP url for system %s and org %s", s.SystemName, s.OrgName)
+
 	host := fmt.Sprintf("http://%s:%d", s.Ip, s.Port)
 	url, err := url.Parse(host)
 	if err != nil {
@@ -116,6 +103,8 @@ func CreateHTTPURL(s SystemIPInfo) (*url.URL, error) {
 }
 
 func CreateHTTPSURL(s SystemIPInfo) (*url.URL, error) {
+	log.Infof("Creating HTTPS url for system %s and org %s", s.SystemName, s.OrgName)
+
 	host := fmt.Sprintf("https://%s:%d", s.Ip, s.Port)
 	url, err := url.Parse(host)
 	if err != nil {
@@ -145,7 +134,6 @@ func ParseHostString(host string, org *string) (*SystemLookupReq, error) {
 	}
 
 	return s, nil
-
 }
 
 func CreateHostString(org string, system string) string {
