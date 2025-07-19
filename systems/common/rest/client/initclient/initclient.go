@@ -83,7 +83,7 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 	if err != nil {
 		log.Tracef("Failed to deserialize system IP info. Error message is %s", err.Error())
 
-		return nil, fmt.Errorf("system IP info deserailization failure: %w", err)
+		return nil, fmt.Errorf("system IP info deserialization failure: %w", err)
 	}
 
 	log.Infof("System IP Info: %+v", sysIpInfo)
