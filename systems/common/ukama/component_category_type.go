@@ -6,7 +6,10 @@
 
 package ukama
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 type ComponentCategory uint8
 
@@ -51,8 +54,7 @@ func (c ComponentCategory) String() string {
 
 // TODO: this should be renamed to ParseComponentCategory instead + update
 // all dependent services using it.
-// TODO: make this also case insensitive.
-func ParseType(value string) ComponentCategory {
+func ParseComponentCategory(value string) ComponentCategory {
 	i, err := strconv.Atoi(value)
 	if err == nil {
 		return ComponentCategory(i)
@@ -67,7 +69,7 @@ func ParseType(value string) ComponentCategory {
 		"spectrum": 5,
 	}
 
-	v, ok := t[value]
+	v, ok := t[strings.ToLower(value)]
 	if !ok {
 		return ComponentCategory(0)
 	}
