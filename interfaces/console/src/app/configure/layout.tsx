@@ -131,9 +131,9 @@ const ConfigureLayout = ({
   }, [searchParams, components]);
 
   const mapComponents = (components: ComponentsResDto) => {
-    const p = searchParams.get('power') ?? '';
-    const s = searchParams.get('switch') ?? '';
-    const b = searchParams.get('backhaul') ?? '';
+    const p = searchParams.get(Component_Type.Power) ?? '';
+    const s = searchParams.get(Component_Type.Switch) ?? '';
+    const b = searchParams.get(Component_Type.Backhaul) ?? '';
     const switchRecords = components.components.find((comp) => comp.id === s);
 
     const powerRecords = components.components.find((comp) => comp.id === p);
