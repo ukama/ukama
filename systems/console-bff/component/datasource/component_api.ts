@@ -25,10 +25,14 @@ class ComponentApi extends RESTDataSource {
     category: string
   ): Promise<ComponentsResDto> => {
     this.logger.info(
-      `GetComponentByUserId [GET]: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
+      `GetComponentByUserId [GET]: ${this.baseURL}/${VERSION}/user/${
+        headers.userId
+      }?category=${category.toUpperCase()}`
     );
     const response = await this.get<ComponentsAPIResDto>(
-      `/${VERSION}/components/user/${headers.userId}?category=${category}`
+      `/${VERSION}/components/user/${
+        headers.userId
+      }?category=${category.toUpperCase()}`
     );
     return dtoToComponentsDto(response);
   };
