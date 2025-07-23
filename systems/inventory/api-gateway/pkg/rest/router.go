@@ -51,6 +51,7 @@ type component interface {
 	Get(id string) (*componentpb.GetResponse, error)
 	GetByUser(uid string, c string) (*componentpb.GetByUserResponse, error)
 	SyncComponent() (*componentpb.SyncComponentsResponse, error)
+	List(id, userId, partNumber, category string) (*componentpb.ListResponse, error)
 }
 
 type accounting interface {
@@ -124,6 +125,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
 		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
 		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
+		components.GET("", formatDoc("List components", "List components with various query params as filters"), tonic.Handler(r.listComponents, http.StatusOK))
 
 		// Account routes
 		const account = "/accounting"
@@ -144,6 +146,10 @@ func (r *Router) getComponentsByUserHandler(c *gin.Context, req *GetComponents) 
 
 func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponentsResponse, error) {
 	return r.clients.Component.SyncComponent()
+}
+
+func (r *Router) listComponents(c *gin.Context, req *ListComponentsReq) (*componentpb.ListResponse, error) {
+	return r.clients.Component.List(req.Id, req.UserId, req.PartNumber, req.Category)
 }
 
 func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accountingpb.GetResponse, error) {

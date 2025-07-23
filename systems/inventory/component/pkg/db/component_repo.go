@@ -19,6 +19,7 @@ type ComponentRepo interface {
 	Get(id uuid.UUID) (*Component, error)
 	GetByUser(userId string, category int32) ([]*Component, error)
 	Add(components []*Component) error
+	List(id, userId, partNumber string, category int32) ([]*Component, error)
 	Delete() error
 }
 
@@ -58,6 +59,36 @@ func (c *componentRepo) GetByUser(userId string, category int32) ([]*Component, 
 
 	if result.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
+	}
+
+	return components, nil
+}
+
+func (r *componentRepo) List(id, userId, partNumber string, category int32) ([]*Component, error) {
+
+	components := []*Component{}
+
+	tx := r.Db.GetGormDb().Preload(clause.Associations)
+
+	if id != "" {
+		tx = tx.Where("id = ?", id)
+	}
+
+	if userId != "" {
+		tx = tx.Where("user_id = ?", userId)
+	}
+
+	if partNumber != "" {
+		tx = tx.Where("part_number = ?", partNumber)
+	}
+
+	if category != 0 {
+		tx = tx.Where("category = ?", category)
+	}
+
+	result := tx.Find(&components)
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
 	return components, nil

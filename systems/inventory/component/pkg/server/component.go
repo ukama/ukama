@@ -90,6 +90,19 @@ func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserReques
 	}, nil
 }
 
+func (c *ComponentServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("Listing components %v", req)
+
+	components, err := c.componentRepo.List(req.Id, req.GetUserId(), req.GetPartNumber(), int32(ukama.ParseComponentCategory(req.GetCategory())))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "component")
+	}
+
+	return &pb.ListResponse{
+		Components: dbComponentsToPbComponents(components),
+	}, nil
+}
+
 func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
 	log.Infof("Syncing components %v", req)
 
