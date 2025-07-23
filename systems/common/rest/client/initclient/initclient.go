@@ -40,6 +40,7 @@ type SystemLookupReq struct {
 
 type InitClient interface {
 	GetSystem(org, system string) (*SystemIPInfo, error)
+	GetSystemFromHost(host string, org *string) (*SystemIPInfo, error)
 }
 
 type initClient struct {
@@ -64,6 +65,19 @@ func NewInitClient(host string, options ...client.Option) *initClient {
 }
 
 func (i *initClient) GetSystem(org, system string) (*SystemIPInfo, error) {
+	return i.getSystem(org, system)
+}
+
+func (i *initClient) GetSystemFromHost(host string, org *string) (*SystemIPInfo, error) {
+	s, err := ParseHostString(host, org)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse host string: %w", err)
+	}
+
+	return i.getSystem(s.Org, s.System)
+}
+
+func (i *initClient) getSystem(org, system string) (*SystemIPInfo, error) {
 	log.Debugf("Getting sysem %q from org %q", system, org)
 
 	sysIpInfo := SystemIPInfo{}
@@ -87,20 +101,10 @@ func (i *initClient) GetSystem(org, system string) (*SystemIPInfo, error) {
 	return &sysIpInfo, nil
 }
 
-func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
-	log.Infof("Getting host url from initclient matching host %s and org %s", host, *org)
+func GetHostUrl(ic InitClient, host string, org *string) (*url.URL, error) {
+	log.Infof("Getting url from initclient matching host %s", host)
 
-	ic := NewInitClient(icHost)
-	if debug {
-		ic = NewInitClient(icHost, client.WithDebug())
-	}
-
-	s, err := ParseHostString(host, org)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse host string: %w", err)
-	}
-
-	sysIpInfo, err := ic.GetSystem(*org, s.System)
+	sysIpInfo, err := ic.GetSystemFromHost(host, org)
 	if err != nil {
 		log.Errorf("Initclient GetSystem failure. error: %s", err)
 
@@ -111,25 +115,24 @@ func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, 
 }
 
 func CreateHTTPURL(s SystemIPInfo) (*url.URL, error) {
-	log.Infof("Creating HTTP url for system %s and org %s", s.SystemName, s.OrgName)
-
-	host := fmt.Sprintf("http://%s:%d", s.Ip, s.Port)
-	url, err := url.Parse(host)
-	if err != nil {
-		return nil, err
-	}
-	return url, nil
+	return createURL(s, "http")
 }
 
 func CreateHTTPSURL(s SystemIPInfo) (*url.URL, error) {
-	log.Infof("Creating HTTPS url for system %s and org %s", s.SystemName, s.OrgName)
+	return createURL(s, "https")
+}
 
-	host := fmt.Sprintf("https://%s:%d", s.Ip, s.Port)
-	url, err := url.Parse(host)
-	if err != nil {
-		return nil, err
+func createURL(s SystemIPInfo, protocol string) (*url.URL, error) {
+	log.Infof("Creating %s url for system %s and org %s",
+		protocol, s.SystemName, s.OrgName)
+
+	//we can add more protocol validation later
+	if protocol == "" {
+		return nil, fmt.Errorf("error while creating url: protocol %q is not valid",
+			protocol)
 	}
-	return url, nil
+
+	return url.Parse(fmt.Sprintf("%s://%s:%d", protocol, s.Ip, s.Port))
 }
 
 /* Host is expected to be orgname.systemname */
@@ -140,14 +143,17 @@ func ParseHostString(host string, org *string) (*SystemLookupReq, error) {
 	if len(tok) == 1 {
 		/* If it only has system name */
 		s.System = tok[0]
-		if org != nil {
-			s.Org = *org
-		} else {
+		if org == nil {
 			return nil, fmt.Errorf("missing organization string for resolving host")
 		}
+		s.Org = *org
 	} else if len(tok) == 2 {
 		s.System = tok[1]
 		s.Org = tok[0]
+		if org != nil && *org != s.Org {
+			return nil, fmt.Errorf("organization string for resolving host does not match: (%s != %s)",
+				*org, s.Org)
+		}
 	} else {
 		return nil, fmt.Errorf("wrong hostname %s. Expected format orgname.systemname", host)
 	}
