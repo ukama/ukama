@@ -376,7 +376,8 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 func handleEventOrgAdd(es *EventToNotifyEventServer, msg *epb.EventOrgCreate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, msg.Id, "", "", "", msg.Owner, jmsg, msg.Id)
 }
@@ -384,7 +385,8 @@ func handleEventOrgAdd(es *EventToNotifyEventServer, msg *epb.EventOrgCreate, c 
 func handleEventUserAdd(es *EventToNotifyEventServer, msg *epb.EventUserCreate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
@@ -392,7 +394,8 @@ func handleEventUserAdd(es *EventToNotifyEventServer, msg *epb.EventUserCreate, 
 func handleEventUserDeactivate(es *EventToNotifyEventServer, msg *epb.EventUserDeactivate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
@@ -400,7 +403,8 @@ func handleEventUserDeactivate(es *EventToNotifyEventServer, msg *epb.EventUserD
 func handleEventUserDelete(es *EventToNotifyEventServer, msg *epb.EventUserDelete, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
@@ -408,7 +412,8 @@ func handleEventUserDelete(es *EventToNotifyEventServer, msg *epb.EventUserDelet
 func handleEventMemberCreate(es *EventToNotifyEventServer, msg *epb.AddMemberEventRequest, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
 
@@ -430,7 +435,8 @@ func handleEventMemberCreate(es *EventToNotifyEventServer, msg *epb.AddMemberEve
 func handleEventMemberDelete(es *EventToNotifyEventServer, msg *epb.DeleteMemberEventRequest, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
 }
@@ -438,7 +444,8 @@ func handleEventMemberDelete(es *EventToNotifyEventServer, msg *epb.DeleteMember
 func handleEventNetworkAdd(es *EventToNotifyEventServer, msg *epb.EventNetworkCreate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
 }
@@ -446,7 +453,8 @@ func handleEventNetworkAdd(es *EventToNotifyEventServer, msg *epb.EventNetworkCr
 func handleEventNetworkDelete(es *EventToNotifyEventServer, msg *epb.EventNetworkDelete, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
 }
@@ -454,7 +462,8 @@ func handleEventNetworkDelete(es *EventToNotifyEventServer, msg *epb.EventNetwor
 func handleEventNodeCreate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeCreate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -462,7 +471,8 @@ func handleEventNodeCreate(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 func handleEventNodeUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeUpdate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -470,7 +480,8 @@ func handleEventNodeUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 func handleEventNodeStateUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeStatusUpdate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -478,7 +489,8 @@ func handleEventNodeStateUpdate(es *EventToNotifyEventServer, msg *epb.EventRegi
 func handleEventNodeDelete(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeDelete, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -486,7 +498,8 @@ func handleEventNodeDelete(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeAssign, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -494,7 +507,8 @@ func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeRelease, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -502,7 +516,8 @@ func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistry
 func handleEventInviteCreate(es *EventToNotifyEventServer, msg *epb.EventInvitationCreated, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
@@ -510,7 +525,8 @@ func handleEventInviteCreate(es *EventToNotifyEventServer, msg *epb.EventInvitat
 func handleEventInviteDelete(es *EventToNotifyEventServer, msg *epb.EventInvitationDeleted, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
@@ -518,7 +534,8 @@ func handleEventInviteDelete(es *EventToNotifyEventServer, msg *epb.EventInvitat
 func handleEventInviteUpdate(es *EventToNotifyEventServer, msg *epb.EventInvitationUpdated, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
@@ -526,7 +543,8 @@ func handleEventInviteUpdate(es *EventToNotifyEventServer, msg *epb.EventInvitat
 func handleEventNodeOnline(es *EventToNotifyEventServer, msg *epb.NodeOnlineEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -534,7 +552,8 @@ func handleEventNodeOnline(es *EventToNotifyEventServer, msg *epb.NodeOnlineEven
 func handleEventNodeOffline(es *EventToNotifyEventServer, msg *epb.NodeOfflineEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
@@ -542,7 +561,8 @@ func handleEventNodeOffline(es *EventToNotifyEventServer, msg *epb.NodeOfflineEv
 func handleEventSimActivate(es *EventToNotifyEventServer, msg *epb.EventSimActivation, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
 }
@@ -550,7 +570,8 @@ func handleEventSimActivate(es *EventToNotifyEventServer, msg *epb.EventSimActiv
 func handleEventSimAllocate(es *EventToNotifyEventServer, msg *epb.EventSimAllocation, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
 }
@@ -558,7 +579,8 @@ func handleEventSimAllocate(es *EventToNotifyEventServer, msg *epb.EventSimAlloc
 func handleEventSimDelete(es *EventToNotifyEventServer, msg *epb.EventSimTermination, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
@@ -566,7 +588,8 @@ func handleEventSimDelete(es *EventToNotifyEventServer, msg *epb.EventSimTermina
 func handleEventSimAddPackage(es *EventToNotifyEventServer, msg *epb.EventSimAddPackage, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
@@ -574,7 +597,8 @@ func handleEventSimAddPackage(es *EventToNotifyEventServer, msg *epb.EventSimAdd
 func handleEventSiteCreate(es *EventToNotifyEventServer, msg *epb.EventAddSite, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
 }
@@ -582,7 +606,8 @@ func handleEventSiteCreate(es *EventToNotifyEventServer, msg *epb.EventAddSite, 
 func handleEventSiteUpdate(es *EventToNotifyEventServer, msg *epb.EventUpdateSite, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
 }
@@ -590,7 +615,8 @@ func handleEventSiteUpdate(es *EventToNotifyEventServer, msg *epb.EventUpdateSit
 func handleEventSimActivePackage(es *EventToNotifyEventServer, msg *epb.EventSimActivePackage, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
@@ -598,7 +624,8 @@ func handleEventSimActivePackage(es *EventToNotifyEventServer, msg *epb.EventSim
 func handleEventSimRemovePackage(es *EventToNotifyEventServer, msg *epb.EventSimRemovePackage, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
@@ -606,7 +633,8 @@ func handleEventSimRemovePackage(es *EventToNotifyEventServer, msg *epb.EventSim
 func handleEventSubscriberCreate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 
@@ -628,7 +656,8 @@ func handleEventSubscriberCreate(es *EventToNotifyEventServer, msg *epb.EventSub
 func handleEventSubscriberUpdate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 }
@@ -636,7 +665,8 @@ func handleEventSubscriberUpdate(es *EventToNotifyEventServer, msg *epb.EventSub
 func handleEventSubscriberDelete(es *EventToNotifyEventServer, msg *epb.EventSubscriberDeleted, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 }
@@ -644,7 +674,8 @@ func handleEventSubscriberDelete(es *EventToNotifyEventServer, msg *epb.EventSub
 func handleEventSimsUpload(es *EventToNotifyEventServer, msg *epb.EventSimsUploaded, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
@@ -652,7 +683,8 @@ func handleEventSimsUpload(es *EventToNotifyEventServer, msg *epb.EventSimsUploa
 func handleEventBaserateUpload(es *EventToNotifyEventServer, msg *epb.EventBaserateUploaded, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
@@ -660,7 +692,8 @@ func handleEventBaserateUpload(es *EventToNotifyEventServer, msg *epb.EventBaser
 func handleEventPackageCreate(es *EventToNotifyEventServer, msg *epb.CreatePackageEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
@@ -668,7 +701,8 @@ func handleEventPackageCreate(es *EventToNotifyEventServer, msg *epb.CreatePacka
 func handleEventPackageUpdate(es *EventToNotifyEventServer, msg *epb.UpdatePackageEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
@@ -676,7 +710,8 @@ func handleEventPackageUpdate(es *EventToNotifyEventServer, msg *epb.UpdatePacka
 func handleEventPackageDelete(es *EventToNotifyEventServer, msg *epb.DeletePackageEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
@@ -684,7 +719,8 @@ func handleEventPackageDelete(es *EventToNotifyEventServer, msg *epb.DeletePacka
 func handleEventMarkupUpdate(es *EventToNotifyEventServer, msg *epb.DefaultMarkupUpdate, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
@@ -692,7 +728,8 @@ func handleEventMarkupUpdate(es *EventToNotifyEventServer, msg *epb.DefaultMarku
 func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeStateChangeEvent, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 
 	dynamicConfig := *c
@@ -729,7 +766,8 @@ func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeS
 func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 
 	if msg.ItemType != ukama.ItemTypeInvoice.String() {
@@ -756,7 +794,8 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 
 	if msg.ItemType != ukama.ItemTypePackage.String() {
@@ -783,7 +822,8 @@ func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c 
 func handleEventInvoiceGenerate(es *EventToNotifyEventServer, msg *epb.Report, c *evt.EventConfig) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
-		log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
+		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
+		return
 	}
 	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)
 }
