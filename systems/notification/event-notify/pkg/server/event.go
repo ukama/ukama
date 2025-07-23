@@ -771,7 +771,7 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 	}
 
 	if msg.ItemType != ukama.ItemTypeInvoice.String() {
-		log.Errorf("unexpected item type for failed payment: %s", msg.ItemType)
+		log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
 		return
 	}
 
@@ -784,7 +784,7 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 
 	targetId, ok := metadata["targetId"]
 	if !ok {
-		log.Errorf("missing targetId metadata for failed package payment: %s", msg.ItemId)
+		log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
 		return
 	}
 
