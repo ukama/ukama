@@ -59,6 +59,7 @@ func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus m
 	}
 }
 
+// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting component %v", req)
 
@@ -77,6 +78,7 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
+// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 

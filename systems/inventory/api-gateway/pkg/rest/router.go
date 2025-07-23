@@ -109,7 +109,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		const component = "/components"
 		components := auth.Group(component, "Component", "Operations on Component")
+		// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
+		// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
 		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
 		components.GET("", formatDoc("List components", "List components with various query params as filters"), tonic.Handler(r.listComponents, http.StatusOK))
