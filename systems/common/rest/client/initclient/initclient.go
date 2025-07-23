@@ -19,10 +19,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type InitClient struct {
-	u *url.URL
-	R *client.Resty
-}
+const (
+	InitApiEndpoint = "/v1/orgs"
+)
 
 type SystemIPInfo struct {
 	SystemId    string `json:"systemId"`
@@ -39,15 +38,22 @@ type SystemLookupReq struct {
 	Org    string
 }
 
-const SYSTEM_API_VERSION = "/v1"
+type InitClient interface {
+	GetSystem(org, system string) (*SystemIPInfo, error)
+}
 
-func NewInitClient(host string, options ...client.Option) *InitClient {
+type initClient struct {
+	u *url.URL
+	R *client.Resty
+}
+
+func NewInitClient(host string, options ...client.Option) *initClient {
 	u, err := url.Parse(host)
 	if err != nil {
 		log.Fatalf("Can't parse %s url. Error: %v", host, err)
 	}
 
-	ic := &InitClient{
+	ic := &initClient{
 		u: u,
 		R: client.NewResty(options...),
 	}
@@ -57,38 +63,51 @@ func NewInitClient(host string, options ...client.Option) *InitClient {
 	return ic
 }
 
-func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
-	log.Infof("Getting host url from initclient for host %s and org %s", host, *org)
-
-	// errStatus := &rest.ErrorMessage{}
-	ic := NewInitClient(icHost)
-	if debug {
-		ic = NewInitClient(icHost, client.WithDebug())
-	}
+func (i *initClient) GetSystem(org, system string) (*SystemIPInfo, error) {
+	log.Debugf("Getting sysem %q from org %q", system, org)
 
 	sysIpInfo := SystemIPInfo{}
-	s, err := ParseHostString(host, org)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse host string: %w", err)
-	}
 
-	resp, err := ic.R.Get(ic.u.String() + SYSTEM_API_VERSION + "/orgs/" + *org + "/systems/" + s.System)
+	resp, err := i.R.Get(i.u.String() + InitApiEndpoint + "/" + org + "/systems/" + system)
 	if err != nil {
-		log.Errorf("Get initclient system failure. error: %s", err.Error())
+		log.Errorf("Get system failure. error: %v", err)
 
-		return nil, fmt.Errorf("get initclient system failure: %w", err)
+		return nil, fmt.Errorf("get system failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &sysIpInfo)
 	if err != nil {
-		log.Tracef("Failed to deserialize system IP info. Error message is %s", err.Error())
+		log.Tracef("Failed to deserialize system IP info. Error message is %v", err)
 
 		return nil, fmt.Errorf("system IP info deserialization failure: %w", err)
 	}
 
 	log.Infof("System IP Info: %+v", sysIpInfo)
 
-	return CreateHTTPURL(sysIpInfo)
+	return &sysIpInfo, nil
+}
+
+func GetHostUrl(host string, icHost string, org *string, debug bool) (*url.URL, error) {
+	log.Infof("Getting host url from initclient matching host %s and org %s", host, *org)
+
+	ic := NewInitClient(icHost)
+	if debug {
+		ic = NewInitClient(icHost, client.WithDebug())
+	}
+
+	s, err := ParseHostString(host, org)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse host string: %w", err)
+	}
+
+	sysIpInfo, err := ic.GetSystem(*org, s.System)
+	if err != nil {
+		log.Errorf("Initclient GetSystem failure. error: %s", err)
+
+		return nil, fmt.Errorf("initclient GetSystem failure: %w", err)
+	}
+
+	return CreateHTTPURL(*sysIpInfo)
 }
 
 func CreateHTTPURL(s SystemIPInfo) (*url.URL, error) {
