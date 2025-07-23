@@ -16,7 +16,7 @@ type GetRequest struct {
 
 type GetComponents struct {
 	UserId   string `example:"{{userId}}" path:"uuid" validate:"required"`
-	Category string `example:"{{componentCategory}}" query:"category" validate:"eq=ALL|eq=ACCESS|eq=BACKHAUL|eq=POWER|eq=SWITCH|eq=SPECTRUM"`
+	Category string `example:"{{componentCategory}}" query:"category" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
 }
 
 type GetAccounts struct {
