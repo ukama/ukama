@@ -194,13 +194,6 @@ func TestGetHostUrl(t *testing.T) {
 }
 
 func TestParseHostString(t *testing.T) {
-
-	t.Run("InvalidHostScheme", func(tt *testing.T) {
-
-	})
-}
-
-func TestTestParseHostString(t *testing.T) {
 	var org string = "org"
 
 	tests := []struct {
