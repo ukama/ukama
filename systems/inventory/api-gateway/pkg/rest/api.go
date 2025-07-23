@@ -32,5 +32,5 @@ type ListComponentsReq struct {
 	Id         string `form:"id" json:"id" query:"id" binding:"required"`
 	UserId     string `form:"user_id" json:"user_id" query:"user_id" binding:"required"`
 	PartNumber string `form:"part_number" json:"part_number" query:"part_number" binding:"required"`
-	Category   string `form:"category" json:"category" query:"category" binding:"required" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
+	Category   string `form:"category" default:"all" json:"category" query:"category" binding:"required" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
 }

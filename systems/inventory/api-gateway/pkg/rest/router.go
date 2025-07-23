@@ -43,21 +43,8 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Component  component
-	Accounting accounting
-}
-
-type component interface {
-	Get(id string) (*componentpb.GetResponse, error)
-	GetByUser(uid string, c string) (*componentpb.GetByUserResponse, error)
-	SyncComponent() (*componentpb.SyncComponentsResponse, error)
-	List(id, userId, partNumber, category string) (*componentpb.ListResponse, error)
-}
-
-type accounting interface {
-	Get(id string) (*accountingpb.GetResponse, error)
-	GetByUser(uid string) (*accountingpb.GetByUserResponse, error)
-	SyncAccounts() (*accountingpb.SyncAcountingResponse, error)
+	Component  client.Component
+	Accounting client.Accounting
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {

@@ -19,6 +19,13 @@ import (
 	"google.golang.org/grpc"
 )
 
+type Component interface {
+	Get(id string) (*pb.GetResponse, error)
+	GetByUser(uid string, c string) (*pb.GetByUserResponse, error)
+	SyncComponent() (*pb.SyncComponentsResponse, error)
+	List(id, userId, partNumber, category string) (*pb.ListResponse, error)
+}
+
 type ComponentInventory struct {
 	conn    *grpc.ClientConn
 	client  pb.ComponentServiceClient

@@ -801,4 +801,139 @@ specification: "Test specification"`
 	})
 }
 
+func TestComponentServer_List(t *testing.T) {
+	t.Run("List components successfully with results", func(t *testing.T) {
+		// Setup test data
+		componentId := uuid.NewV4()
+		userId := uuid.NewV4()
+		partNumber := "TEST-PN-001"
+		category := "ACCESS"
 
+		// Create mock components
+		mockComponents := []*db.Component{
+			{
+				Id:            componentId,
+				Inventory:     "INV001",
+				UserId:        userId,
+				Category:      ukama.ParseComponentCategory(category),
+				Type:          "tower node",
+				Description:   "Test component",
+				DatasheetURL:  "https://datasheet.com",
+				ImagesURL:     "https://images.com",
+				PartNumber:    partNumber,
+				Manufacturer:  "ukama",
+				Managed:       "ukama",
+				Warranty:      12,
+				Specification: "Test specification",
+			},
+			{
+				Id:            uuid.NewV4(),
+				Inventory:     "INV002",
+				UserId:        userId,
+				Category:      ukama.ParseComponentCategory(category),
+				Type:          "amplifier node",
+				Description:   "Another test component",
+				DatasheetURL:  "https://datasheet2.com",
+				ImagesURL:     "https://images2.com",
+				PartNumber:    "TEST-PN-002",
+				Manufacturer:  "ukama",
+				Managed:       "ukama",
+				Warranty:      24,
+				Specification: "Another test specification",
+			},
+		}
+
+		// Setup mock repository
+		compRepo := &mocks.ComponentRepo{}
+		compRepo.On("List", componentId.String(), userId.String(), partNumber, int32(ukama.ParseComponentCategory(category))).
+			Return(mockComponents, nil).Once()
+
+		// Create server instance
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+
+		// Create request
+		req := &pb.ListRequest{
+			Id:         componentId.String(),
+			UserId:     userId.String(),
+			PartNumber: partNumber,
+			Category:   category,
+		}
+
+		// Execute the RPC call
+		resp, err := s.List(context.TODO(), req)
+
+		// Assertions
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Components, 2)
+		assert.Equal(t, componentId.String(), resp.Components[0].Id)
+		assert.Equal(t, userId.String(), resp.Components[0].UserId)
+		assert.Equal(t, partNumber, resp.Components[0].PartNumber)
+		assert.Equal(t, "access", resp.Components[0].Category)
+		assert.Equal(t, "tower node", resp.Components[0].Type)
+		assert.Equal(t, "Test component", resp.Components[0].Description)
+
+		// Verify mock expectations
+		compRepo.AssertExpectations(t)
+	})
+
+	t.Run("List components successfully with no results", func(t *testing.T) {
+		// Setup test data
+		userId := uuid.NewV4()
+		category := "CONTROLLER"
+
+		// Setup mock repository to return empty list
+		compRepo := &mocks.ComponentRepo{}
+		compRepo.On("List", "", userId.String(), "", int32(ukama.ParseComponentCategory(category))).
+			Return([]*db.Component{}, nil).Once()
+
+		// Create server instance
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+
+		// Create request with only userId and category
+		req := &pb.ListRequest{
+			UserId:   userId.String(),
+			Category: category,
+		}
+
+		// Execute the RPC call
+		resp, err := s.List(context.TODO(), req)
+
+		// Assertions
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		assert.Len(t, resp.Components, 0)
+
+		// Verify mock expectations
+		compRepo.AssertExpectations(t)
+	})
+
+	t.Run("List components with database error", func(t *testing.T) {
+		// Setup test data
+		partNumber := "ERROR-PN-001"
+
+		// Setup mock repository to return error
+		compRepo := &mocks.ComponentRepo{}
+		compRepo.On("List", "", "", partNumber, int32(0)).
+			Return(nil, gorm.ErrInvalidDB).Once()
+
+		// Create server instance
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+
+		// Create request with only partNumber
+		req := &pb.ListRequest{
+			PartNumber: partNumber,
+		}
+
+		// Execute the RPC call
+		resp, err := s.List(context.TODO(), req)
+
+		// Assertions
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Contains(t, err.Error(), "invalid db")
+
+		// Verify mock expectations
+		compRepo.AssertExpectations(t)
+	})
+}
