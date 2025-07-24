@@ -369,3 +369,318 @@ func TestRouter_SyncAccounting(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 	acc.AssertExpectations(t)
 }
+
+func TestRouter_ListComponents(t *testing.T) {
+	// arrange
+	componentId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+	partNumber := "TEST-123"
+	category := "access"
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/components", nil)
+
+	// Add query parameters
+	q := hreq.URL.Query()
+	q.Add("id", componentId)
+	q.Add("user_id", userId)
+	q.Add("part_number", partNumber)
+	q.Add("category", category)
+	hreq.URL.RawQuery = q.Encode()
+
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	compReq := &cpb.ListRequest{
+		Id:         componentId,
+		UserId:     userId,
+		PartNumber: partNumber,
+		Category:   category,
+	}
+
+	compResp := &cpb.ListResponse{
+		Components: []*cpb.Component{
+			{
+				Id:            componentId,
+				UserId:        userId,
+				Inventory:     testInventoryID,
+				Category:      category,
+				Type:          testComponentType,
+				Description:   testDescription,
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    partNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
+			},
+		},
+	}
+
+	comp.On("List", mock.Anything, compReq).Return(compResp, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestRouter_ListComponents_WithDefaultCategory(t *testing.T) {
+	// arrange
+	componentId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+	partNumber := "TEST-456"
+	// category is not provided, should default to "all"
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/components", nil)
+
+	// Add query parameters without category
+	q := hreq.URL.Query()
+	q.Add("id", componentId)
+	q.Add("user_id", userId)
+	q.Add("part_number", partNumber)
+	hreq.URL.RawQuery = q.Encode()
+
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	compReq := &cpb.ListRequest{
+		Id:         componentId,
+		UserId:     userId,
+		PartNumber: partNumber,
+		Category:   "all", // default value
+	}
+
+	compResp := &cpb.ListResponse{
+		Components: []*cpb.Component{
+			{
+				Id:            componentId,
+				UserId:        userId,
+				Inventory:     testInventoryID,
+				Category:      "all",
+				Type:          testComponentType,
+				Description:   testDescription,
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    partNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
+			},
+		},
+	}
+
+	comp.On("List", mock.Anything, compReq).Return(compResp, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestRouter_ListComponents_EmptyResponse(t *testing.T) {
+	// arrange
+	componentId := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+	partNumber := "TEST-789"
+	category := "power"
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/components", nil)
+
+	// Add query parameters
+	q := hreq.URL.Query()
+	q.Add("id", componentId)
+	q.Add("user_id", userId)
+	q.Add("part_number", partNumber)
+	q.Add("category", category)
+	hreq.URL.RawQuery = q.Encode()
+
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	compReq := &cpb.ListRequest{
+		Id:         componentId,
+		UserId:     userId,
+		PartNumber: partNumber,
+		Category:   category,
+	}
+
+	compResp := &cpb.ListResponse{
+		Components: []*cpb.Component{}, // empty response
+	}
+
+	comp.On("List", mock.Anything, compReq).Return(compResp, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestRouter_ListComponents_MultipleComponents(t *testing.T) {
+	// arrange
+	componentId1 := uuid.NewV4().String()
+	componentId2 := uuid.NewV4().String()
+	userId := uuid.NewV4().String()
+	partNumber := "TEST-MULTI"
+	category := "switch"
+
+	w := httptest.NewRecorder()
+	hreq, _ := http.NewRequest("GET", "/v1/components", nil)
+
+	// Add query parameters
+	q := hreq.URL.Query()
+	q.Add("id", componentId1)
+	q.Add("user_id", userId)
+	q.Add("part_number", partNumber)
+	q.Add("category", category)
+	hreq.URL.RawQuery = q.Encode()
+
+	arc := &providers.AuthRestClient{}
+	comp := &cmocks.ComponentServiceClient{}
+
+	compReq := &cpb.ListRequest{
+		Id:         componentId1,
+		UserId:     userId,
+		PartNumber: partNumber,
+		Category:   category,
+	}
+
+	compResp := &cpb.ListResponse{
+		Components: []*cpb.Component{
+			{
+				Id:            componentId1,
+				UserId:        userId,
+				Inventory:     testInventoryID,
+				Category:      category,
+				Type:          testComponentType,
+				Description:   testDescription,
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    partNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
+			},
+			{
+				Id:            componentId2,
+				UserId:        userId,
+				Inventory:     testInventoryID,
+				Category:      category,
+				Type:          "switch node",
+				Description:   "Another switch component",
+				DatasheetURL:  testDatasheetURL,
+				ImagesURL:     testImagesURL,
+				PartNumber:    partNumber,
+				Manufacturer:  testManufacturer,
+				Managed:       testManaged,
+				Warranty:      testWarranty,
+				Specification: testSpecification,
+			},
+		},
+	}
+
+	comp.On("List", mock.Anything, compReq).Return(compResp, nil)
+
+	r := NewRouter(&Clients{
+		Component: client.NewComponentInventoryFromClient(comp),
+	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+	// act
+	r.ServeHTTP(w, hreq)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	comp.AssertExpectations(t)
+}
+
+func TestRouter_ListComponents_AllCategories(t *testing.T) {
+	// Test all valid categories
+	categories := []string{"all", "access", "backhaul", "power", "switch", "spectrum"}
+
+	for _, category := range categories {
+		t.Run("Category_"+category, func(t *testing.T) {
+			// arrange
+			componentId := uuid.NewV4().String()
+			userId := uuid.NewV4().String()
+			partNumber := "TEST-" + category
+
+			w := httptest.NewRecorder()
+			hreq, _ := http.NewRequest("GET", "/v1/components", nil)
+
+			// Add query parameters
+			q := hreq.URL.Query()
+			q.Add("id", componentId)
+			q.Add("user_id", userId)
+			q.Add("part_number", partNumber)
+			q.Add("category", category)
+			hreq.URL.RawQuery = q.Encode()
+
+			arc := &providers.AuthRestClient{}
+			comp := &cmocks.ComponentServiceClient{}
+
+			compReq := &cpb.ListRequest{
+				Id:         componentId,
+				UserId:     userId,
+				PartNumber: partNumber,
+				Category:   category,
+			}
+
+			compResp := &cpb.ListResponse{
+				Components: []*cpb.Component{
+					{
+						Id:            componentId,
+						UserId:        userId,
+						Inventory:     testInventoryID,
+						Category:      category,
+						Type:          testComponentType,
+						Description:   testDescription,
+						DatasheetURL:  testDatasheetURL,
+						ImagesURL:     testImagesURL,
+						PartNumber:    partNumber,
+						Manufacturer:  testManufacturer,
+						Managed:       testManaged,
+						Warranty:      testWarranty,
+						Specification: testSpecification,
+					},
+				},
+			}
+
+			comp.On("List", mock.Anything, compReq).Return(compResp, nil)
+
+			r := NewRouter(&Clients{
+				Component: client.NewComponentInventoryFromClient(comp),
+			}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+
+			// act
+			r.ServeHTTP(w, hreq)
+
+			// assert
+			assert.Equal(t, http.StatusOK, w.Code)
+			comp.AssertExpectations(t)
+		})
+	}
+}

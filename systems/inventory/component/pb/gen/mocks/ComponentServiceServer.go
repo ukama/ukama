@@ -74,6 +74,36 @@ func (_m *ComponentServiceServer) GetByUser(_a0 context.Context, _a1 *gen.GetByU
 	return r0, r1
 }
 
+// List provides a mock function with given fields: _a0, _a1
+func (_m *ComponentServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 *gen.ListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SyncComponents provides a mock function with given fields: _a0, _a1
 func (_m *ComponentServiceServer) SyncComponents(_a0 context.Context, _a1 *gen.SyncComponentsRequest) (*gen.SyncComponentsResponse, error) {
 	ret := _m.Called(_a0, _a1)

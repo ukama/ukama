@@ -72,6 +72,36 @@ func (_m *component) GetByUser(uid string, c string) (*gen.GetByUserResponse, er
 	return r0, r1
 }
 
+// List provides a mock function with given fields: id, userId, partNumber, category
+func (_m *component) List(id string, userId string, partNumber string, category string) (*gen.ListResponse, error) {
+	ret := _m.Called(id, userId, partNumber, category)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 *gen.ListResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.ListResponse, error)); ok {
+		return rf(id, userId, partNumber, category)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.ListResponse); ok {
+		r0 = rf(id, userId, partNumber, category)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ListResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
+		r1 = rf(id, userId, partNumber, category)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SyncComponent provides a mock function with no fields
 func (_m *component) SyncComponent() (*gen.SyncComponentsResponse, error) {
 	ret := _m.Called()

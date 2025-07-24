@@ -28,6 +28,118 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=userId,json=user_id,proto3" json:"userId,omitempty"`
+	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
+	PartNumber    string                 `protobuf:"bytes,4,opt,name=partNumber,json=part_number,proto3" json:"partNumber,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRequest) Reset() {
+	*x = ListRequest{}
+	mi := &file_component_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRequest) ProtoMessage() {}
+
+func (x *ListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_component_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
+func (*ListRequest) Descriptor() ([]byte, []int) {
+	return file_component_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ListRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ListRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *ListRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *ListRequest) GetPartNumber() string {
+	if x != nil {
+		return x.PartNumber
+	}
+	return ""
+}
+
+type ListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Components    []*Component           `protobuf:"bytes,1,rep,name=components,proto3" json:"components,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListResponse) Reset() {
+	*x = ListResponse{}
+	mi := &file_component_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListResponse) ProtoMessage() {}
+
+func (x *ListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_component_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
+func (*ListResponse) Descriptor() ([]byte, []int) {
+	return file_component_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListResponse) GetComponents() []*Component {
+	if x != nil {
+		return x.Components
+	}
+	return nil
+}
+
 type GetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -37,7 +149,7 @@ type GetRequest struct {
 
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
-	mi := &file_component_proto_msgTypes[0]
+	mi := &file_component_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -49,7 +161,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[0]
+	mi := &file_component_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -62,7 +174,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{0}
+	return file_component_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetRequest) GetId() string {
@@ -81,7 +193,7 @@ type GetResponse struct {
 
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
-	mi := &file_component_proto_msgTypes[1]
+	mi := &file_component_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -93,7 +205,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[1]
+	mi := &file_component_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,7 +218,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{1}
+	return file_component_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetResponse) GetComponent() *Component {
@@ -126,7 +238,7 @@ type GetByUserRequest struct {
 
 func (x *GetByUserRequest) Reset() {
 	*x = GetByUserRequest{}
-	mi := &file_component_proto_msgTypes[2]
+	mi := &file_component_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -138,7 +250,7 @@ func (x *GetByUserRequest) String() string {
 func (*GetByUserRequest) ProtoMessage() {}
 
 func (x *GetByUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[2]
+	mi := &file_component_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -151,7 +263,7 @@ func (x *GetByUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByUserRequest.ProtoReflect.Descriptor instead.
 func (*GetByUserRequest) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{2}
+	return file_component_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetByUserRequest) GetUserId() string {
@@ -177,7 +289,7 @@ type GetByUserResponse struct {
 
 func (x *GetByUserResponse) Reset() {
 	*x = GetByUserResponse{}
-	mi := &file_component_proto_msgTypes[3]
+	mi := &file_component_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -189,7 +301,7 @@ func (x *GetByUserResponse) String() string {
 func (*GetByUserResponse) ProtoMessage() {}
 
 func (x *GetByUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[3]
+	mi := &file_component_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -202,7 +314,7 @@ func (x *GetByUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetByUserResponse.ProtoReflect.Descriptor instead.
 func (*GetByUserResponse) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{3}
+	return file_component_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetByUserResponse) GetComponents() []*Component {
@@ -220,7 +332,7 @@ type SyncComponentsRequest struct {
 
 func (x *SyncComponentsRequest) Reset() {
 	*x = SyncComponentsRequest{}
-	mi := &file_component_proto_msgTypes[4]
+	mi := &file_component_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +344,7 @@ func (x *SyncComponentsRequest) String() string {
 func (*SyncComponentsRequest) ProtoMessage() {}
 
 func (x *SyncComponentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[4]
+	mi := &file_component_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +357,7 @@ func (x *SyncComponentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncComponentsRequest.ProtoReflect.Descriptor instead.
 func (*SyncComponentsRequest) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{4}
+	return file_component_proto_rawDescGZIP(), []int{6}
 }
 
 type SyncComponentsResponse struct {
@@ -256,7 +368,7 @@ type SyncComponentsResponse struct {
 
 func (x *SyncComponentsResponse) Reset() {
 	*x = SyncComponentsResponse{}
-	mi := &file_component_proto_msgTypes[5]
+	mi := &file_component_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -268,7 +380,7 @@ func (x *SyncComponentsResponse) String() string {
 func (*SyncComponentsResponse) ProtoMessage() {}
 
 func (x *SyncComponentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[5]
+	mi := &file_component_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -281,7 +393,7 @@ func (x *SyncComponentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncComponentsResponse.ProtoReflect.Descriptor instead.
 func (*SyncComponentsResponse) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{5}
+	return file_component_proto_rawDescGZIP(), []int{7}
 }
 
 type Component struct {
@@ -305,7 +417,7 @@ type Component struct {
 
 func (x *Component) Reset() {
 	*x = Component{}
-	mi := &file_component_proto_msgTypes[6]
+	mi := &file_component_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +429,7 @@ func (x *Component) String() string {
 func (*Component) ProtoMessage() {}
 
 func (x *Component) ProtoReflect() protoreflect.Message {
-	mi := &file_component_proto_msgTypes[6]
+	mi := &file_component_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +442,7 @@ func (x *Component) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Component.ProtoReflect.Descriptor instead.
 func (*Component) Descriptor() ([]byte, []int) {
-	return file_component_proto_rawDescGZIP(), []int{6}
+	return file_component_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Component) GetId() string {
@@ -428,7 +540,17 @@ var File_component_proto protoreflect.FileDescriptor
 
 const file_component_proto_rawDesc = "" +
 	"\n" +
-	"\x0fcomponent.proto\x12\x1cukama.inventory.component.v1\"\x1c\n" +
+	"\x0fcomponent.proto\x12\x1cukama.inventory.component.v1\"s\n" +
+	"\vListRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\x06userId\x18\x02 \x01(\tR\auser_id\x12\x1a\n" +
+	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x1f\n" +
+	"\n" +
+	"partNumber\x18\x04 \x01(\tR\vpart_number\"W\n" +
+	"\fListResponse\x12G\n" +
+	"\n" +
+	"components\x18\x01 \x03(\v2'.ukama.inventory.component.v1.ComponentR\n" +
+	"components\"\x1c\n" +
 	"\n" +
 	"GetRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"T\n" +
@@ -459,8 +581,9 @@ const file_component_proto_rawDesc = "" +
 	" \x01(\tR\fmanufacturer\x12\x18\n" +
 	"\amanaged\x18\v \x01(\tR\amanaged\x12\x1a\n" +
 	"\bwarranty\x18\f \x01(\rR\bwarranty\x12$\n" +
-	"\rspecification\x18\r \x01(\tR\rspecification2\xd9\x02\n" +
-	"\x10ComponentService\x12Z\n" +
+	"\rspecification\x18\r \x01(\tR\rspecification2\xb8\x03\n" +
+	"\x10ComponentService\x12]\n" +
+	"\x04List\x12).ukama.inventory.component.v1.ListRequest\x1a*.ukama.inventory.component.v1.ListResponse\x12Z\n" +
 	"\x03Get\x12(.ukama.inventory.component.v1.GetRequest\x1a).ukama.inventory.component.v1.GetResponse\x12l\n" +
 	"\tGetByUser\x12..ukama.inventory.component.v1.GetByUserRequest\x1a/.ukama.inventory.component.v1.GetByUserResponse\x12{\n" +
 	"\x0eSyncComponents\x123.ukama.inventory.component.v1.SyncComponentsRequest\x1a4.ukama.inventory.component.v1.SyncComponentsResponseB;Z9github.com/ukama/ukama/systems/inventory/component/pb/genb\x06proto3"
@@ -477,30 +600,35 @@ func file_component_proto_rawDescGZIP() []byte {
 	return file_component_proto_rawDescData
 }
 
-var file_component_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_component_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_component_proto_goTypes = []any{
-	(*GetRequest)(nil),             // 0: ukama.inventory.component.v1.GetRequest
-	(*GetResponse)(nil),            // 1: ukama.inventory.component.v1.GetResponse
-	(*GetByUserRequest)(nil),       // 2: ukama.inventory.component.v1.GetByUserRequest
-	(*GetByUserResponse)(nil),      // 3: ukama.inventory.component.v1.GetByUserResponse
-	(*SyncComponentsRequest)(nil),  // 4: ukama.inventory.component.v1.SyncComponentsRequest
-	(*SyncComponentsResponse)(nil), // 5: ukama.inventory.component.v1.SyncComponentsResponse
-	(*Component)(nil),              // 6: ukama.inventory.component.v1.Component
+	(*ListRequest)(nil),            // 0: ukama.inventory.component.v1.ListRequest
+	(*ListResponse)(nil),           // 1: ukama.inventory.component.v1.ListResponse
+	(*GetRequest)(nil),             // 2: ukama.inventory.component.v1.GetRequest
+	(*GetResponse)(nil),            // 3: ukama.inventory.component.v1.GetResponse
+	(*GetByUserRequest)(nil),       // 4: ukama.inventory.component.v1.GetByUserRequest
+	(*GetByUserResponse)(nil),      // 5: ukama.inventory.component.v1.GetByUserResponse
+	(*SyncComponentsRequest)(nil),  // 6: ukama.inventory.component.v1.SyncComponentsRequest
+	(*SyncComponentsResponse)(nil), // 7: ukama.inventory.component.v1.SyncComponentsResponse
+	(*Component)(nil),              // 8: ukama.inventory.component.v1.Component
 }
 var file_component_proto_depIdxs = []int32{
-	6, // 0: ukama.inventory.component.v1.GetResponse.component:type_name -> ukama.inventory.component.v1.Component
-	6, // 1: ukama.inventory.component.v1.GetByUserResponse.components:type_name -> ukama.inventory.component.v1.Component
-	0, // 2: ukama.inventory.component.v1.ComponentService.Get:input_type -> ukama.inventory.component.v1.GetRequest
-	2, // 3: ukama.inventory.component.v1.ComponentService.GetByUser:input_type -> ukama.inventory.component.v1.GetByUserRequest
-	4, // 4: ukama.inventory.component.v1.ComponentService.SyncComponents:input_type -> ukama.inventory.component.v1.SyncComponentsRequest
-	1, // 5: ukama.inventory.component.v1.ComponentService.Get:output_type -> ukama.inventory.component.v1.GetResponse
-	3, // 6: ukama.inventory.component.v1.ComponentService.GetByUser:output_type -> ukama.inventory.component.v1.GetByUserResponse
-	5, // 7: ukama.inventory.component.v1.ComponentService.SyncComponents:output_type -> ukama.inventory.component.v1.SyncComponentsResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	8, // 0: ukama.inventory.component.v1.ListResponse.components:type_name -> ukama.inventory.component.v1.Component
+	8, // 1: ukama.inventory.component.v1.GetResponse.component:type_name -> ukama.inventory.component.v1.Component
+	8, // 2: ukama.inventory.component.v1.GetByUserResponse.components:type_name -> ukama.inventory.component.v1.Component
+	0, // 3: ukama.inventory.component.v1.ComponentService.List:input_type -> ukama.inventory.component.v1.ListRequest
+	2, // 4: ukama.inventory.component.v1.ComponentService.Get:input_type -> ukama.inventory.component.v1.GetRequest
+	4, // 5: ukama.inventory.component.v1.ComponentService.GetByUser:input_type -> ukama.inventory.component.v1.GetByUserRequest
+	6, // 6: ukama.inventory.component.v1.ComponentService.SyncComponents:input_type -> ukama.inventory.component.v1.SyncComponentsRequest
+	1, // 7: ukama.inventory.component.v1.ComponentService.List:output_type -> ukama.inventory.component.v1.ListResponse
+	3, // 8: ukama.inventory.component.v1.ComponentService.Get:output_type -> ukama.inventory.component.v1.GetResponse
+	5, // 9: ukama.inventory.component.v1.ComponentService.GetByUser:output_type -> ukama.inventory.component.v1.GetByUserResponse
+	7, // 10: ukama.inventory.component.v1.ComponentService.SyncComponents:output_type -> ukama.inventory.component.v1.SyncComponentsResponse
+	7, // [7:11] is the sub-list for method output_type
+	3, // [3:7] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_component_proto_init() }
@@ -514,7 +642,7 @@ func file_component_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_component_proto_rawDesc), len(file_component_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

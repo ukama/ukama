@@ -13,9 +13,21 @@ option go_package = "github.com/ukama/ukama/systems/inventory/component/pb/gen";
 package ukama.inventory.component.v1;
 
 service ComponentService {
+    rpc List(ListRequest) returns (ListResponse);
     rpc Get(GetRequest) returns (GetResponse);
     rpc GetByUser(GetByUserRequest) returns (GetByUserResponse);
     rpc SyncComponents(SyncComponentsRequest) returns (SyncComponentsResponse);
+}
+
+message ListRequest {
+    string id = 1;
+    string userId = 2 [json_name = "user_id"];
+    string category = 3;
+    string partNumber = 4 [json_name = "part_number"];
+}
+
+message ListResponse {
+    repeated Component components = 1;
 }
 
 message GetRequest {

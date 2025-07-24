@@ -312,3 +312,152 @@ func Test_ComponentRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func Test_ComponentRepo_List(t *testing.T) {
+	t.Run("ListWithNoFilters", func(t *testing.T) {
+		testSetup := setupTestDB(t)
+
+		// Expect query with no WHERE clauses
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()))
+
+		components, err := testSetup.repo.List("", "", "", 0)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 0)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithIDFilter", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
+
+		// Expect query with ID filter
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*WHERE.*id.*`).
+			WithArgs(testData.ID.String()).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+				testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
+			))
+
+		components, err := testSetup.repo.List(testData.ID.String(), "", "", 0)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 1)
+		assert.Equal(t, testData.ID, components[0].Id)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithUserIDFilter", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
+
+		// Expect query with UserID filter
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*WHERE.*user_id.*`).
+			WithArgs(testData.UserID.String()).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+				testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
+			))
+
+		components, err := testSetup.repo.List("", testData.UserID.String(), "", 0)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 1)
+		assert.Equal(t, testData.UserID, components[0].UserId)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithPartNumberFilter", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
+
+		// Expect query with PartNumber filter
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*WHERE.*part_number.*`).
+			WithArgs(testData.PartNumber).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+				testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
+			))
+
+		components, err := testSetup.repo.List("", "", testData.PartNumber, 0)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 1)
+		assert.Equal(t, testData.PartNumber, components[0].PartNumber)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithCategoryFilter", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
+
+		// Expect query with Category filter
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*WHERE.*category.*`).
+			WithArgs(int32(testData.Category)).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+				testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
+			))
+
+		components, err := testSetup.repo.List("", "", "", int32(testData.Category))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 1)
+		assert.Equal(t, testData.Category, components[0].Category)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithMultipleFilters", func(t *testing.T) {
+		testData := createTestComponentData()
+		testSetup := setupTestDB(t)
+
+		// Expect query with multiple filters (ID, UserID, PartNumber, Category)
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*WHERE.*id.*AND.*user_id.*AND.*part_number.*AND.*category.*`).
+			WithArgs(testData.ID.String(), testData.UserID.String(), testData.PartNumber, int32(testData.Category)).
+			WillReturnRows(sqlmock.NewRows(getComponentColumns()).AddRow(
+				testData.ID, testData.Inventory, testData.UserID, testData.Category, testData.Type, testData.Description, testData.DatasheetURL, testData.ImagesURL, testData.PartNumber, testData.Manufacturer, testData.Managed, testData.Warranty, testData.Specification,
+			))
+
+		components, err := testSetup.repo.List(testData.ID.String(), testData.UserID.String(), testData.PartNumber, int32(testData.Category))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, components)
+		assert.Len(t, components, 1)
+		assert.Equal(t, testData.ID, components[0].Id)
+		assert.Equal(t, testData.UserID, components[0].UserId)
+		assert.Equal(t, testData.PartNumber, components[0].PartNumber)
+		assert.Equal(t, testData.Category, components[0].Category)
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListWithDatabaseError", func(t *testing.T) {
+		testSetup := setupTestDB(t)
+
+		// Expect query to return error
+		testSetup.mock.ExpectQuery(`^SELECT.*components.*`).
+			WillReturnError(fmt.Errorf("database connection error"))
+
+		components, err := testSetup.repo.List("", "", "", 0)
+
+		assert.Error(t, err)
+		assert.Nil(t, components)
+		assert.Contains(t, err.Error(), "database connection error")
+
+		err = testSetup.mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
