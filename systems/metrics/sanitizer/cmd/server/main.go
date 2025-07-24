@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/cmd/version"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pb/gen"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg/server"
@@ -83,8 +84,9 @@ func runGrpcServer() {
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	}
 
-	registrySystemUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	//TODO: we should do initclient resolutions on demand, in order to avoid URL changes side effects.
+	registrySystemUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}

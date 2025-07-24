@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
@@ -31,6 +32,8 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
+
+const registrySystemName = "registry"
 
 var svcConf *pkg.Config
 
@@ -74,7 +77,9 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(svcConf.OrgName, "registry"), svcConf.Http.InitClient, &svcConf.OrgName, svcConf.DebugMode)
+	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}

@@ -16,6 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/cmd/version"
@@ -37,6 +38,13 @@ import (
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	generated "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+)
+
+const (
+	registrySystemName     = "registry"
+	dataplanSystemName     = "dataplan"
+	notificationSystemName = "notification"
+	ukamaAgentSystemName   = "ukamaagent"
 )
 
 var serviceConfig = pkg.NewConfig(pkg.ServiceName)
@@ -108,26 +116,27 @@ func runGrpcServer(gormDB sql.Db) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
-	dataplanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "dataplan"),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	dataplanUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, dataplanSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve dataplan address: %v", err)
 	}
 
-	notificationUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "notification"),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	notificationUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, notificationSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve notification address: %v", err)
 	}
 
-	ukamaAgentUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	ukamaAgentUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, ukamaAgentSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve ukama agent address: %v", err)
 	}

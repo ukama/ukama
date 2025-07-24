@@ -26,12 +26,15 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
+
+const registrySystemName = "registry"
 
 var serviceConfig *pkg.Config
 
@@ -76,7 +79,8 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}

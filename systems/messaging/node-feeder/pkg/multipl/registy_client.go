@@ -16,12 +16,14 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/rest/client"
 
 	log "github.com/sirupsen/logrus"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	nodepb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
+// TODO: should use common/rest/client/registry instead of duplicating here
 const (
 	RegistryVersion = "/v1/"
 	SystemName      = "registry"
@@ -73,7 +75,8 @@ type OrgMember struct {
 
 func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) {
 	/* Add user to member db of the org */
-	url, err := ic.GetHostUrl(ic.CreateHostString(org, SystemName), r.icHost, &org, r.debug)
+	url, err := ic.GetHostUrl(ic.NewInitClient(r.icHost, client.WithDebug()),
+		ic.CreateHostString(org, SystemName), &org)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address to update user as member: %v", err)
 		return nil, fmt.Errorf("failed to resolve org registry address. Error: %v", err)

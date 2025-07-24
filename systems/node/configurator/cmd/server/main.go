@@ -30,11 +30,14 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 )
+
+const registrySystemName = "registry"
 
 var serviceConfig *pkg.Config
 
@@ -80,7 +83,9 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
@@ -89,15 +94,21 @@ func runGrpcServer(gormdb sql.Db) {
 	csite := creg.NewSiteClient(regUrl.String())
 	cnode := creg.NewNodeClient(regUrl.String())
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
+		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	s, err := providers.NewStoreClient(serviceConfig.StoreUrl, serviceConfig.StoreUser, serviceConfig.AccessToken, serviceConfig.Timeout)
 	if err != nil {
 		log.Fatalf("Failed to create a config store client. Error %s", err.Error())
 	}
-	configStore := configstore.NewConfigStore(mbClient, cnet, csite, cnode, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), serviceConfig.OrgName, s, serviceConfig.Timeout)
+	configStore := configstore.NewConfigStore(mbClient, cnet, csite, cnode, db.NewConfigRepo(gormdb),
+		db.NewCommitRepo(gormdb), serviceConfig.OrgName, s, serviceConfig.Timeout)
 
-	configuratorServer := server.NewConfiguratorServer(mbClient, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), configStore, serviceConfig.OrgName, pkg.IsDebugMode)
+	configuratorServer := server.NewConfiguratorServer(mbClient, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), configStore,
+		serviceConfig.OrgName, pkg.IsDebugMode)
+
 	configuratorEventServer := server.NewConfiguratorEventServer(serviceConfig.OrgName, configuratorServer)
 
 	log.Debugf("MessageBus Client config: %+v Client: %+v", serviceConfig.MsgClient, mbClient)

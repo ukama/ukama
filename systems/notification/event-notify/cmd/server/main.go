@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -35,6 +36,11 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
+)
+
+const (
+	registrySystemName   = "registry"
+	subscriberSystemName = "subscriber"
 )
 
 var serviceConfig *pkg.Config
@@ -86,12 +92,16 @@ func runGrpcServer(gormdb sql.Db) {
 		inst := uuid.NewV4()
 		instanceId = inst.String()
 	}
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+
+	//ToDO: need to do initclient resolutions on demand, in order to avoid url changes.
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
-	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	subUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, subscriberSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve subscriber address: %v", err)
 	}
