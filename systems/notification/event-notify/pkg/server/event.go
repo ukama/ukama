@@ -13,16 +13,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	notif "github.com/ukama/ukama/systems/common/notification"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 type EventToNotifyEventServer struct {
@@ -581,29 +582,29 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		
+
 		jmsg, err := json.Marshal(msg)
 		if err != nil {
 			log.Errorf("Failed to store raw message for %s to db. Error %+v", c.Name, err)
 		}
-		
+
 		dynamicConfig := c
 		shortNodeId := msg.NodeId
 		if len(msg.NodeId) > 6 {
 			shortNodeId = msg.NodeId[len(msg.NodeId)-6:]
 		}
-		
+
 		dynamicConfig.Title = fmt.Sprintf("Node %s: %s", shortNodeId, msg.State)
 		dynamicConfig.Description = fmt.Sprintf("Status: %s", msg.Substate)
-		
+
 		notificationType := notif.TYPE_INFO
-		
-		if msg.State == "Faulty" {
+
+		if msg.State == ukama.NodeStateFaulty.String() {
 			notificationType = notif.TYPE_CRITICAL
-		} else if msg.State == "Unknown" {
-			notificationType = notif.TYPE_ACTIONABLE_WARNING 
+		} else if msg.State == ukama.NodeStateUnknown.String() {
+			notificationType = notif.TYPE_ACTIONABLE_WARNING
 		}
-		
+
 		if notificationType == notif.TYPE_INFO {
 			switch msg.Substate {
 			case "off":
@@ -612,11 +613,11 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 				notificationType = notif.TYPE_WARNING
 			}
 		}
-		
+
 		dynamicConfig.Type = notificationType
-		
+
 		_ = es.ProcessEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
-		
+
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
 		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
@@ -680,7 +681,6 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		_ = es.ProcessEvent(&c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
-		
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
 		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]

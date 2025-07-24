@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/notification/distributor/cmd/version"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
@@ -24,10 +25,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	generated "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
+)
+
+const (
+	registrySystemName   = "registry"
+	subscriberSystemName = "subscriber"
 )
 
 var serviceConfig *pkg.Config
@@ -57,14 +63,17 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-
 	log.Debugf("Distributor config %+v", serviceConfig)
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	//TODO: we should do initclient resolution on demand, in order to avoid URL changes side effects.
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
-	subUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "subscriber"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+
+	subUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, subscriberSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
@@ -76,7 +85,8 @@ func runGrpcServer() {
 
 	nh := db.NewNotifyHandler(serviceConfig.DB, eventNotifyService)
 
-	distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient, nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
+	distributorServer := server.NewDistributorServer(networkClient, memberClient, subClient,
+		nh, serviceConfig.OrgName, serviceConfig.OrgId, eventNotifyService)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterDistributorServiceServer(s, distributorServer)

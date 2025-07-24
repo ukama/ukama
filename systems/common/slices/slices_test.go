@@ -25,11 +25,22 @@ func Test_FindStruct(t *testing.T) {
 		Foo{ID: 3},
 	}
 
-	f := Find(s, func(i *Foo) bool {
-		return i.ID == 2
+	t.Run("ItemFound", func(tt *testing.T) {
+		f := Find(s, func(i *Foo) bool {
+			return i.ID == 2
+		})
+
+		assert.NotNil(tt, f)
+		assert.Equal(tt, 2, f.ID)
 	})
 
-	assert.Equal(t, 2, f.ID)
+	t.Run("ItemNotFound", func(tt *testing.T) {
+		f := Find(s, func(i *Foo) bool {
+			return i.ID == 5
+		})
+
+		assert.Nil(tt, f)
+	})
 }
 
 func Test_FindPointer(t *testing.T) {
@@ -39,9 +50,20 @@ func Test_FindPointer(t *testing.T) {
 		&Foo{ID: 3},
 	}
 
-	f := FindPointer(s, func(i *Foo) bool {
-		return i.ID == 2
+	t.Run("ItemFound", func(tt *testing.T) {
+		f := FindPointer(s, func(i *Foo) bool {
+			return i.ID == 2
+		})
+
+		assert.NotNil(tt, f)
+		assert.Equal(t, 2, f.ID)
 	})
 
-	assert.Equal(t, 2, f.ID)
+	t.Run("ItemNotFound", func(tt *testing.T) {
+		f := FindPointer(s, func(i *Foo) bool {
+			return i.ID == 10
+		})
+
+		assert.Nil(tt, f)
+	})
 }
