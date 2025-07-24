@@ -136,25 +136,28 @@ const SiteConfigure = ({ params }: IPage) => {
       onCompleted: (data) => {
         if (data.getComponentsByUserId.components.length > 0) {
           const switchRecords = data.getComponentsByUserId.components.filter(
-            (comp) => comp.category === 'SWITCH',
+            (comp) => comp.category === Component_Type.Switch,
           );
 
           const powerRecords = data.getComponentsByUserId.components.filter(
-            (comp) => comp.category === 'POWER',
+            (comp) => comp.category === Component_Type.Power,
           );
 
           const backhaulRecords = data.getComponentsByUserId.components.filter(
-            (comp) => comp.category === 'BACKHAUL',
+            (comp) => comp.category === Component_Type.Backhaul,
           );
 
           if (switchRecords.length === 1) {
-            formik.setFieldValue('switch', switchRecords[0].id);
+            formik.setFieldValue(Component_Type.Switch, switchRecords[0].id);
           }
           if (powerRecords.length === 1) {
-            formik.setFieldValue('power', powerRecords[0].id);
+            formik.setFieldValue(Component_Type.Power, powerRecords[0].id);
           }
           if (backhaulRecords.length === 1) {
-            formik.setFieldValue('backhaul', backhaulRecords[0].id);
+            formik.setFieldValue(
+              Component_Type.Backhaul,
+              backhaulRecords[0].id,
+            );
           }
         }
       },
@@ -171,7 +174,7 @@ const SiteConfigure = ({ params }: IPage) => {
   useEffect(() => {
     if (formik.values.switch !== '') {
       setQueryParam(
-        'switch',
+        Component_Type.Switch,
         formik.values.switch,
         searchParams.toString(),
         pathname,
@@ -180,7 +183,7 @@ const SiteConfigure = ({ params }: IPage) => {
 
     if (formik.values.power !== '') {
       setQueryParam(
-        'power',
+        Component_Type.Power,
         formik.values.power,
         searchParams.toString(),
         pathname,
@@ -189,7 +192,7 @@ const SiteConfigure = ({ params }: IPage) => {
 
     if (formik.values.backhaul !== '') {
       setQueryParam(
-        'backhaul',
+        Component_Type.Backhaul,
         formik.values.backhaul,
         searchParams.toString(),
         pathname,
@@ -299,7 +302,7 @@ const SiteConfigure = ({ params }: IPage) => {
               options={
                 (componentsData &&
                   componentsData?.getComponentsByUserId.components.filter(
-                    (comp) => comp.category === 'SWITCH',
+                    (comp) => comp.category === Component_Type.Switch,
                   )) ??
                 []
               }
@@ -312,7 +315,7 @@ const SiteConfigure = ({ params }: IPage) => {
               }
               onChange={(_, v: any) => {
                 setQueryParam(
-                  'switch',
+                  Component_Type.Switch,
                   v?.id || '',
                   searchParams.toString(),
                   pathname,
@@ -337,7 +340,7 @@ const SiteConfigure = ({ params }: IPage) => {
               options={
                 (componentsData &&
                   componentsData?.getComponentsByUserId.components.filter(
-                    (comp) => comp.category === 'POWER',
+                    (comp) => comp.category === Component_Type.Power,
                   )) ??
                 []
               }
@@ -375,7 +378,7 @@ const SiteConfigure = ({ params }: IPage) => {
               options={
                 (componentsData &&
                   componentsData?.getComponentsByUserId.components.filter(
-                    (comp) => comp.category === 'BACKHAUL',
+                    (comp) => comp.category === Component_Type.Backhaul,
                   )) ??
                 []
               }

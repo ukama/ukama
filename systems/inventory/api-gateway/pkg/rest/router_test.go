@@ -35,7 +35,7 @@ import (
 // Test data constants
 const (
 	testInventoryID           = "1"
-	testCategory              = "ACCESS"
+	testCategory              = "access"
 	testComponentType         = "tower node"
 	testDescription           = "best tower node"
 	testDatasheetURL          = "https://datasheet.com"
