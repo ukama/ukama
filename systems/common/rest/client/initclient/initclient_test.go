@@ -175,7 +175,7 @@ func TestGetHostUrl(t *testing.T) {
 		var org *string = nil
 
 		initclientMock := &cmocks.InitClient{}
-		host := fmt.Sprintf("%s", systemName)
+		host := systemName
 
 		initclientMock.On("GetSystemFromHost", host, org).
 			Return(&initclient.SystemIPInfo{
@@ -194,7 +194,7 @@ func TestGetHostUrl(t *testing.T) {
 }
 
 func TestParseHostString(t *testing.T) {
-	var org string = "org"
+	var org = "org"
 
 	tests := []struct {
 		name  string
