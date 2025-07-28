@@ -17,12 +17,12 @@ import (
 
 type ComponentRepo interface {
 	// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
-	Get(id uuid.UUID) (*Component, error)
 	GetByUser(userId string, category int32) ([]*Component, error)
 	//
 
+	Get(id uuid.UUID) (*Component, error)
 	Add(components []*Component) error
-	List(id, userId, partNumber string, category int32) ([]*Component, error)
+	List(userId, partNumber string, category int32) ([]*Component, error)
 	Delete() error
 }
 
@@ -36,7 +36,6 @@ func NewComponentRepo(db sql.Db) ComponentRepo {
 	}
 }
 
-// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (c *componentRepo) Get(id uuid.UUID) (*Component, error) {
 	var component Component
 	err := c.Db.GetGormDb().First(&component, id).Error
@@ -69,15 +68,11 @@ func (c *componentRepo) GetByUser(userId string, category int32) ([]*Component, 
 	return components, nil
 }
 
-func (r *componentRepo) List(id, userId, partNumber string, category int32) ([]*Component, error) {
+func (r *componentRepo) List(userId, partNumber string, category int32) ([]*Component, error) {
 
 	components := []*Component{}
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
-
-	if id != "" {
-		tx = tx.Where("id = ?", id)
-	}
 
 	if userId != "" {
 		tx = tx.Where("user_id = ?", userId)

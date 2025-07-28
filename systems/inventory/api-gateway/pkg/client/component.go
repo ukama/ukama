@@ -23,7 +23,7 @@ type Component interface {
 	Get(id string) (*pb.GetResponse, error)
 	GetByUser(uid string, c string) (*pb.GetByUserResponse, error)
 	SyncComponent() (*pb.SyncComponentsResponse, error)
-	List(id, userId, partNumber, category string) (*pb.ListResponse, error)
+	List(userId, partNumber, category string) (*pb.ListResponse, error)
 }
 
 type ComponentInventory struct {
@@ -88,12 +88,11 @@ func (r *ComponentInventory) SyncComponent() (*pb.SyncComponentsResponse, error)
 	return r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
 }
 
-func (r *ComponentInventory) List(id, userId, partNumber, category string) (*pb.ListResponse, error) {
+func (r *ComponentInventory) List(userId, partNumber, category string) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
 	return r.client.List(ctx, &pb.ListRequest{
-		Id:         id,
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   category,

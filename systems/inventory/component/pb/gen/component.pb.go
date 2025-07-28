@@ -30,10 +30,9 @@ const (
 
 type ListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=userId,json=user_id,proto3" json:"userId,omitempty"`
-	Category      string                 `protobuf:"bytes,3,opt,name=category,proto3" json:"category,omitempty"`
-	PartNumber    string                 `protobuf:"bytes,4,opt,name=partNumber,json=part_number,proto3" json:"partNumber,omitempty"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=userId,json=user_id,proto3" json:"userId,omitempty"`
+	Category      string                 `protobuf:"bytes,2,opt,name=category,proto3" json:"category,omitempty"`
+	PartNumber    string                 `protobuf:"bytes,3,opt,name=partNumber,json=part_number,proto3" json:"partNumber,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,13 +65,6 @@ func (x *ListRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
 func (*ListRequest) Descriptor() ([]byte, []int) {
 	return file_component_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *ListRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
 }
 
 func (x *ListRequest) GetUserId() string {
@@ -540,13 +532,12 @@ var File_component_proto protoreflect.FileDescriptor
 
 const file_component_proto_rawDesc = "" +
 	"\n" +
-	"\x0fcomponent.proto\x12\x1cukama.inventory.component.v1\"s\n" +
-	"\vListRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
-	"\x06userId\x18\x02 \x01(\tR\auser_id\x12\x1a\n" +
-	"\bcategory\x18\x03 \x01(\tR\bcategory\x12\x1f\n" +
+	"\x0fcomponent.proto\x12\x1cukama.inventory.component.v1\"c\n" +
+	"\vListRequest\x12\x17\n" +
+	"\x06userId\x18\x01 \x01(\tR\auser_id\x12\x1a\n" +
+	"\bcategory\x18\x02 \x01(\tR\bcategory\x12\x1f\n" +
 	"\n" +
-	"partNumber\x18\x04 \x01(\tR\vpart_number\"W\n" +
+	"partNumber\x18\x03 \x01(\tR\vpart_number\"W\n" +
 	"\fListResponse\x12G\n" +
 	"\n" +
 	"components\x18\x01 \x03(\v2'.ukama.inventory.component.v1.ComponentR\n" +

@@ -845,7 +845,7 @@ func TestComponentServer_List(t *testing.T) {
 
 		// Setup mock repository
 		compRepo := &mocks.ComponentRepo{}
-		compRepo.On("List", componentId.String(), userId.String(), partNumber, int32(ukama.ParseComponentCategory(category))).
+		compRepo.On("List", userId.String(), partNumber, int32(ukama.ParseComponentCategory(category))).
 			Return(mockComponents, nil).Once()
 
 		// Create server instance
@@ -853,7 +853,6 @@ func TestComponentServer_List(t *testing.T) {
 
 		// Create request
 		req := &pb.ListRequest{
-			Id:         componentId.String(),
 			UserId:     userId.String(),
 			PartNumber: partNumber,
 			Category:   category,
@@ -884,7 +883,7 @@ func TestComponentServer_List(t *testing.T) {
 
 		// Setup mock repository to return empty list
 		compRepo := &mocks.ComponentRepo{}
-		compRepo.On("List", "", userId.String(), "", int32(ukama.ParseComponentCategory(category))).
+		compRepo.On("List", userId.String(), "", int32(ukama.ParseComponentCategory(category))).
 			Return([]*db.Component{}, nil).Once()
 
 		// Create server instance
@@ -914,7 +913,7 @@ func TestComponentServer_List(t *testing.T) {
 
 		// Setup mock repository to return error
 		compRepo := &mocks.ComponentRepo{}
-		compRepo.On("List", "", "", partNumber, int32(0)).
+		compRepo.On("List", "", partNumber, int32(0)).
 			Return(nil, gorm.ErrInvalidDB).Once()
 
 		// Create server instance

@@ -110,9 +110,9 @@ func (_m *ComponentRepo) GetByUser(userId string, category int32) ([]*db.Compone
 	return r0, r1
 }
 
-// List provides a mock function with given fields: id, userId, partNumber, category
-func (_m *ComponentRepo) List(id string, userId string, partNumber string, category int32) ([]*db.Component, error) {
-	ret := _m.Called(id, userId, partNumber, category)
+// List provides a mock function with given fields: userId, partNumber, category
+func (_m *ComponentRepo) List(userId string, partNumber string, category int32) ([]*db.Component, error) {
+	ret := _m.Called(userId, partNumber, category)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -120,19 +120,19 @@ func (_m *ComponentRepo) List(id string, userId string, partNumber string, categ
 
 	var r0 []*db.Component
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, int32) ([]*db.Component, error)); ok {
-		return rf(id, userId, partNumber, category)
+	if rf, ok := ret.Get(0).(func(string, string, int32) ([]*db.Component, error)); ok {
+		return rf(userId, partNumber, category)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, int32) []*db.Component); ok {
-		r0 = rf(id, userId, partNumber, category)
+	if rf, ok := ret.Get(0).(func(string, string, int32) []*db.Component); ok {
+		r0 = rf(userId, partNumber, category)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Component)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, int32) error); ok {
-		r1 = rf(id, userId, partNumber, category)
+	if rf, ok := ret.Get(1).(func(string, string, int32) error); ok {
+		r1 = rf(userId, partNumber, category)
 	} else {
 		r1 = ret.Error(1)
 	}

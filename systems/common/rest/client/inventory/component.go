@@ -68,7 +68,6 @@ func NewComponentClient(h string, options ...client.Option) *componentClient {
 	}
 }
 
-// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (s *componentClient) Get(id string) (*ComponentInfo, error) {
 	log.Debugf("Getting component: %v", id)
 

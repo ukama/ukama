@@ -20,10 +20,9 @@ service ComponentService {
 }
 
 message ListRequest {
-    string id = 1;
-    string userId = 2 [json_name = "user_id"];
-    string category = 3;
-    string partNumber = 4 [json_name = "part_number"];
+    string userId = 1 [json_name = "user_id"];
+    string category = 2;
+    string partNumber = 3 [json_name = "part_number"];
 }
 
 message ListResponse {

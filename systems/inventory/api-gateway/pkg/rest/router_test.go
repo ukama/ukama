@@ -392,7 +392,6 @@ func TestRouter_ListComponents(t *testing.T) {
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
-		Id:         componentId,
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   category,
@@ -453,7 +452,6 @@ func TestRouter_ListComponents_WithDefaultCategory(t *testing.T) {
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
-		Id:         componentId,
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   "all", // default value
@@ -515,7 +513,6 @@ func TestRouter_ListComponents_EmptyResponse(t *testing.T) {
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
-		Id:         componentId,
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   category,
@@ -562,7 +559,6 @@ func TestRouter_ListComponents_MultipleComponents(t *testing.T) {
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
-		Id:         componentId1,
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   category,
@@ -643,7 +639,6 @@ func TestRouter_ListComponents_AllCategories(t *testing.T) {
 			comp := &cmocks.ComponentServiceClient{}
 
 			compReq := &cpb.ListRequest{
-				Id:         componentId,
 				UserId:     userId,
 				PartNumber: partNumber,
 				Category:   category,
