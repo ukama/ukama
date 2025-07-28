@@ -380,8 +380,8 @@ func TestNodeRepo_List(t *testing.T) {
 	var siteId = uuid.NewV4()
 	var networkId = uuid.NewV4()
 	var ntype = ukama.NODE_ID_TYPE_HOMENODE
-	var connectivity = uint8(ukama.Online)
-	var state = uint8(ukama.Unknown)
+	var connectivity = uint8(ukama.NodeConnectivityOnline)
+	var state = uint8(ukama.NodeStateUnknown)
 
 	var db *extsql.DB
 

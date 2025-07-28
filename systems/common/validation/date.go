@@ -9,43 +9,48 @@
 package validation
 
 import (
-	"errors"
+	"fmt"
 	"time"
 )
 
 func IsFutureDate(date string) error {
-	t, err := time.Parse(time.RFC3339, date)
+	t, err := FromString(date)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid date format, must be RFC3339 standard: %w", err)
 	}
+
 	if t.After(time.Now()) {
 		return nil
 	}
-	return errors.New("date is not in the future")
-}
 
-func ValidateDate(date string) (string, error) {
-	t, err := time.Parse(time.RFC3339, date)
-	if err != nil {
-		return "", errors.New("invalid date format, must be RFC3339 standard")
-	}
-	return t.Format(time.RFC3339), nil
+	return fmt.Errorf("date %s is not in the future", t.Format(time.RFC3339))
 }
 
 func IsAfterDate(date string, after string) error {
-	t, err := time.Parse(time.RFC3339, date)
+	t, err := FromString(date)
 	if err != nil {
-		return errors.New("invalid date format, must be RFC3339 standard")
+		return fmt.Errorf("invalid date format, must be RFC3339 standard: %w", err)
 	}
 
-	a, err := time.Parse(time.RFC3339, after)
+	a, err := FromString(after)
 	if err != nil {
-		return errors.New("invalid date format, must be RFC3339 standard")
+		return fmt.Errorf("invalid date format, must be RFC3339 standard: %w", err)
 	}
+
 	if t.After(a) {
 		return nil
 	}
-	return errors.New("date is not after" + a.Format(time.RFC3339))
+
+	return fmt.Errorf("date is not after %s", a.Format(time.RFC3339))
+}
+
+func ValidateDate(date string) (string, error) {
+	t, err := FromString(date)
+	if err != nil {
+		return "", fmt.Errorf("invalid date format, must be RFC3339 standard: %w", err)
+	}
+
+	return t.Format(time.RFC3339), nil
 }
 
 func FromString(s string) (time.Time, error) {

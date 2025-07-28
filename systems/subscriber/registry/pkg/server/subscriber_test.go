@@ -14,21 +14,21 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
-	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/subscriber/registry/mocks"
+	"github.com/ukama/ukama/systems/subscriber/registry/pkg/db"
+
+	log "github.com/sirupsen/logrus"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simManagerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	simMocks "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen/mocks"
-
-	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
 const OrgName = "testorg"

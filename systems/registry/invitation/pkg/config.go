@@ -11,20 +11,19 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
 	uconf.BaseConfig     `mapstructure:",squash"`
-	DB                   *uconf.Database   `default:"{}"`
-	Grpc                 *uconf.Grpc       `default:"{}"`
-	Queue                *uconf.Queue      `default:"{}"`
-	Timeout              time.Duration     `default:"3s"`
-	MsgClient            *config.MsgClient `default:"{}"`
-	AuthLoginbaseURL     string            `default:"http://localhost:4455/auth/login"`
-	TemplateName         string            `default:"member-invite"`
-	InvitationExpiryTime uint              `default:"24"`
+	DB                   *uconf.Database  `default:"{}"`
+	Grpc                 *uconf.Grpc      `default:"{}"`
+	Queue                *uconf.Queue     `default:"{}"`
+	Timeout              time.Duration    `default:"3s"`
+	MsgClient            *uconf.MsgClient `default:"{}"`
+	AuthLoginbaseURL     string           `default:"http://localhost:4455/auth/login"`
+	TemplateName         string           `default:"member-invite"`
+	InvitationExpiryTime uint             `default:"24"`
 	OrgName              string
 	Service              *uconf.Service
 	Http                 HttpServices
@@ -37,11 +36,11 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
-		DB: &config.Database{
+		DB: &uconf.Database{
 			DbName: name,
 		},
-		Service: config.LoadServiceHostConfig(name),
-		MsgClient: &config.MsgClient{
+		Service: uconf.LoadServiceHostConfig(name),
+		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 		},
 	}

@@ -14,11 +14,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+
 	"github.com/ukama/ukama/systems/node/configurator/mocks"
-	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	"github.com/ukama/ukama/systems/node/configurator/pkg"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 )
 
 const testOrgName = "testOrg"

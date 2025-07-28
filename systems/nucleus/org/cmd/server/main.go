@@ -12,29 +12,24 @@ import (
 	"errors"
 	"os"
 
-	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-
-	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
-	"github.com/ukama/ukama/systems/nucleus/org/pkg/server"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
+	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/nucleus/org/pkg"
-	"gopkg.in/yaml.v2"
-
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/nucleus/org/cmd/version"
-
+	"github.com/ukama/ukama/systems/nucleus/org/pkg"
 	"github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/providers"
+	"github.com/ukama/ukama/systems/nucleus/org/pkg/server"
 
-	"github.com/num30/config"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 )
 
 var svcConf *pkg.Config
@@ -91,7 +86,10 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := msgBusServiceClient.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
+		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
+		svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
+		svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	user := providers.NewUserClientProvider(svcConf.UserHost)
 	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
