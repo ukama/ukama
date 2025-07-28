@@ -26,6 +26,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ComponentService_List_FullMethodName           = "/ukama.inventory.component.v1.ComponentService/List"
 	ComponentService_Get_FullMethodName            = "/ukama.inventory.component.v1.ComponentService/Get"
 	ComponentService_GetByUser_FullMethodName      = "/ukama.inventory.component.v1.ComponentService/GetByUser"
 	ComponentService_SyncComponents_FullMethodName = "/ukama.inventory.component.v1.ComponentService/SyncComponents"
@@ -35,6 +36,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ComponentServiceClient interface {
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	GetByUser(ctx context.Context, in *GetByUserRequest, opts ...grpc.CallOption) (*GetByUserResponse, error)
 	SyncComponents(ctx context.Context, in *SyncComponentsRequest, opts ...grpc.CallOption) (*SyncComponentsResponse, error)
@@ -46,6 +48,16 @@ type componentServiceClient struct {
 
 func NewComponentServiceClient(cc grpc.ClientConnInterface) ComponentServiceClient {
 	return &componentServiceClient{cc}
+}
+
+func (c *componentServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListResponse)
+	err := c.cc.Invoke(ctx, ComponentService_List_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *componentServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
@@ -82,6 +94,7 @@ func (c *componentServiceClient) SyncComponents(ctx context.Context, in *SyncCom
 // All implementations must embed UnimplementedComponentServiceServer
 // for forward compatibility.
 type ComponentServiceServer interface {
+	List(context.Context, *ListRequest) (*ListResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	GetByUser(context.Context, *GetByUserRequest) (*GetByUserResponse, error)
 	SyncComponents(context.Context, *SyncComponentsRequest) (*SyncComponentsResponse, error)
@@ -95,6 +108,9 @@ type ComponentServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedComponentServiceServer struct{}
 
+func (UnimplementedComponentServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
 func (UnimplementedComponentServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
@@ -123,6 +139,24 @@ func RegisterComponentServiceServer(s grpc.ServiceRegistrar, srv ComponentServic
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ComponentService_ServiceDesc, srv)
+}
+
+func _ComponentService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ComponentServiceServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ComponentService_List_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ComponentServiceServer).List(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ComponentService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -186,6 +220,10 @@ var ComponentService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.inventory.component.v1.ComponentService",
 	HandlerType: (*ComponentServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "List",
+			Handler:    _ComponentService_List_Handler,
+		},
 		{
 			MethodName: "Get",
 			Handler:    _ComponentService_Get_Handler,

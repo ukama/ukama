@@ -77,6 +77,7 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
+// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 
@@ -86,6 +87,19 @@ func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserReques
 	}
 
 	return &pb.GetByUserResponse{
+		Components: dbComponentsToPbComponents(components),
+	}, nil
+}
+
+func (c *ComponentServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("Listing components %v", req)
+
+	components, err := c.componentRepo.List(req.GetUserId(), req.GetPartNumber(), int32(ukama.ParseComponentCategory(req.GetCategory())))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "component")
+	}
+
+	return &pb.ListResponse{
 		Components: dbComponentsToPbComponents(components),
 	}, nil
 }

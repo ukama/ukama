@@ -43,20 +43,8 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Component  component
-	Accounting accounting
-}
-
-type component interface {
-	Get(id string) (*componentpb.GetResponse, error)
-	GetByUser(uid string, c string) (*componentpb.GetByUserResponse, error)
-	SyncComponent() (*componentpb.SyncComponentsResponse, error)
-}
-
-type accounting interface {
-	Get(id string) (*accountingpb.GetResponse, error)
-	GetByUser(uid string) (*accountingpb.GetByUserResponse, error)
-	SyncAccounts() (*accountingpb.SyncAcountingResponse, error)
+	Component  client.Component
+	Accounting client.Accounting
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -121,9 +109,12 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		const component = "/components"
 		components := auth.Group(component, "Component", "Operations on Component")
-		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
+		// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 		components.GET("/user/:uuid", formatDoc("Get components", "Get components by user id"), tonic.Handler(r.getComponentsByUserHandler, http.StatusOK))
+
+		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
 		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
+		components.GET("", formatDoc("List components", "List components with various query params as filters"), tonic.Handler(r.listComponents, http.StatusOK))
 
 		// Account routes
 		const account = "/accounting"
@@ -144,6 +135,10 @@ func (r *Router) getComponentsByUserHandler(c *gin.Context, req *GetComponents) 
 
 func (r *Router) syncComponentHandler(c *gin.Context) (*componentpb.SyncComponentsResponse, error) {
 	return r.clients.Component.SyncComponent()
+}
+
+func (r *Router) listComponents(c *gin.Context, req *ListComponentsReq) (*componentpb.ListResponse, error) {
+	return r.clients.Component.List(req.UserId, req.PartNumber, req.Category)
 }
 
 func (r *Router) getAccountByIdHandler(c *gin.Context, req *GetRequest) (*accountingpb.GetResponse, error) {

@@ -41,8 +41,13 @@ type Component struct {
 	ComponentInfo *ComponentInfo `json:"component"`
 }
 
+type ListComponent struct {
+	Components []ComponentInfo `json:"components"`
+}
+
 type ComponentClient interface {
 	Get(Id string) (*ComponentInfo, error)
+	List(Id, UserId, PartNumber, Category string) (*ListComponent, error)
 }
 
 type componentClient struct {
@@ -85,4 +90,28 @@ func (s *componentClient) Get(id string) (*ComponentInfo, error) {
 	log.Infof("Component Info: %+v", component.ComponentInfo)
 
 	return component.ComponentInfo, nil
+}
+
+func (s *componentClient) List(Id, UserId, PartNumber, Category string) (*ListComponent, error) {
+	log.Debugf("List component: id: %v, userId: %v, partNumber: %v, category: %v", Id, UserId, PartNumber, Category)
+
+	components := ListComponent{}
+
+	resp, err := s.R.Get(s.u.String() + ComponentEndpoint + "?id=" + Id + "&user_id=" + UserId + "&part_number=" + PartNumber + "&category=" + Category)
+	if err != nil {
+		log.Errorf("GetComponent failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("GetComponent failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &components)
+	if err != nil {
+		log.Tracef("Failed to deserialize component info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("component info deserialization failure: %w", err)
+	}
+
+	log.Infof("Component Info: %+v", components.Components)
+
+	return &components, nil
 }
