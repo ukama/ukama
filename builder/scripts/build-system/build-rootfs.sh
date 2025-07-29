@@ -158,6 +158,64 @@ install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
+build_armv7_boot() {
+    local node=$1
+    local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
+    local boot1="${path}/build/boot/at91bootstrap/at91bootstrap.bin"
+    local boot2="${path}/build/boot/uboot/u-boot.bin"
+
+    cwd=$(pwd)
+    log_message "INFO: Building firmware for Node: ${node}"
+
+    cd "${path}"
+    make clean TARGET="${node}" ROOTFSPATH="${path}/build"
+    make TARGET="${node}" ROOTFSPATH="${path}/build"
+
+    # check if the boot binaries were build successfully
+    if [ ! -f "$boot1" ]; then
+        log_message "ERROR: Firmware build failure. boot file does not exists: $boot1"
+        exit 1
+    fi
+
+    if [ ! -f "$boot2" ]; then
+        log_message "ERROR: Firmware build failure. boot file does not exists: $boot2"
+        exit 1
+    fi
+
+    log_message "INFO: Firmware build OK"
+    cd "${cwd}"
+}
+
+copy_armv7_boot() {
+
+    local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
+    local boot1="${path}/build/boot/at91bootstrap/at91bootstrap.bin"
+    local boot2="${path}/build/boot/uboot/u-boot.bin"
+
+    cp "$boot1" /boot/BOOT.BIN
+    cp "$boot2" /boot/
+
+    # XXX also need to copy the ukama_anode.dtb and uboot.env file XXX
+    # tree boot
+    #boot
+    #├── BOOT.BIN
+    #├── boot.tar
+    #├── firmware
+    #├── u-boot.bin
+    #├── uboot.env
+    #└── ukama_anode.dtb
+}
+
+copy_armv7_kernel() {
+    log_message "Installing linux-lts kernel and modules"
+
+    # Update the APK index and install the package
+    apk update
+    apk add --no-cache linux-lts
+
+    log_message "SUCCESS: linux-lts package and modules installed"
+}
+
 copy_x86_64_boot() {
     log_message "Extracting boot files from Alpine ISO"
 
@@ -266,21 +324,29 @@ https://dl-cdn.alpinelinux.org/alpine/${VERSION}/main
 https://dl-cdn.alpinelinux.org/alpine/${VERSION}/community
 EOF
 
-    # Core upgrade + packages
+    COMMON_DEV_PACKAGES="alpine-base bash sudo shadow tzdata openrc
+            eudev eudev-openrc
+            kmod dosfstools
+            acpid dhcpcd iproute2 iputils
+            openssh
+            readline autoconf automake cmake
+            alpine-sdk build-base libtool
+            openssl-dev gnutls-dev curl curl-dev
+            sqlite-dev zlib libuuid libcap libidn2 libmicrohttpd-dev
+            protobuf e2fsprogs util-linux rsync jansson tree
+            git tcpdump ethtool iperf3 htop vim doas
+            kbd bison flex"
+
+    ARM_PACKAGES="dtc coreutils"
+
+    # Install base
     apk update && apk upgrade
-    apk add --no-cache \
-        alpine-base bash sudo shadow tzdata openrc \
-        eudev eudev-openrc \
-        kmod dosfstools \
-        acpid dhcpcd iproute2 iputils \
-        openssh \
-        readline autoconf automake cmake \
-        alpine-sdk build-base libtool \
-        openssl-dev gnutls-dev curl curl-dev \
-        sqlite-dev zlib libuuid libcap libidn2 libmicrohttpd-dev \
-        protobuf e2fsprogs util-linux rsync jansson tree \
-        git tcpdump ethtool iperf3 htop vim doas \
-        kbd
+    apk add --no-cache $COMMON_DEV_PACKAGES
+
+    # Conditionally install extras
+    if [[ "$ARCH" == "armv7" || "$ARCH" == "armv7l" ]]; then
+        apk add --no-cache $ARM_PACKAGES
+    fi
 
     cat > /etc/dhcpcd.conf <<'EOF'
 interface eth0
@@ -390,8 +456,22 @@ setup_rootfs
 setup_ukama_dirs
 setup_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
 copy_misc_files
-copy_x86_64_kernel
-copy_x86_64_boot
+
+case "${ARCH}" in
+    x86_64)
+        copy_x86_64_kernel
+        copy_x86_64_boot
+        ;;
+    armv7|armv7l)
+        build_armv7_boot "amplifier"
+        copy_armv7_kernel
+        copy_armv7_boot
+        ;;
+    *)
+        echo "Unsupported architecture: ${ARCH}"
+        exit 1
+        ;;
+esac
 
 echo "Rootfs build success."
 exit 0
