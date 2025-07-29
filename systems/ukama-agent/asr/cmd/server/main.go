@@ -26,10 +26,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	pkg "github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
@@ -118,8 +118,9 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	// Looking up registry system's host from initClient
-	networkServiceUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, registrySystem),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	//TODO: we should initclient resolutions on demand, in order to avoid URL changes side effects.
+	networkServiceUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}
@@ -127,8 +128,8 @@ func runGrpcServer(gormdb sql.Db) {
 	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug())
 
 	// Looking up data plan system's host from initClient
-	dataPlanUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	dataPlanUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug()),
+		ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", dataPlanSystem, err)
 	}
@@ -165,7 +166,6 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	rpcServer.StartServer()
-
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {

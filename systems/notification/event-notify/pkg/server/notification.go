@@ -11,22 +11,23 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	cnotif "github.com/ukama/ukama/systems/common/notification"
-	notif "github.com/ukama/ukama/systems/common/notification"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/common/roles"
-	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
-	"github.com/ukama/ukama/systems/notification/event-notify/pkg"
-	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/event-notify/pkg"
+	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cnotif "github.com/ukama/ukama/systems/common/notification"
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
 type EventToNotifyServer struct {
@@ -226,7 +227,7 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	return usersList
 }
 
-func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope notif.NotificationScope) ([]*db.Users, error) {
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope cnotif.NotificationScope) ([]*db.Users, error) {
 	var userList []*db.Users
 	var err error
 	roleTypes := cnotif.NotificationScopeToRoles[scope]

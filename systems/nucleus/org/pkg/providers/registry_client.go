@@ -6,15 +6,18 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 
+// TODO; we should use common/rest/client/registry's client instead.
 package providers
 
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/rest/client"
+
+	log "github.com/sirupsen/logrus"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 )
 
 const RegistryVersion = "/v1/"
@@ -37,7 +40,8 @@ type OrgMember struct {
 
 func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) {
 	/* Add user to member db of the org */
-	url, err := ic.GetHostUrl(ic.CreateHostString(org, SystemName), r.icHost, &org, r.debug)
+	url, err := ic.GetHostUrl(ic.NewInitClient(r.icHost, client.WithDebug()),
+		ic.CreateHostString(org, SystemName), &org)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address to update user as member: %v", err)
 		return nil, fmt.Errorf("failed to resolve org registry address. Error: %v", err)
@@ -49,7 +53,6 @@ func (r *registryProvider) GetRestyClient(org string) (*rest.RestClient, error) 
 }
 
 func NewRegistryProvider(icHost string, debug bool) *registryProvider {
-
 	r := &registryProvider{
 		debug:  debug,
 		icHost: icHost,
@@ -59,7 +62,6 @@ func NewRegistryProvider(icHost string, debug bool) *registryProvider {
 }
 
 func (r *registryProvider) AddMember(orgName string, uuid string) error {
-
 	var err error
 
 	/* Get Provider */
@@ -85,8 +87,9 @@ func (r *registryProvider) AddMember(orgName string, uuid string) error {
 	}
 
 	if !resp.IsSuccess() {
-		log.Errorf("Failed to add member to registry at %s. HTTP resp code %d and Error message is %s", r.R.URL.String(), resp.StatusCode(), errStatus.Message)
-		return fmt.Errorf("failed to add memeber to registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
+		log.Errorf("Failed to add member to registry at %s. HTTP resp code %d and Error message is %s",
+			r.R.URL.String(), resp.StatusCode(), errStatus.Message)
+		return fmt.Errorf("failed to add member to registry at %s. Error %s", r.R.URL.String(), errStatus.Message)
 	}
 
 	return nil

@@ -9,7 +9,7 @@ import { GraphQLError } from "graphql";
 
 import { asyncRestCall } from "../../common/axiosClient";
 import { VERSION } from "../../common/configs";
-import { API_METHOD_TYPE, STATS_TYPE } from "../../common/enums";
+import { API_METHOD_TYPE } from "../../common/enums";
 import { logger } from "../../common/logger";
 import {
   GetMetricsStatInput,
@@ -44,13 +44,7 @@ const getNodeMetricRange = async (
     method: API_METHOD_TYPE.GET,
     url: `${baseUrl}/${VERSION}/range/metrics/${type}?${params}`,
   })
-    .then(res =>
-      parseMetricsResponse(
-        type === STATS_TYPE.DATA_USAGE ? res.data : res.data.data.result,
-        type,
-        args
-      )
-    )
+    .then(res => parseMetricsResponse(res.data.data.result, type, args))
     .catch(err => {
       logger.error(`Error fetching metrics: ${err}`);
       throw new GraphQLError(err);

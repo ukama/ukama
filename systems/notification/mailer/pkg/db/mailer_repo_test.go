@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	"log"
 	"testing"
 	"time"
 
@@ -21,8 +20,13 @@ import (
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/tj/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type UkamaDbMock struct {
@@ -78,7 +82,7 @@ func Test_SendEmail(t *testing.T) {
 		Email:         "brackley@ukama.com",
 		TemplateName:  "test_template",
 		SentAt:        nil,
-		Status:        ukama.Pending,
+		Status:        ukama.MailStatusPending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
 		Values: utils.JSONMap{
@@ -132,7 +136,7 @@ func Test_GetEmailById(t *testing.T) {
 		Email:         "brackley@ukama.com",
 		TemplateName:  "test_template",
 		SentAt:        nil,
-		Status:        ukama.Pending,
+		Status:        ukama.MailStatusPending,
 		RetryCount:    0,
 		NextRetryTime: &time.Time{},
 		Values: utils.JSONMap{

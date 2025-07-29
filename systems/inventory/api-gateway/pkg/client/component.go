@@ -19,6 +19,13 @@ import (
 	"google.golang.org/grpc"
 )
 
+type Component interface {
+	Get(id string) (*pb.GetResponse, error)
+	GetByUser(uid string, c string) (*pb.GetByUserResponse, error)
+	SyncComponent() (*pb.SyncComponentsResponse, error)
+	List(userId, partNumber, category string) (*pb.ListResponse, error)
+}
+
 type ComponentInventory struct {
 	conn    *grpc.ClientConn
 	client  pb.ComponentServiceClient
@@ -59,39 +66,35 @@ func (r *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &pb.GetRequest{
+	return r.client.Get(ctx, &pb.GetRequest{
 		Id: id,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *ComponentInventory) GetByUser(uid string, c string) (*pb.GetByUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.GetByUser(ctx, &pb.GetByUserRequest{
+	return r.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId:   uid,
-		Category: pb.ComponentCategory(pb.ComponentCategory_value[c]),
+		Category: c,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (r *ComponentInventory) SyncComponent() (*pb.SyncComponentsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	res, err := r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
-	if err != nil {
-		return nil, err
-	}
+	return r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
+}
 
-	return res, nil
+func (r *ComponentInventory) List(userId, partNumber, category string) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	return r.client.List(ctx, &pb.ListRequest{
+		UserId:     userId,
+		PartNumber: partNumber,
+		Category:   category,
+	})
 }

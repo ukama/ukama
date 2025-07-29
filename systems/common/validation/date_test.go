@@ -14,10 +14,13 @@ import (
 	"time"
 )
 
-func TestIsFutureDate(t *testing.T) {
-	mockeEffectiveAtFuture := time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
-	mockeEffectiveAtPast := "2022-12-01T00:00:00Z"
+var (
+	malformattedDate  = "2021/03/08"
+	effectiveAtPast   = "2022-12-01T00:00:00Z"
+	effectiveAtFuture = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
+)
 
+func TestIsFutureDate(t *testing.T) {
 	testCases := []struct {
 		name     string
 		date     string
@@ -25,13 +28,18 @@ func TestIsFutureDate(t *testing.T) {
 	}{
 		{
 			name:     "future date",
-			date:     mockeEffectiveAtFuture,
+			date:     effectiveAtFuture,
 			expected: nil,
 		},
 		{
 			name:     "past date",
-			date:     mockeEffectiveAtPast,
+			date:     effectiveAtPast,
 			expected: errors.New("Date is not in the future"),
+		},
+		{
+			name:     "invalid date format",
+			date:     malformattedDate,
+			expected: errors.New("invalid date format, must be RFC3339 standard"),
 		},
 	}
 
@@ -48,8 +56,53 @@ func TestIsFutureDate(t *testing.T) {
 	}
 }
 
+func TestIsAfterDate(t *testing.T) {
+	testCases := []struct {
+		name     string
+		date     string
+		after    string
+		expected error
+	}{
+		{
+			name:     "invalid date format",
+			date:     malformattedDate,
+			after:    malformattedDate,
+			expected: errors.New("invalid date format, must be RFC3339 standard"),
+		},
+		{
+			name:     "invalid after format",
+			date:     effectiveAtPast,
+			after:    malformattedDate,
+			expected: errors.New("invalid date format, must be RFC3339 standard"),
+		},
+		{
+			name:     "date is after",
+			date:     effectiveAtFuture,
+			after:    effectiveAtPast,
+			expected: nil,
+		},
+		{
+			name:     "date is before",
+			date:     effectiveAtPast,
+			after:    effectiveAtFuture,
+			expected: errors.New("Date is not in the future"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := IsAfterDate(tc.date, tc.after)
+			if err != nil && tc.expected == nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if err == nil && tc.expected != nil {
+				t.Fatalf("expected error: %v, but got nil", tc.expected)
+			}
+		})
+	}
+}
+
 func TestValidateDate(t *testing.T) {
-	var mockeEffectiveAtFuture = time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339)
 	testCases := []struct {
 		name     string
 		date     string
@@ -58,13 +111,13 @@ func TestValidateDate(t *testing.T) {
 	}{
 		{
 			name:     "valid date",
-			date:     mockeEffectiveAtFuture,
-			expected: mockeEffectiveAtFuture,
+			date:     effectiveAtFuture,
+			expected: effectiveAtFuture,
 			hasError: false,
 		},
 		{
 			name:     "invalid date format",
-			date:     "2021/03/08",
+			date:     malformattedDate,
 			expected: "",
 			hasError: true,
 		},

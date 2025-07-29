@@ -17,10 +17,10 @@ import (
 type NodeState uint8
 
 const (
-	Unknown NodeState = iota
-	Configured
-	Operational
-	Faulty
+	NodeStateUnknown NodeState = iota
+	NodeStateConfigured
+	NodeStateOperational
+	NodeStateFaulty
 )
 
 func (s *NodeState) Scan(value interface{}) error {
@@ -60,6 +60,7 @@ func ParseNodeState(value string) NodeState {
 	return NodeState(v)
 }
 
+// Is unknown considered as valid node state?
 func IsValidNodeState(value string) bool {
 	t := map[string]NodeState{"unknown": 0, "configured": 1, "operational": 2, "faulty": 3}
 

@@ -9,7 +9,7 @@
 package db
 
 import (
-	extsql "database/sql"
+	"errors"
 	"log"
 	"regexp"
 	"testing"
@@ -20,8 +20,30 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/tj/assert"
+	ukama "github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+)
+
+// Test data constants
+const (
+	testCountry  = "ABC"
+	testProvider = "XYZ"
+	testVpmn     = "123"
+	testApn      = "apn123"
+	testCurrency = "Dollar"
+	testImsi     = 2
+	testSmsMo    = 0.05
+	testSmsMt    = 0.06
+	testData     = 0.07
+)
+
+// Test time constants
+var (
+	testEndAt    = time.Date(2023, 10, 12, 7, 20, 50, 520000000, time.UTC)
+	testStartAt  = time.Date(2021, 10, 12, 7, 20, 50, 520000000, time.UTC)
+	testFromDate = time.Date(2022, 10, 12, 7, 20, 50, 520000000, time.UTC)
+	testToDate   = time.Date(2023, 10, 11, 7, 20, 50, 520000000, time.UTC)
 )
 
 type UkamaDbMock struct {
@@ -56,66 +78,109 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
+// Test helper functions
+func createTestBaseRate(id uuid.UUID, country, provider string, effectiveAt, endAt time.Time) *BaseRate {
+	return &BaseRate{
+		Uuid:        id,
+		Country:     country,
+		Provider:    provider,
+		Vpmn:        testVpmn,
+		Imsi:        testImsi,
+		SmsMo:       testSmsMo,
+		SmsMt:       testSmsMt,
+		Data:        testData,
+		X2g:         false,
+		X3g:         false,
+		X5g:         true,
+		Lte:         true,
+		LteM:        true,
+		Apn:         testApn,
+		EffectiveAt: effectiveAt,
+		EndAt:       endAt,
+		SimType:     ukama.SimTypeUkamaData,
+		Currency:    testCurrency,
+	}
+}
+
+func createTestBaseRateWithoutCurrency(id uuid.UUID, country, provider string, effectiveAt, endAt time.Time) *BaseRate {
+	rate := createTestBaseRate(id, country, provider, effectiveAt, endAt)
+	rate.Currency = ""
+	return rate
+}
+
+func setupTestDB(t *testing.T) (*baseRateRepo, sqlmock.Sqlmock, func()) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	repo := NewBaseRateRepo(&UkamaDbMock{GormDb: gdb})
+	cleanup := func() { db.Close() }
+
+	return repo, mock, cleanup
+}
+
+func createMockRows(rate *BaseRate) *sqlmock.Rows {
+	return sqlmock.NewRows([]string{
+		"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data",
+		"x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at",
+		"sim_type", "created_at", "updated_at", "deleted_at",
+	}).AddRow(
+		rate.Uuid, rate.Country, rate.Provider, rate.Vpmn, rate.Imsi,
+		rate.SmsMo, rate.SmsMt, rate.Data, rate.X2g, rate.X3g, rate.X5g,
+		rate.Lte, rate.LteM, rate.Apn, rate.EffectiveAt, rate.EndAt,
+		rate.SimType, rate.CreatedAt, rate.UpdatedAt, rate.DeletedAt,
+	)
+}
+
+func createMockRowsForMultipleRates(rates []BaseRate) *sqlmock.Rows {
+	rows := sqlmock.NewRows([]string{
+		"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data",
+		"x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at",
+		"sim_type", "created_at", "updated_at", "deleted_at",
+	})
+
+	for _, rate := range rates {
+		rows.AddRow(
+			rate.Uuid, rate.Country, rate.Provider, rate.Vpmn, rate.Imsi,
+			rate.SmsMo, rate.SmsMt, rate.Data, rate.X2g, rate.X3g, rate.X5g,
+			rate.Lte, rate.LteM, rate.Apn, rate.EffectiveAt, rate.EndAt,
+			rate.SimType, rate.CreatedAt, rate.UpdatedAt, rate.DeletedAt,
+		)
+	}
+
+	return rows
+}
+
 func TestBaseRateRepo_dbTest(t *testing.T) {
 
 	t.Run("BaseRateById", func(t *testing.T) {
 		// Arrange
 		ratID := uuid.NewV4()
-		var db *extsql.DB
-		var err error
-		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-		expectedRate := &BaseRate{
-			Uuid:        ratID,
-			Country:     "India",
-			Provider:    "Airtel",
-			Vpmn:        "123",
-			Imsi:        2,
-			SmsMo:       0.05,
-			SmsMt:       0.06,
-			Data:        0.07,
-			X2g:         false,
-			X3g:         false,
-			X5g:         true,
-			Lte:         true,
-			LteM:        true,
-			Apn:         "apn123",
-			EffectiveAt: time.Now(),
-			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
-		}
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		expectedRate := createTestBaseRateWithoutCurrency(ratID, "India", "Airtel", time.Now(), testEndAt)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
 
+		rows := createMockRows(expectedRate)
 		mock.ExpectQuery(`^SELECT.*rate.*`).
 			WithArgs(ratID.String(), sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewBaseRateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
-		rate, err := r.GetBaseRateById(ratID)
+		rate, err := repo.GetBaseRateById(ratID)
+
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 		assert.Equal(t, rate, expectedRate)
 		assert.NotNil(t, rate)
 	})
@@ -123,217 +188,74 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 	t.Run("BaseRateByCountry", func(t *testing.T) {
 		// Arrange
 		ratID := uuid.NewV4()
-		var db *extsql.DB
-		var err error
-		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-		expectedRate := &BaseRate{
-			Uuid:        ratID,
-			Country:     "ABC",
-			Provider:    "XYZ",
-			Vpmn:        "123",
-			Imsi:        2,
-			SmsMo:       0.05,
-			SmsMt:       0.06,
-			Data:        0.07,
-			X2g:         false,
-			X3g:         false,
-			X5g:         true,
-			Lte:         true,
-			LteM:        true,
-			Apn:         "apn123",
-			EffectiveAt: time.Now(),
-			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
-		}
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		expectedRate := createTestBaseRateWithoutCurrency(ratID, testCountry, testProvider, time.Now(), testEndAt)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
 
+		rows := createMockRows(expectedRate)
 		mock.ExpectQuery(`^SELECT.*rate.*`).
 			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewBaseRateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
-		rate, err := r.GetBaseRatesByCountry(expectedRate.Country, expectedRate.Provider, expectedRate.SimType)
+		rate, err := repo.GetBaseRatesByCountry(expectedRate.Country, expectedRate.Provider, expectedRate.SimType)
+
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 		assert.Equal(t, &rate[0], expectedRate)
 		assert.NotNil(t, rate)
 	})
 
 	t.Run("BaseRateHistoryByCountry", func(t *testing.T) {
 		// Arrange
-		ratID := uuid.NewV4()
-		var db *extsql.DB
-		var err error
-		sat, err := time.Parse(time.RFC3339, "2021-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
+		ratID1 := uuid.NewV4()
+		ratID2 := uuid.NewV4()
 
-		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-
-		expectedRate := []BaseRate{
-			{
-				Uuid:        ratID,
-				Country:     "ABC",
-				Provider:    "XYZ",
-				Vpmn:        "123",
-				Imsi:        2,
-				SmsMo:       0.05,
-				SmsMt:       0.06,
-				Data:        0.07,
-				X2g:         false,
-				X3g:         false,
-				X5g:         true,
-				Lte:         true,
-				LteM:        true,
-				Apn:         "apn123",
-				EffectiveAt: sat,
-				EndAt:       eat,
-				SimType:     SimTypeUkamaData,
-			},
-			{
-				Uuid:        uuid.NewV4(),
-				Country:     "ABCDE",
-				Provider:    "XYZXX",
-				Vpmn:        "123",
-				Imsi:        2,
-				SmsMo:       0.05,
-				SmsMt:       0.06,
-				Data:        0.07,
-				X2g:         false,
-				X3g:         false,
-				X5g:         true,
-				Lte:         true,
-				LteM:        true,
-				Apn:         "apn123",
-				EffectiveAt: time.Now(),
-				EndAt:       eat,
-				SimType:     SimTypeUkamaData,
-			},
+		expectedRates := []BaseRate{
+			*createTestBaseRateWithoutCurrency(ratID1, testCountry, testProvider, testStartAt, testEndAt),
+			*createTestBaseRateWithoutCurrency(ratID2, "ABCDE", "XYZXX", time.Now(), testEndAt),
 		}
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate[0].Uuid, expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].Vpmn, expectedRate[0].Imsi, expectedRate[0].SmsMo, expectedRate[0].SmsMt, expectedRate[0].Data, expectedRate[0].X2g, expectedRate[0].X3g, expectedRate[0].X5g, expectedRate[0].Lte, expectedRate[0].LteM, expectedRate[0].Apn, expectedRate[0].EffectiveAt, expectedRate[0].EndAt, expectedRate[0].SimType, expectedRate[0].CreatedAt, expectedRate[0].UpdatedAt, expectedRate[0].DeletedAt).
-			AddRow(expectedRate[1].Uuid, expectedRate[1].Country, expectedRate[1].Provider, expectedRate[1].Vpmn, expectedRate[1].Imsi, expectedRate[1].SmsMo, expectedRate[1].SmsMt, expectedRate[1].Data, expectedRate[1].X2g, expectedRate[1].X3g, expectedRate[1].X5g, expectedRate[1].Lte, expectedRate[1].LteM, expectedRate[1].Apn, expectedRate[1].EffectiveAt, expectedRate[1].EndAt, expectedRate[1].SimType, expectedRate[1].CreatedAt, expectedRate[1].UpdatedAt, expectedRate[1].DeletedAt)
-
+		rows := createMockRowsForMultipleRates(expectedRates)
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].SimType).
+			WithArgs(expectedRates[0].Country, expectedRates[0].Provider, expectedRates[0].SimType).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewBaseRateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
-		rate, err := r.GetBaseRatesHistoryByCountry(expectedRate[0].Country, expectedRate[0].Provider, expectedRate[0].SimType)
+		rate, err := repo.GetBaseRatesHistoryByCountry(expectedRates[0].Country, expectedRates[0].Provider, expectedRates[0].SimType)
+
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.Equal(t, len(expectedRate), len(rate))
-		assert.Equal(t, rate, expectedRate)
+		assert.NoError(t, mock.ExpectationsWereMet())
+		assert.Equal(t, len(expectedRates), len(rate))
+		assert.Equal(t, rate, expectedRates)
 		assert.NotNil(t, rate)
 	})
 
 	t.Run("BaseRateForPeriod", func(t *testing.T) {
 		// Arrange
 		ratID := uuid.NewV4()
-		var db *extsql.DB
-		var err error
-		from, err := time.Parse(time.RFC3339, "2022-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-		to, err := time.Parse(time.RFC3339, "2023-10-11T07:20:50.52Z")
-		assert.NoError(t, err)
-		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-		expectedRate := &BaseRate{
-			Uuid:        ratID,
-			Country:     "ABC",
-			Provider:    "XYZ",
-			Vpmn:        "123",
-			Imsi:        2,
-			SmsMo:       0.05,
-			SmsMt:       0.06,
-			Data:        0.07,
-			X2g:         false,
-			X3g:         false,
-			X5g:         true,
-			Lte:         true,
-			LteM:        true,
-			Apn:         "apn123",
-			EffectiveAt: time.Now(),
-			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
-		}
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		expectedRate := createTestBaseRateWithoutCurrency(ratID, testCountry, testProvider, time.Now(), testEndAt)
 
-		rows := sqlmock.NewRows([]string{"uuid", "country", "provider", "vpmn", "imsi", "sms_mo", "sms_mt", "data", "x2g", "x3g", "x5g", "lte", "lte_m", "apn", "effective_at", "end_at", "sim_type", "created_at", "updated_at", "deleted_at"}).
-			AddRow(expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.CreatedAt, expectedRate.UpdatedAt, expectedRate.DeletedAt)
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
 
+		rows := createMockRows(expectedRate)
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, from, to).
+			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, testFromDate, testToDate).
 			WillReturnRows(rows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewBaseRateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
-		rate, err := r.GetBaseRatesForPeriod(expectedRate.Country, expectedRate.Provider, from, to, expectedRate.SimType)
+		rate, err := repo.GetBaseRatesForPeriod(expectedRate.Country, expectedRate.Provider, testFromDate, testToDate, expectedRate.SimType)
+
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 		assert.Equal(t, &rate[0], expectedRate)
 		assert.NotNil(t, rate)
 	})
@@ -341,73 +263,156 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 	t.Run("UploadBaseRates", func(t *testing.T) {
 		// Arrange
 		ratID := uuid.NewV4()
-		var db *extsql.DB
-		var err error
-		sat, err := time.Parse(time.RFC3339, "2021-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
+		expectedRate := createTestBaseRate(ratID, testCountry, testProvider, testStartAt, testEndAt)
+		upRates := []BaseRate{*expectedRate}
 
-		eat, err := time.Parse(time.RFC3339, "2023-10-12T07:20:50.52Z")
-		assert.NoError(t, err)
-
-		expectedRate := BaseRate{
-
-			Uuid:        ratID,
-			Country:     "ABC",
-			Provider:    "XYZ",
-			Vpmn:        "123",
-			Imsi:        2,
-			SmsMo:       0.05,
-			SmsMt:       0.06,
-			Data:        0.07,
-			X2g:         false,
-			X3g:         false,
-			X5g:         true,
-			Lte:         true,
-			LteM:        true,
-			Apn:         "apn123",
-			EffectiveAt: sat,
-			EndAt:       eat,
-			SimType:     SimTypeUkamaData,
-			Currency:    "Dollar",
-		}
-
-		upRates := []BaseRate{expectedRate}
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
 
 		mock.ExpectBegin()
-
 		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).
 			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Provider, expectedRate.SimType, expectedRate.EffectiveAt).
 			WillReturnResult(sqlmock.NewResult(1, 1))
-
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := NewBaseRateRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
 		// Act
-		err = r.UploadBaseRates(upRates)
+		err := repo.UploadBaseRates(upRates)
+
 		// Assert
 		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 
-		err = mock.ExpectationsWereMet()
+	t.Run("UploadBaseRates create error", func(t *testing.T) {
+		// Arrange
+		ratID := uuid.NewV4()
+		expectedRate := createTestBaseRate(ratID, testCountry, testProvider, testStartAt, testEndAt)
+		upRates := []BaseRate{*expectedRate}
+
+		repo, mock, cleanup := setupTestDB(t)
+		defer cleanup()
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).
+			WithArgs(sqlmock.AnyArg(), expectedRate.Country, expectedRate.Provider, expectedRate.SimType, expectedRate.EffectiveAt).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), expectedRate.Uuid, expectedRate.Country, expectedRate.Provider, expectedRate.Vpmn, expectedRate.Imsi, expectedRate.SmsMo, expectedRate.SmsMt, expectedRate.Data, expectedRate.X2g, expectedRate.X3g, expectedRate.X5g, expectedRate.Lte, expectedRate.LteM, expectedRate.Apn, expectedRate.EffectiveAt, expectedRate.EndAt, expectedRate.SimType, expectedRate.Currency).
+			WillReturnError(errors.New("create error"))
+		mock.ExpectRollback()
+
+		// Act
+		err := repo.UploadBaseRates(upRates)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "create error")
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestBaseRateRepo_ErrorCases(t *testing.T) {
+	newRepo := func() (*baseRateRepo, sqlmock.Sqlmock, func()) {
+		return setupTestDB(t)
+	}
+
+	t.Run("GetBaseRateById returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRateById(uuid.NewV4())
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesHistoryByCountry returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesHistoryByCountry("c", "p", ukama.SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesByCountry returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesForPeriod returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("GetBaseRatesForPackage returns error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
+		_, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("UploadBaseRates delete error (not NotFound)", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta("UPDATE")).WillReturnError(errors.New("delete error"))
+		mock.ExpectRollback()
+		rate := BaseRate{Country: "c", Provider: "p", SimType: ukama.SimTypeUkamaData, EffectiveAt: time.Now()}
+		err := repo.UploadBaseRates([]BaseRate{rate})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "delete error")
+	})
+
+	t.Run("GetBaseRatesByCountry empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
 		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("GetBaseRatesForPeriod empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesForPeriod("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
+		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("GetBaseRatesForPackage empty result", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		rows := sqlmock.NewRows([]string{})
+		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
+		rates, err := repo.GetBaseRatesForPackage("c", "p", time.Now(), time.Now(), ukama.SimTypeUkamaData)
+		assert.NoError(t, err)
+		assert.Empty(t, rates)
+	})
+
+	t.Run("UploadBaseRates transaction begin error", func(t *testing.T) {
+		repo, mock, cleanup := newRepo()
+		defer cleanup()
+		mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
+		rate := BaseRate{Country: "c", Provider: "p", SimType: ukama.SimTypeUkamaData, EffectiveAt: time.Now()}
+		err := repo.UploadBaseRates([]BaseRate{rate})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "transaction begin error")
 	})
 }

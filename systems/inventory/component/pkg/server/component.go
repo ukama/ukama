@@ -12,6 +12,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gopkg.in/yaml.v2"
+
 	"github.com/ukama/ukama/systems/common/gitClient"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -20,12 +24,8 @@ import (
 	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
-
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
@@ -77,15 +77,29 @@ func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetR
 	}, nil
 }
 
+// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 func (c *ComponentServer) GetByUser(ctx context.Context, req *pb.GetByUserRequest) (*pb.GetByUserResponse, error) {
 	log.Infof("Getting components by user %v", req)
 
-	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(req.GetCategory()))
+	components, err := c.componentRepo.GetByUser(req.GetUserId(), int32(ukama.ParseComponentCategory(req.GetCategory())))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "component")
 	}
 
 	return &pb.GetByUserResponse{
+		Components: dbComponentsToPbComponents(components),
+	}, nil
+}
+
+func (c *ComponentServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("Listing components %v", req)
+
+	components, err := c.componentRepo.List(req.GetUserId(), req.GetPartNumber(), int32(ukama.ParseComponentCategory(req.GetCategory())))
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "component")
+	}
+
+	return &pb.ListResponse{
 		Components: dbComponentsToPbComponents(components),
 	}, nil
 }
@@ -133,7 +147,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 			var component utils.Component
 			err = yaml.Unmarshal(content, &component)
 			if err != nil {
-				return nil, status.Errorf(codes.Internal, "failed to unmarshal json. Error %s", err.Error())
+				return nil, status.Errorf(codes.Internal, "failed to unmarshal yaml. Error %s", err.Error())
 			}
 
 			components = append(components, component)
@@ -182,7 +196,7 @@ func dbComponentToPbComponent(component *db.Component) *pb.Component {
 		Id:            component.Id.String(),
 		Inventory:     component.Inventory,
 		UserId:        component.UserId.String(),
-		Category:      pb.ComponentCategory(component.Category),
+		Category:      ukama.ComponentCategory(component.Category).String(),
 		Type:          component.Type,
 		Description:   component.Description,
 		DatasheetURL:  component.DatasheetURL,
@@ -212,7 +226,7 @@ func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) [
 		res = append(res, &db.Component{
 			Id:            uuid.NewV4(),
 			Inventory:     i.InventoryID,
-			Category:      ukama.ParseType(i.Category), // Use ukama.ParseType here,
+			Category:      ukama.ParseComponentCategory(i.Category),
 			UserId:        uId,
 			Type:          i.Type,
 			Description:   i.Description,

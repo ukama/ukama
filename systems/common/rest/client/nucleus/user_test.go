@@ -44,7 +44,7 @@ func TestUserClient_GetById(t *testing.T) {
 		testUserClient := nucleus.NewUserClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/user call.
+		// so that the test stays a unit test e.g, no server/user call.
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		usr, err := testUserClient.GetById(testUuid)
@@ -145,7 +145,7 @@ func TestUserClient_GetByEmail(t *testing.T) {
 		testUserClient := nucleus.NewUserClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/user call.
+		// so that the test stays a unit test e.g, no server/user call.
 		testUserClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		usr, err := testUserClient.GetByEmail(testEmail)

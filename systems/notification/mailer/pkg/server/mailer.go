@@ -21,14 +21,12 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
@@ -71,7 +69,7 @@ type MailerServer struct {
 func NewMailerServer(mailerRepo db.MailerRepo, mail *pkg.MailerConfig, templatesPath string) (*MailerServer, error) {
 	templates, err := template.ParseGlob(filepath.Join(templatesPath, "*"+templateExtension))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load email templates: %v", err)
+		return nil, fmt.Errorf("failed to load email templates: %w", err)
 	}
 
 	server := &MailerServer{
@@ -125,7 +123,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		}
 	}
 
-	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.Pending, req.Values); err != nil {
+	if err := s.saveEmailStatus(mailId, strings.Join(req.To, ","), req.TemplateName, ukama.MailStatusPending, req.Values); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
@@ -173,14 +171,14 @@ func (s *MailerServer) processEmailQueue() {
 			continue
 		}
 
-		if email.Status == ukama.Success {
+		if email.Status == ukama.MailStatusSuccess {
 			log.Warnf("Skipping email with mailId %v as it has already been sent", payload.MailId)
 			continue
 		}
 
 		if err := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 			MailId:        payload.MailId,
-			Status:        ukama.Process,
+			Status:        ukama.MailStatusProcess,
 			RetryCount:    0,
 			NextRetryTime: nil,
 			UpdatedAt:     time.Now(),
@@ -197,7 +195,7 @@ func (s *MailerServer) processEmailQueue() {
 			nextRetry := time.Now().Add(InitialBackoff)
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        ukama.Retry,
+				Status:        ukama.MailStatusRetry,
 				RetryCount:    1,
 				NextRetryTime: &nextRetry,
 				UpdatedAt:     time.Now(),
@@ -205,11 +203,12 @@ func (s *MailerServer) processEmailQueue() {
 				log.Errorf("Failed to update email status: %v", updateErr)
 			}
 		} else {
-			log.Infof("Email sent successfully to %v with template %s and mail ID %v", payload.To, payload.TemplateName, payload.MailId)
+			log.Infof("Email sent successfully to %v with template %s and mail ID %v",
+				payload.To, payload.TemplateName, payload.MailId)
 
 			if updateErr := s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 				MailId:        payload.MailId,
-				Status:        ukama.Success,
+				Status:        ukama.MailStatusSuccess,
 				SentAt:        &now,
 				RetryCount:    0,
 				NextRetryTime: nil,
@@ -222,7 +221,7 @@ func (s *MailerServer) processEmailQueue() {
 	}
 }
 
-func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.Status) error {
+func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.MailStatus) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:    mailId,
 		Status:    status,
@@ -233,7 +232,7 @@ func (s *MailerServer) updateStatus(mailId uuid.UUID, status ukama.Status) error
 func (s *MailerServer) updateRetryStatus(mailId uuid.UUID, retryCount int, nextRetryTime *time.Time) error {
 	return s.mailerRepo.UpdateEmailStatus(&db.Mailing{
 		MailId:        mailId,
-		Status:        ukama.Retry,
+		Status:        ukama.MailStatusRetry,
 		RetryCount:    retryCount,
 		NextRetryTime: nextRetryTime,
 		UpdatedAt:     time.Now(),
@@ -249,7 +248,7 @@ func (s *MailerServer) processRetries() {
 		}
 
 		for _, email := range emails {
-			if email.Status == ukama.Success || email.Status == ukama.Process {
+			if email.Status == ukama.MailStatusSuccess || email.Status == ukama.MailStatusProcess {
 				continue
 			}
 
@@ -260,14 +259,13 @@ func (s *MailerServer) processRetries() {
 			if email.RetryCount >= MaxRetryCount {
 				log.WithField("mailId", email.MailId).Info("Max retries reached, marking as permanently failed")
 
-				if err := s.updateStatus(email.MailId, ukama.Failed); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.MailStatusFailed); err != nil {
 					log.WithError(err).Error("Failed to update email status")
-
 				}
 				continue
 			}
 
-			if err := s.updateStatus(email.MailId, ukama.Process); err != nil {
+			if err := s.updateStatus(email.MailId, ukama.MailStatusProcess); err != nil {
 				log.WithError(err).Error("Failed to update status to processing")
 				continue
 			}
@@ -287,7 +285,7 @@ func (s *MailerServer) processRetries() {
 				}
 			} else {
 				log.WithField("mailId", email.MailId).Info("Retry successful")
-				if err := s.updateStatus(email.MailId, ukama.Success); err != nil {
+				if err := s.updateStatus(email.MailId, ukama.MailStatusSuccess); err != nil {
 					log.WithError(err).Error("Failed to update email status")
 				}
 			}
@@ -322,9 +320,9 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.Status, values map[string]string) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.MailStatus, values map[string]string) error {
 	var nextRetryTime *time.Time
-	if status == ukama.Failed {
+	if status == ukama.MailStatusFailed {
 		t := time.Now().Add(InitialBackoff)
 		nextRetryTime = &t
 	}
@@ -350,51 +348,65 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 func (s *MailerServer) attemptSendEmail(payload *EmailPayload) error {
 	body, err := s.prepareMsg(payload)
 	if err != nil {
-		return fmt.Errorf("failed to prepare email body: %v", err)
+		return fmt.Errorf("failed to prepare email body: %w", err)
 	}
 
 	client, err := s.createSMTPClient(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to create SMTP client: %v", err)
+		return fmt.Errorf("failed to create SMTP client: %w", err)
 	}
-	defer client.Close()
+
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Warnf("failed to close smtp client connection: %v", err)
+		}
+	}()
 
 	return s.sendWithClient(client, payload, body)
 }
 
 func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, error) {
-
 	dialer := &net.Dialer{
 		Timeout: dialTimeout,
 	}
 
 	conn, err := dialer.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", s.mailer.Host, s.mailer.Port))
 	if err != nil {
-		return nil, fmt.Errorf("SMTP connection failed: %v", err)
+		return nil, fmt.Errorf("SMTP connection failed: %w", err)
 	}
+
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Warnf("failed to close net client connection: %v", err)
+		}
+	}()
 
 	client, err := smtp.NewClient(conn, s.mailer.Host)
 	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("SMTP client creation failed: %v", err)
+		return nil, fmt.Errorf("SMTP client creation failed: %w", err)
 	}
+
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Warnf("failed to close smtp client connection: %v", err)
+		}
+	}()
 
 	config := &tls.Config{
 		ServerName:         s.mailer.Host,
 		InsecureSkipVerify: false,
 	}
+
 	if err := client.StartTLS(config); err != nil {
-		client.Close()
-		return nil, fmt.Errorf("TLS setup failed: %v", err)
+		return nil, fmt.Errorf("TLS setup failed: %w", err)
 	}
 
 	auth := smtp.PlainAuth("", s.mailer.Username, s.mailer.Password, s.mailer.Host)
 	if err := client.Auth(auth); err != nil {
-		client.Close()
 		if strings.Contains(err.Error(), "authentication failed") {
-			return nil, fmt.Errorf("SMTP authentication failed, check credentials: %v", err)
+			return nil, fmt.Errorf("SMTP authentication failed, check credentials: %w", err)
 		}
-		return nil, fmt.Errorf("SMTP authentication error: %v", err)
+		return nil, fmt.Errorf("SMTP authentication error: %w", err)
 	}
 
 	return client, nil
@@ -407,32 +419,37 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 	errCh := make(chan error, 1)
 	go func() {
 		if err := client.Mail(s.mailer.From); err != nil {
-			errCh <- fmt.Errorf("failed to set sender: %v", err)
+			errCh <- fmt.Errorf("failed to set sender: %w", err)
 			return
 		}
 
 		for _, recipient := range payload.To {
 			if err := client.Rcpt(recipient); err != nil {
-				errCh <- fmt.Errorf("failed to add recipient %s: %v", recipient, err)
+				errCh <- fmt.Errorf("failed to add recipient %s: %w", recipient, err)
 				return
 			}
 		}
 
 		writer, err := client.Data()
 		if err != nil {
-			errCh <- fmt.Errorf("failed to create message writer: %v", err)
+			errCh <- fmt.Errorf("failed to create message writer: %w", err)
 			return
 		}
-		defer writer.Close()
+
+		defer func() {
+			if err := writer.Close(); err != nil {
+				log.Warnf("failed to close mail writer: %v", err)
+			}
+		}()
 
 		if _, err := writer.Write(body.Bytes()); err != nil {
-			errCh <- fmt.Errorf("failed to write message body: %v", err)
+			errCh <- fmt.Errorf("failed to write message body: %w", err)
 			return
 		}
 
 		if err := client.Quit(); err != nil {
 			if !strings.Contains(err.Error(), "250 Ok") {
-				errCh <- fmt.Errorf("failed to close SMTP connection: %v", err)
+				errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
 				return
 			}
 		}
@@ -442,7 +459,7 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 
 	select {
 	case <-sendCtx.Done():
-		return fmt.Errorf("send operation timed out: %v", sendCtx.Err())
+		return fmt.Errorf("send operation timed out: %w", sendCtx.Err())
 	case err := <-errCh:
 		return err
 	}

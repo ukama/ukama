@@ -20,7 +20,7 @@ func TestReportType(t *testing.T) {
 		report := ukama.ParseReportType("invoice")
 
 		assert.NotNil(t, report)
-		assert.Equal(t, report.String(), "invoice")
+		assert.Equal(t, report.String(), ukama.ReportTypeInvoice.String())
 		assert.Equal(t, uint8(report), uint8(1))
 	})
 
@@ -29,14 +29,14 @@ func TestReportType(t *testing.T) {
 
 		assert.NotNil(t, report)
 		assert.Equal(t, uint8(report), uint8(2))
-		assert.Equal(t, report.String(), "consumption")
+		assert.Equal(t, report.String(), ukama.ReportTypeConsumption.String())
 	})
 
 	t.Run("ReportTypeNonValidString", func(tt *testing.T) {
 		report := ukama.ParseReportType("failure")
 
 		assert.NotNil(t, report)
-		assert.Equal(t, report.String(), "unknown")
+		assert.Equal(t, report.String(), ukama.ReportTypeUnknown.String())
 		assert.Equal(t, uint8(report), uint8(0))
 	})
 
@@ -44,7 +44,7 @@ func TestReportType(t *testing.T) {
 		report := ukama.ReportType(uint8(10))
 
 		assert.NotNil(t, report)
-		assert.Equal(t, report.String(), "unknown")
+		assert.Equal(t, report.String(), ukama.ReportTypeUnknown.String())
 		assert.Equal(t, uint8(report), uint8(10))
 	})
 }

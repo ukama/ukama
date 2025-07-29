@@ -16,7 +16,7 @@ type GetRequest struct {
 
 type GetComponents struct {
 	UserId   string `example:"{{userId}}" path:"uuid" validate:"required"`
-	Category string `example:"{{componentCategory}}" query:"category" validate:"eq=ALL|eq=ACCESS|eq=BACKHAUL|eq=POWER|eq=SWITCH|eq=SPECTRUM"`
+	Category string `example:"{{componentCategory}}" query:"category" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
 }
 
 type GetAccounts struct {
@@ -26,4 +26,11 @@ type GetAccounts struct {
 type GetContracts struct {
 	Company  string `example:"{{company}}" path:"company" validate:"required"`
 	IsActive bool   `example:"{{true}}" query:"is_active" validate:"required"`
+}
+
+type ListComponentsReq struct {
+	Id         string `form:"id" json:"id" query:"id" binding:"required"`
+	UserId     string `form:"user_id" json:"user_id" query:"user_id" binding:"required"`
+	PartNumber string `form:"part_number" json:"part_number" query:"part_number" binding:"required"`
+	Category   string `form:"category" default:"all" json:"category" query:"category" binding:"required" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
 }

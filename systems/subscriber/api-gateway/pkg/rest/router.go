@@ -11,7 +11,6 @@ package rest
 import (
 	"encoding/base64"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -207,30 +206,15 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 }
 
 func (r *Router) getSimByIccid(c *gin.Context, req *SimByIccidReq) (*simPoolPb.GetByIccidResponse, error) {
-	resp, err := r.clients.sp.Get(req.Iccid)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return r.clients.sp.Get(req.Iccid)
 }
 
 func (r *Router) getSims(c *gin.Context, req *SimPoolStatReq) (*simPoolPb.GetSimsResponse, error) {
-	resp, err := r.clients.sp.GetSims(req.SimType)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return r.clients.sp.GetSims(req.SimType)
 }
 
 func (r *Router) getSimPoolStats(c *gin.Context, req *SimPoolTypeReq) (*simPoolPb.GetStatsResponse, error) {
-	resp, err := r.clients.sp.GetStats(req.SimType)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return r.clients.sp.GetStats(req.SimType)
 }
 
 func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPoolPb.AddResponse, error) {
@@ -238,63 +222,40 @@ func (r *Router) addSimsToSimPool(c *gin.Context, req *SimPoolAddSimReq) (*simPo
 	if err != nil {
 		return nil, err
 	}
-	pbResp, err := r.clients.sp.AddSimsToSimPool(pbreq)
-	if err != nil {
-		return nil, err
-	}
-	return pbResp, nil
+	return r.clients.sp.AddSimsToSimPool(pbreq)
 }
 
 func (r *Router) uploadSimsToSimPool(c *gin.Context, req *SimPoolUploadSimReq) (*simPoolPb.UploadResponse, error) {
 
 	data, err := base64.StdEncoding.DecodeString(req.Data)
 	if err != nil {
-		log.Fatal("error:", err)
+		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: fmt.Sprintf("failed to decode base64 data: %v", err)}
 	}
 
-	pbResp, err := r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
+	return r.clients.sp.UploadSimsToSimPool(&simPoolPb.UploadRequest{
 		SimData: data,
 		SimType: req.SimType,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pbResp, nil
 }
 
 func (r *Router) deleteSimFromSimPool(c *gin.Context, req *SimPoolRemoveSimReq) (*simPoolPb.DeleteResponse, error) {
-	res, err := r.clients.sp.DeleteSimFromSimPool(req.Id)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return r.clients.sp.DeleteSimFromSimPool(req.Id)
 }
 
 func (r *Router) getSubscriberByEmail(c *gin.Context, req *SubscriberGetReqByEmail) (*subRegPb.GetSubscriberByEmailResponse, error) {
-	pbResp, err := r.clients.sub.GetSubscriberByEmail(strings.ToLower(req.Email))
-	if err != nil {
-		return nil, err
-	}
-
-	return pbResp, nil
+	return r.clients.sub.GetSubscriberByEmail(strings.ToLower(req.Email))
 }
 
 func (r *Router) getSubscriber(c *gin.Context, req *SubscriberGetReq) (*subRegPb.GetSubscriberResponse, error) {
 	subsId := req.SubscriberId
 
-	pbResp, err := r.clients.sub.GetSubscriber(subsId)
-	if err != nil {
-		return nil, err
-	}
-
-	return pbResp, nil
+	return r.clients.sub.GetSubscriber(subsId)
 }
 
 func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb.AddSubscriberResponse, error) {
 
-	pbResp, err := r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{
+	return r.clients.sub.AddSubscriber(&subRegPb.AddSubscriberRequest{
 		Name:                  req.Name,
 		Email:                 strings.ToLower(req.Email),
 		PhoneNumber:           req.Phone,
@@ -305,22 +266,14 @@ func (r *Router) putSubscriber(c *gin.Context, req *SubscriberAddReq) (*subRegPb
 		NetworkId:             req.NetworkId,
 		Gender:                req.Gender,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return pbResp, nil
 }
 
 func (r *Router) deleteSubscriber(c *gin.Context, req *SubscriberDeleteReq) (*subRegPb.DeleteSubscriberResponse, error) {
-	res, err := r.clients.sub.DeleteSubscriber(req.SubscriberId)
-
-	return res, err
+	return r.clients.sub.DeleteSubscriber(req.SubscriberId)
 }
 
 func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*subRegPb.UpdateSubscriberResponse, error) {
-	res, err := r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
+	return r.clients.sub.UpdateSubscriber(&subRegPb.UpdateSubscriberRequest{
 		SubscriberId:          req.SubscriberId,
 		Name:                  req.Name,
 		PhoneNumber:           req.Phone,
@@ -328,14 +281,10 @@ func (r *Router) updateSubscriber(c *gin.Context, req *SubscriberUpdateReq) (*su
 		ProofOfIdentification: req.ProofOfIdentification,
 		IdSerial:              req.IdSerial,
 	})
-
-	return res, err
 }
 
 func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetworkReq) (*subRegPb.GetByNetworkResponse, error) {
-	subs, err := r.clients.sub.GetByNetwork(req.NetworkId)
-
-	return subs, err
+	return r.clients.sub.GetByNetwork(req.NetworkId)
 }
 
 func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.AllocateSimResponse, error) {
@@ -347,83 +296,43 @@ func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.Al
 		SimType:       req.SimType,
 		TrafficPolicy: req.TrafficPolicy,
 	}
-	res, err := r.clients.sm.AllocateSim(&simReq)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.AllocateSim(&simReq)
 }
 
 func (r *Router) getSim(c *gin.Context, req *SimReq) (*simMangPb.GetSimResponse, error) {
-	res, err := r.clients.sm.GetSim(req.SimId)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.GetSim(req.SimId)
 }
 
 func (r *Router) listSims(c *gin.Context, req *ListSimsReq) (*simMangPb.ListSimsResponse, error) {
-	res, err := r.clients.sm.ListSims(req.Iccid, req.Imsi, req.SubscriberId, req.NetworkId,
+	return r.clients.sm.ListSims(req.Iccid, req.Imsi, req.SubscriberId, req.NetworkId,
 		req.SimType, req.SimStatus, req.TrafficPolicy, req.IsPhysical, req.Sort, req.Count)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // Deprecated: Use pkg.rest.Router.ListSims with subscriberId as filtering param instead.
 func (r *Router) getSimsBySub(c *gin.Context, req *GetSimsBySubReq) (*simMangPb.GetSimsBySubscriberResponse, error) {
-	res, err := r.clients.sm.GetSimsBySub(req.SubscriberId)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.GetSimsBySub(req.SubscriberId)
 }
 
 // Deprecated: Use pkg.rest.Router.ListSims with networkId as filtering param instead.
 func (r *Router) getSimsByNetwork(c *gin.Context, req *SimByNetworkReq) (*simMangPb.GetSimsByNetworkResponse, error) {
-	res, err := r.clients.sm.GetSimsByNetwork(req.NetworkId)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.GetSimsByNetwork(req.NetworkId)
 }
 
 func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) (*simMangPb.ToggleSimStatusResponse, error) {
-	res, err := r.clients.sm.ToggleSimStatus(req.SimId, req.Status)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.ToggleSimStatus(req.SimId, req.Status)
 }
 
 func (r *Router) terminateSim(c *gin.Context, req *SimReq) (*simMangPb.TerminateSimResponse, error) {
-	res, err := r.clients.sm.TerminateSim(req.SimId)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.TerminateSim(req.SimId)
 }
 
-func (r *Router) addPackageForSim(c *gin.Context, req *AddPkgToSimReq) error {
+func (r *Router) addPackageForSim(c *gin.Context, req *AddPkgToSimReq) (*simMangPb.AddPackageResponse, error) {
 	payload := simMangPb.AddPackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,
 		StartDate: req.StartDate,
 	}
-	_, err := r.clients.sm.AddPackageToSim(&payload)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.clients.sm.AddPackageToSim(&payload)
 }
 
 // Deprecated: Use pkg.rest.Router.addPkgForSim instead.
@@ -442,23 +351,13 @@ func (r *Router) postPkgForSim(c *gin.Context, req *PostPkgToSimReq) error {
 }
 
 func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) (*simMangPb.ListPackagesForSimResponse, error) {
-	res, err := r.clients.sm.ListPackagesForSim(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate, req.FromEndDate,
+	return r.clients.sm.ListPackagesForSim(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate, req.FromEndDate,
 		req.ToEndDate, req.IsActive, req.AsExpired, req.Sort, req.Count)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 // Deprecated: Use pkg.rest.Router.listPackagesForSim instead.
 func (r *Router) getPackagesForSim(c *gin.Context, req *SimReq) (*simMangPb.GetPackagesForSimResponse, error) {
-	res, err := r.clients.sm.GetPackagesForSim(req.SimId)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return r.clients.sm.GetPackagesForSim(req.SimId)
 }
 
 func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageForSimReq) (*simMangPb.SetActivePackageResponse, error) {
@@ -467,26 +366,16 @@ func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageFor
 		PackageId: req.PackageId,
 	}
 
-	resp, err := r.clients.sm.SetActivePackageForSim(&payload)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, err
+	return r.clients.sm.SetActivePackageForSim(&payload)
 }
 
-func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) error {
+func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.RemovePackageResponse, error) {
 	payload := simMangPb.RemovePackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,
 	}
 
-	_, err := r.clients.sm.RemovePackageForSim(&payload)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.clients.sm.RemovePackageForSim(&payload)
 }
 
 func (r *Router) getUsages(c *gin.Context, req *GetUsagesReq) (*simMangPb.UsageResponse, error) {

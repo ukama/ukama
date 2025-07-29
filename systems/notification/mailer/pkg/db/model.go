@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/ukama"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
 )

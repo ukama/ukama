@@ -46,7 +46,7 @@ func TestOrgClient_Get(t *testing.T) {
 		testOrgClient := nucleus.NewOrgClient("")
 
 		// We replace the transport mechanism by mocking the http request
-		// so that the test stays a unit test e.g no server/org call.
+		// so that the test stays a unit test e.g, no server/org call.
 		testOrgClient.R.C.SetTransport(RoundTripFunc(mockTransport))
 
 		o, err := testOrgClient.Get(testUuid)

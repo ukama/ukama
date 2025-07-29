@@ -15,6 +15,19 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *ListRequest) Validate() error {
+	return nil
+}
+func (this *ListResponse) Validate() error {
+	for _, item := range this.Components {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Components", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *GetRequest) Validate() error {
 	return nil
 }

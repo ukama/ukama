@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 import { logger } from "../../common/logger";
-import { formatKPIValue } from "../../common/utils";
+import { formatKPIValue, isMetricNetworkCheckFailed } from "../../common/utils";
 import {
   GetLatestMetricInput,
   GetMetricsStatInput,
@@ -63,10 +63,22 @@ export const parseMetricsResponse = (
   args: GetMetricsStatInput
 ): MetricsRes => {
   const metricResArray: MetricRes[] = res.map(item => {
-    if (args.networkId && args.networkId !== item.metric.network) {
+    if (
+      isMetricNetworkCheckFailed(
+        args.networkId || "",
+        item.metric.network || "",
+        args.operation || ""
+      )
+    ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
-    if (args.siteId && args.siteId !== item.metric.site) {
+    if (
+      isMetricNetworkCheckFailed(
+        args.siteId || "",
+        item.metric.site || "",
+        args.operation || ""
+      )
+    ) {
       return { ...ERROR_RESPONSE, values: [[0, 0]] };
     }
     return {

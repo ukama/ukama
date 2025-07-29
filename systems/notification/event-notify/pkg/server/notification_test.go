@@ -16,15 +16,17 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	notif "github.com/ukama/ukama/systems/common/notification"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
-	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
+
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
 const testOrgName = "testorg"
