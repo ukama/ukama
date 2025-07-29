@@ -32,7 +32,6 @@ import (
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	validate "github.com/ukama/ukama/systems/common/validation"
 	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	simMangerPb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
@@ -69,7 +68,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 	var err error
 
 	if req.GetDob() != "" {
-		dob, err = validate.ValidateDate(req.GetDob())
+		dob, err = validation.ValidateDate(req.GetDob())
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"invalid format for DoB value %s. Error: %v", req.GetDob(), err)

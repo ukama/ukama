@@ -19,6 +19,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+type Accounting interface {
+	Get(id string) (*pb.GetResponse, error)
+	GetByUser(uid string) (*pb.GetByUserResponse, error)
+	SyncAccounts() (*pb.SyncAcountingResponse, error)
+}
+
 type AccountingInventory struct {
 	conn    *grpc.ClientConn
 	client  pb.AccountingServiceClient

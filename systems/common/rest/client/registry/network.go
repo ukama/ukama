@@ -64,7 +64,6 @@ type networkClient struct {
 
 func NewNetworkClient(h string, options ...client.Option) *networkClient {
 	u, err := url.Parse(h)
-
 	if err != nil {
 		log.Fatalf("Can't parse %s url. Error: %v", h, err)
 	}

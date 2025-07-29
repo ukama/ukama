@@ -19,9 +19,9 @@ type NodeConnectivity uint8
 const (
 	// TODO: (Issue: #983) Need to add a sentinel value. And update the logic in registry/node/api-gateway where we defined hardcode value.
 	// TODO: The following value should be mapped to either unknown string or undefined string, not both.
-	Undefined NodeConnectivity = iota
-	Online
-	Offline
+	NodeConnectivityUndefined NodeConnectivity = iota
+	NodeConnectivityOnline
+	NodeConnectivityOffline
 )
 
 func (s *NodeConnectivity) Scan(value interface{}) error {

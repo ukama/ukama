@@ -13,16 +13,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	notif "github.com/ukama/ukama/systems/common/notification"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
 
 type EventToNotifyEventServer struct {

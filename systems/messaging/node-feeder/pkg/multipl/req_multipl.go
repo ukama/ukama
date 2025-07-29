@@ -1,13 +1,22 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
 package multipl
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
+
+	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	rc "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/messaging/node-feeder/pkg"
 )
 
 type requestMultiplier struct {
@@ -42,21 +51,21 @@ func (r *requestMultiplier) Process(req *cpb.NodeFeederMessage) error {
 	}
 
 	if nodeId != "*" {
-		err := r.PublishToFilteredNodes(req, nodeResp, orgName, networkName, siteName, nodeId)
+		err := r.PublishToFilteredNodes(req, nodeResp.Nodes, orgName, networkName, siteName, nodeId)
 		if err != nil {
-			logrus.Errorf("Failed to publish message to queue: %s", err)
+			log.Errorf("Failed to publish message to queue: %s", err)
 		}
 	} else {
 		err := r.PublishToNode(req, orgName, nodeId)
 		if err != nil {
-			logrus.Errorf("Failed to publish message to queue: %s", err)
+			log.Errorf("Failed to publish message to queue: %s", err)
 			return fmt.Errorf("failed to publish message to queue")
 		} else {
-			logrus.Infof("Created %d requests for node id %s", counter, nodeId)
+			log.Infof("Created %d requests for node id %s", counter, nodeId)
 		}
 	}
 
-	logrus.Infof("Pulished requests %+v.", req)
+	log.Infof("Pulished requests %+v.", req)
 	return nil
 }
 
@@ -69,7 +78,7 @@ func (r *requestMultiplier) PublishToNode(req *cpb.NodeFeederMessage, orgName st
 	})
 
 	if err != nil {
-		logrus.Errorf("Failed to publish message to queue: %s", err)
+		log.Errorf("Failed to publish message to queue: %s", err)
 		return fmt.Errorf("failed to publish message to queue")
 	}
 	return nil
@@ -90,7 +99,7 @@ func (r *requestMultiplier) PublishToFilteredNodes(req *cpb.NodeFeederMessage, n
 				if nodeId == "*" {
 					err := r.PublishToNode(req, orgName, n.Id)
 					if err != nil {
-						logrus.Errorf("Failed to publish message to queue: %s", err)
+						log.Errorf("Failed to publish message to queue: %s", err)
 						return fmt.Errorf("failed to publish message to queue")
 					} else {
 						counter++
@@ -100,6 +109,6 @@ func (r *requestMultiplier) PublishToFilteredNodes(req *cpb.NodeFeederMessage, n
 		}
 	}
 
-	logrus.Infof("Created %d requests", counter)
+	log.Infof("Created %d requests", counter)
 	return nil
 }

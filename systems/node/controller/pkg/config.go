@@ -11,7 +11,6 @@ package pkg
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/config"
 	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
@@ -22,8 +21,8 @@ type Config struct {
 	Queue            *uconf.Queue  `default:"{}"`
 	Timeout          time.Duration `default:"20s"`
 	Service          *uconf.Service
-	MsgClient        *config.MsgClient `default:"{}"`
-	OrgName          string            `default:"ukama"`
+	MsgClient        *uconf.MsgClient `default:"{}"`
+	OrgName          string           `default:"ukama"`
 	Http             HttpServices
 }
 

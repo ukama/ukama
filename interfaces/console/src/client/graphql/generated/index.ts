@@ -141,12 +141,12 @@ export type CBooleanResponse = {
 };
 
 export enum Component_Type {
-  Access = 'ACCESS',
-  All = 'ALL',
-  Backhaul = 'BACKHAUL',
-  Power = 'POWER',
-  Spectrum = 'SPECTRUM',
-  Switch = 'SWITCH'
+  Access = 'access',
+  All = 'all',
+  Backhaul = 'backhaul',
+  Power = 'power',
+  Spectrum = 'spectrum',
+  Switch = 'switch'
 }
 
 export type Component = {
@@ -1453,17 +1453,13 @@ export type SimToPackagesDto = {
 };
 
 export type SimUsageInputDto = {
-  from: Scalars['String']['input'];
   iccid: Scalars['String']['input'];
   simId: Scalars['String']['input'];
-  to: Scalars['String']['input'];
   type: Scalars['String']['input'];
 };
 
 export type SimUsagesInputDto = {
-  from?: InputMaybe<Scalars['Float']['input']>;
   networkId: Scalars['String']['input'];
-  to?: InputMaybe<Scalars['Float']['input']>;
   type: Scalars['String']['input'];
 };
 

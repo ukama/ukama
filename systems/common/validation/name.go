@@ -11,8 +11,8 @@ package validation
 import "regexp"
 
 const (
-	segment            string = "[a-z0-9]([-_a-z0-9]*[a-z0-9])?"
-	dnsLabelNameRegexp        = "(" + segment + "\\.)*" + segment
+	segment            = "[a-z0-9]([-_a-z0-9]*[a-z0-9])?"
+	dnsLabelNameRegexp = "(" + segment + "\\.)*" + segment
 
 	maxNameLength int = 253 // max length of DNS label
 )
