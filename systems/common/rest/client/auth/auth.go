@@ -54,16 +54,15 @@ func NewAuthClient(h string, options ...client.Option) *authClient {
 }
 
 func (a *authClient) AuthenticateUser(c *gin.Context, u string) error {
-	log.Debug("Authenticating user reuest:")
-
+	log.Debug("Authenticating user request:")
 	a.Jar.SetCookies(a.u, c.Request.Cookies())
 
 	a.R.C.Header = c.Request.Header
 	a.R.C = a.R.C.SetCookieJar(a.Jar)
 
-	_, err := a.R.Get(a.u.String() + AuthEndpoint)
+	_, err := a.R.Get(a.u.ResolveReference(&url.URL{Path: AuthEndpoint}).String())
 	if err != nil {
-		log.Errorf("AuthenticateUser failure. error: %s", err.Error())
+		log.Errorf("AuthenticateUser failure. error: %v", err)
 
 		return fmt.Errorf("authenticateUser failure: %w", err)
 	}
@@ -71,6 +70,6 @@ func (a *authClient) AuthenticateUser(c *gin.Context, u string) error {
 	return nil
 }
 
-func (a *authClient) MockAuthenticateUser(c *gin.Context, u string) error {
-	return nil
-}
+// func (a *authClient) MockAuthenticateUser(c *gin.Context, u string) error {
+// return nil
+// }
