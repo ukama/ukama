@@ -6,169 +6,132 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
+#include "config.h"
 #include "femd.h"
-#include "gpio_controller.h"
-#include "safety_monitor.h"
+#include "web_service.h"
 
-volatile sig_atomic_t g_running = 1;
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_getopt.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+#include "usys_types.h"
+#include "usys_services.h"
+
+#include "version.h"
 
 void handle_sigint(int signum) {
-    usys_log_info("Received signal %d, shutting down...", signum);
-    g_running = 0;
+    usys_log_debug("Terminate signal.\n");
+    usys_exit(0);
 }
 
-void print_usage(const char *program) {
-    printf("Usage: %s [OPTIONS]\n", program);
-    printf("FEM Daemon - Front End Module control daemon\n\n");
-    printf("Options:\n");
-    printf("  -h, --help              Show this help message\n");
-    printf("  -v, --version           Show version information\n");
-    printf("  -l, --log-level LEVEL   Set log level (DEBUG, INFO, WARN, ERROR)\n");
-    printf("  -p, --port PORT         Set service port (default: %d)\n", DEF_SERVICE_PORT);
-    printf("  -c, --config FILE       Load configuration from file\n");
-    printf("\n");
-    printf("Examples:\n");
-    printf("  %s                           # Start with default settings\n", program);
-    printf("  %s -l DEBUG                  # Start with debug logging\n", program);
-    printf("  %s -c /etc/femd/femd.conf    # Use specific config file\n", program);
+static UsysOption longOptions[] = {
+    { "logs",    required_argument, 0, 'l' },
+    { "config",  required_argument, 0, 'c' },
+    { "help",    no_argument, 0, 'h' },
+    { "version", no_argument, 0, 'v' },
+    { 0, 0, 0, 0 }
+};
+
+static void set_log_level(char *slevel) {
+    int ilevel = USYS_LOG_TRACE;
+
+    if (!strcmp(slevel, "TRACE")) {
+        ilevel = USYS_LOG_TRACE;
+    } else if (!strcmp(slevel, "DEBUG")) {
+        ilevel = USYS_LOG_DEBUG;
+    } else if (!strcmp(slevel, "INFO")) {
+        ilevel = USYS_LOG_INFO;
+    }
+    usys_log_set_level(ilevel);
 }
 
-void print_version(void) {
-    printf("FEM Daemon version %s\n", FEM_VERSION);
-    printf("Built on %s %s\n", __DATE__, __TIME__);
+static void usage() {
+    usys_puts("Usage: femd [options]");
+    usys_puts("Options:");
+    usys_puts("-h, --help                    Help menu");
+    usys_puts("-l, --logs <TRACE|DEBUG|INFO> Log level for the process");
+    usys_puts("-c, --config FILE             Configuration file");
+    usys_puts("-v, --version                 Software version");
 }
 
 int main(int argc, char **argv) {
-    int ret = STATUS_NOK;
-    Config config = {0};
-    GpioController gpio_controller = {0};
-    I2CController i2c_controller = {0};
-    WebAPIServer web_server = {0};
-    SafetyMonitor safety_monitor = {0};
-    
+    int opt, optIdx;
+
+    char *debug = DEF_LOG_LEVEL;
+    char *configFile = DEF_CONFIG_FILE;
+    UInst serviceInst;
+    Config serviceConfig = {0};
+
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
-    
-    usys_log_info("Starting FEM daemon v%s", FEM_VERSION);
-    
-    static struct option long_options[] = {
-        {"help",      no_argument,       0, 'h'},
-        {"version",   no_argument,       0, 'v'},
-        {"log-level", required_argument, 0, 'l'},
-        {"port",      required_argument, 0, 'p'},
-        {"config",    required_argument, 0, 'c'},
-        {0, 0, 0, 0}
-    };
-    
-    int opt;
-    while ((opt = getopt_long(argc, argv, "hvl:p:c:", long_options, NULL)) != -1) {
+
+    while (true) {
+        opt = 0;
+        optIdx = 0;
+
+        opt = usys_getopt_long(argc, argv, "vh:l:c:", longOptions, &optIdx);
+        if (opt == -1) {
+            break;
+        }
+
         switch (opt) {
-            case 'h':
-                print_usage(argv[0]);
-                exit(0);
-                break;
-            case 'v':
-                print_version();
-                exit(0);
-                break;
-            case 'l':
-                usys_log_info("Log level set to: %s", optarg);
-                break;
-            case 'p':
-                usys_log_info("Port set to: %s", optarg);
-                break;
-            case 'c':
-                usys_log_info("Config file: %s", optarg);
-                break;
-            default:
-                print_usage(argv[0]);
-                exit(1);
+        case 'h':
+            usage();
+            usys_exit(0);
+            break;
+
+        case 'v':
+            usys_puts(VERSION);
+            usys_exit(0);
+            break;
+
+        case 'l':
+            debug = optarg;
+            set_log_level(debug);
+            break;
+
+        case 'c':
+            configFile = optarg;
+            break;
+
+        default:
+            usage();
+            usys_exit(0);
         }
     }
-    
-    if (config_init(&config) != STATUS_OK) {
-        usys_log_error("Failed to initialize configuration");
-        goto cleanup;
+
+    /* Service config update */
+    serviceConfig.serviceName = usys_strdup(SERVICE_NAME);
+    serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
+    serviceConfig.configFile  = strdup(configFile);
+
+    if (!serviceConfig.servicePort) {
+        usys_log_error("Unable to determine the port for services");
+        usys_exit(1);
     }
-    
-    const char *config_file = DEF_CONFIG_FILE;
-    if (config_load_from_file(&config, config_file) == STATUS_OK) {
-        usys_log_info("Configuration loaded from: %s", config_file);
-        config_print(&config);
-    } else {
-        usys_log_warn("Could not load config file %s, using defaults", config_file);
-    }
-    
+
+    usys_log_debug("Starting %s ... ", SERVICE_NAME);
+
+    /* Signal handler */
     signal(SIGINT, handle_sigint);
-    signal(SIGTERM, handle_sigint);
-    
-    if (gpio_controller_init(&gpio_controller, NULL) != STATUS_OK) {
-        usys_log_error("Failed to initialize GPIO controller");
-        goto cleanup;
+
+    if (start_web_service(&serviceConfig, &serviceInst, NULL) != USYS_TRUE) {
+        usys_free(serviceConfig.serviceName);
+        usys_free(serviceConfig.configFile);
+        usys_log_error("Webservice failed to setup for clients. Exiting.");
+        usys_exit(1);
     }
-    
-    if (i2c_controller_init(&i2c_controller) != STATUS_OK) {
-        usys_log_error("Failed to initialize I2C controller");
-        goto cleanup;
-    }
-    
-    if (web_api_init(&web_server, config.servicePort, &gpio_controller, &i2c_controller) != STATUS_OK) {
-        usys_log_error("Failed to initialize Web API server");
-        goto cleanup;
-    }
-    
-    if (web_api_start(&web_server) != STATUS_OK) {
-        usys_log_error("Failed to start Web API server");
-        goto cleanup;
-    }
-    
-    if (safety_monitor_init(&safety_monitor, &gpio_controller, &i2c_controller) != STATUS_OK) {
-        usys_log_error("Failed to initialize safety monitor");
-        goto cleanup;
-    }
-    
-    if (safety_monitor_start(&safety_monitor) != STATUS_OK) {
-        usys_log_error("Failed to start safety monitor");
-        goto cleanup;
-    }
-    
-    usys_log_info("FEM daemon started successfully");
-    usys_log_info("Service: %s, Port: %d", config.serviceName, config.servicePort);
-    
-    usys_log_info("Testing GPIO functionality...");
-    
-    GpioStatus status;
-    if (gpio_get_all_status(&gpio_controller, FEM_UNIT_1, &status) == STATUS_OK) {
-        usys_log_info("FEM1 Status - TX_RF: %s, RX_RF: %s, PA_VDS: %s",
-               status.tx_rf_enable ? "ON" : "OFF",
-               status.rx_rf_enable ? "ON" : "OFF", 
-               status.pa_vds_enable ? "ON" : "OFF");
-    }
-    
-    usys_log_info("Testing I2C device detection...");
-    i2c_print_device_scan(FEM_UNIT_1);
-    
-    usys_log_info("Testing GPIO control - enabling TX_RF for FEM1");
-    gpio_set_tx_rf(&gpio_controller, FEM_UNIT_1, true);
-    
-    usys_log_info("Testing GPIO control - disabling TX_RF for FEM1");
-    gpio_set_tx_rf(&gpio_controller, FEM_UNIT_1, false);
-    
-    while (g_running) {
-        usys_log_debug("Daemon is running...");
-        sleep(5);
-    }
-    
-    ret = STATUS_OK;
-    
-cleanup:
-    usys_log_info("Shutting down FEM daemon...");
-    safety_monitor_cleanup(&safety_monitor);
-    web_api_cleanup(&web_server);
-    i2c_controller_cleanup(&i2c_controller);
-    gpio_controller_cleanup(&gpio_controller);
-    config_free(&config);
-    usys_log_info("FEM daemon shutdown complete");
-    
-    return (ret == STATUS_OK) ? 0 : 1;
+
+    pause();
+
+    ulfius_stop_framework(&serviceInst);
+    ulfius_clean_instance(&serviceInst);
+    usys_free(serviceConfig.serviceName);
+    usys_free(serviceConfig.configFile);
+
+    usys_log_debug("Exiting femd ...");
+
+    return USYS_TRUE;
 }

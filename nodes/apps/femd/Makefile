@@ -8,7 +8,7 @@ include ../../ukamaOS/config.mk
 
 TARGET_EXEC = femd.d
 
-UKAMAOS_ROOT = $(NODES_DIR)/ukamaOS
+UKAMAOS_ROOT = ../../ukamaOS
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
@@ -22,15 +22,15 @@ PLATFORM_INC_SYS = $(PLATFORM_DIR)/sys/inc
 PLATFORM_INC_LOG = $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     = $(PLATFORM_DIR)/build/
 
-VENDOR_PKG=
-# Skip platform build on macOS for development
-ifeq ($(shell uname -s),Darwin)
-    PLATFORM=
-    # Add jansson lib path for macOS
-    LDFLAGS+=-L/opt/homebrew/opt/jansson/lib
+ALPINE_BUILD = 1
+
+ifeq ($(ALPINE_BUILD),1)
+    $(info Excluding vendor library for Alpine build)
+        VENDOR_PKG=
 else
-    PLATFORM=platform
+	VENDOR_PKG = tomlc jansson ulfius
 endif
+PLATFORM = platform
 
 CFLAGS=-c
 CFLAGS+=-g
@@ -41,24 +41,20 @@ CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I$(PLATFORM_INC_SYS)
 CFLAGS+=-I$(PLATFORM_INC_LOG)
 CFLAGS+=-I./inc
+CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
 
-# Add jansson include path for macOS
-ifeq ($(shell uname -s),Darwin)
-    CFLAGS+=-I/opt/homebrew/opt/jansson/include
-endif
+LIBS+=-ljansson
+LIBS+=-lpthread
+LIBS+=-lulfius -lorcania -lyder
+LIBS+=-lusys -lyaml
 
 LDFLAGS+=-L${VENDOR_LIB} 
 LDFLAGS+=-L$(VENDOR_LIB64)
 LDFLAGS+=-L$(PLATFORM_LIB)
 
-LIBS+=-lpthread
-# Skip usys on macOS for development
-ifeq ($(shell uname -s),Darwin)
-    LIBS+=-ljansson
-else
-    LIBS+=-lusys
-endif
+TARGET_CFILES   = $(wildcard ./src/*.c)
+TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
 
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
@@ -74,18 +70,23 @@ endif
 
 all: version.h static.h $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(TARGET_OBJFILES)
-ifneq ($(PLATFORM),)
-	$(MAKE) -C $(PLATFORM_DIR)
-endif
+$(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
+$(PLATFORM):
+	$(MAKE) -C $(PLATFORM_DIR)
+
+$(VENDOR_PKG):
+	@echo "Skipping vendor packages for Alpine build"
+
 version.h:
-	$(NODES_DIR)/utils/scripts/generate_version.sh
+	echo '#define VERSION "1.0.0-dev"' > version.h
+	echo '#define BUILD_DATE "'`date`'"' >> version.h
 
 static.h:
-	$(NODES_DIR)/utils/scripts/generate_static.sh
+	echo '#define SERVICE_NAME "femd"' > static.h
+	echo '#define SERVICE_PORT 8080' >> static.h
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@

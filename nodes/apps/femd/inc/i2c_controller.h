@@ -13,9 +13,6 @@
 #include <stdbool.h>
 #include "gpio_controller.h"
 
-#define STATUS_OK                 0
-#define STATUS_NOK               -1
-
 #define I2C_BUS_FEM1              1
 #define I2C_BUS_FEM2              2
 

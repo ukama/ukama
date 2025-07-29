@@ -8,10 +8,16 @@
 
 #include "config.h"
 #include "femd.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define DEF_SERVICE_NAME         "femd"
+#define DEF_LOG_LEVEL            "INFO"
+#define DEF_CONFIG_FILE          "./config/femd.conf"
 
 int config_init(Config *config) {
     if (!config) {
@@ -21,10 +27,10 @@ int config_init(Config *config) {
     
     memset(config, 0, sizeof(Config));
     
-    config->serviceName = strdup(DEF_SERVICE_NAME);
-    config->servicePort = DEF_SERVICE_PORT;
-    config->logLevel = strdup(DEF_LOG_LEVEL);
-    config->configFile = strdup(DEF_CONFIG_FILE);
+    config->serviceName = usys_strdup(DEF_SERVICE_NAME);
+    config->servicePort = 0; /* Will be set by usys_find_service_port */
+    config->logLevel = usys_strdup(DEF_LOG_LEVEL);
+    config->configFile = usys_strdup(DEF_CONFIG_FILE);
     
     if (!config->serviceName || !config->logLevel || !config->configFile) {
         usys_log_error("Failed to allocate memory for config");
@@ -42,17 +48,17 @@ void config_free(Config *config) {
     }
     
     if (config->serviceName) {
-        free(config->serviceName);
+        usys_free(config->serviceName);
         config->serviceName = NULL;
     }
     
     if (config->logLevel) {
-        free(config->logLevel);
+        usys_free(config->logLevel);
         config->logLevel = NULL;
     }
     
     if (config->configFile) {
-        free(config->configFile);
+        usys_free(config->configFile);
         config->configFile = NULL;
     }
     
@@ -109,15 +115,15 @@ int config_load_from_file(Config *config, const char *filename) {
             }
             
             if (strcmp(key, "service_name") == 0) {
-                if (config->serviceName) free(config->serviceName);
-                config->serviceName = strdup(value);
+                if (config->serviceName) usys_free(config->serviceName);
+                config->serviceName = usys_strdup(value);
                 usys_log_debug("Config: service_name = %s", value);
             } else if (strcmp(key, "service_port") == 0) {
-                config->servicePort = atoi(value);
-                usys_log_debug("Config: service_port = %d", config->servicePort);
+                /* Note: service_port from config file is ignored, using usys_find_service_port instead */
+                usys_log_debug("Config: service_port = %s (ignored, using services file)", value);
             } else if (strcmp(key, "log_level") == 0) {
-                if (config->logLevel) free(config->logLevel);
-                config->logLevel = strdup(value);
+                if (config->logLevel) usys_free(config->logLevel);
+                config->logLevel = usys_strdup(value);
                 usys_log_debug("Config: log_level = %s", value);
             } else {
                 usys_log_debug("Unknown config key: %s", key);

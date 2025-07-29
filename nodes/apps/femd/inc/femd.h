@@ -9,48 +9,54 @@
 #ifndef FEMD_H
 #define FEMD_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <pthread.h>
 #include <signal.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include <getopt.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #include "config.h"
 #include "version.h"
 #include "gpio_controller.h"
 #include "i2c_controller.h"
-#include "web_api.h"
 #include "yaml_config.h"
 #include "safety_monitor.h"
 
-#ifdef __APPLE__
-#define usys_log_info(fmt, ...) printf("[INFO] " fmt "\n", ##__VA_ARGS__)
-#define usys_log_error(fmt, ...) printf("[ERROR] " fmt "\n", ##__VA_ARGS__)
-#define usys_log_warn(fmt, ...) printf("[WARN] " fmt "\n", ##__VA_ARGS__)
-#define usys_log_debug(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
-#define usys_log_set_service(name) ((void)0)
-#define usys_log_remote_init(name) ((void)0)
-#else
+#include "ulfius.h"
+#include "usys_types.h"
+#include "usys_services.h"
 #include "usys_log.h"
-#endif
+#include "jansson.h"
 
 #define SERVICE_NAME              "femd"
 #define FEM_VERSION               VERSION
 
-#define STATUS_OK                 0
-#define STATUS_NOK               -1
+#define STATUS_OK                 (0)
+#define STATUS_NOK                (-1)
+#define STATUS_NOTOK              (-1)
 
-#define DEF_LOG_LEVEL            "INFO"
+#define DEF_LOG_LEVEL             "INFO"
+#define DEF_CONFIG_FILE           "./config/femd.conf"
+
+#define ERR_FEMD_JSON_CREATION_ERR     (-1)
+
+#define EP_BS                     "/"
+#define REST_API_VERSION          "v1"
+#define URL_PREFIX                EP_BS REST_API_VERSION
+#define API_RES_EP(RES)           EP_BS RES
+
+typedef struct _u_instance  UInst;
+typedef struct _u_request   URequest;
+typedef struct _u_response  UResponse;
+typedef json_t              JsonObj;
+typedef json_error_t        JsonErrObj;
 
 extern volatile sig_atomic_t g_running;
 
 void handle_sigint(int signum);
-void print_usage(const char *program);
-void print_version(void);
+
+int config_init(Config *config);
+void config_free(Config *config);
+int config_load_from_file(Config *config, const char *filename);
+void config_print(const Config *config);
 
 #endif /* FEMD_H */
