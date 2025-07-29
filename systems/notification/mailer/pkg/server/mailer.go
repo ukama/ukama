@@ -21,12 +21,14 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
@@ -159,7 +161,7 @@ func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdReq
 		MailId:       mail.MailId.String(),
 		TemplateName: mail.TemplateName,
 		SentAt:       mail.CreatedAt.String(),
-		Status:       pb.Status(pb.Status_value[ukama.Status(mail.Status).String()]),
+		Status:       pb.Status(pb.Status_value[ukama.MailStatus(mail.Status).String()]),
 	}, nil
 }
 
