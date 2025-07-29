@@ -1,0 +1,6 @@
+# Config file for femd
+
+[local-config]
+    service-name = "femd"
+    service-port = 8080
+    log-level    = "INFO"
