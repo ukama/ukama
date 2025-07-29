@@ -1200,5 +1200,6 @@ rlog-admin      18013/tcp   rlogd-admin
 bootstrap       18014/tcp   bootstrap
 wimc-agent-test 18015/tcp   wimc-agent-test
 wimc-agent-chunk 18016/tcp  wimc-agent-chunk
+femd            18017/tcp   femd
 ukama		18100/tcp   ukama
 remote          18200/tcp   remote

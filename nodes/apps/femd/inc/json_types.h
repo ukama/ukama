@@ -6,18 +6,8 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
-#ifndef JSON_TYPES_H
-#define JSON_TYPES_H
-
-#include <jansson.h>
-
-typedef json_t JsonObj;
-typedef json_error_t JsonErrObj;
-
-#define JSON_OK                        0
-#define JSON_FAILURE                   -1
-#define JSON_ENCODING_OK               JSON_OK
-#define JSON_DECODING_OK               JSON_OK
+#ifndef JSON_TYPES_H_
+#define JSON_TYPES_H_
 
 #define JTAG_ERROR                      "error"
 #define JTAG_ERROR_CODE                 "code"
@@ -68,4 +58,4 @@ typedef json_error_t JsonErrObj;
 #define JTAG_VERSION                    "version"
 #define JTAG_UPTIME                     "uptime"
 
-#endif /* JSON_TYPES_H */
+#endif /* JSON_TYPES_H_ */

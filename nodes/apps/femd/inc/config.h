@@ -6,14 +6,10 @@
  * Copyright (c) 2024-present, Ukama Inc.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CONFIG_H_
+#define CONFIG_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#define STATUS_OK                 0
-#define STATUS_NOK               -1
+#include "usys_types.h"
 
 typedef struct {
     char *serviceName;
@@ -22,13 +18,4 @@ typedef struct {
     char *configFile;
 } Config;
 
-#define DEF_SERVICE_NAME         "femd"
-#define DEF_SERVICE_PORT         8080
-#define DEF_LOG_LEVEL            "INFO"
-#define DEF_CONFIG_FILE          "./config/femd.conf"
-int config_init(Config *config);
-void config_free(Config *config);
-int config_load_from_file(Config *config, const char *filename);
-void config_print(const Config *config);
-
-#endif /* CONFIG_H */
+#endif /* CONFIG_H_ */
