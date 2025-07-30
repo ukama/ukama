@@ -21,18 +21,19 @@ import (
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
-	// "github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/uuid"
 
 	// csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
+	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
-// const testOrgName = "testorg"
+const testOrgName = "testorg"
 
-// var testOrgId = uuid.NewV4().String()
+var testOrgId = uuid.NewV4().String()
 
-func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo, *mocks.UserRepo, *mocks.EventMsgRepo, *cmocks.MemberClient, *cmocks.MsgBusServiceClient) {
+func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo, *mocks.UserRepo, *mocks.EventMsgRepo, *cmocks.MemberClient, *cmocks.MsgBusServiceClient, *mocks.UserNotificationRepo) {
 	nRepo := &mocks.NotificationRepo{}
 	uRepo := &mocks.UserRepo{}
 	emRepo := &mocks.EventMsgRepo{}
@@ -43,7 +44,7 @@ func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo
 	mainServer := NewEventToNotifyServer(testOrgName, testOrgId, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
 	eventServer := NewNotificationEventServer(testOrgName, testOrgId, nil, mainServer)
 
-	return eventServer, nRepo, uRepo, emRepo, mc, msgclient
+	return eventServer, nRepo, uRepo, emRepo, mc, msgclient, unRepo
 }
 
 func createTestEvent(routingKey string, msg proto.Message) *epb.Event {
@@ -56,7 +57,7 @@ func createTestEvent(routingKey string, msg proto.Message) *epb.Event {
 }
 
 func TestEventToNotifyEventServer_EventNotification_OrgAdd(t *testing.T) {
-	es, nRepo, uRepo, emRepo, _, _ := createTestEventServer()
+	es, nRepo, uRepo, emRepo, _, _, unRepo := createTestEventServer()
 
 	msg := &epb.EventOrgCreate{
 		Id:    "org-123",
@@ -69,7 +70,9 @@ func TestEventToNotifyEventServer_EventNotification_OrgAdd(t *testing.T) {
 	// Mock expectations
 	emRepo.On("Add", mock.AnythingOfType("*db.EventMsg")).Return(uint(1), nil)
 	nRepo.On("Add", mock.AnythingOfType("*db.Notification")).Return(nil)
-	uRepo.On("GetUser", "owner-123").Return(nil, nil)
+	uRepo.On("GetUser", "owner-123").Return(&db.Users{Id: uuid.NewV4(), UserId: "owner-123"}, nil)
+	uRepo.On("GetUserWithRoles", "org-123", []roles.RoleType{roles.TYPE_OWNER, roles.TYPE_ADMIN}).Return([]*db.Users{}, nil)
+	unRepo.On("Add", mock.AnythingOfType("[]*db.UserNotification")).Return(nil)
 
 	// Act
 	resp, err := es.EventNotification(context.Background(), event)

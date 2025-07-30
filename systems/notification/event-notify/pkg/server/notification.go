@@ -131,7 +131,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		}
 	} else {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"no user uuid. Error %s", err.Error())
+			"no user uuid provided")
 	}
 
 	roleType := upb.RoleType_ROLE_INVALID
