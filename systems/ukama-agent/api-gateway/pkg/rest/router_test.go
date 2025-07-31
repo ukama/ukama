@@ -19,57 +19,62 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/rest"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/api-gateway/pkg/client"
+
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
 )
 
-var defaultCors = cors.Config{
-	AllowAllOrigins: true,
-}
+var (
+	testClientSet *Clients
 
-var routerConfig = &RouterConfig{
-	serverConf: &rest.HttpConfig{
-		Cors: defaultCors,
-	},
-	httpEndpoints: &pkg.HttpEndpoints{
-		NodeMetrics: "localhost:8080",
-	},
-	auth: &config.Auth{
-		BypassAuthMode: true,
-	},
-}
+	defaultCors = cors.Config{
+		AllowAllOrigins: true,
+	}
 
-var testClientSet *Clients
+	routerConfig = &RouterConfig{
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+		httpEndpoints: &pkg.HttpEndpoints{
+			NodeMetrics: "localhost:8080",
+		},
+		auth: &config.Auth{
+			BypassAuthMode: true,
+		},
+	}
+)
 
-var iccid = "012345678901234567891"
-var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
+var (
+	iccid   = "012345678901234567891"
+	network = "40987edb-ebb6-4f84-a27c-99db7c136127"
 
-// var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
-var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
+	// orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
+	packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
 
-var sub = pb.ReadResp{
-	Record: &pb.Record{
-		Iccid:       iccid,
-		Imsi:        "012345678912345",
-		Op:          []byte("0123456789012345"),
-		Key:         []byte("0123456789012345"),
-		Amf:         []byte("800"),
-		AlgoType:    1,
-		UeDlAmbrBps: 2000000,
-		UeUlAmbrBps: 2000000,
-		Sqn:         1,
-		CsgIdPrsent: false,
-		CsgId:       0,
-		PackageId:   packageId,
-	},
-}
+	sub = pb.ReadResp{
+		Record: &pb.Record{
+			Iccid:       iccid,
+			Imsi:        "012345678912345",
+			Op:          []byte("0123456789012345"),
+			Key:         []byte("0123456789012345"),
+			Amf:         []byte("800"),
+			AlgoType:    1,
+			UeDlAmbrBps: 2000000,
+			UeUlAmbrBps: 2000000,
+			Sqn:         1,
+			CsgIdPrsent: false,
+			CsgId:       0,
+			PackageId:   packageId,
+		},
+	}
+)
 
 func init() {
 	gin.SetMode(gin.TestMode)
