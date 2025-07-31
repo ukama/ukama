@@ -69,7 +69,3 @@ func (a *authClient) AuthenticateUser(c *gin.Context, u string) error {
 
 	return nil
 }
-
-// func (a *authClient) MockAuthenticateUser(c *gin.Context, u string) error {
-// return nil
-// }
