@@ -21,17 +21,17 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
-
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/utils"
 )
 
 const (
@@ -138,6 +138,31 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 	case <-timeoutCtx.Done():
 		return nil, status.Errorf(codes.Canceled, "operation canceled: %v", timeoutCtx.Err())
 	}
+}
+
+func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
+	log.Infof("GetEmailById: %v", req)
+	if req.MailId == "" {
+		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
+	}
+
+	mailerId, err := uuid.FromString(req.GetMailId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid mail ID")
+	}
+
+	mail, err := s.mailerRepo.GetEmailById(mailerId)
+	if err != nil {
+		log.WithError(err).Error("Error while getting email")
+		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
+	}
+
+	return &pb.GetEmailByIdResponse{
+		MailId:       mail.MailId.String(),
+		TemplateName: mail.TemplateName,
+		SentAt:       mail.CreatedAt.String(),
+		Status:       pb.Status(pb.Status_value[ukama.MailStatus(mail.Status).String()]),
+	}, nil
 }
 
 func (s *MailerServer) processEmailQueue() {
@@ -304,7 +329,7 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 		nextRetryTime = &t
 	}
 
-	jsonMap := make(db.JSONMap)
+	jsonMap := make(utils.JSONMap)
 	for k, v := range values {
 		jsonMap[k] = v
 	}
@@ -465,7 +490,7 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 	var templateBuffer bytes.Buffer
 	if err := t.Execute(&templateBuffer, templateData); err != nil {
 		log.WithError(err).Error("Template execution failed")
-		return body, fmt.Errorf("failed to execute template: %w", err)
+		return body, fmt.Errorf("failed to execute template: %v", err)
 	}
 
 	templateContent := templateBuffer.String()
@@ -549,29 +574,4 @@ func (s *MailerServer) prepareMsg(data *EmailPayload) (bytes.Buffer, error) {
 	}
 
 	return body, nil
-}
-
-func (s *MailerServer) GetEmailById(ctx context.Context, req *pb.GetEmailByIdRequest) (*pb.GetEmailByIdResponse, error) {
-	log.Infof("GetEmailById: %v", req)
-	if req.MailId == "" {
-		return nil, status.Error(codes.InvalidArgument, "missing mail ID")
-	}
-
-	mailerId, err := uuid.FromString(req.GetMailId())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid mail ID")
-	}
-
-	mail, err := s.mailerRepo.GetEmailById(mailerId)
-	if err != nil {
-		log.WithError(err).Error("Error while getting email")
-		return nil, grpc.SqlErrorToGrpc(err, "failed to get email")
-	}
-
-	return &pb.GetEmailByIdResponse{
-		MailId:       mail.MailId.String(),
-		TemplateName: mail.TemplateName,
-		SentAt:       mail.CreatedAt.String(),
-		Status:       pb.Status(pb.Status_value[ukama.MailStatus(mail.Status).String()]),
-	}, nil
 }
