@@ -54,7 +54,7 @@ package integration
 // 		resp, err := client.R().
 // 			EnableTrace().
 // 			SetBody(bytes.NewReader(body)).
-// 			Post(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/perfomance")
+// 			Post(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/performance")
 // 		assert.NoError(t, err)
 // 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 // 	})
@@ -63,7 +63,7 @@ package integration
 
 // 		resp, err := client.R().
 // 			EnableTrace().
-// 			Get(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/perfomance")
+// 			Get(getApiUrl() + healthApiEndpoint + "nodes/" + nt.NodeId + "/performance")
 // 		assert.NoError(t, err)
 // 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 // 		})
@@ -71,4 +71,3 @@ package integration
 // func getApiUrl() string {
 // 	return "http://" + testConf.ServiceHost
 // }
-

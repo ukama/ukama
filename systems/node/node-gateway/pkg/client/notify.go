@@ -51,11 +51,15 @@ func NewNotifyFromClient(mClient pb.NotifyServiceClient) *Notify {
 	}
 }
 
-func (m *Notify) Close() {
-	m.conn.Close()
+func (n *Notify) Close() {
+	err := n.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close Notify Service connection: %v", err)
+	}
 }
 
-func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.RawMessage, status, time uint32) (*pb.AddResponse, error) {
+func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.RawMessage,
+	status, time uint32) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
@@ -79,63 +83,41 @@ func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.R
 func (n *Notify) Get(id string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
-	res, err := n.client.Get(ctx, &pb.GetRequest{
+
+	return n.client.Get(ctx, &pb.GetRequest{
 		NotificationId: id,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (n *Notify) List(nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := n.client.List(ctx, &pb.ListRequest{
+	return n.client.List(ctx, &pb.ListRequest{
 		NodeId:      nodeId,
 		Type:        nType,
 		ServiceName: serviceName,
 		Count:       count,
 		Sort:        sort,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (n *Notify) Delete(id string) (*pb.DeleteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
-	res, err := n.client.Delete(ctx, &pb.GetRequest{
+
+	return n.client.Delete(ctx, &pb.GetRequest{
 		NotificationId: id,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (n *Notify) Purge(nodeId, serviceName, nType string) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
-	res, err := n.client.Purge(ctx, &pb.PurgeRequest{
+
+	return n.client.Purge(ctx, &pb.PurgeRequest{
 		NodeId:      nodeId,
 		Type:        nType,
 		ServiceName: serviceName,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-
 }

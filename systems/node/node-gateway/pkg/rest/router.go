@@ -18,35 +18,30 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/rest"
-
-	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/node/node-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/node/node-gateway/pkg/client"
-	"github.com/wI2L/fizz"
-	"github.com/wI2L/fizz/openapi"
-
 	"github.com/ukama/ukama/systems/node/node-gateway/pkg"
+	"github.com/ukama/ukama/systems/node/node-gateway/pkg/client"
 
-	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/node/health/pb/gen"
+	log "github.com/sirupsen/logrus"
 	healthPb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	npb "github.com/ukama/ukama/systems/node/notify/pb/gen"
-
-	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
-	logger  *logrus.Logger
+	logger  *log.Logger
 }
 
 type RouterConfig struct {
@@ -163,7 +158,13 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save log data"})
 		return "", err
 	}
-	defer file.Close()
+
+	defer func() {
+		err := file.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close log file: %v", err)
+		}
+	}()
 
 	for _, logEntry := range req.Logs {
 		logLine := fmt.Sprintf("%s %s %s %s %s\n", nId, logEntry.AppName, logEntry.Time, logEntry.Level, logEntry.Message)
@@ -184,30 +185,30 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 }
 
 func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunningAppsInfoRequest) (*healthPb.StoreRunningAppsInfoResponse, error) {
-	var genSystems []*gen.System
+	var genSystems []*healthPb.System
 	for _, sys := range req.System {
-		genSystem := &gen.System{
+		genSystem := &healthPb.System{
 			Name:  sys.Name,
 			Value: sys.Value,
 		}
 		genSystems = append(genSystems, genSystem)
 	}
 
-	var genCapps []*gen.Capps
+	var genCapps []*healthPb.Capps
 	for _, capp := range req.Capps {
-		var genResources []*gen.Resource
+		var genResources []*healthPb.Resource
 		for _, resource := range capp.Resources {
-			genResource := &gen.Resource{
+			genResource := &healthPb.Resource{
 				Name:  resource.Name,
 				Value: resource.Value,
 			}
 			genResources = append(genResources, genResource)
 		}
-		genCapp := &gen.Capps{
+		genCapp := &healthPb.Capps{
 			Space:     capp.Space,
 			Name:      capp.Name,
 			Tag:       capp.Tag,
-			Status:    gen.Status(gen.Status_value[capp.Status]),
+			Status:    healthPb.Status(healthPb.Status_value[capp.Status]),
 			Resources: genResources,
 		}
 		genCapps = append(genCapps, genCapp)
@@ -224,7 +225,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 func (r *Router) getSystemPerformanceInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
 	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err)
 		return nil, err
 	}
 

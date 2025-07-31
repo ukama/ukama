@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type Health struct {
@@ -29,7 +29,7 @@ type Health struct {
 func NewHealth(healthHost string, timeout time.Duration) *Health {
 	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewHealhtServiceClient(conn)
 
@@ -50,12 +50,15 @@ func NewHealthFromClient(mClient pb.HealhtServiceClient) *Health {
 	}
 }
 
-func (r *Health) Close() {
-	r.conn.Close()
+func (h *Health) Close() {
+	err := h.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close Health service connection: %v", err)
+	}
 }
 
-func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (h *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (*pb.StoreRunningAppsInfoResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
 	genSystems := make([]*pb.System, len(request.System))
@@ -83,30 +86,20 @@ func (r *Health) StoreRunningAppsInfo(request *pb.StoreRunningAppsInfoRequest) (
 			Resources: genResources,
 		}
 	}
-	res, err := r.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
+
+	return h.client.StoreRunningAppsInfo(ctx, &pb.StoreRunningAppsInfoRequest{
 		NodeId:    request.NodeId,
 		Timestamp: request.Timestamp,
 		System:    genSystems,
 		Capps:     genCapps,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (h *Health) GetRunningAppsInfo(nodeId string) (*pb.GetRunningAppsResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.GetRunningApps(ctx, &pb.GetRunningAppsRequest{
+	return h.client.GetRunningApps(ctx, &pb.GetRunningAppsRequest{
 		NodeId: nodeId,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
 }
