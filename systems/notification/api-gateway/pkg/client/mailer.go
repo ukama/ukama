@@ -65,24 +65,14 @@ func (m *mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, err
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.SendEmail(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.SendEmail(ctx, req)
 }
 
 func (m *mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
+	return m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
 		MailId: mailerId,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
