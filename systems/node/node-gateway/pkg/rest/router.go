@@ -100,9 +100,9 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	}
 }
 
-func (rt *Router) Run() {
-	log.Info("Listening on port ", rt.config.serverConf.Port)
-	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
+func (r *Router) Run() {
+	r.logger.Info("Listening on port ", r.config.serverConf.Port)
+	err := r.f.Engine().Run(fmt.Sprint(":", r.config.serverConf.Port))
 	if err != nil {
 		panic(err)
 	}
@@ -162,7 +162,7 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 	defer func() {
 		err := file.Close()
 		if err != nil {
-			log.Warnf("Failed to gracefully close log file: %v", err)
+			r.logger.Warnf("Failed to gracefully close log file: %v", err)
 		}
 	}()
 
@@ -225,7 +225,7 @@ func (r *Router) postSystemPerformanceInfoHandler(c *gin.Context, req *StoreRunn
 func (r *Router) getSystemPerformanceInfoHandler(c *gin.Context, req *GetRunningAppsRequest) (*healthPb.GetRunningAppsResponse, error) {
 	resp, err := r.clients.Health.GetRunningAppsInfo(req.NodeId)
 	if err != nil {
-		log.Error(err)
+		r.logger.Error(err)
 		return nil, err
 	}
 

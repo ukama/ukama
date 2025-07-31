@@ -61,37 +61,21 @@ func (c *Configurator) ConfigEvent(b []byte) (*pb.ConfigStoreEventResponse, erro
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.ConfigEvent(ctx, &pb.ConfigStoreEvent{
+	return c.client.ConfigEvent(ctx, &pb.ConfigStoreEvent{
 		Data: b,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
 func (c *Configurator) ApplyConfig(commit string) (*pb.ApplyConfigResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.ApplyConfig(ctx, &pb.ApplyConfigRequest{Hash: commit})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.ApplyConfig(ctx, &pb.ApplyConfigRequest{Hash: commit})
 }
 
 func (c *Configurator) GetConfigVersion(nodeId string) (*pb.ConfigVersionResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.GetConfigVersion(ctx, &pb.ConfigVersionRequest{NodeId: nodeId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.GetConfigVersion(ctx, &pb.ConfigVersionRequest{NodeId: nodeId})
 }

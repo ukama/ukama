@@ -62,70 +62,40 @@ func (c *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteRespo
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
 }
 
 func (c *Controller) PingNode(req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.PingNode(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.PingNode(ctx, req)
 }
 
 func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
 }
 
 func (c *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.RestartNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
 }
 
 func (c *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
 }
 
 func (c *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
 }

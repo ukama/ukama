@@ -61,12 +61,7 @@ func (s *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return s.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
 }
 
 func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime,
@@ -74,29 +69,21 @@ func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
+	return s.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
 		NodeId:     nodeId,
 		PageSize:   pageSize,
 		PageNumber: pageNumber,
 		StartTime:  startTime,
 		EndTime:    endTime,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }
 
 func (s *State) EnforeTransition(nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{
+	return s.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{
 		NodeId: nodeId,
 		Event:  event,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
 }

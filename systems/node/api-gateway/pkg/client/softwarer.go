@@ -63,15 +63,10 @@ func (s *SoftwareManager) UpdateSoftware(space string, name string, tag string,
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+	return s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
 		NodeId: nodeId,
 		Space:  space,
 		Name:   name,
 		Tag:    tag,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
