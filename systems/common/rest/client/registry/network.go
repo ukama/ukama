@@ -113,7 +113,7 @@ func (n *networkClient) Get(id string) (*NetworkInfo, error) {
 	if err != nil {
 		log.Errorf("GetNetwork failure. error: %s", err.Error())
 
-		return nil, fmt.Errorf("getNetwork failure: %w", err)
+		return nil, fmt.Errorf("get network failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &ntwk)
