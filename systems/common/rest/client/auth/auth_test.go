@@ -32,7 +32,7 @@ func TestAuthClient_AuthenticateUser(t *testing.T) {
 	t.Run("AuthFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			// Test request parameters
-			assert.Equal(tt, req.URL.String(), auth.AuthEndpoint)
+			assert.Equal(tt, auth.AuthEndpoint, req.URL.String())
 
 			// Send mock response
 			return &http.Response{
@@ -60,7 +60,7 @@ func TestAuthClient_AuthenticateUser(t *testing.T) {
 
 	t.Run("AuthNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), auth.AuthEndpoint)
+			assert.Equal(tt, auth.AuthEndpoint, req.URL.String())
 
 			// error payload
 			resp := `{"error":"not found"}`
@@ -84,7 +84,7 @@ func TestAuthClient_AuthenticateUser(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), auth.AuthEndpoint)
+			assert.Equal(tt, auth.AuthEndpoint, req.URL.String())
 
 			return nil
 		}
