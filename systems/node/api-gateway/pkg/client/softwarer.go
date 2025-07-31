@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type SoftwareManager struct {
@@ -27,10 +27,10 @@ type SoftwareManager struct {
 }
 
 func NewSoftwareManager(softwareManagerHost string, timeout time.Duration) *SoftwareManager {
-
-	conn, err := grpc.NewClient(softwareManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(softwareManagerHost,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewSoftwareServiceClient(conn)
 
@@ -51,15 +51,19 @@ func NewSoftwareManagerFromClient(mClient pb.SoftwareServiceClient) *SoftwareMan
 	}
 }
 
-func (r *SoftwareManager) Close() {
-	r.conn.Close()
+func (s *SoftwareManager) Close() {
+	err := s.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close connection to Software Service: %v", err)
+	}
 }
 
-func (r *SoftwareManager) UpdateSoftware(space string, name string, tag string, nodeId string) (*pb.UpdateSoftwareResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (s *SoftwareManager) UpdateSoftware(space string, name string, tag string,
+	nodeId string) (*pb.UpdateSoftwareResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := r.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+	res, err := s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
 		NodeId: nodeId,
 		Space:  space,
 		Name:   name,

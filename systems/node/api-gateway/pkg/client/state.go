@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type State struct {
@@ -27,10 +27,9 @@ type State struct {
 }
 
 func NewState(stateHost string, timeout time.Duration) *State {
-
 	conn, err := grpc.NewClient(stateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to State Service host: %v", err)
 	}
 	client := pb.NewStateServiceClient(conn)
 
@@ -51,15 +50,18 @@ func NewStateFromClient(mClient pb.StateServiceClient) *State {
 	}
 }
 
-func (r *State) Close() {
-	r.conn.Close()
+func (s *State) Close() {
+	err := s.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close connection to State Server host: %v", err)
+	}
 }
 
-func (r *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (s *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := r.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
+	res, err := s.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +69,12 @@ func (r *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
 	return res, nil
 }
 
-func (r *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*pb.GetStatesHistoryResponse, error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime,
+	endTime string) (*pb.GetStatesHistoryResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := r.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
+	res, err := s.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
 		NodeId:     nodeId,
 		PageSize:   pageSize,
 		PageNumber: pageNumber,
@@ -85,12 +87,11 @@ func (r *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32
 	return res, nil
 }
 
-func (r *State) EnforeTransition(nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (s *State) EnforeTransition(nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
 	defer cancel()
 
-	res, err := r.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{
+	res, err := s.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{
 		NodeId: nodeId,
 		Event:  event,
 	})

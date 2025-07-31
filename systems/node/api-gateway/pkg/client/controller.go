@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type Controller struct {
@@ -27,10 +27,9 @@ type Controller struct {
 }
 
 func NewController(controllerHost string, timeout time.Duration) *Controller {
-
 	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewControllerServiceClient(conn)
 
@@ -51,15 +50,19 @@ func NewControllerFromClient(mClient pb.ControllerServiceClient) *Controller {
 	}
 }
 
-func (r *Controller) Close() {
-	r.conn.Close()
+func (c *Controller) Close() {
+	err := c.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close connection from Controller Service: %v", err)
+	}
+
 }
 
-func (r *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
+	res, err := c.client.RestartSite(ctx, &pb.RestartSiteRequest{SiteId: siteId, NetworkId: networkId})
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +70,11 @@ func (r *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteRespo
 	return res, nil
 }
 
-func (r *Controller) PingNode(req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) PingNode(req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.PingNode(ctx, req)
+	res, err := c.client.PingNode(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -79,11 +82,11 @@ func (r *Controller) PingNode(req *pb.PingNodeRequest) (*pb.PingNodeResponse, er
 	return res, nil
 }
 
-func (r *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
+	res, err := c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
 	if err != nil {
 		return nil, err
 	}
@@ -91,11 +94,11 @@ func (r *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	return res, nil
 }
 
-func (r *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.RestartNodesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.RestartNodesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
+	res, err := c.client.RestartNodes(ctx, &pb.RestartNodesRequest{NetworkId: networkId, NodeIds: nodeIds})
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +106,11 @@ func (r *Controller) RestartNodes(networkId string, nodeIds []string) (*pb.Resta
 	return res, nil
 }
 
-func (r *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) ToggleInternetSwitch(status bool, port int32, siteId string) (*pb.ToggleInternetSwitchResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
+	res, err := c.client.ToggleInternetSwitch(ctx, &pb.ToggleInternetSwitchRequest{Status: status, SiteId: siteId, Port: port})
 	if err != nil {
 		return nil, err
 	}
@@ -115,11 +118,11 @@ func (r *Controller) ToggleInternetSwitch(status bool, port int32, siteId string
 	return res, nil
 }
 
-func (r *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Controller) ToggleRf(nodeId string, status bool) (*pb.ToggleRfSwitchResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
+	res, err := c.client.ToggleRfSwitch(ctx, &pb.ToggleRfSwitchRequest{NodeId: nodeId, Status: status})
 	if err != nil {
 		return nil, err
 	}
