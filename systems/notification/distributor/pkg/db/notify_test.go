@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
@@ -679,6 +680,211 @@ func TestNotifyHandler_Stop_AfterDeregister(t *testing.T) {
 	assert.Equal(t, 2, len(handler.subs))
 
 	// Act
+	handler.Stop()
+
+	// Assert
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_Success(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Act
+	handler.Start()
+
+	// Assert
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_MultipleCalls(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Act - Call Start multiple times
+	handler.Start()
+	handler.Start()
+	handler.Start()
+
+	// Assert
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_WithSubscriptions(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Register subscriptions before starting
+	handler.Register("org1", "network1", "sub1", "user1", []notification.NotificationScope{notification.SCOPE_ORG})
+	handler.Register("org2", "network2", "sub2", "user2", []notification.NotificationScope{notification.SCOPE_NETWORK})
+
+	// Verify subscriptions exist
+	assert.Equal(t, 2, len(handler.subs))
+
+	// Act
+	handler.Start()
+
+	// Assert
+	// Start should work correctly even when subscriptions already exist
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_EmptyHandler(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Verify no subscriptions exist
+	assert.Equal(t, 0, len(handler.subs))
+
+	// Act
+	handler.Start()
+
+	// Assert
+	// Start should work correctly even with no subscriptions
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_ConcurrentAccess(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Act - Start multiple goroutines concurrently
+	done := make(chan bool, 5)
+	for i := 0; i < 5; i++ {
+		go func() {
+			handler.Start()
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines to complete
+	for i := 0; i < 5; i++ {
+		<-done
+	}
+
+	// Assert
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_Stop_Integration(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Register a subscription
+	handler.Register("org1", "network1", "sub1", "user1", []notification.NotificationScope{notification.SCOPE_ORG})
+
+	// Act - Start the handler
+	handler.Start()
+
+	// Give the goroutine a moment to start (though it will fail to connect to DB in test environment)
+	time.Sleep(10 * time.Millisecond)
+
+	// Stop the handler
+	handler.Stop()
+
+	// Assert
+
+	mockProvider.AssertExpectations(t)
+}
+
+func TestNotifyHandler_Start_Stop_WithoutStart(t *testing.T) {
+	// Arrange
+	mockProvider := &MockEventNotifyClientProvider{}
+	mockClient := &MockEventToNotifyServiceClient{}
+	db := &uconf.Database{
+		Host:     "localhost",
+		Port:     5432,
+		DbName:   "testdb",
+		Username: "testuser",
+		Password: "testpass",
+	}
+
+	mockProvider.On("GetClient").Return(mockClient, nil).Once()
+
+	handler := NewNotifyHandler(db, mockProvider)
+
+	// Register a subscription
+	handler.Register("org1", "network1", "sub1", "user1", []notification.NotificationScope{notification.SCOPE_ORG})
+
+	// Act - Stop without starting
 	handler.Stop()
 
 	// Assert
