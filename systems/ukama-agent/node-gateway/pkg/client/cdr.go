@@ -23,7 +23,7 @@ type CDR struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration `default:"3s"`
 	client  pb.CDRServiceClient
-	host    string `deafault:"localhost:9090"`
+	host    string `default:"localhost:9090"`
 }
 
 func NewCDR(host string, timeout time.Duration) *CDR {

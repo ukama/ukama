@@ -20,12 +20,13 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
+
+	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
@@ -214,7 +215,6 @@ func (r *Router) updateEventNotification(c *gin.Context, req *UpdateEventNotific
 }
 
 func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEventNotificationRequest) error {
-
 	log.Infof("Requesting real time notifications %+v", req)
 
 	//Upgrade get request to webSocket protocol
@@ -223,7 +223,12 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 		log.Errorf("upgrade: %s", err.Error())
 		return err
 	}
-	defer ws.Close()
+	defer func() {
+		err := ws.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close EventNotification webSocket connection: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

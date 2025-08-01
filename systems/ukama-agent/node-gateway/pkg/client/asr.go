@@ -23,7 +23,7 @@ type Asr struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration `default:"3s"`
 	client  pb.AsrRecordServiceClient
-	host    string `deafault:"localhost:9090"`
+	host    string `default:"localhost:9090"`
 }
 
 func NewAsr(host string, timeout time.Duration) *Asr {
