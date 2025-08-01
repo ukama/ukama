@@ -3,7 +3,7 @@ services:
  postgresd-messaging:
   image: postgres:13.3
   ports:
-   - '5409:5432'
+   - 5409:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -35,33 +35,14 @@ services:
   networks:
    - ukama-net
 
- initclient-messaging:
-  build: ../services/initClient
-  environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
-   - ENV_SYSTEM_NAME=messaging
-   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_SYSTEM_PORT=8889
-   - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_CLIENT_PORT=9091
-   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
-  restart: always
-  networks:
-   - ukama-net
-
- gateway:
+ api-gateway-messaging:
   build: ./api-gateway
+  restart: always
   ports:
-   - '8079:8080'
+   - 8079:8080
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - NODEMETRICSPORT=10251
-   - SERVICES_NNS=nnsd:9090
-   - ORGNAME=${ORGNAME}
   depends_on:
    - nnsd
   networks:
@@ -99,24 +80,6 @@ services:
   depends_on:
    - msgclient-messaging
 
- msgclient-messaging:
-  build: ../services/msgClient
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-messaging
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - SYSTEM=messaging
-   - GRPC_PORT=9095
-   - ORGNAME=${ORGNAME}
-   - MASTERORGNAME=${MASTERORGNAME}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-messaging
-
  coredns:
   image: coredns/coredns:latest
   command: -conf /etc/coredns/Corefile -dns.port 53
@@ -143,6 +106,44 @@ services:
   depends_on:
    - nnsd
    - msgclient-messaging
+  networks:
+   - ukama-net
+
+ msgclient-messaging:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-messaging
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=messaging
+   - GRPC_PORT=9095
+   - ORGNAME=${ORGNAME}
+   - MASTERORGNAME=${MASTERORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-messaging
+
+ initclient-messaging:
+  # build: ../services/initClient
+  image: main-init
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_NAME=messaging
+   - ENV_SYSTEM_DNS=api-gateway-messaging
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-messaging
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
   networks:
    - ukama-net
 
