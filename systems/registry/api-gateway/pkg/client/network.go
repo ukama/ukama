@@ -17,25 +17,23 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	netpb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
 
 const DefaultNetworkName = "default"
 
 type NetworkRegistry struct {
 	conn    *grpc.ClientConn
-	client  pb.NetworkServiceClient
+	client  netpb.NetworkServiceClient
 	timeout time.Duration
 	host    string
 }
 
 func NewNetworkRegistry(networkHost string, timeout time.Duration) *NetworkRegistry {
-
 	conn, err := grpc.NewClient(networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to registry's network service: %v", err)
 	}
-	client := pb.NewNetworkServiceClient(conn)
+	client := netpb.NewNetworkServiceClient(conn)
 
 	return &NetworkRegistry{
 		conn:    conn,
@@ -45,7 +43,7 @@ func NewNetworkRegistry(networkHost string, timeout time.Duration) *NetworkRegis
 	}
 }
 
-func NewNetworkRegistryFromClient(networkClient pb.NetworkServiceClient) *NetworkRegistry {
+func NewNetworkRegistryFromClient(networkClient netpb.NetworkServiceClient) *NetworkRegistry {
 	return &NetworkRegistry{
 		host:    "localhost",
 		timeout: 1 * time.Second,
@@ -54,16 +52,19 @@ func NewNetworkRegistryFromClient(networkClient pb.NetworkServiceClient) *Networ
 	}
 }
 
-func (r *NetworkRegistry) Close() {
-	r.conn.Close()
+func (n *NetworkRegistry) Close() {
+	err := n.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close Network Service connection: %v", err)
+	}
 }
 
-func (r *NetworkRegistry) AddNetwork(netName string, allowedCountries, allowedNetworks []string,
+func (n *NetworkRegistry) AddNetwork(netName string, allowedCountries, allowedNetworks []string,
 	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := r.client.Add(ctx, &netpb.AddRequest{
+	return n.client.Add(ctx, &netpb.AddRequest{
 		Name:             netName,
 		AllowedCountries: allowedCountries,
 		AllowedNetworks:  allowedNetworks,
@@ -72,55 +73,34 @@ func (r *NetworkRegistry) AddNetwork(netName string, allowedCountries, allowedNe
 		TrafficPolicy:    trafficPolicy,
 		PaymentLinks:     paymentLinks,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
-func (r *NetworkRegistry) GetNetwork(netID string) (*netpb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (n *NetworkRegistry) GetNetwork(netID string) (*netpb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := r.client.Get(ctx, &netpb.GetRequest{NetworkId: netID})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return n.client.Get(ctx, &netpb.GetRequest{NetworkId: netID})
 }
 
-func (r *NetworkRegistry) SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (n *NetworkRegistry) SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := r.client.SetDefault(ctx, &netpb.SetDefaultRequest{NetworkId: netID})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return n.client.SetDefault(ctx, &netpb.SetDefaultRequest{NetworkId: netID})
 }
 
-func (r *NetworkRegistry) GetDefault() (*netpb.GetDefaultResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (n *NetworkRegistry) GetDefault() (*netpb.GetDefaultResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := r.client.GetDefault(ctx, &netpb.GetDefaultRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return n.client.GetDefault(ctx, &netpb.GetDefaultRequest{})
 }
 
-func (r *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (n *NetworkRegistry) GetNetworks() (*netpb.GetNetworksResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	res, err := r.client.GetAll(ctx, &netpb.GetNetworksRequest{})
+	res, err := n.client.GetAll(ctx, &netpb.GetNetworksRequest{})
 	if err != nil {
 		return nil, err
 	}
