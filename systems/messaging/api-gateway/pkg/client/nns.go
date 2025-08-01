@@ -50,10 +50,12 @@ func NewNnsFromClient(NnsClient pb.NnsClient) *Nns {
 	}
 }
 
-func (r *Nns) Close() {
-	err := r.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close NNS server connection: %v", err)
+func (n *Nns) Close() {
+	if n.conn != nil {
+		err := n.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close NNS server connection: %v", err)
+		}
 	}
 }
 
