@@ -29,7 +29,7 @@ type Health struct {
 func NewHealth(healthHost string, timeout time.Duration) *Health {
 	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect ot Health Service host: %v", err)
 	}
 	client := pb.NewHealhtServiceClient(conn)
 
@@ -51,9 +51,11 @@ func NewHealthFromClient(mClient pb.HealhtServiceClient) *Health {
 }
 
 func (h *Health) Close() {
-	err := h.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close Health service connection: %v", err)
+	if h.conn != nil {
+		err := h.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Health service connection: %v", err)
+		}
 	}
 }
 

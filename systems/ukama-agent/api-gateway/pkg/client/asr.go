@@ -51,10 +51,12 @@ func NewAsrFromClient(asrClient pb.AsrRecordServiceClient) *Asr {
 	}
 }
 
-func (r *Asr) Close() {
-	err := r.conn.Close()
-	if err != nil {
-		log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+func (a *Asr) Close() {
+	if a.conn != nil {
+		err := a.conn.Close()
+		if err != nil {
+			log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+		}
 	}
 }
 

@@ -52,9 +52,11 @@ func NewNotifyFromClient(mClient pb.NotifyServiceClient) *Notify {
 }
 
 func (n *Notify) Close() {
-	err := n.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close Notify Service connection: %v", err)
+	if n.conn != nil {
+		err := n.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Notify Service connection: %v", err)
+		}
 	}
 }
 

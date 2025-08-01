@@ -30,7 +30,7 @@ func NewSoftwareManager(softwareManagerHost string, timeout time.Duration) *Soft
 	conn, err := grpc.NewClient(softwareManagerHost,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Software Service: %v", err)
 	}
 	client := pb.NewSoftwareServiceClient(conn)
 
@@ -52,9 +52,11 @@ func NewSoftwareManagerFromClient(mClient pb.SoftwareServiceClient) *SoftwareMan
 }
 
 func (s *SoftwareManager) Close() {
-	err := s.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close connection to Software Service: %v", err)
+	if s.conn != nil {
+		err := s.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close connection to Software Service: %v", err)
+		}
 	}
 }
 

@@ -29,7 +29,7 @@ type Controller struct {
 func NewController(controllerHost string, timeout time.Duration) *Controller {
 	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Controller service: %v", err)
 	}
 	client := pb.NewControllerServiceClient(conn)
 
@@ -51,11 +51,12 @@ func NewControllerFromClient(mClient pb.ControllerServiceClient) *Controller {
 }
 
 func (c *Controller) Close() {
-	err := c.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close connection from Controller Service: %v", err)
+	if c.conn != nil {
+		err := c.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close connection from Controller Service: %v", err)
+		}
 	}
-
 }
 
 func (c *Controller) RestartSite(siteId, networkId string) (*pb.RestartSiteResponse, error) {

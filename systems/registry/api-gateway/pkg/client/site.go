@@ -51,9 +51,11 @@ func NewSiteRegistryFromClient(mClient pb.SiteServiceClient) *SiteRegistry {
 }
 
 func (s *SiteRegistry) Close() {
-	err := s.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close Site Service connection: %v", err)
+	if s.conn != nil {
+		err := s.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Site Service connection: %v", err)
+		}
 	}
 }
 

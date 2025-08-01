@@ -29,8 +29,9 @@ type Configurator struct {
 func NewConfigurator(configuratorHost string, timeout time.Duration) *Configurator {
 	conn, err := grpc.NewClient(configuratorHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Configurator Service: %v", err)
 	}
+
 	client := pb.NewConfiguratorServiceClient(conn)
 
 	return &Configurator{
@@ -51,9 +52,11 @@ func NewConfiguratorFromClient(mClient pb.ConfiguratorServiceClient) *Configurat
 }
 
 func (c *Configurator) Close() {
-	err := c.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close connection from Configurator Service: %v", err)
+	if c.conn != nil {
+		err := c.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Configurator Service connection: %v", err)
+		}
 	}
 }
 

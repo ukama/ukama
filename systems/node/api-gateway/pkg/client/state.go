@@ -51,9 +51,11 @@ func NewStateFromClient(mClient pb.StateServiceClient) *State {
 }
 
 func (s *State) Close() {
-	err := s.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close connection to State Server host: %v", err)
+	if s.conn != nil {
+		err := s.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close connection to State Service host: %v", err)
+		}
 	}
 }
 
