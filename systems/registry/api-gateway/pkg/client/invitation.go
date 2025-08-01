@@ -30,7 +30,7 @@ type InvitationRegistry struct {
 func NewInvitationRegistry(invitationHost string, timeout time.Duration) *InvitationRegistry {
 	conn, err := grpc.NewClient(invitationHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Invitation Service: %v", err)
 	}
 	client := pb.NewInvitationServiceClient(conn)
 
@@ -52,9 +52,11 @@ func NewInvitationRegistryFromClient(mClient pb.InvitationServiceClient) *Invita
 }
 
 func (i *InvitationRegistry) Close() {
-	err := i.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close Invitation Service connection: %v", err)
+	if i.conn != nil {
+		err := i.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Invitation Service connection: %v", err)
+		}
 	}
 }
 

@@ -55,9 +55,11 @@ func NewNodeFromClient(nodeClient pb.NodeServiceClient) *Node {
 }
 
 func (n *Node) Close() {
-	err := n.conn.Close()
-	if err != nil {
-		log.Warnf("Failed to gracefully close Member Service connection: %v", err)
+	if n.conn != nil {
+		err := n.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Node Service connection: %v", err)
+		}
 	}
 }
 
