@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 type Nns struct {
@@ -28,7 +29,7 @@ type Nns struct {
 func NewNns(host string, timeout time.Duration) *Nns {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewNnsClient(conn)
 
@@ -50,7 +51,10 @@ func NewNnsFromClient(NnsClient pb.NnsClient) *Nns {
 }
 
 func (r *Nns) Close() {
-	r.conn.Close()
+	err := r.conn.Close()
+	if err != nil {
+		log.Warnf("Failed to gracefully close NNS server connection: %v", err)
+	}
 }
 
 func (n *Nns) GetNodeIpRequest(req *pb.GetNodeIPRequest) (*pb.GetNodeIPResponse, error) {
