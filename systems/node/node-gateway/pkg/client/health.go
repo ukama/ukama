@@ -29,7 +29,7 @@ type Health struct {
 func NewHealth(healthHost string, timeout time.Duration) *Health {
 	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect ot Health Service host: %v", err)
+		log.Fatalf("Failed to connect to Health Service host: %v", err)
 	}
 	client := pb.NewHealhtServiceClient(conn)
 
