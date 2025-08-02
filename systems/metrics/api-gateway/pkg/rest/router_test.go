@@ -15,13 +15,15 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/systems/common/providers"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/metrics/api-gateway/pkg/client"
 	"github.com/ukama/ukama/systems/metrics/exporter/pb/gen/mocks"
+
+	log "github.com/sirupsen/logrus"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
 func init() {
@@ -42,8 +44,10 @@ func Test_RouterPing(t *testing.T) {
 	cl := &Clients{}
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
-	arc := &providers.AuthRestClient{}
-	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
+	arc := &cmocks.AuthClient{}
+	r := NewRouter(cl, rc, m, arc.AuthenticateUser).f.Engine()
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	// act
 	r.ServeHTTP(w, req)
@@ -74,8 +78,10 @@ func Test_GetMetrics(t *testing.T) {
 	cl := &Clients{}
 	cl.e = client.NewExporterFromClient(&mocks.ExporterServiceClient{})
 
-	arc := &providers.AuthRestClient{}
-	r := NewRouter(cl, rc, m, arc.MockAuthenticateUser).f.Engine()
+	arc := &cmocks.AuthClient{}
+	r := NewRouter(cl, rc, m, arc.AuthenticateUser).f.Engine()
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NodeMetrics", func(t *testing.T) {
 		w := httptest.NewRecorder()

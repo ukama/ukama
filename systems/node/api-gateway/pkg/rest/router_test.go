@@ -17,15 +17,16 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/common/providers"
-	"github.com/ukama/ukama/systems/common/ukama"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	crest "github.com/ukama/ukama/systems/common/rest"
+
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmmocks "github.com/ukama/ukama/systems/common/mocks"
+	crest "github.com/ukama/ukama/systems/common/rest"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -63,9 +64,12 @@ func init() {
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -78,9 +82,11 @@ func Test_RestarteNode(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controller/nodes/60285a2a-fe1d-4261-a868-5be480075b8f/restart", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{},
 		nil)
@@ -88,7 +94,7 @@ func Test_RestarteNode(t *testing.T) {
 	r := NewRouter(&Clients{
 		Controller:   client.NewControllerFromClient(c),
 		Configurator: client.NewConfiguratorFromClient(cfg),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -105,8 +111,10 @@ func Test_RestarteNodes(t *testing.T) {
 
 	req, _ := http.NewRequest("POST", "/v1/controller/networks/456b2743-4831-4d8d-9fbe-830df7bd59d4/restart-nodes", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	restartNodeReq := &cpb.RestartNodesRequest{
 		NetworkId: "456b2743-4831-4d8d-9fbe-830df7bd59d4",
@@ -117,7 +125,7 @@ func Test_RestarteNodes(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -130,15 +138,17 @@ func Test_SoftwareUpdate(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/software/update/space1/name1/tag1/uk-983794-hnode-78-7830", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &smocks.SoftwareServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	c.On("UpdateSoftware", mock.Anything, mock.Anything).Return(&spb.UpdateSoftwareResponse{},
 		nil)
 
 	r := NewRouter(&Clients{
 		SoftwareManager: client.NewSoftwareManagerFromClient(c),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -151,8 +161,10 @@ func Test_RestarteSite(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/v1/controller/networks/0f37639d-3fd6-4741-b63b-9dd4f7ce55f0/sites/site-1/restart", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	RestartSiteRequest := &cpb.RestartSiteRequest{
 		SiteId:    "site-1",
@@ -164,7 +176,7 @@ func Test_RestarteSite(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -178,9 +190,11 @@ func Test_postConfigApplyVersionHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	hash := "1c924398265578d35e2b16adca25dcc021923c89"
 	req, _ := http.NewRequest("POST", "/v1/configurator/config/apply/"+hash, nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	cfg.On("ApplyConfig", mock.Anything, mock.Anything).Return(&cfgPb.ApplyConfigResponse{},
 		nil)
@@ -188,7 +202,7 @@ func Test_postConfigApplyVersionHandler(t *testing.T) {
 	r := NewRouter(&Clients{
 		Controller:   client.NewControllerFromClient(c),
 		Configurator: client.NewConfiguratorFromClient(cfg),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -203,9 +217,11 @@ func Test_getRunningConfigVersionHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	node := ukama.NewVirtualHomeNodeId().String()
 	req, _ := http.NewRequest("GET", "/v1/configurator/config/node/"+node, nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
 	cfg := &cmocks.ConfiguratorServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	cfg.On("GetConfigVersion", mock.Anything, mock.Anything).Return(&cfgPb.ConfigVersionResponse{
 		NodeId:     node,
@@ -219,7 +235,7 @@ func Test_getRunningConfigVersionHandler(t *testing.T) {
 	r := NewRouter(&Clients{
 		Controller:   client.NewControllerFromClient(c),
 		Configurator: client.NewConfiguratorFromClient(cfg),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -238,8 +254,10 @@ func Test_postToggleRfHandler(t *testing.T) {
 	jsonPayload := `{"status": false}`
 	req, _ := http.NewRequest("POST", "/v1/controller/nodes/"+nodeId+"/toggle-rf", strings.NewReader(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
 	c := &nmocks.ControllerServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	c.On("ToggleRfSwitch", mock.Anything, &cpb.ToggleRfSwitchRequest{
 		NodeId: nodeId,
@@ -248,7 +266,7 @@ func Test_postToggleRfHandler(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Controller: client.NewControllerFromClient(c),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

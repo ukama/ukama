@@ -17,14 +17,15 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/report/api-gateway/internal"
 	"github.com/ukama/ukama/systems/report/api-gateway/internal/client"
 
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	crest "github.com/ukama/ukama/systems/common/rest"
 	pmocks "github.com/ukama/ukama/systems/report/api-gateway/mocks"
 )
@@ -69,7 +70,9 @@ func init() {
 
 func TestRouter_PingRoute(t *testing.T) {
 	var pm = &pmocks.Pdf{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	// arrange
 	w := httptest.NewRecorder()
@@ -77,7 +80,7 @@ func TestRouter_PingRoute(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		p: pm,
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -91,16 +94,17 @@ func TestRouter_Pdf(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
 
-		var arc = &providers.AuthRestClient{}
+		var arc = &cmocks.AuthClient{}
 		pm := &pmocks.Pdf{}
 
 		var content = []byte("some fake pdf data")
 
+		arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 		pm.On("GetPdf", invoiceId).Return(content, nil)
 
 		r := NewRouter(&Clients{
 			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -114,14 +118,15 @@ func TestRouter_Pdf(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pdfEndpoint, invoiceId), nil)
 
-		var arc = &providers.AuthRestClient{}
+		var arc = &cmocks.AuthClient{}
 		pm := &pmocks.Pdf{}
 
+		arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 		pm.On("GetPdf", invoiceId).Return(nil, client.ErrInvoicePDFNotFound)
 
 		r := NewRouter(&Clients{
 			p: pm,
-		}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)

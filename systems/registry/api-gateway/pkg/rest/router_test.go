@@ -21,13 +21,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/registry/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	invpb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 	imocks "github.com/ukama/ukama/systems/registry/invitation/pb/gen/mocks"
 	mpb "github.com/ukama/ukama/systems/registry/member/pb/gen"
@@ -72,9 +72,12 @@ func init() {
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -87,11 +90,13 @@ func TestGetMembers(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/members", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
 	UserId := uuid.NewV4()
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	mem.On("GetMembers", mock.Anything, mock.Anything).Return(&mpb.GetMembersResponse{
 		Members: []*mpb.Member{{
@@ -104,7 +109,7 @@ func TestGetMembers(t *testing.T) {
 		Node:    client.NewNodeFromClient(node),
 		Member:  client.NewRegistryFromClient(mem),
 		Network: client.NewNetworkRegistryFromClient(net),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -120,12 +125,14 @@ func TestGetInvitation_NotFound(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/v1/invitations/"+invId.String(), nil)
-	arc := &providers.AuthRestClient{}
-
+	arc := &cmocks.AuthClient{}
 	inv := &imocks.InvitationServiceClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	inv.On("Get", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "invitation not found"))
 
 	r := NewRouter(&Clients{
@@ -134,7 +141,7 @@ func TestGetInvitation_NotFound(t *testing.T) {
 		Network:    client.NewNetworkRegistryFromClient(net),
 		Node:       client.NewNodeFromClient(node),
 		Member:     client.NewRegistryFromClient(mem),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -151,13 +158,14 @@ func TestGetInvitation_Found(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	req, _ := http.NewRequest("GET", "/v1/invitations/"+invId, nil)
-	arc := &providers.AuthRestClient{}
-
+	arc := &cmocks.AuthClient{}
 	inv := &imocks.InvitationServiceClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
 	mem := &mmocks.MemberServiceClient{}
 	site := &sitmocks.SiteServiceClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	inv.On("Get", mock.Anything, mock.Anything).Return(&invpb.GetResponse{
 		Invitation: &invpb.Invitation{
@@ -173,7 +181,7 @@ func TestGetInvitation_Found(t *testing.T) {
 		Node:       client.NewNodeFromClient(node),
 		Member:     client.NewRegistryFromClient(mem),
 		Site:       client.NewSiteRegistryFromClient(site),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -188,13 +196,15 @@ func TestGetInvitation_Found(t *testing.T) {
 // 	// arrange
 // 	w := httptest.NewRecorder()
 // 	req, _ := http.NewRequest("GET", "/v1/invitations", nil)
-// 	arc := &providers.AuthRestClient{}
+// 	arc := &cmocks.AuthClient{}
 // 	inv := &imocks.InvitationServiceClient{}
 // 	invId := uuid.NewV4()
 // 	net := &netmocks.NetworkServiceClient{}
 // 	node := &nmocks.NodeServiceClient{}
 // 	mem := &mmocks.MemberServiceClient{}
 // 	siteM := &sitmocks.SiteServiceClient{}
+
+// arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 // 	inv.On("GetAll", mock.Anything, mock.Anything).Return(&invpb.GetAllResponse{
 // 		Invitations: []*invpb.Invitation{{
@@ -212,7 +222,7 @@ func TestGetInvitation_Found(t *testing.T) {
 // 		Network:    client.NewNetworkRegistryFromClient(net),
 // 		Invitation: client.NewInvitationRegistryFromClient(inv),
 // 		Site:       client.NewSiteRegistryFromClient(siteM),
-// 	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+// 	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 // 	// act
 // 	r.ServeHTTP(w, req)

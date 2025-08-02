@@ -33,10 +33,9 @@ type eventNotification struct {
 }
 
 func NewEventNotification(host string, timeout time.Duration) (*eventNotification, error) {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to EventNotification Service: %v", err)
 
 		return nil, err
 	}
@@ -60,29 +59,34 @@ func NewEventToNotifyFromClient(client pb.EventToNotifyServiceClient) *eventNoti
 	}
 }
 
-func (m *eventNotification) Close() {
-	m.conn.Close()
+func (e *eventNotification) Close() {
+	if e.conn != nil {
+		err := e.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close EventNotification Service connection: %v", err)
+		}
+	}
 }
 
-func (n *eventNotification) Get(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (e *eventNotification) Get(id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.timeout)
 	defer cancel()
 
-	return n.client.Get(ctx, &pb.GetRequest{Id: id})
+	return e.client.Get(ctx, &pb.GetRequest{Id: id})
 }
 
-func (n *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (e *eventNotification) UpdateStatus(id string, isRead bool) (*pb.UpdateStatusResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.timeout)
 	defer cancel()
 
-	return n.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
+	return e.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{Id: id, IsRead: isRead})
 }
 
-func (n *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (e *eventNotification) GetAll(orgId string, networkId string, subscriberId string, userId string) (*pb.GetAllResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), e.timeout)
 	defer cancel()
 
-	return n.client.GetAll(ctx, &pb.GetAllRequest{OrgId: orgId,
+	return e.client.GetAll(ctx, &pb.GetAllRequest{OrgId: orgId,
 		NetworkId:    networkId,
 		SubscriberId: subscriberId,
 		UserId:       userId,

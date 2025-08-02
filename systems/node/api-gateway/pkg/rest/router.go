@@ -14,18 +14,16 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ukama/ukama/systems/common/rest"
-
+	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
-
-	"github.com/gin-gonic/gin"
 
 	log "github.com/sirupsen/logrus"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"

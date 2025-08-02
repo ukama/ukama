@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 )
 
 type Lookup struct {
@@ -29,8 +30,9 @@ func Newlookup(host string, timeout time.Duration) *Lookup {
 
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Lookup Service: %v", err)
 	}
+
 	client := pb.NewLookupServiceClient(conn)
 
 	return &Lookup{
@@ -50,8 +52,13 @@ func NewLookupFromClient(lookupClient pb.LookupServiceClient) *Lookup {
 	}
 }
 
-func (r *Lookup) Close() {
-	r.conn.Close()
+func (l *Lookup) Close() {
+	if l.conn != nil {
+		err := l.conn.Close()
+		if err != nil {
+			log.Warnf("Failed to gracefully close Lookup Service connection :%v", err)
+		}
+	}
 }
 
 func (l *Lookup) AddOrg(req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {

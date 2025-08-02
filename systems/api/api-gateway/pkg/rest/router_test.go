@@ -20,12 +20,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/ukama/ukama/systems/api/api-gateway/mocks"
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	crest "github.com/ukama/ukama/systems/common/rest"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -66,14 +67,15 @@ func init() {
 }
 
 func TestRouter_PingRoute(t *testing.T) {
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	r := NewRouter(netClient, packageClient, simClient, nodeClient, routerConfig,
-		arc.MockAuthenticateUser).f.Engine()
+		arc.AuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -82,7 +84,8 @@ func TestRouter_PingRoute(t *testing.T) {
 }
 
 func TestRouter_GetNetwork(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	netName := "net-1"
 
@@ -100,7 +103,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -128,7 +131,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -151,7 +154,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -171,7 +174,7 @@ func TestRouter_GetNetwork(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", netEndpoint, netId), nil)
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -183,7 +186,8 @@ func TestRouter_GetNetwork(t *testing.T) {
 }
 
 func TestRouter_CreateNetwork(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NetworkCreatedAndStatusUpdated", func(t *testing.T) {
 		netId := uuid.NewV4()
@@ -221,7 +225,7 @@ func TestRouter_CreateNetwork(t *testing.T) {
 			Return(netInfo, nil)
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
@@ -261,10 +265,10 @@ func TestRouter_CreateNetwork(t *testing.T) {
 		}
 
 		netClient.On("CreateNetwork", orgName, netName, countries, networks, budget, overdraft, trafficPolicy, paymentLinks).
-			Return(nil, errors.New("some unexpected error occured"))
+			Return(nil, errors.New("some unexpected error occurred"))
 
 		r := NewRouter(netClient, nil, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", netEndpoint, bytes.NewReader(body))
@@ -279,7 +283,8 @@ func TestRouter_CreateNetwork(t *testing.T) {
 }
 
 func TestRouter_GetPackage(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	pkgName := "Monthly Data"
 
@@ -297,7 +302,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -325,7 +330,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -348,7 +353,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -368,7 +373,7 @@ func TestRouter_GetPackage(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", pkgEndpoint, pkgId), nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -380,7 +385,8 @@ func TestRouter_GetPackage(t *testing.T) {
 }
 
 func TestRouter_AddPackage(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	pkgName := "Monthly Data"
 	from := "2023-04-01T00:00:00Z"
@@ -473,7 +479,7 @@ func TestRouter_AddPackage(t *testing.T) {
 			Return(pkgInfo, nil)
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", pkgEndpoint, bytes.NewReader(body))
@@ -524,10 +530,10 @@ func TestRouter_AddPackage(t *testing.T) {
 		packageClient.On("AddPackage", pkgName, orgId, ownerId, from, to, baserateId,
 			isActive, flatRate, smsVolume, voiceVolume, dataVolume, voiceUnit, dataUnit,
 			simType, apn, pType, duration, markupValue, amount, overdraft, trafficPolicy, networks).
-			Return(nil, errors.New("some unexpected error occured"))
+			Return(nil, errors.New("some unexpected error occurred"))
 
 		r := NewRouter(nil, packageClient, nil, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", pkgEndpoint, bytes.NewReader(body))
@@ -542,7 +548,8 @@ func TestRouter_AddPackage(t *testing.T) {
 }
 
 func TestRouter_GetSim(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	subscriberId := uuid.NewV4()
 
@@ -560,7 +567,7 @@ func TestRouter_GetSim(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -588,7 +595,7 @@ func TestRouter_GetSim(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -611,7 +618,7 @@ func TestRouter_GetSim(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -631,7 +638,7 @@ func TestRouter_GetSim(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", simEndpoint, simId), nil)
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -643,7 +650,9 @@ func TestRouter_GetSim(t *testing.T) {
 }
 
 func TestRouter_ConfigureSim(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	networkId := uuid.NewV4()
 	packageId := uuid.NewV4()
 	simType := "some-sim-type"
@@ -698,7 +707,7 @@ func TestRouter_ConfigureSim(t *testing.T) {
 			Return(simInfo, nil)
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
@@ -724,10 +733,10 @@ func TestRouter_ConfigureSim(t *testing.T) {
 		simClient.On("ConfigureSim", subscriberId.String(), orgId.String(),
 			networkId.String(), name, email, phoneNumber, address,
 			dob, proofOfID, idSerial, packageId.String(), simType, simToken, trafficPolicy).
-			Return(nil, errors.New("some unexpected error occured"))
+			Return(nil, errors.New("some unexpected error occurred"))
 
 		r := NewRouter(nil, nil, simClient, nil, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", simEndpoint, bytes.NewReader(body))
@@ -742,7 +751,8 @@ func TestRouter_ConfigureSim(t *testing.T) {
 }
 
 func TestRouter_GetNode(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	nodeName := "node-1"
 
@@ -760,7 +770,7 @@ func TestRouter_GetNode(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -783,7 +793,7 @@ func TestRouter_GetNode(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -803,7 +813,7 @@ func TestRouter_GetNode(t *testing.T) {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -815,7 +825,8 @@ func TestRouter_GetNode(t *testing.T) {
 }
 
 func TestRouter_RegisterNode(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NodeRegistered", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
@@ -844,7 +855,7 @@ func TestRouter_RegisterNode(t *testing.T) {
 			Return(nodeInfo, nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
@@ -876,10 +887,10 @@ func TestRouter_RegisterNode(t *testing.T) {
 		}
 
 		nodeClient.On("RegisterNode", nodeId, nodeName, orgId.String(), state).
-			Return(nil, errors.New("some unexpected error occured"))
+			Return(nil, errors.New("some unexpected error occurred"))
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint, bytes.NewReader(body))
@@ -894,7 +905,8 @@ func TestRouter_RegisterNode(t *testing.T) {
 }
 
 func TestRouter_AttachNode(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ampNodeL := "uk-sa2341-anode-v0-a1a0"
 	ampNodeR := "uk-sa2341-anode-v0-a1a1"
@@ -916,7 +928,7 @@ func TestRouter_AttachNode(t *testing.T) {
 			Return(nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
@@ -938,10 +950,10 @@ func TestRouter_AttachNode(t *testing.T) {
 		}
 
 		nodeClient.On("AttachNode", nodeId, ampNodeL, ampNodeR).
-			Return(errors.New("some unexpected error occured"))
+			Return(errors.New("some unexpected error occurred"))
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/attach", bytes.NewReader(body))
@@ -956,7 +968,8 @@ func TestRouter_AttachNode(t *testing.T) {
 }
 
 func TestRouter_DetachNode(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NodeDetached", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
@@ -967,7 +980,7 @@ func TestRouter_DetachNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -990,7 +1003,7 @@ func TestRouter_DetachNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1010,7 +1023,7 @@ func TestRouter_DetachNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/attach", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1022,7 +1035,8 @@ func TestRouter_DetachNode(t *testing.T) {
 }
 
 func TestRouter_AddNodeToSite(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	networkId := uuid.NewV4().String()
 	siteId := uuid.NewV4().String()
@@ -1044,7 +1058,7 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 			Return(nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
@@ -1066,10 +1080,10 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 		}
 
 		nodeClient.On("AddNodeToSite", nodeId, networkId, siteId).
-			Return(errors.New("some unexpected error occured"))
+			Return(errors.New("some unexpected error occurred"))
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("POST", nodeEndpoint+"/"+nodeId+"/sites", bytes.NewReader(body))
@@ -1084,7 +1098,8 @@ func TestRouter_AddNodeToSite(t *testing.T) {
 }
 
 func TestRouter_RemoveNodeFromSite(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NodeRemoved", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
@@ -1095,7 +1110,7 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1118,7 +1133,7 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1138,7 +1153,7 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s/sites", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1150,7 +1165,8 @@ func TestRouter_RemoveNodeFromSite(t *testing.T) {
 }
 
 func TestRouter_DeleteNode(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("NodeDeleted", func(t *testing.T) {
 		nodeId := "uk-sa2341-hnode-v0-a1a0"
@@ -1161,7 +1177,7 @@ func TestRouter_DeleteNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1184,7 +1200,7 @@ func TestRouter_DeleteNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -1204,7 +1220,7 @@ func TestRouter_DeleteNode(t *testing.T) {
 		req, _ := http.NewRequest("DELETE", fmt.Sprintf("%s/%s", nodeEndpoint, nodeId), nil)
 
 		r := NewRouter(nil, nil, nil, nodeClient, routerConfig,
-			arc.MockAuthenticateUser).f.Engine()
+			arc.AuthenticateUser).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)

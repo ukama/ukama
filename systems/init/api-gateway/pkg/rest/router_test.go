@@ -19,22 +19,21 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
-	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
-
-	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	lmocks "github.com/ukama/ukama/systems/init/lookup/pb/gen/mocks"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	lmocks "github.com/ukama/ukama/systems/init/lookup/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -69,8 +68,10 @@ func TestRouter_PingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	arc := &providers.AuthRestClient{}
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	arc := &cmocks.AuthClient{}
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	// act
 	r.ServeHTTP(w, req)
@@ -85,12 +86,14 @@ func TestRouter_GetOrg_NotFound(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/v1/orgs/org-name", nil)
 
 	m := &lmocks.LookupServiceClient{}
-
 	m.On("GetOrg", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -111,10 +114,14 @@ func TestRouter_GetOrg(t *testing.T) {
 		Certificate: "helloOrg",
 		Ip:          "0.0.0.0",
 	}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -149,10 +156,14 @@ func TestRouter_AddOrg(t *testing.T) {
 		OrgId:       id,
 	}
 	m.On("AddOrg", mock.Anything, org).Return(&pb.AddOrgResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -175,11 +186,15 @@ func TestRouter_UpdateOrg(t *testing.T) {
 		Certificate: "updated_certs",
 		Ip:          "127.0.0.1",
 	}
+
 	m.On("UpdateOrg", mock.Anything, org).Return(&pb.UpdateOrgResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -208,10 +223,13 @@ func TestRouter_GetNode(t *testing.T) {
 		Certificate: "helloOrg",
 		Ip:          "0.0.0.0",
 	}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -235,10 +253,13 @@ func TestRouter_AddNode(t *testing.T) {
 	}
 
 	m.On("AddNodeForOrg", mock.Anything, nodeReq).Return(&pb.AddNodeResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -261,10 +282,14 @@ func TestRouter_DeleteNode(t *testing.T) {
 	}
 
 	m.On("DeleteNodeForOrg", mock.Anything, nodeReq).Return(&pb.DeleteNodeResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -294,10 +319,13 @@ func TestRouter_GetSystem(t *testing.T) {
 		Ip:          "0.0.0.0",
 		Port:        100,
 	}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -327,10 +355,13 @@ func TestRouter_AddSystem(t *testing.T) {
 	}
 
 	m.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -357,10 +388,13 @@ func TestRouter_UpdateSystem(t *testing.T) {
 	}
 
 	m.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -383,10 +417,13 @@ func TestRouter_DeleteSystem(t *testing.T) {
 	}
 
 	m.On("DeleteSystemForOrg", mock.Anything, sysReq).Return(&pb.DeleteSystemResponse{}, nil)
-	arc := &providers.AuthRestClient{}
+
+	arc := &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		l: client.NewLookupFromClient(m),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

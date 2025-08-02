@@ -64,7 +64,6 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 }
 
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
-
 	r := &Router{
 		clients: clients,
 		config:  config,
