@@ -61,8 +61,7 @@ func NewEventToNotifyFromClient(client pb.EventToNotifyServiceClient) *eventNoti
 
 func (e *eventNotification) Close() {
 	if e.conn != nil {
-		err := e.conn.Close()
-		if err != nil {
+		if err := e.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close EventNotification Service connection: %v", err)
 		}
 	}

@@ -34,7 +34,7 @@ type distributor struct {
 func NewDistributor(host string, timeout time.Duration) (*distributor, error) {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Distributor Service: %v", err)
 
 		return nil, err
 	}
@@ -60,8 +60,7 @@ func NewDistributorFromClient(client pb.DistributorServiceClient) *distributor {
 
 func (d *distributor) Close() {
 	if d.conn != nil {
-		err := d.conn.Close()
-		if err != nil {
+		if err := d.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Distributor Service connection: %v", err)
 		}
 	}

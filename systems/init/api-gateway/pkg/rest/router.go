@@ -111,10 +111,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 	auth.Use()

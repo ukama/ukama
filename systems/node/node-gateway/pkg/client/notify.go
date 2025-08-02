@@ -30,7 +30,7 @@ type Notify struct {
 func NewNotify(notifyHost string, timeout time.Duration) *Notify {
 	conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Notify Service: %v", err)
 	}
 	client := pb.NewNotifyServiceClient(conn)
 
@@ -53,8 +53,7 @@ func NewNotifyFromClient(mClient pb.NotifyServiceClient) *Notify {
 
 func (n *Notify) Close() {
 	if n.conn != nil {
-		err := n.conn.Close()
-		if err != nil {
+		if err := n.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Notify Service connection: %v", err)
 		}
 	}

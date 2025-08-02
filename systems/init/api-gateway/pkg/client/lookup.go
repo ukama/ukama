@@ -54,8 +54,7 @@ func NewLookupFromClient(lookupClient pb.LookupServiceClient) *Lookup {
 
 func (l *Lookup) Close() {
 	if l.conn != nil {
-		err := l.conn.Close()
-		if err != nil {
+		if err := l.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Lookup Service connection :%v", err)
 		}
 	}

@@ -53,8 +53,7 @@ func NewConfiguratorFromClient(mClient pb.ConfiguratorServiceClient) *Configurat
 
 func (c *Configurator) Close() {
 	if c.conn != nil {
-		err := c.conn.Close()
-		if err != nil {
+		if err := c.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Configurator Service connection: %v", err)
 		}
 	}

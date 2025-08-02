@@ -52,8 +52,7 @@ func NewControllerFromClient(mClient pb.ControllerServiceClient) *Controller {
 
 func (c *Controller) Close() {
 	if c.conn != nil {
-		err := c.conn.Close()
-		if err != nil {
+		if err := c.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close connection from Controller Service: %v", err)
 		}
 	}

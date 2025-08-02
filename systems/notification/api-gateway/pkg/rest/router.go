@@ -129,11 +129,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthServerUrl)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 
@@ -151,7 +146,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		dist := auth.Group("/distributor", "Event distribution", "real time even distribution")
 		dist.GET("/live", formatDoc("Real-time Notifications", "Get notification as they are reproted"), tonic.Handler(r.liveEventNotificationHandler, http.StatusOK))
-
 	}
 }
 
@@ -224,8 +218,7 @@ func (r *Router) liveEventNotificationHandler(c *gin.Context, req *GetRealTimeEv
 		return err
 	}
 	defer func() {
-		err := ws.Close()
-		if err != nil {
+		if err := ws.Close(); err != nil {
 			log.Warnf("Failed to gracefully close EventNotification webSocket connection: %v", err)
 		}
 	}()

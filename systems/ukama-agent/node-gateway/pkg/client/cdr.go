@@ -53,12 +53,10 @@ func NewCdrFromClient(asrClient pb.CDRServiceClient) *CDR {
 
 func (c *CDR) Close() {
 	if c.conn != nil {
-		err := c.conn.Close()
-		if err != nil {
+		if err := c.conn.Close(); err != nil {
 			log.Errorf("Failed to close CDR client connection. Error: %v ", err)
 		}
 	}
-
 }
 
 func (c *CDR) PostCDR(req *pb.CDR) (*pb.CDRResp, error) {

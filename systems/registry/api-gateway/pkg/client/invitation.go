@@ -53,8 +53,7 @@ func NewInvitationRegistryFromClient(mClient pb.InvitationServiceClient) *Invita
 
 func (i *InvitationRegistry) Close() {
 	if i.conn != nil {
-		err := i.conn.Close()
-		if err != nil {
+		if err := i.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Invitation Service connection: %v", err)
 		}
 	}

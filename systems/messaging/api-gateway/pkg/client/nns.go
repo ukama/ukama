@@ -29,7 +29,7 @@ type Nns struct {
 func NewNns(host string, timeout time.Duration) *Nns {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to NNS Service: %v", err)
 	}
 	client := pb.NewNnsClient(conn)
 
@@ -52,8 +52,7 @@ func NewNnsFromClient(NnsClient pb.NnsClient) *Nns {
 
 func (n *Nns) Close() {
 	if n.conn != nil {
-		err := n.conn.Close()
-		if err != nil {
+		if err := n.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close NNS server connection: %v", err)
 		}
 	}

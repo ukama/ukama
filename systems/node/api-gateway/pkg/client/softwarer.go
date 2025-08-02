@@ -53,8 +53,7 @@ func NewSoftwareManagerFromClient(mClient pb.SoftwareServiceClient) *SoftwareMan
 
 func (s *SoftwareManager) Close() {
 	if s.conn != nil {
-		err := s.conn.Close()
-		if err != nil {
+		if err := s.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close connection to Software Service: %v", err)
 		}
 	}

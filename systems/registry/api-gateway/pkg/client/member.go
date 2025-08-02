@@ -54,8 +54,7 @@ func NewRegistryFromClient(mClient pb.MemberServiceClient) *MemberRegistry {
 
 func (m *MemberRegistry) Close() {
 	if m.conn != nil {
-		err := m.conn.Close()
-		if err != nil {
+		if err := m.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Member Service connection: %v", err)
 		}
 	}

@@ -34,7 +34,7 @@ type mailer struct {
 func NewMailer(host string, timeout time.Duration) (*mailer, error) {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Errorf("Failed to connect to Mailer Service: %v", err)
 		return nil, err
 	}
 
@@ -59,8 +59,7 @@ func NewMailerFromClient(mailerClient pb.MailerServiceClient) *mailer {
 
 func (m *mailer) Close() {
 	if m.conn != nil {
-		err := m.conn.Close()
-		if err != nil {
+		if err := m.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Mailer Service connection: %v", err)
 		}
 	}

@@ -40,7 +40,7 @@ func NewReportClient(reportHost string, timeout time.Duration) *report {
 	// using same context for three connections
 	conn, err := grpc.NewClient(reportHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect to report host %q.Error: %v", reportHost, err)
+		log.Fatalf("Failed to connect to Report Service %q. Error: %v", reportHost, err)
 	}
 
 	return &report{
@@ -62,8 +62,7 @@ func NewReportFromClient(reportClient pb.ReportServiceClient) *report {
 
 func (r *report) Close() {
 	if r.conn != nil {
-		err := r.conn.Close()
-		if err != nil {
+		if err := r.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close connection to Report Service: %v", err)
 		}
 	}

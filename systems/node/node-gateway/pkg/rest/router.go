@@ -160,8 +160,7 @@ func (r *Router) logHandler(c *gin.Context, req *AddLogsRequest) (string, error)
 	}
 
 	defer func() {
-		err := file.Close()
-		if err != nil {
+		if err := file.Close(); err != nil {
 			r.logger.Warnf("Failed to gracefully close log file: %v", err)
 		}
 	}()

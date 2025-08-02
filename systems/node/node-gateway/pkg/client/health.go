@@ -52,8 +52,7 @@ func NewHealthFromClient(mClient pb.HealhtServiceClient) *Health {
 
 func (h *Health) Close() {
 	if h.conn != nil {
-		err := h.conn.Close()
-		if err != nil {
+		if err := h.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Health service connection: %v", err)
 		}
 	}

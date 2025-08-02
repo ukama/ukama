@@ -54,8 +54,7 @@ func NewNetworkRegistryFromClient(networkClient netpb.NetworkServiceClient) *Net
 
 func (n *NetworkRegistry) Close() {
 	if n.conn != nil {
-		err := n.conn.Close()
-		if err != nil {
+		if err := n.conn.Close(); err != nil {
 			log.Warnf("Failed to gracefully close Network Service connection: %v", err)
 		}
 	}
