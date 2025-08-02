@@ -10,7 +10,7 @@ set -euo pipefail
 CONFIG="smarc_config.yaml"
 YQ_BIN="./.bin/yq"
 FLASH_SCRIPT="flash-smarc.sh"
-ISO_BUILDER="./create_dual_partition_usb.sh"
+ISO_BUILDER="./create_dual_partition.sh"
 RETRIES=3
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
@@ -215,8 +215,12 @@ reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
-    echo "Create bootable USB with custom autorun"
-    USB_DEV="$USB_DEV" FLASH_SCRIPT="$FLASH_SCRIPT" "$ISO_BUILDER"
+    echo "Create bootable USB"
+    DEV="$USB_DEV" \
+    FLASH_SCRIPT="$FLASH_SCRIPT" \
+    BOARD_NAME="SMARC" \
+    ISO_FILE="alpine.iso" \
+       "$ISO_BUILDER"
 
     # Start HTTP server to serve image
     echo "Starting temporary HTTP server to serve image"
@@ -275,7 +279,7 @@ EOF
         echo "PASS" > "$STATUS_FILE"
     fi
 } 2>&1 | tee -a "$ORCHESTRATOR_LOG" || {
-    echo "❌ Flashing failed — logs in: $TMP_LOG_DIR" | tee -a "$ORCHESTRATOR_LOG"
+    echo "Flashing failed — logs in: $TMP_LOG_DIR" | tee -a "$ORCHESTRATOR_LOG"
     echo "FAIL" > "$STATUS_FILE"
     exit 1
 }
