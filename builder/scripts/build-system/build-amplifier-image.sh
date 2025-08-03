@@ -110,7 +110,7 @@ create_disk_image() {
     truncate -s 16G "$RAW_IMG"
     # smaller image for testing
     #    truncate -s 5G "$RAW_IMG"
-    check_status $? "Raw image ready" create_disk_image
+    check_status $? "Raw image ready" "create_disk_image"
 }
 
 attach_loop() {
@@ -120,7 +120,7 @@ attach_loop() {
         log ERROR "Failed to attach loop device"
         exit 1
     fi
-    check_status 0 "Loop device: $LOOPDEV" attach_loop
+    check_status 0 "Loop device: $LOOPDEV" "attach_loop"
 }
 
 partition_image() {
@@ -131,7 +131,7 @@ partition_image() {
          mkpart primary ext4       4609MiB 12289MiB \
          mkpart primary linux-swap 12289MiB 100%     \
          set 1 boot on
-    check_status $? "Partitions created" partition_image
+    check_status $? "Partitions created" "partition_image"
 }
 
 # smaller image for testing (5GB)
@@ -150,30 +150,31 @@ map_partitions() {
     log INFO "Mapping partitions for $LOOPDEV"
     sudo kpartx -av "$LOOPDEV" | tee /dev/stderr
     sleep 1
-    check_status $? "Partitions mapped" map_partitions
+    check_status $? "Partitions mapped" "map_partitions"
 }
 
 format_partitions() {
     log INFO "Formatting partitions"
+    STAGE="format_partitions"
     local b=$(basename "$LOOPDEV")
     local p1="/dev/mapper/${b}p1" p2="/dev/mapper/${b}p2"
     local p3="/dev/mapper/${b}p3" p4="/dev/mapper/${b}p4"
 
     sudo mkfs.vfat -F32 -n boot    "$p1"
-    check_status $? "boot formatted" format_partitions
+    check_status $? "boot formatted" "${STAGE}"
 
     sudo mkfs.ext4 -L passive \
          -O ^64bit,^metadata_csum \
          "$p2"
-    check_status $? "passive formatted" format_partitions
+    check_status $? "passive formatted" "${STAGE}"
 
     sudo mkfs.ext4 -L primary \
          -O ^64bit,^metadata_csum \
          "$p3"
-    check_status $? "primary formatted" format_partitions
+    check_status $? "primary formatted" "${STAGE}"
 
     sudo mkswap    -L swap         "$p4"
-    check_status $? "swap created" format_partitions
+    check_status $? "swap created" "${STAGE}"
 }
 
 mount_partition() {
@@ -181,10 +182,11 @@ mount_partition() {
     log INFO "Mounting $part → $mp"
     sudo mkdir -p "$mp"
     sudo mount "$part" "$mp"
-    check_status $? "Mounted $part" mount_partition
+    check_status $? "Mounted $part" "mount_partition"
 }
 
 copy_boot() {
+    STAGE="copy_boot"
     log INFO "Copying boot files from ${ROOTFS_DIR}/boot → ${BOOT_MNT} (which will become /boot)"
 
     local src="${ROOTFS_DIR}/boot"
@@ -207,7 +209,7 @@ copy_boot() {
       "${src}/" "${dst}/boot"
     check_status $? "Copied u-boot at91boot,  etc." "${STAGE}"
 
-    log SUCCESS "Boot partition populated under /boot" "${STAGE}"
+    log SUCCESS "Boot partition populated under /boot"
 }
 
 copy_rootfs() {
@@ -360,8 +362,8 @@ fi
 
 deploy_to_rootfs "${PRIMARY_MNT}"
 deploy_to_rootfs "${PASSIVE_MNT}"
-copy_misc_files  "${PRIMARY_MOUNT}"
-copy_misc_files  "${PASSIVE_MOUNT}"
+copy_misc_files  "${PRIMARY_MNT}"
+copy_misc_files  "${PASSIVE_MNT}"
 
 log "SUCCESS" "Disk image creation completed successfully!"
 exit 0
