@@ -7,9 +7,10 @@
 
 set -euo pipefail
 
+BOARD_NAME=""
 CONFIG="smarc_config.yaml"
 YQ_BIN="./.bin/yq"
-FLASH_SCRIPT="flash-smarc.sh"
+FLASH_SCRIPT=""
 ISO_BUILDER="./create_dual_partition.sh"
 RETRIES=3
 
@@ -49,7 +50,7 @@ trap cleanup EXIT
 REQUIRED_KEYS=(
     ".network.host_eth" ".network.host_ip" ".network.target_ip"
     ".image.name" ".image.path"
-    ".usb.device" ".usb.iso_url"
+    ".host_device.device" ".host_device.iso_url"
     ".serial.device" ".serial.baud"
     ".flash.target_device" ".flash.success_marker" ".flash.boot_marker"
 )
@@ -101,6 +102,35 @@ detect_ssh_state() {
     esac
 }
 
+# Main
+ORIGINAL_SSH_STATE=$(detect_ssh_state)
+
+# Parse options: -c for config, -b for board name (SMARC, FEM-Control)
+while getopts ":c:b:" opt; do
+  case "${opt}" in
+    c) CONFIG="${OPTARG}" ;;
+    b) BOARD_NAME="${OPTARG}" ;;
+    *) echo "Usage: $0 [-c <config_file>] [-b <board_name>]" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND-1))
+
+# Ensure both flags are provided
+if [[ -z "$CONFIG" || -z "$BOARD_NAME" ]]; then
+    echo "Error: Both -c <config_file> and -b <board_name> are required."
+    echo "Usage: $0 -c <config_file> -b <board_name>"
+    exit 1
+fi
+
+# Ensure the config file exists
+if [ ! -f "$CONFIG" ]; then
+    echo "Config file '$CONFIG' not found."
+    echo "Usage: $0 -c <config_file>"
+    exit 1
+fi
+
+FLASH_SCRIPT="flash-${BOARD_NAME}.sh"
+
 ensure_yq
 validate_config
 
@@ -109,20 +139,18 @@ HOST_IP=$(yq_read         '.network.host_ip')
 TARGET_IP=$(yq_read       '.network.target_ip')
 IMG_NAME=$(yq_read        '.image.name')
 IMG_PATH=$(yq_read        '.image.path')
-USB_DEV=$(yq_read         '.usb.device')
-ISO_URL=$(yq_read         '.usb.iso_url')
+HOST_DEV=$(yq_read        '.host_device.device')
+ISO_URL=$(yq_read         '.host_device.iso_url')
 SERIAL_DEV=$(yq_read      '.serial.device')
 SERIAL_BAUD=$(yq_read     '.serial.baud')
 TARGET_DEV=$(yq_read      '.flash.target_device')
 SUCCESS_MARKER=$(yq_read  '.flash.success_marker')
 BOOT_MARKER=$(yq_read     '.flash.boot_marker')
 
-ORIGINAL_SSH_STATE=$(detect_ssh_state)
-
 {
-    # Verify USB device exists
-    if [ ! -b "$USB_DEV" ]; then
-        echo "USB device '$USB_DEV' not found or is not a block device."
+    # Verify device exists
+    if [ ! -b "$HOST_DEV" ]; then
+        echo "Host device '$HOST_DEV' not found or is not a block device."
         echo "Make sure it's plugged in and use the full device path (e.g., /dev/sdb)"
         exit 1
     fi
@@ -169,16 +197,16 @@ EOF
 #!/bin/sh
 set -eux
 
-echo "[SMARC] Enabling eth0"
+echo "[$BOARD_NAME] Enabling eth0"
 ip link set eth0 up
 
-echo "[SMARC] Bringing up eth0 via DHCP (udhcpc)"
+echo "[$BOARD_NAME] Bringing up eth0 via DHCP (udhcpc)"
 udhcpc -i eth0 -q
 
-echo "[SMARC] Waiting a couple seconds for lease…"
+echo "[$BOARD_NAME] Waiting a couple seconds for lease…"
 sleep 2
 
-echo "[SMARC] Detecting eMMC device..."
+echo "[$BOARD_NAME] Detecting eMMC device..."
 for dev in /dev/mmcblk*; do
     if [ -e "\${dev}boot0" ] && [ -e "\${dev}boot1" ]; then
         EMMC_DEV="\$dev"
@@ -190,35 +218,35 @@ if [ -z "\${EMMC_DEV:-}" ]; then
     echo "[ERROR] No eMMC device found with boot0/boot1"
     exit 1
 fi
-echo "[SMARC] Detected eMMC device: \$EMMC_DEV"
+echo "[$BOARD_NAME] Detected eMMC device: \$EMMC_DEV"
 
-echo "[SMARC] Downloading image from ${HOST_IP}:8000/${IMG_NAME}"
+echo "[$BOARD_NAME] Downloading image from ${HOST_IP}:8000/${IMG_NAME}"
 wget "http://${HOST_IP}:8000/${IMG_NAME}" -O "/mnt/${IMG_NAME}"
 
 ls -lh "/mnt/${IMG_NAME}"
 
 if [ ! -f "/mnt/${IMG_NAME}" ]; then
-    echo "[SMARC] Image not found after wget!"
+    echo "[$BOARD_NAME] Image not found after wget!"
     exit 1
 fi
 
-echo "[SMARC] Zeroing first 64MB of \$EMMC_DEV"
+echo "[$BOARD_NAME] Zeroing first 64MB of \$EMMC_DEV"
 dd if=/dev/zero of="\$EMMC_DEV" bs=1M count=64
 
-echo "[SMARC] Flashing image to \$EMMC_DEV"
+echo "[$BOARD_NAME] Flashing image to \$EMMC_DEV"
 echo "[WARN] pv not found — flashing without progress bar"
 dd if="/mnt/${IMG_NAME}" of="\$EMMC_DEV" bs=4M
 sync
 
-echo "[SMARC] Flash complete"
+echo "[$BOARD_NAME] Flash complete"
 reboot
 EOF
     chmod +x "$FLASH_SCRIPT"
 
-    echo "Create bootable USB"
-    DEV="$USB_DEV" \
+    echo "Create bootable $HOST_DEV"
+    DEV="$HOST_DEV" \
     FLASH_SCRIPT="$FLASH_SCRIPT" \
-    BOARD_NAME="SMARC" \
+    BOARD_NAME="$BOARD_NAME" \
     ISO_FILE="alpine.iso" \
        "$ISO_BUILDER"
 
@@ -231,7 +259,7 @@ EOF
     echo "HTTP server started with PID $HTTP_PID"
     cd - > /dev/null
 
-    echo "Do you want to test this image in QEMU before inserting into SMARC? (y/N): "
+    echo "Do you want to test this image in QEMU before inserting into target? (y/N): "
     read -r qemu_choice
 
     if [[ "$qemu_choice" == "y" || "$qemu_choice" == "Y" ]]; then
@@ -242,28 +270,28 @@ EOF
             KVM="-enable-kvm"
         fi
 
-        echo "Booting actual USB device ($USB_DEV) in QEMU..."
+        echo "Booting actual device ($HOST_DEV) in QEMU..."
         sudo qemu-system-x86_64 \
              $KVM \
              -m 1024 \
              -machine type=pc,accel=kvm \
              -boot order=d \
-             -drive file="$USB_DEV",format=raw,if=virtio,media=disk \
+             -drive file="$HOST_DEV",format=raw,if=virtio,media=disk \
              -serial mon:stdio \
              -display none \
              -name "AlpineUSBTest"
     else
         # Eject USB
-        sudo eject "$USB_DEV"
+        sudo eject "$HOST_DEV"
 
-        echo "Insert USB into SMARC board and power it up"
+        echo "Insert USB into $BOARD_NAME and power it up"
         echo "USB is ready. Insert into target and run flash-smarc.sh manually."
         echo "(Boot to Alpine, mount /dev/sda2, run /mnt/flash-smarc.sh)"
         echo "Please ensure the board is powered on and connected via serial (${SERIAL_DEV})."
         echo "Once ready, press ENTER to begin monitoring the serial port..."
         read -r
 
-        echo "Monitoring serial output from SMARC via ${SERIAL_DEV}..."
+        echo "Monitoring serial output from $BOARD_NAME via ${SERIAL_DEV}..."
         touch "$SERIAL_LOG"
         cat "$SERIAL_DEV" | tee "$RAW_SERIAL" "$SERIAL_LOG" &
         SERIAL_PID=$!
