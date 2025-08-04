@@ -352,6 +352,8 @@ if [ "$IS_INCLUDE_BFF" = true ]; then
     SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://report-api-gateway:8080' WHERE systems."name" = 'report';"
     SYS_QUERY_11="UPDATE PUBLIC.systems SET url = 'http://api-gateway-ukama-agent:8080' WHERE systems."name" = 'ukamaagent'";
     SYS_QUERY_12="UPDATE PUBLIC.systems SET url = 'http://api-gateway-dummy:8080' WHERE systems."name" = 'dummy'";
+    SYS_QUERY_13="UPDATE PUBLIC.systems SET url = 'http://api-gateway-messaging:8080' WHERE systems."name" = 'messaging'";
+    SYS_QUERY_14="UPDATE PUBLIC.systems SET url = 'http://api-gateway-hub:8080' WHERE systems."name" = 'hub'";
 fi
 if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_1="UPDATE PUBLIC.systems SET url = 'http://localhost:8075' WHERE systems."name" = 'registry'";
@@ -366,6 +368,8 @@ if [ "$IS_INCLUDE_BFF" = false ]; then
     SYS_QUERY_10="UPDATE PUBLIC.systems SET url = 'http://localhost:8079' WHERE systems."name" = 'report'";
     SYS_QUERY_11="UPDATE PUBLIC.systems SET url = 'http://localhost:8073' WHERE systems."name" = 'ukamaagent'";
     SYS_QUERY_12="UPDATE PUBLIC.systems SET url = 'http://localhost:8086' WHERE systems."name" = 'dummy'";
+    SYS_QUERY_13="UPDATE PUBLIC.systems SET url = 'http://localhost:8079' WHERE systems."name" = 'messaging'";
+    SYS_QUERY_14="UPDATE PUBLIC.systems SET url = 'http://localhost:8000' WHERE systems."name" = 'hub'";
 fi
 
 echo "$TAG Registering systems URL in lookup db..."
@@ -382,6 +386,8 @@ psql $DB_URI -c "$SYS_QUERY_9"
 psql $DB_URI -c "$SYS_QUERY_10"
 psql $DB_URI -c "$SYS_QUERY_11"
 psql $DB_URI -c "$SYS_QUERY_12"
+psql $DB_URI -c "$SYS_QUERY_13"
+psql $DB_URI -c "$SYS_QUERY_14"
 
 cleanup
 
