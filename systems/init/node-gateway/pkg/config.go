@@ -47,7 +47,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			Timeout:   3 * time.Second,
-			Bootstrap: "0.0.0.0:9090",
+			Bootstrap: "bootstrap:9090",
 		},
 
 		HttpServices: HttpEndpoints{
