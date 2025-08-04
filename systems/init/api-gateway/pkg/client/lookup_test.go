@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	//"github.com/ukama/ukama/systems/init/lookup/gen/mocks"
 	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	mocks "github.com/ukama/ukama/systems/init/lookup/pb/gen/mocks"

@@ -8,83 +8,80 @@
 
 package rest
 
-// var defaultCors = cors.Config{
-// 	AllowAllOrigins: true,
-// }
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
 
-// var routerConfig = &RouterConfig{
-// 	serverConf: &rest.HttpConfig{
-// 		Cors: defaultCors,
-// 	},
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
+	"github.com/ukama/ukama/systems/init/node-gateway/mocks"
+	"github.com/ukama/ukama/systems/init/node-gateway/pkg"
+)
 
-// 	httpEndpoints: &pkg.HttpEndpoints{
-// 		NodeMetrics: "localhost:8080",
-// 	},
-// 	auth: &cconfig.Auth{
-// 		AuthAppUrl:    "http://localhost:4455",
-// 		AuthServerUrl: "http://localhost:4434",
-// 		AuthAPIGW:     "http://localhost:8080",
-// 	},
-// }
+var defaultCors = rest.HttpConfig{
+	Cors: cors.Config{
+		AllowAllOrigins: true,
+	},
+}
 
-// var testClientSet *Clients
+var routerConfig = &RouterConfig{
+	serverConf: &defaultCors,
+	httpEndpoints: &pkg.HttpEndpoints{
+		NodeMetrics: "localhost:8080",
+	},
+	auth: &config.Auth{
+		AuthAppUrl:    "http://localhost:4455",
+		AuthServerUrl: "http://localhost:4434",
+		AuthAPIGW:     "http://localhost:8080",
+	},
+}
 
-// func init() {
-// 	gin.SetMode(gin.TestMode)
-// 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-// 		Timeout: 1 * time.Second,
-// 		Lookup:  "localhost:8080",
-// 	})
-// }
+var testClientSet *Clients
 
-// func TestRouter_GetNode(t *testing.T) {
-// 	nodeId := ukama.NewVirtualNodeId("homenode").String()
-// 	w := httptest.NewRecorder()
-// 	req, _ := http.NewRequest("GET", "/v1/nodes/"+nodeId, nil)
+func init() {
+	gin.SetMode(gin.TestMode)
+	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+		Timeout:   1 * time.Second,
+		Bootstrap: "localhost:8080",
+	})
+}
 
-// 	m := &lmocks.LookupServiceClient{}
+func TestRouter_GetNodeCredentials_Success(t *testing.T) {
+	// arrange
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/nodes/test-node-id", nil)
 
-// 	nodeReq := &pb.GetNodeRequest{
-// 		NodeId: nodeId,
-// 	}
+	mockBootstrap := &mocks.BootstrapEP{}
+	expectedResponse := &gen.GetNodeCredentialsResponse{
+		Id:          "test-node-id",
+		OrgName:     "test-org",
+		Ip:          "0.0.0.0",
+		Certificate: "test-certificate-data",
+	}
 
-// 	m.On("GetNode", mock.Anything, nodeReq).Return(&pb.GetNodeResponse{
-// 		NodeId:      nodeId,
-// 		OrgName:     "org-name",
-// 		Certificate: "helloOrg",
-// 		Ip:          "0.0.0.0",
-// 	}, nil)
+	mockBootstrap.On("GetNodeCredentials", mock.Anything).Return(expectedResponse, nil)
 
-// 	r := NewRouter(&Clients{
-// 		l: client.NewLookupFromClient(m),
-// 	}, routerConfig).f.Engine()
+	clients := &Clients{
+		Bootstrap: mockBootstrap,
+	}
 
-// 	// act
-// 	r.ServeHTTP(w, req)
+	r := NewRouter(clients, routerConfig).f.Engine()
 
-// 	// assert
-// 	assert.Equal(t, http.StatusOK, w.Code)
-// 	m.AssertExpectations(t)
-// 	assert.Contains(t, w.Body.String(), strings.ToLower(nodeId))
-// }
+	// act
+	r.ServeHTTP(w, req)
 
-// func TestRouter_GetNode_NotFound(t *testing.T) {
-// 	nodeId := ukama.NewVirtualNodeId("homenode").String()
-// 	w := httptest.NewRecorder()
-// 	req, _ := http.NewRequest("GET", "/v1/nodes/"+nodeId, nil)
-
-// 	m := &lmocks.LookupServiceClient{}
-
-// 	m.On("GetNode", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "node not found"))
-
-// 	r := NewRouter(&Clients{
-// 		l: client.NewLookupFromClient(m),
-// 	}, routerConfig).f.Engine()
-
-// 	// act
-// 	r.ServeHTTP(w, req)
-
-// 	// assert
-// 	assert.Equal(t, http.StatusNotFound, w.Code)
-// 	m.AssertExpectations(t)
-// }
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "test-node-id")
+	assert.Contains(t, w.Body.String(), "test-org")
+	assert.Contains(t, w.Body.String(), "0.0.0.0")
+	assert.Contains(t, w.Body.String(), "test-certificate-data")
+	mockBootstrap.AssertExpectations(t)
+}
