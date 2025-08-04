@@ -11,16 +11,15 @@ package main
 import (
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
-
-	"github.com/ukama/ukama/systems/common/providers"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/auth"
 	"github.com/ukama/ukama/systems/hub/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/hub/node-gateway/pkg"
-	server "github.com/ukama/ukama/systems/hub/node-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	"github.com/ukama/ukama/systems/common/config"
+	server "github.com/ukama/ukama/systems/hub/node-gateway/pkg/rest"
 )
 
 var svcConf = pkg.NewConfig()
@@ -30,13 +29,10 @@ func main() {
 	initConfig()
 
 	clientSet := server.NewClientsSet(&svcConf.Services)
-	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.BaseConfig.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to create auth client: %v", err)
-	}
 
 	metrics.StartMetricsServer(&svcConf.Metrics)
-	r := server.NewRouter(clientSet, server.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	r := server.NewRouter(clientSet, server.NewRouterConfig(svcConf),
+		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug()).AuthenticateUser)
 	r.Run()
 
 }
