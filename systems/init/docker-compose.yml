@@ -32,6 +32,20 @@ services:
    - msgclient-init
    - postgresd-init
 
+ bootstrap:
+  build: ./bootstrap
+  environment:
+   - DEBUGMODE=true
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-init:9095
+   - BOOTSTRAP_SERVICE_HOST=bootstrap
+   - BOOTSTRAP_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
+  restart: always
+  networks:
+   - ukama-net
+
  node-gateway-init:
   build: ./node-gateway
   restart: always
@@ -42,9 +56,6 @@ services:
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
-   - SERVICES_LOOKUP=lookup:9090
-   # - CORS_ALLOWALLORIGINS=true
-   # - CORS_ALLOWORIGINS=""
   depends_on:
    - lookup
 

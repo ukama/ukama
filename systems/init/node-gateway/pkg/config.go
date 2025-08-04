@@ -26,8 +26,8 @@ type Config struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
-	Lookup  string
+	Timeout   time.Duration
+	Bootstrap string
 }
 
 type HttpEndpoints struct {
@@ -46,8 +46,8 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
-			Lookup:  "0.0.0.0:9090",
+			Timeout:   3 * time.Second,
+			Bootstrap: "0.0.0.0:9090",
 		},
 
 		HttpServices: HttpEndpoints{
