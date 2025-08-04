@@ -39,7 +39,7 @@ filter_make_sys() {
                 PATHS+=("node/configurator" "billing/report" "billing/api-gateway" "billing/collector" )
                 ;;
             "init")
-                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway")
+                PATHS+=("init/lookup" "init/api-gateway" "init/node-gateway" "init/bootstrap" "init/node-gateway")
                 ;;
             "inventory")
                 PATHS+=("inventory/accounting" "inventory/component" "inventory/api-gateway")
