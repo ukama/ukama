@@ -110,7 +110,7 @@ func waitForExit() {
 		done <- true
 	}()
 
-	log.Debug("awaiting terminate/interrrupt signal")
+	log.Debug("awaiting terminate/interrupt signal")
 	<-done
 	log.Infof("exiting service %s", pkg.ServiceName)
 }

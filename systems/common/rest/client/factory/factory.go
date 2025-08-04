@@ -58,16 +58,16 @@ func (s *nodeFactoryClient) Get(id string) (*NodeFactoryInfo, error) {
 
 	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/node/" + id)
 	if err != nil {
-		log.Errorf("GetComponent failure. error: %s", err.Error())
+		log.Errorf("Get node failure. error: %s", err.Error())
 
 		return nil, fmt.Errorf("getComponent failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &nodeFactory)
 	if err != nil {
-		log.Tracef("Failed to deserialize component info. Error message is: %s", err.Error())
+		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
 
-		return nil, fmt.Errorf("component info deserialization failure: %w", err)
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
 	}
 
 	log.Infof("Node Factory Info: %+v", nodeFactory)

@@ -106,7 +106,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "getComponent failure")
+		assert.Contains(tt, err.Error(), "get node failure")
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -130,7 +130,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "component info deserialization failure")
+		assert.Contains(tt, err.Error(), "node info deserialization failure")
 	})
 
 	t.Run("RequestFailure", func(tt *testing.T) {
@@ -149,7 +149,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "getComponent failure")
+		assert.Contains(tt, err.Error(), "get node failure")
 	})
 
 	t.Run("EmptyResponseBody", func(tt *testing.T) {
@@ -172,7 +172,7 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "component info deserialization failure")
+		assert.Contains(tt, err.Error(), "node info deserialization failure")
 	})
 
 }
