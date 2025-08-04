@@ -18,21 +18,22 @@ import (
 	"net/url"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/hub/api-gateway/cmd/version"
-	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/hub/api-gateway/pkg/client"
-	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
-	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
-
 	"github.com/Masterminds/semver/v3"
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/minio/minio-go/v7"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/hub/api-gateway/cmd/version"
+	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/hub/api-gateway/pkg/client"
+
+	log "github.com/sirupsen/logrus"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
+	dpb "github.com/ukama/ukama/systems/hub/distributor/pb/gen"
 )
 
 type Router struct {
@@ -95,7 +96,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.HttpServices,
 		serverConf:    &svcConf.Server,
-		debugMode:     svcConf.BaseConfig.DebugMode,
+		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
 		isGlobal:      svcConf.IsGlobal,
 		distributor:   svcConf.HttpServices.Distributor,
@@ -122,18 +123,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
+
 	auth.Use()
 	{
 		artifact := auth.Group("/hub", "Artifact store", "Artifact operations")
 		artifact.GET("/:type/:name/:filename", formatDoc("Get Artifact contents", "Get artifact contents or its index files"), tonic.Handler(r.artifactGetHandler, http.StatusOK))
 		artifact.PUT("/:type/:name/:version", formatDoc("Upload artifact", "Upload a artifact contents"), tonic.Handler(r.artifactPutHandler, http.StatusCreated))
-		artifact.GET("/:type/:name", formatDoc("List of versions for artifcat", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
+		artifact.GET("/:type/:name", formatDoc("List of versions for artifact", "List all the available version and location info for artifact"), tonic.Handler(r.artifactListVersionsHandler, http.StatusOK))
 		artifact.GET("/:type", formatDoc("List all artifact", "List all artifact of the matching type"), tonic.Handler(r.listArtifactsHandler, http.StatusOK))
 
 		distr := auth.Group("/distributor", "Get chunks", "Download Artifact in chunk")
