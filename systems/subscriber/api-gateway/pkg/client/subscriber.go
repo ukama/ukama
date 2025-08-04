@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
 
 type Registry struct {
@@ -26,11 +27,11 @@ type Registry struct {
 }
 
 func NewRegistry(host string, timeout time.Duration) *Registry {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Subscriber Registry Service: %v", err)
 	}
+
 	client := pb.NewRegistryServiceClient(conn)
 
 	return &Registry{
@@ -51,7 +52,11 @@ func NewRegistryFromClient(RegistryClient pb.RegistryServiceClient) *Registry {
 }
 
 func (sub *Registry) Close() {
-	_ = sub.conn.Close()
+	if sub.conn != nil {
+		if err := sub.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Subscriber Registry connection: %v", err)
+		}
+	}
 }
 
 func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {

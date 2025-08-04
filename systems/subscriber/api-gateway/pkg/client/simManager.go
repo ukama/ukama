@@ -12,10 +12,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	log "github.com/sirupsen/logrus"
 	cclient "github.com/ukama/ukama/systems/common/rest/client"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
@@ -28,10 +28,9 @@ type SimManager struct {
 }
 
 func NewSimManager(host string, timeout time.Duration) *SimManager {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Sim Manager Service: %v", err)
 	}
 	client := pb.NewSimManagerServiceClient(conn)
 
@@ -53,7 +52,11 @@ func NewSimManagerFromClient(SimManagerClient pb.SimManagerServiceClient) *SimMa
 }
 
 func (sm *SimManager) Close() {
-	_ = sm.conn.Close()
+	if sm.conn != nil {
+		if err := sm.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Sim Manager Service connection: %v", err)
+		}
+	}
 }
 
 func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
