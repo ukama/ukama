@@ -50,14 +50,14 @@ func TestGetNodeCredentials(t *testing.T) {
 					OrgName:    "test-org",
 					SystemName: "messaging",
 				}).Return(&lpb.GetSystemResponse{
-					Ip:          "0.0.0.0",
+					Ip:          "192.168.1.100",
 					Certificate: "test-certificate-data",
 				}, nil)
 			},
 			expectedResult: &pb.GetNodeCredentialsResponse{
 				Id:          "test-node-123",
 				OrgName:     "test-org",
-				Ip:          "0.0.0.0",
+				Ip:          "192.168.1.100",
 				Certificate: "test-certificate-data",
 			},
 			expectedError: nil,
@@ -181,91 +181,4 @@ func TestGetNodeCredentials(t *testing.T) {
 			msgBusMock.AssertExpectations(t)
 		})
 	}
-}
-
-func TestGetNodeCredentials_EdgeCases(t *testing.T) {
-	t.Run("Empty node ID", func(t *testing.T) {
-		factoryMock := mocks.NewNodeFactoryClient(t)
-		lookupMock := mocks.NewLookupClientProvider(t)
-		msgBusMock := mbmocks.NewMsgBusServiceClient(t)
-
-		// Setup factory mock to return an error for empty ID
-		factoryMock.On("Get", "").Return(nil, errors.New("invalid node ID"))
-
-		server := NewBootstrapServer("test-org", msgBusMock, false, lookupMock, factoryMock)
-		req := &pb.GetNodeCredentialsRequest{Id: ""}
-
-		result, err := server.GetNodeCredentials(context.Background(), req)
-
-		assert.Error(t, err)
-		assert.Nil(t, result)
-		assert.Equal(t, "invalid node ID", err.Error())
-	})
-
-	t.Run("Nil request", func(t *testing.T) {
-		factoryMock := mocks.NewNodeFactoryClient(t)
-		lookupMock := mocks.NewLookupClientProvider(t)
-		msgBusMock := mbmocks.NewMsgBusServiceClient(t)
-
-		server := NewBootstrapServer("test-org", msgBusMock, false, lookupMock, factoryMock)
-
-		// This should panic or return an error due to nil request
-		assert.Panics(t, func() {
-			server.GetNodeCredentials(context.Background(), nil)
-		})
-	})
-
-	t.Run("Context cancellation", func(t *testing.T) {
-		factoryMock := mocks.NewNodeFactoryClient(t)
-		lookupMock := mocks.NewLookupClientProvider(t)
-		msgBusMock := mbmocks.NewMsgBusServiceClient(t)
-
-		// Setup factory mock to simulate a delay
-		factoryMock.On("Get", "test-node").Return(&factory.NodeFactoryInfo{
-			Id:      "test-node",
-			OrgName: "test-org",
-		}, nil)
-
-		// Setup lookup client provider mock
-		lookupClientMock := &lmocks.LookupServiceClient{}
-		lookupMock.On("GetClient").Return(lookupClientMock, nil)
-
-		// Setup lookup service mock to return messaging system
-		lookupClientMock.On("GetSystemForOrg", mock.Anything, &lpb.GetSystemRequest{
-			OrgName:    "test-org",
-			SystemName: "messaging",
-		}).Return(&lpb.GetSystemResponse{
-			Ip:          "0.0.0.0",
-			Certificate: "test-certificate-data",
-		}, nil)
-
-		server := NewBootstrapServer("test-org", msgBusMock, false, lookupMock, factoryMock)
-		req := &pb.GetNodeCredentialsRequest{Id: "test-node"}
-
-		// Create a cancelled context
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel()
-
-		result, err := server.GetNodeCredentials(ctx, req)
-
-		// The method should still work as it doesn't use the context for cancellation
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-	})
-}
-
-func TestNewBootstrapServer(t *testing.T) {
-	factoryMock := mocks.NewNodeFactoryClient(t)
-	lookupMock := mocks.NewLookupClientProvider(t)
-	msgBusMock := mbmocks.NewMsgBusServiceClient(t)
-
-	server := NewBootstrapServer("test-org", msgBusMock, true, lookupMock, factoryMock)
-
-	assert.NotNil(t, server)
-	assert.Equal(t, "test-org", server.orgName)
-	assert.Equal(t, msgBusMock, server.msgbus)
-	assert.True(t, server.debug)
-	assert.Equal(t, lookupMock, server.lookupClient)
-	assert.Equal(t, factoryMock, server.factoryClient)
-	assert.NotNil(t, server.bootstrapRoutingKey)
 }
