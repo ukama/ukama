@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/data-plan/rate/pb/gen"
 )
 
 type RateClient struct {
@@ -27,10 +27,9 @@ type RateClient struct {
 }
 
 func NewRateClient(rateHost string, timeout time.Duration) *RateClient {
-
 	conn, err := grpc.NewClient(rateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Rate Service: %v", err)
 	}
 	client := pb.NewRateServiceClient(conn)
 
@@ -52,7 +51,11 @@ func NewRateClientFromClient(client pb.RateServiceClient) *RateClient {
 }
 
 func (r *RateClient) Close() {
-	r.conn.Close()
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Rate Service connection: %v", err)
+		}
+	}
 }
 
 func (r *RateClient) GetRate(req *pb.GetRateRequest) (*pb.GetRateResponse, error) {
