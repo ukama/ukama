@@ -34,7 +34,7 @@ func NewBootstrap(bootstrapHost string, timeout time.Duration) *Bootstrap {
 
 	conn, err := grpc.NewClient(bootstrapHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Bootstrap Service:  %v", err)
 	}
 	client := pb.NewBootstrapServiceClient(conn)
 
@@ -56,7 +56,11 @@ func NewBootstrapFromClient(mClient pb.BootstrapServiceClient) *Bootstrap {
 }
 
 func (r *Bootstrap) Close() {
-	r.conn.Close()
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Bootstrap Service connection: %v", err)
+		}
+	}
 }
 
 func (r *Bootstrap) GetNodeCredentials(req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {

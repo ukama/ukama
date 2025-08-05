@@ -33,6 +33,7 @@ import (
 )
 
 var svcConf *pkg.Config
+var FactorySystem = "factory"
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -65,7 +66,7 @@ func runGrpcServer() {
 	}
 
 	factoryUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug()),
-		ic.CreateHostString(svcConf.OrgName, "factory"), &svcConf.OrgName)
+		ic.CreateHostString(svcConf.OrgName, FactorySystem), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve factory system address from initClient: %v", err)
 	}

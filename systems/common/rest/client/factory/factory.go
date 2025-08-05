@@ -60,7 +60,7 @@ func (s *nodeFactoryClient) Get(id string) (*NodeFactoryInfo, error) {
 	if err != nil {
 		log.Errorf("Get node failure. error: %s", err.Error())
 
-		return nil, fmt.Errorf("getComponent failure: %w", err)
+		return nil, fmt.Errorf("getNodeFatctory failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &nodeFactory)
