@@ -1,0 +1,26 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2025-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+option go_package = "pb/gen";
+package ukama.bootstrap.v1;
+
+service BootstrapService {
+    rpc GetNodeCredentials(GetNodeCredentialsRequest) returns (GetNodeCredentialsResponse);
+}
+
+message GetNodeCredentialsRequest {
+    string id = 1;
+}
+
+message GetNodeCredentialsResponse {
+    string id = 1;
+    string orgName = 2;
+    string ip = 3;
+    string certificate = 4;
+}
