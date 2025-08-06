@@ -27,7 +27,7 @@
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME              "femd"
+#define SERVICE_NAME              SERVICE_FEMD
 #define FEM_VERSION               VERSION
 
 #define STATUS_OK                 (0)
@@ -37,7 +37,7 @@
 #define DEF_LOG_LEVEL             "INFO"
 #define DEF_CONFIG_FILE           "./config/femd.conf"
 
-#define ERR_FEMD_JSON_CREATION_ERR     (-1)
+#define ERR_FEMD_JSON_CREATION_ERR (-1)
 
 #define EP_BS                     "/"
 #define REST_API_VERSION          "v1"

@@ -14,8 +14,6 @@
 typedef struct {
     char *serviceName;
     int  servicePort;
-    char *logLevel;
-    char *configFile;
 } Config;
 
 #endif /* CONFIG_H_ */

@@ -5,6 +5,10 @@
  *
  * Copyright (c) 2024-present, Ukama Inc.
  */
+#include <pthread.h>
+#include <signal.h>
+#include <getopt.h>
+#include <stdbool.h>
 
 #include "config.h"
 #include "femd.h"
@@ -59,7 +63,7 @@ static void usage() {
 int main(int argc, char **argv) {
     int opt, optIdx;
 
-    char *debug = DEF_LOG_LEVEL;
+    char *debug      = DEF_LOG_LEVEL;
     char *configFile = DEF_CONFIG_FILE;
     UInst serviceInst;
     Config serviceConfig = {0};
@@ -105,8 +109,6 @@ int main(int argc, char **argv) {
     /* Service config update */
     serviceConfig.serviceName = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.configFile  = strdup(configFile);
-
     if (!serviceConfig.servicePort) {
         usys_log_error("Unable to determine the port for services");
         usys_exit(1);
