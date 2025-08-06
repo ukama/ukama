@@ -125,8 +125,7 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
 
 		nodeInfo = &creg.NodeInfo{
-			Id:    msg.GetNodeId(),
-			OrgId: l.Org,
+			Id: msg.GetNodeId(),
 		}
 
 		nodeInfo.Site = creg.NodeSiteInfo{}

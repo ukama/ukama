@@ -13,9 +13,7 @@ services:
    - postgress-data:/var/lib/postgresql
 
  controller:
-  build:
-   context: ./controller
-   dockerfile: ./Dockerfile
+  build: ./controller
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-node
@@ -159,8 +157,8 @@ services:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=node
+   - ENV_SYSTEM_DNS=api-gateway-node
    - ENV_DNS_SERVER=false
-   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}

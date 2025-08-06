@@ -18,7 +18,7 @@ services:
  postgresd-hub:
   image: postgres:13.3
   ports:
-   - '5408:5432'
+   - 5408:5432
   environment:
    - POSTGRES_USER=postgres
    - POSTGRES_PASSWORD=Pass2020!
@@ -27,12 +27,10 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
- gateway:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./api-gateway
+ api-gateway-hub:
+  build: ./api-gateway
   ports:
-   - '8000:8080'
+   - 8000:8080
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
@@ -48,12 +46,10 @@ services:
   networks:
    - ukama-net
 
- node-gateway:
-  build:
-   dockerfile: ./Dockerfile
-   context: ./node-gateway
+ node-gateway-hub:
+  build: ./node-gateway
   ports:
-   - '8100:8080'
+   - 8100:8080
   environment:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
@@ -70,11 +66,9 @@ services:
    - ukama-net
 
  artifactmanager: # Here, this is where you can configure your gateway.
-  build:
-   context: ./artifactManager
-   dockerfile: ./Dockerfile
+  build: ./artifactManager
   ports:
-   - '9010:9090'
+   - 9010:9090
   environment:
    - STORAGE_ENDPOINT=minio:9000
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
@@ -93,10 +87,10 @@ services:
    - msgclient-hub
 
  distributor: # Here, this is where you can configure your gateway.
-  build:
-   context: ./distributor
-   dockerfile: ./Dockerfile
-  ports: ['9020:9090', '8099:8099']
+  build: ./distributor
+  ports:
+   - 9020:9090
+   - 8099:8099
   environment:
    - DEBUGMODE=TRUE
    - STORE_ENDPOINT=minio:9000
@@ -118,9 +112,7 @@ services:
   restart: always
 
  msgclient-hub:
-  build:
-   context: ../services/msgClient
-   dockerfile: ./Dockerfile
+  build: ../services/msgClient
   environment:
    - DEBUGMODE=true
    - DB_HOST=postgresd-hub
@@ -136,20 +128,20 @@ services:
    - postgresd-hub
 
  initclient-hub:
-  build:
-   dockerfile: ./Dockerfile
-   context: ../services/initClient
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=hub
-   - ENV_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_SYSTEM_PORT=8889
+   - ENV_SYSTEM_DNS=api-gateway-hub
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
    - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8000
-   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_CLIENT_PORT=9091
-   - ENV_INIT_CLIENT_TEMP_FILE=.tempFile
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-hub
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
   restart: always
   networks:
    - ukama-net
