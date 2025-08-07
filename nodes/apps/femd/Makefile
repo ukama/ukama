@@ -60,15 +60,12 @@ LIBS+=-lusys
 TARGET_CFILES   = $(wildcard ./src/*.c)
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: all clean $(TARGET_EXEC)
 
 all: version.h static.h $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
@@ -87,7 +84,7 @@ coverage: test
 	gcov $(TARGET_CFILES)
 
 %.o: %.c
-	$(XCC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) version.h static.h
