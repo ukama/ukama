@@ -51,7 +51,7 @@ LDFLAGS+=--coverage
 # Libraries needed
 CURL_LIB=-lcurl -lssl -lcrypto
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
-ULFIUS_LIB+=-lhogweed -lp11-kit -lz -lyaml
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ljansson
 LIBS+=-lpthread
