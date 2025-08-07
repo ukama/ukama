@@ -6,7 +6,7 @@
 
 include ../../ukamaOS/config.mk
 
-TARGET_EXEC = femd.d
+TARGET_EXEC = fem.d
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
