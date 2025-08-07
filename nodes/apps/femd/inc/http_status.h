@@ -1,14 +1,19 @@
 /*
-* This Source Code Form is subject to the terms of the Mozilla Public
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2024-present, Ukama Inc.
+ * Copyright (c) 2023-present, Ukama Inc.
  */
 
 #ifndef HTTP_STATUS_H
 #define HTTP_STATUS_H
 
+/* Source: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes */
+
+/*
+ * Enum for the HTTP status codes
+ */
 enum HttpStatusCode {
 
 	/* 2xx success */

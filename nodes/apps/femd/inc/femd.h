@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2024-present, Ukama Inc.
+ * Copyright (c) 2025-present, Ukama Inc.
  */
 
 #ifndef FEMD_H
@@ -27,7 +27,7 @@
 #include "usys_log.h"
 #include "jansson.h"
 
-#define SERVICE_NAME              SERVICE_FEMD
+#define SERVICE_NAME              SERVICE_FEM
 #define FEM_VERSION               VERSION
 
 #define STATUS_OK                 (0)
@@ -35,9 +35,14 @@
 #define STATUS_NOTOK              (-1)
 
 #define DEF_LOG_LEVEL             "INFO"
-#define DEF_CONFIG_FILE           "./config/femd.conf"
-
-#define ERR_FEMD_JSON_CREATION_ERR (-1)
+#define DEF_SERVICE_CLIENT_HOST   "localhost"
+#define DEF_NODED_HOST            "localhost"
+#define DEF_NOTIFY_HOST           "localhost"
+#define DEF_NODED_EP              "/v1/nodeinfo"
+#define DEF_NOTIFY_EP             "/notify/v1/event/"
+#define DEF_NODE_ID               "ukama-aaa-bbbb-ccc-dddd"
+#define DEF_NODE_TYPE             "amplifier"
+#define ENV_FEMD_DEBUG_MODE       "FEMD_DEBUG_MODE"
 
 #define EP_BS                     "/"
 #define REST_API_VERSION          "v1"

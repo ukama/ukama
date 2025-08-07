@@ -13,6 +13,7 @@
 #include "config.h"
 #include "femd.h"
 #include "web_service.h"
+#include "web_client.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -64,7 +65,6 @@ int main(int argc, char **argv) {
     int opt, optIdx;
 
     char *debug      = DEF_LOG_LEVEL;
-    char *configFile = DEF_CONFIG_FILE;
     UInst serviceInst;
     Config serviceConfig = {0};
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "vh:l:c:", longOptions, &optIdx);
+        opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
         if (opt == -1) {
             break;
         }
@@ -96,10 +96,6 @@ int main(int argc, char **argv) {
             set_log_level(debug);
             break;
 
-        case 'c':
-            configFile = optarg;
-            break;
-
         default:
             usage();
             usys_exit(0);
@@ -109,8 +105,15 @@ int main(int argc, char **argv) {
     /* Service config update */
     serviceConfig.serviceName = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
-    if (!serviceConfig.servicePort) {
-        usys_log_error("Unable to determine the port for services");
+    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
+    serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.nodeID       = NULL;
+    serviceConfig.nodeType     = NULL;
+    
+    if (!serviceConfig.servicePort ||
+        !serviceConfig.nodedPort   ||
+        !serviceConfig.notifydPort) {
+        usys_log_error("Unable to determine the port for service(s)");
         usys_exit(1);
     }
 
@@ -119,19 +122,33 @@ int main(int argc, char **argv) {
     /* Signal handler */
     signal(SIGINT, handle_sigint);
 
+    if (getenv(ENV_FEMD_DEBUG_MODE)) {
+        serviceConfig.nodeID   = strdup(DEF_NODE_ID);
+        serviceConfig.nodeType = strdup(DEF_NODE_TYPE);
+        usys_log_debug("%s: using default Node ID: %s Type: %s",
+                       SERVICE_NAME,
+                       DEF_NODE_ID,
+                       DEF_NODE_TYPE);
+    } else {
+        if (get_nodeid_and_type_from_noded(&serviceConfig) == STATUS_NOK) {
+            usys_log_error(
+                "%s: unable to connect with node.d", SERVICE_NAME);
+            goto done;
+        }
+    }
+    
     if (start_web_service(&serviceConfig, &serviceInst, NULL) != USYS_TRUE) {
         usys_free(serviceConfig.serviceName);
-        usys_free(serviceConfig.configFile);
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         usys_exit(1);
     }
 
     pause();
 
+done:
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     usys_free(serviceConfig.serviceName);
-    usys_free(serviceConfig.configFile);
 
     usys_log_debug("Exiting femd ...");
 

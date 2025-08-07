@@ -3,12 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2024-present, Ukama Inc.
+ * Copyright (c) 2025-present, Ukama Inc.
  */
 
-#include "jserdes.h"
+#include "web_service.h"
 #include "femd.h"
 #include "json_types.h"
+#include "config.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -17,11 +18,12 @@
 #include "usys_types.h"
 
 void json_log(json_t *json) {
+
     char *str = NULL;
 
     str = json_dumps(json, 0);
     if (str) {
-        usys_log_debug("json str: %s", str);
+        log_debug("json str: %s", str);
         free(str);
     }
 }
@@ -29,13 +31,14 @@ void json_log(json_t *json) {
 static bool get_json_entry(json_t *json, char *key, json_type type,
                            char **strValue, int *intValue,
                            double *doubleValue) {
-    json_t *jEntry = NULL;
+
+    json_t *jEntry=NULL;
 
     if (json == NULL || key == NULL) return USYS_FALSE;
 
     jEntry = json_object_get(json, key);
     if (jEntry == NULL) {
-        usys_log_error("Missing %s key in json", key);
+        log_error("Missing %s key in json", key);
         return USYS_FALSE;
     }
 
@@ -50,45 +53,65 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
         *doubleValue = json_real_value(jEntry);
         break;
     default:
-        usys_log_error("Invalid type for json key-value: %d", type);
+        log_error("Invalid type for json key-value: %d", type);
         return USYS_FALSE;
     }
 
     return USYS_TRUE;
 }
 
-int json_serialize_error(JsonObj **json, int code, const char *str) {
-    *json = json_object();
-    if (!*json) {
-        return ERR_FEMD_JSON_CREATION_ERR;
+/*
+ * deserialize_node_info --
+ *
+ * {
+ * "nodeInfo": {
+ *   "UUID": "ukma-7001-tnode-sa03-1100",
+ *   "name": "tNode",
+ *   "type": 2,
+ *   "partNumber": "LTE-BAND-3-0XXXX",
+ *   "skew": "UK_TNODE-LTE-0001",
+ *   "mac": "10:20:30:20:50:60",
+ *   "prodSwVersion": {
+ *     "major": 1,
+ *     "minor": 1
+ *   },
+ *   "swVersion": {
+ *     "major": 0,
+ *     "minor": 0
+ *   },
+ *   "assemblyDate": "30-07-2020",
+ *   "oemName": "SANMINA",
+ *   "moduleCount": 3
+ * }
+ *}
+ *
+ */
+bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
+
+    json_t *jNodeInfo=NULL;
+
+    if (json == NULL) return USYS_FALSE;
+
+    jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
+    if (jNodeInfo == NULL) {
+        log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
+        return USYS_FALSE;
     }
 
-    json_object_set_new(*json, JTAG_ERROR, json_object());
-    JsonObj *jError = json_object_get(*json, JTAG_ERROR);
-    if (jError) {
-        json_object_set_new(jError, JTAG_ERROR_CODE, json_integer(code));
-        json_object_set_new(jError, JTAG_ERROR_CSTRING, json_string(str));
+    if (get_json_entry(jNodeInfo, tag, JSON_STRING,
+                       data, NULL, NULL) == USYS_FALSE) {
+        log_error("Error deserializing node info. tag: %s", tag);
+        json_log(json);
+        *data = NULL;
+        return USYS_FALSE;
     }
 
-    return JSON_OK;
+    return USYS_TRUE;
 }
 
-int json_serialize_success(JsonObj **json, const char *message) {
-    *json = json_object();
-    if (!*json) {
-        return ERR_FEMD_JSON_CREATION_ERR;
-    }
-
-    json_object_set_new(*json, JTAG_STATUS, json_string("success"));
-    if (message) {
-        json_object_set_new(*json, JTAG_MESSAGE, json_string(message));
-    }
-
-    return JSON_OK;
-}
-
-void json_free(JsonObj **json) {
-    if (*json) {
+/* Decrement json references */
+void json_free(JsonObj** json) {
+    if (*json){
         json_decref(*json);
         *json = NULL;
     }
