@@ -111,12 +111,27 @@ func (h *notifyHandler) Start() {
 
 func (h *notifyHandler) Stop() {
 	log.Infof("Stopping the notify handler routine")
-	h.done <- true
+
+	// Use non-blocking send to avoid hanging if the routine was never started
+	select {
+	case h.done <- true:
+		// Successfully sent the stop signal
+	default:
+		// Channel is full or no receiver, which means the routine was never started
+		log.Warnf("Notify handler routine was not running or done channel is full")
+	}
 
 	/* Cleaning all the sub */
 	for k, s := range h.subs {
 		log.Infof("Stopping sub %s with %+v", k, s)
-		s.QuitChan <- true
+		// Use non-blocking send to avoid hanging if no one is listening
+		select {
+		case s.QuitChan <- true:
+			// Successfully sent quit signal
+		default:
+			// Channel is full or no receiver
+			log.Warnf("Quit channel for sub %s is full or no receiver", k)
+		}
 	}
 }
 

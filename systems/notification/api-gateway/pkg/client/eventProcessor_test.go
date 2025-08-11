@@ -89,3 +89,27 @@ func TestEventProcessor_GetAll(t *testing.T) {
 
 	en.AssertExpectations(t)
 }
+
+func TestEventProcessor_UpdateStatus(t *testing.T) {
+	notifReq := &pb.UpdateStatusRequest{
+		Id:     nId,
+		IsRead: true,
+	}
+
+	data := &pb.UpdateStatusResponse{
+		Id: nId,
+	}
+
+	en.On("UpdateStatus", mock.Anything, notifReq).Return(data, nil)
+
+	c := client.NewEventToNotifyFromClient(en)
+
+	resp, err := c.UpdateStatus(nId, true)
+	assert.NoError(t, err)
+
+	if assert.NotNil(t, resp) {
+		assert.Equal(t, data.Id, resp.Id)
+	}
+
+	en.AssertExpectations(t)
+}
