@@ -93,7 +93,7 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	//TODO:: need to do initclient resolutions on demand, in order to avoid url changes.
+	//TODO: We need to perform InitClient resolutions on demand, in order to avoid url changes.
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystemName), &serviceConfig.OrgName)
 	if err != nil {
