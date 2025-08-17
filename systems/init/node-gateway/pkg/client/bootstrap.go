@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type BootstrapEP interface {

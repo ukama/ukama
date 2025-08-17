@@ -14,19 +14,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/sirupsen/logrus"
+	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
+
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/init/node-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/init/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/node-gateway/pkg/client"
 
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
-	"github.com/wI2L/fizz"
-	"github.com/wI2L/fizz/openapi"
 )
-
-const NODE_URL_PARAMETER = "node"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -78,7 +77,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 }
 
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.config.serverConf.Port)
+	log.Info("Listening on port ", rt.config.serverConf.Port)
 	err := rt.f.Engine().Run(fmt.Sprint(":", rt.config.serverConf.Port))
 	if err != nil {
 		panic(err)
@@ -86,7 +85,6 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName+" - Bootstrap", version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 	v1 := r.f.Group("/v1", "Node gateway system ", "Node gateway system version v1")
 

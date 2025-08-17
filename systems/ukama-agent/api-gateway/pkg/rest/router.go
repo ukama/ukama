@@ -64,7 +64,6 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 }
 
 func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Context, string) error) *Router {
-
 	r := &Router{
 		clients: clients,
 		config:  config,
@@ -108,10 +107,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 	auth.Use()

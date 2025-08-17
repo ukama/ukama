@@ -24,12 +24,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/ukama/ukama/systems/common/providers"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/subscriber/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	subPb "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
@@ -144,15 +144,17 @@ func TestPingRoute(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -169,10 +171,13 @@ func TestRouter_getSimByIccid(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	preq := &spPb.GetByIccidRequest{
 		Iccid: testIccid,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("GetByIccid", mock.Anything, preq).Return(&spPb.GetByIccidResponse{Sim: &spPb.Sim{
 		Id:             1,
 		Iccid:          testIccid,
@@ -187,7 +192,7 @@ func TestRouter_getSimByIccid(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -205,10 +210,13 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	preq := &spPb.GetStatsRequest{
 		SimType: testSimType,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("GetStats", mock.Anything, preq).Return(&spPb.GetStatsResponse{
 		Total:     testTotalSims,
 		Available: testAvailableSims,
@@ -220,7 +228,7 @@ func TestRouter_getSimPoolStats(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -239,7 +247,7 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	preq := &spPb.AddRequest{
 		Sim: []*spPb.AddSim{
 			{
@@ -247,6 +255,9 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 			},
 		},
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("Add", mock.Anything, preq).Return(&spPb.AddResponse{
 		Sim: []*spPb.Sim{
 			{
@@ -265,7 +276,7 @@ func TestRouter_addSimsToSimPool(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -284,10 +295,13 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	preq := &spPb.DeleteRequest{
 		Id: []uint64{1},
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("Delete", mock.Anything, preq).Return(&spPb.DeleteResponse{
 		Id: []uint64{1},
 	}, nil)
@@ -296,7 +310,7 @@ func TestRouter_deleteSimFromSimPool(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -311,12 +325,15 @@ func TestRouter_Subscriber(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	s := &upb.Subscriber{
 		SubscriberId:          testSubscriberId,
@@ -453,12 +470,12 @@ func TestRouter_SimManager(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 	subscriberId := testSubscriberId
 	sim := &smPb.Sim{
 		Id:           testSimId,
@@ -475,6 +492,8 @@ func TestRouter_SimManager(t *testing.T) {
 			EndDate:   testEndDate,
 		},
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("getSims", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -695,10 +714,13 @@ func TestRouter_getSims(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	preq := &spPb.GetSimsRequest{
 		SimType: testSimType,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("GetSims", mock.Anything, preq).Return(&spPb.GetSimsResponse{
 		Sims: []*spPb.Sim{
 			{
@@ -717,7 +739,7 @@ func TestRouter_getSims(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -735,12 +757,15 @@ func TestRouter_uploadSimsToSimPool(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	preq := &spPb.UploadRequest{
 		SimType: testSimType,
 		SimData: []byte(testCsvData),
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csp.On("Upload", mock.Anything, preq).Return(&spPb.UploadResponse{
 		Iccid: []string{testCsvIccid},
 	}, nil)
@@ -749,7 +774,7 @@ func TestRouter_uploadSimsToSimPool(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -766,7 +791,7 @@ func TestRouter_getSubscriberByEmail(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	s := &upb.Subscriber{
 		SubscriberId:          testSubscriberId,
@@ -784,6 +809,9 @@ func TestRouter_getSubscriberByEmail(t *testing.T) {
 	preq := &subPb.GetSubscriberByEmailRequest{
 		Email: testEmail,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csub.On("GetByEmail", mock.Anything, preq).Return(&subPb.GetSubscriberByEmailResponse{
 		Subscriber: s,
 	}, nil)
@@ -792,7 +820,7 @@ func TestRouter_getSubscriberByEmail(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -810,7 +838,7 @@ func TestRouter_getSubscriberByNetwork(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	subscribers := []*upb.Subscriber{
 		{
@@ -830,6 +858,9 @@ func TestRouter_getSubscriberByNetwork(t *testing.T) {
 	preq := &subPb.GetByNetworkRequest{
 		NetworkId: testNetworkId,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csub.On("GetByNetwork", mock.Anything, preq).Return(&subPb.GetByNetworkResponse{
 		Subscribers: subscribers,
 	}, nil)
@@ -838,7 +869,7 @@ func TestRouter_getSubscriberByNetwork(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -856,7 +887,7 @@ func TestRouter_listSims(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	sim := &smPb.Sim{
 		Id:           testSimId,
@@ -876,6 +907,9 @@ func TestRouter_listSims(t *testing.T) {
 		Count:        testCount,
 		Sort:         testSort,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csm.On("ListSims", mock.Anything, preq).Return(&smPb.ListSimsResponse{
 		Sims: []*smPb.Sim{sim},
 	}, nil)
@@ -884,7 +918,7 @@ func TestRouter_listSims(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -902,7 +936,7 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	sim := &smPb.Sim{
 		Id:           testSimId,
@@ -918,6 +952,9 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 	preq := &smPb.GetSimsByNetworkRequest{
 		NetworkId: testNetworkId,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csm.On("GetSimsByNetwork", mock.Anything, preq).Return(&smPb.GetSimsByNetworkResponse{
 		Sims: []*smPb.Sim{sim},
 	}, nil)
@@ -926,7 +963,7 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -944,7 +981,7 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	package1 := &smPb.Package{
 		Id:        testPackageId,
@@ -960,6 +997,9 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 		Count:      testCount,
 		Sort:       testSort,
 	}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	csm.On("ListPackagesForSim", mock.Anything, preq).Return(&smPb.ListPackagesForSimResponse{
 		Packages: []*smPb.Package{package1},
 	}, nil)
@@ -968,7 +1008,7 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -999,20 +1039,23 @@ func TestRouter_addPackageForSim(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	preq := &smPb.AddPackageRequest{
 		SimId:     simId,
 		PackageId: packageId,
 		StartDate: startDate,
 	}
+
 	csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -1029,7 +1072,7 @@ func TestRouter_getUsages(t *testing.T) {
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
 	csub := &submocks.RegistryServiceClient{}
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 
 	// Create a mock usage response with structpb.Struct
 	usageData := map[string]interface{}{
@@ -1054,15 +1097,18 @@ func TestRouter_getUsages(t *testing.T) {
 		To:      testToDate,
 		Region:  testRegion,
 	}
+
 	csm.On("GetUsages", mock.Anything, preq).Return(&smPb.UsageResponse{
 		Usage: usageStruct,
 	}, nil)
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	r := NewRouter(&Clients{
 		sp:  client.NewSimPoolFromClient(csp),
 		sm:  client.NewSimManagerFromClient(csm),
 		sub: client.NewRegistryFromClient(csub),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)

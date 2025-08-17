@@ -12,13 +12,12 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	log "github.com/sirupsen/logrus"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/member/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type MemberRegistry struct {
@@ -29,11 +28,11 @@ type MemberRegistry struct {
 }
 
 func NewMemberRegistry(memberHost string, timeout time.Duration) *MemberRegistry {
-
 	conn, err := grpc.NewClient(memberHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Member Server: %v", err)
 	}
+
 	client := pb.NewMemberServiceClient(conn)
 
 	return &MemberRegistry{
@@ -53,65 +52,48 @@ func NewRegistryFromClient(mClient pb.MemberServiceClient) *MemberRegistry {
 	}
 }
 
-func (r *MemberRegistry) Close() {
-	r.conn.Close()
+func (m *MemberRegistry) Close() {
+	if m.conn != nil {
+		if err := m.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Member Service connection: %v", err)
+		}
+	}
 }
 
-func (r *MemberRegistry) GetMember(memberId string) (*pb.MemberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) GetMember(memberId string) (*pb.MemberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := r.client.GetMember(ctx, &pb.MemberRequest{MemberId: memberId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.GetMember(ctx, &pb.MemberRequest{MemberId: memberId})
 }
 
-func (r *MemberRegistry) GetMemberByUserId(userId string) (*pb.GetMemberByUserIdResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) GetMemberByUserId(userId string) (*pb.GetMemberByUserIdResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := r.client.GetMemberByUserId(ctx, &pb.GetMemberByUserIdRequest{MemberId: userId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.GetMemberByUserId(ctx, &pb.GetMemberByUserIdRequest{MemberId: userId})
 }
 
-func (r *MemberRegistry) GetMembers() (*pb.GetMembersResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) GetMembers() (*pb.GetMembersResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := r.client.GetMembers(ctx, &pb.GetMembersRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.GetMembers(ctx, &pb.GetMembersRequest{})
 }
 
-func (r *MemberRegistry) AddMember(userUUID string, role string) (*pb.MemberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) AddMember(userUUID string, role string) (*pb.MemberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
 	member := &pb.AddMemberRequest{UserUuid: userUUID, Role: upb.RoleType(upb.RoleType_value[role])}
-	res, err := r.client.AddMember(ctx, member)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.AddMember(ctx, member)
 }
 
-func (r *MemberRegistry) UpdateMember(memberId string, isDeactivated bool, role string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) UpdateMember(memberId string, isDeactivated bool, role string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	_, err := r.client.UpdateMember(ctx, &pb.UpdateMemberRequest{
+	_, err := m.client.UpdateMember(ctx, &pb.UpdateMemberRequest{
 		MemberId:      memberId,
 		IsDeactivated: isDeactivated,
 	})
@@ -119,11 +101,11 @@ func (r *MemberRegistry) UpdateMember(memberId string, isDeactivated bool, role 
 	return err
 }
 
-func (r *MemberRegistry) RemoveMember(memberId string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (m *MemberRegistry) RemoveMember(memberId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	_, err := r.client.RemoveMember(ctx, &pb.MemberRequest{MemberId: memberId})
+	_, err := m.client.RemoveMember(ctx, &pb.MemberRequest{MemberId: memberId})
 
 	return err
 }

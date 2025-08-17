@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type Accounting interface {
@@ -33,10 +33,9 @@ type AccountingInventory struct {
 }
 
 func NewAccountingInventory(accountHost string, timeout time.Duration) *AccountingInventory {
-
 	conn, err := grpc.NewClient(accountHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Accounting Service: %v", err)
 	}
 	client := pb.NewAccountingServiceClient(conn)
 
@@ -57,31 +56,35 @@ func NewAccountingInventoryFromClient(mClient pb.AccountingServiceClient) *Accou
 	}
 }
 
-func (r *AccountingInventory) Close() {
-	r.conn.Close()
+func (a *AccountingInventory) Close() {
+	if a.conn != nil {
+		if err := a.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Accounting Service connection: %v", err)
+		}
+	}
 }
 
-func (r *AccountingInventory) Get(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (a *AccountingInventory) Get(id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return r.client.Get(ctx, &pb.GetRequest{
+	return a.client.Get(ctx, &pb.GetRequest{
 		Id: id,
 	})
 }
 
-func (r *AccountingInventory) GetByUser(uid string) (*pb.GetByUserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (a *AccountingInventory) GetByUser(uid string) (*pb.GetByUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return r.client.GetByUser(ctx, &pb.GetByUserRequest{
+	return a.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId: uid,
 	})
 }
 
-func (r *AccountingInventory) SyncAccounts() (*pb.SyncAcountingResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (a *AccountingInventory) SyncAccounts() (*pb.SyncAcountingResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return r.client.SyncAccounting(ctx, &pb.SyncAcountingRequest{})
+	return a.client.SyncAccounting(ctx, &pb.SyncAcountingRequest{})
 }

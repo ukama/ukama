@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
 )
 
 type Mailer interface {
@@ -31,10 +32,9 @@ type mailer struct {
 }
 
 func NewMailer(host string, timeout time.Duration) (*mailer, error) {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Errorf("Failed to connect to Mailer Service: %v", err)
 		return nil, err
 	}
 
@@ -58,31 +58,25 @@ func NewMailerFromClient(mailerClient pb.MailerServiceClient) *mailer {
 }
 
 func (m *mailer) Close() {
-	m.conn.Close()
+	if m.conn != nil {
+		if err := m.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Mailer Service connection: %v", err)
+		}
+	}
 }
 
 func (m *mailer) SendEmail(req *pb.SendEmailRequest) (*pb.SendEmailResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.SendEmail(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return m.client.SendEmail(ctx, req)
 }
 
 func (m *mailer) GetEmailById(mailerId string) (*pb.GetEmailByIdResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 
-	res, err := m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
+	return m.client.GetEmailById(ctx, &pb.GetEmailByIdRequest{
 		MailId: mailerId,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }

@@ -18,13 +18,14 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/common/providers"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	crest "github.com/ukama/ukama/systems/common/rest"
+
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	crest "github.com/ukama/ukama/systems/common/rest"
 	dmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
 	emocks "github.com/ukama/ukama/systems/notification/event-notify/pb/gen/mocks"
 	mailerpb "github.com/ukama/ukama/systems/notification/mailer/pb/gen"
@@ -67,7 +68,9 @@ func TestRouter_PingRoute(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
 
@@ -75,7 +78,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -88,10 +91,12 @@ func TestRouter_mailer(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	mailer := &mailerpb.GetEmailByIdResponse{
 		MailId:       "65d969f7-d63e-44eb-b526-fd200e62a2b0",
@@ -121,7 +126,7 @@ func TestRouter_mailer(t *testing.T) {
 		for i, att := range data.Attachments {
 			pbAttachments[i] = &mailerpb.Attachment{
 				Filename:    att.Filename,
-				Content: att.Content,
+				Content:     att.Content,
 				ContentType: att.ContentType,
 			}
 		}
@@ -172,24 +177,24 @@ func TestRouter_mailer(t *testing.T) {
 			Attachments: []Attachment{
 				{
 					Filename:    "test.txt",
-					Content:     []byte("dGVzdCBjb250ZW50"), 
+					Content:     []byte("dGVzdCBjb250ZW50"),
 					ContentType: "text/plain",
 				},
 			},
 		}
-	
+
 		jdata, err := json.Marshal(&data)
 		assert.NoError(t, err)
-	
+
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("POST", "/v1/mailer/sendEmail", bytes.NewReader(jdata))
 		assert.NoError(t, err)
-	
+
 		newValues := make(map[string]string)
 		for key, value := range data.Values {
 			newValues[key] = fmt.Sprintf("%v", value)
 		}
-	
+
 		pbAttachments := make([]*mailerpb.Attachment, len(data.Attachments))
 		for i, att := range data.Attachments {
 			pbAttachments[i] = &mailerpb.Attachment{
@@ -198,21 +203,21 @@ func TestRouter_mailer(t *testing.T) {
 				ContentType: att.ContentType,
 			}
 		}
-	
+
 		preq := &mailerpb.SendEmailRequest{
 			To:           data.To,
 			TemplateName: data.TemplateName,
 			Values:       newValues,
 			Attachments:  pbAttachments,
 		}
-	
+
 		m.On("SendEmail", mock.Anything, preq).Return(&mailerpb.SendEmailResponse{
 			Message: "email sent successfully",
 			MailId:  "65d969f7-d63e-44eb-b526-fd200e62a2b0",
 		}, nil)
-	
+
 		r.ServeHTTP(w, req)
-	
+
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})

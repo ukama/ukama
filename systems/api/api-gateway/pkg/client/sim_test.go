@@ -89,7 +89,7 @@ func TestCient_GetSim(t *testing.T) {
 	t.Run("SimNotFound", func(t *testing.T) {
 		simClient.On("Get", simId.String()).
 			Return(nil, fmt.Errorf("GetSim failure: %w",
-				cclient.ErrorStatus{
+				&cclient.ErrorStatus{
 					StatusCode: 404,
 					RawError:   crest.ErrorResponse{Err: "not found"},
 				})).Once()

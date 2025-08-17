@@ -23,13 +23,13 @@ type CDR struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration `default:"3s"`
 	client  pb.CDRServiceClient
-	host    string `deafault:"localhost:9090"`
+	host    string `default:"localhost:9090"`
 }
 
 func NewCDR(host string, timeout time.Duration) *CDR {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to CDR Service: %v", err)
 	}
 
 	client := pb.NewCDRServiceClient(conn)
@@ -52,9 +52,10 @@ func NewCdrFromClient(asrClient pb.CDRServiceClient) *CDR {
 }
 
 func (c *CDR) Close() {
-	err := c.conn.Close()
-	if err != nil {
-		log.Errorf("Failed to close CDR client connection. Error: %v ", err)
+	if c.conn != nil {
+		if err := c.conn.Close(); err != nil {
+			log.Errorf("Failed to close CDR client connection. Error: %v ", err)
+		}
 	}
 }
 

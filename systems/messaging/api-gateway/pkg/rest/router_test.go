@@ -9,7 +9,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,38 +16,36 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
+
+	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg"
+	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
-
-	"github.com/tj/assert"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	crest "github.com/ukama/ukama/systems/common/rest"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg"
-
-	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg/client"
 	nnmocks "github.com/ukama/ukama/systems/messaging/nns/pb/gen/mocks"
-	ngr "github.com/ukama/ukama/systems/node/node-gateway/pkg/rest"
 )
 
-const notifyApiEndpoint = "/v1/notify"
+var (
+	testClientSet *Clients
 
-var defaultCors = cors.Config{
-	AllowAllOrigins: true,
-}
+	defaultCors = cors.Config{
+		AllowAllOrigins: true,
+	}
 
-var routerConfig = &RouterConfig{
-	serverConf: &crest.HttpConfig{
-		Cors: defaultCors,
-	},
-	auth: &cconfig.Auth{
-		AuthAppUrl:    "http://localhost:4455",
-		AuthServerUrl: "http://localhost:4434",
-		AuthAPIGW:     "http://localhost:8080",
-	},
-}
-
-var testClientSet *Clients
+	routerConfig = &RouterConfig{
+		serverConf: &crest.HttpConfig{
+			Cors: defaultCors,
+		},
+		auth: &cconfig.Auth{
+			AuthAppUrl:    "http://localhost:4455",
+			AuthServerUrl: "http://localhost:4434",
+			AuthAPIGW:     "http://localhost:8080",
+		},
+	}
+)
 
 func init() {
 	gin.SetMode(gin.TestMode)
@@ -57,15 +54,18 @@ func init() {
 		Nns:     "0.0.0.0:9092",
 	})
 }
+
 func TestPingRoute(t *testing.T) {
-	arc := &providers.AuthRestClient{}
+	arc := &cmocks.AuthClient{}
 	nn := &nnmocks.NnsClient{}
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	r := NewRouter(&Clients{
 		n: client.NewNnsFromClient(nn),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -73,15 +73,4 @@ func TestPingRoute(t *testing.T) {
 	// assert
 	assert.Equal(t, 200, w.Code)
 	assert.Contains(t, w.Body.String(), "pong")
-}
-
-var nodeId = ukama.NewVirtualHomeNodeId().String()
-var nt = ngr.AddNotificationReq{
-	NodeId:      nodeId,
-	Severity:    "high",
-	Type:        "event",
-	ServiceName: "noded",
-	Status:      8300,
-	Time:        uint32(time.Now().Unix()),
-	Details:     json.RawMessage(`{"reason":"testing","component":"router_test"}`),
 }

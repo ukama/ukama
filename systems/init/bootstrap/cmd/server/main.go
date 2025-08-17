@@ -12,24 +12,23 @@ import (
 	"os"
 
 	"github.com/num30/config"
-
-	"github.com/ukama/ukama/systems/init/bootstrap/cmd/version"
-	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
-	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
-	"github.com/ukama/ukama/systems/init/bootstrap/pkg/server"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/rest/client"
-	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
-	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/init/bootstrap/cmd/version"
+	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
+	"github.com/ukama/ukama/systems/init/bootstrap/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
+	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
 
 var svcConf *pkg.Config
@@ -65,22 +64,25 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	factoryUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug()),
+	factoryUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, FactorySystem), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve factory system address from initClient: %v", err)
 	}
-	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug())
+	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
 
-	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
+		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
+		svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
+		svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode, provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient)
+	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
-
 	})
 
 	go grpcServer.StartServer()
@@ -91,7 +93,6 @@ func runGrpcServer() {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}

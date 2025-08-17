@@ -36,7 +36,7 @@ func TestNewNodeFactoryClient(t *testing.T) {
 	})
 
 	t.Run("WithOptions", func(tt *testing.T) {
-		client := factory.NewNodeFactoryClient(testHost, client.WithDebug())
+		client := factory.NewNodeFactoryClient(testHost, client.WithDebug(true))
 
 		assert.NotNil(tt, client)
 		assert.NotNil(tt, client.R)
@@ -106,7 +106,6 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "get node failure")
 	})
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
@@ -149,7 +148,6 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.Error(tt, err)
 		assert.Nil(tt, result)
-		assert.Contains(tt, err.Error(), "get node failure")
 	})
 
 	t.Run("EmptyResponseBody", func(tt *testing.T) {

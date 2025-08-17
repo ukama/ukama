@@ -20,7 +20,8 @@ import (
 )
 
 type Distributor interface {
-	GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error)
+	GetNotificationStream(ctx context.Context, orgId, networkId, subscriberId, userId string,
+		scopes []string) (pb.DistributorService_GetNotificationStreamClient, error)
 }
 
 type distributor struct {
@@ -31,10 +32,9 @@ type distributor struct {
 }
 
 func NewDistributor(host string, timeout time.Duration) (*distributor, error) {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Distributor Service: %v", err)
 
 		return nil, err
 	}
@@ -58,13 +58,18 @@ func NewDistributorFromClient(client pb.DistributorServiceClient) *distributor {
 	}
 }
 
-func (m *distributor) Close() {
-	m.conn.Close()
+func (d *distributor) Close() {
+	if d.conn != nil {
+		if err := d.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Distributor Service connection: %v", err)
+		}
+	}
 }
 
-func (n *distributor) GetNotificationStream(ctx context.Context, orgId string, networkId string, subscriberId string, userId string, scopes []string) (pb.DistributorService_GetNotificationStreamClient, error) {
+func (d *distributor) GetNotificationStream(ctx context.Context, orgId, networkId, subscriberId, userId string,
+	scopes []string) (pb.DistributorService_GetNotificationStreamClient, error) {
 
-	return n.client.GetNotificationStream(ctx,
+	return d.client.GetNotificationStream(ctx,
 		&pb.NotificationStreamRequest{
 			OrgId:        orgId,
 			NetworkId:    networkId,

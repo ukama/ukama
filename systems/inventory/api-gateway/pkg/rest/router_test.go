@@ -20,14 +20,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
+
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
-	apb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
-	amocks "github.com/ukama/ukama/systems/inventory/accounting/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/inventory/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/inventory/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmmocks "github.com/ukama/ukama/systems/common/mocks"
+	apb "github.com/ukama/ukama/systems/inventory/accounting/pb/gen"
+	amocks "github.com/ukama/ukama/systems/inventory/accounting/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 	cmocks "github.com/ukama/ukama/systems/inventory/component/pb/gen/mocks"
 )
@@ -98,9 +100,12 @@ func init() {
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 	// act
 	r.ServeHTTP(w, req)
 
@@ -124,7 +129,10 @@ func TestRouter_GetComponent(t *testing.T) {
 	w := httptest.NewRecorder()
 	hreq, _ := http.NewRequest("GET", "/v1/components/"+componentId, bytes.NewReader(jReq))
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.GetRequest{
@@ -153,7 +161,7 @@ func TestRouter_GetComponent(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -182,7 +190,10 @@ func TestRouter_GetComponents(t *testing.T) {
 	q.Add("category", req.Category)
 	hreq.URL.RawQuery = q.Encode()
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.GetByUserRequest{
@@ -214,7 +225,7 @@ func TestRouter_GetComponents(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -239,7 +250,10 @@ func TestRouter_GetAccounting(t *testing.T) {
 	w := httptest.NewRecorder()
 	hreq, _ := http.NewRequest("GET", "/v1/accounting/"+accountingId, bytes.NewReader(jReq))
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	acc := &amocks.AccountingServiceClient{}
 
 	accReq := &apb.GetRequest{
@@ -263,7 +277,7 @@ func TestRouter_GetAccounting(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -288,7 +302,10 @@ func TestRouter_GetAccountings(t *testing.T) {
 	w := httptest.NewRecorder()
 	hreq, _ := http.NewRequest("GET", "/v1/accounting/user/"+userId, bytes.NewReader(jReq))
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	acc := &amocks.AccountingServiceClient{}
 
 	accReq := &apb.GetByUserRequest{
@@ -314,7 +331,7 @@ func TestRouter_GetAccountings(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -328,7 +345,10 @@ func TestRouter_SyncComponents(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	hreq, _ := http.NewRequest("PUT", "/v1/components/sync", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compResp := &cpb.SyncComponentsResponse{}
@@ -337,7 +357,7 @@ func TestRouter_SyncComponents(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -351,7 +371,10 @@ func TestRouter_SyncAccounting(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	hreq, _ := http.NewRequest("PUT", "/v1/accounting/sync", nil)
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	acc := &amocks.AccountingServiceClient{}
 
 	accResp := &apb.SyncAcountingResponse{}
@@ -360,7 +383,7 @@ func TestRouter_SyncAccounting(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Accounting: client.NewAccountingInventoryFromClient(acc),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -388,7 +411,10 @@ func TestRouter_ListComponents(t *testing.T) {
 	q.Add("category", category)
 	hreq.URL.RawQuery = q.Encode()
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
@@ -421,7 +447,7 @@ func TestRouter_ListComponents(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -448,7 +474,10 @@ func TestRouter_ListComponents_WithDefaultCategory(t *testing.T) {
 	q.Add("part_number", partNumber)
 	hreq.URL.RawQuery = q.Encode()
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
@@ -481,7 +510,7 @@ func TestRouter_ListComponents_WithDefaultCategory(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -509,7 +538,10 @@ func TestRouter_ListComponents_EmptyResponse(t *testing.T) {
 	q.Add("category", category)
 	hreq.URL.RawQuery = q.Encode()
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
@@ -526,7 +558,7 @@ func TestRouter_ListComponents_EmptyResponse(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -555,7 +587,10 @@ func TestRouter_ListComponents_MultipleComponents(t *testing.T) {
 	q.Add("category", category)
 	hreq.URL.RawQuery = q.Encode()
 
-	arc := &providers.AuthRestClient{}
+	arc := &cmmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 	comp := &cmocks.ComponentServiceClient{}
 
 	compReq := &cpb.ListRequest{
@@ -603,7 +638,7 @@ func TestRouter_ListComponents_MultipleComponents(t *testing.T) {
 
 	r := NewRouter(&Clients{
 		Component: client.NewComponentInventoryFromClient(comp),
-	}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	// act
 	r.ServeHTTP(w, hreq)
@@ -635,7 +670,10 @@ func TestRouter_ListComponents_AllCategories(t *testing.T) {
 			q.Add("category", category)
 			hreq.URL.RawQuery = q.Encode()
 
-			arc := &providers.AuthRestClient{}
+			arc := &cmmocks.AuthClient{}
+
+			arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
 			comp := &cmocks.ComponentServiceClient{}
 
 			compReq := &cpb.ListRequest{
@@ -668,7 +706,7 @@ func TestRouter_ListComponents_AllCategories(t *testing.T) {
 
 			r := NewRouter(&Clients{
 				Component: client.NewComponentInventoryFromClient(comp),
-			}, routerConfig, arc.MockAuthenticateUser).f.Engine()
+			}, routerConfig, arc.AuthenticateUser).f.Engine()
 
 			// act
 			r.ServeHTTP(w, hreq)

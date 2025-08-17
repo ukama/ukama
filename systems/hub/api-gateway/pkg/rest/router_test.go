@@ -23,16 +23,18 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/hub/api-gateway/pkg/client"
+
+	log "github.com/sirupsen/logrus"
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	amocks "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen/mocks"
 	dmocks "github.com/ukama/ukama/systems/hub/distributor/pb/gen/mocks"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
 const OrgName = "testorg"
@@ -88,7 +90,11 @@ func Test_RouterPut(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	f := getFileContent(t)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warnf("Failed to gracefully close test file content: %v", err)
+		}
+	}()
 
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/v1/hub/%s/%s/%s", appType, appName, version), f)
 
@@ -133,7 +139,11 @@ func Test_RouterPutNotAtTargzFile(t *testing.T) {
 	am := &amocks.ArtifactServiceClient{}
 	w := httptest.NewRecorder()
 	f := getFileContent(t)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warnf("Failed to gracefully close test file content: %v", err)
+		}
+	}()
 
 	token := make([]byte, 1024*10)
 	if _, err := rand.Read(token); err != nil {
@@ -165,7 +175,11 @@ func Test_RouterGet(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	f := getFileContent(t)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warnf("Failed to gracefully close test file content: %v", err)
+		}
+	}()
 
 	cont, err := io.ReadAll(f)
 	if err != nil {

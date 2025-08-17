@@ -12,12 +12,11 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	log "github.com/sirupsen/logrus"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-	"google.golang.org/grpc"
 )
 
 const DefaultNetworkName = "default"
@@ -29,10 +28,9 @@ type OrgRegistry struct {
 }
 
 func NewOrgRegistry(orgHost string, timeout time.Duration) *OrgRegistry {
-
 	orgConn, err := grpc.NewClient(orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Org Service: %v", err)
 	}
 	orgClient := orgpb.NewOrgServiceClient(orgConn)
 
@@ -51,74 +49,55 @@ func NewOrgRegistryFromClient(orgClient orgpb.OrgServiceClient) *OrgRegistry {
 	}
 }
 
-func (r *OrgRegistry) Close() {
-	r.conn.Close()
-}
-
-func (r *OrgRegistry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	res, err := r.orgClient.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
-	if err != nil {
-		return nil, err
+func (o *OrgRegistry) Close() {
+	if o.conn != nil {
+		if err := o.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Org Service connection: %v", err)
+		}
 	}
-
-	return res, nil
 }
 
-func (r *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (o *OrgRegistry) GetOrg(orgName string) (*orgpb.GetByNameResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.GetByUser(ctx, &orgpb.GetByOwnerRequest{UserUuid: ownerUUID})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return o.orgClient.GetByName(ctx, &orgpb.GetByNameRequest{Name: orgName})
 }
 
-func (r *OrgRegistry) AddOrg(orgName string, owner string, certificate string, country string, currency string) (*orgpb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (o *OrgRegistry) GetOrgs(ownerUUID string) (*orgpb.GetByUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
 	defer cancel()
 
-	organization := &orgpb.Organization{Name: orgName, Owner: owner, Certificate: certificate, Country: country, Currency: currency}
-	res, err := r.orgClient.Add(ctx, &orgpb.AddRequest{Org: organization})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return o.orgClient.GetByUser(ctx, &orgpb.GetByOwnerRequest{UserUuid: ownerUUID})
 }
 
-func (r *OrgRegistry) UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (o *OrgRegistry) AddOrg(orgName string, owner string, certificate string, country string,
+	currency string) (*orgpb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.UpdateOrgForUser(ctx, &orgpb.UpdateOrgForUserRequest{
+	organization := &orgpb.Organization{Name: orgName, Owner: owner,
+		Certificate: certificate, Country: country, Currency: currency}
+
+	return o.orgClient.Add(ctx, &orgpb.AddRequest{Org: organization})
+}
+
+func (o *OrgRegistry) UpdateOrgToUser(orgId string, userId string) (*orgpb.UpdateOrgForUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
+	defer cancel()
+
+	return o.orgClient.UpdateOrgForUser(ctx, &orgpb.UpdateOrgForUserRequest{
 		UserId: userId,
 		OrgId:  orgId,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
-func (r *OrgRegistry) RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (o *OrgRegistry) RemoveOrgForUser(orgId string, userId string) (*orgpb.RemoveOrgForUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), o.timeout)
 	defer cancel()
 
-	res, err := r.orgClient.RemoveOrgForUser(ctx, &orgpb.RemoveOrgForUserRequest{
+	return o.orgClient.RemoveOrgForUser(ctx, &orgpb.RemoveOrgForUserRequest{
 		UserId: userId,
 		OrgId:  orgId,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }

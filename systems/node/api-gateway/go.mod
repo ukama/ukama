@@ -29,6 +29,12 @@ require (
 )
 
 require (
+	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+	github.com/streadway/amqp v1.1.0 // indirect
+	github.com/wagslane/go-rabbitmq v0.14.2 // indirect
+)
+
+require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect

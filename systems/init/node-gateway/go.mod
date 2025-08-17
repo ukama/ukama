@@ -19,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/bootstrap v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/init/lookup v0.0.0-20250806161839-f26ec102fd5d
 	github.com/wI2L/fizz v0.22.0
 	google.golang.org/grpc v1.74.2
 )
@@ -39,6 +40,7 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 // indirect
@@ -64,6 +66,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/penglongli/gin-metrics v0.1.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

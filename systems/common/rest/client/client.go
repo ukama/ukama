@@ -44,9 +44,9 @@ func NewResty(options ...Option) *Resty {
 	return r
 }
 
-func WithDebug() Option {
+func WithDebug(debugMode bool) Option {
 	return func(r *Resty) {
-		r.C = r.C.SetDebug(true)
+		r.C = r.C.SetDebug(debugMode)
 	}
 }
 

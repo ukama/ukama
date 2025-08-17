@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/metrics/exporter/pb/gen"
 )
 
 type Exporter struct {
@@ -28,7 +29,7 @@ type Exporter struct {
 func NewExporter(host string, timeout time.Duration) *Exporter {
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Exporter Service: %v", err)
 	}
 	client := pb.NewExporterServiceClient(conn)
 
@@ -49,10 +50,11 @@ func NewExporterFromClient(c pb.ExporterServiceClient) *Exporter {
 	}
 }
 
-func (r *Exporter) Close() {
-	err := r.conn.Close()
-	if err != nil {
-		log.Warnf("failed to properly close exporter client. Error: %v", err)
+func (e *Exporter) Close() {
+	if e.conn != nil {
+		if err := e.conn.Close(); err != nil {
+			log.Warnf("failed to properly close exporter client. Error: %v", err)
+		}
 	}
 }
 

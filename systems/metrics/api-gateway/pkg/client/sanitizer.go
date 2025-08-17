@@ -33,7 +33,7 @@ type sanitizer struct {
 func NewSanitizer(sanitizerHost string, timeout time.Duration) *sanitizer {
 	conn, err := grpc.NewClient(sanitizerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Sanitizer Service: %v", err)
 	}
 	client := pb.NewSanitizerServiceClient(conn)
 
@@ -55,9 +55,10 @@ func NewSanitizerFromClient(sanitizerClient pb.SanitizerServiceClient) *sanitize
 }
 
 func (s *sanitizer) Close() {
-	err := s.conn.Close()
-	if err != nil {
-		log.Warnf("failed to properly close sanitizer client. Error: %v", err)
+	if s.conn != nil {
+		if err := s.conn.Close(); err != nil {
+			log.Warnf("failed to properly close sanitizer client. Error: %v", err)
+		}
 	}
 }
 

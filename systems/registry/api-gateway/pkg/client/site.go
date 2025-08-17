@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type SiteRegistry struct {
@@ -27,10 +27,9 @@ type SiteRegistry struct {
 }
 
 func NewSiteRegistry(siteHost string, timeout time.Duration) *SiteRegistry {
-
 	conn, err := grpc.NewClient(siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Site Service: %v", err)
 	}
 	client := pb.NewSiteServiceClient(conn)
 
@@ -51,38 +50,34 @@ func NewSiteRegistryFromClient(mClient pb.SiteServiceClient) *SiteRegistry {
 	}
 }
 
-func (r *SiteRegistry) Close() {
-	r.conn.Close()
-}
-
-func (r *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
-	defer cancel()
-
-	res, err := r.client.Get(ctx, &pb.GetRequest{SiteId: siteId})
-	if err != nil {
-		return nil, err
+func (s *SiteRegistry) Close() {
+	if s.conn != nil {
+		if err := s.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Site Service connection: %v", err)
+		}
 	}
-
-	return res, nil
 }
 
-func (r *SiteRegistry) List(networkId string, isDeactivate bool) (*pb.ListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (i *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
 	defer cancel()
 
-	res, err := r.client.List(ctx, &pb.ListRequest{NetworkId: networkId, IsDeactivated: isDeactivate})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return i.client.Get(ctx, &pb.GetRequest{SiteId: siteId})
 }
 
-func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (i *SiteRegistry) List(networkId string, isDeactivate bool) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
 	defer cancel()
-	res, err := r.client.Add(ctx, &pb.AddRequest{
+
+	return i.client.List(ctx, &pb.ListRequest{NetworkId: networkId, IsDeactivated: isDeactivate})
+}
+
+func (i *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string,
+	isDeactivated bool, latitude, longitude float64, installDate string) (*pb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+	defer cancel()
+
+	return i.client.Add(ctx, &pb.AddRequest{
 		Name:          name,
 		NetworkId:     networkId,
 		Location:      location,
@@ -96,26 +91,14 @@ func (r *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, s
 		Longitude:     longitude,
 		InstallDate:   installDate,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
-func (r *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (i *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
 	defer cancel()
 
-	req := &pb.UpdateRequest{
+	return i.client.Update(ctx, &pb.UpdateRequest{
 		SiteId: siteId,
 		Name:   name,
-	}
-
-	res, err := r.client.Update(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	})
 }
