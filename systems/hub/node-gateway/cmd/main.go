@@ -32,7 +32,7 @@ func main() {
 
 	metrics.StartMetricsServer(&svcConf.Metrics)
 	r := server.NewRouter(clientSet, server.NewRouterConfig(svcConf),
-		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug()).AuthenticateUser)
+		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug(svcConf.DebugMode)).AuthenticateUser)
 	r.Run()
 
 }

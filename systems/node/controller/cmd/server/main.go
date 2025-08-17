@@ -78,7 +78,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	//TODO: We should do initclient resolution on demand, in order to avoid systems url changes side effects
-	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug()),
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)

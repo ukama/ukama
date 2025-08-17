@@ -38,7 +38,7 @@ func main() {
 	nodeClient := client.NewNodeClientSet(creg.NewNodeClient(svcConf.HttpServices.RegistryHost))
 
 	router := rest.NewRouter(networkClient, packageClient, simClient, nodeClient, rest.NewRouterConfig(svcConf),
-		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, cclient.WithDebug()).AuthenticateUser)
+		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, cclient.WithDebug(svcConf.DebugMode)).AuthenticateUser)
 	router.Run()
 }
 

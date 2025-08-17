@@ -14,14 +14,15 @@ import (
 	"time"
 
 	"github.com/tj/assert"
+
 	"github.com/ukama/ukama/systems/common/notification"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/distributor/mocks"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/notification/distributor/mocks"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	pmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
 )

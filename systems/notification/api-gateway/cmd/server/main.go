@@ -30,7 +30,7 @@ func main() {
 	clientSet := rest.NewClientsSet(&svcConf.Services)
 
 	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf),
-		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug()).AuthenticateUser)
+		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug(svcConf.DebugMode)).AuthenticateUser)
 	router.Run()
 }
 
