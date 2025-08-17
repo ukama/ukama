@@ -24,10 +24,8 @@ import (
 	"github.com/ukama/ukama/systems/init/node-gateway/pkg/client"
 
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
-
-const NODE_URL_PARAMETER = "node"
 
 type Router struct {
 	f       *fizz.Fizz
@@ -44,16 +42,12 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	l lookup
-}
-
-type lookup interface {
-	GetNode(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error)
+	Bootstrap client.BootstrapEP
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.l = client.Newlookup(endpoints.Lookup, endpoints.Timeout)
+	c.Bootstrap = client.NewBootstrap(endpoints.Bootstrap, endpoints.Timeout)
 
 	return c
 }
@@ -91,13 +85,11 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) init() {
-	const node = "/nodes/" + ":" + NODE_URL_PARAMETER
+	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName+" - Bootstrap", version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+	v1 := r.f.Group("/v1", "Node gateway system ", "Node gateway system version v1")
 
-	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
-	v1 := r.f.Group("/v1", "Init system ", "Init system version v1")
-
-	nodes := v1.Group(node, "Nodes", "looking for Nodes credentials")
-	nodes.GET("", formatDoc("Get Nodes Credentials", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
+	nodes := v1.Group("nodes", "Nodes", "looking for Nodes credentials")
+	nodes.GET("/:nodeId", formatDoc("Get Nodes Credentials", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {
@@ -107,10 +99,8 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
-	node := c.Param("node")
-
-	return r.clients.l.GetNode(&pb.GetNodeRequest{
-		NodeId: node,
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeCredentialsResponse, error) {
+	return r.clients.Bootstrap.GetNodeCredentials(&pb.GetNodeCredentialsRequest{
+		Id: req.NodeId,
 	})
 }

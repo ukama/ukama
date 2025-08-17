@@ -5,245 +5,316 @@
 #
 # Copyright (c) 2024-present, Ukama Inc.
 
-set -e
+set -euo pipefail
 
-STAGE="init"
+# all tools available?
+for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate; do
+    command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
+done
+
+# Load helper utilities
+PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
+if [[ ! -f "$PKG_UTILS" ]]; then
+    echo "ERROR: Missing $PKG_UTILS"
+    exit 1
+fi
+source "$PKG_UTILS"
+
+# Mount points and image path
+BOOT_MNT="/media/boot"
+PRIMARY_MNT="/media/primary"
+PASSIVE_MNT="/media/passive"
+RAW_IMG="ukama-amplifier-image.img"
+
 DIR="$(pwd)"
 UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
-BOOT_MOUNT="/media/boot"
-RECOVERY_MOUNT="/media/recovery"
-PRIMARY_MOUNT="/media/primary"
-PASSIVE_MOUNT="/media/passive"
-DATA_MOUNT="/media/data"
+UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
+UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
+COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
+AMPLIFIER_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/controller.config"
+BOOT1_BIN="${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin"
+BOOT2_BIN="${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin"
 
-RAW_IMG="ukama-amplifier-node.img"
-
-BOOT1_BIN=${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin
-BOOT2_BIN=${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin
-
-ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs 
+ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
+APP_NAMES=()
 
-trap cleanup EXIT
+# Alpine parameters
+ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
+ALPINE_VERSION="3.21"
+ALPINE_ARCH="x86_64"
 
+# Loop device handle
+LOOPDEV=""
+
+# Logging and status helpers
+test -n "\${LOG_LEVEL-}" || LOG_LEVEL=INFO
 log() {
-    local type="$1"
-    local message="$2"
+    local type="$1" msg="$2"
     local color
     case "$type" in
-        "INFO") color="\033[1;34m";;
-        "SUCCESS") color="\033[1;32m";;
-        "ERROR") color="\033[1;31m";;
-        *) color="\033[1;37m";;
+        INFO)    color="\033[1;34m";;
+        SUCCESS) color="\033[1;32m";;
+        ERROR)   color="\033[1;31m";;
+        *)       color="\033[1;37m";;
     esac
-    echo -e "${color}${type}: ${message}\033[0m"
+    echo -e "${color}${type}: ${msg}\033[0m"
 }
 
 check_status() {
-    if [ $1 -ne 0 ]; then
-        log "ERROR" "Script failed at stage: $3"
+    local code=$1 msg=$2 stage=$3
+    if [[ $code -ne 0 ]]; then
+        log ERROR "Stage '${stage}' failed"
         exit 1
     fi
-    log "SUCCESS" "$2"
+    log SUCCESS "$msg"
 }
 
-cleanup() {
-    if [ -z "$LOOPDISK" ]; then
-        return
+check_pre_requisite() {
+    if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
+        log "INFO" "ROOTFS exist."
+    else
+        log "INFO"  "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
+        log "ERROR" "${ROOTFS_DIR} does not exist"
+        exit 1
     fi
-    log "INFO" "Cleaning up resources..."
-    local mounts=(${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT} ${UNUSED_MOUNT})
-    for mount in "${mounts[@]}"; do
-        sudo umount "${mount}" 2>/dev/null || true
-    done
-    sudo kpartx -dv "${RAW_IMG}" 2>/dev/null || true
-    sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
-    log "INFO" "Cleanup completed."
+
+    if [ ! -f "${BOOT1_BIN}" ]; then
+        log "ERROR" "boot file ${BOOT1_BIN} does not exist"
+        exit 1
+    fi
+
+    if [ ! -f "${BOOT2_BIN}" ]; then
+        log "ERROR" "boot file ${BOOT2_BIN} does not exist"
+        exit 1
+    fi
 }
+
+# Cleanup function ensures mounts and loop are detached
+cleanup() {
+    log INFO "Cleaning up mounts and loop device"
+    sudo umount "$BOOT_MNT"     2>/dev/null || true
+    sudo umount "$PASSIVE_MNT"  2>/dev/null || true
+    sudo umount "$PRIMARY_MNT"  2>/dev/null || true
+    if [[ -n "$LOOPDEV" ]]; then
+        sudo kpartx -dv "$LOOPDEV" 2>/dev/null || true
+        sudo losetup -d "$LOOPDEV"  2>/dev/null || true
+    fi
+}
+trap cleanup EXIT
 
 create_disk_image() {
-    STAGE="create_disk_image"
-    log "INFO" "Creating a new raw image: ${RAW_IMG}"
-    rm -f "${RAW_IMG}"
-    dd if=/dev/zero of="${RAW_IMG}" bs=512 count=0 seek=61120512
-    check_status $? "Raw image created" ${STAGE}
+    log INFO "Creating sparse image ${RAW_IMG} (16 GiB)"
+    rm -f "$RAW_IMG"
+    truncate -s 16G "$RAW_IMG"
+    # smaller image for testing
+    #    truncate -s 5G "$RAW_IMG"
+    check_status $? "Raw image ready" "create_disk_image"
 }
 
-build_firmware() {
-    STAGE="build_firmware"
-    local node=$1
-    local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
-    cwd=$(pwd)
-    log "INFO" "Building firmware for Node: ${node}"
-
-    cd "${path}"
-    make clean TARGET="${node}" ROOTFSPATH="${path}/build"
-    make TARGET="${node}" ROOTFSPATH="${path}/build"
-    check_status $? "Firmware (at91 and uboot) build successful" ${STAGE}
-    cd "${cwd}"
-}
-
-setup_loop_device() {
-    STAGE="setup_loop_device"
-    log "INFO" "Attaching ${RAW_IMG} to a loop device"
-    LOOPDISK=$(sudo losetup -f --show "${RAW_IMG}")
-    if [ -z "${LOOPDISK}" ]; then
-        log "ERROR" "Failed to set up loop device for ${RAW_IMG}."
+attach_loop() {
+    log INFO "Attaching ${RAW_IMG} to loop device"
+    LOOPDEV=$(sudo losetup --show --find --partscan "$RAW_IMG")
+    if [[ -z "$LOOPDEV" ]]; then
+        log ERROR "Failed to attach loop device"
         exit 1
     fi
-    log "SUCCESS" "Loop device set up at ${LOOPDISK}"
-}
-
-clean_first_50MB() {
-    STAGE="clean_first_50MB"
-    log "INFO" "Cleaning the first 50MB of ${LOOPDISK}"
-    sudo dd if=/dev/zero of="${LOOPDISK}" bs=1M count=50
-    check_status $? "First 50MB cleaned" ${STAGE}
+    check_status 0 "Loop device: $LOOPDEV" "attach_loop"
 }
 
 partition_image() {
-    STAGE="partition_image"
-    log "INFO" "Creating partitions on ${LOOPDISK} using sfdisk"
-    sudo sfdisk "${LOOPDISK}" <<-__EOF__
-label: dos
-,1G,83      
-,4G,83
-,,5
-,6G,83
-,6G,83
-,11G,83
-,1G,82
-;
-__EOF__
-    check_status $? "Partitions created" ${STAGE}
+    log INFO "Partitioning $LOOPDEV: boot, passive, primary, swap"
+    sudo parted -s "$LOOPDEV" mklabel msdos \
+         mkpart primary fat32      1MiB    513MiB   \
+         mkpart primary ext4       513MiB  4609MiB  \
+         mkpart primary ext4       4609MiB 12289MiB \
+         mkpart primary linux-swap 12289MiB 100%     \
+         set 1 boot on
+    check_status $? "Partitions created" "partition_image"
 }
 
+# smaller image for testing (5GB)
+#partition_image() {
+#    log INFO "Partitioning $LOOPDEV: boot (512 MiB), primary (2 GiB), passive (2 GiB), swap (rest)"
+#    sudo parted -s "$LOOPDEV" mklabel msdos \
+#         mkpart primary fat32      1MiB     513MiB   \
+#         mkpart primary ext4       513MiB   2561MiB  \
+#         mkpart primary ext4       2561MiB  4609MiB  \
+#         mkpart primary linux-swap 4609MiB  100%     \
+#         set 1 boot on
+#    check_status $? "Partitions created" partition_image
+#}
+
 map_partitions() {
-    STAGE="map_partitions"
-    log "INFO" "Mapping partitions using kpartx"
-    sudo kpartx -v -a "${LOOPDISK}"
-    check_status $? "Partitions mapped" ${STAGE}
+    log INFO "Mapping partitions for $LOOPDEV"
+    sudo kpartx -av "$LOOPDEV" | tee /dev/stderr
+    sleep 1
+    check_status $? "Partitions mapped" "map_partitions"
 }
 
 format_partitions() {
+    log INFO "Formatting partitions"
     STAGE="format_partitions"
-    log "INFO" "Formatting partitions"
-    DEVICE=$(basename "${LOOPDISK}")
-    DISK="/dev/mapper/${DEVICE}p"
+    local b=$(basename "$LOOPDEV")
+    local p1="/dev/mapper/${b}p1" p2="/dev/mapper/${b}p2"
+    local p3="/dev/mapper/${b}p3" p4="/dev/mapper/${b}p4"
 
-    mkfs.vfat -F 32 -n boot "${DISK}1"
-    check_status $? "boot partition formatted" ${STAGE}
-	
-	mkfs.ext4 -L recovery "${DISK}2"
-    check_status $? "recovery rootfs formatted" ${STAGE}
+    sudo mkfs.vfat -F32 -n boot    "$p1"
+    check_status $? "boot formatted" "${STAGE}"
 
-    mkfs.ext4 -L primary "${DISK}5"
-    check_status $? "primary rootfs formatted" ${STAGE}
+    sudo mkfs.ext4 -L passive \
+         -O ^64bit,^metadata_csum \
+         "$p2"
+    check_status $? "passive formatted" "${STAGE}"
 
-    mkfs.ext4 -L passive "${DISK}6"
-    check_status $? "passive rootfs formatted" ${STAGE}
+    sudo mkfs.ext4 -L primary \
+         -O ^64bit,^metadata_csum \
+         "$p3"
+    check_status $? "primary formatted" "${STAGE}"
 
-    mkfs.ext4 -L data "${DISK}7"
-    check_status $? "data partition formatted" ${STAGE}
-
-	mkswap "${DISK}8"
-	check_status $? "swap partition created" ${STAGE}
-    
+    sudo mkswap    -L swap         "$p4"
+    check_status $? "swap created" "${STAGE}"
 }
 
 mount_partition() {
-    local partition=$1
-    local mount_point=$2
-    log "INFO" "Mounting ${partition} to ${mount_point}"
-    sudo mkdir -p "${mount_point}"
-    sudo mount "${partition}" "${mount_point}"
-    check_status $? "Partition ${partition} mounted to ${mount_point}" "${STAGE}"
+    local part=$1 mp=$2
+    log INFO "Mounting $part → $mp"
+    sudo mkdir -p "$mp"
+    sudo mount "$part" "$mp"
+    check_status $? "Mounted $part" "mount_partition"
 }
 
-unmount_partition() {
-    local mount_point=$1
-    log "INFO" "Unmounting ${mount_point}"
-    sudo umount "${mount_point}"
-    check_status $? "${mount_point} unmounted" "${STAGE}"
-}
+copy_boot() {
+    STAGE="copy_boot"
+    log INFO "Copying boot files from ${ROOTFS_DIR}/boot → ${BOOT_MNT} (which will become /boot)"
 
-copy_bootloaders() {
-    STAGE="copy_bootloaders"
-    log "INFO" "Copying bootloaders to ${BOOT_MOUNT}"
+    local src="${ROOTFS_DIR}/boot"
+    local dst="${BOOT_MNT}/"
 
-    sudo cp -v ${BOOT1_BIN} ${BOOT_MOUNT}/boot.bin
-    sudo cp -v ${BOOT2_BIN} ${BOOT_MOUNT}/
+    # 1) Sanity-check source
+    if [[ ! -d "${src}" ]]; then
+        log ERROR "Missing source boot dir: ${src}"
+        exit 1
+    fi
 
-    check_status $? "Bootloaders copied" ${STAGE}
+    # 2) Clean out anything already on the boot partition
+    sudo rm -rf "${dst:?}/"*
+    check_status $? "Cleared old files on boot partition" "${STAGE}"
+
+    # 3) Copy everything from rootfs/boot into the partition mount (dst/)
+    #    We exclude the recursive 'boot → .' symlink so rsync won't loop
+    sudo rsync -aAX --delete \
+      --exclude='boot' \
+      "${src}/" "${dst}/boot"
+    check_status $? "Copied u-boot at91boot,  etc." "${STAGE}"
+
+    log SUCCESS "Boot partition populated under /boot"
 }
 
 copy_rootfs() {
     STAGE="copy_rootfs"
+    log INFO "Copying rootfs → primary (${PRIMARY_MNT}) and passive (${PASSIVE_MNT}) partitions"
 
-    log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PRIMARY_MOUNT}/
-	mkdir -p ${PRIMARY_MOUNT}/dev ${PRIMARY_MOUNT}/sys ${PRIMARY_MOUNT}/proc	
+    # Common rsync exclude list
+    local excludes=(
+        --exclude=/dev/*
+        --exclude=/proc/*
+        --exclude=/sys/* 
+        --exclude=/run/*
+        --exclude=/tmp/*
+        --exclude=/boot
+        --exclude=/efi
+        --exclude=/ukamarepo
+        --exclude=/passive
+        --exclude=/recovery
+        --exclude=/data
+        --exclude=/destroy
+        --exclude=/enter-chroot
+        --exclude=env.sh
+        --exclude=setup.log
+    )
 
-	log "INFO" "Copying rootfs to primary and passive"
-	rsync -aAXv --exclude={"/dev","/sys","/proc"} ${ROOTFS_DIR}/* ${PASSIVE_MOUNT}/
-    mkdir -p ${PASSIVE_MOUNT}/dev ${PASSIVE_MOUNT}/sys ${PASSIVE_MOUNT}/proc
-	
-	sync
+    # ---- Primary partition ----
+    # 1) Clear old data
+    sudo rm -rf "${PRIMARY_MNT:?}/"*
+    check_status $? "Cleared ${PRIMARY_MNT}" "${STAGE}"
+
+    # 2) Copy rootfs into PRIMARY
+    sudo rsync -aAX --delete "${excludes[@]}" \
+         "${ROOTFS_DIR}/" "${PRIMARY_MNT}/"
+    check_status $? "Rootfs copied to ${PRIMARY_MNT}" "${STAGE}"
+
+    # 3) Recreate mount-point dirs
+    sudo mkdir -p \
+         "${PRIMARY_MNT}/dev" \
+         "${PRIMARY_MNT}/proc" \
+         "${PRIMARY_MNT}/sys" \
+         "${PRIMARY_MNT}/run" \
+         "${PRIMARY_MNT}/tmp"
+
+    # ---- Passive partition ----
+    sudo rm -rf "${PASSIVE_MNT:?}/"*
+    check_status $? "Cleared ${PASSIVE_MNT}" "${STAGE}"
+
+    sudo rsync -aAX --delete "${excludes[@]}" \
+         "${ROOTFS_DIR}/" "${PASSIVE_MNT}/"
+    check_status $? "Rootfs copied to ${PASSIVE_MNT}" "${STAGE}"
+
+    sudo mkdir -p \
+         "${PASSIVE_MNT}/dev" \
+         "${PASSIVE_MNT}/proc" \
+         "${PASSIVE_MNT}/sys" \
+         "${PASSIVE_MNT}/run" \
+         "${PASSIVE_MNT}/tmp"
+
+    sync
+    log SUCCESS "Rootfs deployed to primary & passive" "${STAGE}"
 }
 
-set_permissions() {
-    STAGE="set_permissions"
-    log "INFO" "Setting permissions for primary and passive partitions"
-    sudo chown -R root:root ${PRIMARY_MOUNT}
-    sudo chmod -R 755 ${PRIMARY_MOUNT}
-    check_status $? "Permissions set for primary" ${STAGE}
-
-    sudo chown -R root:root ${PASSIVE_MOUNT}
-    sudo chmod -R 755 ${PASSIVE_MOUNT}
-    check_status $? "Permissions set for passive" ${STAGE}
-}
-
-# Update /etc/fstab based on partition type
 update_fstab() {
-	PARTITION_TYPE=$1
-    log "INFO" "Updating /etc/fstab for partition type: ${PARTITION_TYPE}"
+    local rootfs_dir="$1"
+    local fstab="${rootfs_dir}/etc/fstab"
+    STAGE="update_fstab"
 
-    if [[ "${PARTITION_TYPE}" == ${PRIMARY_MOUNT} ]]; then
-        cat <<FSTAB > ${PRIMARY_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p6  /passive     auto    ro          0 2
-/dev/mmcblk1p5  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
-FSTAB
-    else
-        cat <<FSTAB > ${PASSIVE_MOUNT}/etc/fstab
-proc            /proc        proc    defaults    0 0
-sysfs           /sys         sysfs   defaults    0 0
-devpts          /dev/pts     devpts  defaults    0 0
-tmpfs           /tmp         tmpfs   defaults    0 0
-/dev/mmcblk1p2  /recovery    auto    ro          0 2
-/dev/mmcblk1p7  /data        auto    ro          0 2
-/dev/mmcblk1p5  /passive     auto    ro          0 2
-/dev/mmcblk1p6  /            auto    errors=remount-ro  0 1
-/dev/mmcblk1p1  /boot/firmware auto  ro          0 2
-FSTAB
-    fi
+    log INFO "Writing label-based fstab in ${fstab}"
 
-    log "INFO" "${PARTITION_TYPE}/etc/fstab updated successfully."
+    sudo tee "${fstab}" > /dev/null <<'FSTAB'
+# pseudo-file systems
+devtmpfs        /dev        devtmpfs    defaults    0 0
+proc            /proc       proc        defaults    0 0
+sysfs           /sys        sysfs       defaults    0 0
+devpts          /dev/pts    devpts      defaults    0 0
+tmpfs           /tmp        tmpfs       defaults    0 0
+
+# real partitions by LABEL
+LABEL=primary   /           ext4      defaults         0 1
+LABEL=boot      /boot       auto      rw,defaults      0 2
+LABEL=swap      none        swap      sw               0 0
+FSTAB
+
+    check_status $? "fstab written" "${STAGE}"
 }
 
-detach_loop_device() {
-    STAGE="detach_loop_device"
-    log "INFO" "Detaching loop device and cleaning up"
-    sudo kpartx -dv "${LOOPDISK}"
-    sudo losetup -d "${LOOPDISK}"
-    check_status $? "Loop device detached" ${STAGE}
+deploy_to_rootfs() {
+    local rootfs="$1"
+
+    log INFO "Deploying apps/libs + manifest into ${rootfs}"
+
+    # ensure dirs exist
+    sudo mkdir -p "${rootfs}/ukama/apps/pkgs" "${rootfs}/lib"
+
+    # copy apps
+    copy_all_apps      "$UKAMA_REPO_APP_PKG" "${rootfs}/ukama/apps/pkgs"
+    check_status $? "copy_all_apps to ${rootfs}" "deploy_to_rootfs"
+
+    # copy libs
+    copy_required_libs "$UKAMA_REPO_LIB_PKG" "${rootfs}/lib"
+    check_status $? "copy_required_libs to ${rootfs}" "deploy_to_rootfs"
+
+    # create manifest
+    create_manifest_file "${rootfs}/manifest.json" "${APPS[@]}"
+    check_status $? "create_manifest_file in ${rootfs}" "deploy_to_rootfs"
 }
 
 copy_misc_files() {
@@ -259,47 +330,40 @@ copy_misc_files() {
 }
 
 # Main
-if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
-    log "INFO" "ROOTFS exist."
-else
-    log "ERROR" "${ROOTFS_DIR} does not exist"
-    log "INFO" "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
-    exit 1
-fi
+check_pre_requisite
 
-build_firmware "amplifier"
-if [ ! -f "${BOOT1_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT1_BIN} does not exist"
-    exit 1
-fi
-
-if [ ! -f "${BOOT2_BIN}" ]; then
-    log "ERROR" "boot file ${BOOT2_BIN} does not exist"
-    exit 1
-fi
+mkdir -p "$BOOT_MNT" "$PASSIVE_MNT" "$PRIMARY_MNT"
 
 create_disk_image
-setup_loop_device
-clean_first_50MB
+attach_loop
 partition_image
 map_partitions
 format_partitions
-mount_partition "${DISK}1" "${BOOT_MOUNT}"
-mount_partition "${DISK}5" "${PRIMARY_MOUNT}"
-mount_partition "${DISK}6" "${PASSIVE_MOUNT}"
-copy_bootloaders
+mount_partition "/dev/mapper/$(basename ${LOOPDEV})p1" "$BOOT_MNT"
+mount_partition "/dev/mapper/$(basename ${LOOPDEV})p2" "$PASSIVE_MNT"
+mount_partition "/dev/mapper/$(basename ${LOOPDEV})p3" "$PRIMARY_MNT"
+
+# Signal success; cleanup trap will unmount and detach
+log SUCCESS "Disk image ${RAW_IMG} prepared successfully"
+
+copy_boot
 copy_rootfs
-set_permissions
-update_fstab "${PRIMARY_MOUNT}"
-update_fstab "${PASSIVE_MOUNT}"
+update_fstab "${PRIMARY_MNT}"
+update_fstab "${PASSIVE_MNT}"
 
-#these files are secific to amplifier nodes
-copy_misc_files "${PRIMARY_MOUNT}"
-copy_misc_files "${PASSIVE_MOUNT}"
+# Gather the list of enabled apps
+get_enabled_apps "$COMMON_CONFIG_FILE" "$AMPLIFIER_CONFIG_FILE"
+if (( ${#APPS[@]} > 0 )); then
+    log INFO "Enabled apps: ${APPS[*]}"
+else
+    log ERROR "No apps enabled. Aborting."
+    exit 1
+fi
 
-unmount_partition "${BOOT_MOUNT}"
-unmount_partition "${PRIMARY_MOUNT}"
-unmount_partition "${PASSIVE_MOUNT}"
-detach_loop_device
+deploy_to_rootfs "${PRIMARY_MNT}"
+deploy_to_rootfs "${PASSIVE_MNT}"
+copy_misc_files  "${PRIMARY_MNT}"
+copy_misc_files  "${PASSIVE_MNT}"
 
 log "SUCCESS" "Disk image creation completed successfully!"
+exit 0
