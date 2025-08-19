@@ -143,16 +143,16 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (gpio_controller_init(&gpio_controller, NULL) != STATUS_OK) {
+    if (gpio_controller_init(&gpioController, NULL) != STATUS_OK) {
         usys_log_error("Failed to initialize GPIO controller");
-        exitcode = USYS_TRUE;
+        exitCode = USYS_TRUE;
         goto done;
     }
 
-    if (i2c_controller_init(&i2c_controller) != STATUS_OK) {
+    if (i2c_controller_init(&i2cController) != STATUS_OK) {
         usys_log_error("Failed to initialize I2C controller");
         exitCode = USYS_TRUE;
-        goto cleanup;
+        goto done;
     }
 
     if (start_web_service(&serviceConfig, &serviceInst, NULL) != USYS_TRUE) {
@@ -169,6 +169,9 @@ done:
     ulfius_clean_instance(&serviceInst);
     usys_free(serviceConfig.serviceName);
 
+    i2c_controller_cleanup(&i2cController);
+    gpio_controller_cleanup(&gpioController);
+    
     usys_log_debug("Exiting femd ...");
 
     return exitCode;
