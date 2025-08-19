@@ -17,23 +17,20 @@
 #include <linux/i2c-dev.h>
 #include <errno.h>
 
-#include "usys_api.h"
-#include "usys_file.h"
-#include "usys_log.h"
-#include "usys_mem.h"
-#include "usys_string.h"
-#include "usys_types.h"
-
 #include "i2c_controller.h"
 #include "femd.h"
 
-/* Unified device metadata */
+/* Unified device metadata (variables in camelCase) */
 static const I2CDeviceInfo deviceInfo[I2C_DEVICE_MAX] = {
     {"AD5667",  I2C_ADDR_DAC_AD5667,  "16-bit DAC"},
     {"LM75A",   I2C_ADDR_TEMP_LM75A,  "Temperature sensor"},
     {"ADS1015", I2C_ADDR_ADC_ADS1015, "12-bit ADC"},
     {"EEPROM",  I2C_ADDR_EEPROM,      "Serial number storage"}
 };
+
+/* Forward statics */
+static int adc_configure_channel(int bus, ADCChannel channel);
+static int dac_set_voltage(I2CController *controller, FemUnit unit, float voltage, bool isCarrier);
 
 /* Controller lifecycle */
 
@@ -47,24 +44,23 @@ int i2c_controller_init(I2CController *controller) {
 
     memset(controller, 0, sizeof(I2CController));
 
-    controller->bus_fem1 = I2C_BUS_FEM1;
-    controller->bus_fem2 = I2C_BUS_FEM2;
+    controller->busFem1 = I2C_BUS_FEM1;
+    controller->busFem2 = I2C_BUS_FEM2;
 
-    controller->dac_state.carrier_voltage = 0.0f;
-    controller->dac_state.peak_voltage    = 0.0f;
-    controller->dac_state.initialized     = false;
+    controller->dacState.carrierVoltage = 0.0f;
+    controller->dacState.peakVoltage    = 0.0f;
+    controller->dacState.initialized    = false;
 
-    controller->temp_state.temperature   = 0.0f;
-    controller->temp_state.threshold     = 85.0f;
-    controller->temp_state.alert_enabled = false;
+    controller->tempState.temperature  = 0.0f;
+    controller->tempState.threshold    = 85.0f;
+    controller->tempState.alertEnabled = false;
 
-    controller->adc_state.max_reverse_power = -10.0f;
-    controller->adc_state.max_current       = 5.0f;
-    controller->adc_state.safety_enabled    = true;
+    controller->adcState.maxReversePower = -10.0f;
+    controller->adcState.maxCurrent      = 5.0f;
+    controller->adcState.safetyEnabled   = true;
 
-    controller->eeprom_state.has_data = false;
-    memset(controller->eeprom_state.serial_number, 0,
-           sizeof(controller->eeprom_state.serial_number));
+    controller->eepromState.hasData = false;
+    memset(controller->eepromState.serialNumber, 0, sizeof(controller->eepromState.serialNumber));
 
     controller->initialized = true;
     usys_log_info("I2C controller initialized");
@@ -81,20 +77,18 @@ void i2c_controller_cleanup(I2CController *controller) {
 
 int i2c_get_bus_for_fem(FemUnit unit) {
     int bus = I2C_BUS_FEM2;
-
     if (unit == FEM_UNIT_1) {
         bus = I2C_BUS_FEM1;
     }
-
     return bus;
 }
 
-/*  Low-level helpers */
+/* Low-level helpers */
 
-int i2c_write_bytes(int bus, uint8_t deviceAddr, uint8_t reg, const uint8_t *data, size_t len) {
-    char devicePath[32]={0};
+int i2c_write_bytes(int bus, uint8_t devAddr, uint8_t reg, const uint8_t *data, size_t len) {
+    char devicePath[32] = {0};
     int fd = -1;
-    uint8_t txBuffer[256]={0};
+    uint8_t txBuffer[256] = {0};
     ssize_t wrote = 0;
     int status = STATUS_OK;
 
@@ -112,8 +106,8 @@ int i2c_write_bytes(int bus, uint8_t deviceAddr, uint8_t reg, const uint8_t *dat
         goto cleanup;
     }
 
-    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
-        usys_log_error("Failed to set I2C slave address 0x%02X: %s", deviceAddr, strerror(errno));
+    if (ioctl(fd, I2C_SLAVE, devAddr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", devAddr, strerror(errno));
         status = STATUS_NOK;
         goto cleanup;
     }
@@ -126,13 +120,13 @@ int i2c_write_bytes(int bus, uint8_t deviceAddr, uint8_t reg, const uint8_t *dat
     wrote = write(fd, txBuffer, len + 1);
     if (wrote != (ssize_t)(len + 1)) {
         usys_log_error("I2C write failed: bus=%d, addr=0x%02X, reg=0x%02X: %s",
-                       bus, deviceAddr, reg, strerror(errno));
+                       bus, devAddr, reg, strerror(errno));
         status = STATUS_NOK;
         goto cleanup;
     }
 
     usys_log_debug("I2C write OK: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu",
-                   bus, deviceAddr, reg, len);
+                   bus, devAddr, reg, len);
 
 cleanup:
     if (fd >= 0) {
@@ -141,8 +135,8 @@ cleanup:
     return status;
 }
 
-int i2c_read_bytes(int bus, uint8_t deviceAddr, uint8_t reg, uint8_t *data, size_t len) {
-    char devicePath[32] = {0};
+int i2c_read_bytes(int bus, uint8_t devAddr, uint8_t reg, uint8_t *data, size_t len) {
+    char devicePath[32];
     int fd = -1;
     ssize_t wrote = 0;
     ssize_t readn = 0;
@@ -162,8 +156,8 @@ int i2c_read_bytes(int bus, uint8_t deviceAddr, uint8_t reg, uint8_t *data, size
         goto cleanup;
     }
 
-    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
-        usys_log_error("Failed to set I2C slave address 0x%02X: %s", deviceAddr, strerror(errno));
+    if (ioctl(fd, I2C_SLAVE, devAddr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", devAddr, strerror(errno));
         status = STATUS_NOK;
         goto cleanup;
     }
@@ -178,13 +172,13 @@ int i2c_read_bytes(int bus, uint8_t deviceAddr, uint8_t reg, uint8_t *data, size
     readn = read(fd, data, len);
     if (readn != (ssize_t)len) {
         usys_log_error("I2C read failed: bus=%d, addr=0x%02X, reg=0x%02X: %s",
-                       bus, deviceAddr, reg, strerror(errno));
+                       bus, devAddr, reg, strerror(errno));
         status = STATUS_NOK;
         goto cleanup;
     }
 
     usys_log_debug("I2C read OK: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu",
-                   bus, deviceAddr, reg, len);
+                   bus, devAddr, reg, len);
 
 cleanup:
     if (fd >= 0) {
@@ -193,8 +187,8 @@ cleanup:
     return status;
 }
 
-int i2c_detect_device(int bus, uint8_t deviceAddr) {
-    char devicePath[32] = {0};
+int i2c_detect_device(int bus, uint8_t devAddr) {
+    char devicePath[32];
     int fd = -1;
     int status = STATUS_OK;
     ssize_t wrote = 0;
@@ -208,7 +202,7 @@ int i2c_detect_device(int bus, uint8_t deviceAddr) {
         goto cleanup;
     }
 
-    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
+    if (ioctl(fd, I2C_SLAVE, devAddr) < 0) {
         status = STATUS_NOK;
         goto cleanup;
     }
@@ -243,7 +237,7 @@ void i2c_print_device_scan(FemUnit unit) {
     const I2CDeviceInfo *info = NULL;
 
     bus = i2c_get_bus_for_fem(unit);
-    usys_log_info("I2C Device Scan for FEM-%d (bus %d):", unit, bus);
+    usys_log_info("I2C Device Scan for FEM%d (bus %d):", unit, bus);
 
     for (i = 0; i < I2C_DEVICE_MAX; i++) {
         info = &deviceInfo[i];
@@ -265,15 +259,11 @@ uint16_t voltage_to_dac_value(float voltage) {
     if (dacValue > 65535) {
         dacValue = 65535;
     }
-
     return dacValue;
 }
 
-float dac_value_to_voltage(uint16_t dac_value) {
-    float voltage = 0.0f;
-
-    voltage = ((float)dac_value / 65535.0f) * DAC_VREF * 2.0f;
-    return voltage;
+float dac_value_to_voltage(uint16_t dacValue) {
+    return ((float)dacValue / 65535.0f) * DAC_VREF * 2.0f;
 }
 
 int dac_init(I2CController *controller, FemUnit unit) {
@@ -302,15 +292,12 @@ int dac_init(I2CController *controller, FemUnit unit) {
 
     usleep(10000); /* 10ms */
 
-    controller->dac_state.initialized = true;
-    usys_log_info("DAC initialized for FEM-%d", unit);
+    controller->dacState.initialized = true;
+    usys_log_info("DAC initialized for FEM%d", unit);
     return STATUS_OK;
 }
 
-static int dac_set_voltage(I2CController *controller,
-                           FemUnit unit,
-                           float voltage,
-                           bool isCarrier) {
+static int dac_set_voltage(I2CController *controller, FemUnit unit, float voltage, bool isCarrier) {
     int status = STATUS_OK;
     float maxAllowed = 0.0f;
     int bus = 0;
@@ -318,9 +305,7 @@ static int dac_set_voltage(I2CController *controller,
     uint8_t data[2];
     uint8_t reg = 0;
 
-    if (!controller ||
-        !controller->initialized ||
-        !controller->dac_state.initialized) {
+    if (!controller || !controller->initialized || !controller->dacState.initialized) {
         return STATUS_NOK;
     }
 
@@ -331,12 +316,12 @@ static int dac_set_voltage(I2CController *controller,
         return STATUS_NOK;
     }
 
-    bus = i2c_get_bus_for_fem(unit);
+    bus      = i2c_get_bus_for_fem(unit);
     dacValue = voltage_to_dac_value(voltage);
 
     data[0] = (uint8_t)((dacValue >> 8) & 0xFF);
     data[1] = (uint8_t)(dacValue & 0xFF);
-    reg = isCarrier ? 0x59 : 0x58;
+    reg     = isCarrier ? 0x59 : 0x58;
 
     status = i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, reg, data, 2);
     if (status != STATUS_OK) {
@@ -345,12 +330,12 @@ static int dac_set_voltage(I2CController *controller,
     }
 
     if (isCarrier) {
-        controller->dac_state.carrier_voltage = voltage;
+        controller->dacState.carrierVoltage = voltage;
     } else {
-        controller->dac_state.peak_voltage    = voltage;
+        controller->dacState.peakVoltage = voltage;
     }
 
-    usys_log_info("%s voltage set to %.2fV for FEM-%d",
+    usys_log_info("%s voltage set to %.2fV for FEM%d",
                   isCarrier ? "Carrier" : "Peak", voltage, unit);
     return STATUS_OK;
 }
@@ -360,22 +345,19 @@ int dac_set_carrier_voltage(I2CController *controller, FemUnit unit, float volta
 }
 
 int dac_set_peak_voltage(I2CController *controller, FemUnit unit, float voltage) {
-    return = dac_set_voltage(controller, unit, voltage, false);
+    return dac_set_voltage(controller, unit, voltage, false);
 }
 
 int dac_get_config(I2CController *controller, float *carrier, float *peak) {
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-
     if (carrier) {
-        *carrier = controller->dac_state.carrier_voltage;
+        *carrier = controller->dacState.carrierVoltage;
     }
-
     if (peak) {
-        *peak = controller->dac_state.peak_voltage;
+        *peak = controller->dacState.peakVoltage;
     }
-
     return STATUS_OK;
 }
 
@@ -391,19 +373,18 @@ int dac_disable_pa(I2CController *controller, FemUnit unit) {
     result2 = dac_set_peak_voltage(controller, unit, 0.0f);
 
     if (result1 == STATUS_OK && result2 == STATUS_OK) {
-        usys_log_info("PA disabled - DAC values set to zero for FEM-%d", unit);
+        usys_log_info("PA disabled - DAC values set to zero for FEM%d", unit);
         return STATUS_OK;
     }
-
     return STATUS_NOK;
 }
 
 /* Temperature sensor (LM75A) */
 
 float lm75a_raw_to_celsius(uint8_t msb, uint8_t lsb) {
-    uint16_t tempRaw  = 0;
+    uint16_t tempRaw = 0;
     int16_t  temp9bit = 0;
-    float    tempC    = 0.0f;
+    float    tempC = 0.0f;
 
     tempRaw  = (uint16_t)((msb << 8) | lsb);
     temp9bit = (int16_t)(tempRaw >> 7);
@@ -417,7 +398,7 @@ float lm75a_raw_to_celsius(uint8_t msb, uint8_t lsb) {
 
 uint16_t celsius_to_lm75a_raw(float temperature) {
     int16_t  temp9bit = 0;
-    uint16_t raw      = 0;
+    uint16_t raw = 0;
 
     temp9bit = (int16_t)(temperature / 0.5f);
     if (temp9bit < 0) {
@@ -443,13 +424,11 @@ int temp_sensor_init(I2CController *controller, FemUnit unit) {
         return STATUS_NOK;
     }
 
-    usys_log_info("Temperature sensor initialized for FEM-%d", unit);
+    usys_log_info("Temperature sensor initialized for FEM%d", unit);
     return STATUS_OK;
 }
 
-int temp_sensor_read(I2CController *controller,
-                     FemUnit unit,
-                     float *temperature) {
+int temp_sensor_read(I2CController *controller, FemUnit unit, float *temperature) {
     int bus = 0;
     uint8_t data[2];
     int status = STATUS_OK;
@@ -461,14 +440,14 @@ int temp_sensor_read(I2CController *controller,
     bus    = i2c_get_bus_for_fem(unit);
     status = i2c_read_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x00, data, 2);
     if (status != STATUS_OK) {
-        usys_log_error("Failed to read temperature from FEM-%d", unit);
+        usys_log_error("Failed to read temperature from FEM%d", unit);
         return STATUS_NOK;
     }
 
     *temperature = lm75a_raw_to_celsius(data[0], data[1]);
-    controller->temp_state.temperature = *temperature;
+    controller->tempState.temperature = *temperature;
 
-    usys_log_debug("Temperature read: %.1f°C from FEM-%d", *temperature, unit);
+    usys_log_debug("Temperature read: %.1f°C from FEM%d", *temperature, unit);
     return STATUS_OK;
 }
 
@@ -498,15 +477,15 @@ int temp_sensor_set_threshold(I2CController *controller, FemUnit unit, float thr
         return STATUS_NOK;
     }
 
-    controller->temp_state.threshold     = threshold;
-    controller->temp_state.alert_enabled = true;
-    usys_log_info("Temperature threshold set to %.1f°C for FEM-%d", threshold, unit);
+    controller->tempState.threshold    = threshold;
+    controller->tempState.alertEnabled = true;
+    usys_log_info("Temperature threshold set to %.1f°C for FEM%d", threshold, unit);
     return STATUS_OK;
 }
 
 /* ADC (ADS1015) */
 
-static int adc_configure_channel(int bus, int channel) {
+static int adc_configure_channel(int bus, ADCChannel channel) {
     uint16_t muxConfigs[4];
     uint16_t config = 0;
     uint8_t data[2];
@@ -517,16 +496,16 @@ static int adc_configure_channel(int bus, int channel) {
     muxConfigs[2] = 0x6000; /* AIN2 vs GND */
     muxConfigs[3] = 0x7000; /* AIN3 vs GND */
 
-    if (channel < 0 || channel > 3) {
+    if (channel < 0 || channel >= ADC_CHANNEL_MAX) {
         return STATUS_NOK;
     }
 
-    config = 0x8000;                /* Start conversion */
-    config |= muxConfigs[channel];  /* MUX */
-    config |= 0x0200;               /* PGA ±4.096V */
-    config |= 0x0100;               /* Single-shot mode */
-    config |= 0x0080;               /* 1600 SPS */
-    config |= 0x0003;               /* Disable comparator */
+    config = 0x8000;                   /* Start conversion */
+    config |= muxConfigs[(int)channel];/* MUX */
+    config |= 0x0200;                  /* PGA ±4.096V */
+    config |= 0x0100;                  /* Single-shot mode */
+    config |= 0x0080;                  /* 1600 SPS */
+    config |= 0x0003;                  /* Disable comparator */
 
     data[0] = (uint8_t)((config >> 8) & 0xFF);
     data[1] = (uint8_t)(config & 0xFF);
@@ -535,8 +514,8 @@ static int adc_configure_channel(int bus, int channel) {
     return status;
 }
 
-float adc_raw_to_voltage(uint16_t raw_value) {
-    return ((int16_t)raw_value >> 4) * 4.096f / 2048.0f;
+float adc_raw_to_voltage(uint16_t rawValue) {
+    return ((int16_t)rawValue >> 4) * 4.096f / 2048.0f;
 }
 
 int adc_init(I2CController *controller, FemUnit unit) {
@@ -554,11 +533,11 @@ int adc_init(I2CController *controller, FemUnit unit) {
         return STATUS_NOK;
     }
 
-    usys_log_info("ADC initialized for FEM-%d", unit);
+    usys_log_info("ADC initialized for FEM%d", unit);
     return STATUS_OK;
 }
 
-int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float *voltage) {
+int adc_read_channel(I2CController *controller, FemUnit unit, ADCChannel channel, float *voltage) {
     int bus = 0;
     int status = STATUS_OK;
     uint8_t data[2];
@@ -567,7 +546,8 @@ int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float
     if (!controller || !controller->initialized || !voltage) {
         return STATUS_NOK;
     }
-    if (channel < 0 || channel > 3) {
+
+    if (channel < 0 || channel >= ADC_CHANNEL_MAX) {
         return STATUS_NOK;
     }
 
@@ -582,14 +562,14 @@ int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float
 
     status = i2c_read_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x00, data, 2);
     if (status != STATUS_OK) {
-        usys_log_error("Failed to read ADC channel %d from FEM-%d", channel, unit);
+        usys_log_error("Failed to read ADC channel %d from FEM%d", (int)channel, unit);
         return STATUS_NOK;
     }
 
-    adcRaw   = (uint16_t)((data[0] << 8) | data[1]);
+    adcRaw = (uint16_t)((data[0] << 8) | data[1]);
     *voltage = adc_raw_to_voltage(adcRaw);
 
-    usys_log_debug("ADC channel %d: %.3fV from FEM-%d", channel, *voltage, unit);
+    usys_log_debug("ADC channel %d: %.3fV from FEM%d", (int)channel, *voltage, unit);
     return STATUS_OK;
 }
 
@@ -598,14 +578,16 @@ float voltage_to_reverse_power(float voltage) {
 }
 
 float voltage_to_current(float voltage) {
-    return voltage;
+    float current = 0.0f;
+    current = voltage; /* Example: 1V = 1A */
+    return current;
 }
 
-int adc_read_reverse_power(I2CController *controller, FemUnit unit, float *power_dbm) {
+int adc_read_reverse_power(I2CController *controller, FemUnit unit, float *powerDbm) {
     float voltage = 0.0f;
     int status    = STATUS_OK;
 
-    if (!power_dbm) {
+    if (!powerDbm) {
         return STATUS_NOK;
     }
 
@@ -614,17 +596,17 @@ int adc_read_reverse_power(I2CController *controller, FemUnit unit, float *power
         return STATUS_NOK;
     }
 
-    *power_dbm = voltage_to_reverse_power(voltage);
-    controller->adc_state.reverse_power_dbm = *power_dbm;
+    *powerDbm = voltage_to_reverse_power(voltage);
+    controller->adcState.reversePowerDbm = *powerDbm;
 
     return STATUS_OK;
 }
 
-int adc_read_pa_current(I2CController *controller, FemUnit unit, float *current_a) {
+int adc_read_pa_current(I2CController *controller, FemUnit unit, float *currentA) {
     float voltage = 0.0f;
-    int   status  = STATUS_OK;
+    int status    = STATUS_OK;
 
-    if (!current_a) {
+    if (!currentA) {
         return STATUS_NOK;
     }
 
@@ -633,8 +615,8 @@ int adc_read_pa_current(I2CController *controller, FemUnit unit, float *current_
         return STATUS_NOK;
     }
 
-    *current_a = voltage_to_current(voltage);
-    controller->adc_state.pa_current_a = *current_a;
+    *currentA = voltage_to_current(voltage);
+    controller->adcState.paCurrentA = *currentA;
 
     return STATUS_OK;
 }
@@ -646,10 +628,10 @@ int adc_read_all_channels(I2CController *controller, FemUnit unit) {
     int status = STATUS_OK;
 
     struct ChannelInfo {
-        int channel;
+        ADCChannel channel;
         const char *name;
         const char *unit;
-        float (*convert)(float);
+        float      (*convert)(float);
     };
 
     struct ChannelInfo channelsInfo[4];
@@ -666,7 +648,7 @@ int adc_read_all_channels(I2CController *controller, FemUnit unit) {
     channelsInfo[1].channel = ADC_CHANNEL_FORWARD_POWER;
     channelsInfo[1].name    = "Forward Power";
     channelsInfo[1].unit    = "dBm";
-    channelsInfo[1].convert = voltage_to_reverse_power; /* adjust if needed */
+    channelsInfo[1].convert = voltage_to_reverse_power;
 
     channelsInfo[2].channel = ADC_CHANNEL_PA_CURRENT;
     channelsInfo[2].name    = "PA Current";
@@ -686,20 +668,20 @@ int adc_read_all_channels(I2CController *controller, FemUnit unit) {
             if (channelsInfo[i].convert) {
                 converted = channelsInfo[i].convert(voltage);
                 usys_log_info("  Channel %d (%s): %.2f %s",
-                              channelsInfo[i].channel,
+                              (int)channelsInfo[i].channel,
                               channelsInfo[i].name,
                               converted,
                               channelsInfo[i].unit);
             } else {
                 usys_log_info("  Channel %d (%s): %.3f %s",
-                              channelsInfo[i].channel,
+                              (int)channelsInfo[i].channel,
                               channelsInfo[i].name,
                               voltage,
                               channelsInfo[i].unit);
             }
         } else {
             usys_log_error("  Channel %d (%s): Read error",
-                           channelsInfo[i].channel,
+                           (int)channelsInfo[i].channel,
                            channelsInfo[i].name);
         }
     }
@@ -707,49 +689,49 @@ int adc_read_all_channels(I2CController *controller, FemUnit unit) {
     return STATUS_OK;
 }
 
-int adc_set_safety_thresholds(I2CController *controller, float max_reverse_power, float max_current) {
+int adc_set_safety_thresholds(I2CController *controller, float maxReversePower, float maxCurrent) {
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
 
-    controller->adc_state.max_reverse_power = max_reverse_power;
-    controller->adc_state.max_current       = max_current;
-    controller->adc_state.safety_enabled    = true;
+    controller->adcState.maxReversePower = maxReversePower;
+    controller->adcState.maxCurrent      = maxCurrent;
+    controller->adcState.safetyEnabled   = true;
 
     usys_log_info("Safety thresholds set: reverse power %.1f dBm, current %.1f A",
-                  max_reverse_power, max_current);
+                  maxReversePower, maxCurrent);
     return STATUS_OK;
 }
 
-int adc_check_safety(I2CController *controller, FemUnit unit, bool *safety_violation) {
+int adc_check_safety(I2CController *controller, FemUnit unit, bool *safetyViolation) {
     float reversePower = 0.0f;
     float paCurrent    = 0.0f;
 
-    if (!controller || !controller->initialized || !safety_violation) {
+    if (!controller || !controller->initialized || !safetyViolation) {
         return STATUS_NOK;
     }
 
-    *safety_violation = false;
+    *safetyViolation = false;
 
-    if (!controller->adc_state.safety_enabled) {
+    if (!controller->adcState.safetyEnabled) {
         return STATUS_OK;
     }
 
     if (adc_read_reverse_power(controller, unit, &reversePower) == STATUS_OK) {
-        if (reversePower > controller->adc_state.max_reverse_power) {
+        if (reversePower > controller->adcState.maxReversePower) {
             usys_log_warn("Safety violation: reverse power %.1f dBm exceeds threshold %.1f dBm",
                           reversePower,
-                          controller->adc_state.max_reverse_power);
-            *safety_violation = true;
+                          controller->adcState.maxReversePower);
+            *safetyViolation = true;
         }
     }
 
     if (adc_read_pa_current(controller, unit, &paCurrent) == STATUS_OK) {
-        if (paCurrent > controller->adc_state.max_current) {
+        if (paCurrent > controller->adcState.maxCurrent) {
             usys_log_warn("Safety violation: PA current %.1f A exceeds threshold %.1f A",
                           paCurrent,
-                          controller->adc_state.max_current);
-            *safety_violation = true;
+                          controller->adcState.maxCurrent);
+            *safetyViolation = true;
         }
     }
 
@@ -780,38 +762,37 @@ int eeprom_write_serial(I2CController *controller, FemUnit unit, const char *ser
 
     for (i = 0U; i < len; i++) {
         byteData = (uint8_t)serial[i];
-        status = i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &byteData, 1);
+        status   = i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &byteData, 1);
         if (status != STATUS_OK) {
             usys_log_error("Failed to write EEPROM at position %zu", i);
             return STATUS_NOK;
         }
-        
         usleep(10000); /* 10ms write cycle */
     }
 
     (void)i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)len, &nullTerm, 1);
 
-    strncpy(controller->eeprom_state.serial_number, serial,
-            sizeof(controller->eeprom_state.serial_number) - 1);
-    controller->eeprom_state.has_data = true;
+    strncpy(controller->eepromState.serialNumber, serial,
+            sizeof(controller->eepromState.serialNumber) - 1);
+    controller->eepromState.hasData = true;
 
     usys_log_info("Serial number written to EEPROM: %s", serial);
     return STATUS_OK;
 }
 
-int eeprom_read_serial(I2CController *controller, FemUnit unit, char *serial, size_t max_len) {
+int eeprom_read_serial(I2CController *controller, FemUnit unit, char *serial, size_t maxLen) {
     int bus = 0;
     size_t readLen = 0U;
     size_t i = 0U;
     uint8_t byteData = 0U;
     int status = STATUS_OK;
 
-    if (!controller || !controller->initialized || !serial || max_len == 0U) {
+    if (!controller || !controller->initialized || !serial || maxLen == 0U) {
         return STATUS_NOK;
     }
 
     bus     = i2c_get_bus_for_fem(unit);
-    readLen = (max_len - 1U < 16U) ? (max_len - 1U) : 16U;
+    readLen = (maxLen - 1U < 16U) ? (maxLen - 1U) : 16U;
 
     serial[0] = '\0';
 
@@ -828,16 +809,15 @@ int eeprom_read_serial(I2CController *controller, FemUnit unit, char *serial, si
         }
 
         serial[i] = (char)byteData;
-
         if (i == readLen - 1U) {
             serial[i + 1U] = '\0';
         }
     }
 
     if (strlen(serial) > 0U) {
-        strncpy(controller->eeprom_state.serial_number, serial,
-                sizeof(controller->eeprom_state.serial_number) - 1);
-        controller->eeprom_state.has_data = true;
+        strncpy(controller->eepromState.serialNumber, serial,
+                sizeof(controller->eepromState.serialNumber) - 1);
+        controller->eepromState.hasData = true;
         usys_log_info("Serial number read from EEPROM: %s", serial);
         return STATUS_OK;
     } else {
