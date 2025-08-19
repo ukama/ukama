@@ -82,13 +82,13 @@ typedef struct {
 } EEPROMState;
 
 typedef struct {
-    int busFem1;
-    int busFem2;
-    DacState dacState;
+    int             busFem1;
+    int             busFem2;
+    DacState        dacState;
     TempSensorState tempState;
-    ADCState adcState;
-    EEPROMState eepromState;
-    bool initialized;
+    ADCState        adcState;
+    EEPROMState     eepromState;
+    bool            initialized;
 } I2CController;
 
 /* Controller lifecycle */
