@@ -28,6 +28,9 @@
 
 #include "version.h"
 
+/* network.c */
+int start_web_service(ServerConfig *serverConfig, UInst *serviceInst);
+
 void handle_sigint(int signum) {
     usys_log_debug("Terminate signal.\n");
     usys_exit(0);
@@ -69,10 +72,10 @@ int main(int argc, char **argv) {
 
     char *debug = DEF_LOG_LEVEL;
     UInst serviceInst;
-    Config serviceConfig = {0};
-
+    Config         serviceConfig  = {0};
     GpioController gpioController = {0};
     I2CController  i2cController  = {0};
+    ServerConfig   serverConfig   = {0};
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
@@ -155,7 +158,11 @@ int main(int argc, char **argv) {
         goto done;
     }
 
-    if (start_web_service(&serviceConfig, &serviceInst, NULL) != USYS_TRUE) {
+    serverConfig.config         = &serviceConfig;
+    serverConfig.gpioController = &gpioController;
+    serverConfig.i2cController  = &i2cController;
+
+    if (start_web_service(&serverConfig, &serviceInst) != USYS_TRUE) {
         usys_free(serviceConfig.serviceName);
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         exitCode = USYS_TRUE;
@@ -171,7 +178,7 @@ done:
 
     i2c_controller_cleanup(&i2cController);
     gpio_controller_cleanup(&gpioController);
-    
+
     usys_log_debug("Exiting femd ...");
 
     return exitCode;

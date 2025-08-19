@@ -55,6 +55,13 @@ typedef struct _u_response  UResponse;
 typedef json_t              JsonObj;
 typedef json_error_t        JsonErrObj;
 
+typedef struct {
+
+    Config         *config;
+    GpioController *gpioController;
+    I2CController  *i2cController;
+} ServerConfig;
+
 extern volatile sig_atomic_t g_running;
 
 void handle_sigint(int signum);

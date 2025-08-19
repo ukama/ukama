@@ -9,58 +9,40 @@
 #ifndef WEB_SERVICE_H_
 #define WEB_SERVICE_H_
 
+#include <ulfius.h>
+
 #include "femd.h"
 
-int web_service_cb_ping(const URequest *request,
-                        UResponse *response,
-                        void *config);
+/* Health & discovery */
+int cb_get_health   (const URequest *req, UResponse *resp, void *user_data);
+int cb_get_fems     (const URequest *req, UResponse *resp, void *user_data);
+int cb_get_fem      (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_version(const URequest *request,
-                           UResponse *response,
-                           void *config);
+/* GPIO */
+int cb_get_gpio     (const URequest *req, UResponse *resp, void *user_data);
+int cb_put_gpio     (const URequest *req, UResponse *resp, void *user_data);
+int cb_patch_gpio   (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_health(const URequest *request,
-                          UResponse *response,
-                          void *config);
+/* DAC */
+int cb_get_dac      (const URequest *req, UResponse *resp, void *user_data);
+int cb_put_dac      (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_default(const URequest *request,
-                           UResponse *response,
-                           void *config);
+/* Sensors */
+int cb_get_temp     (const URequest *req, UResponse *resp, void *user_data);
+int cb_get_adc_all  (const URequest *req, UResponse *resp, void *user_data);
+int cb_get_adc_chan (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_not_allowed(const URequest *request,
-                               UResponse *response,
-                               void *config);
+/* Safety thresholds */
+int cb_get_adc_thr  (const URequest *req, UResponse *resp, void *user_data);
+int cb_put_adc_thr  (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_fem_gpio_status(const URequest *request,
-                                   UResponse *response,
-                                   void *config);
+/* EEPROM serial */
+int cb_get_serial   (const URequest *req, UResponse *resp, void *user_data);
+int cb_put_serial   (const URequest *req, UResponse *resp, void *user_data);
 
-int web_service_cb_fem_gpio_control(const URequest *request,
-                                    UResponse *response,
-                                    void *config);
-
-int web_service_cb_fem_dac_control(const URequest *request,
-                                   UResponse *response,
-                                   void *config);
-
-int web_service_cb_fem_dac_status(const URequest *request,
-                                  UResponse *response,
-                                  void *config);
-
-int web_service_cb_fem_temperature(const URequest *request,
-                                   UResponse *response,
-                                   void *config);
-
-int web_service_cb_fem_adc(const URequest *request,
-                           UResponse *response,
-                           void *config);
-
-int web_service_cb_fem_eeprom(const URequest *request,
-                              UResponse *response,
-                              void *config);
-
-int start_web_service(Config *config,
-                      UInst *serviceInst,
-                      void *webConfig);
+/* Generic helpers */
+int web_service_cb_not_allowed(const URequest *req, UResponse *resp, void *user_data);
+int web_service_cb_default    (const URequest *req, UResponse *resp, void *user_data);
+int cb_options_ok             (const URequest *req, UResponse *resp, void *user_data);
 
 #endif /* WEB_SERVICE_H_ */
