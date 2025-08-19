@@ -64,7 +64,7 @@ static void usage() {
 int main(int argc, char **argv) {
     int opt, optIdx;
 
-    char *debug      = DEF_LOG_LEVEL;
+    char *debug = DEF_LOG_LEVEL;
     UInst serviceInst;
     Config serviceConfig = {0};
 
@@ -105,11 +105,11 @@ int main(int argc, char **argv) {
     /* Service config update */
     serviceConfig.serviceName = usys_strdup(SERVICE_NAME);
     serviceConfig.servicePort = usys_find_service_port(SERVICE_NAME);
-    serviceConfig.nodedPort    = usys_find_service_port(SERVICE_NODE);
-    serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
-    serviceConfig.nodeID       = NULL;
-    serviceConfig.nodeType     = NULL;
-    
+    serviceConfig.nodedPort   = usys_find_service_port(SERVICE_NODE);
+    serviceConfig.notifydPort = usys_find_service_port(SERVICE_NOTIFY);
+    serviceConfig.nodeID      = NULL;
+    serviceConfig.nodeType    = NULL;
+
     if (!serviceConfig.servicePort ||
         !serviceConfig.nodedPort   ||
         !serviceConfig.notifydPort) {
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
             goto done;
         }
     }
-    
+
     if (start_web_service(&serviceConfig, &serviceInst, NULL) != USYS_TRUE) {
         usys_free(serviceConfig.serviceName);
         usys_log_error("Webservice failed to setup for clients. Exiting.");

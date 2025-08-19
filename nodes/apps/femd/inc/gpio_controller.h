@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2024-present, Ukama Inc.
+ * Copyright (c) 2025-present, Ukama Inc.
  */
 
 #ifndef GPIO_CONTROLLER_H
@@ -12,8 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define GPIO_PATH_MAX_LEN         256
-#define GPIO_BASE_PATH           "/sys/devices/platform"
+#define GPIO_PATH_MAX_LEN 256
+#define GPIO_BASE_PATH    "/sys/devices/platform"
 
 typedef enum {
     FEM_UNIT_1 = 1,
@@ -26,17 +26,17 @@ typedef enum {
     GPIO_RX_RF,
     GPIO_PA_VDS,
     GPIO_TX_RFPAL,
-    GPIO_PSU_PGOOD,
+    GPIO_PSU_PGOOD, /* read-only */
     GPIO_MAX
 } GpioPin;
 
 typedef struct {
-    bool pa_disable;        // 28V_VDS Enable (inverted logic)
-    bool tx_rf_enable;      // TX_RF Enable
-    bool rx_rf_enable;      // RX_RF Enable
-    bool pa_vds_enable;     // PA_VDS Enable
-    bool rf_pal_enable;     // TX_RFPAL Enable
-    bool pg_reg_5v;         // PSU_PGOOD (read-only)
+    bool pa_disable;    /* 28V_VDS Enable (inverted logic) */
+    bool tx_rf_enable;  /* TX_RF */
+    bool rx_rf_enable;  /* RX_RF */
+    bool pa_vds_enable; /* PA_VDS */
+    bool rf_pal_enable; /* TX_RFPAL */
+    bool pg_reg_5v;     /* PSU_PGOOD */
 } GpioStatus;
 
 typedef struct {
@@ -44,17 +44,17 @@ typedef struct {
     bool initialized;
 } GpioController;
 
-int gpio_controller_init(GpioController *controller, const char *basePath);
-void gpio_controller_cleanup(GpioController *controller);
+int gpio_controller_init(GpioController     *ctl, const char *basePath);
+void gpio_controller_cleanup(GpioController *ctl);
 
-int gpio_set_28v_vds(GpioController *controller, FemUnit unit, bool enable);
-int gpio_set_tx_rf(GpioController *controller, FemUnit unit, bool enable);
-int gpio_set_rx_rf(GpioController *controller, FemUnit unit, bool enable);
-int gpio_set_pa_vds(GpioController *controller, FemUnit unit, bool enable);
-int gpio_set_tx_rfpal(GpioController *controller, FemUnit unit, bool enable);
-int gpio_get_psu_pgood(GpioController *controller, FemUnit unit, bool *status);
+/* Generic get/set for gpio */
+int gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value);
+int gpio_get(GpioController *ctl, FemUnit unit, GpioPin pin, bool *out);
 
-int gpio_get_all_status(GpioController *controller, FemUnit unit, GpioStatus *status);
-int gpio_disable_pa(GpioController *controller, FemUnit unit);
+/* bulk helper */
+int gpio_read_all(GpioController *ctl, FemUnit unit, GpioStatus *out);
+int gpio_apply(GpioController    *ctl, FemUnit unit, const GpioStatus *desired);
 
+/* convenience */
+int gpio_disable_pa(GpioController *ctl, FemUnit unit);
 #endif /* GPIO_CONTROLLER_H */
