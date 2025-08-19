@@ -6,12 +6,20 @@
  * Copyright (c) 2025-present, Ukama Inc.
  */
 
-#include "gpio_controller.h"
-#include "femd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+#include "usys_types.h"
+
+#include "gpio_controller.h"
+#include "femd.h"
 
 static const char* femUnitNames[3] = {
     [0]           = "",
@@ -58,12 +66,12 @@ static int write_bool_file(const char *path, bool v) {
     }
 
     if (fprintf(file, "%d", v ? 1 : 0) < 0) {
-        fclose(f);
+        fclose(file);
         usys_log_error("write %s failed", path);
         return STATUS_NOK;
     }
 
-    fclose(f);
+    fclose(file);
     return STATUS_OK;
 }
 
@@ -130,7 +138,7 @@ int gpio_set(GpioController *ctl, FemUnit unit, GpioPin pin, bool value) {
 
     int  rc;
     bool fileVal;
-    char path[GPIO_MAX_PATH_LEN]={0};
+    char path[GPIO_PATH_MAX_LEN]={0};
     
     if (!ctl || !ctl->initialized) {
         usys_log_error("controller not initialized");
