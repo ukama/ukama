@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2024-present, Ukama Inc.
+ * Copyright (c) 2025-present, Ukama Inc.
  */
 
 #include <stdio.h>
@@ -17,46 +17,59 @@
 #include <linux/i2c-dev.h>
 #include <errno.h>
 
+#include "usys_api.h"
+#include "usys_file.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+#include "usys_types.h"
+
 #include "i2c_controller.h"
 #include "femd.h"
 
-static const I2CDeviceInfo device_info[I2C_DEVICE_MAX] = {
-    {"AD5667", I2C_ADDR_DAC_AD5667, "16-bit DAC"},
-    {"LM75A", I2C_ADDR_TEMP_LM75A, "Temperature sensor"},
+/* Unified device metadata */
+static const I2CDeviceInfo deviceInfo[I2C_DEVICE_MAX] = {
+    {"AD5667",  I2C_ADDR_DAC_AD5667,  "16-bit DAC"},
+    {"LM75A",   I2C_ADDR_TEMP_LM75A,  "Temperature sensor"},
     {"ADS1015", I2C_ADDR_ADC_ADS1015, "12-bit ADC"},
-    {"EEPROM", I2C_ADDR_EEPROM, "Serial number storage"}
+    {"EEPROM",  I2C_ADDR_EEPROM,      "Serial number storage"}
 };
 
+/* Controller lifecycle */
+
 int i2c_controller_init(I2CController *controller) {
+    int status = STATUS_OK;
+
     if (!controller) {
         usys_log_error("I2C controller pointer is NULL");
         return STATUS_NOK;
     }
 
     memset(controller, 0, sizeof(I2CController));
-    
+
     controller->bus_fem1 = I2C_BUS_FEM1;
     controller->bus_fem2 = I2C_BUS_FEM2;
-    
+
     controller->dac_state.carrier_voltage = 0.0f;
-    controller->dac_state.peak_voltage = 0.0f;
-    controller->dac_state.initialized = false;
-    
-    controller->temp_state.temperature = 0.0f;
-    controller->temp_state.threshold = 85.0f;  // Default threshold
+    controller->dac_state.peak_voltage    = 0.0f;
+    controller->dac_state.initialized     = false;
+
+    controller->temp_state.temperature   = 0.0f;
+    controller->temp_state.threshold     = 85.0f;
     controller->temp_state.alert_enabled = false;
-    
-    controller->adc_state.max_reverse_power = -10.0f;  // Default -10 dBm
-    controller->adc_state.max_current = 5.0f;          // Default 5A
-    controller->adc_state.safety_enabled = true;
-    
+
+    controller->adc_state.max_reverse_power = -10.0f;
+    controller->adc_state.max_current       = 5.0f;
+    controller->adc_state.safety_enabled    = true;
+
     controller->eeprom_state.has_data = false;
-    memset(controller->eeprom_state.serial_number, 0, sizeof(controller->eeprom_state.serial_number));
-    
+    memset(controller->eeprom_state.serial_number, 0,
+           sizeof(controller->eeprom_state.serial_number));
+
     controller->initialized = true;
     usys_log_info("I2C controller initialized");
-    
-    return STATUS_OK;
+
+    return status;
 }
 
 void i2c_controller_cleanup(I2CController *controller) {
@@ -67,399 +80,516 @@ void i2c_controller_cleanup(I2CController *controller) {
 }
 
 int i2c_get_bus_for_fem(FemUnit unit) {
-    return (unit == FEM_UNIT_1) ? I2C_BUS_FEM1 : I2C_BUS_FEM2;
+    int bus = I2C_BUS_FEM2;
+
+    if (unit == FEM_UNIT_1) {
+        bus = I2C_BUS_FEM1;
+    }
+
+    return bus;
 }
 
-int i2c_write_bytes(int bus, uint8_t device_addr, uint8_t reg, const uint8_t *data, size_t len) {
-    char device_path[32];
-    int fd;
-    uint8_t buffer[256];
-    
-    if (len > 254) {  // Reserve space for register byte
+/*  Low-level helpers */
+
+int i2c_write_bytes(int bus, uint8_t deviceAddr, uint8_t reg, const uint8_t *data, size_t len) {
+    char devicePath[32]={0};
+    int fd = -1;
+    uint8_t txBuffer[256]={0};
+    ssize_t wrote = 0;
+    int status = STATUS_OK;
+
+    if (len > 254) { /* 1 byte reserved for reg */
         usys_log_error("I2C write data too long: %zu bytes", len);
         return STATUS_NOK;
     }
-    
-    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
-    
-    fd = open(device_path, O_RDWR);
+
+    snprintf(devicePath, sizeof(devicePath), "/dev/i2c-%d", bus);
+
+    fd = open(devicePath, O_RDWR);
     if (fd < 0) {
-        usys_log_error("Failed to open I2C device %s: %s", device_path, strerror(errno));
-        return STATUS_NOK;
+        usys_log_error("Failed to open I2C device %s: %s", devicePath, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
-        usys_log_error("Failed to set I2C slave address 0x%02X: %s", device_addr, strerror(errno));
+
+    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", deviceAddr, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
+    }
+
+    txBuffer[0] = reg;
+    if (len > 0 && data != NULL) {
+        memcpy(&txBuffer[1], data, len);
+    }
+
+    wrote = write(fd, txBuffer, len + 1);
+    if (wrote != (ssize_t)(len + 1)) {
+        usys_log_error("I2C write failed: bus=%d, addr=0x%02X, reg=0x%02X: %s",
+                       bus, deviceAddr, reg, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
+    }
+
+    usys_log_debug("I2C write OK: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu",
+                   bus, deviceAddr, reg, len);
+
+cleanup:
+    if (fd >= 0) {
         close(fd);
-        return STATUS_NOK;
     }
-    
-    buffer[0] = reg;
-    memcpy(&buffer[1], data, len);
-    
-    if (write(fd, buffer, len + 1) != (ssize_t)(len + 1)) {
-        usys_log_error("I2C write failed: bus=%d, addr=0x%02X, reg=0x%02X: %s", 
-                       bus, device_addr, reg, strerror(errno));
-        close(fd);
-        return STATUS_NOK;
-    }
-    
-    close(fd);
-    usys_log_debug("I2C write successful: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu", 
-                   bus, device_addr, reg, len);
-    
-    return STATUS_OK;
+    return status;
 }
 
-int i2c_read_bytes(int bus, uint8_t device_addr, uint8_t reg, uint8_t *data, size_t len) {
-    char device_path[32];
-    int fd;
-    
+int i2c_read_bytes(int bus, uint8_t deviceAddr, uint8_t reg, uint8_t *data, size_t len) {
+    char devicePath[32] = {0};
+    int fd = -1;
+    ssize_t wrote = 0;
+    ssize_t readn = 0;
+    int status = STATUS_OK;
+
     if (!data || len == 0) {
         usys_log_error("Invalid parameters for I2C read");
         return STATUS_NOK;
     }
-    
-    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
-    
-    fd = open(device_path, O_RDWR);
+
+    snprintf(devicePath, sizeof(devicePath), "/dev/i2c-%d", bus);
+
+    fd = open(devicePath, O_RDWR);
     if (fd < 0) {
-        usys_log_error("Failed to open I2C device %s: %s", device_path, strerror(errno));
-        return STATUS_NOK;
+        usys_log_error("Failed to open I2C device %s: %s", devicePath, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
-        usys_log_error("Failed to set I2C slave address 0x%02X: %s", device_addr, strerror(errno));
-        close(fd);
-        return STATUS_NOK;
+
+    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
+        usys_log_error("Failed to set I2C slave address 0x%02X: %s", deviceAddr, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    // Write register address
-    if (write(fd, &reg, 1) != 1) {
+
+    wrote = write(fd, &reg, 1);
+    if (wrote != 1) {
         usys_log_error("Failed to write register address: %s", strerror(errno));
-        close(fd);
-        return STATUS_NOK;
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    // Read data
-    if (read(fd, data, len) != (ssize_t)len) {
-        usys_log_error("I2C read failed: bus=%d, addr=0x%02X, reg=0x%02X: %s", 
-                       bus, device_addr, reg, strerror(errno));
-        close(fd);
-        return STATUS_NOK;
+
+    readn = read(fd, data, len);
+    if (readn != (ssize_t)len) {
+        usys_log_error("I2C read failed: bus=%d, addr=0x%02X, reg=0x%02X: %s",
+                       bus, deviceAddr, reg, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    close(fd);
-    usys_log_debug("I2C read successful: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu", 
-                   bus, device_addr, reg, len);
-    
-    return STATUS_OK;
+
+    usys_log_debug("I2C read OK: bus=%d, addr=0x%02X, reg=0x%02X, len=%zu",
+                   bus, deviceAddr, reg, len);
+
+cleanup:
+    if (fd >= 0) {
+        close(fd);
+    }
+    return status;
 }
 
-int i2c_detect_device(int bus, uint8_t device_addr) {
-    char device_path[32];
-    int fd;
-    
-    snprintf(device_path, sizeof(device_path), "/dev/i2c-%d", bus);
-    
-    fd = open(device_path, O_RDWR);
+int i2c_detect_device(int bus, uint8_t deviceAddr) {
+    char devicePath[32] = {0};
+    int fd = -1;
+    int status = STATUS_OK;
+    ssize_t wrote = 0;
+
+    snprintf(devicePath, sizeof(devicePath), "/dev/i2c-%d", bus);
+
+    fd = open(devicePath, O_RDWR);
     if (fd < 0) {
-        usys_log_debug("Failed to open I2C device %s: %s", device_path, strerror(errno));
-        return STATUS_NOK;
+        usys_log_debug("Failed to open I2C device %s: %s", devicePath, strerror(errno));
+        status = STATUS_NOK;
+        goto cleanup;
     }
-    
-    if (ioctl(fd, I2C_SLAVE, device_addr) < 0) {
+
+    if (ioctl(fd, I2C_SLAVE, deviceAddr) < 0) {
+        status = STATUS_NOK;
+        goto cleanup;
+    }
+
+    /* No-data write to detect presence */
+    wrote = write(fd, NULL, 0);
+    if (wrote < 0) {
+        status = STATUS_NOK;
+    }
+
+cleanup:
+    if (fd >= 0) {
         close(fd);
-        return STATUS_NOK;
     }
-    
-    // Try a no-data write to detect device presence
-    // This is more reliable than a read as it doesn't block on devices
-    // that don't support reads or require specific command sequences
-    int result = (write(fd, NULL, 0) >= 0) ? STATUS_OK : STATUS_NOK;
-    
-    close(fd);
-    return result;
+    return status;
+}
+
+/* Device info/scan */
+
+const I2CDeviceInfo* i2c_get_device_info(I2CDevice device) {
+    const I2CDeviceInfo *info = NULL;
+    if (device < I2C_DEVICE_MAX) {
+        info = &deviceInfo[device];
+    }
+    return info;
+}
+
+void i2c_print_device_scan(FemUnit unit) {
+    int bus = 0;
+    int i = 0;
+    int detected = STATUS_NOK;
+    const I2CDeviceInfo *info = NULL;
+
+    bus = i2c_get_bus_for_fem(unit);
+    usys_log_info("I2C Device Scan for FEM-%d (bus %d):", unit, bus);
+
+    for (i = 0; i < I2C_DEVICE_MAX; i++) {
+        info = &deviceInfo[i];
+        detected = i2c_detect_device(bus, info->address);
+        usys_log_info("  %s (0x%02X): %s - %s",
+                      info->name, info->address, info->description,
+                      detected == STATUS_OK ? "DETECTED" : "NOT FOUND");
+    }
+}
+
+/* DAC */
+
+uint16_t voltage_to_dac_value(float voltage) {
+    float compensatedVoltage = 0.0f;
+    uint16_t dacValue = 0;
+
+    compensatedVoltage = voltage / 2.0f;
+    dacValue = (uint16_t)((compensatedVoltage / DAC_VREF) * 65535.0f);
+    if (dacValue > 65535) {
+        dacValue = 65535;
+    }
+
+    return dacValue;
+}
+
+float dac_value_to_voltage(uint16_t dac_value) {
+    float voltage = 0.0f;
+
+    voltage = ((float)dac_value / 65535.0f) * DAC_VREF * 2.0f;
+    return voltage;
 }
 
 int dac_init(I2CController *controller, FemUnit unit) {
+    int status = STATUS_OK;
+    int bus = 0;
+    uint8_t resetData[2];
+
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    
+
+    bus = i2c_get_bus_for_fem(unit);
+
     if (i2c_detect_device(bus, I2C_ADDR_DAC_AD5667) != STATUS_OK) {
         usys_log_error("DAC AD5667 not detected on bus %d", bus);
         return STATUS_NOK;
     }
-    
-    uint8_t reset_data[] = {0x06, 0x00};
-    if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x40, reset_data, 2) != STATUS_OK) {
+
+    resetData[0] = 0x06;
+    resetData[1] = 0x00;
+    status = i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x40, resetData, 2);
+    if (status != STATUS_OK) {
         usys_log_error("DAC reset failed");
         return STATUS_NOK;
     }
-    
-    usleep(10000); // 10ms delay after reset
-    
+
+    usleep(10000); /* 10ms */
+
     controller->dac_state.initialized = true;
-    usys_log_info("DAC initialized for FEM%d", unit);
-    
+    usys_log_info("DAC initialized for FEM-%d", unit);
     return STATUS_OK;
 }
 
-uint16_t voltage_to_dac_value(float voltage) {
-    float compensated_voltage = voltage / 2.0f;
-    uint16_t dac_value = (uint16_t)((compensated_voltage / DAC_VREF) * 65535.0f);
-    
-    if (dac_value > 65535) dac_value = 65535;
-    
-    return dac_value;
-}
+static int dac_set_voltage(I2CController *controller,
+                           FemUnit unit,
+                           float voltage,
+                           bool isCarrier) {
+    int status = STATUS_OK;
+    float maxAllowed = 0.0f;
+    int bus = 0;
+    uint16_t dacValue = 0;
+    uint8_t data[2];
+    uint8_t reg = 0;
 
-float dac_value_to_voltage(uint16_t dac_value) {
-    return ((float)dac_value / 65535.0f) * DAC_VREF * 2.0f; // Account for 2x gain
+    if (!controller ||
+        !controller->initialized ||
+        !controller->dac_state.initialized) {
+        return STATUS_NOK;
+    }
+
+    maxAllowed = isCarrier ? DAC_MAX_CARRIER_VOLTAGE : DAC_MAX_PEAK_VOLTAGE;
+    if (voltage < 0.0f || voltage > maxAllowed) {
+        usys_log_error("%s voltage out of range: %.2fV (max %.2fV)",
+                       isCarrier ? "Carrier" : "Peak", voltage, maxAllowed);
+        return STATUS_NOK;
+    }
+
+    bus = i2c_get_bus_for_fem(unit);
+    dacValue = voltage_to_dac_value(voltage);
+
+    data[0] = (uint8_t)((dacValue >> 8) & 0xFF);
+    data[1] = (uint8_t)(dacValue & 0xFF);
+    reg = isCarrier ? 0x59 : 0x58;
+
+    status = i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, reg, data, 2);
+    if (status != STATUS_OK) {
+        usys_log_error("Failed to set %s voltage", isCarrier ? "carrier" : "peak");
+        return STATUS_NOK;
+    }
+
+    if (isCarrier) {
+        controller->dac_state.carrier_voltage = voltage;
+    } else {
+        controller->dac_state.peak_voltage    = voltage;
+    }
+
+    usys_log_info("%s voltage set to %.2fV for FEM-%d",
+                  isCarrier ? "Carrier" : "Peak", voltage, unit);
+    return STATUS_OK;
 }
 
 int dac_set_carrier_voltage(I2CController *controller, FemUnit unit, float voltage) {
-    if (!controller || !controller->initialized || !controller->dac_state.initialized) {
-        return STATUS_NOK;
-    }
-    
-    if (voltage < 0.0f || voltage > DAC_MAX_CARRIER_VOLTAGE) {
-        usys_log_error("Carrier voltage out of range: %.2fV (max: %.2fV)", 
-                       voltage, DAC_MAX_CARRIER_VOLTAGE);
-        return STATUS_NOK;
-    }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    uint16_t dac_value = voltage_to_dac_value(voltage);
-    
-    uint8_t data[] = {(dac_value >> 8) & 0xFF, dac_value & 0xFF};
-    
-    if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x59, data, 2) != STATUS_OK) {
-        usys_log_error("Failed to set carrier voltage");
-        return STATUS_NOK;
-    }
-    
-    controller->dac_state.carrier_voltage = voltage;
-    usys_log_info("Carrier voltage set to %.2fV for FEM%d", voltage, unit);
-    
-    return STATUS_OK;
+    return dac_set_voltage(controller, unit, voltage, true);
 }
 
 int dac_set_peak_voltage(I2CController *controller, FemUnit unit, float voltage) {
-    if (!controller || !controller->initialized || !controller->dac_state.initialized) {
-        return STATUS_NOK;
-    }
-    
-    if (voltage < 0.0f || voltage > DAC_MAX_PEAK_VOLTAGE) {
-        usys_log_error("Peak voltage out of range: %.2fV (max: %.2fV)", 
-                       voltage, DAC_MAX_PEAK_VOLTAGE);
-        return STATUS_NOK;
-    }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    uint16_t dac_value = voltage_to_dac_value(voltage);
-    
-    uint8_t data[] = {(dac_value >> 8) & 0xFF, dac_value & 0xFF};
-    
-    if (i2c_write_bytes(bus, I2C_ADDR_DAC_AD5667, 0x58, data, 2) != STATUS_OK) {
-        usys_log_error("Failed to set peak voltage");
-        return STATUS_NOK;
-    }
-    
-    controller->dac_state.peak_voltage = voltage;
-    usys_log_info("Peak voltage set to %.2fV for FEM%d", voltage, unit);
-    
-    return STATUS_OK;
+    return = dac_set_voltage(controller, unit, voltage, false);
 }
 
 int dac_get_config(I2CController *controller, float *carrier, float *peak) {
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
-    if (carrier) *carrier = controller->dac_state.carrier_voltage;
-    if (peak) *peak = controller->dac_state.peak_voltage;
-    
+
+    if (carrier) {
+        *carrier = controller->dac_state.carrier_voltage;
+    }
+
+    if (peak) {
+        *peak = controller->dac_state.peak_voltage;
+    }
+
     return STATUS_OK;
 }
 
 int dac_disable_pa(I2CController *controller, FemUnit unit) {
+    int result1 = STATUS_NOK;
+    int result2 = STATUS_NOK;
+
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
-    int result1 = dac_set_carrier_voltage(controller, unit, 0.0f);
-    int result2 = dac_set_peak_voltage(controller, unit, 0.0f);
-    
+
+    result1 = dac_set_carrier_voltage(controller, unit, 0.0f);
+    result2 = dac_set_peak_voltage(controller, unit, 0.0f);
+
     if (result1 == STATUS_OK && result2 == STATUS_OK) {
-        usys_log_info("PA disabled - DAC values set to zero for FEM%d", unit);
+        usys_log_info("PA disabled - DAC values set to zero for FEM-%d", unit);
         return STATUS_OK;
     }
-    
+
     return STATUS_NOK;
 }
 
+/* Temperature sensor (LM75A) */
+
 float lm75a_raw_to_celsius(uint8_t msb, uint8_t lsb) {
-    uint16_t temp_raw = (msb << 8) | lsb;
-    
-    int16_t temp_9bit = temp_raw >> 7;
-    
-    if (temp_9bit > 255) {
-        temp_9bit = temp_9bit - 512;  // Subtract 2^9 for two's complement
+    uint16_t tempRaw  = 0;
+    int16_t  temp9bit = 0;
+    float    tempC    = 0.0f;
+
+    tempRaw  = (uint16_t)((msb << 8) | lsb);
+    temp9bit = (int16_t)(tempRaw >> 7);
+    if (temp9bit > 255) {
+        temp9bit = (int16_t)(temp9bit - 512);
     }
-    
-    return temp_9bit * 0.5f;
+
+    tempC = temp9bit * 0.5f;
+    return tempC;
 }
 
 uint16_t celsius_to_lm75a_raw(float temperature) {
-    int16_t temp_9bit = (int16_t)(temperature / 0.5f);
-    
-    if (temp_9bit < 0) {
-        temp_9bit = temp_9bit + 512;  // Add 2^9 for two's complement
+    int16_t  temp9bit = 0;
+    uint16_t raw      = 0;
+
+    temp9bit = (int16_t)(temperature / 0.5f);
+    if (temp9bit < 0) {
+        temp9bit = (int16_t)(temp9bit + 512);
     }
-    
-    return (temp_9bit << 7) & 0xFF80;
+
+    raw = (uint16_t)((temp9bit << 7) & 0xFF80);
+    return raw;
 }
 
 int temp_sensor_init(I2CController *controller, FemUnit unit) {
+    int bus    = 0;
+    int status = STATUS_OK;
+
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    
-    if (i2c_detect_device(bus, I2C_ADDR_TEMP_LM75A) != STATUS_OK) {
+
+    bus    = i2c_get_bus_for_fem(unit);
+    status = i2c_detect_device(bus, I2C_ADDR_TEMP_LM75A);
+    if (status != STATUS_OK) {
         usys_log_error("Temperature sensor LM75A not detected on bus %d", bus);
         return STATUS_NOK;
     }
-    
-    usys_log_info("Temperature sensor initialized for FEM%d", unit);
+
+    usys_log_info("Temperature sensor initialized for FEM-%d", unit);
     return STATUS_OK;
 }
 
-int temp_sensor_read(I2CController *controller, FemUnit unit, float *temperature) {
+int temp_sensor_read(I2CController *controller,
+                     FemUnit unit,
+                     float *temperature) {
+    int bus = 0;
+    uint8_t data[2];
+    int status = STATUS_OK;
+
     if (!controller || !controller->initialized || !temperature) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    uint8_t data[2];
-    
-    if (i2c_read_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x00, data, 2) != STATUS_OK) {
-        usys_log_error("Failed to read temperature from FEM%d", unit);
+
+    bus    = i2c_get_bus_for_fem(unit);
+    status = i2c_read_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x00, data, 2);
+    if (status != STATUS_OK) {
+        usys_log_error("Failed to read temperature from FEM-%d", unit);
         return STATUS_NOK;
     }
-    
+
     *temperature = lm75a_raw_to_celsius(data[0], data[1]);
     controller->temp_state.temperature = *temperature;
-    
-    usys_log_debug("Temperature read: %.1f°C from FEM%d", *temperature, unit);
+
+    usys_log_debug("Temperature read: %.1f°C from FEM-%d", *temperature, unit);
     return STATUS_OK;
 }
 
 int temp_sensor_set_threshold(I2CController *controller, FemUnit unit, float threshold) {
+    int bus = 0;
+    uint16_t thresholdRaw = 0;
+    uint8_t data[2];
+    int status = STATUS_OK;
+
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
+
     if (threshold < TEMP_MIN || threshold > TEMP_MAX) {
         usys_log_error("Temperature threshold out of range: %.1f°C", threshold);
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    uint16_t threshold_raw = celsius_to_lm75a_raw(threshold);
-    
-    uint8_t data[] = {(threshold_raw >> 8) & 0xFF, threshold_raw & 0xFF};
-    
-    if (i2c_write_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x03, data, 2) != STATUS_OK) {
+
+    bus          = i2c_get_bus_for_fem(unit);
+    thresholdRaw = celsius_to_lm75a_raw(threshold);
+    data[0]      = (uint8_t)((thresholdRaw >> 8) & 0xFF);
+    data[1]      = (uint8_t)(thresholdRaw & 0xFF);
+
+    status = i2c_write_bytes(bus, I2C_ADDR_TEMP_LM75A, 0x03, data, 2);
+    if (status != STATUS_OK) {
         usys_log_error("Failed to set temperature threshold");
         return STATUS_NOK;
     }
-    
-    controller->temp_state.threshold = threshold;
+
+    controller->temp_state.threshold     = threshold;
     controller->temp_state.alert_enabled = true;
-    usys_log_info("Temperature threshold set to %.1f°C for FEM%d", threshold, unit);
-    
+    usys_log_info("Temperature threshold set to %.1f°C for FEM-%d", threshold, unit);
     return STATUS_OK;
 }
 
-const I2CDeviceInfo* i2c_get_device_info(I2CDevice device) {
-    if (device >= I2C_DEVICE_MAX) {
-        return NULL;
-    }
-    return &device_info[device];
-}
-
-int adc_init(I2CController *controller, FemUnit unit) {
-    if (!controller || !controller->initialized) {
-        return STATUS_NOK;
-    }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    
-    if (i2c_detect_device(bus, I2C_ADDR_ADC_ADS1015) != STATUS_OK) {
-        usys_log_error("ADC ADS1015 not detected on bus %d", bus);
-        return STATUS_NOK;
-    }
-    
-    usys_log_info("ADC initialized for FEM%d", unit);
-    return STATUS_OK;
-}
+/* ADC (ADS1015) */
 
 static int adc_configure_channel(int bus, int channel) {
-    uint16_t mux_configs[] = {0x4000, 0x5000, 0x6000, 0x7000}; // AIN0-3 vs GND
-    
+    uint16_t muxConfigs[4];
+    uint16_t config = 0;
+    uint8_t data[2];
+    int status = STATUS_OK;
+
+    muxConfigs[0] = 0x4000; /* AIN0 vs GND */
+    muxConfigs[1] = 0x5000; /* AIN1 vs GND */
+    muxConfigs[2] = 0x6000; /* AIN2 vs GND */
+    muxConfigs[3] = 0x7000; /* AIN3 vs GND */
+
     if (channel < 0 || channel > 3) {
         return STATUS_NOK;
     }
-    
-    uint16_t config = 0x8000;  // Start conversion
-    config |= mux_configs[channel];
-    config |= 0x0200;  // PGA ±4.096V
-    config |= 0x0100;  // Single-shot mode
-    config |= 0x0080;  // 1600 SPS
-    config |= 0x0003;  // Disable comparator
-    
-    uint8_t data[] = {(config >> 8) & 0xFF, config & 0xFF};
-    
-    return i2c_write_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x01, data, 2);
+
+    config = 0x8000;                /* Start conversion */
+    config |= muxConfigs[channel];  /* MUX */
+    config |= 0x0200;               /* PGA ±4.096V */
+    config |= 0x0100;               /* Single-shot mode */
+    config |= 0x0080;               /* 1600 SPS */
+    config |= 0x0003;               /* Disable comparator */
+
+    data[0] = (uint8_t)((config >> 8) & 0xFF);
+    data[1] = (uint8_t)(config & 0xFF);
+
+    status = i2c_write_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x01, data, 2);
+    return status;
 }
 
 float adc_raw_to_voltage(uint16_t raw_value) {
     return ((int16_t)raw_value >> 4) * 4.096f / 2048.0f;
 }
 
+int adc_init(I2CController *controller, FemUnit unit) {
+    int bus = 0;
+    int status = STATUS_OK;
+
+    if (!controller || !controller->initialized) {
+        return STATUS_NOK;
+    }
+
+    bus    = i2c_get_bus_for_fem(unit);
+    status = i2c_detect_device(bus, I2C_ADDR_ADC_ADS1015);
+    if (status != STATUS_OK) {
+        usys_log_error("ADC ADS1015 not detected on bus %d", bus);
+        return STATUS_NOK;
+    }
+
+    usys_log_info("ADC initialized for FEM-%d", unit);
+    return STATUS_OK;
+}
+
 int adc_read_channel(I2CController *controller, FemUnit unit, int channel, float *voltage) {
+    int bus = 0;
+    int status = STATUS_OK;
+    uint8_t data[2];
+    uint16_t adcRaw = 0;
+
     if (!controller || !controller->initialized || !voltage) {
         return STATUS_NOK;
     }
-    
     if (channel < 0 || channel > 3) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    
-    if (adc_configure_channel(bus, channel) != STATUS_OK) {
+
+    bus = i2c_get_bus_for_fem(unit);
+
+    status = adc_configure_channel(bus, channel);
+    if (status != STATUS_OK) {
         return STATUS_NOK;
     }
-    
-    usleep(10000); // 10ms delay for conversion
-    
-    uint8_t data[2];
-    if (i2c_read_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x00, data, 2) != STATUS_OK) {
-        usys_log_error("Failed to read ADC channel %d from FEM%d", channel, unit);
+
+    usleep(10000); /* 10ms */
+
+    status = i2c_read_bytes(bus, I2C_ADDR_ADC_ADS1015, 0x00, data, 2);
+    if (status != STATUS_OK) {
+        usys_log_error("Failed to read ADC channel %d from FEM-%d", channel, unit);
         return STATUS_NOK;
     }
-    
-    uint16_t adc_raw = (data[0] << 8) | data[1];
-    *voltage = adc_raw_to_voltage(adc_raw);
-    
-    usys_log_debug("ADC channel %d: %.3fV from FEM%d", channel, *voltage, unit);
+
+    adcRaw   = (uint16_t)((data[0] << 8) | data[1]);
+    *voltage = adc_raw_to_voltage(adcRaw);
+
+    usys_log_debug("ADC channel %d: %.3fV from FEM-%d", channel, *voltage, unit);
     return STATUS_OK;
 }
 
@@ -468,77 +598,112 @@ float voltage_to_reverse_power(float voltage) {
 }
 
 float voltage_to_current(float voltage) {
-    return voltage; // Example: 1V = 1A
+    return voltage;
 }
 
 int adc_read_reverse_power(I2CController *controller, FemUnit unit, float *power_dbm) {
+    float voltage = 0.0f;
+    int status    = STATUS_OK;
+
     if (!power_dbm) {
         return STATUS_NOK;
     }
-    
-    float voltage;
-    if (adc_read_channel(controller, unit, ADC_CHANNEL_REVERSE_POWER, &voltage) != STATUS_OK) {
+
+    status = adc_read_channel(controller, unit, ADC_CHANNEL_REVERSE_POWER, &voltage);
+    if (status != STATUS_OK) {
         return STATUS_NOK;
     }
-    
+
     *power_dbm = voltage_to_reverse_power(voltage);
     controller->adc_state.reverse_power_dbm = *power_dbm;
-    
+
     return STATUS_OK;
 }
 
 int adc_read_pa_current(I2CController *controller, FemUnit unit, float *current_a) {
+    float voltage = 0.0f;
+    int   status  = STATUS_OK;
+
     if (!current_a) {
         return STATUS_NOK;
     }
-    
-    float voltage;
-    if (adc_read_channel(controller, unit, ADC_CHANNEL_PA_CURRENT, &voltage) != STATUS_OK) {
+
+    status = adc_read_channel(controller, unit, ADC_CHANNEL_PA_CURRENT, &voltage);
+    if (status != STATUS_OK) {
         return STATUS_NOK;
     }
-    
+
     *current_a = voltage_to_current(voltage);
     controller->adc_state.pa_current_a = *current_a;
-    
+
     return STATUS_OK;
 }
 
 int adc_read_all_channels(I2CController *controller, FemUnit unit) {
-    if (!controller || !controller->initialized) {
-        return STATUS_NOK;
-    }
-    
-    usys_log_info("Reading all ADC channels for FEM%d:", unit);
-    
-    struct {
+    int i = 0;
+    float voltage = 0.0f;
+    float converted = 0.0f;
+    int status = STATUS_OK;
+
+    struct ChannelInfo {
         int channel;
         const char *name;
         const char *unit;
         float (*convert)(float);
-    } channels[] = {
-        {0, "Reverse Power", "dBm", voltage_to_reverse_power},
-        {1, "Forward Power", "dBm", voltage_to_reverse_power}, // Adjust conversion as needed
-        {2, "PA Current", "A", voltage_to_current},
-        {3, "Temperature", "°C", NULL}  // Direct voltage reading
     };
-    
-    for (int i = 0; i < 4; i++) {
-        float voltage;
-        if (adc_read_channel(controller, unit, channels[i].channel, &voltage) == STATUS_OK) {
-            if (channels[i].convert) {
-                float converted = channels[i].convert(voltage);
-                usys_log_info("  Channel %d (%s): %.2f %s", 
-                              channels[i].channel, channels[i].name, converted, channels[i].unit);
+
+    struct ChannelInfo channelsInfo[4];
+
+    if (!controller || !controller->initialized) {
+        return STATUS_NOK;
+    }
+
+    channelsInfo[0].channel = ADC_CHANNEL_REVERSE_POWER;
+    channelsInfo[0].name    = "Reverse Power";
+    channelsInfo[0].unit    = "dBm";
+    channelsInfo[0].convert = voltage_to_reverse_power;
+
+    channelsInfo[1].channel = ADC_CHANNEL_FORWARD_POWER;
+    channelsInfo[1].name    = "Forward Power";
+    channelsInfo[1].unit    = "dBm";
+    channelsInfo[1].convert = voltage_to_reverse_power; /* adjust if needed */
+
+    channelsInfo[2].channel = ADC_CHANNEL_PA_CURRENT;
+    channelsInfo[2].name    = "PA Current";
+    channelsInfo[2].unit    = "A";
+    channelsInfo[2].convert = voltage_to_current;
+
+    channelsInfo[3].channel = ADC_CHANNEL_TEMPERATURE;
+    channelsInfo[3].name    = "Temperature";
+    channelsInfo[3].unit    = "V";
+    channelsInfo[3].convert = NULL; /* direct voltage */
+
+    usys_log_info("Reading all ADC channels for FEM%d:", unit);
+
+    for (i = 0; i < 4; i++) {
+        status = adc_read_channel(controller, unit, channelsInfo[i].channel, &voltage);
+        if (status == STATUS_OK) {
+            if (channelsInfo[i].convert) {
+                converted = channelsInfo[i].convert(voltage);
+                usys_log_info("  Channel %d (%s): %.2f %s",
+                              channelsInfo[i].channel,
+                              channelsInfo[i].name,
+                              converted,
+                              channelsInfo[i].unit);
             } else {
-                usys_log_info("  Channel %d (%s): %.3f V", 
-                              channels[i].channel, channels[i].name, voltage);
+                usys_log_info("  Channel %d (%s): %.3f %s",
+                              channelsInfo[i].channel,
+                              channelsInfo[i].name,
+                              voltage,
+                              channelsInfo[i].unit);
             }
         } else {
-            usys_log_error("  Channel %d (%s): Read error", 
-                           channels[i].channel, channels[i].name);
+            usys_log_error("  Channel %d (%s): Read error",
+                           channelsInfo[i].channel,
+                           channelsInfo[i].name);
         }
     }
-    
+
     return STATUS_OK;
 }
 
@@ -546,131 +711,137 @@ int adc_set_safety_thresholds(I2CController *controller, float max_reverse_power
     if (!controller || !controller->initialized) {
         return STATUS_NOK;
     }
-    
+
     controller->adc_state.max_reverse_power = max_reverse_power;
-    controller->adc_state.max_current = max_current;
-    controller->adc_state.safety_enabled = true;
-    
-    usys_log_info("Safety thresholds set: reverse power %.1f dBm, current %.1f A", 
+    controller->adc_state.max_current       = max_current;
+    controller->adc_state.safety_enabled    = true;
+
+    usys_log_info("Safety thresholds set: reverse power %.1f dBm, current %.1f A",
                   max_reverse_power, max_current);
-    
     return STATUS_OK;
 }
 
 int adc_check_safety(I2CController *controller, FemUnit unit, bool *safety_violation) {
+    float reversePower = 0.0f;
+    float paCurrent    = 0.0f;
+
     if (!controller || !controller->initialized || !safety_violation) {
         return STATUS_NOK;
     }
-    
+
     *safety_violation = false;
-    
+
     if (!controller->adc_state.safety_enabled) {
         return STATUS_OK;
     }
-    
-    float reverse_power;
-    if (adc_read_reverse_power(controller, unit, &reverse_power) == STATUS_OK) {
-        if (reverse_power > controller->adc_state.max_reverse_power) {
-            usys_log_warn("Safety violation: reverse power %.1f dBm exceeds threshold %.1f dBm", 
-                          reverse_power, controller->adc_state.max_reverse_power);
+
+    if (adc_read_reverse_power(controller, unit, &reversePower) == STATUS_OK) {
+        if (reversePower > controller->adc_state.max_reverse_power) {
+            usys_log_warn("Safety violation: reverse power %.1f dBm exceeds threshold %.1f dBm",
+                          reversePower,
+                          controller->adc_state.max_reverse_power);
             *safety_violation = true;
         }
     }
-    
-    float pa_current;
-    if (adc_read_pa_current(controller, unit, &pa_current) == STATUS_OK) {
-        if (pa_current > controller->adc_state.max_current) {
-            usys_log_warn("Safety violation: PA current %.1f A exceeds threshold %.1f A", 
-                          pa_current, controller->adc_state.max_current);
+
+    if (adc_read_pa_current(controller, unit, &paCurrent) == STATUS_OK) {
+        if (paCurrent > controller->adc_state.max_current) {
+            usys_log_warn("Safety violation: PA current %.1f A exceeds threshold %.1f A",
+                          paCurrent,
+                          controller->adc_state.max_current);
             *safety_violation = true;
         }
     }
-    
+
     return STATUS_OK;
 }
 
+/* EEPROM */
+
 int eeprom_write_serial(I2CController *controller, FemUnit unit, const char *serial) {
+    int bus = 0;
+    size_t len = 0U;
+    size_t i = 0U;
+    uint8_t byteData = 0U;
+    uint8_t nullTerm = 0x00;
+    int status = STATUS_OK;
+
     if (!controller || !controller->initialized || !serial) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    size_t len = strlen(serial);
-    
-    if (len > 16) {
+
+    bus = i2c_get_bus_for_fem(unit);
+    len = strlen(serial);
+
+    if (len > 16U) {
         usys_log_error("Serial number too long (max 16 characters)");
         return STATUS_NOK;
     }
-    
-    for (size_t i = 0; i < len; i++) {
-        uint8_t data = (uint8_t)serial[i];
-        if (i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &data, 1) != STATUS_OK) {
+
+    for (i = 0U; i < len; i++) {
+        byteData = (uint8_t)serial[i];
+        status = i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &byteData, 1);
+        if (status != STATUS_OK) {
             usys_log_error("Failed to write EEPROM at position %zu", i);
             return STATUS_NOK;
         }
-        usleep(10000); // 10ms delay for EEPROM write
+        
+        usleep(10000); /* 10ms write cycle */
     }
-    
-    uint8_t null_term = 0x00;
-    i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)len, &null_term, 1);
-    
-    strncpy(controller->eeprom_state.serial_number, serial, sizeof(controller->eeprom_state.serial_number) - 1);
+
+    (void)i2c_write_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)len, &nullTerm, 1);
+
+    strncpy(controller->eeprom_state.serial_number, serial,
+            sizeof(controller->eeprom_state.serial_number) - 1);
     controller->eeprom_state.has_data = true;
-    
+
     usys_log_info("Serial number written to EEPROM: %s", serial);
     return STATUS_OK;
 }
 
 int eeprom_read_serial(I2CController *controller, FemUnit unit, char *serial, size_t max_len) {
-    if (!controller || !controller->initialized || !serial || max_len == 0) {
+    int bus = 0;
+    size_t readLen = 0U;
+    size_t i = 0U;
+    uint8_t byteData = 0U;
+    int status = STATUS_OK;
+
+    if (!controller || !controller->initialized || !serial || max_len == 0U) {
         return STATUS_NOK;
     }
-    
-    int bus = i2c_get_bus_for_fem(unit);
-    
-    size_t read_len = (max_len - 1 < 16) ? max_len - 1 : 16;
-    
-    for (size_t i = 0; i < read_len; i++) {
-        uint8_t data;
-        if (i2c_read_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &data, 1) != STATUS_OK) {
+
+    bus     = i2c_get_bus_for_fem(unit);
+    readLen = (max_len - 1U < 16U) ? (max_len - 1U) : 16U;
+
+    serial[0] = '\0';
+
+    for (i = 0U; i < readLen; i++) {
+        status = i2c_read_bytes(bus, I2C_ADDR_EEPROM, (uint8_t)i, &byteData, 1);
+        if (status != STATUS_OK) {
             usys_log_error("Failed to read EEPROM at position %zu", i);
             return STATUS_NOK;
         }
-        
-        if (data == 0) {
+
+        if (byteData == 0U) {
             serial[i] = '\0';
             break;
         }
-        
-        serial[i] = (char)data;
-        
-        if (i == read_len - 1) {
-            serial[i + 1] = '\0';
+
+        serial[i] = (char)byteData;
+
+        if (i == readLen - 1U) {
+            serial[i + 1U] = '\0';
         }
     }
-    
-    if (strlen(serial) > 0) {
-        strncpy(controller->eeprom_state.serial_number, serial, sizeof(controller->eeprom_state.serial_number) - 1);
+
+    if (strlen(serial) > 0U) {
+        strncpy(controller->eeprom_state.serial_number, serial,
+                sizeof(controller->eeprom_state.serial_number) - 1);
         controller->eeprom_state.has_data = true;
         usys_log_info("Serial number read from EEPROM: %s", serial);
         return STATUS_OK;
     } else {
         usys_log_info("No serial number found in EEPROM");
         return STATUS_NOK;
-    }
-}
-
-void i2c_print_device_scan(FemUnit unit) {
-    int bus = i2c_get_bus_for_fem(unit);
-    
-    usys_log_info("I2C Device Scan for FEM%d (bus %d):", unit, bus);
-    
-    for (int i = 0; i < I2C_DEVICE_MAX; i++) {
-        const I2CDeviceInfo *info = &device_info[i];
-        int detected = i2c_detect_device(bus, info->address);
-        
-        usys_log_info("  %s (0x%02X): %s - %s", 
-                      info->name, info->address, info->description,
-                      detected == STATUS_OK ? "DETECTED" : "NOT FOUND");
     }
 }
