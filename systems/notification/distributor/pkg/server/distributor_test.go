@@ -53,7 +53,7 @@ func TestNewDistributorServer(t *testing.T) {
 	assert.Equal(t, testOrgName, server.orgName)
 	assert.Equal(t, testOrgId, server.orgId)
 	assert.Equal(t, nc, server.networkClient)
-	assert.Equal(t, mc, server.memberkClient)
+	assert.Equal(t, mc, server.memberClient)
 	assert.Equal(t, sc, server.subscriberClient)
 	assert.Equal(t, ndb, server.notify)
 	assert.Equal(t, eNotify, server.eventNotifyService)
