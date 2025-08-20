@@ -63,7 +63,7 @@ static void setup_verbs(UInst *instance,
 
         if (!method_allowed(verb, allowed, allowed_n)) {
             ulfius_add_endpoint_by_val(instance, verb, prefix, resource, 0,
-                                       &web_service_cb_not_allowed,
+                                       &cb_not_allowed,
                                        (void*)allow_header_str);
         }
     }
@@ -80,6 +80,20 @@ static void setup_webservice_endpoints(ServerConfig *config, UInst *instance) {
                                API_RES_EP("health"), 0,
                                &cb_get_health, config);
     setup_verbs(instance, URL_PREFIX, API_RES_EP("health"),
+                allowed_get_opts, 2, "GET, OPTIONS");
+
+    /* /v1/version */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("version"), 0,
+                               &cb_get_version, config);
+    setup_verbs(instance, URL_PREFIX, API_RES_EP("version"),
+                allowed_get_opts, 2, "GET, OPTIONS");
+
+    /* /v1/version */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ping"), 0,
+                               &cb_get_ping, config);
+    setup_verbs(instance, URL_PREFIX, API_RES_EP("ping"),
                 allowed_get_opts, 2, "GET, OPTIONS");
 
     /* /v1/fems */
@@ -159,7 +173,7 @@ static void setup_webservice_endpoints(ServerConfig *config, UInst *instance) {
                 allowed_get_put_opts, 3, "GET, PUT, OPTIONS");
 
     /* default 404 */
-    ulfius_set_default_endpoint(instance, &web_service_cb_default, config);
+    ulfius_set_default_endpoint(instance, &cb_default, config);
 }
 
 int start_web_service(ServerConfig *serverConfig, UInst *serviceInst) {
