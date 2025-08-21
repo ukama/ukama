@@ -25,6 +25,7 @@
 #include "web_client.h"
 #include "gpio_controller.h"
 #include "i2c_controller.h"
+#include "safety_monitor.h"
 
 #include "version.h"
 
@@ -76,12 +77,13 @@ int main(int argc, char **argv) {
     GpioController gpioController = {0};
     I2CController  i2cController  = {0};
     ServerConfig   serverConfig   = {0};
+    SafetyMonitor  safetyMonitor  = {0};
 
     usys_log_set_service(SERVICE_NAME);
     usys_log_remote_init(SERVICE_NAME);
 
     while (true) {
-        opt = 0;
+        opt    = 0;
         optIdx = 0;
 
         opt = usys_getopt_long(argc, argv, "vh:l:", longOptions, &optIdx);
@@ -169,9 +171,26 @@ int main(int argc, char **argv) {
         usys_exit(1);
     }
 
+    if (safety_monitor_init(&safetyMonitor, &gpioController, &i2cController) != STATUS_OK) {
+        usys_log_error("Failed to initialize safety monitor");
+        goto done;
+    }
+
+    if (safety_monitor_start(&safety_monitor) != STATUS_OK) {
+        usys_log_error("Failed to start safety monitor");
+        goto done;
+    }
+
+    usys_log_info("FEM.d started successfully");
+    usys_log_info("Service: %s, Port: %d",
+                  serverConfig.config->serviceName,
+                  serverConfig.config->servicePort);
+
     pause();
 
 done:
+    saftey_monitor_stop(&safteyMonitor);
+    saftey_monitor_cleanup(&safteyMonitor);
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     usys_free(serviceConfig.serviceName);
