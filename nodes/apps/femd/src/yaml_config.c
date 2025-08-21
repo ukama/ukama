@@ -263,6 +263,11 @@ void yaml_config_set_defaults(YamlSafetyConfig *config) {
     config->emergency_disable_28v_vds    = true;
     config->emergency_log_event          = true;
 
+    config->auto_restore_enabled     = 0;
+    config->restore_cooldown_ms      = 30000;
+    config->restore_ok_checks        = 5;
+    config->restore_reset_unit_stats = 1;
+    
     config->fem1_temp_table.num_points = 0;
     config->fem2_temp_table.num_points = 0;
 }
@@ -419,6 +424,16 @@ int yaml_config_load(const char *filename, YamlSafetyConfig *config) {
         (void)parse_bool_value(line, "disable_pa_vds",     &config->emergency_disable_pa_vds);
         (void)parse_bool_value(line, "disable_28v_vds",    &config->emergency_disable_28v_vds);
         (void)parse_bool_value(line, "log_event",          &config->emergency_log_event);
+
+        /* auto-restore */
+        (void)parse_bool_value(line, "auto_restore_enabled",
+                               &config->auto_restore_enabled);
+        (void)parse_uint32_value(line, "restore_cooldown_ms",
+                                 &config->restore_cooldown_ms);
+        (void)parse_uint32_value(line, "restore_ok_checks",
+                                 &config->restore_ok_checks);
+        (void)parse_bool_value(line, "restore_reset_unit_stats",
+                               &config->restore_reset_unit_stats);
     }
 
     fclose(file);
@@ -563,6 +578,12 @@ void yaml_config_print(const YamlSafetyConfig *c) {
                   c->emergency_disable_pa_vds     ? "true" : "false",
                   c->emergency_disable_28v_vds    ? "true" : "false",
                   c->emergency_log_event          ? "true" : "false");
+
+    usys_log_info("Auto-restore: enabled=%s cooldown_ms=%u ok_checks=%u reset_stats=%s",
+                  config->auto_restore_enabled ? "true":"false",
+                  config->restore_cooldown_ms,
+                  config->restore_ok_checks,
+                  config->restore_reset_unit_stats ? "true":"false");
 
     usys_log_info("Tables: fem1_points=%d, fem2_points=%d",
                   c->fem1_temp_table.num_points, c->fem2_temp_table.num_points);

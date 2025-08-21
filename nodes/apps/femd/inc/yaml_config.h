@@ -70,13 +70,18 @@ typedef struct {
     float current_shunt_resistance;
     float current_max_rating;
     int current_alarm_threshold_percent;
-    
+
     bool emergency_immediate_shutdown;
     bool emergency_disable_tx_rf;
     bool emergency_disable_pa_vds;
     bool emergency_disable_28v_vds;
     bool emergency_log_event;
-    
+
+    /* Auto-restore knobs */
+    bool     auto_restore_enabled;
+    uint32_t restore_cooldown_ms;
+    uint32_t restore_ok_checks;
+    bool     restore_reset_unit_stats;
 } YamlSafetyConfig;
 
 int yaml_config_load(const char *filename, YamlSafetyConfig *config);

@@ -6,7 +6,13 @@ safety:
   enabled: true
   check_interval_ms: 1000
   max_violations_before_shutdown: 3
-  
+
+  # Auto-restore behavior
+  auto_restore_enabled: true       # enable automatic restoration after safe period
+  restore_cooldown_ms: 30000       # minimum time after shutdown before we try to restore
+  restore_ok_checks: 5             # consecutive healthy checks required to restore
+  restore_reset_unit_stats: true   # clear per-FEM violation counters on restore  
+
   # Safety Thresholds
   thresholds:
     max_reverse_power_dbm: -10.0    # Maximum reverse power in dBm

@@ -56,6 +56,14 @@ typedef struct {
     uint32_t        total_checks;
     uint32_t        total_violations;
     SafetyViolation last_violation;
+
+    /* --- Auto-restore bookkeeping (per-FEM) --- */
+    uint32_t   ok_streak[FEM_UNIT_2 + 1];
+    uint32_t   last_shutdown_ms[FEM_UNIT_2 + 1];
+    GpioStatus pre_gpio[FEM_UNIT_2 + 1];
+    float      pre_carrier[FEM_UNIT_2 + 1];
+    float      pre_peak[FEM_UNIT_2 + 1];
+    bool       pre_state_valid[FEM_UNIT_2 + 1];
     
     void (*violation_callback)(const SafetyViolation *violation);
     void (*shutdown_callback)(FemUnit unit, SafetyViolationType reason);

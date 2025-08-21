@@ -23,8 +23,13 @@ static int   safety_monitor_handle_violation(SafetyMonitor *monitor,
 static void  safety_monitor_create_violation(SafetyViolation *violation, SafetyViolationType type,
                                              FemUnit unit, float measured, float threshold,
                                              const char *desc);
+static int safety_monitor_health_ok(SafetyMonitor *monitor, FemUnit unit);
+static void safety_monitor_maybe_auto_restore(SafetyMonitor *monitor, FemUnit unit);
 
-int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CController *i2c_ctrl) {
+
+int safety_monitor_init(SafetyMonitor  *monitor,
+                        GpioController *gpio_ctrl,
+                        I2CController  *i2c_ctrl) {
     int i;
 
     if (!monitor || !gpio_ctrl || !i2c_ctrl) {
@@ -55,6 +60,16 @@ int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CCo
         monitor->config.pa_shutdown_state[i] = false;
     }
     memset(monitor->config.violation_count, 0, sizeof(monitor->config.violation_count));
+
+    for (i = 0; i <= FEM_UNIT_2; i++) {
+        monitor->config.pa_shutdown_state[i] = false;
+        monitor->ok_streak[i] = 0U;
+        monitor->last_shutdown_ms[i] = 0U;
+        monitor->pre_carrier[i] = 0.0f;
+        monitor->pre_peak[i] = 0.0f;
+        monitor->pre_state_valid[i] = false;
+        memset(&monitor->pre_gpio[i], 0, sizeof(GpioStatus));
+    }
 
     monitor->running          = false;
     monitor->total_checks     = 0;
@@ -157,6 +172,9 @@ static void* safety_monitor_thread(void *arg) {
             /* Update totals under lock */
             pthread_mutex_lock(&monitor->mutex);
             monitor->total_checks += 1;
+            /* Attempt auto-restore for any FEM in shutdown - if applicable */
+            safety_monitor_maybe_auto_restore(monitor, FEM_UNIT_1);
+            safety_monitor_maybe_auto_restore(monitor, FEM_UNIT_2);
             pthread_mutex_unlock(&monitor->mutex);
         }
 
@@ -292,7 +310,8 @@ static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyV
     /* Update counters and last_violation under lock */
     pthread_mutex_lock(&monitor->mutex);
     monitor->config.violation_count[violation->unit][violation->type] += 1;
-    monitor->total_violations += 1;
+    monitor->total_violations++;
+    monitor->ok_streak[violation->unit] = 0U;
     monitor->last_violation   = *violation;
     count     = monitor->config.violation_count[violation->unit][violation->type];
     immediate = monitor->config.yaml_config.emergency_immediate_shutdown ? 1 : 0;
@@ -327,17 +346,26 @@ static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyV
 
 int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViolationType reason) {
     int rc;
+    GpioStatus snap_gpio;
+    float snap_carrier;
+    float snap_peak;
+    int have_gpio;
+    int have_dac;
+    uint32_t now_ms;
 
     if (!monitor || !monitor->initialized) {
         return STATUS_NOK;
     }
-
     if (unit < FEM_UNIT_1 || unit > FEM_UNIT_2) {
         return STATUS_NOK;
     }
 
     usys_log_error("EXECUTING PA SHUTDOWN for FEM%d due to %s",
                    unit, safety_violation_type_to_string(reason));
+
+    /* Snapshot current state so we can restore later */
+    have_gpio = gpio_read_all(monitor->gpio_controller, unit, &snap_gpio) == STATUS_OK ? 1 : 0;
+    have_dac  = dac_get_config(monitor->i2c_controller, &snap_carrier, &snap_peak) == STATUS_OK ? 1 : 0;
 
     /* Always zero DAC drive */
     rc = dac_disable_pa(monitor->i2c_controller, unit);
@@ -352,8 +380,9 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
         }
     }
 
+    /* NOTE: GPIO_28V_VDS maps to 'pa_disable' (inverted). To CUT 28V, set logical TRUE. */
     if (monitor->config.yaml_config.emergency_disable_28v_vds) {
-        if (gpio_set(monitor->gpio_controller, unit, GPIO_28V_VDS, false) != STATUS_OK) {
+        if (gpio_set(monitor->gpio_controller, unit, GPIO_28V_VDS, true) != STATUS_OK) {
             usys_log_error("Failed to disable 28V_VDS for FEM%d", unit);
         }
     }
@@ -364,9 +393,23 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
         }
     }
 
-    /* Mark PA as shutdown and invoke callback (under lock for coherence) */
+    /* Mark PA as shutdown, store snapshot and timers under lock */
+    now_ms = safety_monitor_get_timestamp_ms();
     pthread_mutex_lock(&monitor->mutex);
+
     monitor->config.pa_shutdown_state[unit] = true;
+    monitor->ok_streak[unit]                = 0U;
+    monitor->last_shutdown_ms[unit]         = now_ms;
+
+    if (have_gpio) {
+        monitor->pre_gpio[unit] = snap_gpio;
+    }
+    if (have_dac) {
+        monitor->pre_carrier[unit] = snap_carrier;
+        monitor->pre_peak[unit]    = snap_peak;
+    }
+    monitor->pre_state_valid[unit] = (have_gpio && have_dac) ? true : false;
+
     pthread_mutex_unlock(&monitor->mutex);
 
     if (monitor->shutdown_callback) {
@@ -379,6 +422,8 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
 
 int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit) {
     int i;
+    int reset_stats;
+    int have_pre;
 
     if (!monitor || !monitor->initialized) {
         return STATUS_NOK;
@@ -396,13 +441,56 @@ int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit) {
 
     usys_log_info("Restoring PA for FEM%d", unit);
 
-    for (i = 0; i < SAFETY_VIOLATION_MAX; i++) {
-        monitor->config.violation_count[unit][i] = 0;
+    /* Decide if we clear per-unit violation counters based on config */
+    reset_stats = monitor->config.yaml_config.restore_reset_unit_stats ? 1 : 0;
+    if (reset_stats) {
+        for (i = 0; i < SAFETY_VIOLATION_MAX; i++) {
+            monitor->config.violation_count[unit][i] = 0U;
+        }
     }
-    monitor->config.pa_shutdown_state[unit] = false;
+
+    have_pre = monitor->pre_state_valid[unit] ? 1 : 0;
+
     pthread_mutex_unlock(&monitor->mutex);
 
-    usys_log_info("PA restored for FEM%d (manual intervention required for re-enabling)", unit);
+    /* Re-apply DAC and GPIO state (outside lock while touching hardware) */
+    if (have_pre) {
+        (void)dac_set_carrier_voltage(monitor->i2c_controller, unit, monitor->pre_carrier[unit]);
+        (void)dac_set_peak_voltage   (monitor->i2c_controller, unit, monitor->pre_peak[unit]);
+        (void)gpio_apply(monitor->gpio_controller, unit, &monitor->pre_gpio[unit]);
+        usys_log_info("Restored FEM%d to pre-shutdown DAC/GPIO state", unit);
+    } else {
+        /* Fallback: safe defaults (rails on, TX muted) */
+        (void)dac_set_carrier_voltage(monitor->i2c_controller, unit,
+                                      monitor->config.yaml_config.default_carrier_voltage);
+        (void)dac_set_peak_voltage   (monitor->i2c_controller, unit,
+                                      monitor->config.yaml_config.default_peak_voltage);
+        /* To enable 28V, set logical FALSE (pa_disable=0). Also re-enable PA_VDS, keep TX muted. */
+        (void)gpio_set(monitor->gpio_controller, unit, GPIO_28V_VDS, false);
+        (void)gpio_set(monitor->gpio_controller, unit, GPIO_PA_VDS,  true);
+        (void)gpio_set(monitor->gpio_controller, unit, GPIO_TX_RF,   false);
+        usys_log_info("Restored FEM%d to default safe state (TX muted)", unit);
+    }
+
+    /* Finalize state */
+    pthread_mutex_lock(&monitor->mutex);
+
+    monitor->config.pa_shutdown_state[unit] = false;
+    monitor->ok_streak[unit]                = 0U;
+    monitor->pre_state_valid[unit]          = false;
+
+    if (monitor->last_violation.unit == unit) {
+        memset(&monitor->last_violation, 0, sizeof(monitor->last_violation));
+    }
+
+    pthread_mutex_unlock(&monitor->mutex);
+
+    /* Notify restore as a 'NONE' reason */
+    if (monitor->shutdown_callback) {
+        monitor->shutdown_callback(unit, SAFETY_VIOLATION_NONE);
+    }
+
+    usys_log_info("PA restored for FEM%d", unit);
     return STATUS_OK;
 }
 
@@ -633,4 +721,51 @@ uint32_t safety_monitor_get_timestamp_ms(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint32_t)(tv.tv_sec * 1000UL + tv.tv_usec / 1000UL);
+}
+
+static int safety_monitor_health_ok(SafetyMonitor *monitor, FemUnit unit) {
+    float rp = 0.0f, cur = 0.0f, t = 0.0f;
+    int ok = 1;
+    if (adc_read_reverse_power(monitor->i2c_controller, unit, &rp) != STATUS_OK) ok = 0;
+    if (adc_read_pa_current   (monitor->i2c_controller, unit, &cur)!= STATUS_OK) ok = 0;
+    if (temp_sensor_read      (monitor->i2c_controller, unit, &t)  != STATUS_OK) ok = 0;
+    if (!ok) return 0;
+    if (rp  > monitor->config.yaml_config.max_reverse_power_dbm) return 0;
+    if (cur > monitor->config.yaml_config.max_pa_current_a)      return 0;
+    if (t   > monitor->config.yaml_config.max_temperature_c)     return 0;
+    if (t   < monitor->config.yaml_config.min_temperature_c)     return 0;
+    return 1;
+}
+
+static void safety_monitor_maybe_auto_restore(SafetyMonitor *monitor, FemUnit unit) {
+    uint32_t now_ms;
+    uint32_t elapsed;
+
+    if (!monitor->config.yaml_config.auto_restore_enabled) return;
+    if (!monitor->config.pa_shutdown_state[unit]) return;
+
+    now_ms  = safety_monitor_get_timestamp_ms();
+    elapsed = now_ms - monitor->last_shutdown_ms[unit];
+    if (elapsed < monitor->config.yaml_config.restore_cooldown_ms) {
+        return;
+    }
+
+    if (safety_monitor_health_ok(monitor, unit)) {
+        if (monitor->ok_streak[unit] < 0xFFFFFFFFu) {
+            monitor->ok_streak[unit]++;
+        }
+    } else {
+        monitor->ok_streak[unit] = 0U;
+        return;
+    }
+
+    if (monitor->ok_streak[unit] >= monitor->config.yaml_config.restore_ok_checks) {
+        if (monitor->config.yaml_config.restore_reset_unit_stats) {
+            int i;
+            for (i = 0; i < SAFETY_VIOLATION_MAX; i++) {
+                monitor->config.violation_count[unit][i] = 0U;
+            }
+        }
+        (void)safety_monitor_restore_pa(monitor, unit);
+    }
 }
