@@ -62,8 +62,6 @@ typedef struct {
     I2CController  *i2cController;
 } ServerConfig;
 
-extern volatile sig_atomic_t g_running;
-
 void handle_sigint(int signum);
 
 int config_init(Config *config);

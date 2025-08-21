@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -32,9 +33,13 @@
 /* network.c */
 int start_web_service(ServerConfig *serverConfig, UInst *serviceInst);
 
-void handle_sigint(int signum) {
-    usys_log_debug("Terminate signal.\n");
-    usys_exit(0);
+/* Graceful shutdown flag and handlers */
+volatile sig_atomic_t g_running = 1;
+
+static void handle_terminate(int signum) {
+    usys_log_debug("Terminate signal");
+    (void)signum;
+    g_running = 0;
 }
 
 static UsysOption longOptions[] = {
@@ -130,8 +135,13 @@ int main(int argc, char **argv) {
 
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 
-    /* Signal handler */
-    signal(SIGINT, handle_sigint);
+    /* Signal handlers */
+    signal(SIGINT,  handle_sigint);
+    signal(SIGINT,  handle_terminate);
+    signal(SIGTERM, handle_terminate);
+#ifdef SIGPIPE
+    signal(SIGPIPE, SIG_IGN);
+#endif
 
     if (getenv(ENV_FEMD_DEBUG_MODE)) {
         serviceConfig.nodeID   = strdup(DEF_NODE_ID);
@@ -186,7 +196,11 @@ int main(int argc, char **argv) {
                   serverConfig.config->serviceName,
                   serverConfig.config->servicePort);
 
-    pause();
+    /* Main wait loop: break on SIGINT/SIGTERM */
+    while (g_running) {
+        /* small sleep to avoid busy loop; framework threads keep running */
+        usleep(200000); /* 200 ms */
+    }
 
 done:
     saftey_monitor_stop(&safteyMonitor);
