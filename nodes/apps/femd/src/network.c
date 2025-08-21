@@ -74,6 +74,7 @@ static void setup_webservice_endpoints(ServerConfig *config, UInst *instance) {
     const char *allowed_get_opts[]     = {"GET","OPTIONS"};
     const char *allowed_gpio[]         = {"GET","PUT","PATCH","OPTIONS"};
     const char *allowed_get_put_opts[] = {"GET","PUT","OPTIONS"};
+    const char *allowed_post_opts[]    = {"POST","OPTIONS"};
 
     /* /v1/health */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
@@ -161,6 +162,13 @@ static void setup_webservice_endpoints(ServerConfig *config, UInst *instance) {
                                0, &cb_put_adc_thr, config);
     setup_verbs(instance, URL_PREFIX, API_RES_EP("fems/:femId/safety/adc-thresholds"),
                 allowed_get_put_opts, 3, "GET, PUT, OPTIONS");
+
+    /* /v1/fems/:femId/safety/restore  (manual force-restore) */
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("fems/:femId/safety/restore"),
+                               0, &cb_post_safety_restore, config);
+    setup_verbs(instance, URL_PREFIX, API_RES_EP("fems/:femId/safety/restore"),
+                allowed_post_opts, 2, "POST, OPTIONS");
 
     /* /v1/fems/:femId/eeprom/serial */
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,

@@ -36,6 +36,7 @@ int cb_get_adc_chan (const URequest *req, UResponse *resp, void *config);
 /* Safety thresholds */
 int cb_get_adc_thr  (const URequest *req, UResponse *resp, void *config);
 int cb_put_adc_thr  (const URequest *req, UResponse *resp, void *config);
+int cb_post_safety_restore(const URequest *req, UResponse *resp, void *user_data);
 
 /* EEPROM serial */
 int cb_get_serial   (const URequest *req, UResponse *resp, void *config);

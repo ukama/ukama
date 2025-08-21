@@ -60,6 +60,7 @@ typedef struct {
     Config         *config;
     GpioController *gpioController;
     I2CController  *i2cController;
+    SafetyMonitor  *safetyMonitor;
 } ServerConfig;
 
 void handle_sigint(int signum);

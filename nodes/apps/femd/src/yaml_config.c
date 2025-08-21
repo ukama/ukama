@@ -580,10 +580,10 @@ void yaml_config_print(const YamlSafetyConfig *c) {
                   c->emergency_log_event          ? "true" : "false");
 
     usys_log_info("Auto-restore: enabled=%s cooldown_ms=%u ok_checks=%u reset_stats=%s",
-                  config->auto_restore_enabled ? "true":"false",
-                  config->restore_cooldown_ms,
-                  config->restore_ok_checks,
-                  config->restore_reset_unit_stats ? "true":"false");
+                  c->auto_restore_enabled ? "true":"false",
+                  c->restore_cooldown_ms,
+                  c->restore_ok_checks,
+                  c->restore_reset_unit_stats ? "true":"false");
 
     usys_log_info("Tables: fem1_points=%d, fem2_points=%d",
                   c->fem1_temp_table.num_points, c->fem2_temp_table.num_points);

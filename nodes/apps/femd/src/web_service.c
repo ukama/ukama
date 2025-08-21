@@ -17,10 +17,11 @@
 #include "version.h"
 #include "web_service.h"
 #include "config.h"
-#include "gpio_controller.h"
-#include "i2c_controller.h"
 #include "api_http.h"
 #include "api_json.h"
+#include "gpio_controller.h"
+#include "i2c_controller.h"
+#include "safety_monitor.h"
 
 int cb_not_allowed(const URequest *req,
                    UResponse *resp,
@@ -539,5 +540,37 @@ int cb_put_serial(const URequest *req,
         return json_set_err(resp, HttpStatus_InternalServerError, "Alloc error");
     }
 
+    return json_set_ok(resp, o);
+}
+
+/* POST /v1/fems/:femId/safety/restore  -> force manual restore */
+int cb_post_safety_restore(const URequest *req,
+                           UResponse *resp,
+                           void *user_data) {
+    ServerConfig *cfg;
+    FemUnit unit;
+    int rc;
+    json_t *o;
+
+    cfg = (ServerConfig*)user_data;
+    api_set_cors_allow(resp, "POST, OPTIONS");
+
+    if (!api_parse_fem_id(req, &unit)) {
+        return json_set_err(resp, HttpStatus_BadRequest, "Invalid femId");
+    }
+
+    if (cfg == NULL || cfg->safetyMonitor == NULL) {
+        return json_set_err(resp, HttpStatus_InternalServerError, "Safety monitor unavailable");
+    }
+
+    rc = safety_monitor_restore_pa(cfg->safetyMonitor, unit);
+    if (rc != STATUS_OK) {
+        return json_set_err(resp, HttpStatus_InternalServerError, "Failed to restore PA");
+    }
+
+    o = json_pack("{s:s, s:i}", "status", "restored", "fem_unit", (int)unit);
+    if (o == NULL) {
+        return json_set_err(resp, HttpStatus_InternalServerError, "Alloc error");
+    }
     return json_set_ok(resp, o);
 }
