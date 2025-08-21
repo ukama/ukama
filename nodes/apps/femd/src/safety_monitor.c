@@ -56,8 +56,8 @@ int safety_monitor_init(SafetyMonitor *monitor, GpioController *gpio_ctrl, I2CCo
     }
     memset(monitor->config.violation_count, 0, sizeof(monitor->config.violation_count));
 
-    monitor->running = false;
-    monitor->total_checks = 0;
+    monitor->running          = false;
+    monitor->total_checks     = 0;
     monitor->total_violations = 0;
     memset(&monitor->last_violation, 0, sizeof(monitor->last_violation));
 
@@ -131,7 +131,7 @@ static void* safety_monitor_thread(void *arg) {
     SafetyMonitor *monitor = (SafetyMonitor*)arg;
 
     /* Local snapshots to minimize lock contention */
-    int enabled;
+    int      enabled;
     uint32_t interval_ms;
 
     usys_log_info("Safety monitor thread started");
@@ -232,8 +232,10 @@ int safety_monitor_check_pa_current(SafetyMonitor *monitor, FemUnit unit) {
     }
 
     if (pa_current > monitor->config.yaml_config.max_pa_current_a) {
-        safety_monitor_create_violation(&violation, SAFETY_VIOLATION_PA_CURRENT, unit,
-                                        pa_current, monitor->config.yaml_config.max_pa_current_a,
+        safety_monitor_create_violation(&violation,
+                                        SAFETY_VIOLATION_PA_CURRENT, unit,
+                                        pa_current,
+                                        monitor->config.yaml_config.max_pa_current_a,
                                         "PA current exceeded threshold");
         return safety_monitor_handle_violation(monitor, &violation);
     }
@@ -251,8 +253,10 @@ int safety_monitor_check_temperature(SafetyMonitor *monitor, FemUnit unit) {
     }
 
     if (temperature > monitor->config.yaml_config.max_temperature_c) {
-        safety_monitor_create_violation(&violation, SAFETY_VIOLATION_TEMPERATURE, unit,
-                                        temperature, monitor->config.yaml_config.max_temperature_c,
+        safety_monitor_create_violation(&violation,
+                                        SAFETY_VIOLATION_TEMPERATURE, unit,
+                                        temperature,
+                                        monitor->config.yaml_config.max_temperature_c,
                                         "Temperature exceeded threshold");
         return safety_monitor_handle_violation(monitor, &violation);
     }
@@ -264,21 +268,22 @@ static void safety_monitor_create_violation(SafetyViolation *violation,
                                             SafetyViolationType type,
                                             FemUnit unit,
                                             float measured,
-                                            float threshold, const char *desc) {
+                                            float threshold,
+                                            const char *desc) {
     if (!violation) return;
 
-    violation->type = type;
-    violation->unit = unit;
+    violation->type           = type;
+    violation->unit           = unit;
     violation->measured_value = measured;
-    violation->threshold = threshold;
-    violation->timestamp_ms = safety_monitor_get_timestamp_ms();
+    violation->threshold      = threshold;
+    violation->timestamp_ms   = safety_monitor_get_timestamp_ms();
     strncpy(violation->description, desc ? desc : "", sizeof(violation->description) - 1);
     violation->description[sizeof(violation->description) - 1] = '\0';
 }
 
 static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyViolation *violation) {
     uint32_t count;
-    int immediate;
+    int      immediate;
 
     if (!monitor || !violation) {
         return 0;
@@ -288,8 +293,8 @@ static int safety_monitor_handle_violation(SafetyMonitor *monitor, const SafetyV
     pthread_mutex_lock(&monitor->mutex);
     monitor->config.violation_count[violation->unit][violation->type] += 1;
     monitor->total_violations += 1;
-    monitor->last_violation = *violation;
-    count = monitor->config.violation_count[violation->unit][violation->type];
+    monitor->last_violation   = *violation;
+    count     = monitor->config.violation_count[violation->unit][violation->type];
     immediate = monitor->config.yaml_config.emergency_immediate_shutdown ? 1 : 0;
     pthread_mutex_unlock(&monitor->mutex);
 
@@ -326,6 +331,7 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
     if (!monitor || !monitor->initialized) {
         return STATUS_NOK;
     }
+
     if (unit < FEM_UNIT_1 || unit > FEM_UNIT_2) {
         return STATUS_NOK;
     }
@@ -590,7 +596,7 @@ void safety_monitor_reset_statistics(SafetyMonitor *monitor) {
     }
 
     pthread_mutex_lock(&monitor->mutex);
-    monitor->total_checks = 0;
+    monitor->total_checks     = 0;
     monitor->total_violations = 0;
     memset(monitor->config.violation_count, 0, sizeof(monitor->config.violation_count));
     memset(&monitor->last_violation, 0, sizeof(monitor->last_violation));
@@ -603,6 +609,7 @@ void safety_monitor_set_violation_callback(SafetyMonitor *monitor,
                                            void (*callback)(const SafetyViolation *)) {
     if (monitor) {
         monitor->violation_callback = callback;
+        // TODO: send event to notify.d
     }
 }
 

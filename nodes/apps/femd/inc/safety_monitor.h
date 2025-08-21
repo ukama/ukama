@@ -5,13 +5,13 @@
  *
  * Copyright (c) 2024-present, Ukama Inc.
  */
-
 #ifndef SAFETY_MONITOR_H
 #define SAFETY_MONITOR_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+
 #include "gpio_controller.h"
 #include "i2c_controller.h"
 #include "yaml_config.h"
@@ -30,31 +30,31 @@ typedef enum {
 
 typedef struct {
     SafetyViolationType type;
-    FemUnit unit;
-    float measured_value;
-    float threshold;
-    uint32_t timestamp_ms;
-    char description[128];
+    FemUnit             unit;
+    float               measured_value;
+    float               threshold;
+    uint32_t            timestamp_ms;
+    char                description[128];
 } SafetyViolation;
 
 typedef struct {
     YamlSafetyConfig yaml_config;
-    uint32_t violation_count[FEM_UNIT_2 + 1][SAFETY_VIOLATION_MAX];
-    bool pa_shutdown_state[FEM_UNIT_2 + 1];
+    uint32_t         violation_count[FEM_UNIT_2 + 1][SAFETY_VIOLATION_MAX];
+    bool             pa_shutdown_state[FEM_UNIT_2 + 1];
 } SafetyConfig;
 
 typedef struct {
-    bool running;
-    bool initialized;
-    pthread_t monitor_thread;
+    bool            running;
+    bool            initialized;
+    pthread_t       monitor_thread;
     pthread_mutex_t mutex;
     
-    SafetyConfig config;
+    SafetyConfig   config;
     GpioController *gpio_controller;
-    I2CController *i2c_controller;
+    I2CController  *i2c_controller;
     
-    uint32_t total_checks;
-    uint32_t total_violations;
+    uint32_t        total_checks;
+    uint32_t        total_violations;
     SafetyViolation last_violation;
     
     void (*violation_callback)(const SafetyViolation *violation);
