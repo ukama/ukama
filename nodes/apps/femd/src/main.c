@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
     usys_log_debug("Starting %s ... ", SERVICE_NAME);
 
     /* Signal handlers */
-    signal(SIGINT,  handle_sigint);
+    signal(SIGINT,  handle_terminate);
     signal(SIGINT,  handle_terminate);
     signal(SIGTERM, handle_terminate);
 #ifdef SIGPIPE
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
         goto done;
     }
 
-    if (safety_monitor_start(&safety_monitor) != STATUS_OK) {
+    if (safety_monitor_start(&safetyMonitor) != STATUS_OK) {
         usys_log_error("Failed to start safety monitor");
         goto done;
     }
@@ -203,8 +203,8 @@ int main(int argc, char **argv) {
     }
 
 done:
-    saftey_monitor_stop(&safteyMonitor);
-    saftey_monitor_cleanup(&safteyMonitor);
+    safety_monitor_stop(&safetyMonitor);
+    safety_monitor_cleanup(&safetyMonitor);
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     usys_free(serviceConfig.serviceName);
