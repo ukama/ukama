@@ -109,6 +109,33 @@ bool json_deserialize_node_info(char **data, char *tag, json_t *json) {
     return USYS_TRUE;
 }
 
+bool json_serialize_pa_alarm_notification(JsonObj **json,
+                                          Config *config,
+                                          int    type) {
+
+    *json = json_object();
+    if (!*json) return USYS_FALSE;
+
+    json_object_set_new(*json, JTAG_SERVICE_NAME,
+                        json_string(config->serviceName));
+    if (type == ALARM_TYPE_PA_OFF) {
+        json_object_set_new(*json, JTAG_SEVERITY, json_string(ALARM_HIGH));
+        json_object_set_new(*json, JTAG_VALUE,    json_string(ALARM_PA_AUTO_OFF));
+        json_object_set_new(*json, JTAG_DETAILS,  json_string(ALARM_PA_AUTO_OFF_DESCRP));
+    } else if (type == ALARM_TYPE_PA_ON) {
+        json_object_set_new(*json, JTAG_SEVERITY, json_string(ALARM_LOW));
+        json_object_set_new(*json, JTAG_VALUE,    json_string(ALARM_PA_AUTO_ON));
+        json_object_set_new(*json, JTAG_DETAILS,  json_string(ALARM_PA_AUTO_ON_DESCRP));
+    }
+
+    json_object_set_new(*json, JTAG_TIME,     json_integer(time(NULL)));
+    json_object_set_new(*json, JTAG_MODULE,   json_string(MODULE_FEM));
+    json_object_set_new(*json, JTAG_NAME,     json_string(ALARM_NODE));
+    json_object_set_new(*json, JTAG_UNITS,    json_string(EMPTY_STRING));
+
+    return USYS_TRUE;
+}
+
 /* Decrement json references */
 void json_free(JsonObj** json) {
     if (*json){

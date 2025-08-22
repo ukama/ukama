@@ -49,6 +49,22 @@
 #define URL_PREFIX                EP_BS REST_API_VERSION
 #define API_RES_EP(RES)           EP_BS RES
 
+/* for json de/ser - mainly for alaram/notify */
+#define ALARM_TYPE_PA_OFF 0
+#define ALARM_TYPE_PA_ON  1
+
+#define ALARM_LOW                "low"
+#define ALARM_HIGH               "high"
+#define ALARM_NODE               "node"
+#define ALARM_PA_AUTO_OFF        "pa-auto-off"
+#define ALARM_PA_AUTO_ON         "pa-auto-on"
+#define ALARM_PA_AUTO_OFF_DESCRP "PA turned off (voltage, temperature, reverse-power)"
+#define ALARM_PA_AUTO_ON_DESCRP  "PA turned on  (auto-reactivated after violation)"
+#define EMPTY_STRING             ""
+#define MODULE_FEM               "fem"
+
+#define UKAMA_AMPLIFIER_NODE "amplifier-node"
+
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;

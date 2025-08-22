@@ -17,10 +17,12 @@
 #include "usys_string.h"
 
 /* jserdes.c */
-extern bool json_deserialize_node_info(char **data, char *tag, json_t *json);
-#if 0
-extern bool json_serialize_alarm_notification(JsonObj **json, Config *config);
-#endif
+extern bool json_deserialize_node_info(char **data,
+                                       char *tag,
+                                       json_t *json);
+extern bool json_serialize_pa_alarm_notification(JsonObj **json,
+                                                 Config *config,
+                                                 int type);
 
 static int wc_send_http_request(URequest *httpReq,
                                 UResponse **httpResp) {
@@ -151,8 +153,9 @@ int get_nodeid_and_type_from_noded(Config *config) {
     return STATUS_OK;
 }
 
-#if 0
-int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
+int wc_send_alarm_to_notifyd(Config *config,
+                             int *retCode,
+                             int type) {
 
     int ret = USYS_OK;
     char url[128] = {0};
@@ -164,8 +167,8 @@ int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
     sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
             config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
 
-    if (json_serialize_alarm_notification(&json, config) == USYS_FALSE) {
-        usys_log_error("Unable to serialize the notification");
+    if (json_serialize_pa_alarm_notification(&json, config, type) == USYS_FALSE) {
+        usys_log_error("Unable to serialize the alarm notification");
         return USYS_NOK;
     }
 
@@ -187,7 +190,6 @@ int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
                        HttpStatusStr(httpResp->status));
         ret = USYS_NOK;
     }
-
     *retCode = httpResp->status;
 
     /* cleaup code */
@@ -204,4 +206,3 @@ int wc_send_alarm_to_notifyd(Config *config, int *retCode) {
 
     return ret;
 }
-#endif

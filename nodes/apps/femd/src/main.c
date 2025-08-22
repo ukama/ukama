@@ -181,7 +181,10 @@ int main(int argc, char **argv) {
         usys_exit(1);
     }
 
-    if (safety_monitor_init(&safetyMonitor, &gpioController, &i2cController) != STATUS_OK) {
+    if (safety_monitor_init(&safetyMonitor,
+                            &gpioController,
+                            &i2cController,
+                            &serviceConfig) != STATUS_OK) {
         usys_log_error("Failed to initialize safety monitor");
         goto done;
     }

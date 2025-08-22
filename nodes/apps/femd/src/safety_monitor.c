@@ -14,6 +14,7 @@
 
 #include "safety_monitor.h"
 #include "femd.h"
+#include "config.h"
 
 /* Forward statics */
 static void* safety_monitor_thread(void *arg);
@@ -29,10 +30,11 @@ static void safety_monitor_maybe_auto_restore(SafetyMonitor *monitor, FemUnit un
 
 int safety_monitor_init(SafetyMonitor  *monitor,
                         GpioController *gpio_ctrl,
-                        I2CController  *i2c_ctrl) {
+                        I2CController  *i2c_ctrl,
+                        Config         *serviceConfig ){
     int i;
 
-    if (!monitor || !gpio_ctrl || !i2c_ctrl) {
+    if (!monitor || !gpio_ctrl || !i2c_ctrl || !serviceConfig) {
         usys_log_error("Invalid parameters for safety monitor initialization");
         return STATUS_NOK;
     }
@@ -46,6 +48,7 @@ int safety_monitor_init(SafetyMonitor  *monitor,
 
     monitor->gpio_controller = gpio_ctrl;
     monitor->i2c_controller  = i2c_ctrl;
+    monitor->serviceConfig   = serviceConfig;
 
     /* Important: mark initialized BEFORE loading YAML (loader checks this) */
     monitor->initialized = true;
@@ -351,6 +354,7 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
     float snap_peak;
     int have_gpio;
     int have_dac;
+    int retCode;
     uint32_t now_ms;
 
     if (!monitor || !monitor->initialized) {
@@ -416,6 +420,8 @@ int safety_monitor_shutdown_pa(SafetyMonitor *monitor, FemUnit unit, SafetyViola
         monitor->shutdown_callback(unit, reason);
     }
 
+    (void)wc_send_alarm_to_notifyd(monitor->serviceConfig, &retCode, ALARM_TYPE_PA_OFF);
+    
     usys_log_error("PA SHUTDOWN COMPLETE for FEM%d", unit);
     return STATUS_OK;
 }
@@ -424,6 +430,7 @@ int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit) {
     int i;
     int reset_stats;
     int have_pre;
+    int retCode;
 
     if (!monitor || !monitor->initialized) {
         return STATUS_NOK;
@@ -490,6 +497,8 @@ int safety_monitor_restore_pa(SafetyMonitor *monitor, FemUnit unit) {
         monitor->shutdown_callback(unit, SAFETY_VIOLATION_NONE);
     }
 
+    (void)wc_send_alarm_to_notifyd(monitor->serviceConfig, &retCode, ALARM_TYPE_PA_ON);
+    
     usys_log_info("PA restored for FEM%d", unit);
     return STATUS_OK;
 }
