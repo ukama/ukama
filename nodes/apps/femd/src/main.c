@@ -137,7 +137,6 @@ int main(int argc, char **argv) {
 
     /* Signal handlers */
     signal(SIGINT,  handle_terminate);
-    signal(SIGINT,  handle_terminate);
     signal(SIGTERM, handle_terminate);
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);

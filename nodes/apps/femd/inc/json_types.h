@@ -11,9 +11,7 @@
 
 #define JTAG_NODE_INFO                  "nodeInfo"
 #define JTAG_NODE_ID                    "UUID"
-#define JTAG_TYPE                       "type"
 
-#define JTAG_SEVERITY                   "severity"
 #define JTAG_TIME                       "time"
 #define JTAG_TYPE                       "type"
 #define JTAG_MODULE                     "module"

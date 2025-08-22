@@ -49,7 +49,7 @@
 #define URL_PREFIX                EP_BS REST_API_VERSION
 #define API_RES_EP(RES)           EP_BS RES
 
-/* for json de/ser - mainly for alaram/notify */
+/* for json de/ser - mainly for alarm/notify */
 #define ALARM_TYPE_PA_OFF 0
 #define ALARM_TYPE_PA_ON  1
 

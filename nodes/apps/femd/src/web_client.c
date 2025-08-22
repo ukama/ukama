@@ -158,14 +158,22 @@ int wc_send_alarm_to_notifyd(Config *config,
                              int type) {
 
     int ret = USYS_OK;
+    int n = 0;
     char url[128] = {0};
     char *jsonStr=NULL;
     JsonObj *json = NULL;
     UResponse *httpResp = NULL;
     URequest *httpReq = NULL;
 
-    sprintf(url,"http://%s:%d%s%s", DEF_NOTIFY_HOST,
-            config->notifydPort, DEF_NOTIFY_EP, config->serviceName);
+    n = snprintf(url, sizeof(url),
+                 "http://%s:%d%s",
+                 DEF_NODED_HOST,
+                 config->nodedPort,
+                 DEF_NODED_EP);
+    if (n < 0 || n >= (int)sizeof(url)) {
+        usys_log_error("URL build truncated for noded request");
+        return STATUS_NOK;
+    }
 
     if (json_serialize_pa_alarm_notification(&json, config, type) == USYS_FALSE) {
         usys_log_error("Unable to serialize the alarm notification");
@@ -185,7 +193,7 @@ int wc_send_alarm_to_notifyd(Config *config,
 
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK || httpResp->status != HttpStatus_Accepted) {
-        usys_log_error("Failed sending alarm to notiy.d: %s Code: %d Str: %s",
+        usys_log_error("Failed sending alarm to notify.d: %s Code: %d Str: %s",
                        url, httpResp->status,
                        HttpStatusStr(httpResp->status));
         ret = USYS_NOK;
