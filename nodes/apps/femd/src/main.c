@@ -170,17 +170,6 @@ int main(int argc, char **argv) {
         goto done;
     }
 
-    serverConfig.config         = &serviceConfig;
-    serverConfig.gpioController = &gpioController;
-    serverConfig.i2cController  = &i2cController;
-
-    if (start_web_service(&serverConfig, &serviceInst) != USYS_TRUE) {
-        usys_free(serviceConfig.serviceName);
-        usys_log_error("Webservice failed to setup for clients. Exiting.");
-        exitCode = USYS_TRUE;
-        usys_exit(1);
-    }
-
     if (safety_monitor_init(&safetyMonitor,
                             &gpioController,
                             &i2cController,
@@ -192,6 +181,17 @@ int main(int argc, char **argv) {
     if (safety_monitor_start(&safetyMonitor) != STATUS_OK) {
         usys_log_error("Failed to start safety monitor");
         goto done;
+    }
+
+    serverConfig.config         = &serviceConfig;
+    serverConfig.gpioController = &gpioController;
+    serverConfig.i2cController  = &i2cController;
+
+    if (start_web_service(&serverConfig, &serviceInst) != USYS_TRUE) {
+        usys_free(serviceConfig.serviceName);
+        usys_log_error("Webservice failed to setup for clients. Exiting.");
+        exitCode = USYS_TRUE;
+        usys_exit(1);
     }
 
     usys_log_info("FEM.d started successfully");
