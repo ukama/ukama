@@ -1,0 +1,181 @@
+# FEM Daemon Safety Configuration
+# This file contains safety thresholds, DAC voltage lookup tables, and temperature compensation settings
+
+# Global Safety Configuration
+safety:
+  enabled: true
+  check_interval_ms: 1000
+  max_violations_before_shutdown: 3
+
+  # Auto-restore behavior
+  auto_restore_enabled: true       # enable automatic restoration after safe period
+  restore_cooldown_ms: 30000       # minimum time after shutdown before we try to restore
+  restore_ok_checks: 5             # consecutive healthy checks required to restore
+  restore_reset_unit_stats: true   # clear per-FEM violation counters on restore  
+
+  # Safety Thresholds
+  thresholds:
+    max_reverse_power_dbm: -10.0    # Maximum reverse power in dBm
+    max_pa_current_a: 5.0           # Maximum PA current in Amperes  
+    max_temperature_c: 85.0         # Maximum temperature in Celsius
+    min_temperature_c: -40.0        # Minimum operating temperature
+    max_forward_power_dbm: 30.0     # Maximum forward power in dBm
+    
+  # Temperature-based Safety Zones
+  temperature_zones:
+    critical_high: 85.0   # Immediate shutdown
+    warning_high: 75.0    # Reduce power
+    normal_high: 65.0     # Normal operation
+    normal_low: 0.0       # Normal operation  
+    warning_low: -20.0    # Reduce power
+    critical_low: -40.0   # Immediate shutdown
+
+# DAC Voltage Configuration
+dac:
+  # Voltage ranges for each DAC channel
+  voltage_range:
+    min_voltage: 0.0      # Minimum DAC output voltage
+    max_voltage: 2.5      # Maximum DAC output voltage
+    resolution_bits: 12   # DAC resolution
+    
+  # Default voltages for different operating modes
+  default_voltages:
+    carrier_voltage: 1.2  # Default carrier voltage
+    peak_voltage: 2.0     # Default peak voltage
+    shutdown_voltage: 0.0 # Voltage when PA is shutdown
+    standby_voltage: 0.5  # Voltage in standby mode
+
+# Temperature-based DAC Voltage Lookup Tables
+# Format: temperature_c -> {carrier_voltage, peak_voltage}
+temperature_compensation:
+  fem1:
+    voltage_lookup:
+      -30: {carrier: 2.10, peak: 1.20}  # -30 to -20
+      -20: {carrier: 2.10, peak: 1.20}  # -20 to -10
+      -10: {carrier: 2.15, peak: 1.25}  # -10 to 0
+      0:   {carrier: 2.15, peak: 1.25}  # 0 to +10
+      10:  {carrier: 2.20, peak: 1.30}  # 10 to +20
+      20:  {carrier: 2.20, peak: 1.30}  # 20 to +30
+      30:  {carrier: 2.22, peak: 1.35}  # 30 to +40
+      40:  {carrier: 2.22, peak: 1.35}  # 40 to +50
+      50:  {carrier: 2.25, peak: 1.38}  # 50 to +60
+      60:  {carrier: 2.26, peak: 1.38}  # 60 to 70
+      70:  {carrier: 2.28, peak: 1.40}  # 70 to 80
+      80:  {carrier: 2.28, peak: 1.40}  # +70 to 80
+      85:  {carrier: 0.0, peak: 0.0}    # Shutdown
+      
+  fem2:
+    voltage_lookup:
+      -30: {carrier: 2.10, peak: 1.20}  # -30 to -20
+      -20: {carrier: 2.10, peak: 1.20}  # -20 to -10
+      -10: {carrier: 2.15, peak: 1.25}  # -10 to 0
+      0:   {carrier: 2.15, peak: 1.25}  # 0 to +10
+      10:  {carrier: 2.20, peak: 1.30}  # 10 to +20
+      20:  {carrier: 2.20, peak: 1.30}  # 20 to +30
+      30:  {carrier: 2.22, peak: 1.35}  # 30 to +40
+      40:  {carrier: 2.22, peak: 1.35}  # 40 to +50
+      50:  {carrier: 2.25, peak: 1.38}  # 50 to +60
+      60:  {carrier: 2.26, peak: 1.38}  # 60 to 70
+      70:  {carrier: 2.28, peak: 1.40}  # 70 to 80
+      80:  {carrier: 2.28, peak: 1.40}  # +70 to 80
+      85:  {carrier: 0.0, peak: 0.0}    # Shutdown
+
+# Power Level Configuration
+power_levels:
+  # Different power modes with corresponding DAC settings
+  modes:
+    shutdown:
+      carrier_voltage: 0.0
+      peak_voltage: 0.0
+      description: "Complete PA shutdown"
+      
+    standby:
+      carrier_voltage: 0.5
+      peak_voltage: 0.8
+      description: "Low power standby mode"
+      
+    low_power:
+      carrier_voltage: 1.0
+      peak_voltage: 1.5
+      description: "Reduced power operation"
+      
+    normal:
+      carrier_voltage: 1.2
+      peak_voltage: 2.0
+      description: "Normal operation"
+      
+    high_power:
+      carrier_voltage: 1.4
+      peak_voltage: 2.2
+      description: "High power operation"
+
+# Monitoring Configuration  
+monitoring:
+  # ADC monitoring settings
+  adc:
+    sampling_rate_hz: 1000           # ADC sampling frequency
+    averaging_samples: 10            # Number of samples to average
+    calibration_offset_mv: 0         # Calibration offset in millivolts
+    
+  # Temperature sensor settings
+  temperature:
+    sensor_type: "LM75A"             # Temperature sensor model
+    i2c_address_fem1: 0x48           # I2C address for FEM1 temp sensor
+    i2c_address_fem2: 0x49           # I2C address for FEM2 temp sensor
+    resolution_bits: 12              # Temperature resolution
+    update_interval_ms: 2000         # Temperature reading interval
+    
+  # Current monitoring
+  current:
+    shunt_resistance_ohm: 0.01       # Current sense resistor value
+    max_current_rating_a: 10.0       # Maximum current rating
+    alarm_threshold_percent: 80      # Alarm at 80% of max current
+
+# Calibration Data
+calibration:
+  fem1:
+    dac_offset_mv: 0                 # DAC calibration offset
+    dac_gain_error_ppm: 0            # DAC gain error in ppm
+    temp_offset_c: 0.0               # Temperature sensor offset
+    current_offset_ma: 0             # Current measurement offset
+    
+  fem2:
+    dac_offset_mv: 0                 # DAC calibration offset  
+    dac_gain_error_ppm: 0            # DAC gain error in ppm
+    temp_offset_c: 0.0               # Temperature sensor offset
+    current_offset_ma: 0             # Current measurement offset
+
+# Emergency Procedures
+emergency:
+  # Actions to take during different emergency conditions
+  reverse_power_emergency:
+    immediate_shutdown: true
+    disable_tx_rf: true
+    disable_pa_vds: true
+    disable_28v_vds: true
+    log_event: true
+    
+  overcurrent_emergency:
+    immediate_shutdown: true
+    disable_tx_rf: true
+    disable_pa_vds: true
+    disable_28v_vds: true
+    log_event: true
+    
+  overtemperature_emergency:
+    immediate_shutdown: true
+    disable_tx_rf: true
+    disable_pa_vds: true
+    disable_28v_vds: true
+    reduce_dac_voltage: true
+    log_event: true
+
+# Logging Configuration
+logging:
+  safety_events: true
+  temperature_logging: true
+  voltage_adjustments: true
+  current_measurements: true
+  log_level: "INFO"               # DEBUG, INFO, WARN, ERROR
+  max_log_file_size_mb: 100
+  log_rotation_count: 5
