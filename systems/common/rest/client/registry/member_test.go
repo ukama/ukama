@@ -118,3 +118,108 @@ func TestMemberClient_GetByUserId(t *testing.T) {
 		assert.Nil(tt, n)
 	})
 }
+
+func TestMemberClient_AddMember(t *testing.T) {
+	t.Run("MemberAddedSuccessfully", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			// Test request parameters
+			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint)
+			assert.Equal(tt, "POST", req.Method)
+
+			// fake member info response
+			member := `{"member":{"member_id": "03cb753f-5e03-4c97-8e47-625115476c73", "user_id": "03cb753f-5e03-4c97-8e47-625115476c72", "role": "user", "is_deactivated": false}}`
+
+			// Send mock response
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+
+				// Send response to be tested
+				Body: io.NopCloser(bytes.NewBufferString(member)),
+
+				// Must be set to non-nil value or it panics
+				Header: make(http.Header),
+			}
+		}
+
+		testMemberClient := registry.NewMemberClient("")
+
+		// We replace the transport mechanism by mocking the http request
+		// so that the test stays a unit test e.g, no server/network call.
+		testMemberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		m, err := testMemberClient.AddMember(testUuid)
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, testUuid, m.Member.UserId)
+		assert.Equal(tt, "user", m.Member.Role)
+		assert.Equal(tt, false, m.Member.IsDeactivated)
+	})
+
+	t.Run("MemberAddFailed", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint)
+			assert.Equal(tt, "POST", req.Method)
+
+			// error payload
+			resp := `{"error":"failed to add member"}`
+
+			return &http.Response{
+				StatusCode: 400,
+				Status:     "400 BAD REQUEST",
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testMemberClient := registry.NewMemberClient("")
+
+		testMemberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testMemberClient.AddMember(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
+	t.Run("InvalidResponsePayload", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint)
+			assert.Equal(tt, "POST", req.Method)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+				Header:     make(http.Header),
+			}
+		}
+
+		testMemberClient := registry.NewMemberClient("")
+
+		testMemberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testMemberClient.AddMember(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, req.URL.String(), registry.MemberEndpoint)
+			assert.Equal(tt, "POST", req.Method)
+
+			return nil
+		}
+
+		testMemberClient := registry.NewMemberClient("")
+
+		testMemberClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		n, err := testMemberClient.AddMember(testUuid)
+
+		assert.Error(tt, err)
+		assert.Nil(tt, n)
+	})
+}
