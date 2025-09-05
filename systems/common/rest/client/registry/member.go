@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest/client"
 
 	log "github.com/sirupsen/logrus"
@@ -29,12 +30,18 @@ type MemberInfo struct {
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 
+type OrgMember struct {
+	UserUuid string `example:"{{UserUUID}}" json:"user_uuid" validate:"required"`
+	Role     string `example:"member" json:"role" validate:"required"`
+}
+
 type MemberInfoResponse struct {
 	Member MemberInfo `json:"member"`
 }
 
 type MemberClient interface {
 	GetByUserId(Id string) (*MemberInfoResponse, error)
+	AddMember(uuid string) (*MemberInfoResponse, error)
 }
 
 type memberClient struct {
@@ -76,4 +83,35 @@ func (m *memberClient) GetByUserId(id string) (*MemberInfoResponse, error) {
 	log.Infof("Member Info: %+v", mem)
 
 	return &mem, nil
+}
+
+func (m *memberClient) AddMember(uuid string) (*MemberInfoResponse, error) {
+
+	log.Debugf("Adding member: %v", uuid)
+
+	memberRes := MemberInfoResponse{}
+	req := OrgMember{
+		UserUuid: uuid,
+		Role:     ukama.RoleType_ROLE_USER.String(),
+	}
+
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error. error: %w", err)
+	}
+
+	resp, err := m.R.Post(m.u.String()+MemberEndpoint, b)
+
+	if err != nil {
+		log.Errorf("Failed to send api request to registry at %s . Error %s", m.u.String(), err.Error())
+		return nil, fmt.Errorf("api request to registry at %s failure: %v", m.u.String(), err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &memberRes)
+	if err != nil {
+		log.Errorf("Failed to deserialize member info. Error message is: %s", err.Error())
+		return nil, fmt.Errorf("member info deserialization failure: %w", err)
+	}
+
+	return &memberRes, nil
 }

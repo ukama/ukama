@@ -21,6 +21,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
@@ -37,8 +38,7 @@ type OrgService struct {
 	orgRepo             db.OrgRepo
 	userRepo            db.UserRepo
 	orchestratorService providers.OrchestratorProvider
-	userService         providers.UserClientProvider
-	registrySystem      providers.RegistryProvider
+	registrySystem      creg.MemberClient
 	orgName             string
 	baseRoutingKey      msgbus.RoutingKeyBuilder
 	msgbus              mb.MsgBusServiceClient
@@ -46,12 +46,15 @@ type OrgService struct {
 	debug               bool
 }
 
-func NewOrgServer(orgName string, orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, user providers.UserClientProvider, registry providers.RegistryProvider, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
+type HttpServices struct {
+	InitClient string `defaut:"api-gateway-init:8080"`
+}
+
+func NewOrgServer(orgName string, orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, registry creg.MemberClient, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {
 	return &OrgService{
 		orgRepo:             orgRepo,
 		userRepo:            userRepo,
 		orchestratorService: orch,
-		userService:         user,
 		registrySystem:      registry,
 		orgName:             orgName,
 		baseRoutingKey:      msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -268,8 +271,12 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 
 	err = o.userRepo.Add(user, func(user *db.User, tx *gorm.DB) error {
 		/* Add user to members db of org */
-		return o.registrySystem.AddMember(org.Name, user.Uuid.String())
-
+		_, err := o.registrySystem.AddMember(user.Uuid.String())
+		if err != nil {
+			return status.Errorf(codes.Internal,
+				"failed to add user to member registry")
+		}
+		return nil
 	})
 
 	if err != nil {

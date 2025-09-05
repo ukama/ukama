@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/nucleus/org/mocks"
@@ -31,14 +31,12 @@ func TestOrgServer_Add(t *testing.T) {
 	orgName := "org-1"
 	ownerUuid := uuid.NewV4()
 	certificate := "ukama_certs"
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
-	userService := &mocks.UserClientProvider{}
 	orchSystem := &mocks.OrchestratorProvider{}
-	registry := &mocks.RegistryProvider{}
-
+	registryClient := &cmocks.MemberClient{}
 	org := &db.Org{
 		Owner:       ownerUuid,
 		Certificate: certificate,
@@ -61,7 +59,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 	orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
-	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registryClient, msgclientRepo, "", true)
 
 	t.Run("AddValidOrg", func(tt *testing.T) {
 		// Act
@@ -107,15 +105,14 @@ func TestOrgServer_Add(t *testing.T) {
 
 func TestOrgServer_Get(t *testing.T) {
 	orgId := uuid.NewV4()
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
-	userService := &mocks.UserClientProvider{}
 	orchSystem := &mocks.OrchestratorProvider{}
-	registry := &mocks.RegistryProvider{}
+	registry := &cmocks.MemberClient{}
 
-	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registry, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("Get", mock.Anything).Return(&db.Org{Id: orgId}, nil).Once()
@@ -142,15 +139,14 @@ func TestOrgServer_Get(t *testing.T) {
 
 func TestOrgServer_GetByName(t *testing.T) {
 	orgName := "test-org"
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
-	userService := &mocks.UserClientProvider{}
 	orchSystem := &mocks.OrchestratorProvider{}
-	registry := &mocks.RegistryProvider{}
+	registry := &cmocks.MemberClient{}
 
-	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registry, msgclientRepo, "", true)
 
 	t.Run("OrgFound", func(tt *testing.T) {
 		orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
@@ -177,15 +173,14 @@ func TestOrgServer_GetByName(t *testing.T) {
 
 func TestOrgServer_GetByOwner(t *testing.T) {
 	ownerId := uuid.NewV4()
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
-	userService := &mocks.UserClientProvider{}
 	orchSystem := &mocks.OrchestratorProvider{}
-	registry := &mocks.RegistryProvider{}
+	registry := &cmocks.MemberClient{}
 
-	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registry, msgclientRepo, "", true)
 
 	t.Run("OwnerFound", func(tt *testing.T) {
 		orgRepo.On("GetByOwner", mock.Anything).
@@ -219,15 +214,14 @@ func TestOrgServer_GetByUser(t *testing.T) {
 	userId := uuid.NewV4()
 	var id uint = 1
 
-	msgclientRepo := &mbmocks.MsgBusServiceClient{}
+	msgclientRepo := &cmocks.MsgBusServiceClient{}
 
 	orgRepo := &mocks.OrgRepo{}
 	userRepo := &mocks.UserRepo{}
-	userService := &mocks.UserClientProvider{}
 	orchSystem := &mocks.OrchestratorProvider{}
-	registry := &mocks.RegistryProvider{}
+	registry := &cmocks.MemberClient{}
 
-	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, userService, registry, msgclientRepo, "", true)
+	s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registry, msgclientRepo, "", true)
 
 	t.Run("UserFoundOnOwnersAndMembers", func(tt *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: 1, Uuid: userId}, nil).Once()
