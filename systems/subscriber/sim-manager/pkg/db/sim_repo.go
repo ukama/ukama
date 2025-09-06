@@ -190,13 +190,12 @@ func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 		}
 
 		result := tx.Clauses(clause.Returning{}).Updates(sim)
+		if result.Error != nil {
+			return result.Error
+		}
 
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
-		}
-
-		if result.Error != nil {
-			return result.Error
 		}
 
 		return nil

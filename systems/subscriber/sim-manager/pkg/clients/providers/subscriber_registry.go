@@ -20,7 +20,7 @@ import (
 )
 
 // SubscriberRegistryClientProvider creates a local client to interact with
-// a remote instance of  Subscriber Registry service.
+// a remote instance of Subscriber Registry service.
 type SubscriberRegistryClientProvider interface {
 	GetClient() (pb.RegistryServiceClient, error)
 }

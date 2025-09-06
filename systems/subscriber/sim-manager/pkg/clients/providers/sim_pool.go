@@ -20,7 +20,7 @@ import (
 )
 
 // SimPoolClientProvider creates a local client to interact with
-// a remote instance of  Sim Pool service.
+// a remote instance of Sim Pool service.
 type SimPoolClientProvider interface {
 	GetClient() (pb.SimServiceClient, error)
 }
