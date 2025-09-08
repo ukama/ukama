@@ -1131,7 +1131,7 @@ func TestOrgServer_UpdateOrgForUser(t *testing.T) {
 		// Assert
 		assert.Error(t, err)
 		assert.Nil(t, resp)
-		assert.Contains(t, err.Error(), "invalid format of user uuid")
+		assert.Contains(t, err.Error(), "invalid format of org uuid")
 	})
 
 	t.Run("UpdateOrgForUserInvalidUserUUID", func(tt *testing.T) {
