@@ -165,9 +165,7 @@ func (r *Router) sendEmailHandler(c *gin.Context, req *SendEmailReq) (*mailerpb.
 	}
 
 	for key, value := range req.Values {
-		if strValue, ok := value.(string); ok {
-			payload.Values[key] = strValue
-		}
+		payload.Values[key] = fmt.Sprintf("%v", value)
 	}
 
 	for i, att := range req.Attachments {

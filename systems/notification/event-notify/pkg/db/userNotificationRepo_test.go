@@ -458,7 +458,7 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		// Accept both nil and empty slice as valid responses
-		assert.True(t, notifications == nil || len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
+		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -502,7 +502,7 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		// Accept both nil and empty slice as valid responses
-		assert.True(t, notifications == nil || len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
+		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

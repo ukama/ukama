@@ -757,9 +757,10 @@ func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeS
 
 	notificationType := notif.TYPE_INFO
 
-	if msg.State == "Faulty" {
+	switch msg.State {
+	case "Faulty":
 		notificationType = notif.TYPE_CRITICAL
-	} else if msg.State == "Unknown" {
+	case "Unknown":
 		notificationType = notif.TYPE_ACTIONABLE_WARNING
 	}
 
@@ -847,18 +848,17 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 
 	/* Store raw event */
 	event := &db.EventMsg{}
-	var id uint = 0
 	event.Key = ec.Name
 	err := event.Data.Set(msg)
 	if err != nil {
 		log.Errorf("failed to assing event: %v", err)
 		return nil, err
-	} else {
-		id, err = es.n.storeEvent(event)
-		if err != nil {
-			log.Errorf("failed to store event: %v", err)
-			return nil, err
-		}
+	}
+
+	id, err := es.n.storeEvent(event)
+	if err != nil {
+		log.Errorf("failed to store event: %v", err)
+		return nil, err
 	}
 
 	dn := &db.Notification{
@@ -873,10 +873,7 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		NodeId:       nodeId,
 		ResourceId:   rid,
 		SubscriberId: subscriberId,
-	}
-
-	if id != 0 {
-		dn.EventMsgID = id
+		EventMsgID:   id,
 	}
 
 	err = es.n.storeNotification(dn)

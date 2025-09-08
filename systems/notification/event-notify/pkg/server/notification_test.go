@@ -716,7 +716,8 @@ func TestGet(t *testing.T) {
 		}
 
 		eventData := pgtype.JSONB{}
-		eventData.Set([]byte(`{"key": "value"}`))
+		err := eventData.Set([]byte(`{"key": "value"}`))
+		assert.NoError(t, err)
 
 		notification := &db.Notification{
 			Id:           notificationID,

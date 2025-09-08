@@ -230,6 +230,7 @@ func TestRouter_eventNotifications(t *testing.T) {
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
 	var arc = &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
 	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
@@ -345,6 +346,7 @@ func TestRouter_mailerErrorCases(t *testing.T) {
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
 	var arc = &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
 	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
@@ -427,6 +429,7 @@ func TestRouter_eventNotificationsErrorCases(t *testing.T) {
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
 	var arc = &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
 	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
@@ -484,6 +487,7 @@ func TestRouter_eventNotificationsErrorCases(t *testing.T) {
 
 func TestRouter_mailerEdgeCases(t *testing.T) {
 	var arc = &cmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	t.Run("sendEmailWithNonStringValues", func(t *testing.T) {
 		m := &mmocks.MailerServiceClient{}
@@ -515,6 +519,9 @@ func TestRouter_mailerEdgeCases(t *testing.T) {
 		// Only string values are processed by the handler
 		expectedValues := map[string]string{
 			"string_value": "test",
+			"int_value":    "123",
+			"bool_value":   "true",
+			"float_value":  "3.14",
 		}
 
 		preq := &mailerpb.SendEmailRequest{
