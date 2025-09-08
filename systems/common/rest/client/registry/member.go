@@ -97,7 +97,7 @@ func (m *memberClient) AddMember(uuid string) (*MemberInfoResponse, error) {
 
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("request marshal error. error: %w", err)
+		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
 
 	resp, err := m.R.Post(m.u.String()+MemberEndpoint, b)
