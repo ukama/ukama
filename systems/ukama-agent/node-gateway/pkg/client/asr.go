@@ -23,14 +23,13 @@ type Asr struct {
 	conn    *grpc.ClientConn
 	timeout time.Duration `default:"3s"`
 	client  pb.AsrRecordServiceClient
-	host    string `deafault:"localhost:9090"`
+	host    string `default:"localhost:9090"`
 }
 
 func NewAsr(host string, timeout time.Duration) *Asr {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to ASR Service: %v", err)
 	}
 	client := pb.NewAsrRecordServiceClient(conn)
 
@@ -51,10 +50,11 @@ func NewAsrFromClient(asrClient pb.AsrRecordServiceClient) *Asr {
 	}
 }
 
-func (r *Asr) Close() {
-	err := r.conn.Close()
-	if err != nil {
-		log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+func (a *Asr) Close() {
+	if a.conn != nil {
+		if err := a.conn.Close(); err != nil {
+			log.Errorf("Failed to close ASR client connection. Error: %v ", err)
+		}
 	}
 }
 

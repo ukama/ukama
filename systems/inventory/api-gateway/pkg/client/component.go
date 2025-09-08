@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type Component interface {
@@ -34,10 +34,9 @@ type ComponentInventory struct {
 }
 
 func NewComponentInventory(componentHost string, timeout time.Duration) *ComponentInventory {
-
 	conn, err := grpc.NewClient(componentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Component Service: %v", err)
 	}
 	client := pb.NewComponentServiceClient(conn)
 
@@ -58,41 +57,45 @@ func NewComponentInventoryFromClient(mClient pb.ComponentServiceClient) *Compone
 	}
 }
 
-func (r *ComponentInventory) Close() {
-	r.conn.Close()
+func (c *ComponentInventory) Close() {
+	if c.conn != nil {
+		if err := c.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Component Service connection: %v", err)
+		}
+	}
 }
 
-func (r *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *ComponentInventory) Get(id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return r.client.Get(ctx, &pb.GetRequest{
+	return c.client.Get(ctx, &pb.GetRequest{
 		Id: id,
 	})
 }
 
-func (r *ComponentInventory) GetByUser(uid string, c string) (*pb.GetByUserResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *ComponentInventory) GetByUser(uid, category string) (*pb.GetByUserResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return r.client.GetByUser(ctx, &pb.GetByUserRequest{
+	return c.client.GetByUser(ctx, &pb.GetByUserRequest{
 		UserId:   uid,
-		Category: c,
+		Category: category,
 	})
 }
 
-func (r *ComponentInventory) SyncComponent() (*pb.SyncComponentsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *ComponentInventory) SyncComponent() (*pb.SyncComponentsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return r.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
+	return c.client.SyncComponents(ctx, &pb.SyncComponentsRequest{})
 }
 
-func (r *ComponentInventory) List(userId, partNumber, category string) (*pb.ListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *ComponentInventory) List(userId, partNumber, category string) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return r.client.List(ctx, &pb.ListRequest{
+	return c.client.List(ctx, &pb.ListRequest{
 		UserId:     userId,
 		PartNumber: partNumber,
 		Category:   category,

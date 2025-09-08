@@ -15,16 +15,17 @@ import (
 	"time"
 
 	"github.com/tj/assert"
+
 	"github.com/ukama/ukama/systems/common/notification"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/notification/distributor/mocks"
 	"github.com/ukama/ukama/systems/notification/distributor/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	sreg "github.com/ukama/ukama/systems/common/rest/client/subscriber"
-	"github.com/ukama/ukama/systems/notification/distributor/mocks"
 	pb "github.com/ukama/ukama/systems/notification/distributor/pb/gen"
 	pmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
@@ -53,7 +54,6 @@ func TestNewDistributorServer(t *testing.T) {
 	assert.Equal(t, testOrgName, server.orgName)
 	assert.Equal(t, testOrgId, server.orgId)
 	assert.Equal(t, nc, server.networkClient)
-	assert.Equal(t, mc, server.memberClient)
 	assert.Equal(t, sc, server.subscriberClient)
 	assert.Equal(t, ndb, server.notify)
 	assert.Equal(t, eNotify, server.eventNotifyService)

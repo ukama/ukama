@@ -13,26 +13,27 @@ import (
 	"net/http"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/nucleus/api-gateway/cmd/version"
-	"github.com/wI2L/fizz"
-
 	"github.com/ukama/ukama/systems/nucleus/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/nucleus/api-gateway/pkg/client"
 
-	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 	userspb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
-const USER_ID_KEY = "UserId"
-const ORG_URL_PARAMETER = "org"
-const DUMMY_AUTH_ID = "4eaef5fa-6548-481c-87eb-2b2d85ce6141"
+const (
+	USER_ID_KEY       = "UserId"
+	ORG_URL_PARAMETER = "org"
+	DUMMY_AUTH_ID     = "4eaef5fa-6548-481c-87eb-2b2d85ce6141"
+)
 
 type Router struct {
 	f       *fizz.Fizz
@@ -113,10 +114,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 	auth.Use()

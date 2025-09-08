@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
 
 type SimPool struct {
@@ -26,10 +27,9 @@ type SimPool struct {
 }
 
 func NewSimPool(host string, timeout time.Duration) *SimPool {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Sim Pool Service: %v", err)
 	}
 	client := pb.NewSimServiceClient(conn)
 
@@ -51,7 +51,11 @@ func NewSimPoolFromClient(SimPoolClient pb.SimServiceClient) *SimPool {
 }
 
 func (sp *SimPool) Close() {
-	_ = sp.conn.Close()
+	if sp.conn != nil {
+		if err := sp.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Sim Pool Service connection: %v", err)
+		}
+	}
 }
 
 func (sp *SimPool) Get(iccid string) (*pb.GetByIccidResponse, error) {

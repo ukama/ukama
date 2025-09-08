@@ -17,7 +17,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
@@ -135,16 +134,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthServerUrl)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 
 	auth.Use()
 	{
-
 		auth.GET("/metrics", formatDoc("Get Metrics", ""), tonic.Handler(r.metricListHandler, http.StatusOK))
 
 		auth.GET("/metrics/:metric", []fizz.OperationOption{
@@ -227,8 +221,7 @@ func (r *Router) liveMetricHandler(c *gin.Context, m *GetWsMetricInput) error {
 		return err
 	}
 	defer func() {
-		err := ws.Close()
-		if err != nil {
+		if err := ws.Close(); err != nil {
 			log.Warnf("failed to properly close websocket connection. Error: %v", err)
 		}
 	}()

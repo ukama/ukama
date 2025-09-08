@@ -22,15 +22,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"github.com/ukama/ukama/systems/common/rest"
-	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
-	amocks "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen/mocks"
-	dmocks "github.com/ukama/ukama/systems/hub/distributor/pb/gen/mocks"
 	"github.com/ukama/ukama/systems/hub/node-gateway/pkg"
 	"github.com/ukama/ukama/systems/hub/node-gateway/pkg/client"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	log "github.com/sirupsen/logrus"
 	cconfig "github.com/ukama/ukama/systems/common/config"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
+	amocks "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen/mocks"
+	dmocks "github.com/ukama/ukama/systems/hub/distributor/pb/gen/mocks"
 )
 
 const OrgName = "testorg"
@@ -84,7 +86,11 @@ func Test_RouterGet(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	f := getFileContent(t)
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Warnf("Failed to gracefully close test file content: %v", err)
+		}
+	}()
 
 	cont, err := io.ReadAll(f)
 	if err != nil {

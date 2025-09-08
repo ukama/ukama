@@ -7,7 +7,7 @@ image:
   name: "ukama-com-image.img"
   path: "/home/kashif/work/ukama/repos/ukama/builder/scripts/build-system/ukama-com-image.img"
 
-usb:
+host_device:
   device:  "/dev/sdb"
   iso_url: "https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-standard-3.20.0-x86_64.iso"
 

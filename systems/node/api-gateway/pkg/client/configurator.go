@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
-	"google.golang.org/grpc"
 )
 
 type Configurator struct {
@@ -27,11 +27,11 @@ type Configurator struct {
 }
 
 func NewConfigurator(configuratorHost string, timeout time.Duration) *Configurator {
-
 	conn, err := grpc.NewClient(configuratorHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Configurator Service: %v", err)
 	}
+
 	client := pb.NewConfiguratorServiceClient(conn)
 
 	return &Configurator{
@@ -51,45 +51,33 @@ func NewConfiguratorFromClient(mClient pb.ConfiguratorServiceClient) *Configurat
 	}
 }
 
-func (r *Configurator) Close() {
-	r.conn.Close()
+func (c *Configurator) Close() {
+	if c.conn != nil {
+		if err := c.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Configurator Service connection: %v", err)
+		}
+	}
 }
 
-func (r *Configurator) ConfigEvent(b []byte) (*pb.ConfigStoreEventResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Configurator) ConfigEvent(b []byte) (*pb.ConfigStoreEventResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.ConfigEvent(ctx, &pb.ConfigStoreEvent{
+	return c.client.ConfigEvent(ctx, &pb.ConfigStoreEvent{
 		Data: b,
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
 
-func (r *Configurator) ApplyConfig(commit string) (*pb.ApplyConfigResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Configurator) ApplyConfig(commit string) (*pb.ApplyConfigResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.ApplyConfig(ctx, &pb.ApplyConfigRequest{Hash: commit})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.ApplyConfig(ctx, &pb.ApplyConfigRequest{Hash: commit})
 }
 
-func (r *Configurator) GetConfigVersion(nodeId string) (*pb.ConfigVersionResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (c *Configurator) GetConfigVersion(nodeId string) (*pb.ConfigVersionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	res, err := r.client.GetConfigVersion(ctx, &pb.ConfigVersionRequest{NodeId: nodeId})
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return c.client.GetConfigVersion(ctx, &pb.ConfigVersionRequest{NodeId: nodeId})
 }

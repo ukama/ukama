@@ -117,18 +117,18 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Factory Client initialization failed. Error: %v", err)
 	}
 
+	//TODO: We should perform InitClient resolutions on demand, in order to avoid URL changes side effects.
 	// Looking up registry system's host from initClient
-	//TODO: we should initclient resolutions on demand, in order to avoid URL changes side effects.
-	networkServiceUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug()),
+	networkServiceUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, registrySystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
 	}
 
-	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug())
+	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
 
 	// Looking up data plan system's host from initClient
-	dataPlanUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug()),
+	dataPlanUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve %s system address from initClient: %v", dataPlanSystem, err)

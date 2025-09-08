@@ -76,7 +76,7 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	//TODO: we need to call this on demand because the URL can change when the targeted service restarts.
-	notifUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug()),
+	notifUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, notificationSystemName), &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve notification system address from initClient: %v", err)

@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
 )
 
 type BaseRateClient struct {
@@ -30,7 +30,7 @@ func NewBaseRateClient(baserateHost string, timeout time.Duration) *BaseRateClie
 
 	conn, err := grpc.NewClient(baserateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to BaseRate Service: %v", err)
 	}
 	client := pb.NewBaseRatesServiceClient(conn)
 
@@ -52,7 +52,11 @@ func NewBaseRateClientFromClient(client pb.BaseRatesServiceClient) *BaseRateClie
 }
 
 func (b *BaseRateClient) Close() {
-	b.conn.Close()
+	if b.conn != nil {
+		if err := b.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close BaseRate Service connection: %v", err)
+		}
+	}
 }
 
 func (b *BaseRateClient) GetBaseRatesById(req *pb.GetBaseRatesByIdRequest) (*pb.GetBaseRatesByIdResponse, error) {

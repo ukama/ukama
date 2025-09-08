@@ -12,10 +12,11 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	apb "github.com/ukama/ukama/systems/hub/artifactmanager/pb/gen"
 )
 
 type ArtifactManager struct {
@@ -26,13 +27,13 @@ type ArtifactManager struct {
 }
 
 func NewArtifactManager(host string, maxMsgSize int, timeout time.Duration) *ArtifactManager {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithDefaultCallOptions(
 		grpc.MaxCallRecvMsgSize(maxMsgSize),
 		grpc.MaxCallSendMsgSize(maxMsgSize)))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to ArtifactManager Service: %v", err)
 	}
+
 	client := apb.NewArtifactServiceClient(conn)
 
 	return &ArtifactManager{
@@ -52,8 +53,12 @@ func NewArtifactManagerFromClient(c apb.ArtifactServiceClient) *ArtifactManager 
 	}
 }
 
-func (r *ArtifactManager) Close() {
-	r.conn.Close()
+func (a *ArtifactManager) Close() {
+	if a.conn != nil {
+		if err := a.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close ArtifactManager Service connection: %v", err)
+		}
+	}
 }
 
 func (a *ArtifactManager) StoreArtifact(in *apb.StoreArtifactRequest) (*apb.StoreArtifactResponse, error) {

@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/data-plan/package/pb/gen"
 )
 
 type PackageClient struct {
@@ -27,10 +27,9 @@ type PackageClient struct {
 }
 
 func NewPackageClient(packageHost string, timeout time.Duration) *PackageClient {
-
 	packageConn, err := grpc.NewClient(packageHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to Package Service: %v", err)
 	}
 	client := pb.NewPackagesServiceClient(packageConn)
 
@@ -51,47 +50,52 @@ func NewPackageFromClient(client pb.PackagesServiceClient) *PackageClient {
 	}
 }
 
-func (r *PackageClient) Close() {
-	r.conn.Close()
+func (p *PackageClient) Close() {
+	if p.conn != nil {
+		if err := p.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close Package Service connection: %v", err)
+		}
+	}
 }
 
-func (d *PackageClient) AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) AddPackage(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	return d.packageClient.Add(ctx, req)
+	return p.packageClient.Add(ctx, req)
 }
 
-func (d *PackageClient) DeletePackage(id string) (*pb.DeletePackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) DeletePackage(id string) (*pb.DeletePackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	return d.packageClient.Delete(ctx, &pb.DeletePackageRequest{Uuid: id})
+	return p.packageClient.Delete(ctx, &pb.DeletePackageRequest{Uuid: id})
 }
 
-func (d *PackageClient) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) UpdatePackage(req *pb.UpdatePackageRequest) (*pb.UpdatePackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	return d.packageClient.Update(ctx, req)
+	return p.packageClient.Update(ctx, req)
 }
 
-func (d *PackageClient) GetPackage(id string) (*pb.GetPackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) GetPackage(id string) (*pb.GetPackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	return d.packageClient.Get(ctx, &pb.GetPackageRequest{Uuid: id})
+	return p.packageClient.Get(ctx, &pb.GetPackageRequest{Uuid: id})
 }
 
-func (d *PackageClient) GetPackageDetails(id string) (*pb.GetPackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) GetPackageDetails(id string) (*pb.GetPackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
 
-	return d.packageClient.GetDetails(ctx, &pb.GetPackageRequest{Uuid: id})
+	return p.packageClient.GetDetails(ctx, &pb.GetPackageRequest{Uuid: id})
 }
 
-func (d *PackageClient) GetPackages() (*pb.GetAllResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), d.timeout)
+func (p *PackageClient) GetPackages() (*pb.GetAllResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), p.timeout)
 	defer cancel()
-	return d.packageClient.GetAll(ctx, &pb.GetAllRequest{})
+
+	return p.packageClient.GetAll(ctx, &pb.GetAllRequest{})
 }

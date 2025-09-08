@@ -15,15 +15,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/config"
 	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
 
+	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/init/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/init/api-gateway/pkg/client"
+
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
-	"github.com/wI2L/fizz/openapi"
 )
 
 const ORG_URL_PARAMETER = "org"
@@ -110,10 +111,6 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		err := f(ctx, r.config.auth.AuthAPIGW)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-			return
-		}
-		if err == nil {
-			return
 		}
 	})
 	auth.Use()

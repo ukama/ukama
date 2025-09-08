@@ -12,12 +12,12 @@ import (
 	"os"
 
 	"github.com/ukama/ukama/systems/common/config"
-	"github.com/ukama/ukama/systems/common/providers"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/rest/client/auth"
 	"github.com/ukama/ukama/systems/notification/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/rest"
 
-	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 )
 
@@ -28,12 +28,9 @@ func main() {
 	initializeNotificationConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
-	ac, err := providers.NewAuthClient(svcConf.Auth.AuthServerUrl, svcConf.DebugMode)
-	if err != nil {
-		log.Errorf("Failed to create auth client: %v", err)
-	}
 
-	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf), ac.AuthenticateUser)
+	router := rest.NewRouter(clientSet, rest.NewRouterConfig(svcConf),
+		auth.NewAuthClient(svcConf.Auth.AuthServerUrl, client.WithDebug(svcConf.DebugMode)).AuthenticateUser)
 	router.Run()
 }
 

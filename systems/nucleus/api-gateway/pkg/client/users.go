@@ -12,11 +12,11 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-
-	pbusers "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pbusers "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 )
 
 type Users struct {
@@ -35,10 +35,9 @@ func NewUserRegistryFromClient(client pbusers.UserServiceClient) *Users {
 }
 
 func NewUsers(host string, timeout time.Duration) *Users {
-
 	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("Failed to connect to User Service: %v", err)
 	}
 	client := pbusers.NewUserServiceClient(conn)
 
@@ -50,42 +49,46 @@ func NewUsers(host string, timeout time.Duration) *Users {
 	}
 }
 
-func (r *Users) Close() {
-	r.conn.Close()
+func (u *Users) Close() {
+	if u.conn != nil {
+		if err := u.conn.Close(); err != nil {
+			log.Warnf("Failed to gracefully close User Service connection: %v", err)
+		}
+	}
 }
 
-func (r *Users) Get(userId string) (*pbusers.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) Get(userId string) (*pbusers.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	return r.client.Get(ctx, &pbusers.GetRequest{UserId: userId})
+	return u.client.Get(ctx, &pbusers.GetRequest{UserId: userId})
 }
 
-func (r *Users) GetByEmail(email string) (*pbusers.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) GetByEmail(email string) (*pbusers.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	return r.client.GetByEmail(ctx, &pbusers.GetByEmailRequest{Email: email})
+	return u.client.GetByEmail(ctx, &pbusers.GetByEmailRequest{Email: email})
 }
 
-func (r *Users) GetByAuthId(authId string) (*pbusers.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) GetByAuthId(authId string) (*pbusers.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	return r.client.GetByAuthId(ctx, &pbusers.GetByAuthIdRequest{AuthId: authId})
+	return u.client.GetByAuthId(ctx, &pbusers.GetByAuthIdRequest{AuthId: authId})
 }
 
-func (r *Users) AddUser(user *pbusers.User) (*pbusers.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) AddUser(user *pbusers.User) (*pbusers.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
-	return r.client.Add(ctx, &pbusers.AddRequest{User: user})
+	return u.client.Add(ctx, &pbusers.AddRequest{User: user})
 }
 
-func (r *Users) UpdateUser(userId string, user *pbusers.UserAttributes) (*pbusers.UpdateResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) UpdateUser(userId string, user *pbusers.UserAttributes) (*pbusers.UpdateResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	return r.client.Update(ctx, &pbusers.UpdateRequest{
+	return u.client.Update(ctx, &pbusers.UpdateRequest{
 		UserId: userId,
 		User: &pbusers.UserAttributes{
 			Email: user.Email,
@@ -95,25 +98,25 @@ func (r *Users) UpdateUser(userId string, user *pbusers.UserAttributes) (*pbuser
 	})
 }
 
-func (r *Users) Delete(userId string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) Delete(userId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	_, err := r.client.Delete(ctx, &pbusers.DeleteRequest{UserId: userId})
+	_, err := u.client.Delete(ctx, &pbusers.DeleteRequest{UserId: userId})
 	return err
 }
 
-func (r *Users) DeactivateUser(userId string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) DeactivateUser(userId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	_, err := r.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserId: userId})
+	_, err := u.client.Deactivate(ctx, &pbusers.DeactivateRequest{UserId: userId})
 	return err
 }
 
-func (r *Users) Whoami(userId string) (*pbusers.WhoamiResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+func (u *Users) Whoami(userId string) (*pbusers.WhoamiResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), u.timeout)
 	defer cancel()
 
-	return r.client.Whoami(ctx, &pbusers.GetRequest{UserId: userId})
+	return u.client.Whoami(ctx, &pbusers.GetRequest{UserId: userId})
 }

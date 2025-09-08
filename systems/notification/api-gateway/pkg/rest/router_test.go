@@ -18,13 +18,14 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/ukama/ukama/systems/common/providers"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	crest "github.com/ukama/ukama/systems/common/rest"
+
 	"github.com/ukama/ukama/systems/notification/api-gateway/pkg/client"
+
+	cconfig "github.com/ukama/ukama/systems/common/config"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	crest "github.com/ukama/ukama/systems/common/rest"
 	dmocks "github.com/ukama/ukama/systems/notification/distributor/pb/gen/mocks"
 	epb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	emocks "github.com/ukama/ukama/systems/notification/event-notify/pb/gen/mocks"
@@ -68,7 +69,9 @@ func TestRouter_PingRoute(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
 
@@ -76,7 +79,7 @@ func TestRouter_PingRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	r.ServeHTTP(w, req)
 
@@ -89,10 +92,12 @@ func TestRouter_mailer(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
+
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 	ClientInit(m, n, e, d)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	mailer := &mailerpb.GetEmailByIdResponse{
 		MailId:       "65d969f7-d63e-44eb-b526-fd200e62a2b0",
@@ -224,10 +229,10 @@ func TestRouter_eventNotifications(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
 
 	ClientInit(m, n, e, d)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	notificationId := "test-notification-id"
 	orgId := "test-org-id"
@@ -339,10 +344,10 @@ func TestRouter_mailerErrorCases(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
 
 	ClientInit(m, n, e, d)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	t.Run("sendEmailWithInvalidJSON", func(t *testing.T) {
 		w := httptest.NewRecorder()
@@ -421,10 +426,10 @@ func TestRouter_eventNotificationsErrorCases(t *testing.T) {
 	n := &nmocks.NotifyServiceClient{}
 	e := &emocks.EventToNotifyServiceClient{}
 	d := &dmocks.DistributorServiceClient{}
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
 
 	ClientInit(m, n, e, d)
-	r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+	r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 	notificationId := "test-notification-id"
 	orgId := "test-org-id"
@@ -478,7 +483,7 @@ func TestRouter_eventNotificationsErrorCases(t *testing.T) {
 }
 
 func TestRouter_mailerEdgeCases(t *testing.T) {
-	var arc = &providers.AuthRestClient{}
+	var arc = &cmocks.AuthClient{}
 
 	t.Run("sendEmailWithNonStringValues", func(t *testing.T) {
 		m := &mmocks.MailerServiceClient{}
@@ -487,7 +492,7 @@ func TestRouter_mailerEdgeCases(t *testing.T) {
 		d := &dmocks.DistributorServiceClient{}
 
 		ClientInit(m, n, e, d)
-		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 		data := SendEmailReq{
 			To:           []string{"test@ukama.com"},
@@ -537,7 +542,7 @@ func TestRouter_mailerEdgeCases(t *testing.T) {
 		d := &dmocks.DistributorServiceClient{}
 
 		ClientInit(m, n, e, d)
-		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 		data := SendEmailReq{
 			To:           []string{"test@ukama.com"},
@@ -611,7 +616,7 @@ func TestRouter_mailerEdgeCases(t *testing.T) {
 		d := &dmocks.DistributorServiceClient{}
 
 		ClientInit(m, n, e, d)
-		r := NewRouter(testClientSet, routerConfig, arc.MockAuthenticateUser).f.Engine()
+		r := NewRouter(testClientSet, routerConfig, arc.AuthenticateUser).f.Engine()
 
 		data := SendEmailReq{
 			To:           []string{"test@ukama.com"},

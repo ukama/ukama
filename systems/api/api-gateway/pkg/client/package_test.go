@@ -89,7 +89,7 @@ func TestCient_GetPackage(t *testing.T) {
 	t.Run("PackageNotFound", func(t *testing.T) {
 		packageClient.On("Get", packageId.String()).
 			Return(nil, fmt.Errorf("GetNetwork failure: %w",
-				cclient.ErrorStatus{
+				&cclient.ErrorStatus{
 					StatusCode: 404,
 					RawError:   crest.ErrorResponse{Err: "not found"},
 				})).Once()

@@ -26,6 +26,7 @@ type Pdf interface {
 	GetPdf(invoiceId string) ([]byte, error)
 }
 
+// TODO: try again with common/rest/client resty
 type pdf struct {
 	R *rest.RestClient
 }
