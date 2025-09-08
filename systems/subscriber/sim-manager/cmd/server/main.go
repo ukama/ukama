@@ -166,7 +166,10 @@ func runGrpcServer(gormDB sql.Db) {
 		nucleusUserClient,
 	)
 
-	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName, simManagerServer)
+	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName,
+		serviceConfig.OrgId, db.NewSimRepo(gormDB), adapters.NewAgentFactory(serviceConfig.TestAgent,
+			serviceConfig.OperatorAgent, ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode),
+		mbClient, serviceConfig.PushMetricHost, simManagerServer)
 
 	fsInterceptor := interceptor.NewFakeSimInterceptor(serviceConfig.TestAgent, serviceConfig.Timeout)
 

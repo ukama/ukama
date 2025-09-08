@@ -1171,12 +1171,6 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 			"sim state: %s is invalid for activation", sim.Status)
 	}
 
-	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
-	}
-
 	simUpdates := &sims.Sim{
 		Id:               sim.Id,
 		Status:           ukama.SimStatusActive,
@@ -1191,6 +1185,12 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 	err = simRepo.Update(simUpdates, nil)
 	if err != nil {
 		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
 	}
 
 	agentRequest := client.AgentRequestData{

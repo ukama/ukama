@@ -19,11 +19,15 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 const (
@@ -31,15 +35,29 @@ const (
 )
 
 type SimManagerEventServer struct {
-	orgName string
-	s       *SimManagerServer
+	simRepo        sims.SimRepo
+	agentFactory   adapters.AgentFactory
+	msgbus         mb.MsgBusServiceClient
+	baseRoutingKey msgbus.RoutingKeyBuilder
+	orgId          string
+	orgName        string
+	pushMetricHost string
+	s              *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSimManagerEventServer(orgName string, s *SimManagerServer) *SimManagerEventServer {
+func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+	msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
 	return &SimManagerEventServer{
-		orgName: orgName,
-		s:       s,
+		simRepo:      simRepo,
+		agentFactory: agentFactory,
+		msgbus:       msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
+			SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:        orgName,
+		orgId:          orgId,
+		pushMetricHost: pushMetricHost,
+		s:              s,
 	}
 }
 
@@ -53,7 +71,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleSimManagerSimAllocateEvent(e.RoutingKey, msg, es.s)
+		err = es.handleSimManagerSimAllocateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -114,15 +132,13 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 }
 
 // We auto activate any new allocated sim
-func handleSimManagerSimAllocateEvent(key string, msg *epb.EventSimAllocation, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, msg *epb.EventSimAllocation) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	_, err := s.activateSim(ctx, msg.Id)
-
-	return err
+	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.pushMetricHost, es.msgbus, es.baseRoutingKey)
 }
 
 func handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment, s *SimManagerServer) error {
