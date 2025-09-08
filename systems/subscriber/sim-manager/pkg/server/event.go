@@ -53,7 +53,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
+		err = handleSimManagerSimAllocateEvent(e.RoutingKey, msg, es.s)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		itemType := ukama.ParseItemType(msg.ItemType)
 
 		if paymentStatus == ukama.StatusTypeCompleted && itemType == ukama.ItemTypePackage {
-			err = handleEventCloudProcessorPaymentSuccess(e.RoutingKey, msg, es.s)
+			err = handleProcessorPaymentSuccessEvent(e.RoutingKey, msg, es.s)
 			if err != nil {
 				return nil, err
 			}
@@ -80,7 +80,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudOperatorCdrCreate(e.RoutingKey, msg, es.s)
+		err = handleOperatorCdrCreateEvent(e.RoutingKey, msg, es.s)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +91,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudUkamaAgentCdrCreate(e.RoutingKey, msg, es.s)
+		err = handleUkamaAgentCdrCreateEvent(e.RoutingKey, msg, es.s)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudUkamaAgentAsrProfileDelete(e.RoutingKey, msg, es.s)
+		err = handleUkamaAgentAsrProfileDeleteEvent(e.RoutingKey, msg, es.s)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +114,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 }
 
 // We auto activate any new allocated sim
-func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocation, s *SimManagerServer) error {
+func handleSimManagerSimAllocateEvent(key string, msg *epb.EventSimAllocation, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
@@ -125,7 +125,7 @@ func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocati
 	return err
 }
 
-func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *SimManagerServer) error {
+func handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	metadata := map[string]string{}
@@ -156,7 +156,7 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 	return err
 }
 
-func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
+func handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
@@ -207,7 +207,7 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 	return err
 }
 
-func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
+func handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
@@ -252,7 +252,7 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 	return err
 }
 
-func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
+func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
 	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
