@@ -22,11 +22,11 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/mocks"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
-	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/server"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 const (
@@ -59,7 +59,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -87,7 +87,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -122,7 +122,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -157,7 +157,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -199,7 +199,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
@@ -245,7 +245,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, agentFactory, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
@@ -265,7 +265,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, msgbusClient, "", nil)
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)

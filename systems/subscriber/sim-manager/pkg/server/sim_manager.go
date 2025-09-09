@@ -649,150 +649,6 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 	return &pb.AddPackageResponse{}, nil
 }
 
-func addPackageForSim(ctx context.Context, simId, packageId, startDate string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	packageClient cdplan.PackageClient, orgName, orgId, pushMetricHost string, nucleusOrgClient cnuc.OrgClient,
-	nucleusUserClient cnuc.UserClient, subscriberRegistryService providers.SubscriberRegistryClientProvider, networkClient creg.NetworkClient,
-	mailerClient cnotif.MailerClient, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	log.Infof("Adding package %v to sim: %v", packageId, simId)
-
-	formattedStart, err := validation.ValidateDate(startDate)
-	if err != nil {
-		return status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	sim, err := getSim(simId, simRepo)
-	if err != nil {
-		return status.Errorf(codes.NotFound,
-			"invalid simId while adding package to sim. Error %s", err.Error())
-	}
-
-	packageUuid, err := uuid.FromString(packageId)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pkgInfo, err := packageClient.Get(packageUuid.String())
-	if err != nil {
-		return err
-	}
-
-	if !pkgInfo.IsActive {
-		return status.Error(codes.FailedPrecondition,
-			"cannot set package to sim: data plan package is no more active within its org")
-	}
-
-	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
-	if sim.Type != pkgInfoSimType {
-		return status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
-			sim.Type, pkgInfoSimType.String())
-	}
-
-	pkg := &sims.Package{
-		SimId:           sim.Id,
-		PackageId:       packageUuid,
-		IsActive:        false,
-		DefaultDuration: pkgInfo.Duration,
-	}
-
-	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
-	if err != nil {
-		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			simId, err)
-
-		return grpc.SqlErrorToGrpc(err, "packages")
-	}
-
-	if len(packages) == 0 {
-		startDate, err := time.Parse(time.RFC3339, formattedStart)
-		if err != nil {
-			return status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
-		}
-
-		pkg.StartDate = startDate
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
-		pkg.IsActive = true
-	} else {
-		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
-	}
-
-	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
-
-	err = packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
-		pckg.Id = uuid.NewV4()
-
-		return nil
-	})
-
-	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	route := baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimAddPackage{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    packageUuid.String(),
-	}
-
-	err = publishEventMessage(route, evtMsg, msgbus)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	orgInfos, err := nucleusOrgClient.Get(orgName)
-	if err != nil {
-		return err
-	}
-
-	userInfos, err := nucleusUserClient.GetById(orgInfos.Owner)
-	if err != nil {
-		return err
-	}
-
-	subscriberRegistrySvc, err := subscriberRegistryService.GetClient()
-	if err != nil {
-		return err
-	}
-
-	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
-		SubscriberId: sim.SubscriberId.String(),
-	})
-	if err != nil {
-		return err
-	}
-
-	netInfo, err := networkClient.Get(sim.NetworkId.String())
-	if err != nil {
-		return err
-	}
-
-	err = mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{remoteSubResp.Subscriber.Email},
-		TemplateName: emailTemplate.EmailTemplatePackageAddition,
-		Values: map[string]interface{}{
-			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
-			emailTemplate.EmailKeyNetwork:         netInfo.Name,
-			emailTemplate.EmailKeyName:            userInfos.Name,
-			emailTemplate.EmailKeyOrg:             orgName,
-			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
-			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
-			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
-			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
 	log.Infof("Getting packages  matching: %v", req)
 
@@ -1323,6 +1179,150 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 	}
 
 	log.Infof("Sim %s deactivated successfully", reqSimId)
+
+	return nil
+}
+
+func addPackageForSim(ctx context.Context, simId, packageId, startDate string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	packageClient cdplan.PackageClient, orgName, orgId, pushMetricHost string, nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient, subscriberRegistryService providers.SubscriberRegistryClientProvider, networkClient creg.NetworkClient,
+	mailerClient cnotif.MailerClient, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Adding package %v to sim: %v", packageId, simId)
+
+	formattedStart, err := validation.ValidateDate(startDate)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	sim, err := getSim(simId, simRepo)
+	if err != nil {
+		return status.Errorf(codes.NotFound,
+			"invalid simId while adding package to sim. Error %s", err.Error())
+	}
+
+	packageUuid, err := uuid.FromString(packageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkgInfo, err := packageClient.Get(packageUuid.String())
+	if err != nil {
+		return err
+	}
+
+	if !pkgInfo.IsActive {
+		return status.Error(codes.FailedPrecondition,
+			"cannot set package to sim: data plan package is no more active within its org")
+	}
+
+	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
+	if sim.Type != pkgInfoSimType {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
+			sim.Type, pkgInfoSimType.String())
+	}
+
+	pkg := &sims.Package{
+		SimId:           sim.Id,
+		PackageId:       packageUuid,
+		IsActive:        false,
+		DefaultDuration: pkgInfo.Duration,
+	}
+
+	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	if err != nil {
+		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+			simId, err)
+
+		return grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	if len(packages) == 0 {
+		startDate, err := time.Parse(time.RFC3339, formattedStart)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
+		}
+
+		pkg.StartDate = startDate
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+		pkg.IsActive = true
+	} else {
+		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+	}
+
+	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
+
+	err = packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
+		pckg.Id = uuid.NewV4()
+
+		return nil
+	})
+
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	route := baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimAddPackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageUuid.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	orgInfos, err := nucleusOrgClient.Get(orgName)
+	if err != nil {
+		return err
+	}
+
+	userInfos, err := nucleusUserClient.GetById(orgInfos.Owner)
+	if err != nil {
+		return err
+	}
+
+	subscriberRegistrySvc, err := subscriberRegistryService.GetClient()
+	if err != nil {
+		return err
+	}
+
+	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
+		SubscriberId: sim.SubscriberId.String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	netInfo, err := networkClient.Get(sim.NetworkId.String())
+	if err != nil {
+		return err
+	}
+
+	err = mailerClient.SendEmail(cnotif.SendEmailReq{
+		To:           []string{remoteSubResp.Subscriber.Email},
+		TemplateName: emailTemplate.EmailTemplatePackageAddition,
+		Values: map[string]interface{}{
+			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
+			emailTemplate.EmailKeyNetwork:         netInfo.Name,
+			emailTemplate.EmailKeyName:            userInfos.Name,
+			emailTemplate.EmailKeyOrg:             orgName,
+			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
+			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
+			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
+		},
+	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -21,11 +21,16 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
@@ -35,23 +40,38 @@ const (
 )
 
 type SimManagerEventServer struct {
-	simRepo        sims.SimRepo
-	agentFactory   adapters.AgentFactory
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	orgId          string
-	orgName        string
-	pushMetricHost string
-	s              *SimManagerServer
+	simRepo                   sims.SimRepo
+	packageRepo               sims.PackageRepo
+	agentFactory              adapters.AgentFactory
+	packageClient             cdplan.PackageClient
+	networkClient             creg.NetworkClient
+	nucleusOrgClient          cnuc.OrgClient
+	nucleusUserClient         cnuc.UserClient
+	mailerClient              cnotif.MailerClient
+	subscriberRegistryService providers.SubscriberRegistryClientProvider
+	msgbus                    mb.MsgBusServiceClient
+	baseRoutingKey            msgbus.RoutingKeyBuilder
+	orgId                     string
+	orgName                   string
+	pushMetricHost            string
+	s                         *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
 func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
-	msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
+	packageClient cdplan.PackageClient, subscriberRegistryService providers.SubscriberRegistryClientProvider,
+	networkClient creg.NetworkClient, mailerClient cnotif.MailerClient, nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
 	return &SimManagerEventServer{
-		simRepo:      simRepo,
-		agentFactory: agentFactory,
-		msgbus:       msgBus,
+		simRepo:                   simRepo,
+		agentFactory:              agentFactory,
+		packageClient:             packageClient,
+		networkClient:             networkClient,
+		nucleusOrgClient:          nucleusOrgClient,
+		nucleusUserClient:         nucleusUserClient,
+		mailerClient:              mailerClient,
+		subscriberRegistryService: subscriberRegistryService,
+		msgbus:                    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
 			SetOrgName(orgName).SetService(pkg.ServiceName),
 		orgName:        orgName,
@@ -86,7 +106,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		itemType := ukama.ParseItemType(msg.ItemType)
 
 		if paymentStatus == ukama.StatusTypeCompleted && itemType == ukama.ItemTypePackage {
-			err = handleProcessorPaymentSuccessEvent(e.RoutingKey, msg, es.s)
+			err = es.handleProcessorPaymentSuccessEvent(e.RoutingKey, msg)
 			if err != nil {
 				return nil, err
 			}
@@ -141,7 +161,7 @@ func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, ms
 	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.pushMetricHost, es.msgbus, es.baseRoutingKey)
 }
 
-func handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	metadata := map[string]string{}
@@ -167,9 +187,9 @@ func handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment, s *SimMana
 
 	log.Infof("Adding package %s to sim %s", addReq.PackageId, addReq.SimId)
 
-	_, err = s.AddPackageForSim(ctx, addReq)
-
-	return err
+	return addPackageForSim(ctx, addReq.SimId, addReq.PackageId, addReq.StartDate, es.simRepo, es.packageRepo,
+		es.packageClient, es.orgName, es.orgId, es.pushMetricHost, es.nucleusOrgClient, es.nucleusUserClient,
+		es.subscriberRegistryService, es.networkClient, es.mailerClient, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport) error {
