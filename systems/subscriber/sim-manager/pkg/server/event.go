@@ -98,7 +98,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleOperatorCdrCreateEvent(e.RoutingKey, msg, es.s)
+		err = es.handleOperatorCdrCreateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -172,7 +172,7 @@ func handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment, s *SimMana
 	return err
 }
 
-func handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
@@ -181,7 +181,7 @@ func handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport, s
 		return nil
 	}
 
-	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
@@ -212,9 +212,9 @@ func handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport, s
 		// SessionId: msg.InventoryId,
 	}
 
-	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
+	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequest(route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())
