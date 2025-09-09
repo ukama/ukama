@@ -744,125 +744,6 @@ func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPac
 	return resp, nil
 }
 
-func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	log.Infof("Setting package %v as active for sim: %v", req.GetPackageId(), req.GetSimId())
-
-	sim, err := getSim(req.SimId, s.simRepo)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	if sim.Status != ukama.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set active package on non active sim: sim's status is %s", sim.Status)
-	}
-
-	if sim.Package.Id != uuid.Nil {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim currently has package %v as active. This package needs to expire first",
-			sim.Package.Id)
-	}
-
-	packageId, err := uuid.FromString(req.GetPackageId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pkg, err := s.packageRepo.Get(packageId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	if pkg.SimId.String() != req.GetSimId() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
-			req.GetPackageId(), req.GetSimId())
-	}
-
-	if pkg.AsExpired {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set expired package (%s) as active", pkg.Id)
-	}
-
-	if pkg.IsActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set already active package (%s) as active", pkg.Id)
-	}
-
-	// Update package on sim manager
-	newPackageToActivate := &sims.Package{
-		Id:       pkg.Id,
-		IsActive: true,
-	}
-
-	err = s.packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
-		// update startDate and endDate
-		newPackageToActivate.StartDate = time.Now().UTC().
-			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-
-		newPackageToActivate.EndDate = newPackageToActivate.StartDate.
-			Add(time.Hour * 24 * time.Duration(pkg.DefaultDuration))
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"failed to set package as active. Error %s", err.Error())
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
-	}
-
-	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
-	}
-
-	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
-		sim.Type.String(), sim.Iccid)
-
-	err = simAgent.ActivateSim(ctx, agentRequest)
-	if err != nil {
-		log.Infof("Fail to update package on remote agent for %s sim type with iccid %s. Error: %v",
-			sim.Type.String(), sim.Iccid, err)
-
-		// TODO: think of rolling back the package update DB transaction on sim manager
-		// if agent package update fails.
-
-		return nil, fmt.Errorf("fail to update package on remote agent for %s sim type with iccid %s. Error: %w",
-			sim.Type.String(), sim.Iccid, err)
-	}
-
-	// Publish the event only when both updates are successful
-	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimActivePackage{
-		Id:               sim.Id.String(),
-		SubscriberId:     sim.SubscriberId.String(),
-		Iccid:            sim.Iccid,
-		Imsi:             sim.Imsi,
-		NetworkId:        sim.NetworkId.String(),
-		PackageId:        pkg.Id.String(),
-		PlanId:           pkg.PackageId.String(),
-		PackageStartDate: timestamppb.New(newPackageToActivate.StartDate),
-		PackageEndDate:   timestamppb.New(newPackageToActivate.EndDate),
-	}
-
-	err = publishEventMessage(route, evtMsg, s.msgbus)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	return &pb.SetActivePackageResponse{}, nil
-}
-
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
 
@@ -931,6 +812,14 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
+	if err := setActivePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.SetActivePackageResponse{}, nil
 }
 
 func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
@@ -1257,6 +1146,127 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 
 	return nil
 }
+
+func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Setting package %v as active for sim: %v", reqPackageId, reqSimId)
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != ukama.SimStatusActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set active package on non active sim: sim's status is %s", sim.Status)
+	}
+
+	if sim.Package.Id != uuid.Nil {
+		return status.Errorf(codes.FailedPrecondition,
+			"sim currently has package %v as active. This package needs to expire first",
+			sim.Package.Id)
+	}
+
+	packageId, err := uuid.FromString(reqPackageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkg, err := packageRepo.Get(packageId)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pkg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
+	}
+
+	if pkg.AsExpired {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set expired package (%s) as active", pkg.Id)
+	}
+
+	if pkg.IsActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set already active package (%s) as active", pkg.Id)
+	}
+
+	// Update package on sim manager
+	newPackageToActivate := &sims.Package{
+		Id:       pkg.Id,
+		IsActive: true,
+	}
+
+	err = packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+		// update startDate and endDate
+		newPackageToActivate.StartDate = time.Now().UTC().
+			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+
+		newPackageToActivate.EndDate = newPackageToActivate.StartDate.
+			Add(time.Hour * 24 * time.Duration(pkg.DefaultDuration))
+
+		return nil
+	})
+
+	if err != nil {
+		return status.Errorf(codes.Internal,
+			"failed to set package as active. Error %s", err.Error())
+	}
+
+	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
+	}
+
+	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
+		sim.Type.String(), sim.Iccid)
+
+	err = simAgent.ActivateSim(ctx, agentRequest)
+	if err != nil {
+		log.Infof("Fail to update package on remote agent for %s sim type with iccid %s. Error: %v",
+			sim.Type.String(), sim.Iccid, err)
+
+		// TODO: think of rolling back the package update DB transaction on sim manager
+		// if agent package update fails.
+
+		return fmt.Errorf("fail to update package on remote agent for %s sim type with iccid %s. Error: %w",
+			sim.Type.String(), sim.Iccid, err)
+	}
+
+	// Publish the event only when both updates are successful
+	route := baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimActivePackage{
+		Id:               sim.Id.String(),
+		SubscriberId:     sim.SubscriberId.String(),
+		Iccid:            sim.Iccid,
+		Imsi:             sim.Imsi,
+		NetworkId:        sim.NetworkId.String(),
+		PackageId:        pkg.Id.String(),
+		PlanId:           pkg.PackageId.String(),
+		PackageStartDate: timestamppb.New(newPackageToActivate.StartDate),
+		PackageEndDate:   timestamppb.New(newPackageToActivate.EndDate),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	return nil
+}
+
 func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	log.Infof("Terminating package %v for sim: %v", reqPackageId, reqSimId)
