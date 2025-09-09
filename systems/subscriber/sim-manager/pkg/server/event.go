@@ -109,7 +109,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleUkamaAgentCdrCreateEvent(e.RoutingKey, msg, es.s)
+		err = es.handleUkamaAgentCdrCreateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -222,11 +222,10 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 
 	return err
 }
-
-func handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := es.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
@@ -257,9 +256,9 @@ func handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported, s *SimMana
 		// SessionId:    cdr.Session,
 	}
 
-	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
+	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequest(route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())
