@@ -179,16 +179,12 @@ func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	addReq := &pb.AddPackageRequest{
-		SimId:     simId,
-		PackageId: msg.ItemId,
-		StartDate: time.Now().UTC().Format(time.RFC3339),
-	}
+	startDate := time.Now().UTC().Format(time.RFC3339)
 
-	log.Infof("Adding package %s to sim %s", addReq.PackageId, addReq.SimId)
+	log.Infof("Adding package %s to sim %s", msg.ItemId, simId)
 
-	return addPackageForSim(ctx, addReq.SimId, addReq.PackageId, addReq.StartDate, es.simRepo, es.packageRepo,
-		es.packageClient, es.orgName, es.orgId, es.pushMetricHost, es.nucleusOrgClient, es.nucleusUserClient,
+	return addPackageForSim(ctx, simId, msg.ItemId, startDate, es.simRepo, es.packageRepo, es.packageClient,
+		es.orgName, es.orgId, es.pushMetricHost, es.nucleusOrgClient, es.nucleusUserClient,
 		es.subscriberRegistryService, es.networkClient, es.mailerClient, es.msgbus, es.baseRoutingKey)
 }
 

@@ -863,83 +863,6 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	return &pb.SetActivePackageResponse{}, nil
 }
 
-func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
-	log.Infof("Terminating package %v for sim: %v", req.GetPackageId(), req.GetSimId())
-
-	packageId, err := uuid.FromString(req.GetPackageId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pckg, err := s.packageRepo.Get(packageId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	if pckg.SimId.String() != req.GetSimId() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
-			req.GetPackageId(), req.GetSimId())
-	}
-
-	if !pckg.IsActive {
-		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
-
-		return &pb.TerminatePackageResponse{}, nil
-	}
-
-	if pckg.AsExpired {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"package (%s) has already been marked as terminated", pckg.Id)
-	}
-
-	sim, err := getSim(req.SimId, s.simRepo)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	if sim.Status != ukama.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
-	}
-
-	packageToTerminate := &sims.Package{
-		Id:        pckg.Id,
-		IsActive:  false,
-		AsExpired: true,
-	}
-
-	err = s.packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
-		// update endDate
-		packageToTerminate.EndDate = time.Now().UTC()
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"failed to terminate package. Error %s", err.Error())
-	}
-
-	route := s.baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimPackageExpire{
-		Id:              sim.Id.String(),
-		StartDate:       pckg.StartDate.String(),
-		EndDate:         packageToTerminate.EndDate.String(),
-		DefaultDuration: pckg.DefaultDuration,
-		PackageId:       pckg.Id.String(),
-		DataPlanId:      pckg.PackageId.String(),
-	}
-
-	err = publishEventMessage(route, evtMsg, s.msgbus)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	return &pb.TerminatePackageResponse{}, nil
-}
-
 func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
 	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
 
@@ -1008,6 +931,14 @@ func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (
 	}
 
 	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
+	if err := terminatePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.TerminatePackageResponse{}, nil
 }
 
 func getSim(simId string, simRepo sims.SimRepo) (*sims.Sim, error) {
@@ -1322,6 +1253,83 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 	})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Terminating package %v for sim: %v", reqPackageId, reqSimId)
+
+	packageId, err := uuid.FromString(reqPackageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pckg, err := packageRepo.Get(packageId)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pckg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
+	}
+
+	if !pckg.IsActive {
+		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
+
+		return nil
+	}
+
+	if pckg.AsExpired {
+		return status.Errorf(codes.FailedPrecondition,
+			"package (%s) has already been marked as terminated", pckg.Id)
+	}
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != ukama.SimStatusActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
+	}
+
+	packageToTerminate := &sims.Package{
+		Id:        pckg.Id,
+		IsActive:  false,
+		AsExpired: true,
+	}
+
+	err = packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
+		// update endDate
+		packageToTerminate.EndDate = time.Now().UTC()
+
+		return nil
+	})
+
+	if err != nil {
+		return status.Errorf(codes.Internal,
+			"failed to terminate package. Error %s", err.Error())
+	}
+
+	route := baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimPackageExpire{
+		Id:              sim.Id.String(),
+		StartDate:       pckg.StartDate.String(),
+		EndDate:         packageToTerminate.EndDate.String(),
+		DefaultDuration: pckg.DefaultDuration,
+		PackageId:       pckg.Id.String(),
+		DataPlanId:      pckg.PackageId.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
 	return nil
