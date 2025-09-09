@@ -640,62 +640,74 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 }
 
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
-	log.Infof("Adding package %v to sim: %v", req.GetPackageId(), req.GetSimId())
-
-	formattedStart, err := validation.ValidateDate(req.GetStartDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	sim, err := getSim(req.SimId, s.simRepo)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound,
-			"invalid simId while adding package to sim. Error %s", err.Error())
-	}
-
-	packageId, err := uuid.FromString(req.GetPackageId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pkgInfo, err := s.packageClient.Get(packageId.String())
-	if err != nil {
+	if err := addPackageForSim(ctx, req.SimId, req.PackageId, req.StartDate, s.simRepo, s.packageRepo, s.packageClient,
+		s.orgName, s.orgId, s.pushMetricHost, s.nucleusOrgClient, s.nucleusUserClient,
+		s.subscriberRegistryService, s.networkClient, s.mailerClient, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
+	return &pb.AddPackageResponse{}, nil
+}
+
+func addPackageForSim(ctx context.Context, simId, packageId, startDate string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	packageClient cdplan.PackageClient, orgName, orgId, pushMetricHost string, nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient, subscriberRegistryService providers.SubscriberRegistryClientProvider, networkClient creg.NetworkClient,
+	mailerClient cnotif.MailerClient, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Adding package %v to sim: %v", packageId, simId)
+
+	formattedStart, err := validation.ValidateDate(startDate)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	sim, err := getSim(simId, simRepo)
+	if err != nil {
+		return status.Errorf(codes.NotFound,
+			"invalid simId while adding package to sim. Error %s", err.Error())
+	}
+
+	packageUuid, err := uuid.FromString(packageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkgInfo, err := packageClient.Get(packageUuid.String())
+	if err != nil {
+		return err
+	}
+
 	if !pkgInfo.IsActive {
-		return nil, status.Error(codes.FailedPrecondition,
+		return status.Error(codes.FailedPrecondition,
 			"cannot set package to sim: data plan package is no more active within its org")
 	}
 
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
-
 	if sim.Type != pkgInfoSimType {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return status.Errorf(codes.InvalidArgument,
 			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
 			sim.Type, pkgInfoSimType.String())
 	}
 
 	pkg := &sims.Package{
 		SimId:           sim.Id,
-		PackageId:       packageId,
+		PackageId:       packageUuid,
 		IsActive:        false,
 		DefaultDuration: pkgInfo.Duration,
 	}
 
-	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, false, 0, true)
+	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			req.SimId, err)
+			simId, err)
 
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
+		return grpc.SqlErrorToGrpc(err, "packages")
 	}
 
 	if len(packages) == 0 {
 		startDate, err := time.Parse(time.RFC3339, formattedStart)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
+			return status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
 		}
 
 		pkg.StartDate = startDate
@@ -708,66 +720,66 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 
 	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
 
-	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
 		pckg.Id = uuid.NewV4()
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
+		return grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
+	route := baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimAddPackage{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
 		Iccid:        sim.Iccid,
 		Imsi:         sim.Imsi,
 		NetworkId:    sim.NetworkId.String(),
-		PackageId:    packageId.String(),
+		PackageId:    packageUuid.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, s.msgbus)
+	err = publishEventMessage(route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
+	orgInfos, err := nucleusOrgClient.Get(orgName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
+	userInfos, err := nucleusUserClient.GetById(orgInfos.Owner)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	subscriberRegistrySvc, err := s.subscriberRegistryService.GetClient()
+	subscriberRegistrySvc, err := subscriberRegistryService.GetClient()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
 		SubscriberId: sim.SubscriberId.String(),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	netInfo, err := s.networkClient.Get(sim.NetworkId.String())
+	netInfo, err := networkClient.Get(sim.NetworkId.String())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
+	err = mailerClient.SendEmail(cnotif.SendEmailReq{
 		To:           []string{remoteSubResp.Subscriber.Email},
 		TemplateName: emailTemplate.EmailTemplatePackageAddition,
 		Values: map[string]interface{}{
 			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
 			emailTemplate.EmailKeyNetwork:         netInfo.Name,
 			emailTemplate.EmailKeyName:            userInfos.Name,
-			emailTemplate.EmailKeyOrg:             s.orgName,
+			emailTemplate.EmailKeyOrg:             orgName,
 			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
 			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
 			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
@@ -775,10 +787,10 @@ func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPack
 		},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &pb.AddPackageResponse{}, nil
+	return nil
 }
 
 func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
