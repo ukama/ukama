@@ -240,8 +240,9 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 			usageMsg, route, err.Error())
 	}
 
-	return err
+	return nil
 }
+
 func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
@@ -284,7 +285,7 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 			usageMsg, route, err.Error())
 	}
 
-	return err
+	return nil
 }
 
 func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, s *SimManagerServer) error {

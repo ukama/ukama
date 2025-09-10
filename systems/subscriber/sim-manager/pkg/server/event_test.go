@@ -35,12 +35,6 @@ import (
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
-const (
-	OrgName = "testOrg"
-	orgId   = "592f7a8e-f318-4d3a-aab8-8d4187cde7f9"
-	simId   = "e044081b-fbbe-45e9-8f78-0f9c0f112977"
-)
-
 func TestSimManagerEventServer_HandleSimManagerSimAllocateEvent(t *testing.T) {
 	msgbusClient := &cmocks.MsgBusServiceClient{}
 
@@ -712,6 +706,165 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 		evt := &epb.EventSimAllocation{
 			Id: uuid.NewV4().String(),
 		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
+	msgbusClient := &cmocks.MsgBusServiceClient{}
+
+	routingKey := msgbus.PrepareRoute(OrgName,
+		"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create")
+
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	t.Run("MultipleSimIccidFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+
+		simId := uuid.NewV4()
+		subscriberId := uuid.NewV4()
+
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{
+				sims.Sim{
+					Id:           simId,
+					SubscriberId: subscriberId,
+				},
+			}, nil)
+
+		evt := &epb.EventOperatorCdrReport{
+			Iccid: testIccid,
+			Type:  ukama.CdrTypeData.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("MultipleSimIccidFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{
+				sims.Sim{},
+				sims.Sim{},
+			}, nil)
+
+		evt := &epb.EventOperatorCdrReport{
+			Iccid: testIccid,
+			Type:  ukama.CdrTypeData.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("SimIccidNotFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{}, nil)
+
+		evt := &epb.EventOperatorCdrReport{
+			Iccid: testIccid,
+			Type:  ukama.CdrTypeData.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("SimIccidListError", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, errors.New("failed to list sim by Iccid"))
+
+		evt := &epb.EventOperatorCdrReport{
+			Iccid: testIccid,
+			Type:  ukama.CdrTypeData.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("UnsupportableCDRType", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		evt := &epb.EventOperatorCdrReport{
+			Type: ukama.CdrTypeSms.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("InvalidEventTypeSent", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		evt := &epb.EventArtifactChunkReady{}
 
 		anyE, err := anypb.New(evt)
 		assert.NoError(t, err)
