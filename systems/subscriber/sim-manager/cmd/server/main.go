@@ -167,7 +167,7 @@ func runGrpcServer(gormDB sql.Db) {
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName,
-		serviceConfig.OrgId, db.NewSimRepo(gormDB), adapters.NewAgentFactory(serviceConfig.TestAgent,
+		serviceConfig.OrgId, db.NewSimRepo(gormDB), db.NewPackageRepo(gormDB), adapters.NewAgentFactory(serviceConfig.TestAgent,
 			serviceConfig.OperatorAgent, ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode),
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),

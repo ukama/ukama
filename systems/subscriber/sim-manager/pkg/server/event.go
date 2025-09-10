@@ -58,12 +58,13 @@ type SimManagerEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory adapters.AgentFactory,
 	packageClient cdplan.PackageClient, subscriberRegistryService providers.SubscriberRegistryClientProvider,
 	networkClient creg.NetworkClient, mailerClient cnotif.MailerClient, nucleusOrgClient cnuc.OrgClient,
 	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
 	return &SimManagerEventServer{
 		simRepo:                   simRepo,
+		packageRepo:               packageRepo,
 		agentFactory:              agentFactory,
 		packageClient:             packageClient,
 		networkClient:             networkClient,
@@ -102,14 +103,9 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		paymentStatus := ukama.ParseStatusType(msg.Status)
-		itemType := ukama.ParseItemType(msg.ItemType)
-
-		if paymentStatus == ukama.StatusTypeCompleted && itemType == ukama.ItemTypePackage {
-			err = es.handleProcessorPaymentSuccessEvent(e.RoutingKey, msg)
-			if err != nil {
-				return nil, err
-			}
+		err = es.handleProcessorPaymentSuccessEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.cdr.create"):
@@ -163,6 +159,14 @@ func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, ms
 
 func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	paymentStatus := ukama.ParseStatusType(msg.Status)
+	itemType := ukama.ParseItemType(msg.ItemType)
+
+	if paymentStatus != ukama.StatusTypeCompleted || itemType != ukama.ItemTypePackage {
+		return fmt.Errorf("payment of %s with status %s is not valid for event handling",
+			paymentStatus, itemType)
+	}
 
 	metadata := map[string]string{}
 
