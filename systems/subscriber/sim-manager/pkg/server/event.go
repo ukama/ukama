@@ -22,7 +22,6 @@ import (
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -201,23 +200,23 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 		return nil
 	}
 
-	sims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	operatrorSims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
-	if len(sims) == 0 {
+	if len(operatrorSims) == 0 {
 		return fmt.Errorf("no corresponding active sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	if len(sims) > 1 {
+	if len(operatrorSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	sim := sims[0]
+	sim := operatrorSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -246,23 +245,23 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := es.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	ukamaSims, err := es.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
 	}
 
-	if len(sims) == 0 {
+	if len(ukamaSims) == 0 {
 		return fmt.Errorf("no corresponding sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
-	if len(sims) > 1 {
+	if len(ukamaSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
-	sim := sims[0]
+	sim := ukamaSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -291,23 +290,23 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	ukamaSims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			asrProfile.Iccid, err)
 	}
 
-	if len(sims) == 0 {
+	if len(ukamaSims) == 0 {
 		return fmt.Errorf("no corresponding sim found for given iccid %q",
 			asrProfile.Iccid)
 	}
 
-	if len(sims) > 1 {
+	if len(ukamaSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			asrProfile.Iccid)
 	}
 
-	sim := sims[0]
+	sim := ukamaSims[0]
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
@@ -336,7 +335,7 @@ func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, 
 	}
 
 	if len(packages) > 1 {
-		var p db.Package
+		var p sims.Package
 
 		var i int
 		for i, p = range packages {
