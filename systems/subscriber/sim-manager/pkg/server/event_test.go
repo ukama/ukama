@@ -880,3 +880,127 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
+	msgbusClient := &cmocks.MsgBusServiceClient{}
+
+	routingKey := msgbus.PrepareRoute(OrgName,
+		"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create")
+
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+	t.Run("SimFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{
+				sims.Sim{},
+			}, nil)
+
+		evt := &epb.CDRReported{}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("MultipleSimsFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{
+				sims.Sim{},
+				sims.Sim{},
+			}, nil)
+
+		evt := &epb.CDRReported{}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("SimNotFound", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{}, nil)
+
+		evt := &epb.CDRReported{}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("SimListError", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+
+		repo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, errors.New("failed to list sim by Iccid"))
+
+		evt := &epb.CDRReported{}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+
+	t.Run("InvalidEventTypeSent", func(t *testing.T) {
+		repo := mocks.SimRepo{}
+		evt := &epb.Customer{}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &repo, nil, nil, nil, nil, nil, nil, nil, nil, msgbusClient, "", nil)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
