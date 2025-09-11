@@ -30,7 +30,6 @@ import (
 	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
@@ -346,18 +345,13 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 			defer cancel()
 
-			activeReq := &pb.SetActivePackageRequest{
-				SimId:     sim.Id.String(),
-				PackageId: nextPackage.Id.String(),
-			}
-
-			log.Infof("activating package %s on sim %s", activeReq.PackageId, activeReq.SimId)
+			log.Infof("activating package %s on sim %s", nextPackage.Id.String(), sim.Id.String())
 
 			err = setActivePackageForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
 				es.agentFactory, es.msgbus, es.baseRoutingKey)
 			if err != nil {
 				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
-					activeReq.PackageId, activeReq.SimId, err)
+					nextPackage.Id.String(), sim.Id.String(), err)
 			}
 		}
 	}

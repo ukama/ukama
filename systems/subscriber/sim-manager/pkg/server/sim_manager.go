@@ -1291,12 +1291,13 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	if !pckg.IsActive {
 		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 
-		return nil
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 	}
 
 	if pckg.AsExpired {
 		return status.Errorf(codes.FailedPrecondition,
-			"package (%s) has already been marked as terminated", pckg.Id)
+			"package (%s) has already been marked as expired", pckg.Id)
 	}
 
 	sim, err := getSim(reqSimId, simRepo)
