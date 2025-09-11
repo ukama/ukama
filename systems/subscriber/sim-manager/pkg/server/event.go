@@ -135,7 +135,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleUkamaAgentAsrProfileDeleteEvent(e.RoutingKey, msg, es.s)
+		err = es.handleUkamaAgentAsrProfileDeleteEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -287,10 +287,10 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 	return nil
 }
 
-func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	ukamaSims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	ukamaSims, err := es.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			asrProfile.Iccid, err)
@@ -311,27 +311,23 @@ func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	termReq := &pb.TerminatePackageRequest{
-		SimId:     sim.Id.String(),
-		PackageId: asrProfile.SimPackage,
-	}
+	log.Infof("terminating package %s on sim %s", asrProfile.SimPackage, sim.Id.String())
 
-	log.Infof("terminating package %s on sim %s", termReq.PackageId, termReq.SimId)
-
-	_, err = s.TerminatePackageForSim(ctx, termReq)
+	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.SimPackage, es.simRepo,
+		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
 		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
-			termReq.PackageId, termReq.SimId, err)
+			asrProfile.SimPackage, sim.Id.String(), err)
 	}
 
 	// Get next package to activate if any
-	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
+	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			termReq.SimId, err)
+			sim.Id.String(), err)
 
 		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
-			termReq.SimId, err)
+			sim.Id.String(), err)
 	}
 
 	if len(packages) > 1 {
@@ -339,7 +335,7 @@ func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, 
 
 		var i int
 		for i, p = range packages {
-			if p.Id.String() == termReq.PackageId {
+			if p.Id.String() == asrProfile.SimPackage {
 				break
 			}
 		}
@@ -357,7 +353,8 @@ func handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile, 
 
 			log.Infof("activating package %s on sim %s", activeReq.PackageId, activeReq.SimId)
 
-			_, err = s.SetActivePackageForSim(ctx, activeReq)
+			err = setActivePackageForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
+				es.agentFactory, es.msgbus, es.baseRoutingKey)
 			if err != nil {
 				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
 					activeReq.PackageId, activeReq.SimId, err)
