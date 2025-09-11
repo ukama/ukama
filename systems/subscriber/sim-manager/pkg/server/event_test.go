@@ -1006,7 +1006,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete")
 
-	t.Run("NextPackgesNotFound", func(t *testing.T) {
+	t.Run("NextPackagesNotFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -1071,7 +1071,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		assert.NoError(t, err)
 	})
 
-	t.Run("NextPackgesFound", func(t *testing.T) {
+	t.Run("NextPackagesFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
 
@@ -1142,7 +1142,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		assert.Error(t, err)
 	})
 
-	t.Run("NextPackgesListError", func(t *testing.T) {
+	t.Run("NextPackagesListError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
