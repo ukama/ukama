@@ -199,23 +199,23 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 		return nil
 	}
 
-	operatrorSims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	operatorSims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
-	if len(operatrorSims) == 0 {
+	if len(operatorSims) == 0 {
 		return fmt.Errorf("no corresponding active sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	if len(operatrorSims) > 1 {
+	if len(operatorSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	sim := operatrorSims[0]
+	sim := operatorSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
