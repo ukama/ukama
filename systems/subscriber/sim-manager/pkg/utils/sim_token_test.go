@@ -27,7 +27,6 @@ func Test_IccidTokenConversion(t *testing.T) {
 	t.Run("IccidRetrieved", func(t *testing.T) {
 		token, err := GenerateTokenFromIccid(testIccid, testKey2)
 		assert.NoError(t, err)
-
 		res, err := GetIccidFromToken(token, testKey2)
 		assert.NoError(t, err)
 		assert.Equal(t, testIccid, res)
@@ -44,7 +43,6 @@ func Test_IccidTokenConversion(t *testing.T) {
 }
 
 func Test_encrypt(t *testing.T) {
-
 	r, err := encrypt(textToEncode, testKey1)
 	if !assert.NoError(t, err) {
 		assert.FailNow(t, "encrypt failed")
