@@ -223,7 +223,7 @@ func (o *OrgService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) 
 	uuid, err := uuid.FromString(req.UserUuid)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of owner uuid. Error %s", err.Error())
+			"invalid format of user uuid. Error %s", err.Error())
 	}
 
 	user, err := o.userRepo.Update(&db.User{
@@ -304,7 +304,7 @@ func (o *OrgService) UpdateOrgForUser(ctx context.Context, in *pb.UpdateOrgForUs
 	orgUUID, err := uuid.FromString(in.GetOrgId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of user uuid. Error %s", err.Error())
+			"invalid format of org uuid. Error %s", err.Error())
 	}
 
 	org, err := o.orgRepo.Get(orgUUID)

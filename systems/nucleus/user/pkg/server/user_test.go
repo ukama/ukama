@@ -224,7 +224,7 @@ func TestUserService_Add(t *testing.T) {
 
 			// Call the actual callback function
 			callback := args.Get(1).(func(*db.User, *gorm.DB) error)
-			callback(user, nil)
+			_ = callback(user, nil)
 		})
 
 		orgClient := orgService.On("GetClient").
@@ -261,7 +261,7 @@ func TestUserService_Add(t *testing.T) {
 
 			// Call the actual callback function
 			callback := args.Get(1).(func(*db.User, *gorm.DB) error)
-			callback(user, nil)
+			_ = callback(user, nil)
 		})
 
 		orgClient := orgService.On("GetClient").
@@ -732,7 +732,7 @@ func TestUserService_Deactivate(t *testing.T) {
 		}), mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 			// Call the actual callback function
 			callback := args.Get(1).(func(*db.User, *gorm.DB) error)
-			callback(args.Get(0).(*db.User), nil)
+			_ = callback(args.Get(0).(*db.User), nil)
 		})
 
 		orgClient := orgService.On("GetClient").
@@ -776,7 +776,7 @@ func TestUserService_Deactivate(t *testing.T) {
 		}), mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 			// Call the actual callback function
 			callback := args.Get(1).(func(*db.User, *gorm.DB) error)
-			callback(args.Get(0).(*db.User), nil)
+			_ = callback(args.Get(0).(*db.User), nil)
 		})
 
 		orgClient := orgService.On("GetClient").

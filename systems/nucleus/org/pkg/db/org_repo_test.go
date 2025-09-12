@@ -90,7 +90,7 @@ func setupTestDB(t *testing.T) (sqlmock.Sqlmock, org_db.OrgRepo, func()) {
 	assert.NoError(t, err)
 
 	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
+		DSN:                  testDSN,
 		DriverName:           "postgres",
 		Conn:                 db,
 		PreferSimpleProtocol: true,
@@ -103,7 +103,11 @@ func setupTestDB(t *testing.T) (sqlmock.Sqlmock, org_db.OrgRepo, func()) {
 		GormDb: gdb,
 	})
 
-	cleanup := func() { db.Close() }
+	cleanup := func() {
+		if err := db.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
 
 	return mock, repo, cleanup
 }

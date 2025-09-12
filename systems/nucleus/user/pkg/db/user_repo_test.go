@@ -37,8 +37,6 @@ var (
 
 	// Additional test user data
 	testUserEmail2 = "janedoe@example.com"
-	testUserPhone2 = "00300000000"
-	testUserName2  = "Jane Doe"
 
 	// Database configuration
 	testDSN        = "sqlmock_db_0"
@@ -60,13 +58,8 @@ var (
 	testCountColumn = []string{"count"}
 
 	// Mock result values
-	testMockResultRowsAffected     = int64(1)
-	testMockResultLastInsertId     = int64(1)
-	testMockResultRowsAffectedZero = int64(0)
-
-	// Error scenarios
-	testDatabaseError   = "database connection failed"
-	testConstraintError = "duplicate key value violates unique constraint"
+	testMockResultRowsAffected = int64(1)
+	testMockResultLastInsertId = int64(1)
 )
 
 type UkamaDbMock struct {
@@ -120,7 +113,11 @@ func setupTestDB(t *testing.T) (sqlmock.Sqlmock, userdb.UserRepo, func()) {
 		GormDb: gdb,
 	})
 
-	cleanup := func() { db.Close() }
+	cleanup := func() {
+		if err := db.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
 
 	return mock, repo, cleanup
 }
