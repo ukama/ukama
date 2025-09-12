@@ -53,7 +53,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventOrgAdd(es, msg, &c)
+		return handleEventOrgAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserAdd]):
 		c := evt.EventToEventConfig[evt.EventUserAdd]
@@ -61,7 +61,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventUserAdd(es, msg, &c)
+		return handleEventUserAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDeactivate]):
 		c := evt.EventToEventConfig[evt.EventUserDeactivate]
@@ -69,7 +69,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventUserDeactivate(es, msg, &c)
+		return handleEventUserDeactivate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDelete]):
 		c := evt.EventToEventConfig[evt.EventUserDelete]
@@ -77,7 +77,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventUserDelete(es, msg, &c)
+		return handleEventUserDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberCreate]):
 		c := evt.EventToEventConfig[evt.EventMemberCreate]
@@ -85,7 +85,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventMemberCreate(es, msg, &c)
+		return handleEventMemberCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
 		c := evt.EventToEventConfig[evt.EventMemberDelete]
@@ -93,7 +93,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventMemberDelete(es, msg, &c)
+		return handleEventMemberDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkAdd]):
 		c := evt.EventToEventConfig[evt.EventNetworkAdd]
@@ -101,7 +101,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNetworkAdd(es, msg, &c)
+		return handleEventNetworkAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkDelete]):
 		c := evt.EventToEventConfig[evt.EventNetworkDelete]
@@ -109,7 +109,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNetworkDelete(es, msg, &c)
+		return handleEventNetworkDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
 		c := evt.EventToEventConfig[evt.EventNodeCreate]
@@ -117,7 +117,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeCreate(es, msg, &c)
+		return handleEventNodeCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeUpdate]
@@ -125,7 +125,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeUpdate(es, msg, &c)
+		return handleEventNodeUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeStateUpdate]
@@ -133,7 +133,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeStateUpdate(es, msg, &c)
+		return handleEventNodeStateUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
 		c := evt.EventToEventConfig[evt.EventNodeDelete]
@@ -141,7 +141,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeDelete(es, msg, &c)
+		return handleEventNodeDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
 		c := evt.EventToEventConfig[evt.EventNodeAssign]
@@ -149,7 +149,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeAssign(es, msg, &c)
+		return handleEventNodeAssign(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
 		c := evt.EventToEventConfig[evt.EventNodeRelease]
@@ -157,7 +157,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeRelease(es, msg, &c)
+		return handleEventNodeRelease(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteCreate]):
 		c := evt.EventToEventConfig[evt.EventInviteCreate]
@@ -165,7 +165,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventInviteCreate(es, msg, &c)
+		return handleEventInviteCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteDelete]):
 		c := evt.EventToEventConfig[evt.EventInviteDelete]
@@ -173,7 +173,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventInviteDelete(es, msg, &c)
+		return handleEventInviteDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteUpdate]):
 		c := evt.EventToEventConfig[evt.EventInviteUpdate]
@@ -181,7 +181,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventInviteUpdate(es, msg, &c)
+		return handleEventInviteUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
 		c := evt.EventToEventConfig[evt.EventNodeOnline]
@@ -189,7 +189,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeOnline(es, msg, &c)
+		return handleEventNodeOnline(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
 		c := evt.EventToEventConfig[evt.EventNodeOffline]
@@ -197,7 +197,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeOffline(es, msg, &c)
+		return handleEventNodeOffline(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivate]):
 		c := evt.EventToEventConfig[evt.EventSimActivate]
@@ -205,7 +205,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimActivate(es, msg, &c)
+		return handleEventSimActivate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
@@ -213,7 +213,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimAllocate(es, msg, &c)
+		return handleEventSimAllocate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimDelete]):
 		c := evt.EventToEventConfig[evt.EventSimDelete]
@@ -221,7 +221,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimDelete(es, msg, &c)
+		return handleEventSimDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
 		c := evt.EventToEventConfig[evt.EventSimAddPackage]
@@ -229,7 +229,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimAddPackage(es, msg, &c)
+		return handleEventSimAddPackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
 		c := evt.EventToEventConfig[evt.EventSiteCreate]
@@ -237,7 +237,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSiteCreate(es, msg, &c)
+		return handleEventSiteCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteUpdate]):
 		c := evt.EventToEventConfig[evt.EventSiteUpdate]
@@ -245,7 +245,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSiteUpdate(es, msg, &c)
+		return handleEventSiteUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
@@ -253,7 +253,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimActivePackage(es, msg, &c)
+		return handleEventSimActivePackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimRemovePackage]):
 		c := evt.EventToEventConfig[evt.EventSimRemovePackage]
@@ -261,7 +261,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimRemovePackage(es, msg, &c)
+		return handleEventSimRemovePackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberCreate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberCreate]
@@ -269,7 +269,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSubscriberCreate(es, msg, &c)
+		return handleEventSubscriberCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberUpdate]
@@ -277,7 +277,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSubscriberUpdate(es, msg, &c)
+		return handleEventSubscriberUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberDelete]):
 		c := evt.EventToEventConfig[evt.EventSubscriberDelete]
@@ -285,7 +285,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSubscriberDelete(es, msg, &c)
+		return handleEventSubscriberDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimsUpload]):
 		c := evt.EventToEventConfig[evt.EventSimsUpload]
@@ -293,7 +293,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventSimsUpload(es, msg, &c)
+		return handleEventSimsUpload(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventBaserateUpload]):
 		c := evt.EventToEventConfig[evt.EventBaserateUpload]
@@ -301,7 +301,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventBaserateUpload(es, msg, &c)
+		return handleEventBaserateUpload(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageCreate]):
 		c := evt.EventToEventConfig[evt.EventPackageCreate]
@@ -309,7 +309,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventPackageCreate(es, msg, &c)
+		return handleEventPackageCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageUpdate]):
 		c := evt.EventToEventConfig[evt.EventPackageUpdate]
@@ -317,7 +317,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventPackageUpdate(es, msg, &c)
+		return handleEventPackageUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageDelete]):
 		c := evt.EventToEventConfig[evt.EventPackageDelete]
@@ -325,7 +325,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventPackageDelete(es, msg, &c)
+		return handleEventPackageDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMarkupUpdate]):
 		c := evt.EventToEventConfig[evt.EventMarkupUpdate]
@@ -333,7 +333,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventMarkupUpdate(es, msg, &c)
+		return handleEventMarkupUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
 		c := evt.EventToEventConfig[evt.EventNodeStateTransition]
@@ -341,7 +341,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventNodeStateTransition(es, msg, &c)
+		return handleEventNodeStateTransition(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
@@ -349,7 +349,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventPaymentSuccess(es, msg, &c)
+		return handleEventPaymentSuccess(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentFailed]):
 		c := evt.EventToEventConfig[evt.EventPaymentFailed]
@@ -357,7 +357,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventPaymentFailed(es, msg, &c)
+		return handleEventPaymentFailed(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
 		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
@@ -365,58 +365,61 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		if err != nil {
 			return nil, err
 		}
-		handleEventInvoiceGenerate(es, msg, &c)
+		return handleEventInvoiceGenerate(es, msg, &c)
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
+		return nil, fmt.Errorf("no handler for routing key %s", e.RoutingKey)
 	}
-
-	return &epb.EventResponse{}, nil
 }
 
-func handleEventOrgAdd(es *EventToNotifyEventServer, msg *epb.EventOrgCreate, c *evt.EventConfig) {
+func handleEventOrgAdd(es *EventToNotifyEventServer, msg *epb.EventOrgCreate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, msg.Id, "", "", "", msg.Owner, jmsg, msg.Id)
+	return es.processEvent(c, msg.Id, "", "", "", msg.Owner, jmsg, msg.Id)
 }
 
-func handleEventUserAdd(es *EventToNotifyEventServer, msg *epb.EventUserCreate, c *evt.EventConfig) {
+func handleEventUserAdd(es *EventToNotifyEventServer, msg *epb.EventUserCreate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
 
-func handleEventUserDeactivate(es *EventToNotifyEventServer, msg *epb.EventUserDeactivate, c *evt.EventConfig) {
+func handleEventUserDeactivate(es *EventToNotifyEventServer, msg *epb.EventUserDeactivate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
 
-func handleEventUserDelete(es *EventToNotifyEventServer, msg *epb.EventUserDelete, c *evt.EventConfig) {
+func handleEventUserDelete(es *EventToNotifyEventServer, msg *epb.EventUserDelete, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.UserId)
 }
 
-func handleEventMemberCreate(es *EventToNotifyEventServer, msg *epb.AddMemberEventRequest, c *evt.EventConfig) {
+func handleEventMemberCreate(es *EventToNotifyEventServer, msg *epb.AddMemberEventRequest, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
+
+	response, err := es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
+	if err != nil {
+		return nil, err
+	}
 
 	user := &db.Users{
 		Id:           uuid.NewV4(),
@@ -430,214 +433,221 @@ func handleEventMemberCreate(es *EventToNotifyEventServer, msg *epb.AddMemberEve
 	err = es.n.storeUser(user)
 	if err != nil {
 		log.Errorf("Error storing user: %v", err)
+		return nil, err
 	}
+
+	return response, nil
 }
 
-func handleEventMemberDelete(es *EventToNotifyEventServer, msg *epb.DeleteMemberEventRequest, c *evt.EventConfig) {
+func handleEventMemberDelete(es *EventToNotifyEventServer, msg *epb.DeleteMemberEventRequest, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
+	return es.processEvent(c, msg.OrgId, "", "", "", msg.UserId, jmsg, msg.MemberId)
 }
 
-func handleEventNetworkAdd(es *EventToNotifyEventServer, msg *epb.EventNetworkCreate, c *evt.EventConfig) {
+func handleEventNetworkAdd(es *EventToNotifyEventServer, msg *epb.EventNetworkCreate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
+	return es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
 }
 
-func handleEventNetworkDelete(es *EventToNotifyEventServer, msg *epb.EventNetworkDelete, c *evt.EventConfig) {
+func handleEventNetworkDelete(es *EventToNotifyEventServer, msg *epb.EventNetworkDelete, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
+	return es.processEvent(c, msg.OrgId, msg.Id, "", "", "", jmsg, msg.Id)
 }
 
-func handleEventNodeCreate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeCreate, c *evt.EventConfig) {
+func handleEventNodeCreate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeCreate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeUpdate, c *evt.EventConfig) {
+func handleEventNodeUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeUpdate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeStateUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeStatusUpdate, c *evt.EventConfig) {
+func handleEventNodeStateUpdate(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeStatusUpdate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeDelete(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeDelete, c *evt.EventConfig) {
+func handleEventNodeDelete(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeDelete, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeAssign, c *evt.EventConfig) {
+func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeAssign, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeRelease, c *evt.EventConfig) {
+func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeRelease, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventInviteCreate(es *EventToNotifyEventServer, msg *epb.EventInvitationCreated, c *evt.EventConfig) {
+func handleEventInviteCreate(es *EventToNotifyEventServer, msg *epb.EventInvitationCreated, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
 
-func handleEventInviteDelete(es *EventToNotifyEventServer, msg *epb.EventInvitationDeleted, c *evt.EventConfig) {
+func handleEventInviteDelete(es *EventToNotifyEventServer, msg *epb.EventInvitationDeleted, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
 
-func handleEventInviteUpdate(es *EventToNotifyEventServer, msg *epb.EventInvitationUpdated, c *evt.EventConfig) {
+func handleEventInviteUpdate(es *EventToNotifyEventServer, msg *epb.EventInvitationUpdated, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.UserId, jmsg, msg.Id)
 }
 
-func handleEventNodeOnline(es *EventToNotifyEventServer, msg *epb.NodeOnlineEvent, c *evt.EventConfig) {
+func handleEventNodeOnline(es *EventToNotifyEventServer, msg *epb.NodeOnlineEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeOffline(es *EventToNotifyEventServer, msg *epb.NodeOfflineEvent, c *evt.EventConfig) {
+func handleEventNodeOffline(es *EventToNotifyEventServer, msg *epb.NodeOfflineEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventSimActivate(es *EventToNotifyEventServer, msg *epb.EventSimActivation, c *evt.EventConfig) {
+func handleEventSimActivate(es *EventToNotifyEventServer, msg *epb.EventSimActivation, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
 }
 
-func handleEventSimAllocate(es *EventToNotifyEventServer, msg *epb.EventSimAllocation, c *evt.EventConfig) {
+func handleEventSimAllocate(es *EventToNotifyEventServer, msg *epb.EventSimAllocation, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.Id)
 }
 
-func handleEventSimDelete(es *EventToNotifyEventServer, msg *epb.EventSimTermination, c *evt.EventConfig) {
+func handleEventSimDelete(es *EventToNotifyEventServer, msg *epb.EventSimTermination, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
 
-func handleEventSimAddPackage(es *EventToNotifyEventServer, msg *epb.EventSimAddPackage, c *evt.EventConfig) {
+func handleEventSimAddPackage(es *EventToNotifyEventServer, msg *epb.EventSimAddPackage, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
 
-func handleEventSiteCreate(es *EventToNotifyEventServer, msg *epb.EventAddSite, c *evt.EventConfig) {
+func handleEventSiteCreate(es *EventToNotifyEventServer, msg *epb.EventAddSite, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
+	return es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
 }
 
-func handleEventSiteUpdate(es *EventToNotifyEventServer, msg *epb.EventUpdateSite, c *evt.EventConfig) {
+func handleEventSiteUpdate(es *EventToNotifyEventServer, msg *epb.EventUpdateSite, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
+	return es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.SiteId)
 }
 
-func handleEventSimActivePackage(es *EventToNotifyEventServer, msg *epb.EventSimActivePackage, c *evt.EventConfig) {
+func handleEventSimActivePackage(es *EventToNotifyEventServer, msg *epb.EventSimActivePackage, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
 
-func handleEventSimRemovePackage(es *EventToNotifyEventServer, msg *epb.EventSimRemovePackage, c *evt.EventConfig) {
+func handleEventSimRemovePackage(es *EventToNotifyEventServer, msg *epb.EventSimRemovePackage, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", "", msg.SubscriberId, jmsg, msg.Id)
 }
 
-func handleEventSubscriberCreate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) {
+func handleEventSubscriberCreate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+
+	response, err := es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+	if err != nil {
+		return nil, err
+	}
 
 	user := &db.Users{
 		Id:           uuid.NewV4(),
@@ -651,86 +661,89 @@ func handleEventSubscriberCreate(es *EventToNotifyEventServer, msg *epb.EventSub
 	err = es.n.storeUser(user)
 	if err != nil {
 		log.Errorf("Error storing user: %v", err)
+		return nil, err
 	}
+
+	return response, nil
 }
 
-func handleEventSubscriberUpdate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) {
+func handleEventSubscriberUpdate(es *EventToNotifyEventServer, msg *epb.EventSubscriberAdded, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+	return es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 }
 
-func handleEventSubscriberDelete(es *EventToNotifyEventServer, msg *epb.EventSubscriberDeleted, c *evt.EventConfig) {
+func handleEventSubscriberDelete(es *EventToNotifyEventServer, msg *epb.EventSubscriberDeleted, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
+	return es.processEvent(c, es.orgId, "", "", msg.SubscriberId, "", jmsg, msg.SubscriberId)
 }
 
-func handleEventSimsUpload(es *EventToNotifyEventServer, msg *epb.EventSimsUploaded, c *evt.EventConfig) {
+func handleEventSimsUpload(es *EventToNotifyEventServer, msg *epb.EventSimsUploaded, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
 
-func handleEventBaserateUpload(es *EventToNotifyEventServer, msg *epb.EventBaserateUploaded, c *evt.EventConfig) {
+func handleEventBaserateUpload(es *EventToNotifyEventServer, msg *epb.EventBaserateUploaded, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
 
-func handleEventPackageCreate(es *EventToNotifyEventServer, msg *epb.CreatePackageEvent, c *evt.EventConfig) {
+func handleEventPackageCreate(es *EventToNotifyEventServer, msg *epb.CreatePackageEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
 
-func handleEventPackageUpdate(es *EventToNotifyEventServer, msg *epb.UpdatePackageEvent, c *evt.EventConfig) {
+func handleEventPackageUpdate(es *EventToNotifyEventServer, msg *epb.UpdatePackageEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
 
-func handleEventPackageDelete(es *EventToNotifyEventServer, msg *epb.DeletePackageEvent, c *evt.EventConfig) {
+func handleEventPackageDelete(es *EventToNotifyEventServer, msg *epb.DeletePackageEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, msg.Uuid)
 }
 
-func handleEventMarkupUpdate(es *EventToNotifyEventServer, msg *epb.DefaultMarkupUpdate, c *evt.EventConfig) {
+func handleEventMarkupUpdate(es *EventToNotifyEventServer, msg *epb.DefaultMarkupUpdate, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
+	return es.processEvent(c, es.orgId, "", "", "", "", jmsg, "")
 }
 
-func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeStateChangeEvent, c *evt.EventConfig) {
+func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeStateChangeEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
 
 	dynamicConfig := *c
@@ -744,9 +757,10 @@ func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeS
 
 	notificationType := notif.TYPE_INFO
 
-	if msg.State == "Faulty" {
+	switch msg.State {
+	case "Faulty":
 		notificationType = notif.TYPE_CRITICAL
-	} else if msg.State == "Unknown" {
+	case "Unknown":
 		notificationType = notif.TYPE_ACTIONABLE_WARNING
 	}
 
@@ -761,19 +775,19 @@ func handleEventNodeStateTransition(es *EventToNotifyEventServer, msg *epb.NodeS
 
 	dynamicConfig.Type = notificationType
 
-	es.processEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
+	return es.processEvent(&dynamicConfig, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) {
+func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
 
 	if msg.ItemType != ukama.ItemTypeInvoice.String() {
 		log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
-		return
+		return nil, fmt.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
 	}
 
 	metadata := map[string]string{}
@@ -786,22 +800,22 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 	targetId, ok := metadata["targetId"]
 	if !ok {
 		log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
-		return
+		return nil, fmt.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
 	}
 
-	es.processEvent(c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
 }
 
-func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) {
+func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
 
 	if msg.ItemType != ukama.ItemTypePackage.String() {
 		log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
-		return
+		return nil, fmt.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
 	}
 
 	metadata := map[string]string{}
@@ -814,36 +828,37 @@ func handleEventPaymentFailed(es *EventToNotifyEventServer, msg *epb.Payment, c 
 	targetId, ok := metadata["targetId"]
 	if !ok {
 		log.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
-		return
+		return nil, fmt.Errorf("missing targetId metadata for successful package payment: %s", msg.ItemId)
 	}
 
-	es.processEvent(c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, "", "", targetId, targetId, jmsg, msg.Id)
 }
 
-func handleEventInvoiceGenerate(es *EventToNotifyEventServer, msg *epb.Report, c *evt.EventConfig) {
+func handleEventInvoiceGenerate(es *EventToNotifyEventServer, msg *epb.Report, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
-		return
+		return nil, err
 	}
-	es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)
+	return es.processEvent(c, es.orgId, msg.NetworkId, "", "", "", jmsg, msg.Id)
 }
 
-func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte, rid string) *db.Notification {
+func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, networkId, nodeId, subscriberId, userId string, msg []byte, rid string) (*epb.EventResponse, error) {
 	log.Debugf("Processing event OrgId %s NetworkId %s nodeId %s subscriberId %s userId %s", orgId, networkId, nodeId, subscriberId, userId)
 
 	/* Store raw event */
 	event := &db.EventMsg{}
-	var id uint = 0
 	event.Key = ec.Name
 	err := event.Data.Set(msg)
 	if err != nil {
 		log.Errorf("failed to assing event: %v", err)
-	} else {
-		id, err = es.n.storeEvent(event)
-		if err != nil {
-			log.Errorf("failed to store event: %v", err)
-		}
+		return nil, err
+	}
+
+	id, err := es.n.storeEvent(event)
+	if err != nil {
+		log.Errorf("failed to store event: %v", err)
+		return nil, err
 	}
 
 	dn := &db.Notification{
@@ -858,16 +873,14 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		NodeId:       nodeId,
 		ResourceId:   rid,
 		SubscriberId: subscriberId,
-	}
-
-	if id != 0 {
-		dn.EventMsgID = id
+		EventMsgID:   id,
 	}
 
 	err = es.n.storeNotification(dn)
 	if err != nil {
 		log.Errorf("failed to store notification: %v", err)
+		return nil, err
 	}
 
-	return dn
+	return &epb.EventResponse{}, nil
 }

@@ -131,7 +131,7 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		}
 	} else {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"no user uuid. Error %s", err.Error())
+			"no user uuid provided")
 	}
 
 	roleType := upb.RoleType_ROLE_INVALID
@@ -280,6 +280,7 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 	err := n.notificationRepo.Add(dn)
 	if err != nil {
 		log.Errorf("Error adding notification to db %v", err)
+		return err
 	}
 
 	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.Scope)
@@ -312,6 +313,7 @@ func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 	err := n.userRepo.Add(user)
 	if err != nil {
 		log.Errorf("Error adding user to db %v", err)
+		return err
 	}
 	return nil
 }
