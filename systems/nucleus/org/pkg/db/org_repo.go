@@ -130,7 +130,7 @@ func (r *orgRepo) AddUser(org *Org, user *User) error {
 }
 
 func (r *orgRepo) RemoveUser(org *Org, user *User) error {
-	err := r.Db.GetGormDb().Model(org).Association("Users").Append(user)
+	err := r.Db.GetGormDb().Model(org).Association("Users").Delete(user)
 	return err
 }
 

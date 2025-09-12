@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/nucleus/org/cmd/version"
@@ -29,10 +30,16 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 )
 
 var svcConf *pkg.Config
+
+const (
+	registrySys = "registry"
+)
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
@@ -91,14 +98,18 @@ func runGrpcServer(gormdb sql.Db) {
 		svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
 		svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
-	user := providers.NewUserClientProvider(svcConf.UserHost)
-	orch := providers.NewOrchestratorProvider(svcConf.OrchestratorHost, svcConf.DebugMode)
-	registry := providers.NewRegistryProvider(svcConf.InitClientHost, svcConf.DebugMode)
+	orch := providers.NewOrchestratorProvider(svcConf.HttpServices.OrchestratorClient, svcConf.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(svcConf.HttpServices.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, registrySys), &svcConf.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	memClient := creg.NewMemberClient(regUrl.String())
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewOrgServer(svcConf.OrgName, db.NewOrgRepo(gormdb),
-		db.NewUserRepo(gormdb), orch, user, registry,
-		mbClient, svcConf.Pushgateway, svcConf.DebugMode)
+		db.NewUserRepo(gormdb), orch, memClient, mbClient, svcConf.Pushgateway, svcConf.DebugMode)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOrgServiceServer(s, regServer)

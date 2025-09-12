@@ -10,8 +10,10 @@ package db_test
 
 import (
 	"database/sql"
+	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
@@ -22,6 +24,33 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	org_db "github.com/ukama/ukama/systems/nucleus/org/pkg/db"
+)
+
+// Test data constants
+const (
+	testOrgName        = "ukama"
+	testOrgCert        = "ukama_certs"
+	testOrgCertShort   = "ukamacert"
+	testOrgCountry     = "us"
+	testOrgCurrency    = "usd"
+	testInvalidOrgName = "Invalid Name With Spaces!"
+	testOrgNotFound    = "lol"
+	testUserId         = 1
+	testUserIdNotFound = 999
+	testActiveCount    = int64(5)
+	testDeactiveCount  = int64(2)
+)
+
+// Test data variables
+var (
+	testOrgId     = uuid.NewV4()
+	testOrgId2    = uuid.NewV4()
+	testOrgId3    = uuid.NewV4()
+	testOwnerId   = uuid.NewV4()
+	testOwnerId2  = uuid.NewV4()
+	testUserUuid  = uuid.NewV4()
+	testUserUuid2 = uuid.NewV4()
+	testTime      = time.Now()
 )
 
 type UkamaDbMock struct {
@@ -56,23 +85,12 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func TestOrgRepo_Add(t *testing.T) {
-	var db *sql.DB
-
-	org := org_db.Org{
-		Id:          uuid.NewV4(),
-		Name:        "ukama",
-		Owner:       uuid.NewV4(),
-		Certificate: "ukama_certs",
-		Country:     "us",
-		Currency:    "usd",
-	}
-
-	db, mock, err := sqlmock.New() // mock sql.DB
+func setupTestDB(t *testing.T) (sqlmock.Sqlmock, org_db.OrgRepo, func()) {
+	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 
 	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
+		DSN:                  testDSN,
 		DriverName:           "postgres",
 		Conn:                 db,
 		PreferSimpleProtocol: true,
@@ -81,11 +99,34 @@ func TestOrgRepo_Add(t *testing.T) {
 	gdb, err := gorm.Open(dialector, &gorm.Config{})
 	assert.NoError(t, err)
 
-	r := org_db.NewOrgRepo(&UkamaDbMock{
+	repo := org_db.NewOrgRepo(&UkamaDbMock{
 		GormDb: gdb,
 	})
 
+	cleanup := func() {
+		if err := db.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
+
+	return mock, repo, cleanup
+}
+
+func TestOrgRepo_Add(t *testing.T) {
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
 	t.Run("AddValidOrg", func(t *testing.T) {
+		// Arrange
+		org := org_db.Org{
+			Id:          testOrgId,
+			Name:        testOrgName,
+			Owner:       testOwnerId,
+			Certificate: testOrgCert,
+			Country:     testOrgCountry,
+			Currency:    testOrgCurrency,
+		}
+
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
@@ -96,10 +137,126 @@ func TestOrgRepo_Add(t *testing.T) {
 		mock.ExpectCommit()
 
 		// Act
-		err = r.Add(&org, nil)
+		err := r.Add(&org, nil)
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddOrgWithInvalidName", func(t *testing.T) {
+		// Arrange
+		org := org_db.Org{
+			Id:          testOrgId2,
+			Name:        testInvalidOrgName, // Invalid DNS label
+			Owner:       testOwnerId2,
+			Certificate: testOrgCert,
+			Country:     testOrgCountry,
+			Currency:    testOrgCurrency,
+		}
+
+		// Act
+		err := r.Add(&org, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid name must be less then 253")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddOrgWithNestedFuncSuccess", func(t *testing.T) {
+		// Arrange
+		org := org_db.Org{
+			Id:          testOrgId3,
+			Name:        testOrgName,
+			Owner:       testOwnerId,
+			Certificate: testOrgCert,
+			Country:     testOrgCountry,
+			Currency:    testOrgCurrency,
+		}
+
+		nestedFunc := func(org *org_db.Org, tx *gorm.DB) error {
+			// Simulate some nested operation
+			return nil
+		}
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(org.Id, org.Name, org.Owner, org.Country, org.Currency,
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Certificate, sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		mock.ExpectCommit()
+
+		// Act
+		err := r.Add(&org, nestedFunc)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddOrgWithNestedFuncError", func(t *testing.T) {
+		// Arrange
+		org := org_db.Org{
+			Id:          testOrgId,
+			Name:        testOrgName,
+			Owner:       testOwnerId,
+			Certificate: testOrgCert,
+			Country:     testOrgCountry,
+			Currency:    testOrgCurrency,
+		}
+
+		nestedFunc := func(org *org_db.Org, tx *gorm.DB) error {
+			return fmt.Errorf("nested function error")
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectRollback()
+
+		// Act
+		err := r.Add(&org, nestedFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "nested function error")
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddOrgWithDatabaseError", func(t *testing.T) {
+		// Arrange
+		org := org_db.Org{
+			Id:          testOrgId2,
+			Name:        testOrgName,
+			Owner:       testOwnerId2,
+			Certificate: testOrgCert,
+			Country:     testOrgCountry,
+			Currency:    testOrgCurrency,
+		}
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(org.Id, org.Name, org.Owner, org.Country, org.Currency,
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), org.Certificate, sqlmock.AnyArg()).
+			WillReturnError(sql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		// Act
+		err := r.Add(&org, nil)
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -107,51 +264,29 @@ func TestOrgRepo_Add(t *testing.T) {
 }
 
 func TestOrgRepo_Get(t *testing.T) {
-	var db *sql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := org_db.NewOrgRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("OrgFound", func(t *testing.T) {
 		// Arrange
-		const orgName = "ukama"
-		const orgCert = "ukamacert"
-
-		var orgId = uuid.NewV4()
-		var orgOwner = uuid.NewV4()
-
 		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate"}).
-			AddRow(orgId, orgName, orgOwner, orgCert)
+			AddRow(testOrgId, testOrgName, testOwnerId, testOrgCertShort)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId, sqlmock.AnyArg()).
+			WithArgs(testOrgId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(testOrgId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, org)
 
-		assert.Equal(t, orgId, org.Id)
-		assert.Equal(t, orgName, org.Name)
-		assert.Equal(t, orgOwner, org.Owner)
-		assert.Equal(t, orgCert, org.Certificate)
+		assert.Equal(t, testOrgId, org.Id)
+		assert.Equal(t, testOrgName, org.Name)
+		assert.Equal(t, testOwnerId, org.Owner)
+		assert.Equal(t, testOrgCertShort, org.Certificate)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -159,15 +294,12 @@ func TestOrgRepo_Get(t *testing.T) {
 
 	t.Run("OrgNotFound", func(t *testing.T) {
 		// Arrange
-
-		var orgId = uuid.NewV4()
-
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgId, sqlmock.AnyArg()).
+			WithArgs(testOrgId2, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
-		org, err := r.Get(orgId)
+		org, err := r.Get(testOrgId2)
 
 		// Assert
 		assert.Error(t, err)
@@ -179,51 +311,29 @@ func TestOrgRepo_Get(t *testing.T) {
 }
 
 func TestOrgRepo_GetByName(t *testing.T) {
-	var db *sql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := org_db.NewOrgRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("OrgFound", func(t *testing.T) {
 		// Arrange
-		const orgName = "ukama"
-		const orgCert = "ukamacert"
-
-		var orgId = uuid.NewV4()
-		var orgOwner = uuid.NewV4()
-
 		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate"}).
-			AddRow(orgId, orgName, orgOwner, orgCert)
+			AddRow(testOrgId, testOrgName, testOwnerId, testOrgCertShort)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName, sqlmock.AnyArg()).
+			WithArgs(testOrgName, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		org, err := r.GetByName(testOrgName)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, org)
 
-		assert.Equal(t, orgId, org.Id)
-		assert.Equal(t, orgName, org.Name)
-		assert.Equal(t, orgOwner, org.Owner)
-		assert.Equal(t, orgCert, org.Certificate)
+		assert.Equal(t, testOrgId, org.Id)
+		assert.Equal(t, testOrgName, org.Name)
+		assert.Equal(t, testOwnerId, org.Owner)
+		assert.Equal(t, testOrgCertShort, org.Certificate)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -231,15 +341,12 @@ func TestOrgRepo_GetByName(t *testing.T) {
 
 	t.Run("OrgNotFound", func(t *testing.T) {
 		// Arrange
-
-		var orgName = "lol"
-
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgName, sqlmock.AnyArg()).
+			WithArgs(testOrgNotFound, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		org, err := r.GetByName(testOrgNotFound)
 
 		// Assert
 		assert.Error(t, err)
@@ -251,51 +358,29 @@ func TestOrgRepo_GetByName(t *testing.T) {
 }
 
 func TestOrgRepo_GetByOwner(t *testing.T) {
-	var db *sql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := org_db.NewOrgRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("OwnerFound", func(t *testing.T) {
 		// Arrange
-		const orgName = "ukama"
-		const orgCert = "ukamacert"
-
-		var orgId = uuid.NewV4()
-		var orgOwner = uuid.NewV4()
-
 		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate"}).
-			AddRow(orgId, orgName, orgOwner, orgCert)
+			AddRow(testOrgId, testOrgName, testOwnerId, testOrgCertShort)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgOwner).
+			WithArgs(testOwnerId).
 			WillReturnRows(rows)
 
 		// Act
-		orgs, err := r.GetByOwner(orgOwner)
+		orgs, err := r.GetByOwner(testOwnerId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, orgs)
 
-		assert.Equal(t, orgId, orgs[0].Id)
-		assert.Equal(t, orgName, orgs[0].Name)
-		assert.Equal(t, orgOwner, orgs[0].Owner)
-		assert.Equal(t, orgCert, orgs[0].Certificate)
+		assert.Equal(t, testOrgId, orgs[0].Id)
+		assert.Equal(t, testOrgName, orgs[0].Name)
+		assert.Equal(t, testOwnerId, orgs[0].Owner)
+		assert.Equal(t, testOrgCertShort, orgs[0].Certificate)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -303,15 +388,12 @@ func TestOrgRepo_GetByOwner(t *testing.T) {
 
 	t.Run("OwnerNotFound", func(t *testing.T) {
 		// Arrange
-
-		var orgOwner = uuid.NewV4()
-
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
-			WithArgs(orgOwner).
+			WithArgs(testOwnerId2).
 			WillReturnError(sql.ErrNoRows)
 
 		// Act
-		orgs, err := r.GetByOwner(orgOwner)
+		orgs, err := r.GetByOwner(testOwnerId2)
 
 		// Assert
 		assert.Error(t, err)
@@ -322,106 +404,326 @@ func TestOrgRepo_GetByOwner(t *testing.T) {
 	})
 }
 
-// func TestOrgRepo_GetByMember(t *testing.T) {
-// 	var db *sql.DB
+func TestOrgRepo_GetByMember(t *testing.T) {
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
-// 	db, mock, err := sqlmock.New() // mock sql.DB
-// 	assert.NoError(t, err)
+	t.Run("MemberFound", func(t *testing.T) {
+		// Arrange
+		// Mock the main query for orgs
+		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate", "country", "currency", "deleted_at", "created_at", "updated_at", "deactivated"}).
+			AddRow(testOrgId, testOrgName, testOwnerId, testOrgCertShort, testOrgCountry, testOrgCurrency, nil, testTime, testTime, false)
 
-// 	dialector := postgres.New(postgres.Config{
-// 		DSN:                  "sqlmock_db_0",
-// 		DriverName:           "postgres",
-// 		Conn:                 db,
-// 		PreferSimpleProtocol: true,
-// 	})
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnRows(rows)
 
-// 	gdb, err := gorm.Open(dialector, &gorm.Config{})
-// 	assert.NoError(t, err)
+		// Mock the preload query for users - this is a separate query for the association
+		userRows := sqlmock.NewRows([]string{"id", "uuid", "deactivated", "deleted_at"}).
+			AddRow(testUserId, testUserUuid, false, nil)
 
-// 	r := org_db.NewOrgRepo(&UkamaDbMock{
-// 		GormDb: gdb,
-// 	})
+		mock.ExpectQuery(`^SELECT.*org_users.*`).
+			WithArgs(testOrgId).
+			WillReturnRows(userRows)
 
-// 	t.Run("MemberFound", func(t *testing.T) {
-// 		// Arrange
-// 		const userId = 1
-// 		const deactivated = false
+		// Act
+		orgs, err := r.GetByMember(testUserId)
 
-// 		var orgId = uuid.NewV4()
-// 		var uuid = uuid.NewV4()
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, orgs)
+		assert.Equal(t, 1, len(orgs))
+		assert.Equal(t, testOrgId, orgs[0].Id)
+		assert.Equal(t, testOrgName, orgs[0].Name)
+		assert.Equal(t, testOwnerId, orgs[0].Owner)
+		assert.Equal(t, testOrgCertShort, orgs[0].Certificate)
 
-// 		rows := sqlmock.NewRows([]string{"id","org_id", "user_id", "uuid", "deactivated"}).
-// 			AddRow(orgId, userId, uuid, deactivated)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 
-// 		mock.ExpectQuery(`^SELECT.*org_users.*`).
-// 			WithArgs(userId).
-// 			WillReturnRows(rows)
+	t.Run("MemberNotFound", func(t *testing.T) {
+		// Arrange
+		// Mock the main query for orgs (empty result)
+		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate", "country", "currency", "deleted_at", "created_at", "updated_at", "deactivated"})
 
-// 		// Act
-// 		members, err := r.GetByMember(userId)
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnRows(rows)
 
-// 		// Assert
-// 		assert.NoError(t, err)
-// 		assert.NotNil(t, members)
+		// Act
+		orgs, err := r.GetByMember(testUserIdNotFound)
 
-// 		assert.Equal(t, orgId, members[0].OrgId)
-// 		assert.Equal(t, uuid, members[0].Uuid)
-// 		assert.Equal(t, deactivated, members[0].Deactivated)
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, orgs)
+		assert.Equal(t, 0, len(orgs))
 
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 
-// 	t.Run("MemberNotFound", func(t *testing.T) {
-// 		// Arrange
-// 		var uuid = uuid.NewV4()
+	t.Run("GetByMemberDatabaseError", func(t *testing.T) {
+		// Arrange
+		// Mock the main query for orgs to return an error
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnError(sql.ErrConnDone)
 
-// 		mock.ExpectQuery(`^SELECT.*org_users.*`).
-// 			WithArgs(uuid).
-// 			WillReturnError(sql.ErrNoRows)
+		// Act
+		orgs, err := r.GetByMember(testUserId)
 
-// 		// Act
-// 		members, err := r.GetByMember(uuid)
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, orgs)
 
-// 		// Assert
-// 		assert.Error(t, err)
-// 		assert.Nil(t, members)
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
 
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
-//}
+func TestOrgRepo_AddUser(t *testing.T) {
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	t.Run("AddUserSuccess", func(t *testing.T) {
+		// Arrange
+		org := &org_db.Org{
+			Id:   testOrgId,
+			Name: testOrgName,
+		}
+
+		user := &org_db.User{
+			Id:   testUserId,
+			Uuid: testUserUuid,
+		}
+
+		// Mock transaction begin
+		mock.ExpectBegin()
+
+		// Mock the org update (GORM updates updated_at field first)
+		mock.ExpectExec(`^UPDATE "orgs" SET "updated_at"`).
+			WithArgs(sqlmock.AnyArg(), org.Id).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Mock the user insert (GORM tries to insert user)
+		mock.ExpectQuery(`^INSERT INTO "users"`).
+			WithArgs(user.Uuid, false, nil, user.Id).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(user.Id))
+
+		// Mock the association append operation
+		mock.ExpectExec(`^INSERT INTO "org_users"`).
+			WithArgs(org.Id, user.Id).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Mock transaction commit
+		mock.ExpectCommit()
+
+		// Act
+		err := r.AddUser(org, user)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("AddUserError", func(t *testing.T) {
+		// Arrange
+		org := &org_db.Org{
+			Id:   testOrgId2,
+			Name: testOrgName,
+		}
+
+		user := &org_db.User{
+			Id:   testUserId,
+			Uuid: testUserUuid2,
+		}
+
+		// Mock transaction begin
+		mock.ExpectBegin()
+
+		// Mock the org update (GORM updates updated_at field first)
+		mock.ExpectExec(`^UPDATE "orgs" SET "updated_at"`).
+			WithArgs(sqlmock.AnyArg(), org.Id).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Mock the user insert (GORM tries to insert user)
+		mock.ExpectQuery(`^INSERT INTO "users"`).
+			WithArgs(user.Uuid, false, nil, user.Id).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(user.Id))
+
+		// Mock the association append operation to return an error
+		mock.ExpectExec(`^INSERT INTO "org_users"`).
+			WithArgs(org.Id, user.Id).
+			WillReturnError(sql.ErrConnDone)
+
+		// Mock transaction rollback
+		mock.ExpectRollback()
+
+		// Act
+		err := r.AddUser(org, user)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_RemoveUser(t *testing.T) {
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	t.Run("RemoveUserSuccess", func(t *testing.T) {
+		// Arrange
+		org := &org_db.Org{
+			Id:   testOrgId3,
+			Name: testOrgName,
+		}
+
+		user := &org_db.User{
+			Id:   testUserId,
+			Uuid: testUserUuid,
+		}
+
+		// Mock transaction begin
+		mock.ExpectBegin()
+
+		// Mock the association delete operation
+		mock.ExpectExec(`^DELETE FROM "org_users"`).
+			WithArgs(org.Id, user.Id).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		// Mock transaction commit
+		mock.ExpectCommit()
+
+		// Act
+		err := r.RemoveUser(org, user)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("RemoveUserError", func(t *testing.T) {
+		// Arrange
+		org := &org_db.Org{
+			Id:   testOrgId,
+			Name: testOrgName,
+		}
+
+		user := &org_db.User{
+			Id:   testUserId,
+			Uuid: testUserUuid2,
+		}
+
+		// Mock transaction begin
+		mock.ExpectBegin()
+
+		// Mock the association delete operation to return an error
+		mock.ExpectExec(`^DELETE FROM "org_users"`).
+			WithArgs(org.Id, user.Id).
+			WillReturnError(sql.ErrConnDone)
+
+		// Mock transaction rollback
+		mock.ExpectRollback()
+
+		// Act
+		err := r.RemoveUser(org, user)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestOrgRepo_GetOrgCount(t *testing.T) {
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	t.Run("GetOrgCountSuccess", func(t *testing.T) {
+		// Arrange
+		// Mock the active org count query
+		activeRows := sqlmock.NewRows([]string{"count"}).AddRow(testActiveCount)
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "orgs"`).
+			WithArgs(false).
+			WillReturnRows(activeRows)
+
+		// Mock the deactive org count query
+		deactiveRows := sqlmock.NewRows([]string{"count"}).AddRow(testDeactiveCount)
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "orgs"`).
+			WithArgs(true).
+			WillReturnRows(deactiveRows)
+
+		// Act
+		active, deactive, err := r.GetOrgCount()
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, testActiveCount, active)
+		assert.Equal(t, testDeactiveCount, deactive)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetOrgCountActiveError", func(t *testing.T) {
+		// Arrange
+		// Mock the active org count query to return an error
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "orgs"`).
+			WithArgs(false).
+			WillReturnError(sql.ErrConnDone)
+
+		// Act
+		active, deactive, err := r.GetOrgCount()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, int64(0), active)
+		assert.Equal(t, int64(0), deactive)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetOrgCountDeactiveError", func(t *testing.T) {
+		// Arrange
+		// Mock the active org count query
+		activeRows := sqlmock.NewRows([]string{"count"}).AddRow(testActiveCount)
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "orgs"`).
+			WithArgs(false).
+			WillReturnRows(activeRows)
+
+		// Mock the deactive org count query to return an error
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "orgs"`).
+			WithArgs(true).
+			WillReturnError(sql.ErrConnDone)
+
+		// Act
+		active, deactive, err := r.GetOrgCount()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, int64(0), active)
+		assert.Equal(t, int64(0), deactive)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
 
 func TestOrgRepo_GetAll(t *testing.T) {
-	var db *sql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := org_db.NewOrgRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("GetAll", func(t *testing.T) {
 		// Arrange
-		const orgName = "ukama"
-		const orgCert = "ukamacert"
-
-		var orgId = uuid.NewV4()
-		var orgOwner = uuid.NewV4()
-
 		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate"}).
-			AddRow(orgId, orgName, orgOwner, orgCert)
+			AddRow(testOrgId, testOrgName, testOwnerId, testOrgCertShort)
 
 		mock.ExpectQuery(`^SELECT.*orgs.*`).
 			WillReturnRows(rows)
@@ -434,6 +736,41 @@ func TestOrgRepo_GetAll(t *testing.T) {
 		assert.NotNil(t, orgs)
 
 		assert.Equal(t, 1, len(orgs))
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetAllEmptyResult", func(t *testing.T) {
+		// Arrange
+		rows := sqlmock.NewRows([]string{"id", "name", "owner", "certificate"})
+
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnRows(rows)
+
+		// Act
+		orgs, err := r.GetAll()
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, orgs)
+		assert.Equal(t, 0, len(orgs))
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetAllDatabaseError", func(t *testing.T) {
+		// Arrange
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnError(sql.ErrConnDone)
+
+		// Act
+		orgs, err := r.GetAll()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, orgs)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

@@ -150,13 +150,7 @@ func (r *Router) getOrgHandler(c *gin.Context, req *GetOrgRequest) (*orgpb.GetBy
 }
 
 func (r *Router) getOrgsHandler(c *gin.Context, req *GetOrgsRequest) (*orgpb.GetByUserResponse, error) {
-	ownerUUID, ok := c.GetQuery("user_uuid")
-	if !ok {
-		return nil, &rest.HttpError{HttpCode: http.StatusBadRequest,
-			Message: "user_uuid is a mandatory query parameter"}
-	}
-
-	return r.clients.Organization.GetOrgs(ownerUUID)
+	return r.clients.Organization.GetOrgs(req.UserUuid)
 }
 
 func (r *Router) postOrgHandler(c *gin.Context, req *AddOrgRequest) (*orgpb.AddResponse, error) {

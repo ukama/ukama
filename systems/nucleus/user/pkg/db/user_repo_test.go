@@ -19,11 +19,47 @@ import (
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	"database/sql"
 	extsql "database/sql"
 
 	log "github.com/sirupsen/logrus"
 	userdb "github.com/ukama/ukama/systems/nucleus/user/pkg/db"
+)
+
+// Test data constants
+var (
+	// User data
+	testUserName     = "John Doe"
+	testUserEmail    = "johndoe@example.com"
+	testUserPhone    = "00100000000"
+	testUpdatedName  = "Fox Doe"
+	testUpdatedEmail = "foxdoe@example.com"
+	testUpdatedPhone = "00200000000"
+
+	// Additional test user data
+	testUserEmail2 = "janedoe@example.com"
+
+	// Database configuration
+	testDSN        = "sqlmock_db_0"
+	testDriverName = "postgres"
+
+	// Count data
+	testActiveUserCount   = int64(2)
+	testInactiveUserCount = int64(1)
+
+	// SQL query patterns
+	testSelectQueryPattern     = `^SELECT.*users.*`
+	testCountQueryPattern      = `^SELECT count(\\*).*users.*`
+	testCountWhereQueryPattern = `^SELECT count(\\*).*users.*WHERE.*`
+	testUpdateQueryPattern     = `UPDATE "users" SET`
+	testInsertQueryPattern     = `INSERT`
+
+	// Database column names
+	testUserColumns = []string{"id", "name", "email", "phone", "auth_id"}
+	testCountColumn = []string{"count"}
+
+	// Mock result values
+	testMockResultRowsAffected = int64(1)
+	testMockResultLastInsertId = int64(1)
 )
 
 type UkamaDbMock struct {
@@ -58,24 +94,14 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 	return nil
 }
 
-func TestUserRepo_Add(t *testing.T) {
-	// Arrange
-	var db *extsql.DB
-
-	user := userdb.User{
-		Id:     uuid.NewV4(),
-		Name:   "John Doe",
-		Email:  "johndoe@example.com",
-		Phone:  "00100000000",
-		AuthId: uuid.NewV4(),
-	}
-
-	db, mock, err := sqlmock.New() // mock sql.DB
+// Helper functions for test setup
+func setupTestDB(t *testing.T) (sqlmock.Sqlmock, userdb.UserRepo, func()) {
+	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
 
 	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
+		DSN:                  testDSN,
+		DriverName:           testDriverName,
 		Conn:                 db,
 		PreferSimpleProtocol: true,
 	})
@@ -83,22 +109,60 @@ func TestUserRepo_Add(t *testing.T) {
 	gdb, err := gorm.Open(dialector, &gorm.Config{})
 	assert.NoError(t, err)
 
-	r := userdb.NewUserRepo(&UkamaDbMock{
+	repo := userdb.NewUserRepo(&UkamaDbMock{
 		GormDb: gdb,
 	})
+
+	cleanup := func() {
+		if err := db.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
+
+	return mock, repo, cleanup
+}
+
+func createTestUser(id, authId uuid.UUID) userdb.User {
+	return userdb.User{
+		Id:     id,
+		Name:   testUserName,
+		Email:  testUserEmail,
+		Phone:  testUserPhone,
+		AuthId: authId,
+	}
+}
+
+func createTestUserWithData(id, authId uuid.UUID, name, email, phone string) userdb.User {
+	return userdb.User{
+		Id:     id,
+		Name:   name,
+		Email:  email,
+		Phone:  phone,
+		AuthId: authId,
+	}
+}
+
+func TestUserRepo_Add(t *testing.T) {
+	// Arrange
+	userId := uuid.NewV4()
+	authId := uuid.NewV4()
+	user := createTestUser(userId, authId)
+
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("AddUser", func(t *testing.T) {
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+		mock.ExpectExec(regexp.QuoteMeta(testInsertQueryPattern)).
 			WithArgs(user.Id, user.Name, user.Email, user.Phone, sqlmock.AnyArg(),
 				user.AuthId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			WillReturnResult(sqlmock.NewResult(testMockResultLastInsertId, testMockResultRowsAffected))
 
 		mock.ExpectCommit()
 
 		// Act
-		err = r.Add(&user, nil)
+		err := r.Add(&user, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -106,40 +170,43 @@ func TestUserRepo_Add(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	t.Run("AddUserDatabaseError", func(t *testing.T) {
+		// Arrange
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(testInsertQueryPattern)).
+			WithArgs(user.Id, user.Name, user.Email, user.Phone, sqlmock.AnyArg(),
+				user.AuthId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(extsql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		// Act
+		err := r.Add(&user, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestUserRepo_Get(t *testing.T) {
-	var db *extsql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := userdb.NewUserRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("UserFound", func(t *testing.T) {
 		// Arrange
-		const name = "John Doe"
-		const email = "johndoe@example.com"
-		const phone = "00100000000"
-		var userId = uuid.NewV4()
-		var authId = uuid.NewV4()
+		userId := uuid.NewV4()
+		authId := uuid.NewV4()
 
-		rows := sqlmock.NewRows([]string{"id", "name", "email", "phone", "auth_id"}).
-			AddRow(userId, name, email, phone, authId)
+		rows := sqlmock.NewRows(testUserColumns).
+			AddRow(userId, testUserName, testUserEmail, testUserPhone, authId)
 
-		mock.ExpectQuery(`^SELECT.*users.*`).
+		mock.ExpectQuery(testSelectQueryPattern).
 			WithArgs(userId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
@@ -153,19 +220,19 @@ func TestUserRepo_Get(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 
-		assert.Equal(t, name, usr.Name)
-		assert.Equal(t, email, usr.Email)
-		assert.Equal(t, phone, usr.Phone)
+		assert.Equal(t, testUserName, usr.Name)
+		assert.Equal(t, testUserEmail, usr.Email)
+		assert.Equal(t, testUserPhone, usr.Phone)
 		assert.Equal(t, authId, usr.AuthId)
 	})
 
 	t.Run("userNotFound", func(t *testing.T) {
 		// Arrange
-		var userId = uuid.NewV4()
+		userId := uuid.NewV4()
 
-		mock.ExpectQuery(`^SELECT.*users.*`).
+		mock.ExpectQuery(testSelectQueryPattern).
 			WithArgs(userId, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		// Act
 		usr, err := r.Get(userId)
@@ -180,37 +247,19 @@ func TestUserRepo_Get(t *testing.T) {
 }
 
 func TestUserRepo_GetByAuthId(t *testing.T) {
-	var db *extsql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := userdb.NewUserRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("UserFound", func(t *testing.T) {
 		// Arrange
-		const name = "John Doe"
-		const email = "johndoe@example.com"
-		const phone = "00100000000"
-		var userId = uuid.NewV4()
-		var authId = uuid.NewV4()
+		userId := uuid.NewV4()
+		authId := uuid.NewV4()
 
-		rows := sqlmock.NewRows([]string{"id", "name", "email", "phone", "auth_id"}).
-			AddRow(userId, name, email, phone, authId)
+		rows := sqlmock.NewRows(testUserColumns).
+			AddRow(userId, testUserName, testUserEmail, testUserPhone, authId)
 
-		mock.ExpectQuery(`^SELECT.*users.*`).
+		mock.ExpectQuery(testSelectQueryPattern).
 			WithArgs(authId, sqlmock.AnyArg()).
 			WillReturnRows(rows)
 
@@ -224,19 +273,19 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, usr)
 
-		assert.NotNil(t, name, usr.Name)
-		assert.NotNil(t, email, usr.Email)
-		assert.NotNil(t, phone, usr.Phone)
-		assert.NotNil(t, authId, usr.AuthId)
+		assert.Equal(t, testUserName, usr.Name)
+		assert.Equal(t, testUserEmail, usr.Email)
+		assert.Equal(t, testUserPhone, usr.Phone)
+		assert.Equal(t, authId, usr.AuthId)
 	})
 
 	t.Run("userNotFound", func(t *testing.T) {
 		// Arrange
-		var authId = uuid.NewV4()
+		authId := uuid.NewV4()
 
-		mock.ExpectQuery(`^SELECT.*users.*`).
+		mock.ExpectQuery(testSelectQueryPattern).
 			WithArgs(authId, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		// Act
 		usr, err := r.GetByAuthId(authId)
@@ -250,144 +299,25 @@ func TestUserRepo_GetByAuthId(t *testing.T) {
 	})
 }
 
-// func TestUserRepo_Update(t *testing.T) {
-// t.Run("UserFound", func(t *testing.T) {
-// var db *extsql.DB
-
-// const name = "John Doe"
-// const email = "johndoe@example.com"
-// const phone = "00100000000"
-// var authId = uuid.NewV4()
-
-// var userId = uuid.NewV4()
-
-// usr := &userdb.User{
-// Id:     userId,
-// Name:   "Fox Doe",
-// Email:  "foxdoe@example.com",
-// Phone:  "00200000000",
-// AuthId: uuid.NewV4(),
-// }
-
-// db, mock, err := sqlmock.New() // mock sql.DB
-// assert.NoError(t, err)
-
-// rows := sqlmock.NewRows([]string{"id", "name", "email", "phone", "auth_id"}).
-// AddRow(userId, name, email, phone, authId)
-
-// mock.ExpectBegin()
-
-// mock.ExpectQuery(`^SELECT.*users.*`).
-// WithArgs(userId).
-// WillReturnRows(rows)
-
-// mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
-// WithArgs(usr.Name, usr.Email, usr.Phone, usr.AuthId,
-// sqlmock.AnyArg(), usr.Id, usr.Id).
-// WillReturnResult(sqlmock.NewResult(1, 1))
-
-// mock.ExpectCommit()
-
-// dialector := postgres.New(postgres.Config{
-// DSN:                  "sqlmock_db_0",
-// DriverName:           "postgres",
-// Conn:                 db,
-// PreferSimpleProtocol: true,
-// })
-
-// gdb, err := gorm.Open(dialector, &gorm.Config{})
-// assert.NoError(t, err)
-
-// r := userdb.NewUserRepo(&UkamaDbMock{
-// GormDb: gdb,
-// })
-
-// assert.NoError(t, err)
-
-// // Act
-// err = r.Update(usr, nil)
-
-// // Assert
-// assert.NoError(t, err)
-
-// err = mock.ExpectationsWereMet()
-// assert.NoError(t, err)
-// })
-
-// // t.Run("UserNotFound", func(t *testing.T) {
-// // var db *extsql.DB
-
-// // var userId = uuid.NewV4()
-
-// // db, mock, err := sqlmock.New() // mock sql.DB
-// // assert.NoError(t, err)
-
-// // mock.ExpectBegin()
-
-// // mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
-// // WithArgs(sqlmock.AnyArg(), userId).
-// // WillReturnError(sql.ErrNoRows)
-
-// // dialector := postgres.New(postgres.Config{
-// // DSN:                  "sqlmock_db_0",
-// // DriverName:           "postgres",
-// // Conn:                 db,
-// // PreferSimpleProtocol: true,
-// // })
-
-// // gdb, err := gorm.Open(dialector, &gorm.Config{})
-// // assert.NoError(t, err)
-
-// // r := userdb.NewUserRepo(&UkamaDbMock{
-// // GormDb: gdb,
-// // })
-
-// // assert.NoError(t, err)
-
-// // // Act
-// // err = r.Delete(userId, nil)
-
-// // // Assert
-// // assert.Error(t, err)
-
-// // err = mock.ExpectationsWereMet()
-// // assert.NoError(t, err)
-// // })
-// }
-
 func TestUserRepo_Delete(t *testing.T) {
-	var db *extsql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := userdb.NewUserRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("UserFound", func(t *testing.T) {
-		var userId = uuid.NewV4()
+		// Arrange
+		userId := uuid.NewV4()
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
+		mock.ExpectExec(regexp.QuoteMeta(testUpdateQueryPattern)).
 			WithArgs(sqlmock.AnyArg(), userId).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+			WillReturnResult(sqlmock.NewResult(testMockResultLastInsertId, testMockResultRowsAffected))
 
 		mock.ExpectCommit()
 
 		// Act
-		err = r.Delete(userId, nil)
+		err := r.Delete(userId, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -397,16 +327,39 @@ func TestUserRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		var userId = uuid.NewV4()
+		// Arrange
+		userId := uuid.NewV4()
 
 		mock.ExpectBegin()
 
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "users" SET`)).
+		mock.ExpectExec(regexp.QuoteMeta(testUpdateQueryPattern)).
 			WithArgs(sqlmock.AnyArg(), userId).
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		// Act
-		err = r.Delete(userId, nil)
+		err := r.Delete(userId, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("DeleteUserDatabaseError", func(t *testing.T) {
+		// Arrange
+		userId := uuid.NewV4()
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(testUpdateQueryPattern)).
+			WithArgs(sqlmock.AnyArg(), userId).
+			WillReturnError(extsql.ErrConnDone)
+
+		mock.ExpectRollback()
+
+		// Act
+		err := r.Delete(userId, nil)
 
 		// Assert
 		assert.Error(t, err)
@@ -417,38 +370,22 @@ func TestUserRepo_Delete(t *testing.T) {
 }
 
 func TestUserRepo_GetUserCount(t *testing.T) {
-	var db *extsql.DB
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := userdb.NewUserRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
 
 	t.Run("UserFound", func(t *testing.T) {
 		// Arrange
+		rowsCount1 := sqlmock.NewRows(testCountColumn).
+			AddRow(testActiveUserCount)
 
-		rowsCount1 := sqlmock.NewRows([]string{"count"}).
-			AddRow(2)
+		rowsCount2 := sqlmock.NewRows(testCountColumn).
+			AddRow(testInactiveUserCount)
 
-		rowsCount2 := sqlmock.NewRows([]string{"count"}).
-			AddRow(1)
-
-		mock.ExpectQuery(`^SELECT count(\\*).*users.*`).
+		mock.ExpectQuery(testCountQueryPattern).
 			WillReturnRows(rowsCount1)
 
-		mock.ExpectQuery(`^SELECT count(\\*).*users.*WHERE.*`).
+		mock.ExpectQuery(testCountWhereQueryPattern).
 			WillReturnRows(rowsCount2)
 
 		// Act
@@ -459,7 +396,180 @@ func TestUserRepo_GetUserCount(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 
-		assert.Equal(t, int64(2), activeUsr)
-		assert.Equal(t, int64(1), inactiveUsr)
+		assert.Equal(t, testActiveUserCount, activeUsr)
+		assert.Equal(t, testInactiveUserCount, inactiveUsr)
 	})
+
+	t.Run("GetUserCountWithZeroUsers", func(t *testing.T) {
+		// Arrange
+		zeroCount := int64(0)
+		rowsCount1 := sqlmock.NewRows(testCountColumn).
+			AddRow(zeroCount)
+
+		rowsCount2 := sqlmock.NewRows(testCountColumn).
+			AddRow(zeroCount)
+
+		mock.ExpectQuery(testCountQueryPattern).
+			WillReturnRows(rowsCount1)
+
+		mock.ExpectQuery(testCountWhereQueryPattern).
+			WillReturnRows(rowsCount2)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetUserCount()
+		assert.NoError(t, err)
+
+		// Assert
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		assert.Equal(t, zeroCount, activeUsr)
+		assert.Equal(t, zeroCount, inactiveUsr)
+	})
+
+	t.Run("GetUserCountDatabaseError", func(t *testing.T) {
+		// Arrange
+		mock.ExpectQuery(testCountQueryPattern).
+			WillReturnError(extsql.ErrConnDone)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetUserCount()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, int64(0), activeUsr)
+		assert.Equal(t, int64(0), inactiveUsr)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("GetUserCountSecondQueryError", func(t *testing.T) {
+		// Arrange
+		rowsCount1 := sqlmock.NewRows(testCountColumn).
+			AddRow(testActiveUserCount)
+
+		mock.ExpectQuery(testCountQueryPattern).
+			WillReturnRows(rowsCount1)
+
+		mock.ExpectQuery(testCountWhereQueryPattern).
+			WillReturnError(extsql.ErrConnDone)
+
+		// Act
+		activeUsr, inactiveUsr, err := r.GetUserCount()
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, int64(0), activeUsr)
+		assert.Equal(t, int64(0), inactiveUsr)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
+
+func TestUserRepo_GetByEmail(t *testing.T) {
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	t.Run("UserFound", func(t *testing.T) {
+		// Arrange
+		userId := uuid.NewV4()
+		authId := uuid.NewV4()
+
+		rows := sqlmock.NewRows(testUserColumns).
+			AddRow(userId, testUserName, testUserEmail, testUserPhone, authId)
+
+		mock.ExpectQuery(testSelectQueryPattern).
+			WithArgs(testUserEmail, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		// Act
+		usr, err := r.GetByEmail(testUserEmail)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, usr)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+
+		assert.Equal(t, testUserName, usr.Name)
+		assert.Equal(t, testUserEmail, usr.Email)
+		assert.Equal(t, testUserPhone, usr.Phone)
+		assert.Equal(t, authId, usr.AuthId)
+	})
+
+	t.Run("userNotFound", func(t *testing.T) {
+		// Arrange
+		mock.ExpectQuery(testSelectQueryPattern).
+			WithArgs(testUserEmail2, sqlmock.AnyArg()).
+			WillReturnError(extsql.ErrNoRows)
+
+		// Act
+		usr, err := r.GetByEmail(testUserEmail2)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Nil(t, usr)
+	})
+}
+
+func TestUserRepo_Update(t *testing.T) {
+	// Arrange
+	mock, r, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	t.Run("UserUpdated", func(t *testing.T) {
+		// Arrange
+		userId := uuid.NewV4()
+		authId := uuid.NewV4()
+		user := createTestUserWithData(userId, authId, testUpdatedName, testUpdatedEmail, testUpdatedPhone)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`UPDATE "users" SET`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), userId, userId).
+			WillReturnRows(sqlmock.NewRows(testUserColumns).
+				AddRow(userId, testUpdatedName, testUpdatedEmail, testUpdatedPhone, authId))
+
+		mock.ExpectCommit()
+
+		// Act
+		err := r.Update(&user, nil)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("UserNotFound", func(t *testing.T) {
+		// Arrange
+		userId := uuid.NewV4()
+		authId := uuid.NewV4()
+		user := createTestUserWithData(userId, authId, testUpdatedName, testUpdatedEmail, testUpdatedPhone)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`UPDATE "users" SET`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), userId, userId).
+			WillReturnRows(sqlmock.NewRows(testUserColumns)) // Empty rows
+
+		mock.ExpectRollback()
+		// Act
+		err := r.Update(&user, nil)
+
+		// Assert
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
 }
