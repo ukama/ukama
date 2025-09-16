@@ -466,10 +466,10 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 
 func TestSimManagerServer_GetSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -502,10 +502,10 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 	})
 
 	t.Run("AgentFactoryFailure", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -530,10 +530,10 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 	})
 
 	t.Run("AgentAdapterFailure", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -564,9 +564,9 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		var simId = uuid.Nil
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.Nil
 
 		simRepo.On("Get", simId).Return(nil, gorm.ErrRecordNotFound).Once()
 
@@ -581,9 +581,9 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 	})
 
 	t.Run("SimUUIDInvalid", func(t *testing.T) {
-		var simId = "1"
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := "1"
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -598,10 +598,10 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 func TestSimManagerServer_GetUsages(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -635,9 +635,9 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		var simId = uuid.Nil
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.Nil
 
 		simRepo.On("Get", simId).Return(nil, gorm.ErrRecordNotFound).Once()
 
@@ -654,9 +654,9 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 	})
 
 	t.Run("SimUUIDInvalid", func(t *testing.T) {
-		var simId = "1"
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := "1"
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -714,10 +714,10 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 
 func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
-		var subscriberId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.NewV4()
+		subscriberId := uuid.NewV4()
 
 		simRepo.On("GetBySubscriber", subscriberId).Return(
 			[]sims.Sim{
@@ -739,9 +739,9 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 	})
 
 	t.Run("UnexpectedError", func(t *testing.T) {
-		var subscriberId = uuid.Nil
-
 		simRepo := &mocks.SimRepo{}
+
+		subscriberId := uuid.Nil
 
 		simRepo.On("GetBySubscriber", subscriberId).Return(
 			nil, errors.New("some unexpected error has occurred")).Once()
@@ -757,9 +757,9 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 	})
 
 	t.Run("SubscriberUUIDInvalid", func(t *testing.T) {
-		var subscriberId = "1"
-
 		simRepo := &mocks.SimRepo{}
+
+		subscriberId := "1"
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -775,10 +775,10 @@ func TestSimManagerServer_GetSimsBySubscriber(t *testing.T) {
 
 func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 	t.Run("NetworkFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.NewV4()
+		networkId := uuid.NewV4()
 
 		simRepo.On("GetByNetwork", networkId).Return(
 			[]sims.Sim{
@@ -800,9 +800,9 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 	})
 
 	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
-		var networkId = uuid.Nil
-
 		simRepo := &mocks.SimRepo{}
+
+		networkId := uuid.Nil
 
 		simRepo.On("GetByNetwork", networkId).Return(
 			nil, errors.New("some unexpected error has occurred")).Once()
@@ -818,9 +818,9 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 	})
 
 	t.Run("NetworkUUIDInvalid", func(t *testing.T) {
-		var networkId = "1"
-
 		simRepo := &mocks.SimRepo{}
+
+		networkId := "1"
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -835,10 +835,10 @@ func TestSimManagerServer_GetSimsByNetwork(t *testing.T) {
 
 func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
 
 		packageRepo.On("GetBySim", simId).Return(
 			[]sims.Package{
@@ -861,9 +861,9 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 	})
 
 	t.Run("SomeUnexpectedErrorAsOccurred", func(t *testing.T) {
-		var simId = uuid.Nil
-
 		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.Nil
 
 		packageRepo.On("GetBySim", simId).Return(
 			nil, errors.New("some unexpected error has occurred")).Once()
@@ -880,9 +880,9 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 	})
 
 	t.Run("SimUUIDInvalid", func(t *testing.T) {
-		var simId = "1"
-
 		packageRepo := &mocks.PackageRepo{}
+
+		simId := "1"
 
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -898,11 +898,6 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 
 func TestSimManagerServer_AllocateSim(t *testing.T) {
 	t.Run("SimAndPackageFound", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-		var simPackageIDString = "00000000-0000-0000-0000-000000000000"
-		var OrgId = uuid.NewV4()
 
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
@@ -915,6 +910,12 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		userClient := &cmocks.UserClient{}
 		mailerClient := &cmocks.MailerClient{}
 		agentFactory := &mocks.AgentFactory{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		simPackageIDString := "00000000-0000-0000-0000-000000000000"
+		orgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1012,10 +1013,10 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		orgClient.On("Get", OrgName).
 			Return(&cnuc.OrgInfo{
 				Name:  OrgName,
-				Owner: OrgId.String(),
+				Owner: orgId.String(),
 			}, nil).Once()
 
-		userClient.On("GetById", OrgId.String()).
+		userClient.On("GetById", orgId.String()).
 			Return(&cnuc.UserInfo{
 				Name: "test-user",
 			}, nil).Once()
@@ -1031,7 +1032,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		})).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, agentFactory,
-			packageClient, subscriberService, simPoolService, "", msgbusClient, OrgId.String(), "",
+			packageClient, subscriberService, simPoolService, "", msgbusClient, orgId.String(), "",
 			mailerClient, netClient, orgClient, userClient)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
@@ -1056,14 +1057,14 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("SimTokenNotValid", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-		var OrgId = uuid.NewV4()
-
 		simPoolService := &mocks.SimPoolClientProvider{}
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		OrgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1120,14 +1121,14 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("SimpoolServiceClientNotFound", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-		var OrgId = uuid.NewV4()
-
 		simPoolService := &mocks.SimPoolClientProvider{}
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		OrgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1181,11 +1182,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("SubscriberNotRegisteredOnProvidedNetwork", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1220,13 +1221,13 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("OrgPackageNoMoreActive", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-		var orgId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		orgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1271,13 +1272,13 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("PackageSimtypeAndProvidedSimtypeMismatch", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-		var orgId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		orgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1323,12 +1324,12 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("PackageNotFound", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1368,10 +1369,10 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("PackageIdNotValid", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1406,11 +1407,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("SubscriberInfoNotFound", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1439,14 +1440,14 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("SubscriberServiceClientNotFound", func(t *testing.T) {
-		var subscriberId = uuid.NewV4()
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
-
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
 		subscriberService.On("GetClient").
-			Return(nil, errors.New("failed to get subscriber sercice client"))
+			Return(nil, errors.New("failed to get subscriber service client"))
 
 		s := server.NewSimManagerServer(OrgName, nil, nil, nil,
 			nil, subscriberService, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -1466,8 +1467,8 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 
 	t.Run("InvalidSubscriberId", func(t *testing.T) {
-		var networkId = uuid.NewV4()
-		var packageId = uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
 
 		s := server.NewSimManagerServer(OrgName, nil, nil, nil,
 			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -1487,18 +1488,20 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 
 func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 	t.Run("SimAndPackageFound", func(t *testing.T) {
-		var packageId = uuid.NewV4()
-		var simId = uuid.NewV4()
-
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		packageId := uuid.NewV4()
+		simId := uuid.NewV4()
+
 		simd := &sims.Sim{Id: simId,
 			IsPhysical: false,
 			Status:     ukama.SimStatusActive,
 			Type:       ukama.SimTypeTest,
 		}
+
 		simRepo.On("Get", simId).
 			Return(simd, nil).
 			Once()
@@ -1571,10 +1574,10 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 	})
 
 	t.Run("SimStatusInvalid", func(t *testing.T) {
-		var packageId = uuid.NewV4()
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.NewV4()
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -1659,11 +1662,11 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 	})
 
 	t.Run("PackageFetchFailure", func(t *testing.T) {
-		var packageId = uuid.NewV4()
-		var simId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.NewV4()
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{
@@ -1691,11 +1694,11 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 	})
 
 	t.Run("SimIdAndPackageSimIdMismatch", func(t *testing.T) {
-		var packageId = uuid.NewV4()
-		var simId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.NewV4()
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -1727,11 +1730,11 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 	})
 
 	t.Run("PackageAlreadyExpired", func(t *testing.T) {
-		var packageId = uuid.NewV4()
-		var simId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.NewV4()
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2090,11 +2093,11 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 	})
 
 	t.Run("PackageDeleteError", func(t *testing.T) {
-		var packageId = uuid.Nil
-		var simId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.Nil
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2126,9 +2129,9 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 	})
 
 	t.Run("PackageUUIDInvalid", func(t *testing.T) {
-		var packageId = "1"
-
 		packageRepo := &mocks.PackageRepo{}
+
+		packageId := "1"
 
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
@@ -2142,12 +2145,11 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 	})
 
 	t.Run("SimUUIDMismatch", func(t *testing.T) {
-		var packageId = uuid.Nil
-		var simId = uuid.NewV4()
-
 		packageRepo := &mocks.PackageRepo{}
-
 		simRepo := &mocks.SimRepo{}
+
+		packageId := uuid.Nil
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2234,11 +2236,11 @@ func TestSimManagerServer_TerminatePackageForSim(t *testing.T) {
 
 func TestSimManagerServer_TerminateSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var simId = uuid.NewV4()
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2284,9 +2286,9 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 	})
 
 	t.Run("SimStatusInvalid", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2311,10 +2313,10 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 	})
 
 	t.Run("SimTypeNotSupported", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
@@ -2344,10 +2346,10 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 	})
 
 	t.Run("SimAgentFailToTerminate", func(t *testing.T) {
-		var simId = uuid.NewV4()
-
 		simRepo := &mocks.SimRepo{}
 		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
 
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
