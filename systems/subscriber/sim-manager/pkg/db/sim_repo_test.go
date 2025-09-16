@@ -156,24 +156,24 @@ func TestSimRepo_Add(t *testing.T) {
 func TestSimRepo_Get(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
-			AddRow(simID, netID, subID)
+			AddRow(simId, netId, subId)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(simID, sqlmock.AnyArg()).
+			WithArgs(simId, sqlmock.AnyArg()).
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -181,22 +181,22 @@ func TestSimRepo_Get(t *testing.T) {
 		})
 
 		// Act
-		sim, err := r.Get(simID)
+		sim, err := r.Get(simId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, sim)
-		assert.Equal(t, packageID, sim.Package.Id)
+		assert.Equal(t, packageId, sim.Package.Id)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(simID, sqlmock.AnyArg()).
+			WithArgs(simId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -204,7 +204,7 @@ func TestSimRepo_Get(t *testing.T) {
 		})
 
 		// Act
-		sim, err := r.Get(simID)
+		sim, err := r.Get(simId)
 
 		// Assert
 		assert.Error(t, err)
@@ -221,25 +221,25 @@ func TestSimRepo_List(t *testing.T) {
 
 	t.Run("ListAll", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
-			AddRow(simID, netID, subID, testIccid)
+			AddRow(simId, netId, subId, testIccid)
 
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs().
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -258,25 +258,25 @@ func TestSimRepo_List(t *testing.T) {
 
 	t.Run("SimFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
-			AddRow(simID, netID, subID, testIccid)
+			AddRow(simId, netId, subId, testIccid)
 
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs().
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -284,7 +284,7 @@ func TestSimRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List(testIccid, testImsi, subID.String(), netID.String(),
+		list, err := r.List(testIccid, testImsi, subId.String(), netId.String(),
 			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
 
 		// Assert
@@ -295,8 +295,8 @@ func TestSimRepo_List(t *testing.T) {
 
 	t.Run("SimNotFound", func(t *testing.T) {
 		var (
-			netID = uuid.NewV4()
-			subID = uuid.NewV4()
+			netId = uuid.NewV4()
+			subId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
@@ -310,7 +310,7 @@ func TestSimRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List(testIccid, testImsi, subID.String(), netID.String(),
+		list, err := r.List(testIccid, testImsi, subId.String(), netId.String(),
 			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
 
 		// Assert
@@ -325,24 +325,24 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 
 	t.Run("IccidFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id", "iccid"}).
-			AddRow(simID, netID, subID, testIccid)
+			AddRow(simId, netId, subId, testIccid)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
 			WithArgs(testIccid, 1).
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -383,24 +383,24 @@ func TestSimRepo_GetByIccid(t *testing.T) {
 func TestSimRepo_GetBySubscriber(t *testing.T) {
 	t.Run("SubscriberFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
-			AddRow(simID, netID, subID)
+			AddRow(simId, netId, subId)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(subID).
+			WithArgs(subId).
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -408,22 +408,22 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		})
 
 		// Act
-		sims, err := r.GetBySubscriber(subID)
+		sims, err := r.GetBySubscriber(subId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
-		assert.Equal(t, packageID, sims[0].Package.Id)
+		assert.Equal(t, packageId, sims[0].Package.Id)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SubscriberNotFound", func(t *testing.T) {
-		var subID = uuid.NewV4()
+		var subId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(subID).
+			WithArgs(subId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -431,7 +431,7 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 		})
 
 		// Act
-		sims, err := r.GetBySubscriber(subID)
+		sims, err := r.GetBySubscriber(subId)
 
 		// Assert
 		assert.Error(t, err)
@@ -443,24 +443,24 @@ func TestSimRepo_GetBySubscriber(t *testing.T) {
 func TestSimRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			netID     = uuid.NewV4()
-			subID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			netId     = uuid.NewV4()
+			subId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
-			AddRow(simID, netID, subID)
+			AddRow(simId, netId, subId)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(netID).
+			WithArgs(netId).
 			WillReturnRows(simRow)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -468,22 +468,22 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 		})
 
 		// Act
-		sims, err := r.GetByNetwork(netID)
+		sims, err := r.GetByNetwork(netId)
 
 		// Assert
 		assert.NoError(t, err)
 		assert.NotNil(t, sims)
-		assert.Equal(t, packageID, sims[0].Package.Id)
+		assert.Equal(t, packageId, sims[0].Package.Id)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("NetworkNotFound", func(t *testing.T) {
-		var netID = uuid.NewV4()
+		var netId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*sims.*`).
-			WithArgs(netID).
+			WithArgs(netId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -491,7 +491,7 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 		})
 
 		// Act
-		sims, err := r.GetByNetwork(netID)
+		sims, err := r.GetByNetwork(netId)
 
 		// Assert
 		assert.Error(t, err)
@@ -503,20 +503,20 @@ func TestSimRepo_GetByNetwork(t *testing.T) {
 func TestSimRepo_Update(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var (
-			simID = uuid.NewV4()
-			netID = uuid.NewV4()
-			subID = uuid.NewV4()
+			simId = uuid.NewV4()
+			netId = uuid.NewV4()
+			subId = uuid.NewV4()
 		)
 
 		sim := db.Sim{
-			Id:           simID,
-			SubscriberId: subID,
-			NetworkId:    netID,
+			Id:           simId,
+			SubscriberId: subId,
+			NetworkId:    netId,
 		}
 
 		mock, gdb := prepareDb(t)
 		simRow := sqlmock.NewRows([]string{"id", "network_id", "subscriber_id"}).
-			AddRow(simID, netID, subID)
+			AddRow(simId, netId, subId)
 
 		mock.ExpectBegin()
 
@@ -540,15 +540,15 @@ func TestSimRepo_Update(t *testing.T) {
 
 	t.Run("SimNotFound", func(t *testing.T) {
 		var (
-			simID = uuid.NewV4()
-			netID = uuid.NewV4()
-			subID = uuid.NewV4()
+			simId = uuid.NewV4()
+			netId = uuid.NewV4()
+			subId = uuid.NewV4()
 		)
 
 		sim := db.Sim{
-			Id:           simID,
-			SubscriberId: subID,
-			NetworkId:    netID,
+			Id:           simId,
+			SubscriberId: subId,
+			NetworkId:    netId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -573,15 +573,15 @@ func TestSimRepo_Update(t *testing.T) {
 
 	t.Run("SimUpdateError", func(t *testing.T) {
 		var (
-			simID = uuid.NewV4()
-			netID = uuid.NewV4()
-			subID = uuid.NewV4()
+			simId = uuid.NewV4()
+			netId = uuid.NewV4()
+			subId = uuid.NewV4()
 		)
 
 		sim := db.Sim{
-			Id:           simID,
-			SubscriberId: subID,
-			NetworkId:    netID,
+			Id:           simId,
+			SubscriberId: subId,
+			NetworkId:    netId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -606,15 +606,15 @@ func TestSimRepo_Update(t *testing.T) {
 
 	t.Run("SimUpdateNestedFuncError", func(t *testing.T) {
 		var (
-			simID = uuid.NewV4()
-			netID = uuid.NewV4()
-			subID = uuid.NewV4()
+			simId = uuid.NewV4()
+			netId = uuid.NewV4()
+			subId = uuid.NewV4()
 		)
 
 		sim := db.Sim{
-			Id:           simID,
-			SubscriberId: subID,
-			NetworkId:    netID,
+			Id:           simId,
+			SubscriberId: subId,
+			NetworkId:    netId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -634,14 +634,14 @@ func TestSimRepo_Update(t *testing.T) {
 
 func TestSimRepo_Delete(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sims" SET`)).
-			WithArgs(sqlmock.AnyArg(), simID).
+			WithArgs(sqlmock.AnyArg(), simId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -651,7 +651,7 @@ func TestSimRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(simID, nil)
+		err := r.Delete(simId, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -659,13 +659,13 @@ func TestSimRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("SimDeleteError", func(t *testing.T) {
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sims" SET`)).
-			WithArgs(sqlmock.AnyArg(), simID).
+			WithArgs(sqlmock.AnyArg(), simId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -673,7 +673,7 @@ func TestSimRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(simID,
+		err := r.Delete(simId,
 			func(uuid.UUID, *gorm.DB) error { return nil })
 
 		// Assert
@@ -682,13 +682,13 @@ func TestSimRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("SimDeleteNetedFuncError", func(t *testing.T) {
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "sims" SET`)).
-			WithArgs(sqlmock.AnyArg(), simID).
+			WithArgs(sqlmock.AnyArg(), simId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		r := db.NewSimRepo(&UkamaDbMock{
@@ -696,7 +696,7 @@ func TestSimRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(simID,
+		err := r.Delete(simId,
 			func(uuid.UUID, *gorm.DB) error {
 				return errors.
 					New("some error occurred")

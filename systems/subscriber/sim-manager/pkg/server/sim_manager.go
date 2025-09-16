@@ -760,7 +760,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 
 	if pckg.SimId.String() != req.GetSimId() {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
 			req.GetPackageId(), req.GetSimId())
 
 	}
@@ -1180,7 +1180,7 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 
 	if pkg.SimId.String() != reqSimId {
 		return status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
 			reqPackageId, reqSimId)
 	}
 
@@ -1284,7 +1284,7 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 
 	if pckg.SimId.String() != reqSimId {
 		return status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
 			reqPackageId, reqSimId)
 	}
 

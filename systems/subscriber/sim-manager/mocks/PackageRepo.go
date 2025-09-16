@@ -34,9 +34,9 @@ func (_m *PackageRepo) Add(pkg *db.Package, nestedFunc func(*db.Package, *gorm.D
 	return r0
 }
 
-// Delete provides a mock function with given fields: packageID, nestedFunc
-func (_m *PackageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
-	ret := _m.Called(packageID, nestedFunc)
+// Delete provides a mock function with given fields: packageId, nestedFunc
+func (_m *PackageRepo) Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	ret := _m.Called(packageId, nestedFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
@@ -44,7 +44,7 @@ func (_m *PackageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *g
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID, func(uuid.UUID, *gorm.DB) error) error); ok {
-		r0 = rf(packageID, nestedFunc)
+		r0 = rf(packageId, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -52,9 +52,9 @@ func (_m *PackageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *g
 	return r0
 }
 
-// Get provides a mock function with given fields: packageID
-func (_m *PackageRepo) Get(packageID uuid.UUID) (*db.Package, error) {
-	ret := _m.Called(packageID)
+// Get provides a mock function with given fields: packageId
+func (_m *PackageRepo) Get(packageId uuid.UUID) (*db.Package, error) {
+	ret := _m.Called(packageId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -63,10 +63,10 @@ func (_m *PackageRepo) Get(packageID uuid.UUID) (*db.Package, error) {
 	var r0 *db.Package
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Package, error)); ok {
-		return rf(packageID)
+		return rf(packageId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Package); ok {
-		r0 = rf(packageID)
+		r0 = rf(packageId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Package)
@@ -74,7 +74,7 @@ func (_m *PackageRepo) Get(packageID uuid.UUID) (*db.Package, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(packageID)
+		r1 = rf(packageId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -82,9 +82,9 @@ func (_m *PackageRepo) Get(packageID uuid.UUID) (*db.Package, error) {
 	return r0, r1
 }
 
-// GetBySim provides a mock function with given fields: simID
-func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
-	ret := _m.Called(simID)
+// GetBySim provides a mock function with given fields: simId
+func (_m *PackageRepo) GetBySim(simId uuid.UUID) ([]db.Package, error) {
+	ret := _m.Called(simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBySim")
@@ -93,10 +93,10 @@ func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
 	var r0 []db.Package
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Package, error)); ok {
-		return rf(simID)
+		return rf(simId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Package); ok {
-		r0 = rf(simID)
+		r0 = rf(simId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Package)
@@ -104,7 +104,7 @@ func (_m *PackageRepo) GetBySim(simID uuid.UUID) ([]db.Package, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(simID)
+		r1 = rf(simId)
 	} else {
 		r1 = ret.Error(1)
 	}

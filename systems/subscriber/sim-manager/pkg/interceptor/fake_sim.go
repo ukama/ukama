@@ -83,8 +83,8 @@ func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any
 	return rpcHandler(ctx, req)
 }
 
-func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simID string) (any, error) {
-	fakeIccid, err := utils.GetIccidFromTestUUID(simID)
+func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simId string) (any, error) {
+	fakeIccid, err := utils.GetIccidFromTestUUID(simId)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simID string) (a
 
 	if simInfo, ok := resp.(*tapb.GetSimResponse); ok {
 		return &pb.GetSimResponse{Sim: &pb.Sim{
-			Id:     simID,
+			Id:     simId,
 			Iccid:  simInfo.SimInfo.Iccid,
 			Status: simInfo.SimInfo.Status,
 			Imsi:   simInfo.SimInfo.Imsi,
@@ -106,8 +106,8 @@ func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simID string) (a
 	return nil, status.Errorf(codes.Internal, "an unexpected error has occurred.")
 }
 
-func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simID, simStatus string) (any, error) {
-	fakeIccid, err := utils.GetIccidFromTestUUID(simID)
+func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simId, simStatus string) (any, error) {
+	fakeIccid, err := utils.GetIccidFromTestUUID(simId)
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +126,8 @@ func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simID, 
 	}
 }
 
-func (f *FakeSimInterceptor) deleteSimHandler(ctx context.Context, simID string) (any, error) {
-	fakeIccid, err := utils.GetIccidFromTestUUID(simID)
+func (f *FakeSimInterceptor) deleteSimHandler(ctx context.Context, simId string) (any, error) {
+	fakeIccid, err := utils.GetIccidFromTestUUID(simId)
 	if err != nil {
 		return nil, err
 	}

@@ -114,17 +114,17 @@ func TestPackageRepo_Add(t *testing.T) {
 func TestPackageRepo_Get(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 
 		row := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packageID, sqlmock.AnyArg()).
+			WithArgs(packageId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -132,7 +132,7 @@ func TestPackageRepo_Get(t *testing.T) {
 		})
 
 		// Act
-		pkg, err := r.Get(packageID)
+		pkg, err := r.Get(packageId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -141,12 +141,12 @@ func TestPackageRepo_Get(t *testing.T) {
 	})
 
 	t.Run("PackageNotFound", func(t *testing.T) {
-		var packageID = uuid.NewV4()
+		var packageId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packageID, sqlmock.AnyArg()).
+			WithArgs(packageId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -154,7 +154,7 @@ func TestPackageRepo_Get(t *testing.T) {
 		})
 
 		// Act
-		pkg, err := r.Get(packageID)
+		pkg, err := r.Get(packageId)
 
 		// Assert
 		assert.Error(t, err)
@@ -171,13 +171,13 @@ func TestPackageRepo_List(t *testing.T) {
 
 	t.Run("ListAll", func(t *testing.T) {
 		var (
-			packageID = uuid.NewV4()
-			simID     = uuid.NewV4()
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs().
@@ -198,14 +198,14 @@ func TestPackageRepo_List(t *testing.T) {
 
 	t.Run("PackageFound", func(t *testing.T) {
 		var (
-			packageID  = uuid.NewV4()
-			simID      = uuid.NewV4()
-			dataplanID = uuid.NewV4()
+			packageId  = uuid.NewV4()
+			simId      = uuid.NewV4()
+			dataplanId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
 			WithArgs().
@@ -216,7 +216,7 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List(simID.String(), dataplanID.String(), from, to, from, to,
+		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
 			true, true, 1, true)
 
 		// Assert
@@ -227,8 +227,8 @@ func TestPackageRepo_List(t *testing.T) {
 
 	t.Run("PackageNotFound", func(t *testing.T) {
 		var (
-			simID      = uuid.NewV4()
-			dataplanID = uuid.NewV4()
+			simId      = uuid.NewV4()
+			dataplanId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
@@ -242,7 +242,7 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List(simID.String(), dataplanID.String(), from, to, from, to,
+		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
 			true, true, 1, true)
 
 		// Assert
@@ -255,16 +255,16 @@ func TestPackageRepo_List(t *testing.T) {
 func TestPackageRepo_GetBySim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var (
-			simID     = uuid.NewV4()
-			packageID = uuid.NewV4()
+			simId     = uuid.NewV4()
+			packageId = uuid.NewV4()
 		)
 
 		mock, gdb := prepareDb(t)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -272,7 +272,7 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 		})
 
 		// Act
-		packages, err := r.GetBySim(simID)
+		packages, err := r.GetBySim(simId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -281,12 +281,12 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -294,7 +294,7 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 		})
 
 		// Act
-		packages, err := r.GetBySim(simID)
+		packages, err := r.GetBySim(simId)
 
 		// Assert
 		assert.Error(t, err)
@@ -306,19 +306,19 @@ func TestPackageRepo_GetBySim(t *testing.T) {
 func TestPackageRepo_Update(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
 		var (
-			packageID = uuid.NewV4()
-			simID     = uuid.NewV4()
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
 		)
 
 		pckg := db.Package{
-			Id:    packageID,
-			SimId: simID,
+			Id:    packageId,
+			SimId: simId,
 		}
 
 		mock, gdb := prepareDb(t)
 
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectBegin()
 
@@ -342,13 +342,13 @@ func TestPackageRepo_Update(t *testing.T) {
 
 	t.Run("PackageNotFound", func(t *testing.T) {
 		var (
-			packageID = uuid.NewV4()
-			simID     = uuid.NewV4()
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
 		)
 
 		pckg := db.Package{
-			Id:    packageID,
-			SimId: simID,
+			Id:    packageId,
+			SimId: simId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -373,13 +373,13 @@ func TestPackageRepo_Update(t *testing.T) {
 
 	t.Run("PackageUpdateError", func(t *testing.T) {
 		var (
-			packageID = uuid.NewV4()
-			simID     = uuid.NewV4()
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
 		)
 
 		pckg := db.Package{
-			Id:    packageID,
-			SimId: simID,
+			Id:    packageId,
+			SimId: simId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -404,13 +404,13 @@ func TestPackageRepo_Update(t *testing.T) {
 
 	t.Run("PackageUpdateNestedFuncError", func(t *testing.T) {
 		var (
-			packageID = uuid.NewV4()
-			simID     = uuid.NewV4()
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
 		)
 
 		pckg := db.Package{
-			Id:    packageID,
-			SimId: simID,
+			Id:    packageId,
+			SimId: simId,
 		}
 
 		mock, gdb := prepareDb(t)
@@ -430,14 +430,14 @@ func TestPackageRepo_Update(t *testing.T) {
 
 func TestPackageRepo_Delete(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
-		var packageID = uuid.NewV4()
+		var packageId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageID).
+			WithArgs(packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -447,7 +447,7 @@ func TestPackageRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(packageID, nil)
+		err := r.Delete(packageId, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -455,14 +455,14 @@ func TestPackageRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("PackageDeleteError", func(t *testing.T) {
-		var packageID = uuid.NewV4()
+		var packageId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageID).
+			WithArgs(packageId).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -470,7 +470,7 @@ func TestPackageRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(packageID,
+		err := r.Delete(packageId,
 			func(uuid.UUID, *gorm.DB) error { return nil })
 
 		// Assert
@@ -479,13 +479,13 @@ func TestPackageRepo_Delete(t *testing.T) {
 	})
 
 	t.Run("PackageDeleteNetedFuncError", func(t *testing.T) {
-		var packageID = uuid.NewV4()
+		var packageId = uuid.NewV4()
 
 		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageID).
+			WithArgs(packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -493,7 +493,7 @@ func TestPackageRepo_Delete(t *testing.T) {
 		})
 
 		// Act
-		err := r.Delete(packageID,
+		err := r.Delete(packageId,
 			func(uuid.UUID, *gorm.DB) error {
 				return errors.
 					New("some error occurred")
