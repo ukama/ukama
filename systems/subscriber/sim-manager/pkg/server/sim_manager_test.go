@@ -1064,7 +1064,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
 		packageId := uuid.NewV4()
-		OrgId := uuid.NewV4()
+		orgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1102,7 +1102,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			ReturnArguments.Get(0).(*splmocks.SimServiceClient)
 
 		s := server.NewSimManagerServer(OrgName, nil, nil, nil,
-			packageClient, subscriberService, simPoolService, "", nil, OrgId.String(), "",
+			packageClient, subscriberService, simPoolService, "", nil, orgId.String(), "",
 			nil, nil, nil, nil)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
@@ -1128,7 +1128,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		subscriberId := uuid.NewV4()
 		networkId := uuid.NewV4()
 		packageId := uuid.NewV4()
-		OrgId := uuid.NewV4()
+		orgId := uuid.NewV4()
 
 		subscriberClient := subscriberService.On("GetClient").
 			Return(&subsmocks.RegistryServiceClient{}, nil).
@@ -1164,7 +1164,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			Return(nil, errors.New("failed to get sim pool service client"))
 
 		s := server.NewSimManagerServer(OrgName, nil, nil, nil,
-			packageClient, subscriberService, simPoolService, "", nil, OrgId.String(), "",
+			packageClient, subscriberService, simPoolService, "", nil, orgId.String(), "",
 			nil, nil, nil, nil)
 
 		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
