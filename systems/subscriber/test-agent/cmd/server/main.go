@@ -11,23 +11,20 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/num30/config"
+	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/cmd/version"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg"
-
-	generated "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
-
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/server"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	"google.golang.org/grpc"
+	generated "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
 var svcConf = pkg.NewConfig(pkg.ServiceName)
@@ -57,7 +54,7 @@ func initConfig() {
 		// output config in debug mode
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
-			logrus.Infof("Config:\n%s", string(b))
+			log.Infof("Config:\n%s", string(b))
 		}
 	}
 

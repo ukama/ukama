@@ -14,10 +14,13 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/mocks"
-	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/server"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
+
+	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
 func TestTestAgentServer_BindSim(t *testing.T) {
@@ -25,9 +28,8 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -36,7 +38,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 			&storage.SimInfo{
 				Iccid:  iccid,
 				Imsi:   imsi,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -72,9 +74,8 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -82,7 +83,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -102,9 +103,8 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -112,7 +112,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -134,9 +134,8 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -145,7 +144,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 			&storage.SimInfo{
 				Iccid:  iccid,
 				Imsi:   imsi,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -156,7 +155,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, iccid, resp.GetSimInfo().Iccid)
 		assert.Equal(t, imsi, resp.GetSimInfo().Imsi)
-		assert.Equal(t, status, resp.GetSimInfo().Status)
+		assert.Equal(t, ukama.SimStatusInactive.String(), resp.GetSimInfo().Status)
 		store.AssertExpectations(t)
 	})
 
@@ -182,9 +181,8 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -192,7 +190,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -206,7 +204,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, iccid, resp.GetSimInfo().Iccid)
 		assert.Equal(t, imsi, resp.GetSimInfo().Imsi)
-		assert.Equal(t, status, resp.GetSimInfo().Status)
+		assert.Equal(t, ukama.SimStatusInactive.String(), resp.GetSimInfo().Status)
 		store.AssertExpectations(t)
 	})
 
@@ -214,9 +212,8 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		store := &mocks.Storage{}
@@ -224,7 +221,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -245,8 +242,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "922a4f72922a775acd978a75"
-			status = "inactive"
+			iccid = "922a4f72922a775acd978a75"
 		)
 
 		store := &mocks.Storage{}
@@ -254,7 +250,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(nil).Once()
@@ -281,7 +277,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -299,8 +295,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "922a4f72922a775acd978a75"
-			status = "active"
+			iccid = "922a4f72922a775acd978a75"
 		)
 
 		store := &mocks.Storage{}
@@ -308,7 +303,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusActive,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -355,7 +350,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusActive,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(nil).Once()
@@ -373,8 +368,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "50f54f9082fbe245b91924d4"
-			status = "active"
+			iccid = "50f54f9082fbe245b91924d4"
 		)
 
 		store := &mocks.Storage{}
@@ -382,7 +376,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusActive,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -400,8 +394,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "50f54f9082fbe245b91924d4"
-			status = "inactive"
+			iccid = "50f54f9082fbe245b91924d4"
 		)
 
 		store := &mocks.Storage{}
@@ -409,7 +402,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -447,8 +440,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "e828484bac9ca46995e5617e"
-			status = "inactive"
+			iccid = "e828484bac9ca46995e5617e"
 		)
 
 		store := &mocks.Storage{}
@@ -456,7 +448,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		store.On("Delete", iccid, mock.Anything).Return(nil).Once()
@@ -474,8 +466,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "e828484bac9ca46995e5617e"
-			status = "inactive"
+			iccid = "e828484bac9ca46995e5617e"
 		)
 
 		store := &mocks.Storage{}
@@ -483,7 +474,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusInactive,
 			}, nil).Once()
 
 		store.On("Delete", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -501,8 +492,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "e828484bac9ca46995e5617e"
-			status = "active"
+			iccid = "e828484bac9ca46995e5617e"
 		)
 
 		store := &mocks.Storage{}
@@ -510,7 +500,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: status,
+				Status: ukama.SimStatusActive,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
