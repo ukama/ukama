@@ -798,22 +798,6 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 	return &pb.RemovePackageResponse{}, nil
 }
 
-func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
-	if err := activateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
-		return nil, err
-	}
-
-	return &pb.ToggleSimStatusResponse{}, nil
-}
-
-func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
-	if err := deactivateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
-		return nil, err
-	}
-
-	return &pb.ToggleSimStatusResponse{}, nil
-}
-
 func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
 	if err := setActivePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
@@ -828,6 +812,22 @@ func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.T
 	}
 
 	return &pb.TerminatePackageResponse{}, nil
+}
+
+func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+	if err := activateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+	if err := deactivateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
 }
 
 func getSim(simId string, simRepo sims.SimRepo) (*sims.Sim, error) {
@@ -1317,7 +1317,6 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	}
 
 	err = packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
-		// update endDate
 		packageToTerminate.EndDate = time.Now().UTC()
 
 		return nil

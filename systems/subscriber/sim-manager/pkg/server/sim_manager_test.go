@@ -54,7 +54,249 @@ const (
 	cost            = 100.99
 )
 
-func TestSimManagerServer_ListSim(t *testing.T) {
+func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
+	resp := make([]sims.Package, 1)
+
+	t.Run("SimPackagesFound", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		pckgResp := sims.Package{
+			Id:        packageId,
+			SimId:     simId,
+			IsActive:  true,
+			AsExpired: true,
+			PackageId: dataplanId,
+		}
+
+		resp[0] = pckgResp
+
+		packageRepo.On("List", simId.String(), dataplanId.String(), from, to,
+			from, to, true, true, uint32(0), false).Return(resp, nil)
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   from,
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+	})
+
+	t.Run("SimIdNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         "lol",
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   from,
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("DataplanIdNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   from,
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    "lol",
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("FromStartDateNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: "lol",
+			ToStartDate:   to,
+			FromEndDate:   from,
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ToStartDateNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   "lol",
+			FromEndDate:   from,
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("FromEndDateNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   "lol",
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ToDateNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   from,
+			ToEndDate:     "lol",
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ToEndDateNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+		dataplanId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId:         simId.String(),
+			FromStartDate: from,
+			ToStartDate:   to,
+			FromEndDate:   "lol",
+			ToEndDate:     to,
+			IsActive:      true,
+			AsExpired:     true,
+			DataPlanId:    dataplanId.String(),
+			Count:         uint32(0),
+			Sort:          false,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+	t.Run("ListError", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		packageRepo.On("List", simId, "", "", "", "", "", false, false,
+			uint32(0), false).Return(nil, errors.New("package list for sim error"))
+
+		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
+			SimId: simId,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, list)
+	})
+
+}
+
+func TestSimManagerServer_ListSims(t *testing.T) {
 	resp := make([]sims.Sim, 1)
 
 	t.Run("SimFound", func(t *testing.T) {
@@ -257,6 +499,68 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		assert.NotNil(t, simResp)
 		assert.Equal(t, simId.String(), simResp.GetSim().GetId())
 		assert.Equal(t, false, simResp.GetSim().IsPhysical)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("AgentFactoryFailure", func(t *testing.T) {
+		var simId = uuid.NewV4()
+
+		simRepo := &mocks.SimRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{Id: simId,
+				Iccid:      testIccid,
+				Status:     ukama.SimStatusInactive,
+				Type:       ukama.SimTypeTest,
+				IsPhysical: false,
+			}, nil).
+			Once()
+
+		agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(nil, false)
+
+		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+			SimId: simId.String()})
+
+		assert.Error(t, err)
+		assert.Nil(t, simResp)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("AgentAdapterFailure", func(t *testing.T) {
+		var simId = uuid.NewV4()
+
+		simRepo := &mocks.SimRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		sim := simRepo.On("Get", simId).
+			Return(&sims.Sim{Id: simId,
+				Iccid:      testIccid,
+				Status:     ukama.SimStatusInactive,
+				Type:       ukama.SimTypeTest,
+				IsPhysical: false,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("GetSim", mock.Anything,
+			sim.Iccid).Return(nil, errors.New("fail to get sim details from remote agent")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
+			nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+			SimId: simId.String()})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, simResp)
 		simRepo.AssertExpectations(t)
 	})
 
@@ -1236,10 +1540,35 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
+
 		simRepo.AssertExpectations(t)
 		packageRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
 		agentAdapter.AssertExpectations(t)
+	})
+
+	t.Run("SimIdNotValid", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.NewV4()
+		packageID := uuid.NewV4()
+
+		simRepo.On("Get", mock.Anything).
+			Return(nil, errors.New("sim not found")).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo,
+			nil, nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+			SimId:     simId.String(),
+			PackageId: packageID.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
 	})
 
 	t.Run("SimStatusInvalid", func(t *testing.T) {
@@ -1266,6 +1595,100 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimActivePackageStillExists", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		simRepo := &mocks.SimRepo{}
+
+		packageID := uuid.NewV4()
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+				Package: sims.Package{
+					Id: packageID,
+				},
+			}, nil).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+			SimId:     simId.String(),
+			PackageId: packageID.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("PackageIdNotValid", func(t *testing.T) {
+		packageRepo := &mocks.PackageRepo{}
+		simRepo := &mocks.SimRepo{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+			}, nil).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+			SimId:     simId.String(),
+			PackageId: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+	})
+
+	t.Run("PackageFetchFailure", func(t *testing.T) {
+		var packageID = uuid.NewV4()
+		var simId = uuid.NewV4()
+
+		packageRepo := &mocks.PackageRepo{}
+		simRepo := &mocks.SimRepo{}
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+			}, nil).
+			Once()
+
+		packageRepo.On("Get", packageID).Return(nil, errors.New("fail to get package Info")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+			SimId:     simId.String(),
+			PackageId: packageID.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
 	})
 
 	t.Run("SimIdAndPackageSimIdMismatch", func(t *testing.T) {
@@ -1299,6 +1722,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		simRepo.AssertExpectations(t)
 		packageRepo.AssertExpectations(t)
 	})
@@ -1335,19 +1759,303 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Nil(t, resp)
+
 		simRepo.AssertExpectations(t)
 		packageRepo.AssertExpectations(t)
 	})
 }
 
-func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
-	t.Run("PackageFound", func(t *testing.T) {
-		var packageID = uuid.NewV4()
-		var simId = uuid.NewV4()
+func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
+	t.Run("InvalidSimStatus", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("ActiveSimNotFound", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(nil, errors.New("sim not found")).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusActive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("InactiveSimNotFound", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(nil, errors.New("sim not found")).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimAlreadyInactive", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusInactive,
+			}, nil).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("AgentFactoryFailure", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+			}, nil).
+			Once()
+
+		agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(nil, false).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimStatusUpdateFailure", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+			}, nil).
+			Once()
+
+		simRepo.On("Update",
+			&sims.Sim{
+				Id:                 simId,
+				Status:             ukama.SimStatusInactive,
+				DeactivationsCount: uint64(1),
+			},
+			mock.Anything).Return(errors.New("sim status update failure")).Once()
+
+		agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(&mocks.AgentAdapter{}, true).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimAgentFailure", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		sim := simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				Iccid:      testIccid,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+				Type:       ukama.SimTypeTest,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
+
+		simRepo.On("Update",
+			&sims.Sim{
+				Id:                 simId,
+				Status:             ukama.SimStatusInactive,
+				DeactivationsCount: uint64(1),
+			},
+			mock.Anything).Return(nil).Once()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("DeactivateSim", mock.Anything,
+			mock.Anything).Return(errors.New("fail to deactivate sim on remove agent")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, "", nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimDeactivated", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
+		simId := uuid.NewV4()
+
+		sim := simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				Iccid:      testIccid,
+				IsPhysical: false,
+				Status:     ukama.SimStatusActive,
+				Type:       ukama.SimTypeTest,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
+
+		simRepo.On("Update",
+			&sims.Sim{
+				Id:                 simId,
+				Status:             ukama.SimStatusInactive,
+				DeactivationsCount: uint64(1),
+			},
+			mock.Anything).Return(nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]sims.Sim{}, nil).Twice()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		agentAdapter.On("DeactivateSim", mock.Anything,
+			mock.Anything).Return(nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, "", msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusInactive.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+}
+
+func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
+	t.Run("PackageFound", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		packageID := uuid.NewV4()
+		simId := uuid.NewV4()
 
 		packageRepo.On("Get", packageID).Return(
 			&sims.Package{Id: packageID,
@@ -1376,6 +2084,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
+
 		packageRepo.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
 		simRepo.AssertExpectations(t)
@@ -1469,72 +2178,61 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 }
 
 func TestSimManagerServer_AddPackageForSim(t *testing.T) {
-	// t.Run("PackageValidityPeriodOverlapsWithExistingPackages", func(t *testing.T) {
-	// var simId = uuid.NewV4()
-	// var packageID = uuid.NewV4()
-	// var orgID = uuid.NewV4()
-	// startDate := time.Now().UTC().AddDate(0, 0, 1) // tomorrow
+	t.Run("PackageStartDateNotValid", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		packageClient := &cmocks.PackageClient{}
 
-	// simRepo := &mocks.SimRepo{}
-	// packageRepo := &mocks.PackageRepo{}
-	// packageClient := &cmocks.PackageClient{}
+		simId := uuid.NewV4()
+		packageID := uuid.NewV4()
+		orgID := uuid.NewV4()
+		startDate := "lol"
 
-	// sim := simRepo.On("Get", simId, mock.Anything).
-	// Return(&db.Sim{Id: simId,
-	// Iccid:      testIccid,
-	// Status:     ukama.SimStatusInactive,
-	// Type:       ukama.SimTypeTest,
-	// IsPhysical: false,
-	// }, nil).
-	// Once().
-	// ReturnArguments.Get(0).(*db.Sim)
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
+			nil, nil, "", nil, orgID.String(), "", nil, nil, nil, nil)
 
-	// packageClient.On("Get", packageID.String()).
-	// Return(&cdplan.PackageInfo{
-	// Id:       packageID.String(),
-	// OrgId:    orgID.String(),
-	// IsActive: true,
-	// Duration: 3600,
-	// SimType:  simTypeTest,
-	// }, nil).Once()
+		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
+			SimId:     simId.String(),
+			PackageId: packageID.String(),
+			StartDate: startDate,
+		})
 
-	// // Return an empty list for the initial package list check
-	// packageRepo.On("List", sim.Id.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-	// mock.Anything, mock.Anything, mock.Anything, uint32(0), true).Return([]db.Package{}, nil).Once()
+		assert.Error(t, err)
+		assert.Nil(t, resp)
 
-	// // Return overlapping packages for the overlap check
-	// packageRepo.On("GetOverlap", mock.MatchedBy(func(p *db.Package) bool {
-	// return p.SimId == sim.Id
-	// })).Return([]db.Package{
-	// {
-	// Id:              uuid.UUID{},
-	// SimId:           simId,
-	// StartDate:       time.Now().UTC(),
-	// EndDate:         time.Now().UTC().AddDate(9, 10, 10), // Very long duration to ensure overlap
-	// PackageId:       packageID,
-	// IsActive:        true,
-	// DefaultDuration: 1,
-	// },
-	// }, nil).Once()
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 
-	// s := NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
-	// nil, nil, "", nil, orgID.String(), "", nil, nil, nil, nil)
-
-	// resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
-	// SimId:     simId.String(),
-	// PackageId: packageID.String(),
-	// StartDate: startDate.Format(time.RFC3339),
-	// })
-
-	// assert.Error(t, err)
-	// assert.Nil(t, resp)
-	// assert.Contains(t, err.Error(), "package validity period overlaps")
-
-	// simRepo.AssertExpectations(t)
-	// packageRepo.AssertExpectations(t)
-	// packageClient.AssertExpectations(t)
-	// })
+	})
 }
+
+func TestSimManagerServer_TerminatePackageForSim(t *testing.T) {
+	t.Run("PackageIdNotValid", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		packageClient := &cmocks.PackageClient{}
+
+		simId := uuid.NewV4()
+		orgID := uuid.NewV4()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
+			nil, nil, "", nil, orgID.String(), "", nil, nil, nil, nil)
+
+		resp, err := s.TerminatePackageForSim(context.TODO(), &pb.TerminatePackageRequest{
+			SimId:     simId.String(),
+			PackageId: "lol",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
+	})
+}
+
 func TestSimManagerServer_TerminateSim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		var simId = uuid.NewV4()
