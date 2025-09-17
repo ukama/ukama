@@ -21,22 +21,22 @@ import (
 
 type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
-	Get(simID uuid.UUID) (*Sim, error)
+	Get(simId uuid.UUID) (*Sim, error)
 
 	// Deprecated: Use db.SimRepo.List with iccid as filtering param instead.
 	GetByIccid(iccid string) (*Sim, error)
 
 	// Deprecated: Use db.SimRepo.List with subscriberId as filtering param instead.
-	GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error)
+	GetBySubscriber(subscriberId uuid.UUID) ([]Sim, error)
 
 	// Deprecated: Use db.SimRepo.List with networkId as filtering param instead.
-	GetByNetwork(networkID uuid.UUID) ([]Sim, error)
+	GetByNetwork(networkId uuid.UUID) ([]Sim, error)
 
 	List(iccid, imsi, SubscriberId, networkId string, simType ukama.SimType, status ukama.SimStatus,
 		TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error)
 
 	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
-	Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
+	Delete(simId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
 type simRepo struct {
@@ -70,11 +70,11 @@ func (s *simRepo) Add(sim *Sim, nestedFunc func(sim *Sim, tx *gorm.DB) error) er
 	return err
 }
 
-func (s *simRepo) Get(simID uuid.UUID) (*Sim, error) {
+func (s *simRepo) Get(simId uuid.UUID) (*Sim, error) {
 	var sim Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).
-		Preload("Package", "is_active is true").First(&sim, simID)
+		Preload("Package", "is_active is true").First(&sim, simId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -97,10 +97,10 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 }
 
 // Deprecated: Use db.SimRepo.List with subscriberId as filtering param instead.
-func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
+func (s *simRepo) GetBySubscriber(subscriberId uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberID}).
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberId}).
 		Preload("Package", "is_active is true").Find(&sims)
 
 	if result.Error != nil {
@@ -111,10 +111,10 @@ func (s *simRepo) GetBySubscriber(subscriberID uuid.UUID) ([]Sim, error) {
 }
 
 // Deprecated: Use db.SimRepo.List with networkId as filtering param instead.
-func (s *simRepo) GetByNetwork(networkID uuid.UUID) ([]Sim, error) {
+func (s *simRepo) GetByNetwork(networkId uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
-	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkID}).
+	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkId}).
 		Preload("Package", "is_active is true").Find(&sims)
 
 	if result.Error != nil {
@@ -190,13 +190,12 @@ func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 		}
 
 		result := tx.Clauses(clause.Returning{}).Updates(sim)
+		if result.Error != nil {
+			return result.Error
+		}
 
 		if result.RowsAffected == 0 {
 			return gorm.ErrRecordNotFound
-		}
-
-		if result.Error != nil {
-			return result.Error
 		}
 
 		return nil
@@ -205,15 +204,15 @@ func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 	return err
 }
 
-func (s *simRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (s *simRepo) Delete(simId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Delete(&Sim{}, simID)
+		result := tx.Delete(&Sim{}, simId)
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(simID, tx)
+			nestErr := nestedFunc(simId, tx)
 			if nestErr != nil {
 				return nestErr
 			}

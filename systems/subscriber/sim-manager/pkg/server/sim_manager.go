@@ -302,11 +302,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		return nil, err
 	}
 
-	packageInfos, err := s.packageClient.Get(packageId.String())
-	if err != nil {
-		return nil, err
-	}
-
 	if poolSim.QrCode != "" && !poolSim.IsPhysical {
 		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
 			To:           []string{remoteSubResp.Subscriber.Email},
@@ -320,7 +315,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
 				emailTemplate.EmailKeyOrg:        s.orgName,
 				emailTemplate.EmailKeyEndDate:    sim.Package.EndDate.Format("January 2, 2006"),
-				emailTemplate.EmailKeyPackage:    packageInfos.Name,
+				emailTemplate.EmailKeyPackage:    packageInfo.Name,
 				emailTemplate.EmailKeyDuration:   fmt.Sprintf("%v", packageInfo.Duration),
 				emailTemplate.EmailKeyAmount:     fmt.Sprintf("%v", packageInfo.Amount),
 			},
@@ -330,12 +325,12 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		}
 	}
 
-	err = s.pushTotalSimsCountMetric(sim.NetworkId.String())
+	err = pushTotalSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.pushMetricHost)
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim allocation operation: %s", err.Error())
 	}
 
-	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
+	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.pushMetricHost)
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim allocation operation: %s", err.Error())
 	}
@@ -358,7 +353,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageEndDate: timestamppb.New(sim.Package.EndDate),
 	}
 
-	err = s.PublishEventMessage(route, evt)
+	err = publishEventMessage(route, evt, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evt, route, err)
 	}
@@ -371,7 +366,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
 	log.Infof("Getting sim: %v", req.GetSimId())
 
-	sim, err := s.getSim(req.SimId)
+	sim, err := getSim(req.SimId, s.simRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +399,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	var simIccid string
 
 	if req.SimId != "" {
-		sim, err := s.getSim(req.SimId)
+		sim, err := getSim(req.SimId, s.simRepo)
 		if err != nil {
 			return nil, err
 		}
@@ -579,7 +574,7 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
 	log.Infof("Terminating sim: %v", req.GetSimId())
 
-	sim, err := s.getSim(req.SimId)
+	sim, err := getSim(req.SimId, s.simRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -614,12 +609,12 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	err = s.pushTerminatedSimsCountMetric(sim.NetworkId.String())
+	err = pushTerminatedSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.pushMetricHost)
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
 
-	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
+	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.pushMetricHost)
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
@@ -634,7 +629,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
 
-	err = s.PublishEventMessage(route, evtMsg)
+	err = publishEventMessage(route, evtMsg, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -645,152 +640,9 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 }
 
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
-	log.Infof("Adding package %v to sim: %v", req.GetPackageId(), req.GetSimId())
-
-	formattedStart, err := validation.ValidateDate(req.GetStartDate())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	sim, err := s.getSim(req.SimId)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound,
-			"invalid simId while adding package to sim. Error %s", err.Error())
-	}
-
-	packageId, err := uuid.FromString(req.GetPackageId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pkgInfo, err := s.packageClient.Get(packageId.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if !pkgInfo.IsActive {
-		return nil, status.Error(codes.FailedPrecondition,
-			"cannot set package to sim: data plan package is no more active within its org")
-	}
-
-	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
-
-	if sim.Type != pkgInfoSimType {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
-			sim.Type, pkgInfoSimType.String())
-	}
-
-	pkg := &sims.Package{
-		SimId:           sim.Id,
-		PackageId:       packageId,
-		IsActive:        false,
-		DefaultDuration: pkgInfo.Duration,
-	}
-
-	packages, err := s.packageRepo.List(req.SimId, "", "", "", "", "", false, false, 0, true)
-	if err != nil {
-		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			req.SimId, err)
-
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
-	}
-
-	if len(packages) == 0 {
-		startDate, err := time.Parse(time.RFC3339, formattedStart)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
-		}
-
-		pkg.StartDate = startDate
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
-		pkg.IsActive = true
-	} else {
-		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
-	}
-
-	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
-
-	overlappingPackages, err := s.packageRepo.GetOverlap(pkg)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "packages")
-	}
-
-	if len(overlappingPackages) > 0 {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set package to sim: package validity period overlaps with %d or more other packages set for this sim",
-			len(overlappingPackages))
-	}
-
-	err = s.packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
-		pckg.Id = uuid.NewV4()
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	route := s.baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimAddPackage{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    packageId.String(),
-	}
-
-	err = s.PublishEventMessage(route, evtMsg)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
-	if err != nil {
-		return nil, err
-	}
-
-	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
-	if err != nil {
-		return nil, err
-	}
-
-	subscriberRegistrySvc, err := s.subscriberRegistryService.GetClient()
-	if err != nil {
-		return nil, err
-	}
-
-	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
-		SubscriberId: sim.SubscriberId.String(),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	netInfo, err := s.networkClient.Get(sim.NetworkId.String())
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{remoteSubResp.Subscriber.Email},
-		TemplateName: emailTemplate.EmailTemplatePackageAddition,
-		Values: map[string]interface{}{
-			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
-			emailTemplate.EmailKeyNetwork:         netInfo.Name,
-			emailTemplate.EmailKeyName:            userInfos.Name,
-			emailTemplate.EmailKeyOrg:             s.orgName,
-			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
-			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
-			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
-			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
-		},
-	})
-	if err != nil {
+	if err := addPackageForSim(ctx, req.SimId, req.PackageId, req.StartDate, s.simRepo, s.packageRepo, s.packageClient,
+		s.orgName, s.orgId, s.pushMetricHost, s.nucleusOrgClient, s.nucleusUserClient,
+		s.subscriberRegistryService, s.networkClient, s.mailerClient, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
@@ -892,24 +744,8 @@ func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPac
 	return resp, nil
 }
 
-func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	log.Infof("Setting package %v as active for sim: %v", req.GetPackageId(), req.GetSimId())
-
-	sim, err := s.getSim(req.SimId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	if sim.Status != ukama.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot set active package on non active sim: sim's status is %s", sim.Status)
-	}
-
-	if sim.Package.Id != uuid.Nil {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim currently has package %v as active. This package needs to expire first",
-			sim.Package.Id)
-	}
+func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
+	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
 
 	packageId, err := uuid.FromString(req.GetPackageId())
 	if err != nil {
@@ -917,24 +753,444 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	pkg, err := s.packageRepo.Get(packageId)
+	pckg, err := s.packageRepo.Get(packageId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	if pkg.SimId.String() != req.GetSimId() {
+	if pckg.SimId.String() != req.GetSimId() {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
 			req.GetPackageId(), req.GetSimId())
+
+	}
+
+	if pckg.IsActive {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"cannot remove active package (%s) from sim. Set package as not active first", pckg.Id)
+	}
+
+	sim, err := getSim(req.SimId, s.simRepo)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	err = s.packageRepo.Delete(packageId, nil)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimRemovePackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageId.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, s.msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	return &pb.RemovePackageResponse{}, nil
+}
+
+func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
+	if err := setActivePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.SetActivePackageResponse{}, nil
+}
+
+func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
+	if err := terminatePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.TerminatePackageResponse{}, nil
+}
+
+func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+	if err := activateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+	if err := deactivateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.pushMetricHost, s.msgbus, s.baseRoutingKey); err != nil {
+		return nil, err
+	}
+
+	return &pb.ToggleSimStatusResponse{}, nil
+}
+
+func getSim(simId string, simRepo sims.SimRepo) (*sims.Sim, error) {
+	parsedSimId, err := uuid.FromString(simId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"invalid format of sim uuid. Error %s", err.Error())
+	}
+
+	sim, err := simRepo.Get(parsedSimId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	return sim, nil
+}
+
+func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+	orgId, pushMetricHost string, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Activating sim: %v", reqSimId)
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return err
+	}
+
+	if sim.Status != ukama.SimStatusInactive {
+		return status.Errorf(codes.FailedPrecondition,
+			"sim state: %s is invalid for activation", sim.Status)
+	}
+
+	simUpdates := &sims.Sim{
+		Id:               sim.Id,
+		Status:           ukama.SimStatusActive,
+		ActivationsCount: sim.ActivationsCount + 1,
+		LastActivatedOn:  time.Now(),
+	}
+
+	if sim.FirstActivatedOn.IsZero() {
+		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
+	}
+
+	err = simRepo.Update(simUpdates, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
+	}
+
+	err = simAgent.ActivateSim(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the DB transaction on sim manager
+		// if agent operation fails.
+
+		return err
+	}
+
+	err = pushActiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, pushMetricHost)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+	}
+
+	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, pushMetricHost)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+	}
+
+	route := baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
+
+	evtMsg := &epb.EventSimActivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	log.Infof("Sim %s activated successfully", reqSimId)
+
+	return nil
+}
+
+func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+	orgId, pushMetricHost string, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Deactivating sim: %v", reqSimId)
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return err
+	}
+
+	if sim.Status != ukama.SimStatusActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"sim state: %s is invalid for deactivation", sim.Status)
+	}
+
+	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
+	if !ok {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
+	}
+
+	simUpdates := &sims.Sim{
+		Id:                 sim.Id,
+		Status:             ukama.SimStatusInactive,
+		DeactivationsCount: sim.DeactivationsCount + 1}
+
+	err = simRepo.Update(simUpdates, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	agentRequest := client.AgentRequestData{
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.PackageId.String(),
+		SimPackageId: sim.Package.Id.String(),
+	}
+	err = simAgent.DeactivateSim(ctx, agentRequest)
+	if err != nil {
+		// TODO: think of rolling back the DB transaction on sim manager
+		// if agent operation fails.
+
+		return err
+	}
+
+	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, pushMetricHost)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+	}
+
+	err = pushActiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, pushMetricHost)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+	}
+
+	route := baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimDeactivation{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    sim.Package.Id.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	log.Infof("Sim %s deactivated successfully", reqSimId)
+
+	return nil
+}
+
+func addPackageForSim(ctx context.Context, simId, packageId, startDate string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	packageClient cdplan.PackageClient, orgName, orgId, pushMetricHost string, nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient, subscriberRegistryService providers.SubscriberRegistryClientProvider, networkClient creg.NetworkClient,
+	mailerClient cnotif.MailerClient, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Adding package %v to sim: %v", packageId, simId)
+
+	formattedStart, err := validation.ValidateDate(startDate)
+	if err != nil {
+		return status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	sim, err := getSim(simId, simRepo)
+	if err != nil {
+		return status.Errorf(codes.NotFound,
+			"invalid simId while adding package to sim. Error %s", err.Error())
+	}
+
+	packageUuid, err := uuid.FromString(packageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkgInfo, err := packageClient.Get(packageUuid.String())
+	if err != nil {
+		return err
+	}
+
+	if !pkgInfo.IsActive {
+		return status.Error(codes.FailedPrecondition,
+			"cannot set package to sim: data plan package is no more active within its org")
+	}
+
+	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
+	if sim.Type != pkgInfoSimType {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid sim type: sim (%s) and package (%s)'s sim types mismatch",
+			sim.Type, pkgInfoSimType.String())
+	}
+
+	pkg := &sims.Package{
+		SimId:           sim.Id,
+		PackageId:       packageUuid,
+		IsActive:        false,
+		DefaultDuration: pkgInfo.Duration,
+	}
+
+	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	if err != nil {
+		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+			simId, err)
+
+		return grpc.SqlErrorToGrpc(err, "packages")
+	}
+
+	if len(packages) == 0 {
+		startDate, err := time.Parse(time.RFC3339, formattedStart)
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "failed to parse start date: %v", err)
+		}
+
+		pkg.StartDate = startDate
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+		pkg.IsActive = true
+	} else {
+		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+		pkg.EndDate = pkg.StartDate.Add(time.Hour * 24 * time.Duration(pkgInfo.Duration))
+	}
+
+	log.Infof("Package start date: %v, end date: %v", pkg.StartDate, pkg.EndDate)
+
+	err = packageRepo.Add(pkg, func(pckg *sims.Package, tx *gorm.DB) error {
+		pckg.Id = uuid.NewV4()
+
+		return nil
+	})
+
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	route := baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimAddPackage{
+		Id:           sim.Id.String(),
+		SubscriberId: sim.SubscriberId.String(),
+		Iccid:        sim.Iccid,
+		Imsi:         sim.Imsi,
+		NetworkId:    sim.NetworkId.String(),
+		PackageId:    packageUuid.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	orgInfos, err := nucleusOrgClient.Get(orgName)
+	if err != nil {
+		return err
+	}
+
+	userInfos, err := nucleusUserClient.GetById(orgInfos.Owner)
+	if err != nil {
+		return err
+	}
+
+	subscriberRegistrySvc, err := subscriberRegistryService.GetClient()
+	if err != nil {
+		return err
+	}
+
+	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
+		SubscriberId: sim.SubscriberId.String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	netInfo, err := networkClient.Get(sim.NetworkId.String())
+	if err != nil {
+		return err
+	}
+
+	err = mailerClient.SendEmail(cnotif.SendEmailReq{
+		To:           []string{remoteSubResp.Subscriber.Email},
+		TemplateName: emailTemplate.EmailTemplatePackageAddition,
+		Values: map[string]interface{}{
+			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
+			emailTemplate.EmailKeyNetwork:         netInfo.Name,
+			emailTemplate.EmailKeyName:            userInfos.Name,
+			emailTemplate.EmailKeyOrg:             orgName,
+			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
+			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
+			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Setting package %v as active for sim: %v", reqPackageId, reqSimId)
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Status != ukama.SimStatusActive {
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot set active package on non active sim: sim's status is %s", sim.Status)
+	}
+
+	if sim.Package.Id != uuid.Nil {
+		return status.Errorf(codes.FailedPrecondition,
+			"sim currently has package %v as active. This package needs to expire first",
+			sim.Package.Id)
+	}
+
+	packageId, err := uuid.FromString(reqPackageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pkg, err := packageRepo.Get(packageId)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pkg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
 	}
 
 	if pkg.AsExpired {
-		return nil, status.Errorf(codes.FailedPrecondition,
+		return status.Errorf(codes.FailedPrecondition,
 			"cannot set expired package (%s) as active", pkg.Id)
 	}
 
 	if pkg.IsActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
+		return status.Errorf(codes.FailedPrecondition,
 			"cannot set already active package (%s) as active", pkg.Id)
 	}
 
@@ -944,7 +1200,7 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		IsActive: true,
 	}
 
-	err = s.packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
 		// update startDate and endDate
 		newPackageToActivate.StartDate = time.Now().UTC().
 			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
@@ -956,13 +1212,13 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 	})
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal,
+		return status.Errorf(codes.Internal,
 			"failed to set package as active. Error %s", err.Error())
 	}
 
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
+	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return status.Errorf(codes.InvalidArgument,
 			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
 	}
 
@@ -985,12 +1241,12 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		// TODO: think of rolling back the package update DB transaction on sim manager
 		// if agent package update fails.
 
-		return nil, fmt.Errorf("fail to update package on remote agent for %s sim type with iccid %s. Error: %w",
+		return fmt.Errorf("fail to update package on remote agent for %s sim type with iccid %s. Error: %w",
 			sim.Type.String(), sim.Iccid, err)
 	}
 
 	// Publish the event only when both updates are successful
-	route := s.baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
+	route := baseRoutingKey.SetAction("activepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimActivePackage{
 		Id:               sim.Id.String(),
 		SubscriberId:     sim.SubscriberId.String(),
@@ -1003,52 +1259,54 @@ func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.S
 		PackageEndDate:   timestamppb.New(newPackageToActivate.EndDate),
 	}
 
-	err = s.PublishEventMessage(route, evtMsg)
+	err = publishEventMessage(route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	return &pb.SetActivePackageResponse{}, nil
+	return nil
 }
 
-func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
-	log.Infof("Terminating package %v for sim: %v", req.GetPackageId(), req.GetSimId())
+func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Terminating package %v for sim: %v", reqPackageId, reqSimId)
 
-	packageId, err := uuid.FromString(req.GetPackageId())
+	packageId, err := uuid.FromString(reqPackageId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
+		return status.Errorf(codes.InvalidArgument,
 			"invalid format of package uuid. Error %s", err.Error())
 	}
 
-	pckg, err := s.packageRepo.Get(packageId)
+	pckg, err := packageRepo.Get(packageId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
+		return grpc.SqlErrorToGrpc(err, "package")
 	}
 
-	if pckg.SimId.String() != req.GetSimId() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
-			req.GetPackageId(), req.GetSimId())
+	if pckg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
 	}
 
 	if !pckg.IsActive {
 		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 
-		return &pb.TerminatePackageResponse{}, nil
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 	}
 
 	if pckg.AsExpired {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"package (%s) has already been marked as terminated", pckg.Id)
+		return status.Errorf(codes.FailedPrecondition,
+			"package (%s) has already been marked as expired", pckg.Id)
 	}
 
-	sim, err := s.getSim(req.SimId)
+	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
+		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	if sim.Status != ukama.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
+		return status.Errorf(codes.FailedPrecondition,
 			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
 	}
 
@@ -1058,19 +1316,18 @@ func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.T
 		AsExpired: true,
 	}
 
-	err = s.packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
-		// update endDate
+	err = packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
 		packageToTerminate.EndDate = time.Now().UTC()
 
 		return nil
 	})
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal,
+		return status.Errorf(codes.Internal,
 			"failed to terminate package. Error %s", err.Error())
 	}
 
-	route := s.baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
+	route := baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimPackageExpire{
 		Id:              sim.Id.String(),
 		StartDate:       pckg.StartDate.String(),
@@ -1080,252 +1337,18 @@ func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.T
 		DataPlanId:      pckg.PackageId.String(),
 	}
 
-	err = s.PublishEventMessage(route, evtMsg)
+	err = publishEventMessage(route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	return &pb.TerminatePackageResponse{}, nil
+	return nil
 }
 
-func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
-	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
+func pushTotalSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId, pushMetricHost string) error {
+	log.Infof("Collecting and pushing total sims count metric to push gateway host: %s", pushMetricHost)
 
-	packageId, err := uuid.FromString(req.GetPackageId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of package uuid. Error %s", err.Error())
-	}
-
-	pckg, err := s.packageRepo.Get(packageId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	if pckg.SimId.String() != req.GetSimId() {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"simID packageID mismatch: package %s does not belong to the provided sim %s",
-			req.GetPackageId(), req.GetSimId())
-
-	}
-
-	if pckg.IsActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot remove active package (%s) from sim. Set package as not active first", pckg.Id)
-	}
-
-	sim, err := s.getSim(req.SimId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	err = s.packageRepo.Delete(packageId, nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "package")
-	}
-
-	route := s.baseRoutingKey.SetAction("removepackage").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimRemovePackage{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    packageId.String(),
-	}
-
-	err = s.PublishEventMessage(route, evtMsg)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	return &pb.RemovePackageResponse{}, nil
-}
-
-func (s *SimManagerServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
-	err := s.msgbus.PublishRequest(route, msg)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
-	}
-
-	return err
-}
-
-func (s *SimManagerServer) getSim(simId string) (*sims.Sim, error) {
-	parsedSimId, err := uuid.FromString(simId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of sim uuid. Error %s", err.Error())
-	}
-
-	sim, err := s.simRepo.Get(parsedSimId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	return sim, nil
-}
-
-func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
-	log.Infof("Activating sim: %v", reqSimId)
-
-	sim, err := s.getSim(reqSimId)
-	if err != nil {
-		return nil, err
-	}
-
-	if sim.Status != ukama.SimStatusInactive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim state: %s is invalid for activation", sim.Status)
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
-	}
-
-	simUpdates := &sims.Sim{
-		Id:               sim.Id,
-		Status:           ukama.SimStatusActive,
-		ActivationsCount: sim.ActivationsCount + 1,
-		LastActivatedOn:  time.Now(),
-	}
-
-	if sim.FirstActivatedOn.IsZero() {
-		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
-	}
-
-	err = s.simRepo.Update(simUpdates, nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
-	}
-
-	err = simAgent.ActivateSim(ctx, agentRequest)
-	if err != nil {
-		// TODO: think of rolling back the DB transaction on sim manager
-		// if agent operation fails.
-
-		return nil, err
-	}
-
-	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
-	}
-
-	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
-	}
-
-	route := s.baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
-
-	evtMsg := &epb.EventSimActivation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.Id.String(),
-	}
-
-	err = s.PublishEventMessage(route, evtMsg)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	log.Infof("Sim %s activated successfully", reqSimId)
-
-	return &pb.ToggleSimStatusResponse{}, nil
-}
-
-func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
-	log.Infof("Deactivating sim: %v", reqSimId)
-
-	sim, err := s.getSim(reqSimId)
-	if err != nil {
-		return nil, err
-	}
-
-	if sim.Status != ukama.SimStatusActive {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim state: %s is invalid for deactivation", sim.Status)
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
-	}
-
-	simUpdates := &sims.Sim{
-		Id:                 sim.Id,
-		Status:             ukama.SimStatusInactive,
-		DeactivationsCount: sim.DeactivationsCount + 1}
-
-	err = s.simRepo.Update(simUpdates, nil)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
-	}
-	err = simAgent.DeactivateSim(ctx, agentRequest)
-	if err != nil {
-		// TODO: think of rolling back the DB transaction on sim manager
-		// if agent operation fails.
-
-		return nil, err
-	}
-
-	err = s.pushInactiveSimsCountMetric(sim.NetworkId.String())
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
-	}
-
-	err = s.pushActiveSimsCountMetric(sim.NetworkId.String())
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
-	}
-
-	route := s.baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimDeactivation{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.Id.String(),
-	}
-
-	err = s.PublishEventMessage(route, evtMsg)
-	if err != nil {
-		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
-	}
-
-	log.Infof("Sim %s deactivated successfully", reqSimId)
-
-	return &pb.ToggleSimStatusResponse{}, nil
-}
-
-func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
-	log.Infof("Collecting and pushing total sims count metric to push gateway host: %s", s.pushMetricHost)
-
-	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting total sims count metric for network: %s. Error: %v",
 			networkId, err)
@@ -1334,8 +1357,8 @@ func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
-		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(pushMetricHost, pkg.SimMetric, pkg.NumberOfSims,
+		float64(len(sims)), map[string]string{"network": networkId, "org": orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing total sims count metric to push gateway: %s", err.Error())
 
@@ -1345,10 +1368,10 @@ func (s *SimManagerServer) pushTotalSimsCountMetric(networkId string) error {
 	return nil
 }
 
-func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
-	log.Infof("Collecting and pushing active sims count metric to push gateway host: %s", s.pushMetricHost)
+func pushActiveSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId, pushMetricHost string) error {
+	log.Infof("Collecting and pushing active sims count metric to push gateway host: %s", pushMetricHost)
 
-	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
 			networkId, err)
@@ -1357,8 +1380,8 @@ func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
-		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(pushMetricHost, pkg.SimMetric, pkg.ActiveCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while active sims count metric to push gateway: %s", err.Error())
 
@@ -1368,10 +1391,10 @@ func (s *SimManagerServer) pushActiveSimsCountMetric(networkId string) error {
 	return nil
 }
 
-func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
-	log.Infof("Collecting and pushing inactive sims count metric to push gateway host: %s", s.pushMetricHost)
+func pushInactiveSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId, pushMetricHost string) error {
+	log.Infof("Collecting and pushing inactive sims count metric to push gateway host: %s", pushMetricHost)
 
-	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
 			networkId, err)
@@ -1380,8 +1403,8 @@ func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
-		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(pushMetricHost, pkg.SimMetric, pkg.InactiveCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing inactive sims count metric to push gateway: %s", err.Error())
 
@@ -1391,10 +1414,10 @@ func (s *SimManagerServer) pushInactiveSimsCountMetric(networkId string) error {
 	return nil
 }
 
-func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error {
-	log.Infof("Collecting and pushing terminated sims count metric to push gateway host: %s", s.pushMetricHost)
+func pushTerminatedSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId, pushMetricHost string) error {
+	log.Infof("Collecting and pushing terminated sims count metric to push gateway host: %s", pushMetricHost)
 
-	sims, err := s.simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusTerminated, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting terminated sims count metric for network: %s. Error: %v",
 			networkId, err)
@@ -1403,8 +1426,8 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 			networkId, grpc.SqlErrorToGrpc(err, "sims"))
 	}
 
-	err = pmetric.CollectAndPushSimMetrics(s.pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
-		float64(len(sims)), map[string]string{"network": networkId, "org": s.orgId}, pkg.SystemName)
+	err = pmetric.CollectAndPushSimMetrics(pushMetricHost, pkg.SimMetric, pkg.TerminatedCount,
+		float64(len(sims)), map[string]string{"network": networkId, "org": orgId}, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing terminated sims count metric to push gateway: %s", err.Error())
 
@@ -1412,6 +1435,15 @@ func (s *SimManagerServer) pushTerminatedSimsCountMetric(networkId string) error
 	}
 
 	return nil
+}
+
+func publishEventMessage(route string, msg protoreflect.ProtoMessage, msgbus mb.MsgBusServiceClient) error {
+	err := msgbus.PublishRequest(route, msg)
+	if err != nil {
+		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
+	}
+
+	return err
 }
 
 func dbSimToPbSim(sim *sims.Sim) *pb.Sim {

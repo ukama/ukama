@@ -9,8 +9,6 @@
 package db
 
 import (
-	"errors"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -22,16 +20,15 @@ import (
 
 type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
-	Get(packageID uuid.UUID) (*Package, error)
+	Get(packageId uuid.UUID) (*Package, error)
 	List(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate string,
 		isActive, asExpired bool, count uint32, sort bool) ([]Package, error)
 
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
-	GetBySim(simID uuid.UUID) ([]Package, error)
+	GetBySim(simId uuid.UUID) ([]Package, error)
 
-	GetOverlap(*Package) ([]Package, error)
 	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
-	Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
+	Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
 type packageRepo struct {
@@ -65,10 +62,10 @@ func (p *packageRepo) Add(pkg *Package, nestedFunc func(pkg *Package, tx *gorm.D
 	return err
 }
 
-func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
+func (p *packageRepo) Get(packageId uuid.UUID) (*Package, error) {
 	pkg := &Package{}
 
-	result := p.Db.GetGormDb().Where("id = ?", packageID).First(pkg)
+	result := p.Db.GetGormDb().Where("id = ?", packageId).First(pkg)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -76,8 +73,8 @@ func (p *packageRepo) Get(packageID uuid.UUID) (*Package, error) {
 	return pkg, nil
 }
 
-func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
-	fromEndDate, toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
+func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
+	toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -131,27 +128,12 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate,
 }
 
 // Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
-func (p *packageRepo) GetBySim(simID uuid.UUID) ([]Package, error) {
+func (p *packageRepo) GetBySim(simId uuid.UUID) ([]Package, error) {
 	var packages []Package
 
-	result := p.Db.GetGormDb().Where(&Package{SimId: simID}).Find(&packages)
+	result := p.Db.GetGormDb().Where(&Package{SimId: simId}).Find(&packages)
 	if result.Error != nil {
 		return nil, result.Error
-	}
-
-	return packages, nil
-}
-
-func (p *packageRepo) GetOverlap(pkg *Package) ([]Package, error) {
-	var packages []Package
-
-	result := p.Db.GetGormDb().Where(&Package{SimId: pkg.SimId}).Find(&packages,
-		"end_date >= ? AND start_date <= ?", pkg.StartDate, pkg.EndDate)
-
-	if result.Error != nil {
-		if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, result.Error
-		}
 	}
 
 	return packages, nil
@@ -168,12 +150,12 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 
 		result := tx.Clauses(clause.Returning{}).Updates(pkg)
 
-		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
-		}
-
 		if result.Error != nil {
 			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
 		}
 
 		return nil
@@ -182,15 +164,15 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 	return err
 }
 
-func (p *packageRepo) Delete(packageID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+func (p *packageRepo) Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("id=?", packageID).Delete(&Package{})
+		result := tx.Where("id=?", packageId).Delete(&Package{})
 		if result.Error != nil {
 			return result.Error
 		}
 
 		if nestedFunc != nil {
-			nestErr := nestedFunc(packageID, tx)
+			nestErr := nestedFunc(packageId, tx)
 			if nestErr != nil {
 				return nestErr
 			}

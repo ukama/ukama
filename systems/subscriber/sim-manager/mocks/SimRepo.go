@@ -36,9 +36,9 @@ func (_m *SimRepo) Add(sim *db.Sim, nestedFunc func(*db.Sim, *gorm.DB) error) er
 	return r0
 }
 
-// Delete provides a mock function with given fields: simID, nestedFunc
-func (_m *SimRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
-	ret := _m.Called(simID, nestedFunc)
+// Delete provides a mock function with given fields: simId, nestedFunc
+func (_m *SimRepo) Delete(simId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	ret := _m.Called(simId, nestedFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
@@ -46,7 +46,7 @@ func (_m *SimRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) 
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID, func(uuid.UUID, *gorm.DB) error) error); ok {
-		r0 = rf(simID, nestedFunc)
+		r0 = rf(simId, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -54,9 +54,9 @@ func (_m *SimRepo) Delete(simID uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) 
 	return r0
 }
 
-// Get provides a mock function with given fields: simID
-func (_m *SimRepo) Get(simID uuid.UUID) (*db.Sim, error) {
-	ret := _m.Called(simID)
+// Get provides a mock function with given fields: simId
+func (_m *SimRepo) Get(simId uuid.UUID) (*db.Sim, error) {
+	ret := _m.Called(simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -65,10 +65,10 @@ func (_m *SimRepo) Get(simID uuid.UUID) (*db.Sim, error) {
 	var r0 *db.Sim
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Sim, error)); ok {
-		return rf(simID)
+		return rf(simId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Sim); ok {
-		r0 = rf(simID)
+		r0 = rf(simId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Sim)
@@ -76,7 +76,7 @@ func (_m *SimRepo) Get(simID uuid.UUID) (*db.Sim, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(simID)
+		r1 = rf(simId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -114,9 +114,9 @@ func (_m *SimRepo) GetByIccid(iccid string) (*db.Sim, error) {
 	return r0, r1
 }
 
-// GetByNetwork provides a mock function with given fields: networkID
-func (_m *SimRepo) GetByNetwork(networkID uuid.UUID) ([]db.Sim, error) {
-	ret := _m.Called(networkID)
+// GetByNetwork provides a mock function with given fields: networkId
+func (_m *SimRepo) GetByNetwork(networkId uuid.UUID) ([]db.Sim, error) {
+	ret := _m.Called(networkId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByNetwork")
@@ -125,10 +125,10 @@ func (_m *SimRepo) GetByNetwork(networkID uuid.UUID) ([]db.Sim, error) {
 	var r0 []db.Sim
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Sim, error)); ok {
-		return rf(networkID)
+		return rf(networkId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Sim); ok {
-		r0 = rf(networkID)
+		r0 = rf(networkId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Sim)
@@ -136,7 +136,7 @@ func (_m *SimRepo) GetByNetwork(networkID uuid.UUID) ([]db.Sim, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(networkID)
+		r1 = rf(networkId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -144,9 +144,9 @@ func (_m *SimRepo) GetByNetwork(networkID uuid.UUID) ([]db.Sim, error) {
 	return r0, r1
 }
 
-// GetBySubscriber provides a mock function with given fields: subscriberID
-func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
-	ret := _m.Called(subscriberID)
+// GetBySubscriber provides a mock function with given fields: subscriberId
+func (_m *SimRepo) GetBySubscriber(subscriberId uuid.UUID) ([]db.Sim, error) {
+	ret := _m.Called(subscriberId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBySubscriber")
@@ -155,10 +155,10 @@ func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
 	var r0 []db.Sim
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Sim, error)); ok {
-		return rf(subscriberID)
+		return rf(subscriberId)
 	}
 	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Sim); ok {
-		r0 = rf(subscriberID)
+		r0 = rf(subscriberId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Sim)
@@ -166,7 +166,7 @@ func (_m *SimRepo) GetBySubscriber(subscriberID uuid.UUID) ([]db.Sim, error) {
 	}
 
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(subscriberID)
+		r1 = rf(subscriberId)
 	} else {
 		r1 = ret.Error(1)
 	}

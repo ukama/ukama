@@ -10,282 +10,497 @@ package db_test
 
 import (
 	"database/sql"
+	"errors"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+)
 
-	simdb "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+var (
+	validNestedPackageFunc = func(pckg *db.Package, tx *gorm.DB) error {
+		return nil
+	}
+	unvalidNestedPackageFunc = func(pckg *db.Package, tx *gorm.DB) error {
+		return errors.New("some errors occurred")
+	}
 )
 
 func TestPackageRepo_Add(t *testing.T) {
 	t.Run("AddPackage", func(t *testing.T) {
-		// Arrange
-		var db *sql.DB
-
-		pkg := simdb.Package{
+		pkg := db.Package{
 			Id:    uuid.NewV4(),
 			SimId: uuid.NewV4(),
 		}
 
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Add(&pkg, nil)
+		err := r.Add(&pkg, nil)
 
 		// Assert
 		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+	t.Run("AddPackageError", func(t *testing.T) {
+		pkg := db.Package{
+			Id:    uuid.NewV4(),
+			SimId: uuid.NewV4(),
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
+			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&pkg, validNestedPackageFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("AddPackageNestedFuncError", func(t *testing.T) {
+		pkg := db.Package{
+			Id:    uuid.NewV4(),
+			SimId: uuid.NewV4(),
+		}
+
+		mock, gdb := prepareDb(t)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Add(&pkg, unvalidNestedPackageFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
 func TestPackageRepo_Get(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
-		// Arrange
-		var packageID = uuid.NewV4()
-		var simID = uuid.NewV4()
+		var (
+			simId     = uuid.NewV4()
+			packageId = uuid.NewV4()
+		)
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		row := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packageID, sqlmock.AnyArg()).
+			WithArgs(packageId, sqlmock.AnyArg()).
 			WillReturnRows(row)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		pkg, err := r.Get(packageID)
+		pkg, err := r.Get(packageId)
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.NotNil(t, pkg)
-		assert.NotNil(t, pkg)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("PackageNotFound", func(t *testing.T) {
-		// Arrange
-		var packageID = uuid.NewV4()
+		var packageId = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(packageID, sqlmock.AnyArg()).
+			WithArgs(packageId, sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		pkg, err := r.Get(packageID)
+		pkg, err := r.Get(packageId)
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, pkg)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestPackageRepo_List(t *testing.T) {
+	const (
+		from = "2022-12-01T00:00:00Z"
+		to   = "2023-12-01T00:00:00Z"
+	)
+
+	t.Run("ListAll", func(t *testing.T) {
+		var (
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageId, simId)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs().
+			WillReturnRows(packageRow)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List("", "", "", "", "", "", false, false, 0, false)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageFound", func(t *testing.T) {
+		var (
+			packageId  = uuid.NewV4()
+			simId      = uuid.NewV4()
+			dataplanId = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageId, simId)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs().
+			WillReturnRows(packageRow)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
+			true, true, 1, true)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NotNil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageNotFound", func(t *testing.T) {
+		var (
+			simId      = uuid.NewV4()
+			dataplanId = uuid.NewV4()
+		)
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs().
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
+			true, true, 1, true)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, list)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
 func TestPackageRepo_GetBySim(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
-		var packageID = uuid.NewV4()
+		var (
+			simId     = uuid.NewV4()
+			packageId = uuid.NewV4()
+		)
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
+		mock, gdb := prepareDb(t)
 		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageID, simID)
+			AddRow(packageId, simId)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnRows(packageRow)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		packages, err := r.GetBySim(simID)
+		packages, err := r.GetBySim(simId)
 
 		// Assert
 		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.NotNil(t, packages)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("SimNotFound", func(t *testing.T) {
-		// Arrange
-		var simID = uuid.NewV4()
+		var simId = uuid.NewV4()
 
-		var db *sql.DB
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectQuery(`^SELECT.*packages.*`).
-			WithArgs(simID).
+			WithArgs(simId).
 			WillReturnError(sql.ErrNoRows)
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		packages, err := r.GetBySim(simID)
+		packages, err := r.GetBySim(simId)
 
 		// Assert
 		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
 		assert.Nil(t, packages)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestPackageRepo_Update(t *testing.T) {
+	t.Run("PackageFound", func(t *testing.T) {
+		var (
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
+		)
+
+		pckg := db.Package{
+			Id:    packageId,
+			SimId: simId,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
+			AddRow(packageId, simId)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*packages.*`).
+			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WillReturnRows(packageRow)
+
+		mock.ExpectCommit()
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&pckg, nil)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageNotFound", func(t *testing.T) {
+		var (
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
+		)
+
+		pckg := db.Package{
+			Id:    packageId,
+			SimId: simId,
+		}
+
+		mock, gdb := prepareDb(t)
+		packageRow := sqlmock.NewRows([]string{"id", "sim_id"})
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*packages.*`).
+			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WillReturnRows(packageRow)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&pckg, validNestedPackageFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageUpdateError", func(t *testing.T) {
+		var (
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
+		)
+
+		pckg := db.Package{
+			Id:    packageId,
+			SimId: simId,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^UPDATE.*packages.*`).
+			WithArgs(pckg.SimId, sqlmock.AnyArg(), pckg.Id).
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&pckg, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageUpdateNestedFuncError", func(t *testing.T) {
+		var (
+			packageId = uuid.NewV4()
+			simId     = uuid.NewV4()
+		)
+
+		pckg := db.Package{
+			Id:    packageId,
+			SimId: simId,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update(&pckg, unvalidNestedPackageFunc)
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 
 func TestPackageRepo_Delete(t *testing.T) {
 	t.Run("PackageFound", func(t *testing.T) {
-		var db *sql.DB
+		var packageId = uuid.NewV4()
 
-		// Arrange
-		var packageID = uuid.NewV4()
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
+		mock, gdb := prepareDb(t)
 
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
-			WithArgs(packageID).
+			WithArgs(packageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := simdb.NewPackageRepo(&UkamaDbMock{
+		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
-		assert.NoError(t, err)
-
 		// Act
-		err = r.Delete(packageID, nil)
+		err := r.Delete(packageId, nil)
 
 		// Assert
 		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+	t.Run("PackageDeleteError", func(t *testing.T) {
+		var packageId = uuid.NewV4()
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
+			WithArgs(packageId).
+			WillReturnError(sql.ErrNoRows)
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Delete(packageId,
+			func(uuid.UUID, *gorm.DB) error { return nil })
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("PackageDeleteNetedFuncError", func(t *testing.T) {
+		var packageId = uuid.NewV4()
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE`)).
+			WithArgs(packageId).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Delete(packageId,
+			func(uuid.UUID, *gorm.DB) error {
+				return errors.
+					New("some error occurred")
+			})
+
+		// Assert
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

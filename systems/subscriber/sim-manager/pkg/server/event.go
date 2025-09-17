@@ -19,11 +19,18 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
+	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
 
 	log "github.com/sirupsen/logrus"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
+	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
+	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
+	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
 
 const (
@@ -31,15 +38,45 @@ const (
 )
 
 type SimManagerEventServer struct {
-	orgName string
-	s       *SimManagerServer
+	simRepo                   sims.SimRepo
+	packageRepo               sims.PackageRepo
+	agentFactory              adapters.AgentFactory
+	packageClient             cdplan.PackageClient
+	networkClient             creg.NetworkClient
+	nucleusOrgClient          cnuc.OrgClient
+	nucleusUserClient         cnuc.UserClient
+	mailerClient              cnotif.MailerClient
+	subscriberRegistryService providers.SubscriberRegistryClientProvider
+	msgbus                    mb.MsgBusServiceClient
+	baseRoutingKey            msgbus.RoutingKeyBuilder
+	orgId                     string
+	orgName                   string
+	pushMetricHost            string
+	s                         *SimManagerServer
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSimManagerEventServer(orgName string, s *SimManagerServer) *SimManagerEventServer {
+func NewSimManagerEventServer(orgName, orgId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo, agentFactory adapters.AgentFactory,
+	packageClient cdplan.PackageClient, subscriberRegistryService providers.SubscriberRegistryClientProvider,
+	networkClient creg.NetworkClient, mailerClient cnotif.MailerClient, nucleusOrgClient cnuc.OrgClient,
+	nucleusUserClient cnuc.UserClient, msgBus mb.MsgBusServiceClient, pushMetricHost string, s *SimManagerServer) *SimManagerEventServer {
 	return &SimManagerEventServer{
-		orgName: orgName,
-		s:       s,
+		simRepo:                   simRepo,
+		packageRepo:               packageRepo,
+		agentFactory:              agentFactory,
+		packageClient:             packageClient,
+		networkClient:             networkClient,
+		nucleusOrgClient:          nucleusOrgClient,
+		nucleusUserClient:         nucleusUserClient,
+		mailerClient:              mailerClient,
+		subscriberRegistryService: subscriberRegistryService,
+		msgbus:                    msgBus,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
+			SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:        orgName,
+		orgId:          orgId,
+		pushMetricHost: pushMetricHost,
+		s:              s,
 	}
 }
 
@@ -53,7 +90,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudSimManagerSimAllocate(e.RoutingKey, msg, es.s)
+		err = es.handleSimManagerSimAllocateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -64,14 +101,9 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		paymentStatus := ukama.ParseStatusType(msg.Status)
-		itemType := ukama.ParseItemType(msg.ItemType)
-
-		if paymentStatus == ukama.StatusTypeCompleted && itemType == ukama.ItemTypePackage {
-			err = handleEventCloudProcessorPaymentSuccess(e.RoutingKey, msg, es.s)
-			if err != nil {
-				return nil, err
-			}
+		err = es.handleProcessorPaymentSuccessEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.operator.cdr.cdr.create"):
@@ -80,7 +112,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudOperatorCdrCreate(e.RoutingKey, msg, es.s)
+		err = es.handleOperatorCdrCreateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +123,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudUkamaAgentCdrCreate(e.RoutingKey, msg, es.s)
+		err = es.handleUkamaAgentCdrCreateEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +134,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = handleEventCloudUkamaAgentAsrProfileDelete(e.RoutingKey, msg, es.s)
+		err = es.handleUkamaAgentAsrProfileDeleteEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -114,19 +146,25 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 }
 
 // We auto activate any new allocated sim
-func handleEventCloudSimManagerSimAllocate(key string, msg *epb.EventSimAllocation, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleSimManagerSimAllocateEvent(key string, msg *epb.EventSimAllocation) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	_, err := s.activateSim(ctx, msg.Id)
-
-	return err
+	return activateSim(ctx, msg.Id, es.simRepo, es.agentFactory, es.orgId, es.pushMetricHost, es.msgbus, es.baseRoutingKey)
 }
 
-func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, msg *epb.Payment) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	paymentStatus := ukama.ParseStatusType(msg.Status)
+	itemType := ukama.ParseItemType(msg.ItemType)
+
+	if paymentStatus != ukama.StatusTypeCompleted || itemType != ukama.ItemTypePackage {
+		return fmt.Errorf("payment of %s with status %s is not valid for event handling",
+			paymentStatus, itemType)
+	}
 
 	metadata := map[string]string{}
 
@@ -143,20 +181,16 @@ func handleEventCloudProcessorPaymentSuccess(key string, msg *epb.Payment, s *Si
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	addReq := &pb.AddPackageRequest{
-		SimId:     simId,
-		PackageId: msg.ItemId,
-		StartDate: time.Now().UTC().Format(time.RFC3339),
-	}
+	startDate := time.Now().UTC().Format(time.RFC3339)
 
-	log.Infof("Adding package %s to sim %s", addReq.PackageId, addReq.SimId)
+	log.Infof("Adding package %s to sim %s", msg.ItemId, simId)
 
-	_, err = s.AddPackageForSim(ctx, addReq)
-
-	return err
+	return addPackageForSim(ctx, simId, msg.ItemId, startDate, es.simRepo, es.packageRepo, es.packageClient,
+		es.orgName, es.orgId, es.pushMetricHost, es.nucleusOrgClient, es.nucleusUserClient,
+		es.subscriberRegistryService, es.networkClient, es.mailerClient, es.msgbus, es.baseRoutingKey)
 }
 
-func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrReport, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
@@ -165,23 +199,23 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 		return nil
 	}
 
-	sims, err := s.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
+	operatorSims, err := es.simRepo.List(cdr.Iccid, "", "", "", ukama.SimTypeOperatorData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			cdr.Iccid, err)
 	}
 
-	if len(sims) == 0 {
+	if len(operatorSims) == 0 {
 		return fmt.Errorf("no corresponding active sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	if len(sims) > 1 {
+	if len(operatorSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			cdr.Iccid)
 	}
 
-	sim := sims[0]
+	sim := operatorSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -196,37 +230,37 @@ func handleEventCloudOperatorCdrCreate(key string, cdr *epb.EventOperatorCdrRepo
 		// SessionId: msg.InventoryId,
 	}
 
-	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
+	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequest(route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())
 	}
 
-	return err
+	return nil
 }
 
-func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	sims, err := s.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	ukamaSims, err := es.simRepo.List("", cdr.Imsi, "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given imsi %q: %w",
 			cdr.Imsi, err)
 	}
 
-	if len(sims) == 0 {
+	if len(ukamaSims) == 0 {
 		return fmt.Errorf("no corresponding sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
-	if len(sims) > 1 {
+	if len(ukamaSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given imsi %q",
 			cdr.Imsi)
 	}
 
-	sim := sims[0]
+	sim := ukamaSims[0]
 
 	usageMsg := &epb.EventSimUsage{
 		SimId:        sim.Id.String(),
@@ -241,70 +275,66 @@ func handleEventCloudUkamaAgentCdrCreate(key string, cdr *epb.CDRReported, s *Si
 		// SessionId:    cdr.Session,
 	}
 
-	route := s.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
+	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = s.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequest(route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())
 	}
 
-	return err
+	return nil
 }
 
-func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Profile, s *SimManagerServer) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.Profile) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
-	sims, err := s.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
+	ukamaSims, err := es.simRepo.List(asrProfile.Iccid, "", "", "", ukama.SimTypeUkamaData, ukama.SimStatusActive, 0, false, 0, false)
 	if err != nil {
 		return fmt.Errorf("error while looking up sim for given iccid %q: %w",
 			asrProfile.Iccid, err)
 	}
 
-	if len(sims) == 0 {
+	if len(ukamaSims) == 0 {
 		return fmt.Errorf("no corresponding sim found for given iccid %q",
 			asrProfile.Iccid)
 	}
 
-	if len(sims) > 1 {
+	if len(ukamaSims) > 1 {
 		return fmt.Errorf("inconsistent state: multiple sim found for given iccid %q",
 			asrProfile.Iccid)
 	}
 
-	sim := sims[0]
+	sim := ukamaSims[0]
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	termReq := &pb.TerminatePackageRequest{
-		SimId:     sim.Id.String(),
-		PackageId: asrProfile.SimPackage,
-	}
+	log.Infof("terminating package %s on sim %s", asrProfile.SimPackage, sim.Id.String())
 
-	log.Infof("terminating package %s on sim %s", termReq.PackageId, termReq.SimId)
-
-	_, err = s.TerminatePackageForSim(ctx, termReq)
+	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.SimPackage, es.simRepo,
+		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
 		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
-			termReq.PackageId, termReq.SimId, err)
+			asrProfile.SimPackage, sim.Id.String(), err)
 	}
 
 	// Get next package to activate if any
-	packages, err := s.packageRepo.List(termReq.SimId, "", "", "", "", "", false, false, 0, true)
+	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			termReq.SimId, err)
+			sim.Id.String(), err)
 
 		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
-			termReq.SimId, err)
+			sim.Id.String(), err)
 	}
 
 	if len(packages) > 1 {
-		var p db.Package
+		var p sims.Package
 
 		var i int
 		for i, p = range packages {
-			if p.Id.String() == termReq.PackageId {
+			if p.Id.String() == asrProfile.SimPackage {
 				break
 			}
 		}
@@ -315,17 +345,13 @@ func handleEventCloudUkamaAgentAsrProfileDelete(key string, asrProfile *epb.Prof
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 			defer cancel()
 
-			activeReq := &pb.SetActivePackageRequest{
-				SimId:     sim.Id.String(),
-				PackageId: nextPackage.Id.String(),
-			}
+			log.Infof("activating package %s on sim %s", nextPackage.Id.String(), sim.Id.String())
 
-			log.Infof("activating package %s on sim %s", activeReq.PackageId, activeReq.SimId)
-
-			_, err = s.SetActivePackageForSim(ctx, activeReq)
+			err = setActivePackageForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
+				es.agentFactory, es.msgbus, es.baseRoutingKey)
 			if err != nil {
 				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
-					activeReq.PackageId, activeReq.SimId, err)
+					nextPackage.Id.String(), sim.Id.String(), err)
 			}
 		}
 	}
