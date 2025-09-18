@@ -840,6 +840,14 @@ func (m *mockMemberClient) GetByUserId(id string) (*creg.MemberInfoResponse, err
 	return args.Get(0).(*creg.MemberInfoResponse), args.Error(1)
 }
 
+func (m *mockMemberClient) AddMember(uuid string) (*creg.MemberInfoResponse, error) {
+	args := m.Called(uuid)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*creg.MemberInfoResponse), args.Error(1)
+}
+
 type mockMsgBusServiceClient struct {
 	mock.Mock
 }

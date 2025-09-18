@@ -51,7 +51,11 @@ func NewHealthFromClient(mClient pb.DsubscriberServiceClient) *Dsubscriber {
 }
 
 func (r *Dsubscriber) Close() {
-	r.conn.Close()
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			logrus.Errorf("failed to close connection: %v", err)
+		}
+	}
 }
 
 func (h *Dsubscriber) Update(req *pb.UpdateRequest) (*pb.UpdateResponse, error) {

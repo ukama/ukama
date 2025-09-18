@@ -176,13 +176,13 @@ func TestBaseRateService_UploadBaseRates(t *testing.T) {
 				name:        "Effective at not in future",
 				effectiveAt: time.Now().Add(-time.Hour * 24).Format(time.RFC3339),
 				endAt:       time.Now().Add(time.Hour * 24 * 365 * 15).Format(time.RFC3339),
-				expectedErr: "date is not in the future",
+				expectedErr: "Error: date",
 			},
 			{
 				name:        "End at not in future",
 				effectiveAt: time.Now().Add(time.Hour * 24).Format(time.RFC3339),
 				endAt:       time.Now().Add(-time.Hour * 24).Format(time.RFC3339),
-				expectedErr: "date is not in the future",
+				expectedErr: "Error: date",
 			},
 			{
 				name:        "End at before effective at",

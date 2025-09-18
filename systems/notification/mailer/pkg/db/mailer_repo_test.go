@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	"database/sql"
 	"testing"
 	"time"
 
@@ -40,14 +39,9 @@ const (
 
 // Test data structures
 type testSetup struct {
-	mock  sqlmock.Sqlmock
-	repo  int_db.MailerRepo
-	sqlDB *sql.DB
-}
-
-type mailingTestData struct {
-	mailing *int_db.Mailing
-	rows    *sqlmock.Rows
+	mock    sqlmock.Sqlmock
+	repo    int_db.MailerRepo
+	cleanup func()
 }
 
 // UkamaDbMock implements the database interface for testing
@@ -102,14 +96,20 @@ func setupTestDB(t *testing.T) *testSetup {
 		t.Fatalf("failed to open gorm db: %v", err)
 	}
 
+	cleanup := func() {
+		if err := sqlDB.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
+
 	repo := int_db.NewMailerRepo(&UkamaDbMock{
 		GormDb: gdb,
 	})
 
 	return &testSetup{
-		mock:  mock,
-		repo:  repo,
-		sqlDB: sqlDB,
+		mock:    mock,
+		repo:    repo,
+		cleanup: cleanup,
 	}
 }
 
@@ -168,13 +168,6 @@ func withNextRetryTime(nextRetryTime time.Time) func(*int_db.Mailing) {
 	}
 }
 
-// withValues sets custom values for the mailing
-func withValues(values utils.JSONMap) func(*int_db.Mailing) {
-	return func(m *int_db.Mailing) {
-		m.Values = values
-	}
-}
-
 // withName sets a custom name in the values map
 func withName(name string) func(*int_db.Mailing) {
 	return func(m *int_db.Mailing) {
@@ -219,7 +212,7 @@ func createMultipleMockRows(mailings ...*int_db.Mailing) *sqlmock.Rows {
 
 func Test_SendEmail(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	email := createTestMailing()
 
@@ -245,7 +238,7 @@ func Test_SendEmail(t *testing.T) {
 
 func Test_GetEmailById(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	email := createTestMailing()
 
@@ -264,7 +257,7 @@ func Test_GetEmailById(t *testing.T) {
 
 func Test_UpdateEmailStatus(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	nextRetryTime := time.Now().Add(5 * time.Minute)
 	mailing := createTestMailing(
@@ -292,7 +285,7 @@ func Test_UpdateEmailStatus(t *testing.T) {
 
 func Test_UpdateEmailStatus_DatabaseError(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	nextRetryTime := time.Now().Add(5 * time.Minute)
 	mailing := createTestMailing(
@@ -322,7 +315,7 @@ func Test_UpdateEmailStatus_DatabaseError(t *testing.T) {
 
 func Test_UpdateEmailStatus_RecordNotFound(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	nextRetryTime := time.Now().Add(5 * time.Minute)
 	mailing := createTestMailing(
@@ -351,7 +344,7 @@ func Test_UpdateEmailStatus_RecordNotFound(t *testing.T) {
 
 func Test_GetFailedEmails(t *testing.T) {
 	setup := setupTestDB(t)
-	defer setup.sqlDB.Close()
+	defer setup.cleanup()
 
 	// Create test data with different scenarios
 	nextRetryTime1 := time.Now().Add(-5 * time.Minute) // Past time
