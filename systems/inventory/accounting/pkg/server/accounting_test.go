@@ -681,7 +681,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -710,7 +710,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		gitClient := &cmocks.GitClient{}
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(errors.New(GitCloneError))
+		gitClient.On("CloneGitRepo", "main").Return(errors.New(GitCloneError))
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -730,7 +730,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		gitClient := &cmocks.GitClient{}
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return(nil, errors.New("file not found"))
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
@@ -750,7 +750,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		gitClient := &cmocks.GitClient{}
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte("invalid json"), nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
@@ -773,7 +773,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		rootJSON := testData.generateRootJSON(userId)
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(errors.New("branch not found"))
 
@@ -797,7 +797,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		rootJSON := testData.generateRootJSON(userId)
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return(nil, errors.New("manifest file not found"))
@@ -822,7 +822,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		rootJSON := testData.generateRootJSON(userId)
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte("invalid json"), nil)
@@ -847,7 +847,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateSimpleManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -873,7 +873,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -902,7 +902,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -932,7 +932,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -963,7 +963,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -997,7 +997,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateMinimalManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1031,7 +1031,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithEmptyArrays()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1065,7 +1065,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithOnlyUkama()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1099,7 +1099,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithOnlyBackhaul()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1133,7 +1133,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithMissingFields()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1167,7 +1167,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithNullValues()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1201,7 +1201,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithSpecialCharacters()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1235,7 +1235,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSONWithLargeNumbers()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)
@@ -1273,7 +1273,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		manifestJSON := testData.generateManifestJSON()
 
 		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", testData.BranchName).Return(nil)
 		gitClient.On("ReadFileJSON", "/manifest.json").Return([]byte(manifestJSON), nil)

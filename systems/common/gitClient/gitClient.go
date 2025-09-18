@@ -28,7 +28,7 @@ type GitClient interface {
 	CreateTempDir() bool
 	SetupDir() bool
 	RemoveTempDir() bool
-	CloneGitRepo() error
+	CloneGitRepo(branch string) error
 	BranchCheckout(branch string) error
 	ReadFileJSON(path string) ([]byte, error)
 	ReadFileYML(path string) ([]byte, error)
@@ -79,17 +79,22 @@ func (g *gitClient) SetupDir() bool {
 	return true
 }
 
-func (g *gitClient) CloneGitRepo() error {
+func (g *gitClient) CloneGitRepo(branch string) error {
+	// Use 'main' as default branch if not provided
+	if branch == "" {
+		branch = "main"
+	}
+
 	fmt.Print(g.rootPath, g.username, g.token, g.url)
 	r, err := git.PlainClone(g.rootPath, false, &git.CloneOptions{
 		Auth: &thttp.BasicAuth{
 			Username: g.username,
 			Password: g.token,
 		},
-
-		SingleBranch: true,
-		URL:          g.url,
-		Progress:     os.Stdout,
+		SingleBranch:  true,
+		ReferenceName: plumbing.NewBranchReferenceName(branch),
+		URL:           g.url,
+		Progress:      os.Stdout,
 	})
 	g.repo = r
 

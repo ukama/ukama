@@ -27,17 +27,17 @@ func (_m *GitClient) BranchCheckout(branch string) error {
 	return r0
 }
 
-// CloneGitRepo provides a mock function with no fields
-func (_m *GitClient) CloneGitRepo() error {
-	ret := _m.Called()
+// CloneGitRepo provides a mock function with given fields: branch
+func (_m *GitClient) CloneGitRepo(branch string) error {
+	ret := _m.Called(branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CloneGitRepo")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(branch)
 	} else {
 		r0 = ret.Error(0)
 	}

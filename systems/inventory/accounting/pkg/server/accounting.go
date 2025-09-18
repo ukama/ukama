@@ -87,7 +87,7 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 	log.Infof("Syncing accountings %v", req)
 
 	a.gitClient.SetupDir()
-	err := a.gitClient.CloneGitRepo()
+	err := a.gitClient.CloneGitRepo("main")
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to clone git repo. Error %s", err.Error())
 	}

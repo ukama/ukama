@@ -108,7 +108,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 	log.Infof("Syncing components %v", req)
 
 	c.gitClient.SetupDir()
-	err := c.gitClient.CloneGitRepo()
+	err := c.gitClient.CloneGitRepo("main")
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to clone git repo. Error %s", err.Error())
 	}
