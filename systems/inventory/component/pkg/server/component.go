@@ -107,10 +107,13 @@ func (c *ComponentServer) List(ctx context.Context, req *pb.ListRequest) (*pb.Li
 func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncComponentsRequest) (*pb.SyncComponentsResponse, error) {
 	log.Infof("Syncing components %v", req)
 
-	c.gitClient.SetupDir()
+	if err := c.gitClient.SetupDir(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to setup directory: %s", err.Error())
+	}
+
 	err := c.gitClient.CloneGitRepo("main")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to clone git repo. Error %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to clone git repo: %s", err.Error())
 	}
 
 	rootFileContent, err := c.gitClient.ReadFileJSON(c.gitDirPath + "/root.json")
