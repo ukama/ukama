@@ -168,7 +168,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 func add(nodeId, severity, nType, serviceName string, details []byte, nStatus uint32, time uint32,
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
-	var nodeType string = ""
+	var nodeType = ""
 	var err error
 
 	if nodeId != "" {

@@ -48,7 +48,7 @@ func Run(amqpConf conf.Queue, route string, payload *anypb.Any, out io.Writer) e
 		return fmt.Errorf("error while serializing output data: %w", err)
 	}
 
-	_, err = fmt.Fprint(out, outputBuf)
+	_, err = fmt.Fprint(out, string(outputBuf))
 	if err != nil {
 		return fmt.Errorf("error while writting output: %w", err)
 	}

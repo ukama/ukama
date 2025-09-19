@@ -76,7 +76,10 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to get current working directory. Error %s", err.Error())
 	}
 
-	gc := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
+	gc, err := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
+	if err != nil {
+		log.Fatalf("Failed to create git client. Error %s", err.Error())
+	}
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

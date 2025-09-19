@@ -139,21 +139,21 @@ func (n *ConfiguratorEventServer) handleNodeConfigUpdateEvent(key string, msg *e
 	}
 
 	state := db.CommitState(uint8(msg.GetStatus()))
-	if state == db.Success || state == db.Rollback || state == db.Default {
+	switch state {
+	case db.Success, db.Rollback, db.Default:
 		cfg.Commit = *c
 		err = n.s.configRepo.UpdateCurrentCommit(*cfg, &state)
 		if err != nil {
 			log.Errorf("Error updating node %s commit configuration repo.Error: %+v", msg.NodeId, err)
 			return err
 		}
-
-	} else if state == db.Failed {
+	case db.Failed:
 		err = n.s.configRepo.UpdateLastCommit(*cfg, &state)
 		if err != nil {
 			log.Errorf("Error adding node %s last commit configuration repo.Error: %+v", msg.NodeId, err)
 			return err
 		}
-	} else {
+	default:
 		log.Warningf("Unwanted config states: %v", msg)
 		return nil
 	}

@@ -78,14 +78,16 @@ func TestConfigStore_ProcessConfigStoreEvent(t *testing.T) {
 		var node string
 		store.On("GetDiff", mock.Anything, mock.Anything, mock.Anything).Return([]string{"networkABC/siteXYZ/uk-000000-hnode-0000/epc/epc.json", "networkABC/siteXYZ/uk-000000-hnode-0000/deviced/deviced.json", "networkABC/siteXYZ/uk-000000-hnode-0001/epc/epc.json"}, nil).Once()
 		configRepo.On("Get", mock.MatchedBy(func(n string) bool {
-			if n == testNode1 {
+			switch n {
+			case testNode1:
 				node = testNode1
 				return true
-			} else if n == testNode2 {
+			case testNode2:
 				node = testNode2
 				return true
+			default:
+				return false
 			}
-			return false
 		})).Return(&db.Configuration{NodeId: node}, nil)
 
 		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)

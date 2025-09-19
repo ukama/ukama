@@ -23,7 +23,6 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	pbdc "github.com/ukama/ukama/testing/services/dummy/dcontroller/pb/gen"
 	spb "github.com/ukama/ukama/testing/services/dummy/dsimfactory/pb/gen"
@@ -34,7 +33,7 @@ type Router struct {
 	f       *fizz.Fizz
 	clients *Clients
 	config  *RouterConfig
-	logger  *logrus.Logger
+	logger  *log.Logger
 }
 
 type RouterConfig struct {

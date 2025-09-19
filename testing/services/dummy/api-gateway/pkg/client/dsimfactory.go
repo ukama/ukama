@@ -51,7 +51,11 @@ func NewDsimfactoryFromClient(mClient pb.DsimfactoryServiceClient) *Dsimfactory 
 }
 
 func (r *Dsimfactory) Close() {
-	r.conn.Close()
+	if r.conn != nil {
+		if err := r.conn.Close(); err != nil {
+			logrus.Errorf("failed to close connection: %v", err)
+		}
+	}
 }
 
 func (sp *Dsimfactory) GetSims() (*pb.GetSimsResponse, error) {

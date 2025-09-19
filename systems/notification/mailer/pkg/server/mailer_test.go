@@ -85,10 +85,10 @@ const (
 
 // Test error messages
 var (
-	testErrorNotFound           = errors.New("not found")
-	testErrorDatabaseConnection = errors.New("database connection failed")
-	testErrorDatabaseError      = errors.New("database error")
-	testErrorUpdateFailed       = errors.New("update failed")
+	errTestNotFound           = errors.New("not found")
+	errTestDatabaseConnection = errors.New("database connection failed")
+	errTestDatabaseError      = errors.New("database error")
+	errTestUpdateFailed       = errors.New("update failed")
 )
 
 func setupServer(t *testing.T) (*MailerServer, *mocks.MailerRepo) {
@@ -155,7 +155,7 @@ func TestGetEmailById(t *testing.T) {
 			name:   "email not found",
 			mailId: testMailId.String(),
 			setup: func(repo *mocks.MailerRepo) {
-				repo.On("GetEmailById", testMailId).Return(nil, testErrorNotFound).Once()
+				repo.On("GetEmailById", testMailId).Return(nil, errTestNotFound).Once()
 			},
 			wantErr: true,
 			errCode: codes.Internal,
@@ -260,7 +260,7 @@ func TestProcessEmailQueue(t *testing.T) {
 			MailId:       mailId,
 		}
 
-		mockRepo.On("GetEmailById", mailId).Return(nil, testErrorDatabaseError).Once()
+		mockRepo.On("GetEmailById", mailId).Return(nil, errTestDatabaseError).Once()
 
 		server.emailQueue <- payload
 
@@ -283,7 +283,7 @@ func TestProcessEmailQueue(t *testing.T) {
 		}, nil).Once()
 		mockRepo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
 			return m.MailId == mailId && m.Status == ukama.MailStatusProcess
-		})).Return(testErrorUpdateFailed).Once()
+		})).Return(errTestUpdateFailed).Once()
 
 		server.emailQueue <- payload
 
@@ -564,7 +564,7 @@ func TestSendEmail_DatabaseError(t *testing.T) {
 		Values:       map[string]string{"Name": "Test"},
 	}
 
-	mockRepo.On("CreateEmail", mock.AnythingOfType("*db.Mailing")).Return(testErrorDatabaseConnection).Once()
+	mockRepo.On("CreateEmail", mock.AnythingOfType("*db.Mailing")).Return(errTestDatabaseConnection).Once()
 
 	resp, err := server.SendEmail(context.Background(), request)
 
@@ -604,7 +604,7 @@ func TestUpdateStatus(t *testing.T) {
 			setupMocks: func(repo *mocks.MailerRepo) {
 				repo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
 					return m.MailId == mailId && m.Status == ukama.MailStatusFailed
-				})).Return(testErrorDatabaseError).Once()
+				})).Return(errTestDatabaseError).Once()
 			},
 			wantErr: true,
 		},
@@ -677,7 +677,7 @@ func TestUpdateRetryStatus(t *testing.T) {
 					return m.MailId == mailId &&
 						m.Status == ukama.MailStatusRetry &&
 						m.RetryCount == testRetryCount
-				})).Return(testErrorDatabaseError).Once()
+				})).Return(errTestDatabaseError).Once()
 			},
 			wantErr: true,
 		},

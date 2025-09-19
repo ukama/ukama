@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	"database/sql"
 	extsql "database/sql"
 	"fmt"
 	"log"
@@ -24,7 +23,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 	net_db "github.com/ukama/ukama/systems/registry/network/pkg/db"
 )
 
@@ -71,7 +69,7 @@ func Test_NetRepo_Get(t *testing.T) {
 		networks := pq.StringArray{"Verizon"}
 		countries := pq.StringArray{"USA"}
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name", "allowed_networks",
@@ -118,12 +116,12 @@ func Test_NetRepo_Get(t *testing.T) {
 		var db *extsql.DB
 		var netID = uuid.NewV4()
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*networks.*`).
 			WithArgs(netID, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -161,7 +159,7 @@ func Test_NetRepo_GetByName(t *testing.T) {
 
 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).
@@ -204,12 +202,12 @@ func Test_NetRepo_GetByName(t *testing.T) {
 
 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*network.*`).
 			WithArgs(netName, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -247,7 +245,7 @@ func Test_NetRepo_GetAll(t *testing.T) {
 
 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		rows := sqlmock.NewRows([]string{"id", "name"}).
@@ -289,12 +287,12 @@ func Test_NetRepo_GetAll(t *testing.T) {
 
 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectQuery(`^SELECT.*networks.*`).
 			WithArgs().
-			WillReturnError(sql.ErrNoRows)
+			WillReturnError(extsql.ErrNoRows)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -334,7 +332,7 @@ func Test_NetRepo_Add(t *testing.T) {
 			Name: "network1",
 		}
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
@@ -377,7 +375,7 @@ func Test_NetRepo_Add(t *testing.T) {
 func Test_NetRepo_Delete(t *testing.T) {
 	t.Run("NetworkExist", func(t *testing.T) {
 		// Arrange
-		net := db.Network{
+		net := net_db.Network{
 			Id:        uuid.NewV4(),
 			Name:      "test",
 			CreatedAt: time.Now(),
@@ -386,7 +384,7 @@ func Test_NetRepo_Delete(t *testing.T) {
 		}
 		var db *extsql.DB
 
-		db, mock, err := sqlmock.New() // mock sql.DB
+		db, mock, err := sqlmock.New() // mock extsql.DB
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()

@@ -47,9 +47,16 @@ func FetchData(url string) ([]RawRates, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			log.Warnf("Failed to close response body: %v", closeErr)
+		}
+	}()
 
-	content, _ := io.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
 
 	var r []RawRates
 	errorStr := "invalid CSV file data"
