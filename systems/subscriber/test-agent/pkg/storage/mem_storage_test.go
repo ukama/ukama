@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/tj/assert"
+
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 )
 
@@ -20,15 +22,14 @@ func TestMemStorage_Get(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		data := map[string]*storage.SimInfo{
@@ -61,15 +62,14 @@ func TestMemStorage_Put(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		s := storage.NewMemStorage(make(map[string]*storage.SimInfo))
@@ -85,15 +85,14 @@ func TestMemStorage_Delete(t *testing.T) {
 		t.Parallel()
 
 		const (
-			iccid  = "b8f04217beabf6a19e7eb5b3"
-			imsi   = "eabf6a19e7eb5b3"
-			status = "inactive"
+			iccid = "b8f04217beabf6a19e7eb5b3"
+			imsi  = "eabf6a19e7eb5b3"
 		)
 
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: status,
+			Status: ukama.SimStatusInactive,
 		}
 
 		data := map[string]*storage.SimInfo{

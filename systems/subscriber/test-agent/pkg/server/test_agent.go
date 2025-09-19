@@ -13,11 +13,14 @@ import (
 	"errors"
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
-	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/subscriber/test-agent/pkg/storage"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/subscriber/test-agent/pb/gen"
 )
 
 type TestAgentServer struct {
@@ -62,7 +65,7 @@ func (s *TestAgentServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*p
 		SimInfo: &pb.SimInfo{
 			Iccid:  sim.Iccid,
 			Imsi:   sim.Imsi,
-			Status: sim.Status,
+			Status: sim.Status.String(),
 		},
 	}, nil
 }
@@ -75,11 +78,11 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != storage.SimStatusInactive.String() {
+	if sim.Status != ukama.SimStatusInactive {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for operation", sim.Status)
 	}
 
-	sim.Status = storage.SimStatusActive.String()
+	sim.Status = ukama.SimStatusActive
 
 	err = s.storage.Put(req.Iccid, sim)
 	if err != nil {
@@ -97,11 +100,11 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != storage.SimStatusActive.String() {
+	if sim.Status != ukama.SimStatusActive {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for operation", sim.Status)
 	}
 
-	sim.Status = storage.SimStatusInactive.String()
+	sim.Status = ukama.SimStatusInactive
 
 	err = s.storage.Put(req.Iccid, sim)
 	if err != nil {
@@ -119,7 +122,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != storage.SimStatusInactive.String() {
+	if sim.Status != ukama.SimStatusInactive {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for deletion", sim.Status)
 	}
 
@@ -146,7 +149,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, iccid string) 
 		sim = &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: storage.SimStatusInactive.String(),
+			Status: ukama.SimStatusInactive,
 		}
 
 		err := s.storage.Put(iccid, sim)
