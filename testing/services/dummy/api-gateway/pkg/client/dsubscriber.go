@@ -14,7 +14,7 @@ import (
 
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/testing/services/dummy/dsubscriber/pb/gen"
 	"google.golang.org/grpc"
 )
@@ -29,7 +29,7 @@ type Dsubscriber struct {
 func NewDsubscriber(healthHost string, timeout time.Duration) *Dsubscriber {
 	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		logrus.Fatalf("did not connect: %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewDsubscriberServiceClient(conn)
 
@@ -53,7 +53,7 @@ func NewHealthFromClient(mClient pb.DsubscriberServiceClient) *Dsubscriber {
 func (r *Dsubscriber) Close() {
 	if r.conn != nil {
 		if err := r.conn.Close(); err != nil {
-			logrus.Errorf("failed to close connection: %v", err)
+			log.Errorf("failed to close connection: %v", err)
 		}
 	}
 }
