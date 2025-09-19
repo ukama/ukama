@@ -86,10 +86,13 @@ func (a *AccountingServer) GetByUser(ctx context.Context, req *pb.GetByUserReque
 func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcountingRequest) (*pb.SyncAcountingResponse, error) {
 	log.Infof("Syncing accountings %v", req)
 
-	a.gitClient.SetupDir()
-	err := a.gitClient.CloneGitRepo()
+	if err := a.gitClient.SetupDir(); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to setup directory: %s", err.Error())
+	}
+
+	err := a.gitClient.CloneGitRepo("main")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to clone git repo. Error %s", err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to clone git repo: %s", err.Error())
 	}
 
 	rootFileContent, err := a.gitClient.ReadFileJSON(a.gitDirPath + "/root.json")

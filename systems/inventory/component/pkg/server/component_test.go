@@ -208,8 +208,8 @@ func TestComponentServer_SyncComponents(t *testing.T) {
 		msgBus := &cmocks.MsgBusServiceClient{}
 
 		// Mock git client setup
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -294,8 +294,8 @@ specification: "` + TestSpecification2 + `"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(fmt.Errorf("git clone failed"))
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(fmt.Errorf("git clone failed"))
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
 
@@ -319,8 +319,8 @@ specification: "` + TestSpecification2 + `"`
 		msgBus := &cmocks.MsgBusServiceClient{}
 
 		// Mock git client setup
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -420,8 +420,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return(nil, fmt.Errorf("file not found"))
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
@@ -444,8 +444,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte("invalid json"), nil)
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
@@ -469,8 +469,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -506,8 +506,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -545,8 +545,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -584,8 +584,8 @@ specification: "Backhaul component specification for testing"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -637,8 +637,8 @@ specification: "Test specification"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -691,8 +691,8 @@ specification: "Test specification"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"test": [
@@ -747,8 +747,8 @@ specification: "Test specification"`
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
 
-		gitClient.On("SetupDir").Return(true)
-		gitClient.On("CloneGitRepo").Return(nil)
+		gitClient.On("SetupDir").Return(nil)
+		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
 			"production": [
