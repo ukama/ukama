@@ -62,10 +62,10 @@ const (
 
 // Fixed timestamps for consistent testing
 var (
-	fixedBaseTime = time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC)
-	fixedFromTime = time.Date(2025, 8, 15, 12, 0, 0, 0, time.UTC) // 30 days from base
-	fixedToTime   = time.Date(2025, 9, 15, 12, 0, 0, 0, time.UTC) // 60 days from base
-	fixedPastTime = time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC) // 1 day before base
+	fixedBaseTime = time.Now().AddDate(0, 0, 1)  // 1 day from now
+	fixedFromTime = time.Now().AddDate(0, 0, 30) // 30 days from now
+	fixedToTime   = time.Now().AddDate(0, 0, 60) // 60 days from now
+	fixedPastTime = time.Now().AddDate(0, 0, -1) // 1 day ago
 )
 
 type UkamaDbMock struct {
