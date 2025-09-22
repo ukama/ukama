@@ -123,7 +123,11 @@ func setupTestDB(t *testing.T) (*baseRateRepo, sqlmock.Sqlmock, func()) {
 	assert.NoError(t, err)
 
 	repo := NewBaseRateRepo(&UkamaDbMock{GormDb: gdb})
-	cleanup := func() { db.Close() }
+	cleanup := func() {
+		if err := db.Close(); err != nil {
+			t.Logf("Error closing database: %v", err)
+		}
+	}
 
 	return repo, mock, cleanup
 }

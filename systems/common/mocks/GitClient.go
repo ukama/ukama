@@ -27,17 +27,17 @@ func (_m *GitClient) BranchCheckout(branch string) error {
 	return r0
 }
 
-// CloneGitRepo provides a mock function with no fields
-func (_m *GitClient) CloneGitRepo() error {
-	ret := _m.Called()
+// CloneGitRepo provides a mock function with given fields: branch
+func (_m *GitClient) CloneGitRepo(branch string) error {
+	ret := _m.Called(branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CloneGitRepo")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(branch)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,18 +46,18 @@ func (_m *GitClient) CloneGitRepo() error {
 }
 
 // CreateTempDir provides a mock function with no fields
-func (_m *GitClient) CreateTempDir() bool {
+func (_m *GitClient) CreateTempDir() error {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTempDir")
 	}
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func() bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
 	return r0
@@ -154,36 +154,36 @@ func (_m *GitClient) ReadFileYML(path string) ([]byte, error) {
 }
 
 // RemoveTempDir provides a mock function with no fields
-func (_m *GitClient) RemoveTempDir() bool {
+func (_m *GitClient) RemoveTempDir() error {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveTempDir")
 	}
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func() bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
 	return r0
 }
 
 // SetupDir provides a mock function with no fields
-func (_m *GitClient) SetupDir() bool {
+func (_m *GitClient) SetupDir() error {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetupDir")
 	}
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func() bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
 	return r0
