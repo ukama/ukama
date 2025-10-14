@@ -1,124 +1,124 @@
-version: '3.3'
+version: "3.3"
 services:
- postgresd-nucleus:
-  image: postgres:13.3
-  ports:
-   - 5406:5432
-  environment:
-   - POSTGRES_USER=postgres
-   - POSTGRES_PASSWORD=Pass2020!
-  networks:
-   - ukama-net
-  volumes:
-   - postgress-data:/var/lib/postgresql
+  postgresd-nucleus:
+    image: postgres:13.3
+    ports:
+      - 5406:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - ukama-net
+    volumes:
+      - postgress-data:/var/lib/postgresql
 
- org:
-  build: ./org
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-nucleus
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - MSGCLIENT_HOST=msgclient-nucleus:9095
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - ORCHESTRATORHOST=http://${LOCAL_HOST_IP}:8050
-   - INITCLIENTHOST=http://api-gateway-init:8080
-   - ORG_SERVICE_HOST=org
-   - ORG_SERVICE_PORT=9090
-   - USERHOST=user:9090
-   - OWNERID=${OWNERID}
-   - ORGID=${ORGID}
-   - ORGNAME=${ORGNAME}
-   - CURRENCY=${CURRENCY}
-   - COUNTRY=${COUNTRY}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - msgclient-nucleus
+  org:
+    build: ./org
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-nucleus
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - MSGCLIENT_HOST=msgclient-nucleus:9095
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - HTTPSERVICES_ORCHESTRATORCLIENT=http://${LOCAL_HOST_IP}:8050
+      - HTTPSERVICES_INITCLIENT=http://api-gateway-init:8080
+      - ORG_SERVICE_HOST=org
+      - ORG_SERVICE_PORT=9090
+      - USERHOST=user:9090
+      - OWNERID=${OWNERID}
+      - ORGID=${ORGID}
+      - ORGNAME=${ORGNAME}
+      - CURRENCY=${CURRENCY}
+      - COUNTRY=${COUNTRY}
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-nucleus
 
- user:
-  build: ./user
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-nucleus
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - MSGCLIENT_HOST=msgclient-nucleus:9095
-   - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
-   - USER_SERVICE_HOST=user
-   - USER_SERVICE_PORT=9090
-   - ORG=org:9090
-   - ORGNAME=${ORGNAME}
-   - OWNERID=${OWNERID}
-   - OWNERNAME=${OWNERNAME}
-   - OWNEREMAIL=${OWNEREMAIL}
-   - OWNERPHONE=0123456789
-   - AUTHID=${OWNERAUTHID}
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - msgclient-nucleus
+  user:
+    build: ./user
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-nucleus
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - MSGCLIENT_HOST=msgclient-nucleus:9095
+      - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
+      - USER_SERVICE_HOST=user
+      - USER_SERVICE_PORT=9090
+      - ORG=org:9090
+      - ORGNAME=${ORGNAME}
+      - OWNERID=${OWNERID}
+      - OWNERNAME=${OWNERNAME}
+      - OWNEREMAIL=${OWNEREMAIL}
+      - OWNERPHONE=0123456789
+      - AUTHID=${OWNERAUTHID}
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - msgclient-nucleus
 
- api-gateway-nucleus:
-  build: ./api-gateway
-  restart: always
-  ports:
-   - 8060:8080
-  networks:
-   - ukama-net
-  environment:
-   - DEBUGMODE=true
-   - BYPASS_AUTH_MODE=true
-   # - CORS_ALLOWALLORIGINS=true
-   # - CORS_ALLOWORIGINS=""
-  depends_on:
-   - org
-   - user
-   - postgresd-nucleus
+  api-gateway-nucleus:
+    build: ./api-gateway
+    restart: always
+    ports:
+      - 8060:8080
+    networks:
+      - ukama-net
+    environment:
+      - DEBUGMODE=true
+      - BYPASS_AUTH_MODE=true
+      # - CORS_ALLOWALLORIGINS=true
+      # - CORS_ALLOWORIGINS=""
+    depends_on:
+      - org
+      - user
+      - postgresd-nucleus
 
- msgclient-nucleus:
-  build: ../services/msgClient
-  environment:
-   - DEBUGMODE=true
-   - DB_HOST=postgresd-nucleus
-   - DB_PASSWORD=Pass2020!
-   - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - GRPC_PORT=9095
-   - SYSTEM=nucleus
-  restart: always
-  networks:
-   - ukama-net
-  depends_on:
-   - postgresd-nucleus
+  msgclient-nucleus:
+    build: ../services/msgClient
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd-nucleus
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+      - GRPC_PORT=9095
+      - SYSTEM=nucleus
+    restart: always
+    networks:
+      - ukama-net
+    depends_on:
+      - postgresd-nucleus
 
- initclient-nucleus:
-  build: ../services/initClient
-  environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
-   - ENV_DNS_REFRESH_TIME_PERIOD=30
-   - ENV_SYSTEM_NAME=nucleus
-   - ENV_SYSTEM_DNS=api-gateway-nucleus
-   - ENV_DNS_SERVER=false
-   - ENV_SYSTEM_PORT=8080
-   - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=initclient-nucleus
-   - ENV_INIT_CLIENT_PORT=8080
-   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-  restart: always
-  networks:
-   - ukama-net
+  initclient-nucleus:
+    build: ../services/initClient
+    environment:
+      - ENV_SYSTEM_ORG=${ORGNAME}
+      - ENV_DNS_REFRESH_TIME_PERIOD=30
+      - ENV_SYSTEM_NAME=nucleus
+      - ENV_SYSTEM_DNS=api-gateway-nucleus
+      - ENV_DNS_SERVER=false
+      - ENV_SYSTEM_PORT=8080
+      - ENV_SYSTEM_CERT=This-is-a-certificate
+      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+      - ENV_INIT_SYSTEM_PORT=8071
+      - ENV_INIT_CLIENT_ADDR=initclient-nucleus
+      - ENV_INIT_CLIENT_PORT=8080
+      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+    restart: always
+    networks:
+      - ukama-net
 
 networks:
- ukama-net:
-  external: true
-  name: services_ukama-net
+  ukama-net:
+    external: true
+    name: services_ukama-net
 
 volumes:
- postgress-data:
+  postgress-data:
