@@ -1,134 +1,174 @@
-# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 name: build-systems-messaging-mesh
-on:  
-  push:   
+on:
+  push:
     paths:
-        - "systems/messaging/mesh/**"
-        - "nodes/ukamaOS/distro/vendor/**"  
-        - ".github/workflows/systems-messaging-mesh.yaml"
- 
+      - "systems/messaging/mesh/**"
+      - "nodes/ukamaOS/distro/vendor/**"
+      - ".github/workflows/systems-messaging-mesh.yaml"
+
   workflow_dispatch:
 
-jobs:  
+jobs:
   build:
-    env: 
+    env:
       working-directory: systems/messaging/mesh
 
     name: build and test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Installing Ubuntu packages
-      run: |
-        sudo apt-get update
-        sudo add-apt-repository universe
-        sudo apt-get update
-        sudo apt-get install -y \
-          software-properties-common \
-          build-essential \
-          git \
-          wget \
-          autoconf \
-          automake \
-          libtool \
-          pkg-config \
-          libssl-dev \
-          texinfo \
-          cmake \
-          tcl \
-          zlib1g-dev \
-          texlive \
-          texlive-latex-extra \
-          ghostscript \
-          gperf \
-          gtk-doc-tools \
-          libev-dev \
-          bison \
-          jq \
-          qemu-system \
-          virt-manager \
-          virt-viewer \
-          libvirt-daemon-system \
-          libvirt-clients \
-          bridge-utils \
-          debootstrap \
-          kpartx \
-          fdisk \
-          util-linux \
-          protobuf-compiler \
-          iproute2 \
-          libcap-dev \
-          libidn2-0-dev \
-          libmicrohttpd-dev \
-          gnutls-dev \
-          linux-headers-generic \
-          sqlite3 \
-          libsqlite3-dev \
-          dhcpcd5 \
-          libgmp-dev \
-          gnutls-bin \
-          iptables \
-          libjansson-dev \
-          libunistring-dev \
-          libmbedtls-dev \
-          nettle-dev \
-          openssl \
-          p11-kit \
-          libprotobuf-c-dev \
-          libpsl-dev \
-          procps \
-          libcurl4-openssl-dev
+      - name: Installing Ubuntu packages
+        run: |
+          sudo apt-get update
+          sudo add-apt-repository universe
+          sudo apt-get update
+          sudo apt-get install -y \
+            software-properties-common \
+            build-essential \
+            git \
+            wget \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libssl-dev \
+            texinfo \
+            cmake \
+            tcl \
+            zlib1g-dev \
+            texlive \
+            texlive-latex-extra \
+            ghostscript \
+            gperf \
+            gtk-doc-tools \
+            libev-dev \
+            bison \
+            jq \
+            qemu-system \
+            virt-manager \
+            virt-viewer \
+            libvirt-daemon-system \
+            libvirt-clients \
+            bridge-utils \
+            debootstrap \
+            kpartx \
+            fdisk \
+            util-linux \
+            protobuf-compiler \
+            iproute2 \
+            libcap-dev \
+            libidn2-0-dev \
+            libmicrohttpd-dev \
+            gnutls-dev \
+            linux-headers-generic \
+            sqlite3 \
+            libsqlite3-dev \
+            dhcpcd5 \
+            libgmp-dev \
+            gnutls-bin \
+            iptables \
+            libjansson-dev \
+            libunistring-dev \
+            libmbedtls-dev \
+            nettle-dev \
+            openssl \
+            p11-kit \
+            libprotobuf-c-dev \
+            libpsl-dev \
+            procps \
+            libcurl4-openssl-dev
 
-        # Install gettext from source
-        wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
-          && tar -xvf gettext-0.21.tar.gz \
-          && cd gettext-0.21 \
-          && ./configure \
-          && make \
-          && sudo make install \
-          && cd .. \
-          && rm -rf gettext-0.21.tar.gz \
-          && rm -rf gettext-0.21
+          # Install gettext from source
+          wget http://ftp.gnu.org/gnu/gettext/gettext-0.21.tar.gz \
+            && tar -xvf gettext-0.21.tar.gz \
+            && cd gettext-0.21 \
+            && ./configure \
+            && make \
+            && sudo make install \
+            && cd .. \
+            && rm -rf gettext-0.21.tar.gz \
+            && rm -rf gettext-0.21
 
-    - name: Checkout submodules
-      run: git submodule update --init --recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
 
-    - name: Build vendor libs
-      working-directory: nodes/ukamaOS/distro/vendor
-      run: make TARGET=linux
+      - name: Build vendor libs
+        working-directory: nodes/ukamaOS/distro/vendor
+        run: make TARGET=linux
 
-    - name: Build platform library
-      working-directory: ./nodes/ukamaOS/distro/platform
-      run: make TARGET=linux
-        
-    - name: build mesh app
-      working-directory: systems/messaging/mesh
-      run: make TARGET=linux
+      - name: Build platform library
+        working-directory: ./nodes/ukamaOS/distro/platform
+        run: make TARGET=linux
 
-  release:
-      name: release
-      needs: build
-      if: github.ref == 'refs/heads/main'
-      runs-on: ubuntu-latest
-      env:
+      - name: build mesh app
         working-directory: systems/messaging/mesh
-      steps:
-        - uses: actions/checkout@v3
-        
-        - name: Init vars
-          id: vars_step
-          uses: ./.github/actions/git-vars
+        run: make TARGET=linux
 
-        - name: update gitops
-          uses: denispalnitsky/gitops-release@v9
-          with:
-            filename: "releases/messaging-helmfile.yaml"
-            key: "meshImageTag"
-            value:  ${{ steps.vars_step.outputs.sha-short }}
-            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-            github-org-and-repo: "ukama/infra-as-code"
-            github-user-mail: "bot@ukama.com"
-            github-username: "ukama-bot"
+      - name: Init vars
+        id: vars_step
+        uses: ./.github/actions/git-vars
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Login to Amazon ECR
+        shell: bash
+        run: |
+          aws ecr get-login-password --region us-east-1 | \
+          buildah login \
+            --username AWS \
+            --password-stdin \
+            003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+      - name: OCI build and push
+        shell: bash
+        working-directory: systems/messaging/mesh
+        env:
+          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/messaging/mesh
+        run: |
+          buildah bud --pull -t $REGISTRY:${{ steps.vars_step.outputs.sha-short }} \
+           -t $REGISTRY:${{ steps.vars_step.outputs.tag }} \
+           -t $REGISTRY:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+           -t $REGISTRY:latest .  && \
+          buildah push $REGISTRY:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+          buildah push $REGISTRY:${{ steps.vars_step.outputs.sha-short }}  && \
+          buildah push $REGISTRY:${{ steps.vars_step.outputs.tag }}
+
+      - name: OCI push [latest]
+        shell: bash
+        working-directory: ${{ env.working-directory }}
+        if: github.ref == 'refs/heads/main'
+        env:
+          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/messaging/mesh
+        run: buildah push $REGISTRY\:latest
+  release:
+    name: release
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      working-directory: systems/messaging/mesh
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Init vars
+        id: vars_step
+        uses: ./.github/actions/git-vars
+
+      - name: update gitops
+        uses: denispalnitsky/gitops-release@v9
+        with:
+          filename: "releases/messaging-helmfile.yaml"
+          key: "meshImageTag"
+          value: ${{ steps.vars_step.outputs.sha-short }}
+          github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          github-org-and-repo: "ukama/infra-as-code"
+          github-user-mail: "bot@ukama.com"
+          github-username: "ukama-bot"
