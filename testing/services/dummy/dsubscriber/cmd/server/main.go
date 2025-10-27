@@ -20,9 +20,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	ic "github.com/ukama/ukama/systems/common/initclient"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	agent "github.com/ukama/ukama/systems/common/rest/client/ukamaagent"
 	"github.com/ukama/ukama/testing/services/dummy/dsubscriber/clients"
@@ -72,13 +73,14 @@ func runGrpcServer() {
 
 	cdrC := clients.NewCDRClient(serviceConfig.Http.AgentNodeGateway)
 
-	ukamaAgentUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"),
-		serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	ukamaAgentUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, "ukamaagent"), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve ukama agent address: %v", err)
 	}
 
-	regUrl, err := ic.GetHostUrl(ic.CreateHostString(serviceConfig.OrgName, "registry"), serviceConfig.Http.InitClient, &serviceConfig.OrgName, serviceConfig.DebugMode)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
