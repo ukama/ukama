@@ -58,10 +58,7 @@ const (
 var (
 	// Test UUIDs
 	testInvitationId1 = uuid.NewV4()
-	testInvitationId2 = uuid.NewV4()
-	testInvitationId3 = uuid.NewV4()
 	testUserId1       = uuid.NewV4()
-	testUserId2       = uuid.NewV4()
 
 	// Test time
 	testExpiryTime = time.Date(2023, 8, 25, 17, 59, 43, 831000000, time.UTC)
@@ -71,13 +68,6 @@ var (
 	// Test roles and statuses
 	testRole           = roles.TYPE_ADMIN
 	testStatus         = ukama.InvitationStatus_INVITE_PENDING
-	testAcceptedStatus = ukama.InvitationStatus_INVITE_ACCEPTED
-
-	// Test errors
-	testErrorInvalidTransaction = gorm.ErrInvalidTransaction
-	testErrorDuplicatedKey      = gorm.ErrDuplicatedKey
-	testErrorRecordNotFound     = gorm.ErrRecordNotFound
-	testErrorInvalidDB          = gorm.ErrInvalidDB
 
 	// Database column names
 	dbColumns = []string{"id", "name", "email", "role", "status", "user_id", "expires_at", "link", "created_at", "updated_at", "deleted_at"}
