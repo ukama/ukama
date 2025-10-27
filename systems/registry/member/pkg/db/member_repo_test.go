@@ -103,15 +103,6 @@ func createMemberRows(member *Member) *sqlmock.Rows {
 		AddRow(1, member.MemberId, member.UserId, member.Role, member.Deactivated, nil, nil, nil)
 }
 
-// Helper function to create mock rows for multiple members
-func createMultipleMemberRows(members []Member) *sqlmock.Rows {
-	rows := sqlmock.NewRows([]string{"id", "member_id", "user_id", "role", "deactivated", "created_at", "updated_at", "deleted_at"})
-	for _, member := range members {
-		rows.AddRow(1, member.MemberId, member.UserId, member.Role, member.Deactivated, nil, nil, nil)
-	}
-	return rows
-}
-
 func Test_AddMember(t *testing.T) {
 	t.Run("AddMember", func(t *testing.T) {
 		// Arrange

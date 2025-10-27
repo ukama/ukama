@@ -44,7 +44,6 @@ var (
 	testMemberId3     = uuid.NewV4()
 	testMemberId4     = uuid.NewV4()
 	testRole          = roles.TYPE_USERS
-	testRoleAdmin     = roles.TYPE_ADMIN
 	testPushGateway   = ""
 	testModelId1      = uint(1)
 	testModelId2      = uint(2)
