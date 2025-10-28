@@ -96,7 +96,7 @@ void print_config(Config *config) {
     log_debug("Binding IP:     %s",  config->bindingIP);
 	log_debug("Websocket port: %s",  config->websocketPort);
     log_debug("Services port:  %s",  config->servicesPort);
-	log_debug("AMQP: %s:%s@%s:%s",   config->amqpUser, config->amqpPassword, config->amqpHost, config->amqpPort);
+	log_debug("AMQP: %s:***@%s:%s",   config->amqpUser, config->amqpHost, config->amqpPort);
 	log_debug("initClient: %s:%s",   config->initClientHost,
                                      config->initClientPort);
     log_debug("Cert file: %s",       config->certFile);

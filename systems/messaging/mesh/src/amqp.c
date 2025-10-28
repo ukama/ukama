@@ -291,8 +291,8 @@ static WAMQPConn *init_amqp_connection(char *host, char *port, char *user, char 
 
 	/* Sanity check */
 	if (host == NULL || port == NULL || user == NULL || password == NULL) {
-		log_error("Invalid AMQP connection parameters: host: %s port: %s user: %s password: %s",
-				  host, port, user, password);
+		log_error("Invalid AMQP connection parameters: host: %s port: %s user: %s password: ****",
+				  host, port, user);
 		return NULL;
 	}
 
@@ -314,8 +314,8 @@ static WAMQPConn *init_amqp_connection(char *host, char *port, char *user, char 
 	/* Connect to the AMQP host */
 	ret = amqp_socket_open(socket, host, atoi(port));
 	if (ret) {
-		log_error("Unable to connect with AMQP server at host: %s port: %s user: %s password: %s",
-				  host, port, user, password);
+		log_error("Unable to connect with AMQP server at host: %s port: %s user: %s password: ****",
+				  host, port, user);
 		amqp_destroy_connection(conn);
 		return NULL;
 	}
