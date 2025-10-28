@@ -5,8 +5,6 @@
 	local-accept  = "4444"
 	amqp-host     = "192.168.0.100"
 	amqp-port     = "5672"
-	amqp-user     = "guest"
-	amqp-password = "guest"
 	amqp-exchange = "amq.direct"
 	cert          = "/a/b/c/cert.crt"
 	key           = "/x/y/z/pem.key"

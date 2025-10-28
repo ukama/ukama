@@ -1,158 +1,156 @@
-version: "3.3"
+version: '3.3'
 services:
-  postgresd-messaging:
-    image: postgres:13.3
-    ports:
-      - 5409:5432
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Pass2020!
-    networks:
-      - ukama-net
-    volumes:
-      - postgress-data:/var/lib/postgresql
+ postgresd-messaging:
+  image: postgres:13.3
+  ports:
+   - 5409:5432
+  environment:
+   - POSTGRES_USER=postgres
+   - POSTGRES_PASSWORD=Pass2020!
+  networks:
+   - ukama-net
+  volumes:
+   - postgress-data:/var/lib/postgresql
 
-  mesh:
-    build: ./mesh
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_SYSTEM_ORG_ID=${ORGID}
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_CLIENT_PORT=8071
-      - ENV_BINDING_IP=0.0.0.0
-      - ENV_WEBSOCKET_PORT=18200
-      - ENV_SERVICES_PORT=4444
-      - ENV_MESH_CERT_FILE=
-      - ENV_MESH_KEY_FILE=
-      - ENV_AMQP_HOST=${LOCAL_HOST_IP}
-      - ENV_AMQP_PORT=5672
-      - ENV_AMQP_USER=guest
-      - ENV_AMQP_PASSWORD=guest
-    restart: always
-    ports:
-      - "18200:18200"
-      - "4444:4444"
-    networks:
-      - ukama-net
+ mesh:
+  build: ./mesh
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_ORG_ID=${ORGID}
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_CLIENT_PORT=8071
+   - ENV_BINDING_IP=0.0.0.0
+   - ENV_WEBSOCKET_PORT=18200
+   - ENV_SERVICES_PORT=4444
+   - ENV_MESH_CERT_FILE=
+   - ENV_MESH_KEY_FILE=
+   - ENV_AMQP_HOST=${LOCAL_HOST_IP}
+   - ENV_AMQP_PORT=5672
+  restart: always
+  ports:
+   - '18200:18200'
+   - '4444:4444'
+  networks:
+   - ukama-net
 
-  api-gateway-messaging:
-    build: ./api-gateway
-    restart: always
-    ports:
-      - 8079:8080
-    environment:
-      - DEBUGMODE=true
-      - BYPASS_AUTH_MODE=true
-    depends_on:
-      - nnsd
-    networks:
-      - ukama-net
+ api-gateway-messaging:
+  build: ./api-gateway
+  restart: always
+  ports:
+   - 8079:8080
+  environment:
+   - DEBUGMODE=true
+   - BYPASS_AUTH_MODE=true
+  depends_on:
+   - nnsd
+  networks:
+   - ukama-net
 
-  etcd:
-    image: "bitnami/etcd:latest"
-    networks:
-      - ukama-net
-    environment:
-      - ALLOW_NONE_AUTHENTICATION=yes
-      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
-    ports:
-      - 2379:2379
-      - 2380:2380
+ etcd:
+  image: 'bitnami/etcd:latest'
+  networks:
+   - ukama-net
+  environment:
+   - ALLOW_NONE_AUTHENTICATION=yes
+   - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+  ports:
+   - 2379:2379
+   - 2380:2380
 
-  nnsd:
-    build: ./nns
-    environment:
-      - DEBUGMODE=true
-      - DNS_NODEDOMAIN=node.mesh
-      - ETCDHOST=etcd:2379
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - MSGCLIENT_HOST=msgclient-messaging:9095
-      - NNS_SERVICE_HOST=nnsd
-      - NNS_SERVICE_PORT=9090
-      - REGISTRY=http://${LOCAL_HOST_IP}:8075
-      - ORG=${ORGID}
-      - ORGNAME=${ORGNAME}
-    restart: always
-    networks:
-      ukama-net:
-        ipv4_address: 10.1.0.100
+ nnsd:
+  build: ./nns
+  environment:
+   - DEBUGMODE=true
+   - DNS_NODEDOMAIN=node.mesh
+   - ETCDHOST=etcd:2379
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-messaging:9095
+   - NNS_SERVICE_HOST=nnsd
+   - NNS_SERVICE_PORT=9090
+   - REGISTRY=http://${LOCAL_HOST_IP}:8075
+   - ORG=${ORGID}
+   - ORGNAME=${ORGNAME}
+  restart: always
+  networks:
+   ukama-net:
+    ipv4_address: 10.1.0.100
 
-    depends_on:
-      - msgclient-messaging
+  depends_on:
+   - msgclient-messaging
 
-  coredns:
-    image: coredns/coredns:latest
-    command: -conf /etc/coredns/Corefile -dns.port 53
-    restart: on-failure
-    networks:
-      - ukama-net
-    expose:
-      - "53"
-      - "53/udp"
-    ports:
-      - "5053:53"
-      - "5053:53/udp"
-    volumes:
-      - "./coredns/Corefile:/etc/coredns/Corefile"
+ coredns:
+  image: coredns/coredns:latest
+  command: -conf /etc/coredns/Corefile -dns.port 53
+  restart: on-failure
+  networks:
+   - ukama-net
+  expose:
+   - '53'
+   - '53/udp'
+  ports:
+   - '5053:53'
+   - '5053:53/udp'
+  volumes:
+   - './coredns/Corefile:/etc/coredns/Corefile'
 
-  node-feeder:
-    build: ./node-feeder
-    environment:
-      - DEBUGMODE=true
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - REGISTRY_HOST=registry-gateway:8080
-      - NET_HOST=nnsd:9090
-      - ORGNAME=${ORGNAME}
-    depends_on:
-      - nnsd
-      - msgclient-messaging
-    networks:
-      - ukama-net
+ node-feeder:
+  build: ./node-feeder
+  environment:
+   - DEBUGMODE=true
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - REGISTRY_HOST=registry-gateway:8080
+   - NET_HOST=nnsd:9090
+   - ORGNAME=${ORGNAME}
+  depends_on:
+   - nnsd
+   - msgclient-messaging
+  networks:
+   - ukama-net
 
-  msgclient-messaging:
-    build: ../services/msgClient
-    environment:
-      - DEBUGMODE=true
-      - DB_HOST=postgresd-messaging
-      - DB_PASSWORD=Pass2020!
-      - DB_USER=postgres
-      - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-      - SYSTEM=messaging
-      - GRPC_PORT=9095
-      - ORGNAME=${ORGNAME}
-      - MASTERORGNAME=${MASTERORGNAME}
-    restart: always
-    networks:
-      - ukama-net
-    depends_on:
-      - postgresd-messaging
+ msgclient-messaging:
+  build: ../services/msgClient
+  environment:
+   - DEBUGMODE=true
+   - DB_HOST=postgresd-messaging
+   - DB_PASSWORD=Pass2020!
+   - DB_USER=postgres
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - SYSTEM=messaging
+   - GRPC_PORT=9095
+   - ORGNAME=${ORGNAME}
+   - MASTERORGNAME=${MASTERORGNAME}
+  restart: always
+  networks:
+   - ukama-net
+  depends_on:
+   - postgresd-messaging
 
-  initclient-messaging:
-    # build: ../services/initClient
-    image: main-init
-    environment:
-      - ENV_SYSTEM_ORG=${ORGNAME}
-      - ENV_DNS_REFRESH_TIME_PERIOD=30
-      - ENV_SYSTEM_NAME=messaging
-      - ENV_SYSTEM_DNS=api-gateway-messaging
-      - ENV_DNS_SERVER=false
-      - ENV_SYSTEM_PORT=8080
-      - ENV_SYSTEM_CERT=This-is-a-certificate
-      - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-      - ENV_INIT_SYSTEM_PORT=8071
-      - ENV_INIT_CLIENT_ADDR=initclient-messaging
-      - ENV_INIT_CLIENT_PORT=8080
-      - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
-    restart: always
-    networks:
-      - ukama-net
+ initclient-messaging:
+  # build: ../services/initClient
+  image: main-init
+  environment:
+   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_DNS_REFRESH_TIME_PERIOD=30
+   - ENV_SYSTEM_NAME=messaging
+   - ENV_SYSTEM_DNS=api-gateway-messaging
+   - ENV_DNS_SERVER=false
+   - ENV_SYSTEM_PORT=8080
+   - ENV_SYSTEM_CERT=This-is-a-certificate
+   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_PORT=8071
+   - ENV_INIT_CLIENT_ADDR=initclient-messaging
+   - ENV_INIT_CLIENT_PORT=8080
+   - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+  restart: always
+  networks:
+   - ukama-net
 
 networks:
-  ukama-net:
-    external: true
-    name: services_ukama-net
+ ukama-net:
+  external: true
+  name: services_ukama-net
 
 volumes:
-  postgress-data:
+ postgress-data:
