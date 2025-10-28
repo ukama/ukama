@@ -11,26 +11,29 @@
 
 #define DEFAULT_LOG_LEVEL "DEBUG"
 
-typedef struct {
+typedef struct
+{
 
-    char *bindingIP;      /* binding IP for websocket */
-	char *websocketPort;  /* to accept nodes via websocket */
-	char *servicesPort;   /* to accept services */
+	char *bindingIP;	 /* binding IP for websocket */
+	char *websocketPort; /* to accept nodes via websocket */
+	char *servicesPort;	 /* to accept services */
 
-	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
-	char *amqpPort;       /* Port where AMQP exchange is listening */
-	char *amqpExchange;   /* AMQP exchange name */
+	char *amqpHost;		/* Host where AMQP exchange is running (IP) */
+	char *amqpPort;		/* Port where AMQP exchange is listening */
+	char *amqpUser;		/* User for AMQP connection */
+	char *amqpPassword; /* Password for AMQP connection */
+	char *amqpExchange; /* AMQP exchange name */
 
 	char *initClientHost; /* Host where initClient is running (IP) */
 	char *initClientPort; /* Port where initClient is listening */
 
-	char *certFile;       /* CA Cert file name. */
-	char *keyFile;        /* Key file name.*/
+	char *certFile; /* CA Cert file name. */
+	char *keyFile;	/* Key file name.*/
 
-    char *orgName;        /* Ukama organization name */
-    char *orgID;          /* and its ID */
+	char *orgName; /* Ukama organization name */
+	char *orgID;   /* and its ID */
 
-    char *logLevel;
+	char *logLevel;
 } Config;
 
 void clear_config(Config *config);

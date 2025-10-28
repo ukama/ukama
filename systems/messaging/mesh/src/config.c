@@ -38,6 +38,8 @@ int read_config_from_env(Config **config) {
         (servicesPort = getenv(ENV_SERVICES_PORT)) == NULL ||
         (amqpHost = getenv(ENV_AMQP_HOST)) == NULL ||
         (amqpPort = getenv(ENV_AMQP_PORT)) == NULL ||
+        (amqpUser = getenv(ENV_AMQP_USER)) == NULL ||
+        (amqpPassword = getenv(ENV_AMQP_PASSWORD)) == NULL ||
         (initClientHost = getenv(ENV_INIT_SYSTEM_ADDR)) == NULL ||
         (initClientPort = getenv(ENV_INIT_SYSTEM_PORT)) == NULL ||
         (orgName = getenv(ENV_SYSTEM_ORG)) == NULL ||
@@ -67,6 +69,8 @@ int read_config_from_env(Config **config) {
     (*config)->servicesPort   = strdup(servicesPort);
     (*config)->amqpHost       = strdup(amqpHost);
     (*config)->amqpPort       = strdup(amqpPort);
+    (*config)->amqpUser       = strdup(amqpUser);
+    (*config)->amqpPassword   = strdup(amqpPassword);
     (*config)->amqpExchange   = strdup(DEFAULT_MESH_AMQP_EXCHANGE);
     (*config)->initClientHost = strdup(initClientHost);
     (*config)->initClientPort = strdup(initClientPort);
