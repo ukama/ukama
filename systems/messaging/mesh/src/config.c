@@ -38,6 +38,8 @@ int read_config_from_env(Config **config) {
         (servicesPort = getenv(ENV_SERVICES_PORT)) == NULL ||
         (amqpHost = getenv(ENV_AMQP_HOST)) == NULL ||
         (amqpPort = getenv(ENV_AMQP_PORT)) == NULL ||
+        (amqpUser = getenv(ENV_AMQP_USER)) == NULL ||
+        (amqpPassword = getenv(ENV_AMQP_PASSWORD)) == NULL ||
         (initClientHost = getenv(ENV_INIT_SYSTEM_ADDR)) == NULL ||
         (initClientPort = getenv(ENV_INIT_SYSTEM_PORT)) == NULL ||
         (orgName = getenv(ENV_SYSTEM_ORG)) == NULL ||
