@@ -18,7 +18,7 @@
 #include "bootEvent.pb-c.h"
 #include "any.pb-c.h"
 
-/* 
+/*
  * AMQP Routing key:
  * <type>.<source>.<container>.<object>.<state>
  *
@@ -32,7 +32,7 @@
  */
 
 typedef Google__Protobuf__Any ANY;
-typedef Ukama__Events__V1__NodeOnlineEvent  NodeOnlineEvent;
+typedef Ukama__Events__V1__NodeOnlineEvent NodeOnlineEvent;
 typedef Ukama__Events__V1__NodeOfflineEvent NodeOfflineEvent;
 
 static char *convert_type_to_str(MsgType type);
@@ -44,11 +44,11 @@ static char *create_routing_key(MeshEvent event, char *orgName);
 static int object_type(MeshEvent event);
 static void *serialize_boot_event(char *orgName, char *orgId, char *ip);
 static void *serialize_node_online_event(char *nodeID, char *nodeIP, int nodePort,
-                                         char *meshIP, int meshPort);
+										 char *meshIP, int meshPort);
 static void *serialize_node_offline_event(char *nodeID);
 static void *serialize_any_packet(int eventType, size_t len, void *buff);
 
-/* Mapping between Mesh.d internal state and AMQP routing key. 
+/* Mapping between Mesh.d internal state and AMQP routing key.
  *
  * internal    object state   type
  *
@@ -67,37 +67,40 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff);
  */
 static AMQPRoutingKey routingKey[] = {
 
-	[CONN_CONNECT]  = {.type=EVENT, .object=LINK, .state=CONNECT},
-	[CONN_FAIL]     = {.type=EVENT, .object=LINK, .state=FAIL},
-	[CONN_ACTIVE]   = {.type=EVENT, .object=LINK, .state=ACTIVE},
-	[CONN_LOST]     = {.type=EVENT, .object=LINK, .state=LOST},
-	[CONN_END]      = {.type=EVENT, .object=LINK, .state=END},
-	[CONN_CLOSE]    = {.type=EVENT, .object=LINK, .state=CLOSE},
+	[CONN_CONNECT] = {.type = EVENT, .object = LINK, .state = CONNECT},
+	[CONN_FAIL] = {.type = EVENT, .object = LINK, .state = FAIL},
+	[CONN_ACTIVE] = {.type = EVENT, .object = LINK, .state = ACTIVE},
+	[CONN_LOST] = {.type = EVENT, .object = LINK, .state = LOST},
+	[CONN_END] = {.type = EVENT, .object = LINK, .state = END},
+	[CONN_CLOSE] = {.type = EVENT, .object = LINK, .state = CLOSE},
 
-	[CERT_OK]       = {.type=EVENT, .object=CERT, .state=VALID},
-	[CERT_EXPIRED]  = {.type=EVENT, .object=CERT, .state=EXPIRED},
-	[CERT_INVALID]  = {.type=EVENT, .object=CERT, .state=INVALID},
-	[CERT_REQUIRED] = {.type=REQUEST, .object=CERT, .state=UPDATE},
+	[CERT_OK] = {.type = EVENT, .object = CERT, .state = VALID},
+	[CERT_EXPIRED] = {.type = EVENT, .object = CERT, .state = EXPIRED},
+	[CERT_INVALID] = {.type = EVENT, .object = CERT, .state = INVALID},
+	[CERT_REQUIRED] = {.type = REQUEST, .object = CERT, .state = UPDATE},
 };
 
-/* 
+/*
  * Free -- free variable list of arguments
  *
  */
-static void Free(void *ptr, ... ) {
+static void Free(void *ptr, ...)
+{
 
 	void *p;
-  
-	if(!ptr)
+
+	if (!ptr)
 		return;
 
 	va_list list;
 	va_start(list, ptr);
 
-	p = va_arg(list , void *);
-  
-	while( p != ptr ) {
-		if (p) free(p) ;
+	p = va_arg(list, void *);
+
+	while (p != ptr)
+	{
+		if (p)
+			free(p);
 		p = va_arg(list, void *);
 	}
 
@@ -108,22 +111,24 @@ static void Free(void *ptr, ... ) {
  * convert_type_to_str -- convert passed routing key elements into char*
  *
  */
-static char *convert_type_to_str(MsgType type) {
+static char *convert_type_to_str(MsgType type)
+{
 
 	char *str;
 
-	switch(type) {
+	switch (type)
+	{
 
 	case EVENT:
-		str=TYPE_EVENT_STR;
+		str = TYPE_EVENT_STR;
 		break;
 
 	case REQUEST:
-		str=TYPE_REQUEST_STR;
+		str = TYPE_REQUEST_STR;
 		break;
 
 	case RESPONSE:
-		str=TYPE_RESPONSE_STR;
+		str = TYPE_RESPONSE_STR;
 		break;
 
 	default:
@@ -133,11 +138,13 @@ static char *convert_type_to_str(MsgType type) {
 	return strdup(str);
 }
 
-static char *convert_source_to_str(MsgSource source) {
+static char *convert_source_to_str(MsgSource source)
+{
 
 	char *str;
 
-	switch(source) {
+	switch (source)
+	{
 
 	case DEVICE:
 		str = SOURCE_DEVICE_STR;
@@ -154,11 +161,13 @@ static char *convert_source_to_str(MsgSource source) {
 	return strdup(str);
 }
 
-static char *convert_object_to_str(MsgObject object) {
+static char *convert_object_to_str(MsgObject object)
+{
 
 	char *str;
 
-	switch(object) {
+	switch (object)
+	{
 
 	case LINK:
 		str = OBJECT_NODE_STR;
@@ -175,16 +184,18 @@ static char *convert_object_to_str(MsgObject object) {
 	return strdup(str);
 }
 
-static char *convert_state_to_str(ObjectState state) {
+static char *convert_state_to_str(ObjectState state)
+{
 
 	char *str;
 
-	switch(state) {
+	switch (state)
+	{
 
 	case CONNECT:
-    case ACTIVE:
-        str = STATE_ONLINE_STR;
-        break;
+	case ACTIVE:
+		str = STATE_ONLINE_STR;
+		break;
 
 	case FAIL:
 	case LOST:
@@ -216,11 +227,13 @@ static char *convert_state_to_str(ObjectState state) {
 	return strdup(str);
 }
 
-static int is_valid_event(MeshEvent event) {
+static int is_valid_event(MeshEvent event)
+{
 
-	int ret=FALSE;
+	int ret = FALSE;
 
-	switch(event) {
+	switch (event)
+	{
 
 	case CONN_CONNECT:
 	case CONN_FAIL:
@@ -232,12 +245,12 @@ static int is_valid_event(MeshEvent event) {
 	case CERT_EXPIRED:
 	case CERT_INVALID:
 	case CERT_REQUIRED:
-		ret=TRUE;
+		ret = TRUE;
 		break;
 	default:
-		ret=FALSE;
+		ret = FALSE;
 	}
-        
+
 	return ret;
 }
 
@@ -245,9 +258,11 @@ static int is_valid_event(MeshEvent event) {
  * log_amqp_response -- inspired from die_on_amqp_error()
  *
  */
-static void log_amqp_response(WAMQPReply reply, const char *context) {
+static void log_amqp_response(WAMQPReply reply, const char *context)
+{
 
-	switch (reply.reply_type) {
+	switch (reply.reply_type)
+	{
 	case AMQP_RESPONSE_NORMAL:
 		break;
 
@@ -260,15 +275,16 @@ static void log_amqp_response(WAMQPReply reply, const char *context) {
 		break;
 
 	case AMQP_RESPONSE_SERVER_EXCEPTION:
-		switch (reply.reply.id) {
+		switch (reply.reply.id)
+		{
 		case AMQP_CONNECTION_CLOSE_METHOD:
 			log_error("%s: server connection error", context);
 			break;
-      
+
 		case AMQP_CHANNEL_CLOSE_METHOD:
 			log_error("%s: server channel error", context);
 			break;
-      
+
 		default:
 			log_error("%s: unknown server error, method id 0x%08X", context,
 					  reply.reply.id);
@@ -282,28 +298,32 @@ static void log_amqp_response(WAMQPReply reply, const char *context) {
 	}
 }
 
-static WAMQPConn *init_amqp_connection(char *host, char *port) {
+static WAMQPConn *init_amqp_connection(char *host, char *port, char *user, char *password)
+{
 
 	int ret;
-	WAMQPConn *conn=NULL;
-	WAMQPSocket *socket=NULL;
+	WAMQPConn *conn = NULL;
+	WAMQPSocket *socket = NULL;
 	WAMQPReply reply;
 
 	/* Sanity check */
-	if (host == NULL && port == NULL) {
+	if (host == NULL || port == NULL || user == NULL || password == NULL)
+	{
 		return NULL;
 	}
 
 	/* Initialize AMQP state variable */
 	conn = amqp_new_connection();
-	if (!conn) {
+	if (!conn)
+	{
 		log_error("Unable to create AMQP, memory allocation issue");
 		return NULL;
 	}
 
 	/* Create TCP socket */
 	socket = amqp_tcp_socket_new(conn);
-	if (!socket) {
+	if (!socket)
+	{
 		log_error("Unable to create AMQP TCP socket");
 		amqp_destroy_connection(conn);
 		return NULL;
@@ -311,55 +331,61 @@ static WAMQPConn *init_amqp_connection(char *host, char *port) {
 
 	/* Connect to the AMQP host */
 	ret = amqp_socket_open(socket, host, atoi(port));
-	if (ret) {
+	if (ret)
+	{
 		log_error("Unable to connect with AMQP server at host: %s port: %s",
 				  host, port);
 		amqp_destroy_connection(conn);
 		return NULL;
 	}
 
-	/* Login using guest/guest (for now - XXX) */
+	/* Login using user/password env */
 	reply = amqp_login(conn, "/", 0, MAX_FRAME, 0, AMQP_SASL_METHOD_PLAIN,
-					   "guest", "guest");
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
+					   user, password);
+	if (reply.reply_type != AMQP_RESPONSE_NORMAL)
+	{
 		log_amqp_response(reply, "AMQP login");
 		amqp_channel_close(conn, 1, AMQP_CHANNEL_ERROR);
 		amqp_destroy_connection(conn);
 		return NULL;
 	}
-  
+
 	/* Open the channel */
 	amqp_channel_open(conn, 1);
 	reply = amqp_get_rpc_reply(conn);
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
+	if (reply.reply_type != AMQP_RESPONSE_NORMAL)
+	{
 		log_amqp_response(reply, "AMQP channel open");
 		amqp_channel_close(conn, 1, AMQP_CHANNEL_ERROR);
 		amqp_destroy_connection(conn);
 		return NULL;
 	}
-  
+
 	return conn;
 }
 
-static char *create_routing_key(MeshEvent event, char *orgName) {
+static char *create_routing_key(MeshEvent event, char *orgName)
+{
 
 	int len;
-	char *key=NULL;
-	char *type=NULL, *source=NULL, *container=NULL, *object=NULL, *state=NULL;
+	char *key = NULL;
+	char *type = NULL, *source = NULL, *container = NULL, *object = NULL, *state = NULL;
 
 	/* Sanity check */
-	if (!is_valid_event(event)) {
+	if (!is_valid_event(event))
+	{
 		return NULL;
 	}
 
-	/* Step-1: build the routing key for the event. 
+	/* Step-1: build the routing key for the event.
 	 * <type>.<source>.<container>.<object>.<state>
 	 */
-	type   = convert_type_to_str(routingKey[event].type);
+	type = convert_type_to_str(routingKey[event].type);
 	object = convert_object_to_str(routingKey[event].object);
-	state  = convert_state_to_str(routingKey[event].state);
+	state = convert_state_to_str(routingKey[event].state);
 
-	if (type==NULL || object==NULL || state==NULL) {
+	if (type == NULL || object == NULL || state == NULL)
+	{
 		FREE(type, object, state);
 		return NULL;
 	}
@@ -367,184 +393,204 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
 	source = convert_source_to_str((MsgSource)CLOUD);
 
 	len = strlen(type) + strlen(source) + strlen(LOCAL_AMQP) +
-        strlen(orgName) + strlen(SYSTEM_NAME) + strlen(MSG_CONTAINER) +
-		strlen(object) + strlen(state);
+		  strlen(orgName) + strlen(SYSTEM_NAME) + strlen(MSG_CONTAINER) +
+		  strlen(object) + strlen(state);
 
-	key = (char *)malloc(len+7+1); /* 7 for '.' in the key and 1 for' \0' */
-	if (key==NULL) {
-		log_error("Error allocating memory of size: %d", len+1);
+	key = (char *)malloc(len + 7 + 1); /* 7 for '.' in the key and 1 for' \0' */
+	if (key == NULL)
+	{
+		log_error("Error allocating memory of size: %d", len + 1);
 		FREE(source, type, object, state);
 		return NULL;
 	}
 
-    /* event.cloud.local.orgName.messaging.mesh.node.state */
+	/* event.cloud.local.orgName.messaging.mesh.node.state */
 	sprintf(key, "%s.%s.%s.%s.%s.%s.%s.%s",
-            type,
-            source,
-            LOCAL_AMQP,
-            orgName,
-            SYSTEM_NAME,
-            MSG_CONTAINER,
-            object,
-            state);
+			type,
+			source,
+			LOCAL_AMQP,
+			orgName,
+			SYSTEM_NAME,
+			MSG_CONTAINER,
+			object,
+			state);
 
 	FREE(type, source, container, object, state);
 
 	return key;
 }
 
-static void *serialize_any_packet(int eventType, size_t len, void *buff) {
+static void *serialize_any_packet(int eventType, size_t len, void *buff)
+{
 
-    ANY anyEvent = GOOGLE__PROTOBUF__ANY__INIT;
-    void *anyBuff = NULL;
-    size_t anyLen;
+	ANY anyEvent = GOOGLE__PROTOBUF__ANY__INIT;
+	void *anyBuff = NULL;
+	size_t anyLen;
 
-    if (eventType == CONN_CLOSE || eventType == CONN_END ||
-        eventType == CONN_LOST  || eventType == CONN_FAIL) {
+	if (eventType == CONN_CLOSE || eventType == CONN_END ||
+		eventType == CONN_LOST || eventType == CONN_FAIL)
+	{
 
-        anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                     strlen(ukama__events__v1__node_offline_event__descriptor.name) + 1,
-                                           sizeof(char));
-        sprintf(anyEvent.type_url, "%s/%s",
-                TYPE_URL_PREFIX,
-                ukama__events__v1__node_offline_event__descriptor.name);
-    } else if (eventType == CONN_CONNECT) {
+		anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
+											   strlen(ukama__events__v1__node_offline_event__descriptor.name) + 1,
+										   sizeof(char));
+		sprintf(anyEvent.type_url, "%s/%s",
+				TYPE_URL_PREFIX,
+				ukama__events__v1__node_offline_event__descriptor.name);
+	}
+	else if (eventType == CONN_CONNECT)
+	{
 
-        anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                      strlen(ukama__events__v1__node_online_event__descriptor.name) + 1,
-                                           sizeof(char));
-        sprintf(anyEvent.type_url, "%s/%s",
-                TYPE_URL_PREFIX,
-                ukama__events__v1__node_online_event__descriptor.name);
-    } else if (eventType == MESH_BOOT) {
+		anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
+											   strlen(ukama__events__v1__node_online_event__descriptor.name) + 1,
+										   sizeof(char));
+		sprintf(anyEvent.type_url, "%s/%s",
+				TYPE_URL_PREFIX,
+				ukama__events__v1__node_online_event__descriptor.name);
+	}
+	else if (eventType == MESH_BOOT)
+	{
 
-        anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                                           strlen(boot_event__descriptor.name) + 1,
-                                           sizeof(char));
-        sprintf(anyEvent.type_url, "%s/%s",
-                TYPE_URL_PREFIX,
-                boot_event__descriptor.name);
-    } else {
-        return NULL;
-    }
+		anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
+											   strlen(boot_event__descriptor.name) + 1,
+										   sizeof(char));
+		sprintf(anyEvent.type_url, "%s/%s",
+				TYPE_URL_PREFIX,
+				boot_event__descriptor.name);
+	}
+	else
+	{
+		return NULL;
+	}
 
-    anyEvent.value.len  = len;
-    anyEvent.value.data = malloc(len);
-    memcpy(anyEvent.value.data, buff, len);
+	anyEvent.value.len = len;
+	anyEvent.value.data = malloc(len);
+	memcpy(anyEvent.value.data, buff, len);
 
-    anyLen = google__protobuf__any__get_packed_size(&anyEvent);
-    anyBuff = malloc(anyLen+1);
-    if (anyBuff == NULL) {
-        log_error("Error allocating buffer of size: %d", anyLen);
-        return NULL;
-    }
+	anyLen = google__protobuf__any__get_packed_size(&anyEvent);
+	anyBuff = malloc(anyLen + 1);
+	if (anyBuff == NULL)
+	{
+		log_error("Error allocating buffer of size: %d", anyLen);
+		return NULL;
+	}
 
-    google__protobuf__any__pack(&anyEvent, anyBuff);
-    free(anyEvent.type_url);
-    free(anyEvent.value.data);
+	google__protobuf__any__pack(&anyEvent, anyBuff);
+	free(anyEvent.type_url);
+	free(anyEvent.value.data);
 
-    return anyBuff;
+	return anyBuff;
 }
 
 static void *serialize_node_online_event(char *nodeID, char *nodeIP, int nodePort,
-                                         char *meshIP, int meshPort) {
+										 char *meshIP, int meshPort)
+{
 
 	NodeOnlineEvent nodeEvent = UKAMA__EVENTS__V1__NODE_ONLINE_EVENT__INIT;
-	void *buff=NULL, *anyBuff = NULL;
+	void *buff = NULL, *anyBuff = NULL;
 	size_t len;
 
-	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL) return NULL;
+	if (nodeID == NULL || nodeIP == NULL || meshIP == NULL)
+		return NULL;
 
-	nodeEvent.nodeid   = strdup(nodeID);
-	nodeEvent.nodeip   = strdup(nodeIP);
+	nodeEvent.nodeid = strdup(nodeID);
+	nodeEvent.nodeip = strdup(nodeIP);
 	nodeEvent.nodeport = nodePort;
-	nodeEvent.meship   = strdup(meshIP);
+	nodeEvent.meship = strdup(meshIP);
 	nodeEvent.meshport = meshPort;
 	nodeEvent.meshhostname = strdup("localhost");
 
 	len = ukama__events__v1__node_online_event__get_packed_size(&nodeEvent);
 
-	buff = malloc(len+1);
-	if (buff==NULL) {
+	buff = malloc(len + 1);
+	if (buff == NULL)
+	{
 		log_error("Error allocating buffer of size: %d", len);
 		return NULL;
 	}
 
 	ukama__events__v1__node_online_event__pack(&nodeEvent, buff);
 
-    anyBuff = serialize_any_packet(CONN_CONNECT, len, buff);
+	anyBuff = serialize_any_packet(CONN_CONNECT, len, buff);
 
-    free(nodeEvent.nodeid);
+	free(nodeEvent.nodeid);
 	free(nodeEvent.nodeip);
 	free(nodeEvent.meship);
-    free(nodeEvent.meshhostname);
-    free(buff);
+	free(nodeEvent.meshhostname);
+	free(buff);
 
 	return anyBuff;
 }
 
-static void *serialize_node_offline_event(char *nodeID) {
+static void *serialize_node_offline_event(char *nodeID)
+{
 
 	NodeOfflineEvent nodeEvent = UKAMA__EVENTS__V1__NODE_OFFLINE_EVENT__INIT;
 	void *buff = NULL, *anyBuff = NULL;
 	size_t len;
 
-	if (nodeID == NULL) return NULL;
+	if (nodeID == NULL)
+		return NULL;
 
-	nodeEvent.nodeid   = strdup(nodeID);
+	nodeEvent.nodeid = strdup(nodeID);
 	len = ukama__events__v1__node_offline_event__get_packed_size(&nodeEvent);
 
-	buff = malloc(len+1);
-	if (buff==NULL) {
+	buff = malloc(len + 1);
+	if (buff == NULL)
+	{
 		log_error("Error allocating buffer of size: %d", len);
 		return NULL;
 	}
 
 	ukama__events__v1__node_offline_event__pack(&nodeEvent, buff);
 
-    anyBuff = serialize_any_packet(CONN_CLOSE, len, buff);
+	anyBuff = serialize_any_packet(CONN_CLOSE, len, buff);
 
-    free(nodeEvent.nodeid);
-    free(buff);
-
-	return anyBuff;
-}
-
-static void *serialize_boot_event(char *orgName, char *orgId, char *ip) {
-
-    BootEvent bootEvent = BOOT_EVENT__INIT;
-    void *buff=NULL, *anyBuff=NULL;
-    size_t len;
-
-    bootEvent.orgname = strdup(orgName);
-    bootEvent.orgid   = strdup(orgId);
-    bootEvent.ip      = strdup(ip);
-
-    len = boot_event__get_packed_size(&bootEvent);
-
-    buff = malloc(len);
-    if (buff == NULL) {
-        log_error("Error allocating buffer of size: %d", len);
-        return NULL;
-    }
-
-    boot_event__pack(&bootEvent, buff);
-    anyBuff = serialize_any_packet(MESH_BOOT, len, buff);
-
-    free(bootEvent.orgname);
-    free(bootEvent.orgid);
-    free(bootEvent.ip);
-
-    free(buff);
+	free(nodeEvent.nodeid);
+	free(buff);
 
 	return anyBuff;
 }
 
-static int object_type(MeshEvent event) {
+static void *serialize_boot_event(char *orgName, char *orgId, char *ip)
+{
+
+	BootEvent bootEvent = BOOT_EVENT__INIT;
+	void *buff = NULL, *anyBuff = NULL;
+	size_t len;
+
+	bootEvent.orgname = strdup(orgName);
+	bootEvent.orgid = strdup(orgId);
+	bootEvent.ip = strdup(ip);
+
+	len = boot_event__get_packed_size(&bootEvent);
+
+	buff = malloc(len);
+	if (buff == NULL)
+	{
+		log_error("Error allocating buffer of size: %d", len);
+		return NULL;
+	}
+
+	boot_event__pack(&bootEvent, buff);
+	anyBuff = serialize_any_packet(MESH_BOOT, len, buff);
+
+	free(bootEvent.orgname);
+	free(bootEvent.orgid);
+	free(bootEvent.ip);
+
+	free(buff);
+
+	return anyBuff;
+}
+
+static int object_type(MeshEvent event)
+{
 
 	int type;
 
-	switch(event) {
+	switch (event)
+	{
 
 		/* Link object */
 	case CONN_CONNECT:
@@ -573,22 +619,26 @@ static int object_type(MeshEvent event) {
 }
 
 static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
-                              char *orgName, char *nodeID, char *nodeIP, int nodePort,
-                              char *meshIP, int meshPort) {
+							  char *orgName, char *nodeID, char *nodeIP, int nodePort,
+							  char *meshIP, int meshPort)
+{
 
-	char *key=NULL;
+	char *key = NULL;
 	WAMQPProp prop;
-	void *buff=NULL;
+	void *buff = NULL;
 	int ret;
 
-	/* Step-1: build the routing key for the event. 
+	/* Step-1: build the routing key for the event.
 	 * <type>.<source>.<container>.<object>.<state>
 	 */
 	key = create_routing_key(event, orgName);
-	if (key == NULL) {
+	if (key == NULL)
+	{
 		log_error("Error creating routing key. Ignoring the message");
 		return FALSE;
-	} else {
+	}
+	else
+	{
 		log_debug("Routing key created: %s", key);
 	}
 
@@ -598,27 +648,34 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 	prop.delivery_mode = 2; /* persistent delivery mode */
 
 	/* Step-3: protobuf msg. */
-    if (event == CONN_CONNECT) {
+	if (event == CONN_CONNECT)
+	{
 		buff = serialize_node_online_event(nodeID, nodeIP, nodePort, meshIP, meshPort);
-    } else if (event == CONN_CLOSE) {
-        buff = serialize_node_offline_event(nodeID);
-    }
+	}
+	else if (event == CONN_CLOSE)
+	{
+		buff = serialize_node_offline_event(nodeID);
+	}
 
-    if (buff==NULL) {
-        log_error("Error serializing Link packet for AMQP. Event: %d", event);
-        free(key);
-        return FALSE;
-    }
+	if (buff == NULL)
+	{
+		log_error("Error serializing Link packet for AMQP. Event: %d", event);
+		free(key);
+		return FALSE;
+	}
 
 	/* Step-4: send the message to AMQP broker */
 	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 amqp_cstring_bytes((char *)buff));
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		ret = FALSE;
 		log_error("Error sending AMQP message. Error: %s",
 				  amqp_error_string2(ret));
-	} else {
+	}
+	else
+	{
 		ret = TRUE;
 		log_debug("AMQP message successfully sent to default exchange");
 	}
@@ -629,94 +686,108 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 }
 
 int publish_event(MeshEvent event, char *orgName,
-                  char *nodeID, char *nodeIP, int nodePort,
-                  char *meshIP, int meshPort) {
+				  char *nodeID, char *nodeIP, int nodePort,
+				  char *meshIP, int meshPort)
+{
 
-    WAMQPConn *conn=NULL;
-    char *amqpHost=NULL, *amqpPort=NULL;
+	WAMQPConn *conn = NULL;
+	char *amqpHost = NULL, *amqpPort = NULL, *amqpUser = NULL, *amqpPassword = NULL;
 
-    amqpHost = getenv(ENV_AMQP_HOST);
-    amqpPort = getenv(ENV_AMQP_PORT);
+	amqpHost = getenv(ENV_AMQP_HOST);
+	amqpPort = getenv(ENV_AMQP_PORT);
+	amqpUser = getenv(ENV_AMQP_USER);
+	amqpPassword = getenv(ENV_AMQP_PASSWORD);
+	conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
+	if (conn == NULL)
+	{
+		log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+		return FALSE;
+	}
 
-    conn = init_amqp_connection(amqpHost, amqpPort);
-    if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
-        return FALSE;
-    }
+	if (object_type(event) == OBJECT_LINK)
+	{
+		publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
+						   orgName, nodeID,
+						   nodeIP, nodePort,
+						   meshIP, meshPort);
+	}
+	else
+	{
+		log_error("Invalid event type. No publish");
+	}
 
-    if (object_type(event) == OBJECT_LINK) {
-        publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
-                           orgName, nodeID,
-                           nodeIP, nodePort,
-                           meshIP, meshPort);
-    } else {
-        log_error("Invalid event type. No publish");
-    }
-
-    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+	amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
 	amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
 	amqp_destroy_connection(conn);
 
-    return TRUE;
+	return TRUE;
 }
 
-int publish_boot_event(char *exchange) {
+int publish_boot_event(char *exchange)
+{
 
-    WAMQPConn *conn=NULL;
-    char *amqpHost=NULL, *amqpPort=NULL;
-    char *orgName=NULL, *orgId=NULL, *ip=NULL;
+	WAMQPConn *conn = NULL;
+	char *amqpHost = NULL, *amqpPort = NULL, *amqpUser = NULL, *amqpPassword = NULL;
+	char *orgName = NULL, *orgId = NULL, *ip = NULL;
 
-    char key[MAX_BUFFER] = {0};
-    WAMQPProp prop;
-    void *buff=NULL;
-    int ret;
+	char key[MAX_BUFFER] = {0};
+	WAMQPProp prop;
+	void *buff = NULL;
+	int ret;
 
-    amqpHost = getenv(ENV_AMQP_HOST);
-    amqpPort = getenv(ENV_AMQP_PORT);
-    orgName  = getenv(ENV_SYSTEM_ORG);
-    orgId    = getenv(ENV_SYSTEM_ORG_ID);
-    ip       = getenv(ENV_BINDING_IP);
+	amqpHost = getenv(ENV_AMQP_HOST);
+	amqpPort = getenv(ENV_AMQP_PORT);
+	amqpUser = getenv(ENV_AMQP_USER);
+	amqpPassword = getenv(ENV_AMQP_PASSWORD);
+	orgName = getenv(ENV_SYSTEM_ORG);
+	orgId = getenv(ENV_SYSTEM_ORG_ID);
+	ip = getenv(ENV_BINDING_IP);
 
-    conn = init_amqp_connection(amqpHost, amqpPort);
-    if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
-        return FALSE;
-    }
+	conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
+	if (conn == NULL)
+	{
+		log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+		return FALSE;
+	}
 
-    /* set routing key */
-    sprintf(key, "event.cloud.global.%s.messaging.mesh.ip.update", orgName);
+	/* set routing key */
+	sprintf(key, "event.cloud.global.%s.messaging.mesh.ip.update", orgName);
 
-    /* set AMQP delivery properties */
-    prop._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
-    prop.content_type = amqp_cstring_bytes("text/plain");
-    prop.delivery_mode = 2; /* persistent delivery mode */
+	/* set AMQP delivery properties */
+	prop._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
+	prop.content_type = amqp_cstring_bytes("text/plain");
+	prop.delivery_mode = 2; /* persistent delivery mode */
 
-    /* protobuf msg. */
-    buff = serialize_boot_event(orgName, orgId, ip);
-    if (buff == NULL) {
-        log_error("Error serializing boot packet for AMQP");
-        return FALSE;
-    }
+	/* protobuf msg. */
+	buff = serialize_boot_event(orgName, orgId, ip);
+	if (buff == NULL)
+	{
+		log_error("Error serializing boot packet for AMQP");
+		return FALSE;
+	}
 
-    /* send the message to AMQP broker */
-    ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
-                             amqp_cstring_bytes(key), 0, 0, &prop,
-                             amqp_cstring_bytes((char *)buff));
-    if (ret != AMQP_STATUS_OK) {
-        free(buff);
-        ret = FALSE;
-        log_error("Error sending AMQP boot message. Error: %s",
-                  amqp_error_string2(ret));
-    } else {
-        ret = TRUE;
-        log_debug("AMQP boot message successfully sent to default exchange");
-    }
+	/* send the message to AMQP broker */
+	ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),
+							 amqp_cstring_bytes(key), 0, 0, &prop,
+							 amqp_cstring_bytes((char *)buff));
+	if (ret != AMQP_STATUS_OK)
+	{
+		free(buff);
+		ret = FALSE;
+		log_error("Error sending AMQP boot message. Error: %s",
+				  amqp_error_string2(ret));
+	}
+	else
+	{
+		ret = TRUE;
+		log_debug("AMQP boot message successfully sent to default exchange");
+	}
 
-    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-    amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-    amqp_destroy_connection(conn);
+	amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+	amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
+	amqp_destroy_connection(conn);
 
-    free(buff);
+	free(buff);
 
-    return ret;
+	return ret;
 }
