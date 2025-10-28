@@ -28,6 +28,8 @@ services:
    - ENV_MESH_KEY_FILE=
    - ENV_AMQP_HOST=${LOCAL_HOST_IP}
    - ENV_AMQP_PORT=5672
+   - ENV_AMQP_USER=guest
+   - ENV_AMQP_PASSWORD=guest
   restart: always
   ports:
    - '18200:18200'
