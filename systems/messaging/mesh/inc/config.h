@@ -19,6 +19,8 @@ typedef struct {
 
 	char *amqpHost;       /* Host where AMQP exchange is running (IP) */
 	char *amqpPort;       /* Port where AMQP exchange is listening */
+	char *amqpUser;       /* User for AMQP connection */
+	char *amqpPassword;   /* Password for AMQP connection */
 	char *amqpExchange;   /* AMQP exchange name */
 
 	char *initClientHost; /* Host where initClient is running (IP) */

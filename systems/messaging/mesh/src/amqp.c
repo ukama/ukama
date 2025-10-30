@@ -282,7 +282,7 @@ static void log_amqp_response(WAMQPReply reply, const char *context) {
 	}
 }
 
-static WAMQPConn *init_amqp_connection(char *host, char *port) {
+static WAMQPConn *init_amqp_connection(char *host, char *port, char *user, char *password) {
 
 	int ret;
 	WAMQPConn *conn=NULL;
@@ -290,7 +290,9 @@ static WAMQPConn *init_amqp_connection(char *host, char *port) {
 	WAMQPReply reply;
 
 	/* Sanity check */
-	if (host == NULL && port == NULL) {
+	if (host == NULL || port == NULL || user == NULL || password == NULL) {
+		log_error("Invalid AMQP connection parameters: host: %s port: %s user: %s password: ****",
+				  host, port, user);
 		return NULL;
 	}
 
@@ -312,15 +314,15 @@ static WAMQPConn *init_amqp_connection(char *host, char *port) {
 	/* Connect to the AMQP host */
 	ret = amqp_socket_open(socket, host, atoi(port));
 	if (ret) {
-		log_error("Unable to connect with AMQP server at host: %s port: %s",
-				  host, port);
+		log_error("Unable to connect with AMQP server at host: %s port: %s user: %s password: ****",
+				  host, port, user);
 		amqp_destroy_connection(conn);
 		return NULL;
 	}
 
-	/* Login using guest/guest (for now - XXX) */
+	/* Login using user/password env */
 	reply = amqp_login(conn, "/", 0, MAX_FRAME, 0, AMQP_SASL_METHOD_PLAIN,
-					   "guest", "guest");
+					   user, password);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
 		log_amqp_response(reply, "AMQP login");
 		amqp_channel_close(conn, 1, AMQP_CHANNEL_ERROR);
@@ -633,14 +635,15 @@ int publish_event(MeshEvent event, char *orgName,
                   char *meshIP, int meshPort) {
 
     WAMQPConn *conn=NULL;
-    char *amqpHost=NULL, *amqpPort=NULL;
+    char *amqpHost=NULL, *amqpPort=NULL, *amqpUser=NULL, *amqpPassword=NULL;
 
     amqpHost = getenv(ENV_AMQP_HOST);
     amqpPort = getenv(ENV_AMQP_PORT);
-
-    conn = init_amqp_connection(amqpHost, amqpPort);
+    amqpUser = getenv(ENV_AMQP_USER);
+    amqpPassword = getenv(ENV_AMQP_PASSWORD);
+    conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
     if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+        log_error("Failed to connect with AMQP at %s:%s@%s:%s", amqpUser, amqpPassword, amqpHost, amqpPort);
         return FALSE;
     }
 
@@ -663,7 +666,7 @@ int publish_event(MeshEvent event, char *orgName,
 int publish_boot_event(char *exchange) {
 
     WAMQPConn *conn=NULL;
-    char *amqpHost=NULL, *amqpPort=NULL;
+    char *amqpHost=NULL, *amqpPort=NULL, *amqpUser=NULL, *amqpPassword=NULL;
     char *orgName=NULL, *orgId=NULL, *ip=NULL;
 
     char key[MAX_BUFFER] = {0};
@@ -673,13 +676,15 @@ int publish_boot_event(char *exchange) {
 
     amqpHost = getenv(ENV_AMQP_HOST);
     amqpPort = getenv(ENV_AMQP_PORT);
+    amqpUser = getenv(ENV_AMQP_USER);
+    amqpPassword = getenv(ENV_AMQP_PASSWORD);
     orgName  = getenv(ENV_SYSTEM_ORG);
     orgId    = getenv(ENV_SYSTEM_ORG_ID);
     ip       = getenv(ENV_BINDING_IP);
 
-    conn = init_amqp_connection(amqpHost, amqpPort);
+    conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
     if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s", amqpHost, amqpPort);
+        log_error("Failed to connect with AMQP at %s:%s@%s:%s", amqpUser, amqpPassword, amqpHost, amqpPort);
         return FALSE;
     }
 
