@@ -11,6 +11,7 @@ package db
 import (
 	"time"
 
+	"github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/roles"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
@@ -22,27 +23,10 @@ type Invitation struct {
 	Email     string
 	Name      string
 	ExpiresAt time.Time
-	Role      roles.RoleType   `gorm:"type:uint;not null;default:4"`
-	Status    InvitationStatus `gorm:"type:uint;not null;default:0"`
-	UserId    string           `gorm:"type:uuid"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-}
-
-type InvitationStatus uint8
-
-const (
-	Pending  InvitationStatus = 0
-	Accepted InvitationStatus = 1
-	Declined InvitationStatus = 2
-)
-
-func (e *InvitationStatus) Scan(value interface{}) error {
-	*e = InvitationStatus(uint8(value.(int64)))
-	return nil
-}
-
-func (e InvitationStatus) Value() (uint8, error) {
-	return uint8(e), nil
+	Role      roles.RoleType         `gorm:"type:uint;not null;default:4"`
+	Status    ukama.InvitationStatus `gorm:"type:uint;not null;default:0"`
+	UserId    string                 `gorm:"type:uuid"`
+	DeletedAt gorm.DeletedAt         `gorm:"index"`
 }
