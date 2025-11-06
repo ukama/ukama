@@ -113,10 +113,8 @@ int start_websocket_client(Config *config,
                                      "protocol", "permessage-deflate") == U_OK) {
 
         u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
-        if (config->orgID && *config->orgID) {
-            u_map_put(request.map_header, "X-Org-Id", config->orgID);
-            /* proxy might be case/format picky, also mirror it as lowercase: */
-            u_map_put(request.map_header, "x-org-id", config->orgID);
+        if (config->orgName && *config->orgName) {
+            u_map_put(request.map_header, "orgID", config->orgName);
         }
 
         ulfius_add_websocket_client_deflate_extension(handler);
@@ -149,62 +147,6 @@ done:
     ulfius_clean_request(&request);
     ulfius_clean_response(&response);
     return ret;
-}
-
-int start_websocket_client(Config *config,
-                           struct _websocket_client_handler *handler) {
-
-  int ret=FALSE;
-  struct _u_request request;
-  struct _u_response response;
-
-  if (ulfius_init_request(&request) != U_OK) {
-    goto done;
-  }
-
-  if (ulfius_init_response(&response) != U_OK) {
-    goto done;
-  }
-
-  /* Setup websocket request. */
-  if (ulfius_set_websocket_request(&request, config->remoteConnect,
-				   "protocol", "permessage-deflate") == U_OK) {
-    /* Setup request parameters */
-    u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
-    ulfius_add_websocket_client_deflate_extension(handler);
-    request.check_server_certificate = FALSE;
-
-    /* Open websocket connection to remote host. */
-    ret = ulfius_open_websocket_client_connection(&request,
-						  &websocket_manager,
-						  (void *)config,
-						  &websocket_incoming_message,
-						  (void *)config,
-						  &websocket_onclose,
-						  (void*)config,
-						  handler, &response);
-
-    if ( ret == U_OK) {
-      /* Success. The websocket will now run as seperate thread as cb */
-      ret=TRUE;
-      goto done;
-    } else {
-      usys_log_error("Unable to open websocket connect to: %s", config->remoteConnect);
-      handler->websocket = NULL;
-      ret=FALSE;
-      goto done;
-    }
-  } else {
-    usys_log_error("Error initializing the websocket client request");
-    ret=FALSE;
-    goto done;
-  }
-
- done:
-  ulfius_clean_request(&request);
-  ulfius_clean_response(&response);
-
-  return ret;
 }
 
 int start_forward_services(Config *config, UInst *clientInst) {

@@ -16,6 +16,7 @@
 #define DEFAULT_KEY            "certs/server.key"
 #define DEFAULT_REMOTE_PORT    "9275"
 #define DEFAULT_LOCAL_HOSTNAME "localhost"
+#define DEFAULT_ORG_FILENAME   "/ukama/org"
 
 #define MAX_BUFFER 256
 #define TRUE  1
@@ -28,6 +29,7 @@ typedef struct {
     int  servicePort;
     char *localHostname;
     char *remoteConnect;  /* Client: hostname:port to connect with remotely */
+    char *orgName;        /* org node belongs */
     char *certFile;       /* CA Cert file name. */
     char *keyFile;        /* Key file name.*/
 

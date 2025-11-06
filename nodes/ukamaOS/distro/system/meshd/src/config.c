@@ -30,6 +30,7 @@ STATIC int read_line(char *buffer, int size, FILE *fp);
 void print_config(Config *config) {
 
 	usys_log_debug("Remote connect port: %s", config->remoteConnect);
+    usys_log_debug("Org ename: %s",           config->orgName);
 	usys_log_debug("Forward port: %d",        config->forwardPort);
     usys_log_debug("Servuce port: %d",        config->servicePort);
     usys_log_debug("Local hostname: %s",      config->localHostname);
@@ -83,7 +84,7 @@ STATIC int read_nodeid(char **nodeID) {
     fp = fopen("/ukama/nodeid", "r");
 #endif
     if (fp == NULL) {
-        usys_log_error("Unable to open /ukama/nodeid file: %s",
+        usys_log_error("Unable to open /ukama/nodeid file. Error: %s",
                        strerror(errno));
         return FALSE;
     }
@@ -94,6 +95,33 @@ STATIC int read_nodeid(char **nodeID) {
         return FALSE;
 	} else {
         *nodeID = strdup(buffer);
+    }
+
+    return TRUE;
+}
+
+STATIC int read_org_name(char **orgName) {
+
+    char buffer[MAX_BUFFER] = {0};
+    FILE *fp=NULL;
+
+#ifdef UNIT_TEST
+    fp = fopen(".orgName", "r");
+#else
+    fp = fopen("/ukama/org", "r");
+#endif
+    if (fp == NULL) {
+        usys_log_error("Unable to open /ukama/org file. Error: %s",
+                       strerror(errno));
+        return FALSE;
+    }
+
+    if (read_line(buffer, MAX_BUFFER, fp) <= 0) {
+        usys_log_error("[%s] Error reading file. Error: %s", "/ukama/org",
+                       strerror(errno));
+        return FALSE;
+	} else {
+        *orgName = strdup(buffer);
     }
 
     return TRUE;
@@ -185,6 +213,11 @@ STATIC int parse_config_entries(Config *config, toml_table_t *configData) {
         goto done;
     }
 
+    if (!read_org_name(&config->orgName)) {
+        usys_log_error("Unable to read orgName from /ukama/org");
+        goto done;
+    }
+
 	if (!localHostname.ok) {
 		usys_log_debug("[%s] is missing, setting to default: %s", LOCAL_HOSTNAME,
 				  DEFAULT_LOCAL_HOSTNAME);
@@ -266,4 +299,5 @@ void clear_config(Config *config) {
     usys_free(config->localHostname);
 	usys_free(config->certFile);
 	usys_free(config->keyFile);
+    usys_free(config->orgName);
 }
