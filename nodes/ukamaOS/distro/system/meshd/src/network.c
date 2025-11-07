@@ -112,9 +112,12 @@ int start_websocket_client(Config *config,
     if (ulfius_set_websocket_request(&request, config->remoteConnect,
                                      "protocol", "permessage-deflate") == U_OK) {
 
-        u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
+        if (config->deviceInfo && config->deviceInfo->nodeID) {
+            u_map_put(request.map_header, "User-Agent", config->deviceInfo->nodeID);
+        }
+
         if (config->orgName && *config->orgName) {
-            u_map_put(request.map_header, "orgID", config->orgName);
+            u_map_put(request.map_header, "X-org-name", config->orgName);
         }
 
         ulfius_add_websocket_client_deflate_extension(handler);

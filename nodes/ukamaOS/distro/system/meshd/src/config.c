@@ -32,7 +32,7 @@ void print_config(Config *config) {
 	usys_log_debug("Remote connect port: %s", config->remoteConnect);
     usys_log_debug("Org ename: %s",           config->orgName);
 	usys_log_debug("Forward port: %d",        config->forwardPort);
-    usys_log_debug("Servuce port: %d",        config->servicePort);
+    usys_log_debug("Service port: %d",        config->servicePort);
     usys_log_debug("Local hostname: %s",      config->localHostname);
     usys_log_debug("TLS/SSL key file: %s",    config->keyFile);
     usys_log_debug("TLS/SSL cert file: %s",   config->certFile);
