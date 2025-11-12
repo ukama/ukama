@@ -243,6 +243,7 @@ STATIC int parse_config_entries(Config *config, toml_table_t *configData) {
 	if (key.ok)           free(key.u.s);
 	if (cert.ok)          free(cert.u.s);
 	if (remoteIPFile.ok)  free(remoteIPFile.u.s);
+    if (localHostname.ok) free(localHostname.u.s);
     if (hostname)         free(hostname);
     if (subnetMask)       free(subnetMask);
 
