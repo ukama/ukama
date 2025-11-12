@@ -24,7 +24,6 @@ struct Response {
 	size_t size;
 };
 
-/* Function def. */
 static char *create_noded_url(char *host, int port);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 								void *userp);
