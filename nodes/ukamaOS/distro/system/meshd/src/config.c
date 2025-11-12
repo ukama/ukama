@@ -30,7 +30,7 @@ STATIC int read_line(char *buffer, int size, FILE *fp);
 void print_config(Config *config) {
 
 	usys_log_debug("Remote connect port: %s", config->remoteConnect);
-    usys_log_debug("Org ename: %s",           config->orgName);
+    usys_log_debug("Org name: %s",            config->orgName);
 	usys_log_debug("Forward port: %d",        config->forwardPort);
     usys_log_debug("Service port: %d",        config->servicePort);
     usys_log_debug("Local hostname: %s",      config->localHostname);
@@ -113,17 +113,20 @@ STATIC int read_org_name(char **orgName) {
     if (fp == NULL) {
         usys_log_error("Unable to open /ukama/org file. Error: %s",
                        strerror(errno));
+        fclose(fp);
         return FALSE;
     }
 
     if (read_line(buffer, MAX_BUFFER, fp) <= 0) {
         usys_log_error("[%s] Error reading file. Error: %s", "/ukama/org",
                        strerror(errno));
+        fclose(fp);
         return FALSE;
 	} else {
         *orgName = strdup(buffer);
     }
 
+    fclose(fp);
     return TRUE;
 }
 
