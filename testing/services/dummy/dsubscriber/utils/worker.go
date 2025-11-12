@@ -75,11 +75,12 @@ func Worker(iccid string, updateChan chan pkg.WMessage, initial pkg.WMessage, rc
 
 func runLogic(iccid, nodeId, imsi string, profile cenums.Profile, scenario cenums.SCENARIOS, cdrClient clients.CDRClient, count int, interval uint64, rc pkg.RoutineConfig, ua agent.UkamaAgentClient) {
 	usage := 0.0
-	if profile == cenums.PROFILE_MIN {
+	switch profile {
+	case cenums.PROFILE_MIN:
 		usage = rc.Min + rand.Float64()*(rc.Normal-rc.Min)*0.1
-	} else if profile == cenums.PROFILE_NORMAL {
+	case cenums.PROFILE_NORMAL:
 		usage = rc.Normal + rand.Float64()*(rc.Max-rc.Normal)*0.1
-	} else if profile == cenums.PROFILE_MAX {
+	case cenums.PROFILE_MAX:
 		usage = rc.Max + rand.Float64()*(rc.Max-rc.Normal)*0.1
 	}
 

@@ -20,7 +20,6 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/messaging/nns v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/registry/node v0.0.0-00010101000000-000000000000
 	github.com/wagslane/go-rabbitmq v0.14.2
 	google.golang.org/grpc v1.69.0
 	google.golang.org/protobuf v1.35.2
