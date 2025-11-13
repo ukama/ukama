@@ -101,10 +101,9 @@ services:
   build: ./node-feeder
   environment:
    - DEBUGMODE=true
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - REGISTRY_HOST=registry-gateway:8080
-   - NET_HOST=nnsd:9090
    - ORGNAME=${ORGNAME}
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   depends_on:
    - nnsd
    - msgclient-messaging
@@ -130,8 +129,7 @@ services:
    - postgresd-messaging
 
  initclient-messaging:
-  # build: ../services/initClient
-  image: main-init
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30
