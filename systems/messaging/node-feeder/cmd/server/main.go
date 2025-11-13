@@ -40,7 +40,7 @@ func main() {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
-	m := multipl.NewRequestMultiplier(regUrl.Host, pub)
+	m := multipl.NewRequestMultiplier(regUrl.String(), pub)
 
 	ipResolve, err := pkg.NewNodeIpResolver(serviceConfig.Net, serviceConfig.TimeoutSeconds)
 	if err != nil {
