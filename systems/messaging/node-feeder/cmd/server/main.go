@@ -35,7 +35,7 @@ func main() {
 	}
 
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, global.ServiceName), &serviceConfig.OrgName)
+		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
