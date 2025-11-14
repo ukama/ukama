@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/messaging/nns/cmd/version"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg"
@@ -26,6 +27,7 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
@@ -84,7 +86,13 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	nodeClient := creg.NewNodeClient(serviceConfig.Registry)
+	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
+	if err != nil {
+		log.Errorf("Failed to resolve registry address: %v", err)
+	}
+
+	nodeClient := creg.NewNodeClient(regUrl.String())
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig.Dns)

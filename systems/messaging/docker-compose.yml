@@ -74,6 +74,7 @@ services:
    - REGISTRY=http://${LOCAL_HOST_IP}:8075
    - ORG=${ORGID}
    - ORGNAME=${ORGNAME}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    ukama-net:
