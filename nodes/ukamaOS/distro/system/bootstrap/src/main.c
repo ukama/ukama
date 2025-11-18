@@ -30,6 +30,8 @@
 #define DEF_LOG_LEVEL "TRACE"
 #define SERVICE_NAME  SERVICE_BOOTSTRAP
 
+#define ORG_FILE_NAME "/ukama/org"
+
 /* web_service.c */
 extern int start_web_services(struct _u_instance *inst);
 
@@ -69,8 +71,8 @@ static int write_to_file(char *fileName, char *buffer) {
 
     fp = fopen(fileName, "w");
     if(fp == NULL) {
-		usys_log_error("Error opening file for read: %s Error: %s", fileName,
-                       strerror(errno));
+		usys_log_error("Error opening file to write: %s Error: %s",
+                       fileName, strerror(errno));
 		return FALSE;
     }
 
@@ -203,6 +205,13 @@ int main (int argc, char **argv) {
         write_to_file(meshConfig->certFile, serverInfo->cert) <= 0) {
 		usys_log_error("Error updating mesh.d configs. File: %s",
                        config->meshConfig);
+		goto done;
+	}
+
+    /* Step-6: write org name as is recevied from the server */
+    if (write_to_file(ORG_FILE_NAME, serverInfo->org) <=0 ) {
+		usys_log_error("Error updating file for orgnmae. File: %s",
+                       ORG_FILE_NAME);
 		goto done;
 	}
 

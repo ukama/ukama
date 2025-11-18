@@ -13,7 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/common/validation"
+
 	"gorm.io/gorm"
 )
 
@@ -63,30 +63,32 @@ func (n netRepo) GetDefault() (*Network, error) {
 func (n netRepo) SetDefault(id uuid.UUID, isDefault bool) (*Network, error) {
 	var ntwk Network
 
-	// Start a database transaction
-	tx := n.Db.GetGormDb().Begin()
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if err := tx.First(&ntwk, id).Error; err != nil {
+			return fmt.Errorf("failed to find network %v: %w", id, err)
+		}
 
-	// Set all networks to is_default false
-	if err := tx.Model(&Network{}).Where("1 = 1").Update("is_default", false).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to set all networks to not default: %w", err)
-	}
+		if ntwk.IsDefault == isDefault {
+			return nil
+		}
 
-	// Find the network with the id
-	if err := tx.First(&ntwk, id).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to find network %v: %w", id, err)
-	}
+		if isDefault {
+			if err := tx.Model(&Network{}).Where("is_default = ?", true).Update("is_default", false).Error; err != nil {
+				return fmt.Errorf("failed to clear existing default networks: %w", err)
+			}
+		}
 
-	// Set the network to is_default true
-	if err := tx.Model(&ntwk).Update("is_default", true).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("failed to set network %v to default: %w", id, err)
-	}
+		if err := tx.Model(&ntwk).Update("is_default", isDefault).Error; err != nil {
+			return fmt.Errorf("failed to update network %v default status: %w", id, err)
+		}
 
-	// Commit the transaction
-	if err := tx.Commit().Error; err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+		ntwk.IsDefault = isDefault
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return &ntwk, nil
@@ -111,43 +113,19 @@ func (n netRepo) GetByName(networkName string) (*Network, error) {
 		return nil, result.Error
 	}
 
-	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
 	return &network, nil
 }
 
-// func (n netRepo) GetByOrgName(orgID uint) ([]Network, error) {
-// This gives the result in a single sql query, but fail to distingush between
-// when org does not exist vs when org has no networks, can improve later.
-// result := db.Joins("JOIN orgs on orgs.id=networks.org_id").
-// Where("orgs.name=? and orgs.deleted_at is null", orgName).Debug().Find(&networks)
-// }
-
-func (n netRepo) Add(network *Network, nestedFunc func(network *Network, tx *gorm.DB) error) error {
-	if !validation.IsValidDnsLabelName(network.Name) {
-		return fmt.Errorf("invalid name. must be less then 253 " +
-			"characters and consist of lowercase characters with a hyphen")
-	}
-
-	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (n netRepo) Add(network *Network, nestedFunc func(*Network, *gorm.DB) error) error {
+	return n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
-			nestErr := nestedFunc(network, tx)
-			if nestErr != nil {
-				return nestErr
+			if err := nestedFunc(network, tx); err != nil {
+				return err
 			}
 		}
 
-		result := tx.Create(network)
-		if result.Error != nil {
-			return result.Error
-		}
-
-		return nil
+		return tx.Create(network).Error
 	})
-
-	return err
 }
 
 func (s netRepo) Delete(networkId uuid.UUID) error {
