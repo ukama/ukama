@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/common/validation"
 	"github.com/ukama/ukama/systems/registry/network/pkg"
 	"github.com/ukama/ukama/systems/registry/network/pkg/db"
 
@@ -72,6 +73,12 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	if err != nil {
 		return nil, err
 	}
+
+	if !validation.IsValidDnsLabelName(networkName) {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid network name: must be less than 253 "+
+			"characters and consist of lowercase characters with hyphens")
+	}
+
 	// What should we do if the remote org exists but is deactivated?
 	// For now we simply abort.
 	if remoteOrg.IsDeactivated {

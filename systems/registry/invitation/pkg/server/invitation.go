@@ -124,7 +124,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 		Email:     strings.ToLower(req.GetEmail()),
 		Role:      roles.RoleType(req.Role),
 		ExpiresAt: expiry,
-		Status:    db.Pending,
+		Status:    upb.InvitationStatus_INVITE_PENDING,
 		UserId:    userId,
 	}
 
