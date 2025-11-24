@@ -46,7 +46,7 @@ services:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
   depends_on:
-   - nnsd
+   - nns
   networks:
    - ukama-net
 
@@ -106,7 +106,7 @@ services:
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - HTTP_INITCLIENT=http://api-gateway-init:8080
   depends_on:
-   - nnsd
+   - nns
    - msgclient-messaging
   networks:
    - ukama-net
