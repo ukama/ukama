@@ -29,7 +29,7 @@ type Config struct {
 	OrgName           string `default:"ukama"`
 	TimeoutSeconds    int    `default:"3"`
 	DevicePort        int    `default:"0"`
-	Net               string `default:"nnsd:9090"`
+	Net               string `default:"nns:9090"`
 	Registry          string `default:"api-gateway-registry:8080"`
 	Http              HttpServices
 }

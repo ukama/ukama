@@ -61,7 +61,7 @@ services:
    - 2379:2379
    - 2380:2380
 
- nnsd:
+ nns:
   build: ./nns
   environment:
    - DEBUGMODE=true
@@ -69,7 +69,7 @@ services:
    - ETCDHOST=etcd:2379
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-messaging:9095
-   - NNS_SERVICE_HOST=nnsd
+   - NNS_SERVICE_HOST=nns
    - NNS_SERVICE_PORT=9090
    - REGISTRY=http://${LOCAL_HOST_IP}:8075
    - ORG=${ORGID}
