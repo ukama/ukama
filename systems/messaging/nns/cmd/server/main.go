@@ -88,7 +88,7 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	regUrl, err := ic.GetHostUrl(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
-	if err != nil {
+	if err != nil || regUrl.String() == "" {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 

@@ -32,7 +32,7 @@ type Config struct {
 }
 
 type HttpServices struct {
-	InventoryClient string `defaut:"http://api-gateway-inventory:8080"`
+	InventoryClient string `default:"http://api-gateway-inventory:8080"`
 }
 
 const (
