@@ -25,18 +25,8 @@ deps:
 			github.com/vektra/mockery/v2/.../
 
 gen:
-	mkdir ./pb/gen -p
-
-	# generate http
-	protoc -I ./pb -I ../../common/pb/dep --grpc-gateway_out $(GOPATH)/src \
-                     --grpc-gateway_opt logtostderr=true \
-                     nns.proto
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep --go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=$(GOPATH)/src \
-         			  nns.proto
-#	# generate Open API
-#	protoc I ./pb -I ../../common/pb/dep --openapiv2_out ./pb/gen \
-#		--openapiv2_opt logtostderr=true \
-#		net.proto
+ 			  nns.proto
 
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
