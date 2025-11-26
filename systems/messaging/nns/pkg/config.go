@@ -26,9 +26,13 @@ type Config struct {
 	Timeout           time.Duration    `default:"3s"`
 	MsgClient         *uconf.MsgClient `default:"{}"`
 	Service           *uconf.Service
-	Registry          string `default:"http://registry:8080"`
 	Org               string `default:""`
 	OrgName           string
+	Http              HttpServices
+}
+
+type HttpServices struct {
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 type DnsConfig struct {

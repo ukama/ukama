@@ -40,12 +40,13 @@ type RequestExecutor interface {
 }
 
 type requestExecutor struct {
-	nodeResolver      NodeIpResolver
-	deviceNetworkConf *DeviceNetworkConfig
+	nodeResolver   NodeIpResolver
+	devicePort     int
+	timeoutSeconds int
 }
 
-func NewRequestExecutor(deviceNet NodeIpResolver, deviceNetworkConf *DeviceNetworkConfig) *requestExecutor {
-	return &requestExecutor{nodeResolver: deviceNet, deviceNetworkConf: deviceNetworkConf}
+func NewRequestExecutor(deviceNet NodeIpResolver, devicePort int, timeoutSeconds int) *requestExecutor {
+	return &requestExecutor{nodeResolver: deviceNet, devicePort: devicePort, timeoutSeconds: timeoutSeconds}
 }
 
 func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
@@ -69,8 +70,8 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	logrus.Infof("resolved device ip: %s", ip)
 
 	strUrl := fmt.Sprintf("http://%s/%s", ip, strings.Trim(req.Path, "/"))
-	if e.deviceNetworkConf.Port != 0 {
-		strUrl = fmt.Sprintf("http://%s:%d/%s", ip, e.deviceNetworkConf.Port, strings.Trim(req.Path, "/"))
+	if e.devicePort != 0 {
+		strUrl = fmt.Sprintf("http://%s:%d/%s", ip, e.devicePort, strings.Trim(req.Path, "/"))
 	}
 	u, err := url.Parse(strUrl)
 	if err != nil {
@@ -78,7 +79,7 @@ func (e *requestExecutor) Execute(req *cpb.NodeFeederMessage) error {
 	}
 
 	c := http.Client{
-		Timeout: time.Duration(e.deviceNetworkConf.TimeoutSeconds) * time.Second,
+		Timeout: time.Duration(e.timeoutSeconds) * time.Second,
 	}
 
 	httpReq := http.Request{

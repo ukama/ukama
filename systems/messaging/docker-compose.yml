@@ -46,7 +46,7 @@ services:
    - DEBUGMODE=true
    - BYPASS_AUTH_MODE=true
   depends_on:
-   - nnsd
+   - nns
   networks:
    - ukama-net
 
@@ -61,7 +61,7 @@ services:
    - 2379:2379
    - 2380:2380
 
- nnsd:
+ nns:
   build: ./nns
   environment:
    - DEBUGMODE=true
@@ -69,11 +69,12 @@ services:
    - ETCDHOST=etcd:2379
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
    - MSGCLIENT_HOST=msgclient-messaging:9095
-   - NNS_SERVICE_HOST=nnsd
+   - NNS_SERVICE_HOST=nns
    - NNS_SERVICE_PORT=9090
    - REGISTRY=http://${LOCAL_HOST_IP}:8075
    - ORG=${ORGID}
    - ORGNAME=${ORGNAME}
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
    ukama-net:
@@ -101,12 +102,11 @@ services:
   build: ./node-feeder
   environment:
    - DEBUGMODE=true
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
-   - REGISTRY_HOST=registry-gateway:8080
-   - NET_HOST=nnsd:9090
    - ORGNAME=${ORGNAME}
+   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - HTTP_INITCLIENT=http://api-gateway-init:8080
   depends_on:
-   - nnsd
+   - nns
    - msgclient-messaging
   networks:
    - ukama-net
@@ -130,8 +130,7 @@ services:
    - postgresd-messaging
 
  initclient-messaging:
-  # build: ../services/initClient
-  image: main-init
+  build: ../services/initClient
   environment:
    - ENV_SYSTEM_ORG=${ORGNAME}
    - ENV_DNS_REFRESH_TIME_PERIOD=30

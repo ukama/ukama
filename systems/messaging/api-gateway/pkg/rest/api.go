@@ -19,7 +19,7 @@ type SetNodeIPRequest struct {
 	NodePort int32  `json:"node_port" validate:"required"`
 	MeshPort int32  `json:"mesh_port" validate:"required"`
 	Org      string `json:"org" validate:"required"`
-	Network  string `json:"network" validate:"required"`
+	Network  string `json:"network"`
 }
 
 type DeleteNodeIPRequest struct {

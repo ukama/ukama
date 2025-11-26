@@ -47,7 +47,7 @@ type OrgService struct {
 }
 
 type HttpServices struct {
-	InitClient string `defaut:"api-gateway-init:8080"`
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 func NewOrgServer(orgName string, orgRepo db.OrgRepo, userRepo db.UserRepo, orch providers.OrchestratorProvider, registry creg.MemberClient, msgBus mb.MsgBusServiceClient, pushgateway string, debug bool) *OrgService {

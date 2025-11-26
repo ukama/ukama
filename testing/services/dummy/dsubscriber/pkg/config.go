@@ -38,8 +38,8 @@ type RoutineConfig struct {
 }
 
 type HttpServices struct {
-	AgentNodeGateway string `defaut:"http://node-gateway-ukama-agent:8080"`
-	InitClient       string `defaut:"api-gateway-init:8080"`
+	AgentNodeGateway string `default:"http://node-gateway-ukama-agent:8080"`
+	InitClient       string `default:"api-gateway-init:8080"`
 }
 
 type WMessage struct {

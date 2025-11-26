@@ -8,27 +8,24 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/messaging/nns/pb/gen";
-
-import "validator.proto";
+option go_package = "github.com/ukama/ukama/systems/messaging/nns/pb/gen;gen";
 import "google/api/annotations.proto";
-
 package ukama.messaging.nns.v1;
-
+import "validator.proto";
 
 service Nns { // The Node Name Service (like DNS)
     rpc Get(GetNodeIPRequest) returns (GetNodeIPResponse);
     rpc Set(SetNodeIPRequest) returns (SetNodeIPResponse);
+    rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
+    rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
+    rpc GetNodeIPMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
+    rpc GetMesh(GetMeshIPRequest) returns (GetMeshIPResponse);
     rpc List(ListNodeIPRequest) returns (ListNodeIPResponse) {
         option (google.api.http) = {
             post: "/v1/nns/list"
             body: "*"
         };
     }
-    rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
-    rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
-    rpc GetNodeIPMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
-    rpc GetMesh(GetMeshIPRequest) returns (GetMeshIPResponse);
 }   
 
 message GetMeshIPRequest{
@@ -56,8 +53,8 @@ message SetNodeIPRequest{
     int32 nodePort = 4;
     int32 meshPort = 5;
     string org = 6;
-    string network = 7;
-    string site = 8;
+    string site = 7;
+    string network = 8;
     string meshHostName = 9;
 }
 
