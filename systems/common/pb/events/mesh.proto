@@ -20,3 +20,8 @@ message OrgIPUpdateEvent{
     string OrgId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "org_id"];
     string Ip  = 3;
 }
+
+message MeshBootEvent {
+    string ip      = 1;
+    int32 port = 2;
+}
