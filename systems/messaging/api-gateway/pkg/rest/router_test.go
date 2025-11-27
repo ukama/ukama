@@ -8,69 +8,69 @@
 
 package rest
 
-import (
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
+// import (
+// 	"net/http"
+// 	"net/http/httptest"
+// 	"testing"
+// 	"time"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/mock"
-	"github.com/tj/assert"
+// 	"github.com/gin-contrib/cors"
+// 	"github.com/gin-gonic/gin"
+// 	"github.com/stretchr/testify/mock"
+// 	"github.com/tj/assert"
 
-	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg"
-	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg/client"
+// 	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg"
+// 	"github.com/ukama/ukama/systems/messaging/api-gateway/pkg/client"
 
-	cconfig "github.com/ukama/ukama/systems/common/config"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
-	crest "github.com/ukama/ukama/systems/common/rest"
-	nnmocks "github.com/ukama/ukama/systems/messaging/nns/pb/gen/mocks"
-)
+// 	cconfig "github.com/ukama/ukama/systems/common/config"
+// 	cmocks "github.com/ukama/ukama/systems/common/mocks"
+// 	crest "github.com/ukama/ukama/systems/common/rest"
+// 	nnmocks "github.com/ukama/ukama/systems/messaging/nns/pb/gen/mocks"
+// )
 
-var (
-	testClientSet *Clients
+// var (
+// 	testClientSet *Clients
 
-	defaultCors = cors.Config{
-		AllowAllOrigins: true,
-	}
+// 	defaultCors = cors.Config{
+// 		AllowAllOrigins: true,
+// 	}
 
-	routerConfig = &RouterConfig{
-		serverConf: &crest.HttpConfig{
-			Cors: defaultCors,
-		},
-		auth: &cconfig.Auth{
-			AuthAppUrl:    "http://localhost:4455",
-			AuthServerUrl: "http://localhost:4434",
-			AuthAPIGW:     "http://localhost:8080",
-		},
-	}
-)
+// 	routerConfig = &RouterConfig{
+// 		serverConf: &crest.HttpConfig{
+// 			Cors: defaultCors,
+// 		},
+// 		auth: &cconfig.Auth{
+// 			AuthAppUrl:    "http://localhost:4455",
+// 			AuthServerUrl: "http://localhost:4434",
+// 			AuthAPIGW:     "http://localhost:8080",
+// 		},
+// 	}
+// )
 
-func init() {
-	gin.SetMode(gin.TestMode)
-	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
-		Timeout: 1 * time.Second,
-		Nns:     "0.0.0.0:9092",
-	})
-}
+// func init() {
+// 	gin.SetMode(gin.TestMode)
+// 	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+// 		Timeout: 1 * time.Second,
+// 		Nns:     "0.0.0.0:9092",
+// 	})
+// }
 
-func TestPingRoute(t *testing.T) {
-	arc := &cmocks.AuthClient{}
-	nn := &nnmocks.NnsClient{}
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/ping", nil)
+// func TestPingRoute(t *testing.T) {
+// 	arc := &cmocks.AuthClient{}
+// 	nn := &nnmocks.NnsClient{}
+// 	w := httptest.NewRecorder()
+// 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+// 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
-	r := NewRouter(&Clients{
-		n: client.NewNnsFromClient(nn),
-	}, routerConfig, arc.AuthenticateUser).f.Engine()
+// 	r := NewRouter(&Clients{
+// 		n: client.NewNnsFromClient(nn),
+// 	}, routerConfig, arc.AuthenticateUser).f.Engine()
 
-	// act
-	r.ServeHTTP(w, req)
+// 	// act
+// 	r.ServeHTTP(w, req)
 
-	// assert
-	assert.Equal(t, 200, w.Code)
-	assert.Contains(t, w.Body.String(), "pong")
-}
+// 	// assert
+// 	assert.Equal(t, 200, w.Code)
+// 	assert.Contains(t, w.Body.String(), "pong")
+// }

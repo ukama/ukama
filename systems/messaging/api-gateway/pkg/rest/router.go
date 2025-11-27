@@ -9,10 +9,8 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -38,12 +36,12 @@ type Router struct {
 }
 
 type RouterConfig struct {
-	metricsConfig  config.Metrics
-	httpEndpoints  *pkg.HttpEndpoints
-	debugMode      bool
-	serverConf     *rest.HttpConfig
-	auth           *config.Auth
-	nodeMetricPort int32
+	metricsConfig config.Metrics
+	httpEndpoints *pkg.HttpEndpoints
+	debugMode     bool
+	serverConf    *rest.HttpConfig
+	auth          *config.Auth
+	// nodeMetricPort int32
 }
 
 type Clients struct {
@@ -51,14 +49,13 @@ type Clients struct {
 }
 
 type nns interface {
-	GetNodeIpRequest(req *pb.GetNodeIPRequest) (*pb.GetNodeIPResponse, error)
-	SetNodeIpRequest(req *pb.SetNodeIPRequest) (*pb.SetNodeIPResponse, error)
-	DeleteNodeIpRequest(req *pb.DeleteNodeIPRequest) (*pb.DeleteNodeIPResponse, error)
-	ListNodeIpRequest(req *pb.ListNodeIPRequest) (*pb.ListNodeIPResponse, error)
-	GetNodeOrgMapListRequest(req *pb.NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error)
-	GetNodeIPMapListRequest(req *pb.NodeIPMapListRequest) (*pb.NodeIPMapListResponse, error)
-	SetMeshRequest(req *pb.SetMeshRequest) (*pb.SetMeshResponse, error)
-	GetMeshRequest(req *pb.GetMeshIPRequest) (*pb.GetMeshIPResponse, error)
+	GetNodeRequest(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error)
+	GetMeshRequest(req *pb.GetMeshRequest) (*pb.GetMeshResponse, error)
+	SetRequest(req *pb.SetRequest) (*pb.SetResponse, error)
+	UpdateMeshRequest(req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error)
+	UpdateNodeRequest(req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error)
+	DeleteRequest(req *pb.DeleteRequest) (*pb.DeleteResponse, error)
+	ListRequest(req *pb.ListRequest) (*pb.ListResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -119,14 +116,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		nns := auth.Group("/nns", "Nns", "Looking for node Ip address")
 		nns.GET("/node/:node_id", formatDoc("Get node Ip", ""), tonic.Handler(r.getNodeHandler, http.StatusOK))
-		nns.PUT("/node/:node_id", formatDoc("Add node Ip", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
-		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
-		nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
-		nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
-		nns.PUT("/mesh", formatDoc("Set mesh ip", ""), tonic.Handler(r.setMeshHandler, http.StatusOK))
-		nns.GET("/mesh/:node_id", formatDoc("Get mesh ip", ""), tonic.Handler(r.getMeshHandler, http.StatusOK))
-		prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
-		prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
+		nns.GET("/mesh", formatDoc("Get mesh ip", ""), tonic.Handler(r.getMeshHandler, http.StatusOK))
+		nns.PUT("/node", formatDoc("Add node", ""), tonic.Handler(r.putNodeHandler, http.StatusCreated))
+		nns.PUT("/node/:node_id", formatDoc("Update node", ""), tonic.Handler(r.updateNodeHandler, http.StatusCreated))
+		nns.PUT("/mesh", formatDoc("Update mesh", ""), tonic.Handler(r.updateMeshHandler, http.StatusOK))
+		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteHandler, http.StatusOK))
+		nns.GET("/list", formatDoc("Get all nodes", ""), tonic.Handler(r.listHandler, http.StatusOK))
+
+		// prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
+		// prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
 	}
 }
 
@@ -137,145 +135,143 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) prometheusHandler(c *gin.Context) error {
-	w := c.Writer
-	w.Header().Set("Content-Type", "application/json")
+// func (r *Router) prometheusHandler(c *gin.Context) error {
+// 	w := c.Writer
+// 	w.Header().Set("Content-Type", "application/json")
 
-	m := make(chan bool)
-	nodeToOrg := &pb.NodeOrgMapListResponse{}
-	go func() {
-		var errCh error
-		if nodeToOrg, errCh = r.clients.n.GetNodeOrgMapListRequest(&pb.NodeOrgMapListRequest{}); errCh != nil {
-			logrus.Error("Error getting node to org/network map. Error: ", errCh)
-		}
-		m <- true
-	}()
+// 	m := make(chan bool)
+// 	nodeToOrg := &pb.NodeOrgMapListResponse{}
+// 	go func() {
+// 		var errCh error
+// 		if nodeToOrg, errCh = r.clients.n.GetNodeOrgMapListRequest(&pb.NodeOrgMapListRequest{}); errCh != nil {
+// 			logrus.Error("Error getting node to org/network map. Error: ", errCh)
+// 		}
+// 		m <- true
+// 	}()
 
-	l, err := r.clients.n.GetNodeIPMapListRequest(&pb.NodeIPMapListRequest{})
-	if err != nil {
-		logrus.Error("Error getting list of namespaces. Error: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
+// 	l, err := r.clients.n.GetNodeIPMapListRequest(&pb.NodeIPMapListRequest{})
+// 	if err != nil {
+// 		logrus.Error("Error getting list of namespaces. Error: ", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return err
+// 	}
 
-	// wait for nodeToOrgNetwork mapping to finish
-	<-m
+// 	// wait for nodeToOrgNetwork mapping to finish
+// 	<-m
 
-	b, err := r.marshallTargets(l, nodeToOrg, int(r.config.nodeMetricPort))
-	if err != nil {
-		logrus.Error("Error marshalling targets. Error: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
+// 	b, err := r.marshallTargets(l, nodeToOrg, int(r.config.nodeMetricPort))
+// 	if err != nil {
+// 		logrus.Error("Error marshalling targets. Error: ", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return err
+// 	}
 
-	_, err = w.Write(b)
-	if err != nil {
-		logrus.Error("Error writing response. Error: ", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-	return nil
-}
+// 	_, err = w.Write(b)
+// 	if err != nil {
+// 		logrus.Error("Error writing response. Error: ", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return err
+// 	}
+// 	return nil
+// }
 
-type targets struct {
-	Targets []string          `json:"targets"`
-	Labels  map[string]string `json:"labels"`
-}
+// type targets struct {
+// 	Targets []string          `json:"targets"`
+// 	Labels  map[string]string `json:"labels"`
+// }
 
-func (r *Router) marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
-	resp := make([]targets, 0, len(l.Map))
-	var dname string
-	for _, v := range l.Map {
-		labels := map[string]string{
-			"nodeid": v.NodeId,
-		}
+// func (r *Router) marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
+// 	resp := make([]targets, 0, len(l.Map))
+// 	var dname string
+// 	for _, v := range l.Map {
+// 		labels := map[string]string{
+// 			"nodeid": v.NodeId,
+// 		}
 
-		nodeIp, err := r.clients.n.GetNodeIpRequest(&pb.GetNodeIPRequest{
-			NodeId: v.NodeId,
-		})
-		if err != nil {
-			logrus.Errorf("Failed to get node ip for node %s.Error: %s", v.NodeId, err.Error())
-			continue
-		}
+// 		nodeIp, err := r.clients.n.GetNodeIpRequest(&pb.GetNodeIPRequest{
+// 			NodeId: v.NodeId,
+// 		})
+// 		if err != nil {
+// 			logrus.Errorf("Failed to get node ip for node %s.Error: %s", v.NodeId, err.Error())
+// 			continue
+// 		}
 
-		if m, ok := func(m *pb.NodeOrgMapListResponse, id string) (*pb.NodeOrgMap, bool) {
-			for _, k := range m.Map {
-				if strings.EqualFold(k.NodeId, id) {
-					return k, true
-				}
-			}
-			return nil, false
-		}(nodeToOrg, v.NodeId); ok {
-			dname = m.GetDomainname()
-			labels["org"] = m.Org
-			labels["network"] = m.Network
-			labels["serial"] = v.NodeId
-			labels["dns"] = v.NodeId + "." + dname
-		}
+// 		if m, ok := func(m *pb.NodeOrgMapListResponse, id string) (*pb.NodeOrgMap, bool) {
+// 			for _, k := range m.Map {
+// 				if strings.EqualFold(k.NodeId, id) {
+// 					return k, true
+// 				}
+// 			}
+// 			return nil, false
+// 		}(nodeToOrg, v.NodeId); ok {
+// 			dname = m.GetDomainname()
+// 			labels["org"] = m.Org
+// 			labels["network"] = m.Network
+// 			labels["serial"] = v.NodeId
+// 			labels["dns"] = v.NodeId + "." + dname
+// 		}
 
-		resp = append(resp, targets{
-			Targets: []string{nodeIp.Ip},
-			Labels:  labels,
-		})
-	}
+// 		resp = append(resp, targets{
+// 			Targets: []string{nodeIp.Ip},
+// 			Labels:  labels,
+// 		})
+// 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		return nil, err
-	}
+// 	b, err := json.Marshal(resp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return b, nil
-}
+// 	return b, nil
+// }
 
-func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeIPRequest) (*pb.GetNodeIPResponse, error) {
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
 
-	return r.clients.n.GetNodeIpRequest(&pb.GetNodeIPRequest{
+	return r.clients.n.GetNodeRequest(&pb.GetNodeRequest{
 		NodeId: req.NodeId,
 	})
 }
 
-func (r *Router) putNodeHandler(c *gin.Context, req *SetNodeIPRequest) (*pb.SetNodeIPResponse, error) {
+func (r *Router) getMeshHandler(c *gin.Context, req *GetMeshRequest) (*pb.GetMeshResponse, error) {
+	return r.clients.n.GetMeshRequest(&pb.GetMeshRequest{})
+}
 
-	return r.clients.n.SetNodeIpRequest(&pb.SetNodeIPRequest{
+func (r *Router) putNodeHandler(c *gin.Context, req *SetNodeRequest) (*pb.SetResponse, error) {
+	return r.clients.n.SetRequest(&pb.SetRequest{
+		NodeId:       req.NodeId,
+		NodeIp:       req.NodeIp,
+		NodePort:     req.NodePort,
+		MeshIp:       req.MeshIp,
+		MeshPort:     req.MeshPort,
+		Org:          req.Org,
+		Network:      req.Network,
+		Site:         req.Site,
+		MeshHostName: req.MeshHostName,
+	})
+
+}
+
+func (r *Router) updateNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+	return r.clients.n.UpdateNodeRequest(&pb.UpdateNodeRequest{
 		NodeId:   req.NodeId,
 		NodeIp:   req.NodeIp,
 		NodePort: req.NodePort,
+	})
+}
+
+func (r *Router) updateMeshHandler(c *gin.Context, req *UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
+	return r.clients.n.UpdateMeshRequest(&pb.UpdateMeshRequest{
 		MeshIp:   req.MeshIp,
 		MeshPort: req.MeshPort,
-		Org:      req.Org,
-		Network:  req.Network,
 	})
-
 }
 
-func (r *Router) deleteNodeIPHandler(c *gin.Context, req *DeleteNodeIPRequest) (*pb.DeleteNodeIPResponse, error) {
-
-	return r.clients.n.DeleteNodeIpRequest(&pb.DeleteNodeIPRequest{
+func (r *Router) deleteHandler(c *gin.Context, req *DeleteRequest) (*pb.DeleteResponse, error) {
+	return r.clients.n.DeleteRequest(&pb.DeleteRequest{
 		NodeId: req.NodeId,
 	})
 }
 
-func (r *Router) getAllNodeIPHandler(c *gin.Context, req *ListNodeIPsRequest) (*pb.NodeIPMapListResponse, error) {
-
-	return r.clients.n.GetNodeIPMapListRequest(&pb.NodeIPMapListRequest{})
-}
-
-func (r *Router) getNodeOrgMapHandler(c *gin.Context, req *NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error) {
-
-	return r.clients.n.GetNodeOrgMapListRequest(&pb.NodeOrgMapListRequest{})
-}
-
-func (r *Router) setMeshHandler(c *gin.Context, req *SetMeshRequest) (*pb.SetMeshResponse, error) {
-
-	return r.clients.n.SetMeshRequest(&pb.SetMeshRequest{
-		Ip:   req.Ip,
-		Port: req.Port,
-	})
-}
-
-func (r *Router) getMeshHandler(c *gin.Context, req *GetMeshRequest) (*pb.GetMeshIPResponse, error) {
-
-	return r.clients.n.GetMeshRequest(&pb.GetMeshIPRequest{
-		NodeId: req.NodeId,
-	})
+func (r *Router) listHandler(c *gin.Context, req *ListRequest) (*pb.ListResponse, error) {
+	return r.clients.n.ListRequest(&pb.ListRequest{})
 }
