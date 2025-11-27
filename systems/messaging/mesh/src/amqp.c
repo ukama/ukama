@@ -16,7 +16,7 @@
 #include "mesh.h"
 #include "u_amqp.h"
 #include "nodeEvent.pb-c.h"
-#include "bootEvent.pb-c.h"
+#include "registerEvent.pb-c.h"
 #include "any.pb-c.h"
 
 typedef Google__Protobuf__Any ANY;
@@ -41,8 +41,7 @@ static char *convert_state_to_str(ObjectState state);
 static int is_valid_event(MeshEvent event);
 static char *create_routing_key(MeshEvent event, char *orgName);
 static int object_type(MeshEvent event);
-static void *serialize_boot_event(char *orgName, char *orgId, char *ip,
-                                  size_t *outLen);
+static void *serialize_register_event(char *ip, int port, size_t *outLen);
 static void *serialize_node_online_event(char *nodeID, char *nodeIP, int nodePort,
                                          char *meshIP, int meshPort,
                                          size_t *outLen);
@@ -412,14 +411,14 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff, size_t 
         sprintf(anyEvent.type_url, "%s/%s",
                 TYPE_URL_PREFIX,
                 ukama__events__v1__node_online_event__descriptor.name);
-    } else if (eventType == MESH_BOOT) {
+    } else if (eventType == MESH_REGISTER) {
 
         anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                                           strlen(boot_event__descriptor.name) + 1,
+                                           strlen(register_event__descriptor.name) + 1,
                                            sizeof(char));
         sprintf(anyEvent.type_url, "%s/%s",
                 TYPE_URL_PREFIX,
-                boot_event__descriptor.name);
+                register_event__descriptor.name);
     } else {
         return NULL;
     }
@@ -520,17 +519,16 @@ static void *serialize_node_offline_event(char *nodeID, size_t *outLen) {
 	return anyBuff;
 }
 
-static void *serialize_boot_event(char *orgName, char *orgId, char *ip, size_t *outLen) {
+static void *serialize_register_event(char *ip, int port, size_t *outLen) {
 
-    BootEvent bootEvent = BOOT_EVENT__INIT;
+    RegisterEvent registerEvent = REGISTER_EVENT__INIT;
     void *buff=NULL, *anyBuff=NULL;
     size_t len, anyLen = 0;
 
-    bootEvent.orgname = strdup(orgName);
-    bootEvent.orgid   = strdup(orgId);
-    bootEvent.ip      = strdup(ip);
+    registerEvent.ip   = strdup(ip);
+    registerEvent.port = port;
 
-    len = boot_event__get_packed_size(&bootEvent);
+    len = register_event__get_packed_size(&registerEvent);
 
     buff = malloc(len);
     if (buff == NULL) {
@@ -538,13 +536,10 @@ static void *serialize_boot_event(char *orgName, char *orgId, char *ip, size_t *
         return NULL;
     }
 
-    boot_event__pack(&bootEvent, buff);
-    anyBuff = serialize_any_packet(MESH_BOOT, len, buff, &anyLen);
+    register_event__pack(&registerEvent, buff);
+    anyBuff = serialize_any_packet(MESH_REGISTER, len, buff, &anyLen);
 
-    free(bootEvent.orgname);
-    free(bootEvent.orgid);
-    free(bootEvent.ip);
-
+    free(registerEvent.ip);
     free(buff);
 
     if (outLen) {
@@ -681,29 +676,29 @@ int publish_event(MeshEvent event, char *orgName,
     return TRUE;
 }
 
-int publish_boot_event(char *exchange) {
+int publish_register_event(char *exchange, int port) {
 
     WAMQPConn *conn=NULL;
     char *amqpHost=NULL, *amqpPort=NULL, *amqpUser=NULL, *amqpPassword=NULL;
-    char *orgName=NULL, *orgId=NULL, *ip=NULL;
+    char *orgName=NULL, *ip=NULL;
 
-    char key[MAX_BUFFER] = {0};
+    char key[MAX_BUFFER]={0};
     WAMQPProp prop;
     void *buff=NULL;
-    size_t buffLen = 0;
+    size_t buffLen=0;
     int ret;
 
-    amqpHost = getenv(ENV_AMQP_HOST);
-    amqpPort = getenv(ENV_AMQP_PORT);
-    amqpUser = getenv(ENV_AMQP_USER);
+    amqpHost     = getenv(ENV_AMQP_HOST);
+    amqpPort     = getenv(ENV_AMQP_PORT);
+    amqpUser     = getenv(ENV_AMQP_USER);
     amqpPassword = getenv(ENV_AMQP_PASSWORD);
-    orgName  = getenv(ENV_SYSTEM_ORG);
-    orgId    = getenv(ENV_SYSTEM_ORG_ID);
-    ip       = getenv(ENV_BINDING_IP);
+    orgName      = getenv(ENV_SYSTEM_ORG);
+    ip           = getenv(ENV_BINDING_IP);
 
     conn = init_amqp_connection(amqpHost, amqpPort, amqpUser, amqpPassword);
     if (conn == NULL) {
-        log_error("Failed to connect with AMQP at %s:%s@%s:%s", amqpUser, amqpPassword, amqpHost, amqpPort);
+        log_error("Failed to connect with AMQP at %s:%s@%s:%s",
+                  amqpUser, amqpPassword, amqpHost, amqpPort);
         return FALSE;
     }
 
@@ -716,7 +711,7 @@ int publish_boot_event(char *exchange) {
     prop.delivery_mode = 2; /* persistent delivery mode */
 
     /* protobuf msg. */
-    buff = serialize_boot_event(orgName, orgId, ip, &buffLen);
+    buff = serialize_register_event(ip, port, &buffLen);
     if (buff == NULL || buffLen == 0) {
         log_error("Error serializing boot packet for AMQP");
         return FALSE;
@@ -724,7 +719,7 @@ int publish_boot_event(char *exchange) {
 
     /* send the message to AMQP broker */
 	amqp_bytes_t body;
-	body.len = buffLen;
+	body.len   = buffLen;
 	body.bytes = buff;
 
     ret = amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange),

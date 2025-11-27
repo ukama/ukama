@@ -9,7 +9,6 @@
 /*
  * Network related stuff based on ulfius framework.
  */
-
 #include <ulfius.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +21,6 @@
 #include "websocket.h"
 #include "config.h"
 #include "jserdes.h"
-
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request,
@@ -184,10 +182,6 @@ int start_forward_service(Config *config, UInst **forwardInst) {
     return port;
 }
 
-/*
- * start_websocket_server -- start websocket server on the server port.
- *
- */
 int start_websocket_server(Config *config, UInst *websocketInst) {
 
     struct sockaddr_in bindAddr;
@@ -218,10 +212,6 @@ int start_websocket_server(Config *config, UInst *websocketInst) {
  	return TRUE;
 }
 
-/*
- * start_web_services -- start accepting REST clients on 127.0.0.1:port
- *
- */
 int start_web_services(Config *config, UInst *clientInst) {
 
 	/* Initialize the admin and client webservices framework. */

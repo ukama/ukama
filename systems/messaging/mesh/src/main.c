@@ -195,15 +195,15 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-    /* Step-3: publish AMQP event with org name, org id and binding port */
-    if (publish_boot_event(DEFAULT_MESH_AMQP_EXCHANGE)) {
-        log_debug("Mesh running for Ukama Org: %s", config->orgName);
+    /* Step-3: publish register event with IP and binding port */
+    if (publish_register_event(DEFAULT_MESH_AMQP_EXCHANGE, atoi(config->servicesPort))) {
+        log_debug("Mesh(server) running for Ukama Org: %s", config->orgName);
         pause();
     } else {
         log_error("Unable to publish boot event to AMQP");
     }
 
-	ulfius_stop_framework(&websocketInst);
+    ulfius_stop_framework(&websocketInst);
 	ulfius_stop_framework(&servicesInst);
 
 	ulfius_clean_instance(&websocketInst);
