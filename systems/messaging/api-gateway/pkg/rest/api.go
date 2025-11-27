@@ -20,7 +20,6 @@ type SetNodeRequest struct {
 	MeshIp       string `json:"mesh_ip" validate:"required"`
 	NodePort     int32  `json:"node_port" validate:"required"`
 	MeshPort     int32  `json:"mesh_port" validate:"required"`
-	Org          string `json:"org" validate:"required"`
 	Network      string `json:"network"`
 	Site         string `json:"site"`
 	MeshHostName string `json:"mesh_host_name"`

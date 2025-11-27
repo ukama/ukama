@@ -243,7 +243,6 @@ func (r *Router) putNodeHandler(c *gin.Context, req *SetNodeRequest) (*pb.SetRes
 		NodePort:     req.NodePort,
 		MeshIp:       req.MeshIp,
 		MeshPort:     req.MeshPort,
-		Org:          req.Org,
 		Network:      req.Network,
 		Site:         req.Site,
 		MeshHostName: req.MeshHostName,

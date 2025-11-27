@@ -141,7 +141,6 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		MeshIp:       msg.GetMeshIp(),
 		NodePort:     msg.GetNodePort(),
 		MeshPort:     msg.GetMeshPort(),
-		Org:          l.Org,
 		Network:      nodeInfo.Site.NetworkId,
 		Site:         nodeInfo.Site.SiteId,
 		MeshHostName: msg.GetMeshHostName(),

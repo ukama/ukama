@@ -228,10 +228,9 @@ type SetRequest struct {
 	MeshIp        string                 `protobuf:"bytes,3,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
 	NodePort      int32                  `protobuf:"varint,4,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
 	MeshPort      int32                  `protobuf:"varint,5,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
-	Org           string                 `protobuf:"bytes,6,opt,name=org,proto3" json:"org,omitempty"`
-	Site          string                 `protobuf:"bytes,7,opt,name=site,proto3" json:"site,omitempty"`
-	Network       string                 `protobuf:"bytes,8,opt,name=network,proto3" json:"network,omitempty"`
-	MeshHostName  string                 `protobuf:"bytes,9,opt,name=meshHostName,proto3" json:"meshHostName,omitempty"`
+	Site          string                 `protobuf:"bytes,6,opt,name=site,proto3" json:"site,omitempty"`
+	Network       string                 `protobuf:"bytes,7,opt,name=network,proto3" json:"network,omitempty"`
+	MeshHostName  string                 `protobuf:"bytes,8,opt,name=meshHostName,proto3" json:"meshHostName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -299,13 +298,6 @@ func (x *SetRequest) GetMeshPort() int32 {
 		return x.MeshPort
 	}
 	return 0
-}
-
-func (x *SetRequest) GetOrg() string {
-	if x != nil {
-		return x.Org
-	}
-	return ""
 }
 
 func (x *SetRequest) GetSite() string {
@@ -831,7 +823,7 @@ const file_nns_proto_rawDesc = "" +
 	"\x0eGetMeshRequest\"E\n" +
 	"\x0fGetMeshResponse\x12\x16\n" +
 	"\x06meshIp\x18\x01 \x01(\tR\x06meshIp\x12\x1a\n" +
-	"\bmeshPort\x18\x02 \x01(\x05R\bmeshPort\"\xe0\x03\n" +
+	"\bmeshPort\x18\x02 \x01(\x05R\bmeshPort\"\xce\x03\n" +
 	"\n" +
 	"SetRequest\x12\x1e\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\x12\x89\x01\n" +
@@ -840,11 +832,10 @@ const file_nns_proto_rawDesc = "" +
 	"\x06meshIp\x18\x03 \x01(\tBq\xe2\xdf\x1fm\n" +
 	"i^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$X\x01R\x06meshIp\x12\x1a\n" +
 	"\bnodePort\x18\x04 \x01(\x05R\bnodePort\x12\x1a\n" +
-	"\bmeshPort\x18\x05 \x01(\x05R\bmeshPort\x12\x10\n" +
-	"\x03org\x18\x06 \x01(\tR\x03org\x12\x12\n" +
-	"\x04site\x18\a \x01(\tR\x04site\x12\x18\n" +
-	"\anetwork\x18\b \x01(\tR\anetwork\x12\"\n" +
-	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"\r\n" +
+	"\bmeshPort\x18\x05 \x01(\x05R\bmeshPort\x12\x12\n" +
+	"\x04site\x18\x06 \x01(\tR\x04site\x12\x18\n" +
+	"\anetwork\x18\a \x01(\tR\anetwork\x12\"\n" +
+	"\fmeshHostName\x18\b \x01(\tR\fmeshHostName\"\r\n" +
 	"\vSetResponse\"W\n" +
 	"\x11UpdateMeshRequest\x12\x1e\n" +
 	"\x06meshIp\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06meshIp\x12\"\n" +

@@ -45,10 +45,9 @@ message SetRequest{
     string meshIp = 3  [(validator.field) =  { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
     int32 nodePort = 4;
     int32 meshPort = 5;
-    string org = 6;
-    string site = 7;
-    string network = 8;
-    string meshHostName = 9;
+    string site = 6;
+    string network = 7;
+    string meshHostName = 8;
 }
 
 message SetResponse { }
