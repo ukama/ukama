@@ -18,6 +18,8 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+var separator = "|"
+
 type NodeOrgMap struct {
 	etcd *clientv3.Client
 }
@@ -35,7 +37,7 @@ type OrgMap struct {
 }
 
 func (o *OrgMap) String() string {
-	return fmt.Sprintf("%s-%s-%s-%s-%s-%d-%s-%s-%d", o.Org, o.Network, o.Site, o.MeshIp, o.MeshHostName, o.MeshPort, o.NodeId, o.NodeIp, o.NodePort)
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s%s%d%s%s%s%s%s%d", o.Org, separator, o.Network, separator, o.Site, separator, o.MeshIp, separator, o.MeshHostName, separator, o.MeshPort, separator, o.NodeId, separator, o.NodeIp, separator, o.NodePort)
 }
 
 func (o *OrgMap) Parse(value string) error {
@@ -159,6 +161,8 @@ func (n *NodeOrgMap) UpdateMesh(ctx context.Context, ip string, port int32) erro
 			MeshIp:       ip,
 			MeshHostName: item.MeshHostName,
 			MeshPort:     port,
+			NodeIp:       item.NodeIp,
+			NodePort:     item.NodePort,
 		}
 		_, err = n.etcd.Put(ctx, obj.NodeId, obj.String())
 		if err != nil {
