@@ -16,7 +16,7 @@
 #include "mesh.h"
 #include "u_amqp.h"
 #include "nodeEvent.pb-c.h"
-#include "registerEvent.pb-c.h"
+#include "meshRegisterEvent.pb-c.h"
 #include "any.pb-c.h"
 
 typedef Google__Protobuf__Any ANY;
@@ -414,11 +414,11 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff, size_t 
     } else if (eventType == MESH_REGISTER) {
 
         anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                                           strlen(register_event__descriptor.name) + 1,
+                                           strlen(mesh_register_event__descriptor.name) + 1,
                                            sizeof(char));
         sprintf(anyEvent.type_url, "%s/%s",
                 TYPE_URL_PREFIX,
-                register_event__descriptor.name);
+                mesh_register_event__descriptor.name);
     } else {
         return NULL;
     }
@@ -521,14 +521,14 @@ static void *serialize_node_offline_event(char *nodeID, size_t *outLen) {
 
 static void *serialize_register_event(char *ip, int port, size_t *outLen) {
 
-    RegisterEvent registerEvent = REGISTER_EVENT__INIT;
+    MeshRegisterEvent registerEvent = MESH_REGISTER_EVENT__INIT;
     void *buff=NULL, *anyBuff=NULL;
     size_t len, anyLen = 0;
 
     registerEvent.ip   = strdup(ip);
     registerEvent.port = port;
 
-    len = register_event__get_packed_size(&registerEvent);
+    len = mesh_register_event__get_packed_size(&registerEvent);
 
     buff = malloc(len);
     if (buff == NULL) {
@@ -536,7 +536,7 @@ static void *serialize_register_event(char *ip, int port, size_t *outLen) {
         return NULL;
     }
 
-    register_event__pack(&registerEvent, buff);
+    mesh_register_event__pack(&registerEvent, buff);
     anyBuff = serialize_any_packet(MESH_REGISTER, len, buff, &anyLen);
 
     free(registerEvent.ip);

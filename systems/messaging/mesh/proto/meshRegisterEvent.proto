@@ -8,8 +8,8 @@
 
 syntax = "proto3";
 
-message RegisterEvent {
+message MeshRegisterEvent {
 
-    string IP   = 1;
+    string ip   = 1;
     int32  port = 2;
 }
