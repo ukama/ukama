@@ -51,9 +51,6 @@
 #define STATE_ONLINE_STR  "online"
 #define STATE_OFFLINE_STR "offline"
 
-static int free_stop;
-#define FREE( ... ) Free( &free_stop , __VA_ARGS__ , &free_stop )
-
 typedef amqp_basic_properties_t WAMQPProp;
 typedef struct amqp_connection_state_t_ WAMQPConn;
 typedef struct amqp_socket_t_           WAMQPSocket;
