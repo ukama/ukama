@@ -81,24 +81,24 @@ static AMQPRoutingKey routingKey[] = {
 	[CERT_REQUIRED] = {.type=REQUEST, .object=CERT, .state=UPDATE},
 };
 
-static void Free(void *ptr, ... ) {
+static void Free(void *ptr, ...) {
+    va_list ap;
+    void *p;
 
-	void *p;
-  
-	if(!ptr)
-		return;
+    if (!ptr) {
+        return;
+    }
 
-	va_list list;
-	va_start(list, ptr);
+    va_start(ap, ptr);
 
-	p = va_arg(list , void *);
-  
-	while( p != ptr ) {
-		if (p) free(p) ;
-		p = va_arg(list, void *);
-	}
+    /* free the first pointer */
+    p = ptr;
+    while (p != NULL) {
+        free(p);
+        p = va_arg(ap, void *);
+    }
 
-	va_end(list);
+    va_end(ap);
 }
 
 static char *convert_type_to_str(MsgType type) {
@@ -340,7 +340,7 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
 
 	int len;
 	char *key=NULL;
-	char *type=NULL, *source=NULL, *container=NULL, *object=NULL, *state=NULL;
+	char *type=NULL, *source=NULL, *object=NULL, *state=NULL;
 
 	/* Sanity check */
 	if (!is_valid_event(event)) {
@@ -383,7 +383,7 @@ static char *create_routing_key(MeshEvent event, char *orgName) {
             object,
             state);
 
-	Free(type, source, container, object, state, NULL);
+	Free(type, source, object, state, NULL);
 
 	return key;
 }
