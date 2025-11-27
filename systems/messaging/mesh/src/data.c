@@ -110,7 +110,6 @@ static int send_data_to_system(URequest *data, char *ep,
                                int *retCode, char **retStr) {
 
 	int i;
-	long code=0;
 	CURL *curl=NULL;
 	CURLcode res;
 	struct curl_slist *headers=NULL;
@@ -235,7 +234,7 @@ static URequest* create_http_request(char *jStr) {
     /* Get the actual data now */
     jData = json_object_get(jRaw, JSON_DATA);
     if (jData) {
-        char *str = json_string_value(jData);
+        const char *str = json_string_value(jData);
         request->binary_body        = strdup(str);
         request->binary_body_length = strlen(str);
     }
@@ -252,13 +251,12 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
      * 2. create thread, make connection with system, send/recv
      * 3. Put the response back on the websocket via outgoing queue
      */
-	int ret=FALSE, retCode=0;
+	int retCode=0;
 	URequest *request;
 	char *responseLocal=NULL, *jStr=NULL;
     char *systemName=NULL, *systemEP=NULL;
 	char *systemHost=NULL;
     int systemPort=0;
-	json_t *jResp=NULL;
 
     log_debug("Recevied message from mesh-host: %s", message->data);
 
