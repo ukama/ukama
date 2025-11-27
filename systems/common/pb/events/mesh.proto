@@ -21,7 +21,7 @@ message OrgIPUpdateEvent{
     string Ip  = 3;
 }
 
-message MeshBootEvent {
-    string ip      = 1;
+message MeshRegisterEvent {
+    string ip  = 1;
     int32 port = 2;
 }

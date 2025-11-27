@@ -28,6 +28,6 @@ func (this *OrgIPUpdateEvent) Validate() error {
 	}
 	return nil
 }
-func (this *MeshBootEvent) Validate() error {
+func (this *MeshRegisterEvent) Validate() error {
 	return nil
 }

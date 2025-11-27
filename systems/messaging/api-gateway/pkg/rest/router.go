@@ -57,6 +57,8 @@ type nns interface {
 	ListNodeIpRequest(req *pb.ListNodeIPRequest) (*pb.ListNodeIPResponse, error)
 	GetNodeOrgMapListRequest(req *pb.NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error)
 	GetNodeIPMapListRequest(req *pb.NodeIPMapListRequest) (*pb.NodeIPMapListResponse, error)
+	SetMeshRequest(req *pb.SetMeshRequest) (*pb.SetMeshResponse, error)
+	GetMeshRequest(req *pb.GetMeshIPRequest) (*pb.GetMeshIPResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -121,7 +123,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteNodeIPHandler, http.StatusOK))
 		nns.GET("/list", formatDoc("Get all Ip's", ""), tonic.Handler(r.getAllNodeIPHandler, http.StatusOK))
 		nns.GET("/map", formatDoc("Node to Org map", ""), tonic.Handler(r.getNodeOrgMapHandler, http.StatusOK))
-
+		nns.PUT("/mesh", formatDoc("Set mesh ip", ""), tonic.Handler(r.setMeshHandler, http.StatusOK))
+		nns.GET("/mesh/:node_id", formatDoc("Get mesh ip", ""), tonic.Handler(r.getMeshHandler, http.StatusOK))
 		prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
 		prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
 	}
@@ -260,4 +263,19 @@ func (r *Router) getAllNodeIPHandler(c *gin.Context, req *ListNodeIPsRequest) (*
 func (r *Router) getNodeOrgMapHandler(c *gin.Context, req *NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error) {
 
 	return r.clients.n.GetNodeOrgMapListRequest(&pb.NodeOrgMapListRequest{})
+}
+
+func (r *Router) setMeshHandler(c *gin.Context, req *SetMeshRequest) (*pb.SetMeshResponse, error) {
+
+	return r.clients.n.SetMeshRequest(&pb.SetMeshRequest{
+		Ip:   req.Ip,
+		Port: req.Port,
+	})
+}
+
+func (r *Router) getMeshHandler(c *gin.Context, req *GetMeshRequest) (*pb.GetMeshIPResponse, error) {
+
+	return r.clients.n.GetMeshRequest(&pb.GetMeshIPRequest{
+		NodeId: req.NodeId,
+	})
 }

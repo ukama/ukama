@@ -12,30 +12,30 @@ services:
   volumes:
    - postgress-data:/var/lib/postgresql
 
- mesh:
-  build: ./mesh
-  environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
-   - ENV_SYSTEM_ORG_ID=${ORGID}
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_SYSTEM_PORT=8071
-   - ENV_INIT_CLIENT_ADDR=${LOCAL_HOST_IP}
-   - ENV_INIT_CLIENT_PORT=8071
-   - ENV_BINDING_IP=0.0.0.0
-   - ENV_WEBSOCKET_PORT=18200
-   - ENV_SERVICES_PORT=4444
-   - ENV_MESH_CERT_FILE=
-   - ENV_MESH_KEY_FILE=
-   - ENV_AMQP_HOST=${LOCAL_HOST_IP}
-   - ENV_AMQP_PORT=5672
-   - ENV_AMQP_USER=guest
-   - ENV_AMQP_PASSWORD=guest
-  restart: always
-  ports:
-   - '18200:18200'
-   - '4444:4444'
-  networks:
-   - ukama-net
+#  mesh:
+#   build: ./mesh
+#   environment:
+#    - ENV_SYSTEM_ORG=${ORGNAME}
+#    - ENV_SYSTEM_ORG_ID=${ORGID}
+#    - ENV_INIT_SYSTEM_ADDR=192.168.0.138
+#    - ENV_INIT_SYSTEM_PORT=8071
+#    - ENV_INIT_CLIENT_ADDR=192.168.0.138
+#    - ENV_INIT_CLIENT_PORT=8071
+#    - ENV_BINDING_IP=0.0.0.0
+#    - ENV_WEBSOCKET_PORT=18200
+#    - ENV_SERVICES_PORT=4444
+#    - ENV_MESH_CERT_FILE=
+#    - ENV_MESH_KEY_FILE=
+#    - ENV_AMQP_HOST=192.168.0.138
+#    - ENV_AMQP_PORT=5672
+#    - ENV_AMQP_USER=guest
+#    - ENV_AMQP_PASSWORD=guest
+#   restart: always
+#   ports:
+#    - '18200:18200'
+#    - '4444:4444'
+#   networks:
+#    - ukama-net
 
  api-gateway-messaging:
   build: ./api-gateway
@@ -67,13 +67,13 @@ services:
    - DEBUGMODE=true
    - DNS_NODEDOMAIN=node.mesh
    - ETCDHOST=etcd:2379
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
    - MSGCLIENT_HOST=msgclient-messaging:9095
    - NNS_SERVICE_HOST=nns
    - NNS_SERVICE_PORT=9090
-   - REGISTRY=http://${LOCAL_HOST_IP}:8075
-   - ORG=${ORGID}
-   - ORGNAME=${ORGNAME}
+   - REGISTRY=http://192.168.0.138:8075
+   - ORG=fbc2a80d-339e-4d3c-acaa-329dd3d1b221
+   - ORGNAME=ukama
    - HTTP_INITCLIENT=http://api-gateway-init:8080
   restart: always
   networks:
@@ -102,8 +102,8 @@ services:
   build: ./node-feeder
   environment:
    - DEBUGMODE=true
-   - ORGNAME=${ORGNAME}
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - ORGNAME=ukama
+   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
    - HTTP_INITCLIENT=http://api-gateway-init:8080
   depends_on:
    - nns
@@ -118,11 +118,11 @@ services:
    - DB_HOST=postgresd-messaging
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
-   - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - QUEUE_URI=amqp://guest:guest@192.168.0.138:5672
    - SYSTEM=messaging
    - GRPC_PORT=9095
-   - ORGNAME=${ORGNAME}
-   - MASTERORGNAME=${MASTERORGNAME}
+   - ORGNAME=ukama
+   - MASTERORGNAME=ukama
   restart: always
   networks:
    - ukama-net
@@ -130,16 +130,17 @@ services:
    - postgresd-messaging
 
  initclient-messaging:
-  build: ../services/initClient
+  # build: ../services/initClient
+  image: main-init
   environment:
-   - ENV_SYSTEM_ORG=${ORGNAME}
+   - ENV_SYSTEM_ORG=ukama
    - ENV_DNS_REFRESH_TIME_PERIOD=30
    - ENV_SYSTEM_NAME=messaging
    - ENV_SYSTEM_DNS=api-gateway-messaging
    - ENV_DNS_SERVER=false
    - ENV_SYSTEM_PORT=8080
    - ENV_SYSTEM_CERT=This-is-a-certificate
-   - ENV_INIT_SYSTEM_ADDR=${LOCAL_HOST_IP}
+   - ENV_INIT_SYSTEM_ADDR=192.168.0.138
    - ENV_INIT_SYSTEM_PORT=8071
    - ENV_INIT_CLIENT_ADDR=initclient-messaging
    - ENV_INIT_CLIENT_PORT=8080

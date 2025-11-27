@@ -31,3 +31,12 @@ type ListNodeIPsRequest struct {
 
 type NodeOrgMapListRequest struct {
 }
+
+type SetMeshRequest struct {
+	Ip   string `json:"ip" validate:"required"`
+	Port int32  `json:"port" validate:"required"`
+}
+
+type GetMeshRequest struct {
+	NodeId string `path:"node_id" validate:"required"`
+}

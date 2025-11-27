@@ -15,57 +15,27 @@ type NnsServer struct {
 }
 
 // Delete provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Delete(_a0 context.Context, _a1 *gen.DeleteNodeIPRequest) (*gen.DeleteNodeIPResponse, error) {
+func (_m *NnsServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.DeleteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
-	var r0 *gen.DeleteNodeIPResponse
+	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest) (*gen.DeleteNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) (*gen.DeleteResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest) *gen.DeleteNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) *gen.DeleteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteNodeIPResponse)
+			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeIPRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Get provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetNodeIPRequest) (*gen.GetNodeIPResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
-	var r0 *gen.GetNodeIPResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest) (*gen.GetNodeIPResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest) *gen.GetNodeIPResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeIPResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeIPRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -75,27 +45,27 @@ func (_m *NnsServer) Get(_a0 context.Context, _a1 *gen.GetNodeIPRequest) (*gen.G
 }
 
 // GetMesh provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) GetMesh(_a0 context.Context, _a1 *gen.GetMeshIPRequest) (*gen.GetMeshIPResponse, error) {
+func (_m *NnsServer) GetMesh(_a0 context.Context, _a1 *gen.GetMeshRequest) (*gen.GetMeshResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMesh")
 	}
 
-	var r0 *gen.GetMeshIPResponse
+	var r0 *gen.GetMeshResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshIPRequest) (*gen.GetMeshIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshRequest) (*gen.GetMeshResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshIPRequest) *gen.GetMeshIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshRequest) *gen.GetMeshResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMeshIPResponse)
+			r0 = ret.Get(0).(*gen.GetMeshResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMeshIPRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMeshRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -104,58 +74,28 @@ func (_m *NnsServer) GetMesh(_a0 context.Context, _a1 *gen.GetMeshIPRequest) (*g
 	return r0, r1
 }
 
-// GetNodeIPMapList provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) GetNodeIPMapList(_a0 context.Context, _a1 *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error) {
+// GetNode provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetNodeIPMapList")
+		panic("no return value specified for GetNode")
 	}
 
-	var r0 *gen.NodeIPMapListResponse
+	var r0 *gen.GetNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest) (*gen.NodeIPMapListResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest) (*gen.GetNodeResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest) *gen.NodeIPMapListResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest) *gen.GetNodeResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeIPMapListResponse)
+			r0 = ret.Get(0).(*gen.GetNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeIPMapListRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetNodeOrgMapList provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) GetNodeOrgMapList(_a0 context.Context, _a1 *gen.NodeOrgMapListRequest) (*gen.NodeOrgMapListResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodeOrgMapList")
-	}
-
-	var r0 *gen.NodeOrgMapListResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest) (*gen.NodeOrgMapListResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest) *gen.NodeOrgMapListResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeOrgMapListResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeOrgMapListRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -165,27 +105,27 @@ func (_m *NnsServer) GetNodeOrgMapList(_a0 context.Context, _a1 *gen.NodeOrgMapL
 }
 
 // List provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListNodeIPRequest) (*gen.ListNodeIPResponse, error) {
+func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *gen.ListNodeIPResponse
+	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest) (*gen.ListNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest) *gen.ListNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListNodeIPResponse)
+			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListNodeIPRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -195,27 +135,87 @@ func (_m *NnsServer) List(_a0 context.Context, _a1 *gen.ListNodeIPRequest) (*gen
 }
 
 // Set provides a mock function with given fields: _a0, _a1
-func (_m *NnsServer) Set(_a0 context.Context, _a1 *gen.SetNodeIPRequest) (*gen.SetNodeIPResponse, error) {
+func (_m *NnsServer) Set(_a0 context.Context, _a1 *gen.SetRequest) (*gen.SetResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Set")
 	}
 
-	var r0 *gen.SetNodeIPResponse
+	var r0 *gen.SetResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest) (*gen.SetNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest) (*gen.SetResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest) *gen.SetNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest) *gen.SetResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetNodeIPResponse)
+			r0 = ret.Get(0).(*gen.SetResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetNodeIPRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateMesh provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) UpdateMesh(_a0 context.Context, _a1 *gen.UpdateMeshRequest) (*gen.UpdateMeshResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMesh")
+	}
+
+	var r0 *gen.UpdateMeshResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMeshRequest) (*gen.UpdateMeshResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMeshRequest) *gen.UpdateMeshResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateMeshResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateMeshRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateNode provides a mock function with given fields: _a0, _a1
+func (_m *NnsServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNode")
+	}
+
+	var r0 *gen.UpdateNodeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest) *gen.UpdateNodeResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

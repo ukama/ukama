@@ -17,7 +17,7 @@ type NnsClient struct {
 }
 
 // Delete provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) Delete(ctx context.Context, in *gen.DeleteNodeIPRequest, opts ...grpc.CallOption) (*gen.DeleteNodeIPResponse, error) {
+func (_m *NnsClient) Delete(ctx context.Context, in *gen.DeleteRequest, opts ...grpc.CallOption) (*gen.DeleteResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -31,57 +31,20 @@ func (_m *NnsClient) Delete(ctx context.Context, in *gen.DeleteNodeIPRequest, op
 		panic("no return value specified for Delete")
 	}
 
-	var r0 *gen.DeleteNodeIPResponse
+	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest, ...grpc.CallOption) (*gen.DeleteNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest, ...grpc.CallOption) (*gen.DeleteResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeIPRequest, ...grpc.CallOption) *gen.DeleteNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest, ...grpc.CallOption) *gen.DeleteResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteNodeIPResponse)
+			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeIPRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Get provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) Get(ctx context.Context, in *gen.GetNodeIPRequest, opts ...grpc.CallOption) (*gen.GetNodeIPResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
-	var r0 *gen.GetNodeIPResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest, ...grpc.CallOption) (*gen.GetNodeIPResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeIPRequest, ...grpc.CallOption) *gen.GetNodeIPResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeIPResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeIPRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -91,7 +54,7 @@ func (_m *NnsClient) Get(ctx context.Context, in *gen.GetNodeIPRequest, opts ...
 }
 
 // GetMesh provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) GetMesh(ctx context.Context, in *gen.GetMeshIPRequest, opts ...grpc.CallOption) (*gen.GetMeshIPResponse, error) {
+func (_m *NnsClient) GetMesh(ctx context.Context, in *gen.GetMeshRequest, opts ...grpc.CallOption) (*gen.GetMeshResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -105,20 +68,20 @@ func (_m *NnsClient) GetMesh(ctx context.Context, in *gen.GetMeshIPRequest, opts
 		panic("no return value specified for GetMesh")
 	}
 
-	var r0 *gen.GetMeshIPResponse
+	var r0 *gen.GetMeshResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshIPRequest, ...grpc.CallOption) (*gen.GetMeshIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshRequest, ...grpc.CallOption) (*gen.GetMeshResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshIPRequest, ...grpc.CallOption) *gen.GetMeshIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetMeshRequest, ...grpc.CallOption) *gen.GetMeshResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetMeshIPResponse)
+			r0 = ret.Get(0).(*gen.GetMeshResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMeshIPRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetMeshRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -127,8 +90,8 @@ func (_m *NnsClient) GetMesh(ctx context.Context, in *gen.GetMeshIPRequest, opts
 	return r0, r1
 }
 
-// GetNodeIPMapList provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) GetNodeIPMapList(ctx context.Context, in *gen.NodeIPMapListRequest, opts ...grpc.CallOption) (*gen.NodeIPMapListResponse, error) {
+// GetNode provides a mock function with given fields: ctx, in, opts
+func (_m *NnsClient) GetNode(ctx context.Context, in *gen.GetNodeRequest, opts ...grpc.CallOption) (*gen.GetNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -139,60 +102,23 @@ func (_m *NnsClient) GetNodeIPMapList(ctx context.Context, in *gen.NodeIPMapList
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetNodeIPMapList")
+		panic("no return value specified for GetNode")
 	}
 
-	var r0 *gen.NodeIPMapListResponse
+	var r0 *gen.GetNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest, ...grpc.CallOption) (*gen.NodeIPMapListResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) (*gen.GetNodeResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeIPMapListRequest, ...grpc.CallOption) *gen.NodeIPMapListResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) *gen.GetNodeResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeIPMapListResponse)
+			r0 = ret.Get(0).(*gen.GetNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeIPMapListRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetNodeOrgMapList provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) GetNodeOrgMapList(ctx context.Context, in *gen.NodeOrgMapListRequest, opts ...grpc.CallOption) (*gen.NodeOrgMapListResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetNodeOrgMapList")
-	}
-
-	var r0 *gen.NodeOrgMapListResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest, ...grpc.CallOption) (*gen.NodeOrgMapListResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.NodeOrgMapListRequest, ...grpc.CallOption) *gen.NodeOrgMapListResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NodeOrgMapListResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.NodeOrgMapListRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -202,7 +128,7 @@ func (_m *NnsClient) GetNodeOrgMapList(ctx context.Context, in *gen.NodeOrgMapLi
 }
 
 // List provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) List(ctx context.Context, in *gen.ListNodeIPRequest, opts ...grpc.CallOption) (*gen.ListNodeIPResponse, error) {
+func (_m *NnsClient) List(ctx context.Context, in *gen.ListRequest, opts ...grpc.CallOption) (*gen.ListResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -216,20 +142,20 @@ func (_m *NnsClient) List(ctx context.Context, in *gen.ListNodeIPRequest, opts .
 		panic("no return value specified for List")
 	}
 
-	var r0 *gen.ListNodeIPResponse
+	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest, ...grpc.CallOption) (*gen.ListNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) (*gen.ListResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListNodeIPRequest, ...grpc.CallOption) *gen.ListNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) *gen.ListResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListNodeIPResponse)
+			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListNodeIPRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -239,7 +165,7 @@ func (_m *NnsClient) List(ctx context.Context, in *gen.ListNodeIPRequest, opts .
 }
 
 // Set provides a mock function with given fields: ctx, in, opts
-func (_m *NnsClient) Set(ctx context.Context, in *gen.SetNodeIPRequest, opts ...grpc.CallOption) (*gen.SetNodeIPResponse, error) {
+func (_m *NnsClient) Set(ctx context.Context, in *gen.SetRequest, opts ...grpc.CallOption) (*gen.SetResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -253,20 +179,94 @@ func (_m *NnsClient) Set(ctx context.Context, in *gen.SetNodeIPRequest, opts ...
 		panic("no return value specified for Set")
 	}
 
-	var r0 *gen.SetNodeIPResponse
+	var r0 *gen.SetResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest, ...grpc.CallOption) (*gen.SetNodeIPResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest, ...grpc.CallOption) (*gen.SetResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetNodeIPRequest, ...grpc.CallOption) *gen.SetNodeIPResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetRequest, ...grpc.CallOption) *gen.SetResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetNodeIPResponse)
+			r0 = ret.Get(0).(*gen.SetResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetNodeIPRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateMesh provides a mock function with given fields: ctx, in, opts
+func (_m *NnsClient) UpdateMesh(ctx context.Context, in *gen.UpdateMeshRequest, opts ...grpc.CallOption) (*gen.UpdateMeshResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMesh")
+	}
+
+	var r0 *gen.UpdateMeshResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMeshRequest, ...grpc.CallOption) (*gen.UpdateMeshResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateMeshRequest, ...grpc.CallOption) *gen.UpdateMeshResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateMeshResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateMeshRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateNode provides a mock function with given fields: ctx, in, opts
+func (_m *NnsClient) UpdateNode(ctx context.Context, in *gen.UpdateNodeRequest, opts ...grpc.CallOption) (*gen.UpdateNodeResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateNode")
+	}
+
+	var r0 *gen.UpdateNodeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest, ...grpc.CallOption) (*gen.UpdateNodeResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeRequest, ...grpc.CallOption) *gen.UpdateNodeResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

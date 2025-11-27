@@ -95,7 +95,7 @@ func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig.Dns)
+		srv := server.NewNnsServer(nns, nodeOrgMapping, serviceConfig, serviceConfig.Dns)
 		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, nodeClient, srv, serviceConfig.Org)
 		pb.RegisterNnsServer(s, srv)
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))

@@ -90,7 +90,7 @@ func (x *OrgIPUpdateEvent) GetIp() string {
 	return ""
 }
 
-type MeshBootEvent struct {
+type MeshRegisterEvent struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
 	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
@@ -98,20 +98,20 @@ type MeshBootEvent struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MeshBootEvent) Reset() {
-	*x = MeshBootEvent{}
+func (x *MeshRegisterEvent) Reset() {
+	*x = MeshRegisterEvent{}
 	mi := &file_events_mesh_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MeshBootEvent) String() string {
+func (x *MeshRegisterEvent) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MeshBootEvent) ProtoMessage() {}
+func (*MeshRegisterEvent) ProtoMessage() {}
 
-func (x *MeshBootEvent) ProtoReflect() protoreflect.Message {
+func (x *MeshRegisterEvent) ProtoReflect() protoreflect.Message {
 	mi := &file_events_mesh_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -123,19 +123,19 @@ func (x *MeshBootEvent) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MeshBootEvent.ProtoReflect.Descriptor instead.
-func (*MeshBootEvent) Descriptor() ([]byte, []int) {
+// Deprecated: Use MeshRegisterEvent.ProtoReflect.Descriptor instead.
+func (*MeshRegisterEvent) Descriptor() ([]byte, []int) {
 	return file_events_mesh_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *MeshBootEvent) GetIp() string {
+func (x *MeshRegisterEvent) GetIp() string {
 	if x != nil {
 		return x.Ip
 	}
 	return ""
 }
 
-func (x *MeshBootEvent) GetPort() int32 {
+func (x *MeshRegisterEvent) GetPort() int32 {
 	if x != nil {
 		return x.Port
 	}
@@ -150,8 +150,8 @@ const file_events_mesh_proto_rawDesc = "" +
 	"\x10OrgIPUpdateEvent\x12\x18\n" +
 	"\aOrgName\x18\x01 \x01(\tR\aOrgName\x12 \n" +
 	"\x05OrgId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06org_id\x12\x0e\n" +
-	"\x02Ip\x18\x03 \x01(\tR\x02Ip\"3\n" +
-	"\rMeshBootEvent\x12\x0e\n" +
+	"\x02Ip\x18\x03 \x01(\tR\x02Ip\"7\n" +
+	"\x11MeshRegisterEvent\x12\x0e\n" +
 	"\x02ip\x18\x01 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x05R\x04portB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
 
@@ -169,8 +169,8 @@ func file_events_mesh_proto_rawDescGZIP() []byte {
 
 var file_events_mesh_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_events_mesh_proto_goTypes = []any{
-	(*OrgIPUpdateEvent)(nil), // 0: ukama.events.v1.OrgIPUpdateEvent
-	(*MeshBootEvent)(nil),    // 1: ukama.events.v1.MeshBootEvent
+	(*OrgIPUpdateEvent)(nil),  // 0: ukama.events.v1.OrgIPUpdateEvent
+	(*MeshRegisterEvent)(nil), // 1: ukama.events.v1.MeshRegisterEvent
 }
 var file_events_mesh_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

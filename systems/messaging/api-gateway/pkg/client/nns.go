@@ -99,3 +99,17 @@ func (n *Nns) GetNodeIPMapListRequest(req *pb.NodeIPMapListRequest) (*pb.NodeIPM
 
 	return n.client.GetNodeIPMapList(ctx, req)
 }
+
+func (n *Nns) SetMeshRequest(req *pb.SetMeshRequest) (*pb.SetMeshResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.SetMesh(ctx, req)
+}
+
+func (n *Nns) GetMeshRequest(req *pb.GetMeshIPRequest) (*pb.GetMeshIPResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.GetMesh(ctx, req)
+}

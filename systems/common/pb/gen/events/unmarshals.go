@@ -563,8 +563,8 @@ func UnmarshalMarkupUpdate(msg *anypb.Any, emsg string) (*MarkupUpdate, error) {
 	return p, nil
 }
 
-func UnmarshalMeshBootEvent(msg *anypb.Any, emsg string) (*MeshBootEvent, error) {
-	p := &MeshBootEvent{}
+func UnmarshalMeshRegisterEvent(msg *anypb.Any, emsg string) (*MeshRegisterEvent, error) {
+	p := &MeshRegisterEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())

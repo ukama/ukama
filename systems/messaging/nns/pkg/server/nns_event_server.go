@@ -20,6 +20,7 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 )
 
 type NnsEventServer struct {
@@ -87,12 +88,12 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		}
 
 	case msgbus.PrepareRoute(l.orgName, "event.cloud.global.{{ .Org}}.messaging.mesh.ip.update"):
-		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
+		msg, err := epb.UnmarshalMeshRegisterEvent(e.Msg, "MeshRegisterEvent")
 		if err != nil {
 			return nil, err
 		}
 
-		err = l.handleNodeReleaseEvent(e.RoutingKey, msg)
+		err = l.handleMeshRegisterEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -134,7 +135,7 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 		nodeInfo.Site.NetworkId = ""
 	}
 
-	_, err = l.Nns.Set(context.Background(), &pb.SetNodeIPRequest{
+	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       msg.GetMeshIp(),
 		MeshIp:       msg.GetMeshIp(),
@@ -182,6 +183,16 @@ func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.NodeAs
 	return p, nil
 }
 
+func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
+	p := &epb.NodeReleasedEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssignedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
@@ -191,23 +202,25 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, msg.Network, msg.Site, orgNet.NodeIp, orgNet.MeshHostName, orgNet.NodePort, orgNet.MeshPort)
+	obj := pkg.OrgMap{
+		NodeId:       msg.GetNodeId(),
+		NodeIp:       orgNet.NodeIp,
+		NodePort:     orgNet.NodePort,
+		MeshIp:       orgNet.MeshIp,
+		MeshHostName: orgNet.MeshHostName,
+		MeshPort:     orgNet.MeshPort,
+		Org:          l.orgName,
+		Network:      msg.Network,
+		Site:         msg.Site,
+	}
+
+	err = l.Nns.nodeOrgMapping.Add(context.Background(), obj)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
 	}
 
 	return nil
-}
-
-func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
-	p := &epb.NodeReleasedEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleasedEvent) error {
@@ -219,11 +232,37 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), msg.GetNodeId(), l.Org, "", "", orgNet.NodeIp, orgNet.MeshHostName, orgNet.NodePort, orgNet.MeshPort)
+	obj := pkg.OrgMap{
+		NodeId:       msg.GetNodeId(),
+		NodeIp:       orgNet.NodeIp,
+		NodePort:     orgNet.NodePort,
+		MeshIp:       orgNet.MeshIp,
+		MeshHostName: orgNet.MeshHostName,
+		MeshPort:     orgNet.MeshPort,
+		Org:          l.orgName,
+		Network:      msg.Network,
+		Site:         msg.Site,
+	}
+
+	err = l.Nns.nodeOrgMapping.Add(context.Background(), obj)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
 	}
+
+	return nil
+}
+
+func (l *NnsEventServer) handleMeshRegisterEvent(key string, msg *epb.MeshRegisterEvent) error {
+	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	err := l.Nns.nodeOrgMapping.UpdateMesh(context.Background(), msg.GetIp(), msg.GetPort())
+	if err != nil {
+		log.Errorf("failed to update mesh IP and port for %s. Error %v", msg.GetIp(), err)
+		return err
+	}
+
+	log.Infof("Updated mesh IP and port for %s", msg.GetIp())
 
 	return nil
 }
