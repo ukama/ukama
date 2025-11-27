@@ -41,7 +41,7 @@ func (o *OrgMap) String() string {
 }
 
 func (o *OrgMap) Parse(value string) error {
-	parts := strings.Split(value, "-")
+	parts := strings.Split(value, separator)
 	if len(parts) != 9 {
 		return fmt.Errorf("invalid org net string: %s", value)
 	}
