@@ -5,12 +5,6 @@
  *
  * Copyright (c) 2022-present, Ukama Inc.
  */
-
-/*
- * Config.c
- *
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
