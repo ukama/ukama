@@ -195,7 +195,7 @@ func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeRel
 func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssignedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	orgNet, err := l.Nns.nodeOrgMapping.Get(context.Background(), msg.GetNodeId())
+	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
 	if err != nil {
 		log.Errorf("node %s doesn't exist. Error %v", msg.GetNodeId(), err)
 		return err
@@ -213,7 +213,7 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 		Site:         msg.Site,
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), obj)
+	err = l.Nns.nns.Add(context.Background(), obj)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
@@ -225,7 +225,7 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssign
 func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleasedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	orgNet, err := l.Nns.nodeOrgMapping.Get(context.Background(), msg.GetNodeId())
+	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
 	if err != nil {
 		log.Errorf("node %s doesn't exist. Error %v", msg.GetNodeId(), err)
 		return err
@@ -243,7 +243,7 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		Site:         msg.Site,
 	}
 
-	err = l.Nns.nodeOrgMapping.Add(context.Background(), obj)
+	err = l.Nns.nns.Add(context.Background(), obj)
 	if err != nil {
 		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
 		return err
@@ -255,13 +255,13 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 func (l *NnsEventServer) handleMeshRegisterEvent(key string, msg *epb.MeshRegisterEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	err := l.Nns.nodeOrgMapping.SetMesh(context.Background(), msg.GetIp(), msg.GetPort())
+	err := l.Nns.nns.SetMesh(context.Background(), msg.GetIp(), msg.GetPort())
 	if err != nil {
 		log.Errorf("failed to set mesh IP and port for %s. Error %v", msg.GetIp(), err)
 		return err
 	}
 
-	err = l.Nns.nodeOrgMapping.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
+	err = l.Nns.nns.UpdateNodeMesh(context.Background(), msg.GetIp(), msg.GetPort())
 	if err != nil {
 		log.Errorf("failed to update mesh IP and port for %s. Error %v", msg.GetIp(), err)
 		return err

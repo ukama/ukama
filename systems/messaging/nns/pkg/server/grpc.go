@@ -12,30 +12,34 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type NnsServer struct {
 	pb.UnimplementedNnsServer
-	config         *pkg.Config
-	dnsConfig      *pkg.DnsConfig
-	nns            *pkg.Nns
-	nodeOrgMapping *pkg.NodeOrgMap
+	config    *pkg.Config
+	dnsConfig *pkg.DnsConfig
+	nns       *pkg.Nns
 }
 
-func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap, config *pkg.Config, dnsConfig *pkg.DnsConfig) *NnsServer {
+func NewNnsServer(nnsClient *pkg.Nns, config *pkg.Config, dnsConfig *pkg.DnsConfig) *NnsServer {
 	return &NnsServer{
-		config:         config,
-		dnsConfig:      dnsConfig,
-		nns:            nnsClient,
-		nodeOrgMapping: nodeOrgMapping,
+		config:    config,
+		dnsConfig: dnsConfig,
+		nns:       nnsClient,
 	}
 }
 
 func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Getting node %s", req.GetNodeId())
-	node, err := n.nodeOrgMapping.Get(c, req.GetNodeId())
+	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	node, err := n.nns.Get(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,7 @@ func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetN
 
 func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
 	log.Infof("Getting mesh")
-	mesh, err := n.nodeOrgMapping.GetMesh(c)
+	mesh, err := n.nns.GetMesh(c)
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +64,9 @@ func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetM
 
 func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
 	log.Infof("Setting node %s", req.GetNodeId())
+	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	obj := pkg.OrgMap{
 		NodeId:       req.GetNodeId(),
 		NodeIp:       req.GetNodeIp(),
@@ -71,7 +78,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 		MeshHostName: req.GetMeshHostName(),
 		MeshIp:       req.GetMeshIp(),
 	}
-	err := n.nodeOrgMapping.Add(c, obj)
+	err := n.nns.Add(c, obj)
 	if err != nil {
 		return nil, err
 	}
@@ -80,11 +87,11 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 
 func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
 	log.Infof("Updating mesh %s:%d", req.GetMeshIp(), req.GetMeshPort())
-	err := n.nodeOrgMapping.SetMesh(c, req.GetMeshIp(), req.GetMeshPort())
+	err := n.nns.SetMesh(c, req.GetMeshIp(), req.GetMeshPort())
 	if err != nil {
 		return nil, err
 	}
-	err = n.nodeOrgMapping.UpdateNodeMesh(c, req.GetMeshIp(), req.GetMeshPort())
+	err = n.nns.UpdateNodeMesh(c, req.GetMeshIp(), req.GetMeshPort())
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +100,10 @@ func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*p
 
 func (n *NnsServer) UpdateNode(c context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node %s", req.GetNodeId())
-	err := n.nodeOrgMapping.UpdateNode(c, req.GetNodeId(), req.GetNodeIp(), req.GetNodePort())
+	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	err := n.nns.UpdateNode(c, req.GetNodeId(), req.GetNodeIp(), req.GetNodePort())
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +112,10 @@ func (n *NnsServer) UpdateNode(c context.Context, req *pb.UpdateNodeRequest) (*p
 
 func (n *NnsServer) Delete(c context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting node %s", req.GetNodeId())
-	err := n.nodeOrgMapping.Delete(c, req.GetNodeId())
+	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	err := n.nns.Delete(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +124,7 @@ func (n *NnsServer) Delete(c context.Context, req *pb.DeleteRequest) (*pb.Delete
 
 func (n *NnsServer) List(c context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	log.Infof("Listing all nodes")
-	items, err := n.nodeOrgMapping.GetAll(c)
+	items, err := n.nns.GetAll(c)
 	if err != nil {
 		return nil, err
 	}

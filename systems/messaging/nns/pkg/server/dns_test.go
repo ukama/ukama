@@ -82,7 +82,13 @@ func TestDnsServer_Query(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			nns := mocks.NnsReader{}
-			nns.On("Get", mock.Anything, mock.Anything).Return(tt.nnsVals.ip, tt.nnsVals.err)
+			var orgMap *pkg.OrgMap
+			if tt.nnsVals.ip != "" {
+				orgMap = &pkg.OrgMap{
+					NodeIp: tt.nnsVals.ip,
+				}
+			}
+			nns.On("Get", mock.Anything, mock.Anything).Return(orgMap, tt.nnsVals.err)
 
 			d := &DnsServer{
 				nns:    &nns,
