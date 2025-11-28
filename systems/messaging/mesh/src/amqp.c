@@ -20,8 +20,9 @@
 #include "any.pb-c.h"
 
 typedef Google__Protobuf__Any ANY;
-typedef Ukama__Events__V1__NodeOnlineEvent  NodeOnlineEvent;
-typedef Ukama__Events__V1__NodeOfflineEvent NodeOfflineEvent;
+typedef Ukama__Events__V1__NodeOnlineEvent   NodeOnlineEvent;
+typedef Ukama__Events__V1__NodeOfflineEvent  NodeOfflineEvent;
+typedef Ukama__Events__V1__MeshRegisterEvent MeshRegisterEvent;
 
 /* Mapping between Mesh.d internal state and AMQP routing key.
  *
@@ -414,11 +415,11 @@ static void *serialize_any_packet(int eventType, size_t len, void *buff, size_t 
     } else if (eventType == MESH_REGISTER) {
 
         anyEvent.type_url = (char *)calloc(strlen(TYPE_URL_PREFIX) + 1 +
-                                           strlen(mesh_register_event__descriptor.name) + 1,
+                      strlen(ukama__events__v1__mesh_register_event__descriptor.name) + 1,
                                            sizeof(char));
         sprintf(anyEvent.type_url, "%s/%s",
                 TYPE_URL_PREFIX,
-                mesh_register_event__descriptor.name);
+                ukama__events__v1__mesh_register_event__descriptor.name);
     } else {
         return NULL;
     }
@@ -521,14 +522,14 @@ static void *serialize_node_offline_event(char *nodeID, size_t *outLen) {
 
 static void *serialize_register_event(char *ip, int port, size_t *outLen) {
 
-    MeshRegisterEvent registerEvent = MESH_REGISTER_EVENT__INIT;
+    MeshRegisterEvent registerEvent = UKAMA__EVENTS__V1__MESH_REGISTER_EVENT__INIT;
     void *buff=NULL, *anyBuff=NULL;
     size_t len, anyLen = 0;
 
     registerEvent.ip   = strdup(ip);
     registerEvent.port = port;
 
-    len = mesh_register_event__get_packed_size(&registerEvent);
+    len = ukama__events__v1__mesh_register_event__get_packed_size(&registerEvent);
 
     buff = malloc(len);
     if (buff == NULL) {
@@ -536,7 +537,7 @@ static void *serialize_register_event(char *ip, int port, size_t *outLen) {
         return NULL;
     }
 
-    mesh_register_event__pack(&registerEvent, buff);
+    ukama__events__v1__mesh_register_event__pack(&registerEvent, buff);
     anyBuff = serialize_any_packet(MESH_REGISTER, len, buff, &anyLen);
 
     free(registerEvent.ip);
