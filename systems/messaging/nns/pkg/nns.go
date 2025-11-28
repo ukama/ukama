@@ -179,6 +179,10 @@ func (n *Nns) Get(ctx context.Context, key string) (*OrgMap, error) {
 		metrics.RecordIpRequestFailureMetric()
 		return nil, fmt.Errorf("failed to get record from db. Error: %v", err)
 	}
+	if len(val.Kvs) == 0 {
+		metrics.RecordIpRequestFailureMetric()
+		return nil, fmt.Errorf("node not found: %s", key)
+	}
 	orgNet := OrgMap{}
 	err = orgNet.parse(string(val.Kvs[0].Value))
 	if err != nil {
@@ -218,7 +222,7 @@ func (n *Nns) GetAll(ctx context.Context) ([]OrgMap, error) {
 }
 
 func (n *Nns) DeleteAll(ctx context.Context) error {
-	_, err := n.etcd.Delete(context.Background(), "", clientv3.WithPrefix())
+	_, err := n.etcd.Delete(ctx, "", clientv3.WithPrefix())
 	if err != nil {
 		return fmt.Errorf("failed to delete all nodes from etcd. Error: %v", err)
 	}
