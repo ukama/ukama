@@ -15,7 +15,7 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 
-typedef struct _MeshRegisterEvent MeshRegisterEvent;
+typedef struct _Ukama__Events__V1__MeshRegisterEvent Ukama__Events__V1__MeshRegisterEvent;
 
 
 /* --- enums --- */
@@ -23,40 +23,40 @@ typedef struct _MeshRegisterEvent MeshRegisterEvent;
 
 /* --- messages --- */
 
-struct  _MeshRegisterEvent
+struct  _Ukama__Events__V1__MeshRegisterEvent
 {
   ProtobufCMessage base;
   char *ip;
   int32_t port;
 };
-#define MESH_REGISTER_EVENT__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&mesh_register_event__descriptor) \
+#define UKAMA__EVENTS__V1__MESH_REGISTER_EVENT__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&ukama__events__v1__mesh_register_event__descriptor) \
     , (char *)protobuf_c_empty_string, 0 }
 
 
-/* MeshRegisterEvent methods */
-void   mesh_register_event__init
-                     (MeshRegisterEvent         *message);
-size_t mesh_register_event__get_packed_size
-                     (const MeshRegisterEvent   *message);
-size_t mesh_register_event__pack
-                     (const MeshRegisterEvent   *message,
+/* Ukama__Events__V1__MeshRegisterEvent methods */
+void   ukama__events__v1__mesh_register_event__init
+                     (Ukama__Events__V1__MeshRegisterEvent         *message);
+size_t ukama__events__v1__mesh_register_event__get_packed_size
+                     (const Ukama__Events__V1__MeshRegisterEvent   *message);
+size_t ukama__events__v1__mesh_register_event__pack
+                     (const Ukama__Events__V1__MeshRegisterEvent   *message,
                       uint8_t             *out);
-size_t mesh_register_event__pack_to_buffer
-                     (const MeshRegisterEvent   *message,
+size_t ukama__events__v1__mesh_register_event__pack_to_buffer
+                     (const Ukama__Events__V1__MeshRegisterEvent   *message,
                       ProtobufCBuffer     *buffer);
-MeshRegisterEvent *
-       mesh_register_event__unpack
+Ukama__Events__V1__MeshRegisterEvent *
+       ukama__events__v1__mesh_register_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   mesh_register_event__free_unpacked
-                     (MeshRegisterEvent *message,
+void   ukama__events__v1__mesh_register_event__free_unpacked
+                     (Ukama__Events__V1__MeshRegisterEvent *message,
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
-typedef void (*MeshRegisterEvent_Closure)
-                 (const MeshRegisterEvent *message,
+typedef void (*Ukama__Events__V1__MeshRegisterEvent_Closure)
+                 (const Ukama__Events__V1__MeshRegisterEvent *message,
                   void *closure_data);
 
 /* --- services --- */
@@ -64,7 +64,7 @@ typedef void (*MeshRegisterEvent_Closure)
 
 /* --- descriptors --- */
 
-extern const ProtobufCMessageDescriptor mesh_register_event__descriptor;
+extern const ProtobufCMessageDescriptor ukama__events__v1__mesh_register_event__descriptor;
 
 PROTOBUF_C__END_DECLS
 
