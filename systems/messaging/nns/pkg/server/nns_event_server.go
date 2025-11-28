@@ -186,7 +186,7 @@ func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeRel
 	p := &epb.NodeReleasedEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to unmarshal NodeReleasedEvent message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil

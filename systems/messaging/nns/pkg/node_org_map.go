@@ -87,6 +87,9 @@ func (n *NodeOrgMap) GetMesh(ctx context.Context) (*OrgMesh, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get mesh. Error: %v", err)
 	}
+	if len(mesh.Kvs) == 0 {
+		return nil, fmt.Errorf("mesh not found for org: %s", n.orgName)
+	}
 	orgMesh := OrgMesh{}
 	err = orgMesh.parse(string(mesh.Kvs[0].Value))
 	if err != nil {
