@@ -80,7 +80,11 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 
 func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
 	log.Infof("Updating mesh %s:%d", req.GetMeshIp(), req.GetMeshPort())
-	err := n.nodeOrgMapping.UpdateMesh(c, req.GetMeshIp(), req.GetMeshPort())
+	err := n.nodeOrgMapping.SetMesh(c, req.GetMeshIp(), req.GetMeshPort())
+	if err != nil {
+		return nil, err
+	}
+	err = n.nodeOrgMapping.UpdateNodeMesh(c, req.GetMeshIp(), req.GetMeshPort())
 	if err != nil {
 		return nil, err
 	}
