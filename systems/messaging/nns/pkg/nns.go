@@ -199,6 +199,11 @@ func (n *Nns) GetAll(ctx context.Context) ([]OrgMap, error) {
 
 	obj := make([]OrgMap, 0)
 	for _, val := range vals.Kvs {
+		key := string(val.Key)
+		if strings.HasSuffix(key, separator+"mesh") {
+			continue
+		}
+
 		orgMap := OrgMap{}
 		err = orgMap.parse(string(val.Value))
 		if err != nil {
