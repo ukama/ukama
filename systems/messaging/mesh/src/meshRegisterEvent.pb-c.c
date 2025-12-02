@@ -7,52 +7,52 @@
 #endif
 
 #include "meshRegisterEvent.pb-c.h"
-void   mesh_register_event__init
-                     (MeshRegisterEvent         *message)
+void   ukama__events__v1__mesh_register_event__init
+                     (Ukama__Events__V1__MeshRegisterEvent         *message)
 {
-  static const MeshRegisterEvent init_value = MESH_REGISTER_EVENT__INIT;
+  static const Ukama__Events__V1__MeshRegisterEvent init_value = UKAMA__EVENTS__V1__MESH_REGISTER_EVENT__INIT;
   *message = init_value;
 }
-size_t mesh_register_event__get_packed_size
-                     (const MeshRegisterEvent *message)
+size_t ukama__events__v1__mesh_register_event__get_packed_size
+                     (const Ukama__Events__V1__MeshRegisterEvent *message)
 {
-  assert(message->base.descriptor == &mesh_register_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__mesh_register_event__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t mesh_register_event__pack
-                     (const MeshRegisterEvent *message,
+size_t ukama__events__v1__mesh_register_event__pack
+                     (const Ukama__Events__V1__MeshRegisterEvent *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &mesh_register_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__mesh_register_event__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t mesh_register_event__pack_to_buffer
-                     (const MeshRegisterEvent *message,
+size_t ukama__events__v1__mesh_register_event__pack_to_buffer
+                     (const Ukama__Events__V1__MeshRegisterEvent *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &mesh_register_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__mesh_register_event__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-MeshRegisterEvent *
-       mesh_register_event__unpack
+Ukama__Events__V1__MeshRegisterEvent *
+       ukama__events__v1__mesh_register_event__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (MeshRegisterEvent *)
-     protobuf_c_message_unpack (&mesh_register_event__descriptor,
+  return (Ukama__Events__V1__MeshRegisterEvent *)
+     protobuf_c_message_unpack (&ukama__events__v1__mesh_register_event__descriptor,
                                 allocator, len, data);
 }
-void   mesh_register_event__free_unpacked
-                     (MeshRegisterEvent *message,
+void   ukama__events__v1__mesh_register_event__free_unpacked
+                     (Ukama__Events__V1__MeshRegisterEvent *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &mesh_register_event__descriptor);
+  assert(message->base.descriptor == &ukama__events__v1__mesh_register_event__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor mesh_register_event__field_descriptors[2] =
+static const ProtobufCFieldDescriptor ukama__events__v1__mesh_register_event__field_descriptors[2] =
 {
   {
     "ip",
@@ -60,7 +60,7 @@ static const ProtobufCFieldDescriptor mesh_register_event__field_descriptors[2] 
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(MeshRegisterEvent, ip),
+    offsetof(Ukama__Events__V1__MeshRegisterEvent, ip),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -72,34 +72,34 @@ static const ProtobufCFieldDescriptor mesh_register_event__field_descriptors[2] 
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_INT32,
     0,   /* quantifier_offset */
-    offsetof(MeshRegisterEvent, port),
+    offsetof(Ukama__Events__V1__MeshRegisterEvent, port),
     NULL,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned mesh_register_event__field_indices_by_name[] = {
+static const unsigned ukama__events__v1__mesh_register_event__field_indices_by_name[] = {
   0,   /* field[0] = ip */
   1,   /* field[1] = port */
 };
-static const ProtobufCIntRange mesh_register_event__number_ranges[1 + 1] =
+static const ProtobufCIntRange ukama__events__v1__mesh_register_event__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 2 }
 };
-const ProtobufCMessageDescriptor mesh_register_event__descriptor =
+const ProtobufCMessageDescriptor ukama__events__v1__mesh_register_event__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "ukama.events.v1.MeshRegisterEvent",
   "MeshRegisterEvent",
-  "MeshRegisterEvent",
-  "MeshRegisterEvent",
-  "",
-  sizeof(MeshRegisterEvent),
+  "Ukama__Events__V1__MeshRegisterEvent",
+  "ukama.events.v1",
+  sizeof(Ukama__Events__V1__MeshRegisterEvent),
   2,
-  mesh_register_event__field_descriptors,
-  mesh_register_event__field_indices_by_name,
-  1,  mesh_register_event__number_ranges,
-  (ProtobufCMessageInit) mesh_register_event__init,
+  ukama__events__v1__mesh_register_event__field_descriptors,
+  ukama__events__v1__mesh_register_event__field_indices_by_name,
+  1,  ukama__events__v1__mesh_register_event__number_ranges,
+  (ProtobufCMessageInit) ukama__events__v1__mesh_register_event__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

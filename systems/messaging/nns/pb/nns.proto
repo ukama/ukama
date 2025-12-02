@@ -8,81 +8,73 @@
 
 syntax = "proto3";
 
-option go_package = "github.com/ukama/ukama/systems/messaging/nns/pb/gen;gen";
-import "google/api/annotations.proto";
+option go_package = "github.com/ukama/ukama/systems/messaging/nns/pb/gen";
 package ukama.messaging.nns.v1;
 import "validator.proto";
 
 service Nns { // The Node Name Service (like DNS)
-    rpc Get(GetNodeIPRequest) returns (GetNodeIPResponse);
-    rpc Set(SetNodeIPRequest) returns (SetNodeIPResponse);
-    rpc Delete(DeleteNodeIPRequest) returns (DeleteNodeIPResponse);
-    rpc GetNodeOrgMapList(NodeOrgMapListRequest) returns (NodeOrgMapListResponse);
-    rpc GetNodeIPMapList(NodeIPMapListRequest) returns (NodeIPMapListResponse);
-    rpc GetMesh(GetMeshIPRequest) returns (GetMeshIPResponse);
-    rpc List(ListNodeIPRequest) returns (ListNodeIPResponse) {
-        option (google.api.http) = {
-            post: "/v1/nns/list"
-            body: "*"
-        };
-    }
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc GetMesh(GetMeshRequest) returns (GetMeshResponse);
+    rpc Set(SetRequest) returns (SetResponse);
+    rpc UpdateMesh(UpdateMeshRequest) returns (UpdateMeshResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc List(ListRequest) returns (ListResponse);
 }   
 
-message GetMeshIPRequest{
-    string nodeId = 1;
+message GetNodeRequest{
+    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
 }
 
-message GetMeshIPResponse{
-    string ip = 1;
-    int32 port = 2;
+message GetNodeResponse{
+    string nodeId = 1;  
+    string nodeIp = 2;
+    int32 nodePort = 3;
 }
 
-message GetNodeIPRequest{
-    string nodeId = 1;
+message GetMeshRequest { }
+
+message GetMeshResponse{
+    string meshIp = 1;
+    int32 meshPort = 2;
 }
 
-message GetNodeIPResponse{
-    string ip = 1;
-}
-
-
-message SetNodeIPRequest{
+message SetRequest{
     string nodeId = 1  [(validator.field) = { string_not_empty: true}];
     string nodeIp = 2  [(validator.field) = { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
     string meshIp = 3  [(validator.field) =  { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
     int32 nodePort = 4;
     int32 meshPort = 5;
-    string org = 6;
-    string site = 7;
-    string network = 8;
-    string meshHostName = 9;
+    string site = 6;
+    string network = 7;
+    string meshHostName = 8;
 }
 
-message SetNodeIPResponse{
+message SetResponse { }
+
+message UpdateMeshRequest{
+    string meshIp = 1 [(validator.field) = { string_not_empty: true}];
+    int32 meshPort = 2 [(validator.field) = { string_not_empty: true}];;
 }
 
+message UpdateMeshResponse { }
 
-message ListNodeIPResponse {
-    repeated string ips  = 1;
+message UpdateNodeRequest{
+    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
+    string nodeIp = 2 [(validator.field) = { string_not_empty: true}];
+    int32 nodePort = 3 [(validator.field) = { string_not_empty: true}];
 }
 
-message ListNodeIPRequest{
+message UpdateNodeResponse { }
 
+message DeleteRequest{
+    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
 }
 
-message DeleteNodeIPRequest{
-    string nodeId = 1  [(validator.field) = { string_not_empty: true}];
-}
+message DeleteResponse { }
 
-message DeleteNodeIPResponse{
 
-}
-
-message NodeOrgMapListRequest{
-
-}
-
-message NodeOrgMap {
+message OrgMap {
     string nodeId = 1  [(validator.field) = { string_not_empty: true}];
     string nodeIp = 2  [(validator.field) = { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
     int32 nodePort = 3;
@@ -90,21 +82,13 @@ message NodeOrgMap {
     string org = 5;
     string network = 6;
     string site = 7;
-    string domainname = 8;
+    string meshIp = 8;
     string meshHostName = 9;
 }
-message NodeOrgMapListResponse{
-  repeated NodeOrgMap map = 1 ;
+
+message ListRequest { }
+
+message ListResponse {
+    repeated OrgMap list  = 1;
 }
 
-message NodeIPMapListRequest{
-
-}
-
-message NodeIPMap {
-    string nodeId = 1  [(validator.field) = { string_not_empty: true}];
-    string nodeIp = 2  [(validator.field) = { string_not_empty: true,  regex: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"}];
-}
-message NodeIPMapListResponse{
-  repeated NodeIPMap map =1 ;   
-}

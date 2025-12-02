@@ -58,44 +58,51 @@ func (n *Nns) Close() {
 	}
 }
 
-func (n *Nns) GetNodeIpRequest(req *pb.GetNodeIPRequest) (*pb.GetNodeIPResponse, error) {
+func (n *Nns) GetNodeRequest(req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
-	return n.client.Get(ctx, req)
+	return n.client.GetNode(ctx, req)
 }
 
-func (n *Nns) SetNodeIpRequest(req *pb.SetNodeIPRequest) (*pb.SetNodeIPResponse, error) {
+func (n *Nns) GetMeshRequest(req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.GetMesh(ctx, req)
+}
+
+func (n *Nns) SetRequest(req *pb.SetRequest) (*pb.SetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	return n.client.Set(ctx, req)
 }
 
-func (n *Nns) DeleteNodeIpRequest(req *pb.DeleteNodeIPRequest) (*pb.DeleteNodeIPResponse, error) {
+func (n *Nns) UpdateMeshRequest(req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.UpdateMesh(ctx, req)
+}
+
+func (n *Nns) UpdateNodeRequest(req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	defer cancel()
+
+	return n.client.UpdateNode(ctx, req)
+}
+
+func (n *Nns) DeleteRequest(req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	return n.client.Delete(ctx, req)
 }
 
-func (n *Nns) ListNodeIpRequest(req *pb.ListNodeIPRequest) (*pb.ListNodeIPResponse, error) {
+func (n *Nns) ListRequest(req *pb.ListRequest) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
 	defer cancel()
 
 	return n.client.List(ctx, req)
-}
-
-func (n *Nns) GetNodeOrgMapListRequest(req *pb.NodeOrgMapListRequest) (*pb.NodeOrgMapListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.GetNodeOrgMapList(ctx, req)
-}
-
-func (n *Nns) GetNodeIPMapListRequest(req *pb.NodeIPMapListRequest) (*pb.NodeIPMapListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
-	defer cancel()
-
-	return n.client.GetNodeIPMapList(ctx, req)
 }
