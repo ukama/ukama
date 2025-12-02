@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
@@ -29,8 +30,13 @@ type NodeFactoryInfo struct {
 	ProvisionedAt time.Time `json:"provisionedAt,omitempty"`
 }
 
+type Nodes struct {
+	Nodes []*NodeFactoryInfo `json:"nodes"`
+}
+
 type NodeFactoryClient interface {
 	Get(Id string) (*NodeFactoryInfo, error)
+	List(nodeType string, orgName string, isProvisioned bool) (*Nodes, error)
 }
 
 type nodeFactoryClient struct {
@@ -73,4 +79,26 @@ func (s *nodeFactoryClient) Get(id string) (*NodeFactoryInfo, error) {
 	log.Infof("Node Factory Info: %+v", nodeFactory)
 
 	return &nodeFactory, nil
+}
+
+func (s *nodeFactoryClient) List(nodeType string, orgName string, isProvisioned bool) (*Nodes, error) {
+	log.Debugf("Listing nodes from factory. nodeType: %v, orgName: %v, isProvisioned: %v", nodeType, orgName, isProvisioned)
+
+	nodes := Nodes{}
+
+	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/nodes?type=" + nodeType + "&orgName=" + orgName + "&isProvisioned=" + strconv.FormatBool(isProvisioned))
+	if err != nil {
+		log.Errorf("ListNodes failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("ListNodes failure: %w", err)
+	}
+
+	err = json.Unmarshal(resp.Body(), &nodes)
+	if err != nil {
+		log.Tracef("Failed to deserialize node info. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("node info deserialization failure: %w", err)
+	}
+
+	return &nodes, nil
 }
