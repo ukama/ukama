@@ -183,6 +183,16 @@ func UnmarshalEventBaserateUploaded(msg *anypb.Any, emsg string) (*EventBaserate
 	return p, nil
 }
 
+func UnmarshalEventInventoryNodeComponentAdd(msg *anypb.Any, emsg string) (*EventInventoryNodeComponentAdd, error) {
+	p := &EventInventoryNodeComponentAdd{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalEventInvitationCreated(msg *anypb.Any, emsg string) (*EventInvitationCreated, error) {
 	p := &EventInvitationCreated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
