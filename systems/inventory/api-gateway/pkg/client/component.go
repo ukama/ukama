@@ -24,6 +24,9 @@ type Component interface {
 	GetByUser(uid string, c string) (*pb.GetByUserResponse, error)
 	SyncComponent() (*pb.SyncComponentsResponse, error)
 	List(userId, partNumber, category string) (*pb.ListResponse, error)
+	Verify(partNumber string) (*pb.VerifyResponse, error)
+	StartScheduler() (*pb.StartSchedulerResponse, error)
+	StopScheduler() (*pb.StopSchedulerResponse, error)
 }
 
 type ComponentInventory struct {
@@ -100,4 +103,26 @@ func (c *ComponentInventory) List(userId, partNumber, category string) (*pb.List
 		PartNumber: partNumber,
 		Category:   category,
 	})
+}
+
+func (c *ComponentInventory) Verify(partNumber string) (*pb.VerifyResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.Verify(ctx, &pb.VerifyRequest{
+		PartNumber: partNumber,
+	})
+}
+
+func (c *ComponentInventory) StartScheduler() (*pb.StartSchedulerResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.StartScheduler(ctx, &pb.StartSchedulerRequest{})
+}
+
+func (c *ComponentInventory) StopScheduler() (*pb.StopSchedulerResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+	return c.client.StopScheduler(ctx, &pb.StopSchedulerRequest{})
 }

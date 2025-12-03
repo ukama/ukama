@@ -110,8 +110,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		components.GET("/:uuid", formatDoc("Get component", "Get component by id"), tonic.Handler(r.getComponentByIdHandler, http.StatusOK))
 		components.PUT("/sync", formatDoc("Sync components", "Sync components with repo"), tonic.Handler(r.syncComponentHandler, http.StatusOK))
+		components.GET("/verify/:part_number", formatDoc("Verify component", "Verify component by part number"), tonic.Handler(r.verifyComponentByIdHandler, http.StatusOK))
 		components.GET("", formatDoc("List components", "List components with various query params as filters"), tonic.Handler(r.listComponents, http.StatusOK))
-
+		components.POST("/start-scheduler", formatDoc("Start scheduler", "Start scheduler"), tonic.Handler(r.startSchedulerHandler, http.StatusOK))
+		components.POST("/stop-scheduler", formatDoc("Stop scheduler", "Stop scheduler"), tonic.Handler(r.stopSchedulerHandler, http.StatusOK))
 		// Account routes
 		const account = "/accounting"
 		accounts := auth.Group(account, "Account", "Operations on Account")
@@ -147,6 +149,18 @@ func (r *Router) getAccountsByUserHandler(c *gin.Context, req *GetAccounts) (*ac
 
 func (r *Router) syncAccountsHandler(c *gin.Context) (*accountingpb.SyncAcountingResponse, error) {
 	return r.clients.Accounting.SyncAccounts()
+}
+
+func (r *Router) verifyComponentByIdHandler(c *gin.Context, req *VerifyRequest) (*componentpb.VerifyResponse, error) {
+	return r.clients.Component.Verify(req.PartNumber)
+}
+
+func (r *Router) startSchedulerHandler(c *gin.Context) (*componentpb.StartSchedulerResponse, error) {
+	return r.clients.Component.StartScheduler()
+}
+
+func (r *Router) stopSchedulerHandler(c *gin.Context) (*componentpb.StopSchedulerResponse, error) {
+	return r.clients.Component.StopScheduler()
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

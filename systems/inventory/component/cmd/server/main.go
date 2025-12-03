@@ -27,6 +27,7 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cfactory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	generated "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
 
@@ -76,31 +77,32 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to get current working directory. Error %s", err.Error())
 	}
 
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
+		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
+		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
+
+	log.Debugf("MessageBus Client is %+v", mbClient)
+
+	factoryClient := cfactory.NewNodeFactoryClient(serviceConfig.FactoryUrl)
+
 	gc, err := gitClient.NewGitClient(serviceConfig.RepoUrl, serviceConfig.Username, serviceConfig.Token, cwd+serviceConfig.RepoPath)
 	if err != nil {
 		log.Fatalf("Failed to create git client. Error %s", err.Error())
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
-		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
-
 	componentServer := server.NewComponentServer(serviceConfig.OrgName, db.NewComponentRepo(gormdb),
-		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath, serviceConfig.ComponentEnvironment, serviceConfig.TestUserId)
-
-	log.Debugf("MessageBus Client is %+v", mbClient)
+		mbClient, serviceConfig.PushGateway, gc, cwd+serviceConfig.RepoPath, factoryClient, serviceConfig)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		generated.RegisterComponentServiceServer(s, componentServer)
 	})
 
-	go grpcServer.StartServer()
-
 	go msgBusListener(mbClient)
 
-	waitForExit()
+	grpcServer.StartServer()
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
@@ -112,19 +114,4 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	if err := m.Start(); err != nil {
 		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
 	}
-}
-
-func waitForExit() {
-	sigs := make(chan os.Signal, 1)
-	done := make(chan bool, 1)
-	go func() {
-
-		sig := <-sigs
-		log.Info(sig)
-		done <- true
-	}()
-
-	log.Debug("awaiting terminate/interrrupt signal")
-	<-done
-	log.Infof("exiting service %s", pkg.ServiceName)
 }

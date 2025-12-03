@@ -86,7 +86,7 @@ func (s *nodeFactoryClient) List(nodeType string, orgName string, isProvisioned 
 
 	nodes := Nodes{}
 
-	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/nodes?type=" + nodeType + "&orgName=" + orgName + "&isProvisioned=" + strconv.FormatBool(isProvisioned))
+	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/nodes?nodeType=" + nodeType + "&orgName=" + orgName + "&isProvisioned=" + strconv.FormatBool(isProvisioned))
 	if err != nil {
 		log.Errorf("ListNodes failure. error: %s", err.Error())
 

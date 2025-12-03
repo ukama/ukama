@@ -24,39 +24,52 @@ import (
 	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
+	"github.com/ukama/ukama/systems/inventory/component/scheduler"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cfactory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	pb "github.com/ukama/ukama/systems/inventory/component/pb/gen"
 )
 
 const uuidParsingError = "Error parsing UUID"
 
+const (
+	jobTag               = "node-sync-job"
+	eventPublishErrorMsg = "Failed to publish message %+v with key %+v. Errors %v"
+)
+
 type ComponentServer struct {
 	pb.UnimplementedComponentServiceServer
-	orgName              string
-	gitClient            gitClient.GitClient
-	componentRepo        db.ComponentRepo
-	msgbus               mb.MsgBusServiceClient
-	baseRoutingKey       msgbus.RoutingKeyBuilder
-	pushGateway          string
-	gitDirPath           string
-	componentEnvironment string
-	testUserId           string
+	orgName            string
+	gitClient          gitClient.GitClient
+	componentRepo      db.ComponentRepo
+	msgbus             mb.MsgBusServiceClient
+	baseRoutingKey     msgbus.RoutingKeyBuilder
+	componentScheduler scheduler.ComponentScheduler
+	pushGateway        string
+	gitDirPath         string
+	factoryClient      cfactory.NodeFactoryClient
+	config             *pkg.Config
 }
 
-func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string, componentEnvironment string, testUserId string) *ComponentServer {
-	return &ComponentServer{
-		gitClient:            gc,
-		gitDirPath:           path,
-		msgbus:               msgBus,
-		orgName:              orgName,
-		testUserId:           testUserId,
-		pushGateway:          pushGateway,
-		componentRepo:        componentRepo,
-		componentEnvironment: componentEnvironment,
-		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+func NewComponentServer(orgName string, componentRepo db.ComponentRepo, msgBus mb.MsgBusServiceClient, pushGateway string, gc gitClient.GitClient, path string, factoryClient cfactory.NodeFactoryClient, config *pkg.Config) *ComponentServer {
+	componentScheduler := scheduler.NewComponentScheduler(config.SchedulerInterval)
+	c := &ComponentServer{
+		gitClient:          gc,
+		gitDirPath:         path,
+		msgbus:             msgBus,
+		config:             config,
+		orgName:            orgName,
+		pushGateway:        pushGateway,
+		factoryClient:      factoryClient,
+		componentRepo:      componentRepo,
+		componentScheduler: componentScheduler,
+		baseRoutingKey:     msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
+
+	return c
 }
 
 func (c *ComponentServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -129,7 +142,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 
 	var components []utils.Component
 	var environment []gitClient.Company
-	if c.componentEnvironment == "test" {
+	if c.config.ComponentEnvironment == "test" {
 		environment = env.Test
 	} else {
 		environment = env.Production
@@ -157,8 +170,8 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		}
 		var userId string
 
-		if c.componentEnvironment == "test" {
-			userId = c.testUserId
+		if c.config.ComponentEnvironment == "test" {
+			userId = c.config.OwnerId
 		} else {
 			userId = company.UserId
 		}
@@ -194,21 +207,114 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 	return &pb.SyncComponentsResponse{}, nil
 }
 
+func (c *ComponentServer) StartScheduler(ctx context.Context, req *pb.StartSchedulerRequest) (*pb.StartSchedulerResponse, error) {
+	log.Info("Starting scheduler")
+
+	log.Infof("Running job immediately at initialization")
+	c.NodeSyncJob(context.Background())
+
+	err := c.componentScheduler.Start(jobTag, c.NodeSyncJob, "")
+	if err != nil {
+		log.Errorf("Failed to start scheduler. Error %s", err.Error())
+	}
+	return &pb.StartSchedulerResponse{}, nil
+}
+
+func (c *ComponentServer) StopScheduler(ctx context.Context, req *pb.StopSchedulerRequest) (*pb.StopSchedulerResponse, error) {
+	log.Info("Stopping scheduler")
+
+	err := c.componentScheduler.Stop()
+	if err != nil {
+		log.Errorf("Failed to stop scheduler. Error %s", err.Error())
+	}
+	return &pb.StopSchedulerResponse{}, nil
+}
+
+func (c *ComponentServer) Verify(ctx context.Context, req *pb.VerifyRequest) (*pb.VerifyResponse, error) {
+	log.Infof("Verifying component %v", req)
+
+	_, err := c.componentRepo.Verify(req.GetPartNumber())
+	if err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
+
+	return &pb.VerifyResponse{}, nil
+}
+
+func (c *ComponentServer) NodeSyncJob(ctx context.Context) {
+	log.Infof("Node sync job started")
+	nodes, err := c.factoryClient.List("tnode", c.orgName, true)
+	if err != nil {
+		log.Errorf("Failed to get nodes from factory. Error %s", err.Error())
+		return
+	}
+	log.Infof("Nodes: %v", nodes)
+	for _, node := range nodes.Nodes {
+		log.Infof("Node: %s", node.Id)
+		_, err := c.Verify(ctx, &pb.VerifyRequest{PartNumber: node.Id})
+		if err != nil && status.Code(err) == codes.NotFound {
+			log.Infof("Component not found, creating new component: %s", node.Id)
+			ownerId, err := uuid.FromString(c.config.OwnerId)
+			if err != nil {
+				log.Errorf("Failed to parse owner ID. Error %s", err.Error())
+				continue
+			}
+			component := &db.Component{
+				Id:            uuid.NewV4(),
+				PartNumber:    node.Id,
+				Type:          node.Type,
+				Description:   "Tower Node",
+				UserId:        ownerId,
+				Category:      c.config.NodeComponentDetails.Category,
+				Managed:       c.config.NodeComponentDetails.Managed,
+				Warranty:      c.config.NodeComponentDetails.Warranty,
+				ImagesURL:     c.config.NodeComponentDetails.ImagesURL,
+				Inventory:     c.config.NodeComponentDetails.Inventory,
+				DatasheetURL:  c.config.NodeComponentDetails.DatasheetURL,
+				Manufacturer:  c.config.NodeComponentDetails.Manufacturer,
+				Specification: c.config.NodeComponentDetails.Specification,
+			}
+			err = c.componentRepo.Add([]*db.Component{component})
+			if err != nil {
+				log.Errorf("Failed to add component. Error %s", err.Error())
+				continue
+			}
+			route := c.baseRoutingKey.SetAction("added").SetObject("node").MustBuild()
+			evt := &epb.EventInventoryNodeComponentAdd{
+				Type:       component.Type,
+				PartNumber: component.PartNumber,
+				Id:         component.Id.String(),
+				UserId:     component.UserId.String(),
+			}
+
+			err = c.msgbus.PublishRequest(route, evt)
+			if err != nil {
+				log.Errorf(eventPublishErrorMsg, evt, route, err)
+			}
+		} else if err != nil && status.Code(err) != codes.NotFound {
+			log.Errorf("Failed to verify component. Error %s", err.Error())
+			continue
+		} else {
+			log.Infof("Component already exists and verified: %s", node.Id)
+		}
+	}
+}
+
 func dbComponentToPbComponent(component *db.Component) *pb.Component {
 	return &pb.Component{
 		Id:            component.Id.String(),
-		Inventory:     component.Inventory,
-		UserId:        component.UserId.String(),
-		Category:      ukama.ComponentCategory(component.Category).String(),
 		Type:          component.Type,
-		Description:   component.Description,
-		DatasheetURL:  component.DatasheetURL,
-		ImagesURL:     component.ImagesURL,
-		PartNumber:    component.PartNumber,
-		Manufacturer:  component.Manufacturer,
 		Managed:       component.Managed,
 		Warranty:      component.Warranty,
+		Inventory:     component.Inventory,
+		ImagesURL:     component.ImagesURL,
+		PartNumber:    component.PartNumber,
+		Description:   component.Description,
+		DatasheetURL:  component.DatasheetURL,
+		Manufacturer:  component.Manufacturer,
 		Specification: component.Specification,
+		UserId:        component.UserId.String(),
+		Category:      ukama.ComponentCategory(component.Category).String(),
 	}
 }
 
@@ -227,19 +333,19 @@ func utilComponentsToDbComponents(components []utils.Component, uId uuid.UUID) [
 
 	for _, i := range components {
 		res = append(res, &db.Component{
-			Id:            uuid.NewV4(),
-			Inventory:     i.InventoryID,
-			Category:      ukama.ParseComponentCategory(i.Category),
 			UserId:        uId,
 			Type:          i.Type,
-			Description:   i.Description,
-			DatasheetURL:  i.DatasheetURL,
-			ImagesURL:     i.ImagesURL,
-			PartNumber:    i.PartNumber,
-			Manufacturer:  i.Manufacturer,
 			Managed:       i.Managed,
 			Warranty:      i.Warranty,
+			ImagesURL:     i.ImagesURL,
+			Id:            uuid.NewV4(),
+			PartNumber:    i.PartNumber,
+			Description:   i.Description,
+			Inventory:     i.InventoryID,
+			DatasheetURL:  i.DatasheetURL,
+			Manufacturer:  i.Manufacturer,
 			Specification: i.Specification,
+			Category:      ukama.ParseComponentCategory(i.Category),
 		})
 	}
 	return res

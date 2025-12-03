@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,6 +21,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/inventory/component/mocks"
+	"github.com/ukama/ukama/systems/inventory/component/pkg"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/db"
 	"github.com/ukama/ukama/systems/inventory/component/pkg/utils"
 
@@ -68,6 +70,23 @@ const (
 	ErrUUIDParsing    = "Error parsing UUID"
 )
 
+// getTestConfig returns a minimal config for testing
+// If environment is empty, it defaults to "test"
+func getTestConfig(environment ...string) *pkg.Config {
+	env := "test"
+	if len(environment) > 0 && environment[0] != "" {
+		env = environment[0]
+	}
+	return &pkg.Config{
+		SchedulerInterval:    24 * time.Hour,
+		ComponentEnvironment: env,
+		OwnerId:              uuid.NewV4().String(),
+		NodeComponentDetails: pkg.NodeComponentDetails{
+			Category: ukama.ACCESS,
+		},
+	}
+}
+
 func TestComponentServer_Get(t *testing.T) {
 	t.Run("Component record found", func(t *testing.T) {
 		var cId = uuid.NewV4()
@@ -77,7 +96,7 @@ func TestComponentServer_Get(t *testing.T) {
 		compRepo.On("Get", cId).Return(
 			&db.Component{Id: cId}, nil).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 		compResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			Id: cId.String()})
 
@@ -95,7 +114,7 @@ func TestComponentServer_Get(t *testing.T) {
 
 		compRepo.On("Get", cId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 		compResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			Id: cId.String()})
 
@@ -107,7 +126,7 @@ func TestComponentServer_Get(t *testing.T) {
 	t.Run("Invalid UUID format", func(t *testing.T) {
 		compRepo := &mocks.ComponentRepo{}
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 		compResp, err := s.Get(context.TODO(), &pb.GetRequest{
 			Id: "invalid-uuid-format"})
 
@@ -143,7 +162,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 					Specification: TestSpecification,
 				}}, nil).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
@@ -164,7 +183,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 		compRepo.On("GetByUser", uId.String(), int32(2)).Return([]*db.Component{}, nil).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
@@ -184,7 +203,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 		compRepo.On("GetByUser", uId.String(), int32(TestCategory)).Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		compResp, err := s.GetByUser(context.TODO(),
 			&pb.GetByUserRequest{
@@ -200,8 +219,7 @@ func TestComponentServer_GetByUser(t *testing.T) {
 
 func TestComponentServer_SyncComponents(t *testing.T) {
 	t.Run("Successful sync components", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -217,7 +235,7 @@ func TestComponentServer_SyncComponents(t *testing.T) {
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -244,7 +262,7 @@ specification: "` + TestSpecification2 + `"`
 
 		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -257,7 +275,7 @@ specification: "` + TestSpecification2 + `"`
 			Category:      "ACCESS",
 			Type:          TestComponentType,
 			Description:   TestComponentDesc,
-			UserId:        userId.String(),
+			UserId:        userId,
 			ImagesURL:     TestComponentImage,
 			DatasheetURL:  TestComponentData,
 			InventoryID:   TestInventoryID2,
@@ -272,7 +290,7 @@ specification: "` + TestSpecification2 + `"`
 		assert.Equal(t, "ACCESS", component.Category)
 		assert.Equal(t, TestComponentType, component.Type)
 		assert.Equal(t, TestComponentDesc, component.Description)
-		assert.Equal(t, userId.String(), component.UserId)
+		assert.Equal(t, userId, component.UserId)
 		assert.Equal(t, TestComponentImage, component.ImagesURL)
 		assert.Equal(t, TestComponentData, component.DatasheetURL)
 		assert.Equal(t, TestInventoryID2, component.InventoryID)
@@ -288,8 +306,6 @@ specification: "` + TestSpecification2 + `"`
 	})
 
 	t.Run("Git clone failure", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
@@ -297,7 +313,7 @@ specification: "` + TestSpecification2 + `"`
 		gitClient.On("SetupDir").Return(nil)
 		gitClient.On("CloneGitRepo", "main").Return(fmt.Errorf("git clone failed"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -311,8 +327,7 @@ specification: "` + TestSpecification2 + `"`
 	})
 
 	t.Run("Sync components with utils.Component struct usage", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -328,7 +343,7 @@ specification: "` + TestSpecification2 + `"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -355,7 +370,7 @@ specification: "Backhaul component specification for testing"`
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
 		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -367,7 +382,7 @@ specification: "Backhaul component specification for testing"`
 			Category:      "BACKHAUL",
 			Type:          "test-backhaul-component",
 			Description:   "Test backhaul component for utils.Component coverage",
-			UserId:        userId.String(),
+			UserId:        userId,
 			ImagesURL:     "https://example.com/backhaul-image.jpg",
 			DatasheetURL:  "https://example.com/backhaul-datasheet.pdf",
 			InventoryID:   "INV-BACKHAUL-001",
@@ -382,7 +397,7 @@ specification: "Backhaul component specification for testing"`
 		assert.Equal(t, "BACKHAUL", backhaulComponent.Category)
 		assert.Equal(t, "test-backhaul-component", backhaulComponent.Type)
 		assert.Equal(t, "Test backhaul component for utils.Component coverage", backhaulComponent.Description)
-		assert.Equal(t, userId.String(), backhaulComponent.UserId)
+		assert.Equal(t, userId, backhaulComponent.UserId)
 		assert.Equal(t, "https://example.com/backhaul-image.jpg", backhaulComponent.ImagesURL)
 		assert.Equal(t, "https://example.com/backhaul-datasheet.pdf", backhaulComponent.DatasheetURL)
 		assert.Equal(t, "INV-BACKHAUL-001", backhaulComponent.InventoryID)
@@ -414,8 +429,6 @@ specification: "Backhaul component specification for testing"`
 
 	// Negative test cases for comprehensive coverage
 	t.Run("Failed to read root.json file", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
 		msgBus := &cmocks.MsgBusServiceClient{}
@@ -424,7 +437,7 @@ specification: "Backhaul component specification for testing"`
 		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return(nil, fmt.Errorf("file not found"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -438,7 +451,6 @@ specification: "Backhaul component specification for testing"`
 	})
 
 	t.Run("Invalid JSON in root.json file", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -448,7 +460,7 @@ specification: "Backhaul component specification for testing"`
 		gitClient.On("CloneGitRepo", "main").Return(nil)
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte("invalid json"), nil)
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -462,8 +474,7 @@ specification: "Backhaul component specification for testing"`
 	})
 
 	t.Run("Branch checkout failure", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -478,14 +489,14 @@ specification: "Backhaul component specification for testing"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", TestGitBranch).Return(fmt.Errorf("branch not found"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -499,8 +510,7 @@ specification: "Backhaul component specification for testing"`
 	})
 
 	t.Run("Failed to read component YAML file", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -515,7 +525,7 @@ specification: "Backhaul component specification for testing"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -524,7 +534,7 @@ specification: "Backhaul component specification for testing"`
 		gitClient.On("GetFilesPath", "components").Return([]string{"components/component1.yml"}, nil)
 		gitClient.On("ReadFileYML", "components/component1.yml").Return(nil, fmt.Errorf("file read error"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -538,8 +548,7 @@ specification: "Backhaul component specification for testing"`
 	})
 
 	t.Run("Invalid YAML in component file", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -554,7 +563,7 @@ specification: "Backhaul component specification for testing"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -563,7 +572,7 @@ specification: "Backhaul component specification for testing"`
 		gitClient.On("GetFilesPath", "components").Return([]string{"components/component1.yml"}, nil)
 		gitClient.On("ReadFileYML", "components/component1.yml").Return([]byte("invalid: yaml: content"), nil)
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -577,8 +586,7 @@ specification: "Backhaul component specification for testing"`
 	})
 
 	t.Run("Database delete failure", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -593,7 +601,7 @@ specification: "Backhaul component specification for testing"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -616,7 +624,7 @@ specification: "Test specification"`
 
 		compRepo.On("Delete").Return(fmt.Errorf("database delete failed"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -630,8 +638,7 @@ specification: "Test specification"`
 	})
 
 	t.Run("Database add failure", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -646,7 +653,7 @@ specification: "Test specification"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -670,7 +677,7 @@ specification: "Test specification"`
 		compRepo.On("Delete").Return(nil)
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(fmt.Errorf("database add failed"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -684,8 +691,7 @@ specification: "Test specification"`
 	})
 
 	t.Run("Message bus publish failure", func(t *testing.T) {
-		var testUserId = uuid.NewV4().String()
-		var userId = uuid.NewV4()
+		userId := "test-user-id"
 
 		compRepo := &mocks.ComponentRepo{}
 		gitClient := &cmocks.GitClient{}
@@ -700,7 +706,7 @@ specification: "Test specification"`
 					"company": "` + TestCompany + `",
 					"git_branch_name": "` + TestGitBranch + `",
 					"email": "` + TestEmail + `",
-					"user_id": "` + userId.String() + `"
+					"user_id": "` + userId + `"
 				}
 			]
 		}`
@@ -725,7 +731,7 @@ specification: "Test specification"`
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
 		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(fmt.Errorf("publish failed"))
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "test", testUserId)
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -739,7 +745,7 @@ specification: "Test specification"`
 		msgBus.AssertExpectations(t)
 	})
 
-	t.Run("Production environment with multiple companies", func(t *testing.T) {
+	t.Run("test environment with multiple companies", func(t *testing.T) {
 		var userId1 = uuid.NewV4()
 		var userId2 = uuid.NewV4()
 
@@ -751,7 +757,7 @@ specification: "Test specification"`
 		gitClient.On("CloneGitRepo", "main").Return(nil)
 
 		rootJSON := `{
-			"production": [
+			"test": [
 				{
 					"company": "company1",
 					"git_branch_name": "branch1",
@@ -769,7 +775,8 @@ specification: "Test specification"`
 		gitClient.On("ReadFileJSON", "/root.json").Return([]byte(rootJSON), nil)
 		gitClient.On("BranchCheckout", "branch1").Return(nil)
 		gitClient.On("BranchCheckout", "branch2").Return(nil)
-		gitClient.On("GetFilesPath", "components").Return([]string{"components/component1.yml"}, nil)
+		// GetFilesPath and ReadFileYML are called for each company (2 companies)
+		gitClient.On("GetFilesPath", "components").Return([]string{"components/component1.yml"}, nil).Times(2)
 
 		componentYAML := `category: "ACCESS"
 type: "test-component"
@@ -782,13 +789,14 @@ manufacturer: "Test Manufacturer"
 managed: "ukama"
 warranty: 12
 specification: "Test specification"`
-		gitClient.On("ReadFileYML", "components/component1.yml").Return([]byte(componentYAML), nil)
+		gitClient.On("ReadFileYML", "components/component1.yml").Return([]byte(componentYAML), nil).Times(2)
 
-		compRepo.On("Delete").Return(nil)
-		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		// Delete, Add, and PublishRequest are called for each company (2 companies)
+		compRepo.On("Delete").Return(nil).Times(2)
+		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil).Times(2)
+		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil).Times(2)
 
-		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", "production", "")
+		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig("test"))
 
 		resp, err := s.SyncComponents(context.TODO(), &pb.SyncComponentsRequest{})
 
@@ -849,7 +857,7 @@ func TestComponentServer_List(t *testing.T) {
 			Return(mockComponents, nil).Once()
 
 		// Create server instance
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		// Create request
 		req := &pb.ListRequest{
@@ -887,7 +895,7 @@ func TestComponentServer_List(t *testing.T) {
 			Return([]*db.Component{}, nil).Once()
 
 		// Create server instance
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		// Create request with only userId and category
 		req := &pb.ListRequest{
@@ -917,7 +925,7 @@ func TestComponentServer_List(t *testing.T) {
 			Return(nil, gorm.ErrInvalidDB).Once()
 
 		// Create server instance
-		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", "", "")
+		s := NewComponentServer(OrgName, compRepo, nil, "", nil, "", nil, getTestConfig())
 
 		// Create request with only partNumber
 		req := &pb.ListRequest{

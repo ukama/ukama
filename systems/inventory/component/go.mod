@@ -10,6 +10,7 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/go-co-op/gocron v1.37.0
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.2
@@ -95,6 +96,7 @@ require (
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
