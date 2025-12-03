@@ -243,7 +243,7 @@ func (c *ComponentServer) Verify(ctx context.Context, req *pb.VerifyRequest) (*p
 
 func (c *ComponentServer) NodeSyncJob(ctx context.Context) {
 	log.Infof("Node sync job started")
-	nodes, err := c.factoryClient.List("tnode", c.orgName, true)
+	nodes, err := c.factoryClient.List("", c.orgName, true)
 	if err != nil {
 		log.Errorf("Failed to get nodes from factory. Error %s", err.Error())
 		return
