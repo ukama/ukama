@@ -26,26 +26,26 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Nns_Get_FullMethodName               = "/ukama.messaging.nns.v1.Nns/Get"
-	Nns_Set_FullMethodName               = "/ukama.messaging.nns.v1.Nns/Set"
-	Nns_Delete_FullMethodName            = "/ukama.messaging.nns.v1.Nns/Delete"
-	Nns_GetNodeOrgMapList_FullMethodName = "/ukama.messaging.nns.v1.Nns/GetNodeOrgMapList"
-	Nns_GetNodeIPMapList_FullMethodName  = "/ukama.messaging.nns.v1.Nns/GetNodeIPMapList"
-	Nns_GetMesh_FullMethodName           = "/ukama.messaging.nns.v1.Nns/GetMesh"
-	Nns_List_FullMethodName              = "/ukama.messaging.nns.v1.Nns/List"
+	Nns_GetNode_FullMethodName    = "/ukama.messaging.nns.v1.Nns/GetNode"
+	Nns_GetMesh_FullMethodName    = "/ukama.messaging.nns.v1.Nns/GetMesh"
+	Nns_Set_FullMethodName        = "/ukama.messaging.nns.v1.Nns/Set"
+	Nns_UpdateMesh_FullMethodName = "/ukama.messaging.nns.v1.Nns/UpdateMesh"
+	Nns_UpdateNode_FullMethodName = "/ukama.messaging.nns.v1.Nns/UpdateNode"
+	Nns_Delete_FullMethodName     = "/ukama.messaging.nns.v1.Nns/Delete"
+	Nns_List_FullMethodName       = "/ukama.messaging.nns.v1.Nns/List"
 )
 
 // NnsClient is the client API for Nns service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NnsClient interface {
-	Get(ctx context.Context, in *GetNodeIPRequest, opts ...grpc.CallOption) (*GetNodeIPResponse, error)
-	Set(ctx context.Context, in *SetNodeIPRequest, opts ...grpc.CallOption) (*SetNodeIPResponse, error)
-	Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error)
-	GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error)
-	GetNodeIPMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error)
-	GetMesh(ctx context.Context, in *GetMeshIPRequest, opts ...grpc.CallOption) (*GetMeshIPResponse, error)
-	List(ctx context.Context, in *ListNodeIPRequest, opts ...grpc.CallOption) (*ListNodeIPResponse, error)
+	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	GetMesh(ctx context.Context, in *GetMeshRequest, opts ...grpc.CallOption) (*GetMeshResponse, error)
+	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	UpdateMesh(ctx context.Context, in *UpdateMeshRequest, opts ...grpc.CallOption) (*UpdateMeshResponse, error)
+	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 }
 
 type nnsClient struct {
@@ -56,59 +56,19 @@ func NewNnsClient(cc grpc.ClientConnInterface) NnsClient {
 	return &nnsClient{cc}
 }
 
-func (c *nnsClient) Get(ctx context.Context, in *GetNodeIPRequest, opts ...grpc.CallOption) (*GetNodeIPResponse, error) {
+func (c *nnsClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetNodeIPResponse)
-	err := c.cc.Invoke(ctx, Nns_Get_FullMethodName, in, out, cOpts...)
+	out := new(GetNodeResponse)
+	err := c.cc.Invoke(ctx, Nns_GetNode_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *nnsClient) Set(ctx context.Context, in *SetNodeIPRequest, opts ...grpc.CallOption) (*SetNodeIPResponse, error) {
+func (c *nnsClient) GetMesh(ctx context.Context, in *GetMeshRequest, opts ...grpc.CallOption) (*GetMeshResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetNodeIPResponse)
-	err := c.cc.Invoke(ctx, Nns_Set_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nnsClient) Delete(ctx context.Context, in *DeleteNodeIPRequest, opts ...grpc.CallOption) (*DeleteNodeIPResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteNodeIPResponse)
-	err := c.cc.Invoke(ctx, Nns_Delete_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nnsClient) GetNodeOrgMapList(ctx context.Context, in *NodeOrgMapListRequest, opts ...grpc.CallOption) (*NodeOrgMapListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NodeOrgMapListResponse)
-	err := c.cc.Invoke(ctx, Nns_GetNodeOrgMapList_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nnsClient) GetNodeIPMapList(ctx context.Context, in *NodeIPMapListRequest, opts ...grpc.CallOption) (*NodeIPMapListResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NodeIPMapListResponse)
-	err := c.cc.Invoke(ctx, Nns_GetNodeIPMapList_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nnsClient) GetMesh(ctx context.Context, in *GetMeshIPRequest, opts ...grpc.CallOption) (*GetMeshIPResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMeshIPResponse)
+	out := new(GetMeshResponse)
 	err := c.cc.Invoke(ctx, Nns_GetMesh_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -116,9 +76,49 @@ func (c *nnsClient) GetMesh(ctx context.Context, in *GetMeshIPRequest, opts ...g
 	return out, nil
 }
 
-func (c *nnsClient) List(ctx context.Context, in *ListNodeIPRequest, opts ...grpc.CallOption) (*ListNodeIPResponse, error) {
+func (c *nnsClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListNodeIPResponse)
+	out := new(SetResponse)
+	err := c.cc.Invoke(ctx, Nns_Set_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nnsClient) UpdateMesh(ctx context.Context, in *UpdateMeshRequest, opts ...grpc.CallOption) (*UpdateMeshResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateMeshResponse)
+	err := c.cc.Invoke(ctx, Nns_UpdateMesh_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nnsClient) UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateNodeResponse)
+	err := c.cc.Invoke(ctx, Nns_UpdateNode_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nnsClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, Nns_Delete_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *nnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, Nns_List_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -130,13 +130,13 @@ func (c *nnsClient) List(ctx context.Context, in *ListNodeIPRequest, opts ...grp
 // All implementations must embed UnimplementedNnsServer
 // for forward compatibility.
 type NnsServer interface {
-	Get(context.Context, *GetNodeIPRequest) (*GetNodeIPResponse, error)
-	Set(context.Context, *SetNodeIPRequest) (*SetNodeIPResponse, error)
-	Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error)
-	GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error)
-	GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error)
-	GetMesh(context.Context, *GetMeshIPRequest) (*GetMeshIPResponse, error)
-	List(context.Context, *ListNodeIPRequest) (*ListNodeIPResponse, error)
+	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	GetMesh(context.Context, *GetMeshRequest) (*GetMeshResponse, error)
+	Set(context.Context, *SetRequest) (*SetResponse, error)
+	UpdateMesh(context.Context, *UpdateMeshRequest) (*UpdateMeshResponse, error)
+	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	List(context.Context, *ListRequest) (*ListResponse, error)
 	mustEmbedUnimplementedNnsServer()
 }
 
@@ -147,25 +147,25 @@ type NnsServer interface {
 // pointer dereference when methods are called.
 type UnimplementedNnsServer struct{}
 
-func (UnimplementedNnsServer) Get(context.Context, *GetNodeIPRequest) (*GetNodeIPResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+func (UnimplementedNnsServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
 }
-func (UnimplementedNnsServer) Set(context.Context, *SetNodeIPRequest) (*SetNodeIPResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
-}
-func (UnimplementedNnsServer) Delete(context.Context, *DeleteNodeIPRequest) (*DeleteNodeIPResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
-}
-func (UnimplementedNnsServer) GetNodeOrgMapList(context.Context, *NodeOrgMapListRequest) (*NodeOrgMapListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNodeOrgMapList not implemented")
-}
-func (UnimplementedNnsServer) GetNodeIPMapList(context.Context, *NodeIPMapListRequest) (*NodeIPMapListResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetNodeIPMapList not implemented")
-}
-func (UnimplementedNnsServer) GetMesh(context.Context, *GetMeshIPRequest) (*GetMeshIPResponse, error) {
+func (UnimplementedNnsServer) GetMesh(context.Context, *GetMeshRequest) (*GetMeshResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMesh not implemented")
 }
-func (UnimplementedNnsServer) List(context.Context, *ListNodeIPRequest) (*ListNodeIPResponse, error) {
+func (UnimplementedNnsServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+}
+func (UnimplementedNnsServer) UpdateMesh(context.Context, *UpdateMeshRequest) (*UpdateMeshResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMesh not implemented")
+}
+func (UnimplementedNnsServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateNode not implemented")
+}
+func (UnimplementedNnsServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedNnsServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedNnsServer) mustEmbedUnimplementedNnsServer() {}
@@ -189,98 +189,26 @@ func RegisterNnsServer(s grpc.ServiceRegistrar, srv NnsServer) {
 	s.RegisterService(&Nns_ServiceDesc, srv)
 }
 
-func _Nns_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetNodeIPRequest)
+func _Nns_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NnsServer).Get(ctx, in)
+		return srv.(NnsServer).GetNode(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Nns_Get_FullMethodName,
+		FullMethod: Nns_GetNode_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Get(ctx, req.(*GetNodeIPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Nns_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetNodeIPRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NnsServer).Set(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Nns_Set_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Set(ctx, req.(*SetNodeIPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteNodeIPRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NnsServer).Delete(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Nns_Delete_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).Delete(ctx, req.(*DeleteNodeIPRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Nns_GetNodeOrgMapList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NodeOrgMapListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NnsServer).GetNodeOrgMapList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Nns_GetNodeOrgMapList_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).GetNodeOrgMapList(ctx, req.(*NodeOrgMapListRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Nns_GetNodeIPMapList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NodeIPMapListRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NnsServer).GetNodeIPMapList(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Nns_GetNodeIPMapList_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).GetNodeIPMapList(ctx, req.(*NodeIPMapListRequest))
+		return srv.(NnsServer).GetNode(ctx, req.(*GetNodeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Nns_GetMesh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetMeshIPRequest)
+	in := new(GetMeshRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -292,13 +220,85 @@ func _Nns_GetMesh_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: Nns_GetMesh_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).GetMesh(ctx, req.(*GetMeshIPRequest))
+		return srv.(NnsServer).GetMesh(ctx, req.(*GetMeshRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Nns_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).Set(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Nns_Set_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).Set(ctx, req.(*SetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Nns_UpdateMesh_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMeshRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).UpdateMesh(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Nns_UpdateMesh_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).UpdateMesh(ctx, req.(*UpdateMeshRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Nns_UpdateNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).UpdateNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Nns_UpdateNode_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).UpdateNode(ctx, req.(*UpdateNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NnsServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Nns_Delete_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NnsServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Nns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListNodeIPRequest)
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -310,7 +310,7 @@ func _Nns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{
 		FullMethod: Nns_List_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NnsServer).List(ctx, req.(*ListNodeIPRequest))
+		return srv.(NnsServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -323,28 +323,28 @@ var Nns_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*NnsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Nns_Get_Handler,
+			MethodName: "GetNode",
+			Handler:    _Nns_GetNode_Handler,
+		},
+		{
+			MethodName: "GetMesh",
+			Handler:    _Nns_GetMesh_Handler,
 		},
 		{
 			MethodName: "Set",
 			Handler:    _Nns_Set_Handler,
 		},
 		{
+			MethodName: "UpdateMesh",
+			Handler:    _Nns_UpdateMesh_Handler,
+		},
+		{
+			MethodName: "UpdateNode",
+			Handler:    _Nns_UpdateNode_Handler,
+		},
+		{
 			MethodName: "Delete",
 			Handler:    _Nns_Delete_Handler,
-		},
-		{
-			MethodName: "GetNodeOrgMapList",
-			Handler:    _Nns_GetNodeOrgMapList_Handler,
-		},
-		{
-			MethodName: "GetNodeIPMapList",
-			Handler:    _Nns_GetNodeIPMapList_Handler,
-		},
-		{
-			MethodName: "GetMesh",
-			Handler:    _Nns_GetMesh_Handler,
 		},
 		{
 			MethodName: "List",

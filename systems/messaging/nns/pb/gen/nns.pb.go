@@ -15,7 +15,6 @@ package gen
 
 import (
 	_ "github.com/mwitkow/go-proto-validators"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -30,27 +29,27 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetMeshIPRequest struct {
+type GetNodeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetMeshIPRequest) Reset() {
-	*x = GetMeshIPRequest{}
+func (x *GetNodeRequest) Reset() {
+	*x = GetNodeRequest{}
 	mi := &file_nns_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetMeshIPRequest) String() string {
+func (x *GetNodeRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetMeshIPRequest) ProtoMessage() {}
+func (*GetNodeRequest) ProtoMessage() {}
 
-func (x *GetMeshIPRequest) ProtoReflect() protoreflect.Message {
+func (x *GetNodeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nns_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -62,188 +61,42 @@ func (x *GetMeshIPRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetMeshIPRequest.ProtoReflect.Descriptor instead.
-func (*GetMeshIPRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetNodeRequest.ProtoReflect.Descriptor instead.
+func (*GetNodeRequest) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GetMeshIPRequest) GetNodeId() string {
+func (x *GetNodeRequest) GetNodeId() string {
 	if x != nil {
 		return x.NodeId
 	}
 	return ""
 }
 
-type GetMeshIPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetMeshIPResponse) Reset() {
-	*x = GetMeshIPResponse{}
-	mi := &file_nns_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetMeshIPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetMeshIPResponse) ProtoMessage() {}
-
-func (x *GetMeshIPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetMeshIPResponse.ProtoReflect.Descriptor instead.
-func (*GetMeshIPResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *GetMeshIPResponse) GetIp() string {
-	if x != nil {
-		return x.Ip
-	}
-	return ""
-}
-
-func (x *GetMeshIPResponse) GetPort() int32 {
-	if x != nil {
-		return x.Port
-	}
-	return 0
-}
-
-type GetNodeIPRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetNodeIPRequest) Reset() {
-	*x = GetNodeIPRequest{}
-	mi := &file_nns_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetNodeIPRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeIPRequest) ProtoMessage() {}
-
-func (x *GetNodeIPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeIPRequest.ProtoReflect.Descriptor instead.
-func (*GetNodeIPRequest) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *GetNodeIPRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-type GetNodeIPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ip            string                 `protobuf:"bytes,1,opt,name=ip,proto3" json:"ip,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetNodeIPResponse) Reset() {
-	*x = GetNodeIPResponse{}
-	mi := &file_nns_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetNodeIPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetNodeIPResponse) ProtoMessage() {}
-
-func (x *GetNodeIPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetNodeIPResponse.ProtoReflect.Descriptor instead.
-func (*GetNodeIPResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetNodeIPResponse) GetIp() string {
-	if x != nil {
-		return x.Ip
-	}
-	return ""
-}
-
-type SetNodeIPRequest struct {
+type GetNodeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	NodeIp        string                 `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
-	MeshIp        string                 `protobuf:"bytes,3,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
-	NodePort      int32                  `protobuf:"varint,4,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
-	MeshPort      int32                  `protobuf:"varint,5,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
-	Org           string                 `protobuf:"bytes,6,opt,name=org,proto3" json:"org,omitempty"`
-	Site          string                 `protobuf:"bytes,7,opt,name=site,proto3" json:"site,omitempty"`
-	Network       string                 `protobuf:"bytes,8,opt,name=network,proto3" json:"network,omitempty"`
-	MeshHostName  string                 `protobuf:"bytes,9,opt,name=meshHostName,proto3" json:"meshHostName,omitempty"`
+	NodePort      int32                  `protobuf:"varint,3,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetNodeIPRequest) Reset() {
-	*x = SetNodeIPRequest{}
-	mi := &file_nns_proto_msgTypes[4]
+func (x *GetNodeResponse) Reset() {
+	*x = GetNodeResponse{}
+	mi := &file_nns_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetNodeIPRequest) String() string {
+func (x *GetNodeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetNodeIPRequest) ProtoMessage() {}
+func (*GetNodeResponse) ProtoMessage() {}
 
-func (x *SetNodeIPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[4]
+func (x *GetNodeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -254,212 +107,149 @@ func (x *SetNodeIPRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetNodeIPRequest.ProtoReflect.Descriptor instead.
-func (*SetNodeIPRequest) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{4}
+// Deprecated: Use GetNodeResponse.ProtoReflect.Descriptor instead.
+func (*GetNodeResponse) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SetNodeIPRequest) GetNodeId() string {
+func (x *GetNodeResponse) GetNodeId() string {
 	if x != nil {
 		return x.NodeId
 	}
 	return ""
 }
 
-func (x *SetNodeIPRequest) GetNodeIp() string {
+func (x *GetNodeResponse) GetNodeIp() string {
 	if x != nil {
 		return x.NodeIp
 	}
 	return ""
 }
 
-func (x *SetNodeIPRequest) GetMeshIp() string {
-	if x != nil {
-		return x.MeshIp
-	}
-	return ""
-}
-
-func (x *SetNodeIPRequest) GetNodePort() int32 {
+func (x *GetNodeResponse) GetNodePort() int32 {
 	if x != nil {
 		return x.NodePort
 	}
 	return 0
 }
 
-func (x *SetNodeIPRequest) GetMeshPort() int32 {
+type GetMeshRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMeshRequest) Reset() {
+	*x = GetMeshRequest{}
+	mi := &file_nns_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMeshRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMeshRequest) ProtoMessage() {}
+
+func (x *GetMeshRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMeshRequest.ProtoReflect.Descriptor instead.
+func (*GetMeshRequest) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{2}
+}
+
+type GetMeshResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MeshIp        string                 `protobuf:"bytes,1,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
+	MeshPort      int32                  `protobuf:"varint,2,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMeshResponse) Reset() {
+	*x = GetMeshResponse{}
+	mi := &file_nns_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMeshResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMeshResponse) ProtoMessage() {}
+
+func (x *GetMeshResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMeshResponse.ProtoReflect.Descriptor instead.
+func (*GetMeshResponse) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetMeshResponse) GetMeshIp() string {
+	if x != nil {
+		return x.MeshIp
+	}
+	return ""
+}
+
+func (x *GetMeshResponse) GetMeshPort() int32 {
 	if x != nil {
 		return x.MeshPort
 	}
 	return 0
 }
 
-func (x *SetNodeIPRequest) GetOrg() string {
-	if x != nil {
-		return x.Org
-	}
-	return ""
-}
-
-func (x *SetNodeIPRequest) GetSite() string {
-	if x != nil {
-		return x.Site
-	}
-	return ""
-}
-
-func (x *SetNodeIPRequest) GetNetwork() string {
-	if x != nil {
-		return x.Network
-	}
-	return ""
-}
-
-func (x *SetNodeIPRequest) GetMeshHostName() string {
-	if x != nil {
-		return x.MeshHostName
-	}
-	return ""
-}
-
-type SetNodeIPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetNodeIPResponse) Reset() {
-	*x = SetNodeIPResponse{}
-	mi := &file_nns_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetNodeIPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetNodeIPResponse) ProtoMessage() {}
-
-func (x *SetNodeIPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetNodeIPResponse.ProtoReflect.Descriptor instead.
-func (*SetNodeIPResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{5}
-}
-
-type ListNodeIPResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ips           []string               `protobuf:"bytes,1,rep,name=ips,proto3" json:"ips,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListNodeIPResponse) Reset() {
-	*x = ListNodeIPResponse{}
-	mi := &file_nns_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListNodeIPResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListNodeIPResponse) ProtoMessage() {}
-
-func (x *ListNodeIPResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListNodeIPResponse.ProtoReflect.Descriptor instead.
-func (*ListNodeIPResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *ListNodeIPResponse) GetIps() []string {
-	if x != nil {
-		return x.Ips
-	}
-	return nil
-}
-
-type ListNodeIPRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ListNodeIPRequest) Reset() {
-	*x = ListNodeIPRequest{}
-	mi := &file_nns_proto_msgTypes[7]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ListNodeIPRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ListNodeIPRequest) ProtoMessage() {}
-
-func (x *ListNodeIPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[7]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ListNodeIPRequest.ProtoReflect.Descriptor instead.
-func (*ListNodeIPRequest) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{7}
-}
-
-type DeleteNodeIPRequest struct {
+type SetRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	NodeIp        string                 `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
+	MeshIp        string                 `protobuf:"bytes,3,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
+	NodePort      int32                  `protobuf:"varint,4,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
+	MeshPort      int32                  `protobuf:"varint,5,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
+	Site          string                 `protobuf:"bytes,6,opt,name=site,proto3" json:"site,omitempty"`
+	Network       string                 `protobuf:"bytes,7,opt,name=network,proto3" json:"network,omitempty"`
+	MeshHostName  string                 `protobuf:"bytes,8,opt,name=meshHostName,proto3" json:"meshHostName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteNodeIPRequest) Reset() {
-	*x = DeleteNodeIPRequest{}
-	mi := &file_nns_proto_msgTypes[8]
+func (x *SetRequest) Reset() {
+	*x = SetRequest{}
+	mi := &file_nns_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteNodeIPRequest) String() string {
+func (x *SetRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteNodeIPRequest) ProtoMessage() {}
+func (*SetRequest) ProtoMessage() {}
 
-func (x *DeleteNodeIPRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[8]
+func (x *SetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -470,38 +260,271 @@ func (x *DeleteNodeIPRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteNodeIPRequest.ProtoReflect.Descriptor instead.
-func (*DeleteNodeIPRequest) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use SetRequest.ProtoReflect.Descriptor instead.
+func (*SetRequest) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *DeleteNodeIPRequest) GetNodeId() string {
+func (x *SetRequest) GetNodeId() string {
 	if x != nil {
 		return x.NodeId
 	}
 	return ""
 }
 
-type DeleteNodeIPResponse struct {
+func (x *SetRequest) GetNodeIp() string {
+	if x != nil {
+		return x.NodeIp
+	}
+	return ""
+}
+
+func (x *SetRequest) GetMeshIp() string {
+	if x != nil {
+		return x.MeshIp
+	}
+	return ""
+}
+
+func (x *SetRequest) GetNodePort() int32 {
+	if x != nil {
+		return x.NodePort
+	}
+	return 0
+}
+
+func (x *SetRequest) GetMeshPort() int32 {
+	if x != nil {
+		return x.MeshPort
+	}
+	return 0
+}
+
+func (x *SetRequest) GetSite() string {
+	if x != nil {
+		return x.Site
+	}
+	return ""
+}
+
+func (x *SetRequest) GetNetwork() string {
+	if x != nil {
+		return x.Network
+	}
+	return ""
+}
+
+func (x *SetRequest) GetMeshHostName() string {
+	if x != nil {
+		return x.MeshHostName
+	}
+	return ""
+}
+
+type SetResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteNodeIPResponse) Reset() {
-	*x = DeleteNodeIPResponse{}
+func (x *SetResponse) Reset() {
+	*x = SetResponse{}
+	mi := &file_nns_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetResponse) ProtoMessage() {}
+
+func (x *SetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetResponse.ProtoReflect.Descriptor instead.
+func (*SetResponse) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{5}
+}
+
+type UpdateMeshRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MeshIp        string                 `protobuf:"bytes,1,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
+	MeshPort      int32                  `protobuf:"varint,2,opt,name=meshPort,proto3" json:"meshPort,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMeshRequest) Reset() {
+	*x = UpdateMeshRequest{}
+	mi := &file_nns_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMeshRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMeshRequest) ProtoMessage() {}
+
+func (x *UpdateMeshRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMeshRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMeshRequest) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdateMeshRequest) GetMeshIp() string {
+	if x != nil {
+		return x.MeshIp
+	}
+	return ""
+}
+
+func (x *UpdateMeshRequest) GetMeshPort() int32 {
+	if x != nil {
+		return x.MeshPort
+	}
+	return 0
+}
+
+type UpdateMeshResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMeshResponse) Reset() {
+	*x = UpdateMeshResponse{}
+	mi := &file_nns_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMeshResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMeshResponse) ProtoMessage() {}
+
+func (x *UpdateMeshResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMeshResponse.ProtoReflect.Descriptor instead.
+func (*UpdateMeshResponse) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{7}
+}
+
+type UpdateNodeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
+	NodeIp        string                 `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
+	NodePort      int32                  `protobuf:"varint,3,opt,name=nodePort,proto3" json:"nodePort,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateNodeRequest) Reset() {
+	*x = UpdateNodeRequest{}
+	mi := &file_nns_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateNodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateNodeRequest) ProtoMessage() {}
+
+func (x *UpdateNodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateNodeRequest.ProtoReflect.Descriptor instead.
+func (*UpdateNodeRequest) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateNodeRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *UpdateNodeRequest) GetNodeIp() string {
+	if x != nil {
+		return x.NodeIp
+	}
+	return ""
+}
+
+func (x *UpdateNodeRequest) GetNodePort() int32 {
+	if x != nil {
+		return x.NodePort
+	}
+	return 0
+}
+
+type UpdateNodeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateNodeResponse) Reset() {
+	*x = UpdateNodeResponse{}
 	mi := &file_nns_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteNodeIPResponse) String() string {
+func (x *UpdateNodeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteNodeIPResponse) ProtoMessage() {}
+func (*UpdateNodeResponse) ProtoMessage() {}
 
-func (x *DeleteNodeIPResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateNodeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nns_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -513,31 +536,32 @@ func (x *DeleteNodeIPResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteNodeIPResponse.ProtoReflect.Descriptor instead.
-func (*DeleteNodeIPResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateNodeResponse.ProtoReflect.Descriptor instead.
+func (*UpdateNodeResponse) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{9}
 }
 
-type NodeOrgMapListRequest struct {
+type DeleteRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NodeOrgMapListRequest) Reset() {
-	*x = NodeOrgMapListRequest{}
+func (x *DeleteRequest) Reset() {
+	*x = DeleteRequest{}
 	mi := &file_nns_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NodeOrgMapListRequest) String() string {
+func (x *DeleteRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NodeOrgMapListRequest) ProtoMessage() {}
+func (*DeleteRequest) ProtoMessage() {}
 
-func (x *NodeOrgMapListRequest) ProtoReflect() protoreflect.Message {
+func (x *DeleteRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nns_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -549,12 +573,55 @@ func (x *NodeOrgMapListRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NodeOrgMapListRequest.ProtoReflect.Descriptor instead.
-func (*NodeOrgMapListRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRequest) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{10}
 }
 
-type NodeOrgMap struct {
+func (x *DeleteRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+type DeleteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteResponse) Reset() {
+	*x = DeleteResponse{}
+	mi := &file_nns_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteResponse) ProtoMessage() {}
+
+func (x *DeleteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteResponse.ProtoReflect.Descriptor instead.
+func (*DeleteResponse) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{11}
+}
+
+type OrgMap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	NodeIp        string                 `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
@@ -563,27 +630,27 @@ type NodeOrgMap struct {
 	Org           string                 `protobuf:"bytes,5,opt,name=org,proto3" json:"org,omitempty"`
 	Network       string                 `protobuf:"bytes,6,opt,name=network,proto3" json:"network,omitempty"`
 	Site          string                 `protobuf:"bytes,7,opt,name=site,proto3" json:"site,omitempty"`
-	Domainname    string                 `protobuf:"bytes,8,opt,name=domainname,proto3" json:"domainname,omitempty"`
+	MeshIp        string                 `protobuf:"bytes,8,opt,name=meshIp,proto3" json:"meshIp,omitempty"`
 	MeshHostName  string                 `protobuf:"bytes,9,opt,name=meshHostName,proto3" json:"meshHostName,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NodeOrgMap) Reset() {
-	*x = NodeOrgMap{}
-	mi := &file_nns_proto_msgTypes[11]
+func (x *OrgMap) Reset() {
+	*x = OrgMap{}
+	mi := &file_nns_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NodeOrgMap) String() string {
+func (x *OrgMap) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NodeOrgMap) ProtoMessage() {}
+func (*OrgMap) ProtoMessage() {}
 
-func (x *NodeOrgMap) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[11]
+func (x *OrgMap) ProtoReflect() protoreflect.Message {
+	mi := &file_nns_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -594,138 +661,94 @@ func (x *NodeOrgMap) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NodeOrgMap.ProtoReflect.Descriptor instead.
-func (*NodeOrgMap) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{11}
+// Deprecated: Use OrgMap.ProtoReflect.Descriptor instead.
+func (*OrgMap) Descriptor() ([]byte, []int) {
+	return file_nns_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *NodeOrgMap) GetNodeId() string {
+func (x *OrgMap) GetNodeId() string {
 	if x != nil {
 		return x.NodeId
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetNodeIp() string {
+func (x *OrgMap) GetNodeIp() string {
 	if x != nil {
 		return x.NodeIp
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetNodePort() int32 {
+func (x *OrgMap) GetNodePort() int32 {
 	if x != nil {
 		return x.NodePort
 	}
 	return 0
 }
 
-func (x *NodeOrgMap) GetMeshPort() int32 {
+func (x *OrgMap) GetMeshPort() int32 {
 	if x != nil {
 		return x.MeshPort
 	}
 	return 0
 }
 
-func (x *NodeOrgMap) GetOrg() string {
+func (x *OrgMap) GetOrg() string {
 	if x != nil {
 		return x.Org
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetNetwork() string {
+func (x *OrgMap) GetNetwork() string {
 	if x != nil {
 		return x.Network
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetSite() string {
+func (x *OrgMap) GetSite() string {
 	if x != nil {
 		return x.Site
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetDomainname() string {
+func (x *OrgMap) GetMeshIp() string {
 	if x != nil {
-		return x.Domainname
+		return x.MeshIp
 	}
 	return ""
 }
 
-func (x *NodeOrgMap) GetMeshHostName() string {
+func (x *OrgMap) GetMeshHostName() string {
 	if x != nil {
 		return x.MeshHostName
 	}
 	return ""
 }
 
-type NodeOrgMapListResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Map           []*NodeOrgMap          `protobuf:"bytes,1,rep,name=map,proto3" json:"map,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *NodeOrgMapListResponse) Reset() {
-	*x = NodeOrgMapListResponse{}
-	mi := &file_nns_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *NodeOrgMapListResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeOrgMapListResponse) ProtoMessage() {}
-
-func (x *NodeOrgMapListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeOrgMapListResponse.ProtoReflect.Descriptor instead.
-func (*NodeOrgMapListResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *NodeOrgMapListResponse) GetMap() []*NodeOrgMap {
-	if x != nil {
-		return x.Map
-	}
-	return nil
-}
-
-type NodeIPMapListRequest struct {
+type ListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NodeIPMapListRequest) Reset() {
-	*x = NodeIPMapListRequest{}
+func (x *ListRequest) Reset() {
+	*x = ListRequest{}
 	mi := &file_nns_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NodeIPMapListRequest) String() string {
+func (x *ListRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NodeIPMapListRequest) ProtoMessage() {}
+func (*ListRequest) ProtoMessage() {}
 
-func (x *NodeIPMapListRequest) ProtoReflect() protoreflect.Message {
+func (x *ListRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_nns_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -737,33 +760,32 @@ func (x *NodeIPMapListRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NodeIPMapListRequest.ProtoReflect.Descriptor instead.
-func (*NodeIPMapListRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
+func (*ListRequest) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{13}
 }
 
-type NodeIPMap struct {
+type ListResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
-	NodeIp        string                 `protobuf:"bytes,2,opt,name=nodeIp,proto3" json:"nodeIp,omitempty"`
+	List          []*OrgMap              `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NodeIPMap) Reset() {
-	*x = NodeIPMap{}
+func (x *ListResponse) Reset() {
+	*x = ListResponse{}
 	mi := &file_nns_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NodeIPMap) String() string {
+func (x *ListResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NodeIPMap) ProtoMessage() {}
+func (*ListResponse) ProtoMessage() {}
 
-func (x *NodeIPMap) ProtoReflect() protoreflect.Message {
+func (x *ListResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_nns_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -775,65 +797,14 @@ func (x *NodeIPMap) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NodeIPMap.ProtoReflect.Descriptor instead.
-func (*NodeIPMap) Descriptor() ([]byte, []int) {
+// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
+func (*ListResponse) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *NodeIPMap) GetNodeId() string {
+func (x *ListResponse) GetList() []*OrgMap {
 	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *NodeIPMap) GetNodeIp() string {
-	if x != nil {
-		return x.NodeIp
-	}
-	return ""
-}
-
-type NodeIPMapListResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Map           []*NodeIPMap           `protobuf:"bytes,1,rep,name=map,proto3" json:"map,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *NodeIPMapListResponse) Reset() {
-	*x = NodeIPMapListResponse{}
-	mi := &file_nns_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *NodeIPMapListResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*NodeIPMapListResponse) ProtoMessage() {}
-
-func (x *NodeIPMapListResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_nns_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use NodeIPMapListResponse.ProtoReflect.Descriptor instead.
-func (*NodeIPMapListResponse) Descriptor() ([]byte, []int) {
-	return file_nns_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *NodeIPMapListResponse) GetMap() []*NodeIPMap {
-	if x != nil {
-		return x.Map
+		return x.List
 	}
 	return nil
 }
@@ -842,38 +813,43 @@ var File_nns_proto protoreflect.FileDescriptor
 
 const file_nns_proto_rawDesc = "" +
 	"\n" +
-	"\tnns.proto\x12\x16ukama.messaging.nns.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x0fvalidator.proto\"*\n" +
-	"\x10GetMeshIPRequest\x12\x16\n" +
-	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\"7\n" +
-	"\x11GetMeshIPResponse\x12\x0e\n" +
-	"\x02ip\x18\x01 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x02 \x01(\x05R\x04port\"*\n" +
-	"\x10GetNodeIPRequest\x12\x16\n" +
-	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\"#\n" +
-	"\x11GetNodeIPResponse\x12\x0e\n" +
-	"\x02ip\x18\x01 \x01(\tR\x02ip\"\xe6\x03\n" +
-	"\x10SetNodeIPRequest\x12\x1e\n" +
+	"\tnns.proto\x12\x16ukama.messaging.nns.v1\x1a\x0fvalidator.proto\"0\n" +
+	"\x0eGetNodeRequest\x12\x1e\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\"]\n" +
+	"\x0fGetNodeResponse\x12\x16\n" +
+	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\x12\x16\n" +
+	"\x06nodeIp\x18\x02 \x01(\tR\x06nodeIp\x12\x1a\n" +
+	"\bnodePort\x18\x03 \x01(\x05R\bnodePort\"\x10\n" +
+	"\x0eGetMeshRequest\"E\n" +
+	"\x0fGetMeshResponse\x12\x16\n" +
+	"\x06meshIp\x18\x01 \x01(\tR\x06meshIp\x12\x1a\n" +
+	"\bmeshPort\x18\x02 \x01(\x05R\bmeshPort\"\xce\x03\n" +
+	"\n" +
+	"SetRequest\x12\x1e\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\x12\x89\x01\n" +
 	"\x06nodeIp\x18\x02 \x01(\tBq\xe2\xdf\x1fm\n" +
 	"i^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$X\x01R\x06nodeIp\x12\x89\x01\n" +
 	"\x06meshIp\x18\x03 \x01(\tBq\xe2\xdf\x1fm\n" +
 	"i^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$X\x01R\x06meshIp\x12\x1a\n" +
 	"\bnodePort\x18\x04 \x01(\x05R\bnodePort\x12\x1a\n" +
-	"\bmeshPort\x18\x05 \x01(\x05R\bmeshPort\x12\x10\n" +
-	"\x03org\x18\x06 \x01(\tR\x03org\x12\x12\n" +
-	"\x04site\x18\a \x01(\tR\x04site\x12\x18\n" +
-	"\anetwork\x18\b \x01(\tR\anetwork\x12\"\n" +
-	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"\x13\n" +
-	"\x11SetNodeIPResponse\"&\n" +
-	"\x12ListNodeIPResponse\x12\x10\n" +
-	"\x03ips\x18\x01 \x03(\tR\x03ips\"\x13\n" +
-	"\x11ListNodeIPRequest\"5\n" +
-	"\x13DeleteNodeIPRequest\x12\x1e\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\"\x16\n" +
-	"\x14DeleteNodeIPResponse\"\x17\n" +
-	"\x15NodeOrgMapListRequest\"\xf4\x02\n" +
-	"\n" +
-	"NodeOrgMap\x12\x1e\n" +
+	"\bmeshPort\x18\x05 \x01(\x05R\bmeshPort\x12\x12\n" +
+	"\x04site\x18\x06 \x01(\tR\x04site\x12\x18\n" +
+	"\anetwork\x18\a \x01(\tR\anetwork\x12\"\n" +
+	"\fmeshHostName\x18\b \x01(\tR\fmeshHostName\"\r\n" +
+	"\vSetResponse\"W\n" +
+	"\x11UpdateMeshRequest\x12\x1e\n" +
+	"\x06meshIp\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06meshIp\x12\"\n" +
+	"\bmeshPort\x18\x02 \x01(\x05B\x06\xe2\xdf\x1f\x02X\x01R\bmeshPort\"\x14\n" +
+	"\x12UpdateMeshResponse\"w\n" +
+	"\x11UpdateNodeRequest\x12\x1e\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\x12\x1e\n" +
+	"\x06nodeIp\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeIp\x12\"\n" +
+	"\bnodePort\x18\x03 \x01(\x05B\x06\xe2\xdf\x1f\x02X\x01R\bnodePort\"\x14\n" +
+	"\x12UpdateNodeResponse\"/\n" +
+	"\rDeleteRequest\x12\x1e\n" +
+	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\"\x10\n" +
+	"\x0eDeleteResponse\"\xe8\x02\n" +
+	"\x06OrgMap\x12\x1e\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\x12\x89\x01\n" +
 	"\x06nodeIp\x18\x02 \x01(\tBq\xe2\xdf\x1fm\n" +
 	"i^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$X\x01R\x06nodeIp\x12\x1a\n" +
@@ -881,28 +857,22 @@ const file_nns_proto_rawDesc = "" +
 	"\bmeshPort\x18\x04 \x01(\x05R\bmeshPort\x12\x10\n" +
 	"\x03org\x18\x05 \x01(\tR\x03org\x12\x18\n" +
 	"\anetwork\x18\x06 \x01(\tR\anetwork\x12\x12\n" +
-	"\x04site\x18\a \x01(\tR\x04site\x12\x1e\n" +
-	"\n" +
-	"domainname\x18\b \x01(\tR\n" +
-	"domainname\x12\"\n" +
-	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"N\n" +
-	"\x16NodeOrgMapListResponse\x124\n" +
-	"\x03map\x18\x01 \x03(\v2\".ukama.messaging.nns.v1.NodeOrgMapR\x03map\"\x16\n" +
-	"\x14NodeIPMapListRequest\"\xb7\x01\n" +
-	"\tNodeIPMap\x12\x1e\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06nodeId\x12\x89\x01\n" +
-	"\x06nodeIp\x18\x02 \x01(\tBq\xe2\xdf\x1fm\n" +
-	"i^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$X\x01R\x06nodeIp\"L\n" +
-	"\x15NodeIPMapListResponse\x123\n" +
-	"\x03map\x18\x01 \x03(\v2!.ukama.messaging.nns.v1.NodeIPMapR\x03map2\xdf\x05\n" +
+	"\x04site\x18\a \x01(\tR\x04site\x12\x16\n" +
+	"\x06meshIp\x18\b \x01(\tR\x06meshIp\x12\"\n" +
+	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"\r\n" +
+	"\vListRequest\"B\n" +
+	"\fListResponse\x122\n" +
+	"\x04list\x18\x01 \x03(\v2\x1e.ukama.messaging.nns.v1.OrgMapR\x04list2\x83\x05\n" +
 	"\x03Nns\x12Z\n" +
-	"\x03Get\x12(.ukama.messaging.nns.v1.GetNodeIPRequest\x1a).ukama.messaging.nns.v1.GetNodeIPResponse\x12Z\n" +
-	"\x03Set\x12(.ukama.messaging.nns.v1.SetNodeIPRequest\x1a).ukama.messaging.nns.v1.SetNodeIPResponse\x12c\n" +
-	"\x06Delete\x12+.ukama.messaging.nns.v1.DeleteNodeIPRequest\x1a,.ukama.messaging.nns.v1.DeleteNodeIPResponse\x12r\n" +
-	"\x11GetNodeOrgMapList\x12-.ukama.messaging.nns.v1.NodeOrgMapListRequest\x1a..ukama.messaging.nns.v1.NodeOrgMapListResponse\x12o\n" +
-	"\x10GetNodeIPMapList\x12,.ukama.messaging.nns.v1.NodeIPMapListRequest\x1a-.ukama.messaging.nns.v1.NodeIPMapListResponse\x12^\n" +
-	"\aGetMesh\x12(.ukama.messaging.nns.v1.GetMeshIPRequest\x1a).ukama.messaging.nns.v1.GetMeshIPResponse\x12v\n" +
-	"\x04List\x12).ukama.messaging.nns.v1.ListNodeIPRequest\x1a*.ukama.messaging.nns.v1.ListNodeIPResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/v1/nns/listB9Z7github.com/ukama/ukama/systems/messaging/nns/pb/gen;genb\x06proto3"
+	"\aGetNode\x12&.ukama.messaging.nns.v1.GetNodeRequest\x1a'.ukama.messaging.nns.v1.GetNodeResponse\x12Z\n" +
+	"\aGetMesh\x12&.ukama.messaging.nns.v1.GetMeshRequest\x1a'.ukama.messaging.nns.v1.GetMeshResponse\x12N\n" +
+	"\x03Set\x12\".ukama.messaging.nns.v1.SetRequest\x1a#.ukama.messaging.nns.v1.SetResponse\x12c\n" +
+	"\n" +
+	"UpdateMesh\x12).ukama.messaging.nns.v1.UpdateMeshRequest\x1a*.ukama.messaging.nns.v1.UpdateMeshResponse\x12c\n" +
+	"\n" +
+	"UpdateNode\x12).ukama.messaging.nns.v1.UpdateNodeRequest\x1a*.ukama.messaging.nns.v1.UpdateNodeResponse\x12W\n" +
+	"\x06Delete\x12%.ukama.messaging.nns.v1.DeleteRequest\x1a&.ukama.messaging.nns.v1.DeleteResponse\x12Q\n" +
+	"\x04List\x12#.ukama.messaging.nns.v1.ListRequest\x1a$.ukama.messaging.nns.v1.ListResponseB5Z3github.com/ukama/ukama/systems/messaging/nns/pb/genb\x06proto3"
 
 var (
 	file_nns_proto_rawDescOnce sync.Once
@@ -916,47 +886,45 @@ func file_nns_proto_rawDescGZIP() []byte {
 	return file_nns_proto_rawDescData
 }
 
-var file_nns_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_nns_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_nns_proto_goTypes = []any{
-	(*GetMeshIPRequest)(nil),       // 0: ukama.messaging.nns.v1.GetMeshIPRequest
-	(*GetMeshIPResponse)(nil),      // 1: ukama.messaging.nns.v1.GetMeshIPResponse
-	(*GetNodeIPRequest)(nil),       // 2: ukama.messaging.nns.v1.GetNodeIPRequest
-	(*GetNodeIPResponse)(nil),      // 3: ukama.messaging.nns.v1.GetNodeIPResponse
-	(*SetNodeIPRequest)(nil),       // 4: ukama.messaging.nns.v1.SetNodeIPRequest
-	(*SetNodeIPResponse)(nil),      // 5: ukama.messaging.nns.v1.SetNodeIPResponse
-	(*ListNodeIPResponse)(nil),     // 6: ukama.messaging.nns.v1.ListNodeIPResponse
-	(*ListNodeIPRequest)(nil),      // 7: ukama.messaging.nns.v1.ListNodeIPRequest
-	(*DeleteNodeIPRequest)(nil),    // 8: ukama.messaging.nns.v1.DeleteNodeIPRequest
-	(*DeleteNodeIPResponse)(nil),   // 9: ukama.messaging.nns.v1.DeleteNodeIPResponse
-	(*NodeOrgMapListRequest)(nil),  // 10: ukama.messaging.nns.v1.NodeOrgMapListRequest
-	(*NodeOrgMap)(nil),             // 11: ukama.messaging.nns.v1.NodeOrgMap
-	(*NodeOrgMapListResponse)(nil), // 12: ukama.messaging.nns.v1.NodeOrgMapListResponse
-	(*NodeIPMapListRequest)(nil),   // 13: ukama.messaging.nns.v1.NodeIPMapListRequest
-	(*NodeIPMap)(nil),              // 14: ukama.messaging.nns.v1.NodeIPMap
-	(*NodeIPMapListResponse)(nil),  // 15: ukama.messaging.nns.v1.NodeIPMapListResponse
+	(*GetNodeRequest)(nil),     // 0: ukama.messaging.nns.v1.GetNodeRequest
+	(*GetNodeResponse)(nil),    // 1: ukama.messaging.nns.v1.GetNodeResponse
+	(*GetMeshRequest)(nil),     // 2: ukama.messaging.nns.v1.GetMeshRequest
+	(*GetMeshResponse)(nil),    // 3: ukama.messaging.nns.v1.GetMeshResponse
+	(*SetRequest)(nil),         // 4: ukama.messaging.nns.v1.SetRequest
+	(*SetResponse)(nil),        // 5: ukama.messaging.nns.v1.SetResponse
+	(*UpdateMeshRequest)(nil),  // 6: ukama.messaging.nns.v1.UpdateMeshRequest
+	(*UpdateMeshResponse)(nil), // 7: ukama.messaging.nns.v1.UpdateMeshResponse
+	(*UpdateNodeRequest)(nil),  // 8: ukama.messaging.nns.v1.UpdateNodeRequest
+	(*UpdateNodeResponse)(nil), // 9: ukama.messaging.nns.v1.UpdateNodeResponse
+	(*DeleteRequest)(nil),      // 10: ukama.messaging.nns.v1.DeleteRequest
+	(*DeleteResponse)(nil),     // 11: ukama.messaging.nns.v1.DeleteResponse
+	(*OrgMap)(nil),             // 12: ukama.messaging.nns.v1.OrgMap
+	(*ListRequest)(nil),        // 13: ukama.messaging.nns.v1.ListRequest
+	(*ListResponse)(nil),       // 14: ukama.messaging.nns.v1.ListResponse
 }
 var file_nns_proto_depIdxs = []int32{
-	11, // 0: ukama.messaging.nns.v1.NodeOrgMapListResponse.map:type_name -> ukama.messaging.nns.v1.NodeOrgMap
-	14, // 1: ukama.messaging.nns.v1.NodeIPMapListResponse.map:type_name -> ukama.messaging.nns.v1.NodeIPMap
-	2,  // 2: ukama.messaging.nns.v1.Nns.Get:input_type -> ukama.messaging.nns.v1.GetNodeIPRequest
-	4,  // 3: ukama.messaging.nns.v1.Nns.Set:input_type -> ukama.messaging.nns.v1.SetNodeIPRequest
-	8,  // 4: ukama.messaging.nns.v1.Nns.Delete:input_type -> ukama.messaging.nns.v1.DeleteNodeIPRequest
-	10, // 5: ukama.messaging.nns.v1.Nns.GetNodeOrgMapList:input_type -> ukama.messaging.nns.v1.NodeOrgMapListRequest
-	13, // 6: ukama.messaging.nns.v1.Nns.GetNodeIPMapList:input_type -> ukama.messaging.nns.v1.NodeIPMapListRequest
-	0,  // 7: ukama.messaging.nns.v1.Nns.GetMesh:input_type -> ukama.messaging.nns.v1.GetMeshIPRequest
-	7,  // 8: ukama.messaging.nns.v1.Nns.List:input_type -> ukama.messaging.nns.v1.ListNodeIPRequest
-	3,  // 9: ukama.messaging.nns.v1.Nns.Get:output_type -> ukama.messaging.nns.v1.GetNodeIPResponse
-	5,  // 10: ukama.messaging.nns.v1.Nns.Set:output_type -> ukama.messaging.nns.v1.SetNodeIPResponse
-	9,  // 11: ukama.messaging.nns.v1.Nns.Delete:output_type -> ukama.messaging.nns.v1.DeleteNodeIPResponse
-	12, // 12: ukama.messaging.nns.v1.Nns.GetNodeOrgMapList:output_type -> ukama.messaging.nns.v1.NodeOrgMapListResponse
-	15, // 13: ukama.messaging.nns.v1.Nns.GetNodeIPMapList:output_type -> ukama.messaging.nns.v1.NodeIPMapListResponse
-	1,  // 14: ukama.messaging.nns.v1.Nns.GetMesh:output_type -> ukama.messaging.nns.v1.GetMeshIPResponse
-	6,  // 15: ukama.messaging.nns.v1.Nns.List:output_type -> ukama.messaging.nns.v1.ListNodeIPResponse
-	9,  // [9:16] is the sub-list for method output_type
-	2,  // [2:9] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	12, // 0: ukama.messaging.nns.v1.ListResponse.list:type_name -> ukama.messaging.nns.v1.OrgMap
+	0,  // 1: ukama.messaging.nns.v1.Nns.GetNode:input_type -> ukama.messaging.nns.v1.GetNodeRequest
+	2,  // 2: ukama.messaging.nns.v1.Nns.GetMesh:input_type -> ukama.messaging.nns.v1.GetMeshRequest
+	4,  // 3: ukama.messaging.nns.v1.Nns.Set:input_type -> ukama.messaging.nns.v1.SetRequest
+	6,  // 4: ukama.messaging.nns.v1.Nns.UpdateMesh:input_type -> ukama.messaging.nns.v1.UpdateMeshRequest
+	8,  // 5: ukama.messaging.nns.v1.Nns.UpdateNode:input_type -> ukama.messaging.nns.v1.UpdateNodeRequest
+	10, // 6: ukama.messaging.nns.v1.Nns.Delete:input_type -> ukama.messaging.nns.v1.DeleteRequest
+	13, // 7: ukama.messaging.nns.v1.Nns.List:input_type -> ukama.messaging.nns.v1.ListRequest
+	1,  // 8: ukama.messaging.nns.v1.Nns.GetNode:output_type -> ukama.messaging.nns.v1.GetNodeResponse
+	3,  // 9: ukama.messaging.nns.v1.Nns.GetMesh:output_type -> ukama.messaging.nns.v1.GetMeshResponse
+	5,  // 10: ukama.messaging.nns.v1.Nns.Set:output_type -> ukama.messaging.nns.v1.SetResponse
+	7,  // 11: ukama.messaging.nns.v1.Nns.UpdateMesh:output_type -> ukama.messaging.nns.v1.UpdateMeshResponse
+	9,  // 12: ukama.messaging.nns.v1.Nns.UpdateNode:output_type -> ukama.messaging.nns.v1.UpdateNodeResponse
+	11, // 13: ukama.messaging.nns.v1.Nns.Delete:output_type -> ukama.messaging.nns.v1.DeleteResponse
+	14, // 14: ukama.messaging.nns.v1.Nns.List:output_type -> ukama.messaging.nns.v1.ListResponse
+	8,  // [8:15] is the sub-list for method output_type
+	1,  // [1:8] is the sub-list for method input_type
+	1,  // [1:1] is the sub-list for extension type_name
+	1,  // [1:1] is the sub-list for extension extendee
+	0,  // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_nns_proto_init() }
@@ -970,7 +938,7 @@ func file_nns_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_nns_proto_rawDesc), len(file_nns_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

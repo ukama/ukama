@@ -8,26 +8,37 @@
 
 package rest
 
-type GetNodeIPRequest struct {
-	NodeId string `path:"node_id" validate:"required"`
+type GetNodeRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type SetNodeIPRequest struct {
-	NodeId   string `path:"node_id" validate:"required"`
-	NodeIp   string `json:"node_ip" validate:"required"`
+type GetMeshRequest struct{}
+
+type SetNodeRequest struct {
+	NodeId       string `json:"node_id" validate:"required"`
+	NodeIp       string `json:"node_ip" validate:"required"`
+	MeshIp       string `json:"mesh_ip" validate:"required"`
+	NodePort     int32  `json:"node_port" validate:"required"`
+	MeshPort     int32  `json:"mesh_port" validate:"required"`
+	Network      string `json:"network"`
+	Site         string `json:"site"`
+	MeshHostName string `json:"mesh_host_name"`
+}
+
+type UpdateMeshRequest struct {
 	MeshIp   string `json:"mesh_ip" validate:"required"`
-	NodePort int32  `json:"node_port" validate:"required"`
 	MeshPort int32  `json:"mesh_port" validate:"required"`
-	Org      string `json:"org" validate:"required"`
-	Network  string `json:"network"`
 }
 
-type DeleteNodeIPRequest struct {
-	NodeId string `path:"node_id" validate:"required"`
+type UpdateNodeRequest struct {
+	NodeId   string `json:"node_id" validate:"required" path:"node_id"`
+	NodeIp   string `json:"node_ip" validate:"required"`
+	NodePort int32  `json:"node_port" validate:"required"`
 }
 
-type ListNodeIPsRequest struct {
+type DeleteRequest struct {
+	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type NodeOrgMapListRequest struct {
+type ListRequest struct {
 }

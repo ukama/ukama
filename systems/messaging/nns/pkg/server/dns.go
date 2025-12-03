@@ -101,7 +101,7 @@ func (d *DnsServer) resolveIp(ctx context.Context, name string) (net.IP, error) 
 		log.Errorf("failed to get node: %v", err)
 		return nil, err
 	}
-	ip := net.ParseIP(ndIpResp)
+	ip := net.ParseIP(ndIpResp.NodeIp)
 	if ip == nil {
 		log.Errorf("failed to parse ip from DB: %v", err)
 		return nil, err

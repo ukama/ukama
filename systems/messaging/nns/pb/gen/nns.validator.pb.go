@@ -7,7 +7,6 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
@@ -18,33 +17,36 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetMeshIPRequest) Validate() error {
-	return nil
-}
-func (this *GetMeshIPResponse) Validate() error {
-	return nil
-}
-func (this *GetNodeIPRequest) Validate() error {
-	return nil
-}
-func (this *GetNodeIPResponse) Validate() error {
-	return nil
-}
-
-var _regex_SetNodeIPRequest_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-var _regex_SetNodeIPRequest_MeshIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-
-func (this *SetNodeIPRequest) Validate() error {
+func (this *GetNodeRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if !_regex_SetNodeIPRequest_NodeIp.MatchString(this.NodeIp) {
+	return nil
+}
+func (this *GetNodeResponse) Validate() error {
+	return nil
+}
+func (this *GetMeshRequest) Validate() error {
+	return nil
+}
+func (this *GetMeshResponse) Validate() error {
+	return nil
+}
+
+var _regex_SetRequest_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+var _regex_SetRequest_MeshIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+
+func (this *SetRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if !_regex_SetRequest_NodeIp.MatchString(this.NodeIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
 	}
 	if this.NodeIp == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIp))
 	}
-	if !_regex_SetNodeIPRequest_MeshIp.MatchString(this.MeshIp) {
+	if !_regex_SetRequest_MeshIp.MatchString(this.MeshIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("MeshIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.MeshIp))
 	}
 	if this.MeshIp == "" {
@@ -52,35 +54,47 @@ func (this *SetNodeIPRequest) Validate() error {
 	}
 	return nil
 }
-func (this *SetNodeIPResponse) Validate() error {
+func (this *SetResponse) Validate() error {
 	return nil
 }
-func (this *ListNodeIPResponse) Validate() error {
+func (this *UpdateMeshRequest) Validate() error {
+	if this.MeshIp == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("MeshIp", fmt.Errorf(`value '%v' must not be an empty string`, this.MeshIp))
+	}
 	return nil
 }
-func (this *ListNodeIPRequest) Validate() error {
+func (this *UpdateMeshResponse) Validate() error {
 	return nil
 }
-func (this *DeleteNodeIPRequest) Validate() error {
+func (this *UpdateNodeRequest) Validate() error {
+	if this.NodeId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+	}
+	if this.NodeIp == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIp))
+	}
+	return nil
+}
+func (this *UpdateNodeResponse) Validate() error {
+	return nil
+}
+func (this *DeleteRequest) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
 	return nil
 }
-func (this *DeleteNodeIPResponse) Validate() error {
-	return nil
-}
-func (this *NodeOrgMapListRequest) Validate() error {
+func (this *DeleteResponse) Validate() error {
 	return nil
 }
 
-var _regex_NodeOrgMap_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
+var _regex_OrgMap_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
 
-func (this *NodeOrgMap) Validate() error {
+func (this *OrgMap) Validate() error {
 	if this.NodeId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
 	}
-	if !_regex_NodeOrgMap_NodeIp.MatchString(this.NodeIp) {
+	if !_regex_OrgMap_NodeIp.MatchString(this.NodeIp) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
 	}
 	if this.NodeIp == "" {
@@ -88,39 +102,14 @@ func (this *NodeOrgMap) Validate() error {
 	}
 	return nil
 }
-func (this *NodeOrgMapListResponse) Validate() error {
-	for _, item := range this.Map {
+func (this *ListRequest) Validate() error {
+	return nil
+}
+func (this *ListResponse) Validate() error {
+	for _, item := range this.List {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Map", err)
-			}
-		}
-	}
-	return nil
-}
-func (this *NodeIPMapListRequest) Validate() error {
-	return nil
-}
-
-var _regex_NodeIPMap_NodeIp = regexp.MustCompile(`^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`)
-
-func (this *NodeIPMap) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if !_regex_NodeIPMap_NodeIp.MatchString(this.NodeIp) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must be a string conforming to regex "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"`, this.NodeIp))
-	}
-	if this.NodeIp == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeIp", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeIp))
-	}
-	return nil
-}
-func (this *NodeIPMapListResponse) Validate() error {
-	for _, item := range this.Map {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Map", err)
+				return github_com_mwitkow_go_proto_validators.FieldError("List", err)
 			}
 		}
 	}

@@ -8,6 +8,8 @@
 
 syntax = "proto3";
 
+package ukama.events.v1;
+
 message MeshRegisterEvent {
 
     string ip   = 1;

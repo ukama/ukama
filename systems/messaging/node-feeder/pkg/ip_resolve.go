@@ -44,9 +44,9 @@ func NewNodeIpResolver(netHost string, timeoutSecond int) (*nodeIpResolver, erro
 func (r *nodeIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
-	res, err := r.netClient.Get(ctx, &pb.GetNodeIPRequest{NodeId: nodeId.String()})
+	res, err := r.netClient.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
 	if err != nil {
 		return "", err
 	}
-	return res.Ip, nil
+	return res.NodeIp, nil
 }
