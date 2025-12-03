@@ -69,7 +69,7 @@ func (h *componentScheduler) Start(tag string, taskFunc any, params ...any) erro
 }
 
 func (h *componentScheduler) Stop() error {
-	log.Infof("Stoping scheduler")
+	log.Infof("Stopping scheduler")
 
 	if h.s.IsRunning() {
 		h.s.Stop()
