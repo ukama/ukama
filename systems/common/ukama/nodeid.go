@@ -222,6 +222,19 @@ func GetNodeType(n string) *string {
 	return nodeType
 }
 
+func GetPlaceholderNameByType(nodeType string) string {
+	switch nodeType {
+	case NODE_ID_TYPE_HOMENODE:
+		return "Home Node"
+	case NODE_ID_TYPE_TOWERNODE:
+		return "Tower Node"
+	case NODE_ID_TYPE_AMPNODE:
+		return "Amplifier Node"
+	default:
+		return "Undefined Node"
+	}
+}
+
 func ValidateNodeId(id string) (NodeID, error) {
 	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {

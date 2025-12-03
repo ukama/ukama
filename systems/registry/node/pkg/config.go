@@ -73,6 +73,7 @@ func NewConfig(name string) *Config {
 				"event.cloud.local.{{ .Org}}.node.notify.notification.store",
 				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
+				"event.cloud.local.{{ .Org}}.inventory.component.node.added",
 			},
 		},
 	}
