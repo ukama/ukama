@@ -44,7 +44,7 @@ type NodeComponentDetails struct {
 	Managed       string                  `default:"true"`
 	Category      ukama.ComponentCategory `default:"ACCESS"`
 	Manufacturer  string                  `default:"Ukama Inc"`
-	Inventory     string                  `default:"ukma-access"`
+	Inventory     string                  `default:"ukama-access"`
 	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
 }
 
