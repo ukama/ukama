@@ -41,10 +41,17 @@ const (
 )
 
 const (
-	node_id_type_component_home      = "hnode"
-	node_id_type_component_tower     = "tnode"
-	node_id_type_component_amplifier = "anode"
+	placeholder_component_type_home      = "Home node"
+	placeholder_component_type_tower     = "Tower node"
+	placeholder_component_type_amplifier = "Amplifier node"
+	placeholder_component_type_undefined = "Undefined node"
 )
+
+var nodeTypeToPlaceholderName = map[string]string{
+	NODE_ID_TYPE_HOMENODE:  placeholder_component_type_home,
+	NODE_ID_TYPE_TOWERNODE: placeholder_component_type_tower,
+	NODE_ID_TYPE_AMPNODE:   placeholder_component_type_amplifier,
+}
 
 type NodeID string
 
@@ -69,13 +76,13 @@ func (m ModuleID) StringLowercase() string {
 func (n NodeID) GetNodeType() string {
 	t := n.String()[CODE_IDX : CODE_IDX+strings.IndexRune(n.String()[CODE_IDX:], '-')]
 	switch strings.ToLower(t) {
-	case node_id_type_component_home:
+	case NODE_ID_TYPE_HOMENODE:
 		return NODE_ID_TYPE_HOMENODE
 
-	case node_id_type_component_amplifier:
+	case NODE_ID_TYPE_AMPNODE:
 		return NODE_ID_TYPE_AMPNODE
 
-	case node_id_type_component_tower:
+	case NODE_ID_TYPE_TOWERNODE:
 		return NODE_ID_TYPE_TOWERNODE
 	default:
 		return NODE_ID_TYPE_UNDEFINED
@@ -222,6 +229,13 @@ func GetNodeType(n string) *string {
 	return nodeType
 }
 
+func GetPlaceholderNameByType(nodeType string) string {
+	if name, ok := nodeTypeToPlaceholderName[strings.ToLower(nodeType)]; ok {
+		return name
+	}
+	return placeholder_component_type_undefined
+}
+
 func ValidateNodeId(id string) (NodeID, error) {
 	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {
@@ -231,9 +245,9 @@ func ValidateNodeId(id string) (NodeID, error) {
 
 	/* Check for HW codes */
 	codes := [...]string{
-		node_id_type_component_home,
-		node_id_type_component_amplifier,
-		node_id_type_component_tower}
+		NODE_ID_TYPE_HOMENODE,
+		NODE_ID_TYPE_AMPNODE,
+		NODE_ID_TYPE_TOWERNODE}
 	match := false
 	for _, code := range codes {
 		if strings.Contains(strings.ToLower(id), code) {
