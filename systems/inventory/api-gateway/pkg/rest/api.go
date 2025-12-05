@@ -34,3 +34,11 @@ type ListComponentsReq struct {
 	PartNumber string `form:"part_number" json:"part_number" query:"part_number" binding:"required"`
 	Category   string `form:"category" default:"all" json:"category" query:"category" binding:"required" validate:"eq=all|eq=access|eq=backhaul|eq=power|eq=switch|eq=spectrum"`
 }
+
+type VerifyRequest struct {
+	PartNumber string `example:"{{ComponentPartNumber}}" path:"part_number" validate:"required"`
+}
+
+type StartSchedulerRequest struct{}
+
+type StopSchedulerRequest struct{}

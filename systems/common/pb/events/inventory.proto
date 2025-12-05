@@ -1,0 +1,20 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2025-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+message EventInventoryNodeComponentAdd {
+    string id = 1;
+    string type = 2 [json_name = "type"];
+    string userId = 3 [json_name = "user_id"];
+    string partNumber = 4 [json_name = "part_number"];
+}

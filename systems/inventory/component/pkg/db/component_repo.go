@@ -19,7 +19,7 @@ type ComponentRepo interface {
 	// Deprecated: This function is deprecated and will be removed in a future version. Use List instead.
 	GetByUser(userId string, category int32) ([]*Component, error)
 	//
-
+	Verify(partNumber string) (*Component, error)
 	Get(id uuid.UUID) (*Component, error)
 	Add(components []*Component) error
 	List(userId, partNumber string, category int32) ([]*Component, error)
@@ -34,6 +34,15 @@ func NewComponentRepo(db sql.Db) ComponentRepo {
 	return &componentRepo{
 		Db: db,
 	}
+}
+
+func (c *componentRepo) Verify(partNumber string) (*Component, error) {
+	var component Component
+	err := c.Db.GetGormDb().Where("part_number = ?", partNumber).First(&component).Error
+	if err != nil {
+		return nil, err
+	}
+	return &component, nil
 }
 
 func (c *componentRepo) Get(id uuid.UUID) (*Component, error) {

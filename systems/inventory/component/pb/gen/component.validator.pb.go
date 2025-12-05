@@ -15,6 +15,24 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
+func (this *StartSchedulerRequest) Validate() error {
+	return nil
+}
+func (this *StartSchedulerResponse) Validate() error {
+	return nil
+}
+func (this *StopSchedulerRequest) Validate() error {
+	return nil
+}
+func (this *StopSchedulerResponse) Validate() error {
+	return nil
+}
+func (this *VerifyRequest) Validate() error {
+	return nil
+}
+func (this *VerifyResponse) Validate() error {
+	return nil
+}
 func (this *ListRequest) Validate() error {
 	return nil
 }

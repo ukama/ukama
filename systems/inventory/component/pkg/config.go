@@ -13,6 +13,7 @@ import (
 
 	uconf "github.com/ukama/ukama/systems/common/config"
 	metric "github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/ukama"
 )
 
 type Config struct {
@@ -23,14 +24,28 @@ type Config struct {
 	Timeout              time.Duration    `default:"3s"`
 	MsgClient            *uconf.MsgClient `default:"{}"`
 	Service              *uconf.Service
-	PushGateway          string `default:"http://localhost:9091"`
-	OrgName              string `default:"ukama"`
-	RepoUrl              string `default:""`
-	Username             string `default:"ukama"`
-	Token                string `default:""`
-	RepoPath             string `default:"/temp/git/networks"`
-	ComponentEnvironment string `default:"production"`
-	TestUserId           string `default:""`
+	RepoUrl              string               `default:""`
+	Token                string               `default:""`
+	OwnerId              string               `default:""`
+	SchedulerInterval    time.Duration        `default:"24h"`
+	OrgName              string               `default:"ukama"`
+	Username             string               `default:"ukama"`
+	ComponentEnvironment string               `default:"production"`
+	RepoPath             string               `default:"/temp/git/networks"`
+	PushGateway          string               `default:"http://localhost:9091"`
+	FactoryUrl           string               `default:"http://api-gateway-factory:8080"`
+	NodeComponentDetails NodeComponentDetails `default:"{}"`
+}
+
+type NodeComponentDetails struct {
+	ImagesURL     string                  `default:""`
+	Specification string                  `default:""`
+	Warranty      uint32                  `default:"1"`
+	Managed       string                  `default:"true"`
+	Category      ukama.ComponentCategory `default:"ACCESS"`
+	Manufacturer  string                  `default:"Ukama Inc"`
+	Inventory     string                  `default:"ukama-access"`
+	DatasheetURL  string                  `default:"http://www.ukama.com/datasheet"`
 }
 
 var NetworkMetric = []metric.MetricConfig{}
