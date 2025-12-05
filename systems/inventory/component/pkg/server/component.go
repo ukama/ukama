@@ -141,12 +141,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 	}
 
 	var components []utils.Component
-	var environment []gitClient.Company
-	if c.config.ComponentEnvironment == "test" {
-		environment = env.Test
-	} else {
-		environment = env.Production
-	}
+	environment := utils.GetEnvironmentField(env, c.config.ComponentEnvironment)
 
 	for _, company := range environment {
 		err := c.gitClient.BranchCheckout(company.GitBranchName)
@@ -168,22 +163,13 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 
 			components = append(components, component)
 		}
-		var userId string
 
-		if c.config.ComponentEnvironment == "test" {
-			userId = c.config.OwnerId
-		} else {
-			userId = company.UserId
-		}
-		company.UserId = userId
-		userIdUUID, err := uuid.FromString(userId)
+		company.UserId = c.config.OwnerId
+		userIdUUID, err := uuid.FromString(company.UserId)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 		}
-		log.Infof("User ID: %s, %s", userIdUUID, company.UserId)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-		}
+
 		cdb := utilComponentsToDbComponents(components, userIdUUID)
 
 		err = c.componentRepo.Delete()
@@ -263,8 +249,8 @@ func (c *ComponentServer) NodeSyncJob(ctx context.Context) {
 				Id:            uuid.NewV4(),
 				PartNumber:    node.Id,
 				Type:          node.Type,
-				Description:   "Tower Node",
 				UserId:        ownerId,
+				Description:   ukama.GetPlaceholderNameByType(node.Type),
 				Category:      c.config.NodeComponentDetails.Category,
 				Managed:       c.config.NodeComponentDetails.Managed,
 				Warranty:      c.config.NodeComponentDetails.Warranty,
