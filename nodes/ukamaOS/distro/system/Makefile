@@ -40,7 +40,7 @@ distclean:
 
 info:  
 	$(info ============ BUILD INFO ============)
-	$(info Target Board:   $(TARGET_BOARD))
+	$(info Target Board:   $(TARGET))
 	$(info System Dirs:    $(SYS_SUB_DIRS))
 	$(info Architecture:   $(ARCH))
 	$(info Compiler:       $(CC))

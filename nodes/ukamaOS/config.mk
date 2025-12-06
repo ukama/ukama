@@ -31,6 +31,12 @@ PLATFORM_INC_SYS := $(PLATFORM_DIR)/sys/inc
 PLATFORM_INC_LOG := $(PLATFORM_DIR)/log/inc
 PLATFORM_LIB     := $(PLATFORM_DIR)/build/
 
+# used by various Makefile
+ARCH_ARM := arm
+ARCH_X86 := x86
+ARCH_X86_64 := x86_64
+ARCH_ARM64 := aarch64
+
 # OS and Processor configuration
 OS := $(shell uname -s)
 NPROCS := 1
@@ -45,29 +51,10 @@ HOST := x86_64-unknown-linux-gnu
 
 # Set default compiler and paths
 override CC := gcc
-ARCH := $(x86_64)
 OPENSSLTARGET := linux-generic32
 GCCPATH := /usr/bin
-
-# Supported architectures
-ARCH_ARM := arm
-ARCH_X86 := x86
-ARCH_X86_64 := x86_64
-ARCH_ARM64 := aarch64
-
-# Define nodes and local board
-override AMPLIFIER_NODE := amplifier
-override TOWER_NODE := tower
-override ACCESS_NODE := access
-override LOCAL := linux
-
-# Set TARGET_BOARD and TARGET if not already set
-ifndef TARGET
-	override TARGET := $(shell echo $(LOCAL) | tr '[:upper:]' '[:lower:]')
-else
-	override TARGET := $(shell echo $(TARGET) | tr '[:upper:]' '[:lower:]')
-endif
-override TARGET_BOARD := $(TARGET)
+TARGET ?= local
+ARCH := $(ARCH_X86_64)
 export TARGET
 
 # Paths for application configurations
@@ -78,20 +65,25 @@ NODE_APP_CONFIG_DIR := /conf
 NODE_APP_DIR := /sbin/
 
 # Conditional assignments based on TARGET_BOARD
-ifeq ($(TARGET_BOARD), $(AMPLIFIER_NODE))
-    override ARCH := $(ARCH_ARM)
+ifeq ($(TARGET),amplifier)
+    ARCH := $(ARCH_ARM)
     HOST := armv6-alpine-linux-musleabihf
 endif
 
-ifeq ($(TARGET_BOARD), $(TOWER_NODE))
-    override ARCH := $(ARCH_X86_64)
+ifeq ($(TARGET),tower)
+    ARCH := $(ARCH_X86_64)
     HOST := x86_64-linux-musl
     OPENSSLTARGET := linux-generic64
 endif
 
-ifeq ($(TARGET_BOARD), $(ACCESS_NODE))
-    override ARCH := $(ARCH_ARM64)
+ifeq ($(TARGET),access)
+    ARCH := $(ARCH_ARM64)
     OPENSSLTARGET := linux-aarch64
+endif
+
+ifeq ($(TARGET),local)
+	ARCH := $(ARCH_X86_64)
+	OPENSSLTARGET := linux-generic32
 endif
 
 # BUILD_MODE (debug|release) -> set RPATH_FLAGS for Makefile
