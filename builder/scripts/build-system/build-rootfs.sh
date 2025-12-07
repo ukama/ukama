@@ -158,6 +158,41 @@ install_rpi4_kernel_from_tarball() {
     log "SUCCESS" "RPi4 kernel, firmware, DTBs, and modules installed"
 }
 
+install_amplifier_toolchain() {
+    log_message "INFO: Ensuring ARM cross-toolchain for amplifier is installed"
+
+    # If the expected prefix already exists, nothing to do
+    if command -v arm-linux-gnueabihf-gcc >/dev/null 2>&1; then
+        log_message "INFO: arm-linux-gnueabihf-gcc already available, skipping toolchain install"
+        return 0
+    fi
+
+    log_message "INFO: Installing gcc-arm-none-eabi (provides arm-none-eabi-* tools)"
+    apk update
+    apk add --no-cache gcc-arm-none-eabi newlib-arm-none-eabi || {
+        log_message "ERROR: Failed to install gcc-arm-none-eabi toolchain via apk"
+        exit 1
+    }
+
+    # Create arm-linux-gnueabihf-* symlinks pointing to arm-none-eabi-*
+    local bindir="/usr/bin"
+    local tools=(gcc g++ cpp objcopy objdump ar as ld nm ranlib strip)
+
+    for exe in "${tools[@]}"; do
+        if [ -x "${bindir}/arm-none-eabi-${exe}" ] && [ ! -e "${bindir}/arm-linux-gnueabihf-${exe}" ]; then
+            ln -s "arm-none-eabi-${exe}" "${bindir}/arm-linux-gnueabihf-${exe}"
+            log_message "INFO: Linked arm-linux-gnueabihf-${exe} -> arm-none-eabi-${exe}"
+        fi
+    done
+
+    if ! command -v arm-linux-gnueabihf-gcc >/dev/null 2>&1; then
+        log_message "ERROR: arm-linux-gnueabihf-gcc still not found after installing toolchain"
+        exit 1
+    fi
+
+    log_message "SUCCESS: ARM cross-toolchain for amplifier is ready"
+}
+
 build_armv7_boot() {
     local node=$1
     local path="${UKAMA_ROOT}/nodes/ukamaOS/firmware"
@@ -166,6 +201,9 @@ build_armv7_boot() {
 
     cwd=$(pwd)
     log_message "INFO: Building firmware for Node: ${node}"
+
+    # Ensure the cross-toolchain is installed and on PATH
+    install_amplifier_toolchain
 
     cd "${path}"
     make clean TARGET="${node}" ROOTFSPATH="${path}/build"
