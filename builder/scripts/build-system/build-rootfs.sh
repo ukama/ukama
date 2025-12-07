@@ -176,7 +176,8 @@ install_amplifier_toolchain() {
 
     # Create arm-linux-gnueabihf-* symlinks pointing to arm-none-eabi-*
     local bindir="/usr/bin"
-    local tools=(gcc g++ cpp objcopy objdump ar as ld nm ranlib strip)
+    # include ld.bfd because some build systems use it explicitly
+    local tools=(gcc g++ cpp objcopy objdump ar as ld ld.bfd nm ranlib strip)
 
     for exe in "${tools[@]}"; do
         if [ -x "${bindir}/arm-none-eabi-${exe}" ] && [ ! -e "${bindir}/arm-linux-gnueabihf-${exe}" ]; then
