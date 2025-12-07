@@ -169,7 +169,7 @@ install_amplifier_toolchain() {
 
     log_message "INFO: Installing gcc-arm-none-eabi (provides arm-none-eabi-* tools)"
     apk update
-    apk add --no-cache gcc-arm-none-eabi newlib-arm-none-eabi || {
+    apk add --no-cache gcc-arm-none-eabi || {
         log_message "ERROR: Failed to install gcc-arm-none-eabi toolchain via apk"
         exit 1
     }
