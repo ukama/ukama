@@ -206,14 +206,11 @@ build_armv7_boot() {
     # 1) Ensure the cross-toolchain is installed and on PATH
     install_amplifier_toolchain
 
-    # 2) Remove any stale host-built Kconfig 'conf' binary so it rebuilds
-    if [ -f "${path}/at91-bootstrap/config/conf" ]; then
-        log_message "INFO: Removing stale at91-bootstrap/config/conf to force rebuild inside rootfs"
-        rm -f "${path}/at91-bootstrap/config/conf"
-    fi
-
     cd "${path}"
-    make clean TARGET="${node}" ROOTFSPATH="${path}/build"
+
+    # 2) Full firmware-level distclean to remove *all* host-built artifacts
+    log_message "INFO: Running firmware-level distclean for TARGET=${node}"
+    make distclean TARGET="${node}" ROOTFSPATH="${path}/build" || true
     make TARGET="${node}" ROOTFSPATH="${path}/build"
 
     if [ ! -f "$boot1" ]; then
