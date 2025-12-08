@@ -203,21 +203,26 @@ build_armv7_boot() {
     cwd=$(pwd)
     log_message "INFO: Building firmware for Node: ${node}"
 
-    # Ensure the cross-toolchain is installed and on PATH
+    # 1) Ensure the cross-toolchain is installed and on PATH
     install_amplifier_toolchain
+
+    # 2) Remove any stale host-built Kconfig 'conf' binary so it rebuilds
+    if [ -f "${path}/at91-bootstrap/config/conf" ]; then
+        log_message "INFO: Removing stale at91-bootstrap/config/conf to force rebuild inside rootfs"
+        rm -f "${path}/at91-bootstrap/config/conf"
+    fi
 
     cd "${path}"
     make clean TARGET="${node}" ROOTFSPATH="${path}/build"
     make TARGET="${node}" ROOTFSPATH="${path}/build"
 
-    # check if the boot binaries were build successfully
     if [ ! -f "$boot1" ]; then
-        log_message "ERROR: Firmware build failure. boot file does not exists: $boot1"
+        log_message "ERROR: Firmware build failure. boot file does not exist: $boot1"
         exit 1
     fi
 
     if [ ! -f "$boot2" ]; then
-        log_message "ERROR: Firmware build failure. boot file does not exists: $boot2"
+        log_message "ERROR: Firmware build failure. boot file does not exist: $boot2"
         exit 1
     fi
 
