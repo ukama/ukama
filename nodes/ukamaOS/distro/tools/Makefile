@@ -13,14 +13,14 @@ CURMAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
 CURPATH := $(dir $(CURMAKE))
 
 #Set build parameters based on targets
-ifeq ($(ANODEBOARD), $(TARGETBOARD))
+ifeq ($(TARGET),amplifier)
 override CC = gcc
 override XTARGET = arm-linux-musleabihf
 override ARCH = $(ARCHARM)
 CONFIGF ="GCCCONFIG =\"--with-arch=armv6k --with-fpu=vfpv2\""
 endif
 
-ifeq ($(CNODEBOARD), $(TARGETBOARD))
+ifeq ($(TARGET),tower)
 override CC = gcc
 override XTARGET = x86_64-linux-musl
 override ARCH = $(ARCHX86_64)
@@ -63,5 +63,3 @@ distclean:
 
 info: 
 	@echo $(SUBDIRS)
-
-

@@ -11,7 +11,6 @@ CUR_DIR := $(dir $(CUR_MAKE))
 
 SUB_DIRS := firmware kernel distro
 
-
 .PHONY: $(SUB_DIRS) clean distclean info
 
 subdirs: info $(SUB_DIRS)
@@ -38,7 +37,7 @@ info:
 	@echo "================================="
 	@echo " Building Info "
 	@echo "---------------------------------"
-	@echo " Target Board  : $(TARGET_BOARD)"
+	@echo " Target Board  : $(TARGET)"
 	@echo " Sub Dirs      : $(SUB_DIRS)"
 	@echo " Architecture  : $(ARCH)"
 	@echo " Compiler      : $(CC)"
