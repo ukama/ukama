@@ -51,7 +51,6 @@ $(TARGET_EXEC): $(OBJFILES)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-	 
 sourcetgz: $(TARGET_EXEC)
 	rm -rf /tmp/virtnode/
 	rm -rf ukamaOS_*.tgz 
