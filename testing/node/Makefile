@@ -12,6 +12,11 @@ XLD  = ld
 XGXX = g++
 HOST = $(shell gcc -dumpmachine)
 
+VERSION=$(shell git describe --always --dirty=-dirty)
+REPO_ROOT := $(abspath $(CURDIR)/../..)
+STAGE_DIR := /tmp/virtnode
+PKG_NAME  := ukama_${VERSION}.tgz
+
 #VERSION = v0.0.1
 
 OPENSSLTARGET = linux-generic64
@@ -37,9 +42,6 @@ LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib64
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-#VERSION=$(shell git rev-parse --short HEAD)
-VERSION=$(shell git describe --always --dirty=-dirty)
-
 .PHONY: $(TARGET_EXEC)
 
 srvc_router: $(TARGET_EXEC)
@@ -52,13 +54,27 @@ $(TARGET_EXEC): $(OBJFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 sourcetgz: $(TARGET_EXEC)
-	rm -rf /tmp/virtnode/
-	rm -rf ukamaOS_*.tgz 
-	(mkdir -p /tmp/virtnode/ukamaOS/distro && \
-	rsync -av --exclude='musl-cross-make' ../../nodes/ukamaOS/distro/ /tmp/virtnode/ukamaOS/distro && \
-	rsync -av ../../nodes/ukamaOS/config.mk /tmp/virtnode/ukamaOS/config.mk &&\
-	sync && tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
-	mv /tmp/virtnode/ukamaOS.tgz ukamaOS_${VERSION}.tgz)
+	rm -rf $(STAGE_DIR)
+	rm -f ukama_*.tgz
+
+	( set -e; \
+	  mkdir -p $(STAGE_DIR); \
+	  rsync -a --info=progress2  \
+	    --exclude='.git' \
+	    --exclude='.gitmodules' \
+	    --exclude='**/build' \
+	    --exclude='**/out' \
+	    --exclude='**/.cache' \
+	    --exclude='**/musl-cross-make' \
+	    --exclude='**/*.o' \
+	    --exclude='**/*.a' \
+	    --exclude='**/*.so' \
+	    $(REPO_ROOT)/ \
+	    $(STAGE_DIR)/ukama; \
+	  cd $(STAGE_DIR) && \
+	  tar -zcf $(PKG_NAME) ukama; \
+	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME) \
+	)
 
 container:  sourcetgz
 	@echo Building container

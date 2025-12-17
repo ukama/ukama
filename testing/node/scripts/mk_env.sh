@@ -11,8 +11,8 @@
 
 BUILD_ENV=container
 
-UKAMA_OS_TAR=/ukama/ukamaOS_*.tgz
-UKAMA_OS_PATH=/tmp/virtnode/ukamaOS
+UKAMA_OS_TAR=/ukama/ukama_*.tgz
+UKAMA_OS_PATH=/tmp/virtnode/nodes/ukamaOS
 
 # Check if building on local or in container
 if_host() {
@@ -58,4 +58,3 @@ else
     echo "UkamaOS not found."
     exit 1;
 fi
-

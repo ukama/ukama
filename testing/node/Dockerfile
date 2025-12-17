@@ -37,7 +37,7 @@ COPY virtualNode /sbin/
 
 COPY capps /capps
 
-COPY ukamaOS_*.tgz /ukama/
+COPY ukama_*.tgz /ukama/
 
 COPY ./scripts/*.sh /scripts/
 
