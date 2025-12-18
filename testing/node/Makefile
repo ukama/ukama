@@ -17,6 +17,9 @@ REPO_ROOT := $(abspath $(CURDIR)/../..)
 STAGE_DIR := /tmp/virtnode
 PKG_NAME  := ukama_${VERSION}.tgz
 
+# used for version.h
+GITMETA_DIR := $(STAGE_DIR)/ukama/.gitmeta
+
 #VERSION = v0.0.1
 
 OPENSSLTARGET = linux-generic64
@@ -59,7 +62,8 @@ sourcetgz: $(TARGET_EXEC)
 
 	( set -e; \
 	  mkdir -p $(STAGE_DIR); \
-	  rsync -a --info=progress2  \
+	  rsync -a --info=progress2 \
+	    --exclude='.git' \
 	    --exclude='**/build' \
 	    --exclude='**/out' \
 	    --exclude='**/.cache' \
@@ -69,9 +73,12 @@ sourcetgz: $(TARGET_EXEC)
 	    --exclude='**/*.so' \
 	    $(REPO_ROOT)/ \
 	    $(STAGE_DIR)/ukama; \
+	  rm -rf $(GITMETA_DIR); \
+	  git clone --no-checkout --filter=blob:none --tags --depth=500 $(REPO_ROOT) $(GITMETA_DIR); \
+	  printf "gitdir: .gitmeta/.git\n" > $(STAGE_DIR)/ukama/.git; \
 	  cd $(STAGE_DIR) && \
-	  tar -cf $(PKG_NAME) ukama; \
-	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME) \
+	  tar -zcf $(PKG_NAME) ukama; \
+	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
 	)
 
 container:  sourcetgz
