@@ -85,6 +85,12 @@ container:  sourcetgz
 	@echo Building container
 	podman build -t testing/virtualnode:${VERSION} .
 
+print-version:
+	@echo $(VERSION)
+
+print-local-image:
+	@echo testing/virtualnode:$(VERSION)
+
 all: $(TARGET_EXEC)
 
 clean:
