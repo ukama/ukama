@@ -75,8 +75,11 @@ RUN apt-get update && apt-get install -y \
     \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get -y install fuse-overlayfs
-RUN apt-get -y install podman
+RUN apt-get update && apt-get install -y software-properties-common \
+ && add-apt-repository -y universe \
+ && apt-get update \
+ && apt-get install -y podman fuse-overlayfs \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers; touch /var/lib/shared/overlay-images/images.lock; touch /var/lib/shared/overlay-layers/layers.lock
 
