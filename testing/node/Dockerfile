@@ -58,15 +58,13 @@ RUN apt-get update && apt-get install -y \
     util-linux \
     git \
     buildah \
-    texlive \
-    ghostscript \
-    vim \
     tree \
     htop \
     tzdata \
     perl \
     gnat \
     tcl \
+    libunistring-dev \
     libmicrohttpd-dev \
     libjansson-dev \
     libcurl4-openssl-dev \
@@ -101,8 +99,6 @@ ENV _BUILDAH_STARTED_IN_USERNS="" BUILDAH_ISOLATION=chroot
 COPY virtualNode /sbin/
 
 COPY capps /capps
-
-COPY ukama_*.tgz /ukama/
 
 COPY ./scripts/*.sh /scripts/
 
