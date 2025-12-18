@@ -5,11 +5,11 @@
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
-set -euo pipefail
+set -xeuo pipefail
 
 BUILD_ENV=container
 
-UKAMA_OS_TAR_GLOB="/ukama/ukama_*.tgz"
+UKAMA_OS_TAR_GLOB="/ukama/ukama.tgz"
 EXTRACT_ROOT="/tmp/virtnode"          # where we extract inside container
 UKAMA_OS_PATH=""                      # will be discovered after extract
 
@@ -47,14 +47,14 @@ extract_source() {
 
     mkdir -p "$EXTRACT_ROOT"
     echo "Extracting: $tarball -> $EXTRACT_ROOT"
-    tar -zxf "$tarball" -C "$EXTRACT_ROOT"
+    tar -xf "$tarball" -C "$EXTRACT_ROOT"
 
     # Find nodes/ukamaOS anywhere under EXTRACT_ROOT
     local found
     found="$(find "$EXTRACT_ROOT" -type d -path "*/nodes/ukamaOS" -print -quit || true)"
     if [[ -z "$found" ]]; then
         echo "ERROR: After extract, could not find */nodes/ukamaOS under $EXTRACT_ROOT" >&2
-        echo "Tip: inspect tar contents with: tar -tzf \"$tarball\" | head" >&2
+        echo "Tip: inspect tar contents with: tar -tf \"$tarball\" | head" >&2
         exit 1
     fi
 
@@ -62,7 +62,7 @@ extract_source() {
 }
 
 # main
-if_host
+#if_host
 echo "Build environment is $BUILD_ENV"
 
 if [[ "$BUILD_ENV" == "local" ]]; then
@@ -78,6 +78,7 @@ if [[ -d "$UKAMA_OS_PATH" ]]; then
     export UKAMA_OS="$UKAMA_OS_PATH"
     echo "Build environment is set for the Virtual Node on $BUILD_ENV."
     echo "UKAMA_OS=$UKAMA_OS"
+
     exit 0
 else
     echo "UkamaOS not found at: $UKAMA_OS_PATH" >&2

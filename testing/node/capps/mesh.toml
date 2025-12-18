@@ -11,16 +11,16 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/distro/system/mesh"
+	source="/distro/system/meshd"
 	cmd="make"
-	bin_from="/distro/system/mesh/mesh.d"
+	bin_from="/distro/system/meshd/mesh.d"
 	bin_to="/sbin/"
 
 [build-rootfs]
 	mkdir="/conf"
 
 [build-conf]
-	from="/distro/system/mesh/configs/config.toml"
+	from="/distro/system/meshd/configs/config.toml"
 	to="/conf/mesh_config.toml"
 
 # for [program:<exec>] in supervisor.conf

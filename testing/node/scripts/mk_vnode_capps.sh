@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,7 +8,7 @@
 # Base parameters
 #UKAMA_OS=`realpath ../../nodes/ukamaOS`
 BUILD_ENV=container
-UKAMA_OS_PATH=/tmp/virtnode/ukamaOS
+UKAMA_OS_PATH=/tmp/virtnode/ukama/nodes/ukamaOS
 
 DEF_BUILD_DIR=./build/capps
 
@@ -28,9 +28,6 @@ if_host() {
     fi
 }
 
-#
-# Build the app at given src path and cmd
-#
 build_app() {
 
     CWD=`pwd`
@@ -48,9 +45,6 @@ build_app() {
 	cd ${CWD}
 }
 
-#
-# copy all the required lib to rootfs
-#
 copy_all_libs() {
 
     BIN=$1

@@ -13,7 +13,7 @@
 	static="false"
 	source="/distro/system/noded"
 	cmd="make"
-	bin_from="/distro/system/noded/build/noded"
+	bin_from="/distro/system/noded/build/node.d"
 	bin_to="/sbin/"
 
 # for [program:<exec>] in supervisor.conf
@@ -23,7 +23,7 @@
 	autostart="false"
 	autorestart="false"
 	startretries=5
-	bin="noded"
+	bin="node.d"
 	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--p /mfgdata/property/property.json --i /tmp/sys/inventory_db"
 	group="on-boot"
