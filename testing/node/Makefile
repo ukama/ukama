@@ -60,8 +60,6 @@ sourcetgz: $(TARGET_EXEC)
 	( set -e; \
 	  mkdir -p $(STAGE_DIR); \
 	  rsync -a --info=progress2  \
-	    --exclude='.git' \
-	    --exclude='.gitmodules' \
 	    --exclude='**/build' \
 	    --exclude='**/out' \
 	    --exclude='**/.cache' \
@@ -72,7 +70,7 @@ sourcetgz: $(TARGET_EXEC)
 	    $(REPO_ROOT)/ \
 	    $(STAGE_DIR)/ukama; \
 	  cd $(STAGE_DIR) && \
-	  tar -zcf $(PKG_NAME) ukama; \
+	  tar -cf $(PKG_NAME) ukama; \
 	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME) \
 	)
 
