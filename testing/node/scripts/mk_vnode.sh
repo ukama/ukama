@@ -32,21 +32,17 @@ if_host() {
     fi
 }
 
-#
-# Update UKAMA_OS
-#
-
 update_ukama_os_env() {
 	if_host
 
 	if [ "$BUILD_ENV" == "local" ]; then
 		UKAMA_OS=`realpath ../../nodes/ukamaOS`
 	elif [ "$BUILD_ENV" == "container" ]; then
-		UKAMA_OS="/tmp/virtnode/ukamaOS"
-		if [ -z $UAKMA_OS ]; then
+		UKAMA_OS="/tmp/virtnode/ukama/nodes/ukamaOS"
+		if [ -z $UKAMA_OS ]; then
 			echo "UKAMA OS env set to $UKAMA_OS"
 		else
-			echo "Failed to find ukamaOS at $UAKMA_OS"
+			echo "Failed to find ukamaOS at $UKAMA_OS"
 			exit 1
 		fi
 	else
@@ -171,10 +167,7 @@ build_image() {
 	fi
 }
 
-#
-# push image to repo
-#
-push_image() {
+push_image_to_repo() {
 
 	UUID=$1
 	TARGET=$2
@@ -230,7 +223,7 @@ case "$ACTION" in
 		build_image $2 $3
 		;;
 	"push")
-		push_image $2 $3
+		push_image_to_repo $2 $3
 		;;
 	"cp")
 		cp $2 ${BUILD_DIR}/$3
