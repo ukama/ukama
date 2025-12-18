@@ -11,7 +11,69 @@ RUN apt install software-properties-common -y
 
 RUN add-apt-repository ppa:deadsnakes/ppa -y
 
-RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python3.9 python3.9-dev libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim unzip -y
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc-arm-linux-gnueabihf \
+    g++ \
+    cmake \
+    make \
+    automake \
+    autoconf \
+    libtool \
+    pkg-config \
+    bison \
+    flex \
+    gawk \
+    bc \
+    texinfo \
+    lzop \
+    unzip \
+    patchelf \
+    libncurses5-dev \
+    libssl-dev \
+    libelf-dev \
+    zlib1g-dev \
+    libisl-dev \
+    libjansson-dev \
+    libmicrohttpd-dev \
+    libidn2-dev \
+    libcap-dev \
+    libuuid1 \
+    libprotobuf-dev \
+    sqlite3 \
+    libsqlite3-dev \
+    python3.9 \
+    python3.9-dev \
+    curl \
+    wget \
+    rsync \
+    iproute2 \
+    iputils-ping \
+    openssh-client \
+    tcpdump \
+    ethtool \
+    iperf3 \
+    dosfstools \
+    e2fsprogs \
+    util-linux \
+    git \
+    buildah \
+    texlive \
+    ghostscript \
+    vim \
+    tree \
+    htop \
+    tzdata \
+    perl \
+    gnat \
+    tcl \
+    libmicrohttpd-dev \
+    libjansson-dev \
+    libcurl4-openssl-dev \
+    libgnutls28-dev \
+    libsqlite3-dev \
+    \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get -y install fuse-overlayfs
 RUN apt-get -y install podman
@@ -43,4 +105,5 @@ COPY ./scripts/*.sh /scripts/
 
 COPY supervisord.conf /
 
+# /sbin/virtualNode --target "ubuntu:22.04" --exec create --c "/capps"
 CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/capps/"]
