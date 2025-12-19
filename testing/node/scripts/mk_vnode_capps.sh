@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
-set -xeuo pipefail
+set -euo pipefail
 
 # Defaults (can be overridden by env vars)
 : "${BUILD_ENV:=}"   # if empty, we'll auto-detect

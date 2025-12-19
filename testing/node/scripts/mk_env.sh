@@ -5,10 +5,7 @@
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
-set -xeuo pipefail
-
-#!/usr/bin/env bash
-set -xeuo pipefail
+set -euo pipefail
 
 UKAMA_OS_TAR_GLOB="/ukama/ukama.tgz"
 EXTRACT_ROOT="/tmp/virtnode"

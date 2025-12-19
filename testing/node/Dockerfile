@@ -64,6 +64,7 @@ RUN apt-get update && apt-get install -y \
     perl \
     gnat \
     tcl \
+    vim \
     libunistring-dev \
     libmicrohttpd-dev \
     libjansson-dev \

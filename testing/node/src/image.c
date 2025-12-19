@@ -26,10 +26,6 @@ static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
 static int create_container_file(char *target, Configs *config, Node *node);
 
-/*
- * module_schema_file --
- *
- */
 static char *module_schema_file(char* nodeType, char *type) {
 
 	if (strcmp(type, MODULE_TYPE_COM) == 0)  return SCHEMA_FILE_COM;
@@ -48,10 +44,6 @@ static char *module_schema_file(char* nodeType, char *type) {
 	return SCHEMA_FILE_NONE;
 }
 
-/*
- * set_schema_args
- *
- */
 static void set_schema_args(Node *node, char **buffer) {
 
 	char temp[MAX_BUFFER]={0}, temp1[MAX_BUFFER]={0};
@@ -72,10 +64,6 @@ static void set_schema_args(Node *node, char **buffer) {
 	//	sprintf(*buffer, "%s", temp1);
 }
 
-/*
- * init_container_file --
- *
- */
 static FILE* init_container_file(char *fileName) {
 
 	FILE *fp=NULL;
@@ -95,10 +83,6 @@ static FILE* init_container_file(char *fileName) {
 	return fp;
 }
 
-/*
- * write_to_container_file --
- *
- */
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 
 	if (buffer == NULL || fp == NULL) return FALSE;
@@ -113,10 +97,6 @@ static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 	return TRUE;
 }
 
-/*
- * create_container_file --
- *
- */
 static int create_container_file(char *target, Configs *config, Node *node) {
 
 	FILE *fp=NULL;
@@ -185,10 +165,6 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	return TRUE;
 }
 
-/*
- * create_vnode_image --
- *
- */
 int create_vnode_image(char *target, Configs *config, Node *node,
 					   char *runTarget) {
 
@@ -262,10 +238,6 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 	return FALSE;
 }
 
-/*
- * purge_container_file --
- *
- */
 void purge_container_file(char *fileName) {
 
 	if (remove(fileName) == 0) {
@@ -277,10 +249,6 @@ void purge_container_file(char *fileName) {
 	return;
 }
 
-/*
- * purge_vnode_image --
- *
- */
 void purge_vnode_image(Node *node) {
 
 	char runMe[MAX_BUFFER]  = {0};

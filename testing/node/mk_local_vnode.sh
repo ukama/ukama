@@ -7,7 +7,7 @@
 
 # Script to create ukama's virtual node locally
 
-set -xeuo pipefail
+set -euo pipefail
 REPO_SERVER_URL="testing"
 REPO_NAME="virtualnode"
 
@@ -72,5 +72,4 @@ RUN buildah inspect "${OUT_LOCAL_IMAGE}"
 # cleanup
 RUN make clean
 
-echo "Done"
-
+echo "Done. Image available: ${OUT_LOCAL_IMAGE}"
