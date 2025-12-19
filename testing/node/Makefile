@@ -20,8 +20,6 @@ PKG_NAME  := ukama_${VERSION}.tgz
 # used for version.h
 GITMETA_DIR := $(STAGE_DIR)/ukama/.gitmeta
 
-#VERSION = v0.0.1
-
 OPENSSLTARGET = linux-generic64
 
 TARGET_EXEC = virtualNode
@@ -95,3 +93,5 @@ all: $(TARGET_EXEC)
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -rf $(STAGE_DIR)
+	rm -f ${PKG_NAME}
