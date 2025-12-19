@@ -44,20 +44,6 @@ RUN sudo docker run -d -p 5000:5000 --name local_registry registry:latest
 RUN podman tag "${LOCAL_IMAGE}" "${REG_IMAGE}"
 RUN podman push --tls-verify=false "${REG_IMAGE}"
 
-# Debug shell inside the same image, pulled from registry ref (consistent path)
-RUN podman run --network host --privileged -it --rm \
-    -v "${PWD}/ukama_${VERSION}.tgz:/ukama/ukama.tgz:ro" \
-    --tls-verify=false \
-    -e VNODE_METADATA="$VNODE_METADATA" \
-    -e VNODE_ID="$VNODE_ID" \
-    -e VNODE_RUN_TARGET="local" \
-    -e REPO_SERVER_URL="$REPO_SERVER_URL" \
-    -e REPO_NAME="$REPO_NAME" \
-    "${REG_IMAGE}" \
-    /bin/bash
-
-read
-
 # Run incubator from the registry ref (consistent path)
 RUN podman run --network host --privileged -it \
     -v "${PWD}/ukama_${VERSION}.tgz:/ukama/ukama.tgz:ro" \
@@ -82,6 +68,9 @@ RUN sudo docker rm -f local_registry
 
 # Inspect the newly created image (local tag)
 RUN buildah inspect "${OUT_LOCAL_IMAGE}"
+
+# cleanup
+RUN make clean
 
 echo "Done"
 
