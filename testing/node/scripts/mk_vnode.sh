@@ -1,15 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
+set -xeuo pipefail
+
 # Base parameters
 #UKAMA_OS=`realpath ../../nodes/ukamaOS`
 NODED_ROOT=
 DEF_BUILD_DIR=./build/
-BUILD_ENV=container
+BUILD_ENV=
 
 # default target is local machine (gcc)
 DEF_TARGET="local"
@@ -17,46 +19,56 @@ TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_BUILD_DIR}
 BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
+REGISTRY_URL="${REPO_SERVER_URL:-testing}"
+REGISTRY_NAME="${REPO_NAME:-virtualnode}"
 
-REGISTRY_URL=${REPO_SERVER_URL}
+# Detect whether we're running inside a container.
+# Sets BUILD_ENV to "container" or "local".
+detect_env() {
+    BUILD_ENV="local"
+    if [ -f "/.dockerenv" ] || [ -f "/run/.containerenv" ]; then
+        BUILD_ENV="container"
+        return
+    fi
 
-REGISTRY_NAME=${REPO_NAME}
+    if [ -n "${container:-}" ] || [ -n "${CONTAINER:-}" ]; then
+        BUILD_ENV="container"
+        return
+    fi
 
-#
-# Check if building on local or in container
-#
-if_host() {
-    val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-    if [ "${val}" == "/init.scope" ] || [ "${val}" == "/" ]; then
-        BUILD_ENV=local
+    if grep -qaE '(docker|podman|containerd|kubepods|lxc)' /proc/1/cgroup 2>/dev/null; then
+        BUILD_ENV="container"
+        return
     fi
 }
 
 update_ukama_os_env() {
-	if_host
+    detect_env
 
-	if [ "$BUILD_ENV" == "local" ]; then
-		UKAMA_OS=`realpath ../../nodes/ukamaOS`
-	elif [ "$BUILD_ENV" == "container" ]; then
-		UKAMA_OS="/tmp/virtnode/ukama/nodes/ukamaOS"
-		if [ -z $UKAMA_OS ]; then
-			echo "UKAMA OS env set to $UKAMA_OS"
-		else
-			echo "Failed to find ukamaOS at $UKAMA_OS"
-			exit 1
-		fi
-	else
-		echo "Unkown enviornment."
-		exit 1
-	fi
+    # Allow explicit override
+    if [ -n "${UKAMA_OS:-}" ]; then
+        :
+    elif [ "$BUILD_ENV" = "local" ]; then
+        UKAMA_OS="$(realpath ../../nodes/ukamaOS)"
+    else
+        UKAMA_OS="/tmp/virtnode/ukama/nodes/ukamaOS"
+    fi
 
-	NODED_ROOT=${UKAMA_OS}/distro/system/noded
+    # Validate
+    if [ ! -d "$UKAMA_OS" ]; then
+        echo "Failed to find ukamaOS at: $UKAMA_OS (BUILD_ENV=$BUILD_ENV)"
+        exit 1
+    fi
 
+    NODED_ROOT="${UKAMA_OS}/distro/system/noded"
+    if [ ! -d "$NODED_ROOT" ]; then
+        echo "Failed to find noded root at: $NODED_ROOT"
+        exit 1
+    fi
+
+    echo "UKAMA_OS set to $UKAMA_OS (BUILD_ENV=$BUILD_ENV)"
 }
 
-#
-# Build needed tools, e.g., genSchema, genInventory, if needed.
-#
 build_utils() {
 
 	CWD=`pwd`
