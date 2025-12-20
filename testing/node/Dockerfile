@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y \
     flex \
     gawk \
     bc \
-    texinfo \
+    pigz \
     lzop \
     unzip \
     patchelf \

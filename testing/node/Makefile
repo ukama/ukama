@@ -75,7 +75,7 @@ sourcetgz: $(TARGET_EXEC)
 	  git clone --no-checkout --filter=blob:none --tags --depth=500 $(REPO_ROOT) $(GITMETA_DIR); \
 	  printf "gitdir: .gitmeta/.git\n" > $(STAGE_DIR)/ukama/.git; \
 	  cd $(STAGE_DIR) && \
-	  tar -zcf $(PKG_NAME) ukama; \
+	  tar -cf - ukama | pigz -1 > $(PKG_NAME); \
 	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
 	)
 

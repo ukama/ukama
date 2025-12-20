@@ -56,7 +56,32 @@ extract_source() {
 
     mkdir -p "$EXTRACT_ROOT"
     echo "Extracting: $tarball -> $EXTRACT_ROOT"
-    tar -xf "$tarball" -C "$EXTRACT_ROOT"
+
+    # Use parallel decompression when possible (tgz/tar.gz), otherwise plain tar
+    case "$tarball" in
+        *.tar.gz|*.tgz)
+            if command -v pigz >/dev/null 2>&1; then
+                pigz -dc "$tarball" | tar -xf - -C "$EXTRACT_ROOT"
+            else
+                tar -xzf "$tarball" -C "$EXTRACT_ROOT"
+            fi
+            ;;
+        *.tar)
+            tar -xf "$tarball" -C "$EXTRACT_ROOT"
+            ;;
+        *.tar.zst|*.tzst)
+            if command -v zstd >/dev/null 2>&1; then
+                zstd -dc "$tarball" | tar -xf - -C "$EXTRACT_ROOT"
+            else
+                echo "ERROR: $tarball requires zstd but 'zstd' not found" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            # Let tar try its built-in auto-detection as a last resort
+            tar -xf "$tarball" -C "$EXTRACT_ROOT"
+            ;;
+    esac
 
     found="$(find "$EXTRACT_ROOT" -type d -path "*/nodes/ukamaOS" -print -quit || true)"
     if [[ -z "$found" ]]; then
