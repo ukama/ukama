@@ -32,10 +32,6 @@ static void append_service_to_group(char* group, char* name, char* version) {
 	}
 }
 
-/*
- * init_supervisor_config --
- *
- */
 static FILE* init_supervisor_config(char *fileName) {
 
 	FILE *fp=NULL;
@@ -144,10 +140,6 @@ int create_supervisor_groups(FILE* fp ,Configs *configs, char* onBootGroup,
 	return TRUE;
 }
 
-/*
- * create_supervisor_config --
- *
- */
 int create_supervisor_config(Configs *configs) {
 
 	Configs    *ptr=NULL;
@@ -221,10 +213,6 @@ int create_supervisor_config(Configs *configs) {
 	return TRUE;
 }
 
-/*
- * purge_supervisor_config --
- *
- */
 void purge_supervisor_config(char *fileName) {
 
 	if (remove(fileName) == 0) {

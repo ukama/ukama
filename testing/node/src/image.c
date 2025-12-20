@@ -152,6 +152,9 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
+    sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
 	sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -213,6 +216,9 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 	}
 
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
+	if (system(runMe) < 0) goto failure;
+
+    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, "localhost");
 	if (system(runMe) < 0) goto failure;
 
 	/* Step:2 create the container file */

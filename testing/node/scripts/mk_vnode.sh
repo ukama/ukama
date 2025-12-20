@@ -105,7 +105,6 @@ build_utils() {
 # 3. genInventory
 #
 build_sysfs() {
-
 	CWD=`pwd`
 	NODE_TPYE=$1
 	NODE_UUID=$2
@@ -148,11 +147,41 @@ build_sysfs() {
 	cd ${CWD}
 }
 
+setup_ukama_dirs() {
+    local nodeid bootstrap_server
+
+    log "INFO" "Creating Ukama directories..."
+
+    # Validate required variables
+    : "${BUILD_DIR:?BUILD_DIR not set}"
+    : "${UKAMA_OS:?UKAMA_OS not set}"
+
+    nodeid="${1:-unknown}"
+    bootstrap_server="${2:-}"
+
+    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,mocksysfs}
+    mkdir -p "${BUILD_DIR}/ukama/apps/lib"
+
+    # Metadata
+    echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
+    echo "${bootstrap_server}" > "${BUILD_DIR}/ukama/bootstrap"
+
+    touch "${BUILD_DIR}/ukama/apps.log"
+
+    # Copy app configs
+    if [ -d "${UKAMA_OS}/../configs/apps" ]; then
+        cp -r "${UKAMA_OS}/../configs/apps/." "${BUILD_DIR}/ukama/configs/"
+    else
+        log "WARN" "Apps config directory not found: ${UKAMA_OS}/../configs/apps"
+    fi
+
+    log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
+}
+
 #
 # Build image using buildah
 #
 build_image() {
-
 	FILE=$1
 	UUID=$2
 
@@ -221,31 +250,38 @@ push_image_to_repo() {
 
 # main
 
-ACTION=$1
-CWD=`pwd`
+ACTION="${1:-}"
+shift || true
 
 case "$ACTION" in
-	"init")
-		build_utils
-		;;
-	"sysfs")
-		build_sysfs $2 $3
-		;;
-	"build")
-		build_image $2 $3
-		;;
-	"push")
-		push_image_to_repo $2 $3
-		;;
-	"cp")
-		cp $2 ${BUILD_DIR}/$3
-		;;
-	"clean")
-		update_ukama_os_env
-		rm ContainerFile; rm supervisor.conf
-		buildah rmi -f localhost/$1
-		cd ${NODED_ROOT} && make clean && cd ${CWD}
-		;;
+    init)
+        build_utils
+        ;;
+    sysfs)
+        build_sysfs "$1" "$2"
+        ;;
+    ukamadirs)
+        setup_ukama_dirs "$1" "$2"
+        ;;
+    build)
+        build_image "$1" "$2"
+        ;;
+    push)
+        push_image_to_repo "$1" "$2"
+        ;;
+    cp)
+        cp -- "$1" "${BUILD_DIR}/$2"
+        ;;
+    clean)
+        update_ukama_os_env
+        rm -f ContainerFile supervisor.conf
+        [ -n "${1:-}" ] && buildah rmi -f "localhost/$1" || true
+        cd "${NODED_ROOT}" && make clean && cd "${CWD}"
+        ;;
+    *)
+        echo "Unknown action: $ACTION" >&2
+        exit 2
+        ;;
 esac
 
 exit 0
