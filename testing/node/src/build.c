@@ -16,10 +16,6 @@
 #define SCRIPT     "./scripts/mk_vnode_capps.sh"
 #define MAX_BUFFER 1024
 
-/*
- * build_capp --
- *
- */
 int build_capp(Config *config) {
 
 	char runMe[MAX_BUFFER] = {0};
@@ -41,12 +37,6 @@ int build_capp(Config *config) {
 
 	sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
 	if (system(runMe) != 0) return FALSE;
-
-	if (!build->staticFlag) {
-		/* set rpath for the executable */
-		sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
-		if (system(runMe) < 0 ) return FALSE;
-	}
 
 	sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name,	capp->version,
 			build->binTo);
@@ -73,5 +63,10 @@ int build_capp(Config *config) {
 		if (system(runMe) < 0) return FALSE;
 	}
 
+    if (!build->staticFlag) {
+		/* set rpath for the executable */
+		sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
+		if (system(runMe) < 0 ) return FALSE;
+	}
 	return TRUE;
 }
