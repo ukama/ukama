@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
-set -xeuo pipefail
+set -euo pipefail
 
 # Base parameters
 #UKAMA_OS=`realpath ../../nodes/ukamaOS`
