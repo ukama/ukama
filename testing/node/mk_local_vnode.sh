@@ -35,8 +35,8 @@ RUN make clean
 RUN make container
 
 # Start (or restart) local registry on port 5000
-sudo docker rm -f local_registry >/dev/null 2>&1 || true
-RUN sudo docker run -d -p 5000:5000 --name local_registry registry:latest
+RUN docker rm -f local_registry >/dev/null 2>&1 || true
+RUN docker run -d -p 5000:5000 --name local_registry registry:latest
 
 # ---- Key fix: push the base image to the local registry ----
 RUN podman tag "${LOCAL_IMAGE}" "${REG_IMAGE}"
@@ -62,7 +62,7 @@ OUT_LOCAL_IMAGE="${REPO_SERVER_URL}/${REPO_NAME}:${VNODE_ID}"
 RUN podman tag "${OUT_REG_IMAGE}" "${OUT_LOCAL_IMAGE}"
 
 # Stop registry
-RUN sudo docker rm -f local_registry
+RUN docker rm -f local_registry
 
 # Inspect the newly created image (local tag)
 RUN buildah inspect "${OUT_LOCAL_IMAGE}"
