@@ -10,13 +10,11 @@
 set -euo pipefail
 REPO_SERVER_URL="testing"
 REPO_NAME="virtualnode"
-
-# Always use the Makefile's computed version (same as the image tag)
-VERSION="$(make -s print-version)"
-LOCAL_IMAGE="$(make -s print-local-image)"
-
 REGISTRY="localhost:5000"
-REG_IMAGE="${REGISTRY}/${LOCAL_IMAGE}"
+
+VERSION="$(make -s print-version)"
+LOCAL_IMAGE="localhost/${REPO_SERVER_URL}/${REPO_NAME}:${VERSION}"
+REG_IMAGE="${REGISTRY}/${REPO_SERVER_URL}/${REPO_NAME}:${VERSION}"
 
 RUN() {
     "$@"
