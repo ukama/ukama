@@ -1,4 +1,3 @@
-
 #
 # Config file to build mesh.d for the Ukama's Virtual Node.
 #
@@ -20,8 +19,8 @@
 	mkdir="/conf"
 
 [build-conf]
-	from="/distro/system/meshd/configs/config.toml"
-	to="/conf/mesh_config.toml"
+	from="/nodes/configs/apps/mesh/config.toml"
+	to="/ukama/configs/meshd"
 
 # for [program:<exec>] in supervisor.conf
 [capp-exec]
@@ -30,10 +29,10 @@
 	depends_on="bootstrap"
 	wait_for="10s"
 	autostart="false"
-	autorestart="false"
+	autorestart="true"
 	startretries=5
 	bin="mesh.d"
 	path="/sbin" # path where the exec should be. Matches build.bin_to
-	args="--config /conf/mesh_config.toml"
+	args="--config /ukama/configs/meshd/config.toml"
 
 # Nothing to see here. Move on
