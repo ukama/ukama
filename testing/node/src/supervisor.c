@@ -85,7 +85,6 @@ static FILE* init_supervisor_config(const char *fileName) {
         fwrite(SVISOR_SVISORD, strlen(SVISOR_SVISORD), 1, fp) <= 0 ||
         fwrite(SVISOR_RPCINTERFACE, strlen(SVISOR_RPCINTERFACE), 1, fp) <= 0 ||
         fwrite(SVISOR_SVISOR_CTL, strlen(SVISOR_SVISOR_CTL), 1, fp) <= 0 ||
-        fwrite(SVISOR_INCLUDE, strlen(SVISOR_INCLUDE), 1, fp) <= 0 ||
         fwrite(SVISOR_KICKSTART, strlen(SVISOR_KICKSTART), 1, fp) <= 0) {
 
         log_error("Error writing supervisor header to %s. Error: %s", fileName, strerror(errno));
