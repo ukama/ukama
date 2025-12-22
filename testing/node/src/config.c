@@ -6,11 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * Config.c
- *
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -100,10 +95,6 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
 	return ret;
 }
 
-/*
- * read_capp_table --
- *
- */
 static int read_capp_table(toml_table_t *table, Config *config,
 						   char *type) {
 
@@ -332,10 +323,6 @@ static int read_build_config(Config *config, char *fileName,
 	return ret;
 }
 
-/*
- * read_capp_config --
- *
- */
 static int read_capp_config(Config *config, char *fileName,
 							toml_table_t *cappExec) {
 
@@ -353,10 +340,6 @@ static int read_capp_config(Config *config, char *fileName,
 	return ret;
 }
 
-/*
- * add_to_configs --
- *
- */
 static int add_to_configs(Configs **configs, Config *config, char *fileName,
 						  int status, char *errorStr) {
 

@@ -10,6 +10,8 @@ set -euo pipefail
 # Defaults (can be overridden by env vars)
 : "${BUILD_ENV:=}"   # if empty, we'll auto-detect
 : "${UKAMA_OS:=}"    # optional explicit override
+: "${UKAMA_ROOT:=}"
+UKAMA_ROOT_DEFAULT="/tmp/virtnode/ukama"
 UKAMA_OS_PATH_DEFAULT="/tmp/virtnode/ukama/nodes/ukamaOS"
 
 DEF_BUILD_DIR="./build/capps"
@@ -59,7 +61,9 @@ resolve_ukama_os() {
         :
     elif [[ "$BUILD_ENV" == "local" ]]; then
         UKAMA_OS="$(realpath ../../nodes/ukamaOS)"
+        UKAMA_ROOT="$(realpath ../..)"
     else
+        UKAMA_ROOT="$UKAMA_ROOT_DEFUALT"
         UKAMA_OS="$UKAMA_OS_PATH_DEFAULT"
     fi
 
@@ -74,7 +78,9 @@ resolve_ukama_os() {
         exit 1
     fi
 
+    export UKAMA_ROOT
     export UKAMA_OS
+    echo "UKAMA_ROOT=$UKAMA_ROOT"
     echo "UKAMA_OS=$UKAMA_OS"
 }
 
@@ -127,6 +133,10 @@ main() {
             if [[ "${2:-}" == "app" ]]; then
                 build_app "${3:-}" "${4:-}"
             fi
+            ;;
+        cp-config)
+            mkdir -p "${3}"
+            cp "${UKAMA_ROOT}/${2:?missing src path}" "${3:?missing dest path}"
             ;;
         cp)
             cp "${UKAMA_OS}/${2:?missing src path}" "${BUILD_DIR}/${3:?missing dest path}"

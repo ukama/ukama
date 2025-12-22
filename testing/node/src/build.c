@@ -52,8 +52,7 @@ int build_capp(Config *config) {
 	}
 
 	if (build->from) {
-		sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->from, capp->name,
-				capp->version, build->to);
+		sprintf(runMe, "%s cp-config %s %s", SCRIPT, build->from, build->to);
 		if (system(runMe) < 0) return FALSE;
 	}
 
