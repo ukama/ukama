@@ -5,25 +5,40 @@
 #
 # Copyright (c) 2022-present, Ukama Inc.
 
-#USAGE: kisckstart.sh  
+set -euo pipefail
 
-# Deal with on-boot processes.
+echo "Starting on-boot group..."
+supervisorctl start "on-boot:*"
 
-echo "Starting on-boot."
-supervisorctl start on-boot:*
+echo "Waiting for noded to be RUNNING..."
+while ! supervisorctl status noded_latest | grep -q 'RUNNING'; do
+  sleep 2
+done
 
-# Check for noded to move in running state.
-while ! supervisorctl status on-boot:noded_latest | grep -q 'RUNNING'; do sleep 2; done
-
-# Start the bootstrap process
+echo "Starting bootstrap..."
 supervisorctl start bootstrap_latest
 
-# Check for the oneshot bootstrap process to complete.
-while ! supervisorctl status bootstrap_latest | grep -q 'EXITED'; do sleep 10; done
+echo "Waiting for bootstrap to EXIT..."
+while ! supervisorctl status bootstrap_latest | grep -q 'EXITED'; do
+    sleep 2
+done
 
-# Start Other processes
+# Make sure bootstrap exited successfully
+if ! supervisorctl status bootstrap_latest | grep -q '(exit status 0;'; then
+    echo "ERROR: bootstrap failed:"
+    supervisorctl status bootstrap_latest || true
+    exit 1
+fi
+
+echo "Starting meshd..."
 supervisorctl start meshd_latest
 
-#Add new services under service group
-#supervisorctl start service:*
+echo "Waiting for meshd to be RUNNING..."
+while ! supervisorctl status meshd_latest | grep -q 'RUNNING'; do
+    sleep 2
+done
 
+echo "Starting sys-service group..."
+supervisorctl start "sys-service:*" || true
+
+echo "Kickstart complete."
