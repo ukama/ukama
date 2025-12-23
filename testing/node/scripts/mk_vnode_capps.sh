@@ -10,7 +10,7 @@ set -euo pipefail
 # Defaults (can be overridden by env vars)
 : "${BUILD_ENV:=}"   # if empty, we'll auto-detect
 : "${UKAMA_OS:=}"    # optional explicit override
-: "${UKAMA_ROOT:=}"
+: "${UKAMA_ROOT_DEFAULT:=}"
 UKAMA_ROOT_DEFAULT="/tmp/virtnode/ukama"
 UKAMA_OS_PATH_DEFAULT="/tmp/virtnode/ukama/nodes/ukamaOS"
 
@@ -63,7 +63,7 @@ resolve_ukama_os() {
         UKAMA_OS="$(realpath ../../nodes/ukamaOS)"
         UKAMA_ROOT="$(realpath ../..)"
     else
-        UKAMA_ROOT="$UKAMA_ROOT_DEFUALT"
+        UKAMA_ROOT="$UKAMA_ROOT_DEFAULT"
         UKAMA_OS="$UKAMA_OS_PATH_DEFAULT"
     fi
 
