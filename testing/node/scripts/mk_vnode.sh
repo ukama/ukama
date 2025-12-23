@@ -127,7 +127,6 @@ build_sysfs() {
 
     pushd "${BUILD_DIR}" >/dev/null
 
-
     "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
                                    --n com --m UK-SA9001-COM-A1-1103  \
                                    --f mfgdata/schema/com.json --n trx \
@@ -164,7 +163,7 @@ setup_ukama_dirs() {
     : "${BUILD_DIR:?BUILD_DIR not set}"
     : "${UKAMA_OS:?UKAMA_OS not set}"
 
-    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,mocksysfs}
+    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry}
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
