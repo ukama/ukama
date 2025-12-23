@@ -34,8 +34,12 @@ type Nodes struct {
 	Nodes []*NodeFactoryInfo `json:"nodes"`
 }
 
+type Node struct {
+	Node NodeFactoryInfo `json:"node"`
+}
+
 type NodeFactoryClient interface {
-	Get(Id string) (*NodeFactoryInfo, error)
+	Get(Id string) (*Node, error)
 	List(nodeType string, orgName string, isProvisioned bool) (*Nodes, error)
 }
 
@@ -57,11 +61,10 @@ func NewNodeFactoryClient(h string, options ...client.Option) *nodeFactoryClient
 	}
 }
 
-func (s *nodeFactoryClient) Get(id string) (*NodeFactoryInfo, error) {
+func (s *nodeFactoryClient) Get(id string) (*Node, error) {
 	log.Debugf("Getting node by id from factory: %v", id)
 
-	nodeFactory := NodeFactoryInfo{}
-
+	nodeFactory := Node{}
 	resp, err := s.R.Get(s.u.String() + FactoryEndpoint + "/node/" + id)
 	if err != nil {
 		log.Errorf("Get node failure. error: %s", err.Error())

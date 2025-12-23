@@ -36,9 +36,11 @@ func TestGetNodeCredentials(t *testing.T) {
 			nodeID: "test-node-123",
 			setupMocks: func(factoryMock *mocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
 				// Setup factory mock to return a node with org name
-				factoryMock.On("Get", "test-node-123").Return(&factory.NodeFactoryInfo{
-					Id:      "test-node-123",
-					OrgName: "test-org",
+				factoryMock.On("Get", "test-node-123").Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      "test-node-123",
+						OrgName: "test-org",
+					},
 				}, nil)
 
 				// Setup lookup client provider mock
@@ -67,9 +69,11 @@ func TestGetNodeCredentials(t *testing.T) {
 			nodeID: "test-node-456",
 			setupMocks: func(factoryMock *mocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
 				// Setup factory mock to return a node without org name
-				factoryMock.On("Get", "test-node-456").Return(&factory.NodeFactoryInfo{
-					Id:      "test-node-456",
-					OrgName: "",
+				factoryMock.On("Get", "test-node-456").Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      "test-node-456",
+						OrgName: "",
+					},
 				}, nil)
 
 				// Setup lookup client provider mock (it's always called)
@@ -99,9 +103,11 @@ func TestGetNodeCredentials(t *testing.T) {
 			nodeID: "test-node-101",
 			setupMocks: func(factoryMock *mocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
 				// Setup factory mock to return a node with org name
-				factoryMock.On("Get", "test-node-101").Return(&factory.NodeFactoryInfo{
-					Id:      "test-node-101",
-					OrgName: "test-org",
+				factoryMock.On("Get", "test-node-101").Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      "test-node-101",
+						OrgName: "test-org",
+					},
 				}, nil)
 
 				// Setup lookup client provider mock to return an error
@@ -115,9 +121,11 @@ func TestGetNodeCredentials(t *testing.T) {
 			nodeID: "test-node-202",
 			setupMocks: func(factoryMock *mocks.NodeFactoryClient, lookupMock *mocks.LookupClientProvider, msgBusMock *mbmocks.MsgBusServiceClient) {
 				// Setup factory mock to return a node with org name
-				factoryMock.On("Get", "test-node-202").Return(&factory.NodeFactoryInfo{
-					Id:      "test-node-202",
-					OrgName: "test-org",
+				factoryMock.On("Get", "test-node-202").Return(&factory.Node{
+					Node: factory.NodeFactoryInfo{
+						Id:      "test-node-202",
+						OrgName: "test-org",
+					},
 				}, nil)
 
 				// Setup lookup client provider mock

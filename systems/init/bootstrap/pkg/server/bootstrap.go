@@ -59,9 +59,9 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	var ip string
 	var certificate string
 
-	if node.OrgName != "" {
+	if node.Node.OrgName != "" {
 		msgSystem, err := lookupSvc.GetSystemForOrg(ctx, &lpb.GetSystemRequest{
-			OrgName:    node.OrgName,
+			OrgName:    node.Node.OrgName,
 			SystemName: MessagingSystem,
 		})
 		if err != nil {
@@ -73,8 +73,8 @@ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNod
 	}
 
 	return &pb.GetNodeCredentialsResponse{
-		Id:          node.Id,
-		OrgName:     node.OrgName,
+		Id:          node.Node.Id,
+		OrgName:     node.Node.OrgName,
 		Ip:          ip,
 		Certificate: certificate,
 	}, nil
