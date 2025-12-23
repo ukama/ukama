@@ -143,9 +143,6 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/sys", SYSFS_DIR);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
 	sprintf(buffer, CF_COPY, "./build/capps", "/capps");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -154,6 +151,10 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 
     sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /* Make /tmp/sys point to /ukama/mocksysfs */
+    sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs", "/tmp/sys");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
@@ -215,10 +216,10 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 		goto failure;
 	}
 
-	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
+    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, "localhost");
 	if (system(runMe) < 0) goto failure;
 
-    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, "localhost");
+	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
 	/* Step:2 create the container file */

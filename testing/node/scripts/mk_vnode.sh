@@ -118,7 +118,7 @@ build_sysfs() {
     log "INFO" "Preparing sysfs (type=${node_type}, uuid=${node_uuid})"
 
     "${NODED_ROOT}/utils/prepare_env.sh" --clean
-    "${NODED_ROOT}/utils/prepare_env.sh" --unittype "${node_type}"
+    "${NODED_ROOT}/utils/prepare_env.sh" -u tnode -u anode
 
     # Copy schema + mfgdata locally
     mkdir -p "${BUILD_DIR}/schemas"
@@ -127,19 +127,32 @@ build_sysfs() {
 
     pushd "${BUILD_DIR}" >/dev/null
 
-    # VNODE_SCHEMA_ARGS may be empty
-    "${BUILD_DIR}/utils/genSchema" -u "${node_uuid}" ${VNODE_SCHEMA_ARGS}
-    "${BUILD_DIR}/utils/genInventory" ${VNODE_SCHEMA_ARGS}
+
+    "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
+                                   --n com --m UK-SA9001-COM-A1-1103  \
+                                   --f mfgdata/schema/com.json --n trx \
+                                   --m UK-SA9001-TRX-A1-1103  \
+                                   --f mfgdata/schema/trx.json --n mask \
+                                   --m UK-SA9001-MSK-A1-1103\
+                                   --f mfgdata/schema/mask.json
+
+    "${BUILD_DIR}/utils/genInventory" --n com --m UK-SA9001-COM-A1-1103 \
+                                      --f mfgdata/schema/com.json -n trx \
+                                      --m UK-SA9001-TRX-A1-1103 \
+                                      --f mfgdata/schema/trx.json \
+                                      --n mask -m UK-SA9001-MSK-A1-1103 \
+                                      --f mfgdata/schema/mask.json
 
     popd >/dev/null
 
     # Copy sysfs to build dir
     [ -d /tmp/sys ] || die "/tmp/sys not found after prepare_env/genSchema steps"
     rm -rf "${BUILD_DIR}/sys"
-    cp -rf /tmp/sys "${BUILD_DIR}/sys"
+    cp -rf /tmp/sys "${BUILD_DIR}/ukama/"
+    mv "${BUILD_DIR}/ukama/sys" "${BUILD_DIR}/ukama/mocksysfs"
     rm -rf /tmp/sys
 
-    log "SUCCESS" "Sysfs built at ${BUILD_DIR}/sys"
+    log "SUCCESS" "Sysfs built at ${BUILD_DIR}/ukama/mocksysfs"
 }
 
 setup_ukama_dirs() {
