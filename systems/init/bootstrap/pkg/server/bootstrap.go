@@ -15,51 +15,67 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
-	lookupclient "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	"github.com/ukama/ukama/systems/init/bootstrap/client"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 	"github.com/ukama/ukama/systems/init/bootstrap/pkg"
+	lpb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 )
-
-const MessagingSystem = "messaging"
-
-type BootstrapServer struct {
-	pb.UnimplementedBootstrapServiceServer
-	bootstrapRoutingKey msgbus.RoutingKeyBuilder
-	msgbus              mb.MsgBusServiceClient
-	debug               bool
-	orgName             string
-	lookupClient        lookupclient.InitClient
-	factoryClient       factory.NodeFactoryClient
-}
-
-func NewBootstrapServer(orgName string, msgBus mb.MsgBusServiceClient, debug bool, lookupClient lookupclient.InitClient, factoryClient factory.NodeFactoryClient) *BootstrapServer {
-	return &BootstrapServer{
-		orgName:             orgName,
-		bootstrapRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		msgbus:              msgBus,
-		debug:               debug,
-		lookupClient:        lookupClient,
-		factoryClient:       factoryClient,
-	}
-}
-
-func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {
-	node, err := s.factoryClient.Get(req.Id)
-	if err != nil {
-		log.Errorf("Failed to get node from factory: %v", err)
-		return nil, err
-	}
-
-	systemInfo, err := s.lookupClient.GetSystem(node.Node.OrgName, "messaging")
-	if err != nil {
-		log.Errorf("Failed to get messaging system: %v", err)
-		return nil, err
-	}
-
-	return &pb.GetNodeCredentialsResponse{
-		Id:          node.Node.Id,
-		Ip:          systemInfo.Ip,
-		OrgName:     node.Node.OrgName,
-		Certificate: systemInfo.Certificate,
-	}, nil
-}
+ 
+ const MessagingSystem = "messaging"
+ 
+ type BootstrapServer struct {
+	 pb.UnimplementedBootstrapServiceServer
+	 bootstrapRoutingKey msgbus.RoutingKeyBuilder
+	 msgbus              mb.MsgBusServiceClient
+	 debug               bool
+	 orgName             string
+	 lookupClient        client.LookupClientProvider
+	 factoryClient       factory.NodeFactoryClient
+ }
+ 
+ func NewBootstrapServer(orgName string, msgBus mb.MsgBusServiceClient, debug bool, lookupClient client.LookupClientProvider, factoryClient factory.NodeFactoryClient) *BootstrapServer {
+	 return &BootstrapServer{
+		 orgName:             orgName,
+		 bootstrapRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		 msgbus:              msgBus,
+		 debug:               debug,
+		 lookupClient:        lookupClient,
+		 factoryClient:       factoryClient,
+	 }
+ }
+ 
+ func (s *BootstrapServer) GetNodeCredentials(ctx context.Context, req *pb.GetNodeCredentialsRequest) (*pb.GetNodeCredentialsResponse, error) {
+	 node, err := s.factoryClient.Get(req.Id)
+	 if err != nil {
+		 log.Errorf("Failed to get node from factory: %v", err)
+		 return nil, err
+	 }
+ 
+	 lookupSvc, err := s.lookupClient.GetClient()
+	 if err != nil {
+		 return nil, err
+	 }
+ 
+	 var ip string
+	 var certificate string
+ 
+	 if node.Node.OrgName != "" {
+		 msgSystem, err := lookupSvc.GetSystemForOrg(ctx, &lpb.GetSystemRequest{
+			 OrgName:    node.Node.OrgName,
+			 SystemName: MessagingSystem,
+		 })
+		 if err != nil {
+			 log.Errorf("Failed to get messaging system: %v", err)
+		 } else {
+			 ip = msgSystem.Ip
+			 certificate = msgSystem.Certificate
+		 }
+	 }
+ 
+	 return &pb.GetNodeCredentialsResponse{
+		 Id:          node.Node.Id,
+		 OrgName:     node.Node.OrgName,
+		 Ip:          ip,
+		 Certificate: certificate,
+	 }, nil
+ }
