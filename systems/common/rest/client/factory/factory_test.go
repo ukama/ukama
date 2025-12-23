@@ -53,12 +53,15 @@ func TestNewNodeFactoryClient(t *testing.T) {
 
 func TestNodeFactoryClient_Get(t *testing.T) {
 	t.Run("Success", func(tt *testing.T) {
-		expectedNode := factory.NodeFactoryInfo{
+		expectedNodeInfo := factory.NodeFactoryInfo{
 			Id:            testNodeId,
 			Type:          "tnode",
 			OrgName:       "test-org",
 			IsProvisioned: true,
 			ProvisionedAt: time.Now().UTC(),
+		}
+		expectedNode := factory.Node{
+			Node: expectedNodeInfo,
 		}
 
 		mockTransport := func(req *http.Request) *http.Response {
@@ -85,11 +88,11 @@ func TestNodeFactoryClient_Get(t *testing.T) {
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, result)
-		assert.Equal(tt, expectedNode.Id, result.Id)
-		assert.Equal(tt, expectedNode.Type, result.Type)
-		assert.Equal(tt, expectedNode.OrgName, result.OrgName)
-		assert.Equal(tt, expectedNode.IsProvisioned, result.IsProvisioned)
-		assert.True(tt, result.ProvisionedAt.Equal(expectedNode.ProvisionedAt))
+		assert.Equal(tt, expectedNodeInfo.Id, result.Node.Id)
+		assert.Equal(tt, expectedNodeInfo.Type, result.Node.Type)
+		assert.Equal(tt, expectedNodeInfo.OrgName, result.Node.OrgName)
+		assert.Equal(tt, expectedNodeInfo.IsProvisioned, result.Node.IsProvisioned)
+		assert.True(tt, result.Node.ProvisionedAt.Equal(expectedNodeInfo.ProvisionedAt))
 	})
 
 	t.Run("NodeNotFound", func(tt *testing.T) {
@@ -198,7 +201,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 		}
 
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?type=tnode&orgName=test-org&isProvisioned=true"
+			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			// Serialize expected response
@@ -228,7 +231,7 @@ func TestNodeFactoryClient_List(t *testing.T) {
 
 	t.Run("ListNodesNotFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?type=tnode&orgName=test-org&isProvisioned=true"
+			expectedURL := testHost + factory.FactoryEndpoint + "/nodes?nodeType=tnode&orgName=test-org&isProvisioned=true"
 			assert.Equal(tt, expectedURL, req.URL.String())
 
 			return &http.Response{

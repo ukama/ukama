@@ -27,7 +27,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
 
@@ -79,7 +78,7 @@ func runGrpcServer() {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient)
+		ic.NewInitClient(svcConf.Lookup, client.WithDebug(svcConf.DebugMode)), factoryClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
