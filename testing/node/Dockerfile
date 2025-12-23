@@ -86,12 +86,6 @@ RUN mkdir -p /ukama
 
 RUN mkdir -p /scripts
 
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-
-RUN unzip awscliv2.zip
-
-RUN /aws/install
-
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/tmp/virtnode/ukamaOS/distro/vendor/build/lib:/tmp/virtnode/ukamaOS/distro/vendor/build/lib64:/tmp/virtnode/ukamaOS/distro/platform/build"
 
 ENV _BUILDAH_STARTED_IN_USERNS="" BUILDAH_ISOLATION=chroot
