@@ -99,74 +99,85 @@ static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 
 static int create_container_file(char *target, Configs *config, Node *node) {
 
-	FILE *fp=NULL;
-	char buffer[MAX_BUFFER] = {0};
+    FILE *fp = NULL;
+    char buffer[MAX_BUFFER] = {0};
 
-	if (config == NULL) return FALSE;
+    if (config == NULL) return FALSE;
 
-	fp = init_container_file(CONTAINER_FILE);
-	if (!fp) {
-		log_error("Error initalizing container file: %s", CONTAINER_FILE);
-		return FALSE;
-	}
+    fp = init_container_file(CONTAINER_FILE);
+    if (!fp) {
+        log_error("Error initalizing container file: %s", CONTAINER_FILE);
+        return FALSE;
+    }
 
-	sprintf(buffer, CF_FROM, target);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	if (strstr(target, TARGET_ALPINE) != NULL) {
-		sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
-	} if (strstr(target, TARGET_FEDORA) != NULL) {
-		sprintf(buffer, CF_RUN_YUM, UPDATE_PKGS);
-	} else {
-		sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
-	}
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf (buffer, CF_MKDIR, NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf (buffer, CF_MKDIR, SYSFS_DIR);
-		if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/conf", "/conf");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/lib", NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/capps", "/capps");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-    sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-
-    /* Make /tmp/sys point to /ukama/mocksysfs */
-    sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs", "/tmp/sys");
+    sprintf(buffer, CF_FROM, target);
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    /* pkgs: alpine vs ubuntu/debian */
+    if (strstr(target, TARGET_ALPINE) != NULL) {
+        sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
+    } else {
+        sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
+    }
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_MKDIR, NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    /* Make sure /tmp exists */
+    sprintf(buffer, CF_MKDIR, "/tmp");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	fclose(fp);
-	return TRUE;
+    sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/conf", "/conf");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/lib", NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/capps", "/capps");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/bin", "/bin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /* mock sysfs tarball -> /ukama/mocksysfs/sys/... */
+    sprintf(buffer, CF_MKDIR, "/ukama/mocksysfs");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ADD, "./build/sysfs/sys.tar", "/ukama/mocksysfs/");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /*
+     * Make /tmp/sys point to /ukama/mocksysfs/sys
+     * NOTE: If something created a real /tmp/sys directory earlier, ln -sfn might not replace it
+     * deterministically. If you never create /tmp/sys anywhere else, we're fine.
+     */
+    sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    fclose(fp);
+    return TRUE;
 }
 
 int create_vnode_image(char *target, Configs *config, Node *node,

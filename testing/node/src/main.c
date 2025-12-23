@@ -24,6 +24,7 @@
 #include "supervisor.h"
 #include "jserdes.h"
 #include "image.h"
+#include "setup_env.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -264,7 +265,6 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
- done:
 	free_configs(configs);
 	json_decref(jNode);
 	free_node(node);

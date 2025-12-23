@@ -132,7 +132,7 @@ build_sysfs() {
                                    --f mfgdata/schema/com.json --n trx \
                                    --m UK-SA9001-TRX-A1-1103  \
                                    --f mfgdata/schema/trx.json --n mask \
-                                   --m UK-SA9001-MSK-A1-1103\
+                                   --m UK-SA9001-MSK-A1-1103 \
                                    --f mfgdata/schema/mask.json
 
     "${BUILD_DIR}/utils/genInventory" --n com --m UK-SA9001-COM-A1-1103 \
@@ -144,14 +144,31 @@ build_sysfs() {
 
     popd >/dev/null
 
-    # Copy sysfs to build dir
+    # Verify sysfs exists
     [ -d /tmp/sys ] || die "/tmp/sys not found after prepare_env/genSchema steps"
-    rm -rf "${BUILD_DIR}/sys"
-    cp -rf /tmp/sys "${BUILD_DIR}/ukama/"
-    mv "${BUILD_DIR}/ukama/sys" "${BUILD_DIR}/ukama/mocksysfs"
-    rm -rf /tmp/sys
 
-    log "SUCCESS" "Sysfs built at ${BUILD_DIR}/ukama/mocksysfs"
+    # Destination inside build context
+    mkdir -p "${BUILD_DIR}/ukama/mocksysfs"
+
+    # Remove any previous snapshot
+    rm -rf "${BUILD_DIR}/ukama/mocksysfs/sys" "${BUILD_DIR}/sysfs"
+    mkdir -p "${BUILD_DIR}/sysfs"
+
+    #
+    # Copy sysfs snapshot while PRESERVING symlinks
+    # - tar pipeline is portable and preserves links/dirs well.
+    # - (rsync -a --links also works, but tar is almost always available)
+    #
+    ( cd /tmp && tar -cf - sys ) | ( cd "${BUILD_DIR}/ukama/mocksysfs" && tar -xpf - )
+
+    # Create a tarball for Containerfile ADD (auto-extract)
+    # This produces: ${BUILD_DIR}/sysfs/sys.tar containing top-level "sys/"
+    tar -C "${BUILD_DIR}/ukama/mocksysfs" -cpf "${BUILD_DIR}/sysfs/sys.tar" sys
+
+    log "SUCCESS" "Sysfs snapshot at ${BUILD_DIR}/ukama/mocksysfs/sys"
+    log "SUCCESS" "Sysfs tarball   at ${BUILD_DIR}/sysfs/sys.tar"
+
+    rm -rf /tmp/sys
 }
 
 setup_ukama_dirs() {
