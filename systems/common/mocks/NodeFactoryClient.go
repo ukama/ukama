@@ -13,23 +13,23 @@ type NodeFactoryClient struct {
 }
 
 // Get provides a mock function with given fields: Id
-func (_m *NodeFactoryClient) Get(Id string) (*factory.NodeFactoryInfo, error) {
+func (_m *NodeFactoryClient) Get(Id string) (*factory.Node, error) {
 	ret := _m.Called(Id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *factory.NodeFactoryInfo
+	var r0 *factory.Node
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*factory.NodeFactoryInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*factory.Node, error)); ok {
 		return rf(Id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *factory.NodeFactoryInfo); ok {
+	if rf, ok := ret.Get(0).(func(string) *factory.Node); ok {
 		r0 = rf(Id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*factory.NodeFactoryInfo)
+			r0 = ret.Get(0).(*factory.Node)
 		}
 	}
 
