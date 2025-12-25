@@ -41,6 +41,7 @@ int build_capp(Config *config) {
 	sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name,	capp->version,
 			build->binTo);
 	if (system(runMe) < 0) return FALSE;
+
 	sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->binFrom,
 			capp->name, capp->version, build->binTo);
 	if (system(runMe) < 0) return FALSE;
@@ -67,5 +68,6 @@ int build_capp(Config *config) {
 		sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
 		if (system(runMe) < 0 ) return FALSE;
 	}
-	return TRUE;
+
+    return TRUE;
 }

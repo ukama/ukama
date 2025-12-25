@@ -65,7 +65,7 @@ RUN podman tag "${OUT_REG_IMAGE}" "${OUT_LOCAL_IMAGE}"
 RUN docker rm -f local_registry
 
 # Inspect the newly created image (local tag)
-RUN buildah inspect "${OUT_LOCAL_IMAGE}"
+#RUN buildah inspect "${OUT_LOCAL_IMAGE}"
 
 # cleanup
 RUN make clean

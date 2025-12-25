@@ -131,6 +131,9 @@ static int create_container_file(char *target, Configs *config, Node *node) {
     sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
+    sprintf(buffer, CF_COPY, "./build/utils", "/sbin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
     sprintf(buffer, CF_COPY, "./build/conf", "/conf");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -150,6 +153,9 @@ static int create_container_file(char *target, Configs *config, Node *node) {
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_COPY, "./build/ukama/etc", "/etc");
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
     /* mock sysfs tarball -> /ukama/mocksysfs/sys/... */

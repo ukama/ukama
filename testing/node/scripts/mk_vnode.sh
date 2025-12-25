@@ -101,6 +101,9 @@ build_utils() {
     [ -f "${NODED_ROOT}/build/genInventory" ] || die "Error building genInventory."
     cp -f "${NODED_ROOT}/build/genInventory" "${BUILD_DIR}/utils/"
 
+    [ -f "${NODED_ROOT}/utils/prepare_env.sh" ] || die "Missing prepare_env.sh"
+    cp -f "${NODED_ROOT}/utils/prepare_env.sh" "${BUILD_DIR}/utils/"
+
     popd >/dev/null
 
     log "SUCCESS" "Utils built into ${BUILD_DIR}/utils"
@@ -180,7 +183,7 @@ setup_ukama_dirs() {
     : "${BUILD_DIR:?BUILD_DIR not set}"
     : "${UKAMA_OS:?UKAMA_OS not set}"
 
-    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry}
+    mkdir -p "${BUILD_DIR}/ukama"/{configs,apps/lib,apps/pkgs,apps/rootfs,apps/registry,etc}
 
     # Metadata
     echo "${nodeid}" > "${BUILD_DIR}/ukama/nodeid"
@@ -193,6 +196,12 @@ setup_ukama_dirs() {
     else
         log "WARN" "Apps config directory not found: ${UKAMA_OS}/../configs/apps"
     fi
+
+    # copy protocol and services - will be moved to /etc on final image
+    [ -f "${UKAMA_OS}/distro/scripts/files/services" ]  || die "missing services file"
+    [ -f "${UKAMA_OS}/distro/scripts/files/protocols" ] || die "missing protocols file"
+    cp "${UKAMA_OS}/distro/scripts/files/services"  "${BUILD_DIR}/ukama/etc"
+    cp "${UKAMA_OS}/distro/scripts/files/protocols" "${BUILD_DIR}/ukama/etc"
 
     log "SUCCESS" "Ukama directories created at ${BUILD_DIR}/ukama"
 }
