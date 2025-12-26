@@ -7,38 +7,86 @@
 
 set -euo pipefail
 
-echo "Starting on-boot group..."
-supervisorctl start "on-boot:*"
+CONF="/etc/supervisor.conf"
+SUPERVISORCTL=(supervisorctl -c "$CONF")
 
-echo "Waiting for noded to be RUNNING..."
-while ! supervisorctl status noded_latest | grep -q 'RUNNING'; do
-  sleep 2
-done
+# IMPORTANT: noded_latest is part of the group "on-boot"
+NODED="on-boot:noded_latest"
+
+ctl() {
+  "${SUPERVISORCTL[@]}" "$@"
+}
+
+status_line() {
+  local name="$1"
+  ctl status "$name" 2>/dev/null || true
+}
+
+is_state() {
+  local name="$1"
+  local want="$2"
+  ctl status "$name" 2>/dev/null | awk '{print $2}' | grep -qx "$want"
+}
+
+wait_state() {
+  local name="$1"
+  local want="$2"
+  local interval="${3:-1}"
+
+  echo "Waiting for ${name} to be ${want}..."
+  while ! is_state "$name" "$want"; do
+    status_line "$name"
+    sleep "$interval"
+  done
+}
+
+wait_exited_ok() {
+  local name="$1"
+  local interval="${2:-1}"
+
+  echo "Waiting for ${name} to EXIT..."
+  while ! is_state "$name" "EXITED"; do
+    status_line "$name"
+    sleep "$interval"
+  done
+
+  if ! ctl status "$name" 2>/dev/null | grep -q 'exit status 0'; then
+    echo "ERROR: ${name} exited but not successfully:"
+    status_line "$name"
+    exit 1
+  fi
+}
+
+start_prog() {
+  local name="$1"
+  echo "Starting ${name}..."
+  ctl start "$name"
+}
+
+start_group() {
+  local group="$1"
+  echo "Starting ${group} group..."
+  ctl start "${group}:*"
+}
+
+echo "Kickstart using supervisorctl config: $CONF"
+echo "Supervisor status (sanity):"
+ctl status || true
+
+echo "Starting on-boot group..."
+start_group "on-boot"
+
+wait_state "$NODED" "RUNNING" 1
 
 echo "Starting bootstrap..."
-supervisorctl start bootstrap_latest
-
-echo "Waiting for bootstrap to EXIT..."
-while ! supervisorctl status bootstrap_latest | grep -q 'EXITED'; do
-    sleep 2
-done
-
-# Make sure bootstrap exited successfully
-if ! supervisorctl status bootstrap_latest | grep -q '(exit status 0;'; then
-    echo "ERROR: bootstrap failed:"
-    supervisorctl status bootstrap_latest || true
-    exit 1
-fi
+start_prog "bootstrap_latest"
+wait_exited_ok "bootstrap_latest" 1
 
 echo "Starting meshd..."
-supervisorctl start meshd_latest
-
-echo "Waiting for meshd to be RUNNING..."
-while ! supervisorctl status meshd_latest | grep -q 'RUNNING'; do
-    sleep 2
-done
+start_prog "meshd_latest"
+wait_state "meshd_latest" "RUNNING" 1
 
 echo "Starting sys-service group..."
-supervisorctl start "sys-service:*" || true
+ctl start "sys-service:*" || true
 
 echo "Kickstart complete."
