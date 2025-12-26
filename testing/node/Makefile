@@ -95,3 +95,4 @@ clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)
 	rm -rf $(STAGE_DIR)
 	rm -f ${PKG_NAME}
+	rm -rf build/
