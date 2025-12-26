@@ -7,6 +7,12 @@
 
 # Script to create ukama's virtual node locally
 
+# Setup variables before executing this script:
+# VNODE_ID=uk-sa2549-tnode-v0-655b
+# BOOTSTRAP_SERVER=dev.bootstrap.ukama.com
+# VNODE_METADATA={ "nodeInfo": { "type": "hnode", "partNumber": "", "skew": "", "mac": "", "swVersion": "", "mfgSwVersion": "", "assemblyDate": "2022-05-09T14:08:02.985079028-07:00", "oem": "", "mfgTestStatus": "pending", "status": "LabelGenerated" }, "nodeConfig": [ { "moduleID": "ukma-sa2219-trx-m0-e479", "type": "trx", "partNumber": "", "hwVersion": "", "mac": "", "swVersion": "", "mfgSwVersion": "", "mfgDate": "2022-05-09T14:08:02.985112609-07:00", "mfgName": "", "status": "AssemblyCompleted" }] }
+# export VNODE_ID BOOTSTRAP_SERVER VNODE_METADATA
+
 set -euo pipefail
 REPO_SERVER_URL="testing"
 REPO_NAME="virtualnode"
@@ -51,6 +57,7 @@ RUN podman run --network host --privileged -it \
     -e VNODE_RUN_TARGET="local" \
     -e REPO_SERVER_URL="$REPO_SERVER_URL" \
     -e REPO_NAME="$REPO_NAME" \
+    -e BOOTSTRAP_SERVER="$BOOTSTRAP_SERVER" \
     "${REG_IMAGE}"
 
 # Pull output image from registry

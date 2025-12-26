@@ -20,6 +20,8 @@
 #include "config.h"
 #include "supervisor.h"
 
+#define ENV_BOOTSTRAP_SERVER "BOOTSTRAP_SERVER"
+
 static char *module_schema_file(char* nodeType, char *type);
 static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
@@ -191,11 +193,19 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 
 	char runMe[MAX_BUFFER]={0};
 	char *buffer=NULL;
+    char *bootstrapServer=NULL;
 	NodeInfo *nodeInfo=NULL;
 
 	if (node == NULL)             return FALSE;
 	if (node->nodeInfo   == NULL) return FALSE;
 	if (node->nodeConfig == NULL) return FALSE;
+
+	bootstrapServer = getenv(ENV_BOOTSTRAP_SERVER);
+	if (bootstrapServer == NULL) {
+		log_error("Env variable: %s not set \n default to localhost.",
+            ENV_BOOTSTRAP_SERVER);
+        bootstrapServer = "localhost";
+	}
 
 	nodeInfo   = node->nodeInfo;
 
@@ -233,7 +243,7 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 		goto failure;
 	}
 
-    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, "localhost");
+    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
 	if (system(runMe) < 0) goto failure;
 
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
