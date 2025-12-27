@@ -182,7 +182,7 @@ int send_request_to_init_with_exponential_backoff(char *remoteServer,
                                  &responseStr) == TRUE) {
 
             if (responseStr) free(responseStr);
-            return FALSE;
+            return TRUE;
         }
 
         // Calculate exponential backoff time
@@ -197,6 +197,8 @@ int send_request_to_init_with_exponential_backoff(char *remoteServer,
 
         backoffTime = (backoffTime < MAX_BACKOFF) ? backoffTime+1 : MAX_BACKOFF;
     } while (TRUE);
+
+    return FALSE;
 }
 
 void free_server_info(ServerInfo *server) {
