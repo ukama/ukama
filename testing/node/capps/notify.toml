@@ -21,7 +21,7 @@
 	name="notifyd"
 	version="latest"
 	autostart="false"
-	autorestart="false"
+	autorestart="true"
 	startretries=5
 	bin="notifyd"
 	path="/sbin" # path where the exec should be. Matches build.bin_to

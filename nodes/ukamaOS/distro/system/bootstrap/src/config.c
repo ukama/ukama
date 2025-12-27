@@ -10,6 +10,12 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 #include "usys_log.h"
 
@@ -63,55 +69,98 @@ int parse_config(Config *config, toml_table_t *configData) {
     return TRUE;
 }
 
-bool read_bootstrap_server_info(char **buffer) {
+static bool is_valid_hostname_strict(const char *s) {
 
-    FILE *file=NULL;
-    long length=0;
-    size_t n_read=0;
+    if (!s || !*s) return false;
 
-    file = fopen(DEF_BOOTSTRAP_FILE, "r");
-    if (!file) {
+    size_t n = strlen(s);
+    if (n > 253) return false;                  // DNS max hostname length (practical)
+    if (s[0] == '.' || s[0] == '-') return false;
+    if (s[n - 1] == '.' || s[n - 1] == '-') return false;
+
+    for (size_t i = 0; i < n; i++) {
+        unsigned char c = (unsigned char)s[i];
+
+        // Absolutely forbid any whitespace or control chars
+        if (isspace(c) || iscntrl(c)) return false;
+
+        // Allow only letters, digits, dot, hyphen
+        if (!(isalnum(c) || c == '.' || c == '-')) return false;
+
+        // Forbid consecutive dots
+        if (c == '.' && i + 1 < n && s[i + 1] == '.') return false;
+    }
+
+    // Label rules: each label 1..63, no leading/trailing hyphen per label
+    size_t label_len = 0;
+    for (size_t i = 0; i <= n; i++) {
+        char c = s[i];
+        if (c == '.' || c == '\0') {
+            if (label_len == 0 || label_len > 63) return false;
+
+            // check label doesn't end with '-'
+            if (i > 0 && s[i - 1] == '-') return false;
+
+            // check label doesn't start with '-'
+            size_t start = i - label_len;
+            if (s[start] == '-') return false;
+
+            label_len = 0;
+        } else {
+            label_len++;
+        }
+    }
+
+    return true;
+}
+
+bool read_bootstrap_server_info(char **out) {
+    if (!out) return false;
+    *out = NULL;
+
+    FILE *fp = fopen(DEF_BOOTSTRAP_FILE, "rb");
+    if (!fp) {
         usys_log_error("Error opening bootstrap file '%s': %s",
                        DEF_BOOTSTRAP_FILE, strerror(errno));
-        return FALSE;
+        return false;
     }
 
-    if (fseek(file, 0, SEEK_END) != 0) {
-        usys_log_error("Error seeking to end of '%s': %s",
-                       DEF_BOOTSTRAP_FILE, strerror(errno));
-        fclose(file);
-        return FALSE;
+    /* Read first line only; if line is longer than this, we reject */
+    char line[512];
+    if (!fgets(line, sizeof(line), fp)) {
+        usys_log_error("Bootstrap file '%s' is empty/unreadable", DEF_BOOTSTRAP_FILE);
+        fclose(fp);
+        return false;
     }
 
-    length = ftell(file);
-    if (length < 0) {
-        usys_log_error("Error getting size of '%s': %s",
-                       DEF_BOOTSTRAP_FILE, strerror(errno));
-        fclose(file);
-        return FALSE;
-    }
-    rewind(file);
+    /* If there's a second line or extra bytes, we don't care, but we DO reject 
+     * newline chars in the token.
+     */
+    fclose(fp);
 
-    *buffer = malloc((size_t)length + 1);
-    if (!*buffer) {
-        usys_log_error("Memory allocation failed for %zu bytes",
-                       (size_t)length + 1);
-        fclose(file);
-        return FALSE;
+    /* Strip ONLY trailing newline chars produced by fgets (we do not "trim" spaces/tabs/etc.)
+     * This allows the file to be a normal text file with newline at end, 
+     * but the hostname token itself will still be strict (no whitespace allowed inside).
+     */
+    size_t len = strcspn(line, "\r\n");
+    line[len] = '\0';
+
+    /* Reject if there was any whitespace/control in the token (strict) */
+    if (!is_valid_hostname_strict(line)) {
+        /* Helpful logging: show escaped bytes around the token */
+        usys_log_error("Invalid bootstrap server value in '%s' (must be strict hostname [A-Za-z0-9.-], no whitespace/control chars): '%s'",
+                       DEF_BOOTSTRAP_FILE, line);
+        return false;
     }
 
-    n_read = fread(*buffer, 1, (size_t)length, file);
-    if (n_read != (size_t)length) {
-        usys_log_error("Error reading '%s': read %zu of %ld bytes",
-                       DEF_BOOTSTRAP_FILE, n_read, length);
-        free(*buffer);
-        fclose(file);
-        return FALSE;
+    char *dup = strdup(line);
+    if (!dup) {
+        usys_log_error("Memory allocation failed duplicating bootstrap server");
+        return false;
     }
-    (*buffer)[length] = '\0';
 
-    fclose(file);
-    return TRUE;
+    *out = dup;
+    return true;
 }
 
 int process_config_file(char *fileName, Config *config) {

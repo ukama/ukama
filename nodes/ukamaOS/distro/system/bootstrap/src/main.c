@@ -95,7 +95,7 @@ int main (int argc, char **argv) {
     struct _u_instance webInst;
 
     usys_log_set_service(SERVICE_NAME);
-    usys_log_remote_init(SERVICE_NAME);
+    //    usys_log_remote_init(SERVICE_NAME);
 
 	/* Prase command line args. */
 	while (TRUE) {
