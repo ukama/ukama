@@ -123,6 +123,14 @@ static int create_container_file(char *target, Configs *config, Node *node) {
     }
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
+    /* install curl (kickstart readiness probe) */
+    if (strstr(target, TARGET_ALPINE) != NULL) {
+        sprintf(buffer, "RUN apk add --no-cache curl ca-certificates\n");
+    } else {
+        sprintf(buffer, "RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*\n");
+    }
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
     sprintf(buffer, CF_MKDIR, NODE_LIBS);
     if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 

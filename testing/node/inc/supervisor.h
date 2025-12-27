@@ -20,7 +20,8 @@
 
 #define SVISOR_SVISORD                  "[supervisord] \n\
  pidfile=/var/run/supervisord.pid\n\
- nodaemon=true \n\n"
+ nodaemon=true \n\
+ loglevel=warn\n\n"
 
 #define SVISOR_RPCINTERFACE             "[rpcinterface:supervisor]\n\
  supervisor.rpcinterface_factory=\
@@ -39,8 +40,12 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
  startretries=0\n\
  exitcodes=0\n\
  stdout_logfile=/dev/stdout\n\
- stderr_logfile=/dev/stderr\n\n"
+ stdout_logfile_maxbytes=0\n\
+ stderr_logfile=/dev/stderr\n\n\
+ stderr_logfile_maxbytes=0\n\n"
 
+#define SVISOR_STDOUT_LOGFILE_MAXBYTES  "%s stdout_logfile_maxbytes=0\n"
+#define SVISOR_STDERR_LOGFILE_MAXBYTES  "%s stderr_logfile_maxbytes=0\n"
 #define SVISOR_GROUP_ONBOOT             "[group:on-boot]\n programs=%s\n\n"
 #define SVISOR_GROUP_SYSSVC             "[group:sys-service]\n programs=%s\n\n"
 

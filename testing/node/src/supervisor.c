@@ -244,7 +244,7 @@ int create_supervisor_config(Configs *configs) {
         }
 
         /*
-         * bootstrap is a long-running daemon (web server):
+         * bootstrap is a long-running web server:
          * - should be restarted if it crashes
          * - should not be treated as "must exit 0"
          */
@@ -275,8 +275,11 @@ int create_supervisor_config(Configs *configs) {
         }
 
         /* container-friendly logs */
-        if (appendf(buffer, sizeof(buffer), "stdout_logfile=/dev/stdout\n") < 0 ||
-            appendf(buffer, sizeof(buffer), "stderr_logfile=/dev/stderr\n\n") < 0) {
+        if (appendf(buffer, sizeof(buffer),
+                    "stdout_logfile=/dev/stdout\n"
+                    "stdout_logfile_maxbytes=0\n"
+                    "stderr_logfile=/dev/stderr\n"
+                    "stderr_logfile_maxbytes=0\n\n") < 0) {
             log_error("Supervisor config overflow building logs for %s_%s",
                       capp->name, capp->version);
             fclose(fp);
