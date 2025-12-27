@@ -244,26 +244,28 @@ int create_supervisor_config(Configs *configs) {
         }
 
         /*
-         * bootstrap is one-shot:
-         * - do not restart
-         * - must exit 0
-         * - startretries=0, startsecs=0
+         * bootstrap is a long-running daemon (web server):
+         * - should be restarted if it crashes
+         * - should not be treated as "must exit 0"
          */
         if (is_bootstrap_program(capp)) {
-            if (appendf(buffer, sizeof(buffer), "autorestart=false\n") < 0 ||
-                appendf(buffer, sizeof(buffer), "startretries=0\n") < 0 ||
-                appendf(buffer, sizeof(buffer), "startsecs=0\n") < 0 ||
-                appendf(buffer, sizeof(buffer), "exitcodes=0\n") < 0) {
-                log_error("Supervisor config overflow building bootstrap policy for %s_%s",
+            int retries = (capp->startretries > 0) ? capp->startretries : 5;
+
+            if (appendf(buffer, sizeof(buffer), "autorestart=true\n") < 0 ||
+                appendf(buffer, sizeof(buffer), "startretries=%d\n", retries) < 0 ||
+                appendf(buffer, sizeof(buffer), "startsecs=2\n") < 0) {
+                log_error("Supervisor config overflow building bootstrap daemon policy for %s_%s",
                           capp->name, capp->version);
                 fclose(fp);
                 return FALSE;
             }
         } else {
             /* daemons follow config, but use startsecs=2 for stability */
+            int retries = (capp->startretries > 0) ? capp->startretries : 5;
+
             if (appendf(buffer, sizeof(buffer), "autorestart=%s\n",
                         capp->autorestart ? "true" : "false") < 0 ||
-                appendf(buffer, sizeof(buffer), "startretries=%d\n", capp->startretries) < 0 ||
+                appendf(buffer, sizeof(buffer), "startretries=%d\n", retries) < 0 ||
                 appendf(buffer, sizeof(buffer), "startsecs=2\n") < 0) {
                 log_error("Supervisor config overflow building daemon policy for %s_%s",
                           capp->name, capp->version);
