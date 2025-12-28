@@ -56,7 +56,7 @@ void usage() {
 	printf("--t, --target                    FROM Target (alpine:latest)\n");
 	printf("--x, --exec                      command to execute\n");
 	printf("                                 [create delete inspect verify]\n");
-	printf("--c, --capps                     capps config folder\n");
+	printf("--c, --apps                      apps config folder\n");
 	printf("--r, --registry                  registry URL\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> logging levels\n");
 	printf("--V, --version                   version.\n");
@@ -234,7 +234,7 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	/* Build all them capps */
+	/* Build all them apps */
 	ptr = configs;
 	while (ptr) {
 		if (ptr->valid && ptr->config) {

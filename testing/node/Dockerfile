@@ -93,11 +93,11 @@ ENV _BUILDAH_STARTED_IN_USERNS="" BUILDAH_ISOLATION=chroot
 # Copy virtual node related bin and config
 COPY virtualNode /sbin/
 
-COPY capps /capps
+COPY apps /apps
 
 COPY ./scripts/*.sh /scripts/
 
 COPY supervisord.conf /
 
-# /sbin/virtualNode --target "ubuntu:22.04" --exec create --c "/capps"
-CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/capps/"]
+# /sbin/virtualNode --target "ubuntu:22.04" --exec create --c "/apps"
+CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/apps/"]

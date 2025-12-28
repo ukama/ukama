@@ -36,10 +36,6 @@ static int add_to_configs(Configs **configs, Config *config, char *fileName,
 static int read_config_file(Config *config, char *fileName, char **error);
 static int is_valid_file(char *fileName);
 
-/*
- * read_entry --
- *
- */
 static int read_entry(toml_table_t *table, char *key, char **destStr,
 					  int *destInt, int flag) {
 
@@ -183,10 +179,6 @@ static int read_capp_table(toml_table_t *table, Config *config,
 	return TRUE;
 }
 
-/*
- * read_build_table --
- *
- */
 static int read_build_table(toml_table_t *table, Config *config,
 							char *type) {
 
@@ -266,10 +258,6 @@ static int read_build_table(toml_table_t *table, Config *config,
 	return TRUE;
 }
 
-/*
- * get_table --
- *
- */
 static int get_table(toml_table_t *src, char *key, toml_table_t **table) {
 
 	*table = toml_table_in(src, key);
@@ -281,10 +269,6 @@ static int get_table(toml_table_t *src, char *key, toml_table_t **table) {
 	return TRUE;
 }
 
-/*
- * read_build_config --
- *
- */
 static int read_build_config(Config *config, char *fileName,
 							 toml_table_t *buildFrom,
 							 toml_table_t *buildCompile,
@@ -374,10 +358,6 @@ static int add_to_configs(Configs **configs, Config *config, char *fileName,
 	return TRUE;
 }
 
-/*
- * is_valid_file --
- *
- */
 static int is_valid_file(char *fileName) {
 
     struct stat statBuf;
@@ -395,10 +375,6 @@ static int is_valid_file(char *fileName) {
 	return TRUE;
 }
 
-/*
- * read_config_files -- read all the config files within the dir
- *
- */
 int read_config_files(Configs **configs, char *configDir) {
 
     int ret=TRUE, configStatus=FALSE;
@@ -473,11 +449,6 @@ int read_config_files(Configs **configs, char *configDir) {
 	return FALSE;
 }
 
-/*
- * read_config_file -- read and parse the config file
- *
- *
- */
 static int read_config_file(Config *config, char *fileName, char **error) {
 
 	int ret=FALSE;
@@ -540,10 +511,6 @@ static int read_config_file(Config *config, char *fileName, char **error) {
 	return ret;
 }
 
-/*
- * free_configs --
- *
- */
 void free_configs(Configs *configs) {
 
 	Configs *ptr=NULL, *next=NULL;
@@ -566,9 +533,6 @@ void free_configs(Configs *configs) {
 	}
 }
 
-/*
- * free_config --
- */
 void free_config(Config *config, int flag) {
 
 	BuildConfig *build;
@@ -617,10 +581,6 @@ void free_config(Config *config, int flag) {
 	}
 }
 
-/*
- * log_config --
- *
- */
 void log_config(Config *config) {
 
 	BuildConfig *build=NULL;

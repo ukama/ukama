@@ -6,8 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/* build capps for virtual node */
-
 #include <stdlib.h>
 #include <stdio.h>
 

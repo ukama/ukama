@@ -222,9 +222,9 @@ build_image() {
     # copy capp's sbin, conf and lib to /sbin, /conf and /lib
     mkdir -p "${BUILD_DIR}/"{sbin,lib,conf,tmp,bin}
 
-    # Safer copy of capps content: avoid failing if glob doesn't match
+    # Safer copy of apps content: avoid failing if glob doesn't match
     shopt -s nullglob
-    for d in "${BUILD_DIR}"/capps/*; do
+    for d in "${BUILD_DIR}"/apps/*; do
         [ -d "$d" ] || continue
         [ -d "$d/sbin" ] && cp -rf "$d/sbin" "${BUILD_DIR}/"
         [ -d "$d/conf" ] && cp -rf "$d/conf" "${BUILD_DIR}/"

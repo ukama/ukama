@@ -14,7 +14,7 @@ set -euo pipefail
 UKAMA_ROOT_DEFAULT="/tmp/virtnode/ukama"
 UKAMA_OS_PATH_DEFAULT="/tmp/virtnode/ukama/nodes/ukamaOS"
 
-DEF_BUILD_DIR="./build/capps"
+DEF_BUILD_DIR="./build/apps"
 BUILD_DIR="${DEF_BUILD_DIR}"
 
 # default target is local machine (gcc)
@@ -92,7 +92,7 @@ build_app() {
 
     cd "$src"
     eval "$cmd"
-    echo "CApp build done for: ${cmd} (src=$src)"
+    echo "app build done for: ${cmd} (src=$src)"
 
     cd "$cwd"
 }
