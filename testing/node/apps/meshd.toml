@@ -1,6 +1,6 @@
 [build-from]
-	base="alpine"
-	version="latest"
+        base="alpine"
+        version="latest"
 
 [build-compile]
 	version="0.1"
@@ -29,5 +29,3 @@
 	bin="mesh.d"
 	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--config /ukama/configs/meshd/config.toml"
-
-# Nothing to see here. Move on

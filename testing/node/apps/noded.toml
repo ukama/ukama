@@ -10,7 +10,6 @@
 	bin_from="/nodes/ukamaOS/distro/system/noded/build/node.d"
 	bin_to="/sbin/"
 
-# for [program:<exec>] in supervisor.conf
 [capp-exec]
 	name="noded"
 	version="latest"
@@ -18,8 +17,6 @@
 	autorestart="true"
 	startretries=5
 	bin="node.d"
-	path="/sbin" # path where the exec should be. Matches build.bin_to
+	path="/sbin"
 	args="--p /mfgdata/property/property.json --i /tmp/sys/inventory_db"
 	group="on-boot"
-
-# Nothing to see here. Move on
