@@ -76,9 +76,6 @@ TEST_TARGET_OBJFILES = $(TEST_TARGET_CFILES:.c=.o)
 UNITY_OBJFILES = $(UNITY_CFILES:.c=.o)
 TEST_OBJFILES  = $(TEST_CFILES:.c=.o)
 
-XCC := $(XGCCPATH)$(XGCC)
-XLD := $(XGCCPATH)$(XLD)
-
 .PHONY: all clean test $(TARGET_EXEC)
 
 # Conditionally add -DUNIT_TEST to CFLAGS if the test target is being built
@@ -89,7 +86,7 @@ endif
 all: version.h static.h $(TARGET_EXEC)
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
+	$(CC) -o $(TARGET_EXEC) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(PLATFORM):
@@ -105,7 +102,7 @@ static.h:
 	$(NODES_DIR)/utils/scripts/generate_static.sh
 
 test: version.h static.h $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) $(UNITY_OBJFILES)
-	$(XCC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) \
+	$(CC) -o $(TEST_EXEC) $(TEST_OBJFILES) $(TEST_TARGET_OBJFILES) \
 		$(UNITY_OBJFILES) $(LDFLAGS) $(LIBS)
 	./$(TEST_EXEC)
 
@@ -113,10 +110,9 @@ coverage: test
 	gcov $(TARGET_CFILES)
 
 %.o: %.c
-	$(XCC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
+	$(CC) $(CFLAGS) $(COVFLAGS) -I$(VENDOR_DIR)/Unity/src -c $< -o $@
 
 clean:
 	rm -f $(TARGET_EXEC) $(TARGET_OBJFILES) $(TEST_EXEC) $(TEST_OBJFILES) \
 		version.h static.h *.gcda *.gcno *.gcov src/*.gcda src/*.gcov src/*.gcno \
 		test/*.gcda test/*.gcno test/*.gcov
-
