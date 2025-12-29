@@ -5,9 +5,9 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/distro/system/bootstrap"
+	source="/nodes/ukamaOS/distro/system/bootstrap"
 	cmd="make"
-	bin_from="/distro/system/bootstrap/bootstrap"
+	bin_from="/nodes/ukamaOS/distro/system/bootstrap/bootstrap"
 	bin_to="/sbin/"
 
 [build-rootfs]

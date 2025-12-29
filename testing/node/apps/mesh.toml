@@ -1,8 +1,3 @@
-#
-# Config file to build mesh.d for the Ukama's Virtual Node.
-#
-
-# Base image to use to build container. Examples are alpine, Ubuntu, etc.
 [build-from]
 	base="alpine"
 	version="latest"
@@ -10,9 +5,9 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/distro/system/meshd"
+	source="/nodes/ukamaOS/distro/system/meshd"
 	cmd="make"
-	bin_from="/distro/system/meshd/mesh.d"
+	bin_from="/nodes/ukamaOS/distro/system/meshd/mesh.d"
 	bin_to="/sbin/"
 
 [build-rootfs]

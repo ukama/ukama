@@ -1,9 +1,3 @@
-
-#
-# Config file to build node.d for the Ukama's Virtual Node.
-#
-
-# Base image to use to build container. Examples are alpine, Ubuntu, etc.
 [build-from]
 	base="alpine"
 	version="latest"
@@ -11,9 +5,9 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/distro/system/noded"
+	source="/nodes/ukamaOS/distro/system/noded"
 	cmd="make"
-	bin_from="/distro/system/noded/build/node.d"
+	bin_from="/nodes/ukamaOS/distro/system/noded/build/node.d"
 	bin_to="/sbin/"
 
 # for [program:<exec>] in supervisor.conf
