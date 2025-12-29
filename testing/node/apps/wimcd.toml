@@ -1,0 +1,21 @@
+[build-from]
+        base="alpine"
+        version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/wimcd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/wimcd/wimc.d"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="wimcd"
+	version="latest"
+	bin="wimc.d"
+	path="/sbin"
+	autostart="false"
+        autorestart="true"
+        startretries=5
+        group="service"
