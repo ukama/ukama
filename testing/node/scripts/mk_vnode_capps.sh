@@ -87,7 +87,7 @@ resolve_ukama_os() {
 build_app() {
     local cwd src cmd
     cwd="$(pwd)"
-    src="${UKAMA_OS}$1"
+    src="${UKAMA_ROOT}$1"
     cmd="$2"
 
     cd "$src"
@@ -125,9 +125,6 @@ main() {
 
     resolve_ukama_os
 
-    local SYS_ROOT="${UKAMA_OS}/distro"
-    local SCRIPTS_ROOT="${SYS_ROOT}/scripts/"  # kept in case used later
-
     case "$action" in
         build)
             if [[ "${2:-}" == "app" ]]; then
@@ -139,19 +136,19 @@ main() {
             cp "${UKAMA_ROOT}/${2:?missing src path}" "${3:?missing dest path}"
             ;;
         cp)
-            cp "${UKAMA_OS}/${2:?missing src path}" "${BUILD_DIR}/${3:?missing dest path}"
+            cp "${UKAMA_ROOT}/${2:?missing src path}" "${BUILD_DIR}/${3:?missing dest path}"
             ;;
         exec)
             "${2:?missing command}"
             ;;
         patchelf)
-            patchelf --set-rpath /usys/lib "${UKAMA_OS}/${2:?missing path}"
+            patchelf --set-rpath /usys/lib "${UKAMA_ROOT}/${2:?missing path}"
             ;;
         mkdir)
             mkdir -p "${BUILD_DIR}/${2:?missing dir}"
             ;;
         libs)
-            copy_all_libs "${UKAMA_OS}/${2:?missing bin}" "${3:?missing capp}"
+            copy_all_libs "${UKAMA_ROOT}/${2:?missing bin}" "${3:?missing capp}"
             ;;
         rename)
             mv "${BUILD_DIR}" "${2:?missing new name}"
