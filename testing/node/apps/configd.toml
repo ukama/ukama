@@ -12,10 +12,9 @@
 
 [capp-exec]
 	name="configd"
-        version="latest"
-        autostart="false"
-        autorestart="true"
-        startretries=5
-	version="latest"
+    version="latest"
+    autostart="false"
+    autorestart="true"
+    startretries=5
 	bin="config.d"
 	path="/sbin"
