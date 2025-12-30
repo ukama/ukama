@@ -65,6 +65,9 @@ supervisor.rpcinterface:make_main_rpcinterface\n\n"
 #define SVISOR_GROUP_SYS_SVC            "sys-service"
 #define SVISOR_GROUP_NIL                NULL
 
+#define SVISOR_GLOBAL_ENV \
+    "environment=UKAMA_GPS_MODE=\"mock\",UKAMA_GPS_COORDS=\"-90.000000,0.000000\"\n"
+
 int create_supervisor_config(Configs *configs);
 void purge_supervisor_config(char *fileName);
 

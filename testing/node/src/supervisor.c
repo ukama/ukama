@@ -234,6 +234,14 @@ int create_supervisor_config(Configs *configs) {
             }
         }
 
+        /* global env (virtual-node GPS defaults) */
+        if (appendf(buffer, sizeof(buffer), SVISOR_GLOBAL_ENV) < 0) {
+            log_error("Supervisor config overflow building env for %s_%s",
+                      capp->name, capp->version);
+            fclose(fp);
+            return FALSE;
+        }
+
         /* autostart */
         if (appendf(buffer, sizeof(buffer), "autostart=%s\n",
                     capp->autostart ? "true" : "false") < 0) {
