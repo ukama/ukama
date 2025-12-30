@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "gpsd.h"
 #include "config.h"
@@ -145,7 +149,7 @@ bool start_gps_data_collection_and_processing(Config *config, pthread_t *tid) {
         return USYS_FALSE;
     }
 
-    return USYS_FALSE;
+    return USYS_TRUE;
 }
 
 void stop_gps_data_collection_and_processing(pthread_t tid) {
