@@ -21,7 +21,7 @@ UKAMA_GPS_COORDS_DEFAULT="-90.000000,0.000000"
 
 # Align with gps.d expectations
 GPS_LOC_FILE="/tmp/gps_loc.log"
-GPS_RAW_FILE="/tmp/gpslog_raw.txt"
+GPS_RAW_FILE="/tmp/gps_raw.txt"
 
 # Function to convert NMEA format to decimal degrees for Google Maps
 google_api_convert() {
@@ -101,9 +101,9 @@ gather_gps_data() {
 
 	while [ $missing_counter -lt 10 ]; do
 		echo "[$0] Gathering GPS Data"
-		rsync -avz "$trx_host:$GPS_RAW_FILE" "$GPS_RAW_FILE" &
 
-		pid=$(ps | grep -m 1 rsync | awk '{print $1}')
+        rsync -avz "$trx_host:$GPS_RAW_FILE" "$GPS_RAW_FILE" &
+        pid=$!
 		i=0
 		while true; do
 			if [ $i -eq $gps_data_count ]; then
