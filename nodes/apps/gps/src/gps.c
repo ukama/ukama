@@ -137,6 +137,8 @@ bool start_gps_data_collection_and_processing(Config *config, pthread_t *tid) {
 
     int ret = 0;
 
+    if (config == NULL || tid == NULL) return USYS_FALSE;
+
     ret = pthread_create(tid, NULL, gps_thread_wrapper, (void*) config);
     if (ret != 0) {
         usys_log_error("Failed to create GPS thread");
