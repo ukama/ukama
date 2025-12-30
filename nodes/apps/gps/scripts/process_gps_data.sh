@@ -137,7 +137,7 @@ get_coordinates() {
 	google_lat=$(google_api_convert "$Latitude")
 	google_long=$(google_api_convert "$Longitude")
 
-	echo "$google_lat,$google_long" > /etc/gps_loc.log
+	echo "$google_lat,$google_long" > /tmp/gps_loc.log
 }
 
 # Main

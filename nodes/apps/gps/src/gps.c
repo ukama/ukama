@@ -90,7 +90,7 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
         ret = system(runMe);
         if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
             /* gps is locked, get coordinates */
-            snprintf(runMe, MAX_BUFFER, "%s get_coordnates", GPS_SCRIPT);
+            snprintf(runMe, MAX_BUFFER, "%s get_coordinates", GPS_SCRIPT);
             ret = system(runMe);
 
             if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
