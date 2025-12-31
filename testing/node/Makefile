@@ -54,7 +54,7 @@ $(TARGET_EXEC): $(OBJFILES)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-sourcetgz: $(TARGET_EXEC)
+sourcetgz:
 	rm -rf $(STAGE_DIR)
 	rm -f ukama_*.tgz
 
@@ -79,9 +79,15 @@ sourcetgz: $(TARGET_EXEC)
 	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
 	)
 
-container:  sourcetgz
-	@echo Building container
-	podman build -t testing/virtualnode:${VERSION} .
+VNODE_DIR := testing/node
+
+container: sourcetgz
+	@echo "Building container with repo-root context: $(REPO_ROOT)"
+	podman build \
+	  --build-arg VNODE_DIR=$(VNODE_DIR) \
+	  -f $(CURDIR)/Dockerfile \
+	  -t testing/virtualnode:${VERSION} \
+	  $(REPO_ROOT)
 
 print-version:
 	@echo $(VERSION)

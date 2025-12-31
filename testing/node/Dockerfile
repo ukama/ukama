@@ -1,22 +1,14 @@
-FROM ubuntu:22.04
-ENTRYPOINT []
-
-WORKDIR /
-
+# ---------- Stage 1: builder (contains full repo) ----------
+FROM ubuntu:22.04 AS builder
 ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update
-
-RUN apt install software-properties-common -y
-
-RUN add-apt-repository ppa:deadsnakes/ppa -y
+ARG VNODE_DIR=testing/node
 
 RUN apt-get update && apt-get install -y \
     build-essential \
-    gcc-arm-linux-gnueabihf \
+    gcc \
     g++ \
-    cmake \
     make \
+    cmake \
     automake \
     autoconf \
     libtool \
@@ -42,8 +34,8 @@ RUN apt-get update && apt-get install -y \
     libprotobuf-dev \
     sqlite3 \
     libsqlite3-dev \
-    python3.9 \
-    python3.9-dev \
+    python3 \
+    python3-dev \
     curl \
     wget \
     rsync \
@@ -57,7 +49,6 @@ RUN apt-get update && apt-get install -y \
     e2fsprogs \
     util-linux \
     git \
-    buildah \
     tree \
     htop \
     tzdata \
@@ -66,38 +57,107 @@ RUN apt-get update && apt-get install -y \
     tcl \
     vim \
     libunistring-dev \
-    libmicrohttpd-dev \
-    libjansson-dev \
     libcurl4-openssl-dev \
     libgnutls28-dev \
-    libsqlite3-dev \
-    \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y software-properties-common \
- && add-apt-repository -y universe \
- && apt-get update \
- && apt-get install -y podman fuse-overlayfs \
- && rm -rf /var/lib/apt/lists/*
+WORKDIR /work
 
-RUN mkdir -p /var/lib/shared/overlay-images /var/lib/shared/overlay-layers; touch /var/lib/shared/overlay-images/images.lock; touch /var/lib/shared/overlay-layers/layers.lock
+# Copy entire repo (build context = repo root)
+COPY . /work/ukama
+
+WORKDIR /work/ukama/${VNODE_DIR}
+RUN make clean && make all
+
+
+# ---------- Stage 2: runtime (small; no repo) ----------
+FROM ubuntu:22.04
+ARG DEBIAN_FRONTEND=noninteractive
+ARG VNODE_DIR=testing/node
+
+ENTRYPOINT []
+WORKDIR /
+
+# ---------- Stage 2: runtime (builds happen here; no repo) ----------
+FROM ubuntu:22.04
+ARG DEBIAN_FRONTEND=noninteractive
+ARG VNODE_DIR=testing/node
+
+ENTRYPOINT []
+WORKDIR /
+
+RUN apt-get update && apt-get install -y \
+    software-properties-common \
+ && add-apt-repository -y universe \
+ && apt-get update && apt-get install -y \
+    podman \
+    fuse-overlayfs \
+    buildah \
+    ca-certificates \
+    make \
+    build-essential \
+    pkg-config \
+    cmake \
+    autoconf \
+    automake \
+    libtool \
+    git \
+    curl \
+    wget \
+    rsync \
+    tar \
+    pigz \
+    xz-utils \
+    unzip \
+    iproute2 \
+    iputils-ping \
+    openssh-client \
+    tcpdump \
+    ethtool \
+    iperf3 \
+    dosfstools \
+    e2fsprogs \
+    util-linux \
+    tree \
+    htop \
+    tzdata \
+    perl \
+    vim \
+    libjansson4 \
+    libmicrohttpd12 \
+    libidn2-0 \
+    libcap2 \
+    libsqlite3-0 \
+    libssl3 \
+    zlib1g \
+    libcurl4 \
+    libgnutls28-dev \
+    libmicrohttpd-dev \
+    libcurl4-openssl-dev \
+    libidn2-dev \
+    zlib1g-dev \
+    libssl-dev \  
+    libunistring-dev \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/lib/shared/overlay-images
+RUN mkdir -p /var/lib/shared/overlay-layers
+RUN touch /var/lib/shared/overlay-images/images.lock
+RUN touch /var/lib/shared/overlay-layers/layers.lock
 
 RUN mkdir -p /ukama
-
 RUN mkdir -p /scripts
+
+ENV _BUILDAH_STARTED_IN_USERNS=""
+ENV BUILDAH_ISOLATION=chroot
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/tmp/virtnode/ukamaOS/distro/vendor/build/lib:/tmp/virtnode/ukamaOS/distro/vendor/build/lib64:/tmp/virtnode/ukamaOS/distro/platform/build"
 
-ENV _BUILDAH_STARTED_IN_USERNS="" BUILDAH_ISOLATION=chroot
+# Copy only runtime artifacts
+COPY --from=builder /work/ukama/${VNODE_DIR}/virtualNode /sbin/virtualNode
+COPY --from=builder /work/ukama/${VNODE_DIR}/apps /apps
+COPY --from=builder /work/ukama/${VNODE_DIR}/scripts /scripts
+COPY --from=builder /work/ukama/${VNODE_DIR}/supervisord.conf /supervisord.conf
 
-# Copy virtual node related bin and config
-COPY virtualNode /sbin/
-
-COPY apps /apps
-
-COPY ./scripts/*.sh /scripts/
-
-COPY supervisord.conf /
-
-# /sbin/virtualNode --target "ubuntu:22.04" --exec create --c "/apps"
 CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/apps/"]
