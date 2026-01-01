@@ -22,7 +22,7 @@
 	version="latest"
 	bin="metrics.d"
 	path="/sbin"
-	args="--config /ukama/configs/metricsd/config.toml"
+	args="--config /ukama/configs/metricsd/com_config.toml"
         wait_for="10s"
         autostart="false"
         autorestart="true"
