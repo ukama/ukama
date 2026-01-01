@@ -1,6 +1,6 @@
 [build-from]
-        base="alpine"
-        version="latest"
+    base="alpine"
+    version="latest"
 
 [build-compile]
 	version="0.1"
