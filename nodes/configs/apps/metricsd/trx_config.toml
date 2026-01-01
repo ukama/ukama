@@ -355,7 +355,7 @@ metric_server_port = 7001
         [[stats.sensors]]
             source = "tempsensor1"
             agent = "sysfs_agent"
-            url = "./config/trx/tempsensor1/"
+            url = "/ukama/configs/metricsd/config/trx/tempsensor1/"
 
         [[stats.sensors.tempsensor1.kpi]]
                 name = "temp"
@@ -368,7 +368,7 @@ metric_server_port = 7001
        [[stats.lte]]
             source = "stack"
             agent = "lte_agent"
-            url = "./config/trx/lte_stack/lte_stats.file"
+            url = "/ukama/configs/metricsd/trx/lte_stack/lte_stats.file"
             [[stats.lte.stack.kpi]]
                 name = "throughput_downlink"
                 ext = ""
@@ -399,7 +399,7 @@ metric_server_port = 7001
             [[stats.lte]]
                 source = "core"
                 agent = "lte_agent"
-                url = "./config/trx/core/core.file"
+                url = "/ukama/configs/metricsd/trx/core/core.file"
                 [[stats.lte.core.kpi]]
                     name = "active_ue"
                     ext = ""
@@ -413,8 +413,4 @@ metric_server_port = 7001
                     desc = "subscribers"
                     type = "METRICTYPE_GAUGE"
                     labels = []
-
-
-
-
 

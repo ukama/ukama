@@ -379,7 +379,7 @@ ukamnode = "TRX"
 	   [[stats.lte]]
 		    source = "stack"
 		    agent = "lte_agent"
-		    url = "./config/trx/lte_stack/lte_stats.file"
+		    url = "/ukama/configs/metricsd/trx/lte_stack/lte_stats.file"
 		    [[stats.lte.stack.kpi]]
 				name = "throughput_downlink"
 				ext = ""

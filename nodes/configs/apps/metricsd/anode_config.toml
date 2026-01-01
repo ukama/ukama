@@ -355,7 +355,7 @@ metric_server_port = 7001
         [[stats.sensors]]
             source = "tempsensor"
             agent = "sysfs_agent"
-            url = "./config/anode/tempsensor/"
+            url = "/ukama/configs/metricsd/anode/tempsensor/"
 
             [[stats.sensors.tempsensor.kpi]]
                 name = "microprocessor"
@@ -374,7 +374,7 @@ metric_server_port = 7001
         [[stats.sensors]]
             source = "adc"
             agent = "sysfs_agent"
-            url = "./config/anode/adc/"
+            url = "/ukama/configs/metricsd/anode/adc/"
 
             [[stats.sensors.adc.kpi]]
                 name = "tx_power"
@@ -396,10 +396,3 @@ metric_server_port = 7001
                 desc = "PA power consumed"
                 type = "METRICTYPE_GAUGE"
                 labels = []
-
-
-
-
-
-
-

@@ -355,7 +355,7 @@ metric_server_port = 7001
         [[stats.sensors]]
             source = "tempsensor1"
             agent = "sysfs_agent"
-            url = "./config/com/tempsensor1/"
+            url = "/ukama/configs/metricsd/com/tempsensor1/"
 
         [[stats.sensors.tempsensor1.kpi]]
                 name = "temp"
