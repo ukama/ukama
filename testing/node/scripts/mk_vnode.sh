@@ -30,6 +30,7 @@ LOCAL_REGISTRY="${LOCAL_REGISTRY:-localhost:5000}"
 
 # Will be set by update_ukama_os_env
 BUILD_ENV=""        # "local" or "container"
+UKAMA_ROOT="${UKAMA_ROOT:-}"
 UKAMA_OS="${UKAMA_OS:-}"
 NODED_ROOT=""       # ${UKAMA_OS}/distro/system/noded
 
@@ -68,6 +69,14 @@ detect_env() {
 update_ukama_os_env() {
     detect_env
 
+    if [ -z "${UKAMA_ROOT:-}" ]; then
+        if [ "${BUILD_ENV}" = "local" ]; then
+            UKAMA_ROOT="$(realpath ../../)"
+        else
+            UKAMA_ROOT="/tmp/virtnode/ukama/"
+        fi
+    fi
+
     # Allow explicit override via UKAMA_OS env var
     if [ -z "${UKAMA_OS:-}" ]; then
         if [ "${BUILD_ENV}" = "local" ]; then
@@ -77,6 +86,7 @@ update_ukama_os_env() {
         fi
     fi
 
+    [ -d "${UKAMA_ROOT}" ] || die "Failed to find ukama at: ${UKAMA_ROOT} (BUILD_ENV=${BUILD_ENV})"
     [ -d "${UKAMA_OS}" ] || die "Failed to find ukamaOS at: ${UKAMA_OS} (BUILD_ENV=${BUILD_ENV})"
 
     NODED_ROOT="${UKAMA_OS}/distro/system/noded"
@@ -103,6 +113,11 @@ build_utils() {
 
     [ -f "${NODED_ROOT}/utils/prepare_env.sh" ] || die "Missing prepare_env.sh"
     cp -f "${NODED_ROOT}/utils/prepare_env.sh" "${BUILD_DIR}/utils/"
+
+    # gps.d
+    [ -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" ] || \
+        die "Missing process_gps_data.sh"
+    cp -f "${UKAMA_ROOT}/nodes/apps/gps/scripts/process_gps_data.sh" "${BUILD_DIR}/utils/"
 
     popd >/dev/null
 
