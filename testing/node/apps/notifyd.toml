@@ -7,7 +7,7 @@
 	static="false"
 	source="/nodes/ukamaOS/distro/system/notifyd"
 	cmd="make"
-	bin_from="/nodes/ukamaOS/distro/system/notifyd/build/notifyd"
+	bin_from="/nodes/ukamaOS/distro/system/notifyd/build/notify.d"
 	bin_to="/sbin/"
 
 [build-conf]
