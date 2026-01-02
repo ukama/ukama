@@ -46,7 +46,7 @@ static UsysOption longOptions[] = {
     { "logs",          required_argument, 0, 'l' },
     { "noded-host",    required_argument, 0, 'n' },
     { "noded-lep",     required_argument, 0, 'e' },
-    { "status-file",   required_argument, 0, 'f' },
+    { "map-file",      required_argument, 0, 'f' },
     { "help",          no_argument,       0, 'h' },
     { "version",       no_argument,       0, 'v' },
     { 0,               0,                 0,  0 }
