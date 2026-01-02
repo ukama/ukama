@@ -20,16 +20,14 @@
 #include "config.h"
 #include "supervisor.h"
 
+#define ENV_BOOTSTRAP_SERVER "BOOTSTRAP_SERVER"
+
 static char *module_schema_file(char* nodeType, char *type);
 static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
 static int create_container_file(char *target, Configs *config, Node *node);
 
-/*
- * module_schema_file --
- *
- */
 static char *module_schema_file(char* nodeType, char *type) {
 
 	if (strcmp(type, MODULE_TYPE_COM) == 0)  return SCHEMA_FILE_COM;
@@ -48,10 +46,6 @@ static char *module_schema_file(char* nodeType, char *type) {
 	return SCHEMA_FILE_NONE;
 }
 
-/*
- * set_schema_args
- *
- */
 static void set_schema_args(Node *node, char **buffer) {
 
 	char temp[MAX_BUFFER]={0}, temp1[MAX_BUFFER]={0};
@@ -72,10 +66,6 @@ static void set_schema_args(Node *node, char **buffer) {
 	//	sprintf(*buffer, "%s", temp1);
 }
 
-/*
- * init_container_file --
- *
- */
 static FILE* init_container_file(char *fileName) {
 
 	FILE *fp=NULL;
@@ -95,10 +85,6 @@ static FILE* init_container_file(char *fileName) {
 	return fp;
 }
 
-/*
- * write_to_container_file --
- *
- */
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 
 	if (buffer == NULL || fp == NULL) return FALSE;
@@ -113,92 +99,121 @@ static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 	return TRUE;
 }
 
-/*
- * create_container_file --
- *
- */
 static int create_container_file(char *target, Configs *config, Node *node) {
 
-	FILE *fp=NULL;
-	char buffer[MAX_BUFFER] = {0};
+    FILE *fp = NULL;
+    char buffer[MAX_BUFFER] = {0};
 
-	if (config == NULL) return FALSE;
+    if (config == NULL) return FALSE;
 
-	fp = init_container_file(CONTAINER_FILE);
-	if (!fp) {
-		log_error("Error initalizing container file: %s", CONTAINER_FILE);
-		return FALSE;
-	}
+    fp = init_container_file(CONTAINER_FILE);
+    if (!fp) {
+        log_error("Error initalizing container file: %s", CONTAINER_FILE);
+        return FALSE;
+    }
 
-	sprintf(buffer, CF_FROM, target);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_FROM, target);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	if (strstr(target, TARGET_ALPINE) != NULL) {
-		sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
-	} if (strstr(target, TARGET_FEDORA) != NULL) {
-		sprintf(buffer, CF_RUN_YUM, UPDATE_PKGS);
-	} else {
-		sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
-	}
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    /* pkgs: alpine vs ubuntu/debian */
+    if (strstr(target, TARGET_ALPINE) != NULL) {
+        sprintf(buffer, CF_RUN_APK, UPDATE_PKGS);
+    } else {
+        sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
+    }
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf (buffer, CF_MKDIR, NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    /* install curl (kickstart readiness probe) */
+    if (strstr(target, TARGET_ALPINE) != NULL) {
+        sprintf(buffer, "RUN apk add --no-cache curl ca-certificates\n");
+    } else {
+        sprintf(buffer, "RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && rm -rf /var/lib/apt/lists/*\n");
+    }
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf (buffer, CF_MKDIR, SYSFS_DIR);
-		if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_MKDIR, NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    /* Make sure /tmp exists */
+    sprintf(buffer, CF_MKDIR, "/tmp");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/conf", "/conf");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/lib", NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/utils", "/sbin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/conf", "/conf");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/lib", NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/sys", SYSFS_DIR);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/capps", "/capps");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/apps", "/apps");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/bin", "/bin");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/ukama", "/ukama");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
-	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+    sprintf(buffer, CF_COPY, "./build/ukama/etc", "/etc");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	fclose(fp);
-	return TRUE;
+    /* mock sysfs tarball -> /ukama/mocksysfs/sys/... */
+    sprintf(buffer, CF_MKDIR, "/ukama/mocksysfs");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ADD, "./build/sysfs/sys.tar", "/ukama/mocksysfs/");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    /*
+     * Make /tmp/sys point to /ukama/mocksysfs/sys
+     * NOTE: If something created a real /tmp/sys directory earlier, ln -sfn might not replace it
+     * deterministically. If you never create /tmp/sys anywhere else, we're fine.
+     */
+    sprintf(buffer, CF_SYMLINK, "/ukama/mocksysfs/sys", "/tmp/sys");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
+    if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+    fclose(fp);
+    return TRUE;
 }
 
-/*
- * create_vnode_image --
- *
- */
 int create_vnode_image(char *target, Configs *config, Node *node,
 					   char *runTarget) {
 
 	char runMe[MAX_BUFFER]={0};
 	char *buffer=NULL;
+    char *bootstrapServer=NULL;
 	NodeInfo *nodeInfo=NULL;
 
 	if (node == NULL)             return FALSE;
 	if (node->nodeInfo   == NULL) return FALSE;
 	if (node->nodeConfig == NULL) return FALSE;
+
+	bootstrapServer = getenv(ENV_BOOTSTRAP_SERVER);
+	if (bootstrapServer == NULL) {
+		log_error("Env variable: %s not set \n default to localhost.",
+            ENV_BOOTSTRAP_SERVER);
+        bootstrapServer = "localhost";
+	}
 
 	nodeInfo   = node->nodeInfo;
 
@@ -236,6 +251,9 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 		goto failure;
 	}
 
+    sprintf(runMe, "%s ukamadirs %s %s", SCRIPT, nodeInfo->uuid, bootstrapServer);
+	if (system(runMe) < 0) goto failure;
+
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
@@ -262,10 +280,6 @@ int create_vnode_image(char *target, Configs *config, Node *node,
 	return FALSE;
 }
 
-/*
- * purge_container_file --
- *
- */
 void purge_container_file(char *fileName) {
 
 	if (remove(fileName) == 0) {
@@ -277,10 +291,6 @@ void purge_container_file(char *fileName) {
 	return;
 }
 
-/*
- * purge_vnode_image --
- *
- */
 void purge_vnode_image(Node *node) {
 
 	char runMe[MAX_BUFFER]  = {0};

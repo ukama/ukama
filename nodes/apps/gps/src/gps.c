@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "gpsd.h"
 #include "config.h"
@@ -90,7 +94,7 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
         ret = system(runMe);
         if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
             /* gps is locked, get coordinates */
-            snprintf(runMe, MAX_BUFFER, "%s get_coordnates", GPS_SCRIPT);
+            snprintf(runMe, MAX_BUFFER, "%s get_coordinates", GPS_SCRIPT);
             ret = system(runMe);
 
             if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
@@ -137,13 +141,15 @@ bool start_gps_data_collection_and_processing(Config *config, pthread_t *tid) {
 
     int ret = 0;
 
-    pthread_create(tid, NULL, gps_thread_wrapper, (void*) config);
+    if (config == NULL || tid == NULL) return USYS_FALSE;
+
+    ret = pthread_create(tid, NULL, gps_thread_wrapper, (void*) config);
     if (ret != 0) {
         usys_log_error("Failed to create GPS thread");
         return USYS_FALSE;
     }
 
-    return USYS_FALSE;
+    return USYS_TRUE;
 }
 
 void stop_gps_data_collection_and_processing(pthread_t tid) {

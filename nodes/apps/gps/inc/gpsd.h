@@ -28,7 +28,7 @@
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
 
-#define GPS_SCRIPT             "./scripts/process_gps_data.sh"
+#define GPS_SCRIPT             "/sbin/process_gps_data.sh"
 #define GPS_LOC_FILE           "/tmp/gps_loc.log"
 #define GPS_RAW_FILE           "/tmp/gps_raw.log"
 #define GPS_WAIT_TIME          5

@@ -37,6 +37,7 @@
 #define CF_CMD     "CMD [%s]\n"
 #define CF_MKDIR   "RUN mkdir -p %s\n"
 #define CF_ENV     "ENV %s %s\n"
+#define CF_SYMLINK "RUN ln -sfn %s %s\n"
 
 #define UPDATE_PKGS "python3 supervisor"
 

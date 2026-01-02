@@ -1,0 +1,26 @@
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/notifyd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/notifyd/notify.d"
+	bin_to="/sbin/"
+
+[build-conf]
+    from="/nodes/configs/apps/notifyd/status.map"
+    to="/ukama/configs/notifyd/status.map"
+
+[capp-exec]
+	name="notifyd"
+	version="latest"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	bin="notify.d"
+	path="/sbin"
+	args="--map-file /ukama/configs/notifyd/status.map"
+	group="service"

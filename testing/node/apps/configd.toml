@@ -1,0 +1,20 @@
+[build-from]
+        base="alpine"
+        version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/configd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/configd/config.d"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="configd"
+    version="latest"
+    autostart="false"
+    autorestart="true"
+    startretries=5
+	bin="config.d"
+	path="/sbin"

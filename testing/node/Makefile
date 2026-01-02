@@ -12,7 +12,13 @@ XLD  = ld
 XGXX = g++
 HOST = $(shell gcc -dumpmachine)
 
-#VERSION = v0.0.1
+VERSION=$(shell git describe --always --dirty=-dirty)
+REPO_ROOT := $(abspath $(CURDIR)/../..)
+STAGE_DIR := /tmp/virtnode
+PKG_NAME  := ukama_${VERSION}.tgz
+
+# used for version.h
+GITMETA_DIR := $(STAGE_DIR)/ukama/.gitmeta
 
 OPENSSLTARGET = linux-generic64
 
@@ -37,9 +43,6 @@ LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib64
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-#VERSION=$(shell git rev-parse --short HEAD)
-VERSION=$(shell git describe --always --dirty=-dirty)
-
 .PHONY: $(TARGET_EXEC)
 
 srvc_router: $(TARGET_EXEC)
@@ -51,21 +54,45 @@ $(TARGET_EXEC): $(OBJFILES)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-	 
 sourcetgz: $(TARGET_EXEC)
-	rm -rf /tmp/virtnode/
-	rm -rf ukamaOS_*.tgz 
-	(mkdir -p /tmp/virtnode/ukamaOS/distro && \
-	rsync -av --exclude='musl-cross-make' ../../nodes/ukamaOS/distro/ /tmp/virtnode/ukamaOS/distro && \
-	rsync -av ../../nodes/ukamaOS/config.mk /tmp/virtnode/ukamaOS/config.mk &&\
-	sync && tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
-	mv /tmp/virtnode/ukamaOS.tgz ukamaOS_${VERSION}.tgz)
+	rm -rf $(STAGE_DIR)
+	rm -f ukama_*.tgz
+
+	( set -e; \
+	  mkdir -p $(STAGE_DIR); \
+	  rsync -a --info=progress2 \
+	    --exclude='.git' \
+	    --exclude='**/build' \
+	    --exclude='**/out' \
+	    --exclude='**/.cache' \
+	    --exclude='**/musl-cross-make' \
+	    --exclude='**/*.o' \
+	    --exclude='**/*.a' \
+	    --exclude='**/*.so' \
+	    $(REPO_ROOT)/ \
+	    $(STAGE_DIR)/ukama; \
+	  rm -rf $(GITMETA_DIR); \
+	  git clone --no-checkout --filter=blob:none --tags --depth=500 $(REPO_ROOT) $(GITMETA_DIR); \
+	  printf "gitdir: .gitmeta/.git\n" > $(STAGE_DIR)/ukama/.git; \
+	  cd $(STAGE_DIR) && \
+	  tar -cf - ukama | pigz -1 > $(PKG_NAME); \
+	  mv $(PKG_NAME) $(CURDIR)/$(PKG_NAME); \
+	)
 
 container:  sourcetgz
 	@echo Building container
 	podman build -t testing/virtualnode:${VERSION} .
 
+print-version:
+	@echo $(VERSION)
+
+print-local-image:
+	@echo testing/virtualnode:$(VERSION)
+
 all: $(TARGET_EXEC)
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -rf $(STAGE_DIR)
+	rm -f ${PKG_NAME}
+	rm -rf build/

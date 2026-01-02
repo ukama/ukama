@@ -1,0 +1,30 @@
+[build-from]
+        base="alpine"
+        version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/metricsd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/metricsd/metrics.d"
+	bin_to="/sbin"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+    from="/nodes/configs/apps/metricsd/metrics_config.toml"
+    to="/conf/config.toml"
+
+[capp-exec]
+	name="metricsd"
+	version="latest"
+	bin="metrics.d"
+	path="/sbin"
+	args="--config /ukama/configs/metricsd/com_config.toml"
+        wait_for="10s"
+        autostart="false"
+        autorestart="true"
+        startretries=5
+	group="service"

@@ -1,0 +1,21 @@
+[build-from]
+        base="alpine"
+        version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/lookoutd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/lookoutd/lookout.d"
+	bin_to="/sbin"
+
+[capp-exec]
+	name="lookoutd"
+	version="latest"
+	bin="lookout.d"
+	path="/sbin"
+	autostart="false"
+        autorestart="true"
+        startretries=5
+	group="service"

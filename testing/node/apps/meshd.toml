@@ -1,0 +1,31 @@
+[build-from]
+        base="alpine"
+        version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/meshd"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/meshd/mesh.d"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+	from="/nodes/configs/apps/mesh/config.toml"
+	to="/ukama/configs/meshd"
+
+# for [program:<exec>] in supervisor.conf
+[capp-exec]
+	name="meshd"
+	version="latest"
+	depends_on="bootstrap"
+	wait_for="10s"
+	autostart="false"
+	autorestart="true"
+	startretries=5
+	bin="mesh.d"
+	path="/sbin" # path where the exec should be. Matches build.bin_to
+	args="--config /ukama/configs/meshd/config.toml"

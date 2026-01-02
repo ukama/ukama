@@ -1,0 +1,30 @@
+[build-from]
+    base="alpine"
+    version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/nodes/ukamaOS/distro/system/bootstrap"
+	cmd="make"
+	bin_from="/nodes/ukamaOS/distro/system/bootstrap/bootstrap"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+    from="/nodes/configs/apps/bootstrap/config.toml"
+    to="/ukama/configs/bootstrap/"
+
+# for [program:<exec>] in supervisor.conf
+[capp-exec]
+    name="bootstrap"
+    version="latest"
+    wait_for="10s"
+    autostart="false"
+    autorestart="true"
+    startretries=5
+    bin="bootstrap"
+    path="/sbin"
+    args="--config /ukama/configs/bootstrap/config.toml"

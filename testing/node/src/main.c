@@ -24,6 +24,7 @@
 #include "supervisor.h"
 #include "jserdes.h"
 #include "image.h"
+#include "setup_env.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -47,10 +48,6 @@ enum {
 
 extern int build_capp(Config *config);
 
-/*
- * usage --
- *
- */
 void usage() {
 
 	printf("Usage: [options] \n");
@@ -59,16 +56,12 @@ void usage() {
 	printf("--t, --target                    FROM Target (alpine:latest)\n");
 	printf("--x, --exec                      command to execute\n");
 	printf("                                 [create delete inspect verify]\n");
-	printf("--c, --capps                     capps config folder\n");
+	printf("--c, --apps                      apps config folder\n");
 	printf("--r, --registry                  registry URL\n");
 	printf("--l, --level <ERROR | DEBUG | INFO> logging levels\n");
 	printf("--V, --version                   version.\n");
 }
 
-/*
- * set_log_level -- set the verbosity level for logs
- *
- */
 static void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
@@ -84,10 +77,6 @@ static void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/*
- * get_cmd_type --
- *
- */
 static int get_cmd_type(char *arg) {
 
 	if (strcmp(arg, CMD_CREATE) == 0) {
@@ -245,7 +234,7 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	/* Build all them capps */
+	/* Build all them apps */
 	ptr = configs;
 	while (ptr) {
 		if (ptr->valid && ptr->config) {
@@ -276,7 +265,6 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
- done:
 	free_configs(configs);
 	json_decref(jNode);
 	free_node(node);
