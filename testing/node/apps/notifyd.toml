@@ -20,7 +20,7 @@
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	bin="notifyd"
+	bin="notify.d"
 	path="/sbin"
 	args="--map-file /ukama/configs/notifyd/status.map"
 	group="service"
