@@ -21,9 +21,11 @@ REPO_SERVER_URL="testing"
 REPO_NAME="virtualnode"
 REGISTRY="localhost:5000"
 
-: "${BOOTSTRAP_SERVER:=dev.bootstrap.ukama.com}"
+BOOTSTRAP_SERVER="dev.bootstrap.ukama.com"
 
-: "${VNODE_METADATA:='{
+# Always overwrite VNODE_METADATA with known-good JSON
+VNODE_METADATA=$(cat <<'JSON'
+{
   "nodeInfo": {
     "type": "hnode",
     "partNumber": "",
@@ -50,7 +52,10 @@ REGISTRY="localhost:5000"
       "status": "AssemblyCompleted"
     }
   ]
-}'}"
+}
+JSON
+)
+export VNODE_METADATA
 
 DEFAULT_VNODE_ID="uk-sa2601-tnode-v0-62f1"
 
