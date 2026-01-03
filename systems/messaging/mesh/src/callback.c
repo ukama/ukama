@@ -71,7 +71,7 @@ int callback_websocket(const URequest *request, UResponse *response,
 	}
 
     if (verify_nodeid_with_inventory_system(nodeID) == FALSE) {
-        log_error("Unrecoganized nodeID for org. Rejecting. %s", nodeID);
+        log_error("Unrecognized nodeID for org. Rejecting. %s", nodeID);
         return U_CALLBACK_ERROR;
     }
 

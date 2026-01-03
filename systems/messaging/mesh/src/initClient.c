@@ -199,7 +199,7 @@ int get_systemInfo_from_initClient(char *systemName,
 /*
  * 1) Ask init system for "inventory" system credentials (host + port)
  * 2) Call inventory verify endpoint:
- *      http://{ip}:{port}/v1/orgs/{ORGNAME}/components/verify/{node_id}
+ *      http://{ip}:{port}/v1/components/verify/{node_id}
  *    (ORGNAME comes from ENV_SYSTEM_ORG)
  * 3) Return TRUE only if HTTP 200, otherwise FALSE (including if unreachable).
  */
