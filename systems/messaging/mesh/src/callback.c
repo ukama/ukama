@@ -70,6 +70,11 @@ int callback_websocket(const URequest *request, UResponse *response,
 		return U_CALLBACK_ERROR;
 	}
 
+    if (verify_nodeid_with_inventory_system(nodeID) == FALSE) {
+        log_error("Unrecognized nodeID for org. Rejecting. %s", nodeID);
+        return U_CALLBACK_ERROR;
+    }
+
     map = is_existing_item(NodesTable, nodeID);
     if (map != NULL) {
         ulfius_stop_framework(map->forwardInst);
