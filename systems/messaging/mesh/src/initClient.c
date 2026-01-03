@@ -196,6 +196,69 @@ int get_systemInfo_from_initClient(char *systemName,
 	return ret;
 }
 
+/*
+ * 1) Ask init system for "inventory" system credentials (host + port)
+ * 2) Call inventory verify endpoint:
+ *      http://{ip}:{port}/v1/orgs/{ORGNAME}/components/verify/{node_id}
+ *    (ORGNAME comes from ENV_SYSTEM_ORG)
+ * 3) Return TRUE only if HTTP 200, otherwise FALSE (including if unreachable).
+ */
+int verify_nodeid_with_inventory_system(char *nodeID) {
+
+    int  ret      = FALSE;
+    char *invHost = NULL;
+    int  invPort  = 0;
+    char *orgName = NULL;
+    char *url     = NULL;
+
+    struct Response response;
+    memset(&response, 0, sizeof(response));
+
+    if (nodeID == NULL || nodeID[0] == '\0') {
+        return FALSE;
+    }
+
+    /* Step 1: get inventory system credentials from init. */
+    if (get_systemInfo_from_initClient("inventory", &invHost, &invPort) == FALSE) {
+        log_error("Unable to get inventory system info from init system");
+        return FALSE; /* includes unreachable/init failure */
+    }
+
+    orgName = getenv(ENV_SYSTEM_ORG);
+    if (orgName == NULL || orgName[0] == '\0') {
+        log_error("Missing env var %s", ENV_SYSTEM_ORG);
+        goto done;
+    }
+
+    /* Step 2: build verify endpoint URL. */
+    url = (char *)calloc(MAX_URL_LEN, sizeof(char));
+    if (url == NULL) {
+        log_error("Out of memory allocating inventory verify URL");
+        goto done;
+    }
+
+    snprintf(url, MAX_URL_LEN,
+             "http://%s:%d/v1/components/verify/%s",
+             invHost, invPort, nodeID);
+
+    /* Step 3: call inventory verify EP; only 200 => TRUE. */
+    if (send_request_to_initClient(url, &response) == HttpStatus_OK) {
+        ret = TRUE;
+        log_debug("Inventory verify OK for nodeID=%s", nodeID);
+    } else {
+        /* Any failure => FALSE (including unreachable). */
+        ret = FALSE;
+        log_error("Inventory verify failed for nodeID=%s (url=%s)", nodeID, url);
+    }
+
+done:
+    if (url) free(url);
+    if (response.buffer) free(response.buffer);
+    if (invHost) free(invHost);
+
+    return ret;
+}
+
 void free_system_info(SystemInfo *systemInfo) {
 
 	if (systemInfo == NULL) return;
