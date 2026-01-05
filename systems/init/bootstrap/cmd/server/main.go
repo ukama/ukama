@@ -78,8 +78,14 @@ func runGrpcServer() {
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
+	// Convert DNSMap slice to map for bootstrap server
+	dnsMap := make(map[string]string)
+	for _, orgDNS := range svcConf.DNSMap {
+		dnsMap[orgDNS.OrgName] = orgDNS.DNS
+	}
+
 	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf.DNSMap)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, dnsMap)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
