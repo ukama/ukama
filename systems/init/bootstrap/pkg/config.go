@@ -24,7 +24,7 @@ type Config struct {
 	OrgName          string           `default:"ukama"`
 	Lookup           string           `default:"lookup:9090"`
 	Http             HttpServices
-	DNSMap           map[string]string `default:"{ukama: dev.bootstrap.ukama.com}"`
+	DNSMap           map[string]string
 }
 
 type HttpServices struct {
@@ -37,6 +37,9 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout:        7 * time.Second,
 			ListenerRoutes: []string{},
+		},
+		DNSMap: map[string]string{
+			"ukama": "dev.bootstrap.ukama.com",
 		},
 	}
 }
