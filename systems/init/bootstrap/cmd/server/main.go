@@ -79,7 +79,7 @@ func runGrpcServer() {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf.DNSMap)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)

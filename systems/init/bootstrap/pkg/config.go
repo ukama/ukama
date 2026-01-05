@@ -24,6 +24,7 @@ type Config struct {
 	OrgName          string           `default:"ukama"`
 	Lookup           string           `default:"lookup:9090"`
 	Http             HttpServices
+	DNSMap           map[string]string `default:"{ukama: dev.bootstrap.ukama.com}"`
 }
 
 type HttpServices struct {
