@@ -358,6 +358,31 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 }
 
+func (l *LookupServer) GetSystemNodeGwForOrg(ctx context.Context, req *pb.GetSystemNodeGwRequest) (*pb.GetSystemNodeGwResponse, error) {
+	log.Infof("Get system node gw %s for org %s.", req.GetSystemName(), req.GetOrgName())
+
+	org, err := l.getOrgDetails(req.OrgId, req.OrgName)
+	if err != nil {
+		return nil, err
+	}
+
+	system, err := l.getSystem(req.GetSystemName() + "-node-gw", org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetSystemNodeGwResponse{
+		SystemName: system.Name,
+		SystemId:   system.Uuid,
+		OrgName:    org.Name,
+		Certificate: system.Certificate,
+		Ip:          system.Ip.IPNet.IP.String(),
+		Port:        system.Port,
+		Health:      system.Health,
+		Url:         system.URL,
+	}, nil
+}
+
 func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemRequest) (*pb.AddSystemResponse, error) {
 	log.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 

@@ -137,6 +137,21 @@ func (this *GetSystemRequest) Validate() error {
 func (this *GetSystemResponse) Validate() error {
 	return nil
 }
+
+var _regex_GetSystemNodeGwRequest_OrgId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *GetSystemNodeGwRequest) Validate() error {
+	if this.SystemName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))
+	}
+	if !_regex_GetSystemNodeGwRequest_OrgId.MatchString(this.OrgId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OrgId))
+	}
+	return nil
+}
+func (this *GetSystemNodeGwResponse) Validate() error {
+	return nil
+}
 func (this *AddSystemRequest) Validate() error {
 	if this.SystemName == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SystemName", fmt.Errorf(`value '%v' must not be an empty string`, this.SystemName))

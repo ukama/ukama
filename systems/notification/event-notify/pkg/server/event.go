@@ -337,7 +337,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
 		c := evt.EventToEventConfig[evt.EventNodeStateTransition]
-		msg, err := epb.UnmarshalEventNodeStateTransition(e.Msg, c.Name)
+		msg, err := epb.UnmarshalNodeStateChangeEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -361,7 +361,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
 		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
-		msg, err := epb.UnmarshalInvoiceGenerated(e.Msg, c.Name)
+		msg, err := epb.UnmarshalReport(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}

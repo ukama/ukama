@@ -58,6 +58,7 @@ type lookup interface {
 	AddSystemForOrg(req *pb.AddSystemRequest) (*pb.AddSystemResponse, error)
 	UpdateSystemForOrg(req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error)
 	GetSystemForOrg(req *pb.GetSystemRequest) (*pb.GetSystemResponse, error)
+	GetSystemNodeGwForOrg(req *pb.GetSystemNodeGwRequest) (*pb.GetSystemNodeGwResponse, error)
 	DeleteSystemForOrg(req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error)
 }
 
@@ -131,6 +132,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		systems := orgs.Group("/systems", "Systems", "Orgs System credentials")
 		systems.GET("/:system", formatDoc("Get System credential for Org", ""), tonic.Handler(r.getSystemHandler, http.StatusOK))
+		systems.GET("/:system/node-gw", formatDoc("Get System node gw credential for Org", ""), tonic.Handler(r.getSystemNodeGwHandler, http.StatusOK))
 		systems.PUT("/:system", formatDoc("Add or Update System credential for Org", ""), tonic.Handler(r.putSystemHandler, http.StatusCreated))
 		systems.DELETE("/:system", formatDoc("Delete System credential for Org", ""), tonic.Handler(r.deleteSystemHandler, http.StatusOK))
 		systems.PATCH("/:system", formatDoc("Update System Credential", ""), tonic.Handler(r.patchSystemHandler, http.StatusOK))
@@ -220,6 +222,13 @@ func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*
 
 func (r *Router) getSystemHandler(c *gin.Context, req *GetSystemRequest) (*pb.GetSystemResponse, error) {
 	return r.clients.l.GetSystemForOrg(&pb.GetSystemRequest{
+		OrgName:    req.OrgName,
+		SystemName: req.SysName,
+	})
+}
+
+func (r *Router) getSystemNodeGwHandler(c *gin.Context, req *GetSystemRequest) (*pb.GetSystemNodeGwResponse, error) {
+	return r.clients.l.GetSystemNodeGwForOrg(&pb.GetSystemNodeGwRequest{
 		OrgName:    req.OrgName,
 		SystemName: req.SysName,
 	})
