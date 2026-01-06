@@ -282,7 +282,7 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     
         log_debug("Matching server found for system: %s host: %s port: %d",
                   systemName, systemHost, systemPort);
-        log_debug("Sending request to system. name: %s ep: %s host: %s port: %s",
+        log_debug("Sending request to system. name: %s ep: %s host: %s port: %d",
                   systemName, systemEP, systemHost, systemPort);
 
         send_data_to_system(request, systemEP,
