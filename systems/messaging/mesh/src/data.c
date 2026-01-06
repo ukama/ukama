@@ -140,6 +140,7 @@ static int send_data_to_system(URequest *data, char *ep,
 	}
 
 	sprintf(url, "http://%s:%d/%s", ip, port, ep);
+    log_debug("System complete URL is: %s", url);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, data->http_verb);
