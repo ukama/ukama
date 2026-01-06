@@ -96,7 +96,12 @@ import (
 			break
 		}
 	}
- 
+
+	if ip == "" {
+		log.Errorf("No IPv4 address found for DNS %s", dns)
+		return nil, status.Errorf(codes.NotFound, "No IPv4 address found for DNS %s", dns)
+	}
+
 	return &pb.GetNodeCredentialsResponse{
 		Id:          node.Node.Id,
 		OrgName:     node.Node.OrgName,
