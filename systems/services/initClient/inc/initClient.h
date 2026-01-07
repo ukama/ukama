@@ -67,6 +67,8 @@ typedef struct {
 	char *cert;
 	char *ip;
 	char *port;
+    char *nodeGWip;
+    char *nodeGWport;
 } Register;
 
 typedef struct {
@@ -76,6 +78,8 @@ typedef struct {
 	char *certificate;
 	char *ip;
 	int  port;
+    char *nodeGWip;
+    int  nodeGWPort;
 	int  health;
 } QueryResponse;
 

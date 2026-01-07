@@ -39,10 +39,6 @@ State *state=NULL;
 pthread_t child = 0;
 int globalInit = 0;
 
-/*
- * usage -- Usage options for initClient
- *
- */
 void usage() {
 
 	fprintf(stdout, "Usage: initClient [options] \n");
@@ -57,6 +53,8 @@ void usage() {
             ENV_SYSTEM_DNS,
 			ENV_SYSTEM_ADDR,
 			ENV_SYSTEM_PORT,
+            ENV_SYSTEM_NODE_GW_ADDR,
+            ENV_SYSTEM_NODE_GW_PORT,
 			ENV_INIT_SYSTEM_ADDR,
 			ENV_INIT_SYSTEM_PORT,
 			ENV_GLOBAL_INIT_ENABLE,
@@ -64,10 +62,6 @@ void usage() {
 			ENV_GLOBAL_INIT_SYSTEM_PORT);
 }
 
-/*
- * set_log_level --  set the verbosity level for logs
- *
- */
 void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
@@ -83,10 +77,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/*
- * signal_term_handler -- SIGTERM handling routine. Gracefully exit the process
- *
- */
 void signal_term_handler(void) {
 
     char *response=NULL;
@@ -129,10 +119,6 @@ void signal_term_handler(void) {
 	exit(1);
 }
 
-/*
- *  catch_sigterm -- setup SIGTERM catch
- *
- */
 void catch_sigterm(void) {
 
 	static struct sigaction saction;
@@ -386,7 +372,6 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* Wait here for ever. XXX */
 	log_debug("initClient running ...");
 
 	if (config->systemDNS) {

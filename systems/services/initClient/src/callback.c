@@ -74,10 +74,6 @@ int callback_default_webservice(const URequest *request, UResponse *response,
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_ping --
- *
- */
 int callback_ping(const URequest *request, UResponse *response,
 						void *data) {
 
@@ -85,10 +81,6 @@ int callback_ping(const URequest *request, UResponse *response,
 	return U_CALLBACK_CONTINUE;
 }
 
-/*
- * callback_get_systems --
- *
- */
 int callback_get_systems(const URequest *request, UResponse *response,
 						 void *data) {
 

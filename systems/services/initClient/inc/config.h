@@ -6,10 +6,6 @@
  * Copyright (c) 2022-present, Ukama Inc.
  */
 
-/*
- * config.h
- */
-
 #ifndef INIT_CLIENT_CONFIG_H
 #define INIT_CLIENT_CONFIG_H
 
@@ -19,10 +15,13 @@
 #define ENV_DNS_SERVER	"ENV_DNS_SERVER"
 #define ENV_SYSTEM_NAME "ENV_SYSTEM_NAME"
 #define ENV_SYSTEM_ADDR "ENV_SYSTEM_ADDR"
-#define ENV_SYSTEM_DNS "ENV_SYSTEM_DNS"
+#define ENV_SYSTEM_DNS  "ENV_SYSTEM_DNS"
 #define ENV_SYSTEM_PORT "ENV_SYSTEM_PORT"
 #define ENV_SYSTEM_CERT "ENV_SYSTEM_CERT"
 #define ENV_SYSTEM_ORG  "ENV_SYSTEM_ORG"
+
+#define ENV_SYSTEM_NODE_GW_ADDR "ENV_SYSTEM_NODE_GW_ADDR"
+#define ENV_SYSTEM_NODE_GW_PORT "ENV_SYSTEM_NODE_GW_PORT"
 
 #define ENV_INIT_SYSTEM_ADDR "ENV_INIT_SYSTEM_ADDR"
 #define ENV_INIT_SYSTEM_PORT "ENV_INIT_SYSTEM_PORT"
@@ -51,18 +50,22 @@ typedef struct {
 
 	char *logLevel;   /* Log level */
 	char *tempFile;   /* Temp file to log stuff */
-	char *dnsServer; /* DNS server */
-	int  timePeriod; /* time period in seconds.*/
+	char *dnsServer;  /* DNS server */
+	int  timePeriod;  /* time period in seconds.*/
 
 	char *addr;       /* initClient bind address */
 	char *port;       /* initClient listening port */
 
 	char *systemOrg;  /* Name of the organization the system belongs */
 	char *systemName; /* Name of the system */
-	char *systemDNS; /* DNS for system */
+	char *systemDNS;  /* DNS for system */
 	char *systemAddr; /* address where system can be reached at */
 	char *systemPort; /* port where system can be reached at */
 	char *systemCert; /* Certificate for the system */
+
+    char *systemNodeGWAddr; /* address where system's node-gw is available */
+    char *systemNodeGWPort; /* poer where system's node-gw port is */
+
     char *nameServer;
 	char *initSystemAPIVer; /* API version for init system */
 	char *initSystemAddr;   /* address for init system */

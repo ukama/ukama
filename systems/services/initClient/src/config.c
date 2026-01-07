@@ -17,19 +17,17 @@
 /*
  * Description of various env variables:
  *
- * ENV_SYSTEM_NAME - name of my system
- * ENV_SYSTEM_ADDR - address for the api gw of my system
- * ENV_SYSTEM_PORT - listen port for the api gw
- * ENV_SYSTEM_CERT - certificate.
+ * ENV_SYSTEM_NAME         - name of my system
+ * ENV_SYSTEM_ADDR         - address for the api gw of my system
+ * ENV_SYSTEM_PORT         - listen port for the api gw
+ * ENV_SYSTEM_CERT         - certificate.
+ * ENV_SYSTEM_NODE_GW_ADDR - address for the node gw of my system
+ * ENV_SYSTEM_NODE_GW_PORT - listening port for the node gw
  *
  * ENV_INIT_SYSTEM_ADDR - init system address (api-gw)
  * ENV_INIT_SYSTEM_PORT - init system port (api-gw)
  */
 
-/*
- * read_config_from_env -- read configuration params from the env variables
- *
- */
 int read_config_from_env(Config **config){
 
 	char *port=NULL, *addr=NULL, *tempFile=NULL;
@@ -38,6 +36,7 @@ int read_config_from_env(Config **config){
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL, *nameServer = NULL;
+    char *systemNodeGWAddr = NULL, *systemNodeGWPort = NULL;
 	int period = 0 ;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
@@ -58,6 +57,16 @@ int read_config_from_env(Config **config){
 		log_error("Required env variables not defined");
 		return FALSE;
 	}
+
+    systemNodeGWAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
+    systemNodeGWPort = getenv(ENV_SYSTEM_NODE_GW_PORT);
+    if ((systemNodeGWAddr && !systemNodeGWPort) ||
+        (!systemNodeGWAddr && systemNodeGWPort)) {
+        log_error("Error: Both %s and %s must be set together\n",
+                  ENV_SYSTEM_NODE_GW_ADDR,
+                  ENV_SYSTEM_NODE_GW_PORT);
+        return FALSE;
+    }
 
 	if ((globalInitSystemEnable = getenv(ENV_GLOBAL_INIT_ENABLE)) == NULL) {
 		globalInitSystemEnable = GLOBAL_INIT_SYSTEM_DISABLE_STR;
@@ -127,10 +136,19 @@ int read_config_from_env(Config **config){
 	(*config)->systemAddr = strdup(systemAddr);
 	(*config)->systemPort = strdup(systemPort);
 	(*config)->systemCert = strdup(systemCert);
+
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
-	
+    /* set 0.0.0.0:0 for system's node gw */
+    if (systemNodeGWAddr == NULL && systemNodeGWPort == NULL) {
+           (*config)->systemNodeGWAddr = strdup("0.0.0.0");
+           (*config)->systemNodeGWPort = strdup("0");
+    } else {
+        (*config)->systemNodeGWAddr = strdup(systemNodeGWAddr);
+        (*config)->systemNodeGWPort = strdup(systemNodeGWPort);
+    }
+
 	if (nameServer) {
     	(*config)->nameServer = strdup(nameServer);
 	}
@@ -159,10 +177,6 @@ int read_config_from_env(Config **config){
 	return TRUE;
 }
 
-/*
- * clear_config --
- *
- */
 void clear_config(Config *config) {
 
 	if (config == NULL) return;
@@ -180,9 +194,12 @@ void clear_config(Config *config) {
 	if (config->initSystemAPIVer) 		free(config->initSystemAPIVer);
 	if (config->globalInitSystemPort)   free(config->globalInitSystemPort);
 	if (config->globalInitSystemAddr)   free(config->globalInitSystemAddr);
-	if (config->systemDNS) free(config->systemDNS);
-	if (config->dnsServer) free(config->dnsServer);
-	if (config->nameServer) free(config->nameServer);
+	if (config->systemDNS)              free(config->systemDNS);
+	if (config->dnsServer)              free(config->dnsServer);
+	if (config->nameServer)             free(config->nameServer);
+    if (config->systemNodeGWAddr)       free(config->systemNodeGWAddr);
+    if (config->systemNodeGWPort)       free(config->systemNodeGWPort);
+
 	free(config);
 }
 

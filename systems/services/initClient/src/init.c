@@ -163,11 +163,13 @@ static int create_request(Request **request, Config *config) {
 		reg = (Register *)calloc(1, sizeof(Register));
 		if (reg == NULL) return FALSE;
 
-		reg->org  = strdup(config->systemOrg);
-		reg->name = strdup(config->systemName);
-		reg->ip   = strdup(config->systemAddr);
-		reg->port = strdup(config->systemPort);
-		reg->cert = strdup(config->systemCert);
+		reg->org        = strdup(config->systemOrg);
+		reg->name       = strdup(config->systemName);
+		reg->ip         = strdup(config->systemAddr);
+		reg->port       = strdup(config->systemPort);
+		reg->cert       = strdup(config->systemCert);
+        reg->nodeGWip   = strdup(config->systemNodeGWAddr);
+        reg->nodeGWport = strdup(config->systemNodeGWPort);
 
 		(*request)->reg = reg;
 	}
@@ -188,11 +190,13 @@ static void free_request(Request *request) {
 
 		if (reg == NULL) return;
 
-		if (reg->org)  free(reg->org);
-		if (reg->name) free(reg->name);
-		if (reg->cert) free(reg->cert);
-		if (reg->ip)   free(reg->ip);
-		if (reg->port) free(reg->port);
+		if (reg->org)        free(reg->org);
+		if (reg->name)       free(reg->name);
+		if (reg->cert)       free(reg->cert);
+		if (reg->ip)         free(reg->ip);
+		if (reg->port)       free(reg->port);
+        if (reg->nodeGWip)   free(reg->nodeGWip);
+        if (reg->nodeGWport) free(reg->nodeGWport);
 
 		free(reg);
 	}
@@ -417,10 +421,6 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 	return status;
 }
 
-/*
- * get_system_info -- get info about 'system' from the init.
- *
- */
 int get_system_info(Config *config, char *org,
                     char *systemName, char **systemInfo,
                     int global) {

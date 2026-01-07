@@ -16,10 +16,6 @@
 
 /* JSON (de)-serialization functions. */
 
-/*
- * serialize_request --
- *
- */
 int serialize_request(Request *request, json_t **json) {
 
 	int ret=FALSE;
@@ -36,9 +32,11 @@ int serialize_request(Request *request, json_t **json) {
 
 		reg = request->reg;
 
-		json_object_set_new(*json, JSON_IP,   json_string(reg->ip));
-		json_object_set_new(*json, JSON_PORT, json_integer(atoi(reg->port)));
+		json_object_set_new(*json, JSON_IP,          json_string(reg->ip));
+		json_object_set_new(*json, JSON_PORT,        json_integer(atoi(reg->port)));
 		json_object_set_new(*json, JSON_CERTIFICATE, json_string(reg->cert));
+		json_object_set_new(*json, JSON_NODE_GW_IP,  json_string(reg->nodeGWip));
+		json_object_set_new(*json, JSON_PORT,        json_integer(atoi(reg->nodeGWport)));
 
 		str = json_dumps(*json, 0);
 		if (str) {
@@ -57,10 +55,6 @@ int serialize_request(Request *request, json_t **json) {
 	return ret;
 }
 
-/*
- * deserialize_response --
- *
- */
 int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 						 char *str) {
 
