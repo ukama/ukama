@@ -205,7 +205,6 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 		Url:         req.URL,
 		NodeGwIp:    req.NodeGwIp,
 		NodeGwPort:  req.NodeGwPort,
-		NodeGwUrl:   req.NodeGwURL,
 	})
 
 }
@@ -220,7 +219,6 @@ func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*
 		Port:        req.Port,
 		NodeGwIp:    req.NodeGwIp,
 		NodeGwPort:  req.NodeGwPort,
-		NodeGwUrl:   req.NodeGwURL,
 	})
 }
 

@@ -398,7 +398,6 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		URL:         req.GetUrl(),
 		NodeGwIp:    nodeGwIp,
 		NodeGwPort:  req.GetNodeGwPort(),
-		NodeGwURL:   req.GetNodeGwUrl(),
 	}
 
 	log.Debugf("System details: %+v", sys)
@@ -431,7 +430,6 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Url:         resp.URL,
 		NodeGwIp:    resp.NodeGwIp.IPNet.IP.String(),
 		NodeGwPort:  resp.NodeGwPort,
-		NodeGwUrl:   resp.NodeGwURL,
 	}, nil
 }
 
@@ -490,7 +488,6 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		Url:         dbSystem.URL,
 		NodeGwIp:    dbSystem.NodeGwIp.IPNet.IP.String(),
 		NodeGwPort:  dbSystem.NodeGwPort,
-		NodeGwUrl:   dbSystem.NodeGwURL,
 
 	}, nil
 }

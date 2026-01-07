@@ -153,7 +153,6 @@ message AddSystemRequest{
     string url = 6;
     string nodeGwIp = 7;
     int32 nodeGwPort = 8;
-    string nodeGwUrl = 9;
 }
 
 message AddSystemResponse {
@@ -166,7 +165,6 @@ message AddSystemResponse {
     string url = 7;
     string nodeGwIp = 8;
     int32 nodeGwPort = 9;
-    string nodeGwUrl = 10;
 }
 
 message UpdateSystemRequest{
@@ -177,7 +175,6 @@ message UpdateSystemRequest{
     int32 port = 5; 
     string nodeGwIp = 6;
     int32 nodeGwPort = 7;
-    string nodeGwUrl = 8;
 }
 
 message UpdateSystemResponse {
@@ -190,7 +187,6 @@ message UpdateSystemResponse {
     string url = 7; 
     string nodeGwIp = 8;
     int32 nodeGwPort = 9;
-    string nodeGwUrl = 10;
 }
 
 message DeleteSystemRequest{

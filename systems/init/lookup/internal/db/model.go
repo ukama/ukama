@@ -41,7 +41,6 @@ type System struct {
 	Port        int32
 	NodeGwIp    pgtype.Inet `gorm:"type:inet;default:'0.0.0.0'"`
 	NodeGwPort  int32 `gorm:"default:8080"`
-	NodeGwURL   string
 	NodeGwHealth uint32 `gorm:"default:100"`
 	OrgID       uint `gorm:"type:string;index:sys_idx,unique,composite:sys_idx;not null"`
 	Org         Org

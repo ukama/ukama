@@ -50,7 +50,6 @@ type AddSystemRequest struct {
 	URL         string `json:"url"`
 	NodeGwIp    string `json:"node_gw_ip" default:"0.0.0.0"`
 	NodeGwPort  int32  `json:"node_gw_port" default:"8080"`
-	NodeGwURL   string `json:"node_gw_url" default:"http://0.0.0.0:8080"`
 }
 
 type UpdateSystemRequest struct {
