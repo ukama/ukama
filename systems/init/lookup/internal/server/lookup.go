@@ -372,7 +372,7 @@ func (l *LookupServer) GetSystemNodeGwForOrg(ctx context.Context, req *pb.GetSys
 	}
 
 	return &pb.GetSystemNodeGwResponse{
-		SystemName: system.Name,
+		SystemName: strings.Replace(system.Name, "-node-gw", "", 1),
 		SystemId:   system.Uuid,
 		OrgName:    org.Name,
 		Certificate: system.Certificate,
