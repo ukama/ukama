@@ -941,7 +941,6 @@ type GetSystemResponse struct {
 	Url           string                 `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,9,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,10,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
-	NodeGwUrl     string                 `protobuf:"bytes,11,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1044,13 +1043,6 @@ func (x *GetSystemResponse) GetNodeGwPort() int32 {
 		return x.NodeGwPort
 	}
 	return 0
-}
-
-func (x *GetSystemResponse) GetNodeGwUrl() string {
-	if x != nil {
-		return x.NodeGwUrl
-	}
-	return ""
 }
 
 type AddSystemRequest struct {
@@ -1608,7 +1600,7 @@ const file_lookup_proto_rawDesc = "" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12\x18\n" +
 	"\aorgName\x18\x02 \x01(\tR\aorgName\x12\x1d\n" +
-	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\xb3\x02\n" +
+	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\x95\x02\n" +
 	"\x11GetSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
@@ -1624,8 +1616,7 @@ const file_lookup_proto_rawDesc = "" +
 	"\n" +
 	"nodeGwPort\x18\n" +
 	" \x01(\x05R\n" +
-	"nodeGwPort\x12\x1c\n" +
-	"\tnodeGwUrl\x18\v \x01(\tR\tnodeGwUrl\"\x88\x02\n" +
+	"nodeGwPort\"\x88\x02\n" +
 	"\x10AddSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +

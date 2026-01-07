@@ -200,9 +200,9 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 		OrgName:     req.OrgName,
 		SystemName:  req.SysName,
 		Certificate: req.Certificate,
-		Ip:          req.Ip,
-		Port:        req.Port,
-		Url:         req.URL,
+		Ip:          req.ApiGwIp,
+		Port:        req.ApiGwPort,
+		Url:         req.ApiGwUrl,
 		NodeGwIp:    req.NodeGwIp,
 		NodeGwPort:  req.NodeGwPort,
 	})

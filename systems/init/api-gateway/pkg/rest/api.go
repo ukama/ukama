@@ -44,10 +44,10 @@ type GetNodeRequest struct {
 type AddSystemRequest struct {
 	OrgName     string `path:"org" validate:"required"`
 	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip" validate:"required"`
+	ApiGwIp     string `json:"api_gw_ip" validate:"required"`
 	Certificate string `json:"certificate" validate:"required"`
-	Port        int32  `json:"port" validate:"required"`
-	URL         string `json:"url"`
+	ApiGwPort   int32  `json:"api_gw_port" validate:"required"`
+	ApiGwUrl    string `json:"api_gw_url"`
 	NodeGwIp    string `json:"node_gw_ip" default:"0.0.0.0"`
 	NodeGwPort  int32  `json:"node_gw_port" default:"8080"`
 }

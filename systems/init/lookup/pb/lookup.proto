@@ -141,7 +141,6 @@ message GetSystemResponse {
     string url = 8;
     string nodeGwIp = 9;
     int32 nodeGwPort = 10;
-    string nodeGwUrl = 11;
 }
 
 message AddSystemRequest{
