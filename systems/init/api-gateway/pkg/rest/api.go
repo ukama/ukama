@@ -10,7 +10,7 @@ package rest
 
 type AddOrgRequest struct {
 	OrgName     string `path:"org" validate:"required"`
-	OrgId       string `json:"org_id" validate:"required"`
+	OrgId       string `json:"orgId" validate:"required"`
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate" validate:"required"`
 }
@@ -44,12 +44,12 @@ type GetNodeRequest struct {
 type AddSystemRequest struct {
 	OrgName     string `path:"org" validate:"required"`
 	SysName     string `path:"system" validate:"required"`
-	ApiGwIp     string `json:"api_gw_ip" validate:"required"`
+	ApiGwIp     string `json:"apiGwIp" validate:"required"`
 	Certificate string `json:"certificate" validate:"required"`
-	ApiGwPort   int32  `json:"api_gw_port" validate:"required"`
-	ApiGwUrl    string `json:"api_gw_url"`
-	NodeGwIp    string `json:"node_gw_ip" default:"0.0.0.0"`
-	NodeGwPort  int32  `json:"node_gw_port" default:"8080"`
+	ApiGwPort   int32  `json:"apiGwPort" validate:"required"`
+	ApiGwUrl    string `json:"apiGwUrl"`
+	NodeGwIp    string `json:"nodeGwIp" default:"0.0.0.0"`
+	NodeGwPort  int32  `json:"nodeGwPort" default:"8080"`
 }
 
 type UpdateSystemRequest struct {
@@ -58,9 +58,8 @@ type UpdateSystemRequest struct {
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate"`
 	Port        int32  `json:"port"`
-	NodeGwIp    string `json:"node_gw_ip"`
-	NodeGwPort  int32  `json:"node_gw_port"`
-	NodeGwURL   string `json:"node_gw_url"`
+	NodeGwIp    string `json:"nodeGwIp"`
+	NodeGwPort  int32  `json:"nodeGwPort"`
 }
 
 type GetSystemRequest struct {
