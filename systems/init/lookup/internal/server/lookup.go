@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
+ const PREFIX_NODE_GW = "-node-gw"
 type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
@@ -366,13 +366,13 @@ func (l *LookupServer) GetSystemNodeGwForOrg(ctx context.Context, req *pb.GetSys
 		return nil, err
 	}
 
-	system, err := l.getSystem(req.GetSystemName() + "-node-gw", org.ID)
+	system, err := l.getSystem(req.GetSystemName() + PREFIX_NODE_GW, org.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.GetSystemNodeGwResponse{
-		SystemName: strings.Replace(system.Name, "-node-gw", "", 1),
+		SystemName: strings.Replace(system.Name, PREFIX_NODE_GW, "", 1),
 		SystemId:   system.Uuid,
 		OrgName:    org.Name,
 		Certificate: system.Certificate,
