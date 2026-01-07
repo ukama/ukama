@@ -341,7 +341,7 @@ func TestRouter_AddSystem(t *testing.T) {
 	sys := "sys"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", "/v1/orgs/org-name/systems/"+sys,
-		strings.NewReader(`{ "org":"org-name", "system":"sys", "ip":"0.0.0.0", "certificate":"certs", "port":100, "url":"http://localhost:8080"}`))
+		strings.NewReader(`{ "org":"org-name", "system":"sys", "apiGwIp":"0.0.0.0", "certificate":"certs", "apiGwPort":100, "apiGwUrl":"http://localhost:8080"}`))
 
 	m := &lmocks.LookupServiceClient{}
 

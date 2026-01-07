@@ -288,6 +288,10 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 		OrgId:       uuid.NewV4(),
 	}
 
+	var nodeGwIp pgtype.Inet
+	err = nodeGwIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
 	system := &db.System{
 		Name:        "sys",
 		Uuid:        uuid.NewV4().String(),
@@ -295,6 +299,8 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 		Ip:          orgIp,
 		Port:        100,
 		URL:         "http://localhost:100",
+		NodeGwIp:    nodeGwIp,
+		NodeGwPort:  8080,
 	}
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
@@ -328,14 +334,28 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 		Ip:          orgIp,
 	}
 
+	var nodeGwIp pgtype.Inet
+	err = nodeGwIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
 	system := &db.System{
 		Name:        "sys",
 		Certificate: "ukama_certs",
 		Ip:          orgIp,
 		Port:        100,
+		NodeGwIp:    nodeGwIp,
+		NodeGwPort:  8080,
 	}
 
-	psys := &pb.UpdateSystemRequest{SystemName: system.Name, OrgName: "ukama", Certificate: "ukama_certs", Ip: ip, Port: 100}
+	psys := &pb.UpdateSystemRequest{
+		SystemName:  system.Name,
+		OrgName:     "ukama",
+		Certificate: "ukama_certs",
+		Ip:          ip,
+		Port:        100,
+		NodeGwIp:    "0.0.0.0",
+		NodeGwPort:  8080,
+	}
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()

@@ -26,7 +26,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
- const PREFIX_NODE_GW = "-node-gw"
+
+const (
+	PREFIX_NODE_GW = "-node-gw"
+	defaultIP      = "0.0.0.0"
+)
 type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
@@ -346,6 +350,11 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		return nil, err
 	}
 
+	nodeGwIpStr := defaultIP
+	if system.NodeGwIp.Status == pgtype.Present && system.NodeGwIp.IPNet != nil {
+		nodeGwIpStr = system.NodeGwIp.IPNet.IP.String()
+	}
+
 	return &pb.GetSystemResponse{
 		SystemName:  system.Name,
 		SystemId:    system.Uuid,
@@ -355,6 +364,8 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Port:        system.Port,
 		Health:      system.Health,
 		Url:         system.URL,
+		NodeGwIp:    nodeGwIpStr,
+		NodeGwPort:  system.NodeGwPort,
 	}, nil
 
 }
@@ -378,7 +389,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	var nodeGwIp pgtype.Inet
 	if req.NodeGwIp == "" {
 		nodeGwIp = pgtype.Inet{
-			IPNet:  &net.IPNet{IP: net.ParseIP("0.0.0.0"), Mask: net.CIDRMask(32, 32)},
+			IPNet:  &net.IPNet{IP: net.ParseIP(defaultIP), Mask: net.CIDRMask(32, 32)},
 			Status: pgtype.Present,
 		}
 	} else {
@@ -404,9 +415,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	err = l.systemRepo.Add(sys)
 	if err != nil {
-		if err != nil {
-			return nil, grpc.SqlErrorToGrpc(err, "system")
-		}
+		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
 	route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
@@ -420,6 +429,11 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
+	nodeGwIpStr := defaultIP
+	if resp.NodeGwIp.Status == pgtype.Present && resp.NodeGwIp.IPNet != nil {
+		nodeGwIpStr = resp.NodeGwIp.IPNet.IP.String()
+	}
+
 	return &pb.AddSystemResponse{
 		SystemName:  resp.Name,
 		SystemId:    resp.Uuid,
@@ -428,7 +442,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Ip:          resp.Ip.IPNet.IP.String(),
 		Port:        resp.Port,
 		Url:         resp.URL,
-		NodeGwIp:    resp.NodeGwIp.IPNet.IP.String(),
+		NodeGwIp:    nodeGwIpStr,
 		NodeGwPort:  resp.NodeGwPort,
 	}, nil
 }
@@ -459,6 +473,21 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		}
 	}
 
+	var nodeGwIp pgtype.Inet
+	if req.NodeGwIp == "" {
+		nodeGwIp = pgtype.Inet{
+			IPNet:  &net.IPNet{IP: net.ParseIP(defaultIP), Mask: net.CIDRMask(32, 32)},
+			Status: pgtype.Present,
+		}
+	} else {
+		err = nodeGwIp.Set(req.NodeGwIp)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid ip for node gw %s. Error %s", req.OrgName, err.Error())
+		}
+	}
+	sys.NodeGwIp = nodeGwIp
+	sys.NodeGwPort = req.GetNodeGwPort()
+
 	log.Debugf("System details: %+v", sys)
 
 	err = l.systemRepo.Update(sys, org.ID)
@@ -478,6 +507,11 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
+	nodeGwIpStr := defaultIP
+	if dbSystem.NodeGwIp.Status == pgtype.Present && dbSystem.NodeGwIp.IPNet != nil {
+		nodeGwIpStr = dbSystem.NodeGwIp.IPNet.IP.String()
+	}
+
 	return &pb.UpdateSystemResponse{
 		SystemName:  dbSystem.Name,
 		SystemId:    dbSystem.Uuid,
@@ -486,7 +520,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		Ip:          dbSystem.Ip.IPNet.IP.String(),
 		Port:        dbSystem.Port,
 		Url:         dbSystem.URL,
-		NodeGwIp:    dbSystem.NodeGwIp.IPNet.IP.String(),
+		NodeGwIp:    nodeGwIpStr,
 		NodeGwPort:  dbSystem.NodeGwPort,
 
 	}, nil
