@@ -282,36 +282,6 @@ func (_m *lookup) GetSystemForOrg(req *gen.GetSystemRequest) (*gen.GetSystemResp
 	return r0, r1
 }
 
-// GetSystemNodeGwForOrg provides a mock function with given fields: req
-func (_m *lookup) GetSystemNodeGwForOrg(req *gen.GetSystemNodeGwRequest) (*gen.GetSystemNodeGwResponse, error) {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSystemNodeGwForOrg")
-	}
-
-	var r0 *gen.GetSystemNodeGwResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.GetSystemNodeGwRequest) (*gen.GetSystemNodeGwResponse, error)); ok {
-		return rf(req)
-	}
-	if rf, ok := ret.Get(0).(func(*gen.GetSystemNodeGwRequest) *gen.GetSystemNodeGwResponse); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSystemNodeGwResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(*gen.GetSystemNodeGwRequest) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateOrg provides a mock function with given fields: req
 func (_m *lookup) UpdateOrg(req *gen.UpdateOrgRequest) (*gen.UpdateOrgResponse, error) {
 	ret := _m.Called(req)

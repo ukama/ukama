@@ -26,19 +26,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LookupService_AddOrg_FullMethodName                = "/ukama.lookup.v1.LookupService/AddOrg"
-	LookupService_UpdateOrg_FullMethodName             = "/ukama.lookup.v1.LookupService/UpdateOrg"
-	LookupService_GetOrg_FullMethodName                = "/ukama.lookup.v1.LookupService/GetOrg"
-	LookupService_GetOrgs_FullMethodName               = "/ukama.lookup.v1.LookupService/GetOrgs"
-	LookupService_GetNode_FullMethodName               = "/ukama.lookup.v1.LookupService/GetNode"
-	LookupService_AddNodeForOrg_FullMethodName         = "/ukama.lookup.v1.LookupService/AddNodeForOrg"
-	LookupService_GetNodeForOrg_FullMethodName         = "/ukama.lookup.v1.LookupService/GetNodeForOrg"
-	LookupService_DeleteNodeForOrg_FullMethodName      = "/ukama.lookup.v1.LookupService/DeleteNodeForOrg"
-	LookupService_GetSystemForOrg_FullMethodName       = "/ukama.lookup.v1.LookupService/GetSystemForOrg"
-	LookupService_GetSystemNodeGwForOrg_FullMethodName = "/ukama.lookup.v1.LookupService/GetSystemNodeGwForOrg"
-	LookupService_AddSystemForOrg_FullMethodName       = "/ukama.lookup.v1.LookupService/AddSystemForOrg"
-	LookupService_UpdateSystemForOrg_FullMethodName    = "/ukama.lookup.v1.LookupService/UpdateSystemForOrg"
-	LookupService_DeleteSystemForOrg_FullMethodName    = "/ukama.lookup.v1.LookupService/DeleteSystemForOrg"
+	LookupService_AddOrg_FullMethodName             = "/ukama.lookup.v1.LookupService/AddOrg"
+	LookupService_UpdateOrg_FullMethodName          = "/ukama.lookup.v1.LookupService/UpdateOrg"
+	LookupService_GetOrg_FullMethodName             = "/ukama.lookup.v1.LookupService/GetOrg"
+	LookupService_GetOrgs_FullMethodName            = "/ukama.lookup.v1.LookupService/GetOrgs"
+	LookupService_GetNode_FullMethodName            = "/ukama.lookup.v1.LookupService/GetNode"
+	LookupService_AddNodeForOrg_FullMethodName      = "/ukama.lookup.v1.LookupService/AddNodeForOrg"
+	LookupService_GetNodeForOrg_FullMethodName      = "/ukama.lookup.v1.LookupService/GetNodeForOrg"
+	LookupService_DeleteNodeForOrg_FullMethodName   = "/ukama.lookup.v1.LookupService/DeleteNodeForOrg"
+	LookupService_GetSystemForOrg_FullMethodName    = "/ukama.lookup.v1.LookupService/GetSystemForOrg"
+	LookupService_AddSystemForOrg_FullMethodName    = "/ukama.lookup.v1.LookupService/AddSystemForOrg"
+	LookupService_UpdateSystemForOrg_FullMethodName = "/ukama.lookup.v1.LookupService/UpdateSystemForOrg"
+	LookupService_DeleteSystemForOrg_FullMethodName = "/ukama.lookup.v1.LookupService/DeleteSystemForOrg"
 )
 
 // LookupServiceClient is the client API for LookupService service.
@@ -58,7 +57,6 @@ type LookupServiceClient interface {
 	DeleteNodeForOrg(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(ctx context.Context, in *GetSystemRequest, opts ...grpc.CallOption) (*GetSystemResponse, error)
-	GetSystemNodeGwForOrg(ctx context.Context, in *GetSystemNodeGwRequest, opts ...grpc.CallOption) (*GetSystemNodeGwResponse, error)
 	AddSystemForOrg(ctx context.Context, in *AddSystemRequest, opts ...grpc.CallOption) (*AddSystemResponse, error)
 	UpdateSystemForOrg(ctx context.Context, in *UpdateSystemRequest, opts ...grpc.CallOption) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(ctx context.Context, in *DeleteSystemRequest, opts ...grpc.CallOption) (*DeleteSystemResponse, error)
@@ -162,16 +160,6 @@ func (c *lookupServiceClient) GetSystemForOrg(ctx context.Context, in *GetSystem
 	return out, nil
 }
 
-func (c *lookupServiceClient) GetSystemNodeGwForOrg(ctx context.Context, in *GetSystemNodeGwRequest, opts ...grpc.CallOption) (*GetSystemNodeGwResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetSystemNodeGwResponse)
-	err := c.cc.Invoke(ctx, LookupService_GetSystemNodeGwForOrg_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *lookupServiceClient) AddSystemForOrg(ctx context.Context, in *AddSystemRequest, opts ...grpc.CallOption) (*AddSystemResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddSystemResponse)
@@ -219,7 +207,6 @@ type LookupServiceServer interface {
 	DeleteNodeForOrg(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	// System
 	GetSystemForOrg(context.Context, *GetSystemRequest) (*GetSystemResponse, error)
-	GetSystemNodeGwForOrg(context.Context, *GetSystemNodeGwRequest) (*GetSystemNodeGwResponse, error)
 	AddSystemForOrg(context.Context, *AddSystemRequest) (*AddSystemResponse, error)
 	UpdateSystemForOrg(context.Context, *UpdateSystemRequest) (*UpdateSystemResponse, error)
 	DeleteSystemForOrg(context.Context, *DeleteSystemRequest) (*DeleteSystemResponse, error)
@@ -259,9 +246,6 @@ func (UnimplementedLookupServiceServer) DeleteNodeForOrg(context.Context, *Delet
 }
 func (UnimplementedLookupServiceServer) GetSystemForOrg(context.Context, *GetSystemRequest) (*GetSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSystemForOrg not implemented")
-}
-func (UnimplementedLookupServiceServer) GetSystemNodeGwForOrg(context.Context, *GetSystemNodeGwRequest) (*GetSystemNodeGwResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSystemNodeGwForOrg not implemented")
 }
 func (UnimplementedLookupServiceServer) AddSystemForOrg(context.Context, *AddSystemRequest) (*AddSystemResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddSystemForOrg not implemented")
@@ -455,24 +439,6 @@ func _LookupService_GetSystemForOrg_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LookupService_GetSystemNodeGwForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSystemNodeGwRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LookupServiceServer).GetSystemNodeGwForOrg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LookupService_GetSystemNodeGwForOrg_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LookupServiceServer).GetSystemNodeGwForOrg(ctx, req.(*GetSystemNodeGwRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _LookupService_AddSystemForOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddSystemRequest)
 	if err := dec(in); err != nil {
@@ -569,10 +535,6 @@ var LookupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetSystemForOrg",
 			Handler:    _LookupService_GetSystemForOrg_Handler,
-		},
-		{
-			MethodName: "GetSystemNodeGwForOrg",
-			Handler:    _LookupService_GetSystemNodeGwForOrg_Handler,
 		},
 		{
 			MethodName: "AddSystemForOrg",

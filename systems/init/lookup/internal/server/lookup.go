@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"net"
 	"strings"
 
 	"github.com/jackc/pgtype"
@@ -358,31 +359,6 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 
 }
 
-func (l *LookupServer) GetSystemNodeGwForOrg(ctx context.Context, req *pb.GetSystemNodeGwRequest) (*pb.GetSystemNodeGwResponse, error) {
-	log.Infof("Get system node gw %s for org %s.", req.GetSystemName(), req.GetOrgName())
-
-	org, err := l.getOrgDetails(req.OrgId, req.OrgName)
-	if err != nil {
-		return nil, err
-	}
-
-	system, err := l.getSystem(req.GetSystemName() + PREFIX_NODE_GW, org.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.GetSystemNodeGwResponse{
-		SystemName: strings.Replace(system.Name, PREFIX_NODE_GW, "", 1),
-		SystemId:   system.Uuid,
-		OrgName:    org.Name,
-		Certificate: system.Certificate,
-		Ip:          system.Ip.IPNet.IP.String(),
-		Port:        system.Port,
-		Health:      system.Health,
-		Url:         system.URL,
-	}, nil
-}
-
 func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemRequest) (*pb.AddSystemResponse, error) {
 	log.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
@@ -399,6 +375,19 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		return nil, status.Errorf(codes.InvalidArgument, "invalid ip for system %s. Error %s", req.OrgName, err.Error())
 	}
 
+	var nodeGwIp pgtype.Inet
+	if req.NodeGwIp == "" {
+		nodeGwIp = pgtype.Inet{
+			IPNet:  &net.IPNet{IP: net.ParseIP("0.0.0.0"), Mask: net.CIDRMask(32, 32)},
+			Status: pgtype.Present,
+		}
+	} else {
+		err = nodeGwIp.Set(req.NodeGwIp)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid ip for node gw %s. Error %s", req.OrgName, err.Error())
+		}
+	}
+
 	sys := &db.System{
 		Name:        strings.ToLower(req.SystemName),
 		Certificate: req.Certificate,
@@ -407,6 +396,9 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Port:        req.Port,
 		OrgID:       org.ID,
 		URL:         req.GetUrl(),
+		NodeGwIp:    nodeGwIp,
+		NodeGwPort:  req.GetNodeGwPort(),
+		NodeGwURL:   req.GetNodeGwUrl(),
 	}
 
 	log.Debugf("System details: %+v", sys)
@@ -437,6 +429,9 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Ip:          resp.Ip.IPNet.IP.String(),
 		Port:        resp.Port,
 		Url:         resp.URL,
+		NodeGwIp:    resp.NodeGwIp.IPNet.IP.String(),
+		NodeGwPort:  resp.NodeGwPort,
+		NodeGwUrl:   resp.NodeGwURL,
 	}, nil
 }
 
@@ -493,6 +488,10 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		Ip:          dbSystem.Ip.IPNet.IP.String(),
 		Port:        dbSystem.Port,
 		Url:         dbSystem.URL,
+		NodeGwIp:    dbSystem.NodeGwIp.IPNet.IP.String(),
+		NodeGwPort:  dbSystem.NodeGwPort,
+		NodeGwUrl:   dbSystem.NodeGwURL,
+
 	}, nil
 }
 

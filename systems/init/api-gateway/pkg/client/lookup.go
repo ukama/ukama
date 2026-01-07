@@ -136,10 +136,3 @@ func (l *Lookup) DeleteSystemForOrg(req *pb.DeleteSystemRequest) (*pb.DeleteSyst
 
 	return l.client.DeleteSystemForOrg(ctx, req)
 }
-
-func (l *Lookup) GetSystemNodeGwForOrg(req *pb.GetSystemNodeGwRequest) (*pb.GetSystemNodeGwResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), l.timeout)
-	defer cancel()
-
-	return l.client.GetSystemNodeGwForOrg(ctx, req)
-}

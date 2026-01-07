@@ -939,6 +939,9 @@ type GetSystemResponse struct {
 	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
 	Health        uint32                 `protobuf:"varint,7,opt,name=health,proto3" json:"health,omitempty"`
 	Url           string                 `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
+	NodeGwIp      string                 `protobuf:"bytes,9,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
+	NodeGwPort    int32                  `protobuf:"varint,10,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
+	NodeGwUrl     string                 `protobuf:"bytes,11,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1029,162 +1032,23 @@ func (x *GetSystemResponse) GetUrl() string {
 	return ""
 }
 
-type GetSystemNodeGwRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
-	OrgName       string                 `protobuf:"bytes,2,opt,name=orgName,proto3" json:"orgName,omitempty"`
-	OrgId         string                 `protobuf:"bytes,3,opt,name=orgId,proto3" json:"orgId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSystemNodeGwRequest) Reset() {
-	*x = GetSystemNodeGwRequest{}
-	mi := &file_lookup_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSystemNodeGwRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSystemNodeGwRequest) ProtoMessage() {}
-
-func (x *GetSystemNodeGwRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[18]
+func (x *GetSystemResponse) GetNodeGwIp() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSystemNodeGwRequest.ProtoReflect.Descriptor instead.
-func (*GetSystemNodeGwRequest) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *GetSystemNodeGwRequest) GetSystemName() string {
-	if x != nil {
-		return x.SystemName
+		return x.NodeGwIp
 	}
 	return ""
 }
 
-func (x *GetSystemNodeGwRequest) GetOrgName() string {
+func (x *GetSystemResponse) GetNodeGwPort() int32 {
 	if x != nil {
-		return x.OrgName
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwRequest) GetOrgId() string {
-	if x != nil {
-		return x.OrgId
-	}
-	return ""
-}
-
-type GetSystemNodeGwResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
-	SystemId      string                 `protobuf:"bytes,2,opt,name=systemId,proto3" json:"systemId,omitempty"`
-	OrgName       string                 `protobuf:"bytes,3,opt,name=orgName,proto3" json:"orgName,omitempty"`
-	Certificate   string                 `protobuf:"bytes,4,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
-	Health        uint32                 `protobuf:"varint,7,opt,name=health,proto3" json:"health,omitempty"`
-	Url           string                 `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSystemNodeGwResponse) Reset() {
-	*x = GetSystemNodeGwResponse{}
-	mi := &file_lookup_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSystemNodeGwResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSystemNodeGwResponse) ProtoMessage() {}
-
-func (x *GetSystemNodeGwResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSystemNodeGwResponse.ProtoReflect.Descriptor instead.
-func (*GetSystemNodeGwResponse) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *GetSystemNodeGwResponse) GetSystemName() string {
-	if x != nil {
-		return x.SystemName
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwResponse) GetSystemId() string {
-	if x != nil {
-		return x.SystemId
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwResponse) GetOrgName() string {
-	if x != nil {
-		return x.OrgName
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwResponse) GetCertificate() string {
-	if x != nil {
-		return x.Certificate
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwResponse) GetIp() string {
-	if x != nil {
-		return x.Ip
-	}
-	return ""
-}
-
-func (x *GetSystemNodeGwResponse) GetPort() int32 {
-	if x != nil {
-		return x.Port
+		return x.NodeGwPort
 	}
 	return 0
 }
 
-func (x *GetSystemNodeGwResponse) GetHealth() uint32 {
+func (x *GetSystemResponse) GetNodeGwUrl() string {
 	if x != nil {
-		return x.Health
-	}
-	return 0
-}
-
-func (x *GetSystemNodeGwResponse) GetUrl() string {
-	if x != nil {
-		return x.Url
+		return x.NodeGwUrl
 	}
 	return ""
 }
@@ -1197,13 +1061,16 @@ type AddSystemRequest struct {
 	Ip            string                 `protobuf:"bytes,4,opt,name=ip,proto3" json:"ip,omitempty"`
 	Port          int32                  `protobuf:"varint,5,opt,name=port,proto3" json:"port,omitempty"`
 	Url           string                 `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
+	NodeGwIp      string                 `protobuf:"bytes,7,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
+	NodeGwPort    int32                  `protobuf:"varint,8,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
+	NodeGwUrl     string                 `protobuf:"bytes,9,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddSystemRequest) Reset() {
 	*x = AddSystemRequest{}
-	mi := &file_lookup_proto_msgTypes[20]
+	mi := &file_lookup_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1215,7 +1082,7 @@ func (x *AddSystemRequest) String() string {
 func (*AddSystemRequest) ProtoMessage() {}
 
 func (x *AddSystemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[20]
+	mi := &file_lookup_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1228,7 +1095,7 @@ func (x *AddSystemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSystemRequest.ProtoReflect.Descriptor instead.
 func (*AddSystemRequest) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{20}
+	return file_lookup_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *AddSystemRequest) GetSystemName() string {
@@ -1273,6 +1140,27 @@ func (x *AddSystemRequest) GetUrl() string {
 	return ""
 }
 
+func (x *AddSystemRequest) GetNodeGwIp() string {
+	if x != nil {
+		return x.NodeGwIp
+	}
+	return ""
+}
+
+func (x *AddSystemRequest) GetNodeGwPort() int32 {
+	if x != nil {
+		return x.NodeGwPort
+	}
+	return 0
+}
+
+func (x *AddSystemRequest) GetNodeGwUrl() string {
+	if x != nil {
+		return x.NodeGwUrl
+	}
+	return ""
+}
+
 type AddSystemResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
@@ -1282,13 +1170,16 @@ type AddSystemResponse struct {
 	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
 	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
 	Url           string                 `protobuf:"bytes,7,opt,name=url,proto3" json:"url,omitempty"`
+	NodeGwIp      string                 `protobuf:"bytes,8,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
+	NodeGwPort    int32                  `protobuf:"varint,9,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
+	NodeGwUrl     string                 `protobuf:"bytes,10,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddSystemResponse) Reset() {
 	*x = AddSystemResponse{}
-	mi := &file_lookup_proto_msgTypes[21]
+	mi := &file_lookup_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1300,7 +1191,7 @@ func (x *AddSystemResponse) String() string {
 func (*AddSystemResponse) ProtoMessage() {}
 
 func (x *AddSystemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[21]
+	mi := &file_lookup_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1313,7 +1204,7 @@ func (x *AddSystemResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddSystemResponse.ProtoReflect.Descriptor instead.
 func (*AddSystemResponse) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{21}
+	return file_lookup_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AddSystemResponse) GetSystemName() string {
@@ -1365,6 +1256,27 @@ func (x *AddSystemResponse) GetUrl() string {
 	return ""
 }
 
+func (x *AddSystemResponse) GetNodeGwIp() string {
+	if x != nil {
+		return x.NodeGwIp
+	}
+	return ""
+}
+
+func (x *AddSystemResponse) GetNodeGwPort() int32 {
+	if x != nil {
+		return x.NodeGwPort
+	}
+	return 0
+}
+
+func (x *AddSystemResponse) GetNodeGwUrl() string {
+	if x != nil {
+		return x.NodeGwUrl
+	}
+	return ""
+}
+
 type UpdateSystemRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
@@ -1372,13 +1284,16 @@ type UpdateSystemRequest struct {
 	Certificate   string                 `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
 	Ip            string                 `protobuf:"bytes,4,opt,name=ip,proto3" json:"ip,omitempty"`
 	Port          int32                  `protobuf:"varint,5,opt,name=port,proto3" json:"port,omitempty"`
+	NodeGwIp      string                 `protobuf:"bytes,6,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
+	NodeGwPort    int32                  `protobuf:"varint,7,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
+	NodeGwUrl     string                 `protobuf:"bytes,8,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateSystemRequest) Reset() {
 	*x = UpdateSystemRequest{}
-	mi := &file_lookup_proto_msgTypes[22]
+	mi := &file_lookup_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1390,7 +1305,7 @@ func (x *UpdateSystemRequest) String() string {
 func (*UpdateSystemRequest) ProtoMessage() {}
 
 func (x *UpdateSystemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[22]
+	mi := &file_lookup_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1403,7 +1318,7 @@ func (x *UpdateSystemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSystemRequest.ProtoReflect.Descriptor instead.
 func (*UpdateSystemRequest) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{22}
+	return file_lookup_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *UpdateSystemRequest) GetSystemName() string {
@@ -1441,6 +1356,27 @@ func (x *UpdateSystemRequest) GetPort() int32 {
 	return 0
 }
 
+func (x *UpdateSystemRequest) GetNodeGwIp() string {
+	if x != nil {
+		return x.NodeGwIp
+	}
+	return ""
+}
+
+func (x *UpdateSystemRequest) GetNodeGwPort() int32 {
+	if x != nil {
+		return x.NodeGwPort
+	}
+	return 0
+}
+
+func (x *UpdateSystemRequest) GetNodeGwUrl() string {
+	if x != nil {
+		return x.NodeGwUrl
+	}
+	return ""
+}
+
 type UpdateSystemResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
@@ -1450,13 +1386,16 @@ type UpdateSystemResponse struct {
 	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
 	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
 	Url           string                 `protobuf:"bytes,7,opt,name=url,proto3" json:"url,omitempty"`
+	NodeGwIp      string                 `protobuf:"bytes,8,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
+	NodeGwPort    int32                  `protobuf:"varint,9,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
+	NodeGwUrl     string                 `protobuf:"bytes,10,opt,name=nodeGwUrl,proto3" json:"nodeGwUrl,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateSystemResponse) Reset() {
 	*x = UpdateSystemResponse{}
-	mi := &file_lookup_proto_msgTypes[23]
+	mi := &file_lookup_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1468,7 +1407,7 @@ func (x *UpdateSystemResponse) String() string {
 func (*UpdateSystemResponse) ProtoMessage() {}
 
 func (x *UpdateSystemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[23]
+	mi := &file_lookup_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1481,7 +1420,7 @@ func (x *UpdateSystemResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateSystemResponse.ProtoReflect.Descriptor instead.
 func (*UpdateSystemResponse) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{23}
+	return file_lookup_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UpdateSystemResponse) GetSystemName() string {
@@ -1533,6 +1472,27 @@ func (x *UpdateSystemResponse) GetUrl() string {
 	return ""
 }
 
+func (x *UpdateSystemResponse) GetNodeGwIp() string {
+	if x != nil {
+		return x.NodeGwIp
+	}
+	return ""
+}
+
+func (x *UpdateSystemResponse) GetNodeGwPort() int32 {
+	if x != nil {
+		return x.NodeGwPort
+	}
+	return 0
+}
+
+func (x *UpdateSystemResponse) GetNodeGwUrl() string {
+	if x != nil {
+		return x.NodeGwUrl
+	}
+	return ""
+}
+
 type DeleteSystemRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
@@ -1543,7 +1503,7 @@ type DeleteSystemRequest struct {
 
 func (x *DeleteSystemRequest) Reset() {
 	*x = DeleteSystemRequest{}
-	mi := &file_lookup_proto_msgTypes[24]
+	mi := &file_lookup_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1555,7 +1515,7 @@ func (x *DeleteSystemRequest) String() string {
 func (*DeleteSystemRequest) ProtoMessage() {}
 
 func (x *DeleteSystemRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[24]
+	mi := &file_lookup_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +1528,7 @@ func (x *DeleteSystemRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSystemRequest.ProtoReflect.Descriptor instead.
 func (*DeleteSystemRequest) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{24}
+	return file_lookup_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteSystemRequest) GetSystemName() string {
@@ -1593,7 +1553,7 @@ type DeleteSystemResponse struct {
 
 func (x *DeleteSystemResponse) Reset() {
 	*x = DeleteSystemResponse{}
-	mi := &file_lookup_proto_msgTypes[25]
+	mi := &file_lookup_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1605,7 +1565,7 @@ func (x *DeleteSystemResponse) String() string {
 func (*DeleteSystemResponse) ProtoMessage() {}
 
 func (x *DeleteSystemResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_lookup_proto_msgTypes[25]
+	mi := &file_lookup_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1618,7 +1578,7 @@ func (x *DeleteSystemResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSystemResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSystemResponse) Descriptor() ([]byte, []int) {
-	return file_lookup_proto_rawDescGZIP(), []int{25}
+	return file_lookup_proto_rawDescGZIP(), []int{23}
 }
 
 var File_lookup_proto protoreflect.FileDescriptor
@@ -1680,7 +1640,7 @@ const file_lookup_proto_rawDesc = "" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12\x18\n" +
 	"\aorgName\x18\x02 \x01(\tR\aorgName\x12\x1d\n" +
-	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\xd9\x01\n" +
+	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\xb3\x02\n" +
 	"\x11GetSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
@@ -1691,24 +1651,13 @@ const file_lookup_proto_rawDesc = "" +
 	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x16\n" +
 	"\x06health\x18\a \x01(\rR\x06health\x12\x10\n" +
-	"\x03url\x18\b \x01(\tR\x03url\"y\n" +
-	"\x16GetSystemNodeGwRequest\x12&\n" +
+	"\x03url\x18\b \x01(\tR\x03url\x12\x1a\n" +
+	"\bnodeGwIp\x18\t \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
-	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
-	"systemName\x12\x18\n" +
-	"\aorgName\x18\x02 \x01(\tR\aorgName\x12\x1d\n" +
-	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\xdf\x01\n" +
-	"\x17GetSystemNodeGwResponse\x12\x1e\n" +
-	"\n" +
-	"systemName\x18\x01 \x01(\tR\n" +
-	"systemName\x12\x1a\n" +
-	"\bsystemId\x18\x02 \x01(\tR\bsystemId\x12\x18\n" +
-	"\aorgName\x18\x03 \x01(\tR\aorgName\x12 \n" +
-	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
-	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x16\n" +
-	"\x06health\x18\a \x01(\rR\x06health\x12\x10\n" +
-	"\x03url\x18\b \x01(\tR\x03url\"\xcc\x01\n" +
+	"nodeGwPort\x18\n" +
+	" \x01(\x05R\n" +
+	"nodeGwPort\x12\x1c\n" +
+	"\tnodeGwUrl\x18\v \x01(\tR\tnodeGwUrl\"\xa6\x02\n" +
 	"\x10AddSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
@@ -1717,7 +1666,12 @@ const file_lookup_proto_rawDesc = "" +
 	"\vcertificate\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vcertificate\x12\x16\n" +
 	"\x02ip\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x02ip\x12\x1a\n" +
 	"\x04port\x18\x05 \x01(\x05B\x06\xe2\xdf\x1f\x02X\x01R\x04port\x12\x10\n" +
-	"\x03url\x18\x06 \x01(\tR\x03url\"\xc1\x01\n" +
+	"\x03url\x18\x06 \x01(\tR\x03url\x12\x1a\n" +
+	"\bnodeGwIp\x18\a \x01(\tR\bnodeGwIp\x12\x1e\n" +
+	"\n" +
+	"nodeGwPort\x18\b \x01(\x05R\n" +
+	"nodeGwPort\x12\x1c\n" +
+	"\tnodeGwUrl\x18\t \x01(\tR\tnodeGwUrl\"\x9b\x02\n" +
 	"\x11AddSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
@@ -1727,7 +1681,13 @@ const file_lookup_proto_rawDesc = "" +
 	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
 	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03url\x18\a \x01(\tR\x03url\"\xa5\x01\n" +
+	"\x03url\x18\a \x01(\tR\x03url\x12\x1a\n" +
+	"\bnodeGwIp\x18\b \x01(\tR\bnodeGwIp\x12\x1e\n" +
+	"\n" +
+	"nodeGwPort\x18\t \x01(\x05R\n" +
+	"nodeGwPort\x12\x1c\n" +
+	"\tnodeGwUrl\x18\n" +
+	" \x01(\tR\tnodeGwUrl\"\xff\x01\n" +
 	"\x13UpdateSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
@@ -1735,7 +1695,12 @@ const file_lookup_proto_rawDesc = "" +
 	"\aorgName\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\aorgName\x12 \n" +
 	"\vcertificate\x18\x03 \x01(\tR\vcertificate\x12\x0e\n" +
 	"\x02ip\x18\x04 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x05 \x01(\x05R\x04port\"\xc4\x01\n" +
+	"\x04port\x18\x05 \x01(\x05R\x04port\x12\x1a\n" +
+	"\bnodeGwIp\x18\x06 \x01(\tR\bnodeGwIp\x12\x1e\n" +
+	"\n" +
+	"nodeGwPort\x18\a \x01(\x05R\n" +
+	"nodeGwPort\x12\x1c\n" +
+	"\tnodeGwUrl\x18\b \x01(\tR\tnodeGwUrl\"\x9e\x02\n" +
 	"\x14UpdateSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
@@ -1745,13 +1710,19 @@ const file_lookup_proto_rawDesc = "" +
 	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
 	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03url\x18\a \x01(\tR\x03url\"_\n" +
+	"\x03url\x18\a \x01(\tR\x03url\x12\x1a\n" +
+	"\bnodeGwIp\x18\b \x01(\tR\bnodeGwIp\x12\x1e\n" +
+	"\n" +
+	"nodeGwPort\x18\t \x01(\x05R\n" +
+	"nodeGwPort\x12\x1c\n" +
+	"\tnodeGwUrl\x18\n" +
+	" \x01(\tR\tnodeGwUrl\"_\n" +
 	"\x13DeleteSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12 \n" +
 	"\aorgName\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\aorgName\"\x16\n" +
-	"\x14DeleteSystemResponse2\x86\t\n" +
+	"\x14DeleteSystemResponse2\x9a\b\n" +
 	"\rLookupService\x12I\n" +
 	"\x06AddOrg\x12\x1e.ukama.lookup.v1.AddOrgRequest\x1a\x1f.ukama.lookup.v1.AddOrgResponse\x12R\n" +
 	"\tUpdateOrg\x12!.ukama.lookup.v1.UpdateOrgRequest\x1a\".ukama.lookup.v1.UpdateOrgResponse\x12I\n" +
@@ -1761,8 +1732,7 @@ const file_lookup_proto_rawDesc = "" +
 	"\rAddNodeForOrg\x12\x1f.ukama.lookup.v1.AddNodeRequest\x1a .ukama.lookup.v1.AddNodeResponse\x12X\n" +
 	"\rGetNodeForOrg\x12%.ukama.lookup.v1.GetNodeForOrgRequest\x1a .ukama.lookup.v1.GetNodeResponse\x12[\n" +
 	"\x10DeleteNodeForOrg\x12\".ukama.lookup.v1.DeleteNodeRequest\x1a#.ukama.lookup.v1.DeleteNodeResponse\x12X\n" +
-	"\x0fGetSystemForOrg\x12!.ukama.lookup.v1.GetSystemRequest\x1a\".ukama.lookup.v1.GetSystemResponse\x12j\n" +
-	"\x15GetSystemNodeGwForOrg\x12'.ukama.lookup.v1.GetSystemNodeGwRequest\x1a(.ukama.lookup.v1.GetSystemNodeGwResponse\x12X\n" +
+	"\x0fGetSystemForOrg\x12!.ukama.lookup.v1.GetSystemRequest\x1a\".ukama.lookup.v1.GetSystemResponse\x12X\n" +
 	"\x0fAddSystemForOrg\x12!.ukama.lookup.v1.AddSystemRequest\x1a\".ukama.lookup.v1.AddSystemResponse\x12a\n" +
 	"\x12UpdateSystemForOrg\x12$.ukama.lookup.v1.UpdateSystemRequest\x1a%.ukama.lookup.v1.UpdateSystemResponse\x12a\n" +
 	"\x12DeleteSystemForOrg\x12$.ukama.lookup.v1.DeleteSystemRequest\x1a%.ukama.lookup.v1.DeleteSystemResponseB\bZ\x06pb/genb\x06proto3"
@@ -1779,34 +1749,32 @@ func file_lookup_proto_rawDescGZIP() []byte {
 	return file_lookup_proto_rawDescData
 }
 
-var file_lookup_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_lookup_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_lookup_proto_goTypes = []any{
-	(*AddOrgRequest)(nil),           // 0: ukama.lookup.v1.AddOrgRequest
-	(*AddOrgResponse)(nil),          // 1: ukama.lookup.v1.AddOrgResponse
-	(*UpdateOrgRequest)(nil),        // 2: ukama.lookup.v1.UpdateOrgRequest
-	(*UpdateOrgResponse)(nil),       // 3: ukama.lookup.v1.UpdateOrgResponse
-	(*GetOrgRequest)(nil),           // 4: ukama.lookup.v1.GetOrgRequest
-	(*GetOrgResponse)(nil),          // 5: ukama.lookup.v1.GetOrgResponse
-	(*OrgName)(nil),                 // 6: ukama.lookup.v1.OrgName
-	(*GetOrgsRequest)(nil),          // 7: ukama.lookup.v1.GetOrgsRequest
-	(*GetOrgsResponse)(nil),         // 8: ukama.lookup.v1.GetOrgsResponse
-	(*AddNodeRequest)(nil),          // 9: ukama.lookup.v1.AddNodeRequest
-	(*AddNodeResponse)(nil),         // 10: ukama.lookup.v1.AddNodeResponse
-	(*GetNodeForOrgRequest)(nil),    // 11: ukama.lookup.v1.GetNodeForOrgRequest
-	(*GetNodeResponse)(nil),         // 12: ukama.lookup.v1.GetNodeResponse
-	(*GetNodeRequest)(nil),          // 13: ukama.lookup.v1.GetNodeRequest
-	(*DeleteNodeRequest)(nil),       // 14: ukama.lookup.v1.DeleteNodeRequest
-	(*DeleteNodeResponse)(nil),      // 15: ukama.lookup.v1.DeleteNodeResponse
-	(*GetSystemRequest)(nil),        // 16: ukama.lookup.v1.GetSystemRequest
-	(*GetSystemResponse)(nil),       // 17: ukama.lookup.v1.GetSystemResponse
-	(*GetSystemNodeGwRequest)(nil),  // 18: ukama.lookup.v1.GetSystemNodeGwRequest
-	(*GetSystemNodeGwResponse)(nil), // 19: ukama.lookup.v1.GetSystemNodeGwResponse
-	(*AddSystemRequest)(nil),        // 20: ukama.lookup.v1.AddSystemRequest
-	(*AddSystemResponse)(nil),       // 21: ukama.lookup.v1.AddSystemResponse
-	(*UpdateSystemRequest)(nil),     // 22: ukama.lookup.v1.UpdateSystemRequest
-	(*UpdateSystemResponse)(nil),    // 23: ukama.lookup.v1.UpdateSystemResponse
-	(*DeleteSystemRequest)(nil),     // 24: ukama.lookup.v1.DeleteSystemRequest
-	(*DeleteSystemResponse)(nil),    // 25: ukama.lookup.v1.DeleteSystemResponse
+	(*AddOrgRequest)(nil),        // 0: ukama.lookup.v1.AddOrgRequest
+	(*AddOrgResponse)(nil),       // 1: ukama.lookup.v1.AddOrgResponse
+	(*UpdateOrgRequest)(nil),     // 2: ukama.lookup.v1.UpdateOrgRequest
+	(*UpdateOrgResponse)(nil),    // 3: ukama.lookup.v1.UpdateOrgResponse
+	(*GetOrgRequest)(nil),        // 4: ukama.lookup.v1.GetOrgRequest
+	(*GetOrgResponse)(nil),       // 5: ukama.lookup.v1.GetOrgResponse
+	(*OrgName)(nil),              // 6: ukama.lookup.v1.OrgName
+	(*GetOrgsRequest)(nil),       // 7: ukama.lookup.v1.GetOrgsRequest
+	(*GetOrgsResponse)(nil),      // 8: ukama.lookup.v1.GetOrgsResponse
+	(*AddNodeRequest)(nil),       // 9: ukama.lookup.v1.AddNodeRequest
+	(*AddNodeResponse)(nil),      // 10: ukama.lookup.v1.AddNodeResponse
+	(*GetNodeForOrgRequest)(nil), // 11: ukama.lookup.v1.GetNodeForOrgRequest
+	(*GetNodeResponse)(nil),      // 12: ukama.lookup.v1.GetNodeResponse
+	(*GetNodeRequest)(nil),       // 13: ukama.lookup.v1.GetNodeRequest
+	(*DeleteNodeRequest)(nil),    // 14: ukama.lookup.v1.DeleteNodeRequest
+	(*DeleteNodeResponse)(nil),   // 15: ukama.lookup.v1.DeleteNodeResponse
+	(*GetSystemRequest)(nil),     // 16: ukama.lookup.v1.GetSystemRequest
+	(*GetSystemResponse)(nil),    // 17: ukama.lookup.v1.GetSystemResponse
+	(*AddSystemRequest)(nil),     // 18: ukama.lookup.v1.AddSystemRequest
+	(*AddSystemResponse)(nil),    // 19: ukama.lookup.v1.AddSystemResponse
+	(*UpdateSystemRequest)(nil),  // 20: ukama.lookup.v1.UpdateSystemRequest
+	(*UpdateSystemResponse)(nil), // 21: ukama.lookup.v1.UpdateSystemResponse
+	(*DeleteSystemRequest)(nil),  // 22: ukama.lookup.v1.DeleteSystemRequest
+	(*DeleteSystemResponse)(nil), // 23: ukama.lookup.v1.DeleteSystemResponse
 }
 var file_lookup_proto_depIdxs = []int32{
 	6,  // 0: ukama.lookup.v1.GetOrgsResponse.orgs:type_name -> ukama.lookup.v1.OrgName
@@ -1819,25 +1787,23 @@ var file_lookup_proto_depIdxs = []int32{
 	11, // 7: ukama.lookup.v1.LookupService.GetNodeForOrg:input_type -> ukama.lookup.v1.GetNodeForOrgRequest
 	14, // 8: ukama.lookup.v1.LookupService.DeleteNodeForOrg:input_type -> ukama.lookup.v1.DeleteNodeRequest
 	16, // 9: ukama.lookup.v1.LookupService.GetSystemForOrg:input_type -> ukama.lookup.v1.GetSystemRequest
-	18, // 10: ukama.lookup.v1.LookupService.GetSystemNodeGwForOrg:input_type -> ukama.lookup.v1.GetSystemNodeGwRequest
-	20, // 11: ukama.lookup.v1.LookupService.AddSystemForOrg:input_type -> ukama.lookup.v1.AddSystemRequest
-	22, // 12: ukama.lookup.v1.LookupService.UpdateSystemForOrg:input_type -> ukama.lookup.v1.UpdateSystemRequest
-	24, // 13: ukama.lookup.v1.LookupService.DeleteSystemForOrg:input_type -> ukama.lookup.v1.DeleteSystemRequest
-	1,  // 14: ukama.lookup.v1.LookupService.AddOrg:output_type -> ukama.lookup.v1.AddOrgResponse
-	3,  // 15: ukama.lookup.v1.LookupService.UpdateOrg:output_type -> ukama.lookup.v1.UpdateOrgResponse
-	5,  // 16: ukama.lookup.v1.LookupService.GetOrg:output_type -> ukama.lookup.v1.GetOrgResponse
-	8,  // 17: ukama.lookup.v1.LookupService.GetOrgs:output_type -> ukama.lookup.v1.GetOrgsResponse
-	12, // 18: ukama.lookup.v1.LookupService.GetNode:output_type -> ukama.lookup.v1.GetNodeResponse
-	10, // 19: ukama.lookup.v1.LookupService.AddNodeForOrg:output_type -> ukama.lookup.v1.AddNodeResponse
-	12, // 20: ukama.lookup.v1.LookupService.GetNodeForOrg:output_type -> ukama.lookup.v1.GetNodeResponse
-	15, // 21: ukama.lookup.v1.LookupService.DeleteNodeForOrg:output_type -> ukama.lookup.v1.DeleteNodeResponse
-	17, // 22: ukama.lookup.v1.LookupService.GetSystemForOrg:output_type -> ukama.lookup.v1.GetSystemResponse
-	19, // 23: ukama.lookup.v1.LookupService.GetSystemNodeGwForOrg:output_type -> ukama.lookup.v1.GetSystemNodeGwResponse
-	21, // 24: ukama.lookup.v1.LookupService.AddSystemForOrg:output_type -> ukama.lookup.v1.AddSystemResponse
-	23, // 25: ukama.lookup.v1.LookupService.UpdateSystemForOrg:output_type -> ukama.lookup.v1.UpdateSystemResponse
-	25, // 26: ukama.lookup.v1.LookupService.DeleteSystemForOrg:output_type -> ukama.lookup.v1.DeleteSystemResponse
-	14, // [14:27] is the sub-list for method output_type
-	1,  // [1:14] is the sub-list for method input_type
+	18, // 10: ukama.lookup.v1.LookupService.AddSystemForOrg:input_type -> ukama.lookup.v1.AddSystemRequest
+	20, // 11: ukama.lookup.v1.LookupService.UpdateSystemForOrg:input_type -> ukama.lookup.v1.UpdateSystemRequest
+	22, // 12: ukama.lookup.v1.LookupService.DeleteSystemForOrg:input_type -> ukama.lookup.v1.DeleteSystemRequest
+	1,  // 13: ukama.lookup.v1.LookupService.AddOrg:output_type -> ukama.lookup.v1.AddOrgResponse
+	3,  // 14: ukama.lookup.v1.LookupService.UpdateOrg:output_type -> ukama.lookup.v1.UpdateOrgResponse
+	5,  // 15: ukama.lookup.v1.LookupService.GetOrg:output_type -> ukama.lookup.v1.GetOrgResponse
+	8,  // 16: ukama.lookup.v1.LookupService.GetOrgs:output_type -> ukama.lookup.v1.GetOrgsResponse
+	12, // 17: ukama.lookup.v1.LookupService.GetNode:output_type -> ukama.lookup.v1.GetNodeResponse
+	10, // 18: ukama.lookup.v1.LookupService.AddNodeForOrg:output_type -> ukama.lookup.v1.AddNodeResponse
+	12, // 19: ukama.lookup.v1.LookupService.GetNodeForOrg:output_type -> ukama.lookup.v1.GetNodeResponse
+	15, // 20: ukama.lookup.v1.LookupService.DeleteNodeForOrg:output_type -> ukama.lookup.v1.DeleteNodeResponse
+	17, // 21: ukama.lookup.v1.LookupService.GetSystemForOrg:output_type -> ukama.lookup.v1.GetSystemResponse
+	19, // 22: ukama.lookup.v1.LookupService.AddSystemForOrg:output_type -> ukama.lookup.v1.AddSystemResponse
+	21, // 23: ukama.lookup.v1.LookupService.UpdateSystemForOrg:output_type -> ukama.lookup.v1.UpdateSystemResponse
+	23, // 24: ukama.lookup.v1.LookupService.DeleteSystemForOrg:output_type -> ukama.lookup.v1.DeleteSystemResponse
+	13, // [13:25] is the sub-list for method output_type
+	1,  // [1:13] is the sub-list for method input_type
 	1,  // [1:1] is the sub-list for extension type_name
 	1,  // [1:1] is the sub-list for extension extendee
 	0,  // [0:1] is the sub-list for field type_name
@@ -1854,7 +1820,7 @@ func file_lookup_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_lookup_proto_rawDesc), len(file_lookup_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

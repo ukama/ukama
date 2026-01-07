@@ -314,36 +314,6 @@ func (_m *LookupServiceServer) GetSystemForOrg(_a0 context.Context, _a1 *gen.Get
 	return r0, r1
 }
 
-// GetSystemNodeGwForOrg provides a mock function with given fields: _a0, _a1
-func (_m *LookupServiceServer) GetSystemNodeGwForOrg(_a0 context.Context, _a1 *gen.GetSystemNodeGwRequest) (*gen.GetSystemNodeGwResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSystemNodeGwForOrg")
-	}
-
-	var r0 *gen.GetSystemNodeGwResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSystemNodeGwRequest) (*gen.GetSystemNodeGwResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSystemNodeGwRequest) *gen.GetSystemNodeGwResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSystemNodeGwResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSystemNodeGwRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateOrg provides a mock function with given fields: _a0, _a1
 func (_m *LookupServiceServer) UpdateOrg(_a0 context.Context, _a1 *gen.UpdateOrgRequest) (*gen.UpdateOrgResponse, error) {
 	ret := _m.Called(_a0, _a1)

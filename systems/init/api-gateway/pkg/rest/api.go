@@ -48,6 +48,9 @@ type AddSystemRequest struct {
 	Certificate string `json:"certificate" validate:"required"`
 	Port        int32  `json:"port" validate:"required"`
 	URL         string `json:"url"`
+	NodeGwIp    string `json:"node_gw_ip" default:"0.0.0.0"`
+	NodeGwPort  int32  `json:"node_gw_port" default:"8080"`
+	NodeGwURL   string `json:"node_gw_url" default:"http://0.0.0.0:8080"`
 }
 
 type UpdateSystemRequest struct {
@@ -56,6 +59,9 @@ type UpdateSystemRequest struct {
 	Ip          string `json:"ip"`
 	Certificate string `json:"certificate"`
 	Port        int32  `json:"port"`
+	NodeGwIp    string `json:"node_gw_ip"`
+	NodeGwPort  int32  `json:"node_gw_port"`
+	NodeGwURL   string `json:"node_gw_url"`
 }
 
 type GetSystemRequest struct {
