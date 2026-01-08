@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"github.com/jackc/pgtype"
@@ -28,6 +29,8 @@ import (
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")
 var orgName = "test-org"
 
+var sysIp = pgtype.Inet{IPNet: &net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(32, 32)}}
+var sysPort = int32(100)
 func TestLookupServer_AddOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
@@ -296,9 +299,9 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 		Name:        "sys",
 		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
-		Ip:          orgIp,
-		Port:        100,
-		URL:         "http://localhost:100",
+		ApiGwIp:     sysIp,
+		ApiGwPort:   sysPort,
+		ApiGwUrl:    "http://localhost:100",
 		NodeGwIp:    nodeGwIp,
 		NodeGwPort:  8080,
 	}
@@ -341,8 +344,8 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 	system := &db.System{
 		Name:        "sys",
 		Certificate: "ukama_certs",
-		Ip:          orgIp,
-		Port:        100,
+		ApiGwIp:     sysIp,
+		ApiGwPort:   sysPort,
 		NodeGwIp:    nodeGwIp,
 		NodeGwPort:  8080,
 	}
@@ -351,15 +354,24 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 		SystemName:  system.Name,
 		OrgName:     "ukama",
 		Certificate: "ukama_certs",
-		Ip:          ip,
-		Port:        100,
+		ApiGwIp:     sysIp.IPNet.IP.String(),
+		ApiGwPort:   sysPort,
 		NodeGwIp:    "0.0.0.0",
 		NodeGwPort:  8080,
 	}
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
-	systemRepo.On("Update", system, org.ID).Return(nil).Once()
+	systemRepo.On("Update", mock.MatchedBy(func(s *db.System) bool {
+		return s.Name == "sys" &&
+			s.Certificate == "ukama_certs" &&
+			s.ApiGwPort == sysPort &&
+			s.NodeGwPort == 8080 &&
+			s.ApiGwIp.Status == pgtype.Present &&
+			s.NodeGwIp.Status == pgtype.Present &&
+			s.ApiGwIp.IPNet.IP.String() == sysIp.IPNet.IP.String() &&
+			s.NodeGwIp.IPNet.IP.String() == "0.0.0.0"
+	}), org.ID).Return(nil).Once()
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
 
@@ -368,6 +380,8 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 
 	assert.NoError(t, err)
 	orgRepo.AssertExpectations(t)
+	systemRepo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
 
 }
 
@@ -394,8 +408,8 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 		Name:        "sys",
 		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
-		Ip:          orgIp,
-		Port:        100,
+		ApiGwIp:     	sysIp,
+		ApiGwPort:   sysPort,
 	}
 
 	psys := &pb.DeleteSystemRequest{SystemName: system.Name, OrgName: "ukama"}

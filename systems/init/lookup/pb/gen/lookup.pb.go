@@ -935,10 +935,10 @@ type GetSystemResponse struct {
 	SystemId      string                 `protobuf:"bytes,2,opt,name=systemId,proto3" json:"systemId,omitempty"`
 	OrgName       string                 `protobuf:"bytes,3,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	Certificate   string                 `protobuf:"bytes,4,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
-	Health        uint32                 `protobuf:"varint,7,opt,name=health,proto3" json:"health,omitempty"`
-	Url           string                 `protobuf:"bytes,8,opt,name=url,proto3" json:"url,omitempty"`
+	ApiGwIp       string                 `protobuf:"bytes,5,opt,name=apiGwIp,proto3" json:"apiGwIp,omitempty"`
+	ApiGwPort     int32                  `protobuf:"varint,6,opt,name=apiGwPort,proto3" json:"apiGwPort,omitempty"`
+	ApiGwHealth   uint32                 `protobuf:"varint,7,opt,name=apiGwHealth,proto3" json:"apiGwHealth,omitempty"`
+	ApiGwUrl      string                 `protobuf:"bytes,8,opt,name=apiGwUrl,proto3" json:"apiGwUrl,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,9,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,10,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1003,30 +1003,30 @@ func (x *GetSystemResponse) GetCertificate() string {
 	return ""
 }
 
-func (x *GetSystemResponse) GetIp() string {
+func (x *GetSystemResponse) GetApiGwIp() string {
 	if x != nil {
-		return x.Ip
+		return x.ApiGwIp
 	}
 	return ""
 }
 
-func (x *GetSystemResponse) GetPort() int32 {
+func (x *GetSystemResponse) GetApiGwPort() int32 {
 	if x != nil {
-		return x.Port
+		return x.ApiGwPort
 	}
 	return 0
 }
 
-func (x *GetSystemResponse) GetHealth() uint32 {
+func (x *GetSystemResponse) GetApiGwHealth() uint32 {
 	if x != nil {
-		return x.Health
+		return x.ApiGwHealth
 	}
 	return 0
 }
 
-func (x *GetSystemResponse) GetUrl() string {
+func (x *GetSystemResponse) GetApiGwUrl() string {
 	if x != nil {
-		return x.Url
+		return x.ApiGwUrl
 	}
 	return ""
 }
@@ -1050,9 +1050,9 @@ type AddSystemRequest struct {
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
 	OrgName       string                 `protobuf:"bytes,2,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	Certificate   string                 `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,4,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,5,opt,name=port,proto3" json:"port,omitempty"`
-	Url           string                 `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
+	ApiGwIp       string                 `protobuf:"bytes,4,opt,name=apiGwIp,proto3" json:"apiGwIp,omitempty"`
+	ApiGwPort     int32                  `protobuf:"varint,5,opt,name=apiGwPort,proto3" json:"apiGwPort,omitempty"`
+	ApiGwUrl      string                 `protobuf:"bytes,6,opt,name=apiGwUrl,proto3" json:"apiGwUrl,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,7,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,8,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1110,23 +1110,23 @@ func (x *AddSystemRequest) GetCertificate() string {
 	return ""
 }
 
-func (x *AddSystemRequest) GetIp() string {
+func (x *AddSystemRequest) GetApiGwIp() string {
 	if x != nil {
-		return x.Ip
+		return x.ApiGwIp
 	}
 	return ""
 }
 
-func (x *AddSystemRequest) GetPort() int32 {
+func (x *AddSystemRequest) GetApiGwPort() int32 {
 	if x != nil {
-		return x.Port
+		return x.ApiGwPort
 	}
 	return 0
 }
 
-func (x *AddSystemRequest) GetUrl() string {
+func (x *AddSystemRequest) GetApiGwUrl() string {
 	if x != nil {
-		return x.Url
+		return x.ApiGwUrl
 	}
 	return ""
 }
@@ -1151,9 +1151,9 @@ type AddSystemResponse struct {
 	SystemId      string                 `protobuf:"bytes,2,opt,name=systemId,proto3" json:"systemId,omitempty"`
 	OrgName       string                 `protobuf:"bytes,3,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	Certificate   string                 `protobuf:"bytes,4,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
-	Url           string                 `protobuf:"bytes,7,opt,name=url,proto3" json:"url,omitempty"`
+	ApiGwIp       string                 `protobuf:"bytes,5,opt,name=apiGwIp,proto3" json:"apiGwIp,omitempty"`
+	ApiGwPort     int32                  `protobuf:"varint,6,opt,name=apiGwPort,proto3" json:"apiGwPort,omitempty"`
+	ApiGwUrl      string                 `protobuf:"bytes,7,opt,name=apiGwUrl,proto3" json:"apiGwUrl,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,8,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,9,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1218,23 +1218,23 @@ func (x *AddSystemResponse) GetCertificate() string {
 	return ""
 }
 
-func (x *AddSystemResponse) GetIp() string {
+func (x *AddSystemResponse) GetApiGwIp() string {
 	if x != nil {
-		return x.Ip
+		return x.ApiGwIp
 	}
 	return ""
 }
 
-func (x *AddSystemResponse) GetPort() int32 {
+func (x *AddSystemResponse) GetApiGwPort() int32 {
 	if x != nil {
-		return x.Port
+		return x.ApiGwPort
 	}
 	return 0
 }
 
-func (x *AddSystemResponse) GetUrl() string {
+func (x *AddSystemResponse) GetApiGwUrl() string {
 	if x != nil {
-		return x.Url
+		return x.ApiGwUrl
 	}
 	return ""
 }
@@ -1258,8 +1258,8 @@ type UpdateSystemRequest struct {
 	SystemName    string                 `protobuf:"bytes,1,opt,name=systemName,proto3" json:"systemName,omitempty"`
 	OrgName       string                 `protobuf:"bytes,2,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	Certificate   string                 `protobuf:"bytes,3,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,4,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,5,opt,name=port,proto3" json:"port,omitempty"`
+	ApiGwIp       string                 `protobuf:"bytes,4,opt,name=apiGwIp,proto3" json:"apiGwIp,omitempty"`
+	ApiGwPort     int32                  `protobuf:"varint,5,opt,name=apiGwPort,proto3" json:"apiGwPort,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,6,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,7,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1317,16 +1317,16 @@ func (x *UpdateSystemRequest) GetCertificate() string {
 	return ""
 }
 
-func (x *UpdateSystemRequest) GetIp() string {
+func (x *UpdateSystemRequest) GetApiGwIp() string {
 	if x != nil {
-		return x.Ip
+		return x.ApiGwIp
 	}
 	return ""
 }
 
-func (x *UpdateSystemRequest) GetPort() int32 {
+func (x *UpdateSystemRequest) GetApiGwPort() int32 {
 	if x != nil {
-		return x.Port
+		return x.ApiGwPort
 	}
 	return 0
 }
@@ -1351,9 +1351,9 @@ type UpdateSystemResponse struct {
 	SystemId      string                 `protobuf:"bytes,2,opt,name=systemId,proto3" json:"systemId,omitempty"`
 	OrgName       string                 `protobuf:"bytes,3,opt,name=orgName,proto3" json:"orgName,omitempty"`
 	Certificate   string                 `protobuf:"bytes,4,opt,name=certificate,proto3" json:"certificate,omitempty"`
-	Ip            string                 `protobuf:"bytes,5,opt,name=ip,proto3" json:"ip,omitempty"`
-	Port          int32                  `protobuf:"varint,6,opt,name=port,proto3" json:"port,omitempty"`
-	Url           string                 `protobuf:"bytes,7,opt,name=url,proto3" json:"url,omitempty"`
+	ApiGwIp       string                 `protobuf:"bytes,5,opt,name=apiGwIp,proto3" json:"apiGwIp,omitempty"`
+	ApiGwPort     int32                  `protobuf:"varint,6,opt,name=apiGwPort,proto3" json:"apiGwPort,omitempty"`
+	ApiGwUrl      string                 `protobuf:"bytes,7,opt,name=apiGwUrl,proto3" json:"apiGwUrl,omitempty"`
 	NodeGwIp      string                 `protobuf:"bytes,8,opt,name=nodeGwIp,proto3" json:"nodeGwIp,omitempty"`
 	NodeGwPort    int32                  `protobuf:"varint,9,opt,name=nodeGwPort,proto3" json:"nodeGwPort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1418,23 +1418,23 @@ func (x *UpdateSystemResponse) GetCertificate() string {
 	return ""
 }
 
-func (x *UpdateSystemResponse) GetIp() string {
+func (x *UpdateSystemResponse) GetApiGwIp() string {
 	if x != nil {
-		return x.Ip
+		return x.ApiGwIp
 	}
 	return ""
 }
 
-func (x *UpdateSystemResponse) GetPort() int32 {
+func (x *UpdateSystemResponse) GetApiGwPort() int32 {
 	if x != nil {
-		return x.Port
+		return x.ApiGwPort
 	}
 	return 0
 }
 
-func (x *UpdateSystemResponse) GetUrl() string {
+func (x *UpdateSystemResponse) GetApiGwUrl() string {
 	if x != nil {
-		return x.Url
+		return x.ApiGwUrl
 	}
 	return ""
 }
@@ -1600,72 +1600,72 @@ const file_lookup_proto_rawDesc = "" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12\x18\n" +
 	"\aorgName\x18\x02 \x01(\tR\aorgName\x12\x1d\n" +
-	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\x95\x02\n" +
+	"\x05orgId\x18\x03 \x01(\tB\a\xe2\xdf\x1f\x03\x90\x01\x04R\x05orgId\"\xbd\x02\n" +
 	"\x11GetSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
 	"systemName\x12\x1a\n" +
 	"\bsystemId\x18\x02 \x01(\tR\bsystemId\x12\x18\n" +
 	"\aorgName\x18\x03 \x01(\tR\aorgName\x12 \n" +
-	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
-	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x16\n" +
-	"\x06health\x18\a \x01(\rR\x06health\x12\x10\n" +
-	"\x03url\x18\b \x01(\tR\x03url\x12\x1a\n" +
+	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x18\n" +
+	"\aapiGwIp\x18\x05 \x01(\tR\aapiGwIp\x12\x1c\n" +
+	"\tapiGwPort\x18\x06 \x01(\x05R\tapiGwPort\x12 \n" +
+	"\vapiGwHealth\x18\a \x01(\rR\vapiGwHealth\x12\x1a\n" +
+	"\bapiGwUrl\x18\b \x01(\tR\bapiGwUrl\x12\x1a\n" +
 	"\bnodeGwIp\x18\t \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
 	"nodeGwPort\x18\n" +
 	" \x01(\x05R\n" +
-	"nodeGwPort\"\x88\x02\n" +
+	"nodeGwPort\"\xa6\x02\n" +
 	"\x10AddSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12 \n" +
 	"\aorgName\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\aorgName\x12(\n" +
-	"\vcertificate\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vcertificate\x12\x16\n" +
-	"\x02ip\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x02ip\x12\x1a\n" +
-	"\x04port\x18\x05 \x01(\x05B\x06\xe2\xdf\x1f\x02X\x01R\x04port\x12\x10\n" +
-	"\x03url\x18\x06 \x01(\tR\x03url\x12\x1a\n" +
+	"\vcertificate\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vcertificate\x12 \n" +
+	"\aapiGwIp\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\aapiGwIp\x12$\n" +
+	"\tapiGwPort\x18\x05 \x01(\x05B\x06\xe2\xdf\x1f\x02X\x01R\tapiGwPort\x12\x1a\n" +
+	"\bapiGwUrl\x18\x06 \x01(\tR\bapiGwUrl\x12\x1a\n" +
 	"\bnodeGwIp\x18\a \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
 	"nodeGwPort\x18\b \x01(\x05R\n" +
-	"nodeGwPort\"\xfd\x01\n" +
+	"nodeGwPort\"\x9b\x02\n" +
 	"\x11AddSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
 	"systemName\x12\x1a\n" +
 	"\bsystemId\x18\x02 \x01(\tR\bsystemId\x12\x18\n" +
 	"\aorgName\x18\x03 \x01(\tR\aorgName\x12 \n" +
-	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
-	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03url\x18\a \x01(\tR\x03url\x12\x1a\n" +
+	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x18\n" +
+	"\aapiGwIp\x18\x05 \x01(\tR\aapiGwIp\x12\x1c\n" +
+	"\tapiGwPort\x18\x06 \x01(\x05R\tapiGwPort\x12\x1a\n" +
+	"\bapiGwUrl\x18\a \x01(\tR\bapiGwUrl\x12\x1a\n" +
 	"\bnodeGwIp\x18\b \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
 	"nodeGwPort\x18\t \x01(\x05R\n" +
-	"nodeGwPort\"\xe1\x01\n" +
+	"nodeGwPort\"\xf5\x01\n" +
 	"\x13UpdateSystemRequest\x12&\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\n" +
 	"systemName\x12 \n" +
 	"\aorgName\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\aorgName\x12 \n" +
-	"\vcertificate\x18\x03 \x01(\tR\vcertificate\x12\x0e\n" +
-	"\x02ip\x18\x04 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x05 \x01(\x05R\x04port\x12\x1a\n" +
+	"\vcertificate\x18\x03 \x01(\tR\vcertificate\x12\x18\n" +
+	"\aapiGwIp\x18\x04 \x01(\tR\aapiGwIp\x12\x1c\n" +
+	"\tapiGwPort\x18\x05 \x01(\x05R\tapiGwPort\x12\x1a\n" +
 	"\bnodeGwIp\x18\x06 \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
 	"nodeGwPort\x18\a \x01(\x05R\n" +
-	"nodeGwPort\"\x80\x02\n" +
+	"nodeGwPort\"\x9e\x02\n" +
 	"\x14UpdateSystemResponse\x12\x1e\n" +
 	"\n" +
 	"systemName\x18\x01 \x01(\tR\n" +
 	"systemName\x12\x1a\n" +
 	"\bsystemId\x18\x02 \x01(\tR\bsystemId\x12\x18\n" +
 	"\aorgName\x18\x03 \x01(\tR\aorgName\x12 \n" +
-	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x0e\n" +
-	"\x02ip\x18\x05 \x01(\tR\x02ip\x12\x12\n" +
-	"\x04port\x18\x06 \x01(\x05R\x04port\x12\x10\n" +
-	"\x03url\x18\a \x01(\tR\x03url\x12\x1a\n" +
+	"\vcertificate\x18\x04 \x01(\tR\vcertificate\x12\x18\n" +
+	"\aapiGwIp\x18\x05 \x01(\tR\aapiGwIp\x12\x1c\n" +
+	"\tapiGwPort\x18\x06 \x01(\x05R\tapiGwPort\x12\x1a\n" +
+	"\bapiGwUrl\x18\a \x01(\tR\bapiGwUrl\x12\x1a\n" +
 	"\bnodeGwIp\x18\b \x01(\tR\bnodeGwIp\x12\x1e\n" +
 	"\n" +
 	"nodeGwPort\x18\t \x01(\x05R\n" +

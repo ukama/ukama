@@ -355,10 +355,10 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		SystemId:    system.Uuid,
 		OrgName:     org.Name,
 		Certificate: system.Certificate,
-		Ip:          system.Ip.IPNet.IP.String(),
-		Port:        system.Port,
-		Health:      system.Health,
-		Url:         system.URL,
+		ApiGwIp:     system.ApiGwIp.IPNet.IP.String(),
+		ApiGwPort:   system.ApiGwPort,
+		ApiGwHealth: system.ApiGwHealth,
+		ApiGwUrl:    system.ApiGwUrl,
 		NodeGwIp:    system.NodeGwIp.IPNet.IP.String(),
 		NodeGwPort:  system.NodeGwPort,
 	}, nil
@@ -376,7 +376,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	err = sysIp.Set(req.Ip)
+	err = sysIp.Set(req.ApiGwIp)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid ip for system %s. Error %s", req.OrgName, err.Error())
 	}
@@ -398,10 +398,10 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		Name:        strings.ToLower(req.SystemName),
 		Certificate: req.Certificate,
 		Uuid:        sysId,
-		Ip:          sysIp,
-		Port:        req.Port,
+		ApiGwIp:     sysIp,
+		ApiGwPort:   req.ApiGwPort,
 		OrgID:       org.ID,
-		URL:         req.GetUrl(),
+		ApiGwUrl:    req.ApiGwUrl,
 		NodeGwIp:    nodeGwIp,
 		NodeGwPort:  req.GetNodeGwPort(),
 	}
@@ -434,9 +434,9 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		SystemId:    resp.Uuid,
 		OrgName:     org.Name,
 		Certificate: resp.Certificate,
-		Ip:          resp.Ip.IPNet.IP.String(),
-		Port:        resp.Port,
-		Url:         resp.URL,
+		ApiGwIp:     resp.ApiGwIp.IPNet.IP.String(),
+		ApiGwPort:   resp.ApiGwPort,
+		ApiGwUrl:    resp.ApiGwUrl,
 		NodeGwIp:    nodeGwIpStr,
 		NodeGwPort:  resp.NodeGwPort,
 	}, nil
@@ -458,11 +458,11 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 	sys := &db.System{
 		Name:        strings.ToLower(req.SystemName),
 		Certificate: req.Certificate,
-		Port:        req.Port,
+		ApiGwPort:   req.ApiGwPort,
 	}
 
-	if req.Ip != "" {
-		err = sys.Ip.Set(req.Ip)
+	if req.ApiGwIp != "" {
+		err = sys.ApiGwIp.Set(req.ApiGwIp)
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid ip for Org %s. Error %s", req.OrgName, err.Error())
 		}
@@ -512,9 +512,9 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		SystemId:    dbSystem.Uuid,
 		OrgName:     org.Name,
 		Certificate: dbSystem.Certificate,
-		Ip:          dbSystem.Ip.IPNet.IP.String(),
-		Port:        dbSystem.Port,
-		Url:         dbSystem.URL,
+		ApiGwIp:     dbSystem.ApiGwIp.IPNet.IP.String(),
+		ApiGwPort:   dbSystem.ApiGwPort,
+		ApiGwUrl:    dbSystem.ApiGwUrl,
 		NodeGwIp:    nodeGwIpStr,
 		NodeGwPort:  dbSystem.NodeGwPort,
 

@@ -28,9 +28,13 @@ type SystemIPInfo struct {
 	SystemName  string `json:"systemName"`
 	OrgName     string `json:"orgName"`
 	Certificate string `json:"certificate"`
-	Ip          string `json:"ip"`
-	Port        uint   `json:"port"`
-	Health      int    `json:"health"`
+	ApiGwIp     string `json:"apiGwIp"`
+	ApiGwPort   uint  `json:"apiGwPort"`
+	Health int    `json:"apiGwHealth"`
+	Url    string `json:"apiGwUrl"`
+	NodeGwIp    string `json:"nodeGwIp"`
+	NodeGwPort   uint   `json:"nodeGwPort"`
+	NodeGwHealth int    `json:"nodeGwHealth"`
 }
 
 type SystemLookupReq struct {
@@ -132,7 +136,7 @@ func createURL(s SystemIPInfo, protocol string) (*url.URL, error) {
 			protocol)
 	}
 
-	return url.Parse(fmt.Sprintf("%s://%s:%d", protocol, s.Ip, s.Port))
+	return url.Parse(fmt.Sprintf("%s://%s:%d", protocol, s.ApiGwIp, s.ApiGwPort))
 }
 
 /* Host is expected to be orgname.systemname */

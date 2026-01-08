@@ -200,9 +200,9 @@ func (r *Router) putSystemHandler(c *gin.Context, req *AddSystemRequest) (*pb.Ad
 		OrgName:     req.OrgName,
 		SystemName:  req.SysName,
 		Certificate: req.Certificate,
-		Ip:          req.ApiGwIp,
-		Port:        req.ApiGwPort,
-		Url:         req.ApiGwUrl,
+		ApiGwIp:     req.ApiGwIp,
+		ApiGwPort:   req.ApiGwPort,
+		ApiGwUrl:    req.ApiGwUrl,
 		NodeGwIp:    req.NodeGwIp,
 		NodeGwPort:  req.NodeGwPort,
 	})
@@ -215,8 +215,8 @@ func (r *Router) patchSystemHandler(c *gin.Context, req *UpdateSystemRequest) (*
 		OrgName:     req.OrgName,
 		SystemName:  req.SysName,
 		Certificate: req.Certificate,
-		Ip:          req.Ip,
-		Port:        req.Port,
+		ApiGwIp:     req.ApiGwIp,
+		ApiGwPort:   req.ApiGwPort,
 		NodeGwIp:    req.NodeGwIp,
 		NodeGwPort:  req.NodeGwPort,
 	})

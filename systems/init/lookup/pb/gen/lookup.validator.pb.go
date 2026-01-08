@@ -147,8 +147,8 @@ func (this *AddSystemRequest) Validate() error {
 	if this.Certificate == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Certificate", fmt.Errorf(`value '%v' must not be an empty string`, this.Certificate))
 	}
-	if this.Ip == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Ip", fmt.Errorf(`value '%v' must not be an empty string`, this.Ip))
+	if this.ApiGwIp == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("ApiGwIp", fmt.Errorf(`value '%v' must not be an empty string`, this.ApiGwIp))
 	}
 	return nil
 }

@@ -14,14 +14,15 @@ package integration
 import (
 	"context"
 	"fmt"
+	"strings"
+	"testing"
+	"time"
+
 	confr "github.com/num30/config"
 	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/credentials/insecure"
-	"strings"
-	"testing"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -127,8 +128,8 @@ func Test_FullFlow(t *testing.T) {
 			SystemName:  sysName,
 			OrgName:     orgName,
 			Certificate: certs,
-			Ip:          "127.0.0.1",
-			Port:        100,
+			ApiGwIp:     "127.0.0.1",
+			ApiGwPort:   100,
 		})
 		assert.NoError(t, err)
 	})
@@ -138,8 +139,8 @@ func Test_FullFlow(t *testing.T) {
 			SystemName:  sysName,
 			OrgName:     orgName,
 			Certificate: certs,
-			Ip:          "127.0.0.2",
-			Port:        101,
+			ApiGwIp:     "127.0.0.2",
+			ApiGwPort:   101,
 		})
 		assert.NoError(t, err)
 	})

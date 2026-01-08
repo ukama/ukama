@@ -135,10 +135,10 @@ message GetSystemResponse {
     string systemId = 2;
     string orgName = 3;
     string certificate = 4;
-    string ip = 5;
-    int32 port = 6;
-    uint32 health = 7;
-    string url = 8;
+    string apiGwIp = 5;
+    int32 apiGwPort = 6;
+    uint32 apiGwHealth = 7;
+    string apiGwUrl = 8;
     string nodeGwIp = 9;
     int32 nodeGwPort = 10;
 }
@@ -147,9 +147,9 @@ message AddSystemRequest{
     string systemName = 1 [(validator.field) = {string_not_empty: true}];
     string orgName = 2 [(validator.field) = {string_not_empty: true}];
     string certificate = 3 [(validator.field) = {string_not_empty: true}];
-    string ip = 4 [(validator.field) = {string_not_empty: true}];
-    int32 port = 5 [(validator.field) = {string_not_empty: true}];
-    string url = 6;
+    string apiGwIp = 4 [(validator.field) = {string_not_empty: true}];
+    int32 apiGwPort = 5 [(validator.field) = {string_not_empty: true}];
+    string apiGwUrl = 6;
     string nodeGwIp = 7;
     int32 nodeGwPort = 8;
 }
@@ -159,9 +159,9 @@ message AddSystemResponse {
     string systemId = 2;
     string orgName = 3;
     string certificate = 4;
-    string ip = 5;
-    int32 port = 6;
-    string url = 7;
+    string apiGwIp = 5;
+    int32 apiGwPort = 6;
+    string apiGwUrl = 7;
     string nodeGwIp = 8;
     int32 nodeGwPort = 9;
 }
@@ -170,8 +170,8 @@ message UpdateSystemRequest{
     string systemName = 1 [(validator.field) = {string_not_empty: true}];
     string orgName = 2 [(validator.field) = {string_not_empty: true}];
     string certificate = 3; 
-    string ip = 4; 
-    int32 port = 5; 
+    string apiGwIp = 4; 
+    int32 apiGwPort = 5; 
     string nodeGwIp = 6;
     int32 nodeGwPort = 7;
 }
@@ -181,9 +181,9 @@ message UpdateSystemResponse {
     string systemId = 2;
     string orgName = 3;
     string certificate = 4;
-    string ip = 5;
-    int32 port = 6;
-    string url = 7; 
+    string apiGwIp = 5;
+    int32 apiGwPort = 6;
+    string apiGwUrl = 7; 
     string nodeGwIp = 8;
     int32 nodeGwPort = 9;
 }

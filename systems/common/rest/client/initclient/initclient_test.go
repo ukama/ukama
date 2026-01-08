@@ -182,8 +182,8 @@ func TestGetHostUrl(t *testing.T) {
 				SystemId:   uuid.NewV4().String(),
 				SystemName: systemName,
 				OrgName:    orgName,
-				Ip:         testIp,
-				Port:       testPort,
+				ApiGwIp:     testIp,
+				ApiGwPort:   testPort,
 			}, nil)
 
 		u, err := initclient.GetHostUrl(initclientMock, host, nil)
