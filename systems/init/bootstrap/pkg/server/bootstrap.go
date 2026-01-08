@@ -67,7 +67,7 @@ import (
 		 if err != nil {
 			 log.Errorf("Failed to get messaging system: %v", err)
 		 } else {
-			 ip = msgSystem.Ip
+			 ip = msgSystem.ApiGwIp
 			 certificate = msgSystem.Certificate
 		 }
 	 }

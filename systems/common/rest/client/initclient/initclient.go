@@ -29,12 +29,12 @@ type SystemIPInfo struct {
 	OrgName     string `json:"orgName"`
 	Certificate string `json:"certificate"`
 	ApiGwIp     string `json:"apiGwIp"`
-	ApiGwPort   uint  `json:"apiGwPort"`
-	Health int    `json:"apiGwHealth"`
-	Url    string `json:"apiGwUrl"`
+	ApiGwPort   uint   `json:"apiGwPort"`
+	ApiGwHealth int    `json:"apiGwHealth"`
+	ApiGwUrl    string `json:"apiGwUrl"`
 	NodeGwIp    string `json:"nodeGwIp"`
-	NodeGwPort   uint   `json:"nodeGwPort"`
-	NodeGwHealth int    `json:"nodeGwHealth"`
+	NodeGwPort   uint  `json:"nodeGwPort"`
+	NodeGwHealth int   `json:"nodeGwHealth"`
 }
 
 type SystemLookupReq struct {

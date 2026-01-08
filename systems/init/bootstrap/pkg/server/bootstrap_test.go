@@ -52,7 +52,7 @@ import (
 					 OrgName:    "test-org",
 					 SystemName: "messaging",
 				 }).Return(&lpb.GetSystemResponse{
-					 Ip:          "192.168.1.100",
+					 ApiGwIp:     "192.168.1.100",
 					 Certificate: "test-certificate-data",
 				 }, nil)
 			 },
