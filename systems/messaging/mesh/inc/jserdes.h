@@ -55,6 +55,9 @@
 #define JSON_PORT        "port"
 #define JSON_HEALTH      "health"
 
+#define JSON_NODE_GW_IP   "nodeGWIp"
+#define JSON_NODE_GW_PORT "nodeGWPort"
+
 #define JSON_KEY   "key"
 #define JSON_VALUE "value"
 #define JSON_LEN   "len"
