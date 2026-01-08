@@ -91,12 +91,15 @@ int read_config_from_env(Config **config){
 
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL) {
 		if (nameServer == NULL) {
-			systemAddr = nslookup(systemDNS, NULL);
+			systemAddr       = nslookup(systemDNS, NULL);
+            systemNodeGWAddr = nslookup(systemDNS, NULL);
 		} else {
-			systemAddr = nslookup(systemDNS, nameServer);
+			systemAddr       = nslookup(systemDNS, nameServer);
+            systemNodeGWAddr = nslookup(systemDNS, nameServer);
 		}
 	} else {
-		systemAddr = getenv(ENV_SYSTEM_ADDR);
+		systemAddr       = getenv(ENV_SYSTEM_ADDR);
+        systemNodeGWAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
 	}
 
 	if (!systemAddr) {
