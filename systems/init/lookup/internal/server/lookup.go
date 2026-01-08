@@ -350,11 +350,6 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		return nil, err
 	}
 
-	nodeGwIpStr := defaultIP
-	if system.NodeGwIp.Status == pgtype.Present && system.NodeGwIp.IPNet != nil {
-		nodeGwIpStr = system.NodeGwIp.IPNet.IP.String()
-	}
-
 	return &pb.GetSystemResponse{
 		SystemName:  system.Name,
 		SystemId:    system.Uuid,
@@ -364,7 +359,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		Port:        system.Port,
 		Health:      system.Health,
 		Url:         system.URL,
-		NodeGwIp:    nodeGwIpStr,
+		NodeGwIp:    system.NodeGwIp.IPNet.IP.String(),
 		NodeGwPort:  system.NodeGwPort,
 	}, nil
 
