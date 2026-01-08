@@ -55,9 +55,9 @@ type AddSystemRequest struct {
 type UpdateSystemRequest struct {
 	OrgName     string `path:"org" validate:"required"`
 	SysName     string `path:"system" validate:"required"`
-	Ip          string `json:"ip"`
+	ApiGwIp     string `json:"apiGwIp"`
 	Certificate string `json:"certificate"`
-	Port        int32  `json:"port"`
+	ApiGwPort   int32  `json:"apiGwPort"`
 	NodeGwIp    string `json:"nodeGwIp"`
 	NodeGwPort  int32  `json:"nodeGwPort"`
 }
