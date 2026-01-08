@@ -22,7 +22,7 @@
 #define JSON_GLOBAL_UUID "global_uuid"
 #define JSON_LOCAL_UUID  "local_uuid"
 
-#define JSON_NODE_GW_IP   "nodeGWip"
+#define JSON_NODE_GW_IP   "nodeGWIp"
 #define JSON_NODE_GW_PORT "nodeGWPort"
 
 int serialize_request(Request *request, json_t **json);
