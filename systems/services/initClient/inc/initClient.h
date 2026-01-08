@@ -65,10 +65,10 @@ typedef struct {
 	char *org;
 	char *name;
 	char *cert;
-	char *ip;
-	char *port;
-    char *nodeGWip;
-    char *nodeGWport;
+	char *apiGwIp;
+	char *apiGwPort;
+    char *nodeGwIp;
+    char *nodeGwPort;
 } Register;
 
 typedef struct {
@@ -76,10 +76,10 @@ typedef struct {
 	char *systemName;
 	char *systemID;
 	char *certificate;
-	char *ip;
-	int  port;
-    char *nodeGWip;
-    int  nodeGWPort;
+	char *apiGwIp;
+	int  apiGwPort;
+    char *nodeGwIp;
+    int  nodeGwPort;
 	int  health;
 } QueryResponse;
 

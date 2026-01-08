@@ -165,11 +165,11 @@ static int create_request(Request **request, Config *config) {
 
 		reg->org        = strdup(config->systemOrg);
 		reg->name       = strdup(config->systemName);
-		reg->ip         = strdup(config->systemAddr);
-		reg->port       = strdup(config->systemPort);
+		reg->apiGwIp    = strdup(config->systemAddr);
+		reg->apiGwPort  = strdup(config->systemPort);
 		reg->cert       = strdup(config->systemCert);
-        reg->nodeGWip   = strdup(config->systemNodeGWAddr);
-        reg->nodeGWport = strdup(config->systemNodeGWPort);
+        reg->nodeGwIp   = strdup(config->systemNodeGWAddr);
+        reg->nodeGwPort = strdup(config->systemNodeGWPort);
 
 		(*request)->reg = reg;
 	}
@@ -193,10 +193,10 @@ static void free_request(Request *request) {
 		if (reg->org)        free(reg->org);
 		if (reg->name)       free(reg->name);
 		if (reg->cert)       free(reg->cert);
-		if (reg->ip)         free(reg->ip);
-		if (reg->port)       free(reg->port);
-        if (reg->nodeGWip)   free(reg->nodeGWip);
-        if (reg->nodeGWport) free(reg->nodeGWport);
+		if (reg->apiGwIp)    free(reg->apiGwIp);
+		if (reg->apiGwPort)  free(reg->apiGwPort);
+        if (reg->nodeGwIp)   free(reg->nodeGwIp);
+        if (reg->nodeGwPort) free(reg->nodeGwPort);
 
 		free(reg);
 	}
@@ -225,7 +225,8 @@ void free_query_response(QueryResponse *response) {
 	if (response->systemName)  free(response->systemName);
 	if (response->systemID)    free(response->systemID);
 	if (response->certificate) free(response->certificate);
-	if (response->ip)          free(response->ip);
+	if (response->apiGwIp)     free(response->apiGwIp);
+    if (response->nodeGwIp)    free(response->nodeGwIp);
 
 	free(response);
 }
@@ -392,9 +393,9 @@ int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 
 	/* match? */
 	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
-		strcmp(config->systemAddr, queryResponse->ip) == 0 &&
+		strcmp(config->systemAddr, queryResponse->apiGwIp) == 0 &&
 		strcmp(config->systemCert, queryResponse->certificate) == 0 &&
-		atoi(config->systemPort) == queryResponse->port) {
+		atoi(config->systemPort) == queryResponse->apiGwPort) {
 
 		if (status == REG_STATUS_HAVE_UUID) {
 			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){

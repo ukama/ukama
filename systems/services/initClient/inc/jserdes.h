@@ -13,21 +13,19 @@
 
 #include "initClient.h"
 
-#define JSON_SYSTEM_NAME "systemName"
-#define JSON_SYSTEM_ID   "systemId"
-#define JSON_CERTIFICATE "certificate"
-#define JSON_IP          "ip"
-#define JSON_PORT        "port"
-#define JSON_HEALTH      "health"
-#define JSON_GLOBAL_UUID "global_uuid"
-#define JSON_LOCAL_UUID  "local_uuid"
-
+#define JSON_SYSTEM_NAME  "systemName"
+#define JSON_SYSTEM_ID    "systemId"
+#define JSON_CERTIFICATE  "certificate"
+#define JSON_API_GW_IP    "apiGwIp"
+#define JSON_API_GW_PORT  "apiGwPort"
 #define JSON_NODE_GW_IP   "nodeGWIp"
 #define JSON_NODE_GW_PORT "nodeGWPort"
+#define JSON_HEALTH       "health"
+#define JSON_GLOBAL_UUID  "global_uuid"
+#define JSON_LOCAL_UUID   "local_uuid"
 
 int serialize_request(Request *request, json_t **json);
-int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
-						 char *str);
+int deserialize_response(ReqType reqType, QueryResponse **queryResponse, char *str);
 int serialize_uuids_from_file(SystemRegistrationId *sysReg, json_t **json);
 int deserialize_uuids_from_file(char* str, SystemRegistrationId** sysReg);
 

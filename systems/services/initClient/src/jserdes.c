@@ -14,13 +14,12 @@
 #include "jserdes.h"
 #include "log.h"
 
-/* JSON (de)-serialization functions. */
-
 int serialize_request(Request *request, json_t **json) {
 
 	int ret=FALSE;
 	Register *reg;
 	char *str=NULL;
+
 	log_info("serialize_request for %d", request->reqType);
 	if ((request->reqType == (ReqType)REQ_REGISTER) || (request->reqType == (ReqType)REQ_UPDATE)) {
 
@@ -32,11 +31,11 @@ int serialize_request(Request *request, json_t **json) {
 
 		reg = request->reg;
 
-		json_object_set_new(*json, JSON_IP,          json_string(reg->ip));
-		json_object_set_new(*json, JSON_PORT,        json_integer(atoi(reg->port)));
-		json_object_set_new(*json, JSON_CERTIFICATE, json_string(reg->cert));
-		json_object_set_new(*json, JSON_NODE_GW_IP,  json_string(reg->nodeGWip));
-		json_object_set_new(*json, JSON_PORT,        json_integer(atoi(reg->nodeGWport)));
+		json_object_set_new(*json, JSON_API_GW_IP,    json_string(reg->apiGwIp));
+		json_object_set_new(*json, JSON_API_GW_PORT,  json_integer(atoi(reg->apiGwPort)));
+		json_object_set_new(*json, JSON_CERTIFICATE,  json_string(reg->cert));
+		json_object_set_new(*json, JSON_NODE_GW_IP,   json_string(reg->nodeGwIp));
+		json_object_set_new(*json, JSON_NODE_GW_PORT, json_integer(atoi(reg->nodeGwPort)));
 
 		str = json_dumps(*json, 0);
 		if (str) {
@@ -60,7 +59,8 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 
 	int ret=TRUE;
 	json_t *json=NULL;
-	json_t *name, *id, *cert, *ip, *port, *health;
+	json_t *name, *id, *cert, *apiGwIp, *apiGwPort, *health;
+    json_t *nodeGwIp, *nodeGwPort;
 
 	if (str == NULL) return FALSE;
 
@@ -70,17 +70,19 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 		return FALSE;
 	}
 
-	name   = json_object_get(json, JSON_SYSTEM_NAME);
-	id     = json_object_get(json, JSON_SYSTEM_ID);
-	cert   = json_object_get(json, JSON_CERTIFICATE);
-	ip     = json_object_get(json, JSON_IP);
-	port   = json_object_get(json, JSON_PORT);
+	name       = json_object_get(json, JSON_SYSTEM_NAME);
+	id         = json_object_get(json, JSON_SYSTEM_ID);
+	cert       = json_object_get(json, JSON_CERTIFICATE);
+	apiGwIp    = json_object_get(json, JSON_API_GW_IP);
+	apiGwPort  = json_object_get(json, JSON_API_GW_PORT);
+    nodeGwIp   = json_object_get(json, JSON_NODE_GW_IP);
+	nodeGwPort = json_object_get(json, JSON_NODE_GW_PORT);
 
 	if (reqType == (ReqType)REQ_QUERY) {
 		health = json_object_get(json, JSON_HEALTH);
 	}
 
-	if (!name || !id || !cert || !ip || !port) {
+	if (!name || !id || !cert || !apiGwIp || !apiGwPort) {
 		log_error("Error deserilaizing response");
 		ret = FALSE;
 		goto failure;
@@ -103,8 +105,10 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 	(*queryResponse)->systemName  = strdup(json_string_value(name));
 	(*queryResponse)->systemID    = strdup(json_string_value(id));
 	(*queryResponse)->certificate = strdup(json_string_value(cert));
-	(*queryResponse)->ip          = strdup(json_string_value(ip));
-	(*queryResponse)->port        = json_integer_value(port);
+	(*queryResponse)->apiGwIp     = strdup(json_string_value(apiGwIp));
+	(*queryResponse)->apiGwPort   = json_integer_value(apiGwPort);
+    (*queryResponse)->nodeGwIp    = strdup(json_string_value(nodeGwIp));
+	(*queryResponse)->nodeGwPort  = json_integer_value(nodeGwPort);
 
 	if (reqType == (ReqType)REQ_QUERY) {
 		(*queryResponse)->health      = json_integer_value(health);
