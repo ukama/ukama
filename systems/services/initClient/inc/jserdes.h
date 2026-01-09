@@ -18,9 +18,9 @@
 #define JSON_CERTIFICATE  "certificate"
 #define JSON_API_GW_IP    "apiGwIp"
 #define JSON_API_GW_PORT  "apiGwPort"
-#define JSON_NODE_GW_IP   "nodeGWIp"
-#define JSON_NODE_GW_PORT "nodeGWPort"
-#define JSON_HEALTH       "health"
+#define JSON_NODE_GW_IP   "nodeGwIp"
+#define JSON_NODE_GW_PORT "nodeGwPort"
+#define JSON_HEALTH       "apiGwHealth"
 #define JSON_GLOBAL_UUID  "global_uuid"
 #define JSON_LOCAL_UUID   "local_uuid"
 
