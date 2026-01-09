@@ -168,8 +168,8 @@ static int create_request(Request **request, Config *config) {
 		reg->apiGwIp    = strdup(config->systemAddr);
 		reg->apiGwPort  = strdup(config->systemPort);
 		reg->cert       = strdup(config->systemCert);
-        reg->nodeGwIp   = strdup(config->systemNodeGWAddr);
-        reg->nodeGwPort = strdup(config->systemNodeGWPort);
+        reg->nodeGwIp   = strdup(config->systemNodeGwAddr);
+        reg->nodeGwPort = strdup(config->systemNodeGwPort);
 
 		(*request)->reg = reg;
 	}
