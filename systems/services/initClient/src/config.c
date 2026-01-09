@@ -24,6 +24,7 @@
  * ENV_SYSTEM_NODE_GW_ADDR - address for the node gw of my system
  * ENV_SYSTEM_NODE_GW_PORT - listening port for the node gw
  *
+ * (optional)
  * ENV_INIT_SYSTEM_ADDR - init system address (api-gw)
  * ENV_INIT_SYSTEM_PORT - init system port (api-gw)
  */
@@ -36,7 +37,7 @@ int read_config_from_env(Config **config){
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL, *nameServer = NULL;
-    char *systemNodeGWAddr = NULL, *systemNodeGWPort = NULL;
+    char *systemNodeGwAddr = NULL, *systemNodeGwPort = NULL;
 	int period = 0 ;
 
 	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
@@ -58,10 +59,10 @@ int read_config_from_env(Config **config){
 		return FALSE;
 	}
 
-    systemNodeGWAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
-    systemNodeGWPort = getenv(ENV_SYSTEM_NODE_GW_PORT);
-    if ((systemNodeGWAddr && !systemNodeGWPort) ||
-        (!systemNodeGWAddr && systemNodeGWPort)) {
+    systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
+    systemNodeGwPort = getenv(ENV_SYSTEM_NODE_GW_PORT);
+    if ((systemNodeGwAddr && !systemNodeGwPort) ||
+        (!systemNodeGwAddr && systemNodeGwPort)) {
         log_error("Error: Both %s and %s must be set together\n",
                   ENV_SYSTEM_NODE_GW_ADDR,
                   ENV_SYSTEM_NODE_GW_PORT);
@@ -92,14 +93,14 @@ int read_config_from_env(Config **config){
 	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL) {
 		if (nameServer == NULL) {
 			systemAddr       = nslookup(systemDNS, NULL);
-            systemNodeGWAddr = nslookup(systemDNS, NULL);
+            systemNodeGwAddr = nslookup(systemDNS, NULL);
 		} else {
 			systemAddr       = nslookup(systemDNS, nameServer);
-            systemNodeGWAddr = nslookup(systemDNS, nameServer);
+            systemNodeGwAddr = nslookup(systemDNS, nameServer);
 		}
 	} else {
 		systemAddr       = getenv(ENV_SYSTEM_ADDR);
-        systemNodeGWAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
+        systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
 	}
 
 	if (!systemAddr) {
@@ -144,12 +145,18 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
     /* set 0.0.0.0:0 for system's node gw */
-    if (systemNodeGWAddr == NULL && systemNodeGWPort == NULL) {
-           (*config)->systemNodeGWAddr = strdup("0.0.0.0");
-           (*config)->systemNodeGWPort = strdup("0");
+    if (systemNodeGwAddr == NULL && systemNodeGwPort == NULL) {
+           (*config)->systemNodeGwAddr = strdup("0.0.0.0");
+           (*config)->systemNodeGwPort = strdup("0");
     } else {
-        (*config)->systemNodeGWAddr = strdup(systemNodeGWAddr);
-        (*config)->systemNodeGWPort = strdup(systemNodeGWPort);
+        if (systemNodeGwAddr) {
+            (*config)->systemNodeGwAddr = strdup(systemNodeGwAddr);
+        }
+        if (systemNodeGwPort) {
+            (*config)->systemNodeGwPort = strdup(systemNodeGwPort);
+        } else {
+            (*config)->systemNodeGwPort = strdup("0");
+        }
     }
 
 	if (nameServer) {
@@ -200,8 +207,8 @@ void clear_config(Config *config) {
 	if (config->systemDNS)              free(config->systemDNS);
 	if (config->dnsServer)              free(config->dnsServer);
 	if (config->nameServer)             free(config->nameServer);
-    if (config->systemNodeGWAddr)       free(config->systemNodeGWAddr);
-    if (config->systemNodeGWPort)       free(config->systemNodeGWPort);
+    if (config->systemNodeGwAddr)       free(config->systemNodeGwAddr);
+    if (config->systemNodeGwPort)       free(config->systemNodeGwPort);
 
 	free(config);
 }

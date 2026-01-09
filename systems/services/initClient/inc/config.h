@@ -63,8 +63,8 @@ typedef struct {
 	char *systemPort; /* port where system can be reached at */
 	char *systemCert; /* Certificate for the system */
 
-    char *systemNodeGWAddr; /* address where system's node-gw is available */
-    char *systemNodeGWPort; /* poer where system's node-gw port is */
+    char *systemNodeGwAddr; /* address where system's node-gw is available */
+    char *systemNodeGwPort; /* poer where system's node-gw port is */
 
     char *nameServer;
 	char *initSystemAPIVer; /* API version for init system */
