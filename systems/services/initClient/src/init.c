@@ -47,75 +47,96 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 }
 
 static long send_http_request(char *url, Request *request, json_t *json,
-							  char **retStr) {
+                              char **retStr) {
 
-	long code=0;
-	CURL *curl=NULL;
-	CURLcode res;
-	char *json_str=NULL;
-	struct curl_slist *headers=NULL;
-	struct Response response;
+    long code = 0;
+    CURL *curl = NULL;
+    CURLcode res;
+    char *json_str = NULL;
+    struct curl_slist *headers = NULL;
+    struct Response response;
+    const char *method = "UNKNOWN";
 
-	/* sanity check */
-	if (url == NULL) {
-		return FALSE;
-	}
+    /* sanity check */
+    if (url == NULL) {
+        return FALSE;
+    }
 
-	curl_global_init(CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
-	if (curl == NULL) {
-		return FALSE;
-	}
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl = curl_easy_init();
+    if (curl == NULL) {
+        return FALSE;
+    }
 
-	response.buffer = malloc(1);
-	response.size   = 0;
+    response.buffer = malloc(1);
+    response.size   = 0;
 
-	/* Add to the header. */
-	headers = curl_slist_append(headers, "Accept: application/json");
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-	headers = curl_slist_append(headers, "charset: utf-8");
+    /* Add headers */
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = curl_slist_append(headers, "charset: utf-8");
 
-	curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_URL, url);
 
-	if (request->reqType == (ReqType)REQ_REGISTER) {
-		json_str = json_dumps(json, 0);
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
-	} else if (request->reqType == (ReqType)REQ_UNREGISTER) {
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-	} else if (request->reqType == (ReqType)REQ_QUERY ||
-			   request->reqType == (ReqType)REQ_QUERY_SYSTEM) {
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
-	} else if (request->reqType == (ReqType)REQ_UPDATE) {
-		json_str = json_dumps(json, 0);
-		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
-	}
+    if (request->reqType == (ReqType)REQ_REGISTER) {
+        method = "PUT";
+        json_str = json_dumps(json, 0);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
 
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+    } else if (request->reqType == (ReqType)REQ_UNREGISTER) {
+        method = "DELETE";
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
 
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, "initClient/0.1");
+    } else if (request->reqType == (ReqType)REQ_QUERY ||
+               request->reqType == (ReqType)REQ_QUERY_SYSTEM) {
+        method = "GET";
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
 
-	res = curl_easy_perform(curl);
+    } else if (request->reqType == (ReqType)REQ_UPDATE) {
+        method = "PATCH";
+        json_str = json_dumps(json, 0);
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
+    }
 
-	if (res != CURLE_OK) {
-		log_error("Error sending request to init system at url %s: %s", url,
-				  curl_easy_strerror(res));
-	} else {
-		/* get status code */
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-		*retStr = strdup(response.buffer);
-	}
+    /* ---- LOG REQUEST ---- */
+    log_debug("HTTP Request:");
+    log_debug("  Method : %s", method);
+    log_debug("  URL    : %s", url);
+    if (json_str) {
+        log_debug("  Body   : %s", json_str);
+    }
 
-	free(json_str);
-	free(response.buffer);
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-	curl_global_cleanup();
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "initClient/0.1");
 
-	return code;
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+        log_error("HTTP request failed: %s",
+                  curl_easy_strerror(res));
+    } else {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+
+        /* ---- LOG RESPONSE ---- */
+        log_debug("HTTP Response:");
+        log_debug("  Status : %ld", code);
+        log_debug("  Body   : %s",
+                  response.buffer ? response.buffer : "(null)");
+
+        *retStr = strdup(response.buffer);
+    }
+
+    free(json_str);
+    free(response.buffer);
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    return code;
 }
 
 static void create_url(char *url, Config *config, char* org, char *name,
