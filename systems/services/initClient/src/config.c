@@ -36,100 +36,132 @@ int read_config_from_env(Config **config){
 	char *initSystemAddr=NULL, *initSystemPort=NULL;
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
-	char *systemDNS = NULL, *timePeriod = NULL, *dnsServer = NULL, *nameServer = NULL;
-    char *systemNodeGwAddr = NULL, *systemNodeGwPort = NULL;
-	int period = 0 ;
+	char *systemDNS=NULL, *timePeriod=NULL, *dnsServer=NULL, *nameServer=NULL;
+	char *systemDNSNodeGw=NULL;
+	char *systemNodeGwAddr=NULL, *systemNodeGwPort=NULL;
 
-	if ((addr = getenv(ENV_INIT_CLIENT_ADDR)) == NULL ||
-		(port = getenv(ENV_INIT_CLIENT_PORT)) == NULL ||
-		(tempFile = getenv(ENV_INIT_CLIENT_TEMP_FILE)) == NULL) {
+	int period = 0;
+	int freeSystemAddr = 0;
+	int freeSystemNodeGwAddr = 0;
+	int nodegw_any = 0;
+
+	addr     = getenv(ENV_INIT_CLIENT_ADDR);
+	port     = getenv(ENV_INIT_CLIENT_PORT);
+	tempFile = getenv(ENV_INIT_CLIENT_TEMP_FILE);
+	if (!addr || !port || !tempFile) {
 		log_error("Required env variables: %s %s %s missing",
-				  ENV_INIT_CLIENT_ADDR,
-				  ENV_INIT_CLIENT_PORT,
-				  ENV_INIT_CLIENT_TEMP_FILE);
+		          ENV_INIT_CLIENT_ADDR,
+		          ENV_INIT_CLIENT_PORT,
+		          ENV_INIT_CLIENT_TEMP_FILE);
 		return FALSE;
 	}
 
-	if ((systemName = getenv(ENV_SYSTEM_NAME)) == NULL ||
-			(systemPort = getenv(ENV_SYSTEM_PORT)) == NULL ||
-			(systemCert = getenv(ENV_SYSTEM_CERT)) == NULL ||
-			(initSystemAddr = getenv(ENV_INIT_SYSTEM_ADDR)) == NULL ||
-			(initSystemPort = getenv(ENV_INIT_SYSTEM_PORT)) == NULL ){
+	systemName     = getenv(ENV_SYSTEM_NAME);
+	systemPort     = getenv(ENV_SYSTEM_PORT);
+	systemCert     = getenv(ENV_SYSTEM_CERT);
+	initSystemAddr = getenv(ENV_INIT_SYSTEM_ADDR);
+	initSystemPort = getenv(ENV_INIT_SYSTEM_PORT);
+	if (!systemName || !systemPort || !systemCert ||
+	    !initSystemAddr || !initSystemPort) {
 		log_error("Required env variables not defined");
 		return FALSE;
 	}
 
-    systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
-    systemNodeGwPort = getenv(ENV_SYSTEM_NODE_GW_PORT);
-    if ((systemNodeGwAddr && !systemNodeGwPort) ||
-        (!systemNodeGwAddr && systemNodeGwPort)) {
-        log_error("Error: Both %s and %s must be set together\n",
-                  ENV_SYSTEM_NODE_GW_ADDR,
-                  ENV_SYSTEM_NODE_GW_PORT);
-        return FALSE;
+	systemDNSNodeGw  = getenv(ENV_SYSTEM_DNS_NODE_GW);
+	systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
+	systemNodeGwPort = getenv(ENV_SYSTEM_NODE_GW_PORT);
+	nodegw_any = (systemDNSNodeGw != NULL) ||
+	             (systemNodeGwAddr != NULL) ||
+	             (systemNodeGwPort != NULL);
+
+	if (nodegw_any) {
+		if (!systemNodeGwPort) {
+			log_error("NodeGW misconfigured: %s must be set",
+			          ENV_SYSTEM_NODE_GW_PORT);
+			return FALSE;
+		}
+		if (systemDNSNodeGw && systemNodeGwAddr) {
+			log_error("NodeGW misconfigured: only one of %s or %s may be set",
+			          ENV_SYSTEM_DNS_NODE_GW,
+			          ENV_SYSTEM_NODE_GW_ADDR);
+			return FALSE;
+		}
+		if (!systemDNSNodeGw && !systemNodeGwAddr) {
+			log_error("NodeGW misconfigured: one of %s or %s must be set",
+			          ENV_SYSTEM_DNS_NODE_GW,
+			          ENV_SYSTEM_NODE_GW_ADDR);
+			return FALSE;
+		}
+	}
+
+	globalInitSystemEnable = getenv(ENV_GLOBAL_INIT_ENABLE);
+	if (!globalInitSystemEnable) {
+		globalInitSystemEnable = GLOBAL_INIT_SYSTEM_DISABLE_STR;
     }
 
-	if ((globalInitSystemEnable = getenv(ENV_GLOBAL_INIT_ENABLE)) == NULL) {
-		globalInitSystemEnable = GLOBAL_INIT_SYSTEM_DISABLE_STR;
-	}
-
-	if (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0){
-		if ((globalInitSystemAddr = getenv(ENV_GLOBAL_INIT_SYSTEM_ADDR)) == NULL ||
-				(globalInitSystemPort = getenv(ENV_GLOBAL_INIT_SYSTEM_PORT)) == NULL ){
-			log_error("Required env variables system ENV_GLOBAL_INIT_SYSTEM_ADDR and ENV_GLOBAL_INIT_SYSTEM_PORT not defined");
+	if (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) {
+		globalInitSystemAddr = getenv(ENV_GLOBAL_INIT_SYSTEM_ADDR);
+		globalInitSystemPort = getenv(ENV_GLOBAL_INIT_SYSTEM_PORT);
+		if (!globalInitSystemAddr || !globalInitSystemPort) {
+			log_error("ENV_GLOBAL_INIT_SYSTEM_ADDR and PORT must be set");
+			return FALSE;
 		}
 	}
 
-	if ((dnsServer = getenv(ENV_DNS_SERVER)) != NULL) {
-		if (strcmp(dnsServer, "true") == 0) {
-            /* Fetching from /etc/resolv.conf */
-		    log_info("Resolving nameserver from  /etc/resolv.conf");
-		    nameServer = parse_resolveconf();
-		} else {
-			nameServer = NULL;
-		}
+	dnsServer = getenv(ENV_DNS_SERVER);
+	if (dnsServer && strcmp(dnsServer, "true") == 0) {
+		log_info("Resolving nameserver from /etc/resolv.conf");
+		nameServer = parse_resolveconf(); /* heap */
 	}
 
-	if ((systemDNS = getenv(ENV_SYSTEM_DNS)) != NULL) {
-		if (nameServer == NULL) {
-			systemAddr       = nslookup(systemDNS, NULL);
-            systemNodeGwAddr = nslookup(systemDNS, NULL);
-		} else {
-			systemAddr       = nslookup(systemDNS, nameServer);
-            systemNodeGwAddr = nslookup(systemDNS, nameServer);
+	systemDNS = getenv(ENV_SYSTEM_DNS);
+	if (systemDNS) {
+		systemAddr = nslookup(systemDNS, nameServer);
+		if (!systemAddr) {
+			log_error("Failed to resolve %s=%s", ENV_SYSTEM_DNS, systemDNS);
+			goto fail;
 		}
+		freeSystemAddr = 1;
 	} else {
-		systemAddr       = getenv(ENV_SYSTEM_ADDR);
-        systemNodeGwAddr = getenv(ENV_SYSTEM_NODE_GW_ADDR);
+		systemAddr = getenv(ENV_SYSTEM_ADDR);
 	}
 
 	if (!systemAddr) {
-		log_error("Required one of env variable ENV_SYSTEM_DNS or ENV_SYSTEM_ADDR to be valid");
-		return FALSE;
+		log_error("ENV_SYSTEM_DNS or ENV_SYSTEM_ADDR must be set");
+		goto fail;
 	}
 
-	if ((timePeriod = getenv(ENV_DNS_REFRESH_TIME_PERIOD)) == NULL) {
-			period = DEFAULT_TIME_PERIOD;
+	if (nodegw_any && systemDNSNodeGw) {
+		systemNodeGwAddr = nslookup(systemDNSNodeGw, nameServer);
+		if (!systemNodeGwAddr) {
+			log_error("Failed to resolve %s=%s",
+			          ENV_SYSTEM_DNS_NODE_GW, systemDNSNodeGw);
+			goto fail;
+		}
+		freeSystemNodeGwAddr = 1;
 	}
 
-	if (timePeriod) {
+	timePeriod = getenv(ENV_DNS_REFRESH_TIME_PERIOD);
+	if (!timePeriod)
+		period = DEFAULT_TIME_PERIOD;
+	else
 		period = atoi(timePeriod);
-	}
-	if ((systemOrg = getenv(ENV_SYSTEM_ORG)) == NULL) {
+
+	systemOrg = getenv(ENV_SYSTEM_ORG);
+	if (!systemOrg)
 		systemOrg = DEFAULT_SYSTEM_ORG;
-	}
 
-	if ((apiVersion = getenv(ENV_INIT_SYSTEM_API)) == NULL) {
+	apiVersion = getenv(ENV_INIT_SYSTEM_API);
+	if (!apiVersion)
 		apiVersion = DEFAULT_API_VER;
+
+	*config = calloc(1, sizeof(Config));
+	if (!*config) {
+		log_error("Memory allocation failure");
+		goto fail;
 	}
 
-	*config = (Config *)calloc(1, sizeof(Config));
-	if (*config == NULL) {
-		log_error("Memory allocation failure: %d", sizeof(Config));
-		return FALSE;
-	}
-
-	(*config)->logLevel   = getenv(ENV_INIT_CLIENT_LOG_LEVEL);
+	(*config)->logLevel = getenv(ENV_INIT_CLIENT_LOG_LEVEL);
 
 	(*config)->addr     = strdup(addr);
 	(*config)->port     = strdup(port);
@@ -144,47 +176,54 @@ int read_config_from_env(Config **config){
 	(*config)->initSystemAPIVer = strdup(apiVersion);
 	(*config)->initSystemAddr   = strdup(initSystemAddr);
 	(*config)->initSystemPort   = strdup(initSystemPort);
-    /* set 0.0.0.0:0 for system's node gw */
-    if (systemNodeGwAddr == NULL && systemNodeGwPort == NULL) {
-           (*config)->systemNodeGwAddr = strdup("0.0.0.0");
-           (*config)->systemNodeGwPort = strdup("0");
-    } else {
-        if (systemNodeGwAddr) {
-            (*config)->systemNodeGwAddr = strdup(systemNodeGwAddr);
-        }
-        if (systemNodeGwPort) {
-            (*config)->systemNodeGwPort = strdup(systemNodeGwPort);
-        } else {
-            (*config)->systemNodeGwPort = strdup("0");
-        }
-    }
+
+	if (nodegw_any) {
+		(*config)->systemNodeGwAddr = strdup(systemNodeGwAddr);
+		(*config)->systemNodeGwPort = strdup(systemNodeGwPort);
+	} else {
+		(*config)->systemNodeGwAddr = strdup("0.0.0.0");
+		(*config)->systemNodeGwPort = strdup("0");
+	}
 
 	if (nameServer) {
-    	(*config)->nameServer = strdup(nameServer);
-	}
-	
-	(*config)->timePeriod = period;
-	
+		(*config)->nameServer = strdup(nameServer);
+    }
+
 	if (dnsServer) {
-		(*config)->dnsServer = dnsServer;
-	}
-	(*config)->globalInitSystemEnable = (strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0) ? GLOBAL_INIT_SYSTEM_ENABLE : GLOBAL_INIT_SYSTEM_DISABLE ;
+		(*config)->dnsServer = strdup(dnsServer);
+    }
+
+	(*config)->timePeriod = period;
+
+	(*config)->globalInitSystemEnable =
+		(strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0)
+			? GLOBAL_INIT_SYSTEM_ENABLE
+			: GLOBAL_INIT_SYSTEM_DISABLE;
 
 	if ((*config)->globalInitSystemEnable) {
-		(*config)->globalInitSystemAddr   = strdup(globalInitSystemAddr);
-		(*config)->globalInitSystemPort   = strdup(globalInitSystemPort);
+		(*config)->globalInitSystemAddr = strdup(globalInitSystemAddr);
+		(*config)->globalInitSystemPort = strdup(globalInitSystemPort);
 	}
 
-	if(systemDNS) {
+	if (systemDNS) {
 		(*config)->systemDNS = strdup(systemDNS);
-	}
+    }
 
 	if (!(*config)->logLevel) {
-		log_debug("Log level not defined, setting to default: DEBUG");
 		(*config)->logLevel = DEFAULT_LOG_LEVEL;
-	}
+    }
+
+	if (freeSystemAddr)       free(systemAddr);
+	if (freeSystemNodeGwAddr) free(systemNodeGwAddr);
+	if (nameServer)           free(nameServer);
 
 	return TRUE;
+
+fail:
+	if (freeSystemAddr && systemAddr)             free(systemAddr);
+	if (freeSystemNodeGwAddr && systemNodeGwAddr) free(systemNodeGwAddr);
+	if (nameServer)                               free(nameServer);
+	return FALSE;
 }
 
 void clear_config(Config *config) {
