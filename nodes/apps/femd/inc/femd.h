@@ -64,6 +64,7 @@
 #define MODULE_FEM               "fem"
 
 #define UKAMA_AMPLIFIER_NODE "amplifier-node"
+#define ENV_FEM_BAND         "ENV_FEM_BAND"
 
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;

@@ -15,8 +15,6 @@
 #include "yaml_config.h"
 #include "femd.h"
 
-/* ---- small helpers for naive YAML line scanning ---- */
-
 static int parse_float_value(const char *line, const char *key, float *value) {
     char search_key[64];
     char *key_pos;
@@ -299,64 +297,223 @@ static int yaml_clamp_validate(YamlSafetyConfig *c) {
 }
 
 int yaml_config_validate(const YamlSafetyConfig *config) {
-    /* Legacy signature in header expects an int; we keep simple OK */
-    (void)config;
+    const char *band_env;
+    char band[16];
+
+    if (!config) {
+        usys_log_error("yaml_config_validate: NULL config");
+        return STATUS_NOK;
+    }
+
+    /* Determine band (same trim logic as loader). Default to B1. */
+    band_env = getenv(ENV_FEM_BAND);
+    if (band_env && band_env[0] != '\0') {
+        size_t i = 0, j = 0;
+        while (band_env[i] != '\0' && j < sizeof(band) - 1) {
+            if (band_env[i] != ' ' && band_env[i] != '\t' &&
+                band_env[i] != '\n' && band_env[i] != '\r') {
+                band[j++] = band_env[i];
+            }
+            i++;
+        }
+        band[j] = '\0';
+    } else {
+        strncpy(band, "B1", sizeof(band));
+        band[sizeof(band) - 1] = '\0';
+    }
+
+    /* Hard-enforce allowed bands (same as loader) */
+    if (strcmp(band, "B1") != 0 &&
+        strcmp(band, "B41") != 0 &&
+        strcmp(band, "B48") != 0) {
+        usys_log_error("Unsupported FEM band '%s' from %s. Supported: B1, B41, B48",
+                       band, ENV_FEM_BAND);
+        return STATUS_NOK;
+    }
+
+    /* If no temperature tables were populated, band was not found in YAML */
+    if (config->fem1_temp_table.num_points == 0 &&
+        config->fem2_temp_table.num_points == 0) {
+
+        usys_log_error("FEM band '%s' not found or has no temperature_compensation tables in YAML",
+                       band);
+        usys_log_error("Expected path: temperature_compensation.bands.%s.(fem1|fem2).voltage_lookup",
+                       band);
+
+        return STATUS_NOK;
+    }
+
     return STATUS_OK;
 }
 
 int yaml_config_load(const char *filename, YamlSafetyConfig *config) {
     FILE *file;
     char line[512];
+
+    /* band selection */
+    const char *band_env;
+    char band[16];
+
+    /* state for table parsing */
+    int in_temp_comp = 0;
+    int in_bands     = 0;
+    int in_band      = 0;
     int in_fem1_section = 0;
     int in_fem2_section = 0;
+
     int fem1_points = 0;
     int fem2_points = 0;
 
     if (!filename || !config) {
+        usys_log_error("yaml_config_load: invalid args");
         return STATUS_NOK;
     }
 
     yaml_config_set_defaults(config);
 
-    file = fopen(filename, "r");
-    if (!file) {
-        usys_log_warn("Could not open YAML config file %s, using defaults", filename);
+    /* Select band from env; default to B1 */
+    band_env = getenv(ENV_FEM_BAND);
+    if (band_env && band_env[0] != '\0') {
+        /* copy and trim whitespace */
+        size_t i = 0, j = 0;
+        while (band_env[i] != '\0' && j < sizeof(band) - 1) {
+            if (band_env[i] != ' ' && band_env[i] != '\t' &&
+                band_env[i] != '\n' && band_env[i] != '\r') {
+                band[j++] = band_env[i];
+            }
+            i++;
+        }
+        band[j] = '\0';
+    } else {
+        strncpy(band, "B1", sizeof(band));
+        band[sizeof(band) - 1] = '\0';
+    }
+
+    /* Hard-enforce allowed bands */
+    if (strcmp(band, "B1") != 0 &&
+        strcmp(band, "B41") != 0 &&
+        strcmp(band, "B48") != 0) {
+        usys_log_error("Unsupported FEM band '%s' from %s. Supported: B1, B41, B48",
+                       band, ENV_FEM_BAND);
         return STATUS_NOK;
     }
 
-    usys_log_info("Loading YAML configuration from %s", filename);
+    file = fopen(filename, "r");
+    if (!file) {
+        usys_log_error("Could not open YAML config file %s", filename);
+        return STATUS_NOK;
+    }
+
+    usys_log_info("Loading YAML configuration from %s (band=%s)", filename, band);
 
     while (fgets(line, sizeof(line), file)) {
+        int indent = 0;
+        const char *p = line;
+
         /* Skip comments/blank lines early */
         if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') continue;
 
-        /* FEM temperature tables */
-        if (strstr(line, "fem1:")) {
-            in_fem1_section = 1;
-            in_fem2_section = 0;
-            continue;
-        } else if (strstr(line, "fem2:")) {
-            in_fem1_section = 0;
-            in_fem2_section = 1;
-            continue;
-        } else if (strstr(line, "voltage_lookup:")) {
-            /* stay in current fem section */
-            continue;
-        } else if (line[0] != ' ' && line[0] != '\t') {
-            /* new top-level block; clear fem section flags */
-            in_fem1_section = 0;
-            in_fem2_section = 0;
+        /* compute indentation (spaces/tabs) */
+        while (*p == ' ' || *p == '\t') {
+            indent++;
+            p++;
         }
 
-        if (in_fem1_section && fem1_points < MAX_TEMP_POINTS) {
-            TempVoltagePoint p1;
-            if (parse_temp_voltage_line(line, &p1) == STATUS_OK) {
-                config->fem1_temp_table.points[fem1_points++] = p1;
+        /* Track temperature_compensation scope */
+        if (indent == 0 && strstr(p, "temperature_compensation:") == p) {
+            in_temp_comp = 1;
+            in_bands = 0;
+            in_band  = 0;
+            in_fem1_section = 0;
+            in_fem2_section = 0;
+            continue;
+        }
+
+        /* If we hit a new top-level block, leave temperature_compensation */
+        if (indent == 0 && in_temp_comp) {
+            in_temp_comp = 0;
+            in_bands = 0;
+            in_band  = 0;
+            in_fem1_section = 0;
+            in_fem2_section = 0;
+            /* do not continue; let global parsing still run */
+        }
+
+        /* Inside temperature_compensation: find bands: */
+        if (in_temp_comp && strstr(p, "bands:") == p) {
+            in_bands = 1;
+            in_band  = 0;
+            in_fem1_section = 0;
+            in_fem2_section = 0;
+            continue;
+        }
+
+        /* If inside bands:, detect band key e.g. "B1:" */
+        if (in_temp_comp && in_bands) {
+            const char *colon = strchr(p, ':');
+            if (colon) {
+                char key[32];
+                size_t klen = (size_t)(colon - p);
+
+                if (klen > 0 && klen < sizeof(key)) {
+                    size_t kk = 0;
+
+                    /* copy token until space/tab or ':' */
+                    while (kk < klen && p[kk] != ' ' && p[kk] != '\t') {
+                        key[kk] = p[kk];
+                        kk++;
+                    }
+                    key[kk] = '\0';
+
+                    /* treat as band header when it is exactly "<key>:"
+                     * on its own line (not fem1/fem2/voltage_lookup)
+                     */
+                    if (kk > 0 &&
+                        strcmp(key, "fem1") != 0 &&
+                        strcmp(key, "fem2") != 0 &&
+                        strcmp(key, "voltage_lookup") != 0 &&
+                        strcmp(key, "default_band") != 0) {
+
+                        /* If line starts with key and is a map start, assume band header */
+                        if (strstr(p, key) == p && strchr(p, '{') == NULL) {
+                            if (strcmp(key, band) == 0) {
+                                in_band = 1;
+                            } else {
+                                in_band = 0;
+                            }
+                            in_fem1_section = 0;
+                            in_fem2_section = 0;
+                            continue;
+                        }
+                    }
+                }
             }
-        } else if (in_fem2_section && fem2_points < MAX_TEMP_POINTS) {
-            TempVoltagePoint p2;
-            if (parse_temp_voltage_line(line, &p2) == STATUS_OK) {
-                config->fem2_temp_table.points[fem2_points++] = p2;
+        }
+
+        /* Only parse fem tables when we are inside selected band */
+        if (in_temp_comp && in_bands && in_band) {
+            if (strstr(p, "fem1:") == p) {
+                in_fem1_section = 1;
+                in_fem2_section = 0;
+                continue;
+            } else if (strstr(p, "fem2:") == p) {
+                in_fem1_section = 0;
+                in_fem2_section = 1;
+                continue;
+            } else if (strstr(p, "voltage_lookup:") == p) {
+                continue;
+            }
+
+            if (in_fem1_section && fem1_points < MAX_TEMP_POINTS) {
+                TempVoltagePoint tp1;
+                if (parse_temp_voltage_line(line, &tp1) == STATUS_OK) {
+                    config->fem1_temp_table.points[fem1_points++] = tp1;
+                }
+            } else if (in_fem2_section && fem2_points < MAX_TEMP_POINTS) {
+                TempVoltagePoint tp2;
+                if (parse_temp_voltage_line(line, &tp2) == STATUS_OK) {
+                    config->fem2_temp_table.points[fem2_points++] = tp2;
+                }
             }
         }
 
@@ -413,12 +570,14 @@ int yaml_config_load(const char *filename, YamlSafetyConfig *config) {
         }
 
         /* Current monitoring */
-        (void)parse_float_value(line, "shunt_resistance_ohm", &config->current_shunt_resistance);
-        (void)parse_float_value(line, "max_current_rating_a", &config->current_max_rating);
-        (void)parse_int_value  (line, "alarm_threshold_percent", &config->current_alarm_threshold_percent);
+        (void)parse_float_value(line, "shunt_resistance_ohm",
+                                &config->current_shunt_resistance);
+        (void)parse_float_value(line, "max_current_rating_a",
+                                &config->current_max_rating);
+        (void)parse_int_value  (line, "alarm_threshold_percent",
+                                &config->current_alarm_threshold_percent);
 
-        /* Emergency flags:
-         * The simple parser treats any occurrence as global. Your sample sets all to true. */
+        /* Emergency flags */
         (void)parse_bool_value(line, "immediate_shutdown", &config->emergency_immediate_shutdown);
         (void)parse_bool_value(line, "disable_tx_rf",      &config->emergency_disable_tx_rf);
         (void)parse_bool_value(line, "disable_pa_vds",     &config->emergency_disable_pa_vds);
@@ -442,9 +601,6 @@ int yaml_config_load(const char *filename, YamlSafetyConfig *config) {
     config->fem2_temp_table.num_points = fem2_points;
 
     (void)yaml_clamp_validate(config);
-
-    usys_log_info("YAML config loaded: FEM1 temp points=%d, FEM2 temp points=%d",
-                  fem1_points, fem2_points);
 
     return yaml_config_validate(config);
 }
