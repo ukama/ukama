@@ -47,7 +47,13 @@ func initConfig() {
 	err := config.NewConfReader(pkg.ServiceName).Read(svcConf)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
-	} else if svcConf.DebugMode {
+	}
+	
+	if err := svcConf.ParseDNSMapFromEnv(); err != nil {
+		log.Fatalf("Error parsing DNS_MAP from environment: %v", err)
+	}
+	
+	if svcConf.DebugMode {
 		b, err := yaml.Marshal(svcConf)
 		if err != nil {
 			log.Infof("Config:\n%s", string(b))
@@ -79,7 +85,7 @@ func runGrpcServer() {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(svcConf.OrgName, mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf.ToDNSMap())
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)

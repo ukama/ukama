@@ -42,6 +42,7 @@ services:
    - BOOTSTRAP_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - HTTP_INITCLIENT=http://api-gateway-init:8080
+   - 'DNS_MAP=[{"org_name": "ukama", "dns": "localhost"}]'
   restart: always
   networks:
    - ukama-net
