@@ -50,7 +50,7 @@ dac:
 #
 # NOTE:
 # Band selection is controlled by environment variable ENV_FEM_BAND (B1, B41, B48).
-# The daemon will pick tables from the selected band.
+# The fem.d will pick tables from the selected band.
 temperature_compensation:
   bands:
     B1:
@@ -88,34 +88,34 @@ temperature_compensation:
     B41:
       fem1:
         voltage_lookup:
-          -30: {carrier: 2.10, peak: 1.20}
-          -20: {carrier: 2.10, peak: 1.20}
-          -10: {carrier: 2.15, peak: 1.25}
-          0:   {carrier: 2.15, peak: 1.25}
-          10:  {carrier: 2.20, peak: 1.30}
-          20:  {carrier: 2.20, peak: 1.30}
-          30:  {carrier: 2.22, peak: 1.35}
-          40:  {carrier: 2.22, peak: 1.35}
-          50:  {carrier: 2.25, peak: 1.38}
-          60:  {carrier: 2.26, peak: 1.38}
-          70:  {carrier: 2.28, peak: 1.40}
-          80:  {carrier: 2.28, peak: 1.40}
-          85:  {carrier: 0.0,  peak: 0.0}
+          -30: {carrier: 2.10, peak: 1.60} # -30 to -20
+          -20: {carrier: 2.10, peak: 1.58} # -20 to -10
+          -10: {carrier: 2.13, peak: 1.58} # -10 to 0
+          0:   {carrier: 2.15, peak: 1.55} #   0 to 10
+          10:  {carrier: 2.20, peak: 1.55} #  10 to 20
+          20:  {carrier: 2.25, peak: 1.50} #  20 to 30
+          30:  {carrier: 2.28, peak: 1.45} #  30 to 40
+          40:  {carrier: 2.30, peak: 1.40} #  40 to 50
+          50:  {carrier: 2.33, peak: 1.40} #  50 to 60
+          60:  {carrier: 2.35, peak: 1.35} #  60 to 70
+          70:  {carrier: 2.38, peak: 1.30} #  70 to 80
+          80:  {carrier: 2.38, peak: 1.30} #  80 to 85
+          85:  {carrier: 0.0,  peak: 0.0}  #  shutdown
       fem2:
         voltage_lookup:
-          -30: {carrier: 2.10, peak: 1.20}
-          -20: {carrier: 2.10, peak: 1.20}
-          -10: {carrier: 2.15, peak: 1.25}
-          0:   {carrier: 2.15, peak: 1.25}
-          10:  {carrier: 2.20, peak: 1.30}
-          20:  {carrier: 2.20, peak: 1.30}
-          30:  {carrier: 2.22, peak: 1.35}
-          40:  {carrier: 2.22, peak: 1.35}
-          50:  {carrier: 2.25, peak: 1.38}
-          60:  {carrier: 2.26, peak: 1.38}
-          70:  {carrier: 2.28, peak: 1.40}
-          80:  {carrier: 2.28, peak: 1.40}
-          85:  {carrier: 0.0,  peak: 0.0}
+          -30: {carrier: 2.10, peak: 1.60} # -30 to -20
+          -20: {carrier: 2.10, peak: 1.58} # -20 to -10
+          -10: {carrier: 2.13, peak: 1.58} # -10 to 0
+          0:   {carrier: 2.15, peak: 1.55} #   0 to 10
+          10:  {carrier: 2.20, peak: 1.55} #  10 to 20
+          20:  {carrier: 2.25, peak: 1.50} #  20 to 30
+          30:  {carrier: 2.28, peak: 1.45} #  30 to 40
+          40:  {carrier: 2.30, peak: 1.40} #  40 to 50
+          50:  {carrier: 2.33, peak: 1.40} #  50 to 60
+          60:  {carrier: 2.35, peak: 1.35} #  60 to 70
+          70:  {carrier: 2.38, peak: 1.30} #  70 to 80
+          80:  {carrier: 2.38, peak: 1.30} #  80 to 85
+          85:  {carrier: 0.0,  peak: 0.0}  #  shutdown
 
     B48:
       fem1:
