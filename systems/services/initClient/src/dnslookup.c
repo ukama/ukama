@@ -37,8 +37,8 @@ static struct addrinfo *resolve_server(const char *server)
 
 	/* print the address of the server */
 	char str[INET6_ADDRSTRLEN];
-	log_info("%-10s %s\n", "server:", server);
-	log_info("%-10s %s\n", "Address 1:",
+	log_info("%-10s %s", "server:", server);
+	log_info("%-10s %s", "Address 1:",
 			inet_ntop(res->ai_family, res->ai_addr, str, sizeof(str)));
 
 	return res;
@@ -54,12 +54,12 @@ static int res_ssend(struct addrinfo *srv, const unsigned char *msg,
 	int fd = socket(srv->ai_family,
 			SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0);
 	if (fd < 0) {
-		log_error("cannot create the socket\n");
+		log_error("cannot create the socket");
 		goto err;
 	}
 
 	if (bind(fd, (void *)&src, srv->ai_addrlen) < 0) {
-		log_error("bind failure\n");
+		log_error("bind failure");
 		goto err_close;
 	}
 
@@ -67,7 +67,7 @@ static int res_ssend(struct addrinfo *srv, const unsigned char *msg,
 	if (sendto(fd, msg, msglen, MSG_NOSIGNAL,
 			srv->ai_addr, srv->ai_addrlen) < 0)
 	{
-		log_error("sendto failure\n");
+		log_error("sendto failure");
 		goto err_close;
 	}
 
@@ -76,7 +76,7 @@ static int res_ssend(struct addrinfo *srv, const unsigned char *msg,
 	pfd.fd = fd;
 	pfd.events = POLLIN;
 	if (poll(&pfd, 1, POLL_TIMEOUT) <= 0) {
-		log_error("poll timeout\n");
+		log_error("poll timeout");
 		goto err_close;
 	}
 
@@ -84,7 +84,7 @@ static int res_ssend(struct addrinfo *srv, const unsigned char *msg,
 	size_t alen = anslen;
 	ssize_t rlen = recvfrom(fd, answer, alen, 0, NULL, NULL);
 	if (rlen < 0) {
-		log_error("recvfrom error\n");
+		log_error("recvfrom error");
 		goto err_close;
 	}
 

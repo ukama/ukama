@@ -39,10 +39,8 @@ State *state=NULL;
 pthread_t child = 0;
 int globalInit = 0;
 
-/*
- * usage -- Usage options for initClient
- *
- */
+#define ENV_STR(x) ((x) ? (x) : "(unset)")
+
 void usage() {
 
 	fprintf(stdout, "Usage: initClient [options] \n");
@@ -50,24 +48,36 @@ void usage() {
 	fprintf(stdout, "--h, --help     this menu\n");
 	fprintf(stdout, "--V, --version  Version\n");
 	fprintf(stdout, "Environment variable used are: \n");
-	fprintf(stdout, "\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s\n\t %s \n\t %s \n\t %s \n\t",
-			ENV_INIT_CLIENT_LOG_LEVEL,
-			ENV_SYSTEM_ORG,
-			ENV_SYSTEM_NAME,
-            ENV_SYSTEM_DNS,
-			ENV_SYSTEM_ADDR,
-			ENV_SYSTEM_PORT,
-			ENV_INIT_SYSTEM_ADDR,
-			ENV_INIT_SYSTEM_PORT,
-			ENV_GLOBAL_INIT_ENABLE,
-			ENV_GLOBAL_INIT_SYSTEM_ADDR,
-			ENV_GLOBAL_INIT_SYSTEM_PORT);
+    fprintf(stdout,
+            "\t ENV_INIT_CLIENT_LOG_LEVEL   = %s\n"
+            "\t ENV_SYSTEM_ORG              = %s\n"
+            "\t ENV_SYSTEM_NAME             = %s\n"
+            "\t ENV_SYSTEM_DNS              = %s\n"
+            "\t ENV_SYSTEM_ADDR             = %s\n"
+            "\t ENV_SYSTEM_PORT             = %s\n"
+            "\t ENV_SYSTEM_NODE_GW_ADDR     = %s\n"
+            "\t ENV_SYSTEM_NODE_GW_PORT     = %s\n"
+            "\t ENV_INIT_SYSTEM_ADDR        = %s\n"
+            "\t ENV_INIT_SYSTEM_PORT        = %s\n"
+            "\t ENV_GLOBAL_INIT_ENABLE      = %s\n"
+            "\t ENV_GLOBAL_INIT_SYSTEM_ADDR = %s\n"
+            "\t ENV_GLOBAL_INIT_SYSTEM_PORT = %s\n",
+            ENV_STR(getenv(ENV_INIT_CLIENT_LOG_LEVEL)),
+            ENV_STR(getenv(ENV_SYSTEM_ORG)),
+            ENV_STR(getenv(ENV_SYSTEM_NAME)),
+            ENV_STR(getenv(ENV_SYSTEM_DNS)),
+            ENV_STR(getenv(ENV_SYSTEM_ADDR)),
+            ENV_STR(getenv(ENV_SYSTEM_PORT)),
+            ENV_STR(getenv(ENV_SYSTEM_NODE_GW_ADDR)),
+            ENV_STR(getenv(ENV_SYSTEM_NODE_GW_PORT)),
+            ENV_STR(getenv(ENV_INIT_SYSTEM_ADDR)),
+            ENV_STR(getenv(ENV_INIT_SYSTEM_PORT)),
+            ENV_STR(getenv(ENV_GLOBAL_INIT_ENABLE)),
+            ENV_STR(getenv(ENV_GLOBAL_INIT_SYSTEM_ADDR)),
+            ENV_STR(getenv(ENV_GLOBAL_INIT_SYSTEM_PORT))
+        );
 }
 
-/*
- * set_log_level --  set the verbosity level for logs
- *
- */
 void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
@@ -83,10 +93,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/*
- * signal_term_handler -- SIGTERM handling routine. Gracefully exit the process
- *
- */
 void signal_term_handler(void) {
 
     char *response=NULL;
@@ -129,10 +135,6 @@ void signal_term_handler(void) {
 	exit(1);
 }
 
-/*
- *  catch_sigterm -- setup SIGTERM catch
- *
- */
 void catch_sigterm(void) {
 
 	static struct sigaction saction;
@@ -386,7 +388,6 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* Wait here for ever. XXX */
 	log_debug("initClient running ...");
 
 	if (config->systemDNS) {

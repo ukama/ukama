@@ -58,22 +58,22 @@ func TestGetNodeCredentials(t *testing.T) {
 				 lookupClientMock := &lmocks.LookupServiceClient{}
 				 lookupMock.On("GetClient").Return(lookupClientMock, nil)
  
-				// Setup lookup service mock to return messaging system
-				lookupClientMock.On("GetSystemForOrg", mock.Anything, &lpb.GetSystemRequest{
-					OrgName:    testOrgName,
-					SystemName: "messaging",
-				}).Return(&lpb.GetSystemResponse{
-					Ip:          "192.168.1.100",
-					Certificate: "test-certificate-data",
-				}, nil)
-			},
-			expectedResult: &pb.GetNodeCredentialsResponse{
-				Id:          testNodeID123,
-				OrgName:     testOrgName,
-				Ip:          "127.0.0.1", // localhost resolves to 127.0.0.1
-				Certificate: "test-certificate-data",
-			},
-			expectedError: nil,
+				 // Setup lookup service mock to return messaging system
+				 lookupClientMock.On("GetSystemForOrg", mock.Anything, &lpb.GetSystemRequest{
+					 OrgName:    "test-org",
+					 SystemName: "messaging",
+				 }).Return(&lpb.GetSystemResponse{
+					 ApiGwIp:     "192.168.1.100",
+					 Certificate: "test-certificate-data",
+				 }, nil)
+			 },
+			 expectedResult: &pb.GetNodeCredentialsResponse{
+				 Id:          "test-node-123",
+				 OrgName:     "test-org",
+				 Ip:          "127.0.0.1",
+				 Certificate: "test-certificate-data",
+			 },
+			 expectedError: nil,
 		 },
 		{
 			name:   "Error - Node without org name",

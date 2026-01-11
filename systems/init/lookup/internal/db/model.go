@@ -36,10 +36,13 @@ type System struct {
 	Name        string `gorm:"type:string;index:sys_idx,unique,composite:sys_idx,expression:lower(name);not null"`
 	Uuid        string `gorm:"type:uuid;unique"`
 	Certificate string
-	Ip          pgtype.Inet `gorm:"type:inet"`
-	URL         string
-	Port        int32
+	ApiGwIp     pgtype.Inet `gorm:"type:inet"`
+	ApiGwUrl    string
+	ApiGwPort   int32
+	NodeGwIp    pgtype.Inet `gorm:"type:inet;default:'0.0.0.0'"`
+	NodeGwPort  int32 `gorm:"default:8080"`
+	NodeGwHealth uint32 `gorm:"default:100"`
 	OrgID       uint `gorm:"type:string;index:sys_idx,unique,composite:sys_idx;not null"`
 	Org         Org
-	Health      uint32 `gorm:"default:100"`
+	ApiGwHealth uint32 `gorm:"default:100"`
 }

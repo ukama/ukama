@@ -74,8 +74,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-/* SIGTERM handling routine. Gracefully exit the process
- */
 void signal_term_handler(void) {
 
 	if (processState == NULL) exit(1);

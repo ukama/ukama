@@ -51,9 +51,12 @@
 #define JSON_SYSTEM_NAME "systemName"
 #define JSON_SYSTEM_ID   "systemId"
 #define JSON_CERTIFICATE "certificate"
-#define JSON_IP          "ip"
-#define JSON_PORT        "port"
-#define JSON_HEALTH      "health"
+#define JSON_API_GW_IP   "apiGwIp"
+#define JSON_API_GW_PORT "apiGwPort"
+#define JSON_HEALTH      "apiGwHealth"
+
+#define JSON_NODE_GW_IP   "nodeGwIp"
+#define JSON_NODE_GW_PORT "nodeGwPort"
 
 #define JSON_KEY   "key"
 #define JSON_VALUE "value"

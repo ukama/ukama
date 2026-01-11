@@ -166,6 +166,8 @@ services:
    - ENV_INIT_CLIENT_ADDR=initclient-node
    - ENV_INIT_CLIENT_PORT=8080
    - ENV_INIT_CLIENT_TEMP_FILE=/tmp/tmpfile
+   - ENV_SYSTEM_NODE_GW_ADDR=node-gateway-node
+   - ENV_SYSTEM_NODE_GW_PORT=8080
   restart: always
   networks:
    - ukama-net

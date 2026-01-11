@@ -89,8 +89,8 @@ func TestLookupClient_AddSystemForOrg(t *testing.T) {
 		SystemName:  sys,
 		OrgName:     org,
 		Certificate: "certs",
-		Ip:          "0.0.0.0",
-		Port:        100,
+		ApiGwIp:     "0.0.0.0",
+		ApiGwPort:   100,
 	}
 
 	lc.On("AddSystemForOrg", mock.Anything, sysReq).Return(&pb.AddSystemResponse{}, nil)
@@ -109,8 +109,8 @@ func TestLookupClient_UpdateSystemForOrg(t *testing.T) {
 		SystemName:  sys,
 		OrgName:     org,
 		Certificate: "update_certs",
-		Ip:          "127.0.0.1",
-		Port:        101,
+		ApiGwIp:     "127.0.0.1",
+		ApiGwPort:   101,
 	}
 
 	lc.On("UpdateSystemForOrg", mock.Anything, sysReq).Return(&pb.UpdateSystemResponse{}, nil)
@@ -134,8 +134,8 @@ func TestLookupClient_GetSystemForOrg(t *testing.T) {
 		SystemName:  sys,
 		SystemId:    sysId,
 		Certificate: "certs",
-		Ip:          "0.0.0.0",
-		Port:        100,
+		ApiGwIp:     "0.0.0.0",
+		ApiGwPort:   100,
 	}
 
 	lc.On("GetSystemForOrg", mock.Anything, sysReq).Return(sysResp, nil)

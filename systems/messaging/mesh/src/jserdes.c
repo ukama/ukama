@@ -231,9 +231,9 @@ int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
 						  &(*systemInfo)->systemId, NULL);
 	ret |= get_json_entry(json, JSON_CERTIFICATE, JSON_STRING,
 						  &(*systemInfo)->certificate, NULL);
-	ret |= get_json_entry(json, JSON_IP, JSON_STRING,
+	ret |= get_json_entry(json, JSON_NODE_GW_IP, JSON_STRING,
 						  &(*systemInfo)->ip, NULL);
-	ret |= get_json_entry(json, JSON_PORT, JSON_INTEGER,
+	ret |= get_json_entry(json, JSON_NODE_GW_PORT, JSON_INTEGER,
 						  NULL, &(*systemInfo)->port);
 	ret |= get_json_entry(json, JSON_HEALTH, JSON_INTEGER,
 						  NULL, &(*systemInfo)->health);
@@ -295,10 +295,6 @@ int deserialize_websocket_message(Message **message, char *data) {
 	return TRUE;
 }
 
-/*
- * deserialize_map_array --
- *
- */
 static void deserialize_map_array(UMap **map, json_t *json) {
 
 	json_t *jArray;
@@ -327,10 +323,6 @@ static void deserialize_map_array(UMap **map, json_t *json) {
 	}
 }
 
-/*
- * deserialize_map --
- *
- */
 static void deserialize_map(URequest **request, json_t *json) {
 
 	json_t *obj;
