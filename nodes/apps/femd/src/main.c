@@ -77,9 +77,10 @@ static void validate_fem_band_env_or_exit(void) {
     char band[16];
     size_t i, j;
 
-    /* Not set => OK (defaults handled elsewhere) */
     if (env == NULL || env[0] == '\0') {
-        return;
+        usys_log_error("Band env not set: %s Supported values: B1, B41, B48",
+                       ENV_FEM_BAND);
+        usys_exit(1);
     }
 
     /* Trim whitespace */
